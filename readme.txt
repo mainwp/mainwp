@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.5.3
 Requires PHP: 7.4
-Stable tag: 5.0.3.2
+Stable tag: 5.1-beta1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -148,7 +148,6 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 * Added: Quick Setup menu item to the MainWP flyout menu for users with no child sites.
 * Added: Quick Setup menu item to the MainWP main navigation for users with no child sites.
 * Updated: Renamed the "Setup Wizard" link in the plugin meta to "Quick Setup".
-
 
 = 5.0.3.1 - 4-16-2024 =
 

@@ -21,8 +21,7 @@
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-all-active-plugins-table i.circular.icon.cached-icon-customable,
-.mainwp-ui.mainwp-custom-theme #mainwp-globally-ignored-plugins i.circular.icon.cached-icon-customable,
-.mainwp-ui.mainwp-custom-theme #mainwp-manage-sites-monitor-table i.circular.icon {
+.mainwp-ui.mainwp-custom-theme #mainwp-globally-ignored-plugins i.circular.icon.cached-icon-customable{
   height: 1em !important;
 }
 
@@ -62,6 +61,15 @@
 .mainwp-ui.mainwp-custom-theme .ui.statistic>.value {
   color: var(--font-color);
 }
+
+/* default theme */
+.mainwp-ui.mainwp-custom-theme .dt-scroll-body tbody tr.selected .ui.red.button,
+.mainwp-ui.mainwp-custom-theme .dt-scroll-body tbody tr.selected .ui.basic.red.button,
+.mainwp-ui.mainwp-custom-theme .dt-scroll-body tbody tr.selected .ui.button.green,
+.mainwp-ui.mainwp-custom-theme .dt-scroll-body tbody tr.selected .ui.button.basic.green{
+  color: #fff !important;
+}
+/* end */
 
 /* Buttons */
 
@@ -277,7 +285,7 @@
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.message .header {
-  color: var( --font-color );
+  color: var(--font-color);
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.green.mini.message:before {
@@ -430,8 +438,8 @@
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1);
 }
 
-.mainwp-ui.mainwp-custom-theme .dataTables_scroll {
-  box-shadow: 0 1px 2px 0 rgba( 0, 0, 0, .1 );
+.mainwp-ui.mainwp-custom-theme .dt-scroll {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1);
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.table>tbody>tr.odd>* {

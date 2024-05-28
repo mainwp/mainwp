@@ -385,7 +385,6 @@
 .mainwp-ui.mainwp_page_ActionLogs #mainwp-collapse-second-level-navigation,
 .mainwp-ui.mainwp_page_PluginPrivacy #mainwp-collapse-second-level-navigation {
     display: none !important;
-    ;
 }
 
 #mainwp-main-menu .icon {
@@ -409,6 +408,12 @@
 #mainwp-update-everything-button {
     font-size: 14px;
 }
+
+.mainwp-widget .dt-search.ui.input {
+    padding: 5px;
+    max-width: 160px;
+}
+
 
 @media only screen and (min-width: 1368px) {
 
@@ -917,7 +922,6 @@ table.mainwp-manage-wpsites-table .error a {
     position: absolute;
     background-color: #ECECEC;
     background-color: white;
-    /*border: 1px solid #CCC;*/
     border-left: 0;
     z-index: 9999;
 }
@@ -1504,12 +1508,13 @@ th .down.icon {
     color: red;
 }
 
-.icon.settings-field-menu-indicator {
-    float: left !important;
-}
-
 .settings-field-icon-indicator {
     margin-left: -12px !important;
+    display: none !important;
+}
+
+.settings-field-icon-indicator.visible-indicator {
+    display: inline-block !important;
 }
 
 .category-select-item-sub1 {
@@ -1539,8 +1544,9 @@ th .down.icon {
 .mainwp-ui .qq-upload-drop-area {
     min-width: 100%;
     padding: 50px;
-    border: 5px dashed #999999;
     margin-top: 20px;
+    border: 5px dashed #999999 !important;
+    display: none;
 }
 
 .mainwp-get-started-widget-check-lists .item .content {
@@ -1551,6 +1557,27 @@ th .down.icon {
 #mainwp_add_edit_client_upload_custom_icon,
 .mainwp_add_edit_contact_upload_custom_icon {
     margin-left: 30px !important;
+}
+
+.qq-upload-completed .qq-upload-cancel,
+.qq-upload-completed .qq-upload-percent {
+    display: none !important;
+}
+
+#mainwp-install-themes .qq-upload-success .qq-upload-add-to-favorites,
+#mainwp-install-plugins .qq-upload-success .qq-upload-add-to-favorites {
+    display: inline-block !important;
+    /* display on those pages, hide on other extension pages. */
+}
+
+.mainwp-sites-select-deselect-button {
+    border: none !important;
+    box-shadow: none !important;
+    background-color: inherit !important;
+}
+
+.mainwp-sites-select-deselect-button:hover {
+    background-color: inherit !important;
 }
 
 #mainwp-first-level-navigation-menu #leftbar-item-quick-setup {
@@ -1566,4 +1593,7 @@ th .down.icon {
 .mainwp-default-theme #mainwp-first-level-navigation-menu #leftbar-item-quick-setup i,
 .mainwp-default-theme #mainwp-first-level-navigation-menu #leftbar-item-quick-setup span {
     color: var(--grey-dark) !important;
+}
+.mainwp-ui tr.selected.none-selected-color > *{
+    box-shadow: none !important;
 }

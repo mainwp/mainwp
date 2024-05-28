@@ -1,5 +1,5 @@
 /*
- * # Fomantic UI - 2.9.2
+ * # Fomantic UI - 2.9.3
  * https://github.com/fomantic/Fomantic-UI
  * https://fomantic-ui.com/
  *
@@ -9,7 +9,7 @@
  *
  */
 /*!
- * # Fomantic-UI 2.9.2 - Site
+ * # Fomantic-UI 2.9.3 - Site
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -304,7 +304,7 @@
                         });
                     }
                     clearTimeout(module.performance.timer);
-                    module.performance.timer = setTimeout(module.performance.display, 500);
+                    module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                 },
                 display: function () {
                     var
@@ -465,7 +465,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Form Validation
+ * # Fomantic-UI 2.9.3 - Form Validation
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -488,7 +488,7 @@
     $.fn.form = function (parameters) {
         var
             $allModules      = $(this),
-            moduleSelector   = $allModules.selector || '',
+            $window        = $(window),
 
             time             = Date.now(),
             performance      = [],
@@ -527,6 +527,8 @@
                 namespace,
                 moduleNamespace,
                 eventNamespace,
+                attachEventsSelector,
+                attachEventsAction,
 
                 submitting = false,
                 dirty = false,
@@ -541,6 +543,7 @@
                 initialize: function () {
                     // settings grabbed at run time
                     module.get.settings();
+                    $module.addClass(className.initial);
                     if (methodInvoked) {
                         if (instance === undefined) {
                             module.instantiate();
@@ -594,10 +597,13 @@
                     module.bindEvents();
                 },
 
-                submit: function () {
+                submit: function (event) {
                     module.verbose('Submitting form', $module);
                     submitting = true;
                     $module.trigger('submit');
+                    if (event) {
+                        event.preventDefault();
+                    }
                 },
 
                 attachEvents: function (selector, action) {
@@ -609,6 +615,9 @@
                         module[action]();
                         event.preventDefault();
                     });
+
+                    attachEventsSelector = selector;
+                    attachEventsAction = action;
                 },
 
                 bindEvents: function () {
@@ -620,6 +629,7 @@
                         .on('click' + eventNamespace, selector.reset, module.reset)
                         .on('click' + eventNamespace, selector.clear, module.clear)
                     ;
+                    $field.on('invalid' + eventNamespace, module.event.field.invalid);
                     if (settings.keyboardShortcuts) {
                         $module.on('keydown' + eventNamespace, selector.field, module.event.field.keydown);
                     }
@@ -634,10 +644,14 @@
 
                     // Dirty events
                     if (settings.preventLeaving) {
-                        $(window).on('beforeunload' + eventNamespace, module.event.beforeUnload);
+                        $window.on('beforeunload' + eventNamespace, module.event.beforeUnload);
                     }
 
-                    $field.on('change click keyup keydown blur', function (e) {
+                    $field.on('change' + eventNamespace
+                        + ' click' + eventNamespace
+                        + ' keyup' + eventNamespace
+                        + ' keydown' + eventNamespace
+                        + ' blur' + eventNamespace, function (e) {
                         module.determine.isDirty();
                     });
 
@@ -648,6 +662,9 @@
                     $module.on('clean' + eventNamespace, function (e) {
                         settings.onClean.call();
                     });
+                    if (attachEventsSelector) {
+                        module.attachEvents(attachEventsSelector, attachEventsAction);
+                    }
                 },
 
                 clear: function () {
@@ -696,6 +713,7 @@
                             isCheckbox   = $field.is(selector.checkbox),
                             isDropdown   = $element.is(selector.uiDropdown) && module.can.useElement('dropdown'),
                             isCalendar   = $calendar.length > 0 && module.can.useElement('calendar'),
+                            isFile       = $field.is(selector.file),
                             isErrored    = $fieldGroup.hasClass(className.error)
                         ;
                         if (defaultValue === undefined) {
@@ -716,7 +734,7 @@
                             $calendar.calendar('set date', defaultValue);
                         } else {
                             module.verbose('Resetting field value', $field, defaultValue);
-                            $field.val(defaultValue);
+                            $field.val(isFile ? '' : defaultValue);
                         }
                     });
                     module.remove.states();
@@ -727,8 +745,12 @@
                         var
                             allValid = true
                         ;
-                        $.each(validation, function (fieldName, field) {
-                            if (!module.validate.field(field, fieldName, true)) {
+                        $field.each(function (index, el) {
+                            var $el = $(el),
+                                validation = module.get.validation($el) || {},
+                                identifier = module.get.identifier(validation, $el)
+                            ;
+                            if (!module.validate.field(validation, identifier, true)) {
                                 allValid = false;
                             }
                         });
@@ -852,6 +874,13 @@
                     $module.off(eventNamespace);
                     $field.off(eventNamespace);
                     $submit.off(eventNamespace);
+                    if (settings.preventLeaving) {
+                        $window.off(eventNamespace);
+                    }
+                    if (attachEventsSelector) {
+                        $(attachEventsSelector).off(eventNamespace);
+                        attachEventsSelector = undefined;
+                    }
                 },
 
                 event: {
@@ -877,9 +906,8 @@
                             if (!event.ctrlKey && key === keyCode.enter && isInput && !isInDropdown && !isCheckbox) {
                                 if (!keyHeldDown) {
                                     $field.one('keyup' + eventNamespace, module.event.field.keyup);
-                                    module.submit();
+                                    module.submit(event);
                                     module.debug('Enter pressed on input submitting form');
-                                    event.preventDefault();
                                 }
                                 keyHeldDown = true;
                             }
@@ -887,15 +915,18 @@
                         keyup: function () {
                             keyHeldDown = false;
                         },
+                        invalid: function (event) {
+                            event.preventDefault();
+                        },
                         blur: function (event) {
                             var
                                 $field          = $(this),
-                                $fieldGroup     = $field.closest($group),
-                                validationRules = module.get.validation($field)
+                                validationRules = module.get.validation($field) || {},
+                                identifier      = module.get.identifier(validationRules, $field)
                             ;
-                            if (validationRules && (settings.on === 'blur' || ($fieldGroup.hasClass(className.error) && settings.revalidate))) {
+                            if (settings.on === 'blur' || (!$module.hasClass(className.initial) && settings.revalidate)) {
                                 module.debug('Revalidating field', $field, validationRules);
-                                module.validate.field(validationRules);
+                                module.validate.field(validationRules, identifier);
                                 if (!settings.inline) {
                                     module.validate.form(false, true);
                                 }
@@ -904,14 +935,14 @@
                         change: function (event) {
                             var
                                 $field      = $(this),
-                                $fieldGroup = $field.closest($group),
-                                validationRules = module.get.validation($field)
+                                validationRules = module.get.validation($field) || {},
+                                identifier = module.get.identifier(validationRules, $field)
                             ;
-                            if (validationRules && (settings.on === 'change' || ($fieldGroup.hasClass(className.error) && settings.revalidate))) {
+                            if (settings.on === 'change' || (!$module.hasClass(className.initial) && settings.revalidate)) {
                                 clearTimeout(module.timer);
                                 module.timer = setTimeout(function () {
                                     module.debug('Revalidating field', $field, validationRules);
-                                    module.validate.field(validationRules);
+                                    module.validate.field(validationRules, identifier);
                                     if (!settings.inline) {
                                         module.validate.form(false, true);
                                     }
@@ -953,18 +984,7 @@
                         return rule.type;
                     },
                     changeEvent: function (type, $input) {
-                        if (type === 'checkbox' || type === 'radio' || type === 'hidden' || $input.is('select')) {
-                            return 'change';
-                        }
-
-                        return module.get.inputEvent();
-                    },
-                    inputEvent: function () {
-                        return document.createElement('input').oninput !== undefined
-                            ? 'input'
-                            : (document.createElement('input').onpropertychange !== undefined
-                                ? 'propertychange'
-                                : 'keyup');
+                        return ['file', 'checkbox', 'radio', 'hidden'].indexOf(type) >= 0 || $input.is('select') ? 'change' : 'input';
                     },
                     fieldsFromShorthand: function (fields) {
                         var
@@ -987,6 +1007,9 @@
                         });
 
                         return fullFields;
+                    },
+                    identifier: function (validation, $el) {
+                        return validation.identifier || $el.attr('id') || $el.attr('name') || $el.data(metadata.validate);
                     },
                     prompt: function (rule, field) {
                         var
@@ -1100,7 +1123,7 @@
                         var $field = typeof identifier === 'string'
                                 ? module.get.field(identifier)
                                 : identifier,
-                            $label = $field.closest(selector.group).find('label').eq(0)
+                            $label = $field.closest(selector.group).find('label:not(:empty)').eq(0)
                         ;
 
                         return $label.length === 1
@@ -1354,7 +1377,8 @@
                             $field       = module.get.field(identifier),
                             $fieldGroup  = $field.closest($group),
                             $prompt      = $fieldGroup.children(selector.prompt),
-                            promptExists = $prompt.length > 0
+                            promptExists = $prompt.length > 0,
+                            canTransition = settings.transition && module.can.useElement('transition')
                         ;
                         module.verbose('Adding field error state', identifier);
                         if (!internal) {
@@ -1363,8 +1387,22 @@
                             ;
                         }
                         if (settings.inline) {
+                            if (promptExists) {
+                                if (canTransition) {
+                                    if ($prompt.transition('is animating')) {
+                                        $prompt.transition('stop all');
+                                    }
+                                } else if ($prompt.is(':animated')) {
+                                    $prompt.stop(true, true);
+                                }
+                                $prompt = $fieldGroup.children(selector.prompt);
+                                promptExists = $prompt.length > 0;
+                            }
                             if (!promptExists) {
                                 $prompt = $('<div/>').addClass(className.label);
+                                if (!canTransition) {
+                                    $prompt.css('display', 'none');
+                                }
                                 $prompt
                                     .appendTo($fieldGroup)
                                 ;
@@ -1373,7 +1411,7 @@
                                 .html(settings.templates.prompt(errors))
                             ;
                             if (!promptExists) {
-                                if (settings.transition && module.can.useElement('transition')) {
+                                if (canTransition) {
                                     module.verbose('Displaying error with css transition', settings.transition);
                                     $prompt.transition(settings.transition + ' in', settings.duration);
                                 } else {
@@ -1382,9 +1420,9 @@
                                         .fadeIn(settings.duration)
                                     ;
                                 }
-                            } else {
-                                module.verbose('Inline errors are disabled, no inline error added', identifier);
                             }
+                        } else {
+                            module.verbose('Inline errors are disabled, no inline error added', identifier);
                         }
                     },
                     errors: function (errors) {
@@ -1431,7 +1469,7 @@
                         $message.empty();
                     },
                     states: function () {
-                        $module.removeClass(className.error).removeClass(className.success);
+                        $module.removeClass(className.error).removeClass(className.success).addClass(className.initial);
                         if (!settings.inline) {
                             module.remove.errors();
                         }
@@ -1569,6 +1607,7 @@
                                 $field      = module.get.field(key),
                                 $element    = $field.parent(),
                                 $calendar   = $field.closest(selector.uiCalendar),
+                                isFile      = $field.is(selector.file),
                                 isMultiple  = Array.isArray(value),
                                 isCheckbox  = $element.is(selector.uiCheckbox) && module.can.useElement('checkbox'),
                                 isDropdown  = $element.is(selector.uiDropdown) && module.can.useElement('dropdown'),
@@ -1611,7 +1650,7 @@
                                     $calendar.calendar('set date', value);
                                 } else {
                                     module.verbose('Setting field value', value, $field);
-                                    $field.val(value);
+                                    $field.val(isFile ? '' : value);
                                 }
                             }
                         });
@@ -1667,7 +1706,7 @@
                                         return rule.type === 'empty';
                                     }) !== 0
                                     : false,
-                                identifier = validation.identifier || $el.attr('id') || $el.attr('name') || $el.data(metadata.validate)
+                                identifier = module.get.identifier(validation, $el)
                             ;
                             if (isRequired && !isDisabled && !hasEmptyRule && identifier !== undefined) {
                                 if (isCheckbox) {
@@ -1699,7 +1738,7 @@
                         if (keyHeldDown) {
                             return false;
                         }
-
+                        $module.removeClass(className.initial);
                         // reset errors
                         formErrors = [];
                         if (module.determine.isValid()) {
@@ -1771,13 +1810,25 @@
                                 ? module.get.field(field.depends)
                                 : false,
                             fieldValid  = true,
-                            fieldErrors = []
+                            fieldErrors = [],
+                            isDisabled = $field.filter(':not(:disabled)').length === 0,
+                            validationMessage = $field[0].validationMessage,
+                            errorLimit
                         ;
                         if (!field.identifier) {
                             module.debug('Using field name as identifier', identifier);
                             field.identifier = identifier;
                         }
-                        var isDisabled = $field.filter(':not(:disabled)').length === 0;
+                        if (validationMessage) {
+                            module.debug('Field is natively invalid', identifier);
+                            fieldErrors.push(validationMessage);
+                            fieldValid = false;
+                            if (showErrors) {
+                                $field.closest($group).addClass(className.error);
+                            }
+                        } else if (showErrors) {
+                            $field.closest($group).removeClass(className.error);
+                        }
                         if (isDisabled) {
                             module.debug('Field is disabled. Skipping', identifier);
                         } else if (field.optional && module.is.blank($field)) {
@@ -1785,11 +1836,9 @@
                         } else if (field.depends && module.is.empty($dependsField)) {
                             module.debug('Field depends on another value that is not present or empty. Skipping', $dependsField);
                         } else if (field.rules !== undefined) {
-                            if (showErrors) {
-                                $field.closest($group).removeClass(className.error);
-                            }
+                            errorLimit = field.errorLimit || settings.errorLimit;
                             $.each(field.rules, function (index, rule) {
-                                if (module.has.field(identifier)) {
+                                if (module.has.field(identifier) && (!errorLimit || fieldErrors.length < errorLimit)) {
                                     var invalidFields = module.validate.rule(field, rule, true) || [];
                                     if (invalidFields.length > 0) {
                                         module.debug('Field is invalid', identifier, rule.type);
@@ -1804,7 +1853,7 @@
                         }
                         if (fieldValid) {
                             if (showErrors) {
-                                module.remove.prompt(identifier, fieldErrors);
+                                module.remove.prompt(identifier);
                                 settings.onValid.call($field);
                             }
                         } else {
@@ -1926,7 +1975,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -1939,9 +1988,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if ($allModules.length > 1) {
                             title += ' (' + $allModules.length + ')';
                         }
@@ -2044,6 +2090,7 @@
         preventLeaving: false,
         errorFocus: true,
         dateHandling: 'date', // 'date', 'input', 'formatter'
+        errorLimit: 0,
 
         onValid: function () {},
         onInvalid: function () {},
@@ -2097,8 +2144,8 @@
             isExactly: '{name} must be exactly "{ruleValue}"',
             not: '{name} cannot be set to "{ruleValue}"',
             notExactly: '{name} cannot be set to exactly "{ruleValue}"',
-            contain: '{name} must contain "{ruleValue}"',
-            containExactly: '{name} must contain exactly "{ruleValue}"',
+            contains: '{name} must contain "{ruleValue}"',
+            containsExactly: '{name} must contain exactly "{ruleValue}"',
             doesntContain: '{name} cannot contain "{ruleValue}"',
             doesntContainExactly: '{name} cannot contain exactly "{ruleValue}"',
             minLength: '{name} must be at least {ruleValue} characters',
@@ -2117,9 +2164,10 @@
         selector: {
             checkbox: 'input[type="checkbox"], input[type="radio"]',
             clear: '.clear',
-            field: 'input:not(.search):not([type="file"]):not([type="reset"]):not([type="button"]):not([type="submit"]), textarea, select',
+            field: 'input:not(.search):not([type="reset"]):not([type="button"]):not([type="submit"]), textarea, select',
+            file: 'input[type="file"]',
             group: '.field',
-            input: 'input:not([type="file"])',
+            input: 'input',
             message: '.error.message',
             prompt: '.prompt.label',
             radio: 'input[type="radio"]',
@@ -2131,6 +2179,7 @@
         },
 
         className: {
+            initial: 'initial',
             error: 'error',
             label: 'ui basic red pointing prompt label',
             pressed: 'down',
@@ -2571,7 +2620,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Accordion
+ * # Fomantic-UI 2.9.3 - Accordion
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -2617,7 +2666,6 @@
 
                 eventNamespace  = '.' + namespace,
                 moduleNamespace = 'module-' + namespace,
-                moduleSelector  = $allModules.selector || '',
 
                 $module  = $(this),
                 $title   = $module.find(selector.title),
@@ -3011,7 +3059,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -3024,9 +3072,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if (performance.length > 0) {
                             console.groupCollapsed(title);
                             if (console.table) {
@@ -3169,7 +3214,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Calendar
+ * # Fomantic-UI 2.9.3 - Calendar
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -3193,8 +3238,6 @@
         var
             $allModules    = $(this),
             $document      = $(document),
-
-            moduleSelector = $allModules.selector || '',
 
             time           = Date.now(),
             performance    = [],
@@ -4651,7 +4694,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -4664,9 +4707,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if (performance.length > 0) {
                             console.groupCollapsed(title);
                             if (console.table) {
@@ -5185,7 +5225,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Checkbox
+ * # Fomantic-UI 2.9.3 - Checkbox
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -5208,7 +5248,6 @@
     $.fn.checkbox = function (parameters) {
         var
             $allModules    = $(this),
-            moduleSelector = $allModules.selector || '',
 
             time           = Date.now(),
             performance    = [],
@@ -5428,7 +5467,9 @@
                             $input.trigger('blur');
                             shortcutPressed = true;
                             event.stopPropagation();
-                        } else if (!event.ctrlKey && module.can.change()) {
+                        } else if (!module.can.change()) {
+                            shortcutPressed = true;
+                        } else if (!event.ctrlKey) {
                             if (key === keyCode.space || (key === keyCode.enter && settings.enableEnterKey)) {
                                 module.verbose('Enter/space key pressed, toggling checkbox');
                                 module.toggle();
@@ -5910,7 +5951,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -5923,9 +5964,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if (performance.length > 0) {
                             console.groupCollapsed(title);
                             if (console.table) {
@@ -6070,7 +6108,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Dimmer
+ * # Fomantic-UI 2.9.3 - Dimmer
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -6117,7 +6155,6 @@
 
                 eventNamespace  = '.' + namespace,
                 moduleNamespace = 'module-' + namespace,
-                moduleSelector  = $allModules.selector || '',
 
                 clickEvent      = 'ontouchstart' in document.documentElement
                     ? 'touchstart'
@@ -6600,7 +6637,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -6613,9 +6650,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if ($allModules.length > 1) {
                             title += ' (' + $allModules.length + ')';
                         }
@@ -6805,7 +6839,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Dropdown
+ * # Fomantic-UI 2.9.3 - Dropdown
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -6830,14 +6864,25 @@
             $allModules    = $(this),
             $document      = $(document),
 
-            moduleSelector = $allModules.selector || '',
-
             time           = Date.now(),
             performance    = [],
 
             query          = arguments[0],
             methodInvoked  = typeof query === 'string',
             queryArguments = [].slice.call(arguments, 1),
+            contextCheck   = function (context, win) {
+                var $context;
+                if ([window, document].indexOf(context) >= 0) {
+                    $context = $(context);
+                } else {
+                    $context = $(win.document).find(context);
+                    if ($context.length === 0) {
+                        $context = win.frameElement ? contextCheck(context, win.parent) : window;
+                    }
+                }
+
+                return $context;
+            },
             returnedValue
         ;
 
@@ -6862,7 +6907,7 @@
                 moduleNamespace = 'module-' + namespace,
 
                 $module         = $(this),
-                $context        = [window, document].indexOf(settings.context) < 0 ? $document.find(settings.context) : $(settings.context),
+                $context        = contextCheck(settings.context, window),
                 $text           = $module.find(selector.text),
                 $search         = $module.find(selector.search),
                 $sizer          = $module.find(selector.sizer),
@@ -6897,7 +6942,8 @@
                 selectObserver,
                 menuObserver,
                 classObserver,
-                module
+                module,
+                tempDisableApiCache = false
             ;
 
             module = {
@@ -7157,7 +7203,7 @@
                             module.verbose('Adding clear icon');
                             $clear = $('<i />')
                                 .addClass('remove icon')
-                                .insertBefore($text)
+                                .insertAfter($icon)
                             ;
                         }
                         if (module.is.search() && !module.has.search()) {
@@ -7323,7 +7369,7 @@
                     callback = isFunction(callback)
                         ? callback
                         : function () {};
-                    if ((focused || iconClicked) && module.is.remote() && module.is.noApiCache()) {
+                    if ((focused || iconClicked) && module.is.remote() && module.is.noApiCache() && !module.has.maxSelections()) {
                         module.clearItems();
                     }
                     if (!module.can.show() && module.is.remote()) {
@@ -7373,7 +7419,10 @@
                             if ($subMenu.length > 0) {
                                 module.verbose('Hiding sub-menu', $subMenu);
                                 $subMenu.each(function () {
-                                    module.animate.hide(false, $(this));
+                                    var $sub = $(this);
+                                    if (!module.is.animating($sub)) {
+                                        module.animate.hide(false, $sub);
+                                    }
                                 });
                             }
                         }
@@ -7568,6 +7617,8 @@
                         }
                     ;
                     if (settings.useLabels && module.has.maxSelections()) {
+                        module.show();
+
                         return;
                     }
                     if (settings.apiSettings) {
@@ -7664,11 +7715,12 @@
                     if (!$module.api('get request')) {
                         module.setup.api();
                     }
-                    apiSettings = $.extend(true, {}, apiSettings, settings.apiSettings, apiCallbacks);
+                    apiSettings = $.extend(true, {}, apiSettings, settings.apiSettings, apiCallbacks, tempDisableApiCache ? { cache: false } : {});
                     $module
                         .api('setting', apiSettings)
                         .api('query')
                     ;
+                    tempDisableApiCache = false;
                 },
 
                 filterItems: function (query) {
@@ -7890,8 +7942,8 @@
                             notFoundTokens = []
                         ;
                         tokens.forEach(function (value) {
-                            if (module.set.selected(module.escape.htmlEntities(value.trim()), null, true, true) === false) {
-                                notFoundTokens.push(value);
+                            if (module.set.selected(module.escape.htmlEntities(value.trim()), null, false, true) === false) {
+                                notFoundTokens.push(value.trim());
                             }
                         });
                         event.preventDefault();
@@ -8024,7 +8076,7 @@
                             module.set.filtered();
                         }
                         clearTimeout(module.timer);
-                        module.timer = setTimeout(module.search, settings.delay.search);
+                        module.timer = setTimeout(function () { module.search(); }, settings.delay.search);
                     },
                     label: {
                         click: function (event) {
@@ -8200,11 +8252,13 @@
                                     if (settings.allowAdditions) {
                                         module.remove.userAddition();
                                     }
-                                    module.remove.filteredItem();
+                                    if (!settings.keepSearchTerm) {
+                                        module.remove.filteredItem();
+                                        module.remove.searchTerm();
+                                    }
                                     if (!module.is.visible() && $target.length > 0) {
                                         module.show();
                                     }
-                                    module.remove.searchTerm();
                                     if (!module.is.focusedOnSearch() && skipRefocus !== true) {
                                         module.focusSearch(true);
                                     }
@@ -8390,7 +8444,9 @@
                                         module.verbose('Selecting item from keyboard shortcut', $selectedItem);
                                         module.event.item.click.call($selectedItem, event);
                                         if (module.is.searchSelection()) {
-                                            module.remove.searchTerm();
+                                            if (!settings.keepSearchTerm) {
+                                                module.remove.searchTerm();
+                                            }
                                             if (module.is.multiple()) {
                                                 $search.trigger('focus');
                                             }
@@ -8607,7 +8663,7 @@
                             ? value
                             : text;
                         if (module.can.activate($(element))) {
-                            module.set.selected(value, $(element));
+                            module.set.selected(value, $(element), false, settings.keepSearchTerm);
                             if (!module.is.multiple() && !(!settings.collapseOnActionable && $(element).hasClass(className.actionable))) {
                                 module.hideAndClear();
                             }
@@ -8871,7 +8927,7 @@
                                     values.push({
                                         name: name,
                                         value: value,
-                                        text: text,
+                                        text: module.escape.htmlEntities(text, true),
                                         disabled: disabled,
                                     });
                                 }
@@ -8959,7 +9015,7 @@
                                         return;
                                     }
                                     if (isMultiple) {
-                                        if ($.inArray(module.escape.htmlEntities(String(optionValue)), value.map(String)) !== -1) {
+                                        if ($.inArray(module.escape.htmlEntities(String(optionValue)), value.map(String).map(module.escape.htmlEntities)) !== -1) {
                                             $selectedItem = $selectedItem
                                                 ? $selectedItem.add($choice)
                                                 : $choice;
@@ -9020,7 +9076,7 @@
                             return false;
                         }
 
-                        return true;
+                        return false;
                     },
                     disabled: function () {
                         $search.attr('tabindex', module.is.disabled() ? -1 : 0);
@@ -9110,7 +9166,7 @@
                                 $.each(values, function (value, name) {
                                     module.set.text(name);
                                 });
-                            } else {
+                            } else if (settings.useLabels) {
                                 $.each(values, function (value, name) {
                                     module.add.label(value, name);
                                 });
@@ -9194,6 +9250,11 @@
                     module.set.value('', null, null, preventChangeTrigger);
                 },
 
+                clearCache: function () {
+                    module.debug('Clearing API cache once');
+                    tempDisableApiCache = true;
+                },
+
                 scrollPage: function (direction, $selectedItem) {
                     var
                         $currentItem  = $selectedItem || module.get.selectedItem(),
@@ -9252,7 +9313,7 @@
                             valueIsSet       = searchValue !== ''
                         ;
                         if (isMultiple && hasSearchValue) {
-                            module.verbose('Adjusting input width', searchWidth, settings.glyphWidth);
+                            module.verbose('Adjusting input width', searchWidth);
                             $search.css('width', searchWidth + 'px');
                         }
                         if (hasSearchValue || (isSearchMultiple && valueIsSet)) {
@@ -9551,7 +9612,7 @@
                             return false;
                         }
                         module.debug('Setting selected menu item to', $selectedItem);
-                        if (module.is.multiple()) {
+                        if (module.is.multiple() && !keepSearchTerm) {
                             module.remove.searchWidth();
                         }
                         if (module.is.single()) {
@@ -10244,7 +10305,7 @@
                         return settings.apiSettings && module.can.useAPI();
                     },
                     noApiCache: function () {
-                        return settings.apiSettings && !settings.apiSettings.cache;
+                        return tempDisableApiCache || (settings.apiSettings && !settings.apiSettings.cache);
                     },
                     single: function () {
                         return !module.is.multiple();
@@ -10254,7 +10315,7 @@
                             selectChanged = false
                         ;
                         $.each(mutations, function (index, mutation) {
-                            if ($(mutation.target).is('select, option, optgroup') || $(mutation.addedNodes).is('select')) {
+                            if ($(mutation.target).is('option, optgroup') || $(mutation.addedNodes).is('select') || ($(mutation.target).is('select') && mutation.type !== 'attributes')) {
                                 selectChanged = true;
 
                                 return false;
@@ -10526,12 +10587,12 @@
                     show: function () {
                         module.verbose('Delaying show event to ensure user intent');
                         clearTimeout(module.timer);
-                        module.timer = setTimeout(module.show, settings.delay.show);
+                        module.timer = setTimeout(function () { module.show(); }, settings.delay.show);
                     },
                     hide: function () {
                         module.verbose('Delaying hide event to ensure user intent');
                         clearTimeout(module.timer);
-                        module.timer = setTimeout(module.hide, settings.delay.hide);
+                        module.timer = setTimeout(function () { module.hide(); }, settings.delay.hide);
                     },
                 },
 
@@ -10563,7 +10624,7 @@
 
                         return text.replace(regExp.escape, '\\$&');
                     },
-                    htmlEntities: function (string) {
+                    htmlEntities: function (string, forceAmpersand) {
                         var
                             badChars     = /["'<>`]/g,
                             shouldEscape = /["&'<>`]/,
@@ -10579,7 +10640,7 @@
                             }
                         ;
                         if (shouldEscape.test(string)) {
-                            string = string.replace(/&(?![\d#a-z]{1,12};)/gi, '&amp;');
+                            string = string.replace(forceAmpersand ? /&/g : /&(?![\d#a-z]{1,12};)/gi, '&amp;');
 
                             return string.replace(badChars, escapedChar);
                         }
@@ -10657,7 +10718,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -10670,9 +10731,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if (performance.length > 0) {
                             console.groupCollapsed(title);
                             if (console.table) {
@@ -10797,6 +10855,7 @@
         forceSelection: false, // force a choice on blur with search selection
 
         allowAdditions: false, // whether multiple select should allow user added values
+        keepSearchTerm: false, // whether the search value should be kept and menu stays filtered on item selection
         ignoreCase: false, // whether to consider case sensitivity when creating labels
         ignoreSearchCase: true, // whether to consider case sensitivity when filtering items
         hideAdditions: true, // whether or not to hide special message prompting a user they can enter a value
@@ -10815,8 +10874,6 @@
         transition: 'auto', // auto transition will slide down or up based on direction
         duration: 200, // duration of transition
         displayType: false, // displayType of transition
-
-        glyphWidth: 1.037, // widest glyph width in em (W is 1.037 em) used to calculate multiselect input width
 
         headerDivider: true, // whether option headers should have an additional divider line underneath when converted from <select> <optgroup>
 
@@ -11140,7 +11197,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Embed
+ * # Fomantic-UI 2.9.3 - Embed
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -11163,8 +11220,6 @@
     $.fn.embed = function (parameters) {
         var
             $allModules     = $(this),
-
-            moduleSelector  = $allModules.selector || '',
 
             time            = Date.now(),
             performance     = [],
@@ -11583,7 +11638,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -11596,9 +11651,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if ($allModules.length > 1) {
                             title += ' (' + $allModules.length + ')';
                         }
@@ -11824,7 +11876,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Flyout
+ * # Fomantic-UI 2.9.3 - Flyout
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -11853,15 +11905,25 @@
             $head           = $('head'),
             $body           = $('body'),
 
-            moduleSelector  = $allModules.selector || '',
-
             time            = Date.now(),
             performance     = [],
 
             query           = arguments[0],
             methodInvoked   = typeof query === 'string',
             queryArguments  = [].slice.call(arguments, 1),
+            contextCheck    = function (context, win) {
+                var $context;
+                if ([window, document].indexOf(context) >= 0) {
+                    $context = $body;
+                } else {
+                    $context = $(win.document).find(context);
+                    if ($context.length === 0) {
+                        $context = win.frameElement ? contextCheck(context, win.parent) : $body;
+                    }
+                }
 
+                return $context;
+            },
             returnedValue
         ;
 
@@ -11882,7 +11944,7 @@
                 moduleNamespace      = 'module-' + namespace,
 
                 $module              = $(this),
-                $context             = [window, document].indexOf(settings.context) < 0 ? $document.find(settings.context) : $body,
+                $context             = contextCheck(settings.context, window),
                 $closeIcon           = $module.find(selector.close),
                 $inputs,
                 $focusedElement,
@@ -11901,6 +11963,7 @@
                 initialBodyMargin    = '',
                 tempBodyMargin       = '',
                 hadScrollbar         = false,
+                windowRefocused      = false,
 
                 elementNamespace,
                 id,
@@ -12047,9 +12110,6 @@
                         .off(eventNamespace)
                         .removeData(moduleNamespace)
                     ;
-                    if (module.is.ios()) {
-                        module.remove.ios();
-                    }
                     $closeIcon.off(elementNamespace);
                     if ($inputs) {
                         $inputs.off(elementNamespace);
@@ -12079,9 +12139,13 @@
                         module.setup.heights();
                     },
                     focus: function () {
-                        if (module.is.visible() && settings.autofocus && settings.dimPage) {
+                        windowRefocused = true;
+                    },
+                    click: function (event) {
+                        if (windowRefocused && document.activeElement !== event.target && module.is.visible() && settings.autofocus && settings.dimPage && $(document.activeElement).closest(selector.flyout).length === 0) {
                             requestAnimationFrame(module.set.autofocus);
                         }
+                        windowRefocused = false;
                     },
                     clickaway: function (event) {
                         if (settings.closable) {
@@ -12187,6 +12251,9 @@
                         ;
                         $window
                             .on('focus' + elementNamespace, module.event.focus)
+                        ;
+                        $context
+                            .on('click' + elementNamespace, module.event.click)
                         ;
                     },
                     clickaway: function () {
@@ -12317,11 +12384,12 @@
 
                                     return nodes;
                                 },
-                                shouldRefreshInputs = false
+                                shouldRefreshInputs = false,
+                                ignoreAutofocus = true
                             ;
                             mutations.every(function (mutation) {
                                 if (mutation.type === 'attributes') {
-                                    if (observeAttributes && (mutation.attributeName === 'disabled' || $(mutation.target).find(':input').addBack(':input').length > 0)) {
+                                    if (observeAttributes && (mutation.attributeName === 'disabled' || $(mutation.target).find(':input').addBack(':input').filter(':visible').length > 0)) {
                                         shouldRefreshInputs = true;
                                     }
                                 } else {
@@ -12331,6 +12399,9 @@
                                         $removedInputs = $(collectNodes(mutation.removedNodes)).filter('a[href], [tabindex], :input');
                                     if ($addedInputs.length > 0 || $removedInputs.length > 0) {
                                         shouldRefreshInputs = true;
+                                        if ($addedInputs.filter(':input').length > 0 || $removedInputs.filter(':input').length > 0) {
+                                            ignoreAutofocus = false;
+                                        }
                                     }
                                 }
 
@@ -12338,7 +12409,7 @@
                             });
 
                             if (shouldRefreshInputs) {
-                                module.refreshInputs();
+                                module.refreshInputs(ignoreAutofocus);
                             }
                         });
                         observer.observe(element, {
@@ -12352,7 +12423,7 @@
                 },
                 refresh: function () {
                     module.verbose('Refreshing selector cache');
-                    $context = [window, document].indexOf(settings.context) < 0 ? $document.find(settings.context) : $body;
+                    $context = contextCheck(settings.context, window);
                     module.refreshFlyouts();
                     $pusher = $context.children(selector.pusher);
                     module.clear.cache();
@@ -12363,7 +12434,7 @@
                     $flyouts = $context.children(selector.flyout);
                 },
 
-                refreshInputs: function () {
+                refreshInputs: function (ignoreAutofocus) {
                     if ($inputs) {
                         $inputs
                             .off('keydown' + elementNamespace)
@@ -12375,8 +12446,8 @@
                     $inputs = $module.find('a[href], [tabindex], :input:enabled').filter(':visible').filter(function () {
                         return $(this).closest('.disabled').length === 0;
                     });
-                    if ($inputs.length === 0) {
-                        $inputs = $module;
+                    if ($inputs.filter(':input').length === 0) {
+                        $inputs = $module.add($inputs);
                         $module.attr('tabindex', -1);
                     } else {
                         $module.removeAttr('tabindex');
@@ -12387,7 +12458,7 @@
                     $inputs.last()
                         .on('keydown' + elementNamespace, module.event.inputKeyDown.last)
                     ;
-                    if (settings.autofocus && $inputs.filter(':focus').length === 0) {
+                    if (!ignoreAutofocus && settings.autofocus && $inputs.filter(':focus').length === 0) {
                         module.set.autofocus();
                     }
                 },
@@ -12665,20 +12736,14 @@
                         var
                             $autofocus = $inputs.filter('[autofocus]'),
                             $rawInputs = $inputs.filter(':input'),
-                            $input     = $autofocus.length > 0
-                                ? $autofocus.first()
+                            $input     = ($autofocus.length > 0
+                                ? $autofocus
                                 : ($rawInputs.length > 0
                                     ? $rawInputs
-                                    : $inputs.filter(':not(i.close)')
-                                ).first()
+                                    : $module)
+                            ).first()
                         ;
-                        // check if only the close icon is remaining
-                        if ($input.length === 0 && $inputs.length > 0) {
-                            $input = $inputs.first();
-                        }
-                        if ($input.length > 0) {
-                            $input.trigger('focus');
-                        }
+                        $input.trigger('focus');
                     },
                     dimmerStyles: function () {
                         if (settings.blurring) {
@@ -12697,12 +12762,6 @@
                             ;
                             el.css(attribute, 'calc(' + el.css(attribute) + ' + ' + tempBodyMargin + 'px)');
                         });
-                    },
-
-                    // ios only (scroll on html not document). This prevent auto-resize canvas/scroll in ios
-                    // (This is no longer necessary in latest iOS)
-                    ios: function () {
-                        $html.addClass(className.ios);
                     },
 
                     // container
@@ -12752,11 +12811,6 @@
                         $document
                             .off('keydown' + eventNamespace)
                         ;
-                    },
-
-                    // ios scroll on html not document
-                    ios: function () {
-                        $html.removeClass(className.ios);
                     },
 
                     // context
@@ -12879,20 +12933,6 @@
                         }
 
                         return module.cache.isIE;
-                    },
-                    ios: function () {
-                        var
-                            userAgent      = navigator.userAgent,
-                            isIOS          = userAgent.match(regExp.ios),
-                            isMobileChrome = userAgent.match(regExp.mobileChrome)
-                        ;
-                        if (isIOS && !isMobileChrome) {
-                            module.verbose('Browser was found to be iOS', userAgent);
-
-                            return true;
-                        }
-
-                        return false;
                     },
                     mobile: function () {
                         var
@@ -13056,7 +13096,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -13069,9 +13109,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if (performance.length > 0) {
                             console.groupCollapsed(title);
                             if (console.table) {
@@ -13243,7 +13280,6 @@
             blurring: 'blurring',
             closing: 'closing',
             dimmed: 'dimmed',
-            ios: 'ios',
             locked: 'locked',
             pushable: 'pushable',
             pushed: 'pushed',
@@ -13276,8 +13312,6 @@
         },
 
         regExp: {
-            ios: /(iPad|iPhone|iPod)/g,
-            mobileChrome: /(CriOS)/g,
             mobile: /Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile|Kindle|NetFront|Silk-Accelerated|(hpw|web)OS|Fennec|Minimo|Opera M(obi|ini)|Blazer|Dolfin|Dolphin|Skyfire|Zune/g,
         },
 
@@ -13392,7 +13426,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Modal
+ * # Fomantic-UI 2.9.3 - Modal
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -13419,15 +13453,25 @@
             $document      = $(document),
             $body          = $('body'),
 
-            moduleSelector = $allModules.selector || '',
-
             time           = Date.now(),
             performance    = [],
 
             query          = arguments[0],
             methodInvoked  = typeof query === 'string',
             queryArguments = [].slice.call(arguments, 1),
+            contextCheck   = function (context, win) {
+                var $context;
+                if ([window, document].indexOf(context) >= 0) {
+                    $context = $body;
+                } else {
+                    $context = $(win.document).find(context);
+                    if ($context.length === 0) {
+                        $context = win.frameElement ? contextCheck(context, win.parent) : $body;
+                    }
+                }
 
+                return $context;
+            },
             returnedValue
         ;
 
@@ -13447,7 +13491,7 @@
                 moduleNamespace = 'module-' + namespace,
 
                 $module         = $(this),
-                $context        = [window, document].indexOf(settings.context) < 0 ? $document.find(settings.context) : $body,
+                $context        = contextCheck(settings.context, window),
                 isBody          = $context[0] === $body[0],
                 $closeIcon      = $module.find(selector.closeIcon),
                 $inputs,
@@ -13471,6 +13515,7 @@
                 tempBodyMargin = '',
                 keepScrollingClass = false,
                 hadScrollbar = false,
+                windowRefocused = false,
 
                 elementEventNamespace,
                 id,
@@ -13634,6 +13679,7 @@
                         .off(eventNamespace)
                     ;
                     $window.off(elementEventNamespace);
+                    $context.off(elementEventNamespace);
                     $dimmer.off(elementEventNamespace);
                     $closeIcon.off(elementEventNamespace);
                     if ($inputs) {
@@ -13655,11 +13701,12 @@
                                     return nodes;
                                 },
                                 shouldRefresh = false,
-                                shouldRefreshInputs = false
+                                shouldRefreshInputs = false,
+                                ignoreAutofocus = true
                             ;
                             mutations.every(function (mutation) {
                                 if (mutation.type === 'attributes') {
-                                    if (observeAttributes && (mutation.attributeName === 'disabled' || $(mutation.target).find(':input').addBack(':input').length > 0)) {
+                                    if (observeAttributes && (mutation.attributeName === 'disabled' || $(mutation.target).find(':input').addBack(':input').filter(':visible').length > 0)) {
                                         shouldRefreshInputs = true;
                                     }
                                 } else {
@@ -13670,6 +13717,9 @@
                                         $removedInputs = $(collectNodes(mutation.removedNodes)).filter('a[href], [tabindex], :input');
                                     if ($addedInputs.length > 0 || $removedInputs.length > 0) {
                                         shouldRefreshInputs = true;
+                                        if ($addedInputs.filter(':input').length > 0 || $removedInputs.filter(':input').length > 0) {
+                                            ignoreAutofocus = false;
+                                        }
                                     }
                                 }
 
@@ -13681,7 +13731,7 @@
                                 module.refresh();
                             }
                             if (shouldRefreshInputs) {
-                                module.refreshInputs();
+                                module.refreshInputs(ignoreAutofocus);
                             }
                         });
                         observer.observe(element, {
@@ -13709,7 +13759,7 @@
                     $allModals = $otherModals.add($module);
                 },
 
-                refreshInputs: function () {
+                refreshInputs: function (ignoreAutofocus) {
                     if ($inputs) {
                         $inputs
                             .off('keydown' + elementEventNamespace)
@@ -13718,8 +13768,8 @@
                     $inputs = $module.find('a[href], [tabindex], :input:enabled').filter(':visible').filter(function () {
                         return $(this).closest('.disabled').length === 0;
                     });
-                    if ($inputs.length === 0) {
-                        $inputs = $module;
+                    if ($inputs.filter(':input').length === 0) {
+                        $inputs = $module.add($inputs);
                         $module.attr('tabindex', -1);
                     } else {
                         $module.removeAttr('tabindex');
@@ -13730,7 +13780,7 @@
                     $inputs.last()
                         .on('keydown' + elementEventNamespace, module.event.inputKeyDown.last)
                     ;
-                    if (settings.autofocus && $inputs.filter(':focus').length === 0) {
+                    if (!ignoreAutofocus && settings.autofocus && $inputs.filter(':focus').length === 0) {
                         module.set.autofocus();
                     }
                 },
@@ -13767,6 +13817,9 @@
                         $window
                             .on('resize' + elementEventNamespace, module.event.resize)
                             .on('focus' + elementEventNamespace, module.event.focus)
+                        ;
+                        $context
+                            .on('click' + elementEventNamespace, module.event.click)
                         ;
                     },
                     scrollLock: function () {
@@ -13901,7 +13954,7 @@
                     },
                     debounce: function (method, delay) {
                         clearTimeout(module.timer);
-                        module.timer = setTimeout(method, delay);
+                        module.timer = setTimeout(function () { method(); }, delay);
                     },
                     keyboard: function (event) {
                         var
@@ -13925,9 +13978,13 @@
                         }
                     },
                     focus: function () {
-                        if ($dimmable.dimmer('is active') && module.is.active() && settings.autofocus) {
+                        windowRefocused = true;
+                    },
+                    click: function (event) {
+                        if (windowRefocused && document.activeElement !== event.target && $dimmable.dimmer('is active') && module.is.active() && settings.autofocus && $(document.activeElement).closest(selector.modal).length === 0) {
                             requestAnimationFrame(module.set.autofocus);
                         }
+                        windowRefocused = false;
                     },
                 },
 
@@ -13992,7 +14049,7 @@
                             ignoreRepeatedEvents = false;
                             if (settings.allowMultiple) {
                                 if (module.others.active()) {
-                                    $otherModals.filter('.' + className.active).find(selector.dimmer).addClass('active');
+                                    $otherModals.filter('.' + className.active).find(selector.dimmer).removeClass('out').addClass('transition fade in active');
                                 }
 
                                 if (settings.detachable) {
@@ -14064,6 +14121,8 @@
                                     onStart: function () {
                                         if (!module.others.active() && !module.others.animating() && !keepDimmed) {
                                             module.hideDimmer();
+                                        } else if (settings.allowMultiple) {
+                                            (hideOthersToo ? $allModals : $previousModal).find(selector.dimmer).removeClass('in').addClass('out');
                                         }
                                         if (settings.keyboardShortcuts && !module.others.active()) {
                                             module.remove.keyboardShortcuts();
@@ -14076,11 +14135,7 @@
                                             $previousModal.addClass(className.front);
                                             $module.removeClass(className.front);
 
-                                            if (hideOthersToo) {
-                                                $allModals.find(selector.dimmer).removeClass('active');
-                                            } else {
-                                                $previousModal.find(selector.dimmer).removeClass('active');
-                                            }
+                                            (hideOthersToo ? $allModals : $previousModal).find(selector.dimmer).removeClass('active');
                                         }
                                         if (isFunction(settings.onHidden)) {
                                             settings.onHidden.call(element);
@@ -14437,20 +14492,14 @@
                         var
                             $autofocus = $inputs.filter('[autofocus]'),
                             $rawInputs = $inputs.filter(':input'),
-                            $input     = $autofocus.length > 0
-                                ? $autofocus.first()
+                            $input     = ($autofocus.length > 0
+                                ? $autofocus
                                 : ($rawInputs.length > 0
                                     ? $rawInputs
-                                    : $inputs.filter(':not(i.close)')
-                                ).first()
+                                    : $module)
+                            ).first()
                         ;
-                        // check if only the close icon is remaining
-                        if ($input.length === 0 && $inputs.length > 0) {
-                            $input = $inputs.first();
-                        }
-                        if ($input.length > 0) {
-                            $input.trigger('focus');
-                        }
+                        $input.trigger('focus');
                     },
                     bodyMargin: function () {
                         var position = module.can.leftBodyScrollbar() ? 'left' : 'right';
@@ -14651,7 +14700,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -14664,9 +14713,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if (performance.length > 0) {
                             console.groupCollapsed(title);
                             if (console.table) {
@@ -15014,7 +15060,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Nag
+ * # Fomantic-UI 2.9.3 - Nag
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -15037,7 +15083,7 @@
     $.fn.nag = function (parameters) {
         var
             $allModules    = $(this),
-            moduleSelector = $allModules.selector || '',
+            $body          = $('body'),
 
             time           = Date.now(),
             performance    = [],
@@ -15045,6 +15091,19 @@
             query          = arguments[0],
             methodInvoked  = typeof query === 'string',
             queryArguments = [].slice.call(arguments, 1),
+            contextCheck   = function (context, win) {
+                var $context;
+                if ([window, document].indexOf(context) >= 0) {
+                    $context = $(context);
+                } else {
+                    $context = $(win.document).find(context);
+                    if ($context.length === 0) {
+                        $context = win.frameElement ? contextCheck(context, win.parent) : $body;
+                    }
+                }
+
+                return $context;
+            },
             returnedValue
         ;
         $allModules.each(function () {
@@ -15062,9 +15121,7 @@
 
                 $module         = $(this),
 
-                $context        = settings.context
-                    ? ([window, document].indexOf(settings.context) < 0 ? $(document).find(settings.context) : $(settings.context))
-                    : $('body'),
+                $context        = settings.context ? contextCheck(settings.context, window) : $body,
 
                 element         = this,
                 instance        = $module.data(moduleNamespace),
@@ -15092,7 +15149,7 @@
                     }
 
                     if (settings.displayTime > 0) {
-                        setTimeout(module.hide, settings.displayTime);
+                        setTimeout(function () { module.hide(); }, settings.displayTime);
                     }
                     module.show();
                 },
@@ -15381,7 +15438,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -15394,9 +15451,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if (performance.length > 0) {
                             console.groupCollapsed(title);
                             if (console.table) {
@@ -15567,7 +15621,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Popup
+ * # Fomantic-UI 2.9.3 - Popup
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -15594,8 +15648,6 @@
             $window        = $(window),
             $body          = $('body'),
 
-            moduleSelector = $allModules.selector || '',
-
             clickEvent      = 'ontouchstart' in document.documentElement
                 ? 'touchstart'
                 : 'click',
@@ -15606,6 +15658,19 @@
             query          = arguments[0],
             methodInvoked  = typeof query === 'string',
             queryArguments = [].slice.call(arguments, 1),
+            contextCheck   = function (context, win) {
+                var $context;
+                if ([window, document].indexOf(context) >= 0) {
+                    $context = $(context);
+                } else {
+                    $context = $(win.document).find(context);
+                    if ($context.length === 0) {
+                        $context = win.frameElement ? contextCheck(context, win.parent) : $body;
+                    }
+                }
+
+                return $context;
+            },
 
             returnedValue
         ;
@@ -15625,12 +15690,10 @@
                 moduleNamespace    = 'module-' + namespace,
 
                 $module            = $(this),
-                $context           = [window, document].indexOf(settings.context) < 0 ? $document.find(settings.context) : $(settings.context),
-                $scrollContext     = [window, document].indexOf(settings.scrollContext) < 0 ? $document.find(settings.scrollContext) : $(settings.scrollContext),
-                $boundary          = [window, document].indexOf(settings.boundary) < 0 ? $document.find(settings.boundary) : $(settings.boundary),
-                $target            = settings.target
-                    ? ([window, document].indexOf(settings.target) < 0 ? $document.find(settings.target) : $(settings.target))
-                    : $module,
+                $context           = contextCheck(settings.context, window),
+                $scrollContext     = contextCheck(settings.scrollContext, window),
+                $boundary          = contextCheck(settings.boundary, window),
+                $target            = settings.target ? contextCheck(settings.target, window) : $module,
 
                 $popup,
                 $offsetParent,
@@ -15753,7 +15816,7 @@
                         ;
                         clearTimeout(module.hideTimer);
                         if (!openedWithTouch || (openedWithTouch && settings.addTouchEvents)) {
-                            module.showTimer = setTimeout(module.show, delay);
+                            module.showTimer = setTimeout(function () { module.show(); }, delay);
                         }
                     },
                     end: function () {
@@ -15763,7 +15826,7 @@
                                 : settings.delay
                         ;
                         clearTimeout(module.showTimer);
-                        module.hideTimer = setTimeout(module.hide, delay);
+                        module.hideTimer = setTimeout(function () { module.hide(); }, delay);
                     },
                     touchstart: function (event) {
                         openedWithTouch = true;
@@ -15807,9 +15870,11 @@
                 // generates popup html from metadata
                 create: function () {
                     var
+                        targetSibling = $target.next(selector.popup),
+                        contentFallback = !settings.popup && targetSibling.length === 0 ? $module.attr('title') : false,
                         html      = module.get.html(),
                         title     = module.get.title(),
-                        content   = module.get.content()
+                        content   = module.get.content(contentFallback)
                     ;
 
                     if (html || content || title) {
@@ -15850,10 +15915,10 @@
                         if (settings.hoverable) {
                             module.bind.popup();
                         }
-                    } else if ($target.next(selector.popup).length > 0) {
+                    } else if (targetSibling.length > 0) {
                         module.verbose('Pre-existing popup found');
                         settings.inline = true;
-                        settings.popup = $target.next(selector.popup).data(metadata.activator, $module);
+                        settings.popup = targetSibling.data(metadata.activator, $module);
                         module.refresh();
                         if (settings.hoverable) {
                             module.bind.popup();
@@ -16043,10 +16108,10 @@
 
                         return $module.data(metadata.title) || settings.title;
                     },
-                    content: function () {
+                    content: function (fallback) {
                         $module.removeData(metadata.content);
 
-                        return $module.data(metadata.content) || settings.content || $module.attr('title');
+                        return $module.data(metadata.content) || settings.content || fallback;
                     },
                     variation: function () {
                         $module.removeData(metadata.variation);
@@ -16801,7 +16866,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -16814,9 +16879,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if (performance.length > 0) {
                             console.groupCollapsed(title);
                             if (console.table) {
@@ -17115,7 +17177,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Progress
+ * # Fomantic-UI 2.9.3 - Progress
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -17138,8 +17200,6 @@
     $.fn.progress = function (parameters) {
         var
             $allModules    = $(this),
-
-            moduleSelector = $allModules.selector || '',
 
             time           = Date.now(),
             performance    = [],
@@ -17909,7 +17969,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -17922,9 +17982,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if (performance.length > 0) {
                             console.groupCollapsed(title);
                             if (console.table) {
@@ -18098,7 +18155,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Slider
+ * # Fomantic-UI 2.9.3 - Slider
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -18123,8 +18180,6 @@
             $allModules    = $(this),
             $document      = $(document),
             $window        = $(window),
-
-            moduleSelector = $allModules.selector || '',
 
             time           = Date.now(),
             performance    = [],
@@ -18204,9 +18259,7 @@
                     module.setup.layout();
                     module.setup.labels();
 
-                    if (!module.is.disabled()) {
-                        module.bind.events();
-                    }
+                    module.bind.events();
 
                     module.read.metadata();
                     module.read.settings();
@@ -18238,20 +18291,32 @@
                             $module.attr('tabindex', 0);
                         }
                         if ($module.find('.inner').length === 0) {
-                            $module.append("<div class='inner'>"
-                                + "<div class='track'></div>"
-                                + "<div class='track-fill'></div>"
-                                + "<div class='thumb'></div>"
+                            $module.append('<div class="inner">'
+                                + '<div class="track"></div>'
+                                + '<div class="track-fill"></div>'
+                                + '<div class="thumb"></div>'
                                 + '</div>');
                         }
                         precision = module.get.precision();
                         $thumb = $module.find('.thumb:not(.second)');
+                        if (settings.showThumbTooltip) {
+                            $thumb
+                                .attr('data-position', settings.tooltipConfig.position)
+                                .attr('data-variation', settings.tooltipConfig.variation)
+                            ;
+                        }
                         $currThumb = $thumb;
                         if (module.is.range()) {
                             if ($module.find('.thumb.second').length === 0) {
-                                $module.find('.inner').append("<div class='thumb second'></div>");
+                                $module.find('.inner').append('<div class="thumb second"></div>');
                             }
                             $secondThumb = $module.find('.thumb.second');
+                            if (settings.showThumbTooltip) {
+                                $secondThumb
+                                    .attr('data-position', settings.tooltipConfig.position)
+                                    .attr('data-variation', settings.tooltipConfig.variation)
+                                ;
+                            }
                         }
                         $track = $module.find('.track');
                         $trackFill = $module.find('.track-fill');
@@ -18305,9 +18370,10 @@
                         for (var i = 0, len = module.get.numLabels(); i <= len; i++) {
                             var
                                 labelText = module.get.label(i),
-                                $label = labelText !== ''
+                                showLabel = settings.restrictedLabels.length === 0 || settings.restrictedLabels.indexOf(labelText) >= 0,
+                                $label = labelText !== '' && (showLabel || settings.showLabelTicks === 'always')
                                     ? (!(i % module.get.gapRatio())
-                                        ? $('<li class="label">' + labelText + '</li>')
+                                        ? $('<li class="label">' + (showLabel ? labelText : '') + '</li>')
                                         : $('<li class="halftick label"></li>'))
                                     : null,
                                 ratio  = i / len
@@ -18451,6 +18517,18 @@
                             ;
                             $currThumb = initialPosition > newPos ? $thumb : $secondThumb;
                         }
+                        if (module.is.range() && (settings.minRange || settings.maxRange)) {
+                            var currentRangeDiff = module.get.currentRangeDiff(value),
+                                isSecondThumb = $currThumb.hasClass('second')
+                            ;
+                            if ((settings.minRange && currentRangeDiff < settings.minRange)
+                                || (settings.maxRange && currentRangeDiff > settings.maxRange)
+                                || (settings.preventCrossover && !isSecondThumb && value > module.secondThumbVal)
+                                || (settings.preventCrossover && isSecondThumb && value < module.thumbVal)
+                            ) {
+                                return;
+                            }
+                        }
                         if (module.get.step() === 0 || module.is.smooth()) {
                             var
                                 thumbVal = module.thumbVal,
@@ -18486,6 +18564,17 @@
                             return;
                         }
                         var value = module.determine.valueFromEvent(event);
+                        if (module.is.range() && (settings.minRange || settings.maxRange)) {
+                            if ($currThumb === undefined) {
+                                $currThumb = value <= module.get.currentThumbValue() ? $thumb : $secondThumb;
+                            }
+                            var currentRangeDiff = module.get.currentRangeDiff(value);
+                            if (settings.minRange && currentRangeDiff < settings.minRange) {
+                                value = module.get.edgeValue(value, settings.minRange);
+                            } else if (settings.maxRange && currentRangeDiff > settings.maxRange) {
+                                value = module.get.edgeValue(value, settings.maxRange);
+                            }
+                        }
                         module.set.value(value);
                         module.unbind.slidingEvents();
                         touchIdentifier = undefined;
@@ -18502,6 +18591,9 @@
                         }
                     },
                     keydown: function (event, first) {
+                        if (module.is.disabled()) {
+                            return;
+                        }
                         if (settings.preventCrossover && module.is.range() && module.thumbVal === module.secondThumbVal) {
                             $currThumb = undefined;
                         }
@@ -18538,7 +18630,7 @@
                         }
                     },
                     activateFocus: function (event) {
-                        if (!module.is.focused() && module.is.hover() && module.determine.keyMovement(event) !== NO_STEP) {
+                        if (!module.is.disabled() && !module.is.focused() && module.is.hover() && module.determine.keyMovement(event) !== NO_STEP) {
                             event.preventDefault();
                             module.event.keydown(event, true);
                             $module.trigger('focus');
@@ -18603,7 +18695,13 @@
 
                 is: {
                     range: function () {
-                        return $module.hasClass(settings.className.range);
+                        var isRange = $module.hasClass(className.range);
+                        if (!isRange && (settings.minRange || settings.maxRange)) {
+                            $module.addClass(className.range);
+                            isRange = true;
+                        }
+
+                        return isRange;
                     },
                     hover: function () {
                         return isHover;
@@ -18612,23 +18710,56 @@
                         return $module.is(':focus');
                     },
                     disabled: function () {
-                        return $module.hasClass(settings.className.disabled);
+                        return $module.hasClass(className.disabled);
                     },
                     labeled: function () {
-                        return $module.hasClass(settings.className.labeled);
+                        var isLabeled = $module.hasClass(className.labeled);
+                        if (!isLabeled && (settings.restrictedLabels.length > 0 || settings.showLabelTicks !== false)) {
+                            $module.addClass(className.labeled);
+                            isLabeled = true;
+                        }
+
+                        return isLabeled;
                     },
                     reversed: function () {
-                        return $module.hasClass(settings.className.reversed);
+                        return $module.hasClass(className.reversed);
                     },
                     vertical: function () {
-                        return $module.hasClass(settings.className.vertical);
+                        return $module.hasClass(className.vertical);
                     },
                     smooth: function () {
-                        return settings.smooth || $module.hasClass(settings.className.smooth);
+                        return settings.smooth || $module.hasClass(className.smooth);
                     },
                 },
 
                 get: {
+                    currentRangeDiff: function (value) {
+                        var currentRangeDiff;
+                        if ($currThumb.hasClass('second')) {
+                            currentRangeDiff = module.thumbVal < value
+                                ? value - module.thumbVal
+                                : module.thumbVal - value;
+                        } else {
+                            currentRangeDiff = module.secondThumbVal > value
+                                ? module.secondThumbVal - value
+                                : value - module.secondThumbVal;
+                        }
+
+                        return currentRangeDiff;
+                    },
+                    edgeValue: function (value, edgeValue) {
+                        if ($currThumb.hasClass('second')) {
+                            value = module.thumbVal < value
+                                ? module.thumbVal + edgeValue
+                                : module.thumbVal - edgeValue;
+                        } else {
+                            value = module.secondThumbVal < value
+                                ? module.secondThumbVal + edgeValue
+                                : module.secondThumbVal - edgeValue;
+                        }
+
+                        return value;
+                    },
                     trackOffset: function () {
                         if (module.is.vertical()) {
                             return $track.offset().top;
@@ -18699,7 +18830,8 @@
                         var
                             step = module.get.step(),
                             min = module.get.min(),
-                            quotient = step === 0 ? 0 : Math.floor((settings.max - min) / step),
+                            precision = module.get.precision(),
+                            quotient = step === 0 ? 0 : Math.floor(Math.round(((settings.max - min) / step) * precision) / precision),
                             remainder = step === 0 ? 0 : (settings.max - min) % step
                         ;
 
@@ -18709,7 +18841,9 @@
                         return settings.step;
                     },
                     numLabels: function () {
-                        var value = Math.round((module.get.max() - module.get.min()) / (module.get.step() === 0 ? 1 : module.get.step()));
+                        var step = module.get.step(),
+                            precision = module.get.precision(),
+                            value = Math.round(((module.get.max() - module.get.min()) / (step === 0 ? 1 : step)) * precision) / precision;
                         module.debug('Determined that there should be ' + value + ' labels');
 
                         return value;
@@ -18724,7 +18858,9 @@
 
                         switch (settings.labelType) {
                             case settings.labelTypes.number: {
-                                return Math.round(((value * (module.get.step() === 0 ? 1 : module.get.step())) + module.get.min()) * precision) / precision;
+                                var step = module.get.step();
+
+                                return Math.round(((value * (step === 0 ? 1 : step)) + module.get.min()) * precision) / precision;
                             }
                             case settings.labelTypes.letter: {
                                 return alphabet[value % 26];
@@ -18832,13 +18968,10 @@
                         return thumbDelta <= secondThumbDelta ? thumbPos : secondThumbPos;
                     },
                     thumbPos: function ($element) {
-                        var
-                            pos = module.is.vertical()
-                                ? (module.is.reversed() ? $element.css('bottom') : $element.css('top'))
-                                : (module.is.reversed() ? $element.css('right') : $element.css('left'))
+                        return module.is.vertical()
+                            ? (module.is.reversed() ? $element.css('bottom') : $element.css('top'))
+                            : (module.is.reversed() ? $element.css('right') : $element.css('left'))
                         ;
-
-                        return pos;
                     },
                     positionFromValue: function (val) {
                         var
@@ -18862,6 +18995,7 @@
                             position = Math.round(ratio * trackLength),
                             adjustedPos = step === 0 ? position : Math.round(position / step) * step
                         ;
+                        module.verbose('Determined position: ' + position + ' from ratio: ' + ratio);
 
                         return adjustedPos;
                     },
@@ -19085,12 +19219,12 @@
                             }
                             if (!$currThumb.hasClass('second')) {
                                 if (settings.preventCrossover && module.is.range()) {
-                                    newValue = Math.min(module.secondThumbVal, newValue);
+                                    newValue = Math.min(module.secondThumbVal - (settings.minRange || 0), newValue);
                                 }
                                 module.thumbVal = newValue;
                             } else {
                                 if (settings.preventCrossover && module.is.range()) {
-                                    newValue = Math.max(module.thumbVal, newValue);
+                                    newValue = Math.max(module.thumbVal + (settings.minRange || 0), newValue);
                                 }
                                 module.secondThumbVal = newValue;
                             }
@@ -19109,6 +19243,10 @@
                             thumbVal = module.thumbVal || module.get.min(),
                             secondThumbVal = module.secondThumbVal || module.get.min()
                         ;
+                        if (settings.showThumbTooltip) {
+                            var precision = module.get.precision();
+                            $targetThumb.attr('data-tooltip', Math.round(newValue * precision) / precision);
+                        }
                         if (module.is.range()) {
                             if (!$targetThumb.hasClass('second')) {
                                 position = newPos;
@@ -19197,6 +19335,14 @@
                     settings: function () {
                         if (settings.start !== false) {
                             if (module.is.range()) {
+                                var rangeDiff = settings.end - settings.start;
+                                if (rangeDiff < 0
+                                    || (settings.minRange && rangeDiff < settings.minRange)
+                                    || (settings.maxRange && rangeDiff > settings.maxRange)
+                                    || (settings.minRange && settings.maxRange && settings.minRange > settings.maxRange)
+                                ) {
+                                    module.error(error.invalidRanges, settings.start, settings.end, settings.minRange, settings.maxRange);
+                                }
                                 module.debug('Start position set from settings', settings.start, settings.end);
                                 module.set.rangeValue(settings.start, settings.end);
                             } else {
@@ -19277,7 +19423,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -19290,9 +19436,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if (performance.length > 0) {
                             console.groupCollapsed(title);
                             if (console.table) {
@@ -19392,6 +19535,7 @@
         error: {
             method: 'The method you called is not defined.',
             notrange: 'This slider is not a range slider',
+            invalidRanges: 'Invalid range settings (start/end/minRange/maxRange)',
         },
 
         metadata: {
@@ -19404,6 +19548,8 @@
         step: 1,
         start: 0,
         end: 20,
+        minRange: false,
+        maxRange: false,
         labelType: 'number',
         showLabelTicks: false,
         smooth: false,
@@ -19440,6 +19586,13 @@
             downArrow: 40,
         },
 
+        restrictedLabels: [],
+        showThumbTooltip: false,
+        tooltipConfig: {
+            position: 'top center',
+            variation: 'tiny black',
+        },
+
         labelTypes: {
             number: 'number',
             letter: 'letter',
@@ -19451,7 +19604,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Rating
+ * # Fomantic-UI 2.9.3 - Rating
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -19474,7 +19627,6 @@
     $.fn.rating = function (parameters) {
         var
             $allModules     = $(this),
-            moduleSelector  = $allModules.selector || '',
 
             time            = Date.now(),
             performance     = [],
@@ -19821,7 +19973,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -19834,9 +19986,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if ($allModules.length > 1) {
                             title += ' (' + $allModules.length + ')';
                         }
@@ -19994,7 +20143,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Search
+ * # Fomantic-UI 2.9.3 - Search
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -20017,7 +20166,6 @@
     $.fn.search = function (parameters) {
         var
             $allModules     = $(this),
-            moduleSelector  = $allModules.selector || '',
 
             time            = Date.now(),
             performance     = [],
@@ -20165,7 +20313,7 @@
                             callback      = function () {
                                 module.cancel.query();
                                 module.remove.focus();
-                                module.timer = setTimeout(module.hideResults, settings.hideDelay);
+                                module.timer = setTimeout(function () { module.hideResults(); }, settings.hideDelay);
                             }
                         ;
                         if (pageLostFocus) {
@@ -20557,6 +20705,7 @@
                         if (cache) {
                             module.debug('Reading result from cache', searchTerm);
                             module.save.results(cache.results);
+                            settings.onResults.call(element, cache.results, true);
                             module.addResults(cache.html);
                             module.inject.id(cache.results);
                             callback();
@@ -21166,7 +21315,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -21179,9 +21328,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if ($allModules.length > 1) {
                             title += ' (' + $allModules.length + ')';
                         }
@@ -21344,7 +21490,7 @@
         onResultsAdd: false,
 
         onSearchQuery: function (query) {},
-        onResults: function (response) {},
+        onResults: function (response, fromCache) {},
 
         onResultsOpen: function () {},
         onResultsClose: function () {},
@@ -21575,7 +21721,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Shape
+ * # Fomantic-UI 2.9.3 - Shape
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -21611,7 +21757,6 @@
 
         $allModules.each(function () {
             var
-                moduleSelector = $allModules.selector || '',
                 settings       = $.isPlainObject(parameters)
                     ? $.extend(true, {}, $.fn.shape.settings, parameters)
                     : $.extend({}, $.fn.shape.settings),
@@ -22200,7 +22345,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -22213,9 +22358,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if ($allModules.length > 1) {
                             title += ' (' + $allModules.length + ')';
                         }
@@ -22375,7 +22517,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Sidebar
+ * # Fomantic-UI 2.9.3 - Sidebar
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -22404,15 +22546,25 @@
             $html           = $('html'),
             $head           = $('head'),
 
-            moduleSelector  = $allModules.selector || '',
-
             time            = Date.now(),
             performance     = [],
 
             query           = arguments[0],
             methodInvoked   = typeof query === 'string',
             queryArguments  = [].slice.call(arguments, 1),
+            contextCheck    = function (context, win) {
+                var $context;
+                if ([window, document].indexOf(context) >= 0) {
+                    $context = $body;
+                } else {
+                    $context = $(win.document).find(context);
+                    if ($context.length === 0) {
+                        $context = win.frameElement ? contextCheck(context, win.parent) : $body;
+                    }
+                }
 
+                return $context;
+            },
             returnedValue;
 
         $allModules.each(function () {
@@ -22431,7 +22583,7 @@
                 moduleNamespace = 'module-' + namespace,
 
                 $module         = $(this),
-                $context        = [window, document].indexOf(settings.context) < 0 ? $document.find(settings.context) : $body,
+                $context        = contextCheck(settings.context, window),
                 isBody          = $context[0] === $body[0],
 
                 $sidebars       = $module.children(selector.sidebar),
@@ -22495,9 +22647,6 @@
                         .off(eventNamespace)
                         .removeData(moduleNamespace)
                     ;
-                    if (module.is.ios()) {
-                        module.remove.ios();
-                    }
                     // bound by uuid
                     $context.off(elementNamespace);
                     $window.off(elementNamespace);
@@ -22653,7 +22802,7 @@
 
                 refresh: function () {
                     module.verbose('Refreshing selector cache');
-                    $context = [window, document].indexOf(settings.context) < 0 ? $document.find(settings.context) : $body;
+                    $context = contextCheck(settings.context, window);
                     module.refreshSidebars();
                     $pusher = $context.children(selector.pusher);
                     $fixed = $context.children(selector.fixed);
@@ -22961,11 +23110,6 @@
                             $pusher.removeClass(className.blurring);
                         }
                     },
-                    // ios only (scroll on html not document). This prevent auto-resize canvas/scroll in ios
-                    // (This is no longer necessary in latest iOS)
-                    ios: function () {
-                        $html.addClass(className.ios);
-                    },
 
                     // container
                     pushed: function () {
@@ -23012,11 +23156,6 @@
                         if ($style && $style.length > 0) {
                             $style.remove();
                         }
-                    },
-
-                    // ios scroll on html not document
-                    ios: function () {
-                        $html.removeClass(className.ios);
                     },
 
                     // context
@@ -23138,20 +23277,6 @@
                         return module.cache.isIE;
                     },
 
-                    ios: function () {
-                        var
-                            userAgent      = navigator.userAgent,
-                            isIOS          = userAgent.match(regExp.ios),
-                            isMobileChrome = userAgent.match(regExp.mobileChrome)
-                        ;
-                        if (isIOS && !isMobileChrome) {
-                            module.verbose('Browser was found to be iOS', userAgent);
-
-                            return true;
-                        }
-
-                        return false;
-                    },
                     mobile: function () {
                         var
                             userAgent    = navigator.userAgent,
@@ -23264,7 +23389,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -23277,9 +23402,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if (performance.length > 0) {
                             console.groupCollapsed(title);
                             if (console.table) {
@@ -23414,7 +23536,6 @@
             blurring: 'blurring',
             closing: 'closing',
             dimmed: 'dimmed',
-            ios: 'ios',
             locked: 'locked',
             pushable: 'pushable',
             pushed: 'pushed',
@@ -23434,8 +23555,6 @@
         },
 
         regExp: {
-            ios: /(iPad|iPhone|iPod)/g,
-            mobileChrome: /(CriOS)/g,
             mobile: /Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile|Kindle|NetFront|Silk-Accelerated|(hpw|web)OS|Fennec|Minimo|Opera M(obi|ini)|Blazer|Dolfin|Dolphin|Skyfire|Zune/g,
         },
 
@@ -23451,7 +23570,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Sticky
+ * # Fomantic-UI 2.9.3 - Sticky
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -23475,7 +23594,6 @@
         var
             $allModules    = $(this),
             $document      = $(document),
-            moduleSelector = $allModules.selector || '',
 
             time           = Date.now(),
             performance    = [],
@@ -23483,6 +23601,19 @@
             query          = arguments[0],
             methodInvoked  = typeof query === 'string',
             queryArguments = [].slice.call(arguments, 1),
+            contextCheck   = function (context, win) {
+                var $context;
+                if ([window, document].indexOf(context) >= 0) {
+                    $context = $(context);
+                } else {
+                    $context = $(win.document).find(context);
+                    if ($context.length === 0) {
+                        $context = win.frameElement ? contextCheck(context, win.parent) : window;
+                    }
+                }
+
+                return $context;
+            },
             returnedValue
         ;
 
@@ -23501,7 +23632,7 @@
 
                 $module               = $(this),
                 $window               = $(window),
-                $scroll               = [window, document].indexOf(settings.scrollContext) < 0 ? $document.find(settings.scrollContext) : $(settings.scrollContext),
+                $scroll               = contextCheck(settings.scrollContext, window),
                 $container,
                 $context,
 
@@ -23579,19 +23710,11 @@
                 },
 
                 determineContainer: function () {
-                    if (settings.container) {
-                        $container = [window, document].indexOf(settings.container) < 0 ? $document.find(settings.container) : $(settings.container);
-                    } else {
-                        $container = $module.offsetParent();
-                    }
+                    $container = settings.container ? contextCheck(settings.container, window) : $module.offsetParent();
                 },
 
                 determineContext: function () {
-                    if (settings.context) {
-                        $context = [window, document].indexOf(settings.context) < 0 ? $document.find(settings.context) : $(settings.context);
-                    } else {
-                        $context = $container;
-                    }
+                    $context = settings.context ? contextCheck(settings.context, window) : $container;
                     if ($context.length === 0) {
                         module.error(error.invalidContext, settings.context, $module);
                     }
@@ -24194,7 +24317,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 0);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 0);
                     },
                     display: function () {
                         var
@@ -24207,9 +24330,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if (performance.length > 0) {
                             console.groupCollapsed(title);
                             if (console.table) {
@@ -24366,7 +24486,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Tab
+ * # Fomantic-UI 2.9.3 - Tab
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -24397,14 +24517,25 @@
                 ? $(window)
                 : $(this),
             $document      = $(document),
-            moduleSelector  = $allModules.selector || '',
             time            = Date.now(),
             performance     = [],
 
             query           = arguments[0],
             methodInvoked   = typeof query === 'string',
             queryArguments  = [].slice.call(arguments, 1),
+            contextCheck   = function (context, win) {
+                var $context;
+                if ([window, document].indexOf(context) >= 0) {
+                    $context = $(context);
+                } else {
+                    $context = $(win.document).find(context);
+                    if ($context.length === 0) {
+                        $context = win.frameElement ? contextCheck(context, win.parent) : window;
+                    }
+                }
 
+                return $context;
+            },
             initializedHistory = false,
             returnedValue
         ;
@@ -24455,7 +24586,7 @@
                     module.bind.events();
 
                     if (settings.history && !initializedHistory) {
-                        module.initializeHistory();
+                        settings.history = module.initializeHistory();
                         initializedHistory = true;
                     }
 
@@ -24465,7 +24596,7 @@
                         module.debug('No active tab detected, setting tab active', activeTab);
                         module.changeTab(activeTab);
                     }
-                    if (activeTab !== null && settings.history) {
+                    if (activeTab !== null && settings.history && settings.historyType === 'state') {
                         var autoUpdate = $.address.autoUpdate();
                         $.address.autoUpdate(false);
                         $.address.value(activeTab);
@@ -24519,7 +24650,7 @@
                         $context = $reference.parent();
                         module.verbose('Determined parent element for creating context', $context);
                     } else if (settings.context) {
-                        $context = [window, document].indexOf(settings.context) < 0 ? $document.find(settings.context) : $(settings.context);
+                        $context = contextCheck(settings.context, window);
                         module.verbose('Using selector for tab context', settings.context, $context);
                     } else {
                         $context = $('body');
@@ -24558,6 +24689,8 @@
                     $.address
                         .bind('change', module.event.history.change)
                     ;
+
+                    return true;
                 },
 
                 event: {
@@ -25142,7 +25275,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -25155,9 +25288,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if (performance.length > 0) {
                             console.groupCollapsed(title);
                             if (console.table) {
@@ -25322,7 +25452,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Toast
+ * # Fomantic-UI 2.9.3 - Toast
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -25345,7 +25475,7 @@
     $.fn.toast = function (parameters) {
         var
             $allModules    = $(this),
-            moduleSelector = $allModules.selector || '',
+            $body          = $('body'),
 
             time           = Date.now(),
             performance    = [],
@@ -25353,6 +25483,19 @@
             query          = arguments[0],
             methodInvoked  = typeof query === 'string',
             queryArguments = [].slice.call(arguments, 1),
+            contextCheck   = function (context, win) {
+                var $context;
+                if ([window, document].indexOf(context) >= 0) {
+                    $context = $(context);
+                } else {
+                    $context = $(win.document).find(context);
+                    if ($context.length === 0) {
+                        $context = win.frameElement ? contextCheck(context, win.parent) : $body;
+                    }
+                }
+
+                return $context;
+            },
             returnedValue
         ;
         $allModules.each(function () {
@@ -25378,9 +25521,7 @@
                 $progressBar,
                 $animationObject,
                 $close,
-                $context         = settings.context
-                    ? ([window, document].indexOf(settings.context) < 0 ? $(document).find(settings.context) : $(settings.context))
-                    : $('body'),
+                $context         = settings.context ? contextCheck(settings.context, window) : $body,
 
                 isToastComponent = $module.hasClass('toast') || $module.hasClass('message') || $module.hasClass('card'),
 
@@ -25429,11 +25570,11 @@
                     if ($toastBox) {
                         module.debug('Removing toast', $toastBox);
                         module.unbind.events();
+                        settings.onRemove.call($toastBox, element);
                         $toastBox.remove();
                         $toastBox = undefined;
                         $toast = undefined;
                         $animationObject = undefined;
-                        settings.onRemove.call($toastBox, element);
                         $progress = undefined;
                         $progressBar = undefined;
                         $close = undefined;
@@ -26014,7 +26155,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -26027,9 +26168,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if (performance.length > 0) {
                             console.groupCollapsed(title);
                             if (console.table) {
@@ -26275,7 +26413,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Transition
+ * # Fomantic-UI 2.9.3 - Transition
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -26298,7 +26436,6 @@
     $.fn.transition = function () {
         var
             $allModules     = $(this),
-            moduleSelector  = $allModules.selector || '',
 
             time            = Date.now(),
             performance     = [],
@@ -26419,7 +26556,7 @@
                         ? ($allModules.length - index) * interval
                         : index * interval;
                     module.debug('Delaying animation by', delay);
-                    setTimeout(module.animate, delay);
+                    setTimeout(function () { module.animate(); }, delay);
                 },
 
                 animate: function (overrideSettings) {
@@ -27126,7 +27263,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -27139,9 +27276,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if ($allModules.length > 1) {
                             title += ' (' + $allModules.length + ')';
                         }
@@ -27310,7 +27444,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - API
+ * # Fomantic-UI 2.9.3 - API
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -27340,14 +27474,25 @@
             $allModules     = isFunction(this)
                 ? $(window)
                 : $(this),
-            moduleSelector = $allModules.selector || '',
             time           = Date.now(),
             performance    = [],
 
             query          = arguments[0],
             methodInvoked  = typeof query === 'string',
             queryArguments = [].slice.call(arguments, 1),
+            contextCheck   = function (context, win) {
+                var $context;
+                if ([window, document].indexOf(context) >= 0) {
+                    $context = $(context);
+                } else {
+                    $context = $(win.document).find(context);
+                    if ($context.length === 0) {
+                        $context = win.frameElement ? contextCheck(context, win.parent) : window;
+                    }
+                }
 
+                return $context;
+            },
             returnedValue
         ;
 
@@ -27358,6 +27503,7 @@
                     : $.extend({}, $.fn.api.settings),
 
                 // internal aliases
+                regExp          = settings.regExp,
                 namespace       = settings.namespace,
                 metadata        = settings.metadata,
                 selector        = settings.selector,
@@ -27373,9 +27519,7 @@
                 $form           = $module.closest(selector.form),
 
                 // context used for state
-                $context        = settings.stateContext
-                    ? ([window, document].indexOf(settings.stateContext) < 0 ? $(document).find(settings.stateContext) : $(settings.stateContext))
-                    : $module,
+                $context        = settings.stateContext ? contextCheck(settings.stateContext, window) : $module,
 
                 // request details
                 ajaxSettings,
@@ -27662,8 +27806,8 @@
                             optionalVariables
                         ;
                         if (url) {
-                            requiredVariables = url.match(settings.regExp.required);
-                            optionalVariables = url.match(settings.regExp.optional);
+                            requiredVariables = url.match(regExp.required);
+                            optionalVariables = url.match(regExp.optional);
                             urlData = urlData || settings.urlData;
                             if (requiredVariables) {
                                 module.debug('Looking for required URL variables', requiredVariables);
@@ -27760,7 +27904,7 @@
                                 });
                             });
                             $.each(formArray, function (i, el) {
-                                if (!settings.regExp.validate.test(el.name)) {
+                                if (!regExp.validate.test(el.name)) {
                                     return;
                                 }
                                 var
@@ -27771,7 +27915,7 @@
                                         || (String(floatValue) === el.value
                                             ? floatValue
                                             : (el.value === 'false' ? false : el.value)),
-                                    nameKeys = el.name.match(settings.regExp.key) || [],
+                                    nameKeys = el.name.match(regExp.key) || [],
                                     pushKey = el.name.replace(/\[]$/, '')
                                 ;
                                 if (!(pushKey in pushes)) {
@@ -27791,9 +27935,9 @@
 
                                     if (k === '' && !Array.isArray(value)) { // foo[]
                                         value = build([], pushes[pushKey]++, value);
-                                    } else if (settings.regExp.fixed.test(k)) { // foo[n]
+                                    } else if (regExp.fixed.test(k)) { // foo[n]
                                         value = build([], k, value);
-                                    } else if (settings.regExp.named.test(k)) { // foo; foo[bar]
+                                    } else if (regExp.named.test(k)) { // foo; foo[bar]
                                         value = build({}, k, value);
                                     }
                                 }
@@ -27948,7 +28092,7 @@
                                 module.debug('Adding error state');
                                 module.set.error();
                                 if (module.should.removeError()) {
-                                    setTimeout(module.remove.error, settings.errorDuration);
+                                    setTimeout(function () { module.remove.error(); }, settings.errorDuration);
                                 }
                             }
                             module.debug('API Request failed', errorMessage, xhr);
@@ -28272,7 +28416,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -28285,9 +28429,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if (performance.length > 0) {
                             console.groupCollapsed(title);
                             if (console.table) {
@@ -28525,7 +28666,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - State
+ * # Fomantic-UI 2.9.3 - State
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -28549,15 +28690,25 @@
         var
             $allModules     = $(this),
 
-            moduleSelector  = $allModules.selector || '',
-
             time            = Date.now(),
             performance     = [],
 
             query           = arguments[0],
             methodInvoked   = typeof query === 'string',
             queryArguments  = [].slice.call(arguments, 1),
+            contextCheck    = function (context, win) {
+                var $context;
+                if ([window, document].indexOf(context) >= 0) {
+                    $context = $(context);
+                } else {
+                    $context = $(win.document).find(context);
+                    if ($context.length === 0) {
+                        $context = win.frameElement ? contextCheck(context, win.parent) : window;
+                    }
+                }
 
+                return $context;
+            },
             returnedValue
         ;
         $allModules.each(function () {
@@ -28577,6 +28728,7 @@
                 moduleNamespace = namespace + '-module',
 
                 $module         = $(this),
+                $context        = settings.context ? contextCheck(settings.context, window) : $module,
 
                 element         = this,
                 instance        = $module.data(moduleNamespace),
@@ -28594,19 +28746,11 @@
                     }
 
                     // bind events with delegated events
-                    if (settings.context && moduleSelector !== '') {
-                        ([window, document].indexOf(settings.context) < 0 ? $(document).find(settings.context) : $(settings.context))
-                            .on(moduleSelector, 'mouseenter' + eventNamespace, module.change.text)
-                            .on(moduleSelector, 'mouseleave' + eventNamespace, module.reset.text)
-                            .on(moduleSelector, 'click' + eventNamespace, module.toggle.state)
-                        ;
-                    } else {
-                        $module
-                            .on('mouseenter' + eventNamespace, module.change.text)
-                            .on('mouseleave' + eventNamespace, module.reset.text)
-                            .on('click' + eventNamespace, module.toggle.state)
-                        ;
-                    }
+                    $context
+                        .on('mouseenter' + eventNamespace, module.change.text)
+                        .on('mouseleave' + eventNamespace, module.reset.text)
+                        .on('click' + eventNamespace, module.toggle.state)
+                    ;
                     module.instantiate();
                 },
 
@@ -28620,8 +28764,11 @@
 
                 destroy: function () {
                     module.verbose('Destroying previous module', instance);
-                    $module
+                    $context
                         .off(eventNamespace)
+                    ;
+                    $module
+                        .removeData(metadata.storedText)
                         .removeData(moduleNamespace)
                     ;
                 },
@@ -29002,7 +29149,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -29015,9 +29162,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if (performance.length > 0) {
                             console.groupCollapsed(title);
                             if (console.table) {
@@ -29218,7 +29362,7 @@
 })(jQuery, window, document);
 
 /*!
- * # Fomantic-UI 2.9.2 - Visibility
+ * # Fomantic-UI 2.9.3 - Visibility
  * https://github.com/fomantic/Fomantic-UI/
  *
  *
@@ -29241,7 +29385,6 @@
     $.fn.visibility = function (parameters) {
         var
             $allModules    = $(this),
-            moduleSelector = $allModules.selector || '',
 
             time           = Date.now(),
             performance    = [],
@@ -29249,6 +29392,19 @@
             query          = arguments[0],
             methodInvoked  = typeof query === 'string',
             queryArguments = [].slice.call(arguments, 1),
+            contextCheck   = function (context, win) {
+                var $context;
+                if ([window, document].indexOf(context) >= 0) {
+                    $context = $(context);
+                } else {
+                    $context = $(win.document).find(context);
+                    if ($context.length === 0) {
+                        $context = win.frameElement ? contextCheck(context, win.parent) : window;
+                    }
+                }
+
+                return $context;
+            },
             returnedValue,
 
             moduleCount    = $allModules.length,
@@ -29272,7 +29428,7 @@
                 $window         = $(window),
 
                 $module         = $(this),
-                $context        = [window, document].indexOf(settings.context) < 0 ? $(document).find(settings.context) : $(settings.context),
+                $context        = contextCheck(settings.context, window),
 
                 $placeholder,
 
@@ -30295,7 +30451,7 @@
                             });
                         }
                         clearTimeout(module.performance.timer);
-                        module.performance.timer = setTimeout(module.performance.display, 500);
+                        module.performance.timer = setTimeout(function () { module.performance.display(); }, 500);
                     },
                     display: function () {
                         var
@@ -30308,9 +30464,6 @@
                             totalTime += data['Execution Time'];
                         });
                         title += ' ' + totalTime + 'ms';
-                        if (moduleSelector) {
-                            title += ' \'' + moduleSelector + '\'';
-                        }
                         if (performance.length > 0) {
                             console.groupCollapsed(title);
                             if (console.table) {

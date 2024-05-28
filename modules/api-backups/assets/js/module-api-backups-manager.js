@@ -160,7 +160,7 @@ jQuery(function(){
      */
 
     //Trigger action_update_ids.
-    jQuery('.mainwp_3rd_party_api_digitalocean_action_update_ids').on('click', function (event) {
+    jQuery('.mainwp_3rd_party_api_digitalocean_action_update_ids').on('click', function () {
         digitalocean_action_update_ids(this);
     });
 
@@ -199,7 +199,7 @@ jQuery(function(){
     });
 
     // Trigger action_restore_backup.
-    jQuery(document).on('click', '.mainwp_3rd_party_api_cpanel_action_restore_backup', function (event) {
+    jQuery(document).on('click', '.mainwp_3rd_party_api_cpanel_action_restore_backup', function () {
         let confirmMsg = __('Are you sure you want to Restore this backup?');
         mainwp_confirm(confirmMsg, function () {
             cPanel_action_restore_backup(this);
@@ -216,7 +216,7 @@ jQuery(function(){
     });
 
     // Trigger action_restore_manual_backup.
-    jQuery(document).on('click', '.mainwp_3rd_party_api_cpanel_action_restore_manual_backup', function (event) {
+    jQuery(document).on('click', '.mainwp_3rd_party_api_cpanel_action_restore_manual_backup', function () {
         let confirmMsg = __('Are you sure you want to Restore this backup?');
         mainwp_confirm(confirmMsg, function () {
             cpanel_action_restore_manual_backup();
@@ -239,7 +239,7 @@ jQuery(function(){
     });
 
     // Trigger action_database_backup.
-    jQuery('#mainwp_3rd_party_api_cpanel_action_create_database_backup').on('click', function (event) {
+    jQuery('#mainwp_3rd_party_api_cpanel_action_create_database_backup').on('click', function () {
         cpanel_action_create_database_backup(this);
     });
 
@@ -289,7 +289,7 @@ jQuery(function(){
     });
 
     // Trigger action_restore_backup.
-    jQuery(document).on('click', '.mainwp_3rd_party_api_plesk_action_restore_backup', function (event) {
+    jQuery(document).on('click', '.mainwp_3rd_party_api_plesk_action_restore_backup', function () {
         let confirmMsg = __('Are you sure you want to Restore this backup?');
         mainwp_confirm(confirmMsg, function () {
             plesk_action_restore_backup();

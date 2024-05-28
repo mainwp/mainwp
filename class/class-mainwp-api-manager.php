@@ -494,7 +494,7 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      *
      * @return string $error Error message.
      */
-    public function check_response_for_api_errors( $response ) {
+    public function check_response_for_api_errors( $response ) { //phpcs:ignore -- complex.
         if ( ! is_array( $response ) || ! isset( $response['code'] ) ) {
             return false;
         }

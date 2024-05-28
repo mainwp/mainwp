@@ -214,7 +214,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     public function get_websites_count( $userId = null, $all_access = false ) {
         static $total_sites;
-        if ( null !== $total_sites ) {
+        if ( null !== $total_sites ) { // NOSONAR -- static value.
             return $total_sites;
         }
         if ( ( null === $userId ) && MainWP_System::instance()->is_multi_user() ) {
@@ -234,7 +234,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         }
         $qry = 'SELECT COUNT(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp WHERE 1 ' . $where;
 
-        return $this->wpdb->get_var( $qry );
+        $total       = $this->wpdb->get_var( $qry );
+        $total_sites = $total;// NOSONAR -- static value.
+        return $total;
     }
 
 

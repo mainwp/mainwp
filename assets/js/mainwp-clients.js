@@ -67,7 +67,7 @@ jQuery(function () {
   jQuery(document).on('click', '.mainwp-client-add-contact', function () {
     let templ = jQuery(this).attr('add-contact-temp');
     jQuery('.after-add-contact-field').after(templ);
-    let justAdded = jQuery('.after-add-contact-field').next().next().next().next().next();
+    let justAdded = jQuery('.after-add-contact-field').next().next().next().next().next().next();
     jQuery(justAdded).find('.mainwp-edit-clients-select-contact-icon').dropdown({
       onChange: function (val) {
         let parent = jQuery(this).closest('.mainwp_edit_clients_contact_icon_wrapper');

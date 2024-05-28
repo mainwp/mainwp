@@ -924,7 +924,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         continue;
                     }
                     ?>
-                        <tr class="mainwp-field" field-id="<?php echo intval( $field->field_id ); ?>">
+                        <tr class="mainwp-field none-selected-color" field-id="<?php echo intval( $field->field_id ); ?>">
                             <td class="field-name">[<?php echo esc_html( stripslashes( $field->field_name ) ); ?>]</td>
                             <td class="field-description"><?php echo esc_html( stripslashes( $field->field_desc ) ); ?></td>
                             <td>
@@ -1420,7 +1420,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 </div>
                     <?php
 
-                    if ( 'client.name' === $field_name ) {
+                    if ( 'client.email' === $field_name ) {
                         ?>
                         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-client">
                             <label class="six wide column middle aligned">

@@ -726,7 +726,6 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'ext_page'             => 'admin.php?page=Extensions-Mainwp-Post-Dripper-Extension',
             'leftsub_order_level2' => 4,
             'level'                => 2,
-            'active_path'          => array( 'Extensions-Mainwp-Post-Dripper-Extension' => 'managesites' ),
         );
 
         $extensions_and_leftmenus[] = array(
@@ -737,7 +736,6 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'ext_page'             => 'admin.php?page=Extensions-Mainwp-Post-Plus-Extension',
             'leftsub_order_level2' => 5,
             'level'                => 2,
-            'active_path'          => array( 'Extensions-Mainwp-Post-Plus-Extension' => 'managesites' ),
         );
 
         $extensions_and_leftmenus[] = array(
@@ -748,7 +746,6 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'ext_page'             => 'admin.php?page=Extensions-Mainwp-Post-Dripper-Extension',
             'leftsub_order_level2' => 4,
             'level'                => 2,
-            'active_path'          => array( 'Extensions-Mainwp-Post-Dripper-Extension' => 'managesites' ),
         );
 
         $extensions_and_leftmenus[] = array(
@@ -759,7 +756,6 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'ext_page'             => 'admin.php?page=Extensions-Mainwp-Post-Plus-Extension',
             'leftsub_order_level2' => 5,
             'level'                => 2,
-            'active_path'          => array( 'Extensions-Mainwp-Post-Plus-Extension' => 'managesites' ),
         );
 
         $extensions_and_leftmenus[] = array(

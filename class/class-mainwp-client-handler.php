@@ -172,15 +172,15 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 'desc'     => esc_html__( 'Displays the client contact name', 'mainwp' ),
                 'db_field' => 'contact_name',
             ),
-            'contact.role'        => array(
-                'title'    => esc_html__( 'Contact role', 'mainwp' ),
-                'desc'     => esc_html__( 'Displays the contact role', 'mainwp' ),
-                'db_field' => 'contact_role',
-            ),
             'contact.email'       => array(
                 'title'    => esc_html__( 'Contact email (Required)', 'mainwp' ),
                 'desc'     => esc_html__( 'Displays the contact email', 'mainwp' ),
                 'db_field' => 'contact_email',
+            ),
+            'contact.role'        => array(
+                'title'    => esc_html__( 'Contact role', 'mainwp' ),
+                'desc'     => esc_html__( 'Displays the contact role', 'mainwp' ),
+                'db_field' => 'contact_role',
             ),
             'contact.phone'       => array(
                 'title'    => esc_html__( 'Contact phone', 'mainwp' ),
@@ -222,15 +222,15 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 'desc'     => esc_html__( 'Displays the client contact name', 'mainwp' ),
                 'db_field' => 'contact_name',
             ),
-            'contact.role'        => array(
-                'title'    => esc_html__( 'Contact role', 'mainwp' ),
-                'desc'     => esc_html__( 'Displays the contact role', 'mainwp' ),
-                'db_field' => 'contact_role',
-            ),
             'contact.email'       => array(
                 'title'    => esc_html__( 'Contact email (Required)', 'mainwp' ),
                 'desc'     => esc_html__( 'Displays the contact email', 'mainwp' ),
                 'db_field' => 'contact_email',
+            ),
+            'contact.role'        => array(
+                'title'    => esc_html__( 'Contact role', 'mainwp' ),
+                'desc'     => esc_html__( 'Displays the contact role', 'mainwp' ),
+                'db_field' => 'contact_role',
             ),
         );
     }

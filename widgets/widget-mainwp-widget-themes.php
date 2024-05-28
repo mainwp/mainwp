@@ -206,7 +206,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     $slug      = $inactive_themes[ $i ]['slug'];
                     $is_parent = ( isset( $inactive_themes[ $i ]['parent_active'] ) && 1 === (int) $inactive_themes[ $i ]['parent_active'] ) ? true : false;
                     ?>
-                    <div class="item">
+                    <div class="item row-manage-item">
                         <input class="themeName" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) ); ?>"/>
                         <input class="themeSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_themes[ $i ]['slug'] ) ); ?>"/>
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>

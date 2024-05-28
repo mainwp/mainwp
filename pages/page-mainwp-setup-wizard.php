@@ -691,7 +691,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 </div>
                     <?php
 
-                    if ( 'client.name' === $field_name ) {
+                    if ( 'client.email' === $field_name ) {
                         ?>
                         <div class="field">
                             <label><?php esc_html_e( 'Client photo', 'mainwp' ); ?></label>

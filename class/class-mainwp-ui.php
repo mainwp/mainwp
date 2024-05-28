@@ -2062,7 +2062,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 $indi_val = '';
             }
             ?>
-        <div class="ui grid field settings-field-indicator-wrapper" default-indi-valuevaluevaluevalue="all">
+        <div class="ui grid field settings-field-indicator-wrapper" default-indi-valuevaluevalue="all">
             <label class="six wide column">
             <?php
             if ( $setting_page ) {

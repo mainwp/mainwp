@@ -201,9 +201,7 @@ class Cost_Tracker_Add_Edit {
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit">
                     <label class="six wide column middle aligned">
                     <?php
-                    if ( $edit_cost ) {
-                        MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $edit_cost->name );
-                    }
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $edit_cost ? $edit_cost->name : '' );
                     esc_html_e( 'Name', 'mainwp' );
                     ?>
                     </label>
@@ -214,9 +212,7 @@ class Cost_Tracker_Add_Edit {
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit">
                     <label class="six wide column middle aligned">
                     <?php
-                    if ( $edit_cost ) {
-                        MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $edit_cost->url );
-                    }
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $edit_cost ? $edit_cost->url : '' );
                     esc_html_e( 'Product URL', 'mainwp' );
                     ?>
                     </label>
@@ -227,9 +223,7 @@ class Cost_Tracker_Add_Edit {
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit">
                     <label class="six wide column middle aligned">
                     <?php
-                    if ( $edit_cost ) {
-                        MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $cust_prod_src );
-                    }
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $cust_prod_src );
                     esc_html_e( 'Upload product icon', 'mainwp' );
                     ?>
                     </label>
@@ -248,9 +242,7 @@ class Cost_Tracker_Add_Edit {
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit">
                     <label class="six wide column middle aligned">
                     <?php
-                    if ( $edit_cost ) {
-                        MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $selected_default_icon );
-                    }
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $edit_cost ? $selected_default_icon : '' );
                     esc_html_e( 'Select icon', 'mainwp' );
                     ?>
                     </label>
@@ -276,9 +268,7 @@ class Cost_Tracker_Add_Edit {
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit" default-indi-value="subscription">
                     <label class="six wide column middle aligned">
                     <?php
-                    if ( $edit_cost ) {
-                        MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', ( 'subscription' !== $selected_payment_type ) );
-                    }
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $edit_cost ? ( 'subscription' !== $selected_payment_type ) : '' );
                     esc_html_e( 'Type', 'mainwp' );
                     ?>
                     </label>
@@ -302,9 +292,7 @@ class Cost_Tracker_Add_Edit {
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit hide-if-lifetime-subscription-selected" default-indi-value="weekly" <?php echo $lifetime_selected ? 'style="display:none;"' : ''; ?>>
                     <label class="six wide column middle aligned">
                     <?php
-                    if ( $edit_cost ) {
-                        MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', ( 'weekly' !== $selected_renewal ) );
-                    }
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $edit_cost ? ( 'weekly' !== $selected_renewal ) : '' );
                     esc_html_e( 'Renewal frequency', 'mainwp' );
                     ?>
                     </label>
@@ -325,9 +313,7 @@ class Cost_Tracker_Add_Edit {
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit hide-if-lifetime-subscription-selected" default-indi-value="active" <?php echo $lifetime_selected ? 'style="display:none;"' : ''; ?>>
                     <label class="six wide column middle aligned">
                     <?php
-                    if ( $edit_cost ) {
-                        MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', ( 'active' !== $selected_cost_tracker_status ) );
-                    }
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $edit_cost ? ( 'active' !== $selected_cost_tracker_status ) : '' );
                     esc_html_e( 'Subscription status', 'mainwp' );
                     ?>
                     </label>
@@ -365,11 +351,8 @@ class Cost_Tracker_Add_Edit {
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit" default-indi-value="plugin">
                     <label class="six wide column middle aligned">
                     <?php
-                    if ( $edit_cost ) {
-                        MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', ( 'plugin' !== $selected_product_type ) );
-                    }
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $edit_cost ? ( 'plugin' !== $selected_product_type ) : '' );
                     ?>
-
                     <?php esc_html_e( 'Category', 'mainwp' ); ?></label>
                     <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select the category for this cost.', 'mainwp' ); ?>
                     " data-inverted="" data-position="left center">
@@ -389,9 +372,7 @@ class Cost_Tracker_Add_Edit {
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit hide-if-product-type-isnot-plugintheme" <?php echo $is_plugintheme ? '' : 'style="display:none;"'; ?>>
                     <label class="six wide column middle aligned">
                     <?php
-                    if ( $edit_cost ) {
-                        MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $slug );
-                    }
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $slug );
                     esc_html_e( 'Slug', 'mainwp' );
                     ?>
                     </label>
@@ -402,9 +383,7 @@ class Cost_Tracker_Add_Edit {
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit" default-indi-value="single_site">
                     <label class="six wide column middle aligned">
                     <?php
-                    if ( $edit_cost ) {
-                        MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', ( 'single_site' !== $selected_license_type ) );
-                    }
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $edit_cost ? ( 'single_site' !== $selected_license_type ) : '' );
                     esc_html_e( 'License type', 'mainwp' );
                     ?>
                     </label>
@@ -426,9 +405,7 @@ class Cost_Tracker_Add_Edit {
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit">
                     <label class="six wide column middle aligned">
                     <?php
-                    if ( $edit_cost ) {
-                        MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $currency_symbol );
-                    }
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $edit_cost ? $currency_symbol : '' );
                     esc_html_e( 'Price', 'mainwp' );
                     ?>
                     </label>
@@ -442,9 +419,6 @@ class Cost_Tracker_Add_Edit {
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit">
                     <label class="six wide column middle aligned">
                     <?php
-                    if ( $edit_cost ) {
-                        MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $last_renewal );
-                    }
                     esc_html_e( 'Purchase date', 'mainwp' );
                     ?>
                     </label>
@@ -461,9 +435,7 @@ class Cost_Tracker_Add_Edit {
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit" default-indi-value="paypal">
                     <label class="six wide column middle aligned">
                     <?php
-                    if ( $edit_cost ) {
-                        MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', ( 'paypal' !== $selected_payment_method ) );
-                    }
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $edit_cost ? ( 'paypal' !== $selected_payment_method ) : '' );
                     esc_html_e( 'Payment method', 'mainwp' );
                     ?>
                     </label>
@@ -485,9 +457,7 @@ class Cost_Tracker_Add_Edit {
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit">
                     <label class="six wide column middle aligned">
                     <?php
-                    if ( $edit_cost ) {
-                        MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $edit_cost->note );
-                    }
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $edit_cost ? $edit_cost->note : '' );
                     esc_html_e( 'Notes', 'mainwp' );
                     ?>
                     </label>

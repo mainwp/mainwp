@@ -47,23 +47,23 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * Method render_indicator().
      *
      * @param bool $indi_type Indicator type.
-     * @param bool $field_indi_wrapper_cls field wrapper class.
+     * @param bool $wrapper_cls field wrapper class.
      * @param bool $visible Current indicator status.
      */
-    public static function render_indicator( $indi_type = 'field', $field_indi_wrapper_cls = '', $visible = true ) {
-        echo static::get_indicator( $indi_type, $field_indi_wrapper_cls, $visible );  //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    public static function render_indicator( $indi_type = 'field', $wrapper_cls = '', $visible = true ) {
+        echo static::get_indicator( $indi_type, $wrapper_cls, $visible );  //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     }
     /**
      * Method get_indicator().
      *
      * @param bool $indi_type Indicator type.
-     * @param bool $field_indi_wrapper_cls field wrapper class.
+     * @param bool $wrapper_cls field wrapper class.
      * @param bool $visible Current indicator status.
      */
-    public static function get_indicator( $indi_type = 'field', $field_indi_wrapper_cls = '', $visible = true ) {
+    public static function get_indicator( $indi_type = 'field', $wrapper_cls = '', $visible = true ) {
         $cls = $visible ? 'visible-indicator' : '';
         if ( 'header' === $indi_type ) {
-            return '<i style="display:none;" field-indicator-wrapper-class="' . esc_html( $field_indi_wrapper_cls ) . '" class="ui circle icon tiny yellow settings-field-header-indicator ' . $cls . ' "></i>';
+            return '<i style="display:none;" field-indicator-wrapper-class="' . esc_html( $wrapper_cls ) . '" class="ui circle icon tiny yellow settings-field-header-indicator ' . $cls . ' "></i>';
         } else {
             return '<i class="ui circle icon tiny yellow settings-field-icon-indicator ' . $cls . '"></i>';
         }

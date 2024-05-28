@@ -263,7 +263,7 @@ jQuery(function () {
 
 
 let pluginAction = function (elem, what) {
-  let rowElement = jQuery(elem).parent().parent();
+  let rowElement = jQuery(elem).closest('.row-manage-item');
   let plugin = rowElement.children('.pluginSlug').val();
   let websiteId = rowElement.children('.websiteId').val();
 
@@ -291,7 +291,7 @@ jQuery(function () {
 });
 
 let themeAction = function (elem, what) {
-  let rowElement = jQuery(elem).parent().parent();
+  let rowElement = jQuery(elem).closest('.row-manage-item');
   let theme = rowElement.children('.themeSlug').val();
   let websiteId = rowElement.children('.websiteId').val();
   let data = mainwp_secure_data({
@@ -3534,10 +3534,11 @@ jQuery(document).on('keyup', '#managegroups-filter', function () {
 jQuery(document).on('change', '#cb-select-all-top, #cb-select-all-bottom', function () {
   let $this = jQuery(this), $table, controlChecked = $this.prop('checked');
 
-  if (jQuery($this).closest('.mainwp-noserver-side-dt-table').length) {
-    $table = $this.closest('.mainwp-noserver-side-dt-table'); // to support not server side dt table.
-  } else {
-    $table = $this.closest('.dt-scroll').find('.dt-scroll-body table');
+  $table = $this.closest('.dt-scroll').find('.dt-scroll-body table'); // for dt with scroll enabled.
+
+  // if no scrollable table.
+  if ($table.length == 0) {
+    $table = $this.closest('table.table.dataTable');
   }
 
   if ($table.length == 0)
@@ -3736,8 +3737,7 @@ window.mainwp_datatable_fix_to_update_rows_state = function (tblSelect) {
 
 window.mainwp_datatable_fix_reorder_selected_rows_status = function () {
   console.log('Fixing: reordercol selected rows.');
-  jQuery('div.dt-scroll-body table tbody').filter(':visible').children('tr.selected').find(':checkbox').prop('checked', true);
-  jQuery('.mainwp-noserver-side-dt-table tbody').filter(':visible').children('tr.selected').find(':checkbox').prop('checked', true); // to support not server side dt table.
+  jQuery('.table.dataTable tbody').filter(':visible').children('tr.selected').find(':checkbox').prop('checked', true);
 };
 
 // fix menu overflow with scroll tables.
@@ -4321,7 +4321,7 @@ jQuery(function ($) {
         if ($('input[type="checkbox"][name="mainwp_show_widgets[]"]:not(:checked)').length == 0) {
           val = 'all';
         }
-      }else if($(this).attr('inverted-value')){
+      } else if ($(this).attr('inverted-value')) {
         val = val === '1' ? '0' : '1'; // to fix compatible with some case checked is disable, value is 0.
       }
     } else {
@@ -4331,7 +4331,7 @@ jQuery(function ($) {
       } else if ($(this).attr('name') === 'cost_tracker_custom_product_types[title][]') {
         val = $('input[name="cost_tracker_custom_product_types[title][]"]').length; // default 0.
         me = $('.settings-field-indicator-wrapper.default-product-categories');
-      } else if( $(this).attr('name') ===  'cost_tracker_custom_payment_methods[title][]'){
+      } else if ($(this).attr('name') === 'cost_tracker_custom_payment_methods[title][]') {
         val = $('input[name="cost_tracker_custom_payment_methods[title][]"]').length; // default 0.
         me = $('.settings-field-indicator-wrapper.custom-payment-methods');
       }

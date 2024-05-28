@@ -3084,13 +3084,14 @@ let mainwp_master_checkbox_init = function ($) {
     });
 
 }
-
+// This function need to update when datatable changed it's style.
 window.mainwp_table_check_columns_init = function () {
-    jQuery(document).find('table th.check-column .checkbox').checkbox({
+    jQuery(document).find('table th.check-column .checkbox').checkbox({ // table headers.
         // check all children
         onChecked: function () {
+            console.log('parent checked.');
             let $table = jQuery(this).closest('table');
-            if ($table.parent().hasClass('dt-scroll-head')) {
+            if ($table.parent().parent().hasClass('dt-scroll-head') || $table.parent().parent().hasClass('dt-scroll-foot') ) {
                 $table = jQuery(this).closest('.dt-scroll'); // to compatible with datatable scroll
             }
 
@@ -3102,13 +3103,11 @@ window.mainwp_table_check_columns_init = function () {
         // uncheck all children
         onUnchecked: function () {
             let $table = jQuery(this).closest('table');
-
-            if ($table.parent().hasClass('dt-scroll-head'))
+            if ($table.parent().parent().hasClass('dt-scroll-head') || $table.parent().parent().hasClass('dt-scroll-foot') ){
                 $table = jQuery(this).closest('.dt-scroll'); // to compatible with datatable scroll
-
-
+            }
             if ($table.length > 0) {
-                let $childCheckbox = $table.find('td.check-column .checkbox');
+                let $childCheckbox = $table.find('tbody td.check-column .checkbox');
                 $childCheckbox.checkbox('uncheck');
             }
         }
@@ -3119,7 +3118,7 @@ window.mainwp_table_check_columns_init = function () {
         fireOnInit: true,
         // Change parent state on each child checkbox change
         onChange: function () {
-
+            console.log('child checked.');
             let $table = jQuery(this).closest('table');
 
             if ($table.parent().hasClass('dt-scroll-body'))

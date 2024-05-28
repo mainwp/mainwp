@@ -261,7 +261,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
                     <?php
                     $def_val = MainWP_Settings_Indicator::get_defaults_email_settings_value( $type, 'disable' );
                     ?>
-                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-email-<?php echo esc_attr( $type ); ?>" default-indi-valuevalue="<?php echo esc_attr( $def_val ); ?>">
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-email-<?php echo esc_attr( $type ); ?>" default-indi-value="<?php echo esc_attr( $def_val ); ?>">
                         <label class="six wide column middle aligned">
                         <?php
                         MainWP_Settings_Indicator::render_not_default_email_settings_indicator( $type, 'disable', (int) $options['disable'] );
@@ -275,7 +275,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
                     <?php
                     $def_val = MainWP_Settings_Indicator::get_defaults_email_settings_value( $type, 'recipients' );
                     ?>
-                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-email-<?php echo esc_attr( $type ); ?>" default-indi-valuevalue="<?php echo esc_attr( $def_val ); ?>">
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-email-<?php echo esc_attr( $type ); ?>" default-indi-value="<?php echo esc_attr( $def_val ); ?>">
                         <label class="six wide column middle aligned">
                         <?php
                         MainWP_Settings_Indicator::render_not_default_email_settings_indicator( $type, 'recipients', $options['recipients'] );
@@ -289,7 +289,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
                     <?php
                     $def_val = MainWP_Settings_Indicator::get_defaults_email_settings_value( $type, 'subject' );
                     ?>
-                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-email-<?php echo esc_attr( $type ); ?>" default-indi-valuevalue="<?php echo esc_attr( $def_val ); ?>">
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-email-<?php echo esc_attr( $type ); ?>" default-indi-value="<?php echo esc_attr( $def_val ); ?>">
                         <label class="six wide column middle aligned">
                         <?php
                         MainWP_Settings_Indicator::render_not_default_email_settings_indicator( $type, 'subject', $options['subject'] );
@@ -303,7 +303,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
                     <?php
                     $def_val = MainWP_Settings_Indicator::get_defaults_email_settings_value( $type, 'heading' );
                     ?>
-                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-email-<?php echo esc_attr( $type ); ?>" default-indi-valuevalue="<?php echo esc_attr( $def_val ); ?>">
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-email-<?php echo esc_attr( $type ); ?>" default-indi-value="<?php echo esc_attr( $def_val ); ?>">
                         <label class="six wide column middle aligned">
                         <?php
                         MainWP_Settings_Indicator::render_not_default_email_settings_indicator( $type, 'heading', $options['heading'] );

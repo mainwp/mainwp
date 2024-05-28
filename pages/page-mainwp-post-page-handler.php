@@ -1019,8 +1019,8 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
     public static function new_post( $post_data = array(), $replaceadvImg = false, $website = false ) {
         $new_post            = json_decode( base64_decode( $post_data['new_post'] ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
         $post_custom         = json_decode( base64_decode( $post_data['post_custom'] ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-        $post_category       = rawurldecode( isset( $post_data['post_category'] ) ? base64_decode( $post_data['post_category'] ) : null ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-        $post_tags           = rawurldecode( isset( $new_post['post_tags'] ) ? $new_post['post_tags'] : null );
+        $post_category       = isset( $post_data['post_category'] ) ? rawurldecode( base64_decode( $post_data['post_category'] ) ) : ''; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+        $post_tags           = isset( $new_post['post_tags'] ) ? rawurldecode( $new_post['post_tags'] ) : '';
         $post_featured_image = base64_decode( $post_data['post_featured_image'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
         $upload_dir          = json_decode( base64_decode( $post_data['child_upload_dir'] ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
         $post_gallery_images = base64_decode( $post_data['post_gallery_images'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.

@@ -409,6 +409,12 @@
     font-size: 14px;
 }
 
+.mainwp-widget .dt-search.ui.input {
+    padding: 5px;
+    max-width: 160px;
+}
+
+
 @media only screen and (min-width: 1368px) {
 
     .mainwp-widget.ui.segment.gs-w {
@@ -1507,7 +1513,7 @@ th .down.icon {
     display: none !important;
 }
 
-.settings-field-icon-indicator.visible-indicator{
+.settings-field-icon-indicator.visible-indicator {
     display: inline-block !important;
 }
 
@@ -1542,6 +1548,7 @@ th .down.icon {
     border: 5px dashed #999999 !important;
     display: none;
 }
+
 .mainwp-get-started-widget-check-lists .item .content {
     width: auto !important;
 }
@@ -1562,12 +1569,14 @@ th .down.icon {
     display: inline-block !important;
     /* display on those pages, hide on other extension pages. */
 }
-.mainwp-sites-select-deselect-button{
+
+.mainwp-sites-select-deselect-button {
     border: none !important;
     box-shadow: none !important;
     background-color: inherit !important;
 }
-.mainwp-sites-select-deselect-button:hover{
+
+.mainwp-sites-select-deselect-button:hover {
     background-color: inherit !important;
 }
 
@@ -1584,4 +1593,7 @@ th .down.icon {
 .mainwp-default-theme #mainwp-first-level-navigation-menu #leftbar-item-quick-setup i,
 .mainwp-default-theme #mainwp-first-level-navigation-menu #leftbar-item-quick-setup span {
     color: var(--grey-dark) !important;
+}
+.mainwp-ui tr.selected.none-selected-color > *{
+    box-shadow: none !important;
 }

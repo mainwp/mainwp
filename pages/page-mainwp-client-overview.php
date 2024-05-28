@@ -462,7 +462,7 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         <?php if ( isset( $_GET['page'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
         <div class="ui grid field">
             <label class="six wide column"><?php esc_html_e( 'Show widgets', 'mainwp' ); ?></label>
-            <div class="ten wide column" <?php echo 'data-tooltip="' . esc_attr__( 'Select widgets that you want to hide in the MainWP Overview page.', 'mainwp' ); ?> data-inverted="" data-position="top left">
+            <div class="ten wide column" <?php echo 'data-tooltip="' . esc_attr__( 'Select widgets that you want to hide in the MainWP Overview page.', 'mainwp' ) . '"'; ?> data-inverted="" data-position="top left">
                 <ul class="mainwp_hide_wpmenu_checkboxes">
                 <?php
                 foreach ( $default_widgets as $name => $title ) {

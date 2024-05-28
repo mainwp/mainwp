@@ -1735,10 +1735,12 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 curl_setopt( $ch, CURLOPT_PROXYUSERPWD, $proxy->authentication() );
             }
         }
-
+        curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
         curl_setopt( $ch, CURLOPT_FILE, $fp );
+
         curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
         curl_setopt( $ch, CURLOPT_ENCODING, 'none' );
+
         curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
         if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
             $http_pass = stripslashes( $http_pass );

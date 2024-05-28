@@ -517,7 +517,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      */
     public static function render_groups_sites_table_element() {
         ?>
-        <table class="ui very compact table mainwp-with-preview-table mainwp-noserver-side-dt-table" id="mainwp-manage-groups-sites-table">
+        <table class="ui very compact table mainwp-with-preview-table" id="mainwp-manage-groups-sites-table">
             <thead>
                 <tr>
                     <th scope="col" class="no-sort collapsing check-column"><div class="ui checkbox" data-tooltip="<?php esc_attr_e( 'Click to select all sites.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><input type="checkbox" id="cb-select-all-top" name="example"></div></th>

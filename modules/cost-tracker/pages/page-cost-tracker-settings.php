@@ -132,12 +132,12 @@ class Cost_Tracker_Settings {
             <?php
         }
         ?>
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-settings" default-indi-valuevalue="USD">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-settings" default-indi-value="USD">
             <label class="six wide column middle aligned">
             <?php MainWP_Settings_Indicator::render_not_default_indicator( 'cost_tracker_currency_selected', $selected_currency ); ?>
             <?php esc_html_e( 'Currency', 'mainwp' ); ?></label>
             <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select preferred currency.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                <select id="mainwp_module_cost_tracker_settings_currency settings-field-value-change-handler" name="mainwp_module_cost_tracker_settings_currency" class="ui search selection dropdown">
+                <select id="mainwp_module_cost_tracker_settings_currency" name="mainwp_module_cost_tracker_settings_currency" class="ui search selection dropdown settings-field-value-change-handler">
                     <?php foreach ( $currencies as $code => $name ) : ?>
                         <?php
                         $_select = '';
@@ -162,7 +162,7 @@ class Cost_Tracker_Settings {
         $def_val = is_array( $default ) && isset( $default['currency_position'] ) ? $default['currency_position'] : '';
 
         ?>
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-settings" default-indi-valuevalue="<?php echo esc_attr( $def_val ); ?>">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-settings" default-indi-value="<?php echo esc_attr( $def_val ); ?>">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'cost_tracker_currency_position', $currency_position );
@@ -190,7 +190,7 @@ class Cost_Tracker_Settings {
         <?php
         $def_val = is_array( $default ) && isset( $default['thousand_separator'] ) ? $default['thousand_separator'] : '';
         ?>
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-settings" default-indi-valuevalue="<?php echo esc_attr( $def_val ); ?>">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-settings" default-indi-value="<?php echo esc_attr( $def_val ); ?>">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'cost_tracker_thousand_separator', $thousand_separator );
@@ -204,7 +204,7 @@ class Cost_Tracker_Settings {
         <?php
         $def_val = is_array( $default ) && isset( $default['decimal_separator'] ) ? $default['decimal_separator'] : '';
         ?>
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-settings"  default-indi-valuevalue="<?php echo esc_attr( $def_val ); ?>">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-settings"  default-indi-value="<?php echo esc_attr( $def_val ); ?>">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'cost_tracker_decimal_separator', $decimal_separator );
@@ -212,13 +212,13 @@ class Cost_Tracker_Settings {
             ?>
             </label>
             <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Choose a symbol to separate decimal portions in numbers.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                <input type="text" name="mainwp_module_cost_tracker_currency_format[decimal_separator]" value="<?php echo esc_html( $decimal_separator ); ?>" class="regular-text"/>
+                <input type="text" name="mainwp_module_cost_tracker_currency_format[decimal_separator]" value="<?php echo esc_html( $decimal_separator ); ?>" class="settings-field-value-change-handler regular-text"/>
             </div>
         </div>
         <?php
         $def_val = is_array( $default ) && isset( $default['decimals'] ) ? $default['decimals'] : '';
         ?>
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-settings" default-indi-valuevalue="<?php echo esc_attr( $def_val ); ?>">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-settings" default-indi-value="<?php echo esc_attr( $def_val ); ?>">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'cost_tracker_decimals', intval( $decimals ) );
@@ -226,7 +226,7 @@ class Cost_Tracker_Settings {
             ?>
             </label>
             <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Set the number of decimal places for numerical values.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-            <input type="number" name="mainwp_module_cost_tracker_currency_format[decimals]" id="mainwp_module_cost_tracker_currency_format[decimals]" class="small-text" placeholder="" min="1" max="8" step="1" value="<?php echo intval( $decimals ); ?>">
+            <input type="number" class="regular-text small-text settings-field-value-change-handler" name="mainwp_module_cost_tracker_currency_format[decimals]" id="mainwp_module_cost_tracker_currency_format[decimals]" placeholder="" min="1" max="8" step="1" value="<?php echo intval( $decimals ); ?>">
             </div>
         </div>
         <div class="ui grid field settings-field-indicator-wrapper default-product-categories settings-field-indicator-cost-settings ">

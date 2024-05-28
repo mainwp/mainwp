@@ -451,11 +451,11 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $selected_clients = array();
 
         if ( null !== $cachedSearch ) {
-            if ( is_array( $cachedSearch['sites'] ) ) {
+            if ( isset( $cachedSearch['sites'] ) && is_array( $cachedSearch['sites'] ) ) {
                 $selected_sites = $cachedSearch['sites'];
-            } elseif ( is_array( $cachedSearch['groups'] ) ) {
+            } elseif ( isset( $cachedSearch['groups'] ) && is_array( $cachedSearch['groups'] ) ) {
                 $selected_groups = $cachedSearch['groups'];
-            } elseif ( is_array( $cachedSearch['clients'] ) ) {
+            } elseif ( isset( $cachedSearch['clients'] ) && is_array( $cachedSearch['clients'] ) ) {
                 $selected_clients = $cachedSearch['clients'];
             }
         }

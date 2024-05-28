@@ -17,7 +17,7 @@ jQuery(function () {
     });
 
 });
-backup = function () {
+let backup = function () {
     backupError = false;
     backupContinueRetries = 0;
 
@@ -151,7 +151,7 @@ backup = function () {
     });
 };
 
-backup_retry_fail = function (siteId, pData, remoteDestinations, pid, type, subfolder, filename, responseError) {
+let backup_retry_fail = function (siteId, pData, remoteDestinations, pid, type, subfolder, filename, responseError) {
     let backsprocessContentEl = mainwpPopup('#managesite-backup-status-box').getContentEl();
     //we've got the pid file!!!!
     let data = mainwp_secure_data({
@@ -178,24 +178,17 @@ backup_retry_fail = function (siteId, pData, remoteDestinations, pid, type, subf
                 appendToDiv(backsprocessContentEl, __('Backup file on child site created successfully!'));
 
                 backup_download_file(siteId, type, response.result.file, response.result.local, response.result.regexfile, response.result.size, response.result.subfolder, remoteDestinations);
-            } else if (response.status == 'busy') {
-                //Try again in 5seconds
-                setTimeout(function () {
-                    backup_retry_fail(siteId, pData, remoteDestinations, pid, type, subfolder, filename, responseError);
-                }, 10000);
             } else if (response.status == 'stalled') {
                 backupContinueRetries++;
 
-                if (backupContinueRetries > 10) {
+                if (backupContinueRetries > 15) {
                     if (responseError != undefined) {
                         appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: ' + getErrorMessage(responseError) + '</span>');
                     } else {
-                        appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: Backup timed out! <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>'); // NOSONAR - noopener - open safe.
+                        appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: Backup timed out! (stalled) - <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>'); // NOSONAR - noopener - open safe.
                     }
                 } else {
                     appendToDiv(backsprocessContentEl, ' Backup stalled, trying to resume from last file...');
-                    //retrying file: response.result.file !
-
                     pData['filename'] = response.result.file;
                     pData['append'] = 1;
                     pData = mainwp_secure_data(pData, true); //Rescure
@@ -234,9 +227,10 @@ backup_retry_fail = function (siteId, pData, remoteDestinations, pid, type, subf
                 if (responseError != undefined) {
                     appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: ' + getErrorMessage(responseError) + '</span>');
                 } else {
-                    appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: Backup timed out! <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>'); // NOSONAR - noopener - open safe.
+                    appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: Backup timed out! (invalid) - <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>'); // NOSONAR - noopener - open safe.
                 }
             } else {
+                // busy or other.
                 //Try again in 5seconds
                 setTimeout(function () {
                     backup_retry_fail(siteId, pData, remoteDestinations, pid, type, subfolder, filename, responseError);
@@ -499,11 +493,6 @@ backup_upload_file_retry_fail = function (pData, pSiteId, pFile, pRegexFile, pSu
                 appendToDiv(backsprocessContentEl, __('Upload to %1 (%2) successful!', response.info.title, response.info.type));
 
                 backup_upload_file(pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
-            } else if (response.status == 'busy') {
-                //Try again in 10seconds
-                setTimeout(function () {
-                    backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError);
-                }, 10000);
             } else if (response.status == 'stalled') {
                 if (backupContinueRetriesUnique[pUnique] == undefined) {
                     backupContinueRetriesUnique[pUnique] = 1;
@@ -560,6 +549,7 @@ backup_upload_file_retry_fail = function (pData, pSiteId, pFile, pRegexFile, pSu
                     });
                 }
             } else {
+                // busy or other.
                 //Try again in 5seconds
                 setTimeout(function () {
                     backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError);
@@ -733,7 +723,7 @@ managebackups_run_next = function () {
             return function () {
                 backupCreateRunning = false;
                 clearInterval(pInterVal);
-                appendToDiv(backtaskContentEl, '[' + pSiteName + '] ' + '<span class="mainwp-red">ERROR: Backup timed out - <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>'); // NOSONAR - noopener - open safe.
+                appendToDiv(backtaskContentEl, '[' + pSiteName + '] ' + '<span class="mainwp-red">ERROR: Backup timed out (request) - <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>'); // NOSONAR - noopener - open safe.
             }
         }(interVal, siteName), dataType: 'json'
     });

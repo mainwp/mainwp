@@ -817,7 +817,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                                 </div>
                             </div>
                         </div>
-                        <div class="ui grid field settings-field-indicator-wrapper <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>" default-indi-valuevalue="3">
+                        <div class="ui grid field settings-field-indicator-wrapper <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>" default-indi-value="3">
                             <label class="six wide column middle aligned">
                             <?php
                             if ( $item ) {

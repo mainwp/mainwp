@@ -185,7 +185,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     $slug             = wp_strip_all_tags( $actived_plugins[ $i ]['slug'] );
                     $plugin_directory = dirname( $slug );
                     ?>
-                    <div class="item <?php echo esc_html( dirname( $slug ) ); ?>">
+                    <div class="item <?php echo esc_html( dirname( $slug ) ); ?> row-manage-item">
                         <input class="pluginSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $actived_plugins[ $i ]['slug'] ) ); ?>"/>
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
                         <div class="right floated pluginsAction">
@@ -240,7 +240,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     $slug             = $inactive_plugins[ $i ]['slug'];
                     $plugin_directory = dirname( $slug );
                     ?>
-                    <div class="item <?php echo esc_html( sanitize_text_field( dirname( $slug ) ) ); ?>">
+                    <div class="item <?php echo esc_html( sanitize_text_field( dirname( $slug ) ) ); ?> row-manage-item">
                         <input class="pluginSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_plugins[ $i ]['slug'] ) ); ?>"/>
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
                         <div class="right floated content pluginsAction">

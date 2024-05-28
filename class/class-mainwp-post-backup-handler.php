@@ -65,12 +65,12 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $this->add_action( 'mainwp_backup_run_site', array( &$this, 'mainwp_backup_run_site' ) );
         }
         if ( mainwp_current_user_have_right( 'dashboard', 'execute_backups' ) ) {
-            $this->add_action( 'mainwp_backup', array( &$this, 'mainwp_backup' ) );
+            $this->add_action( 'mainwp_backup', array( &$this, 'ajax_mainwp_backup' ) );
         }
         $this->add_action( 'mainwp_checkbackups', array( &$this, 'mainwp_checkbackups' ) );
         $this->add_action( 'mainwp_backup_checkpid', array( &$this, 'mainwp_backup_checkpid' ) );
         $this->add_action( 'mainwp_createbackup_getfilesize', array( &$this, 'mainwp_createbackup_getfilesize' ) );
-        $this->add_action( 'mainwp_backup_download_file', array( &$this, 'mainwp_backup_download_file' ) );
+        $this->add_action( 'mainwp_backup_download_file', array( &$this, 'ajax_mainwp_backup_download_file' ) );
         $this->add_action( 'mainwp_backup_delete_file', array( &$this, 'mainwp_backup_delete_file' ) );
         $this->add_action( 'mainwp_backup_getfilesize', array( &$this, 'mainwp_backup_getfilesize' ) );
         $this->add_action( 'mainwp_backup_upload_getprogress', array( &$this, 'mainwp_backup_upload_getprogress' ) );
@@ -125,7 +125,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup()
      * @uses \MainWP\Dashboard\MainWP_Exception
      */
-    public function mainwp_backup() {
+    public function ajax_mainwp_backup() {
         $this->secure_request( 'mainwp_backup' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
@@ -221,7 +221,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup_download_file()
      * @uses \MainWP\Dashboard\MainWP_Exception
      */
-    public function mainwp_backup_download_file() {
+    public function ajax_mainwp_backup_download_file() {
         $this->secure_request( 'mainwp_backup_download_file' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;

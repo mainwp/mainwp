@@ -201,6 +201,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         add_filter( 'mainwp_get_lookup_items', array( &$this, 'hook_get_lookup_items' ), 10, 4 );
         add_filter( 'mainwp_insert_lookup_item', array( &$this, 'hook_insert_lookup_item' ), 10, 5 );
         add_filter( 'mainwp_delete_lookup_items', array( &$this, 'hook_delete_lookup_items' ), 10, 3 );
+        add_filter( 'mainwp_get_indicator', array( &$this, 'hook_get_indicator' ), 10, 4 );
     }
 
     /**
@@ -1920,5 +1921,20 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
     public function hook_delete_lookup_items( $false_val, $by = 'lookup_id', $params = array() ) {
         unset( $false_val );
         return MainWP_DB::instance()->delete_lookup_items( $by, $params );
+    }
+
+    /**
+     * Method hook_get_indicator().
+     *
+     * @param bool $def_value default input value.
+     * @param bool $indi_type Indicator type.
+     * @param bool $wrapper_cls field wrapper class.
+     * @param bool $visible Current indicator status.
+     *
+     * @return mixed indicator results.
+     */
+    public function hook_get_indicator( $def_value, $indi_type = 'field', $wrapper_cls = '', $visible = true ) {
+        unset( $def_value );
+        return MainWP_Settings_Indicator::get_indicator( $indi_type, $wrapper_cls, $visible );
     }
 }

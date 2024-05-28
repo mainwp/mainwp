@@ -1041,7 +1041,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_options_enableLegacyBackupFeature" id="mainwp_options_enableLegacyBackupFeature" <?php echo 0 === (int) $enableLegacyBackupFeature ? '' : 'checked="true"'; ?>/>
             </div>
         </div>
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-valuevalue="1">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_backupsOnServer', (int) $backupsOnServer );
@@ -1053,7 +1053,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-valuevalue="1">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_backupOnExternalSources', (int) $backupOnExternalSources );
@@ -1065,7 +1065,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-valuevalue="tar.gz">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="tar.gz">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_archiveFormat', $archiveFormat );
@@ -1103,7 +1103,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             echo 'style="display: none;"';
         }
         ?>
-        default-indi-valuevalue="1"
+        default-indi-value="1"
         >
             <label class="six wide column middle aligned">
             <?php
@@ -1121,7 +1121,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             echo 'style="display: none;"';
         }
         ?>
-        default-indi-valuevalue="155" >
+        default-indi-value="155" >
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_maximumFileDescriptors', (int) $maximumFileDescriptors );
@@ -1133,7 +1133,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" default-indi-valuevalue="1" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> <?php
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" default-indi-value="1" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> <?php
         if ( empty( $hidden_elems ) && 'zip' !== $archiveFormat ) {
             echo 'style="display: none;"';
         }
@@ -1150,7 +1150,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-valuevalue="1">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_notificationOnBackupFail', (int) $notificationOnBackupFail );
@@ -1161,7 +1161,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 <input type="checkbox" class="settings-field-value-change-handler" inverted-value="1" name="mainwp_options_notificationOnBackupFail" id="mainwp_options_notificationOnBackupFail" value="1" <?php echo $notificationOnBackupFail ? 'checked="checked"' : ''; ?>/>
             </div>
         </div>
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-valuevalue="1">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_notificationOnBackupStart', (int) $notificationOnBackupStart );
@@ -1173,7 +1173,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-valuevalue="1">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_chunkedBackupTasks', (int) $chunkedBackupTasks );

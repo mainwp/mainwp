@@ -605,7 +605,6 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
         MainWP_Utility::end_session();
 
-        $what = null;
         if ( 'db' === $pType ) {
             MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $pUrl, 'fdl' ), $pFile, false, $website->http_user, $website->http_pass );
         }
@@ -633,7 +632,6 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     public static function backup_delete_file( $pSiteId, $pFile ) {
         $website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
         MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $pFile ) );
-
         return true;
     }
 
@@ -944,11 +942,11 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             throw new MainWP_Exception( 'Database backup failed.' );
         } elseif ( 'full' === $pType && ! $information['full'] ) {
             throw new MainWP_Exception( 'Full backup failed.' );
-        } elseif ( isset( $information['db'] ) ) {
-            if ( false !== $information['db'] ) {
+        } elseif ( isset( $information['db'] ) || isset( $information['full'] ) ) {
+            if ( ! empty( $information['db'] ) ) {
                 $backup_result['url']  = $information['db'];
                 $backup_result['type'] = 'db';
-            } elseif ( false !== $information['full'] ) {
+            } elseif ( ! empty( $information['full'] ) ) {
                 $backup_result['url']  = $information['full'];
                 $backup_result['type'] = 'full';
             }

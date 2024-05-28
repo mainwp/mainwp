@@ -319,7 +319,7 @@ let mainwp_fetch_users = function () {
                     .nodes()
                     .to$().find('td.check-column .ui.checkbox').checkbox('set unchecked');
             }
-        }).on('columns-reordered', function (e, settings, details) {
+        }).on('columns-reordered', function () {
             console.log('columns-reordered');
             setTimeout(() => {
                 jQuery('#mainwp_users_wrap_table table .ui.dropdown').dropdown();

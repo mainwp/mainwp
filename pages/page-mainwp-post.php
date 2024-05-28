@@ -2000,6 +2000,13 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             return;
         }
 
+        // to support custom render bulkpost.
+        $custom_posting = apply_filters( 'mainwp_custom_render_bulkpost', false, $post_id, $post_type );
+
+        if ( $custom_posting ) {
+            return;
+        }
+
         $post_ID = $post->ID;
 
         /**

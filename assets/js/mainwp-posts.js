@@ -615,7 +615,7 @@ let mainwp_fetch_posts_done = function () {
                 .nodes()
                 .to$().find('td.check-column .ui.checkbox').checkbox('set unchecked');
         }
-    }).on('columns-reordered', function (e, settings, details) {
+    }).on('columns-reordered', function () {
         console.log('columns-reordered');
         setTimeout(() => {
             jQuery('#mainwp-posts-table-wrapper table .ui.dropdown').dropdown();

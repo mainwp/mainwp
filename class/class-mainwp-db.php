@@ -234,8 +234,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         }
         $qry = 'SELECT COUNT(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp WHERE 1 ' . $where;
 
-        $total_sites = $this->wpdb->get_var( $qry );
-        return $total_sites;
+        return $this->wpdb->get_var( $qry );
     }
 
 

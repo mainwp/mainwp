@@ -147,8 +147,8 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                                 <div class="item" data-value="noclients"><?php esc_html_e( 'No Client', 'mainwp' ); ?></div>
                             </div>
                         </div>
-                        <button onclick="mainwp_screenshots_sites_filter()" class="ui tiny basic button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
-                        <button onclick="mainwp_screenshots_sites_reset_filters()" class="ui tiny green button"><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
+                        <button onclick="mainwp_screenshots_sites_filter()" class="ui tiny green button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
+                        <button onclick="mainwp_screenshots_sites_reset_filters()" class="ui tiny button"><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
                 </div>
                 <?php
                 MainWP_Manage_Sites_Filter_Segment::get_instance()->render_filters_segment();

@@ -1381,8 +1381,8 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                         </div>
                     </div>
                     <div class="three wide middle aligned right aligned column">
-                        <button onclick="mainwp_module_cost_tracker_manage_costs_filter()"  class="ui mini basic button"><?php esc_html_e( 'Filter Costs', 'mainwp' ); ?></button>
-                        <button onclick="mainwp_module_cost_tracker_manage_costs_reset_filters()" id="mainwp_module_cost_tracker_manage_costs_reset_filters" class="ui mini green button" <?php echo $empty_filter ? 'disabled' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
+                        <button onclick="mainwp_module_cost_tracker_manage_costs_filter()"  class="ui mini green button"><?php esc_html_e( 'Filter Costs', 'mainwp' ); ?></button>
+                        <button onclick="mainwp_module_cost_tracker_manage_costs_reset_filters()" id="mainwp_module_cost_tracker_manage_costs_reset_filters" class="ui mini button" <?php echo $empty_filter ? 'disabled' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
                     </div>
                 </div>
                 <div class="three wide top aligned right aligned column">

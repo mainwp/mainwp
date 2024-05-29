@@ -689,8 +689,8 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
                     </div>
                 </div>
                 <div class="three wide middle aligned left aligned column">
-                    <button onclick="mainwp_module_log_overview_content_filter()" class="ui mini basic button"><?php esc_html_e( 'Filter Data', 'mainwp' ); ?></button>
-                    <button onclick="mainwp_module_log_overview_content_reset_filters(this)" class="ui mini green button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
+                    <button onclick="mainwp_module_log_overview_content_filter()" class="ui mini green button"><?php esc_html_e( 'Filter Data', 'mainwp' ); ?></button>
+                    <button onclick="mainwp_module_log_overview_content_reset_filters(this)" class="ui mini button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
                 </div>
             </div>
             <?php Log_Events_Filter_Segment::get_instance()->render_filters_segment(); ?>

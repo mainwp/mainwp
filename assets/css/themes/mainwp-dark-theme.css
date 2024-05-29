@@ -744,6 +744,10 @@ body.mainwp-ui.mainwp-custom-theme,
   border-color: var(--border-color) !important;
 }
 
+.mainwp-ui.mainwp-custom-theme .ui.dropdown .menu .item:hover {
+  color: var(--background-color-3);
+}
+
 .mainwp-ui.mainwp-custom-theme #mainwp-first-level-navigation {
   background-color: var(--background-color-1);
 }

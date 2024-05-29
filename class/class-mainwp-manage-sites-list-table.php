@@ -553,8 +553,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                 <div class="item" data-value="noclients"><?php esc_html_e( 'No Client', 'mainwp' ); ?></div>
                             </div>
                         </div>
-                        <button onclick="mainwp_manage_sites_filter()" class="ui mini basic button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
-                        <button onclick="mainwp_manage_sites_reset_filters(this)" id="mainwp_manage_sites_reset_filters" class="ui mini green button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
+                        <button onclick="mainwp_manage_sites_filter()" class="ui mini green button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
+                        <button onclick="mainwp_manage_sites_reset_filters(this)" id="mainwp_manage_sites_reset_filters" class="ui mini button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
                 </div>
                 <?php
                 MainWP_Manage_Sites_Filter_Segment::get_instance()->render_filters_segment();

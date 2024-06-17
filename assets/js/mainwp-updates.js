@@ -1834,7 +1834,7 @@ let updatesoverview_upgrade_int_flow = function (params) {
             url: ajaxurl,
             data: data,
             success: function (pWebsiteId, pSlug, pPluginSlugToUpgrade, pWordpressUpgrade, pPluginDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone) { // NOSONAR - compatible.
-                return function (response) {
+                return function (response) { // NOSONAR - complex ok.
                     let slugParts = pSlug.split(',');
                     for (let sid of slugParts) {
                         let result;
@@ -1948,7 +1948,7 @@ let updatesoverview_upgrade_int_flow = function (params) {
             url: ajaxurl,
             data: data,
             success: function (pWebsiteId, pThemeSlugToUpgrade, pSlug, pWordpressUpgrade, pThemeDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone) { // NOSONAR - compatible.
-                return function (response) {
+                return function (response) { // NOSONAR - complex ok.
                     let slugParts = pSlug.split(',');
                     for (let sid of slugParts) {
                         let result;
@@ -3040,7 +3040,7 @@ let updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck
                     type: pWhat,
                     slug: newList.join(',')
                 });
-                jQuery.post(ajaxurl, data, function (response) {
+                jQuery.post(ajaxurl, data, function (response) { //NOSONAR - complex ok.
                     let success = false;
                     let extErr = '';
                     if (response.error) {

@@ -4459,7 +4459,7 @@ jQuery( document ).ready( function () {
   jQuery('.dt-scroll-head').css({
     'overflow-x':'auto'
   }).on('scroll', function(e){
-    var scrollBody = jQuery(this).parent().find('.dt-scroll-body').get(0);
+    let scrollBody = jQuery(this).parent().find('.dt-scroll-body').get(0);
     scrollBody.scrollLeft = this.scrollLeft;
     jQuery(scrollBody).trigger('scroll');
   });

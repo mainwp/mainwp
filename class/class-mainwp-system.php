@@ -27,7 +27,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '5.1-RC1'; // NOSONAR.
+    public static $version = '5.1-RC2'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -141,15 +141,15 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $currentVersion        = get_option( 'mainwp_plugin_version' );
 
             if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '4.0', '<' ) && version_compare( $this->current_version, '4.0', '>=' ) ) {
-                add_action( 'mainwp_before_header', array( MainWP_System_View::get_class_name(), 'mainwp_4_update_notice' ) );
+                add_action( 'mainwp_after_header', array( MainWP_System_View::get_class_name(), 'mainwp_4_update_notice' ) );
             }
 
             if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '5.0', '<' ) && version_compare( $this->current_version, '5.0', '>=' ) ) {
-                add_action( 'mainwp_before_header', array( MainWP_System_View::get_class_name(), 'mainwp_ver5_update_notice' ) );
+                add_action( 'mainwp_after_header', array( MainWP_System_View::get_class_name(), 'mainwp_ver5_update_notice' ) );
             }
 
             if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '5.0.2', '<' ) && version_compare( $this->current_version, '5.0.2', '>=' ) ) {
-                add_action( 'mainwp_before_header', array( MainWP_System_View::get_class_name(), 'mainwp_ver502_update_notice' ) );
+                add_action( 'mainwp_after_header', array( MainWP_System_View::get_class_name(), 'mainwp_ver502_update_notice' ) );
             }
 
             MainWP_Utility::update_option( 'mainwp_plugin_version', $this->current_version );
@@ -232,7 +232,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         MainWP_System_Cron_Jobs::instance()->init_cron_jobs();
 
-        add_action( 'mainwp_before_header', array( MainWP_System_View::get_class_name(), 'admin_notices' ) );
+        add_action( 'mainwp_after_header', array( MainWP_System_View::get_class_name(), 'admin_notices' ) );
         add_action( 'admin_notices', array( MainWP_System_View::get_class_name(), 'wp_admin_notices' ) );
         add_action( 'wp_mail_failed', array( &$this, 'wp_mail_failed' ) );
 
@@ -775,7 +775,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $mainwpUseExternalPrimaryBackupsMethod = apply_filters( 'mainwp_getprimarybackup_activated', $return );
         }
 
-        add_action( 'mainwp_before_header', array( MainWP_System_View::get_class_name(), 'mainwp_warning_notice' ) );
+        add_action( 'mainwp_after_header', array( MainWP_System_View::get_class_name(), 'mainwp_warning_notice' ) );
 
         MainWP_Post_Handler::instance()->init();
         MainWP_Post_Site_Handler::instance()->init();
@@ -815,6 +815,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             'maximumInstallUpdateRequests'     => ( get_option( 'mainwp_maximumInstallUpdateRequests' ) === false ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ),
             '_wpnonce'                         => wp_create_nonce( 'mainwp-admin-nonce' ),
             'demoMode'                         => MainWP_Demo_Handle::is_demo_mode() ? 1 : 0,
+            'roll_ui_icon'                     => MainWP_Updates_Helper::get_roll_icon( '', true ),
         );
         wp_localize_script( 'mainwp', 'mainwpParams', $mainwpParams );
 

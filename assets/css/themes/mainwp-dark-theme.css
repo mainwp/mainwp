@@ -135,11 +135,17 @@ body.mainwp-ui.mainwp-custom-theme,
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-top-header {
-  background: var(--background-color-1);
-  color: var(--font-color);
+  background: var(--background-color-1) !important;
+  color: var(--font-color) !important;
   border: 0px solid var(--border-color) !important;
 }
-
+.mainwp-ui.mainwp-custom-theme #mainwp-top-header .ui.icon.button:not(.red, .green) {
+  background: var(--background-color-3) !important;
+  -webkit-box-shadow: inset 2px 0px 0px 1px var(--background-color-4) !important;
+  -moz-box-shadow: inset 0px 0px 0px 1px var(--background-color-4) !important;
+  box-shadow: inset 0px 0px 0px 1px var(--background-color-4) !important;
+  color: var(--grey-light-alt) !important;
+}
 .mainwp-ui.mainwp-custom-theme #mainwp-page-navigation-wrapper {
   background-color: var(--background-color-3);
   padding: 0 !important;
@@ -322,17 +328,6 @@ body.mainwp-ui.mainwp-custom-theme,
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.definition.table>tbody>tr>td:first-child:not(.ignored) {
-  color: var(--font-color);
-}
-
-.mainwp-ui.mainwp-custom-theme .ui.pagination.menu {
-  background-color: var(--background-color-3);
-  border-color: var(--border-color);
-}
-
-.mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item {
-  background-color: var(--background-color-3);
-  border-color: var(--border-color);
   color: var(--font-color);
 }
 
@@ -718,6 +713,12 @@ body.mainwp-ui.mainwp-custom-theme,
   color: var(--font-color) !important;
 }
 
+
+.mainwp-ui.mainwp-custom-theme button.mainwp-sites-select-select-button,
+.mainwp-ui.mainwp-custom-theme button.mainwp-sites-select-deselect-button {
+  color: var(--font-button-color);
+}
+
 /* Invert Dimmer */
 
 .mainwp-ui.mainwp-custom-theme .ui.inverted.dimmer {
@@ -744,6 +745,8 @@ body.mainwp-ui.mainwp-custom-theme,
   border-color: var(--border-color) !important;
 }
 
+.mainwp-ui.mainwp-custom-theme .ui.dropdown .menu .item.active,
+.mainwp-ui.mainwp-custom-theme .ui.dropdown .menu .item.selected,
 .mainwp-ui.mainwp-custom-theme .ui.dropdown .menu .item:hover {
   color: var(--background-color-3);
 }
@@ -804,6 +807,22 @@ body.mainwp-ui.mainwp-custom-theme,
 
 .mainwp-ui.mainwp-custom-theme .mainwp-api-icon {
   color: var(--accent-color);
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.pagination.menu {
+  background-color: var(--background-color-3);
+  border-color: var(--border-color);
+}
+.mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item.disabled .page-link {
+  color: var(--font-light-color) !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item:hover,
+.mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item.active {
+  background: var(--accent-color);
+}
+.mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item:hover .page-link,
+.mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item.active .page-link {
+  color: var( --background-color-3 );
 }
 
 /* Invert Placeholder */

@@ -137,7 +137,7 @@ class Cost_Tracker_Settings {
             <?php MainWP_Settings_Indicator::render_not_default_indicator( 'cost_tracker_currency_selected', $selected_currency ); ?>
             <?php esc_html_e( 'Currency', 'mainwp' ); ?></label>
             <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select preferred currency.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                <select id="mainwp_module_cost_tracker_settings_currency" name="mainwp_module_cost_tracker_settings_currency" class="ui search selection dropdown settings-field-value-change-handler">
+                <select id="mainwp_module_cost_tracker_settings_currency" name="mainwp_module_cost_tracker_settings_currency" class="ui search selection dropdown settings-field-value-change-handler" aria-label="<?php esc_attr_e( 'Select preferred currency.', 'mainwp' ); ?>">
                     <?php foreach ( $currencies as $code => $name ) : ?>
                         <?php
                         $_select = '';
@@ -171,7 +171,7 @@ class Cost_Tracker_Settings {
             </label>
             <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Choose the position of the currency symbol: before or after the amount.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
                 <div class="ui selection dropdown">
-                    <input type="hidden" class="settings-field-value-change-handler" name="mainwp_module_cost_tracker_currency_format[currency_position]" value="<?php echo esc_attr( $currency_position ); ?>">
+                    <input type="hidden" class="settings-field-value-change-handler" aria-label="<?php esc_attr_e( 'Select preferred currency symbol position.', 'mainwp' ); ?>"  name="mainwp_module_cost_tracker_currency_format[currency_position]" value="<?php echo esc_attr( $currency_position ); ?>">
                     <i class="dropdown icon"></i>
                     <div class="default text"><?php echo esc_html__( 'Left', 'mainwp' ); ?></div>
                     <div class="menu">
@@ -198,7 +198,7 @@ class Cost_Tracker_Settings {
             ?>
             </label>
             <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select a separator for thousands to enhance number readability.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                <input type="text" class="regular-text settings-field-value-change-handler" name="mainwp_module_cost_tracker_currency_format[thousand_separator]" value="<?php echo esc_html( $thousand_separator ); ?>" />
+                <input type="text" class="regular-text settings-field-value-change-handler" aria-label="<?php esc_attr_e( 'Select a separator for thousands.', 'mainwp' ); ?>"  name="mainwp_module_cost_tracker_currency_format[thousand_separator]" value="<?php echo esc_html( $thousand_separator ); ?>" />
             </div>
         </div>
         <?php
@@ -212,7 +212,7 @@ class Cost_Tracker_Settings {
             ?>
             </label>
             <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Choose a symbol to separate decimal portions in numbers.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                <input type="text" name="mainwp_module_cost_tracker_currency_format[decimal_separator]" value="<?php echo esc_html( $decimal_separator ); ?>" class="settings-field-value-change-handler regular-text"/>
+                <input type="text" aria-label="<?php esc_attr_e( 'Choose a symbol to separate decimal portions in numbers.', 'mainwp' ); ?>" name="mainwp_module_cost_tracker_currency_format[decimal_separator]" value="<?php echo esc_html( $decimal_separator ); ?>" class="settings-field-value-change-handler regular-text"/>
             </div>
         </div>
         <?php
@@ -226,7 +226,7 @@ class Cost_Tracker_Settings {
             ?>
             </label>
             <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Set the number of decimal places for numerical values.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-            <input type="number" class="regular-text small-text settings-field-value-change-handler" name="mainwp_module_cost_tracker_currency_format[decimals]" id="mainwp_module_cost_tracker_currency_format[decimals]" placeholder="" min="1" max="8" step="1" value="<?php echo intval( $decimals ); ?>">
+            <input type="number" aria-label="<?php esc_attr_e( 'Set the number of decimal places for numerical values.', 'mainwp' ); ?>" class="regular-text small-text settings-field-value-change-handler" name="mainwp_module_cost_tracker_currency_format[decimals]" id="mainwp_module_cost_tracker_currency_format[decimals]" placeholder="" min="1" max="8" step="1" value="<?php echo intval( $decimals ); ?>">
             </div>
         </div>
         <div class="ui grid field settings-field-indicator-wrapper default-product-categories settings-field-indicator-cost-settings ">

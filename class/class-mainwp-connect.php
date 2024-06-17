@@ -1736,6 +1736,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
         }
         curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
+        curl_setopt( $ch, CURLOPT_HEADER, false );
         curl_setopt( $ch, CURLOPT_FILE, $fp );
 
         curl_setopt( $ch, CURLOPT_USERAGENT, $agent );

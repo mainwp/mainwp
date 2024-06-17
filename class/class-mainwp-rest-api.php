@@ -2103,7 +2103,7 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
                     $site_id = $request['site_id'];
 
                     // get data.
-                    $website     = MainWP_DB::instance()->get_website_by_id( $site_id );
+                    $website     = MainWP_DB::instance()->get_website_by_id( $site_id, false, array( 'rollback_updates_data' ) );
                     $wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
                     $wp_upgrades = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
 
@@ -2116,6 +2116,15 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
                         'themes'      => $theme_upgrades,
                         'translation' => $translation_upgrades,
                     );
+
+                    $roll_data = MainWP_Updates_Helper::instance()->get_roll_items_updates_of_site( $website );
+
+                    if ( ! empty( $roll_data['plugins'] ) ) {
+                        $data['rollback_plugins'] = $roll_data['plugins'];
+                    }
+                    if ( ! empty( $roll_data['themes'] ) ) {
+                        $data['rollback_themes'] = $roll_data['themes'];
+                    }
 
                     $response = new \WP_REST_Response( $data );
                     $response->set_status( 200 );
@@ -2165,7 +2174,7 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
                     $site_id = $request['site_id'];
 
                     // get data.
-                    $website      = MainWP_DB::instance()->get_website_by_id( $site_id );
+                    $website      = MainWP_DB::instance()->get_website_by_id( $site_id, false, array( 'rollback_updates_data' ) );
                     $plugins      = json_decode( $website->plugin_upgrades, true );
                     $themes       = json_decode( $website->theme_upgrades, true );
                     $translations = json_decode( $website->translation_upgrades, true );
@@ -2185,6 +2194,15 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
                         'themes'       => count( $themes ),
                         'translations' => count( $translations ),
                     );
+
+                    $roll_data = MainWP_Updates_Helper::instance()->get_roll_items_updates_of_site( $website );
+
+                    if ( ! empty( $roll_data['plugins'] ) ) {
+                        $data['rollback_plugins'] = $roll_data['plugins'];
+                    }
+                    if ( ! empty( $roll_data['themes'] ) ) {
+                        $data['rollback_themes'] = $roll_data['themes'];
+                    }
 
                     $response = new \WP_REST_Response( $data );
                     $response->set_status( 200 );
@@ -2962,7 +2980,7 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
                     foreach ( $plugin_upgrades as $slug => $plugin ) {
                         $slugs[] = $slug;
                     }
-                    MainWP_Connect::fetch_url_authed(
+                    $information = MainWP_Connect::fetch_url_authed(
                         $website,
                         'upgradeplugintheme',
                         array(
@@ -2971,8 +2989,15 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
                         )
                     );
 
-                    // do common process response.
-                    $response = $this->mainwp_run_process_success();
+                    $result = MainWP_Rest_Api_Helper::instance()->handle_site_update_item( $site_id, 'plugin', $information );
+
+                    $data = array(
+                        'SUCCESS' => 'Process ran.', // to compatible.
+                        'data'    => $result,
+                    );
+
+                    $response = new \WP_REST_Response( $data );
+                    $response->set_status( 200 );
 
                 } else {
                     // throw invalid data error.
@@ -3025,7 +3050,7 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
                     foreach ( $theme_upgrades as $slug => $theme ) {
                         $slugs[] = $slug;
                     }
-                    MainWP_Connect::fetch_url_authed(
+                    $information = MainWP_Connect::fetch_url_authed(
                         $website,
                         'upgradeplugintheme',
                         array(
@@ -3034,8 +3059,15 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
                         )
                     );
 
-                    // do common process response.
-                    $response = $this->mainwp_run_process_success();
+                    $result = MainWP_Rest_Api_Helper::instance()->handle_site_update_item( $site_id, 'theme', $information );
+
+                    $data = array(
+                        'SUCCESS' => 'Process ran.', // to compatible.
+                        'data'    => $result,
+                    );
+
+                    $response = new \WP_REST_Response( $data );
+                    $response->set_status( 200 );
 
                 } else {
                     // throw invalid data error.
@@ -3147,8 +3179,8 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
                     $type    = $request['type'];
                     $slug    = $request['slug'];
 
-                    $website = MainWP_DB::instance()->get_website_by_id( $site_id );
-                    MainWP_Connect::fetch_url_authed(
+                    $website     = MainWP_DB::instance()->get_website_by_id( $site_id );
+                    $information = MainWP_Connect::fetch_url_authed(
                         $website,
                         'upgradeplugintheme',
                         array(
@@ -3157,9 +3189,15 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
                         )
                     );
 
-                    // do common process response.
-                    $response = $this->mainwp_run_process_success();
+                    $result = MainWP_Rest_Api_Helper::instance()->handle_site_update_item( $site_id, $type, $information );
 
+                    $data = array(
+                        'SUCCESS' => 'Process ran.', // to compatible.
+                        'data'    => $result,
+                    );
+
+                    $response = new \WP_REST_Response( $data );
+                    $response->set_status( 200 );
                 } else {
                     // throw invalid data error.
                     $response = $this->mainwp_invalid_data_error();
@@ -3530,7 +3568,7 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
 
             $all_updates = array();
 
-            $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( true ) );
+            $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( true, null, 'wp.url', false, false, null, false, array( 'rollback_updates_data' ) ) );
 
             while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
                 $wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
@@ -3546,6 +3584,13 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
                     'translation' => $translation_upgrades,
                     'groups'      => $website->wpgroups,
                 );
+                $roll_data                   = MainWP_Updates_Helper::instance()->get_roll_items_updates_of_site( $website );
+                if ( ! empty( $roll_data['plugins'] ) ) {
+                    $all_updates[ $website->id ]['rollback_plugins'] = $roll_data['plugins'];
+                }
+                if ( ! empty( $roll_data['themes'] ) ) {
+                    $all_updates[ $website->id ]['rollback_themes'] = $roll_data['themes'];
+                }
             }
             MainWP_DB::free_result( $websites );
 

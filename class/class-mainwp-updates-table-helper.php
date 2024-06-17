@@ -179,8 +179,9 @@ class MainWP_Updates_Table_Helper { // phpcs:ignore Generic.Classes.OpeningBrace
      *
      * @param mixed $value Value of column.
      * @param mixed $column_name Name of column.
+     * @param array $others others data.
      */
-    public function column_default( $value, $column_name ) {
+    public function column_default( $value, $column_name, $others = array() ) {
         $current_wpid = MainWP_System_Utility::get_current_wpid();
         $class        = '';
         if ( 'version' === $column_name || 'latest' === $column_name ) {
@@ -195,6 +196,10 @@ class MainWP_Updates_Table_Helper { // phpcs:ignore Generic.Classes.OpeningBrace
         }
         $column_content .= $value;
 
+        if ( 'latest' === $column_name && ! empty( $others['roll_info'] ) ) {
+            $column_content = $others['roll_info'] . ' ' . $column_content;
+        }
+
         return '<td class="' . $class . '">' . $column_content . '</td>';
     }
 
@@ -203,10 +208,11 @@ class MainWP_Updates_Table_Helper { // phpcs:ignore Generic.Classes.OpeningBrace
      *
      * @param array  $columns Array of columns.
      * @param object $website The website.
+     * @param object $others others data.
      *
      * @return array Row columns.
      */
-    public function render_columns( $columns, $website ) {
+    public function render_columns( $columns, $website, $others = array() ) {
         $row_columns            = apply_filters( 'mainwp_updates_table_row_columns', $columns, $website, $this->type, $this->view_per );
         list( $columns_header ) = $this->get_column_info();
         foreach ( $columns_header as $col => $title ) {
@@ -215,7 +221,7 @@ class MainWP_Updates_Table_Helper { // phpcs:ignore Generic.Classes.OpeningBrace
                 if ( method_exists( $this, 'column_' . $col ) ) {
                     echo call_user_func( array( &$this, 'column_' . $col ), $value ); // phpcs:ignore WordPress.Security.EscapeOutput
                 } else {
-                    echo $this->column_default( $value, $col ); // phpcs:ignore WordPress.Security.EscapeOutput
+                    echo $this->column_default( $value, $col, $others ); // phpcs:ignore WordPress.Security.EscapeOutput
                 }
             }
         }

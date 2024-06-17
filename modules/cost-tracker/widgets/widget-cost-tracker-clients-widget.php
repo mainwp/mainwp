@@ -227,7 +227,7 @@ class Cost_Tracker_Clients_Widget {
             case 'actions':
                 ob_start();
                 ?>
-                <div class="ui right pointing dropdown icon mini basic green button not-auto-init" style="z-index: 999;">
+                <div class="ui right pointing dropdown icon mini basic green button not-auto-init" style="z-index: 99;">
                         <i class="ellipsis horizontal icon"></i>
                         <div class="menu">
                             <a class="item widget-row-cost-tracker-edit-cost" href="admin.php?page=CostTrackerAdd&id=<?php echo intval( $item->id ); ?>"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>

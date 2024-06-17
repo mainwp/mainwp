@@ -162,7 +162,7 @@ let managesites_update_pluginsthemes_done = function (pType) {
                 }
             }
 
-            if (websitesUpdateError <= 0 && websitesEveryError <= 0) {
+            if (websitesUpdateError <= 0 && websitesEveryError <= 0 && mainwpVars.errorCount <= 0) {
                 mainwpPopup('#mainwp-sync-sites-modal').close(true);
             } else {
                 let message = websitesUpdateError + ' Site' + (websitesUpdateError > 1 ? 's' : '') + ' Timed / Errored out. <br/><span class="mainwp-small">(There was an error syncing some of your sites. <a href="https://kb.mainwp.com/docs/potential-issues/">Please check this help doc for possible solutions.</a>)</span>'; // NOSONAR - noopener - open safe.
@@ -188,12 +188,38 @@ let managesites_update_pluginsthemes_next_int = function (websiteId, data, error
         success: function (pWebsiteId, pData, pErrors) {
             return function (response) {
                 if (response.error) {
+                    mainwpVars.errorCount++;
                     dashboard_update_site_status(pWebsiteId, getErrorMessageInfo(response.error, 'ui'));
                     websitesUpdateError++;
                 } else {
-                    dashboard_update_site_status(websiteId, '<i class="green check icon"></i>', true);
-                    // to support reduce update plugins/themes
-                    if (response.chunk_slugs) {
+                    let res_error = response?.result_error;
+                    let isError = false;
+                    if (res_error) {
+
+                        let _error = '';
+                        let has_roll_error = false;
+                        for (let e in res_error) {
+                            let ro_error = mainwp_updates_get_rollback_msg(res_error[e]);
+                            if (ro_error) {
+                                _error += ro_error + '<br/>';
+                                has_roll_error = true;
+                            } else {
+                                _error += res_error[e] + '<br/>';
+                            }
+                            mainwpVars.errorCount++;
+                        }
+
+                        if (_error) {
+                            isError = true;
+                            let _icon = '<i class="red times icon"></i>';
+                            if (has_roll_error) {
+                                _icon = mainwpParams.roll_ui_icon;
+                            }
+                            dashboard_update_site_status(pWebsiteId, '<span class="mainwp-html-popup" data-position="left center" data-html="">' + _icon + '</span>', false);
+                            mainwp_init_html_popup('.sync-site-status[siteid="' + pWebsiteId + '"] .mainwp-html-popup', _error);
+                        }
+
+                    } else if (response.chunk_slugs) { // to support reduce update plugins/themes
                         let msg = '<i class="sync alternate loading icon"></i>';
                         _tempVal++;
                         if (_tempVal % 2)
@@ -202,7 +228,9 @@ let managesites_update_pluginsthemes_next_int = function (websiteId, data, error
                         pData['chunk_slugs'] = response.chunk_slugs;
                         managesites_update_pluginsthemes_next_int(pWebsiteId, pData, pErrors);
                         return;
-                    } else {
+                    }
+
+                    if (!isError) {
                         dashboard_update_site_status(pWebsiteId, '<i class="green check icon"></i>', true);
                     }
                 }

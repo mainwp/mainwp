@@ -280,7 +280,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     $favi_url  = MainWP_Connect::get_favico_url( $website );
                     $site_icon = MainWP_Manage_Sites::get_instance()->get_site_icon_display( $website->cust_site_icon_info, $favi_url );
                 }
-                $pagetitle = $site_icon . '<div class="content"><div class="ui pointing dropdown"><div class="text">' . $website->name . '</div><i class="dropdown icon"></i><div class="menu">' . $dropdown . '</div></div><div class="sub header"><a href="' . $website->url . '" target="_blank" style="color:#666!important;font-weight:normal!important;">' . MainWP_Utility::get_nice_url( $website->url ) . '</a> <a href="' . MainWP_Site_Open::get_open_site_url( $website->id, '', false ) . '" target="_blank" class="open_newwindow_wpadmin" style="color:#666!important;font-weight:normal!important;"><i class="sign in icon" style="color:#666!important;font-weight:normal!important;"></i></a></div></div>';
+                $pagetitle = $site_icon . '<div class="content"><div class="ui pointing dropdown"><div class="text">' . $website->name . '</div><i class="dropdown icon"></i><div class="menu">' . $dropdown . '</div></div><div class="sub header"><a href="' . $website->url . '" target="_blank" style="font-weight:normal!important;">' . MainWP_Utility::get_nice_url( $website->url ) . '</a> <a href="' . MainWP_Site_Open::get_open_site_url( $website->id, '', false ) . '" target="_blank" class="open_newwindow_wpadmin" style="font-weight:normal!important;"><i class="sign in icon" style="font-weight:normal!important;"></i></a></div></div>';
             }
         }
 

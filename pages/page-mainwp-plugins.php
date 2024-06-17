@@ -422,17 +422,16 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <div class="mainwp-main-content">
                 <div class="ui mini form mainwp-actions-bar">
                     <div class="ui stackable grid">
-                        <div class="ui three column row">
+                        <div class="ui two column row">
                             <div class="column" >
-                                <div id="mainwp-plugins-bulk-actions-wapper">
+                                <span id="mainwp-plugins-bulk-actions-wapper" style="margin-right:1rem">
                                     <?php
                                     if ( is_array( $cachedResult ) && isset( $cachedResult['bulk_actions'] ) ) {
                                         echo $cachedResult['bulk_actions']; // phpcs:ignore WordPress.Security.EscapeOutput
-                                    } else {
-                                        MainWP_UI::render_empty_bulk_actions();
                                     }
                                     ?>
-                                </div>
+                                </span>
+                                <button id="mainwp-install-to-selected-sites" class="ui mini green basic button" style="display: none; "><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
                                 <?php
                                 /**
                                  * Action: mainwp_plugins_actions_bar_left
@@ -444,13 +443,9 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 do_action( 'mainwp_plugins_actions_bar_left' );
                                 ?>
                             </div>
-                            <div class="right aligned column" >
-                                <?php
-                                static::render_select_manage_view();
-                                ?>
-                            </div>
                             <div class="right aligned column">
-                                <button id="mainwp-install-to-selected-sites" class="ui mini green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
+                                <?php static::render_select_manage_view(); ?>
+                                
                                 <?php
                                 /**
                                  * Action: mainwp_plugins_actions_bar_right
@@ -730,10 +725,12 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $output->plugins           = array();
         $output->plugins_installed = array();
         $output->status            = $status;
+        $output->roll_items        = array();
         $error_results             = '';
 
         $data_fields   = MainWP_System_Utility::get_default_map_site_fields();
         $data_fields[] = 'plugins';
+        $data_fields[] = 'rollback_updates_data';
 
         if ( 1 === (int) get_option( 'mainwp_optimize', 1 ) || MainWP_Demo_Handle::is_demo_mode() ) {
 
@@ -743,7 +740,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( ! empty( $sites ) ) {
                 foreach ( $sites as $v ) {
                     if ( MainWP_Utility::ctype_digit( $v ) ) {
-                        $website          = MainWP_DB::instance()->get_website_by_id( $v );
+                        $website          = MainWP_DB::instance()->get_website_by_id( $v, false, array( 'rollback_updates_data' ) );
                         $allPlugins       = json_decode( $website->plugins, true );
                         $_count           = count( $allPlugins );
                         $_count_installed = 0;
@@ -780,6 +777,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 $output->plugins_installed[] = $plugin;
                             }
                         }
+                        $output->roll_items[ $website->id ] = MainWP_Updates_Helper::get_roll_update_plugintheme_items( 'plugin', $website->rollback_updates_data );
                     }
                 }
             }
@@ -787,7 +785,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( '' !== $groups ) {
                 foreach ( $groups as $v ) {
                     if ( MainWP_Utility::ctype_digit( $v ) ) {
-                        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
+                        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v, false, 'wp.url', false, false, null, null, array( 'extra_view' => array( 'site_info', 'rollback_updates_data' ) ) ) );
                         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
                             if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
                                 continue;
@@ -828,6 +826,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                     $output->plugins_installed[] = $plugin;
                                 }
                             }
+                            $output->roll_items[ $website->id ] = MainWP_Updates_Helper::get_roll_update_plugintheme_items( 'plugin', $website->rollback_updates_data );
                         }
                         MainWP_DB::free_result( $websites );
                     }
@@ -839,6 +838,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     $clients,
                     array(
                         'select_data' => $data_fields,
+                        'extra_view'  => array( 'rollback_updates_data' ),
                     )
                 );
                 if ( $websites ) {
@@ -883,6 +883,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 $output->plugins_installed[] = $plugin;
                             }
                         }
+                        $output->roll_items[ $website->id ] = MainWP_Updates_Helper::get_roll_update_plugintheme_items( 'plugin', $website->rollback_updates_data );
                     }
                 }
             }
@@ -892,7 +893,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( '' !== $sites ) {
                 foreach ( $sites as $v ) {
                     if ( MainWP_Utility::ctype_digit( $v ) ) {
-                        $website = MainWP_DB::instance()->get_website_by_id( $v );
+                        $website = MainWP_DB::instance()->get_website_by_id( $v, false, array( 'rollback_updates_data' ) );
 
                         if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
                             continue;
@@ -909,7 +910,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( '' !== $groups ) {
                 foreach ( $groups as $v ) {
                     if ( MainWP_Utility::ctype_digit( $v ) ) {
-                        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
+                        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v, false, 'wp.url', false, false, null, null, array( 'extra_view' => array( 'site_info', 'rollback_updates_data' ) ) ) );
                         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
                             if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
                                 continue;
@@ -929,6 +930,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     $clients,
                     array(
                         'select_data' => $data_fields,
+                        'extra_view'  => array( 'rollback_updates_data' ),
                     )
                 );
                 if ( $websites ) {
@@ -985,9 +987,9 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $view_mode = static::get_manage_view();
 
-        $bulkActions = static::render_bulk_actions( $status );
-
-        $plugins_list = array();
+        $bulkActions     = static::render_bulk_actions( $status );
+        $roll_items_list = array();
+        $plugins_list    = array();
 
         ob_start();
 
@@ -1005,15 +1007,21 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 <div class="ui message yellow"><?php esc_html_e( 'No websites found.', 'mainwp' ); ?></div>
                 <?php
             } else {
-                $plugins_list = $output->plugins_installed;
-                $view_mode    = MAINWP_VIEW_PER_SITE;
+                $plugins_list    = $output->plugins_installed;
+                $roll_items_list = ! empty( $output->roll_items ) ? $output->roll_items : array();
+                $view_mode       = MAINWP_VIEW_PER_SITE;
             }
         } elseif ( empty( $output->plugins ) ) {
             ?>
             <div class="ui message yellow"><?php esc_html_e( 'No plugins found.', 'mainwp' ); ?></div>
             <?php
         } else {
-            $plugins_list = $output->plugins;
+            $plugins_list    = $output->plugins;
+            $roll_items_list = ! empty( $output->roll_items ) ? $output->roll_items : array();
+        }
+
+        if ( ! is_array( $roll_items_list ) ) {
+            $roll_items_list = array();
         }
 
         $sites              = array();
@@ -1052,9 +1060,9 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             ksort( $pluginsNameSites, SORT_STRING );
 
             if ( MAINWP_VIEW_PER_PLUGIN_THEME === (int) $view_mode ) {
-                static::render_manage_table( $sites, $pluginsSlug, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsNameSites, $pluginsRealVersion );
+                static::render_manage_table( $sites, $pluginsSlug, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsNameSites, $pluginsRealVersion, $roll_items_list );
             } else {
-                static::render_manage_per_site_table( $sites, $pluginsSlug, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsNameSites, $pluginsRealVersion );
+                static::render_manage_per_site_table( $sites, $pluginsSlug, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsNameSites, $pluginsRealVersion, $roll_items_list );
             }
             MainWP_Updates::render_plugin_details_modal();
             MainWP_UI::render_modal_upload_icon();
@@ -1189,8 +1197,9 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param array $pluginsName Plugin names array.
      * @param array $pluginsNameSites Plugin names with Sites array.
      * @param array $pluginsRealVersion Latest plugin release version.
+     * @param array $roll_list rool items list.
      */
-    public static function render_manage_per_site_table( $sites, $pluginsSlug = array(), $sitePlugins = array(), $pluginsMainWP = array(), $muPlugins = array(), $pluginsName = array(), $pluginsNameSites = array(), $pluginsRealVersion = array() ) { //phpcs:ignore -- NOSONAR - complex method.
+    public static function render_manage_per_site_table( $sites, $pluginsSlug = array(), $sitePlugins = array(), $pluginsMainWP = array(), $muPlugins = array(), $pluginsName = array(), $pluginsNameSites = array(), $pluginsRealVersion = array(), $roll_list = array() ) { //phpcs:ignore -- NOSONAR - complex method.
 
         $userExtension         = MainWP_DB_Common::instance()->get_user_extension();
         $decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
@@ -1206,7 +1215,8 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         foreach ( $sites as $site_id => $info ) {
 
             $plugin_upgrades = array();
-            $website         = MainWP_DB::instance()->get_website_by_id( $site_id );
+            $website         = MainWP_DB::instance()->get_website_by_id( $site_id, false, array( 'rollback_updates_data' ) );
+
             if ( $website && ! $website->is_ignorePluginUpdates ) {
                 $plugin_upgrades        = json_decode( $website->plugin_upgrades, true );
                 $decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
@@ -1368,11 +1378,17 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 <div class="three wide middle aligned column"><a class="open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>" target="_blank" ><strong><?php echo esc_html( $plugin_title ); ?></strong></a></div>
                                 <div class="one wide center aligned middle aligned column"><?php echo $plugin_status; //phpcs:ignore -- escaped. ?></div>
                                 <div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny basic green label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny basic grey label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
-                                <div class="one wide center aligned middle aligned column"><?php echo $plugin_mu ? '<span class="ui small label"><i class="exclamation yellow triangle icon"></i> Must Use</span>' : ''; ?></div>
+                                <div class="one wide center aligned middle aligned column"><?php echo $plugin_mu ? '<span class="ui small label"><i class="exclamation orange triangle icon"></i> MU</span>' : ''; ?></div>
                                 <div class="two wide center aligned middle aligned column current-version">
                                     <?php echo esc_html( $plugin_version ); ?>
                                     <?php if ( ! empty( $new_version ) ) : ?>
-                                    &rarr; <?php echo esc_html( $new_version ); ?>
+                                    &rarr;
+                                        <?php
+                                        if ( ! empty( $roll_list[ $site_id ][ $plugin_slug ][ $new_version ] ) ) {
+                                            echo MainWP_Updates_Helper::get_roll_msg( $roll_list[ $site_id ][ $plugin_slug ][ $new_version ], true, 'notice' ); //phpcs:ignore -- NOSONAR -- ok.
+                                        }
+                                        echo esc_html( $new_version );
+                                        ?>
                                     <?php endif; ?>
                                 </div>
                                 <div class="two wide right aligned middle aligned column update-column" updated="0">
@@ -1469,8 +1485,9 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param array $pluginsName Plugin names array.
      * @param array $pluginsNameSites Plugin names with Sites array.
      * @param array $pluginsRealVersion Latest plugin release version.
+     * @param array $roll_list rool items list.
      */
-    public static function render_manage_table( $sites, $pluginsSlug, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsNameSites, $pluginsRealVersion ) { //phpcs:ignore -- NOSONAR - complex method.
+    public static function render_manage_table( $sites, $pluginsSlug, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsNameSites, $pluginsRealVersion, $roll_list = array() ) { //phpcs:ignore -- NOSONAR - complex method.
 
         $userExtension         = MainWP_DB_Common::instance()->get_user_extension();
         $decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
@@ -1658,12 +1675,18 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                     <div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny basic green label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny basic grey label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
 
 
-                                    <div class="one wide center aligned middle aligned column"><?php echo $plugin_mu ? '<span class="ui small label"><i class="exclamation yellow triangle icon"></i> Must Use</span>' : ''; ?></div>
+                                    <div class="one wide center aligned middle aligned column"><?php echo $plugin_mu ? '<span class="ui small label"><i class="exclamation orange triangle icon"></i> MU</span>' : ''; ?></div>
 
                                     <div class="two wide center aligned middle aligned column current-version">
                                         <?php echo esc_html( $plugin_version ); ?>
                                         <?php if ( ! empty( $new_version ) ) : ?>
-                                        &rarr; <?php echo esc_html( $new_version ); ?>
+                                        &rarr;
+                                            <?php
+                                            if ( ! empty( $roll_list[ $site_id ][ $plugin_slug ][ $new_version ] ) ) {
+                                                echo MainWP_Updates_Helper::get_roll_msg( $roll_list[ $site_id ][ $plugin_slug ][ $new_version ], true, 'notice' ); //phpcs:ignore -- NOSONAR -- ok.
+                                            }
+                                            echo esc_html( $new_version );
+                                            ?>
                                         <?php endif; ?>
                                     </div>
                                     <div class="two wide right aligned middle aligned column update-column" updated="0">
@@ -1675,15 +1698,15 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                     <?php if ( ! $child_plugin ) : ?>
                                         <?php if ( $actived ) { ?>
                                             <?php if ( ! $plugin_mu && mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-                                                <span data-position="top right" data-tooltip="<?php echo esc_attr__( 'Deactivate ', 'mainwp' ) . esc_html( $plugin_title ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><a href="#" class="mainwp-manage-plugin-deactivate ui mini fluid button <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a></span>
+                                                <a href="#" class="mainwp-manage-plugin-deactivate ui mini fluid button <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
                                         <?php } ?>
                                     <?php } else { ?>
                                             <div class="ui mini fluid buttons">
                                             <?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-                                                <span data-position="top right" data-tooltip="<?php echo esc_attr__( 'Activate ', 'mainwp' ) . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><a href="#" class="mainwp-manage-plugin-activate ui green button <?php echo $is_demo ? 'disabled' : ''; ?>" ><?php esc_html_e( 'Activate', 'mainwp' ); ?></a></span>
+                                                <a href="#" class="mainwp-manage-plugin-activate ui green button <?php echo $is_demo ? 'disabled' : ''; ?>" ><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
                                         <?php } ?>
                                             <?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_plugins' ) ) { ?>
-                                                <span data-position="top right" data-tooltip="<?php echo esc_attr__( 'Delete ', 'mainwp' ) . ' ' . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr__( 'plugin from this child site.', 'mainwp' ); ?>" data-inverted=""><a href="#" class="mainwp-manage-plugin-delete ui button <?php echo $is_demo ? 'disabled' : ''; ?>" ><?php esc_html_e( 'Delete', 'mainwp' ); ?></a></span>
+                                                <a href="#" class="mainwp-manage-plugin-delete ui button <?php echo $is_demo ? 'disabled' : ''; ?>" ><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
                                         <?php } ?>
                                             </div>
                                     <?php } ?>

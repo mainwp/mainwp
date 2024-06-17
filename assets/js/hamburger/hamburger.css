@@ -31,9 +31,8 @@ By @betoayesa.
 	.hamburger {
 		width: 30px;
 		height: 30px;
-		position: absolute;
-		right: 30px;
-		top: 30px;
+		position: relative;
+		margin: 10px auto 0 auto;
 		cursor: pointer;
 		display: block;
 	}

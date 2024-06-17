@@ -313,7 +313,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                                 } else {
                                     ?>
                                 <div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item item ui <?php echo esc_html( $type ); ?> <?php echo $selected ? 'selected_sites_item_checked' : ''; ?>">
-                                    <input type="<?php echo esc_html( $type ); ?>" disabled="disabled"/>
+                                    <input type="<?php echo esc_html( $type ); ?>" disabled="disabled" id="selected_sites_<?php echo intval( $website->id ); ?>"/>
                                     <label for="selected_sites_<?php echo intval( $website->id ); ?>">
                                         <?php echo esc_html( stripslashes( $website->name ) ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
                                     </label>
@@ -521,11 +521,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
          * @since 4.0
          */
         $right = apply_filters( 'mainwp_header_right', $right );
-
-        if ( $show_menu ) {
-            MainWP_Menu::render_left_menu();
-            MainWP_Menu::render_mobile_menu();
-        }
 
         $sidebarPosition = get_user_option( 'mainwp_sidebarPosition' );
         if ( false === $sidebarPosition ) {
@@ -867,6 +862,72 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         <?php
         $wrap_class = isset( $params['wrap_class'] ) ? $params['wrap_class'] : '';
         ?>
+        <?php
+            /**
+             * Action: mainwp_before_header
+             *
+             * Fires before the MainWP header element.
+             *
+             * @param array $websites Array containing the child site data.
+             *
+             * @since 4.0
+             */
+            do_action( 'mainwp_before_header', $websites );
+        ?>
+            <div id="mainwp-top-header" class="ui native sticky">
+                <div class="ui grid">
+                    <div class="center aligned middle aligned column" style="width:72px!important;padding:0!important;">
+                        <a href="
+                            <?php
+                            /**
+                             * Filter: mainwp_menu_logo_href
+                             *
+                             * Filters the Logo link.
+                             *
+                             * @since 4.1.4
+                             */
+                            echo esc_url( apply_filters( 'mainwp_menu_logo_href', admin_url( 'admin.php?page=mainwp_tab' ) ) );
+                            ?>
+                            ">
+                            <img src="
+                            <?php
+                            /**
+                             * Filter: mainwp_menu_logo_src
+                             *
+                             * Filters the Logo src attribute.
+                             *
+                             * @since 4.1
+                             */
+                            echo esc_url( apply_filters( 'mainwp_menu_logo_src', MAINWP_PLUGIN_URL . 'assets/images/mainwp-icon.svg' ) );
+                            ?>
+                            " alt="
+                            <?php
+                            /**
+                             * Filter: mainwp_menu_logo_alt
+                             *
+                             * Filters the Logo alt attribute.
+                             *
+                             * @since 4.1
+                             */
+                            echo esc_html( apply_filters( 'mainwp_menu_logo_alt', 'MainWP' ) );
+                            ?>
+                        " id="mainwp-navigation-icon" />
+                        </a>
+                    </div>
+                    <div class="left aligned middle aligned column" style="width:calc( 50% - 72px )!important">
+                        <h2 class="mainwp-page-title ui small header"><?php echo $left; // phpcs:ignore WordPress.Security.EscapeOutput ?></h2>
+                    </div>
+                    <div class="right aligned middle aligned column" style="width:50%!important">
+                        <?php echo $right; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                    </div>
+                </div>
+            </div>
+            <?php
+            if ( $show_menu ) {
+                MainWP_Menu::render_left_menu();
+                MainWP_Menu::render_mobile_menu();
+            }
+            ?>
         <div class="mainwp-content-wrap <?php echo esc_attr( $wrap_class ); ?> <?php echo empty( $sidebarPosition ) ? 'mainwp-sidebar-left' : ''; ?>" menu-overflow="<?php echo intval( $fix_menu_overflow ); ?>">
             <?php if ( MainWP_Demo_Handle::is_demo_mode() ) : ?>
                 <div class="ui segment" style="background-color:#1c1d1b!important;margin-bottom:0px;">
@@ -904,30 +965,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     jQuery( '#mainwp_demo_mode_accordion' ).accordion();
                 </script>
             <?php endif; ?>
-            <?php
-            /**
-             * Action: mainwp_before_header
-             *
-             * Fires before the MainWP header element.
-             *
-             * @param array $websites Array containing the child site data.
-             *
-             * @since 4.0
-             */
-            do_action( 'mainwp_before_header', $websites );
-            ?>
-            <div id="mainwp-top-header" class="ui native sticky">
-                <div class="ui middle aligned stackable grid">
-                    <div class="six wide left aligned middle aligned column">
-                        <h4 class="mainwp-page-title ui header">
-                            <?php echo $left; // phpcs:ignore WordPress.Security.EscapeOutput ?>
-                        </h4>
-                    </div>
 
-                    <div class="ten wide right aligned column"><?php echo $right; ?></div> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
-
-                </div>
-            </div>
 
             <?php if ( 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ) : ?>
                 <script type="text/javascript">
@@ -1254,23 +1292,19 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             $website = MainWP_DB::instance()->get_website_by_id( $id );
             ?>
             <?php if ( $id && $website && '' !== $website->sync_errors ) : ?>
-                <a href="#" class="mainwp-updates-overview-reconnect-site ui green icon button" siteid="<?php echo intval( $website->id ); ?>" data-position="bottom right" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted=""><i class="undo alternate icon"></i></a>
+                <a href="#" class="mainwp-updates-overview-reconnect-site ui green icon button" siteid="<?php echo intval( $website->id ); ?>" data-position="bottom right" aria-label="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted=""><i class="undo alternate icon"></i></a>
             <?php else : ?>
-                <span  data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                    <a class="ui icon button green <?php echo 0 < $sites_count ? '' : 'disabled'; ?>" id="mainwp-sync-sites">
-                        <i class="sync icon"></i>
-                    </a>
-                </span>
+                <a class="ui icon button green <?php echo 0 < $sites_count ? '' : 'disabled'; ?>" id="mainwp-sync-sites" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>" data-inverted="" data-position="bottom right" aria-label="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>" >
+                    <i class="sync icon"></i>
+                </a>
             <?php endif; ?>
         <?php else : ?>
-            <span data-tooltip="<?php esc_attr_e( 'Click here to sync data now.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                <a class="ui icon button green <?php echo 0 < $sites_count ? '' : 'disabled'; ?> " id="mainwp-sync-sites">
-                    <i class="sync alternate icon"></i>
-                </a>
-            </span>
+            <a class="ui icon button green <?php echo 0 < $sites_count ? '' : 'disabled'; ?> " id="mainwp-sync-sites" data-tooltip="<?php esc_attr_e( 'Click here to sync data now.', 'mainwp' ); ?>" data-inverted="" data-position="bottom right" aria-label="<?php esc_attr_e( 'Click here to sync data now.', 'mainwp' ); ?>">
+                <i class="sync alternate icon"></i>
+            </a>
         <?php endif; ?>
 
-        <div class="ui icon top left pointing dropdown <?php echo empty( $sites_count ) ? 'green' : ''; ?> button" id="mainwp-add-new-buttons">
+        <div class="ui icon top left pointing dropdown <?php echo empty( $sites_count ) ? 'green' : ''; ?> button" id="mainwp-add-new-buttons" aria-label="<?php esc_attr_e( 'Add new item to your MainWP Dashboard', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Add new item to your MainWP Dashboard.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
             <i class="plus icon"></i>
             <div class="menu">
                 <a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Add a new Website to your MainWP Dashboard', 'mainwp' ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php esc_html_e( 'Add Website', 'mainwp' ); ?></a>
@@ -1285,7 +1319,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         </div>
 
         <?php if ( ( 'mainwp_tab' === $page ) || isset( $_GET['dashboard'] ) || in_array( $page, $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended ?>
-        <a id="mainwp-screen-options-button" class="ui button basic icon" onclick="jQuery( '#mainwp-overview-screen-options-modal' ).modal({allowMultiple:true}).modal( 'show' ); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="<?php esc_html_e( 'Page Settings', 'mainwp' ); ?>">
+        <a id="mainwp-screen-options-button" class="ui button icon" onclick="jQuery( '#mainwp-overview-screen-options-modal' ).modal({allowMultiple:true}).modal( 'show' ); return false;" data-inverted="" data-position="bottom right" href="#" aria-label="<?php esc_attr_e( 'Page Settings', 'mainwp' ); ?>" data-tooltip="<?php esc_html_e( 'Page Settings', 'mainwp' ); ?>">
             <i class="cog icon"></i>
         </a>
         <?php endif; ?>
@@ -1303,10 +1337,10 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             echo $actions; // phpcs:ignore WordPress.Security.EscapeOutput
                         }
                         ?>
-        <a class="ui button basic icon" id="mainwp-sites-sidebar" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="<?php esc_attr_e( 'Quick sites shortcuts', 'mainwp' ); ?>">
+        <a class="ui button icon" id="mainwp-sites-sidebar" aria-label="<?php esc_attr_e( 'Open sites shortcuts sidebar', 'mainwp' ); ?>" data-inverted="" data-position="bottom right" href="#" data-tooltip="<?php esc_attr_e( 'Quick sites shortcuts', 'mainwp' ); ?>">
             <i class="globe icon"></i>
         </a>
-        <div id="mainwp-select-theme-button" class="ui button icon mainwp-selecte-theme-button" custom-theme="default" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_html_e( 'Select MainWP theme', 'mainwp' ); ?>">
+        <div id="mainwp-select-theme-button" class="ui button icon mainwp-selecte-theme-button" aria-label="<?php esc_attr_e( 'Select MainWP theme', 'mainwp' ); ?>" custom-theme="default" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_html_e( 'Select MainWP theme', 'mainwp' ); ?>">
             <i class="palette icon"></i>
         </div>
 
@@ -1355,7 +1389,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $all_updates = wp_get_update_data();
         if ( is_array( $all_updates ) && isset( $all_updates['counts']['total'] ) && 0 < $all_updates['counts']['total'] ) {
             ?>
-            <a id="mainwp-available-dashboard-updates-button" class="ui red icon button" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Your MainWP Dashboard sites needs your attention. Please check the available updates', 'mainwp' ); ?>" href="update-core.php">
+            <a id="mainwp-available-dashboard-updates-button" class="ui red icon button" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Your MainWP Dashboard sites needs your attention. Please check the available updates', 'mainwp' ); ?>" aria-label="<?php esc_attr_e( 'Your MainWP Dashboard sites needs your attention. Please check the available updates', 'mainwp' ); ?>" href="update-core.php">
                 <i class="exclamation triangle icon"></i>
             </a>
             <?php
@@ -1784,7 +1818,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         <div class="ui grid field" id="mainwp_delete_image_field">
                             <label class="six wide column middle aligned"></label>
                             <div class="six wide column">
-                                <img class="ui tiny image" src="" alt=""/><br/>
+                                <img class="ui tiny image" src="" alt="<?php esc_attr_e( 'Icon to remove.', 'mainwp' ); ?>"/><br/>
                                 <div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, delete image.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                                     <input type="checkbox"id="mainwp_delete_image_chk" item-icon-id="" />
                                     <label for="mainwp_delete_image_chk"><?php esc_html_e( 'Delete Image', 'mainwp' ); ?></label>
@@ -2062,7 +2096,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 $indi_val = '';
             }
             ?>
-        <div class="ui grid field settings-field-indicator-wrapper" default-indi-valuevaluevalue="all">
+        <div class="ui grid field settings-field-indicator-wrapper" default-indi-value="all">
             <label class="six wide column">
             <?php
             if ( $setting_page ) {
@@ -2108,13 +2142,13 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         do_action( 'mainwp_screen_options_modal_bottom' );
     }
 
-        /**
-         * Method render_select_mainwp_themes_modal()
-         *
-         * Render modal window for mainwp themes selection.
-         *
-         * @return void  Render modal window for themes selection.
-         */
+    /**
+     * Method render_select_mainwp_themes_modal()
+     *
+     * Render modal window for mainwp themes selection.
+     *
+     * @return void  Render modal window for themes selection.
+     */
     public static function render_select_mainwp_themes_modal() {
         ?>
         <div class="ui modal" id="mainwp-select-mainwp-themes-modal">
@@ -2207,7 +2241,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         ?>
         <div class="ui one column grid">
             <div class="middle aligned center aligned column">
-                <img alt="" src="<?php echo esc_url( MAINWP_PLUGIN_URL ); ?>assets/images/mainwp-widget-placeholder.png" style="max-width:200px" class="mainwp-no-results-placeholder ui middle aligned image"/>
+                <img alt="<?php esc_attr_e( 'Nothing to show here, check back later!', 'mainwp' ); ?>" src="<?php echo esc_url( MAINWP_PLUGIN_URL ); ?>assets/images/mainwp-widget-placeholder.png" style="max-width:200px" class="mainwp-no-results-placeholder ui middle aligned image"/>
             <?php if ( '' !== $placeholder ) : ?>
                     <p><?php echo $placeholder; //phpcs:ignore -- requires escaped. ?></p>
                 <?php else : ?>

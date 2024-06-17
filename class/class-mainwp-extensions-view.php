@@ -135,7 +135,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $extension_update = get_site_transient( 'update_plugins' );
         $is_demo          = MainWP_Demo_Handle::is_demo_mode();
         ?>
-        <div id="mainwp-manage-extensions" class="ui alt segment">
+        <div id="mainwp-manage-extensions">
             <div class="mainwp-extensions-api-loading" style="display:none">
                 <div class="ui active inverted page dimmer">
                     <div class="ui medium text loader"></div>
@@ -470,7 +470,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         do_action( 'mainwp_extension_card_top', $extension );
         ?>
                 <div class="content">
-                    <img class="right floated mini ui image" alt="" src="<?php echo esc_html( $img_url ); ?>">
+                    <img class="right floated mini ui image" alt="<?php echo esc_attr( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?>" src="<?php echo esc_html( $img_url ); ?>">
                     <div class="header">
 
                         <?php if ( ! $disabled ) { ?>
@@ -582,7 +582,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         ?>
         <div class="ui card extension grey mainwp-disabled-extension extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-title="<?php echo esc_attr( $extension['name'] ); ?>" base-slug="<?php echo esc_attr( $extension['slug'] ); ?>">
             <div class="content">
-                <img class="right floated mini ui image" alt="" src="<?php echo esc_html( $img_url ); ?>">
+                <img class="right floated mini ui image" alt="<?php echo esc_attr( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?>" src="<?php echo esc_html( $img_url ); ?>">
                 <div class="header">
                     <?php echo esc_html( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?>
                 </div>
@@ -656,9 +656,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         <?php } ?>
         <div class="ui form" id="mainwp-extensions-api-fields">
             <div class="field">
-                        <label><?php esc_html_e( 'Enter your MainWP Main API Key.', 'mainwp' ); ?></label>
-                    </div>
-                    <div class="field">
+                <label for="mainwp_com_api_key"><?php esc_html_e( 'Enter your MainWP Main API Key.', 'mainwp' ); ?></label>
                 <div class="ui input fluid">
                     <input type="password" id="mainwp_com_api_key" autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="<?php esc_attr_e( '', 'mainwp' ); ?>" value="<?php echo esc_attr( $mainwp_api_key ); ?>"/>
                 </div>

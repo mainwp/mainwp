@@ -143,7 +143,7 @@ class Cost_Tracker_Utility {
 
         $favi_url = MainWP_Utility::get_saved_favicon_url( $file_name );
         if ( ! empty( $favi_url ) ) {
-            $imgfavi = '<img src="' . esc_attr( $favi_url ) . '" style="width:28px;height:28px;" class="ui circular image" />';
+            $imgfavi = '<img src="' . esc_attr( $favi_url ) . '" style="width:28px;height:28px;" class="ui circular image" alt="Cost custom icon" />';
         }
 
         if ( $ret ) {

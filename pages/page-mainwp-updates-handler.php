@@ -685,10 +685,11 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      */
     public static function upgrade_plugin_theme_translation( $id, $type, $list_items ) { // phpcs:ignore -- NOSONAR - complex method.
         if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
-            $website = MainWP_DB::instance()->get_website_by_id( $id, false, array( 'premium_upgrades' ) ); // to fix loading premium_upgrades.
+            $website = MainWP_DB::instance()->get_website_by_id( $id, false, array( 'premium_upgrades', 'rollback_updates_data' ) ); // to fix loading premium_upgrades.
             if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
                 throw new MainWP_Exception( 'ERROR', esc_html__( 'Suspended site.', 'mainwp' ), 'SUSPENDED_SITE' );
             }
+
             $result = static::update_plugin_theme_translation( $website, $type, $list_items );
             if ( is_array( $result ) ) {
 
@@ -702,11 +703,6 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     $_type = 'trans';
                 }
 
-                if ( ! empty( $_type ) && isset( $result['other_data'] ) ) { // ok.
-                    $output_array = $result['other_data']; // updated_data: plugins,themes,trans.
-                    mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $website, 'updated', $output_array, $_type );
-                }
-
                 $undefined = true;
 
                 if ( isset( $result['upgrades_error'] ) ) {
@@ -715,10 +711,67 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     }
                 }
 
+                if ( ! empty( $_type ) && isset( $result['other_data'] ) ) { // ok.
+                    $output_array = $result['other_data']; // updated_data: plugins,themes,trans.
+                    mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $website, 'updated', $output_array, $_type );
+                    if ( is_array( $output_array ) ) {
+                        $updated_data = isset( $output_array['updated_data'] ) ? $output_array['updated_data'] : array();
+                        if ( is_array( $updated_data ) ) {
+
+                            $saved_roll_items = ! empty( $website->rollback_updates_data ) ? json_decode( $website->rollback_updates_data, true ) : array();
+                            if ( ! is_array( $saved_roll_items ) ) {
+                                $saved_roll_items = array();
+                            }
+
+                            $update = false;
+                            foreach ( $updated_data as $item ) {
+                                $version = isset( $item['version'] ) ? $item['version'] : '';
+                                if ( ! empty( $item ) && isset( $item['slug'] ) && ! empty( $item['rollback'] ) ) {
+                                    $msg = MainWP_Updates_Helper::get_roll_msg( $item );
+                                    $return_results['result_error'][ rawurlencode( $item['slug'] ) ] = '[Roll]' . esc_html( $msg );
+
+                                    $name        = isset( $item['name'] ) ? $item['name'] : '';
+                                    $old_version = isset( $item['old_version'] ) ? $item['old_version'] : '';
+
+                                    if ( ! empty( $version ) ) {
+                                        if ( ! isset( $saved_roll_items[ $_type ] ) ) {
+                                            $saved_roll_items[ $_type ] = array();
+                                        }
+
+                                        $saved_item = array(
+                                            'name'        => $name,
+                                            'old_version' => $old_version,
+                                            'version'     => $version,
+                                            'created'     => time(),
+                                        );
+
+                                        if ( ! empty( $item['error'] ) ) {
+                                            $saved_item['error'] = $item['error'];
+                                        }
+
+                                        $saved_roll_items[ $_type ][ $item['slug'] ][ $version ] = $saved_item;
+                                        $update = true;
+                                    }
+                                } elseif ( ! empty( $item ) && ! empty( $item['slug'] ) && ! empty( $item['success'] ) ) {
+                                    if ( ! empty( $version ) && isset( $saved_roll_items[ $_type ][ $item['slug'] ][ $version ] ) ) {
+                                        unset( $saved_roll_items[ $_type ][ $item['slug'] ][ $version ] );
+                                        $update = true;
+                                    }
+                                }
+                            }
+                            if ( $update ) {
+                                MainWP_DB::instance()->update_website_option( $website, 'rollback_updates_data', wp_json_encode( $saved_roll_items ) );
+                            }
+                        }
+                    }
+                }
+
                 if ( isset( $result['upgrades'] ) ) {
                     if ( isset( $result['upgrades'] ) ) {
                         foreach ( $result['upgrades'] as $k => $v ) {
-                            $return_results['result'][ rawurlencode( $k ) ] = $v;
+                            if ( ! empty( $v ) ) { // updated success.
+                                $return_results['result'][ rawurlencode( $k ) ] = $v;
+                            }
                         }
                     }
 

@@ -596,6 +596,11 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $href = 'admin.php?page=ManageClients&tags=';
         }
 
+        $groups_colors = '';
+        if ( isset( $item['wpgroups_colors'] ) ) {
+            $groups_colors = explode( ',', $item['wpgroups_colors'] );
+        }
+
         $tags        = '';
         $tags_labels = '';
 
@@ -615,11 +620,71 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             if ( is_array( $tags ) ) {
                 foreach ( $tags as $idx => $tag ) {
                     $tag  = trim( $tag );
-                    $tagx = MainWP_DB_Common::instance()->get_group_by_name( $tag );
+                    $tagc = '';
 
-                    if ( is_object( $tagx ) && '' !== $tagx->color ) {
+                    // to improved db query.
+                    if ( is_array( $groups_colors ) && isset( $groups_colors[ $idx ] ) ) {
+                        $tagc = $groups_colors[ $idx ];
+                    } else {
+                        $tagx = MainWP_DB_Common::instance()->get_group_by_name( $tag );
+                        $tagc = is_object( $tagx ) && '' !== $tagx->color ? $tagx->color : '';
+                    }
+
+                    if ( '' !== $tagc ) {
                         $tag_a_style = 'style="color:#fff!important;opacity:1;"';
-                        $tag_style   = 'style="background-color:' . esc_html( $tagx->color ) . '"';
+                        $tag_style   = 'style="background-color:' . esc_html( $tagc ) . '"';
+                    } else {
+                        $tag_a_style = '';
+                        $tag_style   = '';
+                    }
+
+                    if ( isset( $tags_ids[ $idx ] ) && ! empty( $tags_ids[ $idx ] ) ) {
+                        $tag_id       = $tags_ids[ $idx ];
+                        $tags_labels .= '<span ' . $tag_style . ' class="ui tag mini label"><a ' . $tag_a_style . ' href="' . esc_url( $href . $tag_id ) . '">' . esc_html( $tag ) . '</a></span>';
+                    } else {
+                        $tags_labels .= '<span ' . $tag_style . ' class="ui tag mini label">' . esc_html( $tag ) . '</span>';
+                    }
+                }
+            }
+        }
+        return $tags_labels;
+    }
+
+    /**
+     * Gets site tags
+     *
+     * @param array $item Array containing child site data.
+     *
+     * @return mixed Single Row Classes Item.
+     */
+    public static function get_site_tags_belong( $item ) { // phpcs:ignore -- NOSONAR - complex.
+
+        if ( ! is_array( $item ) || ! isset( $item['wpgroups_belong'] ) ) {
+            return static::get_site_tags( $item );
+        }
+
+        $href = 'admin.php?page=managesites&g=';
+
+        $tags        = '';
+        $tags_labels = '';
+
+        if ( isset( $item['wpgroups_belong'] ) && ! empty( $item['wpgroups_belong'] ) ) {
+
+            $tags     = $item['wpgroups_belong'];
+            $tags     = explode( ',', $tags );
+            $tags_ids = $item['wpgroupids_belong'];
+            $tags_ids = explode( ',', $tags_ids );
+
+            $tags_colors = explode( ',', $item['wpgroupcolors_belong'] );
+
+            if ( is_array( $tags ) ) {
+                foreach ( $tags as $idx => $tag ) {
+                    $tag  = trim( $tag );
+                    $tagc = $tags_colors[ $idx ];
+
+                    if ( '' !== $tagc ) {
+                        $tag_a_style = 'style="color:#fff!important;opacity:1;"';
+                        $tag_style   = 'style="background-color:' . esc_html( $tagc ) . '"';
                     } else {
                         $tag_a_style = '';
                         $tag_style   = '';
@@ -1249,13 +1314,13 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
             if ( time() > ( $lasttime_cached + $cached_days * DAY_IN_SECONDS ) || $lasttime_cached < $forced_exprided ) { // expired.
                 if ( ! empty( $scr ) ) {
-                    $icon = '<img style="display:inline-block" class="ui mini circular image ' . ( $is_custom_icon ? $cls_uploadable : $cls_expired ) . '" ' . $attr_slug . 'src="' . esc_attr( $scr ) . '"/>'; // to update expired icon.
+                    $icon = '<img style="display:inline-block" class="ui mini circular image ' . ( $is_custom_icon ? $cls_uploadable : $cls_expired ) . '" ' . $attr_slug . 'src="' . esc_attr( $scr ) . '" alt="Icon"/>'; // to update expired icon.
                 } else {
                     $icon = '<i style="font-size: 17px" class="plug circular inverted icon ' . $cls_expired . $cls_uploadable . '" ' . $attr_slug . '></i>'; // to update expired icon.
                 }
             } elseif ( ! empty( $scr ) ) {
                 $use_cls_expired = $set_expired ? $cls_expired : '';
-                $icon            = '<img style="display:inline-block" class="ui mini circular image ' . ( $is_custom_icon ? $cls_uploadable : $use_cls_expired ) . '" ' . $attr_slug . ' cached-path-icon="true" src="' . esc_attr( $scr ) . '"/>';
+                $icon            = '<img style="display:inline-block" class="ui mini circular image ' . ( $is_custom_icon ? $cls_uploadable : $use_cls_expired ) . '" ' . $attr_slug . ' cached-path-icon="true" src="' . esc_attr( $scr ) . '" alt="Icon"/>';
             } else {
                 $icon = '<i style="font-size: 17px" class="plug circular inverted icon ' . ( $set_expired ? $cls_expired : '' ) . $cls_uploadable . '" ' . $attr_slug . ' cached-path-icon="true"></i>';
             }

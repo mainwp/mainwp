@@ -763,7 +763,14 @@ let manage_plugins_upgrade_continueAfterBackup = function (slug, websiteId, webs
                         siteHolder.attr('updated', 1);
                         siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>');
                     } else if (res_error[slug]) {
-                        siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + res_error[slug] + '"><i class="red times icon"></i></span>');
+                        let _error = res_error[slug];
+                        let _icon = '<i class="red times icon"></i>';
+                        let roll_error = mainwp_updates_get_rollback_msg(_error);
+                        if (roll_error) {
+                            _error = roll_error;
+                            _icon = mainwpParams.roll_ui_icon;
+                        }
+                        siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + _error + '">' + _icon + '</span>');
                     } else {
                         siteHolder.find('.column.update-column').html('<i class="red times icon"></i>');
                     }
@@ -803,7 +810,7 @@ let manage_plugins_upgrade_continueAfterBackup = function (slug, websiteId, webs
 
 let manage_plugins_upgrade_int = function (slug, websiteId) {
     let websiteHolder = jQuery('.mainwp-manage-plugin-item-website[plugin-slug="' + slug + '"][site-id="' + websiteId + '"]');
-    websiteHolder.find('.column.update-column').html('<i class="notched circle loading icon"></i> ' + __('Updating. Please wait...'));
+    websiteHolder.find('.column.update-column').html('<span data-tooltip="Updating..." data-inverted="" data-position="left center"><i class="notched circle loading icon"></i></span>');
 
     let _callbackAfterBackup = function () {
         return manage_plugins_upgrade_continueAfterBackup(slug, websiteId, websiteHolder);
@@ -883,7 +890,7 @@ let manage_themes_upgrade_theme = function (slug, websiteid) {
     }, false, 1);
 };
 
-let manage_themes_upgrade_continueAfterBackup = function( slug, websiteId, websiteHolder ){
+let manage_themes_upgrade_continueAfterBackup = function (slug, websiteId, websiteHolder) {
     console.log('theme upgrade continue');
     let siteHolder = websiteHolder;
     let pSlug = slug;
@@ -904,9 +911,19 @@ let manage_themes_upgrade_continueAfterBackup = function( slug, websiteId, websi
                     siteHolder.find('.column.update-column').html(extErr);
                 } else {
                     let res = response.result;
+                    let res_error = response.result_error;
                     if (res[pSlug]) {
                         siteHolder.attr('updated', 1);
                         siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>');
+                    } else if (res_error ? res_error[slug] : false) {
+                        let _error = res_error[slug];
+                        let _icon = '<i class="red times icon"></i>';
+                        let roll_error = mainwp_updates_get_rollback_msg(_error);
+                        if (roll_error) {
+                            _error = roll_error;
+                            _icon = mainwpParams.roll_ui_icon;
+                        }
+                        siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + _error + '">' + _icon + '</span>');
                     } else {
                         siteHolder.find('.column.update-column').html('<i class="red times icon"></i>');
                     }
@@ -944,9 +961,9 @@ let manage_themes_upgrade_continueAfterBackup = function( slug, websiteId, websi
 
 let manage_themes_upgrade_int = function (slug, websiteId) {
     let websiteHolder = jQuery('.mainwp-manage-theme-item-website[theme-slug="' + slug + '"][site-id="' + websiteId + '"]');
-    websiteHolder.find('.column.update-column').html('<i class="notched circle loading icon"></i> ' + __('Updating. Please wait...'));
+    websiteHolder.find('.column.update-column').html('<span data-tooltip="Updating..." data-inverted="" data-position="left center"><i class="notched circle loading icon"></i></span');
 
-    let _callbackAfterBackup = manage_themes_upgrade_continueAfterBackup( slug, websiteId, websiteHolder );
+    let _callbackAfterBackup = manage_themes_upgrade_continueAfterBackup(slug, websiteId, websiteHolder);
 
     if (mainwpParams['disable_checkBackupBeforeUpgrade']) {
         _callbackAfterBackup();

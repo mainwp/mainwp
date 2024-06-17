@@ -708,47 +708,6 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         ?>
         <div id="mainwp-main-navigation-container">
             <div id="mainwp-first-level-navigation">
-                <div id="mainwp-first-level-navigation-logo">
-                <a href="
-                <?php
-                /**
-                 * Filter: mainwp_menu_logo_href
-                 *
-                 * Filters the Logo link.
-                 *
-                 * @since 4.1.4
-                 */
-                echo esc_url( apply_filters( 'mainwp_menu_logo_href', admin_url( 'admin.php?page=mainwp_tab' ) ) );
-                ?>
-                ">
-                <img src="
-                <?php
-                /**
-                 * Filter: mainwp_menu_logo_src
-                 *
-                 * Filters the Logo src attribute.
-                 *
-                 * @since 4.1
-                 */
-                echo esc_url( apply_filters( 'mainwp_menu_logo_src', MAINWP_PLUGIN_URL . 'assets/images/mainwp-icon.svg' ) );
-                ?>
-                " alt="
-                <?php
-                /**
-                 * Filter: mainwp_menu_logo_alt
-                 *
-                 * Filters the Logo alt attribute.
-                 *
-                 * @since 4.1
-                 */
-                echo esc_html( apply_filters( 'mainwp_menu_logo_alt', 'MainWP' ) );
-                ?>
-                    " id="mainwp-navigation-icon" />
-                </a>
-                </div>
-                <div id="mainwp-first-level-navigation-version-label">
-                <span id="mainwp-version-label" class="ui mini green fluid centered label"><?php echo esc_html( $version ); ?></span>
-                </div>
                 <div id="mainwp-first-level-navigation-menu" class="ui vertical labeled inverted icon tiny menu">
                 <?php
 
@@ -844,9 +803,12 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     }
                     ?>
                 <div id="mainwp-first-level-wpitems-menu" class="ui vertical labeled inverted icon mini menu">
-                    <a class="item" href="#" id="mainwp-collapse-second-level-navigation">
+                    <a class="item" href="#" id="mainwp-collapse-second-level-navigation" aria-label="<?php esc_attr_e( 'Collapse menu.', 'mainwp' ); ?>">
                         <i class="double angle left icon"></i>
                     </a>
+                </div>
+                <div id="mainwp-first-level-navigation-version-label">
+                    <span id="mainwp-version-label" class="ui mini green fluid centered label"><?php echo esc_html( $version ); ?></span>
                 </div>
             </div>
             <div id="mainwp-second-level-navigation">
@@ -1081,44 +1043,6 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
         ?>
         <div class="mainwp-main-mobile-navigation-container">
-            <div id="mainwp-logo">
-                <a href="
-                <?php
-                /**
-                 * Filter: mainwp_menu_logo_href
-                 *
-                 * Filters the Logo link.
-                 *
-                 * @since 4.1.4
-                 */
-                echo esc_url( apply_filters( 'mainwp_menu_logo_href', admin_url( 'admin.php?page=mainwp_tab' ) ) );
-                ?>
-                ">
-                <img src="
-                <?php
-                /**
-                 * Filter: mainwp_menu_logo_src
-                 *
-                 * Filters the Logo src attribute.
-                 *
-                 * @since 4.1
-                 */
-                echo esc_url( apply_filters( 'mainwp_menu_logo_src', MAINWP_PLUGIN_URL . 'assets/images/logo.png' ) );
-                ?>
-                " alt="
-                <?php
-                /**
-                 * Filter: mainwp_menu_logo_alt
-                 *
-                 * Filters the Logo alt attribute.
-                 *
-                 * @since 4.1
-                 */
-                echo apply_filters( 'mainwp_menu_logo_alt', 'MainWP' ); // phpcs:ignore WordPress.Security.EscapeOutput
-                ?>
-                " id="mainwp-navigation-icon"/>
-                </a>
-            </div>
             <div class="mainwp-nav-menu">
                 <?php
                 /**
@@ -1132,7 +1056,12 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 ?>
 
                 <div id="mainwp-main-menu"  class="test-menu ui inverted vertical accordion menu">
-                    <div class="item"></div>
+                    <div class="hamburger">
+                        <span class="hamburger-bun"></span>
+                        <span class="hamburger-patty"></span>
+                        <span class="hamburger-bun"></span>
+                    </div>
+                    
                     <div class="item"><a href="admin.php?page=mainwp_tab"><?php esc_html_e( 'Overview', 'mainwp' ); ?></a></div>
                     <div class="item">
                         <div class="title"><a href="admin.php?page=managesites" class=" with-sub"><?php esc_html_e( 'Sites', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
@@ -1308,11 +1237,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         <a href="<?php echo esc_html( $link['url'] ); ?>" class="title" style="display:inline" data-position="top left" data-tooltip="<?php echo esc_html( $link['tip'] ); ?>"><b><i class="icon wordpress"></i> <?php echo esc_html( $link['text'] ); ?></b></a> <a class="ui small label" data-position="top right" data-tooltip="<?php esc_html_e( 'Logout', 'mainwp' ); ?>" href="<?php echo wp_logout_url(); ?>"><i class="sign out icon" style="margin:0"></i></a> <?php //phpcs:ignore -- to avoid auto fix icon wordpress ?>
                     </div>
                     <?php } ?>
-                    <div class="hamburger">
-                        <span class="hamburger-bun"></span>
-                        <span class="hamburger-patty"></span>
-                        <span class="hamburger-bun"></span>
-                    </div>
+                    
                 </div>
                 <?php
                 /**

@@ -212,7 +212,7 @@ class Cost_Tracker_Yearly_Renewals {
                     <thead>
                         <tr>
                             <th scope="col" ><?php echo esc_html__( 'Name', 'mainwp' ); ?></a></th>
-                            <th scope="col" php echo esc_html__( 'Renews at', 'mainwp' ); ?></th>
+                            <th scope="col" ><?php echo esc_html__( 'Renews at', 'mainwp' ); ?></th>
                             <th scope="col" class="collapsing right aligned"><?php echo esc_html__( 'Price', 'mainwp' ); ?></th>
                         </tr>
                     </thead>

@@ -524,7 +524,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
         list( $columns, $sortable ) = $this->get_column_info();
 
         if ( ! empty( $columns['cb'] ) ) {
-            $columns['cb'] = '<div class="ui checkbox"><input id="' . ( $top ? 'cb-select-all-top' : 'cb-select-all-bottom' ) . '" type="checkbox" /></div>';
+            $columns['cb'] = '<div class="ui checkbox"><input id="' . ( $top ? 'cb-select-all-top' : 'cb-select-all-bottom' ) . '" type="checkbox" aria-label="Select all clients." /></div>';
         }
 
         $def_columns                   = $this->get_default_columns();
@@ -648,7 +648,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
             <?php if ( 'cb' === $column_name ) { ?>
                 <td class="check-column">
                     <div class="ui checkbox">
-                        <input type="checkbox" value="<?php echo intval( $item['client_id'] ); ?>" name=""/>
+                        <input type="checkbox" value="<?php echo intval( $item['client_id'] ); ?>" name="" aria-label="<?php esc_attr_e( 'Select the site.', 'mainwp' ); ?>"/>
                     </div>
                 </td>
                 <?php

@@ -1002,7 +1002,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         'result'   => 'success',
                         'iconfile' => esc_html( $uploaded_icon ),
                         'iconsrc'  => esc_html( $icon_url ),
-                        'iconimg'  => '<img class="ui mini circular image" src="' . esc_attr( $icon_url ) . '" style="width:32px;height:auto;display:inline-block;">',
+                        'iconimg'  => '<img class="ui mini circular image" src="' . esc_attr( $icon_url ) . '" style="width:32px;height:auto;display:inline-block;" alt="Custom icon">',
                     )
                 )
             );
@@ -1031,7 +1031,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         // 2 priority.
         if ( empty( $output ) && ! empty( $favi_url ) ) {
-            $output = '<img src="' . esc_attr( $favi_url ) . '" style="width:28px;height:28px;" class="ui circular image" />';
+            $output = '<img src="' . esc_attr( $favi_url ) . '" style="width:28px;height:28px;" class="ui circular image" alt="Site icon"/>';
         }
 
         // 3 priority.
@@ -1097,7 +1097,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 if ( 'display_edit' === $type ) {
                     $icon_wrapper_attr = ' id="mainw_managesites_add_edit_site_upload_custom_icon" class="' . esc_attr( $default_cls ) . ' ui mini circular image" ';
                 }
-                $icon = '<div style="display:inline-block;" ' . $icon_wrapper_attr . '><img style="' . $style . '" src="' . esc_attr( $scr ) . '"/></div>';
+                $icon = '<div style="display:inline-block;" ' . $icon_wrapper_attr . '><img style="' . $style . '" src="' . esc_attr( $scr ) . '" alt="Site icon"/></div>';
             }
             $output = $icon;
         }

@@ -422,12 +422,12 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             <table id="mainwp-rest-api-keys-table" class="ui unstackable table">
                 <thead>
                     <tr>
-                        <th scope="col" class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
+                        <th scope="col" class="no-sort collapsing check-column"><span class="ui checkbox"><input aria-label="<?php esc_attr_e( 'Select all REST API keys', 'mainwp' ); ?>" id="cb-select-all-top" type="checkbox" /></span></th>
                         <th scope="col" class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
                         <th scope="col" ><?php esc_html_e( 'Permissions', 'mainwp' ); ?></th>
                         <th scope="col" ><?php esc_html_e( 'Description', 'mainwp' ); ?></th>
                         <th scope="col" class="no-sort collapsing"><?php esc_html_e( 'Consumer key ending in', 'mainwp' ); ?></th>
-                        <th scope="col" class="no-sort"></th>
+                        <th scope="col" class="no-sort collapsing"></th>
                     </tr>
                 </thead>
                     <tbody id="mainwp-rest-api-body-table">
@@ -468,7 +468,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                         <tr key-ck-id="<?php echo esc_html( $endcoded_ck ); ?>">
                             <td class="check-column">
                                 <div class="ui checkbox">
-                                    <input type="checkbox" value="<?php echo esc_html( $endcoded_ck ); ?>" name=""/>
+                                    <input type="checkbox" aria-label="<?php echo esc_attr__( 'Select API key described as: ', 'mainwp' ) . esc_html( $desc ); ?>" value="<?php echo esc_html( $endcoded_ck ); ?>" name=""/>
                                 </div>
                             </td>
                             <td><?php echo $enabled ? '<span class="ui green fluid label">' . esc_html__( 'Enabled', 'mainwp' ) . '</span>' : '<span class="ui gray fluid label">' . esc_html__( 'Disabled', 'mainwp' ) . '</span>'; ?></td>
@@ -537,7 +537,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             <div class="item" data-value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></div>
                             </div>
                         </div>
-                        <button class="ui tiny basic button" id="mainwp-do-rest-api-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
+                        <button class="ui mini basic button" id="mainwp-do-rest-api-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
                     </div>
                     <div class="right aligned middle aligned column"></div>
             </div>
@@ -655,20 +655,20 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                         <div class="ui grid field">
                             <label class="six wide column middle aligned"><?php esc_html_e( 'Enable REST API key', 'mainwp' ); ?></label>
                             <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the REST API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <input type="checkbox" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" checked="true" />
+                                <input type="checkbox" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" checked="true" aria-label="<?php esc_attr_e( 'Enable REST API key', 'mainwp' ); ?>"/>
                             </div>
                         </div>
                         <div class="ui grid field">
                             <label class="six wide column middle aligned"><?php esc_html_e( 'Description', 'mainwp' ); ?></label>
                             <div class="five wide column">
-                                <input type="text" name="mainwp_rest_add_api_key_desc" id="mainwp_rest_add_api_key_desc" value="" />
+                                <input type="text" name="mainwp_rest_add_api_key_desc" id="mainwp_rest_add_api_key_desc" value="" aria-label="<?php esc_attr_e( 'Key description', 'mainwp' ); ?>"/>
                             </div>
                         </div>
                         <div class="ui grid field">
                             <label class="six wide column middle aligned"><?php esc_html_e( 'Consumer key', 'mainwp' ); ?></label>
 
                             <div class="five wide column">
-                                <input type="text" name="mainwp_consumer_key" id="mainwp_consumer_key" value="<?php echo esc_html( $consumer_key ); ?>" readonly />
+                                <input type="text" name="mainwp_consumer_key" id="mainwp_consumer_key" value="<?php echo esc_html( $consumer_key ); ?>" readonly aria-label="<?php esc_attr_e( 'Consumer key', 'mainwp' ); ?>"/>
                             </div>
 
                             <div class="five wide column">
@@ -680,7 +680,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             <label class="six wide column middle aligned"><?php esc_html_e( 'Consumer secret', 'mainwp' ); ?></label>
 
                             <div class="five wide column">
-                                <input type="text" name="mainwp_consumer_secret" id="mainwp_consumer_secret" value="<?php echo esc_html( $consumer_secret ); ?>" readonly />
+                                <input type="text" name="mainwp_consumer_secret" id="mainwp_consumer_secret" value="<?php echo esc_html( $consumer_secret ); ?>" readonly aria-label="<?php esc_attr_e( 'Consumer secret', 'mainwp' ); ?>"/>
                             </div>
 
                             <div class="five wide column">
@@ -788,7 +788,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             ?>
                             <?php esc_html_e( 'Enable REST API Key', 'mainwp' ); ?></label>
                             <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the REST API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" value="1" <?php echo $enabled ? 'checked="true"' : ''; ?> />
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" value="1" <?php echo $enabled ? 'checked="true"' : ''; ?> aria-label="<?php esc_attr_e( 'Enable REST API key', 'mainwp' ); ?>" />
                             </div>
                         </div>
                         <div class="ui grid field settings-field-indicator-wrapper <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>"">
@@ -800,7 +800,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             ?>
                             <?php esc_html_e( 'Description', 'mainwp' ); ?></label>
                             <div class="five wide column">
-                                <input type="text" class="settings-field-value-change-handler" name="mainwp_rest_api_key_desc" id="mainwp_rest_api_key_desc" value="<?php echo esc_html( $edit_desc ); ?>" />
+                                <input type="text" class="settings-field-value-change-handler" name="mainwp_rest_api_key_desc" id="mainwp_rest_api_key_desc" value="<?php echo esc_html( $edit_desc ); ?>" aria-label="<?php esc_attr_e( 'Key description', 'mainwp' ); ?>"/>
                             </div>
                         </div>
                         <div class="ui grid field settings-field-indicator-wrapper <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>"">
@@ -813,7 +813,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             <?php esc_html_e( 'Consumer key ending in', 'mainwp' ); ?></label>
                             <div class="five wide column">
                                 <div class="ui disabled input">
-                                    <input type="text" class="settings-field-value-change-handler" value="<?php echo esc_attr( '...' . $ending ); ?>" />
+                                    <input type="text" class="settings-field-value-change-handler" value="<?php echo esc_attr( '...' . $ending ); ?>" aria-label="<?php esc_attr_e( 'Consumer key ending in...', 'mainwp' ); ?>"/>
                                 </div>
                             </div>
                         </div>

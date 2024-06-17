@@ -3040,7 +3040,7 @@ let updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck
                     type: pWhat,
                     slug: newList.join(',')
                 });
-                jQuery.post(ajaxurl, data, function (response) { //NOSONAR - complex ok.
+                jQuery.post(ajaxurl, data, function (response) { // NOSONAR - complex ok.
                     let success = false;
                     let extErr = '';
                     if (response.error) {

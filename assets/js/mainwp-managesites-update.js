@@ -186,7 +186,7 @@ let managesites_update_pluginsthemes_next_int = function (websiteId, data, error
         url: ajaxurl,
         data: data,
         success: function (pWebsiteId, pData, pErrors) {
-            return function (response) { //NOSONAR - complex ok.
+            return function (response) { // NOSONAR - complex ok.
                 if (response.error) {
                     mainwpVars.errorCount++;
                     dashboard_update_site_status(pWebsiteId, getErrorMessageInfo(response.error, 'ui'));

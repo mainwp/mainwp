@@ -870,6 +870,5 @@ body.mainwp-ui.mainwp-custom-theme,
   background-color: var(--grey-dark-alt);
   border-radius: 20px !important;
   border: 4px solid transparent;
-  border-radius: 8px;
-  background-clip: padding-box; 
+  background-clip: padding-box;
 }

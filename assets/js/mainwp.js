@@ -4088,13 +4088,13 @@ jQuery(function () {
 
   jQuery(document).on('click', '.mainwp-import-demo-data-button', function () {
     mainwp_import_demo_data_action(this);
+    return false; //required this return.
   });
 
   jQuery(document).on('click', '.mainwp-remove-demo-data-button', function () {
     mainwp_remove_demo_data_action();
+    return false; //required this return.
   });
-
-
 });
 
 

@@ -519,7 +519,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table { // phpcs:ignore
                     </div>
                 </div>
                     <div class="extra content">
-                        <a href="<?php echo esc_attr( $details_link ); ?>" class="ui mini button open-plugin-details-modal"><?php echo esc_html( 'Plugin Details' ); ?></a>
+                        <a href="<?php echo esc_attr( $details_link ); ?>" class="ui mini button open-plugin-details-modal"><?php echo esc_html__( 'Plugin Details', 'mainwp' ); ?></a>
                         <div class="ui radio checkbox right floated">
                         <input name="install-plugin" type="radio" id="install-plugin-<?php echo sanitize_html_class( $plugin['slug'] ); ?>" plugin-name="<?php echo esc_attr( $title ); ?>" plugin-version="<?php echo esc_attr( $version ); ?>">
                         <label><?php esc_html_e( 'Install Plugin', 'mainwp' ); ?></label>

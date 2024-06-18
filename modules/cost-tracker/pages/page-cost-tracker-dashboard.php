@@ -470,23 +470,23 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
             <tfoot>
                 <tr>
                     <th scope="col" class="no-sort collapsing check-column column-check"><span class="ui checkbox"><input id="cb-select-all-bottom" type="checkbox"></span></th>
-                    <th id="cost_status" class="collapsing column-status"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                    <th id="icon" class="column-icon collapsing"><?php esc_html_e( '', 'mainwp' ); ?></th>
-                    <th id="name" class="column-name" ><?php esc_html_e( 'Name', 'mainwp' ); ?></th>
+                    <th id="cost_status-bottom" class="collapsing column-status"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                    <th id="icon-bottom" class="column-icon collapsing"><?php esc_html_e( '', 'mainwp' ); ?></th>
+                    <th id="name-bottom" class="column-name" ><?php esc_html_e( 'Name', 'mainwp' ); ?></th>
                     <?php if ( $filtered ) : ?>
-                        <th id="per_site_price" class="no-sort collapsing column-site-price"><?php esc_html_e( 'Per Site Price', 'mainwp' ); ?></th>
-                        <th id="price" class="collapsing column-price"><?php esc_html_e( 'Total Price', 'mainwp' ); ?></th>
+                        <th id="per_site_price-bottom" class="no-sort collapsing column-site-price"><?php esc_html_e( 'Per Site Price', 'mainwp' ); ?></th>
+                        <th id="price-bottom" class="collapsing column-price"><?php esc_html_e( 'Total Price', 'mainwp' ); ?></th>
                     <?php else : ?>
-                        <th id="price" class="collapsing column-price"><?php esc_html_e( 'Price', 'mainwp' ); ?></th>
+                        <th id="price-bottom" class="collapsing column-price"><?php esc_html_e( 'Price', 'mainwp' ); ?></th>
                     <?php endif; ?>
-                    <th id="license_type" class="collapsing column-license-type"><?php esc_html_e( 'License', 'mainwp' ); ?></th>
-                    <th id="product_type" class="collapsing column-product-type"><?php esc_html_e( 'Category', 'mainwp' ); ?></th>
-                    <th id="type" class="column-type"><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
-                    <th id="last_renewal" class="collapsing column-last-renewal"><?php esc_html_e( 'Purchased', 'mainwp' ); ?></th>
-                    <th id="payment_method" class="collapsing center aligned column-payment-method"><?php esc_html_e( 'Method', 'mainwp' ); ?></th>
-                    <th id="next_renewal" class="collapsing column-next-renewal"><?php esc_html_e( 'Renews', 'mainwp' ); ?></th>
-                    <th id="sites" class="collapsing column-sites"><?php esc_html_e( 'Sites', 'mainwp' ); ?></th>
-                    <th id="actions" class="no-sort collapsing right aligned column-actions"></th>
+                    <th id="license_type-bottom" class="collapsing column-license-type"><?php esc_html_e( 'License', 'mainwp' ); ?></th>
+                    <th id="product_type-bottom" class="collapsing column-product-type"><?php esc_html_e( 'Category', 'mainwp' ); ?></th>
+                    <th id="type-bottom" class="column-type"><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
+                    <th id="last_renewal-bottom" class="collapsing column-last-renewal"><?php esc_html_e( 'Purchased', 'mainwp' ); ?></th>
+                    <th id="payment_method-bottom" class="collapsing center aligned column-payment-method"><?php esc_html_e( 'Method', 'mainwp' ); ?></th>
+                    <th id="next_renewal-bottom" class="collapsing column-next-renewal"><?php esc_html_e( 'Renews', 'mainwp' ); ?></th>
+                    <th id="sites-bottom" class="collapsing column-sites"><?php esc_html_e( 'Sites', 'mainwp' ); ?></th>
+                    <th id="actions-bottom" class="no-sort collapsing right aligned column-actions"></th>
                 </tr>
             </tfoot>
         </table>
@@ -911,7 +911,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                         case 'actions':
                             ?>
                             <div class="ui right pointing dropdown icon mini basic green button">
-                                <a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
+                                <a href="javascript:void(0)" aria-label="<?php esc_attr_e( 'Actions menu', 'mainwp' ); ?>"><i class="ellipsis horizontal icon"></i></a>
                                 <div class="menu">
                                     <a class="item" href="admin.php?page=CostTrackerAdd&id=<?php echo intval( $subscription->id ); ?>"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
                                     <?php if ( empty( $subscription->note ) ) : ?>
@@ -1125,7 +1125,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                 <div class="right aligned middle aligned column">
                     <div class="ui stackable grid">
                         <div class="fifteen wide right aligned middle aligned column"><?php do_action( 'mainwp_module_cost_tracker_actions_bar_right' ); ?></div>
-                        <div class="one wide center aligned middle aligned column"><a href="#" class="ui icon mini basic button" id="mainwp-manage-costs-filter-toggle-button"><i class="sliders horizontal icon"></i></a></div>
+                        <div class="one wide center aligned middle aligned column"><a href="#" class="ui icon mini basic button" id="mainwp-manage-costs-filter-toggle-button" aria-label="<?php esc_attr_e( 'Available filters.', 'mainwp' ); ?>"><i class="sliders horizontal icon"></i></a></div>
                     </div>
                 </div>
             </div>

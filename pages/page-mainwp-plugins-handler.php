@@ -80,6 +80,10 @@ class MainWP_Plugins_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
             }
 
+            if ( ! empty( $website->rollback_updates_data ) ) {
+                $output->roll_items[ $website->id ] = MainWP_Updates_Helper::get_roll_update_plugintheme_items( 'plugin', $website->rollback_updates_data );
+            }
+
             unset( $plugins );
         } else {
             $output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );

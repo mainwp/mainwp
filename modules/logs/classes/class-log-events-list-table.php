@@ -10,6 +10,8 @@ namespace MainWP\Dashboard\Module\Log;
 
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Utility;
+use MainWP\Dashboard\MainWP_Updates_Helper;
+
 /**
  * Class Log_Events_List_Table
  *
@@ -278,15 +280,22 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         if ( ! is_array( $extra_meta ) ) {
             $extra_meta = array();
         }
-        $title = '';
+        $title    = '';
+        $roll_msg = '';
         if ( 'posts' === $record->connector || 'users' === $record->connector || 'client' === $record->connector || 'installer' === $record->connector ) {
             $title = $record->item;
+            if ( 'installer' === $record->connector && ! empty( $extra_meta['rollback_info'] ) ) {
+                $roll_msg = MainWP_Updates_Helper::get_roll_msg( $extra_meta['rollback_info'], true ) . ' ';
+            }
         } elseif ( 'site' === $record->connector ) {
             $title = esc_html__( 'Website', 'mainwp' );
         } elseif ( isset( $extra_meta['name'] ) ) {
             $title = $extra_meta['name'];
+            if ( 'installer' === $record->connector && ! empty( $extra_meta['rollback_info'] ) ) {
+                $roll_msg = MainWP_Updates_Helper::get_roll_msg( $extra_meta['rollback_info'], true ) . ' ';
+            }
         }
-        $title = esc_html( $title ) . $this->get_context_title( $record->context, $record->connector );
+        $title = $roll_msg . esc_html( $title ) . $this->get_context_title( $record->context, $record->connector );
         return $title;
     }
 

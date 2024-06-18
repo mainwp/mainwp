@@ -125,7 +125,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     public function get_backup_task_progress( $task_id, $wp_id ) {
         $progress = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_backup_progress' ) . ' WHERE task_id= %d AND wp_id = %d ', $task_id, $wp_id ) );
 
-        if ( '' !== $progress->fetchResult ) {
+        if ( $progress && '' !== $progress->fetchResult ) {
             $progress->fetchResult = json_decode( $progress->fetchResult, true );
         }
 

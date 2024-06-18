@@ -571,7 +571,7 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         if ( ! empty( $image_path ) && file_exists( $dirs[0] . $image_path ) ) {
             $full_url = $dirs[1] . $image_path;
-            $img      = '<img ' . $icon_wrapper_attr . ' src="' . esc_attr( $full_url ) . '">';
+            $img      = '<img ' . $icon_wrapper_attr . ' src="' . esc_attr( $full_url ) . '" alt="' . esc_attr( $item['name'] ) . '">';
         } elseif ( ! empty( $icon_info ) ) {
             $img = MainWP_Client::get_cust_client_icon( $icon_info, 'display', $what );
         }

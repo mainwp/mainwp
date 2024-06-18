@@ -149,8 +149,19 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                         if ( ! is_array( $plugin_upgrades ) ) {
                                             $plugin_upgrades = array();
                                         }
-                                        $decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
-                                        $decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+
+                                        $site_opts = MainWP_DB::instance()->get_website_options_array( $website, array( 'premium_upgrades', 'rollback_updates_data' ) );
+                                        if ( ! is_array( $site_opts ) ) {
+                                            $site_opts = array();
+                                        }
+                                        $decodedPremiumUpgrades = ! empty( $site_opts['premium_upgrades'] ) ? json_decode( $site_opts['premium_upgrades'], true ) : array();
+
+                                        $rollItems = ! empty( $site_opts['rollback_updates_data'] ) ? json_decode( $site_opts['rollback_updates_data'], true ) : array();
+
+                                        $rollPlugins = array();
+                                        if ( is_array( $rollItems ) && ! empty( $rollItems['plugin'] ) && is_array( $rollItems['plugin'] ) ) {
+                                            $rollPlugins = $rollItems['plugin'];
+                                        }
 
                                         if ( is_array( $decodedPremiumUpgrades ) ) {
                                             foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
@@ -175,19 +186,27 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                         }
                                         $plugin_upgrade = $plugin_upgrades[ $slug ];
 
-                                        $row_columns = array(
+                                        $last_version = $plugin_upgrade['update']['new_version'];
+                                        $row_columns  = array(
                                             'title'   => MainWP_Updates::render_site_link_dashboard( $website, false ),
                                             'login'   => '<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ) . '&_opennonce=' . wp_create_nonce( 'mainwp-admin-nonce' ) . '" data-tooltip="' . esc_attr__( 'Jump to the site WP Admin', 'mainwp' ) . '"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>',
                                             'version' => '<strong class="mainwp-768-show">' . esc_html__( 'Version: ', 'mainwp' ) . '</strong>' . esc_html( $plugin_upgrade['Version'] ),
-                                            'latest'  => '<strong class="mainwp-768-show">' . esc_html__( 'Latest: ', 'mainwp' ) . '</strong><a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog" target="_blank" class="open-plugin-details-modal">' . esc_html( $plugin_upgrade['update']['new_version'] ) . '</a>',
+                                            'latest'  => '<strong class="mainwp-768-show">' . esc_html__( 'Latest: ', 'mainwp' ) . '</strong><a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog" target="_blank" class="open-plugin-details-modal">' . esc_html( $last_version ) . '</a>',
                                             'trusted' => ( in_array( $slug, $trustedPlugins ) ? true : false ),
                                             'status'  => ( isset( $plugin_upgrade['active'] ) && $plugin_upgrade['active'] ) ? true : false,
                                             'client'  => ( isset( $website->client_name ) && '' !== $website->client_name ) ? $website->client_name : '',
                                         );
+
+                                        $others = array();
+                                        if ( ! empty( $rollPlugins[ $slug ][ $last_version ] ) ) {
+                                            $msg                 = MainWP_Updates_Helper::get_roll_msg( $rollPlugins[ $slug ][ $last_version ], true, 'notice' );
+                                            $others['roll_info'] = $msg;
+                                        }
+
                                         ?>
                                         <tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" updated="0" <?php echo $first_wpplugin ? 'open-wpplugin-siteid="' . intval( $website->id ) . '"' : ''; ?>>
                                             <?php
-                                            $row_columns     = $updates_table_helper->render_columns( $row_columns, $website );
+                                            $row_columns     = $updates_table_helper->render_columns( $row_columns, $website, $others );
                                             $action_rendered = isset( $row_columns['action'] ) ? true : false;
                                             if ( ! $action_rendered ) {
                                                 ?>
@@ -350,9 +369,20 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                         if ( $website->is_ignoreThemeUpdates ) {
                                             continue;
                                         }
-                                        $theme_upgrades         = json_decode( $website->theme_upgrades, true );
-                                        $decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
-                                        $decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+                                        $theme_upgrades = json_decode( $website->theme_upgrades, true );
+
+                                        $site_opts = MainWP_DB::instance()->get_website_options_array( $website, array( 'premium_upgrades', 'rollback_updates_data' ) );
+                                        if ( ! is_array( $site_opts ) ) {
+                                            $site_opts = array();
+                                        }
+                                        $decodedPremiumUpgrades = ! empty( $site_opts['premium_upgrades'] ) ? json_decode( $site_opts['premium_upgrades'], true ) : array();
+
+                                        $rollItems = ! empty( $site_opts['rollback_updates_data'] ) ? json_decode( $site_opts['rollback_updates_data'], true ) : array();
+
+                                        $rollThemes = array();
+                                        if ( is_array( $rollItems ) && ! empty( $rollItems['theme'] ) && is_array( $rollItems['theme'] ) ) {
+                                            $rollThemes = $rollItems['theme'];
+                                        }
 
                                         if ( is_array( $decodedPremiumUpgrades ) ) {
                                             foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
@@ -378,19 +408,27 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                             continue;
                                         }
                                         $theme_upgrade = $theme_upgrades[ $slug ];
+                                        $last_version  = $theme_upgrade['update']['new_version'];
                                         $row_columns   = array(
                                             'title'   => MainWP_Updates::render_site_link_dashboard( $website, false ),
                                             'login'   => '<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ) . '&_opennonce=' . wp_create_nonce( 'mainwp-admin-nonce' ) . '" data-tooltip="' . esc_attr__( 'Jump to the site WP Admin', 'mainwp' ) . '"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>',
                                             'version' => '<strong class="mainwp-768-show">' . esc_html__( 'Version: ', 'mainwp' ) . '</strong>' . esc_html( $theme_upgrade['Version'] ),
-                                            'latest'  => '<strong class="mainwp-768-show">' . esc_html__( 'Latest: ', 'mainwp' ) . '</strong>' . esc_html( $theme_upgrade['update']['new_version'] ),
+                                            'latest'  => '<strong class="mainwp-768-show">' . esc_html__( 'Latest: ', 'mainwp' ) . '</strong>' . esc_html( $last_version ),
                                             'trusted' => ( in_array( $slug, $trustedThemes ) ? true : false ),
                                             'status'  => ( isset( $theme_upgrade['active'] ) && $theme_upgrade['active'] ) ? true : false,
                                             'client'  => ( isset( $website->client_name ) && '' !== $website->client_name ) ? $website->client_name : '',
                                         );
+
+                                        $others = array();
+                                        if ( ! empty( $rollThemes[ $slug ][ $last_version ] ) ) {
+                                            $msg                 = MainWP_Updates_Helper::get_roll_msg( $rollThemes[ $slug ][ $last_version ], true, 'notice' );
+                                            $others['roll_info'] = $msg;
+                                        }
+
                                         ?>
                                         <tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" updated="0">
                                             <?php
-                                            $row_columns     = $updates_table_helper->render_columns( $row_columns, $website );
+                                            $row_columns     = $updates_table_helper->render_columns( $row_columns, $website, $others );
                                             $action_rendered = isset( $row_columns['action'] ) ? true : false;
                                             if ( ! $action_rendered ) {
                                                 ?>

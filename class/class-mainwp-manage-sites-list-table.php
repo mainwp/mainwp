@@ -478,8 +478,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
 
             <div class="row ui mini form">
                 <div class="eight wide middle aligned column">
-                    <div id="mainwp-sites-bulk-actions-menu" class="ui selection dropdown">
-                        <div class="default text"><?php esc_html_e( 'Bulk actions', 'mainwp' ); ?></div>
+                    <div id="mainwp-sites-bulk-actions-menu" class="ui search selection dropdown">
+                        <div class="default text"><?php esc_html_e( 'Run bulk actions...', 'mainwp' ); ?></div>
                         <i class="dropdown icon"></i>
                         <div class="menu">
                             <?php foreach ( $items_bulk as $value => $title ) : ?>
@@ -922,7 +922,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         $extra_view           = apply_filters( 'mainwp_sitestable_prepare_extra_view', array( 'favi_icon', 'health_site_status' ) );
         $extra_view           = array_unique( $extra_view );
         $params['extra_view'] = $extra_view;
-        $websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
+
+        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
 
         $site_ids = array();
         while ( $websites && ( $site = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -1700,7 +1701,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                 <a href="<?php echo esc_url( $website['url'] ); ?>" class="mainwp-may-hide-referrer open_site_url" target="_blank"><?php echo esc_html( MainWP_Utility::get_nice_url( $website['url'] ) ); ?></a>
                                 <?php
                             } elseif ( 'tags' === $column_name ) {
-                                echo MainWP_System_Utility::get_site_tags( $website ); // phpcs:ignore WordPress.Security.EscapeOutput
+                                echo MainWP_System_Utility::get_site_tags_belong( $website ); // phpcs:ignore WordPress.Security.EscapeOutput
                             } elseif ( 'update' === $column_name ) {
                                 ?>
                                 <a class="ui mini compact button <?php echo esc_attr( $a_color ); ?>" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>"><?php echo intval( $total_updates ); ?></a>
@@ -1738,7 +1739,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                             <?php } elseif ( 'added_datetime' === $column_name ) { ?>
                                 <?php echo ! empty( $website['added_timestamp'] ) ? MainWP_Utility::format_date( MainWP_Utility::get_timestamp( $website['added_timestamp'] ) ) : 'N/A'; ?> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
                                 <?php } elseif ( 'site_actions' === $column_name ) { ?>
-                                    <div class="ui right pointing dropdown icon mini basic green button" style="z-index: 999;">
+                                    <div class="ui right pointing dropdown icon mini basic green button" style="z-index: 99;">
                                         <a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
                                         <div class="menu" siteid="<?php echo intval( $website['id'] ); ?>">
                                             <?php if ( '' !== $website['sync_errors'] ) : ?>
@@ -2093,7 +2094,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 <?php
             } elseif ( 'tags' === $column_name ) {
                 ?>
-                <td class="collapsing mainwp-tags-cell"><?php echo MainWP_System_Utility::get_site_tags( $website ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+                <td class="collapsing mainwp-tags-cell"><?php echo MainWP_System_Utility::get_site_tags_belong( $website ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
                 <?php
             } elseif ( 'update' === $column_name ) {
                 ?>
@@ -2141,7 +2142,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         } elseif ( 'site_actions' === $column_name ) {
             ?>
                     <td class="collapsing mainwp-site-actions-cell">
-                        <div class="ui right pointing dropdown icon mini basic green button" style="z-index: 999;">
+                        <div class="ui right pointing dropdown icon mini basic green button" style="z-index: 99;">
                             <a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
                             <div class="menu" siteid="<?php echo intval( $website['id'] ); ?>">
                 <?php if ( '' !== $website['sync_errors'] ) : ?>

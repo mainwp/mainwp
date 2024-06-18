@@ -567,7 +567,9 @@ jQuery(document).on('keyup', '#mainwp-screenshots-sites-filter', function () {
 });
 
 jQuery(function(){
-    jQuery(document).find('#mainwp-select-sites-header .ui.menu .item').tab( {'onVisible': function() { mainwp_sites_selection_onvisible_callback( this ); } } );
+    if(jQuery(document).find('#mainwp-select-sites-header .ui.menu .item').length){
+        jQuery(document).find('#mainwp-select-sites-header .ui.menu .item').tab( {'onVisible': function() { mainwp_sites_selection_onvisible_callback( this ); } } );
+    }
 });
 
 window.mainwp_get_icon_start = function () {

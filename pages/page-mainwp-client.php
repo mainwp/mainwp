@@ -171,7 +171,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public static function screen_options( $input ) {
         return $input .
-                '<a class="ui button basic icon" onclick="mainwp_manage_clients_screen_options(); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="' . esc_html__( 'Page Settings', 'mainwp' ) . '">
+                '<a class="ui button basic icon" onclick="mainwp_manage_clients_screen_options(); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="' . esc_html__( 'Page Settings', 'mainwp' ) . '" aria-label="' . esc_html__( 'Page Settings', 'mainwp' ) . '">
                     <i class="cog icon"></i>
                 </a>';
     }
@@ -318,7 +318,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         'result'   => 'success',
                         'iconfile' => esc_html( $uploaded_icon ),
                         'iconsrc'  => esc_html( $icon_url ),
-                        'iconimg'  => '<img class="ui mini circular image" src="' . esc_attr( $icon_url ) . '" style="width:32px;height:auto;display:inline-block;">',
+                        'iconimg'  => '<img class="ui mini circular image" src="' . esc_attr( $icon_url ) . '" style="width:32px;height:auto;display:inline-block;" alt="Client custom icon">',
                     )
                 )
             );
@@ -372,7 +372,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         'result'   => 'success',
                         'iconfile' => esc_html( $uploaded_icon ),
                         'iconsrc'  => esc_html( $icon_url ),
-                        'iconimg'  => '<img class="ui mini circular image" src="' . esc_attr( $icon_url ) . '" style="width:32px;height:auto;display:inline-block;">',
+                        'iconimg'  => '<img class="ui mini circular image" src="' . esc_attr( $icon_url ) . '" style="width:32px;height:auto;display:inline-block;" alt="Client custom icon">',
                     )
                 )
             );
@@ -408,7 +408,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             if ( $client ) {
                 $arr_client      = MainWP_Utility::map_fields( $client, array( 'image', 'selected_icon_info' ), false ); // array map.
                 $client_pic      = MainWP_Client_Handler::get_client_contact_image( $arr_client );
-                $params['title'] = $client_pic . '<div class="content">' . $client->name . '<div class="sub header"><a href="mailto:' . $client->client_email . '" target="_blank" style="color:#666!important;font-weight:normal!important;">' . $client->client_email . '</a> </div></div>';
+                $params['title'] = $client_pic . '<div class="content">' . $client->name . '<div class="sub header"><a href="mailto:' . $client->client_email . '" target="_blank" style="font-weight:normal!important;">' . $client->client_email . '</a> </div></div>';
             }
         }
 
@@ -1367,7 +1367,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 $tip      = isset( $field['tooltip'] ) ? $field['tooltip'] : '';
                 ?>
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-client">
-                    <label class="six wide column middle aligned" <?php echo ! empty( $tip ) ? 'data-tooltip="' . esc_attr( $tip ) . '" data-inverted="" data-position="top left"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>>
+                    <label class="six wide column middle aligned" for="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]" <?php echo ! empty( $tip ) ? 'data-tooltip="' . esc_attr( $tip ) . '" data-inverted="" data-position="top left"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>>
                     <?php
                     $indi_val = $val && $edit_client ? 1 : 0;
                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $indi_val );
@@ -1380,7 +1380,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     if ( 'client.note' === $field_name ) {
                         ?>
                             <div class="editor">
-                                <textarea class="code settings-field-value-change-handler" cols="80" rows="10" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]"><?php echo esc_html( $val ); ?></textarea>
+                                <textarea class="code settings-field-value-change-handler" cols="80" rows="10" id="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]"><?php echo esc_html( $val ); ?></textarea>
                             </div>
                             <?php
                     } elseif ( 'client.suspended' === $field_name ) {
@@ -1404,7 +1404,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         <?php
                     } else {
                         ?>
-                            <input type="text" class="regular-text settings-field-value-change-handler" value="<?php echo esc_html( $val ); ?>" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]"/>
+                            <input type="text" id="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]" class="regular-text settings-field-value-change-handler" value="<?php echo esc_html( $val ); ?>" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]"/>
                         <?php
                     }
                     ?>

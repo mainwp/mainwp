@@ -575,7 +575,7 @@ window.securityIssues_fix = function (feature) {
 // Securtiy issues Widget
 
 // Show/Hide the list
-jQuery(document).on('click', '#show-security-issues-widget-list', function () {
+jQuery(document).on('click', '#mainwp-show-security-issues-widget-list', function () {
   jQuery('#mainwp-security-issues-widget-list').toggle();
   return false;
 });
@@ -4088,13 +4088,13 @@ jQuery(function () {
 
   jQuery(document).on('click', '.mainwp-import-demo-data-button', function () {
     mainwp_import_demo_data_action(this);
+    return false; //required this return.
   });
 
   jQuery(document).on('click', '.mainwp-remove-demo-data-button', function () {
     mainwp_remove_demo_data_action();
+    return false; //required this return.
   });
-
-
 });
 
 
@@ -4453,3 +4453,14 @@ window.mainwp_init_ui_calendar = ($selectors) => {
   });
 
 }
+
+
+jQuery( document ).ready( function () {
+  jQuery('.dt-scroll-head').css({
+    'overflow-x':'auto'
+  }).on('scroll', function(e){
+    let scrollBody = jQuery(this).parent().find('.dt-scroll-body').get(0);
+    scrollBody.scrollLeft = this.scrollLeft;
+    jQuery(scrollBody).trigger('scroll');
+  });
+} );

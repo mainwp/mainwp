@@ -193,7 +193,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
      */
     public function screen_options( $input ) {
         return $input .
-            '<a class="ui button basic icon" onclick="mainwp_module_log_overview_screen_options(); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="' . esc_html__( 'Page Settings', 'mainwp' ) . '">
+            '<a class="ui button basic icon" onclick="mainwp_module_log_overview_screen_options(); return false;" data-inverted="" data-position="bottom right" href="#" aria-label="' . esc_attr__( 'Page Settings', 'mainwp' ) . '" data-tooltip="' . esc_attr__( 'Page Settings', 'mainwp' ) . '">
                 <i class="cog icon"></i>
             </a>';
     }

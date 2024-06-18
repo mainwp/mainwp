@@ -345,7 +345,7 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
                     } elseif ( 'data_actions' === $column_name ) {
                         ?>
                         <td class="collapsing no-sort">
-                                <div class="ui right pointing dropdown icon mini basic green button" style="z-index: 999;">
+                                <div class="ui right pointing dropdown icon mini basic green button" style="z-index: 99;">
                                     <i class="ellipsis horizontal icon"></i>
                                     <div class="menu"  action-id="<?php echo intval( $data->action_id ); ?>">
                                         <a class="item non-mainwp-action-row-dismiss" href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Dismiss the change.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a>

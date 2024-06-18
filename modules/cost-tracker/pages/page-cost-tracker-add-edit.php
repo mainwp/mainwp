@@ -206,7 +206,7 @@ class Cost_Tracker_Add_Edit {
                     ?>
                     </label>
                     <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter the Company (Product) name.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                        <input type="text" class="settings-field-value-change-handler" name="mainwp_module_cost_tracker_edit_name" id="mainwp_module_cost_tracker_edit_name" value="<?php echo $edit_cost ? esc_html( $edit_cost->name ) : ''; ?>">
+                        <input type="text" class="settings-field-value-change-handler" aria-label="<?php esc_attr_e( 'Enter the Company (Product) name.', 'mainwp' ); ?>" name="mainwp_module_cost_tracker_edit_name" id="mainwp_module_cost_tracker_edit_name" value="<?php echo $edit_cost ? esc_html( $edit_cost->name ) : ''; ?>">
                     </div>
                 </div>
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit">
@@ -217,7 +217,7 @@ class Cost_Tracker_Add_Edit {
                     ?>
                     </label>
                     <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter the URL of the product (optional).', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                        <input type="text" class="settings-field-value-change-handler" name="mainwp_module_cost_tracker_edit_url" id="mainwp_module_cost_tracker_edit_url" value="<?php echo $edit_cost ? esc_html( $edit_cost->url ) : ''; ?>">
+                        <input type="text" class="settings-field-value-change-handler" aria-label="<?php esc_attr_e( 'Enter the URL of the product (optional).', 'mainwp' ); ?>" name="mainwp_module_cost_tracker_edit_url" id="mainwp_module_cost_tracker_edit_url" value="<?php echo $edit_cost ? esc_html( $edit_cost->url ) : ''; ?>">
                     </div>
                 </div>
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit">
@@ -377,7 +377,7 @@ class Cost_Tracker_Add_Edit {
                     ?>
                     </label>
                     <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter the product slug.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                        <input type="text" class="settings-field-value-change-handler" name="mainwp_module_cost_tracker_edit_product_slug" id="mainwp_module_cost_tracker_edit_product_slug" value="<?php echo esc_attr( $slug ); ?>">
+                        <input type="text" class="settings-field-value-change-handler" aria-label="<?php esc_attr_e( 'Enter the product slug.', 'mainwp' ); ?>" name="mainwp_module_cost_tracker_edit_product_slug" id="mainwp_module_cost_tracker_edit_product_slug" value="<?php echo esc_attr( $slug ); ?>">
                     </div>
                 </div>
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit" default-indi-value="single_site">
@@ -640,7 +640,7 @@ class Cost_Tracker_Add_Edit {
                         'result'   => 'success',
                         'iconfile' => esc_html( $uploaded_icon ),
                         'iconsrc'  => esc_html( $cust_icon ),
-                        'iconimg'  => '<img class="ui mini circular image" src="' . esc_attr( $cust_icon ) . '" style="width:32px;height:auto;display:inline-block;">',
+                        'iconimg'  => '<img class="ui mini circular image" src="' . esc_attr( $cust_icon ) . '" style="width:32px;height:auto;display:inline-block;" alt="Cost custom icon">',
                     )
                 )
             );

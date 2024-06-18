@@ -181,6 +181,11 @@
 .mainwp-ui [data-tooltip][data-inverted]:after {
   z-index: 99 !important;
 }
+.mainwp-ui [data-tooltip][data-inverted]:after {
+  white-space: normal;
+  width: max-content;
+  max-width: 500px;
+}
 
 .mainwp-ui .progress .bar {
   border-radius: 0;
@@ -235,7 +240,11 @@
 
 .mainwp-ui .ui.dimmer.active,
 .mainwp-ui .ui.dimmer.modals.active {
-  z-index: 99999;
+  z-index: 1001;
+}
+.mainwp-ui .ui.modal .mainwp-html-popup {
+  overflow: visible;
+  z-index: 9999 !important;
 }
 
 .mainwp-ui .icon.card {
@@ -281,63 +290,6 @@
 
 .mainwp-ui div.dt-container .dt-scroll-body{
   border-bottom: none !important;
-}
-
-/* paging buttons */
-.mainwp-ui .pagination.menu .dt-paging-button.item{
-  padding: 0px !important;
-}
-.mainwp-ui .pagination.menu .dt-paging-button.item::before{
-  margin-right: -1px !important;
-}
-.mainwp-ui .pagination.menu .dt-paging-button:hover{
-  background:none !important;
-}
-.mainwp-ui .pagination.menu .dt-paging-button.item a{
-  display: grid !important;
-  place-items: center !important;
-  width: 100% !important;
-  height: 100% !important;
-  padding: 5px !important;
-  border: none !important;
-  font-weight: 700;
-  margin-left: -3px !important;
-}
-.mainwp-ui .pagination.menu .dt-paging-button.active{
-  background-color: #f2f2f2 !important;
-}
-.mainwp-ui .pagination.menu .dt-paging-button.active a,
-.mainwp-classic-theme .pagination.menu .dt-paging-button a{
-  font-weight: normal !important;
-}
-.mainwp-ui .pagination.menu .dt-paging-button a:focus{
-  border: none !important;
-  outline : none !important;
-  box-shadow: none !important;
-}
-.mainwp-ui .pagination.menu .dt-paging-button .page-link{
-  min-width: 24px !important;
-  line-height: 14px !important;
-}
-.mainwp-ui .pagination.menu .dt-paging-button.disabled .page-link{
-  color:rgba(40, 40, 40, 0.3) !important;
-}
-.mainwp-ui .pagination.menu .dt-paging-button.item.disabled{
-  padding: 5px !important;
-  display: grid !important;
-  align-items: center !important;
-}
-.mainwp-ui .pagination.menu .dt-paging-button:not(.disabled):hover,
-.mainwp-ui .pagination.menu .dt-paging-button.active a,
-.mainwp-ui .pagination.menu .dt-paging-button a:hover{
-  background-color: #f2f2f2 !important;
-  border-color: #f2f2f2 !important;
-  outline : none !important;
-  box-shadow: none !important;
-}
-.mainwp-classic-theme .pagination.menu .dt-paging-button a{
-  color: rgba(0, 0, 0, 0.87);
-  font-size: 14px;
 }
 
 /* end */

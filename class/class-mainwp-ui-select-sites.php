@@ -222,7 +222,7 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             </div>
                 <div class="ui right aligned middle aligned column">
                     <?php if ( $show_new_tag ) { ?>
-                    <a class="ui mini basic icon button" href="javascript:void(0)" id="mainwp-create-new-tag-button" data-tooltip="<?php esc_attr_e( 'Create a tag with selected sites.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="tag icon"></i></a>
+                    <a class="ui mini basic icon button" href="javascript:void(0)" id="mainwp-create-new-tag-button" aria-label="<?php esc_attr_e( 'Create a tag with selected sites.', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Create a tag with selected sites.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="tag icon"></i></a>
                     <?php } ?>
                 </div>
             </div>

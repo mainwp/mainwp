@@ -534,8 +534,9 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             }
         }
 
+        $log_lastsstart = ! empty( $lasttimeStartAutomaticUpdate ) ? ' :: [lasttimeStartAutomaticUpdate=' . MainWP_Utility::format_timestamp( $lasttimeStartAutomaticUpdate ) . '] ' : '';
         MainWP_Logger::instance()->info( 'updates check found ' . count( $checkupdate_websites ) . ' websites' );
-        MainWP_Logger::instance()->log_update_check( 'updates check found [' . count( $checkupdate_websites ) . ' websites] :: going to check [' . count( $websites ) . ' websites]' );
+        MainWP_Logger::instance()->log_update_check( 'updates check found [' . count( $checkupdate_websites ) . ' websites] :: going to check [' . count( $websites ) . ' websites]' . $log_lastsstart );
 
         $userid = null;
         foreach ( $websites as $website ) {

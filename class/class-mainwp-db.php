@@ -131,6 +131,21 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
+     * Method get_select_groups_belong().
+     *
+     * @return string sql.
+     */
+    public function get_select_groups_belong() {
+        return ', ( SELECT GROUP_CONCAT(grbl.name ORDER BY grbl.name SEPARATOR ",")
+        FROM ' . $this->table_name( 'wp_group' ) . ' wpgrbl
+        JOIN ' . $this->table_name( 'group' ) . ' grbl ON grbl.id = wpgrbl.groupid WHERE wpgrbl.wpid = wp.id )  as wpgroups_belong,
+        ( SELECT GROUP_CONCAT(grbl.id ORDER BY grbl.name SEPARATOR ",") FROM ' . $this->table_name( 'wp_group' ) . ' wpgrbl
+        JOIN ' . $this->table_name( 'group' ) . ' grbl ON grbl.id = wpgrbl.groupid WHERE wpgrbl.wpid = wp.id ) as wpgroupids_belong,
+        ( SELECT GROUP_CONCAT(grbl.color ORDER BY grbl.name SEPARATOR ",") FROM ' . $this->table_name( 'wp_group' ) . ' wpgrbl
+        JOIN ' . $this->table_name( 'group' ) . ' grbl ON grbl.id = wpgrbl.groupid WHERE wpgrbl.wpid = wp.id ) as wpgroupcolors_belong ';
+    }
+
+    /**
      * Get connected child sites.
      *
      * @param array $sites_ids Websites ids - option field.
@@ -638,7 +653,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $where .= $this->get_sql_where_allow_access_sites( 'wp' );
 
             if ( $selectgroups ) {
-                $qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids
+                $qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors
                 FROM ' . $this->table_name( 'wp' ) . ' wp
                 LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
                 LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
@@ -741,7 +756,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         // wpgroups to fix issue for mysql 8.0, as groups will generate error syntax.
         if ( $selectgroups ) {
-            $qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids,
+            $qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors,
             wpclient.name as client_name
             FROM ' . $this->table_name( 'wp' ) . ' wp
             LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
@@ -834,7 +849,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             } else {
                 $select = $select_wp_fields . '
                 ' . $extra_select_sql_fields . '
-                ,wp_sync.sync_errors,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, wpclient.name as client_name ';
+                ,wp_sync.sync_errors,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors, wpclient.name as client_name ';
             }
             $qry = 'SELECT ' . $select . '
             FROM ' . $this->table_name( 'wp' ) . ' wp
@@ -1260,7 +1275,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             } else {
                 $where_group = ' AND wpgroup.groupid IS NULL ';
             }
-        } elseif ( $group_ids && ! empty( $group_ids ) ) {
+        } elseif ( $group_ids ) {
             $groups = implode( ',', $group_ids );
             if ( $is_not ) {
                 $join_group  = ' LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
@@ -1272,6 +1287,12 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $join_group  = ' JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
                 $where_group = ' AND wpgroup.groupid IN (' . $groups . ') ';
             }
+        }
+
+        $select_groups_belong = '';
+
+        if ( ! $is_count && $group_ids ) {
+            $select_groups_belong = $this->get_select_groups_belong();
         }
 
         $join_client  = '';
@@ -1318,8 +1339,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $join_group = ' LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
             }
 
-            $qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, wpclient.name as client_name
-            FROM ' . $this->table_name( 'wp' ) . ' wp ' .
+            $qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors, wpclient.name as client_name ' .
+            $select_groups_belong . ' FROM ' . $this->table_name( 'wp' ) . ' wp ' .
             $join_client . ' ' .
             $join_group . '
             LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgroup.groupid = gr.id
@@ -1330,8 +1351,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             GROUP BY wp.id, wp_sync.sync_id ' .
             $orderBy;
         } else {
-            $qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, wpclient.name as client_name
-            FROM ' . $this->table_name( 'wp' ) . ' wp ' .
+            $qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, wpclient.name as client_name ' .
+            $select_groups_belong . ' FROM ' . $this->table_name( 'wp' ) . ' wp ' .
             $join_group . ' ' .
             $join_client . '
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
@@ -1346,6 +1367,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         } elseif ( false !== $rowcount ) {
             $qry .= ' LIMIT ' . $rowcount;
         }
+        //phpcs:ignore
+        // error_log( $qry ); // NOSONAR - for dev.
         return $qry;
     }
 
@@ -1523,7 +1546,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         if ( MainWP_Utility::ctype_digit( $id ) ) {
             $where = $this->get_sql_where_allow_access_sites( 'wp', 'nocheckstaging' );
             if ( $selectGroups ) {
-                return 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids
+                return 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors
                 FROM ' . $this->table_name( 'wp' ) . ' wp
                 LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
                 LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
@@ -1639,6 +1662,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @param bool   $rowcount     Row count. Default: falese.
      * @param null   $where        SQL WHERE value.
      * @param null   $search_site  Site search field value. Default: null.
+     * @param array  $others  Others params.
      *
      * @return object|null Return database query or null on failure.
      *
@@ -1651,7 +1675,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $offset = false,
         $rowcount = false,
         $where = null,
-        $search_site = null
+        $search_site = null,
+        $others = array()
     ) {
 
         $is_staging = 'no';
@@ -1668,16 +1693,18 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $where_search .= ' AND (wp.name LIKE "%' . $this->escape( $search_site ) . '%" OR wp.url LIKE  "%' . $this->escape( $search_site ) . '%") ';
         }
 
+        $extra_view = is_array( $others ) && isset( $others['extra_view'] ) && is_array( $others['extra_view'] ) && ! empty( $others['extra_view'] ) ? $others['extra_view'] : array( 'site_info' );
+
         if ( MainWP_Utility::ctype_digit( $id ) ) {
             $where_allowed = $this->get_sql_where_allow_access_sites( 'wp', $is_staging );
             if ( $selectgroups ) {
-                $qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids
+                $qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors
                  FROM ' . $this->table_name( 'wp' ) . ' wp
                  JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid
                  LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
                  LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
                  JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-                 JOIN ' . $this->get_option_view( array( 'site_info' ), true ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+                 JOIN ' . $this->get_option_view( $extra_view, true ) . ' wp_optionview ON wp.id = wp_optionview.wpid
                  WHERE wpgroup.groupid = ' . $id . ' ' .
                 ( empty( $where ) ? '' : ' AND ' . $where ) . $where_allowed . $where_search . '
                  GROUP BY wp.id, wp_sync.sync_id
@@ -1686,7 +1713,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $qry = 'SELECT wp.*,wp_optionview.*, wp_sync.* FROM ' . $this->table_name( 'wp' ) . ' wp
                         JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid
                         JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-                        JOIN ' . $this->get_option_view( array( 'site_info' ), false ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+                        JOIN ' . $this->get_option_view( $extra_view, false ) . ' wp_optionview ON wp.id = wp_optionview.wpid
                         WHERE wpgroup.groupid = ' . $id . ' ' . $where_allowed . $where_search .
                 ( empty( $where ) ? '' : ' AND ' . $where ) . ' ORDER BY ' . $orderBy;
             }

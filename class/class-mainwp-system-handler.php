@@ -951,13 +951,12 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public function upload_file( $file ) {
         header( 'Content-Description: File Transfer' );
-        if ( MainWP_Utility::ends_with( $file, '.tar.gz' ) ) {
-            header( 'Content-Type: application/x-gzip' );
-            header( 'Content-Encoding: gzip' );
-        } else {
-            header( 'Content-Type: application/octet-stream' );
+        $dwl_fname = basename( $file );
+        if ( 'tar.gz' === $dwl_fname || '.tar.gz' === $dwl_fname ) {
+            $dwl_fname = 'noname.tar.gz'; // to fix name of zip file.
         }
-        header( 'Content-Disposition: attachment; filename="' . basename( $file ) . '"' );
+        header( 'Content-Type: application/octet-stream' );
+        header( 'Content-Disposition: attachment; filename="' . $dwl_fname . '"' );
         header( 'Expires: 0' );
         header( 'Cache-Control: must-revalidate' );
         header( 'Pragma: public' );

@@ -172,9 +172,14 @@ class Connector_Installer extends Log_Connector {
                     if ( isset( $item['version'] ) ) {
                         $args['version'] = $item['version'];
                     }
-                    $args['siteurl']    = $website->url;
-                    $args['site_name']  = $website->name;
-                    $args['extra_info'] = $item;
+                    $args['siteurl']   = $website->url;
+                    $args['site_name'] = $website->name;
+
+                    $save_info = $item;
+                    if ( ! empty( $item['rollback'] ) ) {
+                        $save_info['rollback_info'] = $item;
+                    }
+                    $args['extra_info'] = $save_info;
                     $logs_args[]        = $args;
                 }
             }

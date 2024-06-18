@@ -272,7 +272,6 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                     'slug'       => 'Extensions',
                     'href'       => 'admin.php?page=Extensions',
                     'icon'       => '<i class="puzzle piece icon"></i>',
-                    'id'         => 'menu-item-extensions',
                 ),
                 0
             );

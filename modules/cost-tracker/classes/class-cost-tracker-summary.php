@@ -175,7 +175,7 @@ class Cost_Tracker_Summary {
      */
     public function screen_options( $input ) {
         return $input .
-            '<a class="ui button basic icon" onclick="mainwp_module_cost_tracker_summary_screen_options(); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="' . esc_html__( 'Page Settings', 'mainwp' ) . '">
+            '<a class="ui button basic icon" onclick="mainwp_module_cost_tracker_summary_screen_options(); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="' . esc_html__( 'Page Settings', 'mainwp' ) . '" aria-label="' . esc_html__( 'Page Settings', 'mainwp' ) . '">
                 <i class="cog icon"></i>
             </a>';
     }

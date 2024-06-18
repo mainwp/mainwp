@@ -549,11 +549,20 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             responsive = false;
         }
         jQuery( document ).ready( function() {
-            jQuery( '.mainwp-system-info-table' ).DataTable( {
+            jQuery( '.mainwp-system-info-table:not(#mainwp-system-report-extensions-table)' ).DataTable( {
                 responsive: responsive,
                 colreorder: true,
                 paging: false,
                 info: false,
+            } );
+            jQuery( '#mainwp-system-report-extensions-table' ).DataTable( {
+                responsive: responsive,
+                colreorder: true,
+                paging: false,
+                info: false,
+                "language": {
+                    "emptyTable": "<?php esc_html_e( 'No installed extensions', 'mainwp' ); ?>"
+                },
             } );
         } );
         </script>
@@ -829,7 +838,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $extensions       = MainWP_Extensions_Handler::get_extensions();
         $extensions_slugs = array();
         if ( empty( $extensions ) ) {
-            echo '<tr><td colspan="4">' . esc_html__( 'No installed extensions', 'mainwp' ) . '</td></tr>';
+            return;
         }
         foreach ( $extensions as $extension ) {
             $extensions_slugs[] = $extension['slug'];

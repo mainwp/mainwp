@@ -79,7 +79,9 @@ class MainWP_Themes_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     $output->themes_installed[] = $theme;
                 }
             }
-
+            if ( ! empty( $website->rollback_updates_data ) ) {
+                $output->roll_items[ $website->id ] = MainWP_Updates_Helper::get_roll_update_plugintheme_items( 'theme', $website->rollback_updates_data );
+            }
             unset( $themes );
         } else {
             $output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );

@@ -402,17 +402,16 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <div class="mainwp-main-content">
                 <div class="ui mini form mainwp-actions-bar">
                     <div class="ui stackable grid">
-                        <div class="ui three column row">
+                        <div class="ui two column row">
                             <div class="left aligned column">
-                                <div id="mainwp-themes-bulk-actions-wapper">
+                                <span id="mainwp-themes-bulk-actions-wapper" style="margin-right:1em">
                                 <?php
                                 if ( is_array( $cachedResult ) && isset( $cachedResult['bulk_actions'] ) ) {
                                     echo $cachedResult['bulk_actions']; // phpcs:ignore WordPress.Security.EscapeOutput
-                                } else {
-                                    MainWP_UI::render_empty_bulk_actions();
                                 }
                                 ?>
-                                </div>
+                                </span>
+                                <button id="mainwp-install-themes-to-selected-sites" class="ui mini green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
                                 <?php
                                 /**
                                  * Action: mainwp_themes_actions_bar_left
@@ -424,13 +423,9 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 do_action( 'mainwp_themes_actions_bar_left' );
                                 ?>
                             </div>
-                            <div class="right aligned column" >
-                                <?php
-                                MainWP_Plugins::render_select_manage_view( 'theme' );
-                                ?>
-                            </div>
                             <div class="right aligned column">
-                                <button id="mainwp-install-themes-to-selected-sites" class="ui mini green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
+                                <?php MainWP_Plugins::render_select_manage_view( 'theme' ); ?>
+                                
                                 <?php
                                 /**
                                  * Action: mainwp_themes_actions_bar_right
@@ -701,10 +696,12 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $output->themes           = array();
         $output->themes_installed = array();
         $output->status           = $status;
+        $output->roll_items       = array();
         $error_results            = '';
 
         $data_fields   = MainWP_System_Utility::get_default_map_site_fields();
         $data_fields[] = 'themes';
+        $data_fields[] = 'rollback_updates_data';
 
         if ( 1 === (int) get_option( 'mainwp_optimize', 1 ) || MainWP_Demo_Handle::is_demo_mode() ) {
 
@@ -715,7 +712,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             if ( '' !== $sites ) {
                 foreach ( $sites as $v ) {
                     if ( MainWP_Utility::ctype_digit( $v ) ) {
-                        $website          = MainWP_DB::instance()->get_website_by_id( $v );
+                        $website          = MainWP_DB::instance()->get_website_by_id( $v, false, array( 'rollback_updates_data' ) );
                         $allThemes        = json_decode( $website->themes, true );
                         $_count           = count( $allThemes );
                         $_count_installed = 0;
@@ -751,6 +748,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 $output->themes_installed[] = $theme;
                             }
                         }
+                        $output->roll_items[ $website->id ] = MainWP_Updates_Helper::get_roll_update_plugintheme_items( 'theme', $website->rollback_updates_data );
                     }
                 }
             }
@@ -758,7 +756,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             if ( '' !== $groups ) {
                 foreach ( $groups as $v ) {
                     if ( MainWP_Utility::ctype_digit( $v ) ) {
-                        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
+                        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v, false, 'wp.url', false, false, null, null, array( 'extra_view' => array( 'site_info', 'rollback_updates_data' ) ) ) );
                         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
                             if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
                                 continue;
@@ -798,6 +796,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                     $output->themes_installed[] = $theme;
                                 }
                             }
+                            $output->roll_items[ $website->id ] = MainWP_Updates_Helper::get_roll_update_plugintheme_items( 'theme', $website->rollback_updates_data );
                         }
                         MainWP_DB::free_result( $websites );
                     }
@@ -809,6 +808,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     $clients,
                     array(
                         'select_data' => $data_fields,
+                        'extra_view'  => array( 'rollback_updates_data' ),
                     )
                 );
                 if ( $websites ) {
@@ -850,6 +850,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 $output->themes_installed[] = $theme;
                             }
                         }
+                        $output->roll_items[ $website->id ] = MainWP_Updates_Helper::get_roll_update_plugintheme_items( 'theme', $website->rollback_updates_data );
                     }
                 }
             }
@@ -859,7 +860,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             if ( '' !== $sites ) {
                 foreach ( $sites as $v ) {
                     if ( MainWP_Utility::ctype_digit( $v ) ) {
-                        $website = MainWP_DB::instance()->get_website_by_id( $v );
+                        $website = MainWP_DB::instance()->get_website_by_id( $v, false, array( 'rollback_updates_data' ) );
                         if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
                             continue;
                         }
@@ -874,7 +875,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             if ( '' !== $groups ) {
                 foreach ( $groups as $v ) {
                     if ( MainWP_Utility::ctype_digit( $v ) ) {
-                        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
+                        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v, false, 'wp.url', false, false, null, null, array( 'extra_view' => array( 'site_info', 'rollback_updates_data' ) ) ) );
                         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
                             if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
                                 continue;
@@ -894,6 +895,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     $clients,
                     array(
                         'select_data' => $data_fields,
+                        'extra_view'  => array( 'rollback_updates_data' ),
                     )
                 );
                 if ( $websites ) {
@@ -959,22 +961,24 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <?php
             //phpcs:enable
         }
-
+        $roll_items_list = array();
         if ( 'not_installed' === $status ) {
             if ( empty( $output->themes_installed ) ) {
                 ?>
                 <div class="ui message yellow"><?php esc_html_e( 'No websites found.', 'mainwp' ); ?></div>
                 <?php
             } else {
-                $themes_list = $output->themes_installed;
-                $view_mode   = MAINWP_VIEW_PER_SITE;
+                $themes_list     = $output->themes_installed;
+                $roll_items_list = ! empty( $output->roll_items ) ? $output->roll_items : array();
+                $view_mode       = MAINWP_VIEW_PER_SITE;
             }
         } elseif ( empty( $output->themes ) ) {
             ?>
             <div class="ui message yellow"><?php esc_html_e( 'No themes found.', 'mainwp' ); ?></div>
             <?php
         } else {
-            $themes_list = $output->themes;
+            $themes_list     = $output->themes;
+            $roll_items_list = ! empty( $output->roll_items ) ? $output->roll_items : array();
         }
 
         $sites             = array();
@@ -982,6 +986,10 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $themesNameSites   = array();
         $themesRealVersion = array();
         $themesSlug        = array();
+
+        if ( ! is_array( $roll_items_list ) ) {
+            $roll_items_list = array();
+        }
 
         if ( ! empty( $themes_list ) ) {
 
@@ -1013,9 +1021,9 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             ksort( $themesNameSites, SORT_STRING );
 
             if ( MAINWP_VIEW_PER_PLUGIN_THEME === (int) $view_mode ) {
-                static::render_manage_table( $sites, $themesName, $siteThemes, $themesSlug, $themesNameSites, $themesRealVersion );
+                static::render_manage_table( $sites, $themesName, $siteThemes, $themesSlug, $themesNameSites, $themesRealVersion, $roll_items_list );
             } else {
-                static::render_manage_per_site_table( $sites, $themesName, $siteThemes, $themesSlug, $themesNameSites, $themesRealVersion );
+                static::render_manage_per_site_table( $sites, $themesName, $siteThemes, $themesSlug, $themesNameSites, $themesRealVersion, $roll_items_list );
             }
             MainWP_UI::render_modal_upload_icon();
         }
@@ -1041,8 +1049,9 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param string $themesSlug List of theme slugs.
      * @param array  $themesNameSites Installed theme version.
      * @param string $themesRealVersion Current theme version.
+     * @param array  $roll_list roll items list.
      */
-    public static function render_manage_per_site_table( $sites, $themesName = array(), $siteThemes = array(), $themesSlug = array(), $themesNameSites = array(), $themesRealVersion = array() ) { //phpcs:ignore -- NOSONAR - complex method.
+    public static function render_manage_per_site_table( $sites, $themesName = array(), $siteThemes = array(), $themesSlug = array(), $themesNameSites = array(), $themesRealVersion = array(), $roll_list = array() ) { //phpcs:ignore -- NOSONAR - complex method.
         $userExtension        = MainWP_DB_Common::instance()->get_user_extension();
         $decodedIgnoredThemes = json_decode( $userExtension->ignored_themes, true );
         $trustedThemes        = json_decode( $userExtension->trusted_themes, true );
@@ -1218,7 +1227,13 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 <div class="two wide center aligned middle aligned column current-version">
                                 <?php echo esc_html( $theme_version ); ?>
                                 <?php if ( ! empty( $new_version ) ) : ?>
-                                    &rarr; <?php echo esc_html( $new_version ); ?>
+                                    &rarr;
+                                    <?php
+                                    if ( ! empty( $roll_list[ $site_id ][ $theme_slug ][ $new_version ] ) ) {
+                                        echo MainWP_Updates_Helper::get_roll_msg( $roll_list[ $site_id ][ $theme_slug ][ $new_version ], true, 'notice' ); //phpcs:ignore -- NOSONAR -- ok.
+                                    }
+                                    echo esc_html( $new_version );
+                                    ?>
                                     <?php endif; ?>
                                 </div>
                                 <div class="two wide right aligned middle aligned column update-column">
@@ -1228,18 +1243,18 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 </div>
                                 <div class="two wide center aligned middle aligned column column-actions">
                                 <?php if ( $actived ) : ?>
-                                            <?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
-                                                <span  data-position="top right" data-tooltip="<?php esc_attr_e( 'Active theme cannot be deactivated. If you need to activate another theme, go to the list of inactive themes and activate the wanted theme.', 'mainwp' ); ?>" data-inverted=""><a href="javascript:void(0)" disabled class="ui mini fluid <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a></span>
-                                            <?php } ?>
-                                    <?php else : ?>
-                                        <div class="ui mini fluid buttons">
+                                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
+                                        <a href="javascript:void(0)" disabled class="ui mini fluid <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
+                                    <?php } ?>
+                                <?php else : ?>
+                                    <div class="ui mini fluid buttons">
                                         <?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
-                                            <span  data-position="top right" data-tooltip="<?php echo esc_attr__( 'Activate the ', 'mainwp' ) . esc_html( wp_strip_all_tags( $theme_title ) ) . ' ' . esc_attr__( 'theme on the child site.', 'mainwp' ); ?>" data-inverted=""><a href="javascript:void(0)" class="mainwp-manages-theme-activate ui green <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Activate', 'mainwp' ); ?></a></span>
+                                        <a href="javascript:void(0)" class="mainwp-manages-theme-activate ui green <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
                                         <?php } ?>
-                                            <?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) && ! $not_delete ) { ?>
-                                            <span  data-position="top right" data-tooltip="<?php echo esc_attr__( 'Delete the', 'mainwp' ) . ' ' . esc_html( wp_strip_all_tags( $theme_title ) ) . ' ' . esc_attr__( 'theme from the child site.', 'mainwp' ); ?>" data-inverted=""><a href="javascript:void(0)" class="mainwp-manages-theme-delete ui <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a></span>
+                                        <?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) && ! $not_delete ) { ?>
+                                        <a href="javascript:void(0)" class="mainwp-manages-theme-delete ui <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
                                         <?php } ?>
-                                        </div>
+                                    </div>
                                 <?php endif; ?>
                                 </div>
                             </div>
@@ -1307,8 +1322,9 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param string $themesSlug List of theme slugs.
      * @param array  $themesNameSites Installed theme version.
      * @param string $themesRealVersion Current theme version.
+     * @param array  $roll_list roll items list.
      */
-    public static function render_manage_table( $sites, $themesName, $siteThemes, $themesSlug, $themesNameSites, $themesRealVersion ) { //phpcs:ignore -- NOSONAR - complex method.
+    public static function render_manage_table( $sites, $themesName, $siteThemes, $themesSlug, $themesNameSites, $themesRealVersion, $roll_list = array() ) { //phpcs:ignore -- NOSONAR - complex method.
 
         $userExtension        = MainWP_DB_Common::instance()->get_user_extension();
         $decodedIgnoredThemes = json_decode( $userExtension->ignored_themes, true );
@@ -1503,7 +1519,13 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 <div class="two wide center aligned middle aligned column current-version">
                                     <?php echo esc_html( $theme_version ); ?>
                                     <?php if ( ! empty( $new_version ) ) : ?>
-                                    &rarr; <?php echo esc_html( $new_version ); ?>
+                                    &rarr;
+                                        <?php
+                                        if ( ! empty( $roll_list[ $site_id ][ $theme_slug ][ $lastest_version ] ) ) {
+                                            echo MainWP_Updates_Helper::get_roll_msg( $roll_list[ $site_id ][ $theme_slug ][ $lastest_version ], true, 'notice' ); //phpcs:ignore -- NOSONAR -- ok.
+                                        }
+                                        echo esc_html( $new_version );
+                                        ?>
                                     <?php endif; ?>
                                 </div>
                                 <div class="two wide right aligned middle aligned column update-column">
@@ -1514,15 +1536,15 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 <div class="two wide center aligned middle aligned column column-actions">
                                 <?php if ( $actived ) : ?>
                                             <?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
-                                                <span  data-position="top right" data-tooltip="<?php esc_attr_e( 'Active theme cannot be deactivated. If you need to activate another theme, go to the list of inactive themes and activate the wanted theme.', 'mainwp' ); ?>" data-inverted=""><a href="javascript:void(0)" disabled class="ui mini fluid <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a></span>
+                                                <a href="javascript:void(0)" disabled class="ui mini fluid <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
                                             <?php } ?>
                                     <?php else : ?>
                                         <div class="ui mini fluid buttons">
                                         <?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
-                                            <span  data-position="top right" data-tooltip="<?php echo esc_attr__( 'Activate the ', 'mainwp' ) . esc_html( wp_strip_all_tags( $theme_title ) ) . ' ' . esc_attr__( 'theme on the child site.', 'mainwp' ); ?>" data-inverted=""><a href="javascript:void(0)" class="mainwp-manages-theme-activate ui green <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Activate', 'mainwp' ); ?></a></span>
+                                            <a href="javascript:void(0)" class="mainwp-manages-theme-activate ui green <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
                                         <?php } ?>
                                             <?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) && ! $not_delete ) { ?>
-                                            <span  data-position="top right" data-tooltip="<?php echo esc_attr__( 'Delete the', 'mainwp' ) . ' ' . esc_html( wp_strip_all_tags( $theme_title ) ) . ' ' . esc_attr__( 'theme from the child site.', 'mainwp' ); ?>" data-inverted=""><a href="javascript:void(0)" class="mainwp-manages-theme-delete ui <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a></span>
+                                            <a href="javascript:void(0)" class="mainwp-manages-theme-delete ui <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
                                         <?php } ?>
                                         </div>
                                 <?php endif; ?>
@@ -1842,7 +1864,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         <script id="tmpl-theme" type="text/template">
                 <# if ( data.screenshot_url ) { #>
                 <div class="image">
-                    <img src="{{ data.screenshot_url }}" />
+                    <img src="{{ data.screenshot_url }}" alt="{{ data.name }}" />
                 </div>
                 <# } #>
                 <div class="content">
@@ -1891,7 +1913,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <div class="install-theme-info">
                         <h3 class="theme-name">{{ data.name }}</h3>
                         <span class="theme-by"><?php printf( esc_html__( 'By %s', 'mainwp' ), '{{ data.author }}' ); ?></span>
-                        <img class="theme-screenshot" src="{{ data.screenshot_url }}" alt="" />
+                        <img class="theme-screenshot" src="{{ data.screenshot_url }}" alt="{{ data.name }}" />
                         <div class="theme-details">
                             <# if ( data.rating ) { #>
                                 <div class="star-rating rating-{{ Math.round( data.rating / 10 ) * 10 }}">

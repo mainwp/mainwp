@@ -583,7 +583,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( static::starts_with( strtolower( $pUrl ), 'www.' ) ) {
             $pUrl = substr( $pUrl, 4 );
         }
-                return $pUrl;
+        return $pUrl;
     }
 
     /**

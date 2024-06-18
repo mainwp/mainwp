@@ -970,7 +970,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 <?php if ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Backups' === $_GET['page'] ) : //phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
                     <div class="ui extension card">
                         <div class="content">
-                            <img class="right floated mini ui image" alt="" src="<?php echo esc_url( MAINWP_PLUGIN_URL ) . 'assets/images/extensions/placeholder.png'; ?>">
+                            <img class="right floated mini ui image" alt="<?php esc_attr_e( 'Extension icon placeholder', 'mainwp' ); ?>" src="<?php echo esc_url( MAINWP_PLUGIN_URL ) . 'assets/images/extensions/placeholder.png'; ?>">
                             <div class="header"><a href="admin.php?page=ManageApiBackups"><?php esc_html_e( 'API Backpus', 'mainwp' ); ?></a></div>
                             <a href="admin.php?page=ManageApiBackups" class="ui green ribbon label"><?php echo esc_html__( ' MainWP core feature', 'mainwp' ); ?></a>
                             <div class="description"><?php esc_html_e( 'Manage host-side backups via REST API. Currently, the supported providers are Cloudways, GridPane, Digital Ocean, Linode, Vultr and cPanel.', 'mainwp' ); ?></div>
@@ -980,7 +980,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 <?php if ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Monitoring' === $_GET['page'] ) : //phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
                     <div class="ui extension card">
                         <div class="content">
-                            <img class="right floated mini ui image" alt="" src="<?php echo esc_url( MAINWP_PLUGIN_URL ) . 'assets/images/extensions/placeholder.png'; ?>">
+                            <img class="right floated mini ui image" alt="<?php esc_attr_e( 'Extension icon placeholder', 'mainwp' ); ?>" src="<?php echo esc_url( MAINWP_PLUGIN_URL ) . 'assets/images/extensions/placeholder.png'; ?>">
                             <div class="header"><a href="admin.php?page=MonitoringSites"><?php esc_html_e( 'Basic Monitoring', 'mainwp' ); ?></a></div>
                             <a href="admin.php?page=MonitoringSites" class="ui green ribbon label"><?php echo esc_html__( 'MainWP core feature', 'mainwp' ); ?></a>
                             <div class="description"><?php esc_html_e( 'The MainWP Basic Uptime Monitoring function operates independently of third-party services, providing a straightforward and no-cost option for uptime monitoring across all your managed sites.', 'mainwp' ); ?></div>

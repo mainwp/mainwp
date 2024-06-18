@@ -515,8 +515,13 @@
   border: 1px solid var(--grey-light-alt) !important;
 }
 
-.mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item.active a {
-  background-color: var(--grey-light-alt);
+.mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item:hover,
+.mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item.active {
+  background: var(--accent);
+}
+.mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item:hover .page-link,
+.mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item.active .page-link {
+  color: #ffffff !important;
 }
 
 /* Tooltips */
@@ -538,10 +543,29 @@
   background-color: var(--grey-dark-alt) !important;
 }
 
+
+
 .mainwp-ui.mainwp-custom-theme #mainwp-first-level-navigation,
 .mainwp-ui.mainwp-custom-theme #mainwp-first-level-navigation:hover,
 .mainwp-ui.mainwp-custom-theme #mainwp-first-level-navigation-menu {
   background-color: var(--grey-dark) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme #mainwp-first-level-navigation {
+  padding-top: 25px;
+}
+
+.mainwp-ui.mainwp-custom-theme #mainwp-first-level-navigation::after {
+  width: 25px;
+  height: 25px;
+  top: 0px;
+  left: 72px;
+  position: absolute;
+  border-top-left-radius: 50%;
+  content: "";
+  box-shadow: var(--grey-dark) -10px -1px 0px 0px;
+  pointer-events: none;
+  z-index: 99999;
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-first-level-navigation .ui.vertical.inverted.menu .item,
@@ -598,8 +622,6 @@
   background-color: var(--grey-dark-alt) !important;
 }
 
-
-
 /* Page Navigation
   ========================================================================== */
 
@@ -649,7 +671,11 @@
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.inverted.menu.mainwp-sub-submenu {
-  background-color: var(--grey-dark);
+  background-color: var(--grey-dark-alt) !important;
+  border-radius: 0px !important;
+  box-shadow: 20px 0px 20px -18px rgba(0, 0, 0, 0.15) inset !important;
+  -webkit-box-shadow: 20px 0px 20px -18px rgba(0, 0, 0, 0.15) inset !important;
+  -moz-box-shadow: 20px 0px 20px -18px rgba(0, 0, 0, 0.15) inset !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.inverted.menu.mainwp-sub-submenu .item,
@@ -662,6 +688,7 @@
 .mainwp-ui.mainwp-custom-theme .ui.inverted.menu.mainwp-sub-submenu .item.active {
   color: #ffffff !important;
   background-color: var(--accent);
+  border-radius: 0px !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.inverted.pointing.menu .item {
@@ -726,7 +753,19 @@ body.mainwp-ui.mainwp-custom-theme,
   ========================================================================== */
 
 .mainwp-ui.mainwp-custom-theme #mainwp-top-header {
-  border-bottom: 1px solid var(--grey-light-alt) !important;
+  background: var(--grey-dark);
+}
+
+.mainwp-ui.mainwp-custom-theme #mainwp-top-header .ui.icon.button:not(.red, .green) {
+  background: var(--grey-dark) !important;
+  -webkit-box-shadow: inset 2px 0px 0px 1px var(--grey-light-alt) !important;
+  -moz-box-shadow: inset 0px 0px 0px 1px var(--grey-light-alt) !important;
+  box-shadow: inset 0px 0px 0px 1px var(--grey-light-alt) !important;
+  color: var(--grey-light-alt) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme #mainwp-top-header .mainwp-page-title {
+  color: #ffffff;
 }
 
 .mainwp-ui.mainwp-custom-theme .mainwp-sub-header {
@@ -802,4 +841,34 @@ body.mainwp-ui.mainwp-custom-theme,
 
 .mainwp-ui.mainwp-custom-theme #mainwp-test-connection-result {
   background-color: #ffffff !important;
+}
+
+/*******************************
+         Scrollbars
+*******************************/
+
+/* Force Simple Scrollbars */
+
+
+
+/* Works on Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--grey-dark-alt) var(--grey-light-alt);
+}
+
+/* Works on Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+  width: 5px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--grey-light-alt);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--grey-dark-alt);
+  border-radius: 20px !important;
+  border: 4px solid transparent;
+  background-clip: padding-box;
 }

@@ -690,6 +690,7 @@ class Api_Backups_Settings {
 											<input type="password" name="mainwp_kinsta_api_key" id="mainwp_kinsta_api_key" value="<?php echo esc_attr( $_api_key ); ?>"  />
 										</div>
 									</div>
+
 									<?php
 										/**
 										 * Action: kinsta_api_form_bottom
@@ -811,6 +812,14 @@ class Api_Backups_Settings {
 		$kinsta_environment_id = isset( $_POST['kinsta_environment_id'] ) ? $_POST['kinsta_environment_id'] : '0';
 		Api_Backups_Helper::update_website_option( $website_id, 'mainwp_kinsta_environment_id', $kinsta_environment_id );
 
+		// Store Kinsta Account Email.
+		$kinsta_account_email = isset( $_POST['kinsta_account_email'] ) ? $_POST['kinsta_account_email'] : '0';
+		Api_Backups_Helper::update_website_option( $website_id, 'mainwp_kinsta_account_email', $kinsta_account_email );
+
+		// Store Kinsta Company ID.
+		$kinsta_company_id = isset( $_POST['kinsta_company_id'] ) ? $_POST['kinsta_company_id'] : '0';
+		Api_Backups_Helper::update_website_option( $website_id, 'mainwp_kinsta_company_id', $kinsta_company_id );
+
 		// Store Kinsta Individual API Key.
 		$kinsta_api_key = isset( $_POST['mainwp_kinsta_api_key'] ) ? $_POST['mainwp_kinsta_api_key'] : '';
 		Api_Backups_Utility::get_instance()->update_child_api_key( $website_id, 'kinsta', $kinsta_api_key );
@@ -849,6 +858,8 @@ class Api_Backups_Settings {
 					'plesk_api_url',
 					'mainwp_plesk_installation_id',
 					'mainwp_kinsta_environment_id',
+					'mainwp_kinsta_account_email',
+					'mainwp_kinsta_company_id',
 				)
 			);
 
@@ -868,6 +879,8 @@ class Api_Backups_Settings {
 				$mainwp_plesk_api_url                 = isset( $opts['plesk_api_url'] ) ? $opts['plesk_api_url'] : '';
 				$mainwp_plesk_installation_id         = isset( $opts['mainwp_plesk_installation_id'] ) ? $opts['mainwp_plesk_installation_id'] : '';
 				$mainwp_kinsta_environment_id         = isset( $opts['mainwp_kinsta_environment_id'] ) ? $opts['mainwp_kinsta_environment_id'] : '';
+				$mainwp_kinsta_account_email          = isset( $opts['mainwp_kinsta_account_email'] ) ? $opts['mainwp_kinsta_account_email'] : '';
+				$mainwp_kinsta_company_id             = isset( $opts['mainwp_kinsta_company_id'] ) ? $opts['mainwp_kinsta_company_id'] : '';
 			}
 		}
 
@@ -982,6 +995,22 @@ class Api_Backups_Settings {
 				</div>
 			</div>
 			<div class="mainwp_kinsta_menu_container" style="display:none;">
+				<div class="ui grid field">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Account Email', 'mainwp' ); ?></label>
+					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the Kinsta Account Email.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<div class="ui left labeled input">
+							<input type="text" id="kinsta_account_email" name="kinsta_account_email" value="<?php echo ( empty( $mainwp_kinsta_account_email ) ? '' : esc_html( $mainwp_kinsta_account_email ) ); ?>" />
+						</div>
+					</div>
+				</div>
+				<div class="ui grid field">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Company ID', 'mainwp' ); ?></label>
+					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the Kinsta Company  ID.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<div class="ui left labeled input">
+							<input type="text" id="kinsta_company_id" name="kinsta_company_id" value="<?php echo ( empty( $mainwp_kinsta_company_id ) ? '' : esc_html( $mainwp_kinsta_company_id ) ); ?>" />
+						</div>
+					</div>
+				</div>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Environment ID', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the Kinsta Environment ID.', 'mainwp' ); ?>" data-inverted="" data-position="top left">

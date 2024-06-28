@@ -4748,6 +4748,14 @@ class Api_Backups_3rd_Party {
 			// Grab Kinsta password.
 			$kinsta_api_key = Api_Backups_Utility::get_instance()->get_child_api_key( $website_id, 'kinsta' );
 
+			// Grab Kinsta Account Email.
+			$account_email        = Api_Backups_Helper::get_website_options( $website_id, array( 'mainwp_kinsta_account_email' ) );
+			$kinsta_account_email = isset( $account_email['mainwp_kinsta_account_email'] ) ? $account_email['mainwp_kinsta_account_email'] : null;
+
+			// Grab Kinsta Company ID.
+			$company_id        = Api_Backups_Helper::get_website_options( $website_id, array( 'mainwp_kinsta_company_id' ) );
+			$kinsta_company_id = isset( $company_id['mainwp_kinsta_company_id'] ) ? $company_id['mainwp_kinsta_company_id'] : null;
+
 			// Grab Kinsta Environment ID.
 			$environment_id        = Api_Backups_Helper::get_website_options( $website_id, array( 'mainwp_kinsta_environment_id' ) );
 			$kinsta_environment_id = isset( $environment_id['mainwp_kinsta_environment_id'] ) ? $environment_id['mainwp_kinsta_environment_id'] : null;
@@ -4758,6 +4766,14 @@ class Api_Backups_3rd_Party {
 
 			// Grab Kinsta password.
 			$kinsta_api_key = self::get_kinsta_api_key();
+
+			// Grab Kinsta Account Email.
+			$account_email        = Api_Backups_Helper::get_website_options( $website_id, array( 'mainwp_kinsta_account_email' ) );
+			$kinsta_account_email = isset( $account_email['mainwp_kinsta_account_email'] ) ? $account_email['mainwp_kinsta_account_email'] : null;
+
+			// Grab Kinsta Company ID.
+			$company_id        = Api_Backups_Helper::get_website_options( $website_id, array( 'mainwp_kinsta_company_id' ) );
+			$kinsta_company_id = isset( $company_id['mainwp_kinsta_company_id'] ) ? $company_id['mainwp_kinsta_company_id'] : null;
 
 			// Grab Kinsta Environment ID.
 			$environment_id        = Api_Backups_Helper::get_website_options( $website_id, array( 'mainwp_kinsta_environment_id' ) );
@@ -4770,6 +4786,8 @@ class Api_Backups_3rd_Party {
 			'kinsta_api_key'         => $kinsta_api_key,
 			'kinsta_environment_id'  => $kinsta_environment_id,
 			'website_id'             => $website_id,
+			'kinsta_company_id'      => $kinsta_company_id,
+			'kinsta_company_email'   => $kinsta_account_email,
 		);
 
 
@@ -4827,10 +4845,49 @@ class Api_Backups_3rd_Party {
 		Api_Backups_Utility::log_debug( $payload );
 		Api_Backups_Utility::log_debug( $payload_response );
 
-		//Api_Backups_Utility::log_debug( '[ Status ] ' . $httpCode . ' :: [ Action ] ' . $action . ' :: [ EndPoint ] ' . $baseurl . $url . ' :: [ Response ]' . $resp );
-
 		curl_close( $curl );
 		return $response;
+	}
+
+	/**
+	 *
+	 * Kinsta: Action get User ID.
+	 *
+	 * Get the User Id from the given Company ID & Email address.
+	 *
+	 * @return array
+	 */
+	public static function kinsta_action_get_user_id() {
+
+		// Authenticate kinsta account.
+		$kinsta_authentication_credentials = self::get_kinsta_authentication_credentials();
+		$kinsta_baseurl                    = $kinsta_authentication_credentials[0]['kinsta_baseurl'];
+		$kinsta_api_key                    = $kinsta_authentication_credentials[0]['kinsta_api_key'];
+		$kinsta_company_id                 = $kinsta_authentication_credentials[0]['kinsta_company_id'];
+		$kinsta_company_email              = $kinsta_authentication_credentials[0]['kinsta_company_email'];
+		$kinsta_env_id                     = $kinsta_authentication_credentials[0]['kinsta_environment_id'];
+		$website_id                        = $kinsta_authentication_credentials[0]['website_id'];
+
+		$payload_url = '/company/' . $kinsta_company_id . '/users';
+
+		// Send Payload
+		$api_response = self::call_kinsta_api( 'GET', $payload_url, $kinsta_baseurl, $kinsta_api_key, $action= '' );
+
+		// Decode Response.
+		$response = json_decode( $api_response['response'] );
+		$company = $response->company;
+		$company_users = $company->users;
+
+		// Grab correct user ID.
+		foreach ( $company_users as $user ) {
+			if (  $kinsta_company_email === $user->user->email ) {
+				$user_id = $user->user->id;
+			}
+		}
+
+		// Return user id.
+		return $user_id;
+
 	}
 
 	/**
@@ -4998,12 +5055,14 @@ class Api_Backups_3rd_Party {
 		$kinsta_api_key                    = $kinsta_authentication_credentials[0]['kinsta_api_key'];
 		$kinsta_env_id                     = $kinsta_authentication_credentials[0]['kinsta_environment_id'];
 
+		$company_user_id = self::kinsta_action_get_user_id();
+
 		$payload_url = '/sites/environments/' . $kinsta_env_id . '/backups/restore';
 
 		// Prepare Backup Payload.
 		$backup_data = array(
 			"backup_id" => $backup_id,
-			"notified_user_id" => $kinsta_env_id,
+			"notified_user_id" => $company_user_id,
 		);
 		$backup_data = json_encode( $backup_data );
 

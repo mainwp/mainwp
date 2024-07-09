@@ -385,15 +385,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         }
 
         MainWP_UI::render_page_navigation( $renderItems );
-
-        $saved_status = MainWP_Settings_Indicator::get_instance()->get_saved_indicator_status();
-
-        ?>
-
-        <script type="text/javascript">
-            let mainwp_settings_saved_menu_indicator_status = '<?php echo !empty($saved_status) ? wp_json_encode( $saved_status ) : ''; //phpcs:ignore -- ok.  ?>';
-        </script>
-        <?php
     }
 
     /**
@@ -1526,7 +1517,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             </div>
                         </div>
                         <div class="ui grid field">
-                            <label class="six wide column middle aligned"><?php esc_html_e( 'Force your MainWP Dashbaord to set new pair of OpenSSL Keys', 'mainwp' ); ?></label>
+                            <label class="six wide column middle aligned"><?php esc_html_e( 'Force your MainWP Dashboard to set new pair of OpenSSL Keys', 'mainwp' ); ?></label>
                             <div class="ten wide column" id="mainwp-renew-connections-tool" data-content="<?php esc_attr_e( 'This will function renew connection and reconnect site right away.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
                             <?php
                             if ( $is_demo ) {

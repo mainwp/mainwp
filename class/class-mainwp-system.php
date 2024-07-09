@@ -27,7 +27,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '5.1'; // NOSONAR.
+    public static $version = '5.1.1'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -936,6 +936,12 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         if ( ! empty( $_GET['page'] ) && in_array( $_GET['page'], array( 'mainwp-setup' ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             return;
+        }
+
+        $quick_setup = get_option( 'mainwp_run_quick_setup', false );
+        if ( 'yes' === $quick_setup ) {
+            wp_safe_redirect( admin_url( 'admin.php?page=mainwp-setup' ) );
+            exit;
         }
 
         $request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification

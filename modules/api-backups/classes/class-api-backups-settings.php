@@ -529,7 +529,7 @@ class Api_Backups_Settings {
                             </h3>
                             <ul>
                                 <li><?php printf( esc_html__( "1. If you don't already have one, get a %s", 'mainwp' ), '<a target="_blank" href="https://mainwp.com/go/digital-ocean/">DigitalOcean account</a>' ); // NOSONAR - noopener - open safe. ?></li>
-                                <li><?php printf( esc_html__( '2. You can generate an %1$sOAuth token%2$s by visiting the %3$s section of the DigitalOcean control panel for your account.', 'mainwp' ), '<b>', '</b>', '<a target="_blank" href="https://cloud.digitalocean.com/account/api/tokens">Apps & API</a>' ); ?></b></li>
+                                <li><?php printf( esc_html__( '2. You can generate an %1$sPersonal Access token%2$s by visiting the %3$s section of the DigitalOcean control panel for your account.', 'mainwp' ), '<b>', '</b>', '<a target="_blank" href="https://cloud.digitalocean.com/account/api/tokens">API</a>' ); ?></b></li>
                                 <li><?php printf( esc_html__( '3. Paste in your %1$sPersonal Access Token%2$s below and click the Save Settings button.', 'mainwp' ), '<b>', '</b>' ); ?></li>
                                 <li><?php esc_html_e( '4. Once the API is connected, go to the Site Edit page (for all sites on this host) and set the correct Provider and Instance ID.', 'mainwp' ); ?></li>
                             </ul>

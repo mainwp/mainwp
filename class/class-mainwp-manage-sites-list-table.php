@@ -1097,7 +1097,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                             jQuery( '#mainwp-sites-table-loader' ).hide();
                             $manage_sites_table = jQuery( '#mainwp-manage-sites-table' )
                             .DataTable( {
-                                "responsive": responsive
+                                "responsive": responsive,
                                 "searching" : <?php echo esc_js( $table_features['searching'] ); ?>,
                                 "paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
                                 "pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",

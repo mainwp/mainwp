@@ -84,6 +84,7 @@
 
 .mainwp-content-wrap {
     margin-bottom: 0px;
+    margin-top: 58px;
 }
 
 .mainwp-ui-leftmenu .mainwp-content-wrap,
@@ -122,6 +123,9 @@
     padding: 10px;
     height: 58px;
     background: #1c1d1b;
+    position: fixed;
+    top: 0;
+    width: 100%;
 }
 
 #mainwp-top-header .mainwp-page-title {
@@ -192,6 +196,11 @@
 }
 
 .mainwp-individual-site-view #mainwp-site-mode-wrap {
+    width: calc(100% - 170px);
+    float: right;
+}
+
+.mainwp-individual-site-view .mainwp-content-wrap > .ui.message {
     width: calc(100% - 170px);
     float: right;
 }
@@ -649,6 +658,10 @@
 .mainwp-ui table.dataTable tbody tr>.dtfc-fixed-left,
 .mainwp-ui table.dataTable tbody tr>.dtfc-fixed-right {
     background-color: #fff;
+}
+
+.mainwp-ui table.dataTable > tbody > tr.selected > * {
+    box-shadow: inset 0 0 0 9999px rgba( 0,0,0,.03) !important;
 }
 
 /* Manage Sites Table */

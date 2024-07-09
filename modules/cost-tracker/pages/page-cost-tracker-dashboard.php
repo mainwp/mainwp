@@ -428,9 +428,9 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
 
 
     /**
-     * Render the Dashbaord tab
+     * Render the Dashboard tab
      *
-     * Renders the dashbaord tab content - Subscription table
+     * Renders the dashboard tab content - Subscription table
      */
     public function render_dashboard_body() {
         $_orderby = 'name';

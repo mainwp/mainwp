@@ -10,6 +10,8 @@ namespace MainWP\Dashboard\Module\Log;
 
 defined( 'ABSPATH' ) || exit;
 
+use MainWP\Dashboard\MainWP_Exception;
+
 /**
  * Class Log_Author.
  *

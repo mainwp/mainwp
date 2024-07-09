@@ -315,6 +315,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Renders the Welcome screen of the Quick Start Wizard
      */
     public function mwp_setup_welcome() {
+        delete_option( 'mainwp_run_quick_setup' );
         $is_new       = MainWP_Demo_Handle::get_instance()->is_new_instance();
         $enabled_demo = apply_filters( 'mainwp_demo_mode_enabled', false );
         $count_sites  = MainWP_DB::instance()->get_websites_count();

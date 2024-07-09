@@ -1429,6 +1429,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             if( jQuery( window ).width() > 1140 ) {
                 responsive = false;
             }
+
             jQuery( document ).ready( function() {
                 jQuery( '#mainwp-error-log-table' ).DataTable( {
                     "responsive": responsive,
@@ -1436,6 +1437,9 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     "stateSave": true,
                     "stateDuration": 0,
                     "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+                    "language": {
+                        "emptyTable": '<?php esc_html_e( 'Error logging disabled.', 'mainwp' ); ?><?php echo '<br/>' . sprintf( esc_html__( 'To enable error logging, please check this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://codex.wordpress.org/Debugging_in_WordPress" target="_blank">', '</a>' ); ?>'
+                    },
                 } );
             } );
         </script>
@@ -1464,9 +1468,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
     public static function render_error_log() {
         $log_errors = ini_get( 'log_errors' );
         if ( ! $log_errors ) {
-            echo '<tr><td colspan="2">' . esc_html__( 'Error logging disabled.', 'mainwp' );
-            echo '<br/>' . sprintf( esc_html__( 'To enable error logging, please check this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://codex.wordpress.org/Debugging_in_WordPress" target="_blank">', '</a>' );
-            echo '</td></tr>';
+            return;
         }
 
         $error_log = ini_get( 'error_log' );
@@ -1500,7 +1502,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         if ( empty( $lines ) ) {
 
-            echo '<tr><td colspan="2">' . esc_html__( 'MainWP is unable to find your error logs, please contact your host for server error logs.', 'mainwp' ) . '</td></tr>';
+            echo '<tr><td>' . esc_html__( 'MainWP is unable to find your error logs, please contact your host for server error logs.', 'mainwp' ) . '</td></tr>';
 
             return;
         }

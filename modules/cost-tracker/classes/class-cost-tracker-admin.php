@@ -16,6 +16,7 @@ use MainWP\Dashboard\MainWP_System_Utility;
 use MainWP\Dashboard\MainWP_Logger;
 use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_Settings_Indicator;
+use MainWP\Dashboard\MainWP_Exception;
 
 use function MainWP\Dashboard\mainwp_current_user_have_right;
 
@@ -548,7 +549,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
                     Cost_Tracker_Add_Edit::get_instance()->delete_product_icon_file( $current->cost_icon );
                 }
             }
-        } catch ( \Exception $ex ) {
+        } catch ( MainWP_Exception $ex ) {
             $err_msg = $ex->getMessage();
         }
 

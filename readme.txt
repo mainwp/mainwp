@@ -143,14 +143,17 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
-= 5.1.1 - 7-09-2024 =
+= 5.1.1 - 7-9-2024 =
 
 * Fixed: Inaccurate information for the WordPress SEO extension in the available_extensions array.
 * Fixed: Typo in the Tools page
-* Updated: Background color for selected table rows for consistent design.
+* Updated: Background color for selected table rows for a consistent design.
+* Updated: Quick Setup Wizard will now start automatically when the Dashboard plugin is activated for the first time.
 * Updated: Removed header element push to bottom feature.
 * Updated: Button margins in the header element for a more polished look.
-* Updated: REST API menu item color in both WP Admin and Minimalistic themes for consistent design.
+* Updated: REST API menu item color in both WP Admin and Minimalistic themes for a consistent design.
+
+[See Video Changelog](https://youtu.be/J_PB881HiPg)
 
 = 5.1 - 6-18-2024 =
 

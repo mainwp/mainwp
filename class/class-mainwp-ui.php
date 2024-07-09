@@ -874,7 +874,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
              */
             do_action( 'mainwp_before_header', $websites );
         ?>
-            <div id="mainwp-top-header" class="ui native sticky">
+            <div id="mainwp-top-header">
                 <div class="ui grid">
                     <div class="center aligned middle aligned column" style="width:72px!important;padding:0!important;">
                         <a href="
@@ -1029,10 +1029,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 jQuery( '#mainwp-sites-menu-sidebar' ).prependTo( 'body' );
                 jQuery( '#mainwp-documentation-sidebar' ).prependTo( 'body' );
                 jQuery( 'body > div#wpwrap' ).addClass( 'pusher' );
-
-                jQuery( '.ui.sticky' ).sticky( {
-                    pushing: false,
-                } ).sticky();
 
                 jQuery( '#mainwp-help-sidebar' ).on( 'click', function() {
                     jQuery( '.ui.help.sidebar' ).sidebar( {
@@ -1882,15 +1878,15 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         <?php
     }
 
-            /**
-             * Method render_modal_edit_notes()
-             *
-             * Render modal window for edit notes.
-             *
-             * @param string $what What modal window to render. Default = site.
-             *
-             * @return void
-             */
+    /**
+     * Method render_modal_edit_notes()
+     *
+     * Render modal window for edit notes.
+     *
+     * @param string $what What modal window to render. Default = site.
+     *
+     * @return void
+     */
     public static function render_modal_edit_notes( $what = 'site' ) {
         ?>
         <div id="mainwp-notes-modal" class="ui modal">
@@ -1942,8 +1938,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 </div>
             </div>
         </div>
-
-                <?php
+        <?php
     }
 
     /**

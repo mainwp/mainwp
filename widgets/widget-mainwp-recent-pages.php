@@ -213,7 +213,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @param array $allPages      All pages data.
      * @param int   $recent_number Number of posts.
-     * @param bool  $individual    Determins if it's individual site dashbaord.
+     * @param bool  $individual    Determins if it's individual site dashboard.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
      * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
@@ -308,7 +308,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @param array $allPages      All pages data.
      * @param int   $recent_number Number of pages.
-     * @param bool  $individual    Determins if it's individual site dashbaord.
+     * @param bool  $individual    Determins if it's individual site dashboard.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
      * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
@@ -400,7 +400,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @param array $allPages      All pages data.
      * @param int   $recent_number Number of pages.
-     * @param bool  $individual    Determins if it's individual site dashbaord.
+     * @param bool  $individual    Determins if it's individual site dashboard.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
      * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
@@ -491,7 +491,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @param array $allPages      All pages data.
      * @param int   $recent_number Number of pages.
-     * @param bool  $individual    Determins if it's individual site dashbaord .
+     * @param bool  $individual    Determins if it's individual site dashboard .
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
      * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
@@ -584,7 +584,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
          *
          * @param array $allPages      All pages data.
          * @param int   $recent_number Number of pages.
-         * @param bool  $individual    Determins if it's individual site dashbaord.
+         * @param bool  $individual    Determins if it's individual site dashboard.
          *
          * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
          * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()

@@ -7,6 +7,8 @@
 
 namespace MainWP\Dashboard\Module\Log;
 
+use MainWP\Dashboard\MainWP_Exception;
+
 /**
  * Class - Log_Filter_Input
  */

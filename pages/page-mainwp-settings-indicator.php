@@ -261,22 +261,4 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         return isset( $defaults[ $type ] ) && isset( $defaults[ $type ][ $field ] ) ? $defaults[ $type ][ $field ] : null;
     }
-
-
-    /**
-     * Method get_saved_indicator_status().
-     */
-    public function get_saved_indicator_status() {
-
-        if ( null === static::$saved_indicator_status ) {
-            $values         = get_option( 'mainwp_status_saved_values' );
-            $current_values = is_array( $values ) && isset( $values['save_indicator_values'] ) && ! empty( $values['save_indicator_values'] ) ? json_decode( $values['save_indicator_values'], true ) : array();
-            if ( ! is_array( $current_values ) ) {
-                $current_values = array();
-            }
-            static::$saved_indicator_status = $current_values;
-        }
-
-        return static::$saved_indicator_status;
-    }
 }

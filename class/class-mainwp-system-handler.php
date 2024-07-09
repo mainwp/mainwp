@@ -668,8 +668,8 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         $exts_data = MainWP_Extensions_View::get_available_extensions();
                         if ( isset( $exts_data[ $arg->slug ] ) ) {
                             $ext_info                    = $exts_data[ $arg->slug ];
-                            $changelog_link              = rtrim( $ext_info['link'], '/' );
-                            $info->sections['changelog'] = '<a href="' . $changelog_link . '#tab-changelog" target="_blank">' . $changelog_link . '#tab-changelog</a>';
+                            $changelog_link              = rtrim( $ext_info['changelog_url'], '/' );
+                            $info->sections['changelog'] = '<a href="' . $changelog_link . '" target="_blank">' . $changelog_link . '</a>';
                         }
                     }
                     return $info;

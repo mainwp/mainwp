@@ -217,7 +217,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @param array $allPosts      All posts data.
      * @param int   $recent_number Number of posts.
-     * @param bool  $individual    Determins if it's individual site dashbaord.
+     * @param bool  $individual    Determins if it's individual site dashboard.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
      * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
@@ -311,7 +311,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @param array $allPosts      All posts data.
      * @param int   $recent_number Number of posts.
-     * @param bool  $individual    Determins if it's individual site dashbaord.
+     * @param bool  $individual    Determins if it's individual site dashboard.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
      * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
@@ -402,7 +402,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @param array $allPosts      All posts data.
      * @param int   $recent_number Number of posts.
-     * @param bool  $individual    Determins if it's individual site dashbaord.
+     * @param bool  $individual    Determins if it's individual site dashboard.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
      * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
@@ -493,7 +493,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @param array $allPosts      All posts data.
      * @param int   $recent_number Number of posts.
-     * @param bool  $individual    Determins if it's individual site dashbaord .
+     * @param bool  $individual    Determins if it's individual site dashboard .
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
      * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
@@ -585,7 +585,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @param array $allPosts      All posts data.
      * @param int   $recent_number Number of posts.
-     * @param bool  $individual    Determins if it's individual site dashbaord .
+     * @param bool  $individual    Determins if it's individual site dashboard .
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
      * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()

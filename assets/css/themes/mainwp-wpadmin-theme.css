@@ -514,7 +514,8 @@ body.mainwp-ui.mainwp-custom-theme,
   color: var(--font-color);
 }
 
-.mainwp-ui.mainwp-custom-theme a:not(.button) .icon:not(.green, .red) {
+.mainwp-ui.mainwp-custom-theme a:not(.button) .icon:not(.green, .red),
+.mainwp-ui.mainwp-custom-theme .mainwp-api-icon {
   color: var(--accent-color);
 }
 

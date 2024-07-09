@@ -92,7 +92,9 @@
   border-radius: 8px;
   -webkit-border-radius: 8px;
 }
-
+.mainwp-ui.mainwp-custom-theme #mainwp-top-header .ui.dropdown.button {
+  margin-right: 0px;
+}
 .mainwp-ui.mainwp-custom-theme #mainwp-add-new-buttons .ui.button:nth-of-type(2) {
   border-radius: 15px 0px 0px 15px !important;
 }
@@ -494,7 +496,8 @@
   background-color: #AD000007 !important;
 }
 
-.mainwp-ui.mainwp-custom-theme .ui.table>tbody>tr.error td:first-child {
+.mainwp-ui.mainwp-custom-theme .ui.table>tbody>tr.error td:first-child,
+.mainwp-ui.mainwp-custom-theme .ui.table>tbody>tr.negative td:first-child {
   border-left: 5px solid var(--red-color) !important;
 }
 

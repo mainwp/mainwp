@@ -583,13 +583,15 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
 
     /** Renders WP Multisite Error Message. */
     public static function render_notice_multi_sites() {
-        ?>
-        <div class="ui icon red message" style="margin-bottom: 0; border-radius: 0;">
-            <i class="exclamation circle icon"></i>
-            <?php esc_html_e( 'MainWP plugin is not designed nor fully tested on WordPress Multisite installations. Various features may not work properly. We highly recommend installing it on a single site installation!', 'mainwp' ); ?>
-            <i class="close icon mainwp-notice-dismiss" notice-id="multi_site"></i>
-        </div>
-        <?php
+        if ( 0 === (int) get_option( 'hide_multi_site_notice', 0 ) && MainWP_Utility::show_mainwp_message( 'notice', 'hide_multi_site_notice' ) ) {
+            ?>
+            <div class="ui icon red message" style="margin-bottom: 0; border-radius: 0;">
+                <i class="exclamation circle icon"></i>
+                <?php esc_html_e( 'MainWP plugin is not designed nor fully tested on WordPress Multisite installations. Various features may not work properly. We highly recommend installing it on a single site installation!', 'mainwp' ); ?>
+                <i class="close icon mainwp-notice-dismiss" notice-id="hide_multi_site_notice"></i>
+            </div>
+            <?php
+        }
     }
 
     /**

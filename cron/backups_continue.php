@@ -8,7 +8,7 @@
  */
 
 // include cron/bootstrap.php.
-require_once 'bootstrap.php';
+require_once 'bootstrap.php'; // NOSONAR - WP compatible.
 
 // fire off mainWP->mainwp_cronbackups_continue_action.
 $mainWP->mainwp_cronbackups_continue_action();

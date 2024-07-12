@@ -18,7 +18,7 @@
  * @return Returns the filtered data, or FALSE if the filter fails.
  */
 function mainwp_module_log_filter_var( $var_value, $filter = null, $options = array() ) { //phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
-	return call_user_func_array( array( '\MainWP\Dashboard\Module\Log\Log_Filter_Input', 'filter' ), func_get_args() );
+    return call_user_func_array( array( '\MainWP\Dashboard\Module\Log\Log_Filter_Input', 'filter' ), func_get_args() );
 }
 
 
@@ -31,17 +31,17 @@ function mainwp_module_log_filter_var( $var_value, $filter = null, $options = ar
  * @return string an ISO 8601 extended formatted time
  */
 function mainwp_module_log_get_iso_8601_extended_date( $time = false, $offset = 0 ) {
-	if ( $time ) {
-		$microtime = (float) $time . '.0000';
-	} else {
-		$microtime = microtime( true );
-	}
+    if ( $time ) {
+        $microtime = (float) $time . '.0000';
+    } else {
+        $microtime = microtime( true );
+    }
 
-	$micro_seconds = sprintf( '%06d', ( $microtime - floor( $microtime ) ) * 1000000 );
-	$offset_string = sprintf( 'Etc/GMT%s%d', $offset < 0 ? '+' : '-', abs( $offset ) );
+    $micro_seconds = sprintf( '%06d', ( $microtime - floor( $microtime ) ) * 1000000 );
+    $offset_string = sprintf( 'Etc/GMT%s%d', $offset < 0 ? '+' : '-', abs( $offset ) );
 
-	$timezone = new DateTimeZone( $offset_string );
-	$date     = new DateTime( gmdate( 'Y-m-d H:i:s.' . $micro_seconds, $microtime ), $timezone );
+    $timezone = new DateTimeZone( $offset_string );
+    $date     = new DateTime( gmdate( 'Y-m-d H:i:s.' . $micro_seconds, $microtime ), $timezone );
 
-	return $date->format( 'Y-m-d\TH:i:sO' );
+    return $date->format( 'Y-m-d\TH:i:sO' );
 }

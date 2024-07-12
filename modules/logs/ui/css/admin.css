@@ -16,6 +16,11 @@
     display: inline-block;
 }
 
+#mainwp-module-log-filters-row .ui.calendar,
+#mainwp-module-log-filters-row .ui.calendar .ui.input{
+    width: 100% !important;
+}
+
 @media only screen and (min-width: 1370px) {
     #widget-recent_events .mainwp-scrolly-overflow {
         height: calc(100% - 120px) !important;

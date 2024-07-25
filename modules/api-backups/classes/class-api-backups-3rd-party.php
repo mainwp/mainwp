@@ -5043,12 +5043,10 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
             $kinsta_api_key = self::get_kinsta_api_key();
 
             // Grab Kinsta Account Email.
-            $account_email        = Api_Backups_Helper::get_website_options( $website_id, array( 'mainwp_kinsta_account_email' ) );
-            $kinsta_account_email = isset( $account_email['mainwp_kinsta_account_email'] ) ? $account_email['mainwp_kinsta_account_email'] : null;
+            $kinsta_account_email = get_option( 'mainwp_kinsta_api_account_email' );
 
             // Grab Kinsta Company ID.
-            $company_id        = Api_Backups_Helper::get_website_options( $website_id, array( 'mainwp_kinsta_company_id' ) );
-            $kinsta_company_id = isset( $company_id['mainwp_kinsta_company_id'] ) ? $company_id['mainwp_kinsta_company_id'] : null;
+            $kinsta_company_id    = get_option( 'mainwp_kinsta_company_id' );
 
             // Grab Kinsta Environment ID.
             $environment_id        = Api_Backups_Helper::get_website_options( $website_id, array( 'mainwp_kinsta_environment_id' ) );
@@ -5181,6 +5179,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         $kinsta_api_key                    = $kinsta_authentication_credentials[0]['kinsta_api_key'];
         $kinsta_env_id                     = $kinsta_authentication_credentials[0]['kinsta_environment_id'];
         $website_id                        = $kinsta_authentication_credentials[0]['website_id'];
+        $downloadable_backups  = "";
 
         $action = "kinsta_action_refresh_available_backups";
 
@@ -5197,14 +5196,15 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
             $downloadable_backups = self::call_kinsta_api( 'GET', '/sites/environments/' . $kinsta_env_id . '/downloadable-backups', $kinsta_baseurl, $kinsta_api_key, $action );
 
         } else {
-            Api_Backups_Utility::log_error( 'Kinsta API Error: ' . $api_response['response'] );
+            Api_Backups_Utility::log_debug( 'Kinsta API Error: ' . $api_response['response'] );
         }
-
-        if ( $downloadable_backups['status'] === 'true' ) {
-            $downloadable_backups = $downloadable_backups['response'];
-            Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_kinsta_downloadable_backups', $downloadable_backups );
+        if ( $downloadable_backups ) {
+            if ( $downloadable_backups['status'] === 'true' ) {
+                $downloadable_backups = $downloadable_backups[ 'response' ];
+                Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_kinsta_downloadable_backups', $downloadable_backups );
+            }
         } else {
-            Api_Backups_Utility::log_error( 'Kinsta API Error: ' . $downloadable_backups['response'] );
+            Api_Backups_Utility::log_debug( 'Kinsta API Error: There was an issue while refreshing available backups.' );
         }
 
 

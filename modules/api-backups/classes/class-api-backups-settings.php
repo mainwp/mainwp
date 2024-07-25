@@ -249,6 +249,8 @@ class Api_Backups_Settings {
                         <?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'kinsta_api_form' ) ) : ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_enable_kinsta_api', ( ! isset( $_POST['mainwp_enable_kinsta_api'] ) ? 0 : 1 ) ); ?>
                             <?php Api_Backups_Utility::get_instance()->update_api_key( 'kinsta', $_POST['mainwp_kinsta_api_key'] ); ?>
+                            <?php Api_Backups_Utility::update_option( 'mainwp_kinsta_api_account_email', ( isset( $_POST['mainwp_kinsta_api_account_email'] ) ? wp_unslash( $_POST['mainwp_kinsta_api_account_email'] ) : '' ) ); ?>
+                            <?php Api_Backups_Utility::update_option( 'mainwp_kinsta_company_id', ( isset( $_POST['mainwp_kinsta_company_id'] ) ? wp_unslash( $_POST['mainwp_kinsta_company_id'] ) : '' ) ); ?>
                             <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'API credentials have been successfully saved.', 'mainwp' ); ?></div>
                         <?php endif; ?>
                         <?php // END Save Kinsta Data. ?>
@@ -781,10 +783,10 @@ class Api_Backups_Settings {
                                 <?php esc_html_e( 'Kinsta', 'mainwp' ); ?>
                             </h3>
                             <ul>
-                                <li><?php printf( esc_html__( "1. If you don't already have one, get a %s", 'mainwp' ), '<a target="_blank" href="https://mainwp.com/go/digital-ocean/">Kinsta account</a>' ); ?></li>
-                                <li><?php printf( esc_html__( '2. You can generate an %1$sOAuth token%2$s by visiting the %3$s section of the Kinsta control panel for your account.', 'mainwp' ), '<b>', '</b>', '<a target="_blank" href="https://cloud.kinsta.com/account/api/tokens">Apps & API</a>' ); ?></b></li>
-                                <li><?php printf( esc_html__( '3. Paste in your %1$sPersonal Access Token%2$s below and click the Save Settings button.', 'mainwp' ), '<b>', '</b>' ); ?></li>
-                                <li><?php esc_html_e( '4. Once the API is connected, go to the Site Edit page (for all sites on this host) and set the correct Provider and Instance ID.', 'mainwp' ); ?></li>
+                                <li><?php printf( esc_html__( "1. If you don't already have one, get a %s", 'mainwp' ), '<a target="_blank" href="https://my.kinsta.com/">Kinsta account</a>' ); ?></li>
+                                <li><?php printf( esc_html__( '2. You can generate an API Key by visiting the %1$s tab of the Company Settings Page.', 'mainwp' ),'<a target="_blank" href="https://my.kinsta.com/company/apiKeys">API Keys</a>' ); ?></b></li>
+                                <li><?php printf( esc_html__( '3. Paste in your %1$sCredentials%2$s below and click the Save Settings button.', 'mainwp' ), '<b>', '</b>' ); ?></li>
+                                <li><?php esc_html_e( '4. Once the API is connected, go to the Site Edit page (for all sites on this host) and set the correct Provider and Environment ID.', 'mainwp' ); ?></li>
                             </ul>
                             <div class="ui hidden divider"></div>
                             <div class="ui form">
@@ -810,6 +812,28 @@ class Api_Backups_Settings {
                                         </label>
                                         <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the Kinsta API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                                             <input type="checkbox" name="mainwp_enable_kinsta_api" id="mainwp_enable_kinsta_api" <?php echo ( 1 === (int) get_option( 'mainwp_enable_kinsta_api', 0 ) ) ? 'checked="true"' : ''; ?> />
+                                        </div>
+                                    </div>
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cloudways-settings">
+                                        <label class="six wide column middle aligned">
+                                            <?php
+                                                MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', get_option( 'mainwp_kinsta_api_account_email' ) );
+                                                esc_html_e( 'Account Email', 'mainwp' );
+                                            ?>
+                                        </label>
+                                        <div class="five wide column">
+                                            <input type="text" class="settings-field-value-change-handler" name="mainwp_kinsta_api_account_email" id="mainwp_kinsta_api_account_email" value="<?php echo false === get_option( 'mainwp_kinsta_api_account_email' ) ? '' : esc_attr( get_option( 'mainwp_kinsta_api_account_email' ) ); ?>"  />
+                                        </div>
+                                    </div>
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-kinsta-settings">
+                                        <label class="six wide column middle aligned">
+                                            <?php
+                                                MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', get_option( 'mainwp_kinsta_company_id' ) );
+                                                esc_html_e( 'Company ID', 'mainwp' );
+                                            ?>
+                                        </label>
+                                        <div class="five wide column">
+                                            <input type="text" class="settings-field-value-change-handler" name="mainwp_kinsta_company_id" id="mainwp_kinsta_company_id" value="<?php echo false === get_option( 'mainwp_kinsta_company_id' ) ? '' : esc_attr( get_option( 'mainwp_kinsta_company_id' ) ); ?>"  />
                                         </div>
                                     </div>
                                     <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-kinsta-settings">
@@ -1136,22 +1160,6 @@ class Api_Backups_Settings {
             </div>
             <div class="mainwp_kinsta_menu_container" style="display:none;">
                 <div class="ui grid field">
-                    <label class="six wide column middle aligned"><?php esc_html_e( 'Account Email', 'mainwp' ); ?></label>
-                    <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the Kinsta Account Email.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <div class="ui left labeled input">
-                            <input type="text" id="kinsta_account_email" name="kinsta_account_email" value="<?php echo empty( $mainwp_kinsta_account_email ) ? '' : esc_html( $mainwp_kinsta_account_email ); ?>" />
-                        </div>
-                    </div>
-                </div>
-                <div class="ui grid field">
-                    <label class="six wide column middle aligned"><?php esc_html_e( 'Company ID', 'mainwp' ); ?></label>
-                    <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the Kinsta Company  ID.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <div class="ui left labeled input">
-                            <input type="text" id="kinsta_company_id" name="kinsta_company_id" value="<?php echo empty( $mainwp_kinsta_company_id ) ? '' : esc_html( $mainwp_kinsta_company_id ); ?>" />
-                        </div>
-                    </div>
-                </div>
-                <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Environment ID', 'mainwp' ); ?></label>
                     <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the Kinsta Environment ID.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <div class="ui left labeled input">
@@ -1166,6 +1174,22 @@ class Api_Backups_Settings {
                     </div>
                 </div>
                 <div class="mainwp_kinsta_individual_container" style="display:none;">
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Account Email', 'mainwp' ); ?></label>
+                        <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the Kinsta Account Email.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <div class="ui left labeled input">
+                                <input type="text" id="kinsta_account_email" name="kinsta_account_email" value="<?php echo empty( $mainwp_kinsta_account_email ) ? '' : esc_html( $mainwp_kinsta_account_email ); ?>" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Company ID', 'mainwp' ); ?></label>
+                        <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the Kinsta Company  ID.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <div class="ui left labeled input">
+                                <input type="text" id="kinsta_company_id" name="kinsta_company_id" value="<?php echo empty( $mainwp_kinsta_company_id ) ? '' : esc_html( $mainwp_kinsta_company_id ); ?>" />
+                            </div>
+                        </div>
+                    </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'API Key', 'mainwp' ); ?></label>
                         <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the Kinsta API Key', 'mainwp' ); ?>" data-inverted="" data-position="top left">

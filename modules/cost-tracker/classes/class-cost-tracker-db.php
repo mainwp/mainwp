@@ -24,7 +24,7 @@ class Cost_Tracker_DB extends MainWP_Install {
      *
      * @var string Version.
      */
-    private $cost_tracker_db_version = '1.0.16';
+    private $cost_tracker_db_version = '1.0.18';
 
 
     /**
@@ -93,6 +93,7 @@ class Cost_Tracker_DB extends MainWP_Install {
 `renewal_type` varchar(20) NOT NULL,
 `last_renewal` int(11) NOT NULL,
 `next_renewal` int(11) NOT NULL,
+`next_renewal_today` int(11) NOT NULL,
 `last_alert` int(11) NOT NULL,
 `cost_icon` varchar(64) NOT NULL DEFAULT "",
 `cost_color` varchar(64) NOT NULL DEFAULT "",
@@ -370,6 +371,56 @@ PRIMARY KEY  (`id`)  ';
             $params = array();
         }
 
+        $s       = '';
+        $exclude = array();
+        $include = array();
+        $status  = array();
+        $types   = array();
+
+        $where = '';
+        $limit = '';
+
+        if ( $params && is_array( $params ) ) {
+            $s       = isset( $params['s'] ) ? $params['s'] : '';
+            $exclude = isset( $params['exclude'] ) && ! empty( $params['exclude'] ) ? wp_parse_id_list( $params['exclude'] ) : array();
+            $include = isset( $params['include'] ) && ! empty( $params['include'] ) ? wp_parse_id_list( $params['include'] ) : array();
+
+            $status       = isset( $params['status'] ) && ! empty( $params['status'] ) ? wp_parse_list( $params['status'] ) : array();
+            $product_type = isset( $params['category'] ) && ! empty( $params['category'] ) ? wp_parse_list( $params['category'] ) : array();
+            $types        = isset( $params['type'] ) && ! empty( $params['type'] ) ? wp_parse_list( $params['type'] ) : array();
+
+            $page     = isset( $params['paged'] ) ? intval( $params['paged'] ) : false;
+            $per_page = isset( $params['items_per_page'] ) ? intval( $params['items_per_page'] ) : false;
+
+            if ( ! empty( $s ) ) {
+                $where .= ' AND ( ct.id LIKE "%' . $this->escape( $s ) . '%" OR ct.name LIKE "%' . $this->escape( $s ) . '%" ) ';
+            }
+
+            if ( ! empty( $exclude ) ) {
+                $where .= ' AND  ct.id NOT IN (' . implode( ',', $exclude ) . ') ';
+            }
+
+            if ( ! empty( $include ) ) {
+                $where .= ' AND  ct.id IN (' . implode( ',', $include ) . ') ';
+            }
+
+            if ( ! empty( $status ) ) {
+                $where .= ' AND  ct.cost_status IN (' . $this->prepare_fields_array( $status ) . ') ';
+            }
+
+            if ( ! empty( $product_type ) && ! in_array( 'any', $product_type ) ) {
+                $where .= ' AND  ct.product_type IN (' . $this->prepare_fields_array( $product_type ) . ') ';
+            }
+
+            if ( ! empty( $types ) && ! in_array( 'any', $types ) ) {
+                $where .= ' AND  ct.type IN (' . $this->prepare_fields_array( $types ) . ') ';
+            }
+
+            if ( ! empty( $page ) && ! empty( $per_page ) ) {
+                $limit = ' LIMIT ' . ( $page - 1 ) * $per_page . ',' . $per_page;
+            }
+        }
+
         $product_type = isset( $params['product_type'] ) ? $params['product_type'] : '';
         $selected_ids = isset( $params['selected_ids'] ) ? $params['selected_ids'] : array();
 
@@ -380,12 +431,14 @@ PRIMARY KEY  (`id`)  ';
         }
 
         if ( 'all' === $by ) {
-            $where = '';
             if ( ! empty( $selected_ids ) ) {
-                $where = ' AND id IN (' . implode( ',', $selected_ids ) . ') ';
+                $where .= ' AND ct.id IN (' . implode( ',', $selected_ids ) . ') ';
             }
-            return $wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'cost_tracker' ) . ' WHERE 1 ' . $where ); //phpcs:ignore -- good.
+            return $wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'cost_tracker' ) . ' ct WHERE 1 ' . $where . $limit ); //phpcs:ignore -- good.
         }
+
+        $where = '';
+        $limit = '';
 
         $sql = '';
         if ( 'id' === $by && is_numeric( $value ) ) {
@@ -454,6 +507,20 @@ PRIMARY KEY  (`id`)  ';
         return $data;
     }
 
+    /**
+     * Method prepare_fields_array().
+     *
+     * @param array $values array of string.
+     *
+     * @return string Escaped string result.
+     */
+    public function prepare_fields_array( $values = array() ) {
+        $tmp = '';
+        foreach ( $values as $value ) {
+            $tmp .= '"' . $this->escape( $value ) . '",';
+        }
+        return rtrim( $tmp, ',' );
+    }
 
     /**
      * Method delete_cost_tracker().
@@ -518,7 +585,7 @@ PRIMARY KEY  (`id`)  ';
         $client_sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_ids );
         if ( $client_sites ) {
             foreach ( $client_sites as $website ) {
-                if ( ! empty( $website->client_id ) ) {
+                if ( empty( $website->client_id ) ) {
                     continue;
                 }
                 if ( ! isset( $clients_site_ids[ $website->client_id ] ) ) {
@@ -756,5 +823,29 @@ PRIMARY KEY  (`id`)  ';
             return false;
         }
         return $wpdb->get_results( $sql ); //phpcs:ignore -- good.
+    }
+
+    /**
+     * Method update_next_renewal_today()
+     *
+     * @return void
+     */
+    public function update_next_renewal_today() {
+
+        $costs = $this->get_cost_tracker_by( 'all' );
+        if ( $costs ) {
+            foreach ( $costs as $cost ) {
+                $next_renewal = Cost_Tracker_Admin::get_next_renewal( $cost->last_renewal, $cost->renewal_type );
+                $next_today   = Cost_Tracker_Admin::calc_next_renewal_today( $cost, $next_renewal );
+                if ( $next_today !== $cost->next_renewal_today ) {
+                    $update = array(
+                        'id'                 => $cost->id,
+                        'next_renewal_today' => $next_today,
+                    );
+                    $this->update_cost_tracker( $update );
+                }
+            }
+        }
+        update_option( 'module_cost_tracker_calc_today_next_renewal', gmdate( 'Y-m-d' ) );
     }
 }

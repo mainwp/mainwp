@@ -192,6 +192,10 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'cost_tracker_decimal_separator'             => is_array( $defauls_currency_settings ) && isset( $defauls_currency_settings['decimal_separator'] ) ? $defauls_currency_settings['decimal_separator'] : null,
             'cost_tracker_decimals'                      => is_array( $defauls_currency_settings ) && isset( $defauls_currency_settings['decimals'] ) ? (int) $defauls_currency_settings['decimals'] : null,
             'mainwp_frequencySitesChecking'              => 60,
+            'mainwp_frequency_AutoUpdate'                => 'daily',
+            'mainwp_dayinweek_AutoUpdate'                => 0,
+            'mainwp_dayinmonth_AutoUpdate'               => 1,
+            'mainwp_time_AutoUpdate'                     => '00:00',
         );
 
         if ( 'all' === $field ) {

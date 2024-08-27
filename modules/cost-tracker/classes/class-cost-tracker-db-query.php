@@ -88,7 +88,7 @@ class Cost_Tracker_DB_Query extends Cost_Tracker_DB {
         }
 
         if ( ! empty( $filter_cost_state ) ) {
-            $costs_state       = Cost_Tracker_Admin::get_cost_status( false, true );
+            $costs_state       = Cost_Tracker_Admin::get_cost_status();
             $costs_state       = array_keys( $costs_state );
             $filter_cost_state = array_filter(
                 $filter_cost_state,
@@ -248,8 +248,9 @@ class Cost_Tracker_DB_Query extends Cost_Tracker_DB {
 
         $orderable = array( 'name', 'url', 'type', 'product_type', 'slug', 'license_type', 'cost_status', 'payment_method', 'price', 'renewal_type', 'last_renewal', 'next_renewal' );
         if ( isset( $args['orderby'] ) && in_array( $args['orderby'], $orderable, true ) ) {
-            $prefix  = 'co.';
-            $orderby = sprintf( '%s%s', $prefix, $args['orderby'] );
+            $_orderby = 'next_renewal' === $args['orderby'] ? 'next_renewal_today' : $args['orderby'];
+            $prefix   = 'co.';
+            $orderby  = sprintf( '%s%s', $prefix, $_orderby );
         }
 
         // Show the recent records first by default.

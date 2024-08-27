@@ -149,10 +149,11 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     /**
      * Add a plugin or theme to the ignor list.
      *
-     * @param mixed $type plugin|theme.
-     * @param mixed $slug Plugin or Theme Slug.
-     * @param mixed $name Plugin or Theme Name.
-     * @param mixed $id Child Site ID.
+     * @param mixed  $type plugin|theme.
+     * @param mixed  $slug Plugin or Theme Slug.
+     * @param mixed  $name Plugin or Theme Name.
+     * @param mixed  $id Child Site ID.
+     * @param string $ver version ignore.
      *
      * @return string success.
      *
@@ -161,74 +162,112 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-    public static function ignore_plugin_theme( $type, $slug, $name, $id ) { // phpcs:ignore -- NOSONAR - complex.
+    public static function ignore_plugin_theme( $type, $slug, $name, $id, $ver = '' ) { // phpcs:ignore -- NOSONAR - complex.
         if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
             $website = MainWP_DB::instance()->get_website_by_id( $id );
             if ( MainWP_System_Utility::can_edit_website( $website ) ) {
                 $slug = urldecode( $slug );
                 if ( 'plugin' === $type ) {
                     $decodedIgnoredPlugins = json_decode( $website->ignored_plugins, true );
-                    if ( ! isset( $decodedIgnoredPlugins[ $slug ] ) ) {
+                    /**
+                    * Action: mainwp_before_plugin_ignore
+                    *
+                    * Fires before plugin ignore.
+                    *
+                    * @since 4.1
+                    */
+                    do_action( 'mainwp_before_plugin_ignore', $decodedIgnoredPlugins, $website );
 
-                        /**
-                        * Action: mainwp_before_plugin_ignore
-                        *
-                        * Fires before plugin ignore.
-                        *
-                        * @since 4.1
-                        */
-                        do_action( 'mainwp_before_plugin_ignore', $decodedIgnoredPlugins, $website );
-
-                        $decodedIgnoredPlugins[ $slug ] = urldecode( $name );
-                        MainWP_DB::instance()->update_website_values( $website->id, array( 'ignored_plugins' => wp_json_encode( $decodedIgnoredPlugins ) ) );
-
-                        /**
-                        * Action: mainwp_after_plugin_ignore
-                        *
-                        * Fires after plugin ignore.
-                        *
-                        * @since 4.1
-                        */
-                        do_action( 'mainwp_after_plugin_ignore', $decodedIgnoredPlugins, $website );
-
+                    $ignored_info = is_array( $decodedIgnoredPlugins ) && isset( $decodedIgnoredPlugins[ $slug ] ) ? $decodedIgnoredPlugins[ $slug ] : array();
+                    if ( ! is_array( $ignored_info ) ) {
+                        $ignored_info = array();
                     }
+
+                    $ignored_info['Name'] = urldecode( $name );
+
+                    $ignored_vers = is_array( $ignored_info ) && isset( $ignored_info['ignored_versions'] ) ? $ignored_info['ignored_versions'] : array();
+                    if ( ! is_array( $ignored_vers ) ) {
+                        $ignored_vers = array();
+                    }
+                    if ( empty( $ver ) || 'all_versions' === $ver ) { // ignore all.
+                        $ignored_vers = array( 'all_versions' );
+                    } else {
+                        $ver = urldecode( $ver );
+                        if ( ! in_array( $ver, $ignored_vers ) ) {
+                            $ignored_vers[] = $ver;
+                        }
+                    }
+                    $ignored_info['ignored_versions'] = $ignored_vers;
+
+                    $decodedIgnoredPlugins[ $slug ] = $ignored_info;
+
+                    MainWP_DB::instance()->update_website_values( $website->id, array( 'ignored_plugins' => wp_json_encode( $decodedIgnoredPlugins ) ) );
+
+                    /**
+                    * Action: mainwp_after_plugin_ignore
+                    *
+                    * Fires after plugin ignore.
+                    *
+                    * @since 4.1
+                    */
+                    do_action( 'mainwp_after_plugin_ignore', $decodedIgnoredPlugins, $website );
+
                 } elseif ( 'theme' === $type ) {
                     $decodedIgnoredThemes = json_decode( $website->ignored_themes, true );
-                    if ( ! isset( $decodedIgnoredThemes[ $slug ] ) ) {
-                        /**
-                        * Action: mainwp_before_theme_ignore
-                        *
-                        * Fires before theme ignore.
-                        *
-                        * @since 4.1
-                        */
-                        do_action( 'mainwp_before_theme_ignore', $decodedIgnoredThemes, $website );
 
-                        $decodedIgnoredThemes[ $slug ] = urldecode( $name );
-                        MainWP_DB::instance()->update_website_values( $website->id, array( 'ignored_themes' => wp_json_encode( $decodedIgnoredThemes ) ) );
+                    /**
+                    * Action: mainwp_before_theme_ignore
+                    *
+                    * Fires before theme ignore.
+                    *
+                    * @since 4.1
+                    */
+                    do_action( 'mainwp_before_theme_ignore', $decodedIgnoredThemes, $website );
 
-                        /**
-                        * Action: mainwp_after_theme_ignore
-                        *
-                        * Fires after theme ignore.
-                        *
-                        * @since 4.1
-                        */
-                        do_action( 'mainwp_after_theme_ignore', $website, $decodedIgnoredThemes );
+                    $ignored_info = is_array( $decodedIgnoredThemes ) && isset( $decodedIgnoredThemes[ $slug ] ) ? $decodedIgnoredThemes[ $slug ] : array();
+                    if ( ! is_array( $ignored_info ) ) {
+                        $ignored_info = array();
                     }
+                    $ignored_info['Name'] = urldecode( $name );
+
+                    $ignored_vers = is_array( $ignored_info ) && isset( $ignored_info['ignored_versions'] ) ? $ignored_info['ignored_versions'] : array();
+                    if ( ! is_array( $ignored_vers ) ) {
+                        $ignored_vers = array();
+                    }
+                    if ( empty( $ver ) || 'all_versions' === $ver ) { // ignore all.
+                        $ignored_vers = array( 'all_versions' );
+                    } else {
+                        $ver = urldecode( $ver );
+                        if ( ! in_array( $ver, $ignored_vers ) ) {
+                            $ignored_vers[] = $ver;
+                        }
+                    }
+                    $ignored_info['ignored_versions'] = $ignored_vers;
+
+                    $decodedIgnoredThemes[ $slug ] = $ignored_info;
+                    MainWP_DB::instance()->update_website_values( $website->id, array( 'ignored_themes' => wp_json_encode( $decodedIgnoredThemes ) ) );
+                    /**
+                    * Action: mainwp_after_theme_ignore
+                    *
+                    * Fires after theme ignore.
+                    *
+                    * @since 4.1
+                    */
+                    do_action( 'mainwp_after_theme_ignore', $website, $decodedIgnoredThemes );
                 }
             }
         }
-
         return 'success';
     }
+
 
     /**
      * Remove a plugin or theme from the ignore list.
      *
-     * @param mixed $type plugin|theme.
-     * @param mixed $slug Plugin or Theme slug.
-     * @param mixed $id Plugin or Theme name.
+     * @param mixed  $type plugin|theme.
+     * @param mixed  $slug Plugin or Theme slug.
+     * @param mixed  $id Plugin or Theme name.
+     * @param string $ver Plugin or Theme version.
      *
      * @return string success.
      *
@@ -241,7 +280,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-    public static function unignore_plugin_theme( $type, $slug, $id ) { // phpcs:ignore -- NOSONAR - complex.
+    public static function unignore_plugin_theme( $type, $slug, $id, $ver ) { // phpcs:ignore -- NOSONAR - complex.
         if ( ! empty( $id ) ) {
 
             /**
@@ -307,7 +346,6 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     if ( 'plugin' === $type ) {
                         $decodedIgnoredPlugins = json_decode( $website->ignored_plugins, true );
                         if ( isset( $decodedIgnoredPlugins[ $slug ] ) ) {
-
                             /**
                             * Action: mainwp_before_plugin_unignore
                             *
@@ -317,9 +355,32 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             */
                             do_action( 'mainwp_before_plugin_unignore', $decodedIgnoredPlugins, $website );
 
-                            unset( $decodedIgnoredPlugins[ $slug ] );
-                            MainWP_DB::instance()->update_website_values( $website->id, array( 'ignored_plugins' => wp_json_encode( $decodedIgnoredPlugins ) ) );
+                            if ( is_string( $decodedIgnoredPlugins[ $slug ] ) ) { // old ignored info.
+                                unset( $decodedIgnoredPlugins[ $slug ] );
+                            } elseif ( is_array( $decodedIgnoredPlugins[ $slug ] ) ) {
+                                $ignored_info = $decodedIgnoredPlugins[ $slug ];
+                                $ignored_vers = is_array( $ignored_info ) && isset( $ignored_info['ignored_versions'] ) ? $ignored_info['ignored_versions'] : array();
 
+                                if ( ! is_array( $ignored_vers ) ) {
+                                    $ignored_vers = array();
+                                }
+
+                                if ( empty( $ver ) || 'all_versions' === $ver ) { // ignore all.
+                                    unset( $decodedIgnoredPlugins[ $slug ] );
+                                } else {
+                                    $ver = urldecode( $ver );
+                                    if ( in_array( $ver, $ignored_vers ) ) {
+                                        $ignored_vers = array_diff( $ignored_vers, array( $ver ) );
+                                    }
+                                    $ignored_info['ignored_versions'] = $ignored_vers;
+                                    if ( empty( $ignored_vers ) ) {
+                                        unset( $decodedIgnoredPlugins[ $slug ] );
+                                    } else {
+                                        $decodedIgnoredPlugins[ $slug ] = $ignored_info;
+                                    }
+                                }
+                            }
+                            MainWP_DB::instance()->update_website_values( $website->id, array( 'ignored_plugins' => wp_json_encode( $decodedIgnoredPlugins ) ) );
                             /**
                             * Action: mainwp_after_plugin_unignore
                             *
@@ -342,7 +403,32 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             */
                             do_action( 'mainwp_before_theme_unignore', $decodedIgnoredThemes, $website );
 
-                            unset( $decodedIgnoredThemes[ $slug ] );
+                            if ( is_string( $decodedIgnoredThemes[ $slug ] ) ) { // old ignored info.
+                                unset( $decodedIgnoredThemes[ $slug ] );
+                            } elseif ( is_array( $decodedIgnoredThemes[ $slug ] ) ) {
+                                $ignored_info = $decodedIgnoredThemes[ $slug ];
+                                $ignored_vers = is_array( $ignored_info ) && isset( $ignored_info['ignored_versions'] ) ? $ignored_info['ignored_versions'] : array();
+
+                                if ( ! is_array( $ignored_vers ) ) {
+                                    $ignored_vers = array();
+                                }
+
+                                if ( empty( $ver ) || 'all_versions' === $ver ) { // ignore all.
+                                    unset( $decodedIgnoredThemes[ $slug ] );
+                                } else {
+                                    $ver = urldecode( $ver );
+                                    if ( in_array( $ver, $ignored_vers ) ) {
+                                        $ignored_vers = array_diff( $ignored_vers, array( $ver ) );
+                                    }
+                                    $ignored_info['ignored_versions'] = $ignored_vers;
+                                    if ( empty( $ignored_vers ) ) {
+                                        unset( $decodedIgnoredThemes[ $slug ] );
+                                    } else {
+                                        $decodedIgnoredThemes[ $slug ] = $ignored_info;
+                                    }
+                                }
+                            }
+
                             MainWP_DB::instance()->update_website_values( $website->id, array( 'ignored_themes' => wp_json_encode( $decodedIgnoredThemes ) ) );
 
                             /**
@@ -362,6 +448,137 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         return 'success';
     }
 
+
+    /**
+     * Remove WP from the ignore list.
+     *
+     * @param mixed  $id Plugin or Theme name.
+     * @param string $ver Plugin or Theme version.
+     *
+     * @return string success.
+     */
+    public static function unignore_core_updates( $id, $ver ) { // phpcs:ignore -- NOSONAR - complex.
+        if ( ! empty( $id ) ) {
+
+            if ( '_ALL_' === $id ) {
+                $params   = array(
+                    'view'          => 'updates_view',
+                    'others_fields' => array( 'premium_upgrades' ),
+                );
+                $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params ) );
+                while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
+
+                    /**
+                    * Action: mainwp_before_core_unignore
+                    *
+                    * Fires before plugin unignore.
+                    *
+                    * @since 5.2
+                    */
+                    do_action( 'mainwp_before_core_unignore', '_ALL_', $website );
+
+                    MainWP_DB::instance()->update_website_option( $website->id, 'ignored_wp_upgrades', wp_json_encode( array() ) );
+                    /**
+                    * Action: mainwp_after_core_unignore
+                    *
+                    * Fires after plugin unignore.
+                    *
+                    * @since 5.2
+                    */
+                    do_action( 'mainwp_before_core_unignore', '_ALL_', $website );
+
+                }
+                MainWP_DB::free_result( $websites );
+                return 'success';
+            } elseif ( MainWP_Utility::ctype_digit( $id ) ) {
+                $website = MainWP_DB::instance()->get_website_by_id( $id, false, array( 'ignored_wp_upgrades' ) );
+                if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+                    $ignored_info = ! empty( $website->ignored_wp_upgrades ) ? json_decode( $website->ignored_wp_upgrades, true ) : array();
+
+                    if ( ! is_array( $ignored_info ) ) {
+                        $ignored_info = array();
+                    }
+                    /**
+                    * Action: mainwp_before_core_unignore
+                    *
+                    * Fires before plugin unignore.
+                    *
+                    * @since 5.2
+                    */
+                    do_action( 'mainwp_before_core_unignore', $ignored_info, $website );
+
+                    $ignored_vers = isset( $ignored_info['ignored_versions'] ) ? $ignored_info['ignored_versions'] : array();
+
+                    if ( ! is_array( $ignored_vers ) ) {
+                        $ignored_vers = array();
+                    }
+
+                    if ( empty( $ver ) || 'all_versions' === $ver ) { // unignore all.
+                        $ignored_vers = array();
+                    } elseif ( in_array( $ver, $ignored_vers ) ) {
+                            $ignored_vers = array_diff( $ignored_vers, array( $ver ) );
+                    }
+                    $ignored_info['ignored_versions'] = $ignored_vers;
+                    MainWP_DB::instance()->update_website_option( $website->id, 'ignored_wp_upgrades', wp_json_encode( $ignored_info ) );
+                    /**
+                    * Action: mainwp_after_core_unignore
+                    *
+                    * Fires after plugin unignore.
+                    *
+                    * @since 5.2
+                    */
+                    do_action( 'mainwp_after_core_unignore', $ignored_info, $website );
+                    return 'success';
+                }
+            }
+        }
+        return 'failed';
+    }
+
+    /**
+     * Unignore Plugins or Themes.
+     *
+     * @param string $slug _ALL_|empty.
+     * @param string $ver version info.
+     *
+     * @return string success.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::update_user_extension()
+     */
+    public static function unignore_global_cores( $slug, $ver ) { // phpcs:ignore -- NOSONAR - complex.
+        $userExtension = MainWP_DB_Common::instance()->get_user_extension();
+        if ( '_ALL_' === $slug ) {
+            $decodedIgnoredCores = array();
+        } else {
+            $decodedIgnoredCores = json_decode( $userExtension->ignored_plugins, true );
+            if ( ! is_array( $decodedIgnoredCores ) ) {
+                $decodedIgnoredCores = array();
+            }
+            if ( 'all_versions' === $ver ) {
+                $decodedIgnoredCores = array();
+            } else {
+                $ignored_vers = is_array( $decodedIgnoredCores ) && isset( $decodedIgnoredCores['ignored_versions'] ) ? $decodedIgnoredCores['ignored_versions'] : array();
+                if ( is_array( $ignored_vers ) && in_array( $ver, $ignored_vers ) ) {
+                    $ignored_vers = array_diff( $ignored_vers, array( $ver ) );
+                    if ( empty( $ignored_vers ) ) {
+                        $decodedIgnoredCores = array();
+                    } else {
+                        $decodedIgnoredCores['ignored_versions'] = $ignored_vers;
+                    }
+                }
+            }
+        }
+        MainWP_DB_Common::instance()->update_user_extension(
+            array(
+                'userid'              => null,
+                'ignored_wp_upgrades' => wp_json_encode( $decodedIgnoredCores ),
+            )
+        );
+
+        return 'success';
+    }
+
     /**
      * Method ignore_plugins_themes()
      *
@@ -370,13 +587,14 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @param string $type Plugin or theme.
      * @param string $slug Plugin or tempheme slug.
      * @param string $name Plugin or theme name.
+     * @param string $ver Plugin or theme version.
      *
      * @return string 'success'.
      *
      * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
      * @uses \MainWP\Dashboard\MainWP_DB_Common::update_user_extension()
      */
-    public static function ignore_plugins_themes( $type, $slug, $name ) {
+    public static function ignore_plugins_themes( $type, $slug, $name, $ver = '' ) {
         $slug          = urldecode( $slug );
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();
         if ( 'plugin' === $type ) {
@@ -384,7 +602,31 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             if ( ! is_array( $decodedIgnoredPlugins ) ) {
                 $decodedIgnoredPlugins = array();
             }
-            $decodedIgnoredPlugins[ $slug ] = urldecode( $name );
+
+            $ignored_info = is_array( $decodedIgnoredPlugins ) && isset( $decodedIgnoredPlugins[ $slug ] ) ? $decodedIgnoredPlugins[ $slug ] : array();
+            if ( ! is_array( $ignored_info ) ) {
+                $ignored_info = array();
+            }
+
+            $ignored_info['Name'] = urldecode( $name );
+
+            $ignored_vers = is_array( $ignored_info ) && isset( $ignored_info['ignored_versions'] ) ? $ignored_info['ignored_versions'] : array();
+            if ( ! is_array( $ignored_vers ) ) {
+                $ignored_vers = array();
+            }
+
+            if ( empty( $ver ) || 'all_versions' === $ver ) { // ignore all.
+                $ignored_vers = array( 'all_versions' );
+            } else {
+                $ver = urldecode( $ver );
+                if ( ! in_array( $ver, $ignored_vers ) ) {
+                    $ignored_vers[] = $ver;
+                }
+            }
+
+            $ignored_info['ignored_versions'] = $ignored_vers;
+            $decodedIgnoredPlugins[ $slug ]   = $ignored_info;
+
             MainWP_DB_Common::instance()->update_user_extension(
                 array(
                     'userid'          => null,
@@ -396,7 +638,29 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             if ( ! is_array( $decodedIgnoredThemes ) ) {
                 $decodedIgnoredThemes = array();
             }
-            $decodedIgnoredThemes[ $slug ] = urldecode( $name );
+
+            $ignored_info = is_array( $decodedIgnoredThemes ) && isset( $decodedIgnoredThemes[ $slug ] ) ? $decodedIgnoredThemes[ $slug ] : array();
+            if ( ! is_array( $ignored_info ) ) {
+                $ignored_info = array();
+            }
+
+            $ignored_info['Name'] = urldecode( $name );
+
+            $ignored_vers = is_array( $ignored_info ) && isset( $ignored_info['ignored_versions'] ) ? $ignored_info['ignored_versions'] : array();
+            if ( ! is_array( $ignored_vers ) ) {
+                $ignored_vers = array();
+            }
+            if ( empty( $ver ) || 'all_versions' === $ver ) { // ignore all.
+                $ignored_vers = array( 'all_versions' );
+            } else {
+                $ver = urldecode( $ver );
+                if ( ! in_array( $ver, $ignored_vers ) ) {
+                    $ignored_vers[] = $ver;
+                }
+            }
+            $ignored_info['ignored_versions'] = $ignored_vers;
+            $decodedIgnoredThemes[ $slug ]    = $ignored_info;
+
             MainWP_DB_Common::instance()->update_user_extension(
                 array(
                     'userid'         => null,
@@ -411,15 +675,16 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     /**
      * Unignore Plugins or Themes.
      *
-     * @param mixed $type plugin|themes.
-     * @param mixed $slug Plugin or Themes slug.
+     * @param mixed  $type plugin|themes.
+     * @param mixed  $slug Plugin or Themes slug.
+     * @param string $ver Plugin or Themes version.
      *
      * @return string success.
      *
      * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
      * @uses \MainWP\Dashboard\MainWP_DB_Common::update_user_extension()
      */
-    public static function unignore_plugins_themes( $type, $slug ) { // phpcs:ignore -- NOSONAR - complex.
+    public static function unignore_global_plugins_themes( $type, $slug, $ver ) { // phpcs:ignore -- NOSONAR - complex.
         $slug          = urldecode( $slug );
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();
         if ( 'plugin' === $type ) {
@@ -431,7 +696,19 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     $decodedIgnoredPlugins = array();
                 }
                 if ( isset( $decodedIgnoredPlugins[ $slug ] ) ) {
-                    unset( $decodedIgnoredPlugins[ $slug ] );
+                    if ( 'all_versions' === $ver ) {
+                        unset( $decodedIgnoredPlugins[ $slug ] );
+                    } else {
+                        $ignored_vers = is_array( $decodedIgnoredPlugins[ $slug ] ) && isset( $decodedIgnoredPlugins[ $slug ]['ignored_versions'] ) ? $decodedIgnoredPlugins[ $slug ]['ignored_versions'] : array();
+                        if ( is_array( $ignored_vers ) && in_array( $ver, $ignored_vers ) ) {
+                            $ignored_vers = array_diff( $ignored_vers, array( $ver ) );
+                            if ( empty( $ignored_vers ) ) {
+                                unset( $decodedIgnoredPlugins[ $slug ] );
+                            } else {
+                                $decodedIgnoredPlugins[ $slug ]['ignored_versions'] = $ignored_vers;
+                            }
+                        }
+                    }
                 }
             }
             MainWP_DB_Common::instance()->update_user_extension(
@@ -449,7 +726,19 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     $decodedIgnoredThemes = array();
                 }
                 if ( isset( $decodedIgnoredThemes[ $slug ] ) ) {
-                    unset( $decodedIgnoredThemes[ $slug ] );
+                    if ( 'all_versions' === $ver ) {
+                        unset( $decodedIgnoredThemes[ $slug ] );
+                    } else {
+                        $ignored_vers = is_array( $decodedIgnoredThemes[ $slug ] ) && isset( $decodedIgnoredThemes[ $slug ]['ignored_versions'] ) ? $decodedIgnoredThemes[ $slug ]['ignored_versions'] : array();
+                        if ( is_array( $ignored_vers ) && in_array( $ver, $ignored_vers ) ) {
+                            $ignored_vers = array_diff( $ignored_vers, array( $ver ) );
+                            if ( empty( $ignored_vers ) ) {
+                                unset( $decodedIgnoredThemes[ $slug ] );
+                            } else {
+                                $decodedIgnoredThemes[ $slug ]['ignored_versions'] = $ignored_vers;
+                            }
+                        }
+                    }
                 }
             }
             MainWP_DB_Common::instance()->update_user_extension(
@@ -927,12 +1216,14 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
             $ignored_plugins = json_decode( $website->ignored_plugins, true );
             if ( is_array( $ignored_plugins ) ) {
-                $plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+                $plugin_upgrades = $this->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
+
             }
 
             $ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
             if ( is_array( $ignored_plugins ) ) {
-                $plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+                $plugin_upgrades = $this->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
+
             }
 
             if ( is_array( $plugin_upgrades ) ) {
@@ -965,12 +1256,12 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
             $ignored_themes = json_decode( $website->ignored_themes, true );
             if ( is_array( $ignored_themes ) ) {
-                $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+                $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
             }
 
             $ignored_themes = json_decode( $userExtension->ignored_themes, true );
             if ( is_array( $ignored_themes ) ) {
-                $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+                $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
             }
 
             if ( is_array( $theme_upgrades ) ) {

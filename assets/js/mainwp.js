@@ -900,7 +900,7 @@ let mainwp_managesites_check_abandoned_int = function (siteid, which) {
  */
 jQuery(function () {
   jQuery('#reset-overview-settings').on('click', function () {
-    mainwp_confirm(__('Are you sure.'), function () {
+    mainwp_confirm(__('Are you sure?'), function () {
       let which_set = jQuery('input[name=reset_overview_which_settings]').val();
       if ('sidebar_settings' == which_set) {
         jQuery('#mainwp_sidebarPosition').dropdown('set selected', 1);
@@ -3014,9 +3014,9 @@ jQuery(function () {
     } else if (which == 'theme') {
       mainwp_notes_theme_save();
     } else if (which == 'plugin') {
-      mainwp_notes_plugin_save()
+      mainwp_notes_plugin_save();
     } else if (which == 'client') {
-      mainwp_notes_client_save()
+      mainwp_notes_client_save();
     }
     let newnote = jQuery('#mainwp-notes-note').val();
     jQuery('#mainwp-notes-html').html(newnote);

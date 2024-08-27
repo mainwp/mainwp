@@ -95,7 +95,7 @@ class Api_Backups_Handler {
         $server_id  = isset( $site_options['mainwp_3rd_party_instance_id'] ) ? $site_options['mainwp_3rd_party_instance_id'] : null;
         $backup_api = isset( $site_options['mainwp_3rd_party_api'] ) ? strtolower( $site_options['mainwp_3rd_party_api'] ) : null;
 
-        if ( 'cpanel' !== $backup_api && 'plesk' !== $backup_api && ( empty( $server_id ) || empty( $backup_api ) ) ) {
+        if ( 'cpanel' !== $backup_api && 'plesk' !== $backup_api && 'kinsta' !== $backup_api && ( empty( $server_id ) || empty( $backup_api ) ) ) {
             wp_send_json( array( 'error' => esc_html__( 'Error: Check Backup API settings for the website. Server Id & or Backup API provider not set.', 'mainwp' ) ) );
         }
 
@@ -222,6 +222,22 @@ class Api_Backups_Handler {
                         }
                     }
                     static::send_bulk_backups_error( false, esc_html__( 'Error: Plesk Backup', 'mainwp' ) );
+                }
+                break;
+            case 'kinsta':
+                $result = Api_Backups_3rd_Party::kinsta_action_create_backup( $return, $website_id );
+
+                if ( $die_output ) {
+                    $api_response = $result;
+                    if ( is_array( $api_response ) ) {
+                        if ( true !== $api_response['status'] ) {
+                            static::send_backups_response( false );
+                        } else {
+                            // Return success.
+                            static::send_backups_response();
+                        }
+                    }
+                    wp_die( esc_html__( 'Error: Kinsta Backup', 'mainwp' ) );
                 }
                 break;
             default:

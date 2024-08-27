@@ -28,6 +28,15 @@ class MainWP_Cache { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
     }
 
     /**
+     * Method init_session()
+     *
+     * Start session.
+     */
+    public static function is_session_disable() {
+        return ! function_exists( 'session_start' ) || ! function_exists( 'session_status' ) || PHP_SESSION_DISABLED === session_status();
+    }
+
+    /**
      * Method init_cache()
      *
      * Set session variables.

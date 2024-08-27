@@ -613,22 +613,9 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         $groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false;
         //phpcs:enable
         if ( $groupid ) {
-            $group = MainWP_DB_Common::instance()->get_group_by_id( $groupid );
-            if ( ! empty( $group ) ) {
-                // Remove from DB.
-                $nr = MainWP_DB_Common::instance()->remove_group( $group->id );
-
-                /**
-                 * Fires after a tag has been deleted.
-                 *
-                 * @param object $group group created.
-                 * @param string group action.
-                 */
-                do_action( 'mainwp_site_tag_action', $group, 'deleted' );
-
-                if ( $nr > 0 ) {
-                    die( 'OK' );
-                }
+            $success = MainWP_DB_Common::instance()->remove_group( $groupid );
+            if ( $success ) {
+                die( 'OK' );
             }
         }
         die( 'ERROR' );
@@ -792,19 +779,21 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
     }
 
     /**
-     * Hooks the section help content to the Help Sidebar element.
+     * Method mainwp_help_content()
+     *
+     * Creates the MainWP Help Documentation List for the help component in the sidebar.
      */
     public static function mainwp_help_content() {
         if ( isset( $_GET['page'] ) && 'ManageGroups' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
             ?>
             <p><?php esc_html_e( 'If you need help with managing tags, please review following help documents', 'mainwp' ); ?></p>
-            <div class="ui relaxed bulleted list">
-                <div class="item"><a href="" target="_blank">Manage Tags</a></div>
+            <div class="ui list">
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-child-sites/#manage-child-site-tags" target="_blank">Manage Tags</a></div>
             <?php
             /**
              * Action: mainwp_tags_help_item
              *
-             * Fires at the bottom of the help articles list in the Help sidebar on the Users page.
+             * Fires at the bottom of the help articles list in the Help sidebar on the Tags page.
              *
              * Suggested HTML markup:
              *

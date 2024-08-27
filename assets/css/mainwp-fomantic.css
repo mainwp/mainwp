@@ -26,14 +26,6 @@
   margin-bottom: 1em;
 }
 
-#mainwp_managesites_content .ui.table thead td,
-#mainwp_managesites_content .ui.table thead th,
-#mainwp_managesites_content .ui.table tfoot td,
-#mainwp_managesites_content .ui.table tfoot th {
-  background: #23282D;
-  color: white;
-}
-
 .iconlbl {
   width: 40px;
   display: inline-block;

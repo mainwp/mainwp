@@ -779,6 +779,12 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $custom_field  = false;
         $with_tags     = false;
         $with_contacts = false;
+        $count_only    = false;
+
+        $s       = '';
+        $exclude = array();
+        $include = array();
+        $limit   = '';
 
         $where       = '';
         $select_tags = '';
@@ -786,7 +792,9 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         if ( $params && is_array( $params ) ) {
             $client = isset( $params['client'] ) ? sanitize_text_field( wp_unslash( $params['client'] ) ) : '';
             if ( '' !== $client ) {
-                $clients     = explode( ';', $client );
+                $clients = preg_split( '/[;,]/', $client );
+                $clients = array_filter( array_map( 'trim', $clients ) );
+
                 $clientWhere = '';
                 foreach ( $clients as $clt ) {
                     if ( is_numeric( $clt ) ) {
@@ -801,6 +809,54 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
             $with_tags     = isset( $params['with_tags'] ) && $params['with_tags'] ? true : false;
             $with_contacts = isset( $params['with_contacts'] ) && $params['with_contacts'] ? true : false;
+            $count_only    = isset( $params['count_only'] ) && $params['count_only'] ? true : false;
+
+            $s        = isset( $params['s'] ) ? $params['s'] : '';
+            $exclude  = isset( $params['exclude'] ) && ! empty( $params['exclude'] ) ? wp_parse_id_list( $params['exclude'] ) : array();
+            $include  = isset( $params['include'] ) && ! empty( $params['include'] ) ? wp_parse_id_list( $params['include'] ) : array();
+            $status   = isset( $params['status'] ) && ! empty( $params['status'] ) ? wp_parse_list( $params['status'] ) : array();
+            $page     = isset( $params['page'] ) ? intval( $params['page'] ) : false;
+            $per_page = isset( $params['per_page'] ) ? intval( $params['per_page'] ) : false;
+
+            if ( ! empty( $s ) ) {
+                $where .= ' AND ( wc.client_id LIKE "%' . $this->escape( $s ) . '%" OR wc.name LIKE "%' . $this->escape( $s ) . '%" OR wc.client_email LIKE "%' . $this->escape( $s ) . '%" ) ';
+            }
+
+            if ( ! empty( $exclude ) ) {
+                $where .= ' AND  wc.client_id NOT IN (' . implode( ',', $exclude ) . ') ';
+            }
+
+            if ( ! empty( $include ) ) {
+                $where .= ' AND  wc.client_id IN (' . implode( ',', $include ) . ') ';
+            }
+
+            if ( ! empty( $status ) ) {
+                $suspended_status = array_map(
+                    function ( $value ) {
+                        $map_status_db = array(
+                            'active'    => 0,
+                            'suspended' => 1,
+                            'lead'      => 2,
+                            'lost'      => 3,
+                        );
+                        return isset( $map_status_db[ $value ] ) ? $map_status_db[ $value ] : '';
+                    },
+                    $status
+                );
+                $suspended_status = array_filter(
+                    $suspended_status,
+                    function ( $value ) {
+                        return '' !== $value;
+                    }
+                );
+                if ( ! empty( $suspended_status ) ) {
+                    $where .= ' AND  wc.suspended IN (' . implode( ',', $suspended_status ) . ') ';
+                }
+            }
+
+            if ( ! empty( $page ) && ! empty( $per_page ) ) {
+                $limit = ' LIMIT ' . ( $page - 1 ) * $per_page . ',' . $per_page;
+            }
         }
 
         if ( $with_tags ) {
@@ -815,10 +871,17 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             $select_tags .= ' WHERE wp.client_id = wc.client_id ) as wpgroupids ';
         }
 
-        $sql  = ' SELECT wc.* ';
-        $sql .= ',( SELECT GROUP_CONCAT(wp.id SEPARATOR ",") FROM ' . $this->table_name( 'wp' ) . ' wp WHERE wp.client_id = wc.client_id ) as selected_sites ' . $select_tags;
-        $sql .= ' FROM ' . $this->table_name( 'wp_clients' ) . ' wc ';
-        $sql .= ' WHERE 1 ' . $where . ' ORDER BY wc.name';
+        if ( $count_only ) {
+            $sql  = ' SELECT count(*) ';
+            $sql .= ' FROM ' . $this->table_name( 'wp_clients' ) . ' wc ';
+            $sql .= ' WHERE 1 ' . $where;
+            return $this->wpdb->get_var( $sql );
+        } else {
+            $sql  = ' SELECT wc.* ';
+            $sql .= ',( SELECT GROUP_CONCAT(wp.id SEPARATOR ",") FROM ' . $this->table_name( 'wp' ) . ' wp WHERE wp.client_id = wc.client_id ) as selected_sites ' . $select_tags;
+            $sql .= ' FROM ' . $this->table_name( 'wp_clients' ) . ' wc ';
+            $sql .= ' WHERE 1 ' . $where . ' ORDER BY wc.name ' . $limit;
+        }
 
         $result = $this->wpdb->get_results( $sql, ARRAY_A );
 

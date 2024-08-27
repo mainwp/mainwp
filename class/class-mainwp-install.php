@@ -25,7 +25,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.0.8'; // NOSONAR - no IP.
+    protected $mainwp_db_version = '9.0.0.12'; // NOSONAR - no IP.
 
     /**
      * Protected variable to hold the database option name.
@@ -224,6 +224,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   trusted_plugins longtext NOT NULL DEFAULT '',
   trusted_plugins_notes longtext NOT NULL DEFAULT '',
   ignored_themes longtext NOT NULL DEFAULT '',
+  ignored_wp_upgrades longtext NOT NULL DEFAULT '',
   trusted_themes longtext NOT NULL DEFAULT '',
   trusted_themes_notes longtext NOT NULL DEFAULT '',
   site_view tinyint(1) NOT NULL DEFAULT '0',
@@ -348,6 +349,26 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         }
         $tbl  .= ') ' . $charset_collate;
         $sql[] = $tbl;
+
+        $tbl = 'CREATE TABLE ' . $this->table_name( 'api_keys' ) . ' (
+    key_id bigint(20) unsigned NOT NULL auto_increment,
+    user_id bigint(20) unsigned NOT NULL,
+    description varchar(200) NULL,
+    permissions varchar(10) NOT NULL,
+    consumer_key char(64) NOT NULL,
+    consumer_secret char(43) NOT NULL,
+    nonces longtext NULL,
+    truncated_key char(7) NOT NULL,
+    `enabled` tinyint(1) DEFAULT 0,
+    last_access datetime NULL default null,
+    KEY consumer_key (consumer_key),
+    KEY consumer_secret (consumer_secret)';
+        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.0.9', '<=' ) ) {
+            $tbl .= ',
+    PRIMARY KEY  (key_id)  ';
+        }
+            $tbl  .= ') ' . $charset_collate . ';';
+            $sql[] = $tbl;
 
         $tbl = 'CREATE TABLE ' . $this->table_name( 'action_log' ) . " (
     id int(11) NOT NULL auto_increment,

@@ -55,15 +55,15 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
             <thead>
                 <tr>
                     <th scope="col" class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-                    <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting">
+                    <th scope="col" class="eight wide indicator-accordion-sorting handle-accordion-sorting">
                     <div class="ui main-master checkbox ">
                         <input type="checkbox" name=""><label><?php esc_html_e( 'Plugin', 'mainwp' ); ?></label>
                     </div>
                     <?php MainWP_UI::render_sorting_icons(); ?>
                     </th>
-                    <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting"><?php echo intval( $total_plugin_upgrades ) . ' ' . esc_html( _n( 'Update', 'Updates', $total_plugin_upgrades, 'mainwp' ) ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-                    <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Trusted', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-                    <th scope="col" class="no-sort right aligned">
+                    <th scope="col" class="two wide indicator-accordion-sorting handle-accordion-sorting"><?php echo intval( $total_plugin_upgrades ) . ' ' . esc_html( _n( 'Update', 'Updates', $total_plugin_upgrades, 'mainwp' ) ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+                    <th scope="col" class="two wide indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Trusted', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+                    <th scope="col" class="four wide no-sort right aligned">
                         <?php MainWP_UI::render_show_all_updates_button(); ?>
                         <?php
                         if ( MainWP_Updates::user_can_update_plugins() ) {
@@ -109,7 +109,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         <td sort-value="<?php echo esc_attr( $trusted ); ?>"><?php echo $trusted ? '<span class="ui tiny green label">Trusted</span>' : '<span class="ui tiny grey label">Not Trusted</span>'; ?></td>
                         <td class="right aligned">
                             <?php if ( MainWP_Updates::user_can_ignore_updates() ) { ?>
-                                <a href="javascript:void(0)" class="ui mini button mainwp-ignore-globally-button btn-update-click-accordion" onClick="return updatesoverview_plugins_ignore_all( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_attr( rawurlencode( $pluginsInfo[ $slug ]['name'] ) ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>
+                                <a href="javascript:void(0)" class="ui mini button mainwp-ignore-globally-button" onClick="return updatesoverview_plugins_ignore_all( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_attr( rawurlencode( $pluginsInfo[ $slug ]['name'] ) ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>
                             <?php } ?>
                             <?php if ( MainWP_Updates::user_can_update_plugins() ) { ?>
                                 <?php if ( 0 < $cnt ) { ?>
@@ -130,14 +130,14 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         </td>
                     </tr>
                     <tr class="plugins-bulk-updates child-checkbox content" plugin_slug="<?php echo esc_attr( $plugin_name ); ?>" plugin_name="<?php echo esc_attr( rawurlencode( $pluginsInfo[ $slug ]['name'] ) ); ?>" premium="<?php echo $pluginsInfo[ $slug ]['premium'] ? 1 : 0; ?>">
-                        <td colspan="6">
-                            <table id="mainwp-plugins-updates-sites-inner-table" class="ui mainwp-manage-updates-table table">
+                        <td colspan="7">
+                            <table id="mainwp-plugins-updates-sites-inner-table" class="ui table mainwp-manage-updates-table">
                                 <thead class="mainwp-768-hide">
                                     <tr>
                                     <?php $updates_table_helper->print_column_headers(); ?>
                                     </tr>
                                 </thead>
-                                <tbody plugin_slug="<?php echo esc_attr( $plugin_name ); ?>">
+                                <tbody plugin_slug="<?php echo esc_attr( $plugin_name ); ?>" >
                                     <?php
                                     $first_wpplugin = true;
                                     MainWP_DB::data_seek( $websites, 0 );
@@ -178,7 +178,8 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
                                         $ignored_plugins = json_decode( $website->ignored_plugins, true );
                                         if ( is_array( $ignored_plugins ) ) {
-                                            $plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+                                            $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
+
                                         }
 
                                         if ( ! isset( $plugin_upgrades[ $slug ] ) ) {
@@ -194,7 +195,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                             'latest'  => '<strong class="mainwp-768-show">' . esc_html__( 'Latest: ', 'mainwp' ) . '</strong><a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog" target="_blank" class="open-plugin-details-modal">' . esc_html( $last_version ) . '</a>',
                                             'trusted' => ( in_array( $slug, $trustedPlugins ) ? true : false ),
                                             'status'  => ( isset( $plugin_upgrade['active'] ) && $plugin_upgrade['active'] ) ? true : false,
-                                            'client'  => ( isset( $website->client_name ) && '' !== $website->client_name ) ? $website->client_name : '',
+                                            'client'  => ( isset( $website->client_name ) && '' !== $website->client_name ) ? '<a href="admin.php?page=ManageClients&client_id=' . intval( $website->client_id ) . '" data-tooltip="' . __( 'Jump to the client', 'mainwp' ) . '" data-position="right center" data-inverted="">' . $website->client_name . '</a>' : '',
                                         );
 
                                         $others = array();
@@ -204,7 +205,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                         }
 
                                         ?>
-                                        <tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" updated="0" <?php echo $first_wpplugin ? 'open-wpplugin-siteid="' . intval( $website->id ) . '"' : ''; ?>>
+                                        <tr site_id="<?php echo esc_attr( $website->id ); ?>" plugin_slug="<?php echo esc_attr( $plugin_name ); ?>" last-version="<?php echo esc_attr( rawurlencode( $last_version ) ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" updated="0" <?php echo $first_wpplugin ? 'open-wpplugin-siteid="' . intval( $website->id ) . '"' : ''; ?>>
                                             <?php
                                             $row_columns     = $updates_table_helper->render_columns( $row_columns, $website, $others );
                                             $action_rendered = isset( $row_columns['action'] ) ? true : false;
@@ -212,7 +213,17 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                                 ?>
                                             <td class="right aligned">
                                                 <?php if ( MainWP_Updates::user_can_ignore_updates() ) { ?>
-                                                <a href="javascript:void(0)" class="mainwp-ignore-update-button ui mini button" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_js( rawurlencode( $plugin_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
+                                                <div class="ui mini buttons">
+                                                    <div class="ui button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></div>
+                                                    <div class="ui floating dropdown icon button">
+                                                        <i class="dropdown icon"></i>
+                                                        <div class="menu">
+                                                            <a href="javascript:void(0)" class="mainwp-ignore-update-button item" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_js( rawurlencode( $plugin_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this, '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )"><?php esc_html_e( 'Ignore this version', 'mainwp' ); ?></a>
+                                                            <a href="javascript:void(0)" class="item mainwp-ignore-globally-button" onClick="return updatesoverview_plugins_ignore_all( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_attr( rawurlencode( $pluginsInfo[ $slug ]['name'] ) ); ?>', this, '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )"><?php esc_html_e( 'Ignore this version globally', 'mainwp' ); ?></a>
+                                                            <a href="javascript:void(0)" class="mainwp-ignore-update-button item" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_js( rawurlencode( $plugin_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this, 'all_versions' )"><?php esc_html_e( 'Ignore all versions', 'mainwp' ); ?></a>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             <?php } ?>
                                                 <?php
                                                 if ( MainWP_Updates::user_can_update_plugins() ) {
@@ -287,15 +298,15 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
             <thead>
                 <tr>
                     <th scope="col" class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-                    <th scope="col" class="handle-accordion-sorting indicator-accordion-sorting">
+                    <th scope="col" class="eight wide handle-accordion-sorting indicator-accordion-sorting">
                         <div class="ui main-master checkbox ">
                             <input type="checkbox" name=""><label><?php esc_html_e( 'Theme', 'mainwp' ); ?></label>
                         </div>
                         <?php MainWP_UI::render_sorting_icons(); ?>
                     </th>
-                    <th scope="col" class="handle-accordion-sorting indicator-accordion-sorting"><?php echo intval( $total_theme_upgrades ) . ' ' . esc_html( _n( 'Update', 'Updates', $total_theme_upgrades, 'mainwp' ) ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-                    <th scope="col" class="handle-accordion-sorting indicator-accordion-sorting"><?php esc_html_e( 'Trusted', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-                    <th scope="col" class="no-sort right aligned">
+                    <th scope="col" class="two wide handle-accordion-sorting indicator-accordion-sorting"><?php echo intval( $total_theme_upgrades ) . ' ' . esc_html( _n( 'Update', 'Updates', $total_theme_upgrades, 'mainwp' ) ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+                    <th scope="col" class="two wide handle-accordion-sorting indicator-accordion-sorting"><?php esc_html_e( 'Trusted', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+                    <th scope="col" class="four wide no-sort right aligned">
                         <?php MainWP_UI::render_show_all_updates_button(); ?>
                         <?php
                         if ( MainWP_Updates::user_can_update_themes() ) {
@@ -334,7 +345,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         <td sort-value="<?php echo esc_attr( $trusted ); ?>"><?php echo $trusted ? '<span class="ui tiny green label">Trusted</span>' : '<span class="ui tiny grey label">Not Trusted</span>'; ?></td>
                         <td class="right aligned">
                             <?php if ( MainWP_Updates::user_can_ignore_updates() ) { ?>
-                                <a href="javascript:void(0)" class="ui mini button mainwp-ignore-globally-button btn-update-click-accordion" onClick="return updatesoverview_themes_ignore_all( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $themesInfo[ $slug ]['name'] ) ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>
+                                <a href="javascript:void(0)" class="ui mini button mainwp-ignore-globally-button" onClick="return updatesoverview_themes_ignore_all( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $themesInfo[ $slug ]['name'] ) ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>
                             <?php } ?>
                             <?php if ( MainWP_Updates::user_can_update_themes() ) { ?>
                                 <?php
@@ -401,7 +412,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                         }
                                         $ignored_themes = json_decode( $website->ignored_themes, true );
                                         if ( is_array( $ignored_themes ) ) {
-                                            $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+                                            $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
                                         }
 
                                         if ( ! isset( $theme_upgrades[ $slug ] ) ) {
@@ -416,7 +427,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                             'latest'  => '<strong class="mainwp-768-show">' . esc_html__( 'Latest: ', 'mainwp' ) . '</strong>' . esc_html( $last_version ),
                                             'trusted' => ( in_array( $slug, $trustedThemes ) ? true : false ),
                                             'status'  => ( isset( $theme_upgrade['active'] ) && $theme_upgrade['active'] ) ? true : false,
-                                            'client'  => ( isset( $website->client_name ) && '' !== $website->client_name ) ? $website->client_name : '',
+                                            'client'  => ( isset( $website->client_name ) && '' !== $website->client_name ) ? '<a href="admin.php?page=ManageClients&client_id=' . intval( $website->client_id ) . '" data-tooltip="' . __( 'Jump to the client', 'mainwp' ) . '" data-position="right center" data-inverted="">' . $website->client_name . '</a>' : '',
                                         );
 
                                         $others = array();
@@ -426,7 +437,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                         }
 
                                         ?>
-                                        <tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" updated="0">
+                                        <tr site_id="<?php echo esc_attr( $website->id ); ?>" theme_slug="<?php echo esc_attr( $theme_name ); ?>" last-version="<?php echo esc_attr( rawurlencode( $last_version ) ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" updated="0">
                                             <?php
                                             $row_columns     = $updates_table_helper->render_columns( $row_columns, $website, $others );
                                             $action_rendered = isset( $row_columns['action'] ) ? true : false;
@@ -434,7 +445,17 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                                 ?>
                                             <td class="right aligned">
                                                 <?php if ( MainWP_Updates::user_can_ignore_updates() ) { ?>
-                                                <a href="javascript:void(0)" class="mainwp-ignore-update-button ui mini button" onClick="return updatesoverview_themes_ignore_detail( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $theme_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
+                                                <div class="ui mini buttons">
+                                                    <div class="ui button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></div>
+                                                    <div class="ui floating dropdown icon button">
+                                                        <i class="dropdown icon"></i>
+                                                        <div class="menu">
+                                                            <a href="javascript:void(0)" class="mainwp-ignore-update-button item" onClick="return updatesoverview_themes_ignore_detail( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $theme_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this, '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )"><?php esc_html_e( 'Ignore this version', 'mainwp' ); ?></a>
+                                                            <a href="javascript:void(0)" class="item mainwp-ignore-globally-button" onClick="return updatesoverview_themes_ignore_all( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $theme_upgrade['Name'] ) ); ?>', this, '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )"><?php esc_html_e( 'Ignore this version globally', 'mainwp' ); ?></a>
+                                                            <a href="javascript:void(0)" class="mainwp-ignore-update-button item" onClick="return updatesoverview_themes_ignore_detail( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $theme_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this, 'all_versions' )"><?php esc_html_e( 'Ignore all versions', 'mainwp' ); ?></a>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             <?php } ?>
                                                 <?php
                                                 if ( MainWP_Updates::user_can_update_themes() ) {
@@ -497,14 +518,14 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
             <thead>
                 <tr>
                     <th scope="col" class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-                    <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting">
-                    <div class="ui main-master checkbox ">
-                        <input type="checkbox" name=""><label><?php esc_html_e( 'Translation', 'mainwp' ); ?></label>
-                    </div>
-                    <?php MainWP_UI::render_sorting_icons(); ?>
+                    <th scope="col" class="eight wide indicator-accordion-sorting handle-accordion-sorting">
+                        <div class="ui main-master checkbox ">
+                            <input type="checkbox" name=""><label><?php esc_html_e( 'Translation', 'mainwp' ); ?></label>
+                        </div>
+                        <?php MainWP_UI::render_sorting_icons(); ?>
                     </th>
-                    <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-                    <th scope="col" class="right aligned">
+                    <th scope="col" class="two wideindicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+                    <th scope="col" class="six wide right aligned">
                         <?php MainWP_UI::render_show_all_updates_button(); ?>
                         <?php if ( MainWP_Updates::user_can_update_trans() ) { ?>
                             <?php if ( 0 < $total_translation_upgrades ) { ?>

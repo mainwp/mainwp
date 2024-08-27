@@ -142,7 +142,7 @@ class MainWP_Plugins_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 $slug = $plugins[ $i ];
                 $name = $names[ $i ];
                 if ( ! isset( $decodedIgnoredPlugins[ $slug ] ) ) {
-                    $decodedIgnoredPlugins[ $slug ] = urldecode( $name );
+                    $decodedIgnoredPlugins[ $slug ] = array( 'name' => urldecode( $name ) );
                 }
             }
 

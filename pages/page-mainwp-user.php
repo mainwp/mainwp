@@ -1786,7 +1786,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                         <div class="ui grid field">
                             <label class="six wide column middle aligned"><?php esc_html_e( 'Upload the CSV file', 'mainwp' ); ?></label>
-                        <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click to upload the import file.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                        <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click to upload the import file.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
                                 <div class="ui file input">
                                 <input type="file" name="import_user_file_bulkupload" id="import_user_file_bulkupload" accept="text/comma-separated-values" />
                                 </div>
@@ -1794,7 +1794,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         </div>
                         <div class="ui grid field">
                             <label class="six wide column middle aligned"><?php esc_html_e( 'CSV file contains a header', 'mainwp' ); ?></label>
-                        <div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if the import file contains a header.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                        <div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if the import file contains a header.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
                             <input type="checkbox" name="import_user_chk_header_first" checked="checked" id="import_user_chk_header_first" value="1" />
                             </div>
                         </div>
@@ -2341,18 +2341,20 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
     }
 
     /**
-     * Hooks the section help content to the Help Sidebar element.
+     * Method mainwp_help_content()
+     *
+     * Creates the MainWP Help Documentation List for the help component in the sidebar.
      */
     public static function mainwp_help_content() {
         if ( isset( $_GET['page'] ) && ( 'UserBulkManage' === $_GET['page'] || 'UserBulkAdd' === $_GET['page'] || 'UpdateAdminPasswords' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             ?>
             <p><?php esc_html_e( 'If you need help with managing users, please review following help documents', 'mainwp' ); ?></p>
-            <div class="ui relaxed bulleted list">
-                <div class="item"><a href="https://kb.mainwp.com/docs/manage-users/" target="_blank">Manage Users</a> <i class="external alternate icon"></i></div>
-                <div class="item"><a href="https://kb.mainwp.com/docs/create-a-new-user/" target="_blank">Create a New User</a> <i class="external alternate icon"></i></div>
-                <div class="item"><a href="https://kb.mainwp.com/docs/edit-an-existing-user/" target="_blank">Edit an Existing User</a> <i class="external alternate icon"></i></div>
-                <div class="item"><a href="https://kb.mainwp.com/docs/bulk-update-administrator-passwords/" target="_blank">Bulk Update Administrator Passwords</a> <i class="external alternate icon"></i></div>
-                <div class="item"><a href="https://kb.mainwp.com/docs/delete-users/" target="_blank">Delete User(s)</a> <i class="external alternate icon"></i></div>
+            <div class="ui list">
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-users/" target="_blank">Manage Users</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-users/#create-a-new-user" target="_blank">Create a New User</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-users/#edit-existing-users" target="_blank">Edit an Existing User</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-users/#bulk-update-admin-passwords" target="_blank">Bulk Update Administrator Passwords</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-users/#delete-users" target="_blank">Delete User(s)</a></div>
                 <?php
                 /**
                  * Action: mainwp_users_help_item

@@ -35,6 +35,8 @@ class MainWP_Includes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * Load files.
      */
     public function includes() {
+        require_once static::$plugin_basedir . 'includes/class-mainwp-setup.php'; // NOSONAR - WP compatible.
+        require_once static::$plugin_basedir . 'includes/class-mainwp-datetime.php'; // NOSONAR - WP compatible.
         if ( file_exists( static::$plugin_basedir . 'modules/common/class-module-log.php' ) ) {
             require_once static::$plugin_basedir . 'modules/common/class-module-log.php'; // NOSONAR - WP compatible.
         }

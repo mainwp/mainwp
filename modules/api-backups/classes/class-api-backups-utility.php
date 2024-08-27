@@ -232,6 +232,20 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
                     }
                 }
             }
+        } elseif ( 'kinsta' === $backup_api ) {
+            $available_backups = is_array( $available_backups ) && ! empty( $available_backups ) ? $available_backups : array();
+            if ( is_array( $available_backups ) ) {
+                foreach ( $available_backups as $backup ) {
+                    if ( is_object( $backup ) && ! empty( $backup->created_at ) ) {
+                        $milliseconds = $backup->created_at;
+                        $epoch        = $milliseconds / 1000;
+                        $backup_time  = strtotime( $epoch );
+                        if ( $backup_time > $lasttime_backup ) {
+                            $lasttime_backup = $backup_time;
+                        }
+                    }
+                }
+            }
         } elseif ( 'cpanel_auto' === $backup_api ) {
             if ( is_object( $available_backups ) && isset( $available_backups->data ) ) {
                 $available_backups_automatic_list = $available_backups->data;
@@ -562,6 +576,7 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
             'cloudways',
             'cpanel',
             'plesk',
+            'kinsta',
         );
 
         if ( ! in_array( $name, $names ) ) {
@@ -596,6 +611,7 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
             'cloudways',
             'cpanel',
             'plesk',
+            'kinsta',
         );
 
         if ( ! in_array( $name, $names ) ) {
@@ -645,6 +661,7 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
             'cloudways',
             'cpanel',
             'plesk',
+            'kinsta',
         );
 
         if ( ! in_array( $name, $names ) ) {
@@ -688,6 +705,7 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
             'cloudways',
             'cpanel',
             'plesk',
+            'kinsta',
         );
 
         if ( ! in_array( $name, $names ) ) {

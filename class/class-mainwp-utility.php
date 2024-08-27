@@ -247,6 +247,38 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
+     * Method get_sub_array_with_limit()
+     *
+     * Get sub array.
+     *
+     * @param mixed $arr Array to traverse.
+     * @param mixed $start start index of array.
+     * @param mixed $count count values.
+     *
+     * void array $output Sub array.
+     */
+    public static function get_sub_array_with_limit( $arr, $start, $count ) {
+        $output = array();
+        if ( is_array( $arr ) && ! empty( $arr ) ) {
+            if ( $start > count( $arr ) ) {
+                return array();
+            }
+            $i = 0;
+            foreach ( $arr as $value ) {
+                if ( $i >= $start && $i < $start + $count ) {
+                    $output[] = $value;
+                }
+                ++$i;
+                if ( $i > $start + $count ) {
+                    break;
+                }
+            }
+        }
+        return $output;
+    }
+
+
+    /**
      * Method trim_slashes()
      *
      * Trim stashes from element.
@@ -443,11 +475,19 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( ! empty( $website ) ) {
                 if ( is_object( $website ) ) {
                     foreach ( $keys as $key ) {
-                        $outputSite->{$key} = $website->$key;
+                        if ( property_exists( $website, $key ) ) {
+                            $outputSite->{$key} = $website->$key;
+                        } else {
+                            $outputSite->{$key} = '';
+                        }
                     }
                 } elseif ( is_array( $website ) ) {
                     foreach ( $keys as $key ) {
-                        $outputSite->{$key} = $website[ $key ];
+                        if ( isset( $website[ $key ] ) ) {
+                            $outputSite->{$key} = $website[ $key ];
+                        } else {
+                            $outputSite->{$key} = '';
+                        }
                     }
                 }
             }
@@ -456,11 +496,19 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( ! empty( $website ) ) {
                 if ( is_object( $website ) ) {
                     foreach ( $keys as $key ) {
-                        $outputSite[ $key ] = $website->$key;
+                        if ( property_exists( $website, $key ) ) {
+                            $outputSite[ $key ] = $website->$key;
+                        } else {
+                            $outputSite[ $key ] = '';
+                        }
                     }
                 } elseif ( is_array( $website ) ) {
                     foreach ( $keys as $key ) {
-                        $outputSite[ $key ] = $website[ $key ];
+                        if ( isset( $website[ $key ] ) ) {
+                            $outputSite[ $key ] = $website[ $key ];
+                        } else {
+                            $outputSite[ $key ] = '';
+                        }
                     }
                 }
             }
@@ -1199,7 +1247,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return false;
         }
 
-        $allowed_files = array( 'jpg', 'jpeg', 'jpe', 'gif', 'png', 'bmp', 'tif', 'tiff', 'ico' );
+        $allowed_files = array( 'jpg', 'jpeg', 'jpe', 'gif', 'png', 'bmp', 'tif', 'tiff', 'ico', 'webp', 'heic' );
         $file_ext      = array_values( array_slice( explode( '.', $filename ), -1 ) )[0];
         $file_ext      = strtolower( $file_ext );
         if ( ! in_array( $file_ext, $allowed_files ) ) {
@@ -1618,5 +1666,47 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         return $values;
+    }
+
+    /**
+     * Method valid_file_check().
+     *
+     * @param string $path file path.
+     * @param bool   $readable readable.
+     *
+     * @return bool is valid.
+     */
+    public static function valid_file_check( $path, $readable = true ) {
+        $valid = is_string( $path ) && ! stristr( $path, '..' );
+        if ( $valid && $readable ) {
+            $valid = is_readable( $path );
+        }
+        return $valid;
+    }
+
+
+    /**
+     * Handle sanitize POST data.
+     *
+     * @param array $data input data.
+     *
+     * @return array
+     */
+    public function sanitize_data( $data ) {
+        if ( ! is_array( $data ) ) {
+            return array();
+        }
+
+        // Sanitize all record values.
+        return array_map(
+            function ( $value ) {
+                if ( ! is_array( $value ) ) {
+                    return wp_strip_all_tags( $value );
+                }
+
+                return $value;
+            },
+            $data
+        );
     }
 }

@@ -70,8 +70,8 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 'db_field' => 'client_facebook',
             ),
             'client.twitter'           => array(
-                'title'    => esc_html__( 'Client Twitter', 'mainwp' ),
-                'desc'     => esc_html__( 'Displays the client Twitter', 'mainwp' ),
+                'title'    => esc_html__( 'Client X', 'mainwp' ),
+                'desc'     => esc_html__( 'Displays the client X', 'mainwp' ),
                 'db_field' => 'client_twitter',
             ),
             'client.instagram'         => array(
@@ -193,8 +193,8 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 'db_field' => 'facebook',
             ),
             'contact.twitter'     => array(
-                'title'    => esc_html__( 'Contact Twitter', 'mainwp' ),
-                'desc'     => esc_html__( 'Displays the contact Twitter', 'mainwp' ),
+                'title'    => esc_html__( 'Contact X', 'mainwp' ),
+                'desc'     => esc_html__( 'Displays the contact X', 'mainwp' ),
                 'db_field' => 'twitter',
             ),
             'contact.instagram'   => array(
@@ -277,166 +277,176 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public static function rest_api_add_client( $data, $edit = false ) { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
+        if ( empty( $data ) || ! is_array( $data ) ) {
+            return array( 'error' => esc_html__( 'Invalid Client data. Please try again.', 'mainwp' ) );
+        }
+
         $params = array();
 
-        if ( $edit ) {
+        try {
 
-            $client_id = isset( $data['client_id'] ) ? intval( $data['client_id'] ) : 0;
+            if ( $edit ) {
 
-            if ( empty( $client_id ) ) { // edit client.
-                return array(
-                    'error' => esc_html__( 'Client ID field is required! Please enter a Client ID.', 'mainwp' ),
-                );
-            }
+                $client_id = isset( $data['client_id'] ) ? intval( $data['client_id'] ) : 0;
 
-            $params['client_id'] = $client_id;
+                if ( empty( $client_id ) ) { // edit client.
+                    return array(
+                        'error' => esc_html__( 'Client ID field is required! Please enter a Client ID.', 'mainwp' ),
+                    );
+                }
 
-            if ( isset( $data['name'] ) ) {
-                $params['name'] = sanitize_text_field( wp_unslash( $data['name'] ) );
-            }
+                $params['client_id'] = $client_id;
 
-            if ( isset( $data['address_1'] ) ) {
-                $params['address_1'] = sanitize_text_field( wp_unslash( $data['address_1'] ) );
-            }
-            if ( isset( $data['address_2'] ) ) {
-                $params['address_2'] = sanitize_text_field( wp_unslash( $data['address_2'] ) );
-            }
-            if ( isset( $data['city'] ) ) {
-                $params['city'] = sanitize_text_field( wp_unslash( $data['city'] ) );
-            }
-            if ( isset( $data['zip'] ) ) {
-                $params['zip'] = sanitize_text_field( wp_unslash( $data['zip'] ) );
-            }
-            if ( isset( $data['state'] ) ) {
-                $params['state'] = sanitize_text_field( wp_unslash( $data['state'] ) );
-            }
+                if ( isset( $data['name'] ) && ! empty( trim( $data['name'] ) ) ) {
+                    $params['name'] = sanitize_text_field( wp_unslash( $data['name'] ) );
+                }
 
-            if ( isset( $data['country'] ) ) {
-                $params['country'] = sanitize_text_field( wp_unslash( $data['country'] ) );
-            }
+                if ( isset( $data['address_1'] ) ) {
+                    $params['address_1'] = sanitize_text_field( wp_unslash( $data['address_1'] ) );
+                }
+                if ( isset( $data['address_2'] ) ) {
+                    $params['address_2'] = sanitize_text_field( wp_unslash( $data['address_2'] ) );
+                }
+                if ( isset( $data['city'] ) ) {
+                    $params['city'] = sanitize_text_field( wp_unslash( $data['city'] ) );
+                }
+                if ( isset( $data['zip'] ) ) {
+                    $params['zip'] = sanitize_text_field( wp_unslash( $data['zip'] ) );
+                }
+                if ( isset( $data['state'] ) ) {
+                    $params['state'] = sanitize_text_field( wp_unslash( $data['state'] ) );
+                }
 
-            if ( isset( $data['note'] ) ) {
-                $params['note'] = sanitize_text_field( wp_unslash( $data['note'] ) );
-            }
+                if ( isset( $data['country'] ) ) {
+                    $params['country'] = sanitize_text_field( wp_unslash( $data['country'] ) );
+                }
 
-            if ( isset( $data['client_email'] ) ) {
-                $params['client_email'] = sanitize_text_field( wp_unslash( $data['client_email'] ) );
-            }
+                if ( isset( $data['note'] ) ) {
+                    $params['note'] = sanitize_text_field( wp_unslash( $data['note'] ) );
+                }
 
-            if ( isset( $data['client_phone'] ) ) {
-                $params['client_phone'] = sanitize_text_field( wp_unslash( $data['client_phone'] ) );
-            }
+                if ( isset( $data['client_email'] ) ) {
+                    $params['client_email'] = sanitize_text_field( wp_unslash( $data['client_email'] ) );
+                }
 
-            if ( isset( $data['client_facebook'] ) ) {
-                $params['client_facebook'] = sanitize_text_field( wp_unslash( $data['client_facebook'] ) );
-            }
+                if ( isset( $data['client_phone'] ) ) {
+                    $params['client_phone'] = sanitize_text_field( wp_unslash( $data['client_phone'] ) );
+                }
 
-            if ( isset( $data['client_twitter'] ) ) {
-                $params['client_twitter'] = sanitize_text_field( wp_unslash( $data['client_twitter'] ) );
-            }
+                if ( isset( $data['client_facebook'] ) ) {
+                    $params['client_facebook'] = sanitize_text_field( wp_unslash( $data['client_facebook'] ) );
+                }
 
-            if ( isset( $data['client_instagram'] ) ) {
-                $params['client_instagram'] = sanitize_text_field( wp_unslash( $data['client_instagram'] ) );
-            }
+                if ( isset( $data['client_twitter'] ) ) {
+                    $params['client_twitter'] = sanitize_text_field( wp_unslash( $data['client_twitter'] ) );
+                }
 
-            if ( isset( $data['client_linkedin'] ) ) {
-                $params['client_linkedin'] = sanitize_text_field( wp_unslash( $data['client_linkedin'] ) );
-            }
+                if ( isset( $data['client_instagram'] ) ) {
+                    $params['client_instagram'] = sanitize_text_field( wp_unslash( $data['client_instagram'] ) );
+                }
 
-            if ( isset( $data['created'] ) && is_numeric( $data['created'] ) ) {
-                $params['created'] = intval( $data['created'] );
-            }
+                if ( isset( $data['client_linkedin'] ) ) {
+                    $params['client_linkedin'] = sanitize_text_field( wp_unslash( $data['client_linkedin'] ) );
+                }
 
-            MainWP_DB_Client::instance()->update_client( $params, true );
+                if ( isset( $data['created'] ) && is_numeric( $data['created'] ) ) {
+                    $params['created'] = intval( $data['created'] );
+                }
 
-            if ( isset( $data['selected_sites'] ) && is_array( $data['selected_sites'] ) ) {
-                $selected_sites = array_map( 'sanitize_text_field', wp_unslash( $data['selected_sites'] ) );
-                MainWP_DB_Client::instance()->update_selected_sites_for_client( $client_id, $selected_sites );
-            }
+                MainWP_DB_Client::instance()->update_client( $params, true );
 
-            if ( isset( $data['custom_fields'] ) && is_array( $data['custom_fields'] ) ) {
-                $custom_fields = wp_unslash( $data['custom_fields'] );
-                foreach ( $custom_fields as $field ) {
-                    $fie_name  = isset( $field['field_name'] ) ? sanitize_text_field( wp_unslash( $field['field_name'] ) ) : '';
-                    $fie_value = isset( $field['field_value'] ) ? sanitize_text_field( wp_unslash( $field['field_value'] ) ) : '';
-                    $fie_desc  = isset( $field['field_desc'] ) ? sanitize_text_field( wp_unslash( $field['field_desc'] ) ) : '';
-                    if ( ! empty( $fie_name ) && ! empty( $fie_value ) ) {
-                        $get_gen_field = MainWP_DB_Client::instance()->get_client_fields_by( 'field_name', $fie_name, 0 );
-                        if ( $get_gen_field ) { // it is general field.
-                            if ( ! empty( $fie_desc ) ) {
-                                MainWP_DB_Client::instance()->update_client_field(
-                                    $get_gen_field->field_id,
-                                    array(
-                                        'field_desc' => $fie_desc,
-                                    )
-                                );
-                            }
-                            MainWP_DB_Client::instance()->update_client_field_value( $get_gen_field->field_id, $fie_value, $client_id ); // add or update general field value for the client.
-                        } else {
-                            $indi_gen_field = MainWP_DB_Client::instance()->get_client_fields_by( 'field_name', $fie_name, $client_id );
-                            if ( $indi_gen_field ) { // it is individual field.
+                if ( isset( $data['selected_sites'] ) && is_array( $data['selected_sites'] ) ) {
+                    $selected_sites = array_map( 'sanitize_text_field', wp_unslash( $data['selected_sites'] ) );
+                    MainWP_DB_Client::instance()->update_selected_sites_for_client( $client_id, $selected_sites );
+                }
 
+                if ( isset( $data['custom_fields'] ) && is_array( $data['custom_fields'] ) ) {
+                    $custom_fields = wp_unslash( $data['custom_fields'] );
+                    foreach ( $custom_fields as $field ) {
+                        $fie_name  = isset( $field['field_name'] ) ? sanitize_text_field( wp_unslash( $field['field_name'] ) ) : '';
+                        $fie_value = isset( $field['field_value'] ) ? sanitize_text_field( wp_unslash( $field['field_value'] ) ) : '';
+                        $fie_desc  = isset( $field['field_desc'] ) ? sanitize_text_field( wp_unslash( $field['field_desc'] ) ) : '';
+                        if ( ! empty( $fie_name ) && ! empty( $fie_value ) ) {
+                            $get_gen_field = MainWP_DB_Client::instance()->get_client_fields_by( 'field_name', $fie_name, 0 );
+                            if ( $get_gen_field ) { // it is general field.
                                 if ( ! empty( $fie_desc ) ) {
                                     MainWP_DB_Client::instance()->update_client_field(
-                                        $indi_gen_field->field_id,
+                                        $get_gen_field->field_id,
                                         array(
                                             'field_desc' => $fie_desc,
-                                            'client_id'  => $client_id,
                                         )
                                     );
                                 }
-                                MainWP_DB_Client::instance()->update_client_field_value( $indi_gen_field->field_id, $fie_value, $client_id ); // add or update individual field value for the client.
+                                MainWP_DB_Client::instance()->update_client_field_value( $get_gen_field->field_id, $fie_value, $client_id ); // add or update general field value for the client.
+                            } else {
+                                $indi_gen_field = MainWP_DB_Client::instance()->get_client_fields_by( 'field_name', $fie_name, $client_id );
+                                if ( $indi_gen_field ) { // it is individual field.
+
+                                    if ( ! empty( $fie_desc ) ) {
+                                        MainWP_DB_Client::instance()->update_client_field(
+                                            $indi_gen_field->field_id,
+                                            array(
+                                                'field_desc' => $fie_desc,
+                                                'client_id'  => $client_id,
+                                            )
+                                        );
+                                    }
+                                    MainWP_DB_Client::instance()->update_client_field_value( $indi_gen_field->field_id, $fie_value, $client_id ); // add or update individual field value for the client.
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            return array(
-                'success'  => true,
-                'clientid' => $client_id,
-            );
-
-        } else {
-
-            $params['name'] = isset( $data['name'] ) ? sanitize_text_field( wp_unslash( $data['name'] ) ) : '';
-
-            if ( empty( $params['name'] ) ) {
                 return array(
-                    'error' => esc_html__( 'Client name field is required! Please enter a Client name.', 'mainwp' ),
+                    'success'  => true,
+                    'clientid' => $client_id,
+                );
+
+            } else {
+
+                $params['name'] = isset( $data['name'] ) ? sanitize_text_field( wp_unslash( $data['name'] ) ) : '';
+
+                if ( empty( $params['name'] ) ) {
+                    return array(
+                        'error' => esc_html__( 'Client name field is required! Please enter a Client name.', 'mainwp' ),
+                    );
+                }
+
+                $params['address_1']        = isset( $data['address_1'] ) ? sanitize_text_field( wp_unslash( $data['address_1'] ) ) : '';
+                $params['address_2']        = isset( $data['address_2'] ) ? sanitize_text_field( wp_unslash( $data['address_2'] ) ) : '';
+                $params['city']             = isset( $data['city'] ) ? sanitize_text_field( wp_unslash( $data['city'] ) ) : '';
+                $params['zip']              = isset( $data['zip'] ) ? sanitize_text_field( wp_unslash( $data['zip'] ) ) : '';
+                $params['state']            = isset( $data['state'] ) ? sanitize_text_field( wp_unslash( $data['state'] ) ) : '';
+                $params['country']          = isset( $data['country'] ) ? sanitize_text_field( wp_unslash( $data['country'] ) ) : '';
+                $params['note']             = isset( $data['note'] ) ? sanitize_text_field( wp_unslash( $data['note'] ) ) : '';
+                $params['client_email']     = isset( $data['client_email'] ) ? sanitize_text_field( wp_unslash( $data['client_email'] ) ) : '';
+                $params['client_phone']     = isset( $data['client_phone'] ) ? sanitize_text_field( wp_unslash( $data['client_phone'] ) ) : '';
+                $params['client_facebook']  = isset( $data['client_facebook'] ) ? sanitize_text_field( wp_unslash( $data['client_facebook'] ) ) : '';
+                $params['client_twitter']   = isset( $data['client_twitter'] ) ? sanitize_text_field( wp_unslash( $data['client_twitter'] ) ) : '';
+                $params['client_instagram'] = isset( $data['client_instagram'] ) ? sanitize_text_field( wp_unslash( $data['client_instagram'] ) ) : '';
+                $params['client_linkedin']  = isset( $data['client_linkedin'] ) ? sanitize_text_field( wp_unslash( $data['client_linkedin'] ) ) : '';
+                $params['created']          = time();
+
+                $inserted = MainWP_DB_Client::instance()->update_client( $params, true );
+
+                if ( empty( $inserted ) ) {
+                    return array(
+                        'error' => esc_html__( 'Undefined error. Please try again.', 'mainwp' ),
+                    );
+                }
+
+                $selected_sites = ( isset( $data['selected_sites'] ) && is_array( $data['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $data['selected_sites'] ) ) : array();
+
+                MainWP_DB_Client::instance()->update_selected_sites_for_client( $inserted->client_id, $selected_sites );
+
+                return array(
+                    'success'  => true,
+                    'clientid' => $inserted->client_id,
                 );
             }
-
-            $params['address_1']        = isset( $data['address_1'] ) ? sanitize_text_field( wp_unslash( $data['address_1'] ) ) : '';
-            $params['address_2']        = isset( $data['address_2'] ) ? sanitize_text_field( wp_unslash( $data['address_2'] ) ) : '';
-            $params['city']             = isset( $data['city'] ) ? sanitize_text_field( wp_unslash( $data['city'] ) ) : '';
-            $params['zip']              = isset( $data['zip'] ) ? sanitize_text_field( wp_unslash( $data['zip'] ) ) : '';
-            $params['state']            = isset( $data['state'] ) ? sanitize_text_field( wp_unslash( $data['state'] ) ) : '';
-            $params['country']          = isset( $data['country'] ) ? sanitize_text_field( wp_unslash( $data['country'] ) ) : '';
-            $params['note']             = isset( $data['note'] ) ? sanitize_text_field( wp_unslash( $data['note'] ) ) : '';
-            $params['client_email']     = isset( $data['client_email'] ) ? sanitize_text_field( wp_unslash( $data['client_email'] ) ) : '';
-            $params['client_phone']     = isset( $data['client_phone'] ) ? sanitize_text_field( wp_unslash( $data['client_phone'] ) ) : '';
-            $params['client_facebook']  = isset( $data['client_facebook'] ) ? sanitize_text_field( wp_unslash( $data['client_facebook'] ) ) : '';
-            $params['client_twitter']   = isset( $data['client_twitter'] ) ? sanitize_text_field( wp_unslash( $data['client_twitter'] ) ) : '';
-            $params['client_instagram'] = isset( $data['client_instagram'] ) ? sanitize_text_field( wp_unslash( $data['client_instagram'] ) ) : '';
-            $params['client_linkedin']  = isset( $data['client_linkedin'] ) ? sanitize_text_field( wp_unslash( $data['client_linkedin'] ) ) : '';
-
-            $inserted = MainWP_DB_Client::instance()->update_client( $params );
-
-            if ( empty( $inserted ) ) {
-                return array(
-                    'error' => esc_html__( 'Undefined error. Please try again.', 'mainwp' ),
-                );
-            }
-
-            $selected_sites = ( isset( $data['selected_sites'] ) && is_array( $data['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $data['selected_sites'] ) ) : array();
-
-            MainWP_DB_Client::instance()->update_selected_sites_for_client( $inserted->client_id, $selected_sites );
-
-            return array(
-                'success'  => true,
-                'clientid' => $inserted->client_id,
-            );
+        } catch ( \Exception $e ) {
+            return array( 'error' => $e->getMessage() );
         }
     }
 

@@ -16,7 +16,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
-    // phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
+    // phpcs:disable WordPress.DB.RestrictedFunctions,WordPress.DB.PreparedSQL.NotPrepared,Generic.Metrics.CyclomaticComplexity -- This is the only way to achieve desired results, pull request solutions appreciated.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -262,6 +262,78 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         return $this->wpdb->get_results( 'SELECT gr.*, COUNT(DISTINCT(wpgr.wpid)) as nrsites FROM ' . $this->table_name( 'group' ) . ' gr LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON gr.id = wpgr.groupid WHERE 1 ' . $where . ' GROUP BY gr.id ORDER BY gr.name', OBJECT_K );
     }
 
+
+    /**
+     * Medthod get_groups_and_count()
+     *
+     * Get groups and count.
+     *
+     * @since 5.1.1
+     *
+     * @param array $params      params.
+     *
+     * @return object|null Database query result for groups and count or null on failure.
+     */
+    public function get_tags( $params = array() ) {
+
+        $s       = '';
+        $exclude = array();
+        $include = array();
+        $limit   = '';
+
+        $where  = '';
+        $select = '';
+
+        if ( $params && is_array( $params ) ) {
+            $s              = isset( $params['s'] ) ? $params['s'] : '';
+            $exclude        = isset( $params['exclude'] ) ? wp_parse_id_list( $params['exclude'] ) : array();
+            $include        = isset( $params['include'] ) ? wp_parse_id_list( $params['include'] ) : array();
+            $page           = isset( $params['page'] ) ? intval( $params['page'] ) : false;
+            $per_page       = isset( $params['per_page'] ) ? intval( $params['per_page'] ) : false;
+            $with_sites_ids = isset( $params['with_sites_ids'] ) && $params['with_sites_ids'] ? true : false;
+
+            if ( $with_sites_ids ) {
+                $select .= ', wp_tagview.* ';
+            }
+
+            if ( ! empty( $s ) ) {
+                $where .= ' AND ( gr.name LIKE "%' . $this->escape( $s ) . '%" OR gr.id LIKE "%' . $this->escape( $s ) . '%" ) ';
+            }
+
+            if ( ! empty( $exclude ) ) {
+                $where .= ' AND  gr.id NOT IN (' . implode( ',', $exclude ) . ') ';
+            }
+
+            if ( ! empty( $include ) ) {
+                $where .= ' AND  gr.id IN (' . implode( ',', $include ) . ') ';
+            }
+
+            if ( ! empty( $page ) && ! empty( $per_page ) ) {
+                $limit = ' LIMIT ' . ( $page - 1 ) * $per_page . ',' . $per_page;
+            }
+
+            $join = '';
+
+            if ( $with_sites_ids ) {
+                $join = ' JOIN ' . $this->get_tag_view() . ' wp_tagview ON gr.id = wp_tagview.id ';
+            }
+        }
+        return $this->wpdb->get_results( 'SELECT gr.* ' . $select . ', COUNT(DISTINCT(wpgr.wpid)) as count_sites FROM ' . $this->table_name( 'group' ) . ' gr LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON gr.id = wpgr.groupid ' . $join . ' WHERE 1 ' . $where . ' GROUP BY gr.id ORDER BY gr.name ' . $limit, OBJECT_K );
+    }
+
+    /**
+     * Method get_tag_view().
+     *
+     * @return string tag view.
+     */
+    public function get_tag_view() {
+        $view  = "( SELECT intgr.id, ( SELECT GROUP_CONCAT(wp.id ORDER BY wp.id SEPARATOR ',') FROM " . $this->table_name( 'wp' ) . ' wp ';
+        $view .= ' LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid WHERE wpgr.groupid = intgr.id ) as sites_ids ';
+        $view .= ' FROM ' . $this->table_name( 'group' ) . ' intgr )';
+        return $view;
+    }
+
+
     /**
      * Method get_not_empty_groups()
      *
@@ -495,6 +567,54 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Method add_tag()
+     *
+     * Add Group.
+     *
+     * @param array $params params data.
+     */
+    public function add_tag( $params = array() ) {
+        /**
+         * Current user global.
+         *
+         * @global string
+         */
+        global $current_user;
+        //phpcs:disable WordPress.Security.NonceVerification.Missing
+        $groupId  = isset( $params['id'] ) ? intval( $params['id'] ) : 0;
+        $newName  = isset( $params['name'] ) ? sanitize_text_field( wp_unslash( $params['name'] ) ) : '';
+        $newColor = null;
+
+        if ( isset( $params['color'] ) ) {
+            $newColor = sanitize_hex_color( wp_unslash( $params['color'] ) );
+        }
+        //phpcs:enable WordPress.Security.NonceVerification.Missing
+
+        if ( ! empty( $groupId ) ) {
+            $color_update = '';
+            if ( null !== $newColor ) {
+                $color_update = ", color='" . $this->escape( $newColor ) . "' ";
+            }
+            // update groupname.
+            $this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'group' ) . ' SET name=%s ' . $color_update . ' WHERE id=%d', $this->escape( $newName ), $groupId ) );
+            return $this->get_group_by_id( $groupId );
+        } elseif ( ! empty( $newName ) ) {
+            $groupId = $this->add_group( $current_user->ID, MainWP_Manage_Groups::check_group_name( $newName ), $newColor );
+
+            /**
+             * New Group Added
+             *
+             * Fires after a new sites group has been created.
+             *
+             * @param int $groupId Group ID.
+             */
+            do_action( 'mainwp_added_new_group', $groupId );
+            return $this->get_group_by_id( $groupId );
+        }
+        return false;
+    }
+
+    /**
      * Method remove_group()
      *
      * Remove group.
@@ -507,9 +627,18 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      */
     public function remove_group( $groupid ) {
         if ( MainWP_Utility::ctype_digit( $groupid ) ) {
-            $nr = $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'group' ) . ' WHERE id=%d', $groupid ) );
+            $group = $this->get_group_by_id( $groupid );
+            $nr    = $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'group' ) . ' WHERE id=%d', $groupid ) );
             $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_group' ) . ' WHERE groupid=%d', $groupid ) );
-
+            if ( $nr ) {
+                /**
+                 * Fires after a tag has been deleted.
+                 *
+                 * @param object $group group created.
+                 * @param string group action.
+                 */
+                do_action( 'mainwp_site_tag_action', $group, 'deleted' );
+            }
             return $nr;
         }
 
@@ -621,7 +750,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * @uses \MainWP\Dashboard\MainWP_System::is_single_user()
      */
-    public function get_user_extension_by_user_id( $userid ) {
+    public function get_user_extension_by_user_id( $userid = 0 ) {
         if ( MainWP_System::instance()->is_single_user() ) {
             $userid = 0;
         }
@@ -655,6 +784,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             'trusted_themes'        => '',
             'trusted_themes_notes'  => '',
             'pluginDir'             => '',
+            'ignored_wp_upgrades'   => '',
         );
 
         $this->wpdb->insert( $this->table_name( 'users' ), $fields );
@@ -752,6 +882,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         if ( empty( $website ) ) {
             return false;
         }
+        $success = false;
 
         $map_fields = array(
             'http_user'   => 'http_user',
@@ -803,6 +934,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         if ( ! empty( $sql_set ) ) {
             $sql_set = rtrim( $sql_set, ',' );
             $this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET ' . $sql_set . ' WHERE id=%d', $websiteid ) );
+            $success = true;
         }
 
         $groupids = array();
@@ -824,6 +956,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                     )
                 );
             }
+            $success = true;
         }
 
         $newValues = array();
@@ -857,16 +990,19 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
         if ( ! empty( $newValues ) ) {
             MainWP_DB::instance()->update_website_values( $website->id, $newValues );
+            $success = true;
         }
 
         if ( isset( $data['monitoring_emails'] ) ) {
             $monitoring_emails = MainWP_Utility::valid_input_emails( $data['monitoring_emails'] );
             MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', $monitoring_emails );
+
         }
 
         return array(
             'message' => 'Site updated successfully.',
             'site'    => $website->url,
+            'success' => $success,
         );
     }
 }

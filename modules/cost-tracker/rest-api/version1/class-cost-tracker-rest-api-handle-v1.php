@@ -12,9 +12,9 @@ use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Client;
 
 /**
- * Class Cost_Tracker_Rest_Api_Handle
+ * Class Cost_Tracker_Rest_Api_Handle_V1
  */
-class Cost_Tracker_Rest_Api_Handle {
+class Cost_Tracker_Rest_Api_Handle_V1 {
 
     /**
      * Protected static variable to hold the single instance of the class.

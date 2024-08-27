@@ -792,22 +792,33 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
     /**
      * Method mainwp_help_content()
      *
-     * Create the MainWP Help Document List for the help component in the sidebar.
+     * Creates the MainWP Help Documentation List for the help component in the sidebar.
      */
     public static function mainwp_help_content() {
         if ( isset( $_GET['page'] ) && 'Extensions' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             ?>
             <p><?php esc_html_e( 'If you need help with your MainWP Extensions, please review following help documents', 'mainwp' ); ?></p>
-            <div class="ui relaxed bulleted list">
-                <div class="item"><a href="https://kb.mainwp.com/docs/what-are-mainwp-extensions/" target="_blank"><i class="fa fa-book"></i> What are the MainWP Extensions</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
-                <div class="item"><a href="https://kb.mainwp.com/docs/order-extensions/" target="_blank"><i class="fa fa-book"></i> Order Extension(s)</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
-                <div class="item"><a href="https://kb.mainwp.com/docs/my-downloads-and-api-keys/" target="_blank"><i class="fa fa-book"></i> My Downloads and API Keys</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
-                <div class="item"><a href="https://kb.mainwp.com/docs/install-extensions/" target="_blank"><i class="fa fa-book"></i> Install Extension(s)</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
-                <div class="item"><a href="https://kb.mainwp.com/docs/activate-extensions-api/" target="_blank"><i class="fa fa-book"></i> Activate Extension(s) API</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
-                <div class="item"><a href="https://kb.mainwp.com/docs/updating-extensions/" target="_blank"><i class="fa fa-book"></i> Updating Extension(s)</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
-                <div class="item"><a href="https://kb.mainwp.com/docs/remove-extensions/" target="_blank"><i class="fa fa-book"></i> Remove Extension(s)</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
+            <div class="ui list">
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-extensions/" target="_blank"><i class="fa fa-book"></i> What are the MainWP Extensions</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-extensions/#order-extensions" target="_blank"><i class="fa fa-book"></i> Order Extension(s)</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-extensions/#install-extensions" target="_blank"><i class="fa fa-book"></i> Install Extension(s)</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-extensions/#activate-extensions" target="_blank"><i class="fa fa-book"></i> Activate Extension(s) API</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-extensions/#update-extensions" target="_blank"><i class="fa fa-book"></i> Updating Extension(s)</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-extensions/#remove-unneeded-extensions" target="_blank"><i class="fa fa-book"></i> Remove Extension(s)</a></div> <?php // NOSONAR - noopener - open safe. ?>
             </div>
             <?php
+            /**
+             * Action: mainwp_extensions_help_item
+             *
+             * Fires at the bottom of the help articles list in the Help sidebar on the Extensions page.
+             *
+             * Suggested HTML markup:
+             *
+             * <div class="item"><a href="Your custom URL">Your custom text</a></div>
+             *
+             * @since 5.2
+             */
+            do_action( 'mainwp_extensions_help_item' );
         }
     }
 }

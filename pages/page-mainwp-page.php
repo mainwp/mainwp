@@ -1504,22 +1504,27 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             );
                         }
 
-                        $galleries           = get_post_gallery( $id, false );
+                        $galleries           = get_post_galleries( $id, false );
                         $post_gallery_images = array();
 
-                        if ( is_array( $galleries ) && isset( $galleries['ids'] ) ) {
-                            $attached_images = explode( ',', $galleries['ids'] );
-                            foreach ( $attached_images as $attachment_id ) {
-                                $attachment = get_post( $attachment_id );
-                                if ( $attachment ) {
-                                    $post_gallery_images[] = array(
-                                        'id'          => $attachment_id,
-                                        'alt'         => get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true ),
-                                        'caption'     => MainWP_Utility::esc_content( $attachment->post_excerpt, 'mixed' ),
-                                        'description' => $attachment->post_content,
-                                        'src'         => $attachment->guid,
-                                        'title'       => htmlspecialchars( $attachment->post_title ),
-                                    );
+                        if ( is_array( $galleries ) ) {
+                            foreach ( $galleries as $gallery ) {
+                                if ( isset( $gallery['ids'] ) ) {
+                                    $attached_images = explode( ',', $gallery['ids'] );
+                                    foreach ( $attached_images as $attachment_id ) {
+                                        $attachment = get_post( $attachment_id );
+                                        if ( $attachment ) {
+                                            $post_gallery_images[] = array(
+                                                'id'      => $attachment_id,
+                                                'alt'     => get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true ),
+                                                'caption' => MainWP_Utility::esc_content( $attachment->post_excerpt, 'mixed' ),
+                                                'description' => $attachment->post_content,
+                                                'src'     => $attachment->guid,
+                                                'image_url' => wp_get_attachment_image_url( $attachment_id ), // to fix src/guid missing the file name.
+                                                'title'   => htmlspecialchars( $attachment->post_title ),
+                                            );
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1719,21 +1724,19 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
     /**
      * Method mainwp_help_content()
      *
-     * Hook the section help content to the Help Sidebar element
-     *
-     * @return void Help section html.
+     * Creates the MainWP Help Documentation List for the help component in the sidebar.
      */
     public static function mainwp_help_content() {
         if ( isset( $_GET['page'] ) && ( 'PageBulkManage' === $_GET['page'] || 'PageBulkAdd' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             ?>
             <p><?php esc_html_e( 'If you need help with managing pages, please review following help documents', 'mainwp' ); ?></p>
-            <div class="ui relaxed bulleted list">
-                <div class="item"><a href="https://kb.mainwp.com/docs/manage-pages/" target="_blank">Manage Pages</a> <i class="external alternate icon"></i></div>
-                <div class="item"><a href="https://kb.mainwp.com/docs/create-a-new-page/" target="_blank">Create a New Page</a> <i class="external alternate icon"></i></div>
-                <div class="item"><a href="https://kb.mainwp.com/docs/edit-an-existing-page/" target="_blank">Edit an Existing Page</a> <i class="external alternate icon"></i></div>
-                <div class="item"><a href="https://kb.mainwp.com/docs/change-status-of-an-existing-page/" target="_blank">Change Status of an Existing Page</a> <i class="external alternate icon"></i></div>
-                <div class="item"><a href="https://kb.mainwp.com/docs/view-an-existing-page/" target="_blank">View an Existing Page</a> <i class="external alternate icon"></i></div>
-                <div class="item"><a href="https://kb.mainwp.com/docs/delete-pages/" target="_blank">Delete Page(s)</a> <i class="external alternate icon"></i></div>
+            <div class="ui list">
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-pages/" target="_blank">Manage Pages</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-pages/#create-a-new-page" target="_blank">Create a New Page</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-pages/#edit-a-page" target="_blank">Edit an Existing Page</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-pages/#view-existing-page" target="_blank">View an Existing Page</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-pages/#delete-a-page" target="_blank">Delete Page(s)</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-pages/#restore-a-page" target="_blank">Restore Page(s)</a></div>
                 <?php
                 /**
                  * Action: mainwp_pages_help_item

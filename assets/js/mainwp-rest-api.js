@@ -36,7 +36,7 @@ let mainwp_restapi_bulk_init = function () {
         bulk_RestAPICurrentThreads = 0;
         bulk_RestAPITotal = 0;
         bulk_RestAPIFinished = 0;
-        jQuery('#mainwp-rest-api-body-table .check-column INPUT:checkbox').each(function () {
+        jQuery('.mainwp-rest-api-body-table-manage .check-column INPUT:checkbox').each(function () {
             jQuery(this).attr('status', 'queue')
         });
     }
@@ -44,7 +44,7 @@ let mainwp_restapi_bulk_init = function () {
 
 
 let mainwp_restapi_remove_keys_next = function () {
-    while ((checkedBox = jQuery('#mainwp-rest-api-body-table .check-column INPUT:checkbox:checked[status="queue"]:first')) && (checkedBox.length > 0) && (bulk_RestAPICurrentThreads < bulk_RestAPIMaxThreads)) { // NOSONAR - variables modified in other functions.
+    while ((checkedBox = jQuery('.mainwp-rest-api-body-table-manage .check-column INPUT:checkbox:checked[status="queue"]:first')) && (checkedBox.length > 0) && (bulk_RestAPICurrentThreads < bulk_RestAPIMaxThreads)) { // NOSONAR - variables modified in other functions.
         mainwp_restapi_bulk_remove_specific(checkedBox);
     }
     if ((bulk_RestAPITotal > 0) && (bulk_RestAPIFinished == bulk_RestAPITotal)) { // NOSONAR - modified outside the function.
@@ -66,7 +66,8 @@ let mainwp_restapi_bulk_remove_specific = function (pCheckedBox) {
 
     let data = mainwp_secure_data({
         action: 'mainwp_rest_api_remove_keys',
-        keyId: id
+        keyId: id,
+        api_ver: rowObj.closest('tbody').attr('id') === 'mainwp-rest-api-v2-body-table' ? 'v2': 'v1'
     });
     jQuery.post(ajaxurl, data, function (response) {
         bulk_RestAPICurrentThreads--;

@@ -91,7 +91,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
     /**
      * Initiate Hooks
      *
-     * Initiates hooks for the Subscription extension.
+     * Initiates hooks for the Cost Tracker module.
      */
     public function init() {
         add_action( 'admin_init', array( &$this, 'admin_init' ) );
@@ -548,6 +548,13 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
                 if ( $current && ! empty( $current->cost_icon ) && false === strpos( $current->cost_icon, 'deficon:' ) && $current->cost_icon !== $update['cost_icon'] ) {
                     Cost_Tracker_Add_Edit::get_instance()->delete_product_icon_file( $current->cost_icon );
                 }
+                $next_today = static::calc_next_renewal_today( $output, $next_renewal );
+                Cost_Tracker_DB::get_instance()->update_cost_tracker(
+                    array(
+                        'id'                 => $output->id,
+                        'next_renewal_today' => $next_today,
+                    )
+                );
             }
         } catch ( MainWP_Exception $ex ) {
             $err_msg = $ex->getMessage();
@@ -872,33 +879,64 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
-     * Hooks the section help content to the Help Sidebar element.
+     * Method mainwp_help_content()
+     *
+     * Creates the MainWP Help Documentation List for the help component in the sidebar.
      */
     public static function mainwp_help_content() {
-        $allow_pages = array( 'ManageCostTracker', 'CostTrackerAdd', 'CostTrackerSettings' );
+        $allow_pages = array( 'ManageCostTracker', 'CostTrackerAdd', 'CostTrackerSettings', 'CostSummary' );
         if ( isset( $_GET['page'] ) && in_array( $_GET['page'], $allow_pages, true ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Recommended
             ?>
-            <p><?php esc_html_e( 'If you need help with the Cost Tracker extension, please review following help documents', 'mainwp' ); ?></p>
-            <div class="ui relaxed bulleted list">
-                <div class="item"><a href="#" target="_blank" aria-hidden=""></a></div> <?php // NOSONAR -- compatible with help. ?>
-                <div class="item"><a href="#" target="_blank" aria-hidden=""></a></div> <?php // NOSONAR -- compatible with help. ?>
-            <?php
-            /**
-             * Action: mainwp_module_cost_tracker_help_item
-             *
-             * Fires at the bottom of the help articles list in the Help sidebar on the Themes page.
-             *
-             * Suggested HTML markup:
-             *
-             * <div class="item"><a href="Your custom URL">Your custom text</a></div>
-             *
-             * @since 4.0
-             */
-            do_action( 'mainwp_module_cost_tracker_help_item' );
-            ?>
+            <p><?php esc_html_e( 'If you need help with the Cost Tracker module, please review following help documents', 'mainwp' ); ?></p>
+            <div class="ui list">
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-cost-tracker/" target="_blank">Cost Tracker</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-cost-tracker/#manage-costs-page" target="_blank">Manage Costs</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-cost-tracker/#adding-a-new-cost-to-track" target="_blank">Adding a New Cost to track</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-cost-tracker/#edit-an-item" target="_blank">Edit Costs</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-cost-tracker/#delete-an-item" target="_blank">Delete Costs</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-cost-tracker/#settings-page" target="_blank">Cost Tracker Settings</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-cost-tracker/#cost-tracker-pro-extension" target="_blank">Cost Tracker Pro Extension</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <?php
+                /**
+                 * Action: mainwp_module_cost_tracker_help_item
+                 *
+                 * Fires at the bottom of the help articles list in the Help sidebar on the Cost Tracker page.
+                 *
+                 * Suggested HTML markup:
+                 *
+                 * <div class="item"><a href="Your custom URL">Your custom text</a></div>
+                 *
+                 * @since 5.0
+                 */
+                do_action( 'mainwp_module_cost_tracker_help_item' );
+                ?>
             </div>
             <?php
         }
+    }
+
+    /**
+     * Method calc_next_renewal_today()
+     *
+     * Calculate next renewal today.
+     *
+     * @param object $subscription subscription.
+     * @param int    $next_renewal Next renewal.
+     *
+     * @return mixed result.
+     */
+    public static function calc_next_renewal_today( $subscription, $next_renewal = false ) {
+        if ( 'lifetime' === $subscription->type ) {
+            return 0;
+        }
+        $next_renewal = ! empty( $next_renewal ) ? intval( $next_renewal ) : (int) $subscription->next_renewal;
+        if ( empty( $next_renewal ) ) {
+            return 0;
+        }
+        if ( 'active' !== $subscription->cost_status ) {
+            return 0;
+        }
+        return $next_renewal;
     }
 
     /**

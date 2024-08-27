@@ -83,7 +83,7 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
      * @param WP_REST_Request $request Full details about the request.
      * @return array Of WP_Error or WP_REST_Response.
      */
-    public function batch_items( $request ) {
+    public function batch_items( $request ) { //phpcs:ignore -- NOSONAR complex function.
         /**
          * REST Server
          *
@@ -474,7 +474,7 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
      * @param array $items Request items.
      * @return bool|WP_Error
      */
-    protected function check_batch_limit( $items ) {
+    protected function check_batch_limit( $items ) { //phpcs:ignore -- NOSONAR complex function.
         $limit = apply_filters( 'mainwp_rest_batch_items_limit', 100, $this->get_normalized_rest_base() );
         $total = 0;
 

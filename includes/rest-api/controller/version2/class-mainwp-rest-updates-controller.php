@@ -265,7 +265,7 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
      * @param WP_REST_Request $request Full details about the request.
      * @return WP_Error|WP_REST_Response
      */
-    public function get_items( $request ) {
+    public function get_items( $request ) { //phpcs:ignore -- NOSONAR complex function.
 
         $all_updates = array();
         $websites    = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( true, null, 'wp.url', false, false, null, false, array( 'ignored_wp_upgrades', 'rollback_updates_data' ) ) );
@@ -445,7 +445,7 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
      * @param WP_REST_Request $request Full details about the request.
      * @return WP_Error|WP_REST_Response
      */
-    public function get_updates_of_site( $request ) {
+    public function get_updates_of_site( $request ) { //phpcs:ignore -- NOSONAR complex function.
 
         $item = $this->get_request_item( $request );
 
@@ -670,7 +670,7 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
      * @param WP_REST_Request $request Full details about the request.
      * @return WP_Error|WP_REST_Response
      */
-    public function get_ignored_updates_of_site( $request ) {
+    public function get_ignored_updates_of_site( $request ) { //phpcs:ignore -- NOSONAR complex function.
 
         $website = $this->get_request_item( $request );
 
@@ -1017,7 +1017,7 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
      * @param WP_REST_Request $request Full details about the request.
      * @return WP_Error|WP_REST_Response
      */
-    public function update_themes_site( $request ) {
+    public function update_themes_site( $request ) { //phpcs:ignore -- NOSONAR complex function.
 
         $website = $this->get_request_item( $request );
 

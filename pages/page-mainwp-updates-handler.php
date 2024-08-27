@@ -594,7 +594,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
      * @uses \MainWP\Dashboard\MainWP_DB_Common::update_user_extension()
      */
-    public static function ignore_plugins_themes( $type, $slug, $name, $ver = '' ) {
+    public static function ignore_plugins_themes( $type, $slug, $name, $ver = '' ) { //phpcs:ignore -- NOSONAR complex function.
         $slug          = urldecode( $slug );
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();
         if ( 'plugin' === $type ) {

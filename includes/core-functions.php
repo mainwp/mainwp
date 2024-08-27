@@ -87,7 +87,7 @@ function mainwp_rest_urlencode_rfc3986( $value ) {
  *
  * @return array Search result.
  */
-function mainwp_search_in_array( $data, $search_str, $params = array() ) {
+function mainwp_search_in_array( $data, $search_str, $params = array() ) { //phpcs:ignore -- NOSONAR complex function.
 
     if ( ! is_array( $params ) ) {
         $params = array();

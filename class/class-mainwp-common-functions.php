@@ -232,7 +232,7 @@ class MainWP_Common_Functions { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
      * @return bool Ignored updates.
      */
-    public function is_ignored_updates( $item, $ignored, $type = 'plugintheme' ) {
+    public function is_ignored_updates( $item, $ignored, $type = 'plugintheme' ) { //phpcs:ignore -- NOSONAR complex function.
 
         if ( ! is_array( $item ) || ! is_array( $ignored ) ) {
             return false;

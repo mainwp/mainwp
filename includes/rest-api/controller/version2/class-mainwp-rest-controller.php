@@ -30,7 +30,7 @@ use MainWP\Dashboard\MainWP_DB_Client;
  * @version  5.2
  */
 abstract class MainWP_REST_Controller extends WP_REST_Controller {
-
+    // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
     /**
      * Endpoint namespace.
      *
@@ -453,7 +453,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller {
      * @param WP_REST_Request $request Full details about the request.
      * @return array Of WP_Error or WP_REST_Response.
      */
-    public function batch_items( $request ) {
+    public function batch_items( $request ) { //phpcs:ignore -- NOSONAR complex function.
         /**
          * REST Server
          *

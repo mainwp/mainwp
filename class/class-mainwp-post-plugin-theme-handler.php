@@ -15,7 +15,7 @@ namespace MainWP\Dashboard;
  * @uses \MainWP\Dashboard\MainWP_Post_Base_Handler
  */
 class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
-
+    // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
     /**
      * Protected static variable to hold the single instance of the class.
      *
@@ -841,7 +841,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      *
      * @uses \MainWP\Dashboard\MainWP_Updates_Handler::ignore_plugins_themes()
      */
-    public function ajax_ignore_core_updates() {
+    public function ajax_ignore_core_updates() { //phpcs:ignore -- NOSONAR complex function.
 
         $this->secure_request( 'mainwp_updates_ignore_upgrades' );
 

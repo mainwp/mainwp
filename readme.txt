@@ -143,83 +143,33 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
-= 5.1.1 - 7-9-2024 =
+= 5.2 - 8-28-2024 =
 
-* Fixed: Inaccurate information for the WordPress SEO extension in the available_extensions array.
-* Fixed: Typo in the Tools page
-* Updated: Background color for selected table rows for a consistent design.
-* Updated: Quick Setup Wizard will now start automatically when the Dashboard plugin is activated for the first time.
-* Updated: Removed header element push to bottom feature.
-* Updated: Button margins in the header element for a more polished look.
-* Updated: REST API menu item color in both WP Admin and Minimalistic themes for a consistent design.
+* Fixed: Icon selection dropdown overflow issue on the Cost Tracker settings page.
+* Fixed: Issue with inserting multiple galleries in a post.
+* Fixed: Bug causing issues with triggering Rocket and Cache Control actions in the Sites bulk action menu.
+* Fixed: Font weight inconsistency on the Manage Plugins page for a more uniform appearance.
+* Fixed: Issue with saving plugin and theme notes on the Auto Updates page.
+* Fixed: Issue with removing the featured image when updating a post.
+* Fixed: Incorrect ordering of the "Renews" column in Cost Tracker.
+* Fixed: Broken file upload functionality on Windows servers.
+* Fixed: Missing WP icon in the site card element.
+* Added: MainWP REST API v2 for enhanced API capabilities.
+* Added: "Create New API Key" button on the REST API keys page for easier key management.
+* Added: Ability to ignore updates for specific plugin and theme versions, allowing more control over updates.
+* Added: Option to schedule automatic updates at a specific time for better update management.
+* Added: Support for Kinsta API in the API Backups feature.
+* Added: Link to Client name in the Updates per item table.
+* Updated: Readjusted the MainWP icon size and position in the header element for better alignment.
+* Updated: Changed the "Ignored" success message to a green checkmark icon for consistency.
+* Updated: Updated the "Ignoring..." process indicator from text to a notched circle loader icon for a consistent user experience.
+* Updated: Modified ignoring plugins and themes confirmations to operate independently of the Updates confirmation settings.
+* Updated: Revised help documentation links for accuracy and relevance.
+* Updated: Renamed "Twitter" labels to "X" to reflect the platform’s rebranding.
+* Updated: Removed non-MainWP related notices from the MainWP interface to reduce clutter.
+* Updated: Enhanced tooltip elements to ensure they display properly.
+* Removed: Unused CSS code
 
-[See Video Changelog](https://youtu.be/J_PB881HiPg)
-
-= 5.1 - 6-18-2024 =
-
-* Fixed: Corrected the display of site tags in the Manage Sites view when filtered by tags.
-* Fixed: Resolved an issue with hiding database errors in the Hardening feature.
-* Fixed: An issue with submitting Time Capsule settings.
-* Added: Integrated a Rollback feature to revert plugins to the last stable version in case of update errors.
-* Added: Implemented the Select DataTables extension to allow selecting multiple table rows with shift + select action.
-* Added: Added a horizontal scrollbar at the top of tables for better navigation.
-* Added: Implemented alt attributes for image elements to enhance accessibility.
-* Added: Introduced aria-label attributes to multiple elements to improve accessibility.
-* Updated: Show dot icon indicators for form fields to signify when a field's value differs from the default as soon as the change is made.
-* Updated: Button background for the Filter Sites button and similar elements across the plugin
-* Updated: Addressed coding standard issues found by SonarCloud.
-* Updated: Multiple libraries and extensions to enhance performance and compatibility.
-* Updated: Changed MainWP page title tag from H4 to H2 to improve accessibility.
-* Updated: Revised “See Details” button ID in the Site Hardening widget for enhanced accessibility.
-* Updated: Increased the maximum width for tooltip elements to optimize the display.
-* Updated: Adjusted tooltip positions in the Updates Overview widget for improved visibility.
-* Updated: Refined the header element style for a more uniform appearance.
-* Updated: Set a minimum width for the bulk actions menu element on the Manage Sites page.
-* Updated: Redesigned the layout of the Site Hardening and the Get Started widget for improved organization.
-
-[See Video Changelog](https://youtu.be/OtqrgU8q5RA)
-
-= 5.0.3.2 - 5-14-2024 =
-
-* Added: Quick Setup menu item to the MainWP flyout menu for users with no child sites.
-* Added: Quick Setup menu item to the MainWP main navigation for users with no child sites.
-* Updated: Renamed the "Setup Wizard" link in the plugin meta to "Quick Setup".
-
-= 5.0.3.1 - 4-16-2024 =
-
-* Fixed: A JavaScript error on the Monitoring page that prevented the table element from loading.
-
-= 5.0.3 - 4-9-2024 =
-
-* Fixed: Issues with importing users through CSV uploads have been resolved.
-* Fixed: The error message that was previously truncated when attempting to reconnect a Child Site is now fully visible.
-* Fixed: The "PHP < 7.0" filter in the Manage Sites table has been corrected to function as intended.
-* Fixed: Resolved an issue where duplicate Tags were displayed in the Manage Sites table due to certain filter combinations.
-* Fixed: Post subcategories sharing the same name but belonging to different main categories are now correctly displayed.
-* Fixed: Resolved a conflict with the API Backups extension that caused the site addition process to hang on "Adding site…".
-* Fixed: Alignment and padding issues with filter elements on the Insights page have been addressed.
-* Fixed: Corrected the active menu item display on the Add New Site page.
-* Fixed: Addressed visual inconsistencies with the Boilerplate New Post and New Page modals.
-* Fixed: An issue with detection of GridPane sites with WWW prefix in API Backups
-* Fixed: Resolved an issue with detection of GridPane staging sites in API Backups
-* Added: A new "PHP < 8" filter has been introduced to the Manage Sites table.
-* Added: Dot icon indicators have been added to form fields to signify when a field's value differs from the default.
-* Added: An icon and color picker feature on the Add and Edit Site screen for setting a site icon when the site favicon is unavailable.
-* Added: An icon and color picker feature on the Add and Edit Client screen as an alternative to using an image.
-* Added: The ability to save and load segments on the Dashboard Insights page has been added.
-* Added: A Reset Filters button has been added to the Manage Sites, Manage Clients, Insights, and Cost Tracker pages.
-* Added: Extension Settings Synchronization support when adding a new Child Site for Staging and Jetpack Protect extensions.
-* Added: Support for Database Updater information in the Updates Overview widget.
-* Added: A new Getting Started Widget has been introduced on the Overview page.
-* Added: Support for Boilerplate tokens in Custom Fields when creating Boilerplate Posts and Pages has been added.
-* Updated: The MainWP Dashboard plugin activation will no longer automatically redirect users to the Quick Setup Wizard.
-* Updated: The color picker in the Create/Edit Tag modal has been updated to a Fomantic UI one.
-* Updated: Improved the display and messaging for row item processing and status updates across the MainWP Dashboard.
-* Updated: Revised success and error messages following form submissions across the MainWP Dashboard.
-* Updated: Made visual adjustments to the info tooltip on the Insights page.
-* Updated: Enhanced the size and visual indication of the drag and drop zone for plugin and theme installations via ZIP upload.
-* Updated: Standardized the design of the Filter / Reset Filter buttons across Manage Sites, Manage Clients, Insights, and Cost Tracker pages.
-
-[See Video Changelog](https://www.youtube.com/watch?v=5idFDPrgFf8)
+[See Video Changelog](https://www.youtube.com/watch?v=)
 
 [See changelog for all versions.](https://mainwp.com/changelog.txt)

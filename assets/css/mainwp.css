@@ -1409,3 +1409,7 @@ th .down.icon {
 .mainwp-module-cost-tracker-select-custom-product-types-icons input.search {
     max-width: 160px !important;
 }
+#mainwp-posting-running,
+#mainwp-publish-dimmer{
+    height: 100vh;
+}

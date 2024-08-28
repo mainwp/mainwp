@@ -2461,7 +2461,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param mixed $ignoredThemes Encoded ignored themes.
      * @param mixed $decodedIgnoredThemes Decoded ignored themes.
      */
-    public static function render_global_ignored( $ignoredThemes, $decodedIgnoredThemes ) {
+    public static function render_global_ignored( $ignoredThemes, $decodedIgnoredThemes ) { //phpcs:ignore -- NOSONAR - complex.
         ?>
         <table id="mainwp-globally-ignored-themes" class="ui compact selectable table unstackable">
                 <thead>

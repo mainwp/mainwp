@@ -286,7 +286,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     KEY item_id (item_id),
     KEY object_id (object_id)';
 
-        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.0.5', '<' ) ) { // NOSONAR - no IP.
+        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.0.5', '<' ) ) { // NOSONAR - none IP.
             $tbl .= ',
     PRIMARY KEY  (lookup_id)  ';
         }
@@ -363,7 +363,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     last_access datetime NULL default null,
     KEY consumer_key (consumer_key),
     KEY consumer_secret (consumer_secret)';
-        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.0.9', '<=' ) ) {
+        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.0.9', '<=' ) ) { // NOSONAR - none IP.
             $tbl .= ',
     PRIMARY KEY  (key_id)  ';
         }

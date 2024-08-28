@@ -569,7 +569,7 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @param WP_REST_Request $request Full details about the request.
      * @return WP_Error|WP_REST_Response
      */
-    public function get_clients_by_cost( $request ) {
+    public function get_clients_by_cost( $request ) { //phpcs:ignore -- NOSONAR - complex.
 
         $cost = $this->get_request_item( $request );
 

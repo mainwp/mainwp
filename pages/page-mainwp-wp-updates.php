@@ -112,7 +112,7 @@ class MainWP_WP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
      *
      * @param array $decodedIgnoredCores Decoded ignored cores array.
      */
-    public function render_global_ignored( $decodedIgnoredCores ) {
+    public function render_global_ignored( $decodedIgnoredCores ) { //phpcs:ignore -- NOSONAR - complex.
         ?>
         <table id="mainwp-globally-ignored-cores" class="ui compact selectable table unstackable">
                 <thead>

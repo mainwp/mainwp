@@ -195,7 +195,7 @@ class MainWP_Common_Functions { // phpcs:ignore Generic.Classes.OpeningBraceSame
      *
      * @return array $updates Not ignored updates info.
      */
-    public function get_not_ignored_updates_themesplugins( $updates, $ignored ) {
+    public function get_not_ignored_updates_themesplugins( $updates, $ignored ) { //phpcs:ignore -- NOSONAR - complexity.
         if ( ! is_array( $updates ) || ! is_array( $ignored ) ) {
             return $updates;
         }

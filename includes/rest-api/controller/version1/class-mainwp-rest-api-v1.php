@@ -2988,7 +2988,7 @@ class Rest_Api_V1 { //phpcs:ignore -- NOSONAR - multi methods.
      *
      * @return object $response An object that contains the return data and status of the API request.
      */
-    public function mainwp_rest_api_site_update_plugins_callback( $request ) {
+    public function mainwp_rest_api_site_update_plugins_callback( $request ) { //phpcs:ignore -- NOSONAR - complex.
 
         // first validate the request.
         $valid = $this->mainwp_validate_request( $request );

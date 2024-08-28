@@ -762,7 +762,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      *
      * @return WP_Error|WP_REST_Response
      */
-    public function get_site_plugins( $request ) {
+    public function get_site_plugins( $request ) { //phpcs:ignore -- NOSONAR - complex.
 
         $website = $this->get_request_item( $request );
 
@@ -1010,7 +1010,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      *
      * @return WP_Error|WP_REST_Response
      */
-    public function get_site_themes( $request ) {
+    public function get_site_themes( $request ) { //phpcs:ignore - NOSONAR - complex.
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
             return $website;
@@ -1089,7 +1089,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      *
      * @return WP_Error|array
      */
-    public function handle_theme_actions_of_site( $website, $action, $slugs ) {
+    public function handle_theme_actions_of_site( $website, $action, $slugs ) { //phpcs:ignore -- NOSONAR - complex.
         try {
             $information = MainWP_Connect::fetch_url_authed(
                 $website,
@@ -2153,8 +2153,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return array
      */
     protected function prepare_objects_query( $request, $type = 'object' ) {
-        $args = parent::prepare_objects_query( $request, $type );
-        return $args;
+        return parent::prepare_objects_query( $request, $type );
     }
 
     /**
@@ -2253,7 +2252,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      *
      * @return WP_REST_Response $response Response data.
      */
-    public function prepare_item_for_response( $item, $request, $args = array() ) {
+    public function prepare_item_for_response( $item, $request, $args = array() ) { //phpcs:ignore -- NOSONAR - complex.
 
         $fields = $this->get_fields_for_response( $request );
 

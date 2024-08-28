@@ -2150,7 +2150,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         ?>
         <div class="dt-paging paging_full_numbers">
-            <div class="ui stackable pagination menu">
+            <div class="ui stackable pagination menu"><menu>
                 <?php if ( $first ) { ?>
                     <li class="dt-paging-button item disabled"><div class="page-link first" aria-controls="mainwp-manage-sites-table" aria-disabled="true" aria-label="First" data-dt-idx="first" tabindex="-1">First</div></li>
                     <li class="dt-paging-button item disabled"><div class="page-link previous" aria-controls="mainwp-manage-sites-table" aria-disabled="true" aria-label="Previous" data-dt-idx="previous" tabindex="-1">Previous</div></li>
@@ -2172,7 +2172,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     <li class="dt-paging-button item"><a href="admin.php?page=UpdatesManage&current_page=<?php echo $current_page === $last ? intval( $last ) : intval( $current_page + 1 ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" class="page-link next" aria-controls="mainwp-manage-sites-table" aria-label="Next" data-dt-idx="next" tabindex="0">Next</a></li>
                     <li class="dt-paging-button item"><a href="admin.php?page=UpdatesManage&current_page=<?php echo intval( $total_page ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" class="page-link last" aria-controls="mainwp-manage-sites-table" aria-label="Last" data-dt-idx="last" tabindex="0">Last</a></li>
                 <?php } ?>
-            </div>
+            </menu></div>
         </div>
         <br/>
         <?php

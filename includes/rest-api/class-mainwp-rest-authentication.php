@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * REST API authentication class.
  */
-class MainWP_REST_Authentication {
+class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThreshold.
 
     //phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.NotPrepared
 
@@ -647,10 +647,9 @@ class MainWP_REST_Authentication {
      * @return array Normalized parameters.
      */
     private function normalize_parameters( $parameters ) {
-        $keys       = mainwp_rest_urlencode_rfc3986( array_keys( $parameters ) );
-        $values     = mainwp_rest_urlencode_rfc3986( array_values( $parameters ) );
-        $parameters = array_combine( $keys, $values );
-        return $parameters;
+        $keys   = mainwp_rest_urlencode_rfc3986( array_keys( $parameters ) );
+        $values = mainwp_rest_urlencode_rfc3986( array_values( $parameters ) );
+        return array_combine( $keys, $values );
     }
 
     /**

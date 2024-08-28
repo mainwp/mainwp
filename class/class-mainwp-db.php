@@ -573,7 +573,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *
      * @return string|null Database query result (as string), or null on failure.
      */
-    public function get_website_option( $website, $option, $default_value = null, $json_format = false ) {
+    public function get_website_option( $website, $option, $default_value = null, $json_format = false ) { //phpcs:ignore -- NOSONAR - complex.
 
         if ( is_array( $website ) ) {
             if ( isset( $website[ $option ] ) ) {

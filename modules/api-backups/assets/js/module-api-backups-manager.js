@@ -308,35 +308,35 @@ jQuery(function(){
 	 * Kinsta Ajax Hooks
 	 */
 	// Trigger action_refresh_available_backups.
-	jQuery('#mainwp_3rd_party_api_kinsta_action_refresh_available_backups').on('click', function (event) {
-		kinsta_action_refresh_available_backups(this, event);
+	jQuery('#mainwp_3rd_party_api_kinsta_action_refresh_available_backups').on('click', function () {
+		kinsta_action_refresh_available_backups(this);
 	});
 
 	//Trigger action_backup.
-	jQuery('#mainwp_3rd_party_api_kinsta_action_individual_create_backup').on('click', function (event) {
-		kinsta_action_create_backup(this, event);
+	jQuery('#mainwp_3rd_party_api_kinsta_action_individual_create_backup').on('click', function () {
+		kinsta_action_create_backup(this);
 	});
 
 	// Trigger Bulk action_create_backup.
-	jQuery('.mainwp_3rd_party_api_kinsta_action_backup').on('click', function (event) {
-		kinsta_action_create_backup(this, event);
+	jQuery('.mainwp_3rd_party_api_kinsta_action_backup').on('click', function () {
+		kinsta_action_create_backup(this);
 	});
 
 	// Trigger action_delete_backup.
-	jQuery('.mainwp_3rd_party_api_kinsta_action_delete_backup').on('click', function (event) {
-		var confirmMsg = __('Are you sure you want to Delete this backup?');
+	jQuery('.mainwp_3rd_party_api_kinsta_action_delete_backup').on('click', function () {
+		let confirmMsg = __('Are you sure you want to Delete this backup?');
 		let backupId = jQuery(this).attr('backup_id');
 		mainwp_confirm(confirmMsg, function () {
-			kinsta_action_delete_backup(this, backupId, event);
+			kinsta_action_delete_backup(this, backupId);
 		});
 	});
 
 	// Trigger action_restore_backup.
-	jQuery('.mainwp_3rd_party_api_kinsta_action_restore_backup').on('click', function (event) {
-		var confirmMsg = __('Are you sure you want to Restore this backup?');
+	jQuery('.mainwp_3rd_party_api_kinsta_action_restore_backup').on('click', function () {
+		let confirmMsg = __('Are you sure you want to Restore this backup?');
 		let backupId = jQuery(this).attr('backup_id');
 		mainwp_confirm(confirmMsg, function () {
-			kinsta_action_restore_backup(this, backupId, event);
+			kinsta_action_restore_backup(this, backupId);
 		});
 	});
 
@@ -2180,7 +2180,7 @@ let plesk_action_delete_backup = function () {
  */
 
 // Refresh Available Backups.
-kinsta_action_refresh_available_backups = function (pObj) {
+let kinsta_action_refresh_available_backups = function (pObj) {
 
 	let websiteId = jQuery(pObj).attr('website_id');
 
@@ -2225,7 +2225,7 @@ kinsta_action_refresh_available_backups = function (pObj) {
 };
 
 // Create Manual Backup.
-kinsta_action_create_backup = function (pObj) {
+let kinsta_action_create_backup = function (pObj) {
 
 	let websiteId = jQuery(pObj).attr('website_id');
 
@@ -2268,7 +2268,7 @@ kinsta_action_create_backup = function (pObj) {
 };
 
 // Delete Manual Backup.
-kinsta_action_delete_backup = function (pObj, backupId) {
+let kinsta_action_delete_backup = function (pObj, backupId) {
 	let websiteId = jQuery('.mainwp_3rd_party_api_kinsta_action_delete_backup ').attr('website_id');
 	console.log(websiteId);
 	let data = mainwp_secure_data({
@@ -2309,11 +2309,11 @@ kinsta_action_delete_backup = function (pObj, backupId) {
 };
 
 // Delete Manual Backup.
-kinsta_action_restore_backup = function (pObj, backupId) {
+let kinsta_action_restore_backup = function (pObj, backupId) {
 
-	var websiteId = jQuery('.mainwp_3rd_party_api_kinsta_action_restore_backup').attr('website_id');
+	let websiteId = jQuery('.mainwp_3rd_party_api_kinsta_action_restore_backup').attr('website_id');
 
-	var data = mainwp_secure_data({
+	let data = mainwp_secure_data({
 		action: 'kinsta_action_restore_backup',
 		backup_id: backupId,
 		backup_api: 'kinsta',

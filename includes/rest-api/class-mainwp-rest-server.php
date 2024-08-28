@@ -80,7 +80,7 @@ class MainWP_Rest_Server {
      * @return mixed result.
      */
     public function get_rest_controller( $nspace, $name ) {
-        if ( is_array( $this->controllers ) && isset( $this->controllers[ $nspace ][ $name ] ) && isset( $this->controllers[ $namespace ][ $name ] ) ) {
+        if ( is_array( $this->controllers ) && isset( $this->controllers[ $nspace ][ $name ] ) && isset( $this->controllers[ $nspace ][ $name ] ) ) {
             return $this->controllers[ $nspace ][ $name ];
         }
         return false;

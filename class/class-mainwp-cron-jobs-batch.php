@@ -400,7 +400,7 @@ class MainWP_Cron_Jobs_Batch { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *
      * @param object $website website.
      */
-    public function prepare_bulk_updates( $website ) { //phpcs:ignore -- complex.
+    public function prepare_bulk_updates( $website ) { //phpcs:ignore -- NOSONAR - complex.
 
         $decodedIgnoredCores   = ! empty( $this->userExtension->ignored_wp_upgrades ) ? json_decode( $this->userExtension->ignored_wp_upgrades, true ) : array();
         $decodedIgnoredPlugins = ! empty( $this->userExtension->ignored_plugins ) ? json_decode( $this->userExtension->ignored_plugins, true ) : array();

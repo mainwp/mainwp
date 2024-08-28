@@ -329,7 +329,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @param WP_REST_Request $request Full details about the request.
      * @return WP_Error|WP_REST_Response
      */
-    public function get_items( $request ) {
+    public function get_items( $request ) { //phpcs:ignore -- NOSONAR - complex.
 
         $args = $this->prepare_objects_query( $request );
 

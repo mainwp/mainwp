@@ -1623,7 +1623,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      * @param array       $assoc_args Arguments.
      * @param object|bool $website Website object.
      */
-    public static function callback_updates_ignored_plugins_updates( $args = array(), $assoc_args = array(), $website = false ) {
+    public static function callback_updates_ignored_plugins_updates( $args = array(), $assoc_args = array(), $website = false ) { //phpcs:ignore -- NOSONAR - complex.
         $ignored_all = false;
         if ( $website ) {
             \WP_CLI::line( '' );

@@ -742,12 +742,12 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                         <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
                             <thead>
                             <tr>
-                                <th><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Note', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
-                                <th class="no-sort collapsing"></th>
-                                <th class="no-sort collapsing"></th>
+                                <th  scope="col"><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
+                                <th  scope="col"><?php esc_html_e( 'Note', 'mainwp' ); ?></th>
+                                <th  scope="col"><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
+                                <th  scope="col"><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                                <th  scope="col" class="no-sort collapsing"></th>
+                                <th  scope="col" class="no-sort collapsing"></th>
                             </tr>
                             </thead>
                             <tbody>
@@ -785,12 +785,12 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                             </tbody>
                             <tfoot>
                             <tr>
-                                <th><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Environment', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
-                                <th class="no-sort collapsing"></th>
-                                <th class="no-sort collapsing"></th>
+                                <th  scope="col"><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
+                                <th  scope="col"><?php esc_html_e( 'Environment', 'mainwp' ); ?></th>
+                                <th  scope="col"><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
+                                <th  scope="col"><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                                <th  scope="col" class="no-sort collapsing"></th>
+                                <th  scope="col" class="no-sort collapsing"></th>
                             </tr>
                             </tfoot>
                         </table>
@@ -798,7 +798,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                         <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
                             <thead>
                             <tr>
-                                <th colspan="3">
+                                <th scope="col" colspan="3">
                                     <div class="ui equal width grid">
                                         <div class="left aligned middle aligned column">
                                             <?php esc_html_e( 'Downloadable Backups', 'mainwp' ); ?>
@@ -807,9 +807,9 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                 </th>
                             </tr>
                             <tr>
-                                <th><?php esc_html_e( 'Created', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Expiry', 'mainwp' ); ?></th>
-                                <th class="no-sort collapsing"></th>
+                                <th  scope="col"><?php esc_html_e( 'Created', 'mainwp' ); ?></th>
+                                <th  scope="col"><?php esc_html_e( 'Expiry', 'mainwp' ); ?></th>
+                                <th  scope="col" class="no-sort collapsing"></th>
                             </tr>
                             </thead>
                             <tbody>
@@ -863,9 +863,9 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                             </tbody>
                             <tfoot>
                             <tr>
-                                <th><?php esc_html_e( 'Created', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Expiry', 'mainwp' ); ?></th>
-                                <th class="no-sort collapsing"></th>
+                                <th scope="col"><?php esc_html_e( 'Created', 'mainwp' ); ?></th>
+                                <th scope="col"><?php esc_html_e( 'Expiry', 'mainwp' ); ?></th>
+                                <th scope="col" class="no-sort collapsing"></th>
                             </tr>
                             </tfoot>
                         </table>
@@ -4984,7 +4984,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      *
      * @return array
      */
-    public static function get_kinsta_authentication_credentials( $website_id = null ) {
+    public static function get_kinsta_authentication_credentials( $website_id = null ) { //phpcs:ignore -- NOSONAR - complex.
 
         $kinsta_authentication_credentials = array();
 
@@ -5027,7 +5027,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
             $kinsta_baseurl = 'https://api.kinsta.com/v2';
 
             // Grab Kinsta password.
-            $kinsta_api_key = self::get_kinsta_api_key();
+            $kinsta_api_key = static::get_kinsta_api_key();
 
             // Grab Kinsta Account Email.
             $kinsta_account_email = get_option( 'mainwp_kinsta_api_account_email' );
@@ -5211,14 +5211,14 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * Create a Plesk Backup.
      *
      * @param bool $resturn_values resturn values.
-     * @param int  $website_id website id.
+     * @param int  $site_id website id.
      *
      * @return mixed result.
      */
-    public static function kinsta_action_create_backup( $resturn_values = false, $website_id = null ) {
+    public static function kinsta_action_create_backup( $resturn_values = false, $site_id = null ) {
 
         // Authenticate kinsta account.
-        $kinsta_authentication_credentials = static::get_kinsta_authentication_credentials();
+        $kinsta_authentication_credentials = static::get_kinsta_authentication_credentials( $site_id );
         $kinsta_baseurl                    = $kinsta_authentication_credentials[0]['kinsta_baseurl'];
         $kinsta_api_key                    = $kinsta_authentication_credentials[0]['kinsta_api_key'];
         $kinsta_env_id                     = $kinsta_authentication_credentials[0]['kinsta_environment_id'];

@@ -29,7 +29,7 @@ use MainWP\Dashboard\MainWP_DB_Client;
  * @extends  WP_REST_Controller
  * @version  5.2
  */
-abstract class MainWP_REST_Controller extends WP_REST_Controller {
+abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignore -- NOSONAR - maximumMethodThreshold.
     // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
     /**
      * Endpoint namespace.
@@ -191,7 +191,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller {
      * @param array $items Request items.
      * @return bool|WP_Error
      */
-    protected function check_batch_limit( $items ) {
+    protected function check_batch_limit( $items ) { //phpcs:ignore -- NOSONAR - complex.
         $limit = apply_filters( 'mainwp_rest_batch_items_limit', 100, $this->get_normalized_rest_base() );
         $total = 0;
 
@@ -296,7 +296,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller {
      *
      * @return WP_Error|WP_REST_Response
      */
-    public function validate_rest_args( $args, $valid_args ) {
+    public function validate_rest_args( $args, $valid_args ) { //phpcs:ignore -- NOSONAR - complex.
 
         if ( ! is_array( $args ) ) {
             return $args;
@@ -984,8 +984,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller {
         if ( in_array( $value, array( 'yes', 'no' ) ) ) {
             return $value;
         } elseif ( empty( $value ) ) {
-            $value = isset( $setting['default'] ) ? $setting['default'] : 'no';
-            return $value;
+            return isset( $setting['default'] ) ? $setting['default'] : 'no';
         } else {
             return new WP_Error( 'rest_setting_value_invalid', __( 'An invalid setting value was passed.', 'mainwp' ), array( 'status' => 400 ) );
         }
@@ -1024,7 +1023,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller {
      * @return array
      */
     public function get_public_batch_schema() {
-        $schema = array(
+        return array(
             '$schema'    => 'http://json-schema.org/draft-04/schema#',
             'title'      => 'batch',
             'type'       => 'object',
@@ -1055,8 +1054,6 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller {
                 ),
             ),
         );
-
-        return $schema;
     }
 
 
@@ -1096,7 +1093,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller {
      * @param  array $data data instance.
      * @return array
      */
-    protected function get_formatted_item_data( $data ) { //phpcs:ignore -- compatible.
+    protected function get_formatted_item_data( $data ) { //phpcs:ignore -- NOSONAR - compatible.
         return $data;
     }
 
@@ -1110,7 +1107,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller {
      * @param WP_REST_Request $request Full details about the request.
      * @return array Fields to be included in the response.
      */
-    public function get_fields_for_response( $request ) {
+    public function get_fields_for_response( $request ) { //phpcs:ignore -- NOSONAR - complex.
         // From xdebug profiling, this method could take upto 25% of request time in index calls.
         // Cache it and make sure _fields was cached on current request object!
         if ( isset( $this->_fields ) && is_array( $this->_fields ) && $request === $this->_request ) {
@@ -1238,7 +1235,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller {
      * @param string $context fields to filter.
      * @return array Fields to be included in the response.
      */
-    public function filter_response_data_by_allowed_fields( $item, $context = 'view' ) {
+    public function filter_response_data_by_allowed_fields( $item, $context = 'view' ) { //phpcs:ignore -- NOSONAR - complex.
         $data   = $this->filter_response_by_context( $item, 'view' );
         $fields = $this->get_allowed_fields_by_context( $context );
         if ( is_array( $fields ) && ! empty( $fields ) ) {
@@ -1284,8 +1281,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller {
                 }
             }
         }
-        $fields = array_keys( $properties );
-        return $fields;
+        return array_keys( $properties );
     }
 
     /**

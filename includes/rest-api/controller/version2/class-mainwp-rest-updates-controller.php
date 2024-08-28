@@ -615,7 +615,7 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
      * @param WP_REST_Request $request Full details about the request.
      * @return WP_Error|WP_REST_Response
      */
-    public function get_all_global_ignored_updates( $request ) {
+    public function get_all_global_ignored_updates( $request ) { //phpcs:ignore -- NOSONAR - complex.
 
         $userExtension   = MainWP_DB_Common::instance()->get_user_extension();
         $ignored_plugins = ! empty( $userExtension->ignored_plugins ) ? json_decode( $userExtension->ignored_plugins, true ) : array();
@@ -930,7 +930,7 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
      * @param WP_REST_Request $request Full details about the request.
      * @return WP_Error|WP_REST_Response
      */
-    public function update_plugins_site( $request ) {
+    public function update_plugins_site( $request ) {  //phpcs:ignore -- NOSONAR - complex.
 
         $website = $this->get_request_item( $request );
 

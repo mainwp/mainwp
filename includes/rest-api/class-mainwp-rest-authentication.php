@@ -718,10 +718,10 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         $user         = $wpdb->get_row(
             $wpdb->prepare(
                 '
-			SELECT key_id, user_id, permissions, consumer_key, consumer_secret, nonces, enabled FROM ' .
+            SELECT key_id, user_id, permissions, consumer_key, consumer_secret, nonces, enabled FROM ' .
                 MainWP_DB::instance()->get_table_name( 'api_keys' ) . '
-			WHERE consumer_key = %s
-		',
+            WHERE consumer_key = %s
+            ',
                 $consumer_key
             )
         );

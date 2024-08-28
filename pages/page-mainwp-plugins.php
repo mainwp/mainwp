@@ -2513,7 +2513,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param array $ignoredPlugins Ignored plugins array.
      * @param array $decodedIgnoredPlugins Decoded ignored plugins array.
      */
-    public static function render_global_ignored( $ignoredPlugins, $decodedIgnoredPlugins ) {
+    public static function render_global_ignored( $ignoredPlugins, $decodedIgnoredPlugins ) { //phpcs:ignore -- NOSONAR - complex.
         ?>
         <table id="mainwp-globally-ignored-plugins" class="ui compact selectable table unstackable">
                 <thead>

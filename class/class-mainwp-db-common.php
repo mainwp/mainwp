@@ -274,7 +274,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * @return object|null Database query result for groups and count or null on failure.
      */
-    public function get_tags( $params = array() ) {
+    public function get_tags( $params = array() ) { //phpcs:ignore -- NOSONAR - complex.
 
         $s       = '';
         $exclude = array();

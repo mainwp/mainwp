@@ -1216,13 +1216,13 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
             $ignored_plugins = json_decode( $website->ignored_plugins, true );
             if ( is_array( $ignored_plugins ) ) {
-                $plugin_upgrades = $this->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
+                $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
 
             }
 
             $ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
             if ( is_array( $ignored_plugins ) ) {
-                $plugin_upgrades = $this->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
+                $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
 
             }
 

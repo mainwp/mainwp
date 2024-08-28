@@ -65,7 +65,7 @@ final class MainWP_Setup {
      *
      * Legacy REST requests should still run some extra code for backwards compatibility.
      *
-     * @todo_dev: replace this function once core WP function is available: https://core.trac.wordpress.org/ticket/42061.
+     * @to_do: replace this function once core WP function is available: https://core.trac.wordpress.org/ticket/42061.
      *
      * @return bool
      */

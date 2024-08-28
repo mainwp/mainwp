@@ -344,7 +344,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      *
      * Remove API Key.
      */
-    public function ajax_rest_api_remove_keys() {
+    public function ajax_rest_api_remove_keys() { //phpcs:ignore -- NOSONAR - complex.
         MainWP_Post_Handler::instance()->check_security( 'mainwp_rest_api_remove_keys' );
         $ret         = array( 'success' => false );
         $cons_key_id = isset( $_POST['keyId'] ) ? urldecode( wp_unslash( $_POST['keyId'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -749,7 +749,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
     }
 
     /** Render REST API SubPage */
-    public static function render_rest_api_setings() {
+    public static function render_rest_api_setings() { //phpcs:ignore -- NOSONAR - complex.
         if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_restapi' ) ) {
             mainwp_do_not_have_permissions( esc_html__( 'manage dashboard REST API', 'mainwp' ) );
             return;

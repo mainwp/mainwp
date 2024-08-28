@@ -31,7 +31,7 @@ class MainWP_File_Uploader_Handle { // phpcs:ignore Generic.Classes.OpeningBrace
      */
     public function save( $path ) {
         $moved    = false;
-        $tmp_name = isset( $_FILES['qqfile']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['qqfile']['tmp_name'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification.Missing -- verify in caller.
+        $tmp_name = isset( $_FILES['qqfile']['tmp_name'] ) && MainWP_Utility::valid_file_check( $_FILES['qqfile']['tmp_name'] ) ? $_FILES['qqfile']['tmp_name'] : ''; //phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- verify in caller.
 
         //phpcs:disable WordPress.WP.AlternativeFunctions -- custom process.
         if ( ! is_dir( dirname( $path ) ) ) {

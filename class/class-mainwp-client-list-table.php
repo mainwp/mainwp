@@ -114,7 +114,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
             'suspended'        => esc_html__( 'Status', 'mainwp' ),
             'client_phone'     => esc_html__( 'Phone', 'mainwp' ),
             'client_facebook'  => esc_html__( 'Facebook', 'mainwp' ),
-            'client_twitter'   => esc_html__( 'Twitter', 'mainwp' ),
+            'client_twitter'   => esc_html__( 'X', 'mainwp' ),
             'client_instagram' => esc_html__( 'Instagram', 'mainwp' ),
             'client_linkedin'  => esc_html__( 'LinkedIn', 'mainwp' ),
             'websites'         => esc_html__( 'Websites', 'mainwp' ),

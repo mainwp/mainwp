@@ -381,12 +381,14 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
                 if ( is_array( $plugin_upgrades ) ) {
                     $ignored_plugins = json_decode( $website->ignored_plugins, true );
                     if ( is_array( $ignored_plugins ) ) {
-                        $plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+                        $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
+
                     }
 
                     $ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
                     if ( is_array( $ignored_plugins ) ) {
-                        $plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+                        $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
+
                     }
 
                     $tmp = array();
@@ -546,12 +548,14 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
                 if ( is_array( $plugin_upgrades ) ) {
                     $ignored_plugins = json_decode( $website->ignored_plugins, true );
                     if ( is_array( $ignored_plugins ) ) {
-                        $plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+                        $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
+
                     }
 
                     $ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
                     if ( is_array( $ignored_plugins ) ) {
-                        $plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+                        $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
+
                     }
 
                     $tmp = array();
@@ -652,12 +656,12 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
                 if ( is_array( $theme_upgrades ) ) {
                     $ignored_themes = json_decode( $website->ignored_themes, true );
                     if ( is_array( $ignored_themes ) ) {
-                        $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+                        $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
                     }
 
                     $ignored_themes = json_decode( $userExtension->ignored_themes, true );
                     if ( is_array( $ignored_themes ) ) {
-                        $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+                        $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
                     }
 
                     $tmp = array();
@@ -818,12 +822,12 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
                 if ( is_array( $theme_upgrades ) ) {
                     $ignored_themes = json_decode( $website->ignored_themes, true );
                     if ( is_array( $ignored_themes ) ) {
-                        $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+                        $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
                     }
 
                     $ignored_themes = json_decode( $userExtension->ignored_themes, true );
                     if ( is_array( $ignored_themes ) ) {
-                        $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+                        $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
                     }
 
                     $tmp = array();

@@ -425,7 +425,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                             </div>
                             <div class="right aligned column">
                                 <?php MainWP_Plugins::render_select_manage_view( 'theme' ); ?>
-                                
+
                                 <?php
                                 /**
                                  * Action: mainwp_themes_actions_bar_right
@@ -1092,7 +1092,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 }
                 $ignored_themes = json_decode( $website->ignored_themes, true );
                 if ( is_array( $ignored_themes ) ) {
-                    $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+                    $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
                 }
 
                 if ( is_array( $decodedIgnoredThemes ) ) {
@@ -1366,7 +1366,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 }
                 $ignored_themes = json_decode( $website->ignored_themes, true );
                 if ( is_array( $ignored_themes ) ) {
-                    $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+                    $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
                 }
 
                 if ( is_array( $decodedIgnoredThemes ) ) {
@@ -2461,28 +2461,46 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param mixed $ignoredThemes Encoded ignored themes.
      * @param mixed $decodedIgnoredThemes Decoded ignored themes.
      */
-    public static function render_global_ignored( $ignoredThemes, $decodedIgnoredThemes ) {
+    public static function render_global_ignored( $ignoredThemes, $decodedIgnoredThemes ) { //phpcs:ignore -- NOSONAR - complex.
         ?>
         <table id="mainwp-globally-ignored-themes" class="ui compact selectable table unstackable">
                 <thead>
                     <tr>
                         <th scope="col" ><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
                         <th scope="col" ><?php esc_html_e( 'Theme slug', 'mainwp' ); ?></th>
+                        <th scope="col" ><?php esc_html_e( 'Ignored version', 'mainwp' ); ?></th>
                         <th scope="col" ></th>
                     </tr>
                 </thead>
                 <tbody id="globally-ignored-themes-list">
                     <?php if ( $ignoredThemes ) : ?>
-                        <?php foreach ( $decodedIgnoredThemes as $ignoredTheme => $ignoredThemeName ) : ?>
-                        <tr theme-slug="<?php echo esc_attr( rawurlencode( $ignoredTheme ) ); ?>">
-                            <td><?php echo MainWP_System_Utility::get_theme_icon( $ignoredTheme ) . '&nbsp;&nbsp;&nbsp;&nbsp;' . esc_html( $ignoredThemeName ); //phpcs:ignore -- escaped. ?></td>
-                            <td><?php echo esc_html( $ignoredTheme ); ?></td>
-                            <td class="right aligned">
-                            <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-                                <a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_globally( '<?php echo esc_js( rawurlencode( $ignoredTheme ) ); ?>' )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
-                            <?php endif; ?>
-                            </td>
-                        </tr>
+                        <?php
+                        foreach ( $decodedIgnoredThemes as $ignoredTheme => $ignoredThemeName ) :
+
+                            $ignore_name  = 'N/A';
+                            $ignored_vers = array( 'all_versions' );
+                            if ( is_string( $ignoredThemeName ) ) {
+                                $ignore_name = $ignoredThemeName;
+                            } elseif ( is_array( $ignoredThemeName ) ) {
+                                $ignore_name = ! empty( $ignoredThemeName['Name'] ) ? $ignoredThemeName['Name'] : $ignore_name;
+                                $ig_vers     = ! empty( $ignoredThemeName['ignored_versions'] ) ? $ignoredThemeName['ignored_versions'] : '';
+                                if ( ! empty( $ig_vers ) && is_array( $ig_vers ) && ! in_array( 'all_versions', $ig_vers ) ) {
+                                    $ignored_vers = $ig_vers;
+                                }
+                            }
+                            ?>
+                            <?php foreach ( $ignored_vers as $ignored_ver ) { ?>
+                                <tr theme-slug="<?php echo esc_attr( rawurlencode( $ignoredTheme ) ); ?>">
+                                    <td><?php echo MainWP_System_Utility::get_theme_icon( $ignoredTheme ) . '&nbsp;&nbsp;&nbsp;&nbsp;' . esc_html( $ignore_name ); //phpcs:ignore -- escaped. ?></td>
+                                    <td><?php echo esc_html( $ignoredTheme ); ?></td>
+                                    <td><?php echo 'all_versions' === $ignored_ver ? esc_html__( 'All', 'mainwp' ) : esc_html( $ignored_ver ); ?></td>
+                                    <td class="right aligned">
+                                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+                                        <a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_globally( '<?php echo esc_js( rawurlencode( $ignoredTheme ) ); ?>', '<?php echo esc_js( rawurlencode( $ignored_ver ) ); ?>' )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
+                                    <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php } ?>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </tbody>
@@ -2490,7 +2508,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <?php if ( $ignoredThemes ) : ?>
                     <tfoot class="full-width">
                         <tr>
-                            <th scope="col" colspan="3">
+                            <th scope="col" colspan="4">
                                 <a class="ui right floated small green labeled icon button" onClick="return updatesoverview_themes_unignore_globally_all();" id="mainwp-unignore-globally-all">
                                     <i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
                                 </a>
@@ -2536,6 +2554,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <th scope="col" ><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
                     <th scope="col" ><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
                     <th scope="col" ><?php esc_html_e( 'Theme slug', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Ignored version', 'mainwp' ); ?></th>
                     <th scope="col" ></th>
                 </tr>
             </thead>
@@ -2555,23 +2574,38 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     $first = true;
 
                     foreach ( $decodedIgnoredThemes as $ignoredTheme => $ignoredThemeName ) {
-                        ?>
-                        <tr site-id="<?php echo esc_attr( $website->id ); ?>" theme-slug="<?php echo esc_attr( rawurlencode( $ignoredTheme ) ); ?>">
-                            <?php if ( $first ) : ?>
-                                <td><div><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></div></td>
-                                <?php $first = false; ?>
-                            <?php else : ?>
-                                <td><div style="display:none;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></div></td>
-                            <?php endif; ?>
-                            <td><?php echo MainWP_System_Utility::get_theme_icon( $ignoredTheme ) . '&nbsp;&nbsp;&nbsp;&nbsp;' . esc_html( $ignoredThemeName ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
-                            <td><?php echo esc_html( $ignoredTheme ); ?></td>
-                            <td class="right aligned">
-                            <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-                                <a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_detail( '<?php echo esc_js( rawurlencode( $ignoredTheme ) ); ?>', <?php echo intval( $website->id ); ?> )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
-                            <?php endif; ?>
-                            </td>
-                        </tr>
-                        <?php
+                        $ignore_name  = 'N/A';
+                        $ignored_vers = array( 'all_versions' );
+                        if ( is_string( $ignoredThemeName ) ) {
+                            $ignore_name = $ignoredThemeName;
+                        } elseif ( is_array( $ignoredThemeName ) ) {
+                            $ignore_name = ! empty( $ignoredThemeName['Name'] ) ? $ignoredThemeName['Name'] : $ignore_name;
+                            $ig_vers     = ! empty( $ignoredThemeName['ignored_versions'] ) ? $ignoredThemeName['ignored_versions'] : '';
+                            if ( ! empty( $ig_vers ) && is_array( $ig_vers ) && ! in_array( 'all_versions', $ig_vers ) ) {
+                                $ignored_vers = $ig_vers;
+                            }
+                        }
+
+                        foreach ( $ignored_vers as $ignored_ver ) {
+                            ?>
+                            <tr site-id="<?php echo esc_attr( $website->id ); ?>" theme-slug="<?php echo esc_attr( rawurlencode( $ignoredTheme ) ); ?>">
+                                <?php if ( $first ) : ?>
+                                    <td><div><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></div></td>
+                                    <?php $first = false; ?>
+                                <?php else : ?>
+                                    <td><div style="display:none;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></div></td>
+                                <?php endif; ?>
+                                <td><?php echo MainWP_System_Utility::get_theme_icon( $ignoredTheme ) . '&nbsp;&nbsp;&nbsp;&nbsp;' . esc_html( $ignore_name ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+                                <td><?php echo esc_html( $ignoredTheme ); ?></td>
+                                <td><?php echo 'all_versions' === $ignored_ver ? esc_html__( 'All', 'mainwp' ) : esc_html( $ignored_ver ); ?></td>
+                                <td class="right aligned">
+                                <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+                                    <a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_detail( '<?php echo esc_js( rawurlencode( $ignoredTheme ) ); ?>', <?php echo intval( $website->id ); ?>, '<?php echo esc_js( rawurlencode( $ignored_ver ) ); ?>' )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
+                                <?php endif; ?>
+                                </td>
+                            </tr>
+                            <?php
+                        }
                     }
                 }
                 MainWP_DB::free_result( $websites );
@@ -2582,7 +2616,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 <?php if ( 0 < $cnt ) : ?>
                 <tfoot class="full-width">
                 <tr>
-                    <th scope="col" colspan="4">
+                    <th scope="col" colspan="5">
                         <a class="ui right floated small green labeled icon button" onClick="return updatesoverview_themes_unignore_detail_all();" id="mainwp-unignore-detail-all">
                             <i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
                         </a>
@@ -2833,7 +2867,9 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
 
     /**
-     * Hooks the section help content to the Help Sidebar element.
+     * Method mainwp_help_content()
+     *
+     * Creates the MainWP Help Documentation List for the help component in the sidebar.
      */
     public static function mainwp_help_content() {
          // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -2841,14 +2877,11 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             ?>
             <p><?php esc_html_e( 'If you need help with managing themes, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui relaxed bulleted list">
-                <div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/" target="_blank">Managing Themes with MainWP</a> <i class="external alternate icon"></i></div>
-                <div class="item"><a href="https://kb.mainwp.com/docs/install-themes/" target="_blank">Install Themes</a> <i class="external alternate icon"></i></div>
-                <div class="item"><a href="https://kb.mainwp.com/docs/activate-themes/" target="_blank">Activate Themes</a> <i class="external alternate icon"></i></div>
-                <div class="item"><a href="https://kb.mainwp.com/docs/delete-themes/" target="_blank">Delete Themes</a> <i class="external alternate icon"></i></div>
-                <div class="item"><a href="https://kb.mainwp.com/docs/abandoned-themes/" target="_blank">Abandoned Themes</a> <i class="external alternate icon"></i></div>
-                <div class="item"><a href="https://kb.mainwp.com/docs/update-themes/" target="_blank">Update Themes</a> <i class="external alternate icon"></i></div>
-                <div class="item"><a href="https://kb.mainwp.com/docs/themes-auto-updates/" target="_blank">Themes Auto Updates</a> <i class="external alternate icon"></i></div>
-                <div class="item"><a href="https://kb.mainwp.com/docs/ignore-theme-updates/" target="_blank">Ignore Theme Updates</a> <i class="external alternate icon"></i></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/" target="_blank">Managing Themes with MainWP</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/#install-themes" target="_blank">Install Themes</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/#activate-themes" target="_blank">Activate Themes</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/#delete-themes" target="_blank">Delete Themes</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/#update-themes" target="_blank">Update Themes</a></div>
                 <?php
                 /**
                  * Action: mainwp_themes_help_item

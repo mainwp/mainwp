@@ -227,6 +227,11 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();
 
+        $decodedIgnoredCores = ! empty( $userExtension->ignored_wp_upgrades ) ? json_decode( $userExtension->ignored_wp_upgrades, true ) : array();
+        if ( ! is_array( $decodedIgnoredCores ) ) {
+            $decodedIgnoredCores = array();
+        }
+
         ?>
 
         <div id="mainwp-screenshots-sites" class="ui segment">
@@ -276,10 +281,10 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                         $total_plugin_upgrades = 0;
                         $total_theme_upgrades  = 0;
 
-                        $site_options = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'premium_upgrades' ) );
-                        $wp_upgrades  = isset( $site_options['wp_upgrades'] ) ? json_decode( $site_options['wp_upgrades'], true ) : array();
+                        $wp_upgrades           = ! empty( $website->wp_upgrades ) ? json_decode( $website->wp_upgrades, true ) : array();
+                        $ignored_core_upgrades = ! empty( $website->ignored_wp_upgrades ) ? json_decode( $website->ignored_wp_upgrades, true ) : array();
 
-                        if ( $website->is_ignoreCoreUpdates ) {
+                        if ( $website->is_ignoreCoreUpdates || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $ignored_core_upgrades, 'core' ) || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $decodedIgnoredCores, 'core' ) ) {
                             $wp_upgrades = array();
                         }
 
@@ -299,7 +304,7 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                             $theme_upgrades = array();
                         }
 
-                        $decodedPremiumUpgrades = isset( $site_options['premium_upgrades'] ) ? json_decode( $site_options['premium_upgrades'], true ) : array();
+                        $decodedPremiumUpgrades = ! empty( $website->premium_upgrades ) ? json_decode( $website->premium_upgrades, true ) : array();
 
                         if ( is_array( $decodedPremiumUpgrades ) ) {
                             foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
@@ -327,12 +332,14 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
                             $ignored_plugins = json_decode( $website->ignored_plugins, true );
                             if ( is_array( $ignored_plugins ) ) {
-                                $plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+                                $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
+
                             }
 
                             $ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
                             if ( is_array( $ignored_plugins ) ) {
-                                $plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+                                $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
+
                             }
 
                             $total_plugin_upgrades += count( $plugin_upgrades );
@@ -342,12 +349,12 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
                             $ignored_themes = json_decode( $website->ignored_themes, true );
                             if ( is_array( $ignored_themes ) ) {
-                                $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+                                $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
                             }
 
                             $ignored_themes = json_decode( $userExtension->ignored_themes, true );
                             if ( is_array( $ignored_themes ) ) {
-                                $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+                                $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
                             }
 
                             $total_theme_upgrades += count( $theme_upgrades );
@@ -417,7 +424,7 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                                     <a  data-tooltip="<?php esc_attr_e( 'Available updates.', 'mainwp' ); ?>" data-position="top left" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>" class="ui icon button"><i class="redo <?php esc_attr_e( $a_color ); ?> alternate icon"></i> <?php echo intval( $total_updates ); ?></a>
                                     <a  data-tooltip="<?php esc_attr_e( 'Available plugins updates.', 'mainwp' ); ?>" data-position="top center" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=plugins-updates" class="ui icon button"><i class="plug <?php echo esc_attr( $p_color ); ?> icon"></i> <?php echo intval( $total_plugin_upgrades ); ?></a>
                                     <a  data-tooltip="<?php esc_attr_e( 'Available themes updates.', 'mainwp' ); ?>" data-position="top center" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=themes-updates" class="ui icon button"><i class="brush <?php echo esc_attr( $t_color ); ?> icon"></i> <?php echo intval( $total_theme_upgrades ); ?></a>
-                                    <a  data-tooltip="<?php esc_attr_e( 'WordPress core updates.', 'mainwp' ); ?>" data-position="top right" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=wordpress-updates" class="ui icon button"><i class="WordPress <?php echo esc_attr( $w_color ); ?> icon"></i> <?php echo intval( $total_wp_upgrades ); ?></a>
+                                    <a  data-tooltip="<?php esc_attr_e( 'WordPress core updates.', 'mainwp' ); ?>" data-position="top right" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=wordpress-updates" class="ui icon button"><i class="wordpress <?php echo esc_attr( $w_color ); ?> icon"></i> <?php echo intval( $total_wp_upgrades ); //phpcs:ignore -- wordpress. ?></a>
                         </div>
                         </div>
                         <div class="extra content">
@@ -726,6 +733,11 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
         if ( ! empty( $where ) ) {
             $params['extra_where'] = $where;
         }
+
+        $params['extra_view'] = array(
+            'wp_upgrades',
+            'ignored_wp_upgrades',
+        );
 
         return MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
     }

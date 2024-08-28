@@ -654,7 +654,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             if ( ! is_array( $completed_sites ) ) {
                 $completed_sites = array();
             }
-            $output .= count( $completed_sites ) . ' / ' . count( $item->the_sites );
+            $output .= count( $completed_sites ) . '/' . count( $item->the_sites );
         }
         return $output;
     }

@@ -1696,7 +1696,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             if ( ! empty( $thumbnail_html ) ) {
                 $thumb_ok = true;
 
-                $set_thumbnail_link = '<p class="hide-if-no-js"><div class="field"><a href="%s" id="set-post-thumbnail"%s class="thickbox">%s</a></div></p>';
+                $set_thumbnail_link = '<p class="hide-if-no-js"><div class="field"><a href="%s" id="set-post-thumbnail" %s class="thickbox">%s</a></div></p>';
                 $content            = '<div class="ui setment">';
                 $content           .= sprintf(
                     $set_thumbnail_link,
@@ -1726,7 +1726,6 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $html .= '<div class="title active"><i class="dropdown icon"></i> ' . esc_html__( 'Featured Image', 'mainwp' ) . '</div>';
         $html .= '<div class="content active"';
         $html .= $content;
-        $html .= '</div>';
         $html .= '</div>';
 
         /**
@@ -2692,20 +2691,20 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
     /**
      * Method mainwp_help_content()
      *
-     * Attatch MainWP help content.
+     * Creates the MainWP Help Documentation List for the help component in the sidebar.
      */
     public static function mainwp_help_content() {
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_GET['page'] ) && ( 'PostBulkManage' === $_GET['page'] || 'PostBulkAdd' === $_GET['page'] ) ) {
             ?>
             <p><?php esc_html_e( 'If you need help with managing posts, please review following help documents', 'mainwp' ); ?></p>
-            <div class="ui relaxed bulleted list">
-                <div class="item"><a href="https://kb.mainwp.com/docs/manage-posts/" target="_blank">Manage Posts</a> <i class="external alternate icon"></i></div>
-                <div class="item"><a href="https://kb.mainwp.com/docs/create-a-new-post/" target="_blank">Create a New Post</a> <i class="external alternate icon"></i></div>
-                <div class="item"><a href="https://kb.mainwp.com/docs/edit-an-existing-post/" target="_blank">Edit an Existing Post</a> <i class="external alternate icon"></i></div>
-                <div class="item"><a href="https://kb.mainwp.com/docs/change-status-of-an-existing-post/" target="_blank">Change Status of an Existing Post</a> <i class="external alternate icon"></i></div>
-                <div class="item"><a href="https://kb.mainwp.com/docs/view-an-existing-post/" target="_blank">View an Existing Post</a> <i class="external alternate icon"></i></div>
-                <div class="item"><a href="https://kb.mainwp.com/docs/delete-posts/" target="_blank">Delete Post(s)</a> <i class="external alternate icon"></i></div>
+            <div class="ui list">
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-posts/" target="_blank">Manage Posts</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-posts/#create-a-new-post" target="_blank">Create a New Post</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-posts/#edit-an-existing-post" target="_blank">Edit an Existing Post</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-posts/#change-status-of-an-existing-post" target="_blank">Change Status of an Existing Post</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-posts/#view-an-existing-post" target="_blank">View an Existing Post</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-posts/#delete-post" target="_blank">Delete Post(s)</a></div>
                 <?php
                 /**
                  * Action: mainwp_posts_help_item

@@ -642,22 +642,27 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 $post_slug   = base64_decode( get_post_meta( $id, '_slug', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
                 $post_custom = get_post_custom( $id );
 
-                $galleries           = get_post_gallery( $id, false );
+                $galleries           = get_post_galleries( $id, false );
                 $post_gallery_images = array();
 
-                if ( is_array( $galleries ) && isset( $galleries['ids'] ) ) {
-                    $attached_images = explode( ',', $galleries['ids'] );
-                    foreach ( $attached_images as $attachment_id ) {
-                        $attachment = get_post( $attachment_id );
-                        if ( $attachment ) {
-                            $post_gallery_images[] = array(
-                                'id'          => $attachment_id,
-                                'alt'         => get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true ),
-                                'caption'     => MainWP_Utility::esc_content( $attachment->post_excerpt, 'mixed' ),
-                                'description' => $attachment->post_content,
-                                'src'         => $attachment->guid,
-                                'title'       => htmlspecialchars( $attachment->post_title ),
-                            );
+                if ( is_array( $galleries ) ) {
+                    foreach ( $galleries as $gallery ) {
+                        if ( isset( $gallery['ids'] ) ) {
+                            $attached_images = explode( ',', $gallery['ids'] );
+                            foreach ( $attached_images as $attachment_id ) {
+                                $attachment = get_post( $attachment_id );
+                                if ( $attachment ) {
+                                    $post_gallery_images[] = array(
+                                        'id'          => $attachment_id,
+                                        'alt'         => get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true ),
+                                        'caption'     => MainWP_Utility::esc_content( $attachment->post_excerpt, 'mixed' ),
+                                        'description' => $attachment->post_content,
+                                        'src'         => $attachment->guid,
+                                        'image_url'   => wp_get_attachment_image_url( $attachment_id ), // to fix src/guid missing the file name.
+                                        'title'       => htmlspecialchars( $attachment->post_title ),
+                                    );
+                                }
+                            }
                         }
                     }
                 }
@@ -1196,7 +1201,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
             update_post_meta( $new_post_id, '_sticky', base64_encode( 'sticky' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
         }
 
-        if ( null !== $post_featured_image && ! empty( $post_featured_image ) ) {
+        if ( ! empty( $post_featured_image ) ) {
             try {
                 $upload = static::upload_image( $post_featured_image );
 
@@ -1205,6 +1210,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
             } catch ( \Exception $e ) {
                 // ok.
+                error_log($e->getMessage()); //phpcs:ignore -- NOSONAR - debugging.
             }
         }
 
@@ -1321,7 +1327,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
             if ( MainWP_Utility::check_image_file_name( $local_img_path ) ) {
                 global $wp_filesystem;
                 if ( $wp_filesystem ) {
-                    $moved = $wp_filesystem->move( $temporary_file, $local_img_path );
+                    $moved = $wp_filesystem->move( $temporary_file, $local_img_path, true );
                 }
             }
             if ( $moved ) {

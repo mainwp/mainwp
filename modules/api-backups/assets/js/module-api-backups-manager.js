@@ -304,6 +304,46 @@ jQuery(function(){
         });
     });
 
+	/**
+	 * Kinsta Ajax Hooks
+	 */
+	// Trigger action_refresh_available_backups.
+	jQuery('#mainwp_3rd_party_api_kinsta_action_refresh_available_backups').on('click', function () {
+		kinsta_action_refresh_available_backups(this);
+	});
+
+	//Trigger action_backup.
+	jQuery('#mainwp_3rd_party_api_kinsta_action_individual_create_backup').on('click', function () {
+		kinsta_action_create_backup(this);
+	});
+
+	// Trigger Bulk action_create_backup.
+	jQuery('.mainwp_3rd_party_api_kinsta_action_backup').on('click', function () {
+		kinsta_action_create_backup(this);
+	});
+
+	// Trigger action_delete_backup.
+	jQuery('.mainwp_3rd_party_api_kinsta_action_delete_backup').on('click', function () {
+		let confirmMsg = __('Are you sure you want to Delete this backup?');
+		let backupId = jQuery(this).attr('backup_id');
+		mainwp_confirm(confirmMsg, function () {
+			kinsta_action_delete_backup(this, backupId);
+		});
+	});
+
+	// Trigger action_restore_backup.
+	jQuery('.mainwp_3rd_party_api_kinsta_action_restore_backup').on('click', function () {
+		let confirmMsg = __('Are you sure you want to Restore this backup?');
+		let backupId = jQuery(this).attr('backup_id');
+		mainwp_confirm(confirmMsg, function () {
+			kinsta_action_restore_backup(this, backupId);
+		});
+	});
+
+	/**
+	 * Global Bulk Action: backup selected sites.
+	 */
+
     // Trigger action_backup_selected_sites.
     jQuery('#action_backup_selected_sites').on('click', function () {
         action_backup_selected_sites(this);
@@ -2135,4 +2175,177 @@ let plesk_action_delete_backup = function () {
     });
 };
 
+/********************************************************
+ * Kinsta Functions.
+ */
 
+// Refresh Available Backups.
+let kinsta_action_refresh_available_backups = function (pObj) {
+
+	let websiteId = jQuery(pObj).attr('website_id');
+
+	let data = mainwp_secure_data({
+		action: 'kinsta_action_refresh_available_backups',
+		website_id: websiteId,
+		backup_api: 'Kinsta'
+	});
+
+	// Start button animation.
+	jQuery(pObj).addClass('disabled loading');
+
+	jQuery.post(ajaxurl, data, function (response) {
+		response = jQuery.trim(response);
+
+		if (response === 'true') {
+
+			// Show message.
+			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+			jQuery('#mainwp-api-backups-message-zone .content .message')
+				.html('Available backups have been refreshed.')
+			;
+
+			// Stop button animation.
+			jQuery(pObj).removeClass('disabled loading');
+
+			setInterval('location.reload()', 7000);// Using .reload() method.
+
+		} else {
+
+			// Show message.
+			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+			jQuery('#mainwp-api-backups-message-zone .content .message')
+				.html('There was an issue while refreshing available backups.')
+			;
+
+			// Stop button animation.
+			jQuery(pObj).removeClass('disabled loading');
+
+		}
+	});
+};
+
+// Create Manual Backup.
+let kinsta_action_create_backup = function (pObj) {
+
+	let websiteId = jQuery(pObj).attr('website_id');
+
+	let data = mainwp_secure_data({
+		action: 'kinsta_action_create_backup',
+		website_id: websiteId,
+		backup_api: 'kinsta'
+	});
+
+	// Start button animation.
+	jQuery(pObj).addClass('disabled loading');
+
+	jQuery.post(ajaxurl, data, function (response) {
+		response = jQuery.trim(response);
+
+		if (response === 'true') {
+
+			// Show message.
+			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+			jQuery('#mainwp-api-backups-message-zone .content .message')
+				.html('A backup has been requested.')
+			;
+
+			// Stop button animation.
+			jQuery(pObj).removeClass('disabled loading');
+
+		} else {
+
+			// Show message.
+			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+			jQuery('#mainwp-api-backups-message-zone .content .message')
+				.html( response )
+			;
+
+			// Stop button animation.
+			jQuery(pObj).removeClass('disabled loading');
+
+		}
+	});
+};
+
+// Delete Manual Backup.
+let kinsta_action_delete_backup = function (pObj, backupId) {
+	let websiteId = jQuery('.mainwp_3rd_party_api_kinsta_action_delete_backup ').attr('website_id');
+	console.log(websiteId);
+	let data = mainwp_secure_data({
+		action: 'kinsta_action_delete_backup',
+		backup_id: backupId,
+		website_id: websiteId,
+		backup_api: 'kinsta'
+	});
+
+	// Start button animation.
+	jQuery(pObj).addClass('disabled loading');
+
+	jQuery.post(ajaxurl, data, function (response) {
+		response = jQuery.trim(response);
+		console.log(response);
+		if (response === 'true') {
+
+			// Show message.
+			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+			jQuery('#mainwp-api-backups-message-zone .content .message')
+				.html('The selected backup has been deleted.')
+			;
+
+			setInterval('location.reload()', 5000); // Using .reload() method.
+
+		} else {
+
+			// Show message.
+			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+			jQuery('#mainwp-api-backups-message-zone .content .message')
+				.html('There was an issue while deleting your backup.')
+			;
+
+			setInterval('location.reload()', 5000); // Using .reload() method.
+
+		}
+	});
+};
+
+// Delete Manual Backup.
+let kinsta_action_restore_backup = function (pObj, backupId) {
+
+	let websiteId = jQuery('.mainwp_3rd_party_api_kinsta_action_restore_backup').attr('website_id');
+
+	let data = mainwp_secure_data({
+		action: 'kinsta_action_restore_backup',
+		backup_id: backupId,
+		backup_api: 'kinsta',
+		website_id: websiteId
+	});
+
+	// Start button animation.
+	jQuery(pObj).addClass('disabled loading');
+
+	jQuery.post(ajaxurl, data, function (response) {
+		response = jQuery.trim(response);
+		if (response === 'true') {
+
+			// Show message.
+			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+			jQuery('#mainwp-api-backups-message-zone .content .message')
+				.html('Your application is in the process of restoring. This will take a few minuets...')
+			;
+
+			// Stop button animation.
+			jQuery(button).removeClass('disabled loading');
+
+		} else {
+
+			// Show message.
+			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+			jQuery('#mainwp-api-backups-message-zone .content .message')
+				.html('There was an issue while attempting to restore your application...')
+			;
+
+			// Stop button animation.
+			jQuery(button).removeClass('disabled loading');
+		}
+	});
+};

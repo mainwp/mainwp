@@ -4,7 +4,7 @@
  *
  * This class handles the REST API
  *
- * @package MainWP/REST API
+ * @package MainWP\Dashboard
  * @author Martin Gibson
  */
 
@@ -12,10 +12,8 @@ namespace MainWP\Dashboard;
 
 /**
  * Class Rest_Api
- *
- * @package MainWP\Dashboard
  */
-class MainWP_Rest_Api_Helper { //phpcs:ignore -- NOSONAR - multi methods.
+class Rest_Api_V1_Helper { //phpcs:ignore -- NOSONAR - multi methods.
 
     /**
      * Protected static variable to hold the single instance of the class.
@@ -59,7 +57,7 @@ class MainWP_Rest_Api_Helper { //phpcs:ignore -- NOSONAR - multi methods.
 
         if ( $website && is_array( $result ) ) {
 
-            $return_results = array();
+            $return_results = array( 'updates_info' => array() );
 
             // logging feature.
             $_type = '';
@@ -72,6 +70,10 @@ class MainWP_Rest_Api_Helper { //phpcs:ignore -- NOSONAR - multi methods.
             if ( isset( $result['upgrades_error'] ) ) {
                 foreach ( $result['upgrades_error'] as $k => $v ) {
                     $return_results['result_error'][ rawurlencode( $k ) ] = esc_html( $v );
+                    $return_results['updates_info'][ rawurlencode( $k ) ] = array(
+                        'success' => 0,
+                        'error'   => esc_html( $v ),
+                    );
                 }
             }
 
@@ -89,13 +91,29 @@ class MainWP_Rest_Api_Helper { //phpcs:ignore -- NOSONAR - multi methods.
 
                         $update = false;
                         foreach ( $updated_data as $item ) {
-                            $version = isset( $item['version'] ) ? $item['version'] : '';
-                            if ( ! empty( $item ) && isset( $item['slug'] ) && ! empty( $item['rollback'] ) ) {
-                                $msg = MainWP_Updates_Helper::get_roll_msg( $item );
-                                $return_results['result_error'][ rawurlencode( $item['slug'] ) ] = esc_html( $msg );
 
-                                $name        = isset( $item['name'] ) ? $item['name'] : '';
-                                $old_version = isset( $item['old_version'] ) ? $item['old_version'] : '';
+                            if ( ! is_array( $item ) ) {
+                                continue;
+                            }
+
+                            $success     = ! empty( $item['success'] ) ? 1 : 0;
+                            $slug        = isset( $item['slug'] ) ? $item['slug'] : '';
+                            $name        = isset( $item['name'] ) ? $item['name'] : '';
+                            $version     = isset( $item['version'] ) ? $item['version'] : '';
+                            $old_version = isset( $item['old_version'] ) ? $item['old_version'] : '';
+
+                            if ( ! empty( $slug ) ) {
+                                $return_results['updates_info'][ esc_html( $slug ) ] = array(
+                                    'success'     => $success,
+                                    'name'        => $name,
+                                    'old_version' => $old_version,
+                                    'version'     => $version,
+                                );
+                            }
+
+                            if ( ! empty( $item ) && ! empty( $slug ) && ! empty( $item['rollback'] ) ) {
+                                $msg = MainWP_Updates_Helper::get_roll_msg( $item );
+                                $return_results['result_error'][ rawurlencode( $slug ) ] = esc_html( $msg );
 
                                 if ( ! empty( $version ) ) {
                                     if ( ! isset( $saved_roll_items[ $_type ] ) ) {
@@ -113,12 +131,12 @@ class MainWP_Rest_Api_Helper { //phpcs:ignore -- NOSONAR - multi methods.
                                         $saved_item['error'] = $item['error'];
                                     }
 
-                                    $saved_roll_items[ $_type ][ $item['slug'] ][ $version ] = $saved_item;
+                                    $saved_roll_items[ $_type ][ $slug ][ $version ] = $saved_item;
                                     $update = true;
                                 }
-                            } elseif ( ! empty( $item ) && ! empty( $item['slug'] ) && ! empty( $item['success'] ) ) {
-                                if ( ! empty( $version ) && isset( $saved_roll_items[ $_type ][ $item['slug'] ][ $version ] ) ) {
-                                    unset( $saved_roll_items[ $_type ][ $item['slug'] ][ $version ] );
+                            } elseif ( ! empty( $item ) && ! empty( $slug ) && ! empty( $success ) ) {
+                                if ( ! empty( $version ) && isset( $saved_roll_items[ $_type ][ $slug ][ $version ] ) ) {
+                                    unset( $saved_roll_items[ $_type ][ $slug ][ $version ] );
                                     $update = true;
                                 }
                             }

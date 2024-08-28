@@ -11,9 +11,9 @@ namespace MainWP\Dashboard\Module\CostTracker;
 use MainWP\Dashboard\MainWP_DB_Client;
 
 /**
- * Class Rest_Api
+ * Class Cost_Tracker_Rest_Api_V1
  */
-class Rest_Api {
+class Cost_Tracker_Rest_Api_V1 {
 
     /**
      * Protected variable to hold the API version.
@@ -180,7 +180,7 @@ class Rest_Api {
         if ( apply_filters( 'mainwp_rest_api_validate', false, $request ) ) {
             $costs          = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'all' );
             $result         = array();
-            $data           = Cost_Tracker_Rest_Api_Handle::instance()->prepare_api_costs_data( $costs );
+            $data           = Cost_Tracker_Rest_Api_Handle_V1::instance()->prepare_api_costs_data( $costs );
             $result['data'] = $data;
             $response       = new \WP_REST_Response( $result );
             $response->set_status( 200 );
@@ -219,7 +219,7 @@ class Rest_Api {
                     $error = esc_html__( 'Invalid Client ID or Client not found. Please try again.', 'mainwp' );
                 } else {
                     $costs = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'client_id', $client_id );
-                    $data  = Cost_Tracker_Rest_Api_Handle::instance()->prepare_api_costs_data( $costs );
+                    $data  = Cost_Tracker_Rest_Api_Handle_V1::instance()->prepare_api_costs_data( $costs );
 
                     $result         = array();
                     $result['data'] = $data;
@@ -261,12 +261,12 @@ class Rest_Api {
                 $site_id = intval( $request['site_id'] );
                 $result  = array();
 
-                $valid_error = Cost_Tracker_Rest_Api_Handle::instance()->valid_api_request_data_by( 'site_id', $site_id );
+                $valid_error = Cost_Tracker_Rest_Api_Handle_V1::instance()->valid_api_request_data_by( 'site_id', $site_id );
                 if ( ! empty( $valid_error ) ) {
                     $result = $valid_error;
                 } else {
                     $costs          = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'site_id', $site_id );
-                    $data           = Cost_Tracker_Rest_Api_Handle::instance()->prepare_api_costs_data( $costs );
+                    $data           = Cost_Tracker_Rest_Api_Handle_V1::instance()->prepare_api_costs_data( $costs );
                     $result['data'] = $data;
                 }
                 $response = new \WP_REST_Response( $result );
@@ -314,7 +314,7 @@ class Rest_Api {
                 if ( empty( $cost ) ) {
                     $error = esc_html__( 'Invaid subscription id or subscription not found. Plase try again.', 'mainwp' );
                 } else {
-                    $data           = Cost_Tracker_Rest_Api_Handle::instance()->prepare_api_costs_data( $costs_data );
+                    $data           = Cost_Tracker_Rest_Api_Handle_V1::instance()->prepare_api_costs_data( $costs_data );
                     $result['data'] = $data;
                 }
 

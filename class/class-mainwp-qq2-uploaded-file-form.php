@@ -38,7 +38,7 @@ class MainWP_QQ2_Uploaded_File_Form { // phpcs:ignore Generic.Classes.OpeningBra
 
         $moved = false;
 
-        $tmp_name = isset( $_FILES['qqfile']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['qqfile']['tmp_name'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification.Missing -- verify in caller.
+        $tmp_name = isset( $_FILES['qqfile']['tmp_name'] ) && MainWP_Utility::valid_file_check( $_FILES['qqfile']['tmp_name'] ) ? $_FILES['qqfile']['tmp_name'] : ''; //phpcs:ignore -- valid.
 
         if ( ! empty( $tmp_name ) ) {
             if ( $wpFileSystem ) { //phpcs:ignore -- to valid.

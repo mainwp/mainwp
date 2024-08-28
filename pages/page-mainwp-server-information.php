@@ -643,7 +643,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 <td>OpenSSL Working Status</td>
                 <td>Yes</td>
                 <td><?php echo $wk ? 'Yes' : 'No'; ?></td>
-                <td class="right aligned"><?php echo $wk ? static::get_pass_html() : static::get_warning_html(); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+                <td class="right aligned"><?php $wk ? static::get_pass_html( true ) : static::get_warning_html( self::WARNING, true ); ?></td>
             </tr>
             <?php
 
@@ -672,6 +672,28 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             <td><?php esc_html_e( 'N/A', 'mainwp' ); ?></td>
             <td><?php MainWP_Server_Information_Handler::get_php_xml(); ?></td>
             <td></td>
+        </tr>
+        <tr>
+            <td><?php esc_html_e( 'Function `tmpfile` enabled', 'mainwp' ); ?></td>
+            <td><?php esc_html_e( 'N/A', 'mainwp' ); ?></td>
+            <td>
+            <?php
+            $tmpfile_enabled = MainWP_System_View::is_tmpfile_enable();
+            echo $tmpfile_enabled ? esc_html__( 'Enabled', 'mainwp' ) : esc_html__( 'Disabled', 'mainwp' );
+            ?>
+            </td>
+            <td class="right aligned"><?php $tmpfile_enabled ? static::get_pass_html( true ) : static::get_warning_html( self::WARNING, true ); ?></td>
+        </tr>
+        <tr>
+            <td><?php esc_html_e( 'PHP Session enabled', 'mainwp' ); ?></td>
+            <td><?php esc_html_e( 'N/A', 'mainwp' ); ?></td>
+            <td>
+            <?php
+                $session_disable = MainWP_Cache::is_session_disable();
+                echo $session_disable ? esc_html__( 'Disabled', 'mainwp' ) : esc_html__( 'Enabled', 'mainwp' );
+            ?>
+            </td>
+            <td class="right aligned"><?php echo ! $session_disable ? static::get_pass_html() : static::get_warning_html(); //phpcs:ignore -- ok. ?></td>
         </tr>
         <tr>
             <td><?php esc_html_e( 'PHP Disabled Functions', 'mainwp' ); ?></td>
@@ -1880,23 +1902,39 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
     /**
      * Renders PHP Warning HTML.
      *
-     * @param int $errorType Global variable static::WARNING = 1.
+     * @param int  $errorType Global variable static::WARNING = 1.
+     * @param bool $ech echo or return.
      *
      * @return string PHP Warning html.
      */
-    private static function get_warning_html( $errorType = self::WARNING ) {
+    private static function get_warning_html( $errorType = self::WARNING, $ech = false ) {
+        $msg = '';
         if ( static::WARNING === $errorType ) {
-            return '<i class="large yellow exclamation icon"></i><span style="display:none">' . esc_html__( 'Warning', 'mainwp' ) . '</span>';
+            $msg = '<i class="large yellow exclamation icon"></i><span style="display:none">' . esc_html__( 'Warning', 'mainwp' ) . '</span>';
+        } else {
+            $msg = '<i class="large red times icon"></i><span style="display:none">' . esc_html__( 'Fail', 'mainwp' ) . '</span>';
         }
-        return '<i class="large red times icon"></i><span style="display:none">' . esc_html__( 'Fail', 'mainwp' ) . '</span>';
+
+        if ( $ech ) {
+            echo $msg; //phpcs:ignore -- escaped.
+        } else {
+            return $msg;
+        }
     }
 
     /**
      * Renders PHP Pass HTML.
      *
+     * @param bool $ech echo or return.
+     *
      * @return string PHP Pass html.
      */
-    private static function get_pass_html() {
-        return '<i class="large green check icon"></i><span style="display:none">' . esc_html__( 'Pass', 'mainwp' ) . '</span>';
+    private static function get_pass_html( $ech = false ) {
+        $msg = '<i class="large green check icon"></i><span style="display:none">' . esc_html__( 'Pass', 'mainwp' ) . '</span>';
+        if ( $ech ) {
+            echo $msg; //phpcs:ignore -- escaped.
+        } else {
+            return $msg;
+        }
     }
 }

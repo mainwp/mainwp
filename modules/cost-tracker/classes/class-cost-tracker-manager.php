@@ -15,7 +15,6 @@ use MainWP\Dashboard\MainWP_Utility;
  */
 class Cost_Tracker_Manager {
 
-
     /**
      * Static variable to hold the single instance of the class.
      *
@@ -51,8 +50,25 @@ class Cost_Tracker_Manager {
         Cost_Tracker_Admin::get_instance();
         $base_dir = static::get_location_path();
         // includes rest api work.
-        require_once $base_dir . 'classes/class-cost-tracker-rest-api.php'; // NOSONAR - WP compatible.
-        Rest_Api::instance()->init();
+        require_once $base_dir . 'rest-api/version1/class-cost-tracker-rest-api-v1.php'; // NOSONAR - WP compatible.
+        require_once $base_dir . 'rest-api/version1/class-cost-tracker-rest-api-handle-v1.php'; // NOSONAR - WP compatible.
+
+        require_once $base_dir . 'rest-api/version2/class-mainwp-rest-costs-controller.php'; // NOSONAR - WP compatible.
+
+        Cost_Tracker_Rest_Api_V1::instance()->init();
+        add_filter( 'mainwp_rest_api_get_rest_namespaces', array( $this, 'hook_rest_api_get_rest_namespaces' ), 10, 1 );
+    }
+
+    /**
+     * Method hook_rest_api_get_rest_namespaces().
+     *
+     * @param string $namespaces namespaces.
+     *
+     * @return string namespaces.
+     */
+    public function hook_rest_api_get_rest_namespaces( $namespaces ) {
+        $namespaces['mainwp/v2/costs'] = array( 'costs' => \MainWP_Rest_Costs_Controller::class );
+        return $namespaces;
     }
 
     /**

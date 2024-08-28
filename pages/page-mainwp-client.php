@@ -72,7 +72,6 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
          */
         add_action( 'mainwp_pagefooter_client', array( static::get_class_name(), 'render_footer' ) );
 
-        add_action( 'mainwp_help_sidebar_content', array( static::get_class_name(), 'mainwp_help_content' ) );
         MainWP_Post_Handler::instance()->add_action( 'mainwp_add_edit_client_upload_client_icon', array( static::class, 'ajax_upload_client_icon' ) );
         MainWP_Post_Handler::instance()->add_action( 'mainwp_add_edit_contact_upload_contact_icon', array( static::class, 'ajax_upload_contact_icon' ) );
     }
@@ -2005,33 +2004,5 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
         }
         die( wp_json_encode( array( 'undefined_error' => true ) ) );
-    }
-
-        /**
-         * Hooks the section help content to the Help Sidebar element.
-         */
-    public static function mainwp_help_content() {
-        if ( isset( $_GET['page'] ) && ( 'ManageClients' === $_GET['page'] || 'ClientAddNew' === $_GET['page'] || 'UpdateAdminPasswords' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            ?>
-            <p><?php esc_html_e( 'If you need help with managing clients, please review following help documents', 'mainwp' ); ?></p>
-            <div class="ui relaxed bulleted list">
-                <div class="item"><a href="https://kb.mainwp.com/docs/manage-clients/" target="_blank">Manage Clients</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
-                <?php
-                /**
-                 * Action: mainwp_clients_help_item
-                 *
-                 * Fires at the bottom of the help articles list in the Help sidebar on the Clients page.
-                 *
-                 * Suggested HTML markup:
-                 *
-                 * <div class="item"><a href="Your custom URL">Your custom text</a></div>
-                 *
-                 * @since 4.1
-                 */
-                do_action( 'mainwp_clients_help_item' );
-                ?>
-            </div>
-                <?php
-        }
     }
 }

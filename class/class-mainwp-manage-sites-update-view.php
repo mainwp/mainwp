@@ -55,7 +55,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
          */
         global $current_user;
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();
-        $sql           = MainWP_DB::instance()->get_sql_website_by_id( $id, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
+        $sql           = MainWP_DB::instance()->get_sql_website_by_id( $id, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
         $websites      = MainWP_DB::instance()->query( $sql );
 
         MainWP_DB::data_seek( $websites, 0 );
@@ -98,7 +98,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                 </div>
             <?php endif; ?>
             <?php
-            static::render_wpcore_updates( $website, $active_tab );
+            static::render_wpcore_updates( $website, $active_tab, $userExtension );
             static::render_plugins_updates( $website, $active_tab, $userExtension );
             static::render_themes_updates( $website, $active_tab, $userExtension );
 
@@ -137,8 +137,14 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
     public static function get_total_info( $site_id ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();
-        $sql           = MainWP_DB::instance()->get_sql_website_by_id( $site_id, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
-        $websites      = MainWP_DB::instance()->query( $sql );
+
+        $decodedIgnoredCores = ! empty( $userExtension->ignored_wp_upgrades ) ? json_decode( $userExtension->ignored_wp_upgrades, true ) : array();
+        if ( ! is_array( $decodedIgnoredCores ) ) {
+            $decodedIgnoredCores = array();
+        }
+
+        $sql      = MainWP_DB::instance()->get_sql_website_by_id( $site_id, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
+        $websites = MainWP_DB::instance()->query( $sql );
 
         MainWP_DB::data_seek( $websites, 0 );
         if ( $websites ) {
@@ -159,10 +165,10 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
             return $return;
         }
 
-        $wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
-        $wp_upgrades = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
+        $wp_upgrades           = ! empty( $website->wp_upgrades ) ? json_decode( $website->wp_upgrades, true ) : array();
+        $ignored_core_upgrades = ! empty( $website->ignored_wp_upgrades ) ? json_decode( $website->ignored_wp_upgrades, true ) : array();
 
-        if ( $website->is_ignoreCoreUpdates ) {
+        if ( $website->is_ignoreCoreUpdates || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $ignored_core_upgrades, 'core' ) || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $decodedIgnoredCores, 'core' ) ) {
             $wp_upgrades = array();
         }
 
@@ -196,12 +202,12 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
         }
         $ignored_plugins = json_decode( $website->ignored_plugins, true );
         if ( is_array( $ignored_plugins ) ) {
-            $plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+            $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
         }
 
         $ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
         if ( is_array( $ignored_plugins ) ) {
-            $plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+            $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
         }
 
         $return['total_plugins'] = count( $plugin_upgrades );
@@ -234,12 +240,12 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
         }
         $ignored_themes = json_decode( $website->ignored_themes, true );
         if ( is_array( $ignored_themes ) ) {
-            $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+            $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
         }
 
         $ignored_themes = json_decode( $userExtension->ignored_themes, true );
         if ( is_array( $ignored_themes ) ) {
-            $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+            $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
         }
 
         $return['total_themes'] = count( $theme_upgrades );
@@ -305,12 +311,13 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      *
      * Render the WordPress Updates Tab.
      *
-     * @param mixed $website Child Site info.
-     * @param mixed $active_tab Current active tab.
+     * @param mixed  $website Child Site info.
+     * @param mixed  $active_tab Current active tab.
+     * @param object $userExtension User Extension.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
      */
-    public static function render_wpcore_updates( $website, $active_tab ) { // phpcs:ignore -- NOSONAR - complex.
+    public static function render_wpcore_updates( $website, $active_tab, $userExtension ) { // phpcs:ignore -- NOSONAR - complex.
         $user_can_update_wp = mainwp_current_user_have_right( 'dashboard', 'update_wordpress' );
         $is_demo            = MainWP_Demo_Handle::is_demo_mode();
         ?>
@@ -324,29 +331,35 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                         </tr>
                     </thead>
                     <tbody>
-                    <?php if ( ! $website->is_ignoreCoreUpdates ) : ?>
-                        <?php
-                            $wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
-                            $wp_upgrades = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
+                    <?php
 
-                            $wpcore_update_disabled_by = '';
+                    $decodedIgnoredCores = ! empty( $userExtension->ignored_wp_upgrades ) ? json_decode( $userExtension->ignored_wp_upgrades, true ) : array();
+                    if ( ! is_array( $decodedIgnoredCores ) ) {
+                        $decodedIgnoredCores = array();
+                    }
+
+                    $wp_upgrades           = ! empty( $website->wp_upgrades ) ? json_decode( $website->wp_upgrades, true ) : array();
+                    $ignored_core_upgrades = ! empty( $website->ignored_wp_upgrades ) ? json_decode( $website->ignored_wp_upgrades, true ) : array();
+                    ?>
+                    <?php if ( ! $website->is_ignoreCoreUpdates && ! MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $ignored_core_upgrades, 'core' ) && ! MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $decodedIgnoredCores, 'core' ) ) : ?>
+                        <?php
+                        $wpcore_update_disabled_by = '';
                         if ( ! empty( $wp_upgrades ) ) {
                             $wpcore_update_disabled_by = MainWP_System_Utility::disabled_wpcore_update_by( $website );
                         }
+                        $last_version = ! empty( $wp_upgrades ) ? $wp_upgrades['new'] : '';
                         ?>
                         <?php if ( ( ! empty( $wp_upgrades ) ) && '' === $website->sync_errors ) : ?>
-                        <tr class="mainwp-wordpress-update" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" updated="<?php echo ! empty( $wp_upgrades ) && empty( $wpcore_update_disabled_by ) ? '0' : '1'; ?>">
+                        <tr class="mainwp-wordpress-update" site_id="<?php echo intval( $website->id ); ?>" last-version="<?php echo esc_attr( rawurlencode( $last_version ) ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" updated="<?php echo ! empty( $wp_upgrades ) && empty( $wpcore_update_disabled_by ) ? '0' : '1'; ?>">
                             <td>
                                 <?php if ( ! empty( $wp_upgrades ) ) : ?>
                                     <?php echo esc_html( $wp_upgrades['current'] ); ?>
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <?php if ( ! empty( $wp_upgrades ) ) : ?>
-                                    <?php echo esc_html( $wp_upgrades['new'] ); ?>
-                                <?php endif; ?>
+                                <?php echo esc_html( $last_version ); ?>
                             </td>
-                        <td>
+                            <td>
                                 <?php if ( $user_can_update_wp ) : ?>
                                     <?php
                                     if ( ! empty( $wp_upgrades ) ) :
@@ -359,6 +372,17 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                                                 MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green button mini disabled" disabled="disabled">' . esc_html__( 'Update Now', 'mainwp' ) . '</a>' );
                                             } else {
                                                 ?>
+                                                <div class="ui mini buttons">
+                                                    <div class="ui button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></div>
+                                                    <div class="ui floating dropdown icon button">
+                                                        <i class="dropdown icon"></i>
+                                                        <div class="menu">
+                                                            <a href="javascript:void(0)" onClick="return updatesoverview_upgrade_ignore( <?php echo intval( $website->id ); ?>, this, '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )" class="item"><?php esc_html_e( 'Ignore this version', 'mainwp' ); ?></a>
+                                                            <a href="javascript:void(0)" class="item mainwp-ignore-globally-button" onClick="return updatesoverview_upgrade_ignore_this_version_globally( '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )"><?php esc_html_e( 'Ignore this version globally', 'mainwp' ); ?></a>
+                                                            <a href="javascript:void(0)" onClick="return updatesoverview_upgrade_ignore_all_version( <?php echo intval( $website->id ); ?>, this )" class="item"><?php esc_html_e( 'Ignore all versions', 'mainwp' ); ?></a>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 <a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update', 'mainwp' ) . ' ' . esc_attr( $website->name ); ?>" data-inverted="" data-position="left center" class="ui green button mini" onClick="return updatesoverview_upgrade(<?php echo intval( $website->id ); ?>, this )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
                                                 <?php
                                             }
@@ -443,12 +467,12 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                 }
                 $ignored_plugins = json_decode( $website->ignored_plugins, true );
                 if ( is_array( $ignored_plugins ) ) {
-                    $plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+                    $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
                 }
 
                 $ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
                 if ( is_array( $ignored_plugins ) ) {
-                    $plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+                    $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
                 }
 
                 $updates_table_helper = new MainWP_Updates_Table_Helper( MAINWP_VIEW_PER_SITE, 'plugin', array( 'show_select' => true ) );
@@ -484,7 +508,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                         }
 
                         ?>
-                        <tr plugin_slug="<?php echo esc_attr( $plugin_name ); ?>" premium="<?php echo isset( $plugin_upgrade['premium'] ) && ! empty( $plugin_upgrade['premium'] ) ? 1 : 0; ?>" updated="0">
+                        <tr plugin_slug="<?php echo esc_attr( $plugin_name ); ?>" last-version="<?php echo esc_js( rawurlencode( $last_version ) ); ?>" premium="<?php echo isset( $plugin_upgrade['premium'] ) && ! empty( $plugin_upgrade['premium'] ) ? 1 : 0; ?>" updated="0">
                             <?php
                             $row_columns     = $updates_table_helper->render_columns( $row_columns, $website, $others );
                             $action_rendered = isset( $row_columns['action'] ) ? true : false;
@@ -492,7 +516,17 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                                 ?>
                             <td>
                                 <?php if ( $user_can_ignore_unignore ) : ?>
-                                    <a href="javascript:void(0)" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_js( rawurlencode( $plugin_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this )" class="ui mini button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
+                                    <div class="ui mini buttons">
+                                        <div class="ui button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></div>
+                                        <div class="ui floating dropdown icon button">
+                                            <i class="dropdown icon"></i>
+                                            <div class="menu">
+                                                <a href="javascript:void(0)" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_js( rawurlencode( $plugin_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this, '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )" class="item"><?php esc_html_e( 'Ignore this version', 'mainwp' ); ?></a>
+                                                <a href="javascript:void(0)" class="item mainwp-ignore-globally-button" onClick="return updatesoverview_plugins_ignore_all( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_attr( rawurlencode( $plugin_upgrade['Name'] ) ); ?>', this, '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )"><?php esc_html_e( 'Ignore this version globally', 'mainwp' ); ?></a>
+                                                <a href="javascript:void(0)" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_js( rawurlencode( $plugin_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this, 'all_versions' )" class="item"><?php esc_html_e( 'Ignore all versions', 'mainwp' ); ?></a>
+                                            </div>
+                                        </div>
+                                    </div>
                                 <?php endif; ?>
                                 <?php
                                 if ( $user_can_update_plugins ) :
@@ -636,12 +670,12 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                 }
                 $ignored_themes = json_decode( $website->ignored_themes, true );
                 if ( is_array( $ignored_themes ) ) {
-                    $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+                    $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
                 }
 
                 $ignored_themes = json_decode( $userExtension->ignored_themes, true );
                 if ( is_array( $ignored_themes ) ) {
-                    $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+                    $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
                 }
 
                 $updates_table_helper = new MainWP_Updates_Table_Helper( MAINWP_VIEW_PER_SITE, 'theme', array( 'show_select' => true ) );
@@ -674,7 +708,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                                 $others['roll_info'] = $msg;
                             }
                             ?>
-                            <tr theme_slug="<?php echo esc_attr( $theme_name ); ?>" premium="<?php echo isset( $theme_upgrade['premium'] ) && ! empty( $theme_upgrade['premium'] ) ? 1 : 0; ?>" updated="0">
+                            <tr theme_slug="<?php echo esc_attr( $theme_name ); ?>" last-version="<?php echo esc_js( rawurlencode( $last_version ) ); ?>" premium="<?php echo isset( $theme_upgrade['premium'] ) && ! empty( $theme_upgrade['premium'] ) ? 1 : 0; ?>" updated="0">
                                 <?php
                                 $row_columns     = $updates_table_helper->render_columns( $row_columns, $website, $others );
                                 $action_rendered = isset( $row_columns['action'] ) ? true : false;
@@ -682,7 +716,17 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                                     ?>
                                 <td>
                                     <?php if ( $user_can_ignore_unignore ) : ?>
-                                        <a href="javascript:void(0)" onClick="return updatesoverview_themes_ignore_detail( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $theme_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this )" class="ui mini button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
+                                        <div class="ui mini buttons">
+                                            <div class="ui button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></div>
+                                            <div class="ui floating dropdown icon button">
+                                                <i class="dropdown icon"></i>
+                                                <div class="menu">
+                                                    <a href="javascript:void(0)" onClick="return updatesoverview_themes_ignore_detail( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $theme_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this, '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )" class="item"><?php esc_html_e( 'Ignore this version', 'mainwp' ); ?></a>
+                                                    <a href="javascript:void(0)" class="item mainwp-ignore-globally-button" onClick="return updatesoverview_themes_ignore_all( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $theme_upgrade['Name'] ) ); ?>', this, '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )"><?php esc_html_e( 'Ignore this version globally', 'mainwp' ); ?></a>
+                                                    <a href="javascript:void(0)" onClick="return updatesoverview_themes_ignore_detail( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $theme_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this, 'all_versions' )" class="item"><?php esc_html_e( 'Ignore all versions', 'mainwp' ); ?></a>
+                                                </div>
+                                            </div>
+                                        </div>
                                     <?php endif; ?>
                                     <?php
                                     if ( $user_can_update_themes ) :

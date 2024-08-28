@@ -921,7 +921,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
 
         $options_value[ $opt ] = array(
             'label' => esc_html__( 'REST API enabled', 'mainwp' ),
-            'value' => Rest_Api::instance()->is_rest_api_enabled() ? esc_html__( 'Yes', 'mainwp' ) : esc_html__( 'No', 'mainwp' ),
+            'value' => Rest_Api_V1::instance()->is_rest_api_enabled() ? esc_html__( 'Yes', 'mainwp' ) : esc_html__( 'No', 'mainwp' ),
         );
 
         /**

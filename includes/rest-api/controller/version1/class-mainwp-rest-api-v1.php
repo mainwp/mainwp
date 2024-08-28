@@ -4,20 +4,33 @@
  *
  * This class handles the REST API
  *
- * @package MainWP/REST API
+ * @package MainWP\Dashboard
  * @author Martin Gibson
  */
 
 namespace MainWP\Dashboard;
 
+use MainWP\Dashboard\MainWP_Rest_Api_Page;
+use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Utility;
+use MainWP\Dashboard\MainWP_Monitoring_Handler;
+use MainWP\Dashboard\MainWP_Sync;
+use MainWP\Dashboard\MainWP_DB_Site_Actions;
+use MainWP\Dashboard\MainWP_Client_Handler;
+use MainWP\Dashboard\MainWP_DB_Common;
+use MainWP\Dashboard\MainWP_Updates_Handler;
+use MainWP\Dashboard\MainWP_DB_Client;
+use MainWP\Dashboard\MainWP_Connect;
+use MainWP\Dashboard\MainWP_Error_Helper;
+use MainWP\Dashboard\MainWP_Exception;
 use Exception;
 
 /**
- * Class Rest_Api
+ * Class Rest_Api_V1
  *
  * @package MainWP\Dashboard
  */
-class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
+class Rest_Api_V1 { //phpcs:ignore -- NOSONAR - multi methods.
 
     // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
@@ -65,11 +78,14 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
      */
     public function init() {
         if ( $this->is_rest_api_enabled() ) {
-            add_filter( 'mainwp_rest_api_validate', array( &$this, 'rest_api_validate' ), 10, 2 );
+            add_filter( 'mainwp_rest_api_validate', array( &$this, 'rest_api_validate' ), 10, 2 ); // to compatible version 1 rest api validate.
             // run API.
-            add_action( 'rest_api_init', array( &$this, 'mainwp_register_routes' ) );
+            if ( $this->enabled_rest_v1_api() ) {
+                add_action( 'rest_api_init', array( &$this, 'mainwp_register_routes' ) );
+            }
         }
         add_filter( 'mainwp_rest_api_enabled', array( &$this, 'hook_rest_api_enabled' ), 10, 1 );
+        add_filter( 'mainwp_rest_api_v2_enabled', array( &$this, 'hook_rest_api_v2_enabled' ), 10, 1 );
     }
 
 
@@ -80,23 +96,22 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
      */
     public function is_rest_api_enabled() {
         if ( null === static::$enabled_api ) {
-            static::$enabled_api = $this->enabled_rest_api();
+            $disabled = apply_filters( 'mainwp_rest_api_disabled', false );
+            if ( $disabled ) {
+                static::$enabled_api = false;
+            } else {
+                static::$enabled_api = $this->enabled_rest_v2_api() || $this->enabled_rest_v1_api();
+            }
         }
         return static::$enabled_api;
     }
 
     /**
-     * Method enabled_rest_api()
+     * Method enabled_rest_v1_api()
      *
-     * Enabled the REST API.
+     * Check if enable the REST API.
      */
-    public function enabled_rest_api() {
-
-        $disabled = apply_filters( 'mainwp_rest_api_disabled', false );
-
-        if ( $disabled ) {
-            return false;
-        }
+    private function enabled_rest_v1_api() {
 
         $all_keys = get_option( 'mainwp_rest_api_keys', false );
 
@@ -114,6 +129,15 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
+     * Method enabled_rest_v2_api()
+     *
+     * Enabled the REST API.
+     */
+    private function enabled_rest_v2_api() {
+        return MainWP_DB::instance()->is_existed_enabled_rest_key();
+    }
+
+    /**
      * Method hook_rest_api_enabled()
      *
      * Hook to check if Enabled the REST API.
@@ -123,13 +147,21 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
+     * Method hook_rest_api_enabled()
+     *
+     * Hook to check if Enabled the REST API.
+     */
+    public function hook_rest_api_v2_enabled() {
+        return $this->is_rest_api_enabled() && $this->enabled_rest_v2_api();
+    }
+
+    /**
      * Method mainwp_rest_api_init()
      *
      * Creates the necessary endpoints for the api.
      * Note, for a request to be successful the URL query parameters consumer_key and consumer_secret need to be set and correct.
      */
     public function mainwp_register_routes() { // phpcs:ignore -- NOSONAR - complex.
-
         // Create an array which holds all the endpoints. Method can be GET, POST, PUT, DELETE.
         $endpoints = array(
             array(
@@ -2956,7 +2988,7 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
      *
      * @return object $response An object that contains the return data and status of the API request.
      */
-    public function mainwp_rest_api_site_update_plugins_callback( $request ) {
+    public function mainwp_rest_api_site_update_plugins_callback( $request ) { //phpcs:ignore -- NOSONAR - complex.
 
         // first validate the request.
         $valid = $this->mainwp_validate_request( $request );
@@ -2980,25 +3012,30 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
                     foreach ( $plugin_upgrades as $slug => $plugin ) {
                         $slugs[] = $slug;
                     }
-                    $information = MainWP_Connect::fetch_url_authed(
-                        $website,
-                        'upgradeplugintheme',
-                        array(
-                            'type' => 'plugin',
-                            'list' => urldecode( implode( ',', $slugs ) ),
-                        )
-                    );
 
-                    $result = MainWP_Rest_Api_Helper::instance()->handle_site_update_item( $site_id, 'plugin', $information );
+                    try {
+                        $information = MainWP_Connect::fetch_url_authed(
+                            $website,
+                            'upgradeplugintheme',
+                            array(
+                                'type' => 'plugin',
+                                'list' => urldecode( implode( ',', $slugs ) ),
+                            )
+                        );
 
-                    $data = array(
-                        'SUCCESS' => 'Process ran.', // to compatible.
-                        'data'    => $result,
-                    );
+                        $result = Rest_Api_V1_Helper::instance()->handle_site_update_item( $site_id, 'plugin', $information );
 
-                    $response = new \WP_REST_Response( $data );
-                    $response->set_status( 200 );
+                        $data = array(
+                            'SUCCESS' => 'Process ran.', // to compatible.
+                            'data'    => $result,
+                        );
 
+                        $response = new \WP_REST_Response( $data );
+                        $response->set_status( 200 );
+
+                    } catch ( \Exception $e ) {
+                        return new \WP_Error( 'mainwp_rest_upgrade_plugintheme_error', $e->getMessage() );
+                    }
                 } else {
                     // throw invalid data error.
                     $response = $this->mainwp_invalid_data_error();
@@ -3050,6 +3087,7 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
                     foreach ( $theme_upgrades as $slug => $theme ) {
                         $slugs[] = $slug;
                     }
+
                     $information = MainWP_Connect::fetch_url_authed(
                         $website,
                         'upgradeplugintheme',
@@ -3059,7 +3097,7 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
                         )
                     );
 
-                    $result = MainWP_Rest_Api_Helper::instance()->handle_site_update_item( $site_id, 'theme', $information );
+                    $result = Rest_Api_V1_Helper::instance()->handle_site_update_item( $site_id, 'theme', $information );
 
                     $data = array(
                         'SUCCESS' => 'Process ran.', // to compatible.
@@ -3189,7 +3227,7 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
                         )
                     );
 
-                    $result = MainWP_Rest_Api_Helper::instance()->handle_site_update_item( $site_id, $type, $information );
+                    $result = Rest_Api_V1_Helper::instance()->handle_site_update_item( $site_id, $type, $information );
 
                     $data = array(
                         'SUCCESS' => 'Process ran.', // to compatible.
@@ -3901,7 +3939,7 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
                 $type = $request['type'];
                 $slug = $request['slug'];
 
-                MainWP_Updates_Handler::unignore_plugins_themes( $type, $slug );
+                MainWP_Updates_Handler::unignore_global_plugins_themes( $type, $slug );
 
                 // do common process response.
                 $response = $this->mainwp_run_process_success();
@@ -4184,3 +4222,4 @@ class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
     }
 }
 // End of class.
+Rest_Api_V1::instance()->init();

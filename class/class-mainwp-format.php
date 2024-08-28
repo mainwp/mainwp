@@ -194,7 +194,7 @@ class MainWP_Format { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                         'Blog: https://mainwp.com/mainwp-blog/' . "\r\n" .
                                         'Codex: https://mainwp.dev/' . "\r\n" .
                                         'Support: https://mainwp.com/support/' . "\r\n\r\n" .
-                                        'Follow us on Twitter: https://twitter.com/mymainwp' . "\r\n" .
+                                        'Follow us on X: https://x.com/mymainwp' . "\r\n" .
                                         'Friend us on Facebook: https://www.facebook.com/mainwp' . "\r\n\r\n" .
                                         "Copyright {$current_year} MainWP, All rights reserved.";
         } else {
@@ -505,7 +505,7 @@ EOT;
                                                                     <a href="https://mainwp.com" target="_self" style="color: #7fb100;font-weight: normal;text-decoration: none;text-transform: uppercase;">MainWP</a> | <a href="https://mainwp.com/mainwp-extensions/" target="_self" style="color: #7fb100;font-weight: normal;text-decoration: none;text-transform: uppercase;">Extensions</a> | <a href="https://kb.mainwp.com/" target="_self" style="color: #7fb100;font-weight: normal;text-decoration:none;text-transform: uppercase;">Documentation</a> | <a href="https://mainwp.com/mainwp-blog/" target="_self" style="color: #7fb100;font-weight: normal;text-decoration: none;text-transform: uppercase;">Blog</a> | <a href="http://codex.mainwp.com" target="_self" style="color: #7fb100;font-weight: normal;text-decoration: none;text-transform: uppercase;">Codex</a> | <a href="https://mainwp.com/support/" target="_self" style="color: #7fb100;font-weight: normal;text-decoration: none;text-transform: uppercase;">Support</a></div>
 
                                                                     <hr><br>
-                                                                    <a href="https://twitter.com/mymainwp" target="_blank" style="color: #336699;font-weight: normal;text-decoration: underline;">Follow us on Twitter</a> | <a href="https://www.facebook.com/mainwp" style="color:#336699;font-weight: normal;text-decoration: underline;">Friend us on Facebook</a>
+                                                                    <a href="https://x.com/mymainwp" target="_blank" style="color: #336699;font-weight: normal;text-decoration: underline;">Follow us on X</a> | <a href="https://www.facebook.com/mainwp" style="color:#336699;font-weight: normal;text-decoration: underline;">Friend us on Facebook</a>
                                                             </td>
                                                         </tr>
                                                         <tr>

@@ -459,6 +459,32 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     MainWP_Logger::instance()->log_update_check( 'New frequency daily :: ' . $new_freq );
                 }
 
+                $curr_frequency_updates = get_option( 'mainwp_frequency_AutoUpdate', 'daily' );
+                $new_frequency_updates  = isset( $_POST['mainwp_frequency_AutoUpdate'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_frequency_AutoUpdate'] ) ) : 'daily';
+                if ( $new_frequency_updates !== $curr_frequency_updates ) {
+                    MainWP_Utility::update_option( 'mainwp_frequency_AutoUpdate', $new_frequency_updates );
+                }
+
+                $curr_day_updates = (int) get_option( 'mainwp_dayinweek_AutoUpdate', 0 );
+                $new_day_updates  = isset( $_POST['mainwp_dayinweek_AutoUpdate'] ) ? intval( wp_unslash( $_POST['mainwp_dayinweek_AutoUpdate'] ) ) : 0;
+                if ( $new_day_updates !== $curr_day_updates ) {
+                    MainWP_Utility::update_option( 'mainwp_dayinweek_AutoUpdate', $new_day_updates );
+                }
+
+                $curr_dayinmonth_updates = (int) get_option( 'mainwp_dayinmonth_AutoUpdate', 1 );
+                $new_dayinmonth_updates  = isset( $_POST['mainwp_dayinmonth_AutoUpdate'] ) ? intval( wp_unslash( $_POST['mainwp_dayinmonth_AutoUpdate'] ) ) : 1;
+                if ( $new_dayinmonth_updates !== $curr_dayinmonth_updates ) {
+                    MainWP_Utility::update_option( 'mainwp_dayinmonth_AutoUpdate', $new_dayinmonth_updates );
+                }
+
+                $curr_time_updates = get_option( 'mainwp_time_AutoUpdate', '00:00' );
+                $new_time_updates  = isset( $_POST['mainwp_time_AutoUpdate'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_time_AutoUpdate'] ) ) : '00:00';
+                if ( $new_time_updates !== $curr_time_updates ) {
+                    MainWP_Utility::update_option( 'mainwp_time_AutoUpdate', $new_time_updates );
+                }
+
+                MainWP_Cron_Jobs_Auto_Updates::set_next_auto_updates_time();
+
                 $new_delay = ( isset( $_POST['mainwp_delay_autoupdate'] ) ? intval( $_POST['mainwp_delay_autoupdate'] ) : 1 );
                 MainWP_Utility::update_option( 'mainwp_delay_autoupdate', $new_delay );
 
@@ -591,38 +617,26 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_timeDailyUpdate', $timeDailyUpdate );
-                            esc_html_e( 'Daily sync & update time', 'mainwp' );
+                            esc_html_e( 'Daily sync time', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Choose a specific time to initiate the first daily synchronization and update process.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Choose a specific time to initiate the first daily synchronization process.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                                 <div class="time-selector">
                                     <div class="ui input left icon">
                                         <i class="clock icon"></i>
-                                        <input type="text" class="settings-field-value-change-handler" current-utc-datetime="<?php echo date( 'Y-m-d H:i:s' ); ?>" sync-time-local-datetime="<?php echo date( 'Y-m-d H:i:s', $run_timestamp ); ?>" local-datetime="<?php echo date( 'Y-m-d H:i:s', MainWP_Utility::get_timestamp() ); // phpcs:ignore -- to get local time. ?>" name="mainwp_timeDailyUpdate" id="mainwp_timeDailyUpdate" value="<?php echo esc_attr( $timeDailyUpdate ); ?>" />
+                                        <input type="text" class="settings-field-value-change-handler" current-utc-datetime="<?php echo esc_attr( gmdate( 'Y-m-d H:i:s' ) ); ?>" sync-time-local-datetime="<?php echo esc_attr( gmdate( 'Y-m-d H:i:s', $run_timestamp ) ); ?>" local-datetime="<?php echo esc_attr( gmdate( 'Y-m-d H:i:s', MainWP_Utility::get_timestamp() ) ); // phpcs:ignore -- to get local time. ?>" name="mainwp_timeDailyUpdate" id="mainwp_timeDailyUpdate" value="<?php echo esc_attr( $timeDailyUpdate ); ?>" />
                                     </div>
                                 </div>
-                                <script type="text/javascript">
-                                jQuery( document ).ready( function() {
-                                    jQuery( '.time-selector' ).calendar( {
-                                        type: 'time',
-                                        ampm: false,
-                                        formatter: {
-                                            time: 'H:mm',
-                                            cellTime: 'H:mm'
-                                        }
-                                    } );
-                                } );
-                                </script>
                             </div>
                         </div>
                         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-general" default-indi-value="2">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_frequencyDailyUpdate', $frequencyDailyUpdate );
-                            esc_html_e( 'Frequency of auto sync & updates', 'mainwp' );
+                            esc_html_e( 'Frequency of auto sync', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set the frequency for automatic synchronization and updates throughout the day.', 'mainwp' ); ?>" data-inverted="" data-position="top left" >
+                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set the frequency for automatic synchronization throughout the day.', 'mainwp' ); ?>" data-inverted="" data-position="top left" >
                                 <select name="mainwp_frequencyDailyUpdate" id="mainwp_frequencyDailyUpdate" class="ui dropdown settings-field-value-change-handler">
                                     <option value="1" <?php echo 1 === $frequencyDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Once per day', 'mainwp' ); ?></option>
                                     <option value="2" <?php echo 2 === $frequencyDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Twice per day', 'mainwp' ); ?></option>
@@ -639,8 +653,21 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 </select>
                             </div>
                         </div>
+                        <script type="text/javascript">
+                            jQuery( document ).ready( function() {
+                                jQuery( '.time-selector' ).calendar( {
+                                    type: 'time',
+                                    ampm: false,
+                                    formatter: {
+                                        time: 'H:mm',
+                                        cellTime: 'H:mm'
+                                    }
+                                } );
+                            } );
+                        </script>
 
                         <?php
+
                         static::render_timezone_settings();
                         static::render_datetime_settings();
 
@@ -727,6 +754,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 </select>
                             </div>
                         </div>
+                        <?php static::render_auto_updates_settings(); ?>
                         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates" default-indi-value="1">
                             <label class="six wide column middle aligned">
                             <?php
@@ -867,6 +895,124 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             </div>
         <?php
         static::render_footer( '' );
+    }
+
+    /**
+     * Method render_auto_updates_settings().
+     */
+    public static function render_auto_updates_settings() { // phpcs:ignore -- NOSONAR - complex.
+
+        $time_AutoUpdate       = get_option( 'mainwp_time_AutoUpdate' );
+        $dayinweek_AutoUpdate  = (int) get_option( 'mainwp_dayinweek_AutoUpdate', 0 );
+        $dayinmonth_AutoUpdate = (int) get_option( 'mainwp_dayinmonth_AutoUpdate', 1 );
+        $frequency_AutoUpdate  = get_option( 'mainwp_frequency_AutoUpdate', 'daily' );
+
+        if ( empty( $time_AutoUpdate ) ) {
+            $time_AutoUpdate = '00:00';
+        }
+
+        if ( ! in_array( $frequency_AutoUpdate, array( 'daily', 'weekly', 'monthly' ) ) ) {
+            $frequency_AutoUpdate = 'daily';
+        }
+
+        ?>
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-general" default-indi-value="daily">
+            <label class="six wide column middle aligned">
+                <?php
+                MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_frequency_AutoUpdate', $frequency_AutoUpdate );
+                esc_html_e( 'Frequency of automatic updates', 'mainwp' );
+                ?>
+                </label>
+                <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set the frequency for automatic updates process.', 'mainwp' ); ?>" data-inverted="" data-position="top left" >
+                    <select name="mainwp_frequency_AutoUpdate" id="mainwp_frequency_AutoUpdate" class="ui dropdown settings-field-value-change-handler">
+                        <option value="daily" <?php echo 'daily' === $frequency_AutoUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Daily', 'mainwp' ); ?></option>
+                        <option value="weekly" <?php echo 'weekly' === $frequency_AutoUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Weekly', 'mainwp' ); ?></option>
+                        <option value="monthly" <?php echo 'monthly' === $frequency_AutoUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Monthly', 'mainwp' ); ?></option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-general" id="mainwp-dayinmonth-autoupdate-wrapper" <?php echo in_array( $frequency_AutoUpdate, array( 'monthly' ) ) ? '' : 'style="display:none;"'; ?>>
+                    <label class="six wide column middle aligned">
+                        <?php
+                        MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_dayinmonth_AutoUpdate', $dayinmonth_AutoUpdate );
+                        esc_html_e( 'Select day', 'mainwp' );
+                        ?>
+                    </label>
+                    <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Choose a specific day in month to initiate automatic updates process.', 'mainwp' ); ?>" data-inverted="" data-position="top left" >
+                    <select name="mainwp_dayinmonth_AutoUpdate" id="mainwp_dayinmonth_AutoUpdate" class="ui dropdown settings-field-value-change-handler">
+                        <?php
+                        $day_suffix = array(
+                            1 => 'st',
+                            2 => 'nd',
+                            3 => 'rd',
+                        );
+                        for ( $x = 1; $x <= 31; $x++ ) {
+                            $_select = '';
+                            if ( $dayinmonth_AutoUpdate === $x ) {
+                                $_select = 'selected';
+                            }
+                            $remain = $x % 10;
+                            $day_sf = isset( $day_suffix[ $remain ] ) ? $day_suffix[ $remain ] : 'th';
+                            echo '<option value="' . intval( $x ) . '" ' . esc_html( $_select ) . '>' . esc_html( $x . $day_sf ) . ' of the month</option>';
+                        }
+                        ?>
+                            </select>
+                    </div>
+                </div>
+
+            <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-general" id="mainwp-dayinweek-autoupdate-wrapper" <?php echo in_array( $frequency_AutoUpdate, array( 'weekly' ) ) ? '' : 'style="display:none;"'; ?>>
+                <label class="six wide column middle aligned">
+                <?php
+                MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_dayinweek_AutoUpdate', $dayinweek_AutoUpdate );
+                esc_html_e( 'Select day', 'mainwp' );
+                ?>
+                </label>
+                <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Choose a specific day in week to initiate automatic updates process.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                    <select name="mainwp_dayinweek_AutoUpdate" id="mainwp_dayinweek_AutoUpdate" class="ui dropdown settings-field-value-change-handler">
+                        <option value="0" <?php echo 0 === $dayinweek_AutoUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Mon', 'mainwp' ); ?></option>
+                        <option value="1" <?php echo 1 === $dayinweek_AutoUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Tue', 'mainwp' ); ?></option>
+                        <option value="2" <?php echo 2 === $dayinweek_AutoUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Wed', 'mainwp' ); ?></option>
+                        <option value="3" <?php echo 3 === $dayinweek_AutoUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Thus', 'mainwp' ); ?></option>
+                        <option value="4" <?php echo 4 === $dayinweek_AutoUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Fri', 'mainwp' ); ?></option>
+                        <option value="5" <?php echo 5 === $dayinweek_AutoUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Sat', 'mainwp' ); ?></option>
+                        <option value="6" <?php echo 6 === $dayinweek_AutoUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Sun', 'mainwp' ); ?></option>
+                    </select>
+                </div>
+            </div>
+            <div id="mainwp-time-autoupdate-wrapper" class="ui grid field settings-field-indicator-wrapper settings-field-indicator-general" default-indi-value="00:00">
+                <label class="six wide column middle aligned">
+                <?php
+                MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_time_AutoUpdate', $time_AutoUpdate );
+                esc_html_e( 'Select time', 'mainwp' );
+                $_last_start_auto_updates = get_option( 'mainwp_automatic_updates_start_lasttime', 0 );
+                $_next_auto_updates       = get_option( 'mainwp_automatic_update_next_run_timestamp', 0 );
+                ?>
+                </label>
+                <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Choose a specific time to initiate automatic updates process.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                    <div class="time-selector">
+                        <div class="ui input left icon">
+                            <i class="clock icon"></i>
+                            <input type="text" class="settings-field-value-change-handler" current-utc-datetime="<?php echo date( 'Y-m-d H:i:s' ); ?>" auto-updates-last-start-time="<?php echo date( 'Y-m-d H:i:s', $_last_start_auto_updates ); ?>" auto-updates-next-time="<?php echo date( 'Y-m-d H:i:s', $_next_auto_updates ); ?>" local-datetime="<?php echo date( 'Y-m-d H:i:s', MainWP_Utility::get_timestamp() ); // phpcs:ignore -- to get local time. ?>"  name="mainwp_time_AutoUpdate" id="mainwp_time_AutoUpdate" value="<?php echo esc_attr( $time_AutoUpdate ); ?>" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <script type="text/javascript">
+                jQuery(document).on('change', '#mainwp_frequency_AutoUpdate', function () {
+                    if( jQuery(this).val() == 'monthly' ){
+                        jQuery('#mainwp-dayinweek-autoupdate-wrapper').hide();
+                        jQuery('#mainwp-dayinmonth-autoupdate-wrapper').show();
+                    } else if( jQuery(this).val() == 'weekly'){
+                        jQuery('#mainwp-dayinweek-autoupdate-wrapper').show();
+                        jQuery('#mainwp-dayinmonth-autoupdate-wrapper').hide();
+                    } else {
+                        jQuery('#mainwp-dayinweek-autoupdate-wrapper').hide();
+                        jQuery('#mainwp-dayinmonth-autoupdate-wrapper').hide();
+                    }
+                });
+            </script>
+        <?php
     }
 
     /**
@@ -1084,12 +1230,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      *
      * @return mixed array
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_last_automatic_sync()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count_where_dts_automatic_sync_smaller_then_start()
      * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
      */
     public static function get_websites_automatic_update_time() {
-        $lastAutomaticUpdate    = MainWP_DB::instance()->get_websites_last_automatic_sync();
+        $lastAutomaticUpdate    = MainWP_Auto_Updates_DB::instance()->get_websites_last_automatic_sync();
         $lasttimeAutomatic      = get_option( 'mainwp_updatescheck_last_timestamp' );
         $lasttimeStartAutomatic = get_option( 'mainwp_updatescheck_start_last_timestamp' );
         $local_timestamp        = MainWP_Utility::get_timestamp();
@@ -1101,7 +1245,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
         if ( empty( $lastAutomaticUpdate ) ) {
             $nextAutomaticUpdate = esc_html__( 'Any minute', 'mainwp' );
-        } elseif ( 'yes' === $running && ( 0 < MainWP_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start( $lasttimeStartAutomatic ) || 0 < MainWP_DB::instance()->get_websites_check_updates_count( $lasttimeStartAutomatic ) ) ) {
+        } elseif ( 'yes' === $running && ( 0 < MainWP_Auto_Updates_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start( $lasttimeStartAutomatic ) || 0 < MainWP_Auto_Updates_DB::instance()->get_websites_check_updates_count( $lasttimeStartAutomatic ) ) ) {
             $nextAutomaticUpdate = esc_html__( 'Processing your websites.', 'mainwp' );
         } else {
             $next_time = MainWP_System_Cron_Jobs::get_next_time_automatic_update_to_show();
@@ -1807,16 +1951,38 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
     }
 
     /**
-     * Hook the section help content to the Help Sidebar element
+     * Method mainwp_help_content()
+     *
+     * Creates the MainWP Help Documentation List for the help component in the sidebar.
      */
     public static function mainwp_help_content() {
         if ( isset( $_GET['page'] ) && ( 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'MainWPTools' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             ?>
             <p><?php esc_html_e( 'If you need help with your MainWP Dashboard settings, please review following help documents', 'mainwp' ); ?></p>
-            <div class="ui relaxed bulleted list">
-                <div class="item"><a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">MainWP Dashboard Settings</a> <i class="external alternate icon"></i></div>
+            <div class="ui list">
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">MainWP Dashboard Settings</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/#updates-settings" target="_blank">Updates Settings</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/#basic-uptime-monitoring" target="_blank">Basic Uptime Monitoring Settings</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/#site-health-monitoring" target="_blank">Site Health Settings</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/#backup-options" target="_blank">Backup Settings</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/#advanced-settings" target="_blank">Advanced Settings</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/#email-settings" target="_blank">Email Settings</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/#mainwp-tools" target="_blank">Tools</a></div>
             </div>
             <?php
+            /**
+             * Action: mainwp_settings_help_item
+             *
+             * Fires at the bottom of the help articles list in the Help sidebar on the Settings page.
+             *
+             * Suggested HTML markup:
+             *
+             * <div class="item"><a href="Your custom URL">Your custom text</a></div>
+             *
+             * @since 5.2
+             */
+            do_action( 'mainwp_settings_help_item' );
+
         }
     }
 }

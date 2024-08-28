@@ -156,6 +156,12 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         do_action( 'mainwp_ajax_add_action', 'plesk_action_restore_backup', array( &$this, 'ajax_plesk_action_restore_backup' ) );
         do_action( 'mainwp_ajax_add_action', 'plesk_action_delete_backup', array( &$this, 'ajax_plesk_action_delete_backup' ) );
 
+        // Kinsta Ajax.
+        do_action( 'mainwp_ajax_add_action', 'kinsta_action_refresh_available_backups', array( &$this, 'ajax_kinsta_action_refresh_available_backups' ) );
+        do_action( 'mainwp_ajax_add_action', 'kinsta_action_create_backup', array( &$this, 'ajax_kinsta_action_create_backup' ) );
+        do_action( 'mainwp_ajax_add_action', 'kinsta_action_restore_backup', array( &$this, 'ajax_kinsta_action_restore_backup' ) );
+        do_action( 'mainwp_ajax_add_action', 'kinsta_action_delete_backup', array( &$this, 'ajax_kinsta_action_delete_backup' ) );
+
         // Backup selected sites.
         do_action( 'mainwp_ajax_add_action', 'action_backup_selected_sites', array( &$this, 'action_backup_selected_sites' ) );
 
@@ -716,7 +722,154 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                             </div>
                         <?php endif; ?>
                     <?php } ?>
+                    <?php // Display Kinsta Table. ?>
+                    <?php
+                    if ( 'kinsta' === $backup_api ) {
 
+                        if ( is_object( $available_backups ) ) {
+                            $available_backups = $available_backups->environment->backups;
+                        } else {
+                            $available_backups = array();
+                        }
+
+                        ?>
+                        <?php if ( Api_Backups_Utility::show_mainwp_message( 'mainwp-module-api-backups-info-message' ) ) : ?>
+                            <div class="ui info message">
+                                <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-module-api-backups-info-message"></i>
+                                <div><?php esc_html_e( 'You can create up to 5 manual backups. Each manual backup will be stored for 14 days.', 'mainwp' ); ?></div>
+                            </div>
+                        <?php endif; ?>
+                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
+                            <thead>
+                            <tr>
+                                <th  scope="col"><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
+                                <th  scope="col"><?php esc_html_e( 'Note', 'mainwp' ); ?></th>
+                                <th  scope="col"><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
+                                <th  scope="col"><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                                <th  scope="col" class="no-sort collapsing"></th>
+                                <th  scope="col" class="no-sort collapsing"></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ( $available_backups as $backup ) { ?>
+                                <?php
+                                // Convert Kinsta backup date to human readable format.
+                                $backup_date = Api_Backups_Utility::format_timestamp( intval( $backup->created_at / 1000 ) );
+                                ?>
+                                <tr>
+                                    <td class="collapsing"><?php esc_html_e( $backup->name ); ?></td>
+                                    <td class="collapsing"><?php echo esc_html( $backup->note ); ?></td>
+                                    <td class="collapsing"><?php echo esc_html( $backup->type ); ?></td>
+                                    <td class="collapsing"><?php echo esc_html( $backup_date ); ?></td>
+                                    <td></td>
+                                    <td class="collapsing right aligned">
+                                        <button id="kinsta_restore_button" class="ui circular icon button mainwp_3rd_party_api_<?php echo esc_attr( $backup_api ); ?>_action_restore_backup item"
+                                                website_id="<?php echo intval( $website['id'] ); ?>"
+                                                backup_id="<?php echo intval( $backup->id ); ?>"
+                                                data-tooltip="<?php esc_attr_e( 'Restore Backup', 'mainwp' ); ?>"
+                                                data-inverted=""
+                                                data-position="top center">
+                                            <i class="undo icon"></i>
+                                        </button>
+                                        <button id="kinsta_delete_button" class="ui circular icon button mainwp_3rd_party_api_<?php echo esc_attr( $backup_api ); ?>_action_delete_backup item"
+                                                website_id="<?php echo intval( $website['id'] ); ?>"
+                                                backup_id="<?php echo intval( $backup->id ); ?>"
+                                                data-tooltip="<?php esc_attr_e( 'Delete Backup', 'mainwp' ); ?>"
+                                                data-inverted=""
+                                                data-position="top center">
+                                            <i class="trash icon"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <?php } ?>
+                            </tbody>
+                            <tfoot>
+                            <tr>
+                                <th  scope="col"><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
+                                <th  scope="col"><?php esc_html_e( 'Environment', 'mainwp' ); ?></th>
+                                <th  scope="col"><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
+                                <th  scope="col"><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                                <th  scope="col" class="no-sort collapsing"></th>
+                                <th  scope="col" class="no-sort collapsing"></th>
+                            </tr>
+                            </tfoot>
+                        </table>
+                        <div class="ui divider hidden"></div>
+                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
+                            <thead>
+                            <tr>
+                                <th scope="col" colspan="3">
+                                    <div class="ui equal width grid">
+                                        <div class="left aligned middle aligned column">
+                                            <?php esc_html_e( 'Downloadable Backups', 'mainwp' ); ?>
+                                        </div>
+                                    </div>
+                                </th>
+                            </tr>
+                            <tr>
+                                <th  scope="col"><?php esc_html_e( 'Created', 'mainwp' ); ?></th>
+                                <th  scope="col"><?php esc_html_e( 'Expiry', 'mainwp' ); ?></th>
+                                <th  scope="col" class="no-sort collapsing"></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php
+                                // Grab Downloadable Backups.
+                                $site_options         = Api_Backups_Helper::get_website_options( $website, array( 'mainwp_3rd_party_kinsta_downloadable_backups' ) );
+                                $downloadable_backups = isset( $site_options['mainwp_3rd_party_kinsta_downloadable_backups'] ) ? $site_options['mainwp_3rd_party_kinsta_downloadable_backups'] : '';
+                                $downloadable_backups = json_decode( $downloadable_backups );
+                            ?>
+                            <?php if ( is_object( $downloadable_backups ) ) { ?>
+                                <?php foreach ( $downloadable_backups->environment->downloadable_backups as $backup ) { ?>
+                                    <?php
+
+                                    // Convert Kinsta backup dates to human readable format.
+                                    $created_date = Api_Backups_Utility::format_timestamp( intval( $backup->created_at / 1000 ) );
+                                    $expiry_date  = Api_Backups_Utility::format_timestamp( intval( $backup->expires_at / 1000 ) );
+
+                                    // Check if backup is expired, disable row including download button.
+                                    if ( intval( $backup->expires_at / 1000 ) > time() ) {
+
+                                        ?>
+
+                                        <tr>
+                                            <td class="collapsing"><?php esc_html_e( $created_date ); ?></td>
+                                            <td class="collapsing"><?php esc_html_e( $expiry_date ); ?></td>
+                                            <td>
+                                                <a class="kinsta_download" href="<?php echo esc_attr( $backup->download_link ); ?>" target="_blank">
+                                                    <button class="ui right labeled icon button">
+                                                        <i class="right download icon"></i>
+                                                        <?php echo esc_html__( 'Download', 'mainwp' ); ?>
+                                                    </button>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <?php } else { ?>
+                                        <tr class="disabled">
+                                            <td class="collapsing"><?php esc_html_e( $created_date ); ?></td>
+                                            <td class="collapsing"><?php esc_html_e( $expiry_date ); ?></td>
+                                            <td>
+                                                <a class="kinsta_download" href="<?php echo esc_attr( $backup->download_link ); ?>" target="_blank">
+                                                    <button class="ui right labeled icon button disabled">
+                                                        <i class="right download icon"></i>
+                                                        <?php echo esc_html__( 'Download', 'mainwp' ); ?>
+                                                    </button>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <?php } ?>
+                                <?php } ?>
+                            <?php } ?>
+                            </tbody>
+                            <tfoot>
+                            <tr>
+                                <th scope="col"><?php esc_html_e( 'Created', 'mainwp' ); ?></th>
+                                <th scope="col"><?php esc_html_e( 'Expiry', 'mainwp' ); ?></th>
+                                <th scope="col" class="no-sort collapsing"></th>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    <?php } ?>
                 <?php // Display Plesk Table. ?>
                 <?php
                 if ( 'plesk' === $backup_api ) {
@@ -1515,25 +1668,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                     jQuery('.mainwp-api-backup-table .ui.dropdown').dropdown();
                                     mainwp_datatable_fix_menu_overflow('.mainwp-api-backup-table', -55, 10 );
                                 }, 1000);
-                            },
-                            select: {
-                                items: 'row',
-                                style: 'multi+shift',
-                                selector: 'tr>td:not(.not-selectable)'
                             }
-                        } ).on('select', function (e, dt, type, indexes) {
-                            if( 'row' == type ){
-                                dt.rows(indexes)
-                                .nodes()
-                                .to$().find('td.check-column .ui.checkbox' ).checkbox('set checked');
-                            }
-                        }).on('deselect', function (e, dt, type, indexes) {
-                            if( 'row' == type ){
-                                dt.rows(indexes)
-                                .nodes()
-                                .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
-                            }
-                        }).on( 'columns-reordered', function () {
+                        } ).on( 'columns-reordered', function () {
                             console.log('columns-reordered');
                             setTimeout(() => {
                                 jQuery( '.mainwp-api-backup-table .ui.dropdown' ).dropdown();
@@ -2146,20 +2282,26 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
+     * Method get_kinsta_api_key().
+     */
+    public static function get_kinsta_api_key() {
+        return Api_Backups_Utility::get_instance()->get_api_key( 'kinsta' );
+    }
+
+    /**
      * Vultr: action create snapshot.
      *
      * Create a snapshot on the selected Vultr server.
      *
      * This function is also called before any update. During this time a backup will be
-     * Created but no updates will be made this time around. A new update will need to be manually triggered.
+     * created but no updates will be made this time around. A new update will need to be manually triggered.
      *
-     * @param int    $website_id Website ID.
-     * @param string $backup_api Backup api.
-     * @param bool   $ret_val Return output or not.
+     * @param int    $website_id website id.
+     * @param string $backup_api backup api.
      *
-     * @return mixed
+     * @return mixed result.
      */
-    public static function vultr_action_create_snapshot( $website_id = '', $backup_api = '', $ret_val = false ) {
+    public static function vultr_action_create_snapshot( $website_id = '', $backup_api = '' ) {
 
         // Grab $_POST data if set else use args.
         $website_id = isset( $_POST['website_id'] ) ? intval( $_POST['website_id'] ) : intval( $website_id );  //phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended
@@ -2635,8 +2777,6 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         $backup_response = static::call_gridpane_api( 'POST', '/backups/' . $site_id, $accessToken, $backup_data );
         $backup_status   = json_decode( $backup_response );
 
-        // DON'T REMOVE THIS LINE - for debugging.
-        // error_log(print_r($backup_response, true));.
         $success = false;
         $error   = false;
         // Store Last Backup timestamp.
@@ -4771,6 +4911,434 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         if ( is_admin() && defined( 'DOING_AJAX' ) && DOING_AJAX ) {
             // Store Last Backup timestamp.
             if ( '200' === (string) $api_response['httpCode'] && empty( $errors ) ) {
+                wp_send_json( 'true' );
+            } else {
+                wp_die( 'false' );
+            }
+        }
+    }
+
+    /*********************************************************************************
+     * Kinsta API Methods.
+     **********************************************************************************/
+
+    /**
+     * Kinsta: action refresh available backups.
+     *
+     * Refresh available backups for the selected server.
+     *
+     * @return void
+     */
+    public function ajax_kinsta_action_refresh_available_backups() {
+        Api_Backups_Helper::security_nonce( 'kinsta_action_refresh_available_backups' );
+        static::kinsta_action_refresh_available_backups();
+        die();
+    }
+
+    /**
+     * Kinsta: action create backup.
+     *
+     * Create backup for the selected server.
+     *
+     * @return void
+     */
+    public function ajax_kinsta_action_create_backup() {
+        Api_Backups_Helper::security_nonce( 'kinsta_action_create_backup' );
+        static::kinsta_action_create_backup();
+        die();
+    }
+
+    /**
+     * Kinsta: action delete backup.
+     *
+     * Create backup for the selected server.
+     *
+     * @return void
+     */
+    public function ajax_kinsta_action_delete_backup() {
+        Api_Backups_Helper::security_nonce( 'kinsta_action_delete_backup' );
+        static::kinsta_action_delete_backup();
+        die();
+    }
+
+    /**
+     * Kinsta: action restore backup.
+     *
+     * Restore backup for the selected server.
+     *
+     * @return void
+     */
+    public function ajax_kinsta_action_restore_backup() {
+        Api_Backups_Helper::security_nonce( 'kinsta_action_restore_backup' );
+        static::kinsta_action_restore_backup(); // ajax call.
+        die();
+    }
+
+    /**
+     *
+     * Kinsta: Authentication.
+     *
+     * Grab needed authentication credentials for Kinsta API - either from global settings or individual settings.
+     *
+     * @param int $website_id Website ID.
+     *
+     * @return array
+     */
+    public static function get_kinsta_authentication_credentials( $website_id = null ) { //phpcs:ignore -- NOSONAR - complex.
+
+        $kinsta_authentication_credentials = array();
+
+        // Grab website_id & from Ajax post if $website_id is not set.
+        if ( empty( $website_id ) ) {
+            if ( is_admin() && defined( 'DOING_AJAX' ) && DOING_AJAX ) {
+                // Grab : $_POST['data'] submit values.
+                $website_id = isset( $_POST['website_id'] ) ? intval( $_POST['website_id'] ) : 0;  //phpcs:ignore -- nonce verified.
+            } else {
+                // Grab : $_GET['data'] from url if not Ajax call.
+                $website_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;  //phpcs:ignore -- nonce verified.
+            }
+        }
+
+        // Global / Individual check.
+        $global_individual_check         = Api_Backups_Helper::get_website_options( $website_id, array( 'mainwp_enable_kinsta_individual' ) );
+        $mainwp_enable_kinsta_individual = isset( $global_individual_check['mainwp_enable_kinsta_individual'] ) ? $global_individual_check['mainwp_enable_kinsta_individual'] : '0';
+
+        if ( 'on' === $mainwp_enable_kinsta_individual ) {
+            // Grab cPanel baseurl, username & password.
+            $kinsta_baseurl = 'https://api.kinsta.com/v2';
+
+            // Grab Kinsta password.
+            $kinsta_api_key = Api_Backups_Utility::get_instance()->get_child_api_key( $website_id, 'kinsta' );
+
+            // Grab Kinsta Account Email.
+            $account_email        = Api_Backups_Helper::get_website_options( $website_id, array( 'mainwp_kinsta_account_email' ) );
+            $kinsta_account_email = isset( $account_email['mainwp_kinsta_account_email'] ) ? $account_email['mainwp_kinsta_account_email'] : null;
+
+            // Grab Kinsta Company ID.
+            $company_id        = Api_Backups_Helper::get_website_options( $website_id, array( 'mainwp_kinsta_company_id' ) );
+            $kinsta_company_id = isset( $company_id['mainwp_kinsta_company_id'] ) ? $company_id['mainwp_kinsta_company_id'] : null;
+
+            // Grab Kinsta Environment ID.
+            $environment_id        = Api_Backups_Helper::get_website_options( $website_id, array( 'mainwp_kinsta_environment_id' ) );
+            $kinsta_environment_id = isset( $environment_id['mainwp_kinsta_environment_id'] ) ? $environment_id['mainwp_kinsta_environment_id'] : null;
+
+        } elseif ( '0' === $mainwp_enable_kinsta_individual ) {
+            // Grab Kinsta baseurl, username & password.
+            $kinsta_baseurl = 'https://api.kinsta.com/v2';
+
+            // Grab Kinsta password.
+            $kinsta_api_key = static::get_kinsta_api_key();
+
+            // Grab Kinsta Account Email.
+            $kinsta_account_email = get_option( 'mainwp_kinsta_api_account_email' );
+
+            // Grab Kinsta Company ID.
+            $kinsta_company_id = get_option( 'mainwp_kinsta_company_id' );
+
+            // Grab Kinsta Environment ID.
+            $environment_id        = Api_Backups_Helper::get_website_options( $website_id, array( 'mainwp_kinsta_environment_id' ) );
+            $kinsta_environment_id = isset( $environment_id['mainwp_kinsta_environment_id'] ) ? $environment_id['mainwp_kinsta_environment_id'] : null;
+        }
+
+        // Build array.
+        $kinsta_authentication_credentials[] = array(
+            'kinsta_baseurl'        => $kinsta_baseurl,
+            'kinsta_api_key'        => $kinsta_api_key,
+            'kinsta_environment_id' => $kinsta_environment_id,
+            'website_id'            => $website_id,
+            'kinsta_company_id'     => $kinsta_company_id,
+            'kinsta_company_email'  => $kinsta_account_email,
+        );
+
+        return $kinsta_authentication_credentials;
+    }
+
+    /**
+     * Call Kinsta API, Authenticate & perform given method.
+     *
+     * @param string $method GET|POST|PUT|DELETE.
+     * @param string $url API endpoint for the call.
+     * @param string $baseurl baseurl.
+     * @param string $api_key Kinsta API Key.
+     * @param string $action action.
+     * @param string $backup_data action.
+     *
+     * @return array Output from cPanel API.
+     */
+    public static function call_kinsta_api( $method, $url, $baseurl, $api_key, $action = '', $backup_data = array() ) {
+
+        $curl = curl_init();
+
+        $api_Key = $api_key;
+        curl_setopt_array(
+            $curl,
+            array(
+                CURLOPT_URL            => $baseurl . $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING       => '',
+                CURLOPT_MAXREDIRS      => 10,
+                CURLOPT_TIMEOUT        => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST  => $method,
+                CURLOPT_POSTFIELDS     => $backup_data,
+                CURLOPT_HTTPHEADER     => array(
+                    'Content-Type: application/json',
+                    "Authorization: Bearer $api_Key",
+                ),
+            )
+        );
+
+        $resp     = curl_exec( $curl );
+        $httpCode = (string) curl_getinfo( $curl, CURLINFO_HTTP_CODE );
+
+        $response['httpCode'] = $httpCode;
+        $response['response'] = $resp;
+
+        if ( '202' !== $httpCode && '200' !== $httpCode ) {
+            $response['status'] = 'false';
+        } else {
+            $response['status'] = 'true';
+        }
+
+        // Log API call.
+        $payload          = "[Status] $httpCode :: [Action] $action :: [EndPoint] $baseurl$url";
+        $payload_response = "[Status] $httpCode :: [Action] $action :: [Response] $resp";
+        Api_Backups_Utility::log_debug( $payload );
+        Api_Backups_Utility::log_debug( $payload_response );
+
+        curl_close( $curl );
+        return $response;
+    }
+
+    /**
+     *
+     * Kinsta: Action get User ID.
+     *
+     * Get the User Id from the given Company ID & Email address.
+     *
+     * @return array
+     */
+    public static function kinsta_action_get_user_id() {
+
+        // Authenticate kinsta account.
+        $kinsta_authentication_credentials = static::get_kinsta_authentication_credentials();
+        $kinsta_baseurl                    = $kinsta_authentication_credentials[0]['kinsta_baseurl'];
+        $kinsta_api_key                    = $kinsta_authentication_credentials[0]['kinsta_api_key'];
+        $kinsta_company_id                 = $kinsta_authentication_credentials[0]['kinsta_company_id'];
+        $kinsta_company_email              = $kinsta_authentication_credentials[0]['kinsta_company_email'];
+
+        $payload_url = '/company/' . $kinsta_company_id . '/users';
+
+        // Send Payload.
+        $api_response = static::call_kinsta_api( 'GET', $payload_url, $kinsta_baseurl, $kinsta_api_key, '' );
+
+        // Decode Response.
+        $response      = json_decode( $api_response['response'] );
+        $company       = $response->company;
+        $company_users = $company->users;
+
+        // Grab correct user ID.
+        foreach ( $company_users as $user ) {
+            if ( $kinsta_company_email === $user->user->email ) {
+                $user_id = $user->user->id;
+            }
+        }
+
+        // Return user id.
+        return $user_id;
+    }
+
+    /**
+     *
+     * Kinsta: Action refresh available backups.
+     *
+     * Save backups to DB for the selected server.
+     *
+     * @return void
+     */
+    public static function kinsta_action_refresh_available_backups() {
+
+        // Authenticate kinsta account.
+        $kinsta_authentication_credentials = static::get_kinsta_authentication_credentials();
+        $kinsta_baseurl                    = $kinsta_authentication_credentials[0]['kinsta_baseurl'];
+        $kinsta_api_key                    = $kinsta_authentication_credentials[0]['kinsta_api_key'];
+        $kinsta_env_id                     = $kinsta_authentication_credentials[0]['kinsta_environment_id'];
+        $website_id                        = $kinsta_authentication_credentials[0]['website_id'];
+        $downloadable_backups              = '';
+
+        $action = 'kinsta_action_refresh_available_backups';
+
+        // Grab backup meta.
+        $api_response = static::call_kinsta_api( 'GET', '/sites/environments/' . $kinsta_env_id . '/backups', $kinsta_baseurl, $kinsta_api_key, $action );
+
+        if ( 'true' === $api_response['status'] ) {
+            $all_backups = $api_response['response'];
+            Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_kinsta_available_backups', $all_backups );
+            Api_Backups_Utility::save_lasttime_backup( $website_id, $all_backups, 'kinsta' );
+
+            $action = 'kinsta_action_refresh_available_backups_downloadable';
+
+            $downloadable_backups = static::call_kinsta_api( 'GET', '/sites/environments/' . $kinsta_env_id . '/downloadable-backups', $kinsta_baseurl, $kinsta_api_key, $action );
+
+        } else {
+            Api_Backups_Utility::log_debug( 'Kinsta API Error: ' . $api_response['response'] );
+        }
+        if ( $downloadable_backups ) {
+            if ( 'true' === $downloadable_backups['status'] ) {
+                $downloadable_backups = $downloadable_backups['response'];
+                Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_kinsta_downloadable_backups', $downloadable_backups );
+            }
+        } else {
+            Api_Backups_Utility::log_debug( 'Kinsta API Error: There was an issue while refreshing available backups.' );
+        }
+
+        // Return AJAX.
+        if ( is_admin() && defined( 'DOING_AJAX' ) && DOING_AJAX ) {
+            // Store Last Backup timestamp.
+            if ( 'true' === $api_response['status'] ) {
+                wp_send_json( 'true' );
+            } else {
+                wp_die( 'false' );
+            }
+        }
+    }
+
+    /**
+     *
+     * Kinsta: Action create manual backup.
+     *
+     * Create a Plesk Backup.
+     *
+     * @param bool $resturn_values resturn values.
+     * @param int  $site_id website id.
+     *
+     * @return mixed result.
+     */
+    public static function kinsta_action_create_backup( $resturn_values = false, $site_id = null ) {
+
+        // Authenticate kinsta account.
+        $kinsta_authentication_credentials = static::get_kinsta_authentication_credentials( $site_id );
+        $kinsta_baseurl                    = $kinsta_authentication_credentials[0]['kinsta_baseurl'];
+        $kinsta_api_key                    = $kinsta_authentication_credentials[0]['kinsta_api_key'];
+        $kinsta_env_id                     = $kinsta_authentication_credentials[0]['kinsta_environment_id'];
+        $website_id                        = $kinsta_authentication_credentials[0]['website_id'];
+
+        // Grab Child Site options.
+        $website = Api_Backups_Helper::get_website_by_id( $website_id );
+
+        // Prepare Backup Payload.
+        $backup_data = array(
+            'tag' => 'MainWP API Backups - ' . $website['name'],
+        );
+        $backup_data = json_encode( $backup_data );
+
+        // Send Payload & create backup.
+        $api_response = static::call_kinsta_api( 'POST', '/sites/environments/' . $kinsta_env_id . '/manual-backups', $kinsta_baseurl, $kinsta_api_key, $backup_data );
+
+        if ( is_array( $api_response ) && isset( $api_response['status'] ) && 'true' === $api_response['status'] ) {
+            // Save Timestamp.
+            $local_time   = current_datetime();
+            $current_time = $local_time->getTimestamp() + $local_time->getOffset();
+            Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_kinsta_last_backup', $current_time );
+        }
+
+        if ( $resturn_values ) {
+            return $api_response;
+        }
+
+        // Return AJAX.
+        if ( is_admin() && defined( 'DOING_AJAX' ) && DOING_AJAX ) {
+            // Store Last Backup timestamp.
+            if ( 'true' === $api_response['status'] ) {
+                wp_send_json( 'true' );
+            } else {
+                wp_die( 'false' );
+            }
+        }
+    }
+
+    /**
+     *
+     * Kinsta: Action create manual backup.
+     *
+     * Create a Plesk Backup.
+     *
+     * @param bool $return_values return values.
+     *
+     * @return array
+     */
+    public static function kinsta_action_delete_backup( $return_values = false ) {
+
+        $backup_id = isset( $_POST['backup_id'] ) ? wp_unslash( $_POST['backup_id'] ) : ''; //phpcs:ignore -- nonce verified.
+
+        // Authenticate kinsta account.
+        $kinsta_authentication_credentials = static::get_kinsta_authentication_credentials();
+        $kinsta_baseurl                    = $kinsta_authentication_credentials[0]['kinsta_baseurl'];
+        $kinsta_api_key                    = $kinsta_authentication_credentials[0]['kinsta_api_key'];
+
+        $payload_url = '/sites/environments/backups/' . $backup_id;
+
+        // Send Payload & create backup.
+        $api_response = static::call_kinsta_api( 'DELETE', $payload_url, $kinsta_baseurl, $kinsta_api_key, '' );
+
+        if ( $return_values ) {
+            return $api_response;
+        }
+
+        // Return AJAX.
+        if ( is_admin() && defined( 'DOING_AJAX' ) && DOING_AJAX ) {
+            // Store Last Backup timestamp.
+            if ( 'true' === $api_response['status'] ) {
+                wp_send_json( 'true' );
+            } else {
+                wp_die( 'false' );
+            }
+        }
+    }
+
+    /**
+     *
+     * Kinsta: Action restore manual backup.
+     *
+     * Restore a selected Backup.
+     *
+     * @param bool $return_values return or not.
+     *
+     * @return array
+     */
+    public static function kinsta_action_restore_backup( $return_values = false ) {
+
+        $backup_id = isset( $_POST['backup_id'] ) ? intval( $_POST['backup_id'] ) : 0; //phpcs:ignore -- nonce verified.
+
+        // Authenticate kinsta account.
+        $kinsta_authentication_credentials = static::get_kinsta_authentication_credentials();
+        $kinsta_baseurl                    = $kinsta_authentication_credentials[0]['kinsta_baseurl'];
+        $kinsta_api_key                    = $kinsta_authentication_credentials[0]['kinsta_api_key'];
+        $kinsta_env_id                     = $kinsta_authentication_credentials[0]['kinsta_environment_id'];
+
+        $company_user_id = static::kinsta_action_get_user_id();
+
+        $payload_url = '/sites/environments/' . $kinsta_env_id . '/backups/restore';
+
+        // Prepare Backup Payload.
+        $backup_data = array(
+            'backup_id'        => $backup_id,
+            'notified_user_id' => $company_user_id,
+        );
+        $backup_data = json_encode( $backup_data );
+
+        // Send Payload & create backup.
+        $api_response = static::call_kinsta_api( 'POST', $payload_url, $kinsta_baseurl, $kinsta_api_key, '', $backup_data );
+
+        if ( $return_values ) {
+            return $api_response;
+        }
+
+        // Return AJAX.
+        if ( is_admin() && defined( 'DOING_AJAX' ) && DOING_AJAX ) {
+            // Store Last Backup timestamp.
+            if ( 'true' === $api_response['status'] ) {
                 wp_send_json( 'true' );
             } else {
                 wp_die( 'false' );

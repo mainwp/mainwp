@@ -260,7 +260,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             }
         </style>
         <tr class="plugin-update-tr active" slug="<?php echo esc_attr( $slug ); ?>"><td colspan="3" class="plugin-update colspanchange"><div class="update-message api-deactivate">
-                    <?php printf( esc_html__( 'You have a MainWP Extension that does not have an active API entered.  This means you will not receive updates or support.  Please visit the %1$sExtensions%2$s page and enter your API.', 'mainwp' ), '<a href="admin.php?page=Extensions">', '</a>' ); ?>
+                <?php printf( esc_html__( 'You have a MainWP Extension that does not have an active API entered.  This means you will not receive updates or support.  Please visit the %1$sExtensions%2$s page and enter your API.', 'mainwp' ), '<a href="admin.php?page=Extensions">', '</a>' ); ?>
                     <span class="mainwp-right"><a href="#" class="mainwp-activate-notice-dismiss" ><i class="times circle icon"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span>
                 </div></td></tr>
         <?php
@@ -294,13 +294,13 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             <div class="ui modal" id="mainwp-v5-update-notice-modal">
                 <i class="close icon mainwp-notice-dismiss" notice-id="upgrade_version5"></i>
                 <div class="header">
-                    <?php echo esc_html__( 'MainWP 5.0 Update Notice', 'mainwp' ); ?>
+                <?php echo esc_html__( 'MainWP 5.0 Update Notice', 'mainwp' ); ?>
                 </div>
                 <div class="content">
                     <h3 class="ui header">
                         <i class="sync alternate icon"></i>
                         <div class="content">
-                            <?php echo esc_html__( 'Hard Refresh Required', 'mainwp' ); ?>
+                        <?php echo esc_html__( 'Hard Refresh Required', 'mainwp' ); ?>
 
                         </div>
                     </h3>
@@ -319,7 +319,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     <h3 class="ui header">
                         <i class="linkify icon"></i>
                         <div class="content">
-                            <?php echo esc_html__( 'Extensions License Reactivation Required', 'mainwp' ); ?>
+                        <?php echo esc_html__( 'Extensions License Reactivation Required', 'mainwp' ); ?>
 
                         </div>
                     </h3>
@@ -364,7 +364,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             <div class="ui modal" id="mainwp-v502-update-notice-modal">
                 <i class="close icon mainwp-notice-dismiss" notice-id="upgrade_version502"></i>
                 <div class="header">
-                    <?php echo esc_html__( 'MainWP 5.0.2 Update Notice', 'mainwp' ); ?>
+                <?php echo esc_html__( 'MainWP 5.0.2 Update Notice', 'mainwp' ); ?>
                 </div>
                 <div class="content">
                     <div><?php echo esc_html__( 'Please perform a hard refresh of your browser to ensure optimal performance and access to all new features.', 'mainwp' ); ?></div>
@@ -463,22 +463,30 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         if ( MainWP_Demo_Handle::is_instawp_site() ) {
             return;
         }
-        $disabled_functions = ini_get( 'disable_functions' );
-        if ( '' !== $disabled_functions ) {
-            $disabled_functions_array = explode( ',', $disabled_functions );
-            if ( in_array( 'tmpfile', $disabled_functions_array ) && MainWP_Utility::show_mainwp_message( 'notice', 'tmpfile_notice' ) ) {
-                ?>
-                <div class="ui red message" style="margin-bottom: 0; border-radius: 0;">
-                    <i class="close icon mainwp-notice-dismiss" notice-id="tmpfile_notice"></i>
-                    <div><?php esc_html_e( 'tmpfile() function is currently disabled on your server.', 'mainwp' ); ?></div>
-                    <div><?php esc_html_e( 'This function is essential for creating temporary files, and its unavailability may affect certain functionalities of your MainWP Dashboard.', 'mainwp' ); ?></div>
-                    <div><?php esc_html_e( 'If you are unsure how to enable it, please contact your host support and have them do it for you.', 'mainwp' ); ?></div>
-                </div>
-                <?php
-            }
+        if ( ! static::is_tmpfile_enable() && MainWP_Utility::show_mainwp_message( 'notice', 'tmpfile_notice' ) ) {
+            ?>
+            <div class="ui red message" style="margin-bottom: 0; border-radius: 0;">
+                <i class="close icon mainwp-notice-dismiss" notice-id="tmpfile_notice"></i>
+                <div><?php esc_html_e( 'tmpfile() function is currently disabled on your server.', 'mainwp' ); ?></div>
+                <div><?php esc_html_e( 'This function is essential for creating temporary files, and its unavailability may affect certain functionalities of your MainWP Dashboard.', 'mainwp' ); ?></div>
+                <div><?php esc_html_e( 'If you are unsure how to enable it, please contact your host support and have them do it for you.', 'mainwp' ); ?></div>
+            </div>
+            <?php
         }
     }
 
+    /**
+     * Method is_tmpfile_enable()
+     *
+     * Checks if the `tmpfile()` PHP function is enable.
+     */
+    public static function is_tmpfile_enable() {
+        if ( ! function_exists( '\tmpfile' ) ) {
+            return false;
+        }
+        $disabled_functions = ini_get( 'disable_functions' );
+        return '' !== $disabled_functions && false !== stripos( $disabled_functions, 'tmpfile' ) ? false : true;
+    }
 
     /**
      * Renders Browsers extensions notice.
@@ -740,7 +748,6 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         }
     }
 
-
     /**
      * Method admin_footer()
      *
@@ -822,7 +829,6 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         </style>
         <?php
     }
-
 
     /**
      * Productions site warning.

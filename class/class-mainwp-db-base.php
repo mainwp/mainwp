@@ -170,6 +170,17 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         return $result;
     }
 
+
+    /**
+     * Method get_last_query()
+     *
+     * @return string Get last query.
+     */
+    public function get_last_query() {
+        return $this->wpdb->last_query;
+    }
+
+
     /**
      * Method escape_array()
      *

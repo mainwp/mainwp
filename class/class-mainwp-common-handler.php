@@ -52,7 +52,7 @@ class MainWP_Common_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $total_plugin_db_upgrades     = 0;
         $supported_db_updater_plugins = array();
 
-        $get_fields    = array( 'premium_upgrades', 'favi_icon' );
+        $get_fields    = array( 'premium_upgrades', 'favi_icon', 'ignored_wp_upgrades' );
         $custom_fields = apply_filters( 'mainwp_available_updates_count_custom_fields_data', array(), 'updates_count' );
 
         if ( is_array( $custom_fields ) && 1 === count( $custom_fields ) && in_array( 'plugin_db_upgrades', $custom_fields ) ) {
@@ -64,7 +64,13 @@ class MainWP_Common_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, $get_fields, $is_staging );
 
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();
-        $websites      = MainWP_DB::instance()->query( $sql );
+
+        $decodedIgnoredCores = ! empty( $userExtension->ignored_wp_upgrades ) ? json_decode( $userExtension->ignored_wp_upgrades, true ) : array();
+        if ( ! is_array( $decodedIgnoredCores ) ) {
+            $decodedIgnoredCores = array();
+        }
+
+        $websites = MainWP_DB::instance()->query( $sql );
 
         $mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
 
@@ -76,10 +82,10 @@ class MainWP_Common_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         MainWP_DB::data_seek( $websites, 0 );
 
         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-            $wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
-            $wp_upgrades = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
+            $wp_upgrades           = ! empty( $website->wp_upgrades ) ? json_decode( $website->wp_upgrades, true ) : array();
+            $ignored_core_upgrades = ! empty( $website->ignored_wp_upgrades ) ? json_decode( $website->ignored_wp_upgrades, true ) : array();
 
-            if ( $website->is_ignoreCoreUpdates ) {
+            if ( $website->is_ignoreCoreUpdates || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $ignored_core_upgrades, 'core' ) || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $decodedIgnoredCores, 'core' ) ) {
                 $wp_upgrades = array();
             }
 
@@ -137,12 +143,12 @@ class MainWP_Common_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             if ( is_array( $plugin_upgrades ) ) {
                 $ignored_plugins = json_decode( $website->ignored_plugins, true );
                 if ( is_array( $ignored_plugins ) ) {
-                    $plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+                    $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
                 }
 
                 $ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
                 if ( is_array( $ignored_plugins ) ) {
-                    $plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+                    $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
                 }
 
                 $total_plugin_upgrades += count( $plugin_upgrades );
@@ -151,12 +157,12 @@ class MainWP_Common_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             if ( is_array( $theme_upgrades ) ) {
                 $ignored_themes = json_decode( $website->ignored_themes, true );
                 if ( is_array( $ignored_themes ) ) {
-                    $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+                    $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
                 }
 
                 $ignored_themes = json_decode( $userExtension->ignored_themes, true );
                 if ( is_array( $ignored_themes ) ) {
-                    $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+                    $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
                 }
 
                 $total_theme_upgrades += count( $theme_upgrades );

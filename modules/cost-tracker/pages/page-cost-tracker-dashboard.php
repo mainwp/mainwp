@@ -439,6 +439,10 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
         static::$order   = $_order;
         static::$orderby = $_orderby;
 
+        if ( gmdate( 'Y-m-d' ) !== get_option( 'module_cost_tracker_calc_today_next_renewal', '' ) ) {
+            Cost_Tracker_DB::get_instance()->update_next_renewal_today();
+        }
+
         $filtered = false;
         if ( isset( $_GET['selected_ids'] ) && ! empty( $_GET['selected_ids'] ) ) { //phpcs:ignore -- ok.
             $filtered = true;
@@ -816,7 +820,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                     $url_manage_sites = 'admin.php?page=managesites' . $filter_sites . $filter_groups . $filter_clients;
                 }
 
-                $rw_classes = 'cost-item cost-tracker-item-' . intval( $subscription->id ) . ' cost-tracker-type-' . $product_types[ $subscription->product_type ];
+                $rw_classes = 'cost-item cost-tracker-item-' . intval( $subscription->id ) . ' cost-tracker-type-' . ( isset( $product_types[ $subscription->product_type ] ) ? $product_types[ $subscription->product_type ] : '' );
                 $info_item  = array(
                     'rowClass' => esc_html( $rw_classes ),
                     'cost_id'  => intval( $subscription->id ),

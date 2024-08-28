@@ -136,7 +136,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
             $postdata = array(
                 'optimize'                        => 1 === (int) get_option( 'mainwp_optimize', 1 ) ? 1 : 0,
-                'cloneSites'                      => ( ! $cloneEnabled || $disallowed_current_site ? 0 : rawurlencode( wp_json_encode( $cloneSites ) ) ),
+                'cloneSites'                      => ( ! $cloneEnabled || $disallowed_current_site ) ? 0 : rawurlencode( wp_json_encode( $cloneSites ) ),
                 'othersData'                      => wp_json_encode( $othersData ),
                 'server'                          => get_admin_url(),
                 'numberdaysOutdatePluginTheme'    => get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', 365 ),

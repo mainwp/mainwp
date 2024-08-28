@@ -135,7 +135,7 @@ class MainWP_Deprecated_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @return string
      */
     protected function get_deprecated_version( $old_hook ) {
-        return ! empty( $this->deprecated_version[ $old_hook ] ) ? $this->deprecated_version[ $old_hook ] : WC_VERSION;
+        return ! empty( $this->deprecated_version[ $old_hook ] ) ? $this->deprecated_version[ $old_hook ] : MAINWP_VERSION;
     }
 
     /**

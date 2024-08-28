@@ -263,6 +263,40 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
     }
 
     /**
+     * Method remove_wp_site()
+     *
+     * Try to remove Child Site.
+     *
+     * @throws MainWP_Extra_Exception Error message.
+     *
+     * @param intt $site_id The Site ID.
+     *
+     * @return mixed result.
+     */
+    public static function remove_wp_site( $site_id ) {
+         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        if ( isset( $site_id ) ) {
+            $info  = static::remove_website( intval( $site_id ) );
+            $error = is_array( $info ) && isset( $info['error'] ) ? $info['error'] : '';
+            if ( 'NOMAINWP' === $error ) {
+                $error = esc_html__( 'Be sure to deactivate the child plugin on the child site to avoid potential security issues.', 'mainwp' );
+            }
+            if ( '' !== $error ) {
+                throw new MainWP_Extra_Exception( 'mainwp_remove_site_error', $error ); //phpcs:ignore -- ok.
+            } elseif ( is_array( $info ) && isset( $info['deactivated'] ) ) {
+                $result = array( 'result' => 'success' );
+            } elseif ( is_array( $info ) && isset( $info['removed'] ) ) {
+                $result = array( 'result' => 'removed' );
+            } else {
+                throw new MainWP_Extra_Exception( 'mainwp_remove_site_error', esc_html__( 'Undefined error. Please try again.', 'mainwp' ) );
+            }
+            return $result;
+        }
+
+        return false;
+    }
+
+    /**
      * Method remove_site()
      *
      * Try to remove Child Site.

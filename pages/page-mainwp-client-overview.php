@@ -500,21 +500,25 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     /**
      * Method mainwp_help_content()
      *
-     * Hook the section help content to the Help Sidebar element
-     *
-     * @return void
+     * Creates the MainWP Help Documentation List for the help component in the sidebar.
      */
     public static function mainwp_help_content() {
         if ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             ?>
             <p><?php esc_html_e( 'If you need help with your MainWP Dashboard, please review following help documents', 'mainwp' ); ?></p>
-            <div class="ui relaxed bulleted list">
-                <div class="item"><a href="https://kb.mainwp.com/docs/manage-clients/" target="_blank">Manage Clients</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
+            <div class="ui list">
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-clients/" target="_blank">Manage Clients</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-clients/#create-a-new-client" target="_blank">Create a new Client</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-clients/#update-a-client" target="_blank">Update a Client</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-clients/#delete-a-client" target="_blank">Delete a Client</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-clients/#customize-the-manage-clients-table" target="_blank">Customize the Manage Clients table</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-clients/#client-card" target="_blank">Client Card (View Client)</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-clients/#client-fields" target="_blank">Client Fields</a></div> <?php // NOSONAR - noopener - open safe. ?>
                 <?php
                 /**
                  * Action: mainwp_clients_overview_help_item
                  *
-                 * Fires at the bottom of the help articles list in the Help sidebar on the Overview page.
+                 * Fires at the bottom of the help articles list in the Help sidebar on the Clients page.
                  *
                  * Suggested HTML markup:
                  *

@@ -303,7 +303,7 @@ jQuery(function () {
             note: newnote
         });
 
-        jQuery('#mainwp-notes-status').html('<i class="notched circle loading icon"></i> ' + __('Saving note. Please wait...'));
+        jQuery('#mainwp-notes-status').html('<i class="notched circle loading icon"></i> ' + __('Saving note. Please wait...')).show();
 
         jQuery.post(ajaxurl, data, function (pSlug) {
             return function (response) {

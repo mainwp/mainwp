@@ -569,6 +569,10 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             return;
         }
 
+        if ( ! empty( $params['menu_hidden'] ) ) {
+            return;
+        }
+
         $level = (int) $level;
 
         if ( 1 !== $level && 2 !== $level && 0 !== $level ) {
@@ -579,7 +583,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $before_title = ! empty( $params['before_title'] ) ? $params['before_title'] : '';
 
         $slug  = isset( $params['slug'] ) ? $params['slug'] : '';
-        $href  = $params['href'];
+        $href  = isset( $params['href'] ) ? $params['href'] : '';
         $right = isset( $params['right'] ) ? $params['right'] : '';
         $id    = isset( $params['id'] ) ? $params['id'] : '';
 
@@ -588,6 +592,10 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $leftsub_order_level2 = isset( $params['leftsub_order_level2'] ) ? $params['leftsub_order_level2'] : '';
         $ext_state            = isset( $params['ext_status'] ) && ( 'activated' === $params['ext_status'] || 'inactive' === $params['ext_status'] ) ? $params['ext_status'] : '';
         $parent_key           = isset( $params['parent_key'] ) ? $params['parent_key'] : '';
+        $others               = array();
+        if ( isset( $params['active_params'] ) ) {
+            $others['active_params'] = $params['active_params'];
+        }
 
         /**
          * MainWP Left Menu, Sub Menu & Active menu slugs.
@@ -643,7 +651,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             if ( empty( $parent_key ) ) {
                 $parent_key = 'mainwp_tab'; // forced value.
             }
-            $mainwp_sub_leftmenu[ $parent_key ][] = array( $title, $href, $right, $id, $slug, $leftsub_order_level2, $ext_state, $active_path, $before_title );
+            $mainwp_sub_leftmenu[ $parent_key ][] = array( $title, $href, $right, $id, $slug, $leftsub_order_level2, $ext_state, $active_path, $before_title, $others );
         }
 
         if ( ! empty( $slug ) ) {
@@ -1061,7 +1069,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         <span class="hamburger-patty"></span>
                         <span class="hamburger-bun"></span>
                     </div>
-                    
+
                     <div class="item"><a href="admin.php?page=mainwp_tab"><?php esc_html_e( 'Overview', 'mainwp' ); ?></a></div>
                     <div class="item">
                         <div class="title"><a href="admin.php?page=managesites" class=" with-sub"><?php esc_html_e( 'Sites', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
@@ -1237,7 +1245,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         <a href="<?php echo esc_html( $link['url'] ); ?>" class="title" style="display:inline" data-position="top left" data-tooltip="<?php echo esc_html( $link['tip'] ); ?>"><b><i class="icon wordpress"></i> <?php echo esc_html( $link['text'] ); ?></b></a> <a class="ui small label" data-position="top right" data-tooltip="<?php esc_html_e( 'Logout', 'mainwp' ); ?>" href="<?php echo wp_logout_url(); ?>"><i class="sign out icon" style="margin:0"></i></a> <?php //phpcs:ignore -- to avoid auto fix icon wordpress ?>
                     </div>
                     <?php } ?>
-                    
+
                 </div>
                 <?php
                 /**
@@ -1294,6 +1302,11 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $ext_state    = isset( $sub_item[6] ) ? $sub_item[6] : '';
             $active_path  = isset( $sub_item[7] ) ? $sub_item[7] : '';
             $before_title = isset( $sub_item[8] ) ? $sub_item[8] : '';
+            $others       = isset( $sub_item[9] ) ? $sub_item[9] : array();
+
+            if ( ! is_array( $others ) ) {
+                $others = array();
+            }
 
             $item_classes = 'inactive' === $ext_state ? 'extension-inactive' : '';
 
@@ -1331,6 +1344,16 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         $level2_active = true;
                     }
                 }
+
+                if ( ! $level2_active && ! empty( $others['active_params'] ) && is_array( $others['active_params'] ) ) {
+                    foreach ( $others['active_params'] as $name => $value ) {
+                        if ( isset( $_GET[ $name ] ) && wp_unslash( $_GET[ $name ] ) === $value ) {
+                            $level2_active = true;
+                            break;
+                        }
+                    }
+                }
+
                 //phpcs:enable WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                 if ( $level2_active ) {
                     $set_actived = true;
@@ -1347,7 +1370,6 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 <a class="item <?php echo $level2_active ? 'active level-two-active' : ''; ?> <?php echo esc_attr( $item_classes ); ?>" href="<?php echo esc_url( $href ); ?>" id="<?php echo esc_attr( $slug ); ?>" <?php echo $_blank ? 'target="_blank"' : ''; ?>>
                     <?php echo $before_title . $title; //phpcs:ignore -- requires escaped. ?>
                 </a>
-
                 <?php
             }
         }

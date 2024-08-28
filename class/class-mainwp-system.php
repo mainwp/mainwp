@@ -27,7 +27,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '5.1.1'; // NOSONAR.
+    public static $version = '5.2'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -118,8 +118,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         MainWP_Execution_Helper::instance()->init_exec_time();
 
-        $loader = new MainWP_Includes();
-        $loader->includes();
+        $includer = new MainWP_Includes();
+        $includer->includes();
 
         MainWP_Keys_Manager::auto_load_files();
 
@@ -129,10 +129,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $this->plugin_slug = plugin_basename( $mainwp_plugin_file );
 
         do_action( 'mainwp_system_init' );
-
-        // includes rest api work.
-        require_once 'class-mainwp-rest-api.php'; // NOSONAR - WP compatible.
-        Rest_Api::instance()->init();
 
         if ( is_admin() ) {
             include_once ABSPATH . 'wp-admin' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'plugin.php'; // NOSONAR - WP compatible.
@@ -325,6 +321,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_activated',
                 'mainwp_api_sslVerifyCertificate',
                 'mainwp_automaticDailyUpdate',
+                'mainwp_pluginAutomaticDailyUpdate',
+                'mainwp_themeAutomaticDailyUpdate',
                 'mainwp_backup_before_upgrade',
                 'mainwp_enableLegacyBackupFeature',
                 'mainwp_maximumInstallUpdateRequests',
@@ -361,6 +359,12 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_log_wait_lasttime',
                 'mainwp_updatescheck_start_last_schedule_timestamp',
                 'mainwp_cron_license_deactivated_alert_lasttime',
+                'mainwp_updatescheck_is_running',
+                'mainwp_automatic_updates_is_running',
+                'mainwp_frequency_AutoUpdate',
+                'mainwp_batch_updates_is_running',
+                'mainwp_batch_individual_updates_is_running',
+
             );
 
             $options = apply_filters( 'mainwp_init_load_all_options', $options );

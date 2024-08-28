@@ -102,7 +102,8 @@ class MainWP_Updates_Table_Helper { // phpcs:ignore Generic.Classes.OpeningBrace
         }
         $columns            = $this->get_columns();
         $sortable           = $this->get_sortable_columns();
-        $this->columns_info = apply_filters( 'mainwp_updates_table_columns_header', array( $columns, $sortable ), $this->type, $this->view_per );
+        $collapsing         = $this->get_collapsing_columns();
+        $this->columns_info = apply_filters( 'mainwp_updates_table_columns_header', array( $columns, $sortable, $collapsing ), $this->type, $this->view_per );
         return $this->columns_info;
     }
 
@@ -121,18 +122,38 @@ class MainWP_Updates_Table_Helper { // phpcs:ignore Generic.Classes.OpeningBrace
     }
 
     /**
+     * Get collapsing columns.
+     *
+     * @return array $collapsing_columns Array of collapsing columns.
+     */
+    public function get_collapsing_columns() {
+        return array(
+            'login'   => true,
+            'version' => true,
+            'latest'  => true,
+            'trusted' => true,
+            'status'  => true,
+            'client'  => true,
+            'action'  => true,
+        );
+    }
+
+    /**
      * Echo the column headers.
      *
      * @param bool $top true|false.
      */
     public function print_column_headers( $top = true ) {
 
-        list( $columns_header, $sortable ) = $this->get_column_info();
+        list( $columns_header, $sortable, $collapsing ) = $this->get_column_info();
 
         foreach ( $columns_header as $column_key => $column_display_name ) {
             $class = array();
             if ( ! isset( $sortable[ $column_key ] ) ) {
                 $class[] = 'no-sort';
+            }
+            if ( isset( $collapsing[ $column_key ] ) ) {
+                $class[] = 'two wide collapsing';
             }
 
             if ( ! empty( $class ) ) {

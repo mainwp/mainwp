@@ -60,6 +60,7 @@ class Log_Admin {
      */
     public function __construct( $manager ) {
         $this->manager = $manager;
+        add_action( 'init', array( &$this, 'init' ) );
         add_filter( 'mainwp_getsubpages_settings', array( $this, 'add_subpage_menu_logs' ) );
         // Load admin scripts and styles.
         add_action(
@@ -74,6 +75,15 @@ class Log_Admin {
         // Auto purge setup.
         add_action( 'wp_loaded', array( $this, 'hook_purge_scheduled_action' ) );
         add_action( 'admin_init', array( $this, 'admin_init' ) );
+    }
+
+    /**
+     * Initiate Hooks
+     *
+     * Initiates hooks for the Dashboard insights module.
+     */
+    public function init() {
+        add_action( 'mainwp_help_sidebar_content', array( $this, 'mainwp_help_content' ) );
     }
 
     /**
@@ -343,5 +353,38 @@ class Log_Admin {
             }
         }
         return $list_users;
+    }
+
+    /**
+     * Method mainwp_help_content()
+     *
+     * Creates the MainWP Help Documentation List for the help component in the sidebar.
+     */
+    public static function mainwp_help_content() {
+        $allow_pages = array( 'InsightsOverview' );
+        if ( isset( $_GET['page'] ) && in_array( $_GET['page'], $allow_pages, true ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            ?>
+            <p><?php esc_html_e( 'If you need help with the Dashboard Insights module, please review following help documents', 'mainwp' ); ?></p>
+            <div class="ui list">
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/dashboard-insights/" target="_blank">Dashboard Insights</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/dashboard-insights/#comprehensive-filtering-options" target="_blank">Filtering Options</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/dashboard-insights/#export-the-data-and-charts-from-an-individual-widget" target="_blank">Export Insights Data</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <?php
+                /**
+                 * Action: mainwp_module_dashboard_insights_help_item
+                 *
+                 * Fires at the bottom of the help articles list in the Help sidebar on the Insights page.
+                 *
+                 * Suggested HTML markup:
+                 *
+                 * <div class="item"><a href="Your custom URL">Your custom text</a></div>
+                 *
+                 * @since 5.2
+                 */
+                do_action( 'mainwp_module_dashboard_insights_help_item' );
+                ?>
+            </div>
+            <?php
+        }
     }
 }

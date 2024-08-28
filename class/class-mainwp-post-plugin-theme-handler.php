@@ -15,7 +15,7 @@ namespace MainWP\Dashboard;
  * @uses \MainWP\Dashboard\MainWP_Post_Base_Handler
  */
 class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
-
+    // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
     /**
      * Protected static variable to hold the single instance of the class.
      *
@@ -60,13 +60,16 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         $this->add_action( 'mainwp_ignoreplugintheme', array( &$this, 'mainwp_ignoreplugintheme' ) );
         $this->add_action( 'mainwp_unignoreplugintheme', array( &$this, 'mainwp_unignoreplugintheme' ) );
         $this->add_action( 'mainwp_ignorepluginsthemes', array( &$this, 'mainwp_ignorepluginsthemes' ) );
-        $this->add_action( 'mainwp_unignorepluginsthemes', array( &$this, 'mainwp_unignorepluginsthemes' ) );
+        $this->add_action( 'mainwp_unignorepluginsthemes', array( &$this, 'mainwp_unignore_global_pluginsthemes' ) );
         $this->add_action( 'mainwp_unignoreabandonedplugintheme', array( &$this, 'mainwp_unignoreabandonedplugintheme' ) );
         $this->add_action( 'mainwp_unignoreabandonedpluginsthemes', array( &$this, 'mainwp_unignoreabandonedpluginsthemes' ) );
         $this->add_action( 'mainwp_dismissoutdateplugintheme', array( &$this, 'mainwp_dismissoutdateplugintheme' ) );
         $this->add_action( 'mainwp_dismissoutdatepluginsthemes', array( &$this, 'mainwp_dismissoutdatepluginsthemes' ) );
         $this->add_action( 'mainwp_trust_plugin', array( &$this, 'mainwp_trust_plugin' ) );
         $this->add_action( 'mainwp_trust_theme', array( &$this, 'mainwp_trust_theme' ) );
+        $this->add_action( 'mainwp_updates_ignore_upgrades', array( &$this, 'ajax_ignore_core_updates' ) );
+        $this->add_action( 'mainwp_updates_unignore_upgrades', array( &$this, 'ajax_unignore_core_updates' ) );
+        $this->add_action( 'mainwp_updates_unignore_global_upgrades', array( &$this, 'ajax_unignore_global_upgrades' ) );
 
         // Page: Themes.
         $this->add_action( 'mainwp_themes_search', array( &$this, 'mainwp_themes_search' ) );
@@ -662,8 +665,29 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         $slug = isset( $_POST['slug'] ) ? esc_html( wp_unslash( $_POST['slug'] ) ) : '';
         $id   = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
         $name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
+        $ver  = isset( $_POST['ignore_ver'] ) ? sanitize_text_field( wp_unslash( $_POST['ignore_ver'] ) ) : '';
         // phpcs:enable
-        wp_send_json( array( 'result' => MainWP_Updates_Handler::ignore_plugin_theme( $type, $slug, $name, $id ) ) );
+        wp_send_json( array( 'result' => MainWP_Updates_Handler::ignore_plugin_theme( $type, $slug, $name, $id, $ver ) ) );
+    }
+
+
+    /**
+     * Method mainwp_unignore_global_pluginsthemes()
+     *
+     * Unignore plugins or themes.
+     */
+    public function mainwp_unignore_global_pluginsthemes() {
+        $this->secure_request( 'mainwp_unignorepluginsthemes' );
+
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        if ( ! isset( $_POST['slug'] ) ) {
+            die( wp_json_encode( array( 'error' => esc_html__( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
+        }
+        $type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
+        $slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '';
+        $ver  = isset( $_POST['ignore_ver'] ) ? wp_unslash( $_POST['ignore_ver'] ) : '';
+        // phpcs:enable
+        die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_global_plugins_themes( $type, $slug, $ver ) ) ) );
     }
 
     /**
@@ -776,12 +800,14 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         $type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
         $slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '';
         $id   = isset( $_POST['id'] ) ? sanitize_text_field( wp_unslash( $_POST['id'] ) ) : '';
+        $ver  = isset( $_POST['ignore_ver'] ) ? sanitize_text_field( wp_unslash( $_POST['ignore_ver'] ) ) : '';
+
         // phpcs:enable
-        die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_plugin_theme( $type, $slug, $id ) ) ) );
+        die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_plugin_theme( $type, $slug, $id, $ver ) ) ) );
     }
 
     /**
-     * Method mainwp_ignorepluginthemes()
+     * Method mainwp_ignorepluginsthemes()
      *
      * Ignore plugins or themes.
      *
@@ -802,27 +828,138 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         $type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
         $slug = isset( $_POST['slug'] ) ? esc_html( wp_unslash( $_POST['slug'] ) ) : '';
         $name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
+        $ver  = isset( $_POST['ignore_ver'] ) ? sanitize_text_field( wp_unslash( $_POST['ignore_ver'] ) ) : '';
+
         // phpcs:enable
-        die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::ignore_plugins_themes( $type, $slug, $name ) ) ) );
+        die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::ignore_plugins_themes( $type, $slug, $name, $ver ) ) ) );
     }
 
     /**
-     * Method mainwp_unignorepluginthemes()
+     * Method ajax_ignore_core_updates()
      *
-     * Unignore plugins or themes.
+     * Ignore plugins or themes.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Updates_Handler::ignore_plugins_themes()
      */
-    public function mainwp_unignorepluginsthemes() {
-        $this->secure_request( 'mainwp_unignorepluginsthemes' );
+    public function ajax_ignore_core_updates() { //phpcs:ignore -- NOSONAR complex function.
+
+        $this->secure_request( 'mainwp_updates_ignore_upgrades' );
+
+        if ( ! mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) {
+            die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
+        }
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        if ( ! isset( $_POST['slug'] ) ) {
+        if ( empty( $_POST['slug'] ) ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
         }
-        $type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
-        $slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '';
-        // phpcs:enable
-        die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_plugins_themes( $type, $slug ) ) ) );
+
+        $type    = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
+        $ignore  = isset( $_POST['ignore'] ) ? sanitize_text_field( wp_unslash( $_POST['ignore'] ) ) : '';
+        $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : 0;
+        $ver     = isset( $_POST['ignore_ver'] ) ? sanitize_text_field( wp_unslash( $_POST['ignore_ver'] ) ) : '';
+
+        if ( 'wp' === $type ) {
+            if ( ( 'this_version' === $ignore || 'all_versions' === $ignore ) && $site_id ) {
+                $website = MainWP_DB::instance()->get_website_by_id( $site_id, false, array( 'ignored_wp_upgrades' ) );
+
+                if ( empty( $website ) ) {
+                    wp_send_json( array( 'error' => esc_html__( 'Site ID invalid or site not found. Please try again.', 'mainwp' ) ) );
+                }
+
+                $ignored_upgrades = ! empty( $website->ignored_wp_upgrades ) ? json_decode( $website->ignored_wp_upgrades, true ) : array();
+
+                if ( ! is_array( $ignored_upgrades ) ) {
+                    $ignored_upgrades = array();
+                }
+
+                $ignored_vers = is_array( $ignored_upgrades ) && isset( $ignored_upgrades['ignored_versions'] ) ? $ignored_upgrades['ignored_versions'] : array();
+                if ( ! is_array( $ignored_vers ) ) {
+                    $ignored_vers = array();
+                }
+
+                if ( empty( $ver ) || 'all_versions' === $ver ) { // ignore all.
+                    $ignored_vers = array( 'all_versions' );
+                } else {
+                    $ver = urldecode( $ver );
+                    if ( ! in_array( $ver, $ignored_vers ) ) {
+                        $ignored_vers[] = $ver;
+                    }
+                }
+
+                $ignored_upgrades['ignored_versions'] = $ignored_vers;
+
+                MainWP_DB::instance()->update_website_option(
+                    $site_id,
+                    'ignored_wp_upgrades',
+                    wp_json_encode( $ignored_upgrades )
+                );
+
+                wp_send_json( array( 'success' => 1 ) );
+
+            } elseif ( 'this_version_global' === $ignore ) {
+
+                $userExtension       = MainWP_DB_Common::instance()->get_user_extension();
+                $decodedIgnoredCores = ! empty( $userExtension->ignored_wp_upgrades ) ? json_decode( $userExtension->ignored_wp_upgrades, true ) : array();
+
+                if ( ! is_array( $decodedIgnoredCores ) ) {
+                    $decodedIgnoredCores = array();
+                }
+
+                $ignored_vers = isset( $decodedIgnoredCores['ignored_versions'] ) ? $decodedIgnoredCores['ignored_versions'] : array();
+
+                if ( ! is_array( $ignored_vers ) ) {
+                    $ignored_vers = array();
+                }
+
+                $ver = urldecode( $ver );
+                if ( ! in_array( $ver, $ignored_vers ) ) {
+                    $ignored_vers[] = $ver;
+                }
+
+                $decodedIgnoredCores['ignored_versions'] = $ignored_vers;
+
+                MainWP_DB_Common::instance()->update_user_extension(
+                    array(
+                        'userid'              => null,
+                        'ignored_wp_upgrades' => wp_json_encode( $decodedIgnoredCores ),
+                    )
+                );
+                wp_send_json( array( 'success' => 1 ) );
+            }
+        }
+        wp_send_json( array( 'error' => esc_html__( 'Invalid types. Please try again.', 'mainwp' ) ) );
     }
+
+    /**
+     * Method ajax_unignore_core_updates()
+     *
+     * Unignore plugin or theme.
+     */
+    public function ajax_unignore_core_updates() {
+        $this->secure_request( 'mainwp_updates_unignore_upgrades' );
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $id  = isset( $_POST['id'] ) ? sanitize_text_field( wp_unslash( $_POST['id'] ) ) : ''; // numberic id or _ALL_.
+        $ver = isset( $_POST['ignore_ver'] ) ? sanitize_text_field( wp_unslash( $_POST['ignore_ver'] ) ) : '';
+        // phpcs:enable
+        die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_core_updates( $id, $ver ) ) ) );
+    }
+
+
+    /**
+     * Method ajax_unignore_global_upgrades()
+     *
+     * Unignore plugin or theme.
+     */
+    public function ajax_unignore_global_upgrades() {
+        $this->secure_request( 'mainwp_updates_unignore_global_upgrades' );
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '';
+        $ver  = isset( $_POST['ignore_ver'] ) ? sanitize_text_field( wp_unslash( $_POST['ignore_ver'] ) ) : '';
+        // phpcs:enable
+        die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_global_cores( $slug, $ver ) ) ) );
+    }
+
 
     /**
      * Method mainwp_trust_plugin()

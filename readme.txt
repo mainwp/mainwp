@@ -170,6 +170,6 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 * Updated: Enhanced tooltip elements to ensure they display properly.
 * Removed: Unused CSS code
 
-[See Video Changelog](https://www.youtube.com/watch?v=)
+[See Video Changelog](https://www.youtube.com/watch?v=GrA_faZKcfQ)
 
 [See changelog for all versions.](https://mainwp.com/changelog.txt)

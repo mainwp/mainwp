@@ -2142,20 +2142,6 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         return apply_filters( 'mainwp_rest_pre_update_site_item', $data, $request );
     }
 
-
-    /**
-     * Prepare objects query.
-     *
-     * @since  5.2
-     * @param  WP_REST_Request $request Full details about the request.
-     * @param  string          $type Object type.
-     *
-     * @return array
-     */
-    protected function prepare_objects_query( $request, $type = 'object' ) {
-        return parent::prepare_objects_query( $request, $type );
-    }
-
     /**
      * Get formatted item object.
      *

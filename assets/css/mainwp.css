@@ -1413,3 +1413,6 @@ th .down.icon {
 #mainwp-publish-dimmer{
     height: 100vh;
 }
+#plugin-information-footer{
+    display: none !important;
+}

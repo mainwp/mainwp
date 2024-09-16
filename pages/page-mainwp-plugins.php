@@ -2301,7 +2301,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <thead>
                 <tr>
                     <th scope="col" class="no-sort check-column collapsing"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
-                    <th scope="col" class="no-sort"><?php esc_html_e( '', 'mainwp' ); ?></th>
+                    <th scope="col" class="no-sort"></th>
                     <th scope="col" data-priority="1"><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
                     <th scope="col" ><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
                     <th scope="col" class="collapsing" data-priority="2"><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
@@ -2613,7 +2613,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <thead>
                 <tr>
                     <th scope="col" ><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
-                    <th scope="col" class="no-sort"><?php esc_html_e( '', 'mainwp' ); ?></th>
+                    <th scope="col" class="no-sort"></th>
                     <th scope="col" ><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
                     <th scope="col" ><?php esc_html_e( 'Plugin slug', 'mainwp' ); ?></th>
                     <th scope="col" ><?php esc_html_e( 'Ignored version', 'mainwp' ); ?></th>

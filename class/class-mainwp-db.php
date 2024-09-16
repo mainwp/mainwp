@@ -284,7 +284,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             'wp.themes',
         );
 
-        $select = ' wp.*,wp_sync.*,wp_optionview.* ';
+        $select = ' wp.*,wp_sync.* ';
         if ( 'base_view' === $view ) {
             $select = implode( ',', $base_fields );
         } elseif ( 'updates_view' === $view ) {
@@ -298,6 +298,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             );
             $select         = implode( ',', array_merge( $updates_fields, $base_fields ) );
         }
+
+        $select         .= ',wp_optionview.* '; // to fix bug.
 
         // wpgroups to fix issue for mysql 8.0, as groups will generate error syntax.
         if ( $selectgroups ) {

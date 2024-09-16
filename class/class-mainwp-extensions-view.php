@@ -658,7 +658,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             <div class="field">
                 <label for="mainwp_com_api_key"><?php esc_html_e( 'Enter your MainWP Main API Key.', 'mainwp' ); ?></label>
                 <div class="ui input fluid">
-                    <input type="password" id="mainwp_com_api_key" autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="<?php esc_attr_e( '', 'mainwp' ); ?>" value="<?php echo esc_attr( $mainwp_api_key ); ?>"/>
+                    <input type="password" id="mainwp_com_api_key" autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="<?php echo esc_attr( '' ); ?>" value="<?php echo esc_attr( $mainwp_api_key ); ?>"/>
                 </div>
             </div>
             <div class="field">

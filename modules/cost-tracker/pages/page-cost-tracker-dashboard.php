@@ -453,7 +453,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                 <tr>
                     <th scope="col" class="no-sort collapsing check-column column-check"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox"></span></th>
                     <th id="cost_status" class="collapsing column-status"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                    <th id="icon" class="no-sort column-icon collapsing"><?php esc_html_e( '', 'mainwp' ); ?></th>
+                    <th id="icon" class="no-sort column-icon collapsing"></th>
                     <th id="name" class="column-name"><?php esc_html_e( 'Name', 'mainwp' ); ?></th>
                     <?php if ( $filtered ) : ?>
                         <th id="per_site_price" class="no-sort collapsing column-site-price"><?php esc_html_e( 'Per Site Price', 'mainwp' ); ?></th>
@@ -475,7 +475,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                 <tr>
                     <th scope="col" class="no-sort collapsing check-column column-check"><span class="ui checkbox"><input id="cb-select-all-bottom" type="checkbox"></span></th>
                     <th id="cost_status-bottom" class="collapsing column-status"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                    <th id="icon-bottom" class="column-icon collapsing"><?php esc_html_e( '', 'mainwp' ); ?></th>
+                    <th id="icon-bottom" class="column-icon collapsing"></th>
                     <th id="name-bottom" class="column-name" ><?php esc_html_e( 'Name', 'mainwp' ); ?></th>
                     <?php if ( $filtered ) : ?>
                         <th id="per_site_price-bottom" class="no-sort collapsing column-site-price"><?php esc_html_e( 'Per Site Price', 'mainwp' ); ?></th>

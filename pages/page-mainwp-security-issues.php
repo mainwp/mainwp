@@ -53,7 +53,7 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 <tr>
                     <th scope="col" class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
                     <th scope="col" ><?php esc_html_e( 'Detected Issues', 'mainwp' ); ?></th>
-                    <th scope="col" class="collapsing"><?php esc_html_e( '', 'mainwp' ); ?></th>
+                    <th scope="col" class="collapsing"></th>
                 </tr>
         </thead>
         <tbody>

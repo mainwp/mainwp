@@ -584,7 +584,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         if ( empty( $checkupdate_websites ) ) {
             $busyCounter = MainWP_Auto_Updates_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start( $lasttimeStartAutomaticUpdate );
-            if ( 0 !== $busyCounter ) {
+            if ( ! empty( $busyCounter ) ) {
                 MainWP_Logger::instance()->log_update_check( 'busy counter :: found ' . $busyCounter . ' websites' );
                 $lastAutomaticUpdate = MainWP_Auto_Updates_DB::instance()->get_websites_last_automatic_sync();
                 if ( ( time() - $lastAutomaticUpdate ) < HOUR_IN_SECONDS ) {
@@ -592,7 +592,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 }
             }
 
-            MainWP_Logger::instance()->log_update_check( 'sites to check update empty' );
+            MainWP_Logger::instance()->log_update_check( 'Automatic sync sites finished.' );
 
             if ( $updatecheck_running ) {
                 MainWP_Utility::update_option( 'mainwp_updatescheck_is_running', '' );
@@ -688,9 +688,11 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     );
 
                     MainWP_DB::instance()->update_website_sync_values( $website->id, $websiteValues );
-
+                    MainWP_Logger::instance()->log_update_check( 'auto sync failed :: [siteid=' . $website->id . ']' );
                     continue;
                 }
+                MainWP_Logger::instance()->log_update_check( 'auto sync success :: [siteid=' . $website->id . ']' );
+
                 $website = MainWP_DB::instance()->get_website_by_id( $website->id, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'last_wp_upgrades' ) );
 
                 $check_individual_digest = false;

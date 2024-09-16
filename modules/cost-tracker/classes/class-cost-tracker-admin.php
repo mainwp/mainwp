@@ -956,18 +956,18 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
         }
 
         if ( 'lifetime' === $subscription->type ) {
-            esc_html_e( '', 'mainwp' );
+            echo '';
             return;
         }
 
         $next_renewal = ! empty( $next_renewal ) ? intval( $next_renewal ) : (int) $subscription->next_renewal;
 
         if ( empty( $next_renewal ) ) {
-            echo esc_html__( '', 'mainwp' );
+            echo '';
             return;
         }
         if ( 'active' !== $subscription->cost_status ) {
-            echo esc_html__( '', 'mainwp' );
+            echo '';
             return;
         }
 

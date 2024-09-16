@@ -244,9 +244,11 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
     }
 
     /**
-     * Get default columns.
+     * Default Manage Sites table columns.
      *
-     * @return array Array of default column names.
+     * Returns the array of default columns for the Manage Sites table.
+     *
+     * @return array Array of default columns names.
      */
     public function get_default_columns() {
         return array(

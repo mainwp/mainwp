@@ -70,6 +70,14 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
         } else {
             $local_timestamp      = MainWP_Utility::get_timestamp();
             $time_to_auto_updates = get_option( 'mainwp_automatic_update_next_run_timestamp', 0 );
+
+            // to fix compatiple.
+            $frequency_AutoUpdate = get_option( 'mainwp_frequency_AutoUpdate' );
+            if ( false === $frequency_AutoUpdate ) {
+                MainWP_Utility::update_option( 'mainwp_frequency_AutoUpdate', 'daily' );
+                static::set_next_auto_updates_time();
+            }
+
             if ( ! empty( $time_to_auto_updates ) && $local_timestamp > $time_to_auto_updates ) {
                 static::set_next_auto_updates_time();
 
@@ -140,13 +148,12 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
             foreach ( $autoupdates_websites as $website ) {
                 if ( ! MainWP_DB_Backup::instance()->backup_full_task_running( $website->id ) ) {
                     if ( ! empty( $website->sync_errors ) && ! MainWP_Sync::sync_site( $website, false, true ) ) {
-                        $websiteValues = array(
-                            'dtsAutomaticSync' => $local_timestamp, // to skip.
-                        );
-                        MainWP_DB::instance()->update_website_sync_values( $website->id, $websiteValues );
+                        $this->finished_site_auto_updates( $website );  // to skip.
                     } else {
                         $websites[] = $website;
                     }
+                } else {
+                    $this->finished_site_auto_updates( $website );  // to skip.
                 }
             }
 
@@ -182,7 +189,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
             $decodedIgnoredThemes = array();
         }
 
-        $remain_updates_count = array();
+        $finished_updates_sites = array();
 
         $coreToUpdateNow    = array();
         $pluginsToUpdateNow = array();
@@ -217,7 +224,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                 continue;
             }
 
-            $updated_status = ! empty( $website->bulk_updates_info ) ? son_decode( $website->bulk_updates_info, true ) : array();
+            $updated_status = ! empty( $website->bulk_updates_info ) ? json_decode( $website->bulk_updates_info, true ) : array();
 
             if ( ! is_array( $updated_status ) ) {
                 $updated_status = array();
@@ -231,11 +238,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                 );
             }
 
-            $remain_updates_count[ $website->id ] = array(
-                'wp'      => 0,
-                'plugins' => 0,
-                'themes'  => 0,
-            );
+            $found_updates = 0;
 
             $websiteDecodedIgnoredPlugins = json_decode( $website->ignored_plugins, true );
             if ( ! is_array( $websiteDecodedIgnoredPlugins ) ) {
@@ -286,11 +289,11 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                             $websiteCoreUpdateCheck = time();
                         } elseif ( ! empty( $websiteCoreUpdateCheck ) && time() > $delay_autoupdate * DAY_IN_SECONDS + intval( $websiteCoreUpdateCheck ) ) {
                             $coreToUpdateNow[ $website->id ] = $item;
-                            ++$remain_updates_count[ $website->id ]['wp'];
+                            ++$found_updates;
                         }
                     } else {
                         $coreToUpdateNow[ $website->id ] = $item;
-                        ++$remain_updates_count[ $website->id ]['wp'];
+                        ++$found_updates;
                     }
                 }
             }
@@ -349,14 +352,14 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                     if ( ! empty( $delay_autoupdate ) ) {
                         if ( ! empty( $check_timestamp ) && ( time() > $delay_autoupdate * DAY_IN_SECONDS + intval( $check_timestamp ) ) ) {
                             $pluginsToUpdateNow[ $website->id ][ $pluginSlug ] = $item;
-                            ++$remain_updates_count[ $website->id ]['plugins'];
+                            ++$found_updates;
                         }
                         if ( empty( $check_timestamp ) ) {
                             $websitePluginsUpdateCheck[ $pluginSlug ] = time();
                         }
                     } else {
                         $pluginsToUpdateNow[ $website->id ][ $pluginSlug ] = $item;
-                        ++$remain_updates_count[ $website->id ]['plugins'];
+                        ++$found_updates;
                     }
                 }
             }
@@ -382,19 +385,27 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
 
                 if ( in_array( $themeSlug, $trustedThemes ) ) {
                     $check_timestamp = isset( $websiteThemesUpdateCheck[ $themeSlug ] ) ? $websiteThemesUpdateCheck[ $themeSlug ] : 0;
-                    if ( ! empty( $check_timestamp ) && ! empty( $delay_autoupdate ) ) {
-                        if ( time() > $delay_autoupdate * DAY_IN_SECONDS + intval( $check_timestamp ) ) {
+                    if ( ! empty( $delay_autoupdate ) ) {
+                        if ( ! empty( $check_timestamp ) && time() > $delay_autoupdate * DAY_IN_SECONDS + intval( $check_timestamp ) ) {
                             $themesToUpdateNow[ $website->id ][ $themeSlug ] = $item;
-                            ++$remain_updates_count[ $website->id ]['themes'];
+                            ++$found_updates;
+                        }
+                        if ( empty( $check_timestamp ) ) {
+                            $websiteThemesUpdateCheck[ $themeSlug ] = time();
                         }
                     } else {
                         $themesToUpdateNow[ $website->id ][ $themeSlug ] = $item;
-                        ++$remain_updates_count[ $website->id ]['themes'];
+                        ++$found_updates;
                     }
                 }
             }
 
-            MainWP_DB::instance()->update_website_sync_values( $website->id, array( 'dtsAutomaticSync' => $local_timestamp ) );
+            MainWP_Logger::instance()->log_update_check( 'Automatic before updates :: [siteid=' . $website->id . '] :: [found_updates=' . $found_updates . ']' );
+
+            if ( ! $found_updates ) {
+                $this->finished_site_auto_updates( $website );
+                $finished_updates_sites[] = $website->id;
+            }
 
             if ( ! empty( $delay_autoupdate ) ) {
                 foreach ( $websitePluginsUpdateCheck as $slug => $check_time ) {
@@ -528,8 +539,6 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                 if ( ! empty( $slugs ) ) {
                     try {
 
-                        $remain_updates_count[ $websiteId ]['plugins'] -= count( $slugs );
-
                         MainWP_DB::instance()->update_website_option( $website, 'bulk_updates_info', wp_json_encode( $updated_status ) );
 
                         MainWP_Logger::instance()->log_update_check( 'Automatic updates plugins [websiteid=' . $websiteId . '] :: [slugs=' . urldecode( implode( ',', $slugs ) ) . ']' );
@@ -598,8 +607,6 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
 
                 if ( ! empty( $slugs ) ) {
 
-                    $remain_updates_count[ $websiteId ]['themes'] -= count( $slugs );
-
                     MainWP_DB::instance()->update_website_option( $website, 'bulk_updates_info', wp_json_encode( $updated_status ) );
 
                     MainWP_Logger::instance()->log_update_check( 'Automatic updates theme [websiteid=' . $websiteId . '] :: themes :: ' . implode( ',', $slugs ) );
@@ -652,8 +659,6 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                     continue; // updated ?.
                 }
 
-                $remain_updates_count[ $websiteId ]['wp'] -= 1;
-
                 $updated_status['auto_updates_processed']['wp'] = $info;
                 MainWP_DB::instance()->update_website_option( $website, 'bulk_updates_info', wp_json_encode( $updated_status ) );
 
@@ -667,19 +672,14 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
             }
         }
 
-        if ( ! empty( $remain_updates_count ) ) {
-            foreach ( $websites as $website ) {
-                $websiteId = $website->id;
-                if ( $remain_updates_count[ $websiteId ]['plugins'] + $remain_updates_count[ $websiteId ]['themes'] + $remain_updates_count[ $websiteId ]['wp'] <= 0 ) {
-                    $this->finished_site_auto_updates( $website ); // updates site done for this update.
-
-                    $updated_status = MainWP_DB::instance()->get_json_website_option( $website, 'bulk_updates_info' );
-                    if ( ! is_array( $updated_status ) ) {
-                        $updated_status = array();
-                    }
-                    $updated_status['finished'] = MainWP_Utility::get_timestamp();
-                    MainWP_DB::instance()->update_website_option( $website, 'bulk_updates_info', wp_json_encode( $updated_status ) );
+        if ( ! empty( $finished_updates_sites ) ) {
+            foreach ( $finished_updates_sites as $websiteId ) {
+                $updated_status = MainWP_DB::instance()->get_json_website_option( $websiteId, 'bulk_updates_info' );
+                if ( ! is_array( $updated_status ) ) {
+                    $updated_status = array();
                 }
+                $updated_status['finished'] = MainWP_Utility::get_timestamp();
+                MainWP_DB::instance()->update_website_option( $websiteId, 'bulk_updates_info', wp_json_encode( $updated_status ) );
             }
         }
     }

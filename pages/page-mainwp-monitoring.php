@@ -112,6 +112,22 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             $columns['favicon'] = esc_html__( 'Favicon', 'mainwp' );
         }
 
+        if ( isset( $columns['login'] ) ) {
+            $columns['login'] = esc_html__( 'Jump to WP Admin', 'mainwp' );
+        }
+
+        if ( isset( $columns['site_preview'] ) ) {
+            $columns['site_preview'] = esc_html__( 'Site preview', 'mainwp' );
+        }
+
+        if ( isset( $columns['lighthouse_desktop_score'] ) ) {
+            $columns['lighthouse_desktop_score'] = esc_html__( 'Lighthouse Desktop Score', 'mainwp' );
+        }
+
+        if ( isset( $columns['lighthouse_mobile_score'] ) ) {
+            $columns['lighthouse_mobile_score'] = esc_html__( 'Lighthouse Mobile Score', 'mainwp' );
+        }
+
         $sites_per_page = get_option( 'mainwp_default_monitoring_sites_per_page', 25 );
 
         if ( isset( $columns['site_actions'] ) && empty( $columns['site_actions'] ) ) {

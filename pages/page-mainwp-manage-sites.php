@@ -395,48 +395,24 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $columns['favicon'] = esc_html__( 'Favicon', 'mainwp' );
         }
 
-        if ( isset( $columns['login'] ) ) {
-            $columns['login'] = esc_html__( 'Jump to WP Admin', 'mainwp' );
-        }
+        $list_items = array(
+            'login'                    => esc_html__( 'Jump to WP Admin', 'mainwp' ),
+            'update'                   => esc_html__( 'Available updates', 'mainwp' ),
+            'wpcore_update'            => esc_html__( 'Available WP core updates', 'mainwp' ),
+            'plugin_update'            => esc_html__( 'Available plugins updates', 'mainwp' ),
+            'theme_update'             => esc_html__( 'Available themes updates', 'mainwp' ),
+            'site-cost-tracker'        => esc_html__( 'Cost Tracker', 'mainwp' ),
+            'note'                     => esc_html__( 'Notes', 'mainwp' ),
+            'site_preview'             => esc_html__( 'Site preview', 'mainwp' ),
+            'time-tracker-tasks'       => esc_html__( 'Time Tracker Tasks', 'mainwp' ),
+            'lighthouse_desktop_score' => esc_html__( 'Lighthouse Desktop Score', 'mainwp' ),
+            'lighthouse_mobile_score'  => esc_html__( 'Lighthouse Mobile Score', 'mainwp' ),
+        );
 
-        if ( isset( $columns['update'] ) ) {
-            $columns['update'] = esc_html__( 'Available updates', 'mainwp' );
-        }
-
-        if ( isset( $columns['wpcore_update'] ) ) {
-            $columns['wpcore_update'] = esc_html__( 'Available WP core updates', 'mainwp' );
-        }
-
-        if ( isset( $columns['plugin_update'] ) ) {
-            $columns['plugin_update'] = esc_html__( 'Available plugins updates', 'mainwp' );
-        }
-
-        if ( isset( $columns['theme_update'] ) ) {
-            $columns['theme_update'] = esc_html__( 'Available themes updates', 'mainwp' );
-        }
-
-        if ( isset( $columns['site-cost-tracker'] ) ) {
-            $columns['site-cost-tracker'] = esc_html__( 'Cost Tracker', 'mainwp' );
-        }
-
-        if ( isset( $columns['note'] ) ) {
-            $columns['note'] = esc_html__( 'Notes', 'mainwp' );
-        }
-
-        if ( isset( $columns['site_preview'] ) ) {
-            $columns['site_preview'] = esc_html__( 'Site preview', 'mainwp' );
-        }
-
-        if ( isset( $columns['time-tracker-tasks'] ) ) {
-            $columns['time-tracker-tasks'] = esc_html__( 'Time Tracker Tasks', 'mainwp' );
-        }
-
-        if ( isset( $columns['lighthouse_desktop_score'] ) ) {
-            $columns['lighthouse_desktop_score'] = esc_html__( 'Lighthouse Desktop Score', 'mainwp' );
-        }
-
-        if ( isset( $columns['lighthouse_mobile_score'] ) ) {
-            $columns['lighthouse_mobile_score'] = esc_html__( 'Lighthouse Mobile Score', 'mainwp' );
+        foreach ( $list_items as $idx => $title ) {
+            if ( isset( $columns[ $idx ] ) ) {
+                $columns[ $idx ] = $title;
+            }
         }
 
         $sites_per_page = get_option( 'mainwp_default_sites_per_page', 25 );

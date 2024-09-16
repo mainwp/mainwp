@@ -289,11 +289,11 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                             $websiteCoreUpdateCheck = time();
                         } elseif ( ! empty( $websiteCoreUpdateCheck ) && time() > $delay_autoupdate * DAY_IN_SECONDS + intval( $websiteCoreUpdateCheck ) ) {
                             $coreToUpdateNow[ $website->id ] = $item;
-                            $found_updates++;
+                            ++$found_updates;
                         }
                     } else {
                         $coreToUpdateNow[ $website->id ] = $item;
-                        $found_updates++;
+                        ++$found_updates;
                     }
                 }
             }
@@ -352,14 +352,14 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                     if ( ! empty( $delay_autoupdate ) ) {
                         if ( ! empty( $check_timestamp ) && ( time() > $delay_autoupdate * DAY_IN_SECONDS + intval( $check_timestamp ) ) ) {
                             $pluginsToUpdateNow[ $website->id ][ $pluginSlug ] = $item;
-                            $found_updates++;
+                            ++$found_updates;
                         }
                         if ( empty( $check_timestamp ) ) {
                             $websitePluginsUpdateCheck[ $pluginSlug ] = time();
                         }
                     } else {
                         $pluginsToUpdateNow[ $website->id ][ $pluginSlug ] = $item;
-                        $found_updates++;
+                        ++$found_updates;
                     }
                 }
             }
@@ -388,14 +388,14 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                     if ( ! empty( $delay_autoupdate ) ) {
                         if ( ! empty( $check_timestamp ) && time() > $delay_autoupdate * DAY_IN_SECONDS + intval( $check_timestamp ) ) {
                             $themesToUpdateNow[ $website->id ][ $themeSlug ] = $item;
-                            $found_updates++;
+                            ++$found_updates;
                         }
                         if ( empty( $check_timestamp ) ) {
                             $websiteThemesUpdateCheck[ $themeSlug ] = time();
                         }
                     } else {
                         $themesToUpdateNow[ $website->id ][ $themeSlug ] = $item;
-                        $found_updates++;
+                        ++$found_updates;
                     }
                 }
             }

@@ -422,7 +422,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         } else {
 
             if ( ! file_exists( $newdir ) ) {
-                mkdir( $newdir, 0777, true );
+                mkdir( $newdir, 0777, true ); // NOSONAR - @newdir is valid.
             }
 
             if ( ! empty( $dirs[0] ) . $userid && ! file_exists( trailingslashit( $dirs[0] . $userid ) . '.htaccess' ) ) {

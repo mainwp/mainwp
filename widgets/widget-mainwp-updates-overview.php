@@ -1154,7 +1154,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
      */
     public static function check_backups() { // phpcs:ignore -- NOSONAR - complex.
-        if ( empty( $_POST['sites'] ) || ! is_array( $_POST['sites'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        if ( empty( $_POST['sites'] ) || ! is_array( $_POST['sites'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- NOSONAR - verified before.
             return true;
         }
 

@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 6.2
-Tested up to: 6.6.1
+Tested up to: 6.6.2
 Requires PHP: 7.4
-Stable tag: 5.2
+Stable tag: 5.2.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -142,6 +142,11 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.2.1 - 9-16-2024 =
+
+* Fixed: An issue with the auto-sync process that caused synchronization delays or failures.
+* Updated: The "Show Columns" option checkbox labels by replacing icons with text labels for improved clarity.
 
 = 5.2 - 8-28-2024 =
 

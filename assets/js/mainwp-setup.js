@@ -11,6 +11,17 @@ jQuery(function () {
     }
   });
 
+  // Handle submit import file CVS.
+  jQuery(document).on('click', '#mainwp_managesites_add_import', function (e) {
+    e.preventDefault();
+    if (jQuery('#connect_first_site_file_bulkupload').val() == '') {
+      setHtml('#mainwp-message-zone', __('Please enter csv file for upload.'), false);
+    } else {
+      jQuery('#mainwp_connect_first_site_form').trigger('submit');
+    }
+    return false;
+  });
+
   jQuery('#mainwp_qsw_client_name_field').on('keyup', function () {
     if (jQuery(this).val()) {
       jQuery('#bulk_add_createclient').show();
@@ -65,6 +76,17 @@ jQuery(function () {
 
 });
 
+// Handle tab onvisible.
+const mainwp_menu_connect_first_site_onvisible_callback = function (objItem) {
+  const tab = jQuery(objItem).attr("data-tab");
+  if (tab === 'multiple-site') {
+    jQuery('#mainwp_managesites_add_import').show();
+    jQuery('#mainwp_managesites_add').hide();
+  } else if (tab === 'single-site') {
+    jQuery('#mainwp_managesites_add').show();
+    jQuery('#mainwp_managesites_add_import').hide();
+  }
+}
 // Connect a new website
 let mainwp_setup_managesites_add = function () {
   mainwp_set_message_zone('#mainwp-message-zone');

@@ -1416,3 +1416,7 @@ th .down.icon {
 #plugin-information-footer{
     display: none !important;
 }
+
+.menu-connect-first-site .item.active {
+	background: var(--grey-light) !important;
+  }

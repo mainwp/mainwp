@@ -1131,6 +1131,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Render Import Sites - bulk new site modal.
      *
      * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::render_import_sites()
+     * @uses \MainWP_Utility::show_mainwp_message()
      */
     public static function render_bulk_new_site() {
         $showpage = 'BulkAddNew';
@@ -1138,17 +1139,16 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( ! mainwp_current_user_have_right( 'dashboard', 'add_sites' ) ) {
             mainwp_do_not_have_permissions( esc_html__( 'add sites', 'mainwp' ) );
             return;
-        } elseif ( isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_bulkupload']['error'] && check_admin_referer( 'mainwp-admin-nonce' ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Missing
+        } elseif ( ( isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_bulkupload']['error'] ) || ! empty( $_POST['mainwp_managesites_import'] ) && check_admin_referer( 'mainwp-admin-nonce' ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Missing
             ?>
                 <div class="ui large modal" id="mainwp-import-sites-modal">
                 <i class="close icon"></i>
                     <div class="header"><?php esc_html_e( 'Import Sites', 'mainwp' ); ?></div>
-                    <div class="scrolling header">
+                    <div class="scrolling content">
                     <?php MainWP_Manage_Sites_View::render_import_sites(); ?>
                     </div>
                     <div class="actions">
                         <input type="button" name="mainwp_managesites_btn_import" id="mainwp_managesites_btn_import" class="ui basic button" value="<?php esc_attr_e( 'Pause', 'mainwp' ); ?>"/>
-                        <input type="button" name="mainwp_managesites_btn_save_csv" id="mainwp_managesites_btn_save_csv" disabled="disabled" class="ui basic green button" value="<?php esc_attr_e( 'Save failed', 'mainwp' ); ?>"/>
                     </div>
                 </div>
                 <script type="text/javascript">
@@ -1165,36 +1165,55 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         } else {
             ?>
                 <div class="ui segment" id="mainwp-import-sites">
-                <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-sites-info-message' ) ) : ?>
+                    <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-sites-info-message' ) ) : ?>
                         <div class="ui info message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-sites-info-message"></i>
                             <?php printf( esc_html__( 'You can download the sample CSV file to see how to format the import file properly. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
                         </div>
                     <?php endif; ?>
                     <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
-                    <h3 class="ui dividing header">
-                    <?php esc_html_e( 'Import Sites', 'mainwp' ); ?>
-                        <div class="sub header"><?php esc_html_e( 'Import multiple websites to your MainWP Dashboard.', 'mainwp' ); ?></div>
-                    </h3>
-                    <form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form" class="ui form">
-                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                        <form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form" class="ui form">
+                        <h3 class="ui dividing header">
+                            <?php esc_html_e( 'Import Sites', 'mainwp' ); ?>
+                            <div class="sub header"><?php esc_html_e( 'Import multiple websites to your MainWP Dashboard.', 'mainwp' ); ?></div>
+                        </h3>
+                        <div class="mainwp-primary-content-wrap">
+                            <?php self::mainwp_managesites_form_import_sites(); // NOSONAR - render html form. ?>
+                        </div>
+                        <br/>
+                        <em>
+                            <?php esc_html_e( 'Enter each site\'s information on a new line using the following format:', 'mainwp' ); ?><br/>
+                            <code><?php esc_html_e( 'Site Name, URL, Admin Name, Tag, Security ID, HTTP Username, HTTP Password, Verify Certificate, SSL Version', 'mainwp' ); ?></code><br/>
+                            <ul class="ui bulleted list small text">
+                                <li><?php esc_html_e( 'Site Name: Enter the Site friedly name (Required)', 'mainwp' ); ?></li>
+                                <li><?php esc_html_e( 'URL: Enter your Site URL (Required)', 'mainwp' ); ?></li>
+                                <li><?php esc_html_e( 'Admin Name: Enter the website Administrator username (Required)', 'mainwp' ); ?></li>
+                                <li><?php esc_html_e( 'Tag: Assign tags to the website (Optional)', 'mainwp' ); ?></li>
+                                <li><?php esc_html_e( 'Security ID: If in use, enter the website Unique ID, if not, leave blank', 'mainwp' ); ?></li>
+                                <li><?php esc_html_e( 'HTTP Username: If the child site is HTTP Basic Auth protected, enter the HTTP username', 'mainwp' ); ?></li>
+                                <li><?php esc_html_e( 'HTTP Password: If the child site is HTTP Basic Auth protected, enter the HTTP passowrd', 'mainwp' ); ?></li>
+                                <li><?php esc_html_e( 'Verify Certificate: Enter 1 for true or 0 for false (default is 1).', 'mainwp' ); ?></li>
+                                <li><?php esc_html_e( 'SSL Version: Choose from auto, 1.x, 1, 2, 1.1, 1.2, 1.3 (default is auto).', 'mainwp' ); ?></li>
+                            </ul>
+                            <?php esc_html_e( 'Tip: For simplicity, you can leave "Verify Certificate" and "SSL Version" as default by entering a blank value.', 'mainwp' ); ?>
+                        </em>
+                        <div class="ui hidden divider"></div>
+                        <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                         <div class="ui grid field">
-                            <label class="six wide column middle aligned"><?php esc_html_e( 'Upload the CSV file', 'mainwp' ); ?></label>
-                            <div class="ten wide column">
+                            <label class="three wide column middle aligned" for="mainwp_managesites_file_bulkupload"><?php esc_html_e( 'Upload CSV', 'mainwp' ); ?> (<a href="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/csv/sample.csv' ); ?>"><?php esc_html_e( 'Download Sample', 'mainwp' ); ?></a>)</label>
+                            <div class="nine wide column">
                                 <div class="ui file input">
                                 <input type="file" name="mainwp_managesites_file_bulkupload" id="mainwp_managesites_file_bulkupload" accept="text/comma-separated-values"/>
                                 </div>
                             </div>
-                        </div>
-                        <div class="ui grid field">
-                            <label class="six wide column middle aligned"><?php esc_html_e( 'CSV file contains a header', 'mainwp' ); ?></label>
-                            <div class="ui toggle checkbox">
+                            <div class="ui toggle checkbox four wide column middle aligned">
                                 <input type="checkbox" name="mainwp_managesites_chk_header_first" checked="checked" id="mainwp_managesites_chk_header_first" value="1"/>
+                                <label for="mainwp_managesites_chk_header_first"><?php esc_html_e( 'CSV file contains a header', 'mainwp' ); ?></label>
                             </div>
                         </div>
                         <div class="ui divider"></div>
                         <input type="button" name="mainwp_managesites_add" id="mainwp_managesites_bulkadd" class="ui big green button" value="<?php esc_attr_e( 'Import Sites', 'mainwp' ); ?>"/>
-                        <a href="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/csv/sample.csv' ); ?>" class="ui big green basic right floated button"><?php esc_html_e( 'Download Sample CSV file', 'mainwp' ); ?></a>
+                        
                     </form>
                 </div>
                 <?php
@@ -1962,5 +1981,120 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             }
         }
         // @NO_SONAR_END@ end of block.
+    }
+
+    /**
+     * Method mainwp_managesites_form_import_sites()
+     *
+     * Creates the form import websites.
+     */
+    private static function mainwp_managesites_form_import_sites() {
+        ?>
+        <div class="ui mainwp-widget segment">
+            <div class="ui middle aligned left aligned compact grid" id="mainwp-managesites-row-import-sites">
+                <div class="ui row">
+                    <div class="two wide column">
+                        <strong><?php esc_html_e( 'Site URL', 'mainwp' ); ?></strong>
+                    </div>
+                    <div class="two wide column">
+                        <strong><?php esc_html_e( 'Site Name', 'mainwp' ); ?></strong>
+                    </div>
+                    <div class="two wide column">
+                        <strong><?php esc_html_e( 'Admin Name', 'mainwp' ); ?></strong>
+                    </div>
+                    <div class="one wide column">
+                        <strong><?php esc_html_e( 'Tag', 'mainwp' ); ?></strong>
+                    </div>
+                    <div class="two wide column">
+                        <strong><?php esc_html_e( 'Security ID', 'mainwp' ); ?></strong>
+                    </div>
+                    <div class="two wide column">
+                        <strong><?php esc_html_e( 'HTTP Username', 'mainwp' ); ?></strong>
+                    </div>
+                    <div class="two wide column">
+                        <strong><?php esc_html_e( 'HTTP Password', 'mainwp' ); ?></strong>
+                    </div>
+                    <div class="three wide column">
+                        <div class="ui grid">
+                            <div class="doubling three column row">
+                                <div class="column">
+                                    <strong><?php esc_html_e( 'Verify SSL', 'mainwp' ); ?></strong>
+                                </div>
+                                <div class="column">
+                                    <strong><?php esc_html_e( 'SSL Version', 'mainwp' ); ?></strong>
+                                </div>
+                                <div class="column"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php for ( $x = 1; $x <= 5; $x++ ) : ?>
+                <div class="row mainwp-managesites-import-rows" id="mainwp-managesites-import-row-<?php echo esc_attr( $x ); ?>">
+                    <div class="two wide column">
+                        <div class="ui mini fluid input">
+                            <input type="text" name="mainwp_managesites_import[<?php echo esc_attr( $x ); ?>][site_url]" class="mainwp-managesites-import-site-url" data-row-index="<?php echo esc_attr( $x ); ?>"/>
+                        </div>
+                    </div>
+                    <div class="two wide column">
+                        <div class="ui mini fluid input">
+                            <input type="text" id="mainwp-managesites-import-site-name-<?php echo esc_attr( $x ); ?>"  name="mainwp_managesites_import[<?php echo esc_attr( $x ); ?>][site_name]" class="mainwp-managesites-import-site-name"/>
+                        </div>
+                    </div>
+                    <div class="two wide column">
+                        <div class="ui mini fluid input">
+                            <input type="text" id="mainwp-managesites-import-admin-name-<?php echo esc_attr( $x ); ?>" name="mainwp_managesites_import[<?php echo esc_attr( $x ); ?>][admin_name]" class="mainwp-managesites-import-admin-name"/>
+                        </div>
+                    </div>
+                    <div class="one wide column">
+                        <div class="ui mini fluid input">
+                            <input type="text"  name="mainwp_managesites_import[<?php echo esc_attr( $x ); ?>][tag]" />
+                        </div>
+                    </div>
+                    <div class="two wide column"><div class="ui mini fluid input"><input type="text"  name="mainwp_managesites_import[<?php echo esc_attr( $x ); ?>][security_id]" /></div></div>
+                    <div class="two wide column">
+                        <div class="ui mini fluid input">
+                            <input type="text"  name="mainwp_managesites_import[<?php echo esc_attr( $x ); ?>][http_username]" />
+                        </div>
+                    </div>
+                    <div class="two wide column">
+                        <div class="ui mini fluid input">
+                            <input type="text"  name="mainwp_managesites_import[<?php echo esc_attr( $x ); ?>][http_password]" />
+                        </div>
+                    </div>
+                    <div class="three wide column">
+                        <div class="ui grid">
+                            <div class="doubling three column row">
+                                <div class="column">
+                                    <div class="ui mini fluid input">
+                                        <input type="text" value="1" class="mini" name="mainwp_managesites_import[<?php echo esc_attr( $x ); ?>][verify_certificate]" />
+                                    </div>
+                                </div>
+                                <div class="column">
+                                    <div class="ui mini fluid input">
+                                        <input type="text" value="auto" class="mini" name="mainwp_managesites_import[<?php echo esc_attr( $x ); ?>][ssl_version]" />
+                                    </div>
+                                </div>
+                                <div class="column">
+                                <?php if ( $x > 1 ) : ?>
+                                    <button class="ui compact circular red icon button mainwp-managesites-delete-import-row" style="margin-left: 5px !important;" type="button" onclick="mainwp_managesites_import_sites_delete_row(<?php echo esc_attr( $x ); ?>)">
+                                        <i class="trash alternate outline icon"></i>
+                                    </button>
+                                <?php else : ?>
+                                    <button class="ui compact circular red icon button disabled" style="margin-left: 5px !important;" type="button">
+                                        <i class="trash alternate outline icon"></i>
+                                    </button>
+                                <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endfor; ?>
+                <div  class="add-row" id="mainwp-managesites-add-row">
+                    <a href="#" class="ui mini green basic button" id="mainwp-managesites-import-row" data-default-row="5"><?php esc_html_e( 'Add New Row', 'mainwp' ); ?></a>
+                </div>
+            </div>
+        </div>
+        <?php
     }
 }

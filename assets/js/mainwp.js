@@ -2166,12 +2166,47 @@ jQuery(function () {
     mainwp_managesites_add();
   });
 
+	// hanlde click submit form import website
   jQuery(document).on('click', '#mainwp_managesites_bulkadd', function () {
-    if (jQuery('#mainwp_managesites_file_bulkupload').val() == '') {
-      setHtml('#mainwp-message-zone', __('Please enter csv file for upload.'), false);
-    } else {
-      jQuery('#mainwp_managesites_bulkadd_form').submit();
-    }
+
+		let hasTable_data = false;
+		let csv_selected = jQuery('#mainwp_managesites_file_bulkupload').val() !== ''; // Kiểm tra nếu file CSV đã được chọn
+		let error_messages = [];
+		// Iterate through each row in the rows
+		jQuery('#mainwp-managesites-row-import-sites .mainwp-managesites-import-rows').each(function(index) {
+
+			let site_url = jQuery(`input[name="mainwp_managesites_import[${index + 1}][site_url]"]`).val();
+			let admin_name = jQuery(`input[name="mainwp_managesites_import[${index + 1}][admin_name]"]`).val();
+			// If there is data in any row of the table, check the required fields
+			if (site_url || admin_name) {
+					hasTable_data = true;
+					let msg = '';
+				if (!site_url) {
+						msg = sprintf(__('Site URL is required in row %1', index + 1));
+						error_messages.push(msg);
+					}
+				if (!admin_name) {
+						msg = sprintf(__('Admin Name is required in row %1', index + 1));
+						error_messages.push(msg);
+					}
+			}
+		});
+
+		// Check if both CSV and table have data 
+		if (csv_selected && hasTable_data) {
+			error_messages.push(__("You can only submit either the table data or a CSV file, not both."));
+		}
+		// Check if both are empty
+		if (!csv_selected && !hasTable_data) {
+			error_messages.push(__("Please fill in the table or select a CSV file."));
+		}
+
+		// If there is an error, prevent submission and display the error
+		if (error_messages.length > 0) {
+			setHtml('#mainwp-message-zone', error_messages.join("<br/>"), false); 
+		}else{
+			jQuery('#mainwp_managesites_bulkadd_form').submit();
+		}
     return false;
   });
 
@@ -4464,3 +4499,107 @@ jQuery( document ).ready( function () {
     jQuery(scrollBody).trigger('scroll');
   });
 } );
+
+// Handel page import website
+jQuery( document ).ready( function () {
+// Get default value
+  let import_index = jQuery('#mainwp-managesites-import-row').attr("data-default-row");
+// Add new row by clicking Add New Row button
+  jQuery('#mainwp-managesites-import-row').on('click', function(e) {
+    e.preventDefault();
+    import_index++; // Update index before create row.
+    let new_row = mainwp_managesites_import_sites_add_row(import_index)
+    jQuery(this).parent().before(new_row);
+    
+  });
+  // Attach blur event to all input fields whose name is site_url
+	jQuery(document).on('blur', '.mainwp-managesites-import-site-url', function() {
+		const full_url =jQuery(this).val();
+		const row_index = jQuery(this).attr("data-row-index");
+		const parsed_url = mainwp_managesites_import_sites_extract_domain(full_url);
+		if(parsed_url !== '' && parsed_url !== undefined){
+			// Update input value with domain name only
+			jQuery(this).val(`${parsed_url.protocol}//${parsed_url.host}`);
+			// Set value site name
+			jQuery('#mainwp-managesites-import-site-name-' + row_index).val(`${parsed_url.host}`);
+		}
+	});
+});
+
+// Function to get the domain part from the entered URL
+const mainwp_managesites_import_sites_extract_domain = function (url) { // NOSONAR - to compatible.
+  try {
+    // Use URL API to parse URL and get only protocol and host part
+		return new URL(url);
+  } catch (e) {
+    // If the URL is invalid or contains an error, return an empty string.
+    return '';
+  }
+}
+
+// Delete row when pressing Delete button.
+const mainwp_managesites_import_sites_delete_row = function (index) {
+  jQuery('#mainwp-managesites-import-row-' + index).remove();
+}
+// Add new row by clicking Add New Row button.
+const mainwp_managesites_import_sites_add_row = function (row_index) {
+  return `
+    <div class="row mainwp-managesites-row-import-sites" id="mainwp-managesites-import-row-${row_index}">
+      <div class="two wide column">
+        <div class="ui mini fluid input">
+          <input type="text" name="mainwp_managesites_import[${row_index}][site_url]" class="mainwp-managesites-import-site-url" data-row-index="${row_index}"/>
+        </div>
+      </div>
+      <div class="two wide column">
+        <div class="ui mini fluid input">
+          <input type="text" id="mainwp-managesites-import-site-name-${row_index}" name="mainwp_managesites_import[${row_index}][site_name]" class="mainwp-managesites-import-site-name" />
+        </div>
+      </div>
+      <div class="two wide column">
+        <div class="ui mini fluid input">
+          <input type="text" id="mainwp-managesites-import-admin-name-${row_index}" name="mainwp_managesites_import[${row_index}][admin_name]" class="mainwp-managesites-import-admin-name"/>
+        </div>
+      </div>
+      <div class="one wide column">
+        <div class="ui mini fluid input">
+          <input type="text"  name="mainwp_managesites_import[${row_index}][tag]" />
+        </div>
+      </div>
+      <div class="two wide column">
+        <div class="ui mini fluid input">
+          <input type="text"  name="mainwp_managesites_import[${row_index}][security_id]" />
+        </div>
+      </div>
+      <div class="two wide column">
+        <div class="ui mini fluid input">
+          <input type="text"  name="mainwp_managesites_import[${row_index}][http_username]" />
+        </div>
+      </div>
+      <div class="two wide column">
+        <div class="ui mini fluid input">
+          <input type="text"  name="mainwp_managesites_import[${row_index}][http_password]" />
+        </div>
+      </div>
+      <div class="three wide column">
+        <div class="ui grid">
+          <div class="doubling three column row">
+            <div class="column">
+              <div class="ui mini fluid input">
+                <input type="text" value="1" class="mini" name="mainwp_managesites_import[${row_index}][verify_ssl]" />
+              </div>
+            </div>
+            <div class="column">
+              <div class="ui mini fluid input">
+                <input type="text" value="auto" class="mini" name="mainwp_managesites_import[${row_index}][ssl_version]" />
+              </div>
+            </div>
+            <div class="column">
+              <button class="ui compact circular red icon button mainwp-managesites-delete-import-row" style="margin-left: 5px !important;" type="button" onclick="mainwp_managesites_import_sites_delete_row(${row_index})">
+                <i class="trash alternate outline icon"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}

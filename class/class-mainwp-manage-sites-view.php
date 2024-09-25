@@ -394,7 +394,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             if ( isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) && is_uploaded_file( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) {
                 $tmp_path = isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) : '';
                 MainWP_System_Utility::get_wp_file_system();
-        //phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
+                //phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
 
                 /**
                  * WordPress files system object.
@@ -488,8 +488,59 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             } else {
                 $errors[] = esc_html__( 'Upload failed. Please, try again.', 'mainwp' ) . '<br />';
             }
+        } elseif ( ! empty( $_POST['mainwp_managesites_import'] ) && check_admin_referer( 'mainwp-admin-nonce' ) ) {
+            // Set site data by POST value.
+            $sites_data = $_POST['mainwp_managesites_import'] ? wp_unslash( $_POST['mainwp_managesites_import'] ) : array();
+            if ( ! empty( $sites_data ) ) {
+                $import_data = array(); // Create default import data.
+                // Map data sites data to import_data.
+                foreach ( $sites_data as $site ) {
+                    // Break site if site_url and admin_name empty.
+                    if ( empty( $site['site_url'] ) && empty( $site['admin_name'] ) ) {
+                        continue;
+                    }
+                    // Map POST data to import data
+                    $import_data[] = array(
+                        'name'               => ! empty( $site['site_name'] ) ? sanitize_text_field( $site['site_name'] ) : '',
+                        'url'                => ! empty( $site['site_url'] ) ? sanitize_text_field( $site['site_url'] ) : '',
+                        'adminname'          => ! empty( $site['admin_name'] ) ? sanitize_text_field( $site['admin_name'] ) : '',
+                        'wpgroups'           => ! empty( $site['tag'] ) ? sanitize_text_field( $site['tag'] ) : '',
+                        'uniqueId'           => ! empty( $site['security_id'] ) ? sanitize_text_field( $site['security_id'] ) : '',
+                        'http_user'          => ! empty( $site['http_username'] ) ? sanitize_text_field( $site['http_username'] ) : '',
+                        'http_pass'          => ! empty( $site['http_password'] ) ? sanitize_text_field( $site['http_password'] ) : '',
+                        'verify_certificate' => ! empty( $site['verify_ssl'] ) && (int) $site['verify_ssl'] !== 1 ? intval( $site['verify_ssl'] ) : 1,
+                        'ssl_version'        => ! empty( $site['ssl_version'] ) ? sanitize_text_field( $site['ssl_version'] ) : 'auto',
+                    );
+                }
+                // Import website if import data is not empty.
+                if ( ! empty( $import_data ) ) {
+                    $header_line = trim( 'Site Name, Url, Admin Name, Tag,Security ID,HTTP Username,HTTP Password,Verify Certificate,SSL Version' ); // Set Header Line
+                    // Map import data to input html
+                    foreach ( $import_data as $key_import => $val_import ) {
+                        $line = trim( implode( ',', $val_import ) )
+                        ?>
+                        <input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo esc_attr( $key_import + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $val_import ) ); ?>" original="<?php echo esc_attr( $line ); ?>" />
+                    <?php } ?>
+                    <input type="hidden" id="mainwp_managesites_do_import" value="1"/>
+                    <input type="hidden" id="mainwp_managesites_total_import" value="<?php echo esc_attr( count( $import_data ) ); ?>"/>
+
+                    <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_logging">
+                        <span class="log ui small text">
+                            <?php echo esc_html( $header_line ) . '<br/>'; ?>
+                        </span>
+                    </div>
+                    <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_fail_logging" style="display: none;">
+                        <?php echo esc_html( $header_line ); ?>
+                    </div>
+                    <?php
+                } else {
+                    $errors[] = esc_html__( 'An error occurred. Please, try again.', 'mainwp' ) . '<br />';
+                }
+            } else {
+                $errors[] = esc_html__( 'Import failed. Please, try again.', 'mainwp' ) . '<br />';
+            }
         } else {
-            $errors[] = esc_html__( 'Upload failed. Please, try again.', 'mainwp' ) . '<br />';
+            $errors[] = esc_html__( 'Import failed. Please, try again.', 'mainwp' ) . '<br />';
         }
 
         if ( ! empty( $errors ) ) {
@@ -2117,7 +2168,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             set_transient( 'mainwp_transient_just_connected_site_id', $id, HOUR_IN_SECONDS );
                             $message = sprintf( esc_html__( '%1$sCongratulations you have connected %2$s.%3$s After finishing the Quick Setup Wizard, you can add additional sites from the Add New Sites page.', 'mainwp' ), '<div class="ui header">', '<strong>' . esc_html( $params['name'] ) . '</strong>', '</div>' );
                         } else {
-                            $message = sprintf( esc_html__( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . esc_html__( 'Dashboard', 'mainwp' ) . '">', '</a>' );
+                            $message = sprintf( esc_html__( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.%3$s', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . esc_html__( 'Dashboard', 'mainwp' ) . '">', '</a>', '<br/>' );
                         }
 
                         $website = MainWP_DB::instance()->get_website_by_id( $id );

@@ -259,7 +259,7 @@
 
 .mainwp-ui.mainwp-custom-theme .ui.attention.message:before {
   content: "\f061";
-  font-family: 'Icons';
+  font-family: 'Icons', sans-serif;
   color: #ffffff;
   position: absolute;
   top: 14px;
@@ -274,7 +274,7 @@
 .mainwp-ui.mainwp-custom-theme .ui.info.message:before,
 .mainwp-ui.mainwp-custom-theme .ui.blue.message:before {
   content: "\f129";
-  font-family: 'Icons';
+  font-family: 'Icons', sans-serif;
   color: #ffffff;
   position: absolute;
   top: 14px;
@@ -292,7 +292,7 @@
 
 .mainwp-ui.mainwp-custom-theme .ui.green.message:before {
   content: "\f00c";
-  font-family: 'Icons';
+  font-family: 'Icons', sans-serif;
   color: #ffffff;
   position: absolute;
   top: 14px;
@@ -313,7 +313,7 @@
 
 .mainwp-ui.mainwp-custom-theme .ui.yellow.message:before {
   content: "\f12a";
-  font-family: 'Icons';
+  font-family: 'Icons', sans-serif;
   color: #ffffff;
   position: absolute;
   top: 14px;
@@ -330,7 +330,7 @@
 
 .mainwp-ui.mainwp-custom-theme .ui.red.message:before {
   content: "\f06a";
-  font-family: 'Icons';
+  font-family: 'Icons', sans-serif;
   color: #ffffff;
   position: absolute;
   top: 14px;

@@ -149,6 +149,8 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                 if ( ! MainWP_DB_Backup::instance()->backup_full_task_running( $website->id ) ) {
                     if ( ! empty( $website->sync_errors ) && ! MainWP_Sync::sync_site( $website, false, true ) ) {
                         $this->finished_site_auto_updates( $website );  // to skip.
+                    } elseif ( ! MainWP_Sync::sync_site( $website, false, true ) ) {
+                        $this->finished_site_auto_updates( $website );  // to skip.
                     } else {
                         $websites[] = $website;
                     }
@@ -158,8 +160,8 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
             }
 
             $log_lastsstart = ! empty( $lasttime_start ) ? ' :: [lasttime_start=' . MainWP_Utility::format_timestamp( $lasttime_start ) . '] ' : '';
-            MainWP_Logger::instance()->info( 'Automatic updates found [websites=' . count( $autoupdates_websites ) . ']' . $log_lastsstart );
-            MainWP_Logger::instance()->log_update_check( 'Automatic updates found [websites=' . count( $autoupdates_websites ) . ']' . $log_lastsstart );
+            MainWP_Logger::instance()->info( 'Automatic updates found [count=' . count( $autoupdates_websites ) . ']' . $log_lastsstart );
+            MainWP_Logger::instance()->log_update_check( 'Automatic updates found [count=' . count( $autoupdates_websites ) . ']' . $log_lastsstart );
             unset( $autoupdates_websites );
         }
 
@@ -224,20 +226,6 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                 continue;
             }
 
-            $updated_status = ! empty( $website->bulk_updates_info ) ? json_decode( $website->bulk_updates_info, true ) : array();
-
-            if ( ! is_array( $updated_status ) ) {
-                $updated_status = array();
-            }
-
-            if ( ! isset( $updated_status['auto_updates_processed'] ) ) {
-                $updated_status['auto_updates_processed'] = array(
-                    'wp'      => array(),
-                    'plugins' => array(),
-                    'themes'  => array(),
-                );
-            }
-
             $found_updates = 0;
 
             $websiteDecodedIgnoredPlugins = json_decode( $website->ignored_plugins, true );
@@ -275,26 +263,42 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                 $websiteThemesUpdateCheck = array();
             }
 
-            if ( isset( $websiteCoreUpgrades['current'] ) && ! $website->is_ignoreCoreUpdates && ! MainWP_Common_Functions::instance()->is_ignored_updates( $item, $websiteIgnoredCores, 'core' ) && ! MainWP_Common_Functions::instance()->is_ignored_updates( $item, $decodedIgnoredCores, 'core' ) ) {
-                $item = array(
-                    'id'          => $website->id,
-                    'name'        => $website->name,
-                    'url'         => $website->url,
-                    'current'     => $websiteCoreUpgrades['current'],
-                    'new_version' => $websiteCoreUpgrades['new'],
+            $updated_status = ! empty( $website->bulk_updates_info ) ? json_decode( $website->bulk_updates_info, true ) : array();
+            if ( ! is_array( $updated_status ) ) {
+                $updated_status = array();
+            }
+
+            if ( ! isset( $updated_status['auto_updates_processed'] ) ) {
+                $updated_status['auto_updates_processed'] = array(
+                    'wp'      => array(),
+                    'plugins' => array(),
+                    'themes'  => array(),
                 );
-                if ( 1 === (int) $website->automatic_update ) {
-                    if ( ! empty( $delay_autoupdate ) ) {
-                        if ( empty( $websiteCoreUpdateCheck ) ) {
-                            $websiteCoreUpdateCheck = time();
-                        } elseif ( ! empty( $websiteCoreUpdateCheck ) && time() > $delay_autoupdate * DAY_IN_SECONDS + intval( $websiteCoreUpdateCheck ) ) {
-                            $coreToUpdateNow[ $website->id ] = $item;
-                            ++$found_updates;
-                        }
-                    } else {
-                        $coreToUpdateNow[ $website->id ] = $item;
-                        ++$found_updates;
+            }
+
+            $item = array(
+                'id'          => $website->id,
+                'name'        => $website->name,
+                'url'         => $website->url,
+                'current'     => $websiteCoreUpgrades['current'],
+                'new_version' => $websiteCoreUpgrades['new'],
+            );
+
+            if ( 1 === (int) $website->automatic_update && 1 === (int) $enable_automaticCoreUpdates && isset( $websiteCoreUpgrades['current'] ) && ! $website->is_ignoreCoreUpdates && ! MainWP_Common_Functions::instance()->is_ignored_updates( $item, $websiteIgnoredCores, 'core' ) && ! MainWP_Common_Functions::instance()->is_ignored_updates( $item, $decodedIgnoredCores, 'core' ) ) {
+                $_update_now = false;
+                if ( ! empty( $delay_autoupdate ) ) {
+                    if ( empty( $websiteCoreUpdateCheck ) ) {
+                        $websiteCoreUpdateCheck = time();
+                    } elseif ( ! empty( $websiteCoreUpdateCheck ) && time() > $delay_autoupdate * DAY_IN_SECONDS + intval( $websiteCoreUpdateCheck ) ) {
+                        $_update_now = true;
                     }
+                } else {
+                    $_update_now = true;
+                }
+
+                if ( $_update_now && empty( $updated_status['wp'] ) ) {
+                    $coreToUpdateNow[ $website->id ] = $item;
+                    ++$found_updates;
                 }
             }
 
@@ -320,87 +324,99 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                 }
             }
 
-            foreach ( $websitePlugins as $pluginSlug => $pluginInfo ) {
-                if ( $website->is_ignorePluginUpdates ) {
-                    continue;
-                }
-
-                if ( MainWP_Common_Functions::instance()->is_ignored_updates( $pluginInfo, $decodedIgnoredPlugins ) || MainWP_Common_Functions::instance()->is_ignored_updates( $pluginInfo, $websiteDecodedIgnoredPlugins ) ) {
-                    continue;
-                }
-
-                $change_log = '';
-                if ( isset( $pluginInfo['update']['url'] ) && ( false !== strpos( $pluginInfo['update']['url'], 'wordpress.org/plugins' ) ) ) {
-                    $change_log = $pluginInfo['update']['url'];
-                    if ( substr( $change_log, - 1 ) !== '/' ) {
-                        $change_log .= '/';
+            if ( 1 === (int) $plugin_automaticDailyUpdate ) {
+                foreach ( $websitePlugins as $pluginSlug => $pluginInfo ) {
+                    if ( $website->is_ignorePluginUpdates ) {
+                        continue;
                     }
-                    $change_log .= '#developers';
-                }
 
-                $item = array(
-                    'id'          => $website->id,
-                    'name'        => $website->name,
-                    'url'         => $website->url,
-                    'plugin'      => $pluginInfo['Name'],
-                    'current'     => $pluginInfo['Version'],
-                    'new_version' => $pluginInfo['update']['new_version'],
-                    'change_log'  => $change_log,
-                );
-                if ( in_array( $pluginSlug, $trustedPlugins ) ) {
-                    $check_timestamp = isset( $websitePluginsUpdateCheck[ $pluginSlug ] ) ? $websitePluginsUpdateCheck[ $pluginSlug ] : 0;
-                    if ( ! empty( $delay_autoupdate ) ) {
-                        if ( ! empty( $check_timestamp ) && ( time() > $delay_autoupdate * DAY_IN_SECONDS + intval( $check_timestamp ) ) ) {
+                    if ( MainWP_Common_Functions::instance()->is_ignored_updates( $pluginInfo, $decodedIgnoredPlugins, 'plugin' ) || MainWP_Common_Functions::instance()->is_ignored_updates( $pluginInfo, $websiteDecodedIgnoredPlugins, 'plugin' ) ) {
+                        continue;
+                    }
+
+                    $change_log = '';
+                    if ( isset( $pluginInfo['update']['url'] ) && ( false !== strpos( $pluginInfo['update']['url'], 'wordpress.org/plugins' ) ) ) {
+                        $change_log = $pluginInfo['update']['url'];
+                        if ( substr( $change_log, - 1 ) !== '/' ) {
+                            $change_log .= '/';
+                        }
+                        $change_log .= '#developers';
+                    }
+
+                    $item = array(
+                        'id'          => $website->id,
+                        'name'        => $website->name,
+                        'url'         => $website->url,
+                        'plugin'      => $pluginInfo['Name'],
+                        'current'     => $pluginInfo['Version'],
+                        'new_version' => $pluginInfo['update']['new_version'],
+                        'change_log'  => $change_log,
+                    );
+                    if ( in_array( $pluginSlug, $trustedPlugins ) ) {
+                        $_update_now     = false;
+                        $check_timestamp = isset( $websitePluginsUpdateCheck[ $pluginSlug ] ) ? $websitePluginsUpdateCheck[ $pluginSlug ] : 0;
+                        if ( ! empty( $delay_autoupdate ) ) {
+                            if ( ! empty( $check_timestamp ) && ( time() > $delay_autoupdate * DAY_IN_SECONDS + intval( $check_timestamp ) ) ) {
+                                $_update_now = true;
+                            }
+                            if ( empty( $check_timestamp ) ) {
+                                $websitePluginsUpdateCheck[ $pluginSlug ] = time();
+                            }
+                        } else {
+                            $_update_now = true;
+                        }
+                        if ( $_update_now && ( ! isset( $updated_status['auto_updates_processed']['plugins'][ $pluginSlug ] ) || ( $item['new_version'] !== $updated_status['auto_updates_processed']['plugins'][ $pluginSlug ]['new_version'] ) ) ) {
                             $pluginsToUpdateNow[ $website->id ][ $pluginSlug ] = $item;
                             ++$found_updates;
                         }
-                        if ( empty( $check_timestamp ) ) {
-                            $websitePluginsUpdateCheck[ $pluginSlug ] = time();
-                        }
-                    } else {
-                        $pluginsToUpdateNow[ $website->id ][ $pluginSlug ] = $item;
-                        ++$found_updates;
                     }
                 }
             }
 
-            foreach ( $websiteThemes as $themeSlug => $themeInfo ) {
+            if ( 1 === (int) $theme_automaticDailyUpdate ) {
+                foreach ( $websiteThemes as $themeSlug => $themeInfo ) {
 
-                if ( $website->is_ignoreThemeUpdates ) {
-                    continue;
-                }
+                    if ( $website->is_ignoreThemeUpdates ) {
+                        continue;
+                    }
 
-                if ( MainWP_Common_Functions::instance()->is_ignored_updates( $themeInfo, $decodedIgnoredThemes ) || MainWP_Common_Functions::instance()->is_ignored_updates( $themeInfo, $websiteDecodedIgnoredThemes ) ) {
-                    continue;
-                }
-                $item = array(
-                    'id'          => $website->id,
-                    'name'        => $website->name,
-                    'url'         => $website->url,
-                    'theme'       => $themeInfo['Name'],
-                    'current'     => $themeInfo['Version'],
-                    'new_version' => $themeInfo['update']['new_version'],
-                    'slug'        => $themeSlug,
-                );
+                    if ( MainWP_Common_Functions::instance()->is_ignored_updates( $themeInfo, $decodedIgnoredThemes, 'theme' ) || MainWP_Common_Functions::instance()->is_ignored_updates( $themeInfo, $websiteDecodedIgnoredThemes, 'theme' ) ) {
+                        continue;
+                    }
+                    $item = array(
+                        'id'          => $website->id,
+                        'name'        => $website->name,
+                        'url'         => $website->url,
+                        'theme'       => $themeInfo['Name'],
+                        'current'     => $themeInfo['Version'],
+                        'new_version' => $themeInfo['update']['new_version'],
+                        'slug'        => $themeSlug,
+                    );
 
-                if ( in_array( $themeSlug, $trustedThemes ) ) {
-                    $check_timestamp = isset( $websiteThemesUpdateCheck[ $themeSlug ] ) ? $websiteThemesUpdateCheck[ $themeSlug ] : 0;
-                    if ( ! empty( $delay_autoupdate ) ) {
-                        if ( ! empty( $check_timestamp ) && time() > $delay_autoupdate * DAY_IN_SECONDS + intval( $check_timestamp ) ) {
+                    if ( in_array( $themeSlug, $trustedThemes ) ) {
+                        $_update_now = false;
+
+                        $check_timestamp = isset( $websiteThemesUpdateCheck[ $themeSlug ] ) ? $websiteThemesUpdateCheck[ $themeSlug ] : 0;
+                        if ( ! empty( $delay_autoupdate ) ) {
+                            if ( ! empty( $check_timestamp ) && time() > $delay_autoupdate * DAY_IN_SECONDS + intval( $check_timestamp ) ) {
+                                $_update_now = true;
+                            }
+                            if ( empty( $check_timestamp ) ) {
+                                $websiteThemesUpdateCheck[ $themeSlug ] = time();
+                            }
+                        } else {
+                            $_update_now = true;
+                        }
+
+                        if ( $_update_now && ( ! isset( $updated_status['auto_updates_processed']['themes'][ $themeSlug ] ) || ( $item['new_version'] !== $updated_status['auto_updates_processed']['themes'][ $themeSlug ]['new_version'] ) ) ) {
                             $themesToUpdateNow[ $website->id ][ $themeSlug ] = $item;
                             ++$found_updates;
                         }
-                        if ( empty( $check_timestamp ) ) {
-                            $websiteThemesUpdateCheck[ $themeSlug ] = time();
-                        }
-                    } else {
-                        $themesToUpdateNow[ $website->id ][ $themeSlug ] = $item;
-                        ++$found_updates;
                     }
                 }
             }
 
-            MainWP_Logger::instance()->log_update_check( 'Automatic before updates :: [siteid=' . $website->id . '] :: [found_updates=' . $found_updates . ']' );
+            MainWP_Logger::instance()->log_update_check( 'Automatic found updates :: [siteid=' . $website->id . '] :: [found_updates=' . $found_updates . ']' );
 
             if ( ! $found_updates ) {
                 $this->finished_site_auto_updates( $website );
@@ -524,9 +540,23 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                     continue;
                 }
 
+                // reload.
+                $updated_status = MainWP_DB::instance()->get_json_website_option( $websiteId, 'bulk_updates_info' );
+                if ( ! is_array( $updated_status ) ) {
+                    $updated_status = array();
+                }
+
+                if ( ! isset( $updated_status['auto_updates_processed'] ) ) {
+                    $updated_status['auto_updates_processed'] = array(
+                        'wp'      => array(),
+                        'plugins' => array(),
+                        'themes'  => array(),
+                    );
+                }
+
                 $slugs = array();
                 foreach ( $updates_plugins as $slug => $info ) {
-                    if ( ! isset( $updated_status['auto_updates_processed']['plugins'][ $slug ] ) ) {
+                    if ( ! isset( $updated_status['auto_updates_processed']['plugins'][ $slug ] ) || ( $info['new_version'] !== $updated_status['auto_updates_processed']['plugins'][ $slug ]['new_version'] ) ) {
                         ++$count_processed_now;
                         $slugs[] = $slug;
                         $updated_status['auto_updates_processed']['plugins'][ $slug ] = $info;
@@ -536,12 +566,16 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                     }
                 }
 
+                MainWP_Logger::instance()->log_update_check( 'Automatic updates plugins now:: [count_slugs=' . count( $slugs ) . ']' );
+
                 if ( ! empty( $slugs ) ) {
                     try {
 
-                        MainWP_DB::instance()->update_website_option( $website, 'bulk_updates_info', wp_json_encode( $updated_status ) );
+                        MainWP_DB::instance()->update_website_option( $websiteId, 'bulk_updates_info', wp_json_encode( $updated_status ) );
 
-                        MainWP_Logger::instance()->log_update_check( 'Automatic updates plugins [websiteid=' . $websiteId . '] :: [slugs=' . urldecode( implode( ',', $slugs ) ) . ']' );
+                        MainWP_Logger::instance()->log_update_check( 'Automatic updates plugins [siteid=' . $websiteId . '] :: [slugs=' . urldecode( implode( ',', $slugs ) ) . ']' );
+
+                        $website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 
                         /**
                         * Action: mainwp_before_plugin_theme_translation_update
@@ -565,7 +599,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                         if ( is_array( $information ) && isset( $information['upgrades'] ) && is_array( $information['upgrades'] ) ) {
                             $upgrades = wp_json_encode( $information['upgrades'] ); // phpcs:ignore -- logging.
                         }
-                        MainWP_Logger::instance()->log_update_check( 'Automatic updates plugins [websiteid=' . $websiteId . '] :: [upgrades results=' . $upgrades . ']' );
+                        MainWP_Logger::instance()->log_update_check( 'Automatic updates plugins [siteid=' . $websiteId . '] :: [upgrades results=' . $upgrades . ']' );
 
                         /**
                         * Action: mainwp_after_plugin_theme_translation_update
@@ -593,9 +627,23 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                     continue;
                 }
 
+                // reload.
+                $updated_status = MainWP_DB::instance()->get_json_website_option( $websiteId, 'bulk_updates_info' );
+                if ( ! is_array( $updated_status ) ) {
+                    $updated_status = array();
+                }
+
+                if ( ! isset( $updated_status['auto_updates_processed'] ) ) {
+                    $updated_status['auto_updates_processed'] = array(
+                        'wp'      => array(),
+                        'plugins' => array(),
+                        'themes'  => array(),
+                    );
+                }
+
                 $slugs = array();
                 foreach ( $updates_themes as $slug => $info ) {
-                    if ( ! isset( $updated_status['auto_updates_processed']['themes'][ $slug ] ) ) {
+                    if ( ! isset( $updated_status['auto_updates_processed']['themes'][ $slug ] ) || ( $info['new_version'] !== $updated_status['auto_updates_processed']['themes'][ $slug ]['new_version'] ) ) {
                         ++$count_processed_now;
                         $slugs[] = $slug;
                         $updated_status['auto_updates_processed']['themes'][ $slug ] = $info;
@@ -605,11 +653,15 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                     }
                 }
 
+                MainWP_Logger::instance()->log_update_check( 'Automatic updates themes now:: [count_slugs=' . count( $slugs ) . ']' );
+
                 if ( ! empty( $slugs ) ) {
 
-                    MainWP_DB::instance()->update_website_option( $website, 'bulk_updates_info', wp_json_encode( $updated_status ) );
+                    MainWP_DB::instance()->update_website_option( $websiteId, 'bulk_updates_info', wp_json_encode( $updated_status ) );
 
-                    MainWP_Logger::instance()->log_update_check( 'Automatic updates theme [websiteid=' . $websiteId . '] :: themes :: ' . implode( ',', $slugs ) );
+                    MainWP_Logger::instance()->log_update_check( 'Automatic updates theme [siteid=' . $websiteId . '] :: themes :: ' . implode( ',', $slugs ) );
+
+                    $website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 
                     /**
                     * Action: mainwp_before_plugin_theme_translation_update
@@ -655,14 +707,31 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                     continue;
                 }
 
+                // reload.
+                $updated_status = MainWP_DB::instance()->get_json_website_option( $websiteId, 'bulk_updates_info' );
+                if ( ! is_array( $updated_status ) ) {
+                    $updated_status = array();
+                }
+
+                if ( ! isset( $updated_status['auto_updates_processed'] ) ) {
+                    $updated_status['auto_updates_processed'] = array(
+                        'wp'      => array(),
+                        'plugins' => array(),
+                        'themes'  => array(),
+                    );
+                }
+
                 if ( ! empty( $updated_status['wp'] ) ) {
                     continue; // updated ?.
                 }
 
                 $updated_status['auto_updates_processed']['wp'] = $info;
-                MainWP_DB::instance()->update_website_option( $website, 'bulk_updates_info', wp_json_encode( $updated_status ) );
+                MainWP_DB::instance()->update_website_option( $websiteId, 'bulk_updates_info', wp_json_encode( $updated_status ) );
 
-                MainWP_Logger::instance()->log_update_check( 'Automatic updates core [websiteid=' . $websiteId . ']' );
+                MainWP_Logger::instance()->log_update_check( 'Automatic updates core [siteid=' . $websiteId . ']' );
+
+                $website = MainWP_DB::instance()->get_website_by_id( $websiteId );
+
                 try {
                     MainWP_Connect::fetch_url_authed( $website, 'upgrade' );
                 } catch ( \Exception $e ) {
@@ -725,8 +794,8 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
             $next_year = gmdate( 'Y', $local_timestamp );
 
             if ( $next_month > 12 ) {
-                    $next_month = 1;
-                    ++$next_year;
+                $next_month = 1;
+                ++$next_year;
             }
 
             $last_day = $this->calculate_days_in_month( $next_month, $next_year );

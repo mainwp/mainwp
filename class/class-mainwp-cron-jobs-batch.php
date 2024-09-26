@@ -62,8 +62,30 @@ class MainWP_Cron_Jobs_Batch { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     public function check_to_run_batch_updates() {
         $batch_updates_running            = get_option( 'mainwp_batch_updates_is_running', 0 );
         $batch_individual_updates_running = get_option( 'mainwp_batch_individual_updates_is_running', 0 );
+
+        $local_timestamp = MainWP_Utility::get_timestamp();
+
+        if ( $batch_updates_running ) {
+            // check timeout.
+            $start_time = get_option( 'mainwp_batch_updates_start_time', 0 );
+            if ( ! empty( $start_time ) && $local_timestamp > $start_time + 4 * HOUR_IN_SECONDS ) {
+                $batch_updates_running = 0;
+                MainWP_Utility::update_option( 'mainwp_batch_updates_is_running', 0 ); // stop.
+            }
+        }
+
+        if ( $batch_individual_updates_running ) {
+            // check timeout.
+            $start_time = get_option( 'mainwp_batch_updates_individual_start_time', 0 );
+            if ( ! empty( $start_time ) && $local_timestamp > $start_time + 3 * HOUR_IN_SECONDS ) {
+                $batch_individual_updates_running = 0;
+                MainWP_Utility::update_option( 'mainwp_batch_individual_updates_is_running', 0 ); // stop.
+            }
+        }
+
         // a batch updates running so wait to finish to run auto updates check.
         if ( $batch_updates_running || $batch_individual_updates_running ) {
+
             return true;
         }
         return false;
@@ -207,7 +229,7 @@ class MainWP_Cron_Jobs_Batch { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     continue;
                 }
                 if ( ! isset( $updated_status['updates_processed']['plugins'][ $slug ] ) ) {
-                    $ignored = MainWP_Common_Functions::instance()->is_ignored_updates( $info, $decodedIgnoredPlugins ) || MainWP_Common_Functions::instance()->is_ignored_updates( $info, $websiteDecodedIgnoredPlugins );
+                    $ignored = MainWP_Common_Functions::instance()->is_ignored_updates( $info, $decodedIgnoredPlugins, 'plugin' ) || MainWP_Common_Functions::instance()->is_ignored_updates( $info, $websiteDecodedIgnoredPlugins, 'plugin' );
                     if ( $ignored ) {
                         $info['ignored'] = 1;
                     }
@@ -273,7 +295,7 @@ class MainWP_Cron_Jobs_Batch { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         continue;
                     }
                     if ( ! isset( $updated_status['updates_processed']['themes'][ $slug ] ) ) {
-                        $ignored = MainWP_Common_Functions::instance()->is_ignored_updates( $info, $decodedIgnoredThemes ) || MainWP_Common_Functions::instance()->is_ignored_updates( $info, $websiteDecodedIgnoredThemes );
+                        $ignored = MainWP_Common_Functions::instance()->is_ignored_updates( $info, $decodedIgnoredThemes, 'theme' ) || MainWP_Common_Functions::instance()->is_ignored_updates( $info, $websiteDecodedIgnoredThemes, 'theme' );
                         if ( $ignored ) {
                             $info['ignored'] = 1;
                         }
@@ -475,7 +497,7 @@ class MainWP_Cron_Jobs_Batch { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             if ( $website->is_ignorePluginUpdates ) {
                 continue;
             }
-            if ( MainWP_Common_Functions::instance()->is_ignored_updates( $pluginInfo, $decodedIgnoredPlugins ) || MainWP_Common_Functions::instance()->is_ignored_updates( $pluginInfo, $websiteDecodedIgnoredPlugins ) ) {
+            if ( MainWP_Common_Functions::instance()->is_ignored_updates( $pluginInfo, $decodedIgnoredPlugins, 'plugin' ) || MainWP_Common_Functions::instance()->is_ignored_updates( $pluginInfo, $websiteDecodedIgnoredPlugins, 'plugin' ) ) {
                 continue;
             }
 
@@ -503,7 +525,7 @@ class MainWP_Cron_Jobs_Batch { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             if ( $website->is_ignoreThemeUpdates ) {
                 continue;
             }
-            if ( MainWP_Common_Functions::instance()->is_ignored_updates( $themeInfo, $decodedIgnoredThemes ) || MainWP_Common_Functions::instance()->is_ignored_updates( $themeInfo, $websiteDecodedIgnoredThemes ) ) {
+            if ( MainWP_Common_Functions::instance()->is_ignored_updates( $themeInfo, $decodedIgnoredThemes, 'theme' ) || MainWP_Common_Functions::instance()->is_ignored_updates( $themeInfo, $websiteDecodedIgnoredThemes, 'theme' ) ) {
                 continue;
             }
             $item                         = array(

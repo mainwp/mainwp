@@ -33,7 +33,7 @@ class MainWP_Common_Functions { // phpcs:ignore Generic.Classes.OpeningBraceSame
      *
      * Get Class Name.
      *
-     * @return object
+     * @return string
      */
     public static function get_class_name() {
         return __CLASS__;
@@ -45,7 +45,7 @@ class MainWP_Common_Functions { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * Create public static instance.
      *
      * @static
-     * @return MainWP_DB_Common
+     * @return MainWP_Common_Functions
      */
     public static function instance() {
         if ( null === static::$instance ) {
@@ -161,12 +161,12 @@ class MainWP_Common_Functions { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 if ( is_array( $theme_upgrades ) ) {
                     $ignored_themes = json_decode( $website->ignored_themes, true );
                     if ( is_array( $ignored_themes ) ) {
-                        $theme_upgrades = self::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
+                        $theme_upgrades = $this->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
                     }
 
                     $ignored_themes = json_decode( $this->userExtension->ignored_themes, true );
                     if ( is_array( $ignored_themes ) ) {
-                        $theme_upgrades = self::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
+                        $theme_upgrades = $this->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
                     }
 
                     $total_theme_upgrades += count( $theme_upgrades );
@@ -228,17 +228,17 @@ class MainWP_Common_Functions { // phpcs:ignore Generic.Classes.OpeningBraceSame
      *
      * @param array  $item Update info of theme or plugin.
      * @param array  $ignored Ignored update info.
-     * @param string $type theme/plugin/plugintheme/core.
+     * @param string $type theme/plugin/core.
 
      * @return bool Ignored updates.
      */
-    public function is_ignored_updates( $item, $ignored, $type = 'plugintheme' ) { //phpcs:ignore -- NOSONAR complex function.
+    public function is_ignored_updates( $item, $ignored, $type = 'plugin' ) { //phpcs:ignore -- NOSONAR complex function.
 
         if ( ! is_array( $item ) || ! is_array( $ignored ) ) {
             return false;
         }
 
-        if ( in_array( $type, array( 'plugin', 'theme', 'plugintheme' ) ) ) {
+        if ( in_array( $type, array( 'plugin', 'theme' ) ) ) {
             $item_slug   = isset( $item['update'] ) && is_array( $item['update'] ) && isset( $item['update'][ $type ] ) ? $item['update'][ $type ] : '';
             $new_version = isset( $item['update']['new_version'] ) ? $item['update']['new_version'] : '';
 

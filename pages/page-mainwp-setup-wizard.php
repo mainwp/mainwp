@@ -636,7 +636,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     </div>
                     <div class="ui bottom attached tab segment" data-tab="multiple-site">
                         <div class="ui grid field">
-                            <label class="six wide column middle aligned" for="mainwp_managesites_file_bulkupload"><?php esc_html_e( 'Upload the CSV file', 'mainwp' ); ?> (<a href="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/csv/sample.csv' ); ?>"><?php esc_html_e( "Download sample CSV file"); ?></a>)</label>
+                            <label class="six wide column middle aligned" for="mainwp_managesites_file_bulkupload"><?php esc_html_e( 'Upload the CSV file', 'mainwp' ); ?> (<a href="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/csv/sample.csv' ); ?>"><?php esc_html_e( 'Download sample CSV file'); ?></a>)</label>
                             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click to upload the import file.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
                                 <div class="ui file input">
                                     <input type="file" name="mainwp_managesites_file_bulkupload" id="connect_first_site_file_bulkupload" accept="text/comma-separated-values" />

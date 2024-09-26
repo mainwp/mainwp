@@ -544,8 +544,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         ?>
         <h1><?php esc_html_e( 'Connect Your First Child Site', 'mainwp' ); ?></h1>
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-qsw-add-site-message' ) ) { ?>
-            <div class="ui info message">
-                <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-qsw-add-site-message"></i>
+            <div class="">
                 <?php esc_html_e( 'MainWP requires the MainWP Child plugin to be installed and activated on the WordPress site that you want to connect to your MainWP Dashboard.  ', 'mainwp' ); ?>
             <?php esc_html_e( 'To install the MainWP Child plugin, please follow these steps:', 'mainwp' ); ?>
             <ol>
@@ -557,27 +556,28 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             </ol>
         </div>
         <?php } ?>
+        <div class="ui hidden divider"></div>
+        <div class="ui attention message">
             <div class="ui form">
                 <div class="field">
-                <div class="ui hidden divider"></div>
                     <label for="mainwp-qsw-verify-mainwp-child-active"><?php esc_html_e( 'Is MainWP Child plugin installed and activated on the WordPress site that you want to connect?', 'mainwp' ); ?></label>
-                <div class="ui hidden divider"></div>
+                    <div class="ui hidden divider"></div>
                     <div class="ui toggle checkbox">
                         <input type="checkbox" name="mainwp-qsw-verify-mainwp-child-active" id="mainwp-qsw-verify-mainwp-child-active">
                         <label for="mainwp-qsw-verify-mainwp-child-active"><?php esc_html_e( 'Select to confirm that the MainWP Child plugin is active.', 'mainwp' ); ?></label>
                     </div>
                 </div>
             </div>
+        </div>
             <?php if ( isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_bulkupload']['error'] && check_admin_referer( 'mainwp-admin-nonce' ) ) : ?>
                 <div class="ui large modal" id="mainwp-setup-import-sites-modal">
                     <i class="close icon"></i>
                     <div class="header"><?php esc_html_e( 'Import Sites', 'mainwp' ); ?></div>
-                    <div class="scrolling header">
+                    <div class="scrolling content">
                         <?php MainWP_Manage_Sites_View::render_import_sites(); ?>
                     </div>
                     <div class="actions">
-                        <input type="button" name="mainwp_managesites_btn_import" id="mainwp_managesites_btn_import" class="ui basic button" value="<?php esc_attr_e( 'Pause', 'mainwp' ); ?>" />
-                        <input type="button" name="mainwp_managesites_btn_save_csv" id="mainwp_managesites_btn_save_csv" disabled="disabled" class="ui basic green button" value="<?php esc_attr_e( 'Save failed', 'mainwp' ); ?>" />
+                        <input type="button" name="mainwp_managesites_btn_import" id="mainwp_managesites_btn_import" class="ui basic button" value="<?php esc_attr_e( 'Pause', 'mainwp' ); ?>"/>
                     </div>
                 </div>
             <?php else : ?>
@@ -592,13 +592,13 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <div class="ui hidden divider"></div>
                     <div class="ui top attached tabular menu menu-connect-first-site">
                         <a class="item active" data-tab="single-site"><?php esc_html_e( 'Connect Single Site', 'mainwp' ); ?></a>
-                        <a class="item" data-tab="multiple-site"><?php esc_html_e( 'Import Multiple Site', 'mainwp' ); ?></a>
+                        <a class="item" data-tab="multiple-site"><?php esc_html_e( 'Import Multiple Sites', 'mainwp' ); ?></a>
                     </div>
                     <div class="ui bottom attached tab segment active" data-tab="single-site">
                         <div class="ui secondary">
                             <div class="ui hidden divider"></div>
                             <div class="ui hidden divider"></div>
-                            <div class="ui horizontal divider"><?php esc_html_e( 'Required Fields', 'mainwp' ); ?></div>
+                            <div class="ui horizontal left aligned divider"><?php esc_html_e( 'Required Fields', 'mainwp' ); ?></div>
                             <div class="ui hidden divider"></div>
                             <div class="ui hidden divider"></div>
                             <div class="field">
@@ -624,7 +624,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <div class="ui hidden divider"></div>
                             <div id="mainwp-qsw-optional-settings-form" style="display:none">
                                 <div class="ui hidden divider"></div>
-                                <div class="ui horizontal divider"><?php esc_html_e( 'Advanced Options (optional)', 'mainwp' ); ?></div>
+                                <div class="ui horizontal left aligned divider"><?php esc_html_e( 'Advanced Options (optional)', 'mainwp' ); ?></div>
                                 <div class="ui hidden divider"></div>
                                 <div class="ui hidden divider"></div>
                                 <div class="field">
@@ -636,7 +636,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     </div>
                     <div class="ui bottom attached tab segment" data-tab="multiple-site">
                         <div class="ui grid field">
-                            <label class="six wide column middle aligned" for="mainwp_managesites_file_bulkupload"><?php esc_html_e( 'Upload the CSV file', 'mainwp' ); ?></label>
+                            <label class="six wide column middle aligned" for="mainwp_managesites_file_bulkupload"><?php esc_html_e( 'Upload the CSV file', 'mainwp' ); ?> (<a href="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/csv/sample.csv' ); ?>"><?php esc_html_e( "Download sample CSV file"); ?></a>)</label>
                             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click to upload the import file.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
                                 <div class="ui file input">
                                     <input type="file" name="mainwp_managesites_file_bulkupload" id="connect_first_site_file_bulkupload" accept="text/comma-separated-values" />
@@ -645,7 +645,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         </div>
                         <div class="ui grid field">
                             <label class="six wide column middle aligned" for="mainwp_managesites_chk_header_first"><?php esc_html_e( 'CSV file contains a header', 'mainwp' ); ?></label>
-                            <div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if the import file contains a header.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+                            <div class="ui toggle checkbox ten wide middle aligned column" data-tooltip="<?php esc_attr_e( 'Enable if the import file contains a header.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
                                 <input type="checkbox" name="mainwp_managesites_chk_header_first" checked="checked" id="managesites_chk_header_first" value="1" />
                             </div>
                         </div>
@@ -744,7 +744,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 $tip      = isset( $field['tooltip'] ) ? $field['tooltip'] : '';
                 ?>
                 <div class="field">
-                    <label <?php echo '' !== $tip ? 'data-tooltip="' . esc_attr( $tip ) . '" data-inverted="" data-position="top left"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>><?php echo esc_html( $field['title'] ); ?></label>
+                    <label <?php echo '' !== $tip ? 'data-tooltip="' . esc_attr( $tip ) . '" data-inverted="" data-position="top left"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?> for="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]"><?php echo esc_html( $field['title'] ); ?></label>
                     <input type="text" value="<?php echo esc_html( $val ); ?>" id="mainwp_qsw_client_name_field" class="regular-text" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]"/>
                 </div>
                     <?php

@@ -20,13 +20,11 @@ jQuery(function(){
             jQuery('#mainwp_managesites_import_logging .log').append(__('Paused import by user.') + "\n");
             jQuery('#mainwp_managesites_btn_import').val(__('Continue'));
             jQuery('#mainwp_managesites_btn_save_csv').prop("disabled", false); //Enable
-            jQuery('#mainwp-importing-sites').hide();
         } else {
             import_stop_by_user = false;
             jQuery('#mainwp_managesites_import_logging .log').append(__('Continue import.') + "\n");
             jQuery('#mainwp_managesites_btn_import').val(__('Pause'));
             jQuery('#mainwp_managesites_btn_save_csv').attr('disabled', 'true'); // Disable
-            jQuery('#mainwp-importing-sites').show();
             mainwp_managesites_import_sites();
         }
     });
@@ -41,7 +39,6 @@ jQuery(function(){
     });
 
     if (jQuery('#mainwp_managesites_do_import').val() == 1) {
-        jQuery('#mainwp-importing-sites').show();
         mainwp_managesites_import_sites();
     }
 });
@@ -50,17 +47,25 @@ let mainwp_managesites_import_sites = function () {
     if (import_stop_by_user)
         return;
 
+    jQuery('#mainwp-importing-sites').hide();
+
     import_current++;
 
     if (import_current > import_total) {
-        jQuery('#mainwp_managesites_btn_import').val(__('Finished!'));
+        jQuery('#mainwp-import-sites-status-message').hide();
         jQuery('#mainwp_managesites_btn_import').attr('disabled', 'true'); //Disable
         if (import_count_success < import_total) {
             jQuery('#mainwp_managesites_btn_save_csv').prop("disabled", false); //Enable
         }
-        jQuery('#mainwp_managesites_import_logging .log').append('<div class="ui divider"></div>' + __('Number of sites to Import: %1 Created sites: %2 Failed: %3', import_total, import_count_success, import_count_fails));
+
+        if (import_count_fails == 0) {
+            jQuery('#mainwp_managesites_import_logging .log').html('<div style="text-align:center;margin:50px 0;"><h2 class="ui icon header"><i class="green check icon"></i><div class="content">Congratulations!<div class="sub header">' + import_count_success + ' sites imported successfully.</div></div></h2></div>');
+        } else {
+            jQuery('#mainwp_managesites_import_logging .log').append('<div class="ui yellow message">Process completed with errors. ' + import_count_fails + ' site(s) failed to import. Please review logs to resolve problems and try again.</div>');
+        }
+
         jQuery('#mainwp_managesites_import_logging').scrollTop(jQuery('#mainwp_managesites_import_logging .log').height());
-        jQuery('#mainwp-importing-sites').hide();
+        
         return;
     }
 
@@ -88,7 +93,7 @@ let mainwp_managesites_import_sites = function () {
     if (typeof (import_uniqueId) == "undefined")
         import_uniqueId = '';
 
-    jQuery('#mainwp_managesites_import_logging .log').append('[' + import_current + '] ' + import_line_orig + '<br/>');
+    jQuery('#mainwp_managesites_import_logging .log').append('<strong>[' + import_current + '] << ' + import_line_orig + '</strong><br/>');
 
     let errors = [];
 
@@ -105,7 +110,7 @@ let mainwp_managesites_import_sites = function () {
     }
 
     if (errors.length > 0) {
-        jQuery('#mainwp_managesites_import_logging .log').append('[' + import_current + ']>> Error - ' + errors.join(" ") + '\n');
+        jQuery('#mainwp_managesites_import_logging .log').append('[' + import_current + '] >> Error - ' + errors.join(" ") + '<br/>');
         jQuery('#mainwp_managesites_import_fail_logging').append('<span>' + import_line_orig + '</span>');
         import_count_fails++;
         mainwp_managesites_import_sites();
@@ -126,7 +131,7 @@ let mainwp_managesites_import_sites = function () {
     jQuery.post(ajaxurl, data, function (res_things) {
         let response = res_things.response??'';
 
-        let check_result = '[' + res_things.check_me + ']>> ';
+        let check_result = '[' + res_things.check_me + '] >> ';
 
         response = response.trim();
         let url = import_wpurl;
@@ -170,23 +175,23 @@ let mainwp_managesites_import_sites = function () {
                 } else {
                     response = res_things.response;
                 }
-                let add_result = '[' + res_things.add_me + ']>> ';
+                let add_result = '[' + res_things.add_me + '] >> ';
 
                 response = response.trim();
 
                 if (response.substring(0, 5) == 'ERROR') {
                     jQuery('#mainwp_managesites_import_fail_logging').append('<span>' + import_line_orig + '</span>');
-                    jQuery('#mainwp_managesites_import_logging .log').append(add_result + response.substring(6) + "\n");
+                    jQuery('#mainwp_managesites_import_logging .log').append(add_result + response.substring(6) + "<br/>");
                     import_count_fails++;
                 } else {
                     //Message the WP was added
-                    jQuery('#mainwp_managesites_import_logging .log').append(add_result + response + "\n");
+                    jQuery('#mainwp_managesites_import_logging .log').append(add_result + response + "<br/>");
                     import_count_success++;
                 }
                 mainwp_managesites_import_sites();
             }, 'json').fail(function (xhr, textStatus, errorThrown) {
                 jQuery('#mainwp_managesites_import_fail_logging').append('<span>' + import_line_orig + '</span>');
-                jQuery('#mainwp_managesites_import_logging .log').append("error: " + errorThrown + "\n");
+                jQuery('#mainwp_managesites_import_logging .log').append("error: " + errorThrown + "<br/>");
                 import_count_fails++;
                 mainwp_managesites_import_sites();
             });
@@ -194,7 +199,7 @@ let mainwp_managesites_import_sites = function () {
 
         if (errors.length > 0) {
             jQuery('#mainwp_managesites_import_fail_logging').append('<span>' + import_line_orig + '</span>');
-            jQuery('#mainwp_managesites_import_logging .log').append(errors.join("\n") + '\n');
+            jQuery('#mainwp_managesites_import_logging .log').append(errors.join("\n") + '<br/>');
             import_count_fails++;
             mainwp_managesites_import_sites();
         }
@@ -202,4 +207,3 @@ let mainwp_managesites_import_sites = function () {
     }, 'json');
 
 };
-

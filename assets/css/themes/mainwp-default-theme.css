@@ -11,7 +11,7 @@
   --blue-dark: #0253B3;
   --green-color: #7fb100;
   --red-color: #AD0000;
-  --yellow-color: #FFD300;
+  --yellow-color: #FFD500;
   --grey-light: #F1F6FA;
   --grey-light-alt: #E7EEF6;
   --grey-dark: #2D3B44;
@@ -251,6 +251,19 @@
   color: var(--font-color);
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1) !important;
   -webkit-box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.attention.message {
+  border-left: 48px solid  var(--grey-dark);
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.attention.message:before {
+  content: "\f061";
+  font-family: 'Icons';
+  color: #ffffff;
+  position: absolute;
+  top: 14px;
+  left: -26px;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.info.message,

@@ -4500,37 +4500,38 @@ jQuery( document ).ready( function () {
   });
 } );
 
+
 // Handel page import website
-jQuery( document ).ready( function () {
-// Get default value
+jQuery(document).ready(function () {
+  // Get default value
   let import_index = jQuery('#mainwp-managesites-import-row').attr("data-default-row");
-// Add new row by clicking Add New Row button
-  jQuery('#mainwp-managesites-import-row').on('click', function(e) {
+  // Add new row by clicking Add New Row button
+  jQuery('#mainwp-managesites-import-row').on('click', function (e) {
     e.preventDefault();
     import_index++; // Update index before create row.
     let new_row = mainwp_managesites_import_sites_add_row(import_index)
     jQuery(this).parent().before(new_row);
-    
+
   });
   // Attach blur event to all input fields whose name is site_url
-	jQuery(document).on('blur', '.mainwp-managesites-import-site-url', function() {
-		const full_url =jQuery(this).val();
-		const row_index = jQuery(this).attr("data-row-index");
-		const parsed_url = mainwp_managesites_import_sites_extract_domain(full_url);
-		if(parsed_url !== '' && parsed_url !== undefined){
-			// Update input value with domain name only
-			jQuery(this).val(`${parsed_url.protocol}//${parsed_url.host}`);
-			// Set value site name
-			jQuery('#mainwp-managesites-import-site-name-' + row_index).val(`${parsed_url.host}`);
-		}
-	});
+  jQuery(document).on('blur', '.mainwp-managesites-import-site-url', function () {
+    const full_url = jQuery(this).val();
+    const row_index = jQuery(this).attr("data-row-index");
+    const parsed_url = mainwp_managesites_import_sites_extract_domain(full_url);
+    if (parsed_url !== '' && parsed_url !== undefined) {
+      // Update input value with domain name only
+      jQuery(this).val(`${parsed_url.protocol}//${parsed_url.host}`);
+      // Set value site name
+      jQuery('#mainwp-managesites-import-site-name-' + row_index).val(`${parsed_url.host}`);
+    }
+  });
 });
 
 // Function to get the domain part from the entered URL
 const mainwp_managesites_import_sites_extract_domain = function (url) { // NOSONAR - to compatible.
   try {
     // Use URL API to parse URL and get only protocol and host part
-		return new URL(url);
+    return new URL(url);
   } catch (e) {
     // If the URL is invalid or contains an error, return an empty string.
     return '';

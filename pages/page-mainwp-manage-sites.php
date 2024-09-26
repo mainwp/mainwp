@@ -1134,7 +1134,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP_Utility::show_mainwp_message()
      */
     public static function render_bulk_new_site() {
-        $showpage = 'BulkAddNew';
+        $title_page = esc_html__( 'Import Sites', 'mainwp' );
+        $showpage   = 'BulkAddNew';
         static::render_header( $showpage );
         if ( ! mainwp_current_user_have_right( 'dashboard', 'add_sites' ) ) {
             mainwp_do_not_have_permissions( esc_html__( 'add sites', 'mainwp' ) );
@@ -1143,7 +1144,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             ?>
                 <div class="ui large modal" id="mainwp-import-sites-modal">
                 <i class="close icon"></i>
-                    <div class="header"><?php esc_html_e( 'Import Sites', 'mainwp' ); ?></div>
+                    <div class="header"><?php echo $title_page; ?></div>
                     <div class="scrolling content">
                     <?php MainWP_Manage_Sites_View::render_import_sites(); ?>
                     </div>
@@ -1174,7 +1175,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
                         <form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form" class="ui form">
                         <h3 class="ui dividing header">
-                            <?php esc_html_e( 'Import Sites', 'mainwp' ); ?>
+                            <?php echo $title_page; ?>
                             <div class="sub header"><?php esc_html_e( 'Import multiple websites to your MainWP Dashboard.', 'mainwp' ); ?></div>
                         </h3>
                         <div class="mainwp-primary-content-wrap">
@@ -1212,7 +1213,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             </div>
                         </div>
                         <div class="ui divider"></div>
-                        <input type="button" name="mainwp_managesites_add" id="mainwp_managesites_bulkadd" class="ui big green button" value="<?php esc_attr_e( 'Import Sites', 'mainwp' ); ?>"/>
+                        <input type="button" name="mainwp_managesites_add" id="mainwp_managesites_bulkadd" class="ui big green button" value="<?php echo esc_attr( $title_page ); ?>"/>
                         
                     </form>
                 </div>

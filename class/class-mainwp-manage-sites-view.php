@@ -384,8 +384,11 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      */
     public static function render_import_sites() { // phpcs:ignore -- NOSONAR - complex.
         ?>
-        <div id="mainwp-importing-sites" class="ui active inverted dimmer" style="display:none">
+        <div id="mainwp-importing-sites" class="ui active inverted dimmer">
             <div class="ui medium text loader"><?php esc_html_e( 'Importing', 'mainwp' ); ?></div>
+        </div>
+        <div class="ui message" id="mainwp-import-sites-status-message">
+            <?php echo '<i class="notched circle loading icon"></i> ' . esc_html( 'Importing...', 'mainwp' ); ?>
         </div>
         <?php
         $errors = array();
@@ -473,7 +476,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <input type="hidden" id="mainwp_managesites_total_import" value="<?php echo esc_attr( $row ); ?>"/>
 
                     <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_logging">
-                        <span class="log ui small text"><?php echo esc_html( $header_line ) . '<br/>'; ?></span>
+                        <span class="log ui medium text"><?php echo esc_html( $header_line ) . '<br/>'; ?></span>
                     </div>
                     <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_fail_logging" style="display: none;">
                     <?php
@@ -1100,7 +1103,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_automatic_update', (int) $website->automatic_update );
-                    esc_html_e( 'Install trusted updates', 'mainwp' );
+                    esc_html_e( 'Auto update WP Core', 'mainwp' );
                     ?>
                     </label>
                     <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want MainWP to automatically update WP Core on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">

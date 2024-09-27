@@ -71,6 +71,8 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
 
     let import_data = jQuery('#mainwp_managesites_import_csv_line_' + import_current).attr('encoded-data');
     let import_line_orig = jQuery('#mainwp_managesites_import_csv_line_' + import_current).attr('original');
+		const is_page_managesites = jQuery('#mainwp_managesites_do_managesites_import').val(); // Get value page managesites
+
     let decodedVal = JSON.parse(import_data);
 
     let import_wpname = decodedVal.name;
@@ -184,9 +186,19 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
                     jQuery('#mainwp_managesites_import_logging .log').append(add_result + response.substring(6) + "<br/>");
                     import_count_fails++;
                 } else {
-                    //Message the WP was added
-                    jQuery('#mainwp_managesites_import_logging .log').append(add_result + response + "<br/>");
-                    import_count_success++;
+									//Message the WP was added.
+									jQuery('#mainwp_managesites_import_logging .log').append(add_result + response + "<br/>");
+									// Check if you are on page managesites and import by form.
+									if (is_page_managesites !== undefined && Number(is_page_managesites) === 1) {
+										let data_temp_managesites = mainwp_secure_data({
+											action: 'mainwp_delete_temp_import_website',
+											managesites_add_wpurl: url,
+											managesites_add_wpadmin: import_wpadmin,
+										});
+										jQuery.post(ajaxurl, data_temp_managesites, function (res) {});
+									}
+
+									import_count_success++;
                 }
                 mainwp_managesites_import_sites();
             }, 'json').fail(function (xhr, textStatus, errorThrown) {

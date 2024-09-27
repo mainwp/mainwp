@@ -4500,52 +4500,158 @@ jQuery( document ).ready( function () {
   });
 } );
 
-
 // Handel page import website
-jQuery(document).ready(function () {
-  // Get default value
-  let import_index = jQuery('#mainwp-managesites-import-row').attr("data-default-row");
-  // Add new row by clicking Add New Row button
-  jQuery('#mainwp-managesites-import-row').on('click', function (e) {
-    e.preventDefault();
-    import_index++; // Update index before create row.
-    let new_row = mainwp_managesites_import_sites_add_row(import_index)
-    jQuery(this).parent().before(new_row);
+jQuery(document).ready(function ($) {
+	// Get default value
+	let import_index = $('#mainwp-managesites-import-row').attr("data-default-row");
+	// Store the initial value of the input
+	let initial_value = '';
+	// Add new row by clicking Add New Row button
+	$('#mainwp-managesites-import-row').on('click', function (e) {
+		e.preventDefault();
+		import_index++; // Update index before create row.
+		let new_row = mainwp_managesites_import_sites_add_row(import_index)
+		$(this).parent().before(new_row);
 
-  });
-  // Attach blur event to all input fields whose name is site_url
-  jQuery(document).on('blur', '.mainwp-managesites-import-site-url', function () {
-    const full_url = jQuery(this).val();
-    const row_index = jQuery(this).attr("data-row-index");
-    const parsed_url = mainwp_managesites_import_sites_extract_domain(full_url);
-    if (parsed_url !== '' && parsed_url !== undefined) {
-      // Update input value with domain name only
-      jQuery(this).val(`${parsed_url.protocol}//${parsed_url.host}`);
-      // Set value site name
-      jQuery('#mainwp-managesites-import-site-name-' + row_index).val(`${parsed_url.host}`);
-    }
-  });
+	});
+	
+	// When user focuses on input, save initial value
+	$("#mainwp-managesites-row-import-sites").on('focus', 'input', function () {
+		initial_value = $(this).val();
+	});
+
+	// Attach blur event to all input fields whose name is site_url
+	$("#mainwp-managesites-row-import-sites").on('blur', '.mainwp-managesites-import-site-url', function (event) {
+		const input = $(this);
+		if (input.val() === initial_value) {
+			return;
+		}
+		const row_index = input.attr("data-row-index");
+		const input_site_name = $('#mainwp-managesites-import-site-name-' + row_index);
+		const parsed_url = mainwp_managesites_import_sites_extract_domain(input.val());
+
+		if (parsed_url !== '' && parsed_url !== undefined) {
+			// Update input value with domain name only
+			input.val(`${parsed_url.protocol}//${parsed_url.host}`);
+			// Set value site name
+			input_site_name.val(`${parsed_url.host}`);
+		}else{
+			const user_confirmed = confirm(__('Please enter a valid URL. Example: http://example.com\nClick OK to stay and correct, or Cancel to continue without correcting.'));
+			if (user_confirmed) {
+				setTimeout(function () {
+					input.focus();
+				}, 1);  // Reset focus immediately after confirm
+			}
+			input_site_name.val(input.val());
+		}
+	});
+	
+	// Catch paste event to check URL as soon as data is pasted
+	$(document).on('paste', '.mainwp-managesites-import-site-url', function (event) {
+		const input = $(this);
+		if (input.val() === initial_value) {
+			return;
+		}
+		const row_index = input.attr("data-row-index");
+		const input_site_name = $('#mainwp-managesites-import-site-name-' + row_index);
+		const parsed_url = mainwp_managesites_import_sites_extract_domain(input.val());
+		if (parsed_url !== '' && parsed_url !== undefined) {
+			// Update input value with domain name only
+			input.val(`${parsed_url.protocol}//${parsed_url.host}`);
+			// Set value site name
+			input_site_name.val(`${parsed_url.host}`);
+		}else{
+			// Show confirm, asking the user if they want to edit or not
+			const user_confirmed = confirm(__('The pasted URL is invalid. Example: http://example.com\nClick OK to stay and correct, or Cancel to continue without correcting.'));
+			if (user_confirmed) {
+			setTimeout(function () {
+				input.focus();
+			}, 1 );  // 	Reset focus if user selects OK
+			input_site_name.val(input.val());
+			}
+		}
+	});
+
+	// Save data when leaving inputs in a row.
+	$('#mainwp-managesites-row-import-sites').on('blur', 'input', function () {
+		const current_value = $(this).val();
+		// Check if value has changed before calling AJAX
+		if (current_value !== initial_value) {
+			const row_index = $(this).attr("data-row-index");
+			mainwp_managesites_save_row_temp_data(row_index);
+		}
+	});
 });
 
+// Function to send temporary data of a row to the server.
+const mainwp_managesites_save_row_temp_data = function (row_index) {
+	const row = jQuery('#mainwp-managesites-import-row-' + row_index);
+	const site_url = row.find(`input[name="mainwp_managesites_import[${row_index}][site_url]"]`).val();
+	const admin_name = row.find(`input[name="mainwp_managesites_import[${row_index}][admin_name]"]`).val();
+	
+	// Check if the fields site_url, admin_name are not empty.
+	if (site_url && admin_name ) {
+		const site_name = row.find(`input[name="mainwp_managesites_import[${row_index}][site_name]"]`).val();
+		const tag = row.find(`input[name="mainwp_managesites_import[${row_index}][tag]"]`).val();
+		const security_id = row.find(`input[name="mainwp_managesites_import[${row_index}][security_id]"]`).val();
+		const http_username = row.find(`input[name="mainwp_managesites_import[${row_index}][http_username]"]`).val();
+		const http_password = row.find(`input[name="mainwp_managesites_import[${row_index}][http_password]"]`).val();
+		const verify_certificate = row.find(`input[name="mainwp_managesites_import[${row_index}][verify_certificate]"]`).val();
+		const ssl_version = row.find(`input[name="mainwp_managesites_import[${row_index}][ssl_version]"]`).val();
+		const data = mainwp_secure_data({
+			action: 'mainwp_save_temp_import_website',
+			status: 'save_temp',
+			row_index: Number(row_index),
+			site_url: site_url,
+			admin_name: admin_name,
+			site_name: site_name,
+			tag: tag,
+			security_id: security_id,
+			http_username: http_username,
+			http_password: http_password,
+			verify_certificate: verify_certificate,
+			ssl_version: ssl_version,
+		});
+
+		// Send row save data to server.
+		jQuery.post(ajaxurl, data, function (response) {});
+	}
+
+}
 // Function to get the domain part from the entered URL
 const mainwp_managesites_import_sites_extract_domain = function (url) { // NOSONAR - to compatible.
-  try {
-    // Use URL API to parse URL and get only protocol and host part
-    return new URL(url);
-  } catch (e) {
-    // If the URL is invalid or contains an error, return an empty string.
-    return '';
-  }
+	try {
+		// Use URL API to parse URL and get only protocol and host part
+		return new URL(url);
+	} catch (e) {
+		// If the URL is invalid or contains an error, return an empty string.
+		return '';
+	}
 }
 
 // Delete row when pressing Delete button.
 const mainwp_managesites_import_sites_delete_row = function (index) {
-  jQuery('#mainwp-managesites-import-row-' + index).remove();
+	const row = jQuery('#mainwp-managesites-import-row-' + index);
+	const site_url = row.find(`input[name="mainwp_managesites_import[${index}][site_url]"]`).val();
+	const admin_name = row.find(`input[name="mainwp_managesites_import[${index}][admin_name]"]`).val();
+	// Check if the fields site_url, admin_name are not empty.
+	if (site_url && admin_name) {
+		const data = mainwp_secure_data({
+			action: 'mainwp_save_temp_import_website',
+			status: 'delete_temp',
+			row_index: Number(index),
+		});
+
+		jQuery.post(ajaxurl, data, function (response) {});
+	}
+	jQuery('#mainwp-managesites-import-row-' + index).remove();
 }
+
 // Add new row by clicking Add New Row button.
 const mainwp_managesites_import_sites_add_row = function (row_index) {
-  return `
-    <div class="row mainwp-managesites-row-import-sites" id="mainwp-managesites-import-row-${row_index}">
+	row_index--;
+	return `
+    <div class="row mainwp-managesites-import-rows" id="mainwp-managesites-import-row-${row_index}" data-index="${row_index}" data-temp-id="${row_index}">
       <div class="two wide column">
         <div class="ui mini fluid input">
           <input type="text" name="mainwp_managesites_import[${row_index}][site_url]" class="mainwp-managesites-import-site-url" data-row-index="${row_index}"/>
@@ -4553,32 +4659,32 @@ const mainwp_managesites_import_sites_add_row = function (row_index) {
       </div>
       <div class="two wide column">
         <div class="ui mini fluid input">
-          <input type="text" id="mainwp-managesites-import-site-name-${row_index}" name="mainwp_managesites_import[${row_index}][site_name]" class="mainwp-managesites-import-site-name" />
+          <input type="text" id="mainwp-managesites-import-site-name-${row_index}" name="mainwp_managesites_import[${row_index}][site_name]" class="mainwp-managesites-import-site-name" data-row-index="${row_index}"/>
         </div>
       </div>
       <div class="two wide column">
         <div class="ui mini fluid input">
-          <input type="text" id="mainwp-managesites-import-admin-name-${row_index}" name="mainwp_managesites_import[${row_index}][admin_name]" class="mainwp-managesites-import-admin-name"/>
+          <input type="text" id="mainwp-managesites-import-admin-name-${row_index}" name="mainwp_managesites_import[${row_index}][admin_name]" class="mainwp-managesites-import-admin-name" data-row-index="${row_index}"/>
         </div>
       </div>
       <div class="one wide column">
         <div class="ui mini fluid input">
-          <input type="text"  name="mainwp_managesites_import[${row_index}][tag]" />
+          <input type="text"  name="mainwp_managesites_import[${row_index}][tag]" data-row-index="${row_index}"/>
         </div>
       </div>
       <div class="two wide column">
         <div class="ui mini fluid input">
-          <input type="text"  name="mainwp_managesites_import[${row_index}][security_id]" />
+          <input type="text"  name="mainwp_managesites_import[${row_index}][security_id]" data-row-index="${row_index}" />
         </div>
       </div>
       <div class="two wide column">
         <div class="ui mini fluid input">
-          <input type="text"  name="mainwp_managesites_import[${row_index}][http_username]" />
+          <input type="text"  name="mainwp_managesites_import[${row_index}][http_username]" data-row-index="${row_index}"/>
         </div>
       </div>
       <div class="two wide column">
         <div class="ui mini fluid input">
-          <input type="text"  name="mainwp_managesites_import[${row_index}][http_password]" />
+          <input type="text"  name="mainwp_managesites_import[${row_index}][http_password]" data-row-index="${row_index}"/>
         </div>
       </div>
       <div class="three wide column">
@@ -4586,12 +4692,12 @@ const mainwp_managesites_import_sites_add_row = function (row_index) {
           <div class="doubling three column row">
             <div class="column">
               <div class="ui mini fluid input">
-                <input type="text" value="1" class="mini" name="mainwp_managesites_import[${row_index}][verify_ssl]" />
+                <input type="text" value="1" class="mini" name="mainwp_managesites_import[${row_index}][verify_certificate]" data-row-index="${row_index}" oninput="this.value = this.value.replace(/[^0-9]/g, '')"/>
               </div>
             </div>
             <div class="column">
               <div class="ui mini fluid input">
-                <input type="text" value="auto" class="mini" name="mainwp_managesites_import[${row_index}][ssl_version]" />
+                <input type="text" value="auto" class="mini" name="mainwp_managesites_import[${row_index}][ssl_version]" data-row-index="${row_index}"/>
               </div>
             </div>
             <div class="column">

@@ -525,7 +525,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         <input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo esc_attr( $key_import + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $val_import ) ); ?>" original="<?php echo esc_attr( $line ); ?>" />
                     <?php } ?>
                     <input type="hidden" id="mainwp_managesites_do_managesites_import" value="1"/>
-					<input type="hidden" id="mainwp_managesites_do_import" value="1"/>
+                    <input type="hidden" id="mainwp_managesites_do_import" value="1"/>
                     <input type="hidden" id="mainwp_managesites_total_import" value="<?php echo esc_attr( count( $import_data ) ); ?>"/>
 
                     <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_logging">

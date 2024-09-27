@@ -504,15 +504,15 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     }
                     // Map POST data to import data
                     $import_data[] = array(
-                        'name'               => ! empty( $site['site_name'] ) ? sanitize_text_field( $site['site_name'] ) : '',
-                        'url'                => ! empty( $site['site_url'] ) ? sanitize_text_field( $site['site_url'] ) : '',
-                        'adminname'          => ! empty( $site['admin_name'] ) ? sanitize_text_field( $site['admin_name'] ) : '',
-                        'wpgroups'           => ! empty( $site['tag'] ) ? sanitize_text_field( $site['tag'] ) : '',
-                        'uniqueId'           => ! empty( $site['security_id'] ) ? sanitize_text_field( $site['security_id'] ) : '',
-                        'http_user'          => ! empty( $site['http_username'] ) ? sanitize_text_field( $site['http_username'] ) : '',
-                        'http_pass'          => ! empty( $site['http_password'] ) ? sanitize_text_field( $site['http_password'] ) : '',
-                        'verify_certificate' => ! empty( $site['verify_ssl'] ) && (int) $site['verify_ssl'] !== 1 ? intval( $site['verify_ssl'] ) : 1,
-                        'ssl_version'        => ! empty( $site['ssl_version'] ) ? sanitize_text_field( $site['ssl_version'] ) : 'auto',
+                        'name'               => ! empty( $site['site_name'] ) ? sanitize_text_field( wp_unslash( $site['site_name'] ) ) : '',
+                        'url'                => ! empty( $site['site_url'] ) ? sanitize_text_field( wp_unslash( $site['site_url'] ) ) : '',
+                        'adminname'          => ! empty( $site['admin_name'] ) ? sanitize_text_field( wp_unslash( $site['admin_name'] ) ) : '',
+                        'wpgroups'           => ! empty( $site['tag'] ) ? sanitize_text_field( wp_unslash( $site['tag'] ) ) : '',
+                        'uniqueId'           => ! empty( $site['security_id'] ) ? sanitize_text_field( wp_unslash( $site['security_id'] ) ) : '',
+                        'http_user'          => ! empty( $site['http_username'] ) ? sanitize_text_field( wp_unslash( $site['http_username'] ) ) : '',
+                        'http_pass'          => ! empty( $site['http_password'] ) ? sanitize_text_field( wp_unslash( $site['http_password'] ) ) : '',
+                        'verify_certificate' => ! empty( $site['verify_certificate'] ) && 1 !== (int) $site['verify_certificate'] ? intval( wp_unslash( $site['verify_certificate'] ) ) : 1,
+                        'ssl_version'        => ! empty( $site['ssl_version'] ) ? sanitize_text_field( wp_unslash( $site['ssl_version'] ) ) : 'auto',
                     );
                 }
                 // Import website if import data is not empty.

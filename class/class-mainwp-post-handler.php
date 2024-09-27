@@ -1606,7 +1606,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
      *
      * @return mixed data value.
      */
-    private function mainwp_get_sanitized_post( $key, $callback = 'sanitize_text_field' ) {
+    public function mainwp_get_sanitized_post( $key, $callback = 'sanitize_text_field' ) {
         return isset( $_POST[ $key ] ) ? $callback( wp_unslash( $_POST[ $key ] ) ) : '';
     }
 }

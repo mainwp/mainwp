@@ -2166,11 +2166,11 @@ jQuery(function () {
     mainwp_managesites_add();
   });
 
-	// hanlde click submit form import website
+	// Hanlde click submit form import website
   jQuery(document).on('click', '#mainwp_managesites_bulkadd', function () {
 
 		let hasTable_data = false;
-		let csv_selected = jQuery('#mainwp_managesites_file_bulkupload').val() !== ''; // Kiểm tra nếu file CSV đã được chọn
+		let csv_selected = jQuery('#mainwp_managesites_file_bulkupload').val() !== ''; // Check if CSV file is selected
 		let error_messages = [];
 		// Iterate through each row in the rows
 		jQuery('#mainwp-managesites-row-import-sites .mainwp-managesites-import-rows').each(function(index) {

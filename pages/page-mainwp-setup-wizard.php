@@ -534,10 +534,10 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Method mwp_setup_connect_first_site()
      *
      * Render Install first Child Site Step form.
-	 * 
-	 * @uses MainWP_Manage_Sites_View::render_import_sites()
-	 * @uses MainWP_Manage_Sites::mainwp_managesites_form_import_sites()
-	 * @uses MainWP_Manage_Sites::mainwp_managesites_information_import_sites()
+     *
+     * @uses MainWP_Manage_Sites_View::render_import_sites()
+     * @uses MainWP_Manage_Sites::mainwp_managesites_form_import_sites()
+     * @uses MainWP_Manage_Sites::mainwp_managesites_information_import_sites()
      */
     public function mwp_setup_connect_first_site() {
         $count = MainWP_DB::instance()->get_websites_count( null, true );
@@ -584,16 +584,16 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <input type="button" name="mainwp_managesites_btn_import" id="mainwp_managesites_btn_import" class="ui basic button" value="<?php esc_attr_e( 'Pause', 'mainwp' ); ?>"/>
                     </div>
                 </div>
-				<script>
-					jQuery(document).ready(function() {
-						jQuery("#mainwp-setup-import-sites-modal").modal({
-							closable: false,
-							onHide: function() {
-								location.href = 'admin.php?page=mainwp-setup&step=connect_first_site';
-							}
-						}).modal('show');
-					});
-				</script>
+                <script>
+                    jQuery(document).ready(function() {
+                        jQuery("#mainwp-setup-import-sites-modal").modal({
+                            closable: false,
+                            onHide: function() {
+                                location.href = 'admin.php?page=mainwp-setup&step=connect_first_site';
+                            }
+                        }).modal('show');
+                    });
+                </script>
             <?php else : ?>
                 <form method="post" action="" class="ui form" enctype="multipart/form-data" id="mainwp_connect_first_site_form">
                 <div id="mainwp-qsw-connect-site-form" style="display:none">
@@ -649,10 +649,10 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         </div>
                     </div>
                     <div class="ui bottom attached tab segment" data-tab="multiple-site">
-						<?php MainWP_Manage_Sites::mainwp_managesites_form_import_sites() ?>
-						<div class="ui hidden divider"></div>
-						<?php MainWP_Manage_Sites::mainwp_managesites_information_import_sites(); ?>
-						<div class="ui hidden divider"></div>
+                        <?php MainWP_Manage_Sites::mainwp_managesites_form_import_sites(); ?>
+                        <div class="ui hidden divider"></div>
+                        <?php MainWP_Manage_Sites::mainwp_managesites_information_import_sites(); ?>
+                        <div class="ui hidden divider"></div>
                         <div class="ui grid field">
                             <label class="six wide column middle aligned" for="mainwp_managesites_file_bulkupload"><?php esc_html_e( 'Upload the CSV file', 'mainwp' ); ?> (<a href="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/csv/sample.csv' ); ?>"><?php esc_html_e( 'Download sample CSV file'); ?></a>)</label>
                             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click to upload the import file.', 'mainwp' ); ?>" data-inverted="" data-position="left center">

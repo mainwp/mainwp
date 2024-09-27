@@ -1969,32 +1969,31 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         // @NO_SONAR_END@ end of block.
     }
 
-	/**
-	 * Method mainwp_managesites_information_import_sites()
-	 *
-	 * Display Import site information.
-	 */
-	public static function mainwp_managesites_information_import_sites()
-	{
-		?>
-		<em>
-			<?php esc_html_e( 'Enter each site\'s information on a new line using the following format:', 'mainwp' ); ?><br/>
-			<code><?php esc_html_e( 'Site Name, URL, Admin Name, Tag, Security ID, HTTP Username, HTTP Password, Verify Certificate, SSL Version', 'mainwp' ); ?></code><br/>
-			<ul class="ui bulleted list small text">
-				<li><?php esc_html_e( 'Site Name: Enter the Site friedly name (Required)', 'mainwp' ); ?></li>
-				<li><?php esc_html_e( 'URL: Enter your Site URL (Required)', 'mainwp' ); ?></li>
-				<li><?php esc_html_e( 'Admin Name: Enter the website Administrator username (Required)', 'mainwp' ); ?></li>
-				<li><?php esc_html_e( 'Tag: Assign tags to the website (Optional)', 'mainwp' ); ?></li>
-				<li><?php esc_html_e( 'Security ID: If in use, enter the website Unique ID, if not, leave blank', 'mainwp' ); ?></li>
-				<li><?php esc_html_e( 'HTTP Username: If the child site is HTTP Basic Auth protected, enter the HTTP username', 'mainwp' ); ?></li>
-				<li><?php esc_html_e( 'HTTP Password: If the child site is HTTP Basic Auth protected, enter the HTTP passowrd', 'mainwp' ); ?></li>
-				<li><?php esc_html_e( 'Verify Certificate: Enter 1 for true or 0 for false (default is 1).', 'mainwp' ); ?></li>
-				<li><?php esc_html_e( 'SSL Version: Choose from auto, 1.x, 1, 2, 1.1, 1.2, 1.3 (default is auto).', 'mainwp' ); ?></li>
-			</ul>
-			<?php esc_html_e( 'Tip: For simplicity, you can leave "Verify Certificate" and "SSL Version" as default by entering a blank value.', 'mainwp' ); ?>
-		</em>
-		<?php
-	}
+    /**
+     * Method mainwp_managesites_information_import_sites()
+     *
+     * Display Import site information.
+     */
+    public static function mainwp_managesites_information_import_sites() {
+        ?>
+        <em>
+            <?php esc_html_e( 'Enter each site\'s information on a new line using the following format:', 'mainwp' ); ?><br/>
+            <code><?php esc_html_e( 'Site Name, URL, Admin Name, Tag, Security ID, HTTP Username, HTTP Password, Verify Certificate, SSL Version', 'mainwp' ); ?></code><br/>
+            <ul class="ui bulleted list small text">
+                <li><?php esc_html_e( 'Site Name: Enter the Site friedly name (Required)', 'mainwp' ); ?></li>
+                <li><?php esc_html_e( 'URL: Enter your Site URL (Required)', 'mainwp' ); ?></li>
+                <li><?php esc_html_e( 'Admin Name: Enter the website Administrator username (Required)', 'mainwp' ); ?></li>
+                <li><?php esc_html_e( 'Tag: Assign tags to the website (Optional)', 'mainwp' ); ?></li>
+                <li><?php esc_html_e( 'Security ID: If in use, enter the website Unique ID, if not, leave blank', 'mainwp' ); ?></li>
+                <li><?php esc_html_e( 'HTTP Username: If the child site is HTTP Basic Auth protected, enter the HTTP username', 'mainwp' ); ?></li>
+                <li><?php esc_html_e( 'HTTP Password: If the child site is HTTP Basic Auth protected, enter the HTTP passowrd', 'mainwp' ); ?></li>
+                <li><?php esc_html_e( 'Verify Certificate: Enter 1 for true or 0 for false (default is 1).', 'mainwp' ); ?></li>
+                <li><?php esc_html_e( 'SSL Version: Choose from auto, 1.x, 1, 2, 1.1, 1.2, 1.3 (default is auto).', 'mainwp' ); ?></li>
+            </ul>
+            <?php esc_html_e( 'Tip: For simplicity, you can leave "Verify Certificate" and "SSL Version" as default by entering a blank value.', 'mainwp' ); ?>
+        </em>
+        <?php
+    }
 
     /**
      * Method mainwp_managesites_form_import_sites()

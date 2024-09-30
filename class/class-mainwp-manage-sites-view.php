@@ -388,7 +388,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <div class="ui medium text loader"><?php esc_html_e( 'Importing', 'mainwp' ); ?></div>
         </div>
         <div class="ui message" id="mainwp-import-sites-status-message">
-            <?php echo '<i class="notched circle loading icon"></i> ' . esc_html( 'Importing...', 'mainwp' ); ?>
+            <?php echo '<i class="notched circle loading icon"></i> ' . esc_html__( 'Importing...', 'mainwp' ); ?>
         </div>
         <?php
         $errors = array();
@@ -502,7 +502,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     if ( empty( $site['site_url'] ) && empty( $site['admin_name'] ) ) {
                         continue;
                     }
-                    // Map POST data to import data
+                    // Map POST data to import data.
                     $import_data[] = array(
                         'name'               => ! empty( $site['site_name'] ) ? sanitize_text_field( wp_unslash( $site['site_name'] ) ) : '',
                         'url'                => ! empty( $site['site_url'] ) ? sanitize_text_field( wp_unslash( $site['site_url'] ) ) : '',
@@ -517,8 +517,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
                 // Import website if import data is not empty.
                 if ( ! empty( $import_data ) ) {
-                    $header_line = trim( 'Site Name, Url, Admin Name, Tag,Security ID,HTTP Username,HTTP Password,Verify Certificate,SSL Version' ); // Set Header Line
-                    // Map import data to input html
+                    $header_line = trim( 'Site Name, Url, Admin Name, Tag,Security ID,HTTP Username,HTTP Password,Verify Certificate,SSL Version' ); // Set Header Line.
+                    // Map import data to input html.
                     foreach ( $import_data as $key_import => $val_import ) {
                         $line = trim( implode( ',', $val_import ) )
                         ?>

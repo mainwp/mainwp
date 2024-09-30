@@ -1144,7 +1144,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             ?>
                 <div class="ui large modal" id="mainwp-import-sites-modal">
                 <i class="close icon"></i>
-                    <div class="header"><?php echo $title_page; ?></div>
+                    <div class="header"><?php echo esc_html( $title_page ); ?></div>
                     <div class="scrolling content">
                     <?php MainWP_Manage_Sites_View::render_import_sites(); ?>
                     </div>
@@ -1175,7 +1175,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
                         <form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form" class="ui form">
                         <h3 class="ui dividing header">
-                            <?php echo $title_page; ?>
+                            <?php echo esc_html( $title_page ); ?>
                             <div class="sub header"><?php esc_html_e( 'Import multiple websites to your MainWP Dashboard.', 'mainwp' ); ?></div>
                         </h3>
                         <div class="mainwp-primary-content-wrap">
@@ -2014,7 +2014,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         // Get total rows import site default 5.
         $total_sites   = max( 5, count( $temp_sites ) );
-        $is_page_setup = isset( $_GET['page'] ) && 'mainwp-setup' === $_GET['page'] ? true : false;
+        $is_page_setup = isset( $_GET['page'] ) && 'mainwp-setup' === $_GET['page'] ? true : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $display_none  = $is_page_setup ? 'display:none' : '';
         ?>
         <div class="ui mainwp-widget segment">
@@ -2188,7 +2188,6 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $general_fields  = $fields['fields'];
         $optional_fields = $fields['optional_fields'];
         $row_class       = $is_page_setup ? 'five' : 'two';
-
         ?>
         <div class="row mainwp-managesites-import-rows" id="mainwp-managesites-import-row-<?php echo esc_attr( $index ); ?>" data-index="<?php echo esc_attr( $index ); ?>">
         <?php

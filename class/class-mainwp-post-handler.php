@@ -1482,7 +1482,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         $is_update = false;
         if ( 'delete_temp' === $status ) { // Handling remove temp data.
             $is_update = $this->mainwp_handle_delete_temp_import_website( $values, $index );
-        } elseif ( 'save_temp' === $status ) { // Handling save row data
+        } elseif ( 'save_temp' === $status ) { // Handling save row data.
             // Update row data into array.
             $row_item = array(
                 'site_url'           => $this->mainwp_get_sanitized_post( 'site_url' ),
@@ -1498,14 +1498,14 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
 
             $is_update = $this->mainwp_handle_save_temp_import_website( $values, $index, $row_item );
         }
-        // Save data to options table
+        // Save data to options table.
         if ( $is_update ) {
             MainWP_DB::instance()->update_general_option( 'temp_import_sites', $values, 'array' );
             wp_die( wp_send_json_success( esc_html__( 'Row data saved successfully.', 'mainwp' ) ) );
         }
 
-        // In case of no updates
-        wp_die( wp_send_json_error( $error_msg ) );
+        // In case of no updates.
+        wp_die( wp_send_json_error( esc_html( $error_msg ) ) );
     }
 
     /**
@@ -1540,7 +1540,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
      */
     private function mainwp_handle_save_temp_import_website( &$values, $index, $row_item ) {
         if ( empty( $values ) || ! array_key_exists( $index, $values ) ) {
-            $index            = $index !== 0 ? $index : 0;
+            $index            = 0 !== $index ? $index : 0;
             $values[ $index ] = $row_item;
         } else {
             $values[ $index ] = $row_item;
@@ -1574,8 +1574,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         $is_delete = false;
 
         if ( ! empty( $temp_sites ) && is_array( $temp_sites ) ) {
-            // Loop through data to remove added website
-            foreach ( $temp_sites as $k_site => $val_site ) {
+            foreach ( $temp_sites as $k_site => $val_site ) { // Loop through data to remove added website.
                 // Check if row data stream exists.
                 if ( rtrim( $wp_url, '/' ) === $val_site['site_url'] && $wp_admin === $val_site['admin_name'] ) {
                     // Remove row data.
@@ -1601,12 +1600,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
      *
      * Sanitized post field.
      *
-     * @param string $key key to get from POST
+     * @param string $key key to get from POST.
      * @param string $callback cleaning method.
      *
      * @return mixed data value.
      */
     public function mainwp_get_sanitized_post( $key, $callback = 'sanitize_text_field' ) {
-        return isset( $_POST[ $key ] ) ? $callback( wp_unslash( $_POST[ $key ] ) ) : '';
+        return isset( $_POST[ $key ] ) ? $callback( wp_unslash( $_POST[ $key ] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification
     }
 }

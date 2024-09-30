@@ -20,8 +20,8 @@ jQuery(function () {
 		// Iterate through each row in the rows
 		jQuery('#mainwp-managesites-row-import-sites .mainwp-managesites-import-rows').each(function (index) {
 
-			let site_url = jQuery(`input[name="mainwp_managesites_import[${index + 1}][site_url]"]`).val();
-			let admin_name = jQuery(`input[name="mainwp_managesites_import[${index + 1}][admin_name]"]`).val();
+			let site_url = jQuery(`input[name="mainwp_managesites_import[${index}][site_url]"]`).val();
+			let admin_name = jQuery(`input[name="mainwp_managesites_import[${index}][admin_name]"]`).val();
 			// If there is data in any row of the table, check the required fields
 			if (site_url || admin_name) {
 				hasTable_data = true;

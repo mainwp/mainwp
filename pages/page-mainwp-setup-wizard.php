@@ -546,8 +546,8 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             return;
         }
 
-        $has_file_upload = isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_bulkupload']['error'];
-        $has_import_data = ! empty( $_POST['mainwp_managesites_import'] );
+        $has_file_upload    = isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_bulkupload']['error'];
+        $has_import_data    = ! empty( $_POST['mainwp_managesites_import'] );
         $has_manage_wp_data = isset( $_FILES['mainwp_managesites_file_managewp'] ) && isset( $_FILES['mainwp_managesites_file_managewp']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_managewp']['error'];
         ?>
         <h1><?php esc_html_e( 'Connect Your First Child Site', 'mainwp' ); ?></h1>

@@ -696,18 +696,18 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
     public static function handle_import_site_render_input_field( $site_values ) {
         $header_line = trim( 'Site Name, Url, Admin Name, Tag,Security ID,HTTP Username,HTTP Password,Verify Certificate,SSL Version' ); // Set Header Line.
         foreach ( $site_values as $k_item => $item ) {
-            $site        = $item['site'];
-            $line        = trim( implode( ',', $site ) );
+            $site = $item['site'];
+            $line = trim( implode( ',', $site ) );
             ?>
                 <input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo esc_attr( $k_item + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $site ) ); ?>" original="<?php echo esc_attr( $line ); ?>" />
             <?php
-			if ( ! empty( $item['client'] ) ) {
-				$client      = $item['client'][0];
-				$client_line = trim( implode( ',', $client ) );
-				?>
-					<input class="mainwp_managesites_import_client_lines" type="hidden" id="mainwp_managesites_import_client_line_<?php echo esc_attr( $k_item + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $client ) ); ?>" original="<?php echo esc_attr( $client_line ); ?>" />
-				<?php
-			}
+            if ( ! empty( $item['client'] ) ) {
+                $client      = $item['client'][0];
+                $client_line = trim( implode( ',', $client ) );
+                ?>
+                    <input class="mainwp_managesites_import_client_lines" type="hidden" id="mainwp_managesites_import_client_line_<?php echo esc_attr( $k_item + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $client ) ); ?>" original="<?php echo esc_attr( $client_line ); ?>" />
+                <?php
+            }
         }
         ?>
         <input type="hidden" id="mainwp_managesites_do_import" value="1"/>

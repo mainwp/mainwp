@@ -1137,8 +1137,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $title_page = esc_html__( 'Import Sites', 'mainwp' );
         $showpage   = 'BulkAddNew';
         static::render_header( $showpage );
-        $has_file_upload = isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_bulkupload']['error'];
-        $has_import_data = ! empty( $_POST['mainwp_managesites_import'] );
+        $has_file_upload    = isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_bulkupload']['error'];
+        $has_import_data    = ! empty( $_POST['mainwp_managesites_import'] );
         $has_manage_wp_data = isset( $_FILES['mainwp_managesites_file_managewp'] ) && isset( $_FILES['mainwp_managesites_file_managewp']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_managewp']['error'];
 
         if ( ! mainwp_current_user_have_right( 'dashboard', 'add_sites' ) ) {
@@ -2254,10 +2254,10 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
     public static function mainwp_managesites_form_import_sites_file_managewp( $label_class = 'three', $column_class = 'nine' ) {
         ?>
-		<h3 class="ui dividing header">
-			<?php echo esc_html_e( 'Import a Site in ManageWP', 'mainwp' ); ?>
-			<div class="sub header"><?php esc_html_e( 'Import multiple websites from ManageWP to your MainWP Dashboard.', 'mainwp' ); ?></div>
-		</h3>
+        <h3 class="ui dividing header">
+            <?php echo esc_html_e( 'Import a Site in ManageWP', 'mainwp' ); ?>
+            <div class="sub header"><?php esc_html_e( 'Import multiple websites from ManageWP to your MainWP Dashboard.', 'mainwp' ); ?></div>
+        </h3>
         <div class="ui grid field">
             <label class="<?php echo esc_attr( $label_class ); ?> wide column middle aligned" for="mainwp_managesites_file_managewp">
                 <?php esc_html_e( 'Upload ZIP file', 'mainwp' ); ?>

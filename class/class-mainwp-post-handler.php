@@ -1602,15 +1602,15 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
      * Create client.
      *
      * @uses MainWP_DB_Client::instance()->update_client()
-	 * @uses MainWP_DB_Client::instance()->update_selected_sites_for_client()
+     * @uses MainWP_DB_Client::instance()->update_selected_sites_for_client()
      */
     public function ajax_import_website_add_client() {
         $this->secure_request( 'mainwp_import_website_add_client' ); // Check secure.
         $error_msg = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
         try {
             // Retrieve client data.
-            $data = $this->mainwp_get_sanitized_post( 'client' );
-			$site_id = $this->mainwp_get_sanitized_post( 'site_id' );
+            $data    = $this->mainwp_get_sanitized_post( 'client' );
+            $site_id = $this->mainwp_get_sanitized_post( 'site_id' );
 
             if ( empty( $data ) ) {
                 wp_die( wp_send_json_error( $error_msg ) );
@@ -1619,10 +1619,10 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
             $data   = json_decode( $data, true );
             $client = MainWP_DB_Client::instance()->update_client( $data ); // Create client.
             if ( $client ) {
-				// add groups website and client
-				if( ! empty( $site_id ) ){
-					MainWP_DB_Client::instance()->update_selected_sites_for_client( $client->client_id, array( $site_id ) );
-				}
+                // add groups website and client
+                if ( ! empty( $site_id ) ) {
+                    MainWP_DB_Client::instance()->update_selected_sites_for_client( $client->client_id, array( $site_id ) );
+                }
 
                 wp_die( wp_send_json_success( esc_html__( 'Created client successfully.', 'mainwp' ) ) );
             }

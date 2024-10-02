@@ -145,6 +145,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         // Page: managesites.
         $this->add_action( 'mainwp_save_temp_import_website', array( &$this, 'ajax_save_temp_import_website' ) );
         $this->add_action( 'mainwp_delete_temp_import_website', array( &$this, 'ajax_delete_temp_import_website' ) );
+        $this->add_action( 'mainwp_import_website_add_client', array( &$this, 'ajax_import_website_add_client' ) );
     }
 
     /**
@@ -1592,6 +1593,43 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         }
 
         // In case of no delete.
+        wp_die( wp_send_json_error( $error_msg ) );
+    }
+
+    /**
+     * Method ajax_import_website_add_client()
+     *
+     * Create client.
+     *
+     * @uses MainWP_DB_Client::instance()->update_client()
+	 * @uses MainWP_DB_Client::instance()->update_selected_sites_for_client()
+     */
+    public function ajax_import_website_add_client() {
+        $this->secure_request( 'mainwp_import_website_add_client' ); // Check secure.
+        $error_msg = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
+        try {
+            // Retrieve client data.
+            $data = $this->mainwp_get_sanitized_post( 'client' );
+			$site_id = $this->mainwp_get_sanitized_post( 'site_id' );
+
+            if ( empty( $data ) ) {
+                wp_die( wp_send_json_error( $error_msg ) );
+            }
+
+            $data   = json_decode( $data, true );
+            $client = MainWP_DB_Client::instance()->update_client( $data ); // Create client.
+            if ( $client ) {
+				// add groups website and client
+				if( ! empty( $site_id ) ){
+					MainWP_DB_Client::instance()->update_selected_sites_for_client( $client->client_id, array( $site_id ) );
+				}
+
+                wp_die( wp_send_json_success( esc_html__( 'Created client successfully.', 'mainwp' ) ) );
+            }
+        } catch ( \Exception $e ) {
+            wp_die( wp_send_json_error( esc_html( $e->getMessage() ) ) );
+        }
+        // In case of no created.
         wp_die( wp_send_json_error( $error_msg ) );
     }
 

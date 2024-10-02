@@ -2169,44 +2169,13 @@ jQuery(function () {
 	// Hanlde click submit form import website
   jQuery(document).on('click', '#mainwp_managesites_bulkadd', function () {
 
-		let hasTable_data = false;
-		let csv_selected = jQuery('#mainwp_managesites_file_bulkupload').val() !== ''; // Check if CSV file is selected
-		let error_messages = [];
-		// Iterate through each row in the rows
-		jQuery('#mainwp-managesites-row-import-sites .mainwp-managesites-import-rows').each(function(index) {
-
-			let site_url = jQuery(`input[name="mainwp_managesites_import[${index}][site_url]"]`).val();
-			let admin_name = jQuery(`input[name="mainwp_managesites_import[${index}][admin_name]"]`).val();
-			// If there is data in any row of the table, check the required fields
-			if (site_url || admin_name) {
-					hasTable_data = true;
-					let msg = '';
-				if (!site_url) {
-						msg = sprintf(__('Site URL is required in row %1', index + 1));
-						error_messages.push(msg);
-					}
-				if (!admin_name) {
-						msg = sprintf(__('Admin Name is required in row %1', index + 1));
-						error_messages.push(msg);
-					}
-			}
-		});
-
-		// Check if both CSV and table have data 
-		if (csv_selected && hasTable_data) {
-			error_messages.push(__("You can only submit either the table data or a CSV file, not both."));
-		}
-		// Check if both are empty
-		if (!csv_selected && !hasTable_data) {
-			error_messages.push(__("Please fill in the table or select a CSV file."));
-		}
-
-		// If there is an error, prevent submission and display the error
-		if (error_messages.length > 0) {
-			setHtml('#mainwp-message-zone', error_messages.join("<br/>"), false); 
-		}else{
-			jQuery('#mainwp_managesites_bulkadd_form').submit();
-		}
+	let error_messages = mainwp_managesites_import_handle_form_before_submit();
+	// If there is an error, prevent submission and display the error
+	if (error_messages.length > 0) {
+		setHtml('#mainwp-message-zone', error_messages.join("<br/>"), false); 
+	}else{
+		jQuery('#mainwp_managesites_bulkadd_form').submit();
+	}
     return false;
   });
 

@@ -2232,7 +2232,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <i class="eye outline icon"  id="icon-visible-<?php echo esc_attr( $index ); ?>"></i>
                         <i class="eye slash outline icon" id="icon-hidden-<?php echo esc_attr( $index ); ?>" style="<?php echo esc_attr( $display_none ); ?>"></i>
                     </a>
-                    <a class="mainwp-managesites-delete-import-row" href="javascript:void(0)" onclick="mainwp_managesites_import_sites_delete_row(<?php echo esc_attr( $index ); ?>)"> 
+                    <a class="mainwp-managesites-delete-import-row" href="javascript:void(0)" onclick="mainwp_managesites_import_sites_delete_row(<?php echo esc_attr( $index ); ?>)">
                         <i class="trash alternate outline icon"></i>
                     </a>
                 </div>

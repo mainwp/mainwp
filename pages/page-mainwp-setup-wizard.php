@@ -554,30 +554,30 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-qsw-add-site-message' ) ) { ?>
             <div class="">
                 <p><?php esc_html_e( 'In the MainWP system, the sites you connect are referred to as \'Child Sites.', 'mainwp' ); ?> <br/> <?php esc_html_e( 'hese Child Sites will be managed centrally from your MainWP Dashboard.', 'mainwp' ); ?></p>
-			</div>
+            </div>
         <?php } ?>
-		
-		<div class="ui form">
-			<div class="ui hidden divider"></div>
-			<div class="ui hidden divider"></div>
-			<strong	><?php esc_html_e( 'Would you like to start with a single site or connect multiple sites to your MainWP Dashboard?', 'mainwp' ); ?></strong>
-			<div class="ui hidden divider"></div>
-			<div class="ui hidden divider"></div>
-			<div class="grouped fields mainwp-field-tab-connect">
-				<div class="field">
-					<div class="ui radio checkbox">
-						<input type="radio" name="tab_connect" tabindex="0" class="hidden" value="single-site">
-						<label for="tab_connect"><?php esc_html_e('Connect Single Site', 'mainwp'); ?></label>
-					</div>
-				</div>
-				<div class="field">
-					<div class="ui radio checkbox">
-						<input type="radio" name="tab_connect" tabindex="0" class="hidden" value="multiple-site">
-						<label for="tab_connect"><?php esc_html_e('Connect Multiple Site', 'mainwp'); ?></label>
-					</div>
-				</div>
-			</div>
-		</div>
+        
+        <div class="ui form">
+            <div class="ui hidden divider"></div>
+            <div class="ui hidden divider"></div>
+            <strong ><?php esc_html_e( 'Would you like to start with a single site or connect multiple sites to your MainWP Dashboard?', 'mainwp' ); ?></strong>
+            <div class="ui hidden divider"></div>
+            <div class="ui hidden divider"></div>
+            <div class="grouped fields mainwp-field-tab-connect">
+                <div class="field">
+                    <div class="ui radio checkbox">
+                        <input type="radio" name="tab_connect" tabindex="0" class="hidden" value="single-site">
+                        <label for="tab_connect"><?php esc_html_e('Connect Single Site', 'mainwp'); ?></label>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="ui radio checkbox">
+                        <input type="radio" name="tab_connect" tabindex="0" class="hidden" value="multiple-site">
+                        <label for="tab_connect"><?php esc_html_e('Connect Multiple Site', 'mainwp'); ?></label>
+                    </div>
+                </div>
+            </div>
+        </div>
             <?php if ( ( $has_file_upload || $has_import_data || $has_manage_wp_data ) && check_admin_referer( 'mainwp-admin-nonce' ) ) : ?>
                 <div class="ui large modal" id="mainwp-setup-import-sites-modal">
                     <i class="close icon"></i>
@@ -657,7 +657,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <div class="ui form">
                             <div class="ui hidden divider"></div>
                             <div class="field">
-                                <p><strong><?php esc_html_e( 'Do you want to migrate sites form another Wordpres management tool, such as ManageWP or Umbrella?', 'mainwp' ); ?></strong></p>
+                                <p><strong><?php esc_html_e( 'Do you want to migrate sites form another WordPress management tool, such as ManageWP or Umbrella?', 'mainwp' ); ?></strong></p>
                                 <div class="ui hidden divider"></div>
                                 <div class="ui toggle checkbox">
                                     <input type="checkbox" name="mainwp-qsw-migrate-managewp-umbrella" id="mainwp-qsw-migrate-managewp-umbrella">
@@ -671,7 +671,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <div class="ui hidden divider"></div>
 
                             <div class="ui horizontal left aligned divider">
-                                <?php esc_attr_e( 'or upload csv file', 'mainwp' )?>
+                                <?php esc_attr_e( 'or upload csv file', 'mainwp' ); ?>
                             </div>
 
                             <div class="ui grid field">
@@ -704,18 +704,18 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                 </div>
                             </div>
                             <div class="ui horizontal left aligned divider">
-                                <?php esc_attr_e( 'or use dashboard connect plugin', 'mainwp' )?>
+                                <?php esc_attr_e( 'or use dashboard connect plugin', 'mainwp' ); ?>
                             </div>
                             <div class="ui hidden divider"></div>
                             <div class="ui grid field">
                                 <p><strong><?php esc_html_e( 'MainWP Dashboard Connect', 'mainwp' ); ?></strong></p>
                                 <p>
                                     <?php esc_html_e( 'This option allows you to use the MainWp Dashboard Connect Plugin.', 'mainwp' ); ?><br/>
-                                    <?php esc_html_e( 'Download add install the plguin on the sites you wish to connect via your connect Wordpress Management system.', 'mainwp' ); ?><br/>
+                                    <?php esc_html_e( 'Download add install the plguin on the sites you wish to connect via your connect WordPress Management system.', 'mainwp' ); ?><br/>
                                     <?php esc_html_e( 'The plugin will automatically install MainWP Child plugin, connect your sites to the MainWP Dashboard via the REST API and deactivate itself.', 'mainwp' ); ?><br/>
                                 </p>
                             </div>
-                            <?php self::mainwp_dashboard_connect()?>
+                            <?php self::mainwp_dashboard_connect(); ?>
                         </div>
                     </div>
                 </div>
@@ -747,7 +747,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             </form>
         <?php endif; ?>
         <script>
-		
+        
             jQuery('.menu-connect-first-site .item').tab({
                 'onVisible': function() {
                     mainwp_menu_connect_first_site_onvisible_callback(this);
@@ -1045,46 +1045,45 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         ";
     }
 
-	/**
-	 * Method mainwp_dashboard_connect()
+    /**
+     * Method mainwp_dashboard_connect()
      *
      * Render field mainwp dashboard connect.
      *
      * @uses MainWP_Settings_Indicator::render_not_default_indicator()
      * @uses MainWP_Dashboard_Connect_Handle::instance()->is_zip_archive_supported()
      * @uses MainWP_Settings::is_basic_auth_dashboard_enabled()
-	 *
-	 */
-	public static function mainwp_dashboard_connect() {
-		$permalink                 = get_option( 'permalink_structure' );
-		$zip_supported             = MainWP_Dashboard_Connect_Handle::instance()->is_zip_archive_supported();
-		$disabled_download_connect = empty( $permalink ) || MainWP_Settings::is_basic_auth_dashboard_enabled();
+     */
+    public static function mainwp_dashboard_connect() {
+        $permalink                 = get_option( 'permalink_structure' );
+        $zip_supported             = MainWP_Dashboard_Connect_Handle::instance()->is_zip_archive_supported();
+        $disabled_download_connect = empty( $permalink ) || MainWP_Settings::is_basic_auth_dashboard_enabled();
 
-		$tip     = '';
-		$btn_tip = '';
+        $tip     = '';
+        $btn_tip = '';
 
-		if ( ! $zip_supported ) {
-			$tip = esc_attr__( 'Unable to download the MainWP Dashboard Connect plugin. The ZipArchive library is not available on your server. Please contact your hosting provider to enable this library.', 'mainwp' );
-		} elseif ( $disabled_download_connect ) {
-			$tip = esc_attr__( 'Unable to download the MainWP Dashboard Connect plugin. The permalink settings are not configured, or HTTP Basic Authentication is enabled. Please update your permalink settings or disable HTTP Basic Authentication and try again.', 'mainwp' );
-		} else {
-			$btn_tip = esc_attr__( 'Click here to download the MainWP Dashboard Connect plugin.', 'mainwp' );
-		}
-		?>
-		<div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools" default-indi-value="" >
-			<label class="six wide column middle aligned" style="display: none;" for="">
-			<?php
-			MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', '' );
-			esc_html_e( 'Download the MainWP Dashboard Connect plugin', 'mainwp' );
-			?>
-			</label>
-			<div class="ten wide column">
-				<div class="ui action input" <?php echo ! empty( $tip ) ? 'data-inverted="" data-position="top left" data-tooltip="' . esc_attr( $tip ) . '" ' : ''; ?> >
-					<span data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Enter an optional passphrase for additional security when adding site(s) through the MainWP Dashboard Connect plugin.', 'mainwp' ); ?>"><input type="text" class="settings-field-value-change-handler" name="download-mainwp-connect-pass" id="download-mainwp-connect-pass" <?php echo $zip_supported && ! $disabled_download_connect ? '' : 'disabled'; ?> value=""></span>
-					<button id="download-mainwp-dashboard-connect-button"  data-nonce="<?php echo esc_attr( wp_create_nonce( 'download-connect-nonce' ) ); ?>" <?php echo $zip_supported && ! $disabled_download_connect ? '' : ' disabled="disabled" '; ?>" <?php echo ! empty( $btn_tip ) ? 'data-inverted="" data-position="top right" data-tooltip="' . esc_attr( $btn_tip ) . '"' : ''; ?> class="ui green basic right labeled icon button <?php echo $zip_supported && ! $disabled_download_connect ? '' : 'disabled'; ?>" ><i class="download icon"></i> <?php esc_attr_e( 'Download', 'mainwp' ); ?></button>
-				</div>
-			</div>
-		</div>
-		<?php
-	}
+        if ( ! $zip_supported ) {
+            $tip = esc_attr__( 'Unable to download the MainWP Dashboard Connect plugin. The ZipArchive library is not available on your server. Please contact your hosting provider to enable this library.', 'mainwp' );
+        } elseif ( $disabled_download_connect ) {
+            $tip = esc_attr__( 'Unable to download the MainWP Dashboard Connect plugin. The permalink settings are not configured, or HTTP Basic Authentication is enabled. Please update your permalink settings or disable HTTP Basic Authentication and try again.', 'mainwp' );
+        } else {
+            $btn_tip = esc_attr__( 'Click here to download the MainWP Dashboard Connect plugin.', 'mainwp' );
+        }
+        ?>
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools" default-indi-value="" >
+            <label class="six wide column middle aligned" style="display: none;" for="">
+            <?php
+            MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', '' );
+            esc_html_e( 'Download the MainWP Dashboard Connect plugin', 'mainwp' );
+            ?>
+            </label>
+            <div class="ten wide column">
+                <div class="ui action input" <?php echo ! empty( $tip ) ? 'data-inverted="" data-position="top left" data-tooltip="' . esc_attr( $tip ) . '" ' : ''; ?> >
+                    <span data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Enter an optional passphrase for additional security when adding site(s) through the MainWP Dashboard Connect plugin.', 'mainwp' ); ?>"><input type="text" class="settings-field-value-change-handler" name="download-mainwp-connect-pass" id="download-mainwp-connect-pass" <?php echo $zip_supported && ! $disabled_download_connect ? '' : 'disabled'; ?> value=""></span>
+                    <button id="download-mainwp-dashboard-connect-button"  data-nonce="<?php echo esc_attr( wp_create_nonce( 'download-connect-nonce' ) ); ?>" <?php echo $zip_supported && ! $disabled_download_connect ? '' : ' disabled="disabled" '; ?>" <?php echo ! empty( $btn_tip ) ? 'data-inverted="" data-position="top right" data-tooltip="' . esc_attr( $btn_tip ) . '"' : ''; ?> class="ui green basic right labeled icon button <?php echo $zip_supported && ! $disabled_download_connect ? '' : 'disabled'; ?>" ><i class="download icon"></i> <?php esc_attr_e( 'Download', 'mainwp' ); ?></button>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
 }

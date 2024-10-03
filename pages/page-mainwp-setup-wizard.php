@@ -553,30 +553,31 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <h1><?php esc_html_e( 'Connect Your First Child Site', 'mainwp' ); ?></h1>
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-qsw-add-site-message' ) ) { ?>
             <div class="">
-                <?php esc_html_e( 'MainWP requires the MainWP Child plugin to be installed and activated on the WordPress site that you want to connect to your MainWP Dashboard.  ', 'mainwp' ); ?>
-            <?php esc_html_e( 'To install the MainWP Child plugin, please follow these steps:', 'mainwp' ); ?>
-            <ol>
-                <li><?php printf( esc_html__( 'Login to the WordPress site you want to connect %1$s(open it in a new browser tab)%2$s', 'mainwp' ), '<em>', '</em>' ); ?></li>
-                <li><?php printf( esc_html__( 'Go to the %1$sWP > Plugins%2$s page', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
-                <li><?php printf( esc_html__( 'Click %1$sAdd New%2$s to install a new plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
-                <li><?php printf( esc_html__( 'In the %1$sSearch Field%2$s, enter "MainWP Child" and once the plugin shows, click the Install button', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
-                <li><?php printf( esc_html__( '%1$sActivate%2$s the plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
-            </ol>
-        </div>
+                <p><?php esc_html_e( 'In the MainWP system, the sites you connect are referred to as \'Child Sites.', 'mainwp' ); ?> <br/> <?php esc_html_e( 'hese Child Sites will be managed centrally from your MainWP Dashboard.', 'mainwp' ); ?></p>
+			</div>
         <?php } ?>
-        <div class="ui hidden divider"></div>
-        <div class="ui attention message">
-            <div class="ui form">
-                <div class="field">
-                    <label for="mainwp-qsw-verify-mainwp-child-active"><?php esc_html_e( 'Is MainWP Child plugin installed and activated on the WordPress site that you want to connect?', 'mainwp' ); ?></label>
-                    <div class="ui hidden divider"></div>
-                    <div class="ui toggle checkbox">
-                        <input type="checkbox" name="mainwp-qsw-verify-mainwp-child-active" id="mainwp-qsw-verify-mainwp-child-active">
-                        <label for="mainwp-qsw-verify-mainwp-child-active"><?php esc_html_e( 'Select to confirm that the MainWP Child plugin is active.', 'mainwp' ); ?></label>
-                    </div>
-                </div>
-            </div>
-        </div>
+		
+		<div class="ui form">
+			<div class="ui hidden divider"></div>
+			<div class="ui hidden divider"></div>
+			<strong	><?php esc_html_e( 'Would you like to start with a single site or connect multiple sites to your MainWP Dashboard?', 'mainwp' ); ?></strong>
+			<div class="ui hidden divider"></div>
+			<div class="ui hidden divider"></div>
+			<div class="grouped fields mainwp-field-tab-connect">
+				<div class="field">
+					<div class="ui radio checkbox">
+						<input type="radio" name="tab_connect" tabindex="0" class="hidden" value="single-site">
+						<label for="tab_connect"><?php esc_html_e('Connect Single Site', 'mainwp'); ?></label>
+					</div>
+				</div>
+				<div class="field">
+					<div class="ui radio checkbox">
+						<input type="radio" name="tab_connect" tabindex="0" class="hidden" value="multiple-site">
+						<label for="tab_connect"><?php esc_html_e('Connect Multiple Site', 'mainwp'); ?></label>
+					</div>
+				</div>
+			</div>
+		</div>
             <?php if ( ( $has_file_upload || $has_import_data || $has_manage_wp_data ) && check_admin_referer( 'mainwp-admin-nonce' ) ) : ?>
                 <div class="ui large modal" id="mainwp-setup-import-sites-modal">
                     <i class="close icon"></i>
@@ -653,42 +654,100 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         </div>
                     </div>
                     <div class="ui bottom attached tab segment" data-tab="multiple-site">
-                        <?php MainWP_Manage_Sites::mainwp_managesites_form_import_sites(); ?>
-                        <div class="ui hidden divider"></div>
-                        <?php MainWP_Manage_Sites::mainwp_managesites_information_import_sites(); ?>
-                        <div class="ui hidden divider"></div>
-                        <div class="ui grid field">
-                            <label class="six wide column middle aligned" for="mainwp_managesites_file_bulkupload"><?php esc_html_e( 'Upload the CSV file', 'mainwp' ); ?> (<a href="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/csv/sample.csv' ); ?>"><?php esc_html_e( 'Download sample CSV file' ); ?></a>)</label>
-                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click to upload the import file.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                                <div class="ui file input">
-                                    <input type="file" name="mainwp_managesites_file_bulkupload" id="connect_first_site_file_bulkupload" accept="text/comma-separated-values" />
+                        <div class="ui form">
+                            <div class="ui hidden divider"></div>
+                            <div class="field">
+                                <p><strong><?php esc_html_e( 'Do you want to migrate sites form another Wordpres management tool, such as ManageWP or Umbrella?', 'mainwp' ); ?></strong></p>
+                                <div class="ui hidden divider"></div>
+                                <div class="ui toggle checkbox">
+                                    <input type="checkbox" name="mainwp-qsw-migrate-managewp-umbrella" id="mainwp-qsw-migrate-managewp-umbrella">
+                                    <label for="mainwp-qsw-migrate-managewp-umbrella"><?php esc_html_e( 'Enable if you wish to migrate', 'mainwp' ); ?></label>
                                 </div>
                             </div>
+                            <div class="ui hidden divider"></div>
                         </div>
-                        <div class="ui grid field">
-                            <label class="six wide column middle aligned" for="mainwp_managesites_chk_header_first"><?php esc_html_e( 'CSV file contains a header', 'mainwp' ); ?></label>
-                            <div class="ui toggle checkbox ten wide middle aligned column" data-tooltip="<?php esc_attr_e( 'Enable if the import file contains a header.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                                <input type="checkbox" name="mainwp_managesites_chk_header_first" checked="checked" id="managesites_chk_header_first" value="1" />
-                            </div>
-                        </div>
-                        <div class="ui hidden divider"></div>
-                        <?php MainWP_Manage_Sites::mainwp_managesites_form_import_sites_file_managewp( 'six', 'ten' ); ?>
-                    </div>
+                        <div class="mainwp-wish-to-csv mainwp-wish-to-migrate">
+                            <?php MainWP_Manage_Sites::mainwp_managesites_form_import_sites(); ?>
+                            <div class="ui hidden divider"></div>
 
+                            <div class="ui horizontal left aligned divider">
+                                <?php esc_attr_e( 'or upload csv file', 'mainwp' )?>
+                            </div>
+
+                            <div class="ui grid field">
+                                <label class="six wide column middle aligned" for="mainwp_managesites_file_bulkupload"><?php esc_html_e( 'Upload the CSV file', 'mainwp' ); ?> (<a href="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/csv/sample.csv' ); ?>"><?php esc_html_e( 'Download sample CSV file' ); ?></a>)</label>
+                                <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click to upload the import file.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+                                    <div class="ui file input">
+                                        <input type="file" name="mainwp_managesites_file_bulkupload" id="connect_first_site_file_bulkupload" accept="text/comma-separated-values" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ui grid field">
+                                <label class="six wide column middle aligned" for="mainwp_managesites_chk_header_first"><?php esc_html_e( 'CSV file contains a header', 'mainwp' ); ?></label>
+                                <div class="ui toggle checkbox ten wide middle aligned column" data-tooltip="<?php esc_attr_e( 'Enable if the import file contains a header.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+                                    <input type="checkbox" name="mainwp_managesites_chk_header_first" checked="checked" id="managesites_chk_header_first" value="1" />
+                                </div>
+                            </div>
+                            <div class="ui hidden divider"></div>
+                        </div>
+                        <div class="mainwp-wish-to-zip mainwp-wish-to-migrate" style="display: none;">
+                            <div class="ui grid field">
+                                <p><strong><?php esc_html_e( 'Import sites from ManageWP', 'mainwp' ); ?></strong></p>
+                                <p>
+                                    <?php esc_html_e( 'This option allows you to migrate form ManageWP.', 'mainwp' ); ?><br/>
+                                    <?php esc_html_e( 'Upload the ZIP file you obtained by exporting your data form ManageWP. This will import you sites along with client data.', 'mainwp' ); ?>
+                                </p>
+                                <div class="ten wide column">
+                                    <div class="ui file input">
+                                        <input type="file" name="mainwp_managesites_file_managewp" id="mainwp_managesites_file_managewp" accept=".zip"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ui horizontal left aligned divider">
+                                <?php esc_attr_e( 'or use dashboard connect plugin', 'mainwp' )?>
+                            </div>
+                            <div class="ui hidden divider"></div>
+                            <div class="ui grid field">
+                                <p><strong><?php esc_html_e( 'MainWP Dashboard Connect', 'mainwp' ); ?></strong></p>
+                                <p>
+                                    <?php esc_html_e( 'This option allows you to use the MainWp Dashboard Connect Plugin.', 'mainwp' ); ?><br/>
+                                    <?php esc_html_e( 'Download add install the plguin on the sites you wish to connect via your connect Wordpress Management system.', 'mainwp' ); ?><br/>
+                                    <?php esc_html_e( 'The plugin will automatically install MainWP Child plugin, connect your sites to the MainWP Dashboard via the REST API and deactivate itself.', 'mainwp' ); ?><br/>
+                                </p>
+                            </div>
+                            <?php self::mainwp_dashboard_connect()?>
+                        </div>
+                    </div>
                 </div>
                 <div class="ui clearing hidden divider"></div>
                 <div class="ui hidden divider"></div>
                 <div class="ui hidden divider"></div>
-                <input type="button" style="display:none" name="mainwp_managesites_add" id="mainwp_managesites_add" class="ui button green big right floated" value="<?php esc_attr_e( 'Connect Site', 'mainwp' ); ?>" />
-                <input type="button" style="display:none" name="mainwp_managesites_add_import" id="mainwp_managesites_add_import" class="ui button green big right floated" value="<?php esc_attr_e( 'Import Sites', 'mainwp' ); ?>" />
-                <a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" id="mainwp_addsite_continue_button" class="ui big green right floated button"><?php esc_html_e( 'Continue', 'mainwp' ); ?></a>
-                <a href="<?php echo esc_url( $this->get_back_step_link() ); ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>
                 <?php wp_nonce_field( 'mwp-setup' ); ?>
                 <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                 <input type="hidden" id="nonce_secure_data" mainwp_addwp="<?php echo esc_js( wp_create_nonce( 'mainwp_addwp' ) ); ?>" mainwp_checkwp="<?php echo esc_attr( wp_create_nonce( 'mainwp_checkwp' ) ); ?>" />
+                <div class="ui grid">
+                    <div class="row">
+                        <div class="three wide column">
+                        <a href="<?php echo esc_url( $this->get_back_step_link() ); ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>
+                        </div>
+                        <div class="ten wide column middle aligned">
+                            <div class="ui toggle checkbox" id="mainwp-qsw-toggle-verify-mainwp-child-active" style="display:none">
+                                <input type="checkbox" name="mainwp-qsw-verify-mainwp-child-active" id="mainwp-qsw-verify-mainwp-child-active" >
+                                <label for="mainwp-qsw-verify-mainwp-child-active" ><?php esc_html_e( 'Confirm that the MainWP Child plugin is activated on the site(s) you wish to connect.', 'mainwp' ); ?></label>
+                            </div>
+                        </div>
+                        <div class="three wide column">
+                            <a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" id="mainwp_addsite_continue_button" class="ui big green right floated button"><?php esc_html_e( 'Continue', 'mainwp' ); ?></a>
+                            <input type="button" style="display:none" name="mainwp_managesites_add" id="mainwp_managesites_add" class="ui button green big right floated" value="<?php esc_attr_e( 'Connect Site', 'mainwp' ); ?>" disabled />
+                            <input type="button" style="display:none" name="mainwp_managesites_add_import" id="mainwp_managesites_add_import" class="ui button green big right floated" value="<?php esc_attr_e( 'Import Sites', 'mainwp' ); ?>" disabled />
+                        </div>
+                    </div>
+                </div>
+                
             </form>
         <?php endif; ?>
         <script>
+		
             jQuery('.menu-connect-first-site .item').tab({
                 'onVisible': function() {
                     mainwp_menu_connect_first_site_onvisible_callback(this);
@@ -985,4 +1044,47 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
       })(window, document, 'https://www.usetiful.com/dist/usetiful.js');</script>
         ";
     }
+
+	/**
+	 * Method mainwp_dashboard_connect()
+     *
+     * Render field mainwp dashboard connect.
+     *
+     * @uses MainWP_Settings_Indicator::render_not_default_indicator()
+     * @uses MainWP_Dashboard_Connect_Handle::instance()->is_zip_archive_supported()
+     * @uses MainWP_Settings::is_basic_auth_dashboard_enabled()
+	 *
+	 */
+	public static function mainwp_dashboard_connect() {
+		$permalink                 = get_option( 'permalink_structure' );
+		$zip_supported             = MainWP_Dashboard_Connect_Handle::instance()->is_zip_archive_supported();
+		$disabled_download_connect = empty( $permalink ) || MainWP_Settings::is_basic_auth_dashboard_enabled();
+
+		$tip     = '';
+		$btn_tip = '';
+
+		if ( ! $zip_supported ) {
+			$tip = esc_attr__( 'Unable to download the MainWP Dashboard Connect plugin. The ZipArchive library is not available on your server. Please contact your hosting provider to enable this library.', 'mainwp' );
+		} elseif ( $disabled_download_connect ) {
+			$tip = esc_attr__( 'Unable to download the MainWP Dashboard Connect plugin. The permalink settings are not configured, or HTTP Basic Authentication is enabled. Please update your permalink settings or disable HTTP Basic Authentication and try again.', 'mainwp' );
+		} else {
+			$btn_tip = esc_attr__( 'Click here to download the MainWP Dashboard Connect plugin.', 'mainwp' );
+		}
+		?>
+		<div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools" default-indi-value="" >
+			<label class="six wide column middle aligned" style="display: none;" for="">
+			<?php
+			MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', '' );
+			esc_html_e( 'Download the MainWP Dashboard Connect plugin', 'mainwp' );
+			?>
+			</label>
+			<div class="ten wide column">
+				<div class="ui action input" <?php echo ! empty( $tip ) ? 'data-inverted="" data-position="top left" data-tooltip="' . esc_attr( $tip ) . '" ' : ''; ?> >
+					<span data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Enter an optional passphrase for additional security when adding site(s) through the MainWP Dashboard Connect plugin.', 'mainwp' ); ?>"><input type="text" class="settings-field-value-change-handler" name="download-mainwp-connect-pass" id="download-mainwp-connect-pass" <?php echo $zip_supported && ! $disabled_download_connect ? '' : 'disabled'; ?> value=""></span>
+					<button id="download-mainwp-dashboard-connect-button"  data-nonce="<?php echo esc_attr( wp_create_nonce( 'download-connect-nonce' ) ); ?>" <?php echo $zip_supported && ! $disabled_download_connect ? '' : ' disabled="disabled" '; ?>" <?php echo ! empty( $btn_tip ) ? 'data-inverted="" data-position="top right" data-tooltip="' . esc_attr( $btn_tip ) . '"' : ''; ?> class="ui green basic right labeled icon button <?php echo $zip_supported && ! $disabled_download_connect ? '' : 'disabled'; ?>" ><i class="download icon"></i> <?php esc_attr_e( 'Download', 'mainwp' ); ?></button>
+				</div>
+			</div>
+		</div>
+		<?php
+	}
 }

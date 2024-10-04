@@ -643,13 +643,13 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                             $site_values[] = array(
                                 'site'   => $site,
-                                'client' => array_values( $client ),
+                                'client' => ! empty( $client ) ? array_values( $client ) : array(),
                             );
                         }
                     }
 
                     if ( ! empty( $site_values ) ) {
-                        self::handle_import_site_render_input_field( $site_values );
+                        static::handle_import_site_render_input_field( $site_values );
                     }
                 } else {
 

@@ -2422,7 +2422,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             /**
              * Action: mainwp_themes_before_ignored_updates
              *
-             * Fires on the top of the Ignored Themes Updates page.
+             * Fires on the top of the Ignored Theme Updates page.
              *
              * @since 4.1
              */
@@ -2443,7 +2443,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         /**
          * Action: mainwp_themes_after_ignored_updates
          *
-         * Fires on the bottom of the Ignored Themes Updates page.
+         * Fires on the bottom of the Ignored Theme Updates page.
          *
          * @since 4.1
          */

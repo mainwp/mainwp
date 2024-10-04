@@ -399,8 +399,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             'login'                    => esc_html__( 'Jump to WP Admin', 'mainwp' ),
             'update'                   => esc_html__( 'Available updates', 'mainwp' ),
             'wpcore_update'            => esc_html__( 'Available WP core updates', 'mainwp' ),
-            'plugin_update'            => esc_html__( 'Available plugins updates', 'mainwp' ),
-            'theme_update'             => esc_html__( 'Available themes updates', 'mainwp' ),
+            'plugin_update'            => esc_html__( 'Available plugin updates', 'mainwp' ),
+            'theme_update'             => esc_html__( 'Available theme updates', 'mainwp' ),
             'site-cost-tracker'        => esc_html__( 'Cost Tracker', 'mainwp' ),
             'note'                     => esc_html__( 'Notes', 'mainwp' ),
             'site_preview'             => esc_html__( 'Site preview', 'mainwp' ),
@@ -650,8 +650,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
             <div id="mainwp-message-zone" style="display: none;" class="ui message"></div>
 
-            <div id="mainwp_managesites_add_errors" style="display: none" class="mainwp-notice mainwp-notice-red"></div>
-            <div id="mainwp_managesites_add_message" style="display: none" class="mainwp-notice mainwp-notice-green"></div>
+            <div id="mainwp_managesites_add_errors" style="display: none" class="ui red message"></div>
+            <div id="mainwp_managesites_add_message" style="display: none" class="ui green message"></div>
             <div class="ui info message" id="mainwp_message_verify_installed_child" style="display:none">
                 <?php esc_html_e( 'MainWP requires the MainWP Child plugin to be installed and activated on the WordPress site that you want to connect to your MainWP Dashboard. ', 'mainwp' ); ?>
                 <?php esc_html_e( 'To install the MainWP Child plugin, please follow these steps:', 'mainwp' ); ?>

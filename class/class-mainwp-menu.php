@@ -1092,8 +1092,8 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                 <div class="item accordion">
                                     <div class="title"><a href="admin.php?page=UpdatesManage"><?php esc_html_e( 'Updates', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
                                     <div class="content menu">
-                                        <a class="item" href="admin.php?page=UpdatesManage&tab=plugins-updates"><?php esc_html_e( 'Plugins Updates', 'mainwp' ); ?></a>
-                                        <a class="item" href="admin.php?page=UpdatesManage&tab=themes-updates"><?php esc_html_e( 'Themes Updates', 'mainwp' ); ?></a>
+                                        <a class="item" href="admin.php?page=UpdatesManage&tab=plugins-updates"><?php esc_html_e( 'Plugin Updates', 'mainwp' ); ?></a>
+                                        <a class="item" href="admin.php?page=UpdatesManage&tab=themes-updates"><?php esc_html_e( 'Theme Updates', 'mainwp' ); ?></a>
                                         <a class="item" href="admin.php?page=UpdatesManage&tab=wordpress-updates"><?php esc_html_e( 'WordPress Updates', 'mainwp' ); ?></a>
                                     <?php if ( $mainwp_show_language_updates ) : ?>
                                         <a class="item" href="admin.php?page=UpdatesManage&tab=translations-updates"><?php esc_html_e( 'Translation Plugins', 'mainwp' ); ?></a>

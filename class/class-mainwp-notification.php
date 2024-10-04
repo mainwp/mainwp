@@ -165,8 +165,8 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @param array $email_settings     Email settings.
      * @param bool  $available_updates  Update avaiable.
      * @param mixed $wp_updates         WP updates.
-     * @param mixed $plugin_updates     Plugins updates.
-     * @param mixed $theme_updates      Themes updates.
+     * @param mixed $plugin_updates     Plugin updates.
+     * @param mixed $theme_updates      Theme updates.
      * @param mixed $sites_disconnected Sites disconnected.
      * @param array $params         Other params.
      *

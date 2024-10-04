@@ -2759,7 +2759,7 @@ let mainwp_upload_bulk_start_next = function (type, urls, activatePlugin, overwr
 
     let msg = mainwp_install_bulk_you_know_msg(type, jQuery('#bulk_upload_info').attr('number-files'));
 
-    jQuery('#bulk_upload_info').html('<div class="mainwp-notice mainwp-notice-blue">' + msg + '</div>');
+    jQuery('#bulk_upload_info').html('<div class="bui blue message">' + msg + '</div>');
 
     if (jQuery('.mainwp_cost_tracker_assistant_installed_items').length > 0) { // to support add to cost tracker pro.
       let cost_tracker_items = [];
@@ -4455,12 +4455,19 @@ window.mainwp_init_ui_calendar = ($selectors) => {
 }
 
 
-jQuery( document ).ready( function () {
+jQuery(document).ready(function () {
   jQuery('.dt-scroll-head').css({
-    'overflow-x':'auto'
-  }).on('scroll', function(e){
+    'overflow-x': 'auto'
+  }).on('scroll', function (e) {
     let scrollBody = jQuery(this).parent().find('.dt-scroll-body').get(0);
     scrollBody.scrollLeft = this.scrollLeft;
     jQuery(scrollBody).trigger('scroll');
   });
-} );
+});
+
+jQuery(function ($) {
+  $(document).on('click', '#download-mainwp-dashboard-connect-button', function () {
+    window.location.href = 'admin.php?page=MainWPTools&action=download-connect&_wpnonce=' + jQuery(this).attr('data-nonce') + '&pass=' + encodeURIComponent(jQuery('#download-mainwp-connect-pass').val().trim());
+    return false;
+  });
+});

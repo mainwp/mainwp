@@ -23,6 +23,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     const LOGS_AUTO_PURGE_LOG_PRIORITY = 16;
     const COST_TRACKER_LOG_PRIORITY    = 20230112;
     const API_BACKUPS_LOG_PRIORITY     = 20240130;
+    const CONNECT_LOG_PRIORITY         = 20241001;
 
     const DISABLED = - 1;
     const LOG      = 0;
@@ -91,6 +92,13 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     private $logSpecific = 0;
 
+    /**
+     * Private varibale to hold the log Specific priotrity.
+     *
+     * @var string Disabled
+     */
+    private $autoEnableLoggingActions = array();
+
 
     /**
      * Private static varibale to hold the instance.
@@ -131,6 +139,10 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $specific = apply_filters( 'mainwp_log_specific', $specific );
 
         $this->set_log_priority( $enabled, $specific );
+
+        $this->autoEnableLoggingActions = array(
+            static::CONNECT_LOG_PRIORITY,
+        );
     }
 
     /**
@@ -145,6 +157,26 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $this->logPriority = (int) $logPriority;
         $this->logSpecific = (int) $spec_log; // 1 - specific log, 0 - not specific log.
     }
+
+
+        /**
+         * Method enable_log_priority()
+         *
+         * Sets the log priority.
+         *
+         * @param mixed $logPriority Log priority value.
+         * @param mixed $spec_log Specific log.
+         */
+    public function enable_log_priority( $logPriority, $spec_log = 1 ) {
+        $spec_log    = $spec_log ? 1 : 0;
+        $logPriority = intval( $logPriority );
+        MainWP_Utility::update_option( 'mainwp_specific_logs', $spec_log );
+        MainWP_Utility::update_option( 'mainwp_actionlogs', $logPriority );
+        MainWP_Utility::update_option( 'mainwp_actionlogs_enabled_timestamp', time() );
+        $this->log_action( 'Action logs set to: ' . $this->get_log_text( $logPriority ), ( $spec_log ? $logPriority : static::LOG ), 2, true );
+        $this->set_log_priority( $logPriority, $spec_log );
+    }
+
 
     /**
      * Method get_log_status()
@@ -438,6 +470,10 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @return bool true|false Default is False.
      */
     private function log( $text, $priority,  $log_color = 0, $forced = false, $website = false ) { // phpcs:ignore -- NOSONAR - complex function.
+
+        if ( in_array( $priority, $this->autoEnableLoggingActions ) && (int) $this->logPriority !== (int) $priority ) {
+            $this->enable_log_priority( $priority, 1 );
+        }
 
         if ( static::DISABLED === $this->logPriority ) {
             return;

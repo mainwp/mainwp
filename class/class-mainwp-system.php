@@ -263,6 +263,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_Client::init();
         MainWP_Rest_Api_Page::init();
         MainWP_Non_MainWP_Actions::instance();
+        MainWP_Dashboard_Connect_Handle::instance()->init();
 
         if ( defined( 'WP_CLI' ) && WP_CLI ) {
             MainWP_WP_CLI_Command::init();

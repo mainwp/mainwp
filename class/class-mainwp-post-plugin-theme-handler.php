@@ -293,7 +293,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
     /**
      * Method mainwp_plugin_ignore_updates()
      *
-     * Ignore plugins updates,
+     * Ignore plugin updates,
      * Page: Plugins.
      *
      * @uses \MainWP\Dashboard\MainWP_Plugins_Handler::ignore_updates()

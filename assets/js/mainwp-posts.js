@@ -211,21 +211,21 @@ let mainwp_fetch_pages_prepare = function () { // NOSONAR - complexity 19/15.
             selected_sites.push(jQuery(this).val());
         });
         if (selected_sites.length == 0) {
-            errors.push('<div class="mainwp-notice mainwp-notice-red">' + __('Please select websites or groups or clients.') + '</div>');
+            errors.push('<div class="ui yellow message">' + __('Please select websites or groups or clients.') + '</div>');
         }
     } else if (jQuery('#select_by').val() == 'client') {
         jQuery("input[name='selected_clients[]']:checked").each(function () {
             selected_clients.push(jQuery(this).val());
         });
         if (selected_clients.length == 0) {
-            errors.push('<div class="mainwp-notice mainwp-notice-red">' + __('Please select websites or groups or clients.') + '</div>');
+            errors.push('<div class="ui yellow message">' + __('Please select websites or groups or clients.') + '</div>');
         }
     } else {
         jQuery("input[name='selected_groups[]']:checked").each(function () {
             selected_groups.push(jQuery(this).val());
         });
         if (selected_groups.length == 0) {
-            errors.push('<div class="mainwp-notice mainwp-notice-red">' + __('Please select websites or groups or clients.') + '</div>');
+            errors.push('<div class="ui yellow message">' + __('Please select websites or groups or clients.') + '</div>');
         }
     }
 

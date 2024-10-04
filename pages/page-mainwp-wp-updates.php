@@ -74,7 +74,7 @@ class MainWP_WP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             /**
              * Action: mainwp_cores_before_ignored_updates
              *
-             * Fires on the top of the Ignored Plugins Updates page.
+             * Fires on the top of the Ignored Plugin Updates page.
              *
              * @since 5.2
              */
@@ -95,7 +95,7 @@ class MainWP_WP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             /**
              * Action: mainwp_cores_after_ignored_updates
              *
-             * Fires on the bottom of the Ignored Plugins Updates page.
+             * Fires on the bottom of the Ignored Plugin Updates page.
              *
              * @since 4.1
              */

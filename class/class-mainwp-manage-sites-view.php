@@ -636,10 +636,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                 <i class="dropdown icon"></i>
                                 <div class="menu">
                                     <div class="<?php echo 'WordPress' === $active_tab ? 'active' : ''; ?> item" data-tab="wordpress" data-value="wordpress"><?php esc_html_e( 'WordPress Updates', 'mainwp' ); ?></div>
-                                    <div class="<?php echo 'plugins' === $active_tab ? 'active' : ''; ?> item" data-tab="plugins" data-value="plugins"><?php esc_html_e( 'Plugins Updates', 'mainwp' ); ?></div>
-                                    <div class="<?php echo 'themes' === $active_tab ? 'active' : ''; ?> item" data-tab="themes" data-value="themes"><?php esc_html_e( 'Themes Updates', 'mainwp' ); ?></div>
+                                    <div class="<?php echo 'plugins' === $active_tab ? 'active' : ''; ?> item" data-tab="plugins" data-value="plugins"><?php esc_html_e( 'Plugin Updates', 'mainwp' ); ?></div>
+                                    <div class="<?php echo 'themes' === $active_tab ? 'active' : ''; ?> item" data-tab="themes" data-value="themes"><?php esc_html_e( 'Theme Updates', 'mainwp' ); ?></div>
                                     <?php if ( $show_language_updates ) { ?>
-                                    <div class="<?php echo 'trans' === $active_tab ? 'active' : ''; ?> item" data-tab="translations" data-value="translations"><?php esc_html_e( 'Translations Updates', 'mainwp' ); ?></div>
+                                    <div class="<?php echo 'trans' === $active_tab ? 'active' : ''; ?> item" data-tab="translations" data-value="translations"><?php esc_html_e( 'Translation Updates', 'mainwp' ); ?></div>
                                     <?php } ?>
                                     <div class="<?php echo 'abandoned-plugins' === $active_tab ? 'active' : ''; ?> item" data-tab="abandoned-plugins" data-value="abandoned-plugins"><?php esc_html_e( 'Abandoned Plugins', 'mainwp' ); ?></div>
                                     <div class="<?php echo 'abandoned-themes' === $active_tab ? 'active' : ''; ?> item" data-tab="abandoned-themes" data-value="abandoned-themes"><?php esc_html_e( 'Abandoned Themes', 'mainwp' ); ?></div>
@@ -828,7 +828,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                 <option <?php echo MainWP_Utility::starts_with( $website->url, 'http:' ) ? 'selected' : ''; ?> value="http">http://</option>
                                 <option <?php echo MainWP_Utility::starts_with( $website->url, 'https:' ) ? 'selected' : ''; ?> value="https">https://</option>
                             </select>
-                            <div class="ui compact selection dropdown">
+                            <div class="ui compact selection dropdown" id="mainwp-edit-site-edit-url-www">
                                 <input type="hidden" name="mainwp_managesites_edit_wpurl_with_www" value="<?php echo false !== stripos( $website->url, '/www.' ) ? 'www' : 'none-www'; ?>">
                                 <i class="dropdown icon"></i>
                                 <div class="default text"><?php esc_html_e( 'www', 'mainwp' ); ?></div>
@@ -1975,9 +1975,15 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $message    = '';
         $id         = 0;
         $fetch_data = null;
+        $existed_id = 0;
 
         if ( $website ) {
             $error = esc_html__( 'The site is already connected to your MainWP Dashboard', 'mainwp' );
+            if ( is_array( $website ) && ! empty( $website[0] ) && is_object( $website[0] ) ) {
+                $existed_id = $website[0]->id;
+            } elseif ( is_object( $website ) && property_exists( $website, 'id' ) ) {
+                $existed_id = $website->id;
+            }
         } else {
             try {
                 if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
@@ -2012,7 +2018,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 $http_user         = isset( $params['http_user'] ) ? $params['http_user'] : '';
                 $http_pass         = isset( $params['http_pass'] ) ? $params['http_pass'] : '';
                 $force_use_ipv4    = isset( $params['force_use_ipv4'] ) ? $params['force_use_ipv4'] : null;
-                $information       = MainWP_Connect::fetch_url_not_authed(
+
+                MainWP_Logger::instance()->debug( ' :: register site :: ' . $url );
+
+                $information = MainWP_Connect::fetch_url_not_authed(
                     $url,
                     $params['wpadmin'],
                     'register',
@@ -2161,7 +2170,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             }
         }
 
-        return array( $message, $error, $id, $fetch_data );
+        return array( $message, $error, $id, $fetch_data, $existed_id );
     }
 
     /**

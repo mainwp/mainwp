@@ -485,8 +485,8 @@
     .mainwp-scrolly-overflow {
         overflow-y: auto;
         overflow-x: hidden;
-        padding: 0 10px 0 0;
-        margin-bottom: 20px;
+        padding: 0 1em;
+        margin: 0 -1em 20px -1em;
     }
 
     .mainwp-widget-footer {
@@ -538,12 +538,10 @@
 
     #widget-overview .mainwp-scrolly-overflow {
         height: calc(100% - 120px) !important;
-        padding: 10px 0;
     }
 
     #widget-advanced-cost-tracker-costs .mainwp-scrolly-overflow {
         height: calc(100% - 120px) !important;
-        padding: 10px 0;
     }
 
     #widget-fields_info .mainwp-scrolly-overflow {
@@ -865,31 +863,6 @@ table.mainwp-manage-wpsites-table .error a {
 
 /* END V4
 ********************************************************************************/
-
-
-.mainwp-notice {
-    margin: 5px 0 15px;
-    padding: .6em;
-    background: #fff;
-    box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
-    vertical-align: middle;
-}
-
-.mainwp-notice-green {
-    border-left: 4px solid #7fb100;
-}
-
-.mainwp-notice-blue {
-    border-left: 4px solid #0073AA;
-}
-
-.mainwp-notice-red {
-    border-left: 4px solid #a00;
-}
-
-.mainwp-notice-yellow {
-    border-left: 4px solid #FFB901;
-}
 
 .mainwp_action {
     text-decoration: none;

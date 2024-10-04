@@ -25,7 +25,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.0.12'; // NOSONAR - no IP.
+    protected $mainwp_db_version = '9.0.0.14'; // NOSONAR - no IP.
 
     /**
      * Protected variable to hold the database option name.
@@ -359,6 +359,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     consumer_secret char(43) NOT NULL,
     nonces longtext NULL,
     truncated_key char(7) NOT NULL,
+    key_pass char(64) NOT NULL DEFAULT "",
+    key_type tinyint(1) NOT NULL DEFAULT 0,
     `enabled` tinyint(1) DEFAULT 0,
     last_access datetime NULL default null,
     KEY consumer_key (consumer_key),

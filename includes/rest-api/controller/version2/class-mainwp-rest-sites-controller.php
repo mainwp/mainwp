@@ -20,6 +20,7 @@ use MainWP\Dashboard\Module\CostTracker\Cost_Tracker_Rest_Api_Handle_V1;
 use MainWP\Dashboard\MainWP_DB_Common;
 use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_DB_Site_Actions;
+use MainWP\Dashboard\MainWP_Logger;
 /**
  * Class MainWP_Rest_Sites_Controller
  *
@@ -2377,10 +2378,15 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
     public function create_item( $request ) {
         $resp_data            = array();
         $resp_data['success'] = 0;
+        $site_id              = 0;
+        $url                  = '';
+        $data                 = array(); //phpcs:ignore -- NOSONAR - not used data.
+        $found_id             = 0;
         try {
-            $item                              = $this->prepare_object_for_database( $request );
-            $website                           = MainWP_DB::instance()->get_websites_by_url( $item['url'] );
-            list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::add_wp_site( $website, $item );
+            $item    = $this->prepare_object_for_database( $request );
+            $url     = $item['url'];
+            $website = MainWP_DB::instance()->get_websites_by_url( $item['url'] );
+            list( $message, $error, $site_id, $data, $found_id ) = MainWP_Manage_Sites_View::add_wp_site( $website, $item );
 
             if ( ! empty( $site_id ) ) {
                 $site                 = MainWP_DB::instance()->get_website_by_id( $site_id );
@@ -2398,6 +2404,35 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         } catch ( Exception $e ) {
             $resp_data['error'] = wp_strip_all_tags( $e->getMessage() );
         }
+
+        $user                 = $this->get_rest_api_user();
+        $is_dashboard_connect = ! empty( $user ) && 1 === (int) $user->key_type ? true : false;
+
+        if ( $is_dashboard_connect ) {
+            if ( ! empty( $resp_data['error'] ) ) {
+                MainWP_Logger::instance()->log_action( 'Dashboard Connect add Site :: [url=' . $url . '] :: [result=Failed] :: [error=' . esc_html( $resp_data['error'] ) . ']', MainWP_Logger::CONNECT_LOG_PRIORITY );
+            } elseif ( ! empty( $resp_data['success'] ) ) {
+                MainWP_Logger::instance()->log_action( 'Dashboard Connect add Site :: [url=' . $url . '] :: [result=Success]', MainWP_Logger::CONNECT_LOG_PRIORITY );
+            }
+        }
+
+        if ( ! empty( $found_id ) ) {
+            $resp_data['found_id'] = $found_id;
+            // if found connected and is dashboard connect request then try to reconnect to prevent incorrect connection.
+            if ( $is_dashboard_connect ) {
+                $reconnect = false;
+                $site      = MainWP_DB::instance()->get_website_by_id( $found_id );
+                try {
+                    $reconnect                      = MainWP_Manage_Sites_View::m_reconnect_site( $site );
+                    $resp_data['reconnect_success'] = $reconnect ? 1 : 0;
+                } catch ( \Exception $e ) {
+                    // failed.
+                    $resp_data['reconnect_error'] = $e->getMessage();
+                }
+                MainWP_Logger::instance()->log_action( 'Dashboard Connect reconnect site :: [url=' . $url . '] :: [result=' . ( $reconnect ? 'success' : 'failed' ) . ']', MainWP_Logger::CONNECT_LOG_PRIORITY );
+            }
+        }
+
         return rest_ensure_response( $resp_data );
     }
 

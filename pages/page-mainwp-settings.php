@@ -719,7 +719,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             esc_html_e( 'Plugin advanced automatic updates', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic plugins updates. If enabled, MainWP will update only plugins that you have marked as Trusted.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic plugin updates. If enabled, MainWP will update only plugins that you have marked as Trusted.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                                 <select name="mainwp_pluginAutomaticDailyUpdate" id="mainwp_pluginAutomaticDailyUpdate" class="ui dropdown settings-field-value-change-handler">
                                     <option value="1" <?php echo 1 === $snPluginAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
                                     <option value="0" <?php echo 0 === $snPluginAutomaticDailyUpdate || 2 === $snPluginAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
@@ -733,7 +733,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             esc_html_e( 'Theme advanced automatic updates', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic themes updates. If enabled, MainWP will update only themes that you have marked as Trusted.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic theme updates. If enabled, MainWP will update only themes that you have marked as Trusted.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                                 <select name="mainwp_themeAutomaticDailyUpdate" id="mainwp_themeAutomaticDailyUpdate" class="ui dropdown settings-field-value-change-handler">
                                     <option value="1" <?php echo 1 === $snThemeAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
                                     <option value="0" <?php echo 0 === $snThemeAutomaticDailyUpdate || 2 === $snThemeAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
@@ -1583,7 +1583,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
     public static function render_mainwp_tools() { // phpcs:ignore -- NOSONAR - complex.
         if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
             mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
-
             return;
         }
         static::render_header( 'MainWPTools' );
@@ -1604,6 +1603,14 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     <div><?php esc_html_e( 'To create a custom theme, copy the `mainwp-dark-theme.css` file from the MainWP Custom Dashboard Extension located in the `css` directory, make your edits and upload the file to the `../wp-content/uploads/mainwp/custom-dashboard/` directory.', 'mainwp' ); ?></div>
                 </div>
             <?php endif; ?>
+            <?php
+            if ( isset( $_GET['message'] ) && '-1' === $_GET['message'] ) {
+                ?>
+                <div class="ui yellow message">
+                    <i class="close icon"></i>
+                    <?php esc_html_e( 'Unable to download the MainWP Dashboard Connect plugin. Please check your server settings or contact MainWP support for assistance.', 'mainwp' ); ?>
+                </div>
+            <?php } ?>
                 <?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) : ?>
                     <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
                 <?php endif; ?>
@@ -1648,6 +1655,39 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 </div>
                             </div>
                         </div>
+
+                        <?php
+                        $permalink                 = get_option( 'permalink_structure' );
+                        $zip_supported             = MainWP_Dashboard_Connect_Handle::instance()->is_zip_archive_supported();
+                        $disabled_download_connect = empty( $permalink ) || static::is_basic_auth_dashboard_enabled();
+
+                        $tip     = '';
+                        $btn_tip = '';
+
+                        if ( ! $zip_supported ) {
+                            $tip = esc_attr__( 'Unable to download the MainWP Dashboard Connect plugin. The ZipArchive library is not available on your server. Please contact your hosting provider to enable this library.', 'mainwp' );
+                        } elseif ( $disabled_download_connect ) {
+                            $tip = esc_attr__( 'Unable to download the MainWP Dashboard Connect plugin. The permalink settings are not configured, or HTTP Basic Authentication is enabled. Please update your permalink settings or disable HTTP Basic Authentication and try again.', 'mainwp' );
+                        } else {
+                            $btn_tip = esc_attr__( 'Click here to download the MainWP Dashboard Connect plugin.', 'mainwp' );
+                        }
+
+                        ?>
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools" default-indi-value="" >
+                            <label class="six wide column middle aligned">
+                            <?php
+                            MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', '' );
+                            esc_html_e( 'Download the MainWP Dashboard Connect plugin', 'mainwp' );
+                            ?>
+                            </label>
+                            <div class="five wide column">
+                                <div class="ui action input" <?php echo ! empty( $tip ) ? 'data-inverted="" data-position="top left" data-tooltip="' . esc_attr( $tip ) . '" ' : ''; ?> >
+                                    <span data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Enter an optional passphrase for additional security when adding site(s) through the MainWP Dashboard Connect plugin.', 'mainwp' ); ?>"><input type="text" class="settings-field-value-change-handler" name="download-mainwp-connect-pass" id="download-mainwp-connect-pass" <?php echo $zip_supported && ! $disabled_download_connect ? '' : 'disabled'; ?> value=""></span>
+                                    <button id="download-mainwp-dashboard-connect-button"  data-nonce="<?php echo esc_attr( wp_create_nonce( 'download-connect-nonce' ) ); ?>" <?php echo $zip_supported && ! $disabled_download_connect ? '' : ' disabled="disabled" '; ?>" <?php echo ! empty( $btn_tip ) ? 'data-inverted="" data-position="top right" data-tooltip="' . esc_attr( $btn_tip ) . '"' : ''; ?> class="ui green basic right labeled icon button <?php echo $zip_supported && ! $disabled_download_connect ? '' : 'disabled'; ?>" ><i class="download icon"></i> <?php esc_attr_e( 'Download', 'mainwp' ); ?></button>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="ui grid field">
                             <label class="six wide column middle aligned"><?php esc_html_e( 'Force your MainWP Dashboard to establish a new connection', 'mainwp' ); ?></label>
                             <div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'Force your MainWP Dashboard to reconnect with your child sites. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -1749,6 +1789,21 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         static::render_footer( 'MainWPTools' );
         MainWP_Connect_Helper::render_renew_connections_modal();
     }
+
+    /**
+     * Method is_basic_auth_dashboard_enabled.
+     *
+     * @return bool true|false.
+     */
+    public static function is_basic_auth_dashboard_enabled() { // phpcs:ignore -- NOSONAR - complex.
+        $response = wp_remote_get( get_site_url() . '/wp-json' );
+        $code     = wp_remote_retrieve_response_code( $response );
+        if ( 404 === (int) $code || 401 === (int) $code ) {
+            return true;
+        }
+        return false;
+    }
+
 
     /**
      * Render MainWP themes selection.

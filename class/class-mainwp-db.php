@@ -2960,10 +2960,11 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @param string $scope scope.
      * @param string $description description.
      * @param int    $enabled 1 or 0.
+     * @param array  $others others.
      *
      * @return array
      */
-    public function insert_rest_api_key( $consumer_key, $consumer_secret, $scope, $description, $enabled ) {
+    public function insert_rest_api_key( $consumer_key, $consumer_secret, $scope, $description, $enabled, $others = array() ) {
         global $current_user;
 
         if ( $current_user ) {
@@ -2973,6 +2974,13 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         if ( empty( $user_id ) ) {
             return false;
         }
+
+        if ( ! is_array( $others ) ) {
+            $others = array();
+        }
+
+        $pass = isset( $others['key_pass'] ) ? $others['key_pass'] : '';
+        $type = isset( $others['key_type'] ) ? intval( $others['key_type'] ) : 0;
 
         // Created API keys.
         $permissions = in_array( $scope, array( 'read', 'write', 'read_write' ), true ) ? sanitize_text_field( $scope ) : 'read';
@@ -2986,6 +2994,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 'consumer_secret' => $consumer_secret,
                 'truncated_key'   => substr( $consumer_key, -7 ),
                 'enabled'         => $enabled,
+                'key_pass'        => $pass,
+                'key_type'        => $type,
             ),
             array(
                 '%d',
@@ -2995,16 +3005,18 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 '%s',
                 '%s',
                 '%d',
-            )
+                '%s',
+                '%d',
+            ),
         );
 
-        return array(
-            'key_id'          => $this->wpdb->insert_id,
-            'user_id'         => $user_id,
-            'consumer_key'    => $consumer_key,
-            'consumer_secret' => $consumer_secret,
-            'key_permissions' => $permissions,
-        );
+            return array(
+                'key_id'          => $this->wpdb->insert_id,
+                'user_id'         => $user_id,
+                'consumer_key'    => $consumer_key,
+                'consumer_secret' => $consumer_secret,
+                'key_permissions' => $permissions,
+            );
     }
 
     /**

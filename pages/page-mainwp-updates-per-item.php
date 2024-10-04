@@ -26,7 +26,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Method render_plugins_updates()
      *
-     * Render Plugins updates
+     * Render Plugin updates
      *
      * @param object $websites the websites.
      * @param int    $total_plugin_upgrades total plugin updates.
@@ -268,10 +268,10 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Method render_themes_updates()
      *
-     * Render themes updates
+     * Render theme updates
      *
      * @param object $websites the websites.
-     * @param int    $total_theme_upgrades total themes updates.
+     * @param int    $total_theme_upgrades total theme updates.
      * @param mixed  $userExtension user extension.
      * @param array  $allThemes all themes.
      * @param array  $themesInfo themes information.

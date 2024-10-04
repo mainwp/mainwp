@@ -2166,12 +2166,16 @@ jQuery(function () {
     mainwp_managesites_add();
   });
 
+	// Hanlde click submit form import website
   jQuery(document).on('click', '#mainwp_managesites_bulkadd', function () {
-    if (jQuery('#mainwp_managesites_file_bulkupload').val() == '') {
-      setHtml('#mainwp-message-zone', __('Please enter csv file for upload.'), false);
-    } else {
-      jQuery('#mainwp_managesites_bulkadd_form').submit();
-    }
+
+	let error_messages = mainwp_managesites_import_handle_form_before_submit();
+	// If there is an error, prevent submission and display the error
+	if (error_messages.length > 0) {
+		setHtml('#mainwp-message-zone', error_messages.join("<br/>"), false);
+	}else{
+		jQuery('#mainwp_managesites_bulkadd_form').submit();
+	}
     return false;
   });
 

@@ -1,6 +1,3 @@
-/* END V4
-********************************************************************************/
-
 /* Genaral Style */
 
 .mainwp-main-content {
@@ -465,6 +462,11 @@
 .mainwp-widget .dt-search.ui.input {
     padding: 5px;
     max-width: 160px;
+}
+
+/* Forms - Import Sites */
+.mainwp-managesites-import-rows:nth-of-type(odd) {
+    background-color: rgba(0,0,0,.04);
 }
 
 
@@ -1389,3 +1391,7 @@ th .down.icon {
 #plugin-information-footer{
     display: none !important;
 }
+
+.menu-connect-first-site .item.active {
+	background: var(--grey-light) !important;
+  }

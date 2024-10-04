@@ -524,6 +524,10 @@ body.mainwp-ui.mainwp-custom-theme,
   background-color: var(--background-color-2) !important;
 }
 
+.mainwp-ui.mainwp-custom-theme .mainwp-managesites-import-rows:nth-of-type(odd) {
+  background-color: rgba(255, 255, 255, .06) !important;
+}
+
 /* Invert Messages */
 
 .mainwp-ui.mainwp-custom-theme .ui.message .header {

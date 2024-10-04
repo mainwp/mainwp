@@ -11,7 +11,7 @@
   --blue-dark: #0253B3;
   --green-color: #7fb100;
   --red-color: #AD0000;
-  --yellow-color: #FFD300;
+  --yellow-color: #FFD500;
   --grey-light: #F1F6FA;
   --grey-light-alt: #E7EEF6;
   --grey-dark: #2D3B44;
@@ -253,6 +253,19 @@
   -webkit-box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1) !important;
 }
 
+.mainwp-ui.mainwp-custom-theme .ui.attention.message {
+  border-left: 48px solid  var(--grey-dark);
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.attention.message:before {
+  content: "\f061";
+  font-family: 'Icons', sans-serif;
+  color: #ffffff;
+  position: absolute;
+  top: 14px;
+  left: -26px;
+}
+
 .mainwp-ui.mainwp-custom-theme .ui.info.message,
 .mainwp-ui.mainwp-custom-theme .ui.blue.message {
   border-left: 48px solid var(--blue-light);
@@ -261,7 +274,7 @@
 .mainwp-ui.mainwp-custom-theme .ui.info.message:before,
 .mainwp-ui.mainwp-custom-theme .ui.blue.message:before {
   content: "\f129";
-  font-family: 'Icons';
+  font-family: 'Icons', sans-serif;
   color: #ffffff;
   position: absolute;
   top: 14px;
@@ -279,7 +292,7 @@
 
 .mainwp-ui.mainwp-custom-theme .ui.green.message:before {
   content: "\f00c";
-  font-family: 'Icons';
+  font-family: 'Icons', sans-serif;
   color: #ffffff;
   position: absolute;
   top: 14px;
@@ -300,7 +313,7 @@
 
 .mainwp-ui.mainwp-custom-theme .ui.yellow.message:before {
   content: "\f12a";
-  font-family: 'Icons';
+  font-family: 'Icons', sans-serif;
   color: #ffffff;
   position: absolute;
   top: 14px;
@@ -317,7 +330,7 @@
 
 .mainwp-ui.mainwp-custom-theme .ui.red.message:before {
   content: "\f06a";
-  font-family: 'Icons';
+  font-family: 'Icons', sans-serif;
   color: #ffffff;
   position: absolute;
   top: 14px;
@@ -419,6 +432,10 @@
 .mainwp-ui.mainwp-custom-theme .ui.form textarea {
   border-radius: 10px;
   -webkit-border-radius: 10px;
+}
+
+.mainwp-ui.mainwp-custom-theme .mainwp-managesites-import-rows:nth-of-type(odd) {
+  background-color: var(--grey-light) !important;
 }
 
 /* Lists */

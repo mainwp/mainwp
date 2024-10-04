@@ -1462,6 +1462,10 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     "language": {
                         "emptyTable": '<?php esc_html_e( 'Error logging disabled.', 'mainwp' ); ?><?php echo '<br/>' . sprintf( esc_html__( 'To enable error logging, please check this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://codex.wordpress.org/Debugging_in_WordPress" target="_blank">', '</a>' ); ?>'
                     },
+                    columnDefs: [{
+                        "defaultContent": "-",
+                        "targets": "_all"
+                    }]
                 } );
             } );
         </script>
@@ -1523,9 +1527,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $lines = array_filter( $lines );
 
         if ( empty( $lines ) ) {
-
-            echo '<tr><td>' . esc_html__( 'MainWP is unable to find your error logs, please contact your host for server error logs.', 'mainwp' ) . '</td></tr>';
-
+            echo '<tr><td colspan="2">' . esc_html__( 'MainWP is unable to find your error logs, please contact your host for server error logs.', 'mainwp' ) . '</td></tr>';
             return;
         }
 

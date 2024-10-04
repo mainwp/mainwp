@@ -1,14 +1,48 @@
 jQuery(function () {
-  jQuery('#mainwp-qsw-verify-mainwp-child-active').on('change', function () {
-    if (jQuery(this).is(':checked')) {
+  jQuery('.mainwp-field-tab-connect input[name=tab_connect]').change(function () {
+    const tab_active = this.value;
+    if (tab_active !== '') {
       jQuery('#mainwp-qsw-connect-site-form').fadeIn(500);
       jQuery('#mainwp_managesites_add').show();
+      jQuery('#mainwp-qsw-toggle-verify-mainwp-child-active').show();
+
       jQuery('#mainwp_addsite_continue_button').hide();
-    } else {
-      jQuery('#mainwp-qsw-connect-site-form').fadeOut(500);
-      jQuery('#mainwp_managesites_add').hide();
-      jQuery('#mainwp_addsite_continue_button').show();
+      jQuery('.menu-connect-first-site .item').tab('change tab', tab_active);
     }
+  });
+
+  jQuery('#mainwp-qsw-migrate-managewp-umbrella').change(function (e) {
+    jQuery('.mainwp-wish-to-migrate').fadeToggle(100);
+    if (jQuery(this).is(':checked')) {
+      jQuery('.mainwp-wish-to-migrate.mainwp-wish-to-zip').fadeIn(500);
+      jQuery('#mainwp-wish-to-migrate.mainwp-wish-to-csv').hide();
+    } else {
+      jQuery('.mainwp-wish-to-migrate.mainwp-wish-to-csv').fadeIn(500);
+      jQuery('#mainwp-wish-to-migrate.mainwp-wish-to-csv').hide();
+    }
+  });
+
+  jQuery('#mainwp-qsw-verify-mainwp-child-active').on('change', function () {
+    if (jQuery(this).is(':checked')) {
+      jQuery('#mainwp_managesites_add').attr("disabled", false);
+      jQuery('#mainwp_managesites_add_import').attr("disabled", false);
+    } else {
+      jQuery('#mainwp_managesites_add').attr("disabled", true);
+      jQuery('#mainwp_managesites_add_import').attr("disabled", true);
+    }
+  });
+
+  // Handle submit import file CVS.
+  jQuery(document).on('click', '#mainwp_managesites_add_import', function (e) {
+    let error_messages = mainwp_managesites_import_handle_form_before_submit();
+    // If there is an error, prevent submission and display the error
+    if (error_messages.length > 0) {
+      setHtml('#mainwp-message-zone', error_messages.join("<br/>"), false);
+    } else {
+      jQuery('#mainwp_connect_first_site_form').trigger('submit');
+    }
+
+    return false;
   });
 
   jQuery('#mainwp_qsw_client_name_field').on('keyup', function () {
@@ -65,6 +99,18 @@ jQuery(function () {
 
 });
 
+// Handle tab onvisible.
+const mainwp_menu_connect_first_site_onvisible_callback = function (objItem) {
+  const tab = jQuery(objItem).attr("data-tab");
+  jQuery('.mainwp-field-tab-connect input[name=tab_connect]').filter(`[value="${tab}"]`).parent().trigger('click'); // set checked class ui checkbox
+  if (tab === 'multiple-site') {
+    jQuery('#mainwp_managesites_add_import').show();
+    jQuery('#mainwp_managesites_add').hide();
+  } else if (tab === 'single-site') {
+    jQuery('#mainwp_managesites_add').show();
+    jQuery('#mainwp_managesites_add_import').hide();
+  }
+}
 // Connect a new website
 let mainwp_setup_managesites_add = function () {
   mainwp_set_message_zone('#mainwp-message-zone');

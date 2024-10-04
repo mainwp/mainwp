@@ -14,7 +14,7 @@ namespace MainWP\Dashboard;
  *
  * @uses \MainWP\Dashboard\MainWP_Post_Base_Handler
  */
-class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
+class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace, Generic.WhiteSpace.DisallowSpaceIndent.SpacesUsed -- NOSONAR.
 
     // phpcs:disable Generic.Metrics.CyclomaticComplexity -- This is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -141,6 +141,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         $this->add_action( 'mainwp_delete_demo_data', array( &$this, 'ajax_delete_demo_data' ) );
         $this->add_action( 'mainwp_prepare_renew_connections', array( MainWP_Connect_Helper::instance(), 'ajax_prepare_renew_connections' ) );
         $this->add_action( 'mainwp_renew_connections', array( MainWP_Connect_Helper::instance(), 'ajax_renew_connections' ) );
+
+        // Page: managesites.
+        $this->add_action( 'mainwp_save_temp_import_website', array( &$this, 'ajax_save_temp_import_website' ) );
+        $this->add_action( 'mainwp_delete_temp_import_website', array( &$this, 'ajax_delete_temp_import_website' ) );
+        $this->add_action( 'mainwp_import_website_add_client', array( &$this, 'ajax_import_website_add_client' ) );
     }
 
     /**
@@ -1454,5 +1459,191 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         $data = MainWP_Demo_Handle::get_instance()->delete_data_demo();
         MainWP_Utility::update_option( 'mainwp_enable_guided_tours', 0 );
         wp_die( wp_json_encode( $data ) );
+    }
+
+    /**
+     *  Method ajax_save_temp_import_website()
+     *
+     *  Save temp import website.
+     *
+     * @uses MainWP_DB::instance()->get_general_option()
+     * @uses MainWP_DB::instance()->update_general_option(()
+     */
+    public function ajax_save_temp_import_website() {
+        $this->secure_request( 'mainwp_save_temp_import_website' ); // Check secure.
+        $error_msg = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
+        // Get previously saved temporary data (if any).
+        $values = MainWP_DB::instance()->get_general_option( 'temp_import_sites', 'array' );
+        $status = $this->mainwp_get_sanitized_post( 'status' );
+        $index  = $this->mainwp_get_sanitized_post( 'row_index', 'intval' ) ?? 1;
+        if ( empty( $status ) || '' === $index ) {
+            wp_die( wp_send_json_error( $error_msg ) );
+        }
+
+        $is_update = false;
+        if ( 'delete_temp' === $status ) { // Handling remove temp data.
+            $is_update = $this->mainwp_handle_delete_temp_import_website( $values, $index );
+        } elseif ( 'save_temp' === $status ) { // Handling save row data.
+            // Update row data into array.
+            $row_item = array(
+                'site_url'           => $this->mainwp_get_sanitized_post( 'site_url' ),
+                'admin_name'         => $this->mainwp_get_sanitized_post( 'admin_name' ),
+                'site_name'          => $this->mainwp_get_sanitized_post( 'site_name' ),
+                'tag'                => $this->mainwp_get_sanitized_post( 'tag' ),
+                'security_id'        => $this->mainwp_get_sanitized_post( 'security_id' ),
+                'http_username'      => $this->mainwp_get_sanitized_post( 'http_username' ),
+                'http_password'      => $this->mainwp_get_sanitized_post( 'http_password' ),
+                'verify_certificate' => $this->mainwp_get_sanitized_post( 'verify_certificate', 'intval' ) ?? 1,
+                'ssl_version'        => $this->mainwp_get_sanitized_post( 'ssl_version' ) ?? 'auto',
+            );
+
+            $is_update = $this->mainwp_handle_save_temp_import_website( $values, $index, $row_item );
+        }
+        // Save data to options table.
+        if ( $is_update ) {
+            MainWP_DB::instance()->update_general_option( 'temp_import_sites', $values, 'array' );
+            wp_die( wp_send_json_success( esc_html__( 'Row data saved successfully.', 'mainwp' ) ) );
+        }
+
+        // In case of no updates.
+        wp_die( wp_send_json_error( esc_html( $error_msg ) ) );
+    }
+
+    /**
+     * Method mainwp_handle_delete_temp_import_website()
+     *
+     * Handling remove temp data.
+     *
+     * @param mixed $values temp import sites.
+     * @param int   $index row key.
+     *
+     * @return bool true|false.
+     */
+    private function mainwp_handle_delete_temp_import_website( &$values, $index ) {
+        // Check if row data stream exists.
+        if ( ! empty( $values ) && is_array( $values ) && array_key_exists( $index, $values ) ) {
+            unset( $values[ $index ] ); // Remove row data.
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     *  Method mainwp_handle_save_temp_import_website()
+     *
+     * Create value if empty or array key exists.
+     *
+     * @param mixed $values temp import sites.
+     * @param int   $index row key
+     * @param array $row_item new row.
+     *
+     * @return bool true.
+     */
+    private function mainwp_handle_save_temp_import_website( &$values, $index, $row_item ) {
+        if ( empty( $values ) || ! array_key_exists( $index, $values ) ) {
+            $index            = 0 !== $index ? $index : 0;
+            $values[ $index ] = $row_item;
+        } else {
+            $values[ $index ] = $row_item;
+        }
+        return true;
+    }
+
+    /**
+     * Method ajax_delete_temp_import_website().
+     *
+     * Delete data temp if has been added website.
+     *
+     * @uses MainWP_DB::instance()->get_general_option().
+     * @uses MainWP_DB::instance()->update_general_option().
+     */
+    public function ajax_delete_temp_import_website() {
+        $this->secure_request( 'mainwp_delete_temp_import_website' ); // Check secure.
+        $error_msg = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
+        // Get option temp import sites data.
+        $temp_sites = MainWP_DB::instance()->get_general_option( 'temp_import_sites', 'array' );
+        if ( empty( $temp_sites ) || ! is_array( $temp_sites ) ) { // Check if temp_sites data exists and is an array.
+            wp_die( wp_send_json_error( $error_msg ) );
+        }
+
+        // Get wpurl, wpadmin from POST.
+        $wp_url   = $this->mainwp_get_sanitized_post( 'managesites_add_wpurl' );
+        $wp_admin = $this->mainwp_get_sanitized_post( 'managesites_add_wpadmin' );
+        if ( empty( $wp_url ) || empty( $wp_admin ) ) { // Check wpurl, wpadmin has data or empty.
+            wp_die( wp_send_json_error( $error_msg ) );
+        }
+        $is_delete = false;
+
+        if ( ! empty( $temp_sites ) && is_array( $temp_sites ) ) {
+            foreach ( $temp_sites as $k_site => $val_site ) { // Loop through data to remove added website.
+                // Check if row data stream exists.
+                if ( rtrim( $wp_url, '/' ) === $val_site['site_url'] && $wp_admin === $val_site['admin_name'] ) {
+                    // Remove row data.
+                    unset( $temp_sites[ $k_site ] );
+                    $is_delete = true;
+                    break;
+                }
+            }
+        }
+
+        // Save data to options table.
+        if ( $is_delete ) {
+            MainWP_DB::instance()->update_general_option( 'temp_import_sites', $temp_sites, 'array' );
+            wp_die( wp_send_json_success( esc_html__( 'Delete import row successfully.', 'mainwp' ) ) );
+        }
+
+        // In case of no delete.
+        wp_die( wp_send_json_error( $error_msg ) );
+    }
+
+    /**
+     * Method ajax_import_website_add_client()
+     *
+     * Create client.
+     *
+     * @uses MainWP_DB_Client::instance()->update_client()
+     * @uses MainWP_DB_Client::instance()->update_selected_sites_for_client()
+     */
+    public function ajax_import_website_add_client() {
+        $this->secure_request( 'mainwp_import_website_add_client' ); // Check secure.
+        $error_msg = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
+        try {
+            // Retrieve client data.
+            $data    = $this->mainwp_get_sanitized_post( 'client' );
+            $site_id = $this->mainwp_get_sanitized_post( 'site_id' );
+
+            if ( empty( $data ) ) {
+                wp_die( wp_send_json_error( $error_msg ) );
+            }
+
+            $data   = json_decode( $data, true );
+            $client = MainWP_DB_Client::instance()->update_client( $data ); // Create client.
+            if ( $client ) {
+                // add groups website and client
+                if ( ! empty( $site_id ) ) {
+                    MainWP_DB_Client::instance()->update_selected_sites_for_client( $client->client_id, array( $site_id ) );
+                }
+
+                wp_die( wp_send_json_success( esc_html__( 'Created client successfully.', 'mainwp' ) ) );
+            }
+        } catch ( \Exception $e ) {
+            wp_die( wp_send_json_error( esc_html( $e->getMessage() ) ) );
+        }
+        // In case of no created.
+        wp_die( wp_send_json_error( $error_msg ) );
+    }
+
+    /**
+     * Method mainwp_get_sanitized_post()
+     *
+     * Sanitized post field.
+     *
+     * @param string $key key to get from POST.
+     * @param string $callback cleaning method.
+     *
+     * @return mixed data value.
+     */
+    public function mainwp_get_sanitized_post( $key, $callback = 'sanitize_text_field' ) {
+        return isset( $_POST[ $key ] ) ? $callback( wp_unslash( $_POST[ $key ] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification
     }
 }

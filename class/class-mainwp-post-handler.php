@@ -1637,9 +1637,6 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
      * Method ajax_clients_add_multi_client
      *
      * Create Multi Client form QSW.
-     *
-     * @uses MainWP_DB_Client::instance()->update_client_contact()
-     * @uses MMainWP_DB_Client::instance()->update_client()
      */
     public function ajax_clients_add_multi_client() {
         $error_msg = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
@@ -1647,7 +1644,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         $dataes = isset( $_POST['data'] ) ? $_POST['data'] : array();
         try {
             if ( ! empty( $dataes ) ) {
-                foreach ( $dataes as $k_data => $val_data ) {
+                foreach ( $dataes as $val_data ) {
                     $client_data = array(
                         'image'              => '',
                         'name'               => $val_data['client_name'] ?? '',
@@ -1679,31 +1676,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
                     }
                     // Create client contact.
                     if ( ! empty( $val_data['contacts_field'] ) ) {
-                        $contacts = array_filter( $val_data['contacts_field'] );
-                        // Check required fields.
-                        if ( ( isset($contacts['contact_name']) && $contacts['contact_name'] !== '' ) && ( isset($contacts['contact_email']) && $contacts['contact_email'] ) ) {
-                            $contact_data = array(
-                                'contact_name'      => $contacts['contact_name'] ?? '',
-                                'contact_email'     => $contacts['contact_email'] ?? '',
-                                'contact_role'      => $contacts['contact_role'] ?? '',
-                                'contact_client_id' => $client->client_id,
-                                'contact_phone'     => '',
-                                'facebook'          => '',
-                                'twitter'           => '',
-                                'instagram'         => '',
-                                'linkedin'          => '',
-                                'contact_icon_info' => '',
-                            );
-                            $inserted     = MainWP_DB_Client::instance()->update_client_contact( $contact_data ); // Create or update contact of client.
-                            // If the update is successful, the client will be updated again.
-                            if ( $inserted ) {
-                                $update = array(
-                                    'client_id'          => $client->client_id,
-                                    'primary_contact_id' => $inserted->contact_id,
-                                );
-                                MainWP_DB_Client::instance()->update_client( $update );
-                            }
-                        }
+						$this->mainwp_handle_create_contact_for_client( $client, $val_data['contacts_field'] );
                     }
                 }
                 wp_die( wp_send_json_success( esc_html__( 'Created client successfully.', 'mainwp' ) ) );
@@ -1768,4 +1741,43 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         $ids[]     = $website_id;
         MainWP_DB_Client::instance()->update_selected_sites_for_client( $client->client_id, $ids );
     }
+
+	/**
+	 * Method mainwp_handle_create_contact_for_client()
+	 *
+	 * Handle create contact for client.
+	 *
+	 * @uses MainWP_DB_Client::instance()->update_client_contact()
+     * @uses MMainWP_DB_Client::instance()->update_client()
+	 *
+	 * @param object $client client data.
+	 * @param array $contacts_data contacts Data.
+	 */
+	public function mainwp_handle_create_contact_for_client( $client, $contacts_data ) {
+		$contacts = array_filter( $contacts_data );
+		// Check required fields.
+		if ( ( isset($contacts['contact_name']) && $contacts['contact_name'] !== '' ) && ( isset($contacts['contact_email']) && $contacts['contact_email'] ) ) {
+			$contact_data = array(
+				'contact_name'      => $contacts['contact_name'] ?? '',
+				'contact_email'     => $contacts['contact_email'] ?? '',
+				'contact_role'      => $contacts['contact_role'] ?? '',
+				'contact_client_id' => $client->client_id,
+				'contact_phone'     => '',
+				'facebook'          => '',
+				'twitter'           => '',
+				'instagram'         => '',
+				'linkedin'          => '',
+				'contact_icon_info' => '',
+			);
+			$inserted     = MainWP_DB_Client::instance()->update_client_contact( $contact_data ); // Create or update contact of client.
+			// If the update is successful, the client will be updated again.
+			if ( $inserted ) {
+				$update = array(
+					'client_id'          => $client->client_id,
+					'primary_contact_id' => $inserted->contact_id,
+				);
+				MainWP_DB_Client::instance()->update_client( $update );
+			}
+		}
+	}
 }

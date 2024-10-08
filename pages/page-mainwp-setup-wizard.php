@@ -780,53 +780,51 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <?php else : ?>
             <?php $first_site_id = get_transient( 'mainwp_transient_just_connected_site_id' ); ?>
             <h1><?php esc_html_e( 'Create a Client', 'mainwp' ); ?></h1>
-            <!-- <div class="ui secondary segment"> -->
-                    <form action="" method="post" enctype="multipart/form-data" name="createclient_form" id="createclient_form" class="add:clients: validate">
-                        <div class="ui red message" id="mainwp-message-zone" style="display:none"></div>
-                        <div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
-                        <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-                        <div class="ui top attached tabular menu mainwp-qsw-add-client">
-                            <a class="item active" data-tab="single-client"><?php esc_html_e( 'Single Client', 'mainwp' ); ?></a>
-                            <a class="item" data-tab="multiple-client"><?php esc_html_e( 'Multiple Clients', 'mainwp' ); ?></a>
-                        </div>
+            <form action="" method="post" enctype="multipart/form-data" name="createclient_form" id="createclient_form" class="add:clients: validate">
+                <div class="ui red message" id="mainwp-message-zone" style="display:none"></div>
+                <div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
+                <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                <div class="ui top attached tabular menu mainwp-qsw-add-client">
+                    <a class="item active" data-tab="single-client"><?php esc_html_e( 'Single Client', 'mainwp' ); ?></a>
+                    <a class="item" data-tab="multiple-client"><?php esc_html_e( 'Multiple Clients', 'mainwp' ); ?></a>
+                </div>
 
-                        <div class="ui bottom attached tab segment active" data-tab="single-client">
-                            <div class="ui hidden divider"></div>
-                            
-                            <div id="mainwp-add-new-client-form" >
-                            <?php $this->render_add_client_content( false, true ); ?>
-                            </div>
-                            <input type="hidden" name="selected_first_site" value="<?php echo intval( $first_site_id ); ?>">
-                        </div>
-                        <div class="ui bottom attached tab segment" data-tab="multiple-client">
-                            <div class="ui mainwp-widget segment">
-                                <div class="ui middle aligned left aligned compact grid">
-                                    <div class="ui row">
-                                        <div class="five wide column" >
-                                            <span class="ui text small"><?php esc_html_e( 'Client URL (required)', 'mainwp' ); ?></span>
-                                        </div>
-                                        <div class="five wide column">
-                                            <span class="ui text small"><?php esc_html_e( 'Client Name (required)', 'mainwp' ); ?></span>
-                                        </div>
-                                        <div class="five wide column">
-                                            <span class="ui text small"><?php esc_html_e( 'Client Email (required)', 'mainwp' ); ?></span>
-                                        </div>
-                                        <div class="one wide column">
-                                            <span></span>
-                                        </div>
-                                    </div>
-                                    <?php
-                                    for ( $i = 0; $i < $total_sites; $i++ ) {
-                                        $website = isset( $sites[ $i ] ) ? $sites[ $i ] : array();
-                                        $this->render_multi_add_client_content( $i, $website );
-                                    }
-                                    ?>
+                <div class="ui bottom attached tab segment active" data-tab="single-client">
+                    <div class="ui hidden divider"></div>
+                    
+                    <div id="mainwp-add-new-client-form" >
+                    <?php $this->render_add_client_content( false, true ); ?>
+                    </div>
+                    <input type="hidden" name="selected_first_site" value="<?php echo intval( $first_site_id ); ?>">
+                </div>
+                <div class="ui bottom attached tab segment" data-tab="multiple-client">
+                    <div class="ui mainwp-widget segment">
+                        <div class="ui middle aligned left aligned compact grid">
+                            <div class="ui row">
+                                <div class="five wide column" >
+                                    <span class="ui text small"><?php esc_html_e( 'Client URL (required)', 'mainwp' ); ?></span>
+                                </div>
+                                <div class="five wide column">
+                                    <span class="ui text small"><?php esc_html_e( 'Client Name (required)', 'mainwp' ); ?></span>
+                                </div>
+                                <div class="five wide column">
+                                    <span class="ui text small"><?php esc_html_e( 'Client Email (required)', 'mainwp' ); ?></span>
+                                </div>
+                                <div class="one wide column">
+                                    <span></span>
                                 </div>
                             </div>
+                            <?php
+                            for ( $i = 0; $i < $total_sites; $i++ ) {
+                                $website = isset( $sites[ $i ] ) ? $sites[ $i ] : array();
+                                $this->render_multi_add_client_content( $i, $website );
+                            }
+                            ?>
                         </div>
-                    </form>
-                <div class="ui clearing hidden divider"></div>
-            <!-- </div> -->
+                    </div>
+                </div>
+            </form>
+        <div class="ui clearing hidden divider"></div>
         <?php endif; ?>
         <div class="ui hidden divider"></div>
         <div class="ui hidden divider"></div>

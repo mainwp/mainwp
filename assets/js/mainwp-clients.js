@@ -230,7 +230,7 @@ const mainwp_add_client_onvisible_callback = function (obj_item) {
 const mainwp_qsw_add_client_delete_row = function (index) {
   const row = jQuery("#mainwp-qsw-add-client-row-" + index);
   row.remove();
-  return;
+  return false;
 }
 // Handle show more input òn client multi client.
 const mainwp_qsw_add_client_more_row = function (index) {
@@ -270,7 +270,7 @@ jQuery(document).on('keyup change', '.mainwp-qsw-add-client-client-name, .mainwp
 jQuery(document).on('click', '#bulk_add_multi_create_client', function (e) {
   let all_rows_valid = true;
   let errors = []; // Array declaration containing error messages.
-  var form_data = []; // Initialize array containing form data
+  let form_data = []; // Initialize array containing form data
   jQuery('.mainwp-qsw-add-client-rows').each(function () {
     let website_id = null;
     if (jQuery('#mainwp-qsw-add-client-website-id-' + row_index).length > 0) {

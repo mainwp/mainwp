@@ -271,7 +271,7 @@ jQuery(document).on('click', '#bulk_add_multi_create_client', function (e) {
   let all_rows_valid = true;
   let errors = []; // Array declaration containing error messages.
   let form_data = []; // Initialize array containing form data
-  jQuery('.mainwp-qsw-add-client-rows').each(function () {
+  jQuery('.mainwp-qsw-add-client-rows').each(function () { // NOSONAR -- complex
     let website_id = null;
     if (jQuery('#mainwp-qsw-add-client-website-id-' + row_index).length > 0) {
       website_id = jQuery('#mainwp-qsw-add-client-website-id-' + row_index)?.val().trim();

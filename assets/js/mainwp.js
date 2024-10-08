@@ -4478,6 +4478,6 @@ jQuery(function ($) {
 
 // Function to check valid email using regular expression.
 const mainwp_validate_email = function (email) {
-	var re = /^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,255}\.[A-Za-z]{2,}$/;
+	const re = /^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,255}\.[A-Za-z]{2,}$/;
 	return re.test(email);
 }

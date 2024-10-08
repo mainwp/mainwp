@@ -1392,6 +1392,11 @@ th .down.icon {
     display: none !important;
 }
 
-.menu-connect-first-site .item.active {
+.menu-connect-first-site .item.active,
+.mainwp-qsw-add-client .item.active {
 	background: var(--grey-light) !important;
-  }
+}
+.mainwp-qsw-add-client-more-row,
+.mainwp-managesites-more-import-row{
+	cursor: pointer;
+}

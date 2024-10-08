@@ -4475,3 +4475,9 @@ jQuery(function ($) {
     return false;
   });
 });
+
+// Function to check valid email using regular expression.
+const mainwp_validate_email = function (email) {
+	var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	return re.test(email);
+}

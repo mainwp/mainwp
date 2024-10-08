@@ -469,6 +469,10 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         check_admin_referer( 'mwp-setup' );
         if ( isset( $_POST['mainwp-qsw-confirm-add-new-client'] ) && ! empty( $_POST['mainwp-qsw-confirm-add-new-client'] ) ) {
             wp_safe_redirect( $this->get_next_step_link() );
+
+            if ( isset( $_GET['import-by'] ) && 'manage_wp' === $_GET['import-by'] ) {
+                wp_safe_redirect( $this->get_next_step_link( 'monitoring' ) );
+            }
         } else {
             wp_safe_redirect( $this->get_next_step_link( 'monitoring' ) );
         }
@@ -500,6 +504,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public function mwp_setup_connect_first_site_already() {
         $count_clients = MainWP_DB_Client::instance()->count_total_clients();
+        $is_manage_wp  = isset( $_GET['import-by'] ) && 'manage_wp' === $_GET['import-by'] ? true : false;
         ?>
         <h1 class="ui header"><?php esc_html_e( 'Congratulations!', 'mainwp' ); ?></h1>
         <p><?php esc_html_e( 'You have successfully connected your first site to your MainWP Dashboard!', 'mainwp' ); ?></p>
@@ -510,11 +515,13 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <label><?php esc_html_e( 'Do you want to create a client for your first child site?', 'mainwp' ); ?></label>
                         <div><?php esc_html_e( 'By adding a new client, you streamline site management within MainWP. Assigning sites to clients allows you to group and manage websites according to the clients they belong to for better organization and accessibility.', 'mainwp' ); ?></div>
                         <div class="ui hidden divider"></div>
+                        <?php if ( ! $is_manage_wp ) : ?>
                         <div class="ui toggle checkbox">
-                        <input type="checkbox" name="mainwp-qsw-confirm-add-new-client" id="mainwp-qsw-confirm-add-new-client" checked="true"/>
+                            <input type="checkbox" name="mainwp-qsw-confirm-add-new-client" id="mainwp-qsw-confirm-add-new-client" checked="true"/>
                             <label><?php esc_html_e( 'Select to create a New Client', 'mainwp' ); ?></label>
+                        </div>
+                        <?php endif; ?>
                     </div>
-                </div>
                 <?php } ?>
                 <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                 <div class="ui clearing hidden divider"></div>
@@ -567,13 +574,13 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <div class="field">
                     <div class="ui radio checkbox">
                         <input type="radio" name="tab_connect" tabindex="0" class="hidden" value="single-site">
-                        <label for="tab_connect"><?php esc_html_e('Connect Single Site', 'mainwp'); ?></label>
+                        <label for="tab_connect"><?php esc_html_e( 'Connect Single Site', 'mainwp' ); ?></label>
                     </div>
                 </div>
                 <div class="field">
                     <div class="ui radio checkbox">
                         <input type="radio" name="tab_connect" tabindex="0" class="hidden" value="multiple-site">
-                        <label for="tab_connect"><?php esc_html_e('Connect Multiple Site', 'mainwp'); ?></label>
+                        <label for="tab_connect"><?php esc_html_e( 'Connect Multiple Site', 'mainwp' ); ?></label>
                     </div>
                 </div>
             </div>
@@ -591,10 +598,11 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 </div>
                 <script>
                     jQuery(document).ready(function() {
+                        const manage_wp = `<?php echo $has_manage_wp_data ? '&import-by=manage_wp' : ''; ?>`;
                         jQuery("#mainwp-setup-import-sites-modal").modal({
                             closable: false,
                             onHide: function() {
-                                location.href = 'admin.php?page=mainwp-setup&step=connect_first_site';
+                                location.href = 'admin.php?page=mainwp-setup&step=connect_first_site' + manage_wp;
                             }
                         }).modal('show');
                     });
@@ -747,7 +755,6 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             </form>
         <?php endif; ?>
         <script>
-        
             jQuery('.menu-connect-first-site .item').tab({
                 'onVisible': function() {
                     mainwp_menu_connect_first_site_onvisible_callback(this);
@@ -763,41 +770,81 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Render Add first Client Step form.
      */
     public function mwp_setup_add_client() {
-        $count_clients = MainWP_DB_Client::instance()->count_total_clients();
-        if ( ! empty( $count_clients ) ) {
-            ?>
-            <h1 class="ui header"><?php esc_html_e( 'Congratulations!', 'mainwp' ); ?></h1>
-            <p><?php esc_html_e( 'You have successfully created your first Client.', 'mainwp' ); ?></p>
-            <?php
-        } else {
-            $first_site_id = get_transient( 'mainwp_transient_just_connected_site_id' );
-            ?>
-            <h1><?php esc_html_e( 'Create a Client', 'mainwp' ); ?></h1>
-            <div class="ui secondary segment">
-                    <form action="" method="post" enctype="multipart/form-data" name="createclient_form" id="createclient_form" class="add:clients: validate">
-                        <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-                        <div class="">
-                            <div class="ui hidden divider"></div>
-                            <div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
-                            <div id="mainwp-add-new-client-form" >
-                            <?php $this->render_add_client_content( false, true ); ?>
-                            </div>
-                        </div>
-                        <input type="hidden" name="selected_first_site" value="<?php echo intval( $first_site_id ); ?>">
-                    </form>
-                <div class="ui clearing hidden divider"></div>
-            </div>
-            <?php
-        }
-        ?>
-        <div class="ui hidden divider"></div>
-        <div class="ui hidden divider"></div>
-        <input type="button" style="display:none" name="createclient" current-page="qsw-add" id="bulk_add_createclient" class="ui big green right floated button" value="<?php echo esc_attr__( 'Add Client', 'mainwp' ); ?> "/>
-        <a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" id="mainwp_qsw_add_client_continue_button" class="ui big green right floated button"><?php esc_html_e( 'Continue', 'mainwp' ); ?></a>
-        <a href="<?php echo esc_url( $this->get_back_step_link() ); ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>
-        <?php
-    }
+		$count_clients = MainWP_DB_Client::instance()->count_total_clients();
+		$sites = MainWP_DB::instance()->get_sites(); // Get site data.
+		$total_sites = ! empty( $sites ) ? count($sites) : 5; // set default 
+		if ( ! empty( $count_clients ) ) :
+		?>
+			<h1 class="ui header"><?php esc_html_e( 'Congratulations!', 'mainwp' ); ?></h1>
+			<p><?php esc_html_e( 'You have successfully created your first Client.', 'mainwp' ); ?></p>
+		<?php else : ?>
+			<?php $first_site_id = get_transient( 'mainwp_transient_just_connected_site_id' ); ?>
+			<h1><?php esc_html_e( 'Create a Client', 'mainwp' ); ?></h1>
+			<!-- <div class="ui secondary segment"> -->
+					<form action="" method="post" enctype="multipart/form-data" name="createclient_form" id="createclient_form" class="add:clients: validate">
+						<div class="ui red message" id="mainwp-message-zone" style="display:none"></div>
+						<div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
+						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+						<div class="ui top attached tabular menu mainwp-qsw-add-client">
+							<a class="item active" data-tab="single-client"><?php esc_html_e( 'Single Client', 'mainwp' ); ?></a>
+							<a class="item" data-tab="multiple-client"><?php esc_html_e( 'Multiple Clients', 'mainwp' ); ?></a>
+						</div>
 
+						<div class="ui bottom attached tab segment active" data-tab="single-client">
+							<div class="ui hidden divider"></div>
+							
+							<div id="mainwp-add-new-client-form" >
+							<?php $this->render_add_client_content( false, true ); ?>
+							</div>
+							<input type="hidden" name="selected_first_site" value="<?php echo intval( $first_site_id ); ?>">
+						</div>
+						<div class="ui bottom attached tab segment" data-tab="multiple-client">
+							<div class="ui mainwp-widget segment">
+								<div class="ui middle aligned left aligned compact grid">
+									<div class="ui row">
+										<div class="five wide column" >
+											<span class="ui text small"><?php esc_html_e( 'Client URL (required)', 'mainwp' ); ?></span>
+										</div>
+										<div class="five wide column">
+											<span class="ui text small"><?php esc_html_e( 'Client Name (required)', 'mainwp' ); ?></span>
+										</div>
+										<div class="five wide column">
+											<span class="ui text small"><?php esc_html_e( 'Client Email (required)', 'mainwp' ); ?></span>
+										</div>
+										<div class="one wide column">
+											<span></span>
+										</div>
+									</div>
+									<?php
+									for ( $i = 0; $i < $total_sites; $i++ ) {
+										$website = isset( $sites[ $i ] ) ? $sites[ $i ] : array();
+										$this->render_multi_add_client_content( $i, $website );
+									}
+									?>
+								</div>
+							</div>
+						</div>
+					</form>
+				<div class="ui clearing hidden divider"></div>
+			<!-- </div> -->
+        <?php endif; ?>
+		<div class="ui hidden divider"></div>
+		<div class="ui hidden divider"></div>
+		<input type="button" style="display:none" name="createclient" current-page="qsw-add" id="bulk_add_createclient" class="ui big green right floated button" value="<?php echo esc_attr__( 'Add Client', 'mainwp' ); ?> "/>
+
+		<input type="button" style="display:none" name="create_multi_client" current-page="qsw-add" id="bulk_add_multi_create_client" class="ui big green right floated button" value="<?php echo esc_attr__( 'Add Multi Client', 'mainwp' ); ?> "/>
+
+		<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" id="mainwp_qsw_add_client_continue_button" class="ui big green right floated button"><?php esc_html_e( 'Continue', 'mainwp' ); ?></a>
+		<a href="<?php echo esc_url( $this->get_back_step_link() ); ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>
+		<script>
+			jQuery('.mainwp-qsw-add-client .item').tab({
+				'onVisible': function() {
+					mainwp_add_client_onvisible_callback(this);
+				}
+			});
+		</script>
+		<?php
+    }
 
     /**
      * Method render_add_client_content().
@@ -846,6 +893,62 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <?php
     }
 
+	/**
+	 * Method render_multi_add_client_content()
+	 *
+	 * Render form multi create client.
+	 *
+	 * @uses MainWP_Client_Handler::get_mini_default_contact_fields()
+	 *
+	 * @param int $index row index.
+	 * @param array $website website data.
+	 */
+	public function render_multi_add_client_content($index, $website) {
+		$contact_fields = MainWP_Client_Handler::get_mini_default_contact_fields();
+		?>
+		<div class="row mainwp-qsw-add-client-rows" id="mainwp-qsw-add-client-row-<?php echo esc_attr( $index ); ?>">
+			<div class="five wide column">
+				<div class="ui mini fluid input">
+					<input type="text" name="mainwp_add_client[<?php echo esc_attr( $index ); ?>][site_url]" class="mainwp-qsw-add-client-site-url" value="<?php echo isset( $website['url'] ) ? esc_attr( $website['url'] ) : ''; ?>" data-row-index="<?php echo esc_attr( $index ); ?>" id="mainwp-qsw-add-client-site-url-<?php echo esc_attr( $index ); ?>" <?php echo isset( $website['id'] ) ? 'disabled' : ''; ?>>
+					<?php if ( isset( $website['id'] ) ) : ?>
+						<input type="hidden" name="mainwp_add_client[<?php echo esc_attr( $index ); ?>][website_id]" value="<?php echo intval( $website['id'] ); ?>" id="mainwp-qsw-add-client-website-id-<?php echo esc_attr( $index ); ?>" >
+					<?php endif ?>
+				</div>
+			</div>
+			<div class="five wide column">
+				<div class="ui mini fluid input">
+					<input type="text" name="mainwp_add_client[<?php echo esc_attr( $index ); ?>][client_name]" class="mainwp-qsw-add-client-client-name" value="" data-row-index="<?php echo esc_attr( $index ); ?>" id="mainwp-qsw-add-client-client-name-<?php echo esc_attr( $index ); ?>">
+				</div>
+			</div>
+			<div class="five wide column">
+				<div class="ui mini fluid input">
+					<input type="email" name="mainwp_add_client[<?php echo esc_attr( $index ); ?>][client_email]" class="mainwp-qsw-add-client-client-email" value="" data-row-index="<?php echo esc_attr( $index ); ?>" id="mainwp-qsw-add-client-client-email-<?php echo esc_attr( $index ); ?>">
+				</div>
+			</div>
+			<div class="one wide column">
+				<div class="ui mini fluid input">
+					<a class="mainwp-qsw-add-client-more-row" onclick="mainwp_qsw_add_client_more_row(<?php echo esc_attr( $index ); ?>)" style="margin-right: 10px !important;">
+						<i class="eye outline icon"  id="icon-visible-<?php echo esc_attr( $index ); ?>"></i>
+						<i class="eye slash outline icon" id="icon-hidden-<?php echo esc_attr( $index ); ?>" style="display:none"></i>
+					</a>
+					<a class="mainwp-qsw-add-client-delete-row" href="javascript:void(0)" onclick="mainwp_qsw_add_client_delete_row(<?php echo esc_attr( $index ); ?>)">
+						<i class="trash alternate outline icon"></i>
+					</a>
+				</div>
+			</div>
+			<?php if ( ! empty( $contact_fields ) ) : ?>
+				<?php foreach ( $contact_fields as $field_name => $field ) : ?>
+					<div class="five wide column mainwp-qsw-add-client-column-more-<?php echo esc_attr( $index ); ?>" style="display:none">
+						<span class="ui small text"><?php echo esc_html( $field['title'] ); ?></span>
+						<div class="ui mini fluid input">
+							<input type="text" name="client_fields[<?php echo esc_attr( $index ); ?>][new_contacts_field][<?php echo esc_attr( $field_name ); ?>][]" class="mainwp-qsw-add-client-client-fields">
+						</div>
+					</div>
+				<?php endforeach; ?>
+			<?php endif; ?>
+		</div>
+		<?php
+	}
 
     /**
      * Method get_add_contact_temp().

@@ -220,7 +220,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             ),
             'ManageSitesEdit'          => array(
                 'href'   => 'admin.php?page=managesites&id=' . $site_id,
-                'title'  => esc_html__( 'Edit', 'mainwp' ),
+                'title'  => esc_html__( 'Settings', 'mainwp' ),
                 'access' => mainwp_current_user_have_right( 'dashboard', 'edit_sites' ),
             ),
             'ManageSitesUpdates'       => array(

@@ -560,7 +560,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <h1><?php esc_html_e( 'Connect Your First Child Site', 'mainwp' ); ?></h1>
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-qsw-add-site-message' ) ) { ?>
             <div class="">
-                <p><?php esc_html_e( 'In the MainWP system, the sites you connect are referred to as \'Child Sites.', 'mainwp' ); ?> <br/> <?php esc_html_e( 'hese Child Sites will be managed centrally from your MainWP Dashboard.', 'mainwp' ); ?></p>
+                <p><?php esc_html_e( 'In the MainWP system, the sites you connect are referred to as "Child Sites."', 'mainwp' ); ?> <br/> <?php esc_html_e( 'These Child Sites will be managed centrally from your MainWP Dashboard.', 'mainwp' ); ?></p>
             </div>
         <?php } ?>
         
@@ -574,13 +574,13 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <div class="field">
                     <div class="ui radio checkbox">
                         <input type="radio" name="tab_connect" tabindex="0" class="hidden" value="single-site">
-                        <label for="tab_connect"><?php esc_html_e( 'Connect Single Site', 'mainwp' ); ?></label>
+                        <label for="tab_connect"><?php esc_html_e('Connect a Single Site', 'mainwp'); ?></label>
                     </div>
                 </div>
                 <div class="field">
                     <div class="ui radio checkbox">
                         <input type="radio" name="tab_connect" tabindex="0" class="hidden" value="multiple-site">
-                        <label for="tab_connect"><?php esc_html_e( 'Connect Multiple Site', 'mainwp' ); ?></label>
+                        <label for="tab_connect"><?php esc_html_e('Connect Multiple Site', 'mainwp'); ?></label>
                     </div>
                 </div>
             </div>

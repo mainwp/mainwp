@@ -189,9 +189,8 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
 
                 $table_features = array(
                     'searching'     => 'true',
-                    'paging'        => 'false',
-                    'pagingType'    => 'full_numbers',
-                    'info'          => 'true',
+                    'paging'        => 'true',
+                    'info'          => 'false',
                     'colReorder'    => '{ columns:":not(.manage-status-column):not(.manage-site_actions-column)"} ',
                     'stateSave'     => 'true',
                     'stateDuration' => '0',
@@ -213,8 +212,12 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                             "searching" : <?php echo esc_js( $table_features['searching'] ); ?>,
                             "responsive": responsive,
                             "paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
-                            "pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
                             "info" : <?php echo esc_js( $table_features['info'] ); ?>,
+                            "layout": {
+                                "bottom": 'paging',
+                                "bottomStart": null,
+                                "bottomEnd": null
+                            },
                             "scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
                             "colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
                             "stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
@@ -637,7 +640,7 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                             <a class="item" href="admin.php?page=managesites&dashboard=<?php echo intval( $website['id'] ); ?>"><?php esc_html_e( 'Overview', 'mainwp' ); ?></a>
                             <?php endif; ?>
                     <?php if ( mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) : ?>
-                            <a class="item" href="admin.php?page=managesites&id=<?php echo intval( $website['id'] ); ?>"><?php esc_html_e( 'Edit Site', 'mainwp' ); ?></a>
+                            <a class="item" href="admin.php?page=managesites&id=<?php echo intval( $website['id'] ); ?>"><?php esc_html_e( 'Settings', 'mainwp' ); ?></a>
                             <?php endif; ?>
                             </div>
                         </div>

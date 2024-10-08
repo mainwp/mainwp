@@ -1180,7 +1180,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
                         <form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form" class="ui form">
                         <h3 class="ui dividing header">
-                        <?php esc_html_e( 'Bulk Add Sites', 'mainwp' ); ?>
+                        <?php esc_html_e( 'Bulk Import Sites', 'mainwp' ); ?>
                             <div class="sub header"><?php esc_html_e( 'Add websites in Bulk to your MainWP Dashboard.', 'mainwp' ); ?></div>
                         </h3>
                         <div class="mainwp-primary-content-wrap">

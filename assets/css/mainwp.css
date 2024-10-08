@@ -739,6 +739,7 @@ table.mainwp-manage-wpsites-table .error a {
 .ui.accordion.mainwp-manage-plugin-item,
 .ui.accordion.mainwp-manage-theme-item {
     border-bottom: 1px solid rgba(34, 36, 38, 0.1);
+    padding: 1em !important;
 }
 
 .ui.accordion.mainwp-manage-plugin-item .title,
@@ -776,7 +777,7 @@ table.mainwp-manage-wpsites-table .error a {
     border-bottom: 1px solid rgba(34, 36, 38, 0.1);
     border-top: 1px solid rgba(34, 36, 38, 0.1);
     background: #fafafa;
-    padding: 1em;
+    padding: 1em !important;
     margin: 0 0 -1px !important;
 }
 

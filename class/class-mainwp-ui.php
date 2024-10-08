@@ -712,7 +712,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                                 </div>
                                 <div class="item">
                                     <i class="edit icon"></i>
-                                    <a href="<?php echo 'admin.php?page=managesites&id=' . intval( $website->id ); ?>"><?php esc_html_e( 'Edit Site', 'mainwp' ); ?></a>
+                                    <a href="<?php echo 'admin.php?page=managesites&id=' . intval( $website->id ); ?>"><?php esc_html_e( 'Settings', 'mainwp' ); ?></a>
                                 </div>
                                 <div class="item">
                                     <i class="sync alt icon"></i>

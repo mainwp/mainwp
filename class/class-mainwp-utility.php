@@ -1722,7 +1722,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return \str_ends_with( $str, $ends );
         } else {
             $ends_len = strlen($ends);
-            if ($ends_len > strlen($str)) {
+            if ( $ends_len > strlen($str) ) {
                 return false;
             }
             return substr($str, -$ends_len) === $ends;

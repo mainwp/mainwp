@@ -488,7 +488,7 @@
         overflow-y: auto;
         overflow-x: hidden;
         padding: 0 1em;
-        margin: 0 -1em 20px -1em;
+        margin: 0 -1em 20px;
     }
 
     .mainwp-widget-footer {

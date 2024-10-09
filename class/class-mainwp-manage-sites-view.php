@@ -1551,7 +1551,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ?>
                 <div class="ui divider"></div>
                 <input type="submit" name="submit" id="submit" class="ui button green big" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
-				<input type="button" name="submit_remove_webiste" id="mainwp-managesites-remove-site" class="ui button red big floated right" value="<?php esc_attr_e( 'Remove Site', 'mainwp' ); ?>"/>
+                <input type="button" name="submit_remove_webiste" id="mainwp-managesites-remove-site" class="ui button red big floated right" value="<?php esc_attr_e( 'Remove Site', 'mainwp' ); ?>"/>
             </form>
         </div>
         <div class="ui modal" id="mainwp-test-connection-modal">

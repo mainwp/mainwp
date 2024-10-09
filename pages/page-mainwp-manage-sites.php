@@ -645,13 +645,13 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                     <div class="ui labeled icon inverted menu mainwp-sub-submenu" id="mainwp-add-sites-tabular-menu">
                         <a class="item active" data-tab="single-site">
-                            <i class="wordpress icon"></i>
+                            <i class="WordPress icon"></i>
                             <?php echo esc_html( 'Single Site', 'mainwp' ); ?>
                         </a>
                         <a class="item" data-tab="multiple-site">
                             <div class="icons" style="margin:0.5rem auto">
-                                <i class="icon wordpress"></i>
-                                <i class="icon wordpress"></i>
+                                <i class="icon WordPress"></i>
+                                <i class="icon WordPress"></i>
                             </div>
                             <?php echo esc_html( 'Multiple Sites', 'mainwp' ); ?>
                         </a>

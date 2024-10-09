@@ -1427,7 +1427,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 } elseif ( isset( $_GET['scanid'] ) ) {
                     $id = intval( $_GET['scanid'] );
                 }
-    
+
                 $website = MainWP_DB::instance()->get_website_by_id( $id );
                 ?>
                 <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" src="//s0.wordpress.com/mshots/v1/<?php echo esc_html( rawurlencode( $website->url ) ); ?>?w=170">

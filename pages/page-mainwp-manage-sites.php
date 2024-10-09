@@ -676,7 +676,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <?php static::render_new_site_add_new_site();  // NOSONAR - render html form. ?>
                     </div>
                     <div class="ui bottom attached tab segment" data-tab="multiple-site">
-                        <?php static::render_new_site_add_multi_new_site(); // NOSONAR - render html form.?>
+                        <?php static::render_new_site_add_multi_new_site(); // NOSONAR - render html form. ?>
                     </div>
                 </form>
             </div>
@@ -1015,8 +1015,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses static::mainwp_managesites_form_import_sites()
      * @uses static::mainwp_managesites_information_import_sites()
      */
-    public static function render_new_site_add_multi_new_site()
-    {
+    public static function render_new_site_add_multi_new_site() {
         ?>
         <?php static::mainwp_managesites_form_import_sites(); // NOSONAR - render html form. ?>
         <br/>

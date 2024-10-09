@@ -545,9 +545,9 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses MainWP_Manage_Sites_View::render_import_sites()
      * @uses MainWP_Manage_Sites::mainwp_managesites_form_import_sites()
      * @uses MainWP_Manage_Sites::mainwp_managesites_information_import_sites()
-	 * @uses MainWP_Manage_Sites::render_import_sites_modal()
-	 * @uses MainWP_DB::instance()->get_websites_count()
-	 * @uses MainWP_Utility::show_mainwp_message()
+     * @uses MainWP_Manage_Sites::render_import_sites_modal()
+     * @uses MainWP_DB::instance()->get_websites_count()
+     * @uses MainWP_Utility::show_mainwp_message()
      */
     public function mwp_setup_connect_first_site() {
         $count = MainWP_DB::instance()->get_websites_count( null, true );
@@ -589,13 +589,13 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             </div>
         </div>
             <?php if ( ( $has_file_upload || $has_import_data || $has_manage_wp_data ) && check_admin_referer( 'mainwp-admin-nonce' ) ) : ?>
-				<?php
-					$url = 'admin.php?page=mainwp-setup&step=connect_first_site';
-					if ( $has_import_data ) {
-						$url .= '&import-by=manage_wp';
-					}
-					MainWP_Manage_Sites::render_import_sites_modal( $url, 'Import Sites' );
-				?>
+                <?php
+                    $url = 'admin.php?page=mainwp-setup&step=connect_first_site';
+                if ( $has_import_data ) {
+                    $url .= '&import-by=manage_wp';
+                }
+                    MainWP_Manage_Sites::render_import_sites_modal( $url, 'Import Sites' );
+                ?>
             <?php else : ?>
                 <form method="post" action="" class="ui form" enctype="multipart/form-data" id="mainwp_connect_first_site_form">
                 <div id="mainwp-qsw-connect-site-form" style="display:none">

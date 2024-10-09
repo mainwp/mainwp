@@ -86,7 +86,7 @@ class MainWP_Dashboard_Connect_Handle { // phpcs:ignore Generic.Classes.OpeningB
      *
      * @param  mixed $url url.
      * @param  mixed $destination_folder destination_folder.
-     * @return mixed 
+     * @return mixed
      */
     private function download_connect_file_and_attach_rest_keys( $url, $destination_folder ) {
 

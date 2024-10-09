@@ -1631,7 +1631,6 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         }
         // In case of no created.
         wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput
-
     }
 
     /**

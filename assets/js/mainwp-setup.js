@@ -39,7 +39,7 @@ jQuery(function () {
     let error_messages = mainwp_managesites_import_handle_form_before_submit();
     // If there is an error, prevent submission and display the error
     if (error_messages.length > 0) {
-      setHtml('#mainwp-message-zone', error_messages.join("<br/>"), false);
+			feedback('mainwp-message-zone', error_messages.join("<br/>"), "red");
     } else {
       jQuery('#mainwp_connect_first_site_form').trigger('submit');
     }

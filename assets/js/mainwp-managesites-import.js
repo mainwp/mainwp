@@ -662,38 +662,15 @@ const mainwp_managesites_import_sites_render_button_remove = function (
             <i class="trash alternate outline icon"></i>
         </a>`;
 };
-
+// validate form before submitting form managesites_import.
 const mainwp_managesites_import_handle_form_before_submit = function () {
-    let hasTable_data = false;
-    let csv_selected =
-        jQuery(`input[name="mainwp_managesites_file_bulkupload"]`).val() !== ""; // Check if CSV file is selected
+    let has_table_data = false;
+    let csv_selected = jQuery(`input[name="mainwp_managesites_file_bulkupload"]`).val() !== ""; // Check if CSV file is selected
     let zip_file = jQuery("#mainwp_managesites_file_managewp").val();
     let error_messages = [];
 
     // Iterate through each row in the rows
-    jQuery(
-        "#mainwp-managesites-row-import-sites .mainwp-managesites-import-rows"
-    ).each(function (index) {
-        let site_url = jQuery(
-        `input[name="mainwp_managesites_import[${index}][site_url]"]`
-        ).val();
-        let admin_name = jQuery(
-        `input[name="mainwp_managesites_import[${index}][admin_name]"]`
-        ).val();
-        // If there is data in any row of the table, check the required fields
-        if (site_url || admin_name) {
-        hasTable_data = true;
-        let msg = "";
-        if (!site_url) {
-            msg = sprintf(__("Site URL is required in row %1", index + 1));
-            error_messages.push(msg);
-        }
-        if (!admin_name) {
-            msg = sprintf(__("Admin Name is required in row %1", index + 1));
-            error_messages.push(msg);
-        }
-        }
-    });
+		has_table_data = mainwp_managesites_validate_import_rows(error_messages);
 
     // Check zip file format.
     if (zip_file != "") {
@@ -705,7 +682,7 @@ const mainwp_managesites_import_handle_form_before_submit = function () {
     }
 
     // Check if both CSV and table have data
-    if (csv_selected && hasTable_data && zip_file) {
+    if (csv_selected && has_table_data && zip_file) {
         error_messages.push(
         __(
             "You can only submit either the table data or a CSV file, not both at the same time"
@@ -714,9 +691,51 @@ const mainwp_managesites_import_handle_form_before_submit = function () {
     }
 
     // Check if both are empty
-    if (!csv_selected && !hasTable_data && !zip_file) {
+    if (!csv_selected && !has_table_data && !zip_file) {
         error_messages.push(__("Please fill in the table or select a CSV file or ManageWP file."));
     }
 
     return error_messages;
 };
+
+// Check data in model table add new website.
+const mainwp_managesites_validate_import_rows = function (error_messages, is_valid_row = false) {
+	let has_table_data = false; 
+	let valid_row_count = 0; 
+	jQuery(
+		"#mainwp-managesites-row-import-sites .mainwp-managesites-import-rows"
+	).each(function (index) {
+		let site_url = jQuery(
+			`input[name="mainwp_managesites_import[${index}][site_url]"]`
+		).val();
+		let admin_name = jQuery(
+			`input[name="mainwp_managesites_import[${index}][admin_name]"]`
+		).val();
+
+		// If there is data in any row of the table, check the required fields
+		if (site_url || admin_name) {
+			has_table_data = true;
+			
+			let msg = "";
+			if (!site_url) {
+				msg = __("Site URL is required in row %1", index + 1);
+				error_messages.push(msg);
+			}
+			if (!admin_name) {
+				msg = __("Admin Name is required in row %1", index + 1);
+				error_messages.push(msg);
+			}
+
+			// If both site_url and admin_name have values, increment the counter variable.
+			if (site_url && admin_name) {
+				valid_row_count++;
+			}
+		}
+
+	});
+	if (is_valid_row && error_messages.length === 0 && valid_row_count === 0){
+		error_messages.push(__("At least one row must have both Site URL and Admin Name."));
+	}
+
+	return has_table_data;
+}

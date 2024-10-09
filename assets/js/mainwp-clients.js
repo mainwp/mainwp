@@ -273,10 +273,11 @@ jQuery(document).on('click', '#bulk_add_multi_create_client', function (e) {
   let form_data = []; // Initialize array containing form data
   jQuery('.mainwp-qsw-add-client-rows').each(function () { // NOSONAR -- complex
     let website_id = null;
-    if (jQuery('#mainwp-qsw-add-client-website-id-' + row_index).length > 0) {
+    const row_index = jQuery(this).attr('id').replace('mainwp-qsw-add-client-row-', '');
+    
+		if (jQuery('#mainwp-qsw-add-client-website-id-' + row_index).length > 0) {
       website_id = jQuery('#mainwp-qsw-add-client-website-id-' + row_index)?.val().trim();
     }
-    const row_index = jQuery(this).attr('id').replace('mainwp-qsw-add-client-row-', '');
     const site_url = jQuery('#mainwp-qsw-add-client-site-url-' + row_index).val().trim();
     const client_name = jQuery('#mainwp-qsw-add-client-client-name-' + row_index).val().trim();
     const client_email = jQuery('#mainwp-qsw-add-client-client-email-' + row_index).val().trim();

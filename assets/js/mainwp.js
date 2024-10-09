@@ -2192,16 +2192,21 @@ jQuery(function () {
 	// Handle submit add multi website
 	jQuery(document).on('click', '#mainwp_managesites_add_multi_site', function () {
 		let error_messages = [];
-		error_messages = mainwp_managesites_validate_import_rows(error_messages, true);
+		let has_table_data = false;
+		has_table_data = mainwp_managesites_validate_import_rows(error_messages, true);
 		// If there is an error, prevent submission and display the error
-		if (error_messages.length > 0) {
-			feedback('mainwp-message-zone', error_messages.join("<br/>"), "red");
+		if (error_messages.length > 0 && !has_table_data ) {
+			feedback('mainwp-add-multi-new-site-message-zone', error_messages.join("<br/>"), "red");
 		} else {
 			jQuery('#mainwp_managesites_add_form').submit();
 		}
 		return false;
 	});
-
+	
+	// Handle click remove website on management webiste. 
+	jQuery(document).on('click', '#mainwp-managesites-remove-site', function(){
+		jQuery('#mainwp-remove-site-button').trigger('click');
+	});
 });
 
 /**

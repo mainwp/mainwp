@@ -551,7 +551,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <div class="ui small modal" id="mainwp-manage-sites-site-preview-screen-options-modal">
             <div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
             <div class="scrolling content ui form">
-                <span><?php esc_html_e( 'Would you like to turn on home screen previews?  This function queries WordPress.com servers to capture a screenshot of your site the same way comments shows you preview of URLs.', 'mainwp' ); ?>
+                <span><?php esc_html_e( 'Would you like to turn on home screen previews? This function queries WordPress.com servers to capture a screenshot of your site the same way comments shows you preview of URLs.', 'mainwp' ); ?>
             </div>
             <div class="actions">
                 <div class="ui ok button"><?php esc_html_e( 'Yes', 'mainwp' ); ?></div>
@@ -640,41 +640,55 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 $groups = array();
             }
             ?>
-            <div id="mainwp-add-new-site" class="ui segment">
-                <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-site-info-message' ) ) : ?>
-                    <div class="ui info message">
-                        <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-site-info-message"></i>
-                        <div><?php printf( esc_html__( 'Use the provided form to connect your websites to your MainWP Dashboard.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
-                        <div><?php printf( esc_html__( 'If you are experiencing issues with adding a website to your MainWP Dashboard, use the %1$sTest Connection%2$s feature to ensure that your MainWP Dashboard can communicate with your website.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/test-connection-between-your-mainwp-dashboard-and-child-site/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
-                        <div><?php printf( esc_html__( 'If you still can not connect the site, see the list of %1$spotential issues%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/potential-issues/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
-                        </div>
-                <?php endif; ?>
-
-                <div id="mainwp-message-zone" style="display: none;" class="ui message"></div>
-
-                <div id="mainwp_managesites_add_errors" style="display: none" class="ui red message"></div>
-                <div id="mainwp_managesites_add_message" style="display: none" class="ui green message"></div>
-                <div class="ui info message" id="mainwp_message_verify_installed_child" style="display:none">
-                    <?php esc_html_e( 'MainWP requires the MainWP Child plugin to be installed and activated on the WordPress site that you want to connect to your MainWP Dashboard. ', 'mainwp' ); ?>
-                    <?php esc_html_e( 'To install the MainWP Child plugin, please follow these steps:', 'mainwp' ); ?>
-                    <ol>
-                        <li><?php printf( esc_html__( 'Login to the WordPress site you want to connect %1$s(open it in a new browser tab)%2$s', 'mainwp' ), '<em>', '</em>' ); ?></li>
-                        <li><?php printf( esc_html__( 'Go to the %1$sWP > Plugins%2$s page', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
-                        <li><?php printf( esc_html__( 'Click %1$sAdd New%2$s to install a new plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
-                        <li><?php printf( esc_html__( 'In the %1$sSearch Field%2$s, enter "MainWP Child" and once the plugin shows, click the Install button', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
-                        <li><?php printf( esc_html__( '%1$sActivate%2$s the plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
-                    </ol>
-                </div>
-
+            <div id="mainwp-add-new-site">
                 <form method="POST" class="ui form" action="" enctype="multipart/form-data" id="mainwp_managesites_add_form">
                     <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-                    <div class="ui top attached tabular menu menu-connect-first-site">
-                        <a class="item active" data-tab="single-site"><?php echo esc_html( $title_page ); ?></a>
-                        <a class="item" data-tab="multiple-site"><?php esc_html_e( 'Add a New Multiple Sites', 'mainwp' ); ?></a>
+                    <div class="ui labeled icon inverted menu mainwp-sub-submenu" id="mainwp-add-sites-tabular-menu">
+                        <a class="item active" data-tab="single-site">
+                            <i class="wordpress icon"></i>
+                            <?php echo esc_html( 'Single Site', 'mainwp' ); ?>
+                        </a>
+                        <a class="item" data-tab="multiple-site">
+                            <div class="icons" style="margin:0.5rem auto">
+                                <i class="icon wordpress"></i>
+                                <i class="icon wordpress"></i>
+                            </div>
+                            <?php echo esc_html( 'Multiple Sites', 'mainwp' ); ?>
+                        </a>
                     </div>
                     <div class="ui bottom attached tab segment active" data-tab="single-site">
+                        <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-site-info-message' ) ) : ?>
+                            <div class="ui info message">
+                                <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-site-info-message"></i>
+                                <div><?php printf( esc_html__( 'Use the provided form to connect your websites to your MainWP Dashboard. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
+                                <div><?php printf( esc_html__( 'If you are experiencing issues with adding a website to your MainWP Dashboard, use the %1$sTest Connection%2$s feature to ensure that your MainWP Dashboard can communicate with your website.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/test-connection-between-your-mainwp-dashboard-and-child-site/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
+                                <div><?php printf( esc_html__( 'If you still can not connect the site, see the list of %1$spotential issues%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/potential-issues/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
+                            </div>
+                        <?php endif; ?>
+
+                        <div id="mainwp-message-zone" style="display: none;" class="ui message"></div>
+
+                        <div id="mainwp_managesites_add_errors" style="display: none" class="ui red message"></div>
+                        <div id="mainwp_managesites_add_message" style="display: none" class="ui green message"></div>
+
+                        <div class="ui info message" id="mainwp_message_verify_installed_child" style="display:none">
+                            <?php esc_html_e( 'MainWP requires the MainWP Child plugin to be installed and activated on the WordPress site that you want to connect to your MainWP Dashboard. ', 'mainwp' ); ?>
+                            <?php esc_html_e( 'To install the MainWP Child plugin, please follow these steps:', 'mainwp' ); ?>
+                            <ol>
+                                <li><?php printf( esc_html__( 'Login to the WordPress site you want to connect %1$s(open it in a new browser tab)%2$s', 'mainwp' ), '<em>', '</em>' ); ?></li>
+                                <li><?php printf( esc_html__( 'Go to the %1$sWP > Plugins%2$s page', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+                                <li><?php printf( esc_html__( 'Click %1$sAdd New%2$s to install a new plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+                                <li><?php printf( esc_html__( 'In the %1$sSearch Field%2$s, enter "MainWP Child" and once the plugin shows, click the Install button', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+                                <li><?php printf( esc_html__( '%1$sActivate%2$s the plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+                            </ol>
+                        </div>
+                        <h3 class="ui dividing header">
+                            <?php echo esc_html__( 'Connect a Single Site', 'mainwp' ); ?>
+                            <div class="sub header"><?php echo esc_html__( 'Connect your site to your MainWP Dashboarad for centralized management.', 'mainwp' ); ?></div>
+                        </h3>
                         <?php static::render_new_site_add_new_site( $groups );  // NOSONAR - render html form. ?>
                     </div>
+
                     <div class="ui bottom attached tab segment" data-tab="multiple-site">
                         <?php static::render_new_site_add_multi_new_site(); // NOSONAR - render html form. ?>
                     </div>
@@ -703,7 +717,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             </div>
 
             <script type="text/javascript">
-                jQuery('.menu-connect-first-site .item').tab({});
+                jQuery('#mainwp-add-sites-tabular-menu .item').tab();
                 jQuery( document ).ready( function () {
                     jQuery( '#mainwp_managesites_add_addgroups' ).dropdown( {
                         allowAdditions: true
@@ -784,13 +798,6 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public static function render_new_site_add_new_site( $groups ) {
         ?>
-        <div class="ui field">
-            <div class="column ">
-                <em>
-                    <p><?php esc_html_e( 'Add a new site or use the Test Connection feature to check if the site can be connected.', 'mainwp' ); ?></p>
-                </em>
-            </div>
-        </div>
         <div class="ui grid field">
             <label class="six wide column middle aligned"><?php esc_html_e( 'Site URL', 'mainwp' ); ?></label>
             <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter your website URL.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -1015,13 +1022,24 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Render page managesites add multi new site.
      *
      * @uses static::mainwp_managesites_form_import_sites()
-     * @uses static::mainwp_managesites_information_import_sites()
      */
     public static function render_new_site_add_multi_new_site() {
         ?>
+        <div class="ui fitted hidden divider"></div>
+        <h3 class="ui dividing header">
+            <?php echo esc_html__( 'Connect Multiple Sites', 'mainwp' ); ?>
+            <div class="sub header"><?php echo esc_html__( 'Connect multiple sites to your MainWP Dashboarad for centralized management.', 'mainwp' ); ?></div>
+        </h3>
+        <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-multiple-sites-info-message' ) ) : ?>
+            <div class="ui blue message">
+                <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-multiple-sites-info-message"></i>
+                <?php static::mainwp_managesites_information_import_sites(); ?>
+            </div>
+        <?php endif; ?>
+        
+        <div id="mainwp-add-multi-new-site-message-zone" style="display: none;" class="ui message"></div>
+
         <?php static::mainwp_managesites_form_import_sites(); // NOSONAR - render html form. ?>
-        <br/>
-        <?php static::mainwp_managesites_information_import_sites(); ?>
 
         <div class="ui divider"></div>
         <input type="button" name="mainwp_managesites_add" id="mainwp_managesites_add_multi_site" class="ui big green button left floated" value="<?php esc_html_e( 'Add Sites', 'mainwp' ); ?>"/>
@@ -2008,22 +2026,15 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public static function mainwp_managesites_information_import_sites() {
         ?>
-        <em>
-            <p><?php esc_html_e( 'Enter each site\'s information on a new line using the following format:', 'mainwp' ); ?></p>
-            <code><?php esc_html_e( 'Site Name, URL, Admin Name, Tag, Security ID, HTTP Username, HTTP Password, Verify Certificate, SSL Version', 'mainwp' ); ?></code><br/>
-            <ul class="ui bulleted list small text">
-                <li><?php esc_html_e( 'Site Name: Enter the Site friedly name (Required)', 'mainwp' ); ?></li>
-                <li><?php esc_html_e( 'URL: Enter your Site URL (Required)', 'mainwp' ); ?></li>
-                <li><?php esc_html_e( 'Admin Name: Enter the website Administrator username (Required)', 'mainwp' ); ?></li>
-                <li><?php esc_html_e( 'Tag: Assign tags to the website (Optional)', 'mainwp' ); ?></li>
-                <li><?php esc_html_e( 'Security ID: If in use, enter the website Unique ID, if not, leave blank', 'mainwp' ); ?></li>
-                <li><?php esc_html_e( 'HTTP Username: If the child site is HTTP Basic Auth protected, enter the HTTP username', 'mainwp' ); ?></li>
-                <li><?php esc_html_e( 'HTTP Password: If the child site is HTTP Basic Auth protected, enter the HTTP passowrd', 'mainwp' ); ?></li>
-                <li><?php esc_html_e( 'Verify Certificate: Enter 1 for true or 0 for false (default is 1).', 'mainwp' ); ?></li>
-                <li><?php esc_html_e( 'SSL Version: Choose from auto, 1.x, 1, 2, 1.1, 1.2, 1.3 (default is auto).', 'mainwp' ); ?></li>
-            </ul>
-            <p><?php esc_html_e( 'Tip: For simplicity, you can leave "Verify Certificate" and "SSL Version" as default by entering a blank value.', 'mainwp' ); ?></p>
-        </em>
+        <?php esc_html_e( 'MainWP requires the MainWP Child plugin to be installed and activated on the WordPress sites that you want to connect to your MainWP Dashboard. ', 'mainwp' ); ?>
+        <?php esc_html_e( 'To connect multiple sites, please follow these steps:', 'mainwp' ); ?>
+        <ol>
+            <li><?php esc_html_e( 'Fill in the required fields (Site URL and Admin Name) for each site you want to connect. Optionally, provide additional information such as Site Name, Tag, Security ID, HTTP Username, and HTTP Password if applicable.', 'mainwp' ); ?></li>
+            <li><?php esc_html_e( 'Keep the default value of "1" to verify the SSL certificate for your sites, or change it if you prefer not to verify.', 'mainwp' ); ?></li>
+            <li><?php esc_html_e( 'Leave this as "auto" unless you know the specific SSL version required by the site. The "auto" option typically works for most sites.', 'mainwp' ); ?></li>
+            <li><?php esc_html_e( 'Use the "Add New Row" button to add additional rows if you need to connect more sites at once.', 'mainwp' ); ?></li>
+            <li><?php esc_html_e( 'After filling in all the required information, submit the form to connect the selected sites to your MainWP Dashboard.', 'mainwp' ); ?></li>
+        </ol>
         <?php
     }
 
@@ -2050,16 +2061,16 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $display_none  = $is_page_setup ? 'display:none' : '';
         ?>
         <div class="ui mainwp-widget segment">
-            <div class="ui middle aligned left aligned compact grid" id="mainwp-managesites-row-import-sites">
+            <div class="ui middle aligned left aligned compact stackable grid" id="mainwp-managesites-row-import-sites">
                 <div class="ui row">
                     <div class="<?php echo $is_page_setup ? 'five' : 'two'; ?> wide column" >
-                        <span class="ui text small"><?php esc_html_e( 'Site URL (required)', 'mainwp' ); ?></span>
+                        <span class="ui text small"><strong><?php esc_html_e( 'Site URL (required)', 'mainwp' ); ?></strong></span>
                     </div>
                     <div class="<?php echo $is_page_setup ? 'five' : 'two'; ?> wide column">
                         <span class="ui text small"><?php esc_html_e( 'Site Name', 'mainwp' ); ?></span>
                     </div>
                     <div class="<?php echo $is_page_setup ? 'five' : 'two'; ?> wide column">
-                        <span class="ui text small"><?php esc_html_e( 'Admin Name (required)', 'mainwp' ); ?></span>
+                        <span class="ui text small"><strong><?php esc_html_e( 'Admin Name (required)', 'mainwp' ); ?></strong></span>
                     </div>
                     <?php if ( ! $is_page_setup ) : ?>
                         <div class="two wide column">
@@ -2326,7 +2337,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 jQuery( "#mainwp-import-sites-modal" ).modal( {
                     closable: false,
                     onHide: function() {
-                        location.href = '<?php echo esc_url( $url ); ?>';
+                        location.href = '<?php echo ! empty( $url ) ? $url : ''; ?>';
                     }
                 } ).modal( 'show' );
             } );

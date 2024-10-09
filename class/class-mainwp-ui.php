@@ -1413,8 +1413,28 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $subitems = apply_filters( 'mainwp_page_navigation', $subitems, $name_caller );
         ?>
         <div id="mainwp-page-navigation-wrapper">
+            <?php if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) ) : ?>
+                <?php
+                $id = 0;
+                if ( isset( $_GET['dashboard'] ) ) {
+                    $id = intval( $_GET['dashboard'] );
+                } elseif ( isset( $_GET['id'] ) ) {
+                    $id = intval( $_GET['id'] );
+                } elseif ( isset( $_GET['updateid'] ) ) {
+                    $id = intval( $_GET['updateid'] );
+                } elseif ( isset( $_GET['emailsettingsid'] ) ) {
+                    $id = intval( $_GET['emailsettingsid'] );
+                } elseif ( isset( $_GET['scanid'] ) ) {
+                    $id = intval( $_GET['scanid'] );
+                }
+    
+                $website = MainWP_DB::instance()->get_website_by_id( $id );
+                ?>
+                <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" src="//s0.wordpress.com/mshots/v1/<?php echo esc_html( rawurlencode( $website->url ) ); ?>?w=170">
+            <?php endif; ?>
 
             <div class="ui vertical menu mainwp-page-navigation">
+                
                 <?php
 
                 if ( is_array( $subitems ) ) {
@@ -1443,7 +1463,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         }
 
                         ?>
-
                         <a class="<?php echo esc_attr( $class ); ?> item" style="<?php echo esc_attr( $style ); ?>" href="<?php echo esc_url( $item['href'] ); ?>">
                         <?php echo isset( $item['before_title'] ) ? $item['before_title'] : ''; ?> <?php echo esc_html( $item['title'] ); ?> <?php echo isset( $item['after_title'] ) ? $item['after_title'] : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                         </a>

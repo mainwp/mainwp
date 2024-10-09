@@ -551,7 +551,7 @@ const mainwp_managesites_import_sites_add_row = function (row_index) {
                     "mainwp-managesites-import-admin-name"
                 )}
             </div>
-            <div class="one wide column">
+            <div class="two wide column">
                 ${mainwp_managesites_import_sites_render_input(
                     row_index,
                     "tag",
@@ -559,7 +559,7 @@ const mainwp_managesites_import_sites_add_row = function (row_index) {
                     "mainwp-managesites-import-tag"
                 )}
             </div>
-            <div class="two wide column">
+            <div class="one wide column">
                 ${mainwp_managesites_import_sites_render_input(
                     row_index,
                     "security_id",

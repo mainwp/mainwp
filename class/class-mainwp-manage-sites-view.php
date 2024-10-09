@@ -576,12 +576,12 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses self::handle_import_site_file_zip_data()
      * @uses self::handle_import_site_render_input_field()
      *
-     * @param mixed $file fild data.
+     * @param mixed $file file data.
      * @param mixed $errors error message.
      */
     public static function handle_import_site_file_zip_upload($file, &$errors) { // phpcs:ignore -- NOSONAR - complex.
         if ( 'application/zip' === $file['type'] || 'application/x-zip-compressed' === $file['type'] ) {
-            $tmp_path = isset( $_FILES['mainwp_managesites_file_managewp']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_managesites_file_managewp']['tmp_name'] ) ) : '';
+            $tmp_path = isset( $_FILES['mainwp_managesites_file_managewp']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_managesites_file_managewp']['tmp_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 
             $zip = new \ZipArchive();
             if ( $zip->open( $tmp_path ) ) {
@@ -691,7 +691,6 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * Render input field modal import sites.
      *
      * @param array $site_values website value.
-     * @param array $clients client data.
      */
     public static function handle_import_site_render_input_field( $site_values ) {
         $header_line = trim( 'Site Name, Url, Admin Name, Tag,Security ID,HTTP Username,HTTP Password,Verify Certificate,SSL Version' ); // Set Header Line.

@@ -1504,7 +1504,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         // Save data to options table.
         if ( $is_update ) {
             MainWP_DB::instance()->update_general_option( 'temp_import_sites', $values, 'array' );
-            wp_die( wp_send_json_success( esc_html__( 'Row data saved successfully.', 'mainwp' ) ) );
+            wp_die( wp_send_json_success( __( 'Row data saved successfully.', 'mainwp' ) ) );
         }
 
         // In case of no updates.
@@ -1617,7 +1617,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
 
             $data = json_decode( $data, true );
             // Create client.
-            $client = $this->mainwp_handle_create_client($client_data);
+            $client = $this->mainwp_handle_create_client( $client_data );
             if ( $client ) {
                 // add groups website and client
                 if ( ! empty( $site_id ) ) {
@@ -1627,7 +1627,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
                 wp_die( wp_send_json_success( esc_html__( 'Created client successfully.', 'mainwp' ) ) );
             }
         } catch ( \Exception $e ) {
-            wp_die( wp_send_json_error( esc_html( $e->getMessage() ) ) );
+            wp_die( wp_send_json_error( $e->getMessage() ) );
         }
         // In case of no created.
         wp_die( wp_send_json_error( $error_msg ) );
@@ -1667,7 +1667,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
                     );
 
                     // Create client.
-                    $client = $this->mainwp_handle_create_client($client_data);
+                    $client = $this->mainwp_handle_create_client( $client_data );
 
                     // Create client successfy.
                     if ( ! empty( $client ) && ! empty( $val_data['website_id'] ) ) {
@@ -1682,7 +1682,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
                 wp_die( wp_send_json_success( esc_html__( 'Created client successfully.', 'mainwp' ) ) );
             }
         } catch ( \Exception $e ) {
-            wp_die( wp_send_json_error( esc_html( $e->getMessage() ) ) );
+            wp_die( wp_send_json_error( $e->getMessage() ) );
         }
 
         wp_die( wp_send_json_error( $error_msg ) );
@@ -1756,7 +1756,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
     public function mainwp_handle_create_contact_for_client( $client, $contacts_data ) {
         $contacts = array_filter( $contacts_data );
         // Check required fields.
-        if ( ( isset($contacts['contact_name']) && $contacts['contact_name'] !== '' ) && ( isset($contacts['contact_email']) && $contacts['contact_email'] ) ) {
+        if ( ( isset( $contacts['contact_name'] ) && $contacts['contact_name'] !== '' ) && ( isset( $contacts['contact_email'] ) && $contacts['contact_email'] ) ) {
             $contact_data = array(
                 'contact_name'      => $contacts['contact_name'] ?? '',
                 'contact_email'     => $contacts['contact_email'] ?? '',

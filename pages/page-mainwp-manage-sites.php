@@ -794,8 +794,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter your website URL.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                 <div class="ui left action input">
                     <select class="ui compact selection dropdown" id="mainwp_managesites_add_wpurl_protocol" name="mainwp_managesites_add_wpurl_protocol">
-                        <option value="http"><?php echo esc_html('http://'); ?></option>
-                        <option selected="" value="https"><?php echo esc_html('https://'); ?></option>
+                        <option value="http"><?php echo esc_html( 'http://' ); ?></option>
+						<option selected="" value="https"><?php echo esc_html( 'https://' ); ?></option>
                     </select>
                     <input type="text" id="mainwp_managesites_add_wpurl" name="mainwp_managesites_add_wpurl" value="" />
                 </div>
@@ -2324,7 +2324,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 jQuery( "#mainwp-import-sites-modal" ).modal( {
                     closable: false,
                     onHide: function() {
-                        location.href = '<?php echo $url; ?>';
+                        location.href = '<?php echo esc_url( $url ); ?>';
                     }
                 } ).modal( 'show' );
             } );

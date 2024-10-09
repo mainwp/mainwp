@@ -329,7 +329,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <a class="ui big green basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp-setup&step=introduction' ) ); ?>"><?php esc_html_e( 'Start the MainWP Quick Setup Wizard', 'mainwp' ); ?></a>
         <?php if ( 0 === $count_sites ) : ?>
             <div class="ui hidden divider"></div>
-            <h3><?php esc_html_e( 'Would you like to see Demo content first? ', 'mainwp' ); ?> - <?php printf( esc_html__( '%sWhat is this?%s', 'mainwp' ), '<a href="https://www.youtube.com/watch?v=fCHT47AKt7s" target="_blank">', '</a>' ); ?></h3>
+            <h3><?php esc_html_e( 'Would you like to see Demo content first? ', 'mainwp' ); ?> - <?php printf( esc_html__( '%1$sWhat is this?%2$s', 'mainwp' ), '<a href="https://www.youtube.com/watch?v=fCHT47AKt7s" target="_blank">', '</a>' ); ?></h3>
             <p><?php esc_attr_e( 'Explore MainWP\'s capabilities using our pre-loaded demo content.', 'mainwp' ); ?></p>
             <p><?php esc_attr_e( 'It\'s the perfect way to experience the benefits and ease of use MainWP provides without connecting to any of your own sites.', 'mainwp' ); ?></p>
             <p><?php esc_html_e( 'The demo content serves as placeholder data to give you a feel for the MainWP Dashboard. Please note that because no real websites are connected in this demo, some functionality will be restricted. Features that require a connection to actual websites will be disabled for the duration of the demo.', 'mainwp' ); ?></p>
@@ -577,13 +577,13 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <div class="field">
                     <div class="ui radio checkbox">
                         <input type="radio" name="tab_connect" tabindex="0" class="hidden" value="single-site">
-                        <label for="tab_connect"><?php esc_html_e('Connect a Single Site', 'mainwp'); ?></label>
+                        <label for="tab_connect"><?php esc_html_e( 'Connect a Single Site', 'mainwp' ); ?></label>
                     </div>
                 </div>
                 <div class="field">
                     <div class="ui radio checkbox">
                         <input type="radio" name="tab_connect" tabindex="0" class="hidden" value="multiple-site">
-                        <label for="tab_connect"><?php esc_html_e('Connect Multiple Site', 'mainwp'); ?></label>
+                        <label for="tab_connect"><?php esc_html_e( 'Connect Multiple Site', 'mainwp' ); ?></label>
                     </div>
                 </div>
             </div>
@@ -761,7 +761,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     public function mwp_setup_add_client() {
         $count_clients = MainWP_DB_Client::instance()->count_total_clients();
         $sites         = MainWP_DB::instance()->get_sites(); // Get site data.
-        $total_sites   = ! empty( $sites ) ? count($sites) : 5; // set default
+        $total_sites   = ! empty( $sites ) ? count( $sites ) : 5; // set default
         if ( ! empty( $count_clients ) ) :
             ?>
             <h1 class="ui header"><?php esc_html_e( 'Congratulations!', 'mainwp' ); ?></h1>

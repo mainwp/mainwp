@@ -795,7 +795,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <div class="ui left action input">
                     <select class="ui compact selection dropdown" id="mainwp_managesites_add_wpurl_protocol" name="mainwp_managesites_add_wpurl_protocol">
                         <option value="http"><?php echo esc_html( 'http://' ); ?></option>
-						<option selected="" value="https"><?php echo esc_html( 'https://' ); ?></option>
+                        <option selected="" value="https"><?php echo esc_html( 'https://' ); ?></option>
                     </select>
                     <input type="text" id="mainwp_managesites_add_wpurl" name="mainwp_managesites_add_wpurl" value="" />
                 </div>

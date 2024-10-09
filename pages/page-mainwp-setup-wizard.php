@@ -504,7 +504,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public function mwp_setup_connect_first_site_already() {
         $count_clients = MainWP_DB_Client::instance()->count_total_clients();
-        $is_manage_wp  = isset( $_GET['import-by'] ) && 'manage_wp' === $_GET['import-by'] ? true : false;
+        $is_manage_wp  = isset( $_GET['import-by'] ) && 'manage_wp' === $_GET['import-by'] ? true : false; //phpcs:ignore WordPress.Security.NonceVerification
         ?>
         <h1 class="ui header"><?php esc_html_e( 'Congratulations!', 'mainwp' ); ?></h1>
         <p><?php esc_html_e( 'You have successfully connected your first site to your MainWP Dashboard!', 'mainwp' ); ?></p>

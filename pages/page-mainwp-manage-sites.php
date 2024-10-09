@@ -635,7 +635,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         } elseif ( $has_import_data && check_admin_referer( 'mainwp-admin-nonce' ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Missing
             static::render_import_sites_modal( 'admin.php?page=managesites&do=new', $title_page );
         } else {
-                $groups = MainWP_DB_Common::instance()->get_groups_for_current_user();
+            $groups = MainWP_DB_Common::instance()->get_groups_for_current_user();
             if ( ! is_array( $groups ) ) {
                 $groups = array();
             }
@@ -673,7 +673,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <a class="item" data-tab="multiple-site"><?php esc_html_e( 'Add a New Multiple Sites', 'mainwp' ); ?></a>
                     </div>
                     <div class="ui bottom attached tab segment active" data-tab="single-site">
-                        <?php static::render_new_site_add_new_site();  // NOSONAR - render html form. ?>
+                        <?php static::render_new_site_add_new_site( $groups );  // NOSONAR - render html form. ?>
                     </div>
                     <div class="ui bottom attached tab segment" data-tab="multiple-site">
                         <?php static::render_new_site_add_multi_new_site(); // NOSONAR - render html form. ?>
@@ -779,8 +779,10 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses MainWP_UI::get_default_icons()
      * @uses MainWP_DB_Client::instance()->get_wp_client_by()
      * @uses MainWP_Manage_Sites_View::render_sync_exts_settings()
+     *
+     * @param array $groups manage sites add groups.
      */
-    public static function render_new_site_add_new_site() {
+    public static function render_new_site_add_new_site( $groups ) {
         ?>
         <div class="ui field">
             <div class="column ">
@@ -871,7 +873,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <div class="ui green button basic mainwp-managesites-add-site-icon-customable" iconItemId="" iconFileSlug="" icon-src="">
                     <?php esc_html_e( 'Upload Icon', 'mainwp' ); ?>
                 </div>
-                <div style="display:inline-block;" id="mainw_managesites_add_edit_site_upload_custom_icon"></div> 
+                <div style="display:inline-block;" id="mainw_managesites_add_edit_site_upload_custom_icon"></div>
                 <?php // used for icon holder. ?>
             </div>
         </div>

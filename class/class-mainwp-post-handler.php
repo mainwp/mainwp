@@ -1096,7 +1096,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         try {
             die( wp_json_encode( array( 'result' => MainWP_Updates_Overview::dismiss_sync_errors() ) ) );
         } catch ( \Exception $e ) {
-            die( wp_json_encode( array( 'error' => $e->getMessage() ) ) );
+            die( wp_json_encode( array( 'error' => sanitize_text_field( $e->getMessage() ) ) ) );
         }
     }
 
@@ -1504,11 +1504,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         // Save data to options table.
         if ( $is_update ) {
             MainWP_DB::instance()->update_general_option( 'temp_import_sites', $values, 'array' );
-            wp_die( wp_send_json_success( __( 'Row data saved successfully.', 'mainwp' ) ) );
+            wp_die( wp_send_json_success( esc_html( __( 'Row data saved successfully.', 'mainwp' ) ) ) );
         }
 
         // In case of no updates.
-        wp_die( wp_send_json_error( esc_html( $error_msg ) ) );
+        wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput
     }
 
     /**
@@ -1565,14 +1565,14 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         // Get option temp import sites data.
         $temp_sites = MainWP_DB::instance()->get_general_option( 'temp_import_sites', 'array' );
         if ( empty( $temp_sites ) || ! is_array( $temp_sites ) ) { // Check if temp_sites data exists and is an array.
-            wp_die( wp_send_json_error( $error_msg ) );
+            wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput
         }
 
         // Get wpurl, wpadmin from POST.
         $wp_url   = $this->mainwp_get_sanitized_post( 'managesites_add_wpurl' );
         $wp_admin = $this->mainwp_get_sanitized_post( 'managesites_add_wpadmin' );
         if ( empty( $wp_url ) || empty( $wp_admin ) ) { // Check wpurl, wpadmin has data or empty.
-            wp_die( wp_send_json_error( $error_msg ) );
+            wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput
         }
         $is_delete = false;
 
@@ -1612,14 +1612,14 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
             $site_id = $this->mainwp_get_sanitized_post( 'site_id' );
 
             if ( empty( $data ) ) {
-                wp_die( wp_send_json_error( $error_msg ) );
+                wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput
             }
 
             $data = json_decode( $data, true );
             // Create client.
             $client = $this->mainwp_handle_create_client( $client_data );
             if ( $client ) {
-                // add groups website and client
+                // Add groups website and client.
                 if ( ! empty( $site_id ) ) {
                     $this->mainwp_handle_selected_sites_for_client( $client, $site_id );
                 }
@@ -1627,10 +1627,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
                 wp_die( wp_send_json_success( esc_html__( 'Created client successfully.', 'mainwp' ) ) );
             }
         } catch ( \Exception $e ) {
-            wp_die( wp_send_json_error( $e->getMessage() ) );
+            wp_die( wp_send_json_error( sanitize_text_field( $e->getMessage() ) ) );
         }
         // In case of no created.
-        wp_die( wp_send_json_error( $error_msg ) );
+        wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput
+
     }
 
     /**
@@ -1682,10 +1683,10 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
                 wp_die( wp_send_json_success( esc_html__( 'Created client successfully.', 'mainwp' ) ) );
             }
         } catch ( \Exception $e ) {
-            wp_die( wp_send_json_error( $e->getMessage() ) );
+            wp_die( wp_send_json_error( sanitize_text_field( $e->getMessage() ) ) );
         }
 
-        wp_die( wp_send_json_error( $error_msg ) );
+        wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput
     }
 
     /**
@@ -1756,7 +1757,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
     public function mainwp_handle_create_contact_for_client( $client, $contacts_data ) {
         $contacts = array_filter( $contacts_data );
         // Check required fields.
-        if ( ( isset( $contacts['contact_name'] ) && $contacts['contact_name'] !== '' ) && ( isset( $contacts['contact_email'] ) && $contacts['contact_email'] ) ) {
+        if ( ( isset( $contacts['contact_name'] ) && '' !== $contacts['contact_name'] ) && ( isset( $contacts['contact_email'] ) && $contacts['contact_email'] ) ) {
             $contact_data = array(
                 'contact_name'      => $contacts['contact_name'] ?? '',
                 'contact_email'     => $contacts['contact_email'] ?? '',

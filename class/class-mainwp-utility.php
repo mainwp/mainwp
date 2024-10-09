@@ -1713,19 +1713,19 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * string_ends_by
      *
-     * @param  mixed $str
-     * @param  mixed $ends
-     * @return bool value.
+     * @param  mixed $str str.
+     * @param  mixed $ends ends.
+     * @return bool value value.
      */
     public static function string_ends_by( $str, $ends ) {
         if ( function_exists( '\str_ends_with' ) ) {
-            return \str_ends_with( $str, $ends );
-        } else {
-            $ends_len = strlen($ends);
-            if ( $ends_len > strlen($str) ) {
-                return false;
-            }
-            return substr($str, -$ends_len) === $ends;
-        }
+			return \str_ends_with( $str, $ends );
+		} else {
+			$ends_len = strlen( $ends );
+			if ( $ends_len > strlen( $str ) ) {
+				return false;
+			}
+			return substr( $str, -$ends_len ) === $ends;
+		}
     }
 }

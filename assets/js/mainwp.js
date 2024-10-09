@@ -2192,7 +2192,7 @@ jQuery(function () {
 	// Handle submit add multi website
 	jQuery(document).on('click', '#mainwp_managesites_add_multi_site', function () {
 		let error_messages = [];
-		has_table_data = mainwp_managesites_validate_import_rows(error_messages, true);
+		error_messages = mainwp_managesites_validate_import_rows(error_messages, true);
 		// If there is an error, prevent submission and display the error
 		if (error_messages.length > 0) {
 			feedback('mainwp-message-zone', error_messages.join("<br/>"), "red");

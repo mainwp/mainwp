@@ -191,6 +191,12 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     jQuery.fn.DataTable.ext.pager.numbers_length = 4;
                     jQuery( '#mainwp-non-mainwp-changes-table' ).DataTable( {
                         "pageLength": 10,
+                        "info": false,
+                        "layout": {
+                            "bottom": 'paging',
+                            "bottomStart": null,
+                            "bottomEnd": null
+                        },
                         "lengthMenu": [ [5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"] ],
                         "stateSave" : true,
                         "stateDuration" : 0,

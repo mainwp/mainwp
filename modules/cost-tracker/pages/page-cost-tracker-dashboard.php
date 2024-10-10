@@ -1776,7 +1776,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
         <div class="ui small modal" id="mainwp-module-cost-tracker-sites-site-preview-screen-options-modal">
             <div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
             <div class="scrolling content ui form">
-                <span><?php esc_html_e( 'Would you like to turn on home screen previews?  This function queries WordPress.com servers to capture a screenshot of your site the same way comments shows you preview of URLs.', 'mainwp' ); ?>
+                <span><?php esc_html_e( 'Would you like to turn on home screen previews? This function queries WordPress.com servers to capture a screenshot of your site the same way comments shows you preview of URLs.', 'mainwp' ); ?>
             </div>
             <div class="actions">
                 <div class="ui ok button"><?php esc_html_e( 'Yes', 'mainwp' ); ?></div>

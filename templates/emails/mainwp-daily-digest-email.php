@@ -88,7 +88,7 @@ if ( empty( $heading ) ) {
                                             </table>
                                         <?php endif; ?>
                                         <?php if ( is_array( $plugin_updates ) && ! empty( $plugin_updates ) ) : ?>
-                                            <h4 style="color:#444;"><?php esc_html_e( 'Plugins Updates', 'mainwp' ); ?></h4>
+                                            <h4 style="color:#444;"><?php esc_html_e( 'Plugin Updates', 'mainwp' ); ?></h4>
                                             <table style="border:0;width:100%;text-align:left;padding:0;border-spacing:0;font-size:11px; margin-bottom:30px;">
                                                 <thead style="background: #eee">
                                                     <tr>
@@ -113,7 +113,7 @@ if ( empty( $heading ) ) {
                                             </table>
                                         <?php endif; ?>
                                         <?php if ( is_array( $theme_updates ) && ! empty( $theme_updates ) ) : ?>
-                                            <h4 style="color:#444;"><?php esc_html_e( 'Themes Updates', 'mainwp' ); ?></h4>
+                                            <h4 style="color:#444;"><?php esc_html_e( 'Theme Updates', 'mainwp' ); ?></h4>
                                             <table style="border:0;width:100%;text-align:left;padding:0;border-spacing:0;font-size:11px; margin-bottom:30px;">
                                                 <thead style="background: #eee">
                                                     <tr>

@@ -99,7 +99,7 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             /**
              * Filter: mainwp_detect_premium_plugins_update
              *
-             * Filters supported premium plugins to fix compatiblity issues with detecting premium plugins updates.
+             * Filters supported premium plugins to fix compatiblity issues with detecting premium plugin updates.
              *
              * @since Unknown
              */
@@ -119,7 +119,7 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             /**
              * Filter: mainwp_detect_premium_themes_update
              *
-             * Filters supported premium themes to fix compatiblity issues with detecting premium themes updates.
+             * Filters supported premium themes to fix compatiblity issues with detecting premium theme updates.
              *
              * @since Unknown
              */

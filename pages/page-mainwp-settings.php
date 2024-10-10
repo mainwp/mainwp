@@ -719,7 +719,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             esc_html_e( 'Plugin advanced automatic updates', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic plugins updates. If enabled, MainWP will update only plugins that you have marked as Trusted.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic plugin updates. If enabled, MainWP will update only plugins that you have marked as Trusted.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                                 <select name="mainwp_pluginAutomaticDailyUpdate" id="mainwp_pluginAutomaticDailyUpdate" class="ui dropdown settings-field-value-change-handler">
                                     <option value="1" <?php echo 1 === $snPluginAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
                                     <option value="0" <?php echo 0 === $snPluginAutomaticDailyUpdate || 2 === $snPluginAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
@@ -733,7 +733,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             esc_html_e( 'Theme advanced automatic updates', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic themes updates. If enabled, MainWP will update only themes that you have marked as Trusted.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic theme updates. If enabled, MainWP will update only themes that you have marked as Trusted.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                                 <select name="mainwp_themeAutomaticDailyUpdate" id="mainwp_themeAutomaticDailyUpdate" class="ui dropdown settings-field-value-change-handler">
                                     <option value="1" <?php echo 1 === $snThemeAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
                                     <option value="0" <?php echo 0 === $snThemeAutomaticDailyUpdate || 2 === $snThemeAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
@@ -1371,7 +1371,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                         <em><?php esc_html_e( 'If you have confirmed the placement of your openssl.cnf and are still receiving an error banner, click the "Error Fixed" button to dismiss it.', 'mainwp' ); ?></em>
                                     </div>
                                 </div>
-                    <?php } ?>
+                        <?php } ?>
 
                         <h3 class="ui dividing header">
                         <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-cross-ip' ); ?>
@@ -1384,8 +1384,11 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             esc_html_e( 'Maximum simultaneous requests (Default: 4)', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" class="settings-field-value-change-handler" name="mainwp_maximumRequests" id="mainwp_maximumRequests" value="<?php echo false === get_option( 'mainwp_maximumRequests' ) ? 4 : esc_attr( get_option( 'mainwp_maximumRequests' ) ); ?>"/>
+                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <div class="ui bottom aligned labeled slider" id="mainwp_maximumRequests_slider"></div>
+                                <div class="ui input">
+                                    <input type="hidden" class="settings-field-value-change-handler" name="mainwp_maximumRequests" id="mainwp_maximumRequests" value="<?php echo false === get_option( 'mainwp_maximumRequests' ) ? 4 : esc_attr( get_option( 'mainwp_maximumRequests' ) ); ?>"/>
+                                </div>
                             </div>
                         </div>
 
@@ -1393,11 +1396,14 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_minimumDelay', (int) get_option( 'mainwp_minimumDelay', 200 ) );
-                            esc_html_e( 'Minimum delay between requests (Default: 200)', 'mainwp' );
+                            esc_html_e( 'Minimum delay between requests in milliseconds (Default: 200ms)', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" class="settings-field-value-change-handler" name="mainwp_minimumDelay" id="mainwp_minimumDelay" value="<?php echo false === get_option( 'mainwp_minimumDelay' ) ? 200 : esc_attr( get_option( 'mainwp_minimumDelay' ) ); ?>"/>
+                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <div class="ui bottom aligned labeled slider" id="mainwp_minimumDelay_slider"></div>
+                                <div class="ui input">
+                                    <input type="hidden" class="settings-field-value-change-handler" name="mainwp_minimumDelay" id="mainwp_minimumDelay" value="<?php echo false === get_option( 'mainwp_minimumDelay' ) ? 200 : esc_attr( get_option( 'mainwp_minimumDelay' ) ); ?>"/>
+                                </div>
                             </div>
                         </div>
 
@@ -1412,8 +1418,11 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             esc_html_e( 'Maximum simultaneous requests per IP (Default: 1)', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column ui input"  data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" class="settings-field-value-change-handler" name="mainwp_maximumIPRequests" id="mainwp_maximumIPRequests" value="<?php echo false === get_option( 'mainwp_maximumIPRequests' ) ? 1 : esc_attr( get_option( 'mainwp_maximumIPRequests' ) ); ?>"/>
+                            <div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <div class="ui bottom aligned labeled slider" id="mainwp_maximumIPRequests_slider"></div>
+                                <div class="ui input">
+                                    <input type="hidden" class="settings-field-value-change-handler" name="mainwp_maximumIPRequests" id="mainwp_maximumIPRequests" value="<?php echo false === get_option( 'mainwp_maximumIPRequests' ) ? 1 : esc_attr( get_option( 'mainwp_maximumIPRequests' ) ); ?>"/>
+                                </div>
                             </div>
                         </div>
 
@@ -1421,11 +1430,14 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_minimumIPDelay', (int) get_option( 'mainwp_minimumIPDelay', 1000 ) );
-                            esc_html_e( 'Minimum delay between requests to the same IP (Default: 1000)', 'mainwp' );
+                            esc_html_e( 'Minimum delay between requests to the same IP in milliseconds (Default: 1000ms)', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" class="settings-field-value-change-handler" name="mainwp_minimumIPDelay" id="mainwp_minimumIPDelay" value="<?php echo false === get_option( 'mainwp_minimumIPDelay' ) ? 1000 : esc_attr( get_option( 'mainwp_minimumIPDelay' ) ); ?>"/>
+                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <div class="ui bottom aligned labeled slider" id="mainwp_minimumIPDelay_slider"></div>
+                                <div class="ui input">
+                                    <input type="hidden" class="settings-field-value-change-handler" name="mainwp_minimumIPDelay" id="mainwp_minimumIPDelay" value="<?php echo false === get_option( 'mainwp_minimumIPDelay' ) ? 1000 : esc_attr( get_option( 'mainwp_minimumIPDelay' ) ); ?>"/>
+                                </div>
                             </div>
                         </div>
 
@@ -1440,8 +1452,11 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             esc_html_e( 'Maximum simultaneous sync requests (Default: 8)', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'This option allows you to control how many sites your MainWP Dashboard should sync at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" class="settings-field-value-change-handler" name="mainwp_maximumSyncRequests" id="mainwp_maximumSyncRequests" value="<?php echo false === get_option( 'mainwp_maximumSyncRequests' ) ? 8 : esc_attr( get_option( 'mainwp_maximumSyncRequests' ) ); ?>"/>
+                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'This option allows you to control how many sites your MainWP Dashboard should sync at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <div class="ui bottom aligned labeled slider" id="mainwp_maximumSyncRequests_slider"></div>
+                                <div class="ui input">
+                                    <input type="hidden" class="settings-field-value-change-handler" name="mainwp_maximumSyncRequests" id="mainwp_maximumSyncRequests" value="<?php echo false === get_option( 'mainwp_maximumSyncRequests' ) ? 8 : esc_attr( get_option( 'mainwp_maximumSyncRequests' ) ); ?>"/>
+                                </div>
                             </div>
                         </div>
 
@@ -1452,8 +1467,11 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             esc_html_e( 'Maximum simultaneous install and update requests (Default: 3)', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column ui input"  data-tooltip="<?php esc_attr_e( 'This option allows you to control how many update and install requests your MainWP Dashboard should process at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" class="settings-field-value-change-handler" name="mainwp_maximumInstallUpdateRequests" id="mainwp_maximumInstallUpdateRequests" value="<?php echo false === get_option( 'mainwp_maximumInstallUpdateRequests' ) ? 3 : esc_attr( get_option( 'mainwp_maximumInstallUpdateRequests' ) ); ?>"/>
+                            <div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'This option allows you to control how many update and install requests your MainWP Dashboard should process at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <div class="ui bottom aligned labeled slider" id="mainwp_maximumInstallUpdateRequests_slider"></div>
+                                <div class="ui input">
+                                    <input type="hidden" class="settings-field-value-change-handler" name="mainwp_maximumInstallUpdateRequests" id="mainwp_maximumInstallUpdateRequests" value="<?php echo false === get_option( 'mainwp_maximumInstallUpdateRequests' ) ? 3 : esc_attr( get_option( 'mainwp_maximumInstallUpdateRequests' ) ); ?>"/>
+                                </div>
                             </div>
                         </div>
 
@@ -1571,6 +1589,104 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     </form>
                 </div>
             </div>
+            <script>
+            const maximumRequests = <?php echo ! empty( get_option( 'mainwp_maximumRequests' ) ) ? esc_js( get_option( 'mainwp_maximumRequests' ) ) : 4; ?>;
+            jQuery('#mainwp_maximumRequests_slider').slider({
+                min: 1,
+                max: 20,
+                start: maximumRequests,
+                step: 1,
+                restrictedLabels: [1,20],
+                showThumbTooltip: true,
+                tooltipConfig: {
+                    position: 'top center',
+                    variation: 'small visible black'
+                },
+                onChange: function(value) {
+                    jQuery('#mainwp_maximumRequests').val(value);
+                }
+            });
+            const minimumDelay = <?php echo ! empty( get_option( 'mainwp_minimumDelay' ) ) ? esc_js( get_option( 'mainwp_minimumDelay' ) ) : 200; ?>;
+            jQuery('#mainwp_minimumDelay_slider').slider({
+                min: 100,
+                max: 5000,
+                start: minimumDelay,
+                step: 100,
+                restrictedLabels: [100,5000],
+                showThumbTooltip: true,
+                tooltipConfig: {
+                    position: 'top center',
+                    variation: 'small visible black'
+                },
+                onChange: function(value) {
+                    jQuery('#mainwp_minimumDelay').val(value);
+                }
+            });
+            const maximumIPRequests = <?php echo ! empty( get_option( 'mainwp_maximumIPRequests' ) ) ? esc_js( get_option( 'mainwp_maximumIPRequests' ) ) : 1; ?>;
+            jQuery('#mainwp_maximumIPRequests_slider').slider({
+                min: 1,
+                max: 10,
+                start: maximumIPRequests,
+                step: 1,
+                restrictedLabels: [1,10],
+                showThumbTooltip: true,
+                tooltipConfig: {
+                    position: 'top center',
+                    variation: 'small visible black'
+                },
+                onChange: function(value) {
+                    jQuery('#mainwp_maximumIPRequests').val(value);
+                }
+            });
+            const minimumIPDelay = <?php echo ! empty( get_option( 'mainwp_minimumIPDelay' ) ) ? esc_js( get_option( 'mainwp_minimumIPDelay' ) ) : 1000; ?>;
+            jQuery('#mainwp_minimumIPDelay_slider').slider({
+                min: 500,
+                max: 5000,
+                start: minimumIPDelay,
+                step: 100,
+                restrictedLabels: [500,5000],
+                showThumbTooltip: true,
+                tooltipConfig: {
+                    position: 'top center',
+                    variation: 'small visible black'
+                },
+                onChange: function(value) {
+                    jQuery('#mainwp_minimumIPDelay').val(value);
+                }
+            });
+            const maximumSyncRequests = <?php echo ! empty( get_option( 'mainwp_maximumSyncRequests' ) ) ? esc_js( get_option( 'mainwp_maximumSyncRequests' ) ) : 8; ?>;
+            jQuery('#mainwp_maximumSyncRequests_slider').slider({
+                min: 1,
+                max: 20,
+                start: maximumSyncRequests,
+                step: 1,
+                restrictedLabels: [1,20],
+                showThumbTooltip: true,
+                tooltipConfig: {
+                    position: 'top center',
+                    variation: 'small visible black'
+                },
+                onChange: function(value) {
+                    jQuery('#mainwp_maximumSyncRequests').val(value);
+                }
+            });
+            const maximumInstallUpdateRequests = <?php echo ! empty( get_option( 'mainwp_maximumInstallUpdateRequests' ) ) ? esc_js( get_option( 'mainwp_maximumInstallUpdateRequests' ) ) : 3; ?>;
+            jQuery('#mainwp_maximumInstallUpdateRequests_slider').slider({
+                min: 1,
+                max: 20,
+                start: maximumInstallUpdateRequests,
+                step: 1,
+                restrictedLabels: [1,20],
+                showThumbTooltip: true,
+                tooltipConfig: {
+                    position: 'top center',
+                    variation: 'small visible black'
+                },
+                onChange: function(value) {
+                    jQuery('#mainwp_maximumInstallUpdateRequests').val(value);
+                }
+            });
+            </script>
         <?php
         static::render_footer( 'Advanced' );
     }
@@ -1583,7 +1699,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
     public static function render_mainwp_tools() { // phpcs:ignore -- NOSONAR - complex.
         if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
             mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
-
             return;
         }
         static::render_header( 'MainWPTools' );
@@ -1604,6 +1719,14 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     <div><?php esc_html_e( 'To create a custom theme, copy the `mainwp-dark-theme.css` file from the MainWP Custom Dashboard Extension located in the `css` directory, make your edits and upload the file to the `../wp-content/uploads/mainwp/custom-dashboard/` directory.', 'mainwp' ); ?></div>
                 </div>
             <?php endif; ?>
+            <?php
+            if ( isset( $_GET['message'] ) && '-1' === $_GET['message'] ) {
+                ?>
+                <div class="ui yellow message">
+                    <i class="close icon"></i>
+                    <?php esc_html_e( 'Unable to download the MainWP Dashboard Connect plugin. Please check your server settings or contact MainWP support for assistance.', 'mainwp' ); ?>
+                </div>
+            <?php } ?>
                 <?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) : ?>
                     <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
                 <?php endif; ?>
@@ -1648,6 +1771,49 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 </div>
                             </div>
                         </div>
+
+                        <?php
+                        $permalink                 = get_option( 'permalink_structure' );
+                        $zip_supported             = MainWP_Dashboard_Connect_Handle::instance()->is_zip_archive_supported();
+                        $disabled_download_connect = empty( $permalink ) || static::is_basic_auth_dashboard_enabled();
+
+                        $tip     = '';
+                        $btn_tip = '';
+
+                        if ( ! $zip_supported ) {
+                            $tip = esc_attr__( 'Unable to download the MainWP Dashboard Connect plugin. The ZipArchive library is not available on your server. Please contact your hosting provider to enable this library.', 'mainwp' );
+                        } elseif ( $disabled_download_connect ) {
+                            $tip = esc_attr__( 'Unable to download the MainWP Dashboard Connect plugin. The permalink settings are not configured, or HTTP Basic Authentication is enabled. Please update your permalink settings or disable HTTP Basic Authentication and try again.', 'mainwp' );
+                        } else {
+                            $btn_tip = esc_attr__( 'Click here to download the MainWP Dashboard Connect plugin.', 'mainwp' );
+                        }
+
+                        ?>
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools" default-indi-value="" >
+                            <label class="six wide column middle aligned">
+                            <?php
+                            MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', '' );
+                            esc_html_e( 'Download the MainWP Dashboard Connect plugin', 'mainwp' );
+                            ?>
+                            </label>
+                            <div class="ten wide column">
+                                <div class="ui blue message">
+                                    <div><?php esc_html_e( 'The MainWP Dashboard Connect Plugin allows you to easily migrate to MainWP from any other WordPress management system. The plugin is designed to automatically install the MainWP Child plugin on your sites and connect them to your MainWP Dashboard without any manual intervention.', 'mainwp' ); ?></div>
+                                    <ol>
+                                        <li><?php esc_html_e( 'Although the process authenticates via an automatically generated REST API key, you have the option to enter a custom passphrase for additional security if desired.', 'mainwp' ); ?></li>
+                                        <li><?php esc_html_e( 'Click the Download button to download the plugin.', 'mainwp' ); ?></li>
+                                        <li><?php esc_html_e( 'Use your current WordPress management system to install and activate the plugin on the sites you want to add to your MainWP Dashboard.', 'mainwp' ); ?></li>
+                                        <li><?php esc_html_e( 'Once the plugin is installed and activated, the MainWP Dashboard Connect plugin will automatically connect your sites to the MainWP Dashboard. It will then remove itself, allowing you to click the Continue button to proceed to the next step of the Quick Setup Wizard.', 'mainwp' ); ?></li>
+                                    </ol>
+                                </div>
+
+                                <div class="ui action input" <?php echo ! empty( $tip ) ? 'data-inverted="" data-position="top left" data-tooltip="' . esc_attr( $tip ) . '" ' : ''; ?> >
+                                    <span data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Enter an optional passphrase for additional security when adding site(s) through the MainWP Dashboard Connect plugin.', 'mainwp' ); ?>"><input type="text" class="settings-field-value-change-handler" name="download-mainwp-connect-pass" id="download-mainwp-connect-pass" <?php echo $zip_supported && ! $disabled_download_connect ? '' : 'disabled'; ?> value=""></span>
+                                    <button id="download-mainwp-dashboard-connect-button"  data-nonce="<?php echo esc_attr( wp_create_nonce( 'download-connect-nonce' ) ); ?>" <?php echo $zip_supported && ! $disabled_download_connect ? '' : ' disabled="disabled" '; ?>" <?php echo ! empty( $btn_tip ) ? 'data-inverted="" data-position="top right" data-tooltip="' . esc_attr( $btn_tip ) . '"' : ''; ?> class="ui green basic right labeled icon button <?php echo $zip_supported && ! $disabled_download_connect ? '' : 'disabled'; ?>" ><i class="download icon"></i> <?php esc_attr_e( 'Download', 'mainwp' ); ?></button>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="ui grid field">
                             <label class="six wide column middle aligned"><?php esc_html_e( 'Force your MainWP Dashboard to establish a new connection', 'mainwp' ); ?></label>
                             <div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'Force your MainWP Dashboard to reconnect with your child sites. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -1749,6 +1915,21 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         static::render_footer( 'MainWPTools' );
         MainWP_Connect_Helper::render_renew_connections_modal();
     }
+
+    /**
+     * Method is_basic_auth_dashboard_enabled.
+     *
+     * @return bool true|false.
+     */
+    public static function is_basic_auth_dashboard_enabled() { // phpcs:ignore -- NOSONAR - complex.
+        $response = wp_remote_get( get_site_url() . '/wp-json' );
+        $code     = wp_remote_retrieve_response_code( $response );
+        if ( 404 === (int) $code || 401 === (int) $code ) {
+            return true;
+        }
+        return false;
+    }
+
 
     /**
      * Render MainWP themes selection.

@@ -366,10 +366,10 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             static::render_header( '' );
             ?>
             <?php if ( 0 === count( $primaryBackupMethods ) ) { ?>
-                <div class="mainwp-notice mainwp-notice-blue"><?php printf( esc_html__( 'Did you know that MainWP has extensions for working with popular backup plugins? Visit the %1$sextensions site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
+                <div class="ui blue message"><?php printf( esc_html__( 'Did you know that MainWP has extensions for working with popular backup plugins? Visit the %1$sextensions site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
             <?php } ?>
             <div class="ui alt segment">
-                <div id="mainwp_managebackups_add_message" class="mainwp-notice mainwp-notice-green" style="display:
+                <div id="mainwp_managebackups_add_message" class="ui green message" style="display:
                 <?php
                 if ( isset( $_GET['a'] ) && '1' === $_GET['a'] ) {
                     echo 'block';

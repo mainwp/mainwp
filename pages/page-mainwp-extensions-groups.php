@@ -821,6 +821,8 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'level'                => 2,
         );
 
+        $extensions_and_leftmenus = apply_filters( 'mainwp_menu_extensions_left_menu', $extensions_and_leftmenus );
+
         foreach ( $extensions_and_leftmenus as $item ) {
             if ( isset( $item['type'] ) && 'extension' === $item['type'] ) {
                 static::add_extension_menu( $item );

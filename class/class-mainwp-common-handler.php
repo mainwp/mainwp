@@ -43,7 +43,7 @@ class MainWP_Common_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * Returns the number of available udpates for sites.
      *
-     * @return object $response An object that contains the return data and status of the API request.
+     * @return mixed $response An object that contains the return data and status of the API request.
      */
     public function sites_available_updates_count() {  // phpcs:ignore -- NOSONAR - complex function.
         $is_staging = 'no';

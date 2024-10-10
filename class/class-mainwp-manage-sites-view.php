@@ -220,7 +220,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             ),
             'ManageSitesEdit'          => array(
                 'href'   => 'admin.php?page=managesites&id=' . $site_id,
-                'title'  => esc_html__( 'Edit', 'mainwp' ),
+                'title'  => esc_html__( 'Settings', 'mainwp' ),
                 'access' => mainwp_current_user_have_right( 'dashboard', 'edit_sites' ),
             ),
             'ManageSitesUpdates'       => array(
@@ -384,8 +384,11 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      */
     public static function render_import_sites() { // phpcs:ignore -- NOSONAR - complex.
         ?>
-        <div id="mainwp-importing-sites" class="ui active inverted dimmer" style="display:none">
+        <div id="mainwp-importing-sites" class="ui active inverted dimmer">
             <div class="ui medium text loader"><?php esc_html_e( 'Importing', 'mainwp' ); ?></div>
+        </div>
+        <div class="ui message" id="mainwp-import-sites-status-message">
+            <?php echo '<i class="notched circle loading icon"></i> ' . esc_html__( 'Importing...', 'mainwp' ); ?>
         </div>
         <?php
         $errors = array();
@@ -394,7 +397,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             if ( isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) && is_uploaded_file( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) {
                 $tmp_path = isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) : '';
                 MainWP_System_Utility::get_wp_file_system();
-        //phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
+                //phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
 
                 /**
                  * WordPress files system object.
@@ -473,7 +476,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <input type="hidden" id="mainwp_managesites_total_import" value="<?php echo esc_attr( $row ); ?>"/>
 
                     <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_logging">
-                        <span class="log ui small text"><?php echo esc_html( $header_line ) . '<br/>'; ?></span>
+                        <span class="log ui medium text"><?php echo esc_html( $header_line ) . '<br/>'; ?></span>
                     </div>
                     <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_fail_logging" style="display: none;">
                     <?php
@@ -488,8 +491,67 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             } else {
                 $errors[] = esc_html__( 'Upload failed. Please, try again.', 'mainwp' ) . '<br />';
             }
+        } elseif ( check_admin_referer( 'mainwp-admin-nonce' ) && isset( $_FILES['mainwp_managesites_file_managewp']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_managewp']['error'] ) {
+            $file = isset( $_FILES['mainwp_managesites_file_managewp'] ) ? $_FILES['mainwp_managesites_file_managewp'] : array();
+            if ( isset( $file['tmp_name'] ) && is_uploaded_file( $file['tmp_name'] ) ) {
+                self::handle_import_site_file_zip_upload( $file, $errors );
+            } else {
+                $errors[] = esc_html__( 'Upload failed. Please, try again.', 'mainwp' ) . '<br />';
+            }
+        } elseif ( ! empty( $_POST['mainwp_managesites_import'] ) && check_admin_referer( 'mainwp-admin-nonce' ) ) {
+            // Set site data by POST value.
+            $sites_data = $_POST['mainwp_managesites_import'] ? wp_unslash( $_POST['mainwp_managesites_import'] ) : array();
+            if ( ! empty( $sites_data ) ) {
+                $import_data = array(); // Create default import data.
+                // Map data sites data to import_data.
+                foreach ( $sites_data as $site ) {
+                    // Break site if site_url and admin_name empty.
+                    if ( empty( $site['site_url'] ) && empty( $site['admin_name'] ) ) {
+                        continue;
+                    }
+                    // Map POST data to import data.
+                    $import_data[] = array(
+                        'name'               => ! empty( $site['site_name'] ) ? sanitize_text_field( wp_unslash( $site['site_name'] ) ) : '',
+                        'url'                => ! empty( $site['site_url'] ) ? sanitize_text_field( wp_unslash( $site['site_url'] ) ) : '',
+                        'adminname'          => ! empty( $site['admin_name'] ) ? sanitize_text_field( wp_unslash( $site['admin_name'] ) ) : '',
+                        'wpgroups'           => ! empty( $site['tag'] ) ? sanitize_text_field( wp_unslash( $site['tag'] ) ) : '',
+                        'uniqueId'           => ! empty( $site['security_id'] ) ? sanitize_text_field( wp_unslash( $site['security_id'] ) ) : '',
+                        'http_user'          => ! empty( $site['http_username'] ) ? sanitize_text_field( wp_unslash( $site['http_username'] ) ) : '',
+                        'http_pass'          => ! empty( $site['http_password'] ) ? sanitize_text_field( wp_unslash( $site['http_password'] ) ) : '',
+                        'verify_certificate' => ! empty( $site['verify_certificate'] ) && 1 !== (int) $site['verify_certificate'] ? intval( wp_unslash( $site['verify_certificate'] ) ) : 1,
+                        'ssl_version'        => ! empty( $site['ssl_version'] ) ? sanitize_text_field( wp_unslash( $site['ssl_version'] ) ) : 'auto',
+                    );
+                }
+                // Import website if import data is not empty.
+                if ( ! empty( $import_data ) ) {
+                    $header_line = trim( 'Site Name, Url, Admin Name, Tag,Security ID,HTTP Username,HTTP Password,Verify Certificate,SSL Version' ); // Set Header Line.
+                    // Map import data to input html.
+                    foreach ( $import_data as $key_import => $val_import ) {
+                        $line = trim( implode( ',', $val_import ) )
+                        ?>
+                        <input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo esc_attr( $key_import + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $val_import ) ); ?>" original="<?php echo esc_attr( $line ); ?>" />
+                    <?php } ?>
+                    <input type="hidden" id="mainwp_managesites_do_managesites_import" value="1"/>
+                    <input type="hidden" id="mainwp_managesites_do_import" value="1"/>
+                    <input type="hidden" id="mainwp_managesites_total_import" value="<?php echo esc_attr( count( $import_data ) ); ?>"/>
+
+                    <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_logging">
+                        <span class="log ui small text">
+                            <?php echo esc_html( $header_line ) . '<br/>'; ?>
+                        </span>
+                    </div>
+                    <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_fail_logging" style="display: none;">
+                        <?php echo esc_html( $header_line ); ?>
+                    </div>
+                    <?php
+                } else {
+                    $errors[] = esc_html__( 'An error occurred. Please, try again.', 'mainwp' ) . '<br />';
+                }
+            } else {
+                $errors[] = esc_html__( 'Import failed. Please, try again.', 'mainwp' ) . '<br />';
+            }
         } else {
-            $errors[] = esc_html__( 'Upload failed. Please, try again.', 'mainwp' ) . '<br />';
+            $errors[] = esc_html__( 'Import failed. Please, try again.', 'mainwp' ) . '<br />';
         }
 
         if ( ! empty( $errors ) ) {
@@ -503,6 +565,161 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             </div>
             <?php
         }
+    }
+
+    /**
+     * Method handle_import_site_file_zip_upload().
+     *
+     * Process uploaded ZIP file.
+     *
+     * @uses \ZipArchive
+     * @uses self::handle_import_site_file_zip_data()
+     * @uses self::handle_import_site_render_input_field()
+     *
+     * @param mixed $file file data.
+     * @param mixed $errors error message.
+     */
+    public static function handle_import_site_file_zip_upload($file, &$errors) { // phpcs:ignore -- NOSONAR - complex.
+        if ( 'application/zip' === $file['type'] || 'application/x-zip-compressed' === $file['type'] ) {
+            $tmp_path = isset( $_FILES['mainwp_managesites_file_managewp']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_managesites_file_managewp']['tmp_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+
+            $zip = new \ZipArchive();
+            if ( $zip->open( $tmp_path ) ) {
+                // Get the list of files in the ZIP.
+                $sites = self::handle_import_site_file_zip_data( $zip, 'sites.json' );
+                // Check if the sites.json file exists in the ZIP.
+                if ( ! empty( $sites ) && is_array( $sites ) ) {
+                    $site_values = array();
+                    $clients     = self::handle_import_site_file_zip_data( $zip, 'clients.json' );
+                    // Map site value.
+                    foreach ( $sites as $val_site ) {
+                        if ( null === $val_site['deletedAt'] ) {
+                            $site   = array(
+                                'name'               => $val_site['wpTitle'] ?? '',
+                                'url'                => $val_site['wpUrl'] ?? '',
+                                'adminname'          => $val_site['wpUsername'] ?? '',
+                                'wpgroups'           => '',
+                                'uniqueId'           => '',
+                                'http_user'          => $val_site['httpUser'] ?? '',
+                                'http_pass'          => $val_site['httpPassword'] ?? '',
+                                'verify_certificate' => 1,
+                                'ssl_version'        => 'auto',
+                            );
+                            $client = '';
+                            if ( ! empty( $clients ) ) {
+                                $filtered_client = array_filter(
+                                    $clients,
+                                    function ( $item ) use ( $val_site ) {
+                                        return $item['id'] === $val_site['clientId'];
+                                    }
+                                );
+                                $client          = array_map(
+                                    function ( $val_client ) {
+                                        $full_name = trim( ( $val_client['firstName'] ?? '' ) . ' ' . ( $val_client['lastName'] ?? '' ) );
+                                        return array(
+                                            'image'        => $val_client['imageUrl'] ?? '',
+                                            'name'         => $full_name,
+                                            'address_1'    => '',
+                                            'address_2'    => '',
+                                            'city'         => '',
+                                            'zip'          => '',
+                                            'state'        => '',
+                                            'country'      => $val_client['countryCode'] ?? '',
+                                            'note'         => $val_client['note'] ?? '',
+                                            'selected_icon_info' => 'selected:wordpress;color:#34424d',
+                                            'client_email' => $val_client['email'] ?? '',
+                                            'client_phone' => $val_client['tel'] ?? '',
+                                            'client_facebook' => '',
+                                            'client_twitter' => '',
+                                            'client_instagram' => '',
+                                            'client_linkedin' => '',
+                                            'suspended'    => 0,
+                                            'primary_contact_id' => 0,
+                                        );
+                                    },
+                                    $filtered_client
+                                );
+                            }
+
+                            $site_values[] = array(
+                                'site'   => $site,
+                                'client' => ! empty( $client ) ? array_values( $client ) : array(),
+                            );
+                        }
+                    }
+
+                    if ( ! empty( $site_values ) ) {
+                        static::handle_import_site_render_input_field( $site_values );
+                    }
+                } else {
+
+                    $errors[] = esc_html__( 'Invalid data. Please, review the import file.', 'mainwp' ) . '<br />';
+                }
+            } else {
+                $errors[] = esc_html__( 'Cannot open ZIP file.', 'mainwp' ) . '<br />';
+            }
+        } else {
+            $errors[] = esc_html__( 'Please upload a valid ZIP file.', 'mainwp' ) . '<br />';
+        }
+    }
+
+    /**
+     * Method handle_import_site_file_zip_data()
+     *
+     *  Read data from a JSON file and then return an array containing the results.
+     *
+     * @param mixed  $zip ZipArchive class.
+     * @param string $file_path file path.
+     *
+     * @return array|bool The array containing data or results is incorrect.
+     */
+    public static function handle_import_site_file_zip_data( $zip, $file_path ) {
+        if ( false !== $zip->locateName( $file_path ) ) {
+            $json_content = $zip->getFromName( $file_path );
+            $content      = json_decode( $json_content, true );
+            // Check if the decryption was successful.
+            if ( json_last_error() === JSON_ERROR_NONE && ! empty( $content ) && is_array( $content ) ) {
+                return $content;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Method handle_import_site_render_input_field()
+     *
+     * Render input field modal import sites.
+     *
+     * @param array $site_values website value.
+     */
+    public static function handle_import_site_render_input_field( $site_values ) {
+        $header_line = trim( 'Site Name, Url, Admin Name, Tag,Security ID,HTTP Username,HTTP Password,Verify Certificate,SSL Version' ); // Set Header Line.
+        foreach ( $site_values as $k_item => $item ) {
+            $site = $item['site'];
+            $line = trim( implode( ',', $site ) );
+            ?>
+                <input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo esc_attr( $k_item + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $site ) ); ?>" original="<?php echo esc_attr( $line ); ?>" />
+            <?php
+            if ( ! empty( $item['client'] ) ) {
+                $client      = $item['client'][0];
+                $client_line = trim( implode( ',', $client ) );
+                ?>
+                    <input class="mainwp_managesites_import_client_lines" type="hidden" id="mainwp_managesites_import_client_line_<?php echo esc_attr( $k_item + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $client ) ); ?>" original="<?php echo esc_attr( $client_line ); ?>" />
+                <?php
+            }
+        }
+        ?>
+        <input type="hidden" id="mainwp_managesites_do_import" value="1"/>
+        <input type="hidden" id="mainwp_managesites_total_import" value="<?php echo esc_attr( count( $site_values ) ); ?>"/>
+        <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_logging">
+            <span class="log ui small text">
+                <?php echo esc_html( $header_line ) . '<br/>'; ?>
+            </span>
+        </div>
+        <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_fail_logging" style="display: none;">
+            <?php echo esc_html( $header_line ); ?>
+        </div>
+        <?php
     }
 
     /**
@@ -636,10 +853,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                 <i class="dropdown icon"></i>
                                 <div class="menu">
                                     <div class="<?php echo 'WordPress' === $active_tab ? 'active' : ''; ?> item" data-tab="wordpress" data-value="wordpress"><?php esc_html_e( 'WordPress Updates', 'mainwp' ); ?></div>
-                                    <div class="<?php echo 'plugins' === $active_tab ? 'active' : ''; ?> item" data-tab="plugins" data-value="plugins"><?php esc_html_e( 'Plugins Updates', 'mainwp' ); ?></div>
-                                    <div class="<?php echo 'themes' === $active_tab ? 'active' : ''; ?> item" data-tab="themes" data-value="themes"><?php esc_html_e( 'Themes Updates', 'mainwp' ); ?></div>
+                                    <div class="<?php echo 'plugins' === $active_tab ? 'active' : ''; ?> item" data-tab="plugins" data-value="plugins"><?php esc_html_e( 'Plugin Updates', 'mainwp' ); ?></div>
+                                    <div class="<?php echo 'themes' === $active_tab ? 'active' : ''; ?> item" data-tab="themes" data-value="themes"><?php esc_html_e( 'Theme Updates', 'mainwp' ); ?></div>
                                     <?php if ( $show_language_updates ) { ?>
-                                    <div class="<?php echo 'trans' === $active_tab ? 'active' : ''; ?> item" data-tab="translations" data-value="translations"><?php esc_html_e( 'Translations Updates', 'mainwp' ); ?></div>
+                                    <div class="<?php echo 'trans' === $active_tab ? 'active' : ''; ?> item" data-tab="translations" data-value="translations"><?php esc_html_e( 'Translation Updates', 'mainwp' ); ?></div>
                                     <?php } ?>
                                     <div class="<?php echo 'abandoned-plugins' === $active_tab ? 'active' : ''; ?> item" data-tab="abandoned-plugins" data-value="abandoned-plugins"><?php esc_html_e( 'Abandoned Plugins', 'mainwp' ); ?></div>
                                     <div class="<?php echo 'abandoned-themes' === $active_tab ? 'active' : ''; ?> item" data-tab="abandoned-themes" data-value="abandoned-themes"><?php esc_html_e( 'Abandoned Themes', 'mainwp' ); ?></div>
@@ -828,7 +1045,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                 <option <?php echo MainWP_Utility::starts_with( $website->url, 'http:' ) ? 'selected' : ''; ?> value="http">http://</option>
                                 <option <?php echo MainWP_Utility::starts_with( $website->url, 'https:' ) ? 'selected' : ''; ?> value="https">https://</option>
                             </select>
-                            <div class="ui compact selection dropdown">
+                            <div class="ui compact selection dropdown" id="mainwp-edit-site-edit-url-www">
                                 <input type="hidden" name="mainwp_managesites_edit_wpurl_with_www" value="<?php echo false !== stripos( $website->url, '/www.' ) ? 'www' : 'none-www'; ?>">
                                 <i class="dropdown icon"></i>
                                 <div class="default text"><?php esc_html_e( 'www', 'mainwp' ); ?></div>
@@ -1049,7 +1266,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_automatic_update', (int) $website->automatic_update );
-                    esc_html_e( 'Install trusted updates', 'mainwp' );
+                    esc_html_e( 'Auto update WP Core', 'mainwp' );
                     ?>
                     </label>
                     <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want MainWP to automatically update WP Core on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -1334,6 +1551,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ?>
                 <div class="ui divider"></div>
                 <input type="submit" name="submit" id="submit" class="ui button green big" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                <input type="button" name="submit_remove_webiste" id="mainwp-managesites-remove-site" class="ui button red big floated right" value="<?php esc_attr_e( 'Remove Site', 'mainwp' ); ?>"/>
             </form>
         </div>
         <div class="ui modal" id="mainwp-test-connection-modal">
@@ -1975,9 +2193,15 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $message    = '';
         $id         = 0;
         $fetch_data = null;
+        $existed_id = 0;
 
         if ( $website ) {
             $error = esc_html__( 'The site is already connected to your MainWP Dashboard', 'mainwp' );
+            if ( is_array( $website ) && ! empty( $website[0] ) && is_object( $website[0] ) ) {
+                $existed_id = $website[0]->id;
+            } elseif ( is_object( $website ) && property_exists( $website, 'id' ) ) {
+                $existed_id = $website->id;
+            }
         } else {
             try {
                 if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
@@ -2012,7 +2236,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 $http_user         = isset( $params['http_user'] ) ? $params['http_user'] : '';
                 $http_pass         = isset( $params['http_pass'] ) ? $params['http_pass'] : '';
                 $force_use_ipv4    = isset( $params['force_use_ipv4'] ) ? $params['force_use_ipv4'] : null;
-                $information       = MainWP_Connect::fetch_url_not_authed(
+
+                MainWP_Logger::instance()->debug( ' :: register site :: ' . $url );
+
+                $information = MainWP_Connect::fetch_url_not_authed(
                     $url,
                     $params['wpadmin'],
                     'register',
@@ -2117,7 +2344,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             set_transient( 'mainwp_transient_just_connected_site_id', $id, HOUR_IN_SECONDS );
                             $message = sprintf( esc_html__( '%1$sCongratulations you have connected %2$s.%3$s After finishing the Quick Setup Wizard, you can add additional sites from the Add New Sites page.', 'mainwp' ), '<div class="ui header">', '<strong>' . esc_html( $params['name'] ) . '</strong>', '</div>' );
                         } else {
-                            $message = sprintf( esc_html__( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . esc_html__( 'Dashboard', 'mainwp' ) . '">', '</a>' );
+                            $message = sprintf( esc_html__( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.%3$s', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . esc_html__( 'Dashboard', 'mainwp' ) . '">', '</a>', '<br/>' );
                         }
 
                         $website = MainWP_DB::instance()->get_website_by_id( $id );
@@ -2161,7 +2388,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             }
         }
 
-        return array( $message, $error, $id, $fetch_data );
+        return array( $message, $error, $id, $fetch_data, $existed_id );
     }
 
     /**

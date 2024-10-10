@@ -54,7 +54,7 @@ class MainWP_Clients { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                  */
                 echo esc_html( apply_filters( 'mainwp_clients_widget_title', esc_html__( 'Clients', 'mainwp' ) ) );
                 ?>
-                <div class="sub header"><?php esc_html_e( 'Clients information', 'mainwp' ); ?></div>
+                <div class="sub header"><?php esc_html_e( 'View and manage all clients connected to your MainWP Dashboard.', 'mainwp' ); ?></div>
             </h3>
         </div>
         <div id="mainwp-clients-widget"  class="mainwp-scrolly-overflow">
@@ -135,16 +135,22 @@ class MainWP_Clients { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 </table>
                 <div class="ui two columns stackable grid mainwp-widget-footer">
                     <div class="left aligned column">
-                        <a href="admin.php?page=ManageClients" class="ui button mini fluid green"><?php esc_html_e( 'Clients', 'mainwp' ); ?></a>
+                        <a href="admin.php?page=ManageClients" class="ui button basic mini fluid green"><?php esc_html_e( 'Manage Clients', 'mainwp' ); ?></a>
                     </div>
                     <div class="right aligned column">
-                        <a href="admin.php?page=ClientAddNew" class="ui button basic mini fluid green"><?php esc_html_e( 'New Client', 'mainwp' ); ?></a>
+                        <a href="admin.php?page=ClientAddNew" class="ui button mini fluid green"><?php esc_html_e( 'New Client', 'mainwp' ); ?></a>
                     </div>
                 </div>
                 <script type="text/javascript">
                 jQuery( document ).ready( function() {
                     jQuery.fn.DataTable.ext.pager.numbers_length = 4;
                     jQuery( '#mainwp-clients-widget-table' ).DataTable( {
+                        "info": false,
+                        "layout": {
+                            "bottom": 'paging',
+                            "bottomStart": null,
+                            "bottomEnd": null
+                        },
                         "lengthMenu": [ [5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"] ],
                         "stateSave" : true,
                         "order"     : [ [1, 'asc'] ],

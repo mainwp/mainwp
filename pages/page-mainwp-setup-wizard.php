@@ -545,15 +545,9 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses MainWP_Manage_Sites::mainwp_managesites_form_import_sites()
      * @uses MainWP_Manage_Sites::mainwp_managesites_information_import_sites()
      * @uses MainWP_Manage_Sites::render_import_sites_modal()
-     * @uses MainWP_DB::instance()->get_websites_count()
      * @uses MainWP_Utility::show_mainwp_message()
      */
     public function mwp_setup_connect_first_site() {
-        $count = MainWP_DB::instance()->get_websites_count( null, true );
-        if ( 1 <= $count ) {
-            $this->mwp_setup_connect_first_site_already();
-            return;
-        }
 
         $has_file_upload    = isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_bulkupload']['error'];
         $has_import_data    = ! empty( $_POST['mainwp_managesites_import'] );
@@ -663,7 +657,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <div class="ui hidden divider"></div>
                         </div>
                         <div class="mainwp-wish-to-csv mainwp-wish-to-migrate">
-                            <div class="ui blue message"><?php MainWP_Manage_Sites::mainwp_managesites_information_import_sites(); ?></div>
+                            <div class="ui blue message"><?php MainWP_Manage_Sites::mainwp_managesites_information_import_sites( true ); ?></div>
                             <?php MainWP_Manage_Sites::mainwp_managesites_form_import_sites(); ?>
                             <div class="ui hidden divider"></div>
                             <div class="ui hidden divider"></div>
@@ -792,6 +786,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $count_clients = MainWP_DB_Client::instance()->count_total_clients();
         $sites         = MainWP_DB::instance()->get_sites(); // Get site data.
         $total_sites   = ! empty( $sites ) ? count( $sites ) : 5; // set default
+
         if ( ! empty( $count_clients ) ) :
             ?>
             <h1 class="ui header"><?php esc_html_e( 'Congratulations!', 'mainwp' ); ?></h1>
@@ -804,11 +799,11 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
                 <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                 <div class="ui top attached tabular menu mainwp-qsw-add-client">
-                    <a class="item active" data-tab="single-client"><?php esc_html_e( 'Single Client', 'mainwp' ); ?></a>
-                    <a class="item" data-tab="multiple-client"><?php esc_html_e( 'Multiple Clients', 'mainwp' ); ?></a>
+                    <a class="item <?php echo 1 === $total_sites ? 'active' : ''; ?>" data-tab="single-client"><?php esc_html_e( 'Single Client', 'mainwp' ); ?></a>
+                    <a class="item <?php echo 1 < $total_sites ? 'active' : ''; ?>" data-tab="multiple-client"><?php esc_html_e( 'Multiple Clients', 'mainwp' ); ?></a>
                 </div>
 
-                <div class="ui bottom attached tab segment active" data-tab="single-client">
+                <div class="ui bottom attached tab segment <?php echo 1 === $total_sites ? 'active' : ''; ?>" data-tab="single-client">
                     <div class="ui hidden divider"></div>
                     
                     <div id="mainwp-add-new-client-form" >
@@ -816,18 +811,23 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     </div>
                     <input type="hidden" name="selected_first_site" value="<?php echo intval( $first_site_id ); ?>">
                 </div>
-                <div class="ui bottom attached tab segment" data-tab="multiple-client">
+                <div class="ui bottom attached tab segment <?php echo 1 < $total_sites ? 'active' : ''; ?>" data-tab="multiple-client">
+                    <div class="ui blue message">
+                    <div><?php esc_html_e( 'For each site you’ve imported, please enter the Client Name and Client Email.', 'mainwp' ); ?></div>
+                    <div><?php esc_html_e( 'If the same client name and email are used across multiple sites, those sites will be merged and assigned to a single client profile.', 'mainwp' ); ?></div>
+                    <div><strong><?php esc_html_e( 'You can always update or edit this information later from the Clients module in your MainWP Dashboard.', 'mainwp' ); ?></strong></div>
+                    </div>
                     <div class="ui mainwp-widget segment">
                         <div class="ui middle aligned left aligned compact grid">
                             <div class="ui row">
                                 <div class="five wide column" >
-                                    <span class="ui text small"><?php esc_html_e( 'Site URL (required)', 'mainwp' ); ?></span>
+                                    <span class="ui text small"><strong><?php esc_html_e( 'Client Site URL (required)', 'mainwp' ); ?></strong></span>
                                 </div>
                                 <div class="five wide column">
-                                    <span class="ui text small"><?php esc_html_e( 'Client Name (required)', 'mainwp' ); ?></span>
+                                    <span class="ui text small"><strong><?php esc_html_e( 'Client Name (required)', 'mainwp' ); ?></strong></span>
                                 </div>
                                 <div class="five wide column">
-                                    <span class="ui text small"><?php esc_html_e( 'Client Email (required)', 'mainwp' ); ?></span>
+                                    <span class="ui text small"><strong><?php esc_html_e( 'Client Email (required)', 'mainwp' ); ?></strong></span>
                                 </div>
                                 <div class="one wide column">
                                     <span></span>
@@ -872,8 +872,18 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $edit_client           = false;
         $client_id             = 0;
         $default_client_fields = MainWP_Client_Handler::get_mini_default_client_fields();
+        $first_site_id         = get_transient( 'mainwp_transient_just_connected_site_id' );
+        $website               = MainWP_DB::instance()->get_website_by_id( $first_site_id );
         ?>
         <div class="ui form">
+            <?php if ( $first_site_id ) : ?>
+                <div class="field">
+                    <label><?php esc_html_e( 'Client Site URL', 'mainwp' ); ?></label>
+                    <div class="ui disabled fluid input">
+                        <input type="text" value="<?php echo esc_url( $website->url ); ?>" />
+                    </div>
+                </div>
+            <?php endif; ?>
             <?php
             foreach ( $default_client_fields as $field_name => $field ) {
                 $db_field = isset( $field['db_field'] ) ? $field['db_field'] : '';
@@ -981,7 +991,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         ob_start();
         ?>
             <div class="ui hidden divider top-contact-fields"></div> <?php // must have class: top-contact-fields. ?>
-            <div class="ui horizontal divider"><?php esc_html_e( 'Add Contact', 'mainwp' ); ?></div>
+            <div class="ui left aligned horizontal divider"><?php esc_html_e( 'Add Contact', 'mainwp' ); ?></div>
             <div class="ui hidden divider"></div>
             <div class="ui hidden divider"></div>
             <?php

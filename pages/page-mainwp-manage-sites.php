@@ -645,13 +645,13 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                     <div class="ui labeled icon inverted menu mainwp-sub-submenu" id="mainwp-add-sites-tabular-menu">
                         <a class="item active" data-tab="single-site">
-                            <i class="WordPress icon"></i>
+                            <i class="wordpress icon"></i><?php //phpcs:ignore -- WP icon. ?>
                             <?php echo esc_html( 'Single Site', 'mainwp' ); ?>
                         </a>
                         <a class="item" data-tab="multiple-site">
                             <div class="icons" style="margin:0.5rem auto">
-                                <i class="icon WordPress"></i>
-                                <i class="icon WordPress"></i>
+                                <i class="icon wordpress"></i><?php //phpcs:ignore -- WP icon. ?>
+                                <i class="icon wordpress"></i><?php //phpcs:ignore -- WP icon. ?>
                             </div>
                             <?php echo esc_html( 'Multiple Sites', 'mainwp' ); ?>
                         </a>
@@ -1216,19 +1216,31 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             mainwp_do_not_have_permissions( esc_html__( 'add sites', 'mainwp' ) );
             return;
         } elseif ( ( $has_file_upload || $has_import_data || $has_manage_wp_data ) && check_admin_referer( 'mainwp-admin-nonce' ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Missing
-            static::render_import_sites_modal( 'admin.php?page=managesites&do=bulknew' );
+            static::render_import_sites_modal( 'admin.php?page=managesites&do=bulknew', $title_page );
         } else {
             ?>
-                <div class="ui segment" id="mainwp-import-sites">
-
-                    <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-sites-info-message' ) ) : ?>
+            <div id="mainwp-import-sites">
+                <div class="ui labeled icon inverted menu mainwp-sub-submenu" id="mainwp-import-sites-tabular-menu">
+                    <a class="item active" data-tab="mainwp-import-csv">
+                        <i class="file excel icon"></i>
+                        <?php echo esc_html( 'CSV Import', 'mainwp' ); ?>
+                    </a>
+                    <a class="item" data-tab="mainwp-import-manage-json">
+                        <i class="file import icon"></i>
+                        <?php echo esc_html( 'ManageWP JSON Import', 'mainwp' ); ?>
+                    </a>
+                </div>
+                <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-sites-info-message' ) ) : ?>
+                    <div class="ui segment">
                         <div class="ui info message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-sites-info-message"></i>
                             <?php printf( esc_html__( 'You can download the sample CSV file to see how to format the import file properly. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
                         </div>
-                    <?php endif; ?>
-                    <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
-                        <form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form" class="ui form">
+                    </div>
+                <?php endif; ?>
+                <form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form" class="ui form">
+                    <div class="ui bottom attached tab segment active" data-tab="mainwp-import-csv">
+                        <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
                         <h3 class="ui dividing header">
                             <?php echo esc_html( $title_page ); ?>
                             <div class="sub header"><?php esc_html_e( 'Import multiple websites to your MainWP Dashboard.', 'mainwp' ); ?></div>
@@ -1246,14 +1258,21 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                 <label for="mainwp_managesites_chk_header_first"><?php esc_html_e( 'CSV file contains a header', 'mainwp' ); ?></label>
                             </div>
                         </div>
+                    </div>
+                    <div class="ui bottom attached tab segment" data-tab="mainwp-import-manage-json">
+                        <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
                         <?php self::mainwp_managesites_form_import_sites_file_managewp(); ?>
+                    </div>
+                    <div class="ui segment">
                         <div class="ui divider"></div>
                         <input type="button" name="mainwp_managesites_add" id="mainwp_managesites_bulkadd" class="ui big green button" value="<?php echo esc_attr( $title_page ); ?>"/>
-                        
-                    </form>
-                </div>
-                <?php
-
+                    </div>
+                </form>
+                <script type="text/javascript">
+                    jQuery('#mainwp-import-sites-tabular-menu .item').tab();
+                </script>
+            </div>
+            <?php
         }
         static::render_footer( $showpage );
     }
@@ -2024,16 +2043,29 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * Display Import site information.
      */
-    public static function mainwp_managesites_information_import_sites() {
+    public static function mainwp_managesites_information_import_sites( $is_qsw = false ) {
         ?>
         <?php esc_html_e( 'MainWP requires the MainWP Child plugin to be installed and activated on the WordPress sites that you want to connect to your MainWP Dashboard. ', 'mainwp' ); ?>
         <?php esc_html_e( 'To connect multiple sites, please follow these steps:', 'mainwp' ); ?>
         <ol>
-            <li><?php esc_html_e( 'Fill in the required fields (Site URL and Admin Name) for each site you want to connect. Optionally, provide additional information such as Site Name, Tag, Security ID, HTTP Username, and HTTP Password if applicable.', 'mainwp' ); ?></li>
+            <li><?php esc_html_e( 'Fill in the Site URL field by entering the URL of the website you want to connect.', 'mainwp' ); ?></li>
+            <li><?php esc_html_e( 'Enter the username of your Administrator account on the site.', 'mainwp' ); ?></li>
+            <li><?php esc_html_e( 'Optionally, enter a custom Site Name, or MainWP will automatically generate a name for it.', 'mainwp' ); ?></li>
+            <?php if ( $is_qsw ) : ?>
+            <li><?php esc_html_e( 'To show additional fields (Tags, Security ID, HTTP Username, HTTP Password, SSL Version, and SSL Verification, click the eye icon at the end of the row.', 'mainwp' ); ?></li>
+            <?php endif; ?>
+            <li><?php esc_html_e( 'If needed, you can tag your sites in the Tag field.', 'mainwp' ); ?></li>
+            <li><?php esc_html_e( 'If you have enabled the Unique Security ID in the MainWP Child plugin settings, enter the Security ID in the corresponding field.', 'mainwp' ); ?></li>
+            <li><?php esc_html_e( 'If the website you are trying to connect is protected with HTTP Basic Auth, enter the HTTP Username & Password. If not, leave it blank.', 'mainwp' ); ?></li>
             <li><?php esc_html_e( 'Keep the default value of "1" to verify the SSL certificate for your sites, or change it if you prefer not to verify.', 'mainwp' ); ?></li>
-            <li><?php esc_html_e( 'Leave this as "auto" unless you know the specific SSL version required by the site. The "auto" option typically works for most sites.', 'mainwp' ); ?></li>
-            <li><?php esc_html_e( 'Use the "Add New Row" button to add additional rows if you need to connect more sites at once.', 'mainwp' ); ?></li>
+            <li><?php esc_html_e( 'Leave the SSL Version as "auto" unless you know the specific version required by the site. The "auto" option typically works for most sites.', 'mainwp' ); ?></li>
+            <li><?php esc_html_e( 'Repeat this process for all sites you want to add.', 'mainwp' ); ?></li>
+            <li><?php esc_html_e( 'Use the Add New Row button to add additional rows if you need to connect more sites at once.', 'mainwp' ); ?></li>
+            <?php if ( ! $is_qsw ) : ?>
             <li><?php esc_html_e( 'After filling in all the required information, submit the form to connect the selected sites to your MainWP Dashboard.', 'mainwp' ); ?></li>
+            <?php else : ?>
+            <li><?php esc_html_e( 'After filling in all the required information, confirm that you have the MainWP Child plugin installed and activated and click the Connect Sites button to proceed.', 'mainwp' ); ?></li>
+            <?php endif; ?>
         </ol>
         <?php
     }
@@ -2297,6 +2329,21 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <?php echo esc_html_e( 'Import a Site in ManageWP', 'mainwp' ); ?>
             <div class="sub header"><?php esc_html_e( 'Import multiple websites from ManageWP to your MainWP Dashboard.', 'mainwp' ); ?></div>
         </h3>
+        <div class="ui blue message">
+            <div><?php esc_html_e( 'This option allows you to easily migrate form ManageWP to MainWP.', 'mainwp' ); ?></div>
+            <ol>
+                <li><?php esc_html_e( 'Go to your ManageWP dashboard', 'mainwp' ); ?></li>
+                <li><?php esc_html_e( 'Click on your name or profile image in the top-right corner of the ManageWP Dashboard', 'mainwp' ); ?></li>
+                <li><?php esc_html_e( 'From the dropdown menu, select Settings, then navigate to the Profile tab', 'mainwp' ); ?></li>
+                <li><?php esc_html_e( 'Scroll down to the "Export Personal Data" section', 'mainwp' ); ?></li>
+                <li><?php esc_html_e( 'Click the Request Data Export button', 'mainwp' ); ?></li>
+                <li><?php esc_html_e( 'ManageWP will prepare your data in a JSON format, and you will be notified once the export is complete', 'mainwp' ); ?></li>
+                <li><?php esc_html_e( 'Once you have the export, return here to the MainWP Quick Setup to continue the import process', 'mainwp' ); ?></li>
+                <li><?php esc_html_e( 'Upload the ZIP file obtained from exporting your data from ManageWP', 'mainwp' ); ?></li>
+                <li><?php esc_html_e( 'Click the Connect Sites button to proceed', 'mainwp' ); ?></li>
+            </ol>
+            <div><?php esc_html_e( 'This will import your sites along with associated client data.', 'mainwp' ); ?></div>
+        </div>
         <div class="ui grid field">
             <label class="<?php echo esc_attr( $label_class ); ?> wide column middle aligned" for="mainwp_managesites_file_managewp">
                 <?php esc_html_e( 'Upload ZIP file', 'mainwp' ); ?>
@@ -2322,14 +2369,29 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public static function render_import_sites_modal( $url, $title_page ) {
         ?>
-        <div class="ui large modal" id="mainwp-import-sites-modal">
-            <i class="close icon"></i>
+        <div class="ui large modal <?php echo ( 'Import Sites' === $title_page ) ? 'mainwp-qsw-import-modal' : ''; ?>" id="mainwp-import-sites-modal" >
+            <?php if ( 'Import Sites' !== $title_page ) : ?>
+                <i class="close icon"></i>
+            <?php endif; ?>
             <div class="header"><?php echo esc_html( $title_page ); ?></div>
             <div class="scrolling content">
             <?php MainWP_Manage_Sites_View::render_import_sites(); ?>
             </div>
             <div class="actions">
-                <input type="button" name="mainwp_managesites_btn_import" id="mainwp_managesites_btn_import" class="ui basic button" value="<?php esc_attr_e( 'Pause', 'mainwp' ); ?>"/>
+                <div class="ui two column grid">
+                    <div class="left aligned middle aligned column">
+                        <input type="button" name="mainwp_managesites_btn_import" id="mainwp_managesites_btn_import" class="ui basic button" value="<?php esc_attr_e( 'Pause', 'mainwp' ); ?>"/>
+                        <?php if ( 'Import Sites' === $title_page ) : ?>
+                            <a class="ui green button" id="mainwp-import-sites-modal-try-again" href="admin.php?page=mainwp-setup&step=connect_first_site" style="display:none"><?php esc_html_e( 'Try Again', 'mainwp' ); ?></a>
+                        <?php endif; ?>
+                    </div>
+                    <div class="right aligned middle aligned column">
+                        <?php if ( 'Import Sites' === $title_page ) : ?>
+                            <a class="ui basic green button" id="mainwp-import-sites-modal-continue" href="admin.php?page=mainwp-setup&step=add_client" style="display:none"><?php esc_html_e( 'Continue', 'mainwp' ); ?></a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                
             </div>
         </div>
         <script type="text/javascript">

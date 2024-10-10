@@ -783,11 +783,11 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Render Add first Client Step form.
      */
     public function mwp_setup_add_client() {
-        $count_clients = MainWP_DB_Client::instance()->count_total_clients();
-        $sites         = MainWP_DB::instance()->get_sites(); // Get site data.
-        $total_sites   = ! empty( $sites ) ? count( $sites ) : 5; // set default
+        $count_clients     = MainWP_DB_Client::instance()->count_total_clients();
+        $sites             = MainWP_DB::instance()->get_sites(); // Get site data.
+        $total_sites       = ! empty( $sites ) ? count( $sites ) : 5; // set default
         $item_class_active = 1 === $total_sites ? 'active' : '';
-        $tab_class_active = 1 < $total_sites ? 'active' : '';
+        $tab_class_active  = 1 < $total_sites ? 'active' : '';
         if ( ! empty( $count_clients ) ) :
             ?>
             <h1 class="ui header"><?php esc_html_e( 'Congratulations!', 'mainwp' ); ?></h1>

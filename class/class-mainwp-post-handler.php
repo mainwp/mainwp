@@ -1536,7 +1536,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      * Create value if empty or array key exists.
      *
      * @param mixed $values temp import sites.
-     * @param int   $index row key
+     * @param int   $index row key.
      * @param array $row_item new row.
      *
      * @return bool true.

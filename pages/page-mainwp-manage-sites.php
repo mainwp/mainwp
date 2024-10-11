@@ -2367,9 +2367,9 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses MainWP_Manage_Sites_View::render_import_sites()
      *
      * @param string $url location url href.
-     * @param string $title_page modal title.
+     * @param string|null $title_page modal title.
      */
-    public static function render_import_sites_modal( $url, $title_page ) {
+    public static function render_import_sites_modal( $url, $title_page = null ) {
         ?>
         <div class="ui large modal <?php echo ( 'Import Sites' === $title_page ) ? 'mainwp-qsw-import-modal' : ''; ?>" id="mainwp-import-sites-modal" >
             <?php if ( 'Import Sites' !== $title_page ) : ?>

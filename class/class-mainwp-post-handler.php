@@ -1615,7 +1615,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
                 wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
             }
 
-            $data = json_decode( $data, true );
+            $client_data = json_decode( $data, true );
             // Create client.
             $client = $this->mainwp_handle_create_client( $client_data );
             if ( $client ) {

@@ -800,11 +800,11 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
                 <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                 <div class="ui top attached tabular menu mainwp-qsw-add-client">
-                    <a class="item <?php echo $item_class_active; ?>" data-tab="single-client"><?php esc_html_e( 'Single Client', 'mainwp' ); ?></a>
-                    <a class="item <?php echo $tab_class_active; ?>" data-tab="multiple-client"><?php esc_html_e( 'Multiple Clients', 'mainwp' ); ?></a>
+                    <a class="item <?php echo esc_attr( $item_class_active ); ?>" data-tab="single-client"><?php esc_html_e( 'Single Client', 'mainwp' ); ?></a>
+                    <a class="item <?php echo esc_attr( $tab_class_active ); ?>" data-tab="multiple-client"><?php esc_html_e( 'Multiple Clients', 'mainwp' ); ?></a>
                 </div>
 
-                <div class="ui bottom attached tab segment <?php echo $item_class_active; ?>" data-tab="single-client">
+                <div class="ui bottom attached tab segment <?php echo esc_attr( $item_class_active ); ?>" data-tab="single-client">
                     <div class="ui hidden divider"></div>
                     
                     <div id="mainwp-add-new-client-form" >
@@ -812,7 +812,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     </div>
                     <input type="hidden" name="selected_first_site" value="<?php echo intval( $first_site_id ); ?>">
                 </div>
-                <div class="ui bottom attached tab segment <?php echo $tab_class_active; ?>" data-tab="multiple-client">
+                <div class="ui bottom attached tab segment <?php echo esc_attr( $tab_class_active ); ?>" data-tab="multiple-client">
                     <div class="ui blue message">
                     <div><?php esc_html_e( 'For each site you’ve imported, please enter the Client Name and Client Email.', 'mainwp' ); ?></div>
                     <div><?php esc_html_e( 'If the same client name and email are used across multiple sites, those sites will be merged and assigned to a single client profile.', 'mainwp' ); ?></div>

@@ -646,14 +646,14 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <div class="ui labeled icon inverted menu mainwp-sub-submenu" id="mainwp-add-sites-tabular-menu">
                         <a class="item active" data-tab="single-site">
                             <i class="wordpress icon"></i><?php //phpcs:ignore -- WP icon. ?>
-                            <?php echo esc_html( 'Single Site', 'mainwp' ); ?>
+                            <?php esc_html_e( 'Single Site', 'mainwp' ); ?>
                         </a>
                         <a class="item" data-tab="multiple-site">
                             <div class="icons" style="margin:0.5rem auto">
                                 <i class="icon wordpress"></i><?php //phpcs:ignore -- WP icon. ?>
                                 <i class="icon wordpress"></i><?php //phpcs:ignore -- WP icon. ?>
                             </div>
-                            <?php echo esc_html( 'Multiple Sites', 'mainwp' ); ?>
+                            <?php esc_html_e( 'Multiple Sites', 'mainwp' ); ?>
                         </a>
                     </div>
                     <div class="ui bottom attached tab segment active" data-tab="single-site">
@@ -1223,11 +1223,11 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <div class="ui labeled icon inverted menu mainwp-sub-submenu" id="mainwp-import-sites-tabular-menu">
                     <a class="item active" data-tab="mainwp-import-csv">
                         <i class="file excel icon"></i>
-                        <?php echo esc_html( 'CSV Import', 'mainwp' ); ?>
+                        <?php esc_html_e( 'CSV Import', 'mainwp' ); ?>
                     </a>
                     <a class="item" data-tab="mainwp-import-manage-json">
                         <i class="file import icon"></i>
-                        <?php echo esc_html( 'ManageWP JSON Import', 'mainwp' ); ?>
+                        <?php esc_html_e( 'ManageWP JSON Import', 'mainwp' ); ?>
                     </a>
                 </div>
                 <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-sites-info-message' ) ) : ?>
@@ -2041,6 +2041,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     /**
      * Method mainwp_managesites_information_import_sites()
      *
+     * @param bool $is_qsw is qsw.
+     *
      * Display Import site information.
      */
     public static function mainwp_managesites_information_import_sites( $is_qsw = false ) {
@@ -2399,7 +2401,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 jQuery( "#mainwp-import-sites-modal" ).modal( {
                     closable: false,
                     onHide: function() {
-                        location.href = '<?php echo ! empty( $url ) ? $url : ''; ?>';
+                        location.href = '<?php echo ! empty( $url ) ? $url : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>';
                     }
                 } ).modal( 'show' );
             } );

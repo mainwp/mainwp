@@ -1262,7 +1262,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count()
      */
-    public static function render_header_actions() { //phpcs:ignore -- NOSONAR - complex method.
+    public static function render_header_actions() { // phpcs:ignore -- NOSONAR - complex method.
         $sites_count   = MainWP_DB::instance()->get_websites_count();
         $sidebar_pages = array( 'ManageGroups', 'PostBulkManage', 'PostBulkAdd', 'PageBulkManage', 'PageBulkAdd', 'ThemesManage', 'ThemesInstall', 'ThemesAutoUpdate', 'PluginsManage', 'PluginsInstall', 'PluginsAutoUpdate', 'UserBulkManage', 'UserBulkAdd', 'UpdateAdminPasswords', 'Extensions' );
         $sidebar_pages = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages ); // deprecated filter.
@@ -1314,7 +1314,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             </div>
         </div>
 
-        <?php if ( ( 'mainwp_tab' === $page ) || isset( $_GET['dashboard'] ) || in_array( $page, $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended ?>
+        <?php if ( ( 'mainwp_tab' === $page ) || isset( $_GET['dashboard'] ) || in_array( $page, $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Recommended ?>
         <a id="mainwp-screen-options-button" class="ui button icon" onclick="jQuery( '#mainwp-overview-screen-options-modal' ).modal({allowMultiple:true}).modal( 'show' ); return false;" data-inverted="" data-position="bottom right" href="#" aria-label="<?php esc_attr_e( 'Page Settings', 'mainwp' ); ?>" data-tooltip="<?php esc_html_e( 'Page Settings', 'mainwp' ); ?>">
             <i class="cog icon"></i>
         </a>
@@ -1413,8 +1413,9 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $subitems = apply_filters( 'mainwp_page_navigation', $subitems, $name_caller );
         ?>
         <div id="mainwp-page-navigation-wrapper">
-            <?php if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) ) : ?>
+            <?php if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
                 <?php
+                // phpcs:disable WordPress.Security.NonceVerification
                 $id = 0;
                 if ( isset( $_GET['dashboard'] ) ) {
                     $id = intval( $_GET['dashboard'] );
@@ -1427,7 +1428,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 } elseif ( isset( $_GET['scanid'] ) ) {
                     $id = intval( $_GET['scanid'] );
                 }
-
+                // phpcs: enable
                 $website = MainWP_DB::instance()->get_website_by_id( $id );
                 ?>
                 <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" src="//s0.wordpress.com/mshots/v1/<?php echo esc_html( rawurlencode( $website->url ) ); ?>?w=170">

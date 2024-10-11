@@ -395,10 +395,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         //phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
         if ( isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_bulkupload']['error'] && check_admin_referer( 'mainwp-admin-nonce' ) ) {
             if ( isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) && is_uploaded_file( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) {
-                $tmp_path = isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) : '';
+                $tmp_path = isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification
                 MainWP_System_Utility::get_wp_file_system();
-                //phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
-
+                //phpcs:enable
                 /**
                  * WordPress files system object.
                  *
@@ -579,9 +578,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param mixed $file file data.
      * @param mixed $errors error message.
      */
-    public static function handle_import_site_file_zip_upload($file, &$errors) { // phpcs:ignore -- NOSONAR - complex.
+    public static function handle_import_site_file_zip_upload($file, &$errors) { //phpcs:ignore -- NOSONAR - complex.
         if ( 'application/zip' === $file['type'] || 'application/x-zip-compressed' === $file['type'] ) {
-            $tmp_path = isset( $_FILES['mainwp_managesites_file_managewp']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_managesites_file_managewp']['tmp_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+            $tmp_path = isset( $_FILES['mainwp_managesites_file_managewp']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_managesites_file_managewp']['tmp_name'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification
 
             $zip = new \ZipArchive();
             if ( $zip->open( $tmp_path ) ) {

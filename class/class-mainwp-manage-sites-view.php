@@ -2141,8 +2141,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @return self add_wp_site()
      */
-    public static function add_site( $website = false, &$output = array() ) { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
-        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+    public static function add_site( $website = false, &$output = array() ) { //phpcs:ignore -- NOSONAR - complexity.
+        //phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $params['url']                = isset( $_POST['managesites_add_wpurl'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpurl'] ) ) : '';
         $params['name']               = isset( $_POST['managesites_add_wpname'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpname'] ) ) : '';
         $params['wpadmin']            = isset( $_POST['managesites_add_wpadmin'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpadmin'] ) ) : '';
@@ -2162,7 +2162,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( isset( $_POST['qsw_page'] ) ) {
             $params['qsw_page'] = sanitize_text_field( wp_unslash( $_POST['qsw_page'] ) );
         }
-        // phpcs:enable
+        //phpcs:enable
 
         return static::add_wp_site( $website, $params, $output );
     }
@@ -2187,7 +2187,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_openssl_conf()
      * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
      */
-    public static function add_wp_site( $website, $params = array(), &$output = array() ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function add_wp_site( $website, $params = array(), &$output = array() ) { //phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $error      = '';
         $message    = '';
         $id         = 0;

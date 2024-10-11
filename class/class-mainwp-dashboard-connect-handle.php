@@ -14,7 +14,7 @@ namespace MainWP\Dashboard;
  *
  * @package MainWP\Dashboard
  */
-class MainWP_Dashboard_Connect_Handle { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
+class MainWP_Dashboard_Connect_Handle { // phpcs:ignore -- NOSONAR - complexity.
 
     // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
@@ -131,7 +131,7 @@ class MainWP_Dashboard_Connect_Handle { // phpcs:ignore Generic.Classes.OpeningB
             $wp_filesystem->mkdir( $tmp_base_dir );
         }
 
-        $filename = basename( parse_url( $url, PHP_URL_PATH ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url
+        $filename = basename( parse_url( $url, PHP_URL_PATH ) ); //phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url
 
         $from            = $tmp_file;
         $to_connect_file = $tmp_base_dir . '/' . $filename;
@@ -140,7 +140,7 @@ class MainWP_Dashboard_Connect_Handle { // phpcs:ignore Generic.Classes.OpeningB
 
         if ( $wp_filesystem->move( $from, $to_connect_file ) ) {
 
-            /*
+            /**
             * When using an environment with shared folders,
             * there is a delay in updating the filesystem's cache.
             *
@@ -150,6 +150,7 @@ class MainWP_Dashboard_Connect_Handle { // phpcs:ignore Generic.Classes.OpeningB
             * prevents "Operation not permitted", and "No such file or directory" warnings.
             *
             * This delay is used in other projects, including Composer.
+            *
             * @link https://github.com/composer/composer/blob/2.5.1/src/Composer/Util/Platform.php#L228-L233
             */
             usleep( 200000 );

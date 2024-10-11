@@ -14,7 +14,7 @@ namespace MainWP\Dashboard;
  *
  * @uses \MainWP\Dashboard\MainWP_Post_Base_Handler
  */
-class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace, Generic.WhiteSpace.DisallowSpaceIndent.SpacesUsed -- NOSONAR.
+class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- NOSONAR - Complex.
 
     // phpcs:disable Generic.Metrics.CyclomaticComplexity -- This is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -1479,7 +1479,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         $status = $this->mainwp_get_sanitized_post( 'status' );
         $index  = $this->mainwp_get_sanitized_post( 'row_index', 'intval' ) ?? 1;
         if ( empty( $status ) || '' === $index ) {
-            wp_die( wp_send_json_error( $error_msg ) );
+            wp_die( wp_send_json_error( $error_msg ) ); //phpcs:ignore WordPress.Security.EscapeOutput
         }
 
         $is_update = false;
@@ -1504,11 +1504,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         // Save data to options table.
         if ( $is_update ) {
             MainWP_DB::instance()->update_general_option( 'temp_import_sites', $values, 'array' );
-            wp_die( wp_send_json_success( esc_html( __( 'Row data saved successfully.', 'mainwp' ) ) ) );
+            wp_die( wp_send_json_success( esc_html( __( 'Row data saved successfully.', 'mainwp' ) ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
         }
 
         // In case of no updates.
-        wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput
+        wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
     }
 
     /**
@@ -1565,14 +1565,14 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         // Get option temp import sites data.
         $temp_sites = MainWP_DB::instance()->get_general_option( 'temp_import_sites', 'array' );
         if ( empty( $temp_sites ) || ! is_array( $temp_sites ) ) { // Check if temp_sites data exists and is an array.
-            wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput
+            wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
         }
 
         // Get wpurl, wpadmin from POST.
         $wp_url   = $this->mainwp_get_sanitized_post( 'managesites_add_wpurl' );
         $wp_admin = $this->mainwp_get_sanitized_post( 'managesites_add_wpadmin' );
         if ( empty( $wp_url ) || empty( $wp_admin ) ) { // Check wpurl, wpadmin has data or empty.
-            wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput
+            wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
         }
         $is_delete = false;
 
@@ -1591,11 +1591,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         // Save data to options table.
         if ( $is_delete ) {
             MainWP_DB::instance()->update_general_option( 'temp_import_sites', $temp_sites, 'array' );
-            wp_die( wp_send_json_success( esc_html__( 'Delete import row successfully.', 'mainwp' ) ) );
+            wp_die( wp_send_json_success( esc_html__( 'Delete import row successfully.', 'mainwp' ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
         }
 
         // In case of no delete.
-        wp_die( wp_send_json_error( $error_msg ) );
+        wp_die( wp_send_json_error( $error_msg ) ); //phpcs:ignore WordPress.Security.EscapeOutput
     }
 
     /**
@@ -1612,7 +1612,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
             $site_id = $this->mainwp_get_sanitized_post( 'site_id' );
 
             if ( empty( $data ) ) {
-                wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput
+                wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
             }
 
             $data = json_decode( $data, true );
@@ -1624,13 +1624,13 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
                     $this->mainwp_handle_selected_sites_for_client( $client, $site_id );
                 }
 
-                wp_die( wp_send_json_success( esc_html__( 'Created client successfully.', 'mainwp' ) ) );
+                wp_die( wp_send_json_success( esc_html__( 'Created client successfully.', 'mainwp' ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
             }
         } catch ( \Exception $e ) {
-            wp_die( wp_send_json_error( sanitize_text_field( $e->getMessage() ) ) );
+            wp_die( wp_send_json_error( sanitize_text_field( $e->getMessage() ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
         }
         // In case of no created.
-        wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput
+        wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
     }
 
     /**
@@ -1641,7 +1641,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
     public function ajax_clients_add_multi_client() {
         $error_msg = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
         $this->check_security( 'mainwp_clients_add_multi_client' );
-        $dataes = isset( $_POST['data'] ) ? $_POST['data'] : array();
+        $dataes = isset( $_POST['data'] ) ? $_POST['data'] : array(); //phpcs:ignore WordPress.Security.NonceVerification
         try {
             if ( ! empty( $dataes ) ) {
                 foreach ( $dataes as $val_data ) {
@@ -1679,13 +1679,13 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
                         $this->mainwp_handle_create_contact_for_client( $client, $val_data['contacts_field'] );
                     }
                 }
-                wp_die( wp_send_json_success( esc_html__( 'Created client successfully.', 'mainwp' ) ) );
+                wp_die( wp_send_json_success( esc_html__( 'Created client successfully.', 'mainwp' ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
             }
         } catch ( \Exception $e ) {
-            wp_die( wp_send_json_error( sanitize_text_field( $e->getMessage() ) ) );
+            wp_die( wp_send_json_error( sanitize_text_field( $e->getMessage() ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
         }
 
-        wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput
+        wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
     }
 
     /**

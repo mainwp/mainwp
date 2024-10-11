@@ -1711,7 +1711,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
-     * string_ends_by
+     * String ends by.
      *
      * @param  mixed $str str.
      * @param  mixed $ends ends.

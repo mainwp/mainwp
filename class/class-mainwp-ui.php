@@ -1415,7 +1415,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         <div id="mainwp-page-navigation-wrapper">
             <?php if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
                 <?php
-                // phpcs:disable WordPress.Security.NonceVerification
+                //phpcs:disable WordPress.Security.NonceVerification
                 $id = 0;
                 if ( isset( $_GET['dashboard'] ) ) {
                     $id = intval( $_GET['dashboard'] );
@@ -1428,7 +1428,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 } elseif ( isset( $_GET['scanid'] ) ) {
                     $id = intval( $_GET['scanid'] );
                 }
-                // phpcs: enable
+                // phpcs:enable
                 $website = MainWP_DB::instance()->get_website_by_id( $id );
                 ?>
                 <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" src="//s0.wordpress.com/mshots/v1/<?php echo esc_html( rawurlencode( $website->url ) ); ?>?w=170">

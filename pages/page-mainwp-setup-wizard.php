@@ -785,7 +785,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     public function mwp_setup_add_client() {
         $count_clients     = MainWP_DB_Client::instance()->count_total_clients();
         $sites             = MainWP_DB::instance()->get_sites(); // Get site data.
-        $total_sites       = ! empty( $sites ) ? count( $sites ) : 5; // set default
+        $total_sites       = ! empty( $sites ) ? count( $sites ) : 5; // Set default.
         $item_class_active = 1 === $total_sites ? 'active' : '';
         $tab_class_active  = 1 < $total_sites ? 'active' : '';
         if ( ! empty( $count_clients ) ) :

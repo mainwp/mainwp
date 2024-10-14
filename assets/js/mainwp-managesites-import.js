@@ -83,6 +83,11 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
         return;
     }
 
+    // Call the customer constructor without the website on the last run.
+    if (import_current == import_total) {
+      mainwp_managesites_import_client_no_website();
+    }
+
     let import_data = jQuery('#mainwp_managesites_import_csv_line_' + import_current).attr('encoded-data');
     let import_line_orig = jQuery('#mainwp_managesites_import_csv_line_' + import_current).attr('original');
     const is_page_managesites = jQuery('#mainwp_managesites_do_managesites_import').val(); // Get value page managesites
@@ -254,6 +259,25 @@ const mainwp_managesites_import_client = function (index, siteid) {
     }
 
     return true;
+}
+
+// Handle add new client no website
+const mainwp_managesites_import_client_no_website = function() {
+  let client_data = [];
+  jQuery('.mainwp_managesites_import_client_no_site_lines').each(function(){
+    let data = jQuery(this).attr('encoded-data');
+    client_data.push(data);
+  });
+
+  if (client_data.length > 0) {
+    const data = mainwp_secure_data({
+      action: 'mainwp_import_website_add_client_no_site',
+      client: client_data,
+    });
+
+    jQuery.post(ajaxurl, data, function (res) { });
+  }
+  return true;
 }
 
 // Handle page import website
@@ -685,7 +709,7 @@ const mainwp_managesites_import_handle_form_before_submit = function () {
     let error_messages = [];
 
     // Iterate through each row in the rows
-		has_table_data = mainwp_managesites_validate_import_rows(error_messages);
+    has_table_data = mainwp_managesites_validate_import_rows(error_messages);
 
     // Check zip file format.
     if (zip_file != "") {
@@ -715,42 +739,42 @@ const mainwp_managesites_import_handle_form_before_submit = function () {
 
 // Check data in model table add new website.
 const mainwp_managesites_validate_import_rows = function (error_messages, is_valid_row = false) {
-	let has_table_data = false; 
-	let valid_row_count = 0; 
-	jQuery(
-		"#mainwp-managesites-row-import-sites .mainwp-managesites-import-rows"
-	).each(function (index) {
-		let site_url = jQuery(
-			`input[name="mainwp_managesites_import[${index}][site_url]"]`
-		).val();
-		let admin_name = jQuery(
-			`input[name="mainwp_managesites_import[${index}][admin_name]"]`
-		).val();
+  let has_table_data = false; 
+  let valid_row_count = 0; 
+  jQuery(
+    "#mainwp-managesites-row-import-sites .mainwp-managesites-import-rows"
+  ).each(function (index) {
+    let site_url = jQuery(
+      `input[name="mainwp_managesites_import[${index}][site_url]"]`
+    ).val();
+    let admin_name = jQuery(
+      `input[name="mainwp_managesites_import[${index}][admin_name]"]`
+    ).val();
 
-		// If there is data in any row of the table, check the required fields
-		if (site_url || admin_name) {
-			has_table_data = true;
-			
-			let msg = "";
-			if (!site_url) {
-				msg = __("Site URL is required in row %1", index + 1);
-				error_messages.push(msg);
-			}
-			if (!admin_name) {
-				msg = __("Admin Name is required in row %1", index + 1);
-				error_messages.push(msg);
-			}
+    // If there is data in any row of the table, check the required fields
+    if (site_url || admin_name) {
+      has_table_data = true;
+      
+      let msg = "";
+      if (!site_url) {
+        msg = __("Site URL is required in row %1", index + 1);
+        error_messages.push(msg);
+      }
+      if (!admin_name) {
+        msg = __("Admin Name is required in row %1", index + 1);
+        error_messages.push(msg);
+      }
 
-			// If both site_url and admin_name have values, increment the counter variable.
-			if (site_url && admin_name) {
-				valid_row_count++;
-			}
-		}
+      // If both site_url and admin_name have values, increment the counter variable.
+      if (site_url && admin_name) {
+        valid_row_count++;
+      }
+    }
 
-	});
-	if (is_valid_row && error_messages.length === 0 && valid_row_count === 0){
-		error_messages.push(__("At least one row must have both Site URL and Admin Name."));
-	}
+  });
+  if (is_valid_row && error_messages.length === 0 && valid_row_count === 0){
+    error_messages.push(__("At least one row must have both Site URL and Admin Name."));
+  }
 
-	return has_table_data;
+  return has_table_data;
 }

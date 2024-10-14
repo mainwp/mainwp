@@ -593,7 +593,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     // Map site value.
                     foreach ( $sites as $val_site ) {
                         if ( null === $val_site['deletedAt'] ) {
-                            $site   = array(
+                            $site = array(
                                 'name'               => $val_site['wpTitle'] ?? '',
                                 'url'                => $val_site['wpUrl'] ?? '',
                                 'adminname'          => $val_site['wpUsername'] ?? '',
@@ -604,51 +604,44 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                 'verify_certificate' => 1,
                                 'ssl_version'        => 'auto',
                             );
-                            $client = '';
-                            if ( ! empty( $clients ) ) {
-                                $filtered_client = array_filter(
-                                    $clients,
-                                    function ( $item ) use ( $val_site ) {
-                                        return $item['id'] === $val_site['clientId'];
-                                    }
-                                );
-                                $client          = array_map(
-                                    function ( $val_client ) {
-                                        $full_name = trim( ( $val_client['firstName'] ?? '' ) . ' ' . ( $val_client['lastName'] ?? '' ) );
-                                        return array(
-                                            'image'        => $val_client['imageUrl'] ?? '',
-                                            'name'         => $full_name,
-                                            'address_1'    => '',
-                                            'address_2'    => '',
-                                            'city'         => '',
-                                            'zip'          => '',
-                                            'state'        => '',
-                                            'country'      => $val_client['countryCode'] ?? '',
-                                            'note'         => $val_client['note'] ?? '',
-                                            'selected_icon_info' => 'selected:wordpress;color:#34424d',
-                                            'client_email' => $val_client['email'] ?? '',
-                                            'client_phone' => $val_client['tel'] ?? '',
-                                            'client_facebook' => '',
-                                            'client_twitter' => '',
-                                            'client_instagram' => '',
-                                            'client_linkedin' => '',
-                                            'suspended'    => 0,
-                                            'primary_contact_id' => 0,
-                                        );
-                                    },
-                                    $filtered_client
-                                );
-                            }
 
                             $site_values[] = array(
-                                'site'   => $site,
-                                'client' => ! empty( $client ) ? array_values( $client ) : array(),
+                                'site'      => $site,
+                                'client_id' => $val_site['clientId'] ? intval( $val_site['clientId'] ) : '',
+                            );
+                        }
+                    }
+                    // Map client value form file client.json
+                    $client_value = array();
+                    if ( ! empty( $clients ) ) {
+                        foreach ( $clients as $val_client ) {
+                            $full_name                  = trim( ( $val_client['firstName'] ?? '' ) . ' ' . ( $val_client['lastName'] ?? '' ) );
+                            $client_id                  = intval( $val_client['id'] );
+                            $client_value[ $client_id ] = array(
+                                'image'              => $val_client['imageUrl'] ?? '',
+                                'name'               => $full_name,
+                                'address_1'          => '',
+                                'address_2'          => '',
+                                'city'               => '',
+                                'zip'                => '',
+                                'state'              => '',
+                                'country'            => $val_client['countryCode'] ?? '',
+                                'note'               => $val_client['note'] ?? '',
+                                'selected_icon_info' => 'selected:wordpress;color:#34424d',
+                                'client_email'       => $val_client['email'] ?? '',
+                                'client_phone'       => $val_client['tel'] ?? '',
+                                'client_facebook'    => '',
+                                'client_twitter'     => '',
+                                'client_instagram'   => '',
+                                'client_linkedin'    => '',
+                                'suspended'          => 0,
+                                'primary_contact_id' => 0,
                             );
                         }
                     }
 
                     if ( ! empty( $site_values ) ) {
-                        static::handle_import_site_render_input_field( $site_values );
+                        static::handle_import_site_render_input_field( $site_values, $client_value );
                     }
                 } else {
 
@@ -690,20 +683,36 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * Render input field modal import sites.
      *
      * @param array $site_values website value.
+     * @param array $client_values client value.
      */
-    public static function handle_import_site_render_input_field( $site_values ) {
-        $header_line = trim( 'Site Name, Url, Admin Name, Tag,Security ID,HTTP Username,HTTP Password,Verify Certificate,SSL Version' ); // Set Header Line.
+    public static function handle_import_site_render_input_field( $site_values, $client_values ) {
+        $header_line        = trim( 'Site Name, Url, Admin Name, Tag,Security ID,HTTP Username,HTTP Password,Verify Certificate,SSL Version' ); // Set Header Line.
+        $client_has_website = array();
         foreach ( $site_values as $k_item => $item ) {
             $site = $item['site'];
             $line = trim( implode( ',', $site ) );
             ?>
                 <input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo esc_attr( $k_item + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $site ) ); ?>" original="<?php echo esc_attr( $line ); ?>" />
             <?php
-            if ( ! empty( $item['client'] ) ) {
-                $client      = $item['client'][0];
-                $client_line = trim( implode( ',', $client ) );
+            if ( isset( $item['client_id'] ) && ! empty( $item['client_id'] ) && isset( $client_values[ $item['client_id'] ] ) ) {
+                $client               = $client_values[ $item['client_id'] ];
+                $client_line          = trim( implode( ',', $client ) );
+                $client_has_website[] = $item['client_id'];
                 ?>
-                    <input class="mainwp_managesites_import_client_lines" type="hidden" id="mainwp_managesites_import_client_line_<?php echo esc_attr( $k_item + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $client ) ); ?>" original="<?php echo esc_attr( $client_line ); ?>" />
+                <input class="mainwp_managesites_import_client_lines" type="hidden" id="mainwp_managesites_import_client_line_<?php echo esc_attr( $k_item + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $client ) ); ?>" original="<?php echo esc_attr( $client_line ); ?>" />
+                <?php
+            }
+        }
+
+        // Render all customers without a website.
+        if ( ! empty( $client_values ) ) {
+            foreach ( $client_values as $k_client => $val_client ) {
+                if ( ! empty( $client_has_website ) && in_array( $k_client, $client_has_website ) ) {
+                    continue;
+                }
+                $client_line = trim( implode( ',', $val_client ) );
+                ?>
+                    <input class="mainwp_managesites_import_client_no_site_lines" type="hidden" id="mainwp_managesites_import_client_no_site_line_<?php echo esc_attr( $k_client + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $client ) ); ?>" original="<?php echo esc_attr( $client_line ); ?>" />
                 <?php
             }
         }

@@ -146,6 +146,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $this->add_action( 'mainwp_save_temp_import_website', array( &$this, 'ajax_save_temp_import_website' ) );
         $this->add_action( 'mainwp_delete_temp_import_website', array( &$this, 'ajax_delete_temp_import_website' ) );
         $this->add_action( 'mainwp_import_website_add_client', array( &$this, 'ajax_import_website_add_client' ) );
+        $this->add_action( 'mainwp_import_website_add_client_no_site', array( &$this, 'ajax_import_website_add_client_no_site' ) );
 
         // Page:: mainwp-setup.
         $this->add_action( 'mainwp_clients_add_multi_client', array( &$this, 'ajax_clients_add_multi_client' ) );
@@ -1625,6 +1626,32 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
                 }
 
                 wp_die( wp_send_json_success( esc_html__( 'Created client successfully.', 'mainwp' ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
+            }
+        } catch ( \Exception $e ) {
+            wp_die( wp_send_json_error( sanitize_text_field( $e->getMessage() ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
+        }
+        // In case of no created.
+        wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
+    }
+
+    /**
+     * Method ajax_import_website_add_client_no_site()
+     *
+     * Create client dont has a website.
+     */
+    public function ajax_import_website_add_client_no_site() {
+        $this->secure_request( 'mainwp_import_website_add_client_no_site' ); // Check secure.
+        $error_msg = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
+        try {
+            $data = ! empty( $_POST['client'] ) ? rest_sanitize_array( $_POST['client'] ) : array(); //phpcs:ignore WordPress.Security.NonceVerification
+
+            if ( empty( $data ) || ! is_array( $data ) ) {
+                wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
+            }
+
+            foreach ( $data as $val_data ) {
+                $client_data = json_decode( stripslashes( $val_data ), true ); // decode client data
+                $this->mainwp_handle_create_client( $client_data ); // update or instert new client
             }
         } catch ( \Exception $e ) {
             wp_die( wp_send_json_error( sanitize_text_field( $e->getMessage() ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput

@@ -611,7 +611,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             );
                         }
                     }
-                    // Map client value form file client.json
+                    // Map client value form file client.json.
                     $client_value = array();
                     if ( ! empty( $clients ) ) {
                         foreach ( $clients as $val_client ) {

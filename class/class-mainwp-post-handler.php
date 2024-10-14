@@ -1650,8 +1650,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             }
 
             foreach ( $data as $val_data ) {
-                $client_data = json_decode( stripslashes( $val_data ), true ); // decode client data
-                $this->mainwp_handle_create_client( $client_data ); // update or instert new client
+                $client_data = json_decode( stripslashes( $val_data ), true ); // Decode client data.
+                $this->mainwp_handle_create_client( $client_data ); // Update or instert new client.
             }
         } catch ( \Exception $e ) {
             wp_die( wp_send_json_error( sanitize_text_field( $e->getMessage() ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput

@@ -2166,12 +2166,16 @@ jQuery(function () {
     mainwp_managesites_add();
   });
 
+	// Hanlde click submit form import website
   jQuery(document).on('click', '#mainwp_managesites_bulkadd', function () {
-    if (jQuery('#mainwp_managesites_file_bulkupload').val() == '') {
-      setHtml('#mainwp-message-zone', __('Please enter csv file for upload.'), false);
-    } else {
-      jQuery('#mainwp_managesites_bulkadd_form').submit();
-    }
+
+	let error_messages = mainwp_managesites_import_handle_form_before_submit();
+	// If there is an error, prevent submission and display the error
+	if (error_messages.length > 0) {
+		feedback('mainwp-message-zone', error_messages.join("<br/>"), "red");
+	}else{
+		jQuery('#mainwp_managesites_bulkadd_form').submit();
+	}
     return false;
   });
 
@@ -2185,6 +2189,24 @@ jQuery(function () {
     mainwp_managesites_edit_test();
   });
 
+	// Handle submit add multi website
+	jQuery(document).on('click', '#mainwp_managesites_add_multi_site', function () {
+		let error_messages = [];
+		let has_table_data = false;
+		has_table_data = mainwp_managesites_validate_import_rows(error_messages, true);
+		// If there is an error, prevent submission and display the error
+		if (error_messages.length > 0 && !has_table_data ) {
+			feedback('mainwp-add-multi-new-site-message-zone', error_messages.join("<br/>"), "red");
+		} else {
+			jQuery('#mainwp_managesites_add_form').submit();
+		}
+		return false;
+	});
+	
+	// Handle click remove website on management webiste. 
+	jQuery(document).on('click', '#mainwp-managesites-remove-site', function(){
+		jQuery('#mainwp-remove-site-button').trigger('click');
+	});
 });
 
 /**
@@ -2759,7 +2781,7 @@ let mainwp_upload_bulk_start_next = function (type, urls, activatePlugin, overwr
 
     let msg = mainwp_install_bulk_you_know_msg(type, jQuery('#bulk_upload_info').attr('number-files'));
 
-    jQuery('#bulk_upload_info').html('<div class="mainwp-notice mainwp-notice-blue">' + msg + '</div>');
+    jQuery('#bulk_upload_info').html('<div class="bui blue message">' + msg + '</div>');
 
     if (jQuery('.mainwp_cost_tracker_assistant_installed_items').length > 0) { // to support add to cost tracker pro.
       let cost_tracker_items = [];
@@ -4455,12 +4477,25 @@ window.mainwp_init_ui_calendar = ($selectors) => {
 }
 
 
-jQuery( document ).ready( function () {
+jQuery(document).ready(function () {
   jQuery('.dt-scroll-head').css({
-    'overflow-x':'auto'
-  }).on('scroll', function(e){
+    'overflow-x': 'auto'
+  }).on('scroll', function (e) {
     let scrollBody = jQuery(this).parent().find('.dt-scroll-body').get(0);
     scrollBody.scrollLeft = this.scrollLeft;
     jQuery(scrollBody).trigger('scroll');
   });
-} );
+});
+
+jQuery(function ($) {
+  $(document).on('click', '#download-mainwp-dashboard-connect-button', function () {
+    window.location.href = 'admin.php?page=MainWPTools&action=download-connect&_wpnonce=' + jQuery(this).attr('data-nonce') + '&pass=' + encodeURIComponent(jQuery('#download-mainwp-connect-pass').val().trim());
+    return false;
+  });
+});
+
+// Function to check valid email using regular expression.
+const mainwp_validate_email = function (email) {
+	const re = /^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,255}\.[A-Za-z]{2,}$/;
+	return re.test(email);
+}

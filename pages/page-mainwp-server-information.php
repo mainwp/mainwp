@@ -1462,6 +1462,10 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     "language": {
                         "emptyTable": '<?php esc_html_e( 'Error logging disabled.', 'mainwp' ); ?><?php echo '<br/>' . sprintf( esc_html__( 'To enable error logging, please check this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://codex.wordpress.org/Debugging_in_WordPress" target="_blank">', '</a>' ); ?>'
                     },
+                    columnDefs: [{
+                        "defaultContent": "-",
+                        "targets": "_all"
+                    }]
                 } );
             } );
         </script>
@@ -1523,9 +1527,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $lines = array_filter( $lines );
 
         if ( empty( $lines ) ) {
-
-            echo '<tr><td>' . esc_html__( 'MainWP is unable to find your error logs, please contact your host for server error logs.', 'mainwp' ) . '</td></tr>';
-
+            echo '<tr><td colspan="2">' . esc_html__( 'MainWP is unable to find your error logs, please contact your host for server error logs.', 'mainwp' ) . '</td></tr>';
             return;
         }
 
@@ -1665,6 +1667,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             MainWP_Logger::UPDATE_CHECK_LOG_PRIORITY    => esc_html__( 'Update Checking', 'mainwp' ),
             MainWP_Logger::EXECUTION_TIME_LOG_PRIORITY  => esc_html__( 'Execution time', 'mainwp' ),
             MainWP_Logger::LOGS_AUTO_PURGE_LOG_PRIORITY => esc_html__( 'Logs Auto Purge', 'mainwp' ),
+            MainWP_Logger::CONNECT_LOG_PRIORITY         => esc_html__( 'Dashboard Connect', 'mainwp' ),
         );
         $specific_logs    = apply_filters( 'mainwp_specific_action_logs', $specific_default ); // deprecated since 4.3.1, use 'mainwp_log_specific_actions' instead.
         $specific_logs    = apply_filters( 'mainwp_log_specific_actions', $specific_logs );

@@ -1917,12 +1917,12 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $header_tabs = array(
             'plugins-updates'   => array(
                 'slug'           => 'plugins-updates',
-                'title'          => esc_html__( 'Plugins Updates', 'mainwp' ),
+                'title'          => esc_html__( 'Plugin Updates', 'mainwp' ),
                 'total_upgrades' => $total_plugin_upgrades,
             ),
             'themes-updates'    => array(
                 'slug'           => 'themes-updates',
-                'title'          => esc_html__( 'Themes Updates', 'mainwp' ),
+                'title'          => esc_html__( 'Theme Updates', 'mainwp' ),
                 'total_upgrades' => $total_theme_upgrades,
             ),
             'wordpress-updates' => array(
@@ -2079,15 +2079,15 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         <?php
                         if ( 'wordpress-updates' === $current_tab ) {
                             ?>
-                            <a class="ui green mini basic button" href="admin.php?page=UpdatesManage&tab=updates-ignore" data-position="top right" data-tooltip="Update WordPress Core files on selected child sites." data-inverted=""><?php esc_html_e( 'View Ignored Core Updates', 'mainwp' ); ?></a>
+                            <a class="ui mini basic button" href="admin.php?page=UpdatesManage&tab=updates-ignore" data-position="top right" data-tooltip="<?php esc_attr_e( 'Click here to see the list of ignored WordPress core updates.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'View Ignored Core Updates', 'mainwp' ); ?></a>
                             <?php
                         } elseif ( 'plugins-updates' === $current_tab ) {
                             ?>
-                            <a class="ui green mini basic button" href="admin.php?page=PluginsIgnore" data-position="top right" data-tooltip="Update WordPress Core files on selected child sites." data-inverted=""><?php esc_html_e( 'View Ignored Plugins Updates', 'mainwp' ); ?></a>
+                            <a class="ui mini basic button" href="admin.php?page=PluginsIgnore" data-position="top right" data-tooltip="<?php esc_attr_e( 'Click here to see the list of ignored plugin updates.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'View Ignored Plugin Updates', 'mainwp' ); ?></a>
                             <?php
                         } elseif ( 'themes-updates' === $current_tab ) {
                             ?>
-                            <a class="ui green mini basic button" href="admin.php?page=ThemesIgnore" data-position="top right" data-tooltip="Update WordPress Core files on selected child sites." data-inverted=""><?php esc_html_e( 'View Ignored Themes Updates', 'mainwp' ); ?></a>
+                            <a class="ui mini basic button" href="admin.php?page=ThemesIgnore" data-position="top right" data-tooltip="<?php esc_attr_e( 'Click here to see the list of ignored theme updates.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'View Ignored Theme Updates', 'mainwp' ); ?></a>
                             <?php
                         }
                         ?>
@@ -2455,7 +2455,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'UpdatesScrOptions' ) ); ?>" />
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Plugin advanced automatic updates', 'mainwp' ); ?></label>
-                        <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic plugins updates.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                        <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic plugin updates.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                             <select name="mainwp_pluginAutomaticDailyUpdate" id="mainwp_pluginAutomaticDailyUpdate" class="ui dropdown">
                                 <option value="1" <?php echo 1 === $snPluginAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
                                 <option value="0" <?php echo ( false !== $snPluginAutomaticDailyUpdate && empty( $snPluginAutomaticDailyUpdate ) ) || 2 === $snPluginAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
@@ -2464,7 +2464,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Theme advanced automatic updates', 'mainwp' ); ?></label>
-                        <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic themes updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                        <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic theme updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <select name="mainwp_themeAutomaticDailyUpdate" id="mainwp_themeAutomaticDailyUpdate" class="ui dropdown">
                                 <option value="1" <?php echo 1 === $snThemeAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
                                 <option value="0" <?php echo ( false !== $snThemeAutomaticDailyUpdate && 0 === $snThemeAutomaticDailyUpdate ) || 2 === $snThemeAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>

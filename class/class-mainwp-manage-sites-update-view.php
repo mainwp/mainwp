@@ -66,7 +66,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
         $mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
 
         $active_tab  = 'plugins';
-        $active_text = esc_html__( 'Plugins Updates', 'mainwp' );
+        $active_text = esc_html__( 'Plugin Updates', 'mainwp' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_GET['tab'] ) ) {
             if ( 'wordpress-updates' === $_GET['tab'] ) {
@@ -74,10 +74,10 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                 $active_text = esc_html__( 'WordPress Updates', 'mainwp' );
             } elseif ( 'themes-updates' === $_GET['tab'] ) {
                 $active_tab  = 'themes';
-                $active_text = esc_html__( 'Themes Updates', 'mainwp' );
+                $active_text = esc_html__( 'Theme Updates', 'mainwp' );
             } elseif ( 'translations-updates' === $_GET['tab'] ) {
                 $active_tab  = 'trans';
-                $active_text = esc_html__( 'Translations Updates', 'mainwp' );
+                $active_text = esc_html__( 'Translation Updates', 'mainwp' );
             } elseif ( 'abandoned-plugins' === $_GET['tab'] ) {
                 $active_tab  = 'abandoned-plugins';
                 $active_text = esc_html__( 'Abandoned Plugins', 'mainwp' );
@@ -613,7 +613,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
     /**
      * Method render_themes_updates()
      *
-     * Render the Themes Updates Tab.
+     * Render the Themes Update Tab.
      *
      * @param mixed $website Child Site info.
      * @param mixed $active_tab Current active tab.

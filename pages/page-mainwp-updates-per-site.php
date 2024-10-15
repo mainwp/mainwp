@@ -177,10 +177,10 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Method render_plugins_updates()
      *
-     * Render Plugins updates
+     * Render Plugin updates
      *
      * @param object $websites the websites.
-     * @param int    $total_plugin_upgrades number of available plugins updates.
+     * @param int    $total_plugin_upgrades number of available plugin updates.
      * @param mixed  $userExtension user extension.
      * @param array  $trustedPlugins trusted plugins.
      *
@@ -411,10 +411,10 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Method render_themes_updates()
      *
-     * Render Themes updates
+     * Render Theme updates
      *
      * @param object $websites the websites.
-     * @param int    $total_theme_upgrades number of available themes updates.
+     * @param int    $total_theme_upgrades number of available theme updates.
      * @param mixed  $userExtension user extension.
      * @param array  $trustedThemes trusted themes.
      *

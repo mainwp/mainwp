@@ -8,7 +8,6 @@
  */
 
 use MainWP\Dashboard\MainWP_DB;
-use MainWP\Dashboard\MainWP_Common_Handler;
 use MainWP\Dashboard\MainWP_Updates_Helper;
 use MainWP\Dashboard\MainWP_DB_Common;
 use MainWP\Dashboard\MainWP_Updates_Handler;
@@ -424,7 +423,7 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
      */
     public function get_request_item( $request ) {
         $route = $request->get_route();
-        if ( str_ends_with( $route, '/batch' ) ) {
+        if ( MainWP_Utility::string_ends_by( $route, '/batch' ) ) {
             $by    = 'id';
             $value = $request['id'];
         } else {
@@ -1380,13 +1379,13 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
                 ),
                 'plugins'          => array(
                     'type'              => 'array',
-                    'description'       => __( 'Plugins Updates.', 'mainwp' ),
+                    'description'       => __( 'Plugin Updates.', 'mainwp' ),
                     'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view' ),
                 ),
                 'themes'           => array(
                     'type'              => 'array',
-                    'description'       => __( 'Themes Updates.', 'mainwp' ),
+                    'description'       => __( 'Theme Updates.', 'mainwp' ),
                     'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view' ),
                 ),

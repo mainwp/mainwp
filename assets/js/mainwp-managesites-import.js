@@ -69,7 +69,7 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
 							}, 2000);
 						}else{
 							setTimeout(function () {
-								window.location.href;
+                window.location.href = window.location.href;
 							}, 2000);
 						}
         } else {

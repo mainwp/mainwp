@@ -47,7 +47,7 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
     if (import_stop_by_user)
         return;
 
-    let is_page_setup = jQuery("#mainwp-import-sites-modal").hasClass("mainwp-qsw-import-modal");
+		let page_href = jQuery("#mainwp-import-sites-modal").attr('data-page-url');
 
     jQuery('#mainwp-importing-sites').hide();
 
@@ -63,15 +63,15 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
         if (import_count_fails == 0) {
             jQuery('#mainwp_managesites_import_logging .log').html('<div style="text-align:center;margin:50px 0;"><h2 class="ui icon header"><i class="green check icon"></i><div class="content">Congratulations!<div class="sub header">' + import_count_success + ' sites imported successfully.</div></div></h2></div>');
             jQuery('#mainwp_managesites_btn_import').hide();
-            if ( is_page_setup ) {
-                setTimeout(function () {
-                    window.location.href = 'admin.php?page=mainwp-setup&step=add_client';
-                }, 2000);
-            } else {
-                setTimeout(function () {
-                    window.location.href = 'admin.php?page=managesites';
-                }, 2000);
-            }
+						if (page_href !== undefined && page_href !== '') {
+							setTimeout(function () {
+								window.location.href = page_href;
+							}, 2000);
+						}else{
+							setTimeout(function () {
+								window.location.href;
+							}, 2000);
+						}
         } else {
             jQuery('#mainwp_managesites_import_logging .log').append('<div class="ui yellow message">Process completed with errors. ' + import_count_fails + ' site(s) failed to import. Please review logs to resolve problems and try again.</div>');
             jQuery('#mainwp_managesites_btn_import').hide();

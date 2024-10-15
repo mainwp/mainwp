@@ -500,12 +500,6 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public function mwp_setup_connect_first_site_already() {
         $count_clients = MainWP_DB_Client::instance()->count_total_clients();
-        $is_manage_wp  = isset( $_GET['import-by'] ) && 'manage_wp' === $_GET['import-by'] ? true : false; //phpcs:ignore WordPress.Security.NonceVerification
-        // Redirect to monitoring if import by manage wp.
-        if ( $is_manage_wp ) {
-            wp_safe_redirect( $this->get_next_step_link( 'monitoring' ) );
-        }
-
         ?>
         <h1 class="ui header"><?php esc_html_e( 'Congratulations!', 'mainwp' ); ?></h1>
         <p><?php esc_html_e( 'You have successfully connected your first site to your MainWP Dashboard!', 'mainwp' ); ?></p>
@@ -583,9 +577,11 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         </div>
             <?php if ( ( $has_file_upload || $has_import_data || $has_manage_wp_data ) && check_admin_referer( 'mainwp-admin-nonce' ) ) : ?>
                 <?php
-                    $url = 'admin.php?page=mainwp-setup&step=connect_first_site';
+                    $url = 'admin.php?page=mainwp-setup';
                 if ( $has_manage_wp_data ) {
-                    $url .= '&import-by=manage_wp';
+                    $url .= '&step=monitoring';
+                } else {
+                    $url .= '&step=add_client';
                 }
                     MainWP_Manage_Sites::render_import_sites_modal( $url, 'Import Sites' );
                 ?>

@@ -2371,7 +2371,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public static function render_import_sites_modal( $url, $title_page = null ) {
         ?>
-        <div class="ui large modal <?php echo ( 'Import Sites' === $title_page ) ? 'mainwp-qsw-import-modal' : ''; ?>" id="mainwp-import-sites-modal" >
+        <div class="ui large modal <?php echo ( 'Import Sites' === $title_page ) ? 'mainwp-qsw-import-modal' : ''; ?>" id="mainwp-import-sites-modal" data-page-url="<?php echo esc_url( $url ); ?>" >
             <?php if ( 'Import Sites' !== $title_page ) : ?>
                 <i class="close icon"></i>
             <?php endif; ?>
@@ -2389,7 +2389,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     </div>
                     <div class="right aligned middle aligned column">
                         <?php if ( 'Import Sites' === $title_page ) : ?>
-                            <a class="ui basic green button" id="mainwp-import-sites-modal-continue" href="admin.php?page=mainwp-setup&step=add_client" style="display:none"><?php esc_html_e( 'Continue', 'mainwp' ); ?></a>
+                            <a class="ui basic green button" id="mainwp-import-sites-modal-continue" href="<?php echo esc_url( $url ); ?>" style="display:none"><?php esc_html_e( 'Continue', 'mainwp' ); ?></a>
                         <?php endif; ?>
                     </div>
                 </div>

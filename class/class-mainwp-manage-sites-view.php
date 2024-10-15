@@ -712,7 +712,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
                 $client_line = trim( implode( ',', $val_client ) );
                 ?>
-                    <input class="mainwp_managesites_import_client_no_site_lines" type="hidden" id="mainwp_managesites_import_client_no_site_line_<?php echo esc_attr( $k_client + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $client ) ); ?>" original="<?php echo esc_attr( $client_line ); ?>" />
+                    <input class="mainwp_managesites_import_client_no_site_lines" type="hidden" id="mainwp_managesites_import_client_no_site_line_<?php echo esc_attr( $k_client + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $val_client ) ); ?>" original="<?php echo esc_attr( $client_line ); ?>" />
                 <?php
             }
         }

@@ -1665,6 +1665,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $enabled          = (int) MainWP_Logger::instance()->get_log_status();
         $specific_default = array(
             MainWP_Logger::UPDATE_CHECK_LOG_PRIORITY    => esc_html__( 'Update Checking', 'mainwp' ),
+            MainWP_Logger::UPTIME_CHECK_LOG_PRIORITY    => esc_html__( 'Uptime monitoring', 'mainwp' ),
             MainWP_Logger::EXECUTION_TIME_LOG_PRIORITY  => esc_html__( 'Execution time', 'mainwp' ),
             MainWP_Logger::LOGS_AUTO_PURGE_LOG_PRIORITY => esc_html__( 'Logs Auto Purge', 'mainwp' ),
             MainWP_Logger::CONNECT_LOG_PRIORITY         => esc_html__( 'Dashboard Connect', 'mainwp' ),

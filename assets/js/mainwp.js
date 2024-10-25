@@ -490,6 +490,37 @@ window.scrollElementTop = function (id) {
     shake_element('#' + id); // shake the error message to get attention :)
 }
 
+window.mainwp_showhide_message = function (id, content, cls, append, scroll) {
+
+  if ('' === content) {
+    jQuery('#' + id).html('').fadeOut(500);
+    return;
+  }
+
+  if (append) {
+    let html = jQuery('#' + id).html();
+    if (html == null)
+      html = "";
+    if (html != '') {
+      html += '<br />' + content;
+    } else {
+      html = content;
+    }
+    jQuery('#' + id).html(html);
+  } else {
+    jQuery('#' + id).html(content);
+  }
+
+  jQuery('#' + id).removeClass('yellow green red');
+  jQuery('#' + id).addClass(cls);
+  jQuery('#' + id).show();
+
+  if (typeof scroll !== 'undefined' && scroll) {
+    scrollElementTop(id);
+  }
+
+};
+
 jQuery(function () {
   jQuery('div.mainwp-hidden').parent().parent().css("display", "none");
 });
@@ -1371,23 +1402,34 @@ jQuery(function ($) {
   });
   jQuery('.mainwp-checkbox-showhide-elements').on('click', function () {
     let hiel = $(this).attr('hide-parent');
-    mainwp_showhide_elements(hiel, $(this).find('input').is(':checked'));
+    let chk = this;
+    // support multi hide values.
+    hiel.split(';').forEach(function (hi) {
+      mainwp_showhide_elements(hi, $(chk).find('input').is(':checked'));
+    });
   });
 
   jQuery('.mainwp-selecter-showhide-elements').on('change', function () {
     let hiel = $(this).attr('hide-parent');
     let hival = $(this).attr('hide-value');
-    hival = hival.split('-'); // support multi hide values.
+    hival = hival.split(';'); // support multi hide values.
     let selectedval = $(this).val();
     mainwp_showhide_elements(hiel, hival.includes(selectedval));
   });
 });
 
 function mainwp_showhide_elements(attEl, valHi) {
+  // support multi attr to hide.
   if (valHi) {
-    jQuery('[hide-element=' + attEl + ']').fadeOut(300);
+    attEl.split(';').forEach(function (att) {
+      jQuery('[hide-element=' + att.trim() + ']').fadeOut(300);
+      jQuery('[hide-sub-element=' + att.trim() + ']').fadeOut(300);
+    });
   } else {
-    jQuery('[hide-element=' + attEl + ']').fadeIn(200);
+    attEl.split(';').forEach(function (att) {
+      jQuery('[hide-element=' + att.trim() + ']').fadeIn(300);
+      jQuery('[hide-sub-element=' + att.trim() + ']').fadeIn(300);
+    });
   }
 }
 
@@ -2166,16 +2208,16 @@ jQuery(function () {
     mainwp_managesites_add();
   });
 
-	// Hanlde click submit form import website
+  // Hanlde click submit form import website
   jQuery(document).on('click', '#mainwp_managesites_bulkadd', function () {
 
-	let error_messages = mainwp_managesites_import_handle_form_before_submit();
-	// If there is an error, prevent submission and display the error
-	if (error_messages.length > 0) {
-		setHtml('#mainwp-message-zone', error_messages.join("<br/>"), false);
-	}else{
-		jQuery('#mainwp_managesites_bulkadd_form').submit();
-	}
+    let error_messages = mainwp_managesites_import_handle_form_before_submit();
+    // If there is an error, prevent submission and display the error
+    if (error_messages.length > 0) {
+      setHtml('#mainwp-message-zone', error_messages.join("<br/>"), false);
+    } else {
+      jQuery('#mainwp_managesites_bulkadd_form').submit();
+    }
     return false;
   });
 
@@ -4474,4 +4516,50 @@ jQuery(function ($) {
     window.location.href = 'admin.php?page=MainWPTools&action=download-connect&_wpnonce=' + jQuery(this).attr('data-nonce') + '&pass=' + encodeURIComponent(jQuery('#download-mainwp-connect-pass').val().trim());
     return false;
   });
+
+
+  $(document).on('click', '#delete_uptime_monitor_btn', function () {
+    let is_sub = $('#monitor_edit_is_sub_url')?.val();
+
+    let confirmation = __("Are you sure you want to delete this uptime monitor?");
+
+    if (is_sub) {
+      confirmation = __("Are you sure you want to delete this uptime sub-url monitor?");
+    }
+
+    mainwp_confirm(confirmation, () => {
+      let wpid = $('#mainwp_edit_monitor_site_id').val();
+      let moid = $('#mainwp_edit_monitor_id').val();
+
+      mainwp_uptime_monitoring_remove(wpid, moid);
+    });
+
+  });
+
+  let mainwp_uptime_monitoring_remove = function (wpid, moid) {
+
+    feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + __('Removing Uptime Monitor...'), 'green');
+
+    let data = mainwp_secure_data({
+      action: 'mainwp_uptime_monitoring_remove_monitor',
+      wpid: wpid,
+      moid: moid
+    });
+
+    jQuery.post(ajaxurl, data, function (response) {
+      if (response?.success) {
+        feedback('mainwp-message-zone', __('Monitor have been removed.'), 'green');
+        setTimeout(function () {
+          window.location = 'admin.php?page=managesites&monitor_wpid=' + wpid;
+        }, 2000);
+
+      } else if (response?.error) {
+        feedback('mainwp-message-zone', response.error, 'red');
+      } else {
+        feedback('mainwp-message-zone', __('Undefined error. Please try again.'), 'red');
+      }
+    }, 'json');
+    return false;
+  };
+
 });

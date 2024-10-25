@@ -30,9 +30,9 @@ if ( empty( $heading ) ) {
         <div id="mainwp-email-wrapper" style="padding: 30px 0;">
             <?php
             /**
-             * Basic Uptime Monitoring Email Header
+             * Uptime Monitoring Email Header
              *
-             * Fires at the top of the basic uptime monitoring email template.
+             * Fires at the top of the uptime monitoring email template.
              *
              * @since 4.1
              */
@@ -123,9 +123,9 @@ if ( empty( $heading ) ) {
             </div>
             <?php
             /**
-             * Basic Uptime Monitoring Email Footer
+             * Uptime Monitoring Email Footer
              *
-             * Fires at the bottom of the basic uptime monitoring email template.
+             * Fires at the bottom of the uptime monitoring email template.
              *
              * @since 4.1
              */

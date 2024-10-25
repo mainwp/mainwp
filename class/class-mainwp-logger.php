@@ -24,12 +24,12 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     const COST_TRACKER_LOG_PRIORITY    = 20230112;
     const API_BACKUPS_LOG_PRIORITY     = 20240130;
     const CONNECT_LOG_PRIORITY         = 20241001;
-
-    const DISABLED = - 1;
-    const LOG      = 0;
-    const WARNING  = 1;
-    const INFO     = 2;
-    const DEBUG    = 3;
+    const UPTIME_CHECK_LOG_PRIORITY    = 20241017;
+    const DISABLED                     = - 1;
+    const LOG                          = 0;
+    const WARNING                      = 1;
+    const INFO                         = 2;
+    const DEBUG                        = 3;
 
     const LOG_COLOR     = '#999999';
     const DEBUG_COLOR   = '#666666';
@@ -309,6 +309,15 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public function log_update_check( $text = '' ) {
         $this->log_action( $text, static::UPDATE_CHECK_LOG_PRIORITY );
+    }
+
+    /**
+     * Method log_update_check().
+     *
+     * @param string $text Log update check.
+     */
+    public function log_uptime_check( $text = '' ) {
+        $this->log_action( $text, static::UPTIME_CHECK_LOG_PRIORITY );
     }
 
     /**
@@ -764,7 +773,25 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         echo '<div class="ui hidden divider"></div>';
         echo '<div class="ui divided padded relaxed list" local-datetime="' . date( 'Y-m-d H:i:s' ) . '">'; // phpcs:ignore -- local time.
 
-        $rows = MainWP_DB::instance()->query( MainWP_DB_Common::instance()->get_sql_log() );
+        $limit = 500;
+
+        $paged = isset( $_GET['paged'] ) ? intval( $_GET['paged'] ) : 0;
+
+        if ( $paged <= 0 ) {
+            $paged = 0;
+        } else {
+            --$paged;
+        }
+
+        $order = isset( $_GET['order'] ) ? sanitize_text_field( wp_unslash( $_GET['order'] ) ) : '';
+
+        $rows = MainWP_DB::instance()->query( MainWP_DB_Common::instance()->get_sql_log( $paged, $order, array( 'limit' => $limit ) ) );
+
+        if ( isset( $_GET['paged'] ) ) {
+            $total = MainWP_DB::instance()->get_var_field( MainWP_DB_Common::instance()->get_sql_log( $paged, $order, array( 'count' => true ) ) );
+            $from  = $limit * $paged;
+            echo '<p><strong>' . esc_html__( 'Showing ', 'mainwp' ) . ':</strong> ' . ( $from . ' - ' . ( $from + $limit ) . ' of ' . $total . ' total.' );
+        }
 
         $start_wrapper = '<span class="ui mini label mainwp-action-log-show-more">Click to See Response</span><div class="mainwp-action-log-site-response" style="display: none;">';
         $end_wrapper   = '</div>';
@@ -775,9 +802,10 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 $line = '[Data row too long]';
             }
 
-            $time = gmdate( $this->logDateFormat, $row->log_timestamp );
+            $time = gmdate( $this->logDateFormat, MainWP_Utility::get_timestamp( $row->log_timestamp ) );
 
-            $showInfo     = $this->get_log_type_info( $row->log_type, $row->log_color );
+            $showInfo = $this->get_log_type_info( $row->log_type, $row->log_color );
+
             $currentColor = $showInfo['log_color'];
 
             $prefix = $time . ' ' . $showInfo['log_prefix'];

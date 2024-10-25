@@ -371,7 +371,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 'wp_upgrades',
                 'ignored_wp_upgrades',
             );
-        } elseif ( 'base_view' === $view ) {
+        } elseif ( in_array( $view, array( 'simple_view', 'base_view', 'monitor_view', 'ping_view' ) ) ) {
             $fields = array();
         } else {
             $fields = $default;
@@ -1925,17 +1925,79 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         }
     }
 
+
+    /**
+     * Get child site by id and params.
+     *
+     * @param int   $id           Child site ID.
+     * @param array $params params.
+     * @param int   $obj OBJECT|ARRAY_A.
+     *
+     * @return object|null Database query results or null on failure.
+     */
+    public function get_website_by_id_params( $id, $params = array(), $obj = OBJECT ) {
+        return $this->get_row_result( $this->get_sql_website_by_params( $id, $params ), $obj );
+    }
+
+    /**
+     * Get sql child site by id and params.
+     *
+     * @param int   $id           Child site ID.
+     * @param array $params params.
+     *
+     * @return object|null Database query results or null on failure.
+     */
+    public function get_sql_website_by_params( $id, $params = array() ) {
+
+        if ( ! is_array( $params ) ) {
+            $params = array();
+        }
+
+        $select_groups = ! empty( $params['select_groups'] ) ? true : false;
+
+        $view        = empty( $params['view'] ) ? $params['view'] : 'simple_view';
+        $view_fields = isset( $params['view_fields'] ) ? $params['view_fields'] : array();
+
+        if ( is_string( $view_fields ) ) {
+            $view_fields = (array) $view_fields;
+        } elseif ( ! is_array( $view_fields ) ) {
+            $view_fields = array();
+        }
+
+        if ( MainWP_Utility::ctype_digit( $id ) ) {
+            $where = $this->get_sql_where_allow_access_sites( 'wp', 'nocheckstaging' );
+            if ( $select_groups ) {
+                return 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors
+                FROM ' . $this->table_name( 'wp' ) . ' wp
+                LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
+                LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
+                JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
+                JOIN ' . $this->get_option_view_by( $view, $view_fields ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+                WHERE wp.id = ' . $id . $where . '
+                GROUP BY wp.id, wp_sync.sync_id';
+            }
+
+            return 'SELECT wp.*,wp_sync.*,wp_optionview.*
+                    FROM ' . $this->table_name( 'wp' ) . ' wp
+                    JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
+                    JOIN ' . $this->get_option_view_by( $view, $view_fields ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+                    WHERE id = ' . $id . $where;
+        }
+        return null;
+    }
+
     /**
      * Get child site by id.
      *
      * @param int   $id           Child site ID.
      * @param array $selectGroups Select groups.
      * @param array $extra_view       Get extra option fields.
+     * @param int   $obj OBJECT|ARRAY_A.
      *
      * @return object|null Database query results or null on failure.
      */
-    public function get_website_by_id( $id, $selectGroups = false, $extra_view = array() ) {
-        return $this->get_row_result( $this->get_sql_website_by_id( $id, $selectGroups, $extra_view ) );
+    public function get_website_by_id( $id, $selectGroups = false, $extra_view = array(), $obj = OBJECT ) {
+        return $this->get_row_result( $this->get_sql_website_by_id( $id, $selectGroups, $extra_view ), $obj );
     }
 
     /**
@@ -3085,5 +3147,19 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     public function get_rest_api_keys() {
         return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'api_keys' ) . ' ORDER BY key_id DESC' );
+    }
+
+
+    /**
+     * log_system_query
+     *
+     * @param  array $params
+     * @param  string $sql
+     * @return void
+     */
+    public function log_system_query( $params, $sql ) {
+        if ( is_array(  $params ) && ! empty( $params['dev_log_query'] ) && ! empty( $sql ) ) {
+            error_log( $sql ); //phpcs:ignore -- NOSONAR - for dev.
+        }
     }
 }

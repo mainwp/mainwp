@@ -712,7 +712,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                                 </div>
                                 <div class="item">
                                     <i class="edit icon"></i>
-                                    <a href="<?php echo 'admin.php?page=managesites&id=' . intval( $website->id ); ?>"><?php esc_html_e( 'Edit Site', 'mainwp' ); ?></a>
+                                    <a href="<?php echo 'admin.php?page=managesites&id=' . intval( $website->id ); ?>"><?php esc_html_e( 'Settings', 'mainwp' ); ?></a>
                                 </div>
                                 <div class="item">
                                     <i class="sync alt icon"></i>
@@ -1267,6 +1267,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $sidebar_pages = array( 'ManageGroups', 'PostBulkManage', 'PostBulkAdd', 'PageBulkManage', 'PageBulkAdd', 'ThemesManage', 'ThemesInstall', 'ThemesAutoUpdate', 'PluginsManage', 'PluginsInstall', 'PluginsAutoUpdate', 'UserBulkManage', 'UserBulkAdd', 'UpdateAdminPasswords', 'Extensions' );
         $sidebar_pages = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages ); // deprecated filter.
         $sidebar_pages = apply_filters( 'mainwp_sidebar_pages', $sidebar_pages );
+        $current_user  = get_current_user_id();
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
@@ -1283,6 +1284,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 $id = intval( $_GET['emailsettingsid'] );
             } elseif ( isset( $_GET['scanid'] ) ) {
                 $id = intval( $_GET['scanid'] );
+            } elseif ( isset( $_GET['monitor_wpid'] ) ) {
+                $id = intval( $_GET['monitor_wpid'] );
             }
 
             $website = MainWP_DB::instance()->get_website_by_id( $id );
@@ -1390,6 +1393,11 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             </a>
             <?php
         }
+        ?>
+        <a href="profile.php" class="ui icon button" style="padding:0;overflow:hidden;" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Edit your profile.', 'mainwp' ); ?>" aria-label="<?php esc_attr_e( 'Edit your profile.', 'mainwp' ); ?>">
+            <?php echo get_avatar( $current_user, 36, '', '', array( 'extra_attr'=>'style="margin-bottom:-2px;"' ) ); ?>
+        </a>
+        <?php
         return ob_get_clean();
     }
 
@@ -1413,8 +1421,29 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $subitems = apply_filters( 'mainwp_page_navigation', $subitems, $name_caller );
         ?>
         <div id="mainwp-page-navigation-wrapper">
+            <?php if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+                <?php
+                //phpcs:disable WordPress.Security.NonceVerification
+                $id = 0;
+                if ( isset( $_GET['dashboard'] ) ) {
+                    $id = intval( $_GET['dashboard'] );
+                } elseif ( isset( $_GET['id'] ) ) {
+                    $id = intval( $_GET['id'] );
+                } elseif ( isset( $_GET['updateid'] ) ) {
+                    $id = intval( $_GET['updateid'] );
+                } elseif ( isset( $_GET['emailsettingsid'] ) ) {
+                    $id = intval( $_GET['emailsettingsid'] );
+                } elseif ( isset( $_GET['scanid'] ) ) {
+                    $id = intval( $_GET['scanid'] );
+                }
+                // phpcs:enable
+                $website = MainWP_DB::instance()->get_website_by_id( $id );
+                ?>
+                <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" src="//s0.wordpress.com/mshots/v1/<?php echo esc_html( rawurlencode( $website->url ) ); ?>?w=170">
+            <?php endif; ?>
 
             <div class="ui vertical menu mainwp-page-navigation">
+                
                 <?php
 
                 if ( is_array( $subitems ) ) {
@@ -1466,15 +1495,15 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         <?php
     }
 
-            /**
-             * Method render_header()
-             *
-             * Render page title.
-             *
-             * @param string $title Page title.
-             *
-             * @return void Render page title and hidden divider html.
-             */
+    /**
+     * Method render_header()
+     *
+     * Render page title.
+     *
+     * @param string $title Page title.
+     *
+     * @return void Render page title and hidden divider html.
+     */
     public static function render_header( $title = '' ) {
         static::render_top_header( array( 'title' => $title ) );
         echo '<div class="ui hidden clearing fitted divider"></div>';

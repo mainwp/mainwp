@@ -93,18 +93,19 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @var array $enable_widgets Widgets to enable.
      */
     private static $enable_widgets = array(
-        'overview'           => true,
-        'recent_posts'       => true,
-        'recent_pages'       => true,
-        'security_issues'    => true,
-        'manage_backups'     => true,
-        'plugins'            => true,
-        'themes'             => true,
-        'notes'              => true,
-        'site_note'          => true,
-        'client_info'        => true,
-        'non_mainwp_changes' => true,
-
+        'overview'                        => true,
+        'recent_posts'                    => true,
+        'recent_pages'                    => true,
+        'security_issues'                 => true,
+        'manage_backups'                  => true,
+        'plugins'                         => true,
+        'themes'                          => true,
+        'notes'                           => true,
+        'site_note'                       => true,
+        'client_info'                     => true,
+        'non_mainwp_changes'              => true,
+        'uptime_monitoring_info'          => true,
+        'uptime_monitoring_response_time' => true,
     );
 
     /**
@@ -293,7 +294,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             if ( 'new' === $_REQUEST['do'] ) {
                 return;
             }
-        } elseif ( isset( $_GET['id'] ) || isset( $_GET['scanid'] ) || isset( $_GET['backupid'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,ized
+        } elseif ( isset( $_GET['id'] ) || isset( $_GET['scanid'] ) || isset( $_GET['backupid'] ) || isset( $_GET['updateid'] ) || isset( $_GET['monitor_wpid'] ) || isset( $_GET['emailsettingsid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,ized
             return;
         }
         // phpcs:enable
@@ -551,7 +552,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <div class="ui small modal" id="mainwp-manage-sites-site-preview-screen-options-modal">
             <div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
             <div class="scrolling content ui form">
-                <span><?php esc_html_e( 'Would you like to turn on home screen previews?  This function queries WordPress.com servers to capture a screenshot of your site the same way comments shows you preview of URLs.', 'mainwp' ); ?>
+                <span><?php esc_html_e( 'Would you like to turn on home screen previews? This function queries WordPress.com servers to capture a screenshot of your site the same way comments shows you preview of URLs.', 'mainwp' ); ?>
             </div>
             <div class="actions">
                 <div class="ui ok button"><?php esc_html_e( 'Yes', 'mainwp' ); ?></div>
@@ -1211,7 +1212,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <?php self::mainwp_managesites_form_import_sites_file_managewp(); ?>
                         <div class="ui divider"></div>
                         <input type="button" name="mainwp_managesites_add" id="mainwp_managesites_bulkadd" class="ui big green button" value="<?php echo esc_attr( $title_page ); ?>"/>
-                        
+
                     </form>
                 </div>
                 <?php
@@ -1352,6 +1353,16 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), static::$page, array( 1, 1, 4, 8 ) );
         }
 
+        // Load the Uptime monitoring widget.
+        if ( mainwp_current_user_have_right( 'dashboard', 'manage_uptime_monitoring' ) && static::$enable_widgets['uptime_monitoring_info'] ) {
+            MainWP_UI::add_widget_box( 'uptime_monitoring_info', array( MainWP_Uptime_Monitoring_Site_Widget::instance(), 'render_uptime_widget' ), static::$page, array( 1, 1, 4, 8 ) );
+        }
+
+        // Load the Uptime monitoring widget.
+        if ( mainwp_current_user_have_right( 'dashboard', 'manage_uptime_monitoring' ) && static::$enable_widgets['uptime_monitoring_response_time'] ) {
+            MainWP_UI::add_widget_box( 'uptime_monitoring_response_time', array( MainWP_Uptime_Monitoring_Site_Widget::instance(), 'render_response_time_widget' ), static::$page, array( 1, 1, 4, 8 ) );
+        }
+
         // Load the Updates Overview widget.
         if ( static::$enable_widgets['overview'] ) {
             MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), static::$page, array( 1, 1, 4, 18 ) );
@@ -1465,6 +1476,19 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         MainWP_Manage_Sites_View::render_scan_site( $website );
         static::render_footer( 'SecurityScan' );
     }
+
+    /**
+     * Method render_monitor_site()
+     *
+     * @param mixed $website Child Site.
+     */
+    public static function render_monitor_site( $website ) {
+        MainWP_System_Utility::set_current_wpid( $website->id );
+        static::render_header( 'ManageSitesMonitor' );
+        MainWP_Uptime_Monitoring_Edit::instance()->render_monitor_settings( $website->id, true );
+        static::render_footer( 'ManageSitesMonitor' );
+    }
+
 
     /**
      * Method show_backups()
@@ -1623,6 +1647,13 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 static::render_updates( $updatesWebsite );
                 return;
             }
+        }
+
+        if ( isset( $_GET['monitor_wpid'] ) ) {
+            $websiteid = intval( $_GET['monitor_wpid'] );
+            $website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
+            static::render_monitor_site( $website );
+            return;
         }
 
         if ( ! empty( $_GET['emailsettingsid'] ) ) {

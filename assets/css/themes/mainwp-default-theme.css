@@ -76,11 +76,11 @@
 .mainwp-ui.mainwp-custom-theme .ui.button {
   border-radius: 15px;
   -webkit-border-radius: 15px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .15) !important;
+  box-shadow: 0 0 0 0 rgba(0, 0, 0, .0) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.button:hover {
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .0) !important;
+  box-shadow: 0 0 0 0 rgba(0, 0, 0, .0) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.tiny.button {
@@ -434,7 +434,8 @@
   -webkit-border-radius: 10px;
 }
 
-.mainwp-ui.mainwp-custom-theme .mainwp-managesites-import-rows:nth-of-type(odd) {
+.mainwp-ui.mainwp-custom-theme .mainwp-managesites-import-rows:nth-of-type(odd),
+.mainwp-ui.mainwp-custom-theme .mainwp-qsw-add-client-rows:nth-of-type(odd) {
   background-color: var(--grey-light) !important;
 }
 
@@ -461,6 +462,18 @@
 .mainwp-ui.mainwp-custom-theme #mainwp-sites-previews .ui.cards .image img {
   border-radius: 15px 15px 0 0 !important;
   -webkit-border-radius: 15px 15px 0 0 !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .mainwp-widget .ui.cards .card {
+  border: 1px solid var(--grey-light) !important;
+  box-shadow: none !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .mainwp-widget .ui.cards .inverted.card {
+  background-color: var(--grey-dark);
+}
+.mainwp-ui.mainwp-custom-theme .mainwp-widget .ui.cards .light.card {
+  background-color: var(--grey-light);
 }
 
 /* Tables */

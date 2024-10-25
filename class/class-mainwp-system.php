@@ -196,6 +196,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_Client_Overview::instance();
 
         MainWP_Manage_Sites::init();
+        MainWP_Uptime_Monitoring_Handle::instance();
 
         MainWP_Hooks::get_instance();
         MainWP_Menu::get_instance();
@@ -358,14 +359,13 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_update_check_version',
                 'mainwp_setting_demo_mode_enabled',
                 'mainwp_log_wait_lasttime',
-                'mainwp_updatescheck_start_last_schedule_timestamp',
                 'mainwp_cron_license_deactivated_alert_lasttime',
                 'mainwp_updatescheck_is_running',
                 'mainwp_automatic_updates_is_running',
                 'mainwp_frequency_AutoUpdate',
                 'mainwp_batch_updates_is_running',
                 'mainwp_batch_individual_updates_is_running',
-
+                'mainwp_maximum_uptime_monitoring_requests',
             );
 
             $options = apply_filters( 'mainwp_init_load_all_options', $options );
@@ -502,6 +502,15 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     }
 
     /**
+     * Method mainwp_cron_uptime_monitoring_check_action()
+     *
+     * Run cron uptime monitoring check action.
+     */
+    public function mainwp_cron_uptime_monitoring_check_action() {
+        MainWP_Uptime_Monitoring_Schedule::instance()->cron_uptime_check();
+    }
+
+    /**
      * Method mainwp_crondeactivatedlicensesalert_action()
      *
      * Run cron activated licenses alert action.
@@ -557,7 +566,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public static function is_mainwp_site_page() {
         //phpcs:disable WordPress.Security.NonceVerification.Recommended
-        if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) || ( 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] ) ) ) {
+        if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['monitor_wpid'] ) && ! empty( $_GET['monitor_wpid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) || ( 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] ) ) ) {
             return true;
         }
         //phpcs:enable
@@ -1004,6 +1013,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
     }
 
+
     /**
      * Method admin_enqueue_scripts()
      *
@@ -1025,6 +1035,12 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
 
         if ( static::is_mainwp_pages() ) {
+
+            if ( isset( $_GET['page'] ) && $this->is_slider_conflict_pages( $_GET['page'] ) ) {
+                wp_dequeue_script( 'jquery-ui-slider' );
+                wp_deregister_script( 'jquery-ui-slider' );
+            }
+
             wp_enqueue_script( 'jquery-migrate' );
             wp_enqueue_script( 'mainwp-updates', MAINWP_PLUGIN_URL . 'assets/js/mainwp-updates.js', array(), $this->current_version, true );
             wp_enqueue_script( 'mainwp-managesites-action', MAINWP_PLUGIN_URL . 'assets/js/mainwp-managesites-action.js', array(), $this->current_version, true );
@@ -1038,6 +1054,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             wp_enqueue_script( 'mainwp-extensions', MAINWP_PLUGIN_URL . 'assets/js/mainwp-extensions.js', array(), $this->current_version, true );
             wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'assets/js/moment/moment.min.js', array(), $this->current_version, true );
             wp_enqueue_script( 'fomantic-ui', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.js', array( 'jquery' ), $this->current_version, false );
+            wp_enqueue_script( 'fomantic-ui-slider', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/slider.min.js', array( 'jquery' ), $this->current_version, false );
 
             wp_enqueue_script( 'datatables', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.js', array( 'jquery' ), $this->current_version, false );
             wp_enqueue_script( 'datatables-semanticui', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.semanticui.js', array( 'datatables' ), $this->current_version, false );
@@ -1092,6 +1109,14 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
     }
 
+
+    /**
+     * Method is_slider_conflict_pages()
+     */
+    public function is_slider_conflict_pages( $page ) {
+        return ( in_array( $page, array( 'managesites' ) ) && isset( $_GET['monitor_wpid'] ) || in_array( $page, array( 'Settings' ) ) ) ? true : false;
+    }
+
     /**
      * Method admin_enqueue_styles()
      *
@@ -1122,6 +1147,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             wp_enqueue_style( 'mainwp-fonts', MAINWP_PLUGIN_URL . 'assets/css/mainwp-fonts.css', array(), $this->current_version );
             wp_enqueue_style( 'fomantic-ui', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.css', array(), $this->current_version );
             wp_enqueue_style( 'mainwp-fomantic', MAINWP_PLUGIN_URL . 'assets/css/mainwp-fomantic.css', array(), $this->current_version );
+            wp_enqueue_style( 'fomantic-ui-slider', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/slider.min.css', array(), $this->current_version );
 
             wp_enqueue_style( 'datatables', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.dataTables.css', array(), $this->current_version );
             wp_enqueue_style( 'datatables-semanticui', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.semanticui.css', array(), $this->current_version );

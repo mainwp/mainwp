@@ -1,6 +1,6 @@
 <?php
 /**
- * MainWP monotoring sites view
+ * MainWP monitoring sites view
  *
  * @package MainWP/Dashboard
  */
@@ -19,18 +19,18 @@ class MainWP_Monitoring_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      */
     public static function render_settings() {
 
-        $disableSitesMonitoring = (int) get_option( 'mainwp_disableSitesChecking', 1 );
-        $frequencySitesChecking = (int) get_option( 'mainwp_frequencySitesChecking', 60 );
-
+        $disableSitesMonitoring       = (int) get_option( 'mainwp_disableSitesChecking', 1 );
+        $frequencySitesChecking       = (int) get_option( 'mainwp_frequencySitesChecking', 60 );
         $disableSitesHealthMonitoring = (int) get_option( 'mainwp_disableSitesHealthMonitoring', 1 ); // disabled by default.
         $sitehealthThreshold          = (int) get_option( 'mainwp_sitehealthThreshold', 80 ); // "Should be improved" threshold.
         ?>
         <h3 class="ui dividing header">
-            <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-basic-monitoring' ); ?>
+            <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-monitor-general' ); ?>
             <?php esc_html_e( 'Basic Uptime Monitoring', 'mainwp' ); ?>
-            <div class="sub header"><?php printf( esc_html__( 'For additional help with setting up the Basic Uptime monitoring, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
+            <div class="sub header"><?php printf( esc_html__( 'For additional help with setting up the Uptime Monitoring, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
         </h3>
         <div class="ui info message"><?php printf( esc_html__( 'Excessive checking can cause server resource issues.  For frequent checks or lots of sites, we recommend the %1$sMainWP Advanced Uptime Monitoring%2$s extension.', 'mainwp' ), '<a href="https://mainwp.com/extension/advanced-uptime-monitor" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
+
         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-basic-monitoring" default-indi-value="1">
             <label class="six wide column middle aligned">
             <?php
@@ -63,6 +63,16 @@ class MainWP_Monitoring_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 </select>
             </div>
         </div>
+
+        <h3 class="ui dividing header">
+            <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-monitor-general' ); ?>
+            <?php esc_html_e( 'Uptime Monitoring', 'mainwp' ); ?>
+            <div class="sub header"><?php printf( esc_html__( 'For additional help with setting up the Uptime Monitoring, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
+        </h3>
+
+        <?php
+            MainWP_Uptime_Monitoring_Edit::instance()->render_monitor_settings();
+        ?>
         <h3 class="ui dividing header">
             <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-health-monitoring' ); ?>
             <?php esc_html_e( 'Site Health Monitoring', 'mainwp' ); ?>

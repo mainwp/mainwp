@@ -28,9 +28,13 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     public static function handle_settings_post() { // phpcs:ignore -- NOSONAR - complex.
         if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) && MainWP_System_Utility::is_admin() ) {
-            MainWP_Utility::update_option( 'mainwp_disableSitesChecking', ( ! isset( $_POST['mainwp_disableSitesChecking'] ) ? 1 : 0 ) );
+            
+      		MainWP_Utility::update_option( 'mainwp_disableSitesChecking', ( ! isset( $_POST['mainwp_disableSitesChecking'] ) ? 1 : 0 ) );
             $val = isset( $_POST['mainwp_frequency_sitesChecking'] ) ? intval( $_POST['mainwp_frequency_sitesChecking'] ) : 1440;
             MainWP_Utility::update_option( 'mainwp_frequencySitesChecking', $val );
+      
+			//global uptime monitoring settings.
+            MainWP_Uptime_Monitoring_Edit::instance()->handle_save_settings();
             MainWP_Utility::update_option( 'mainwp_disableSitesHealthMonitoring', ( ! isset( $_POST['mainwp_disable_sitesHealthMonitoring'] ) ? 1 : 0 ) );
             $val = isset( $_POST['mainwp_site_healthThreshold'] ) ? intval( $_POST['mainwp_site_healthThreshold'] ) : 80;
             MainWP_Utility::update_option( 'mainwp_sitehealthThreshold', $val );

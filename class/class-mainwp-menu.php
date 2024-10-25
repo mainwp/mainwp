@@ -118,6 +118,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         'manage_security_issues',
                         'test_connection',
                         'manage_groups',
+                        'manage_uptime_monitoring',
                     ),
                 ),
                 'init_menu_callback' => array( MainWP_Manage_Sites::class, 'init_menu' ),
@@ -531,7 +532,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * Check if $_mainwp_disable_menus_items contains any menu items to hide.
      *
      * @param string $level The level the menu item is on.
-     * @param array  $item The menu items meta data.
+     * @param array|string  $item The menu items meta data.
      *
      * @return bool True|False, default is False.
      */

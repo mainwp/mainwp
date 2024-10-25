@@ -110,3 +110,44 @@ if ( ! function_exists( 'mainwp_modules_is_enabled' ) ) {
         return ! empty( $enable_mainwp_modules[ $module ] ) ? true : false;
     }
 }
+
+if ( ! function_exists( 'mainwp_get_timestamp' ) ) {
+
+    /**
+     * mainwp_get_timestamp.
+     *
+     * @param  int $add_time
+     * @return int
+     */
+    function mainwp_get_timestamp( $add_time = 0 ) {
+        return (int) $add_time + (int) \MainWP\Dashboard\MainWP_Utility::get_timestamp();
+    }
+
+
+}
+
+if ( ! function_exists( 'mainwp_get_current_utc_datetime_db' ) ) {
+    /**
+     * mainwp_get_timestamp.
+     *
+     * @param  int $add_time
+     * @return int
+     */
+    function mainwp_get_current_utc_datetime_db() {
+        $utcTime = new \DateTime( 'now', new \DateTimeZone( 'UTC' ) );
+        return $utcTime->format( 'Y-m-d H:i:s' ); // Outputs: YYYY-MM-DD HH:MM:SS.
+    }
+}
+
+if ( ! function_exists( 'mainwp_secure_request' ) ) {
+
+    /**
+     * mainwp_secure_request.
+     *
+     * @param  string $action
+     * @return null or die
+     */
+    function mainwp_secure_request( $action ) {
+        \MainWP\Dashboard\MainWP_Post_Handler::instance()->secure_request( $action );
+    }
+}

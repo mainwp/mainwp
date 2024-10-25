@@ -377,12 +377,33 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * Get sql log.
      *
+     * @param int   $paged
+     * @param int   $order
+     * @param array $params
+     *
      * @return string sql query.
      */
-    public function get_sql_log() {
+    public function get_sql_log( $paged = 0, $order = '', $params = array() ) {
+
+        $count_only = ! empty( $params['count'] ) ? true : false;
+        $limit      = ! empty( $params['limit'] ) ? intval( $params['limit'] ) : 500;
+
+        $order = strtoupper( $order );
+
+        $order = 'DESC' === $order || 'ASC' === $order ? $order : 'DESC';
+
+        $start = ! empty( $paged ) ? absint( $paged * $limit ) : 0;
+
+        if ( $count_only ) {
+            return 'SELECT count(*)
+                FROM ' . $this->table_name( 'action_log' ) . ' log
+                WHERE 1 ';
+        }
+
         return 'SELECT log.*
                 FROM ' . $this->table_name( 'action_log' ) . ' log
-                WHERE 1 LIMIT 0, 300 ';
+                WHERE 1 ORDER BY ' .
+                $this->wpdb->prepare( 'log_timestamp ' . $this->escape( $order ) . ' LIMIT %d, %d', $start, $limit );
     }
 
     /**

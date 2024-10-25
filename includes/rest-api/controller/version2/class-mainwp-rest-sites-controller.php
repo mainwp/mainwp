@@ -2199,7 +2199,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 'securityIssues'        => $site_object->securityIssues,
                 'themes'                => $site_object->themes,
                 'plugins'               => $site_object->plugins,
-                'automatic_update'      => $site_object->automatic_update,
+                'automatic_update'      => ! empty( $site_object->automatic_update ) ? $site_object->automatic_update : 0,
                 'sync_errors'           => $site_object->sync_errors,
                 'last_post_gmt'         => $site_object->last_post_gmt,
                 'health_value'          => $site_object->health_value,

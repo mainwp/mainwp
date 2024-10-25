@@ -146,6 +146,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         $this->add_action( 'mainwp_save_temp_import_website', array( &$this, 'ajax_save_temp_import_website' ) );
         $this->add_action( 'mainwp_delete_temp_import_website', array( &$this, 'ajax_delete_temp_import_website' ) );
         $this->add_action( 'mainwp_import_website_add_client', array( &$this, 'ajax_import_website_add_client' ) );
+
+        // Page:: mainwp-setup.
+        $this->add_action( 'mainwp_clients_add_multi_client', array( &$this, 'ajax_clients_add_multi_client' ) );
     }
 
     /**
@@ -186,7 +189,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         MainWP_Cache::init_session();
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        $role    = isset( $_POST['role'] ) ? sanitize_text_field( wp_unslash( $_POST['role'] ) ) : '';
+        $role    = isset( $_POST['urole'] ) ? sanitize_text_field( wp_unslash( $_POST['urole'] ) ) : '';
         $groups  = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : '';
         $sites   = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : '';
         $clients = isset( $_POST['clients'] ) && is_array( $_POST['clients'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['clients'] ) ) : '';
@@ -1094,7 +1097,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         try {
             die( wp_json_encode( array( 'result' => MainWP_Updates_Overview::dismiss_sync_errors() ) ) );
         } catch ( \Exception $e ) {
-            die( wp_json_encode( array( 'error' => $e->getMessage() ) ) );
+            die( wp_json_encode( array( 'error' => sanitize_text_field( $e->getMessage() ) ) ) );
         }
     }
 
@@ -1477,7 +1480,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         $status = $this->mainwp_get_sanitized_post( 'status' );
         $index  = $this->mainwp_get_sanitized_post( 'row_index', 'intval' ) ?? 1;
         if ( empty( $status ) || '' === $index ) {
-            wp_die( wp_send_json_error( $error_msg ) );
+            wp_die( wp_send_json_error( $error_msg ) ); //phpcs:ignore WordPress.Security.EscapeOutput
         }
 
         $is_update = false;
@@ -1502,11 +1505,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         // Save data to options table.
         if ( $is_update ) {
             MainWP_DB::instance()->update_general_option( 'temp_import_sites', $values, 'array' );
-            wp_die( wp_send_json_success( esc_html__( 'Row data saved successfully.', 'mainwp' ) ) );
+            wp_die( wp_send_json_success( esc_html( __( 'Row data saved successfully.', 'mainwp' ) ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
         }
 
         // In case of no updates.
-        wp_die( wp_send_json_error( esc_html( $error_msg ) ) );
+        wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
     }
 
     /**
@@ -1534,7 +1537,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
      * Create value if empty or array key exists.
      *
      * @param mixed $values temp import sites.
-     * @param int   $index row key
+     * @param int   $index row key.
      * @param array $row_item new row.
      *
      * @return bool true.

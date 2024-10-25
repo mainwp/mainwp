@@ -25,7 +25,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.0.14'; // NOSONAR - no IP.
+    protected $mainwp_db_version = '9.0.0.41'; // NOSONAR - no IP.
 
     /**
      * Protected variable to hold the database option name.
@@ -400,6 +400,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $tbl  .= ') ' . $charset_collate . ';';
         $sql[] = $tbl;
 
+        MainWP_DB_Uptime_Monitoring::instance()->get_db_schema( $sql, $currentVersion);
+
+        // End of tables.
+
         $sql = apply_filters( 'mainwp_db_install_tables', $sql, $currentVersion, $charset_collate );
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php'; // NOSONAR - WP compatible.
@@ -410,11 +414,11 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             error_reporting(0); // phpcs:ignore -- try to disabled the error_log somewhere in WP.
         }
 
-        $suppress = $wpdb->suppress_errors();
+        // $suppress = $wpdb->suppress_errors();
         foreach ( $sql as $query ) {
             dbDelta( $query );
         }
-        $wpdb->suppress_errors( $suppress );
+        // $wpdb->suppress_errors( $suppress );
 
         $this->post_update();
 

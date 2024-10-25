@@ -1264,15 +1264,15 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         ?>
         <div class="ui secondary segment main-master-checkbox">
             <div class="ui stackable grid">
-                <div class="one wide center aligned middle aligned column">
+                <div class="one wide left aligned middle aligned column">
                     <span class="trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></span>
                 </div>
                 <div class="one wide center aligned middle aligned column"><div class="ui checkbox main-master  not-auto-init"><input type="checkbox"/><label></label></div></div>
-                <div class="five wide middle aligned column"><?php esc_html_e( 'Website', 'mainwp' ); ?></div>
+                <div class="six wide middle aligned column"><?php esc_html_e( 'Website', 'mainwp' ); ?></div>
                 <div class="two wide center aligned middle aligned column"></div>
                 <div class="two wide center aligned middle aligned column"></div>
                 <div class="two wide center aligned middle aligned column"></div>
-                <div class="two wide center aligned middle aligned column"><?php esc_html_e( 'Plugins', 'mainwp' ); ?></div>
+                <div class="two wide right aligned middle aligned column"><?php esc_html_e( 'Plugins', 'mainwp' ); ?></div>
             </div>
         </div>
 
@@ -1294,19 +1294,19 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <div class="ui accordion mainwp-manage-plugin-accordion mainwp-manage-plugin-item main-child-checkbox"  id="<?php echo esc_html( $item_id ); ?>">
                 <div class="title master-checkbox">
                     <div class="ui stackable grid">
-                        <div class="one wide center aligned middle aligned column"><i class="dropdown icon dropdown-trigger"></i></div>
+                        <div class="one wide left aligned middle aligned column"><i class="dropdown icon dropdown-trigger"></i></div>
                         <div class="one wide center aligned middle aligned column">
                             <div class="ui checkbox master">
                                 <input type="checkbox"/>
                                 <label></label>
                             </div>
                         </div>
-                        <div class="three wide middle aligned column"><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $site_id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo intval( $site_id ); ?>"><?php echo esc_html( $site_name ); ?></a></div>
+                        <div class="four wide middle aligned column"><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $site_id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo intval( $site_id ); ?>"><?php echo esc_html( $site_name ); ?></a></div>
                         <div class="two wide center aligned middle aligned column"></div>
                         <div class="two wide center aligned middle aligned column"></div>
                         <div class="two wide center aligned middle aligned column"></div>
                         <div class="two wide center aligned middle aligned column"></div>
-                        <div class="two wide center aligned middle aligned column"><div class="ui label"><i class="icon plug"></i> <?php echo intval( $count_plugins ); ?></div></div>
+                        <div class="two wide right aligned middle aligned column"><div class="ui label"><?php echo intval( $count_plugins ) . ' ' . esc_html( _n( 'Plugin', 'Plugins', intval( $count_plugins ), 'mainwp' ) ); ?></div></div>
                     </div>
                 </div>
                 <div class="content child-checkbox">
@@ -1364,7 +1364,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             ?>
                             <div class="ui very compact stackable grid mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( $plugin_title ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
                             <div class="one wide center aligned middle aligned column"></div>
-                                <div class="one wide center aligned middle aligned column">
+                                <div class="one wide left aligned middle aligned column">
                                     <div class="ui checkbox child <?php echo 'mainwp-child' === $plugin_directory ? 'disabled' : ''; ?>">
                                     <input type="checkbox"
                                     <?php
@@ -1380,7 +1380,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 <div class="one wide center aligned middle aligned column"><?php echo $plugin_status; //phpcs:ignore -- escaped. ?></div>
                                 <div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny basic green label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny basic grey label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
                                 <div class="one wide center aligned middle aligned column"><?php echo $plugin_mu ? '<span class="ui small label"><i class="exclamation orange triangle icon"></i> MU</span>' : ''; ?></div>
-                                <div class="two wide center aligned middle aligned column current-version">
+                                <div class="two wide right aligned middle aligned column current-version">
                                     <?php echo esc_html( $plugin_version ); ?>
                                     <?php if ( ! empty( $new_version ) ) : ?>
                                     &rarr;
@@ -1402,18 +1402,18 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                     <?php if ( $actived ) { ?>
                                         <?php if ( ! $plugin_mu && mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
                                             <a href="#" class="mainwp-manage-plugin-deactivate ui mini fluid button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Deactivate ', 'mainwp' ) . esc_html( $plugin_title ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
-                                    <?php } ?>
-                                <?php } else { ?>
+                                        <?php } ?>
+                                    <?php } else { ?>
                                         <div class="ui mini fluid buttons">
-                                        <?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-                                                    <a href="#" class="mainwp-manage-plugin-activate ui green button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Activate ', 'mainwp' ) . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
-                                    <?php } ?>
-                                        <?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_plugins' ) ) { ?>
-                                                    <a href="#" class="mainwp-manage-plugin-delete ui button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Delete ', 'mainwp' ) . ' ' . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr__( 'plugin from this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
-                                    <?php } ?>
+                                            <?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
+                                                <a href="#" class="mainwp-manage-plugin-activate ui green button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Activate ', 'mainwp' ) . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
+                                            <?php } ?>
+                                            <?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_plugins' ) ) { ?>
+                                                <a href="#" class="mainwp-manage-plugin-delete ui button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Delete ', 'mainwp' ) . ' ' . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr__( 'plugin from this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+                                            <?php } ?>
                                         </div>
-                                <?php } ?>
-                            <?php endif; ?>
+                                    <?php } ?>
+                                <?php endif; ?>
                             </div>
                         </div>
                             <?php
@@ -1549,16 +1549,16 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         ?>
         <div class="ui secondary segment main-master-checkbox">
             <div class="ui stackable grid">
-                <div class="one wide center aligned middle aligned column">
+                <div class="one wide left aligned middle aligned column">
                     <span class="trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></span>
                 </div>
                 <div class="one wide center aligned middle aligned column"><div class="ui checkbox main-master  not-auto-init"><input type="checkbox"/><label></label></div></div>
                 <div class="one wide center aligned middle aligned column"></div>
                 <div class="five wide middle aligned column"><?php esc_html_e( 'Plugin', 'mainwp' ); ?></div>
                 <div class="two wide center aligned middle aligned column"></div>
-                <div class="two wide center aligned middle aligned column"><?php esc_html_e( 'Latest Version', 'mainwp' ); ?></div>
+                <div class="two wide right aligned middle aligned column"><?php esc_html_e( 'Latest Version', 'mainwp' ); ?></div>
                 <div class="two wide center aligned middle aligned column"></div>
-                <div class="two wide center aligned middle aligned column"><?php esc_html_e( 'Websites', 'mainwp' ); ?></div>
+                <div class="two wide right aligned middle aligned column"><?php esc_html_e( 'Websites', 'mainwp' ); ?></div>
             </div>
         </div>
 
@@ -1587,16 +1587,16 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <div class="ui accordion mainwp-manage-plugin-accordion mainwp-manage-plugin-item main-child-checkbox"  id="<?php echo esc_html( $item_id ); ?>">
                 <div class="title master-checkbox">
                     <div class="ui grid">
-                        <div class="one wide center aligned middle aligned column"><i class="dropdown icon dropdown-trigger"></i></div>
+                        <div class="one wide left aligned middle aligned column"><i class="dropdown icon dropdown-trigger"></i></div>
                         <div class="one wide center aligned middle aligned column">
                             <div class="ui checkbox <?php echo 'mainwp-child' === $plugin_directory ? 'disabled' : ''; ?> master"><input type="checkbox" <?php echo 'mainwp-child' === $plugin_directory ? 'disabled="disabled"' : ''; ?>><label></label></div>
                         </div>
                         <div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
                         <div class="five wide middle aligned column"><a class="open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>" target="_blank" ><?php echo esc_html( $plugin_title ); ?></a></div>
                         <div class="two wide center aligned middle aligned column"></div>
-                        <div class="two wide center aligned middle aligned column lastest-version-info"></div>
+                        <div class="two wide right aligned middle aligned column lastest-version-info"></div>
                         <div class="two wide center aligned middle aligned column"></div>
-                        <div class="two wide center aligned middle aligned column"><div class="ui label"><i class="icon wordpress"></i> <?php echo intval( $count_sites ); // phpcs:ignore -- Prevent modify WP icon. ?></div></div>
+                        <div class="two wide right aligned middle aligned column"><div class="ui label"><?php echo intval( $count_sites ) . ' ' . esc_html( _n( 'Site', 'Sites', intval( $count_sites ), 'mainwp' ) ); ?></div></div>
                     </div>
                 </div>
                 <div class="content child-checkbox">

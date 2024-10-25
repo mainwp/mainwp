@@ -284,7 +284,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                 'new_version' => $websiteCoreUpgrades['new'],
             );
 
-            if ( 1 === (int) $website->automatic_update && 1 === (int) $enable_automaticCoreUpdates && isset( $websiteCoreUpgrades['current'] ) && ! $website->is_ignoreCoreUpdates && ! MainWP_Common_Functions::instance()->is_ignored_updates( $item, $websiteIgnoredCores, 'core' ) && ! MainWP_Common_Functions::instance()->is_ignored_updates( $item, $decodedIgnoredCores, 'core' ) ) {
+            if ( ! empty( $website->automatic_update ) && 1 === (int) $website->automatic_update && 1 === (int) $enable_automaticCoreUpdates && isset( $websiteCoreUpgrades['current'] ) && ! $website->is_ignoreCoreUpdates && ! MainWP_Common_Functions::instance()->is_ignored_updates( $item, $websiteIgnoredCores, 'core' ) && ! MainWP_Common_Functions::instance()->is_ignored_updates( $item, $decodedIgnoredCores, 'core' ) ) {
                 $_update_now = false;
                 if ( ! empty( $delay_autoupdate ) ) {
                     if ( empty( $websiteCoreUpdateCheck ) ) {

@@ -75,16 +75,21 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @param string $field setting field to check.
      * @param mixed  $current_value setting current value.
      * @param bool   $render_indi to render indication.
+     * @param mixed  $default_val default value directly.
      */
-    public static function render_not_default_indicator( $field, $current_value, $render_indi = true ) {
-        $def = static::get_defaults_value( $field );
+    public static function render_not_default_indicator( $field, $current_value, $render_indi = true, $default_val = null ) {
+        $indi_value = static::get_defaults_value( $field );
+
+        if ( null !== $default_val ) {
+            $indi_value = $default_val;
+        }
 
         $visible = false;
-        if ( ( 'none_preset_value' !== $field && $current_value !== $def ) || ( 'none_preset_value' === $field && ! empty( $current_value ) ) ) {
+        if ( ( 'none_preset_value' !== $field && $current_value !== $indi_value ) || ( 'none_preset_value' === $field && ! empty( $current_value ) ) ) {
             $visible = true;
         }
         $indi = static::get_indicator( 'field', '', $visible );
-        $indi = apply_filters( 'mainwp_default_settings_indicator', $indi, $field, $def, $current_value, $render_indi );
+        $indi = apply_filters( 'mainwp_default_settings_indicator', $indi, $field, $indi_value, $current_value, $render_indi, $default_val );
         if ( $render_indi ) {
             echo $indi; //phpcs:ignore -- ok.
         }
@@ -159,6 +164,7 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'mainwp_minimumIPDelay'                      => 1000,
             'mainwp_maximumSyncRequests'                 => 8,
             'mainwp_maximumInstallUpdateRequests'        => 3,
+            'mainwp_maximum_uptime_monitoring_requests'  => 10,
             'mainwp_optimize'                            => 1,
             'mainwp_wp_cron'                             => 1,
             'mainwp_sslVerifyCertificate'                => 1,
@@ -196,6 +202,14 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'mainwp_dayinweek_AutoUpdate'                => 0,
             'mainwp_dayinmonth_AutoUpdate'               => 1,
             'mainwp_time_AutoUpdate'                     => '00:00',
+            'mainwp_edit_monitor_up_statuscodes_json'    => 'useglobal',
+            'mainwp_edit_monitor_active'                 => 2,
+            'mainwp_edit_monitor_active_global'          => 1,
+            'mainwp_edit_monitor_maxretries'             => -1, // use global.
+            'mainwp_edit_monitor_maxretries_global'      => 1,
+            'mainwp_edit_monitor_monitoring_emails'      => '',
+            'mainwp_edit_monitor_method'                 => 'useglobal',
+            'mainwp_edit_monitor_method_global'          => 'get',
         );
 
         if ( 'all' === $field ) {

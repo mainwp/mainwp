@@ -116,6 +116,8 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $this->step = isset( $_GET['step'] ) ? sanitize_key( $_GET['step'] ) : current( array_keys( $this->steps ) ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         wp_enqueue_script( 'fomantic-ui', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.js', array( 'jquery' ), MAINWP_VERSION, false );
+        wp_enqueue_script( 'fomantic-ui-slider', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/slider.min.js', array( 'jquery' ), MAINWP_VERSION, false );
+
         wp_localize_script( 'mainwp-setup', 'mainwpSetupLocalize', array( 'nonce' => wp_create_nonce( 'MainWPSetup' ) ) );
         wp_enqueue_script( 'mainwp', MAINWP_PLUGIN_URL . 'assets/js/mainwp.js', array( 'jquery' ), MAINWP_VERSION, true );
         wp_enqueue_script( 'mainwp-clients', MAINWP_PLUGIN_URL . 'assets/js/mainwp-clients.js', array(), MAINWP_VERSION, true );
@@ -556,7 +558,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <p><?php esc_html_e( 'In the MainWP system, the sites you connect are referred to as \'Child Sites.', 'mainwp' ); ?> <br/> <?php esc_html_e( 'hese Child Sites will be managed centrally from your MainWP Dashboard.', 'mainwp' ); ?></p>
             </div>
         <?php } ?>
-        
+
         <div class="ui form">
             <div class="ui hidden divider"></div>
             <div class="ui hidden divider"></div>
@@ -743,11 +745,11 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         </div>
                     </div>
                 </div>
-                
+
             </form>
         <?php endif; ?>
         <script>
-        
+
             jQuery('.menu-connect-first-site .item').tab({
                 'onVisible': function() {
                     mainwp_menu_connect_first_site_onvisible_callback(this);
@@ -904,9 +906,9 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         ?>
         <h1 class="ui header">
-            <?php esc_html_e( 'Basic Uptime Monitoring', 'mainwp' ); ?>
+            <?php esc_html_e( 'Uptime Monitoring', 'mainwp' ); ?>
         </h1>
-        <div><?php esc_html_e( 'The MainWP Basic Uptime Monitoring function periodically sends HTTP requests to your child sites, based on a chosen frequency from every 5 minutes to once daily, to check their operational status. It uses a direct cURL request to obtain an HTTP Header response, alerting you via email if a site fails to return a Status Code 200 (OK). This feature operates independently of third-party services, providing a straightforward and no-cost option for uptime monitoring across all your managed sites. However, it does not diagnose the specific nature of errors leading to site unavailability.', 'mainwp' ); ?></div>
+        <div><?php esc_html_e( 'The MainWP Uptime Monitoring function periodically sends HTTP requests to your child sites, based on a chosen frequency from every 5 minutes to once daily, to check their operational status. It uses a direct cURL request to obtain an HTTP Header response, alerting you via email if a site fails to return a Status Code 200 (OK). This feature operates independently of third-party services, providing a straightforward and no-cost option for uptime monitoring across all your managed sites. However, it does not diagnose the specific nature of errors leading to site unavailability.', 'mainwp' ); ?></div>
         <div class="ui hidden divider"></div>
         <div class="ui hidden divider"></div>
         <form method="post" class="ui form">
@@ -916,7 +918,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <label class="six wide column middle aligned">
                 <?php
                 MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_disableSitesChecking', (int) $disableSitesMonitoring );
-                esc_html_e( 'Enable basic uptime monitoring', 'mainwp' );
+                esc_html_e( 'Enable uptime monitoring', 'mainwp' );
                 ?>
                 </label>
                 <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring" style="max-width:100px !important;">

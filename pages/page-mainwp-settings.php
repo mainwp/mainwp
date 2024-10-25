@@ -178,6 +178,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             );
         }
 
+
+
         if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsEmail' ) ) {
             add_submenu_page(
                 'mainwp_tab',
@@ -1311,8 +1313,13 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             MainWP_Utility::update_option( 'mainwp_connect_signature_algo', isset( $_POST['mainwp_settings_openssl_alg'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_settings_openssl_alg'] ) ) : 0 );
             MainWP_Utility::update_option( 'mainwp_verify_connection_method', isset( $_POST['mainwp_settings_verify_connection_method'] ) ? intval( $_POST['mainwp_settings_verify_connection_method'] ) : 0 );
             MainWP_Utility::update_option( 'mainwp_forceUseIPv4', isset( $_POST['mainwp_forceUseIPv4'] ) ? 1 : 0 );
-            MainWP_Utility::update_option( 'mainwp_wp_cron', ( ! isset( $_POST['mainwp_options_wp_cron'] ) ? 0 : 1 ) );
+            $use_wpcron = ! isset( $_POST['mainwp_options_wp_cron'] ) ? 0 : 1;
+            MainWP_Utility::update_option( 'mainwp_wp_cron', $use_wpcron );
             MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
+            MainWP_Utility::update_option( 'mainwp_maximum_uptime_monitoring_requests', ! empty( $_POST['mainwp_maximum_uptime_monitoring_requests'] ) ? intval( $_POST['mainwp_maximum_uptime_monitoring_requests'] ) : 10 );
+
+            //required check.
+            MainWP_Uptime_Monitoring_Schedule::instance()->check_to_disable_schedule_individual_uptime_monitoring( $use_wpcron );
 
             if ( isset( $_POST['mainwp_openssl_lib_location'] ) ) {
                 $openssl_loc = ! empty( $_POST['mainwp_openssl_lib_location'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_openssl_lib_location'] ) ) : '';
@@ -1384,8 +1391,11 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             esc_html_e( 'Maximum simultaneous requests (Default: 4)', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" class="settings-field-value-change-handler" name="mainwp_maximumRequests" id="mainwp_maximumRequests" value="<?php echo false === get_option( 'mainwp_maximumRequests' ) ? 4 : esc_attr( get_option( 'mainwp_maximumRequests' ) ); ?>"/>
+                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <div class="ui bottom aligned labeled slider" id="mainwp_maximumRequests_slider"></div>
+                                <div class="ui input">
+                                    <input type="hidden" class="settings-field-value-change-handler" name="mainwp_maximumRequests" id="mainwp_maximumRequests" value="<?php echo false === get_option( 'mainwp_maximumRequests' ) ? 4 : esc_attr( get_option( 'mainwp_maximumRequests' ) ); ?>"/>
+                                </div>
                             </div>
                         </div>
 
@@ -1393,11 +1403,14 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_minimumDelay', (int) get_option( 'mainwp_minimumDelay', 200 ) );
-                            esc_html_e( 'Minimum delay between requests (Default: 200)', 'mainwp' );
+                            esc_html_e( 'Minimum delay between requests in milliseconds (Default: 200ms)', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" class="settings-field-value-change-handler" name="mainwp_minimumDelay" id="mainwp_minimumDelay" value="<?php echo false === get_option( 'mainwp_minimumDelay' ) ? 200 : esc_attr( get_option( 'mainwp_minimumDelay' ) ); ?>"/>
+                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <div class="ui bottom aligned labeled slider" id="mainwp_minimumDelay_slider"></div>
+                                <div class="ui input">
+                                    <input type="hidden" class="settings-field-value-change-handler" name="mainwp_minimumDelay" id="mainwp_minimumDelay" value="<?php echo false === get_option( 'mainwp_minimumDelay' ) ? 200 : esc_attr( get_option( 'mainwp_minimumDelay' ) ); ?>"/>
+                                </div>
                             </div>
                         </div>
 
@@ -1412,8 +1425,11 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             esc_html_e( 'Maximum simultaneous requests per IP (Default: 1)', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column ui input"  data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" class="settings-field-value-change-handler" name="mainwp_maximumIPRequests" id="mainwp_maximumIPRequests" value="<?php echo false === get_option( 'mainwp_maximumIPRequests' ) ? 1 : esc_attr( get_option( 'mainwp_maximumIPRequests' ) ); ?>"/>
+                            <div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <div class="ui bottom aligned labeled slider" id="mainwp_maximumIPRequests_slider"></div>
+                                <div class="ui input">
+                                    <input type="hidden" class="settings-field-value-change-handler" name="mainwp_maximumIPRequests" id="mainwp_maximumIPRequests" value="<?php echo false === get_option( 'mainwp_maximumIPRequests' ) ? 1 : esc_attr( get_option( 'mainwp_maximumIPRequests' ) ); ?>"/>
+                                </div>
                             </div>
                         </div>
 
@@ -1421,11 +1437,14 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_minimumIPDelay', (int) get_option( 'mainwp_minimumIPDelay', 1000 ) );
-                            esc_html_e( 'Minimum delay between requests to the same IP (Default: 1000)', 'mainwp' );
+                            esc_html_e( 'Minimum delay between requests to the same IP in milliseconds (Default: 1000ms)', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" class="settings-field-value-change-handler" name="mainwp_minimumIPDelay" id="mainwp_minimumIPDelay" value="<?php echo false === get_option( 'mainwp_minimumIPDelay' ) ? 1000 : esc_attr( get_option( 'mainwp_minimumIPDelay' ) ); ?>"/>
+                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <div class="ui bottom aligned labeled slider" id="mainwp_minimumIPDelay_slider"></div>
+                                <div class="ui input">
+                                    <input type="hidden" class="settings-field-value-change-handler" name="mainwp_minimumIPDelay" id="mainwp_minimumIPDelay" value="<?php echo false === get_option( 'mainwp_minimumIPDelay' ) ? 1000 : esc_attr( get_option( 'mainwp_minimumIPDelay' ) ); ?>"/>
+                                </div>
                             </div>
                         </div>
 
@@ -1440,8 +1459,11 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             esc_html_e( 'Maximum simultaneous sync requests (Default: 8)', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'This option allows you to control how many sites your MainWP Dashboard should sync at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" class="settings-field-value-change-handler" name="mainwp_maximumSyncRequests" id="mainwp_maximumSyncRequests" value="<?php echo false === get_option( 'mainwp_maximumSyncRequests' ) ? 8 : esc_attr( get_option( 'mainwp_maximumSyncRequests' ) ); ?>"/>
+                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'This option allows you to control how many sites your MainWP Dashboard should sync at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <div class="ui bottom aligned labeled slider" id="mainwp_maximumSyncRequests_slider"></div>
+                                <div class="ui input">
+                                    <input type="hidden" class="settings-field-value-change-handler" name="mainwp_maximumSyncRequests" id="mainwp_maximumSyncRequests" value="<?php echo false === get_option( 'mainwp_maximumSyncRequests' ) ? 8 : esc_attr( get_option( 'mainwp_maximumSyncRequests' ) ); ?>"/>
+                                </div>
                             </div>
                         </div>
 
@@ -1452,8 +1474,23 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             esc_html_e( 'Maximum simultaneous install and update requests (Default: 3)', 'mainwp' );
                             ?>
                             </label>
+                            <div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'This option allows you to control how many update and install requests your MainWP Dashboard should process at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <div class="ui bottom aligned labeled slider" id="mainwp_maximumInstallUpdateRequests_slider"></div>
+                                <div class="ui input">
+                                <input type="hidden" class="settings-field-value-change-handler" name="mainwp_maximumInstallUpdateRequests" id="mainwp_maximumInstallUpdateRequests" value="<?php echo false === get_option( 'mainwp_maximumInstallUpdateRequests' ) ? 3 : esc_attr( get_option( 'mainwp_maximumInstallUpdateRequests' ) ); ?>"/>
+                             </div>
+                           </div>
+
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-frontend-request" default-indi-value="10">
+                            <label class="six wide column middle aligned">
+                            <?php
+                            $maximum_monitoring_requests = (int) get_option( 'mainwp_maximum_uptime_monitoring_requests', 10 );
+                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_maximum_uptime_monitoring_requests', $maximum_monitoring_requests );
+                            esc_html_e( 'Maximum simultaneous uptime monitoring requests (Default: 10)', 'mainwp' );
+                            ?>
+                            </label>
                             <div class="ten wide column ui input"  data-tooltip="<?php esc_attr_e( 'This option allows you to control how many update and install requests your MainWP Dashboard should process at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" class="settings-field-value-change-handler" name="mainwp_maximumInstallUpdateRequests" id="mainwp_maximumInstallUpdateRequests" value="<?php echo false === get_option( 'mainwp_maximumInstallUpdateRequests' ) ? 3 : esc_attr( get_option( 'mainwp_maximumInstallUpdateRequests' ) ); ?>"/>
+                                <input type="text" class="settings-field-value-change-handler" name="mainwp_maximum_uptime_monitoring_requests" id="mainwp_maximum_uptime_monitoring_requests" value="<?php echo intval( $maximum_monitoring_requests ); ?>"/>
                             </div>
                         </div>
 
@@ -2017,7 +2054,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             <div class="ui list">
                 <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">MainWP Dashboard Settings</a></div>
                 <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/#updates-settings" target="_blank">Updates Settings</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/#basic-uptime-monitoring" target="_blank">Basic Uptime Monitoring Settings</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/#basic-uptime-monitoring" target="_blank">Uptime Monitoring Settings</a></div>
                 <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/#site-health-monitoring" target="_blank">Site Health Settings</a></div>
                 <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/#backup-options" target="_blank">Backup Settings</a></div>
                 <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/#advanced-settings" target="_blank">Advanced Settings</a></div>

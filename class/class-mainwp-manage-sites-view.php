@@ -153,14 +153,14 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * Build Sites page header.
      *
      * @param string $shownPage Current Page.
-     * @param string $subPages Sites subpages.
+     * @param array $subPages Sites subpages.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::get_favico_url()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
      * @uses \MainWP\Dashboard\MainWP_UI::render_second_top_header()
      */
-    public static function render_header( $shownPage = '', $subPages = '' ) { // phpcs:ignore -- NOSONAR - complex.
+    public static function render_header( $shownPage = '', $subPages = array() ) { // phpcs:ignore -- NOSONAR - complex.
 
         if ( '' === $shownPage || 'managesites' === $shownPage ) {
             $shownPage = 'ManageSites';
@@ -182,6 +182,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $site_id = intval( $_GET['emailsettingsid'] );
         } elseif ( isset( $_GET['cacheControlId'] ) && ! empty( $_GET['cacheControlId'] ) ) {
             $site_id = intval( $_GET['cacheControlId'] );
+        } elseif ( !empty( $_GET['monitor_wpid'] ) ) {
+            $site_id = intval( $_GET['monitor_wpid'] );
         }
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
@@ -220,7 +222,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             ),
             'ManageSitesEdit'          => array(
                 'href'   => 'admin.php?page=managesites&id=' . $site_id,
-                'title'  => esc_html__( 'Edit', 'mainwp' ),
+                'title'  => esc_html__( 'Settings', 'mainwp' ),
                 'access' => mainwp_current_user_have_right( 'dashboard', 'edit_sites' ),
             ),
             'ManageSitesUpdates'       => array(
@@ -228,6 +230,11 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 'title'       => esc_html__( 'Updates', 'mainwp' ),
                 'access'      => mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ),
                 'after_title' => $after_title,
+            ),
+            'ManageSitesMonitor'       => array(
+                'href'        => 'admin.php?page=managesites&monitor_wpid=' . $site_id,
+                'title'       => esc_html__( 'Uptime Monitoring', 'mainwp' ),
+                'access'      => mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ),
             ),
             'ManageSitesEmailSettings' => array(
                 'href'   => 'admin.php?page=managesites&emailsettingsid=' . $site_id,
@@ -576,12 +583,12 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses self::handle_import_site_file_zip_data()
      * @uses self::handle_import_site_render_input_field()
      *
-     * @param mixed $file fild data.
+     * @param mixed $file file data.
      * @param mixed $errors error message.
      */
     public static function handle_import_site_file_zip_upload($file, &$errors) { // phpcs:ignore -- NOSONAR - complex.
         if ( 'application/zip' === $file['type'] || 'application/x-zip-compressed' === $file['type'] ) {
-            $tmp_path = isset( $_FILES['mainwp_managesites_file_managewp']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_managesites_file_managewp']['tmp_name'] ) ) : '';
+            $tmp_path = isset( $_FILES['mainwp_managesites_file_managewp']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_managesites_file_managewp']['tmp_name'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification
 
             $zip = new \ZipArchive();
             if ( $zip->open( $tmp_path ) ) {
@@ -691,7 +698,6 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * Render input field modal import sites.
      *
      * @param array $site_values website value.
-     * @param array $clients client data.
      */
     public static function handle_import_site_render_input_field( $site_values ) {
         $header_line = trim( 'Site Name, Url, Admin Name, Tag,Security ID,HTTP Username,HTTP Password,Verify Certificate,SSL Version' ); // Set Header Line.
@@ -1332,7 +1338,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <?php
                     $indi_compatible_val = ! $website->disable_status_check ? 1 : 0;
                     MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_disableSitesChecking', $indi_compatible_val );
-                    esc_html_e( 'Enable basic uptime monitoring (optional)', 'mainwp' );
+                    esc_html_e( 'Enable uptime monitoring (optional)', 'mainwp' );
                     ?>
                     </label>
                     <div class="six wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring" data-tooltip="<?php esc_attr_e( 'Enable if you want to monitoring this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -1409,6 +1415,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         </select>
                     </div>
                 </div>
+
                 <h3 class="ui dividing header">
                     <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-edit-site-advanced' ); ?>
                     <?php esc_html_e( 'Advanced Settings (Optional)', 'mainwp' ); ?></h3>

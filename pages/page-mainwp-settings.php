@@ -1480,6 +1480,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 <input type="hidden" class="settings-field-value-change-handler" name="mainwp_maximumInstallUpdateRequests" id="mainwp_maximumInstallUpdateRequests" value="<?php echo false === get_option( 'mainwp_maximumInstallUpdateRequests' ) ? 3 : esc_attr( get_option( 'mainwp_maximumInstallUpdateRequests' ) ); ?>"/>
                              </div>
                            </div>
+                        </div>
 
                         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-frontend-request" default-indi-value="10">
                             <label class="six wide column middle aligned">

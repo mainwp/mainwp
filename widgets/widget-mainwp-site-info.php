@@ -139,7 +139,7 @@ class MainWP_Site_Info { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
                 $website_info['group'] = empty( $website->wpgroups ) ? 'None' : $website->wpgroups;
 
                 ?>
-            <table class="ui celled striped table">
+            <table class="ui table">
                 <tbody>
                 <?php
                 /**
@@ -164,10 +164,10 @@ class MainWP_Site_Info { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
                         }
                     }
                     ?>
-                        <tr>
+                    <tr>
                         <td><?php echo esc_html( $title ); ?></td>
-                        <td><?php echo esc_html( $val ); ?></td>
-                        </tr>
+                        <td class="right aligned"><?php echo esc_html( $val ); ?></td>
+                    </tr>
                 <?php } ?>
                 <?php
                 /**

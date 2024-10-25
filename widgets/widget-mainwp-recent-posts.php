@@ -152,11 +152,11 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         ?>
 
         <div class="ui stackable grid mainwp-widget-footer">
-            <div class="eight wide column">
-                <a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkManage' ) ); ?>" title="" class="ui button fluid mini green basic"><?php esc_html_e( 'Manage Posts', 'mainwp' ); ?></a>
+            <div class="eight wide left aligned middle aligned column">
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkAdd' ) ); ?>" class="ui button mini green"><?php esc_html_e( 'Create a New Post', 'mainwp' ); ?></a>
             </div>
-            <div class="eight wide column right aligned">
-                <a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkAdd' ) ); ?>" title="" class="ui button fluid mini green"><?php esc_html_e( 'New Post', 'mainwp' ); ?></a>
+            <div class="eight wide right aligned middle aligned column">
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkManage' ) ); ?>"><?php esc_html_e( 'Manage Posts', 'mainwp' ); ?></a>
             </div>
         </div>
         <?php
@@ -196,16 +196,15 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 </h3>
             </div>
             <div class="four wide column right aligned">
-                <div class="ui dropdown right pointing mainwp-dropdown-tab">
-                        <div class="text"><?php esc_html_e( 'Published', 'mainwp' ); ?></div>
-                        <i class="dropdown icon"></i>
-                        <div class="menu">
+                <div class="ui dropdown right tiny pointing mainwp-dropdown-tab">
+                    <i class="vertical ellipsis icon"></i>
+                    <div class="menu">
                         <a class="item recent_posts_published_lnk" data-tab="published" data-value="published" title="<?php esc_attr_e( 'Published', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Published', 'mainwp' ); ?></a>
                         <a class="item recent_posts_draft_lnk" data-tab="draft" data-value="draft" title="<?php esc_attr_e( 'Draft', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Draft', 'mainwp' ); ?></a>
                         <a class="item recent_posts_pending_lnk" data-tab="pending" data-value="pending" title="<?php esc_attr_e( 'Pending', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Pending', 'mainwp' ); ?></a>
                         <a class="item recent_posts_future_lnk" data-tab="future" data-value="future" title="<?php esc_attr_e( 'Scheduled', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Scheduled', 'mainwp' ); ?></a>
                         <a class="item recent_posts_trash_lnk" data-tab="trash" data-value="trash" title="<?php esc_attr_e( 'Trash', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
-                        </div>
+                    </div>
                 </div>
             </div>
         </div>

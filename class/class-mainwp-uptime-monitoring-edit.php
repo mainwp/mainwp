@@ -543,6 +543,11 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                             <div class="ui six wide column"  data-tooltip="<?php esc_attr_e( 'Click to edit the sub-url monitor.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                                 <?php
                                 $this->render_sub_urls_monitoring( $mo_settings, $sub_monitors );
+                                if ( ! $edit_sub_monitor ) {
+                                    ?>
+                                    <a class="ui button green big" href="admin.php?page=managesites&monitor_wpid=<?php echo intval( $site_id ); ?>&action=add_submonitor"><?php esc_html_e( 'Add Sub-Url Monitor', 'mainwp' ); ?></a>
+                                    <?php
+                                }
                                 ?>
                             </div>
                     </div>
@@ -557,11 +562,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                     <input type="button" name="delete_uptime_monitor_btn" id="delete_uptime_monitor_btn" class="ui button basic big" value="<?php esc_html_e( 'Delete', 'mainwp' ); ?>">
                     <?php
                 }
-                if ( ! $edit_sub_monitor ) {
-                    ?>
-                    <a class="ui button green big" href="admin.php?page=managesites&monitor_wpid=<?php echo intval( $site_id ); ?>&action=add_submonitor"><?php esc_html_e( 'Add Sub-Url Monitor', 'mainwp' ); ?></a>
-                    <?php
-                }
+
                 ?>
             <?php } ?>
             <script type="text/javascript">
@@ -572,31 +573,42 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                         echo 'var interval_values = ' . json_encode( array_keys( $all_intervals ) ) . ";\n";
                         ?>
                         $('#mainwp_edit_monitor_interval_slider').slider({
-                            interpretLabel: function(value) {
-                                return interval_label[value];
-                            },
+                            // interpretLabel: function(value) {
+                            //     return interval_label[value];
+                            // },
                             autoAdjustLabels: false,
                             start: interval_values.indexOf(<?php echo intval( $mo_settings['interval'] ); ?>),
                             min: 0,
+                            restrictedLabels: [0,<?php echo count( $all_intervals ) - 1; ?>],
+                            showThumbTooltip: true,
+                            tooltipConfig: {
+                                position: 'top center',
+                                variation: 'small visible black'
+                            },
                             max: <?php echo count( $all_intervals ) - 1; ?>,
                             onChange: function(value) {
                                 $('#mainwp_edit_monitor_interval_hidden').val(interval_values[value]).change();
                             }
                         });
-
                         <?php
                         $all_timeouts = static::get_timeout_values( $individual );
                         echo 'var timeouts_label = ' . json_encode( array_values( $all_timeouts ) ) . ";\n";
                         echo 'var timeouts_values = ' . json_encode( array_keys( $all_timeouts ) ) . ";\n";
                         ?>
                         $('#mainwp_edit_monitor_timeout_slider').slider({
-                            interpretLabel: function(value) {
-                                return timeouts_label[value];
-                            },
+                            // interpretLabel: function(value) {
+                            //     return timeouts_label[value];
+                            // },
                             autoAdjustLabels: false,
                             start: timeouts_values.indexOf(<?php echo intval( $mo_settings['timeout'] ); ?>),
                             min: 0,
                             smooth: true,
+                            restrictedLabels: [0,<?php echo count( $all_timeouts ) - 1; ?>],
+                            showThumbTooltip: true,
+                            tooltipConfig: {
+                                position: 'top center',
+                                variation: 'small visible black'
+                            },
                             max: <?php echo count( $all_timeouts ) - 1; ?>,
                             onChange: function(value) {
                                 $('#mainwp_edit_monitor_timeout_number').val(timeouts_values[value]).change();

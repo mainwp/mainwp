@@ -2262,17 +2262,15 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
          */
     public static function render_empty_element_placeholder( $placeholder = '' ) {
         ?>
-        <div class="ui one column grid">
-            <div class="middle aligned center aligned column">
-                <img alt="<?php esc_attr_e( 'Nothing to show here, check back later!', 'mainwp' ); ?>" src="<?php echo esc_url( MAINWP_PLUGIN_URL ); ?>assets/images/mainwp-widget-placeholder.png" style="max-width:200px" class="mainwp-no-results-placeholder ui middle aligned image"/>
+        <div class="mainwp-empty-widget-placeholder">
+            <img alt="<?php esc_attr_e( 'Nothing to show here, check back later!', 'mainwp' ); ?>" src="<?php echo esc_url( MAINWP_PLUGIN_URL ); ?>assets/images/mainwp-widget-placeholder.png" class="mainwp-no-results-placeholder"/>
             <?php if ( '' !== $placeholder ) : ?>
-                    <p><?php echo $placeholder; //phpcs:ignore -- requires escaped. ?></p>
-                <?php else : ?>
-                    <p><?php echo esc_html__( 'Nothing to show here, check back later!', 'mainwp' ); ?></p>
-                <?php endif; ?>
-            </div>
+                <p><?php echo $placeholder; //phpcs:ignore -- requires escaped. ?></p>
+            <?php else : ?>
+                <p><?php echo esc_html__( 'Nothing to show here, check back later!', 'mainwp' ); ?></p>
+            <?php endif; ?>
         </div>
-            <?php
+        <?php
     }
 
         /**

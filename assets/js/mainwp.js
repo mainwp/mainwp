@@ -3559,6 +3559,19 @@ jQuery(document).on('click', '.mainwp-action-dismiss', function () {
   return false;
 });
 
+jQuery(document).on('click', '.mainwp-event-action-dismiss', function () {
+  let action_id = jQuery(this).attr('action-id');
+  jQuery(this).closest('.event').fadeOut("slow");
+  let data = {
+    action: 'mainwp_site_actions_dismiss'
+  };
+  data['action_id'] = action_id;
+  jQuery.post(ajaxurl, mainwp_secure_data(data), function () {
+
+  });
+  return false;
+});
+
 jQuery(document).on('click', '#mainwp-delete-all-nonmainwp-actions-button', function () {
   mainwp_confirm('Are you sure you want to delete all Non-MainWP changes? This action can not be undone!', function () {
     mainwp_delete_nonmainwp_data_start();

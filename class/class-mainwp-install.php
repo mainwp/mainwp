@@ -414,11 +414,11 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             error_reporting(0); // phpcs:ignore -- try to disabled the error_log somewhere in WP.
         }
 
-        // $suppress = $wpdb->suppress_errors();
+        $suppress = $wpdb->suppress_errors();
         foreach ( $sql as $query ) {
             dbDelta( $query );
         }
-        // $wpdb->suppress_errors( $suppress );
+        $wpdb->suppress_errors( $suppress );
 
         $this->post_update();
 

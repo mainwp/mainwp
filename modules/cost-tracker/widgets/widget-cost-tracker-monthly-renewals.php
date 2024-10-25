@@ -65,8 +65,7 @@ class Cost_Tracker_Monthly_Renewals {
             <div class="four wide column right aligned">
                 <div class="ui dropdown right pointing mainwp-dropdown-tab not-auto-init"  id="cost-tracker-widget-monthly-renewals-top-select">
                     <input type="hidden" value="monthly-renewals-month">
-                        <div class="text"><?php esc_html_e( 'Select period', 'mainwp' ); ?></div>
-                        <i class="dropdown icon"></i>
+                        <i class="vertical ellipsis icon"></i>
                         <div class="menu">
                             <a class="item monthly_renewals_today_lnk" data-tab="monthly-renewals-today" data-value="monthly-renewals-today" title="<?php esc_attr_e( 'Today', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Today', 'mainwp' ); ?></a>
                             <a class="item monthly_renewals_tomorrow_lnk" data-tab="monthly-renewals-tomorrow" data-value="monthly-renewals-tomorrow" title="<?php esc_attr_e( 'Tomorrow', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Tomorrow', 'mainwp' ); ?></a>
@@ -121,6 +120,7 @@ class Cost_Tracker_Monthly_Renewals {
         }
         ?>
         </div>
+        <div class="mainwp-widget-footer"></div>
         <?php
     }
 
@@ -199,9 +199,6 @@ class Cost_Tracker_Monthly_Renewals {
              */
             do_action( 'mainwp_module_monthly_renewals_before_costs_list', $tab, $cost_data );
             if ( empty( $lists ) ) {
-                echo '<div class="ui hidden divider"></div>';
-                echo '<div class="ui hidden divider"></div>';
-                echo '<div class="ui hidden divider"></div>';
                 MainWP_UI::render_empty_element_placeholder( __( 'No upcoming renewals for the selected priod.', 'mainwp' ) );
             } else {
                 ?>

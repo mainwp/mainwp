@@ -133,14 +133,7 @@ class MainWP_Clients { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     <?php endforeach; ?>
                     </tbody>
                 </table>
-                <div class="ui two columns stackable grid mainwp-widget-footer">
-                    <div class="left aligned column">
-                        <a href="admin.php?page=ManageClients" class="ui button basic mini fluid green"><?php esc_html_e( 'Manage Clients', 'mainwp' ); ?></a>
-                    </div>
-                    <div class="right aligned column">
-                        <a href="admin.php?page=ClientAddNew" class="ui button mini fluid green"><?php esc_html_e( 'New Client', 'mainwp' ); ?></a>
-                    </div>
-                </div>
+                
                 <script type="text/javascript">
                 jQuery( document ).ready( function() {
                     jQuery.fn.DataTable.ext.pager.numbers_length = 4;
@@ -177,6 +170,14 @@ class MainWP_Clients { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 do_action( 'mainwp_clients_widget_bottom', $clients );
                 ?>
             </div>
-            <?php
+            <div class="ui two columns stackable grid mainwp-widget-footer">
+                <div class="left aligned middle aligned column">
+                    
+                </div>
+                <div class="right aligned middle aligned column">
+                    
+                </div>
+            </div>
+        <?php
     }
 }

@@ -2173,7 +2173,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                             <a class="item" href="admin.php?page=managesites&dashboard=<?php echo intval( $website['id'] ); ?>"><?php esc_html_e( 'Overview', 'mainwp' ); ?></a>
                             <?php endif; ?>
                 <?php if ( mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) : ?>
-                            <a class="item" href="admin.php?page=managesites&id=<?php echo intval( $website['id'] ); ?>"><?php esc_html_e( 'Edit Site', 'mainwp' ); ?></a>
+                            <a class="item" href="admin.php?page=managesites&id=<?php echo intval( $website['id'] ); ?>"><?php esc_html_e( 'Settings', 'mainwp' ); ?></a>
                             <?php endif; ?>
                 <?php if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) : ?>
                             <a class="item" href="admin.php?page=managesites&scanid=<?php echo intval( $website['id'] ); ?>"><?php esc_html_e( 'Site Hardening', 'mainwp' ); ?></a>

@@ -749,12 +749,13 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
      */
     private function check_permissions( $method ) {
         $permissions = $this->user->permissions;
-
+        $msg         = '';
+        $flag        = true;
         switch ( $method ) {
             case 'HEAD':
             case 'GET':
                 if ( 'read' !== $permissions && 'read_write' !== $permissions ) {
-                    return new WP_Error( 'mainwp_rest_authentication_error', __( 'The API key provided does not have read permissions.', 'mainwp' ), array( 'status' => 401 ) );
+                    $msg = __( 'The API key provided does not have read permissions.', 'mainwp' );
                 }
                 break;
             case 'POST':
@@ -762,17 +763,22 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             case 'PATCH':
             case 'DELETE':
                 if ( 'write' !== $permissions && 'read_write' !== $permissions ) {
-                    return new WP_Error( 'mainwp_rest_authentication_error', __( 'The API key provided does not have write permissions.', 'mainwp' ), array( 'status' => 401 ) );
+                    $msg = __( 'The API key provided does not have write permissions.', 'mainwp' );
                 }
                 break;
             case 'OPTIONS':
-                return true;
-
+                $flag = true;
+                break;
             default:
-                return new WP_Error( 'mainwp_rest_authentication_error', __( 'Unknown request method.', 'mainwp' ), array( 'status' => 401 ) );
+                $msg = __( 'Unknown request method.', 'mainwp' );
         }
 
-        return true;
+        if ( ! empty( $msg ) ) {
+            return new WP_Error( 'mainwp_rest_authentication_error', $msg, array( 'status' => 401 ) );
+
+        }
+
+        return $flag;
     }
 
     /**

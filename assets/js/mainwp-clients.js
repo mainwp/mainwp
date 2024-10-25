@@ -214,7 +214,142 @@ let manageclients_bulk_init = function () {
   }
 };
 
+// Handle tab QSW add client
+const mainwp_add_client_onvisible_callback = function (obj_item) {
+  const tab = jQuery(obj_item).attr("data-tab");
+  if (tab === 'multiple-client') {
+    jQuery('#bulk_add_createclient').hide();
+    jQuery('#mainwp_qsw_add_client_continue_button').show();
+  } else if (tab === 'single-client') {
+    jQuery('#mainwp_qsw_add_client_continue_button').show();
+    jQuery('#bulk_add_multi_create_client').hide();
+  }
+}
 
+// Handle remove row client
+const mainwp_qsw_add_client_delete_row = function (index) {
+  const row = jQuery("#mainwp-qsw-add-client-row-" + index);
+  row.remove();
+  return false;
+}
+// Handle show more input òn client multi client.
+const mainwp_qsw_add_client_more_row = function (index) {
+  jQuery(".mainwp-qsw-add-client-column-more-" + index).fadeToggle("slow");
+  jQuery("#icon-visible-" + index).toggle();
+  jQuery("#icon-hidden-" + index).toggle();
+  return false;
+}
+
+// Track keyup events on Client Name and Client Email inputs.
+jQuery(document).on('keyup change', '.mainwp-qsw-add-client-client-name, .mainwp-qsw-add-client-client-email, input[name^="client_fields"][name$="[client.contact.name][]"], input[name^="client_fields"][name$="[contact.email][]"]', function () {
+  const current_row = jQuery(this).closest('.mainwp-qsw-add-client-rows');
+  const client_name = current_row.find('.mainwp-qsw-add-client-client-name').val().trim();
+  const client_email = current_row.find('.mainwp-qsw-add-client-client-email').val().trim();
+
+  // If at least one of the two inputs Client Name or Client Email has data
+  if (client_name !== '' || client_email !== '') {
+    jQuery('#bulk_add_multi_create_client').show(); // Display Add Multi Client button.
+    jQuery('#mainwp_qsw_add_client_continue_button').hide(); // Hide Continue button.
+  } else {
+    // If all fields are empty, hide the Add Multi Client button.
+    let all_empty = true;
+    jQuery('.mainwp-qsw-add-client-client-name, .mainwp-qsw-add-client-client-email, input[name^="client_fields"][name$="[client.contact.name][]"], input[name^="client_fields"][name$="[contact.email][]"]').each(function () {
+      if (jQuery(this).val().trim() !== '') {
+        all_empty = false;
+      }
+    });
+
+    if (all_empty) {
+      jQuery('#bulk_add_multi_create_client').hide(); // Hide Add Multi Client button. 
+      jQuery('#mainwp_qsw_add_client_continue_button').show(); // Display Continue button.
+    }
+  }
+});
+
+// Handle event click button  Add Multi Client
+jQuery(document).on('click', '#bulk_add_multi_create_client', function (e) {
+  let all_rows_valid = true;
+  let errors = []; // Array declaration containing error messages.
+  let form_data = []; // Initialize array containing form data
+  jQuery('.mainwp-qsw-add-client-rows').each(function () { // NOSONAR -- complex
+    let website_id = null;
+    const row_index = jQuery(this).attr('id').replace('mainwp-qsw-add-client-row-', '');
+    
+		if (jQuery('#mainwp-qsw-add-client-website-id-' + row_index).length > 0) {
+      website_id = jQuery('#mainwp-qsw-add-client-website-id-' + row_index)?.val().trim();
+    }
+    const site_url = jQuery('#mainwp-qsw-add-client-site-url-' + row_index).val().trim();
+    const client_name = jQuery('#mainwp-qsw-add-client-client-name-' + row_index).val().trim();
+    const client_email = jQuery('#mainwp-qsw-add-client-client-email-' + row_index).val().trim();
+    const contact_name = jQuery('input[name="client_fields[' + row_index + '][new_contacts_field][client.contact.name][]"]').val().trim();
+    const contact_email = jQuery('input[name="client_fields[' + row_index + '][new_contacts_field][contact.email][]"]').val().trim();
+    const contact_role = jQuery('input[name="client_fields[' + row_index + '][new_contacts_field][contact.role][]"]').val().trim();
+
+
+    // Check if the line has Client Name or Client Email, but is missing data.
+    if (client_name !== '' || client_email !== '') {
+      if (site_url === '' || client_name === '' || client_email === '') {
+        all_rows_valid = false;
+        errors.push(`The data in row ${(parseInt(row_index) + 1)} is incomplete!`);
+      }
+
+      if (contact_name !== '' || contact_email !== '') {
+        if (contact_name === '' || contact_email === '') {
+          all_rows_valid = false;
+          errors.push(`The data in row ${(parseInt(row_index) + 1)} is incomplete!`);
+        }
+      }
+
+      if ((!mainwp_validate_email(client_email) && client_email !== '') || (contact_email !== '' && !mainwp_validate_email(contact_email))) {
+        all_rows_valid = false;
+        errors.push(`Field email in row ${(parseInt(row_index) + 1)} is invalid!`);
+      }
+
+      // If All rows valid then add data to form_data
+      if (all_rows_valid) {
+        form_data.push({
+          website_id: website_id,
+          website_url: site_url,
+          client_name: client_name,
+          client_email: client_email,
+          contacts_field: {
+            contact_name: contact_name,
+            contact_email: contact_email,
+            contact_role: contact_role
+          }
+        });
+      }
+    }
+  });
+
+  // If there is a column with missing data, prevent submission and display a message.
+  if (!all_rows_valid) {
+    e.preventDefault(); //Prevent form submission or further processing.
+    mainwp_set_message_zone('#mainwp-message-zone', errors.join('<br />'), 'red');
+    return false;
+  } else {
+    let msg = __('Creating the client. Please wait...');
+    jQuery('#mainwp-message-zone').html('').hide(); // Hide message error
+    mainwp_set_message_zone('#mainwp-message-zone-client', '<i class="notched circle loading icon"></i> ' + msg); // show message creating.
+    jQuery('#bulk_add_multi_create_client').attr('disabled', 'disabled'); // disable button
+
+    const data = mainwp_secure_data({
+      action: "mainwp_clients_add_multi_client",
+      data: form_data,
+    });
+    jQuery.post(ajaxurl, data, function (response) {
+      if (response?.success) {
+        window.location.href = 'admin.php?page=mainwp-setup&step=monitoring&message=1';
+      } else if (response?.error) {
+        mainwp_set_message_zone('#mainwp-message-zone', response.error, 'red');
+      } else {
+        mainwp_set_message_zone('#mainwp-message-zone', __('Undefined error. Please try again.'), 'red');
+      }
+      jQuery('#bulk_add_multi_create_client').attr('disabled', false); // enable button
+    });
+    return true;
+  }
+});
 
 jQuery(document).on('click', '#bulk_add_createclient', function () {
   let currPage = jQuery(this).attr('current-page');

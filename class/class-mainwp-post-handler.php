@@ -14,7 +14,7 @@ namespace MainWP\Dashboard;
  *
  * @uses \MainWP\Dashboard\MainWP_Post_Base_Handler
  */
-class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace, Generic.WhiteSpace.DisallowSpaceIndent.SpacesUsed -- NOSONAR.
+class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- NOSONAR - Complex.
 
     // phpcs:disable Generic.Metrics.CyclomaticComplexity -- This is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -146,6 +146,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         $this->add_action( 'mainwp_save_temp_import_website', array( &$this, 'ajax_save_temp_import_website' ) );
         $this->add_action( 'mainwp_delete_temp_import_website', array( &$this, 'ajax_delete_temp_import_website' ) );
         $this->add_action( 'mainwp_import_website_add_client', array( &$this, 'ajax_import_website_add_client' ) );
+        $this->add_action( 'mainwp_import_website_add_client_no_site', array( &$this, 'ajax_import_website_add_client_no_site' ) );
 
         // Page:: mainwp-setup.
         $this->add_action( 'mainwp_clients_add_multi_client', array( &$this, 'ajax_clients_add_multi_client' ) );
@@ -993,12 +994,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         exit;
     }
 
-
-        /**
-         * Method mainwp_clients_delete_field()
-         *
-         * Delete client custom fields.
-         */
+    /**
+     * Method mainwp_clients_delete_field()
+     *
+     * Delete client custom fields.
+     */
     public function mainwp_clients_delete_field() {
         $this->check_security( 'mainwp_clients_delete_field' );
         $ret = array( 'success' => false );
@@ -1566,14 +1566,14 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         // Get option temp import sites data.
         $temp_sites = MainWP_DB::instance()->get_general_option( 'temp_import_sites', 'array' );
         if ( empty( $temp_sites ) || ! is_array( $temp_sites ) ) { // Check if temp_sites data exists and is an array.
-            wp_die( wp_send_json_error( $error_msg ) );
+            wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
         }
 
         // Get wpurl, wpadmin from POST.
         $wp_url   = $this->mainwp_get_sanitized_post( 'managesites_add_wpurl' );
         $wp_admin = $this->mainwp_get_sanitized_post( 'managesites_add_wpadmin' );
         if ( empty( $wp_url ) || empty( $wp_admin ) ) { // Check wpurl, wpadmin has data or empty.
-            wp_die( wp_send_json_error( $error_msg ) );
+            wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
         }
         $is_delete = false;
 
@@ -1592,20 +1592,17 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         // Save data to options table.
         if ( $is_delete ) {
             MainWP_DB::instance()->update_general_option( 'temp_import_sites', $temp_sites, 'array' );
-            wp_die( wp_send_json_success( esc_html__( 'Delete import row successfully.', 'mainwp' ) ) );
+            wp_die( wp_send_json_success( esc_html__( 'Delete import row successfully.', 'mainwp' ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
         }
 
         // In case of no delete.
-        wp_die( wp_send_json_error( $error_msg ) );
+        wp_die( wp_send_json_error( $error_msg ) ); //phpcs:ignore WordPress.Security.EscapeOutput
     }
 
     /**
      * Method ajax_import_website_add_client()
      *
      * Create client.
-     *
-     * @uses MainWP_DB_Client::instance()->update_client()
-     * @uses MainWP_DB_Client::instance()->update_selected_sites_for_client()
      */
     public function ajax_import_website_add_client() {
         $this->secure_request( 'mainwp_import_website_add_client' ); // Check secure.
@@ -1616,24 +1613,106 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
             $site_id = $this->mainwp_get_sanitized_post( 'site_id' );
 
             if ( empty( $data ) ) {
-                wp_die( wp_send_json_error( $error_msg ) );
+                wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
             }
 
-            $data   = json_decode( $data, true );
-            $client = MainWP_DB_Client::instance()->update_client( $data ); // Create client.
+            $client_data = json_decode( $data, true );
+            // Create client.
+            $client = $this->mainwp_handle_create_client( $client_data );
             if ( $client ) {
-                // add groups website and client
+                // Add groups website and client.
                 if ( ! empty( $site_id ) ) {
-                    MainWP_DB_Client::instance()->update_selected_sites_for_client( $client->client_id, array( $site_id ) );
+                    $this->mainwp_handle_selected_sites_for_client( $client, $site_id );
                 }
 
-                wp_die( wp_send_json_success( esc_html__( 'Created client successfully.', 'mainwp' ) ) );
+                wp_die( wp_send_json_success( esc_html__( 'Created client successfully.', 'mainwp' ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
             }
         } catch ( \Exception $e ) {
-            wp_die( wp_send_json_error( esc_html( $e->getMessage() ) ) );
+            wp_die( wp_send_json_error( sanitize_text_field( $e->getMessage() ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
         }
         // In case of no created.
-        wp_die( wp_send_json_error( $error_msg ) );
+        wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
+    }
+
+    /**
+     * Method ajax_import_website_add_client_no_site()
+     *
+     * Create client dont has a website.
+     */
+    public function ajax_import_website_add_client_no_site() {
+        $this->secure_request( 'mainwp_import_website_add_client_no_site' ); // Check secure.
+        $error_msg = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
+        try {
+            $data = ! empty( $_POST['client'] ) ? rest_sanitize_array( $_POST['client'] ) : array(); //phpcs:ignore WordPress.Security.NonceVerification
+
+            if ( empty( $data ) || ! is_array( $data ) ) {
+                wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
+            }
+
+            foreach ( $data as $val_data ) {
+                $client_data = json_decode( stripslashes( $val_data ), true ); // Decode client data.
+                $this->mainwp_handle_create_client( $client_data ); // Update or instert new client.
+            }
+        } catch ( \Exception $e ) {
+            wp_die( wp_send_json_error( sanitize_text_field( $e->getMessage() ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
+        }
+        // In case of no created.
+        wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
+    }
+
+    /**
+     * Method ajax_clients_add_multi_client
+     *
+     * Create Multi Client form QSW.
+     */
+    public function ajax_clients_add_multi_client() {
+        $error_msg = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
+        $this->check_security( 'mainwp_clients_add_multi_client' );
+        $dataes = isset( $_POST['data'] ) ? $_POST['data'] : array(); //phpcs:ignore WordPress.Security.NonceVerification
+        try {
+            if ( ! empty( $dataes ) ) {
+                foreach ( $dataes as $val_data ) {
+                    $client_data = array(
+                        'image'              => '',
+                        'name'               => $val_data['client_name'] ?? '',
+                        'address_1'          => '',
+                        'address_2'          => '',
+                        'city'               => '',
+                        'zip'                => '',
+                        'state'              => '',
+                        'country'            => '',
+                        'note'               => '',
+                        'selected_icon_info' => 'selected:wordpress;color:#34424d',
+                        'client_email'       => $val_data['client_email'] ?? '',
+                        'client_phone'       => '',
+                        'client_facebook'    => '',
+                        'client_twitter'     => '',
+                        'client_instagram'   => '',
+                        'client_linkedin'    => '',
+                        'suspended'          => 0,
+                        'primary_contact_id' => 0,
+                    );
+
+                    // Create client.
+                    $client = $this->mainwp_handle_create_client( $client_data );
+
+                    // Create client successfy.
+                    if ( ! empty( $client ) && ! empty( $val_data['website_id'] ) ) {
+                        // Add groups website and client.
+                        $this->mainwp_handle_selected_sites_for_client( $client, $val_data['website_id'] );
+                    }
+                    // Create client contact.
+                    if ( ! empty( $val_data['contacts_field'] ) ) {
+                        $this->mainwp_handle_create_contact_for_client( $client, $val_data['contacts_field'] );
+                    }
+                }
+                wp_die( wp_send_json_success( esc_html__( 'Created client successfully.', 'mainwp' ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
+            }
+        } catch ( \Exception $e ) {
+            wp_die( wp_send_json_error( sanitize_text_field( $e->getMessage() ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
+        }
+
+        wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
     }
 
     /**
@@ -1648,5 +1727,84 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
      */
     public function mainwp_get_sanitized_post( $key, $callback = 'sanitize_text_field' ) {
         return isset( $_POST[ $key ] ) ? $callback( wp_unslash( $_POST[ $key ] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification
+    }
+
+    /**
+     * Method mainwp_handle_create_client()
+     *
+     * Create new client or return client data.
+     *
+     * @uses MainWP_DB_Client::instance()->get_wp_client_by()
+     * @uses MainWP_DB_Client::instance()->update_client()
+     *
+     * @param array $client_data new client creation data.
+     *
+     * @return object client data.
+     */
+    public function mainwp_handle_create_client( $client_data ) {
+        // Check if client does not exist then create new one.
+        $client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_email', $client_data['client_email'], OBJECT );
+        if ( empty( $client ) ) {
+            $client = MainWP_DB_Client::instance()->update_client( $client_data ); // Create client.
+        }
+
+        return $client;
+    }
+
+    /**
+     * Method mainwp_handle_selected_sites_for_client()
+     *
+     * Update selected sites for client.
+     *
+     * @uses MainWP_DB_Client::instance()->get_websites_by_client_ids()
+     * @uses MainWP_DB_Client::instance()->update_selected_sites_for_client()
+     *
+     * @param object $client client data.
+     * @param int    $website_id id.
+     */
+    public function mainwp_handle_selected_sites_for_client( $client, $website_id ) {
+        $sites_ids = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client->client_id );
+        $ids       = isset( $sites_ids ) && ! empty( $sites_ids ) ? array_column( $sites_ids, 'id' ) : array();
+        $ids[]     = $website_id;
+        MainWP_DB_Client::instance()->update_selected_sites_for_client( $client->client_id, $ids );
+    }
+
+    /**
+     * Method mainwp_handle_create_contact_for_client()
+     *
+     * Handle create contact for client.
+     *
+     * @uses MainWP_DB_Client::instance()->update_client_contact()
+     * @uses MMainWP_DB_Client::instance()->update_client()
+     *
+     * @param object $client client data.
+     * @param array  $contacts_data contacts Data.
+     */
+    public function mainwp_handle_create_contact_for_client( $client, $contacts_data ) {
+        $contacts = array_filter( $contacts_data );
+        // Check required fields.
+        if ( ( isset( $contacts['contact_name'] ) && '' !== $contacts['contact_name'] ) && ( isset( $contacts['contact_email'] ) && $contacts['contact_email'] ) ) {
+            $contact_data = array(
+                'contact_name'      => $contacts['contact_name'] ?? '',
+                'contact_email'     => $contacts['contact_email'] ?? '',
+                'contact_role'      => $contacts['contact_role'] ?? '',
+                'contact_client_id' => $client->client_id,
+                'contact_phone'     => '',
+                'facebook'          => '',
+                'twitter'           => '',
+                'instagram'         => '',
+                'linkedin'          => '',
+                'contact_icon_info' => '',
+            );
+            $inserted     = MainWP_DB_Client::instance()->update_client_contact( $contact_data ); // Create or update contact of client.
+            // If the update is successful, the client will be updated again.
+            if ( $inserted ) {
+                $update = array(
+                    'client_id'          => $client->client_id,
+                    'primary_contact_id' => $inserted->contact_id,
+                );
+                MainWP_DB_Client::instance()->update_client( $update );
+            }
+        }
     }
 }

@@ -14,7 +14,7 @@ namespace MainWP\Dashboard;
  *
  * @package MainWP\Dashboard
  */
-class MainWP_Dashboard_Connect_Handle { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
+class MainWP_Dashboard_Connect_Handle { // phpcs:ignore -- NOSONAR - complexity.
 
     // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
@@ -61,7 +61,7 @@ class MainWP_Dashboard_Connect_Handle { // phpcs:ignore Generic.Classes.OpeningB
     }
 
     /**
-     * prepare_and_donwload_connect_helper
+     * Prepare and download connect helper.
      *
      * @return mixed value.
      */
@@ -82,10 +82,10 @@ class MainWP_Dashboard_Connect_Handle { // phpcs:ignore Generic.Classes.OpeningB
 
 
     /**
-     * download_connect_file_and_attach_rest_keys
+     * Download connect file and attach rest keys.
      *
-     * @param  mixed $url
-     * @param  mixed $destination_folder
+     * @param  mixed $url url.
+     * @param  mixed $destination_folder destination_folder.
      * @return mixed
      */
     private function download_connect_file_and_attach_rest_keys( $url, $destination_folder ) {
@@ -122,16 +122,16 @@ class MainWP_Dashboard_Connect_Handle { // phpcs:ignore Generic.Classes.OpeningB
         // Initialize the filesystem.
         WP_Filesystem();
 
-        // Define the destination folder (Ensure it ends with a trailing slash)
+        // Define the destination folder (Ensure it ends with a trailing slash).
         $destination_folder = trailingslashit( $destination_folder );
         $tmp_base_dir       = $destination_folder . wp_generate_password( 12, false, false );
 
-        // Ensure destination folder exists or create it
+        // Ensure destination folder exists or create it.
         if ( ! $wp_filesystem->is_dir( $tmp_base_dir ) ) {
             $wp_filesystem->mkdir( $tmp_base_dir );
         }
 
-        $filename = basename( parse_url( $url, PHP_URL_PATH ) );
+        $filename = basename( parse_url( $url, PHP_URL_PATH ) ); //phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url
 
         $from            = $tmp_file;
         $to_connect_file = $tmp_base_dir . '/' . $filename;
@@ -140,7 +140,7 @@ class MainWP_Dashboard_Connect_Handle { // phpcs:ignore Generic.Classes.OpeningB
 
         if ( $wp_filesystem->move( $from, $to_connect_file ) ) {
 
-            /*
+            /**
             * When using an environment with shared folders,
             * there is a delay in updating the filesystem's cache.
             *
@@ -150,12 +150,13 @@ class MainWP_Dashboard_Connect_Handle { // phpcs:ignore Generic.Classes.OpeningB
             * prevents "Operation not permitted", and "No such file or directory" warnings.
             *
             * This delay is used in other projects, including Composer.
+            *
             * @link https://github.com/composer/composer/blob/2.5.1/src/Composer/Util/Platform.php#L228-L233
             */
             usleep( 200000 );
             wp_opcache_invalidate_directory( $to_connect_file );
-            // Cleanup the temporary file
-            unlink( $from );
+            // Cleanup the temporary file.
+            unlink( $from ); //phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
 
             $result_addfile = $this->put_rest_api_info_into_zip( $to_connect_file, $tmp_base_dir );
 
@@ -172,14 +173,14 @@ class MainWP_Dashboard_Connect_Handle { // phpcs:ignore Generic.Classes.OpeningB
             return new \WP_Error( 'add_rest_api_keys_failed', 'Failed to add REST API keys to the ZIP file.' );
         }
 
-        return $to_connect_file; // Success
+        return $to_connect_file; // Success.
     }
 
 
     /**
-     * prepare_rest_api_attached_data
+     * Prepare rest api attached data.
      *
-     * @return string
+     * @return string data.
      */
     public function prepare_rest_api_data_to_attached() {
 
@@ -191,7 +192,7 @@ class MainWP_Dashboard_Connect_Handle { // phpcs:ignore Generic.Classes.OpeningB
         $desc            = sprintf( esc_html__( 'MainWP Dashboard Connect Key (auto-generated, can be deleted after successfully connecting your sites) %s', 'mainwp' ), gmdate( 'Y-m-d H:i:s' ) );
         $enabled         = 1;
         $scope           = 'read_write';
-        $pass            = isset( $_GET['pass'] ) ? sanitize_key( $_GET['pass'] ) : '';
+        $pass            = isset( $_GET['pass'] ) ? sanitize_key( $_GET['pass'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 
         MainWP_DB::instance()->insert_rest_api_key(
             $consumer_key,
@@ -207,13 +208,13 @@ class MainWP_Dashboard_Connect_Handle { // phpcs:ignore Generic.Classes.OpeningB
         $token   = $_consumer_secret . '==' . $_consumer_key;
         $api_url = get_site_url() . '/wp-json/mainwp/v2/sites/add';
 
-        return base64_encode( $api_url . '||' . $token . '||' . $pass );
+        return base64_encode( $api_url . '||' . $token . '||' . $pass ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions
     }
 
     /**
-     * is_zip_archive_supported
+     * Is zip archive supported.
      *
-     * @return bool supported
+     * @return bool supported.
      */
     public function is_zip_archive_supported() {
         if ( class_exists( '\ZipArchive' ) ) {
@@ -224,11 +225,10 @@ class MainWP_Dashboard_Connect_Handle { // phpcs:ignore Generic.Classes.OpeningB
 
 
     /**
-     * put_rest_api_info_into_zip
+     * Put rest api info into zip.
      *
-     * @param  mixed $zipfile
-     * @param  mixed $basedir
-     * @return mixed
+     * @param  mixed $zipfile zipfile.
+     * @param  mixed $base_dir basedir.
      */
     public function put_rest_api_info_into_zip( $zipfile, $base_dir ) {
 

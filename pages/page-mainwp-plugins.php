@@ -1658,7 +1658,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
                                 ?>
                         <div class="ui stackable grid very compact mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $pluginsName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
-                            <div class="one wide center aligned middle aligned column"></div>
+                            <div class="one wide left aligned middle aligned column"></div>
                                 <div class="one wide center aligned middle aligned column">
                                         <?php if ( $child_plugin ) { ?>
                                             <div class="ui disabled checkbox"><input type="checkbox" disabled="disabled"><label></label></div>

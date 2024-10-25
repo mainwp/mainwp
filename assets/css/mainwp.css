@@ -490,7 +490,7 @@
         overflow-y: auto;
         overflow-x: hidden;
         padding: 0 1em;
-        margin: 0 -1em 20px -1em;
+        margin: 0 -1em 20px;
     }
 
     .mainwp-widget-footer {
@@ -741,6 +741,7 @@ table.mainwp-manage-wpsites-table .error a {
 .ui.accordion.mainwp-manage-plugin-item,
 .ui.accordion.mainwp-manage-theme-item {
     border-bottom: 1px solid rgba(34, 36, 38, 0.1);
+    padding: 1em !important;
 }
 
 .ui.accordion.mainwp-manage-plugin-item .title,
@@ -778,7 +779,7 @@ table.mainwp-manage-wpsites-table .error a {
     border-bottom: 1px solid rgba(34, 36, 38, 0.1);
     border-top: 1px solid rgba(34, 36, 38, 0.1);
     background: #fafafa;
-    padding: 1em;
+    padding: 1em !important;
     margin: 0 0 -1px !important;
 }
 
@@ -1399,6 +1400,11 @@ th .down.icon {
     display: none !important;
 }
 
-.menu-connect-first-site .item.active {
-    background: var(--grey-light) !important;
+.menu-connect-first-site .item.active,
+.mainwp-qsw-add-client .item.active {
+	background: var(--grey-light) !important;
+}
+.mainwp-qsw-add-client-more-row,
+.mainwp-managesites-more-import-row{
+	cursor: pointer;
 }

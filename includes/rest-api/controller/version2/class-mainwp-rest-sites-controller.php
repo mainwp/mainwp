@@ -2375,7 +2375,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      *
      * @return WP_Error|WP_REST_Response
      */
-    public function create_item( $request ) {
+    public function create_item( $request ) {  //phpcs:ignore -- NOSONAR - complex.
         $resp_data            = array();
         $resp_data['success'] = 0;
         $site_id              = 0;

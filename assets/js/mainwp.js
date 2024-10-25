@@ -2211,13 +2211,13 @@ jQuery(function () {
   // Hanlde click submit form import website
   jQuery(document).on('click', '#mainwp_managesites_bulkadd', function () {
 
-    let error_messages = mainwp_managesites_import_handle_form_before_submit();
-    // If there is an error, prevent submission and display the error
-    if (error_messages.length > 0) {
-      setHtml('#mainwp-message-zone', error_messages.join("<br/>"), false);
-    } else {
-      jQuery('#mainwp_managesites_bulkadd_form').submit();
-    }
+	let error_messages = mainwp_managesites_import_handle_form_before_submit();
+	// If there is an error, prevent submission and display the error
+	if (error_messages.length > 0) {
+		feedback('mainwp-message-zone', error_messages.join("<br/>"), "red");
+	}else{
+		jQuery('#mainwp_managesites_bulkadd_form').submit();
+	}
     return false;
   });
 
@@ -2231,6 +2231,24 @@ jQuery(function () {
     mainwp_managesites_edit_test();
   });
 
+	// Handle submit add multi website
+	jQuery(document).on('click', '#mainwp_managesites_add_multi_site', function () {
+		let error_messages = [];
+		let has_table_data = false;
+		has_table_data = mainwp_managesites_validate_import_rows(error_messages, true);
+		// If there is an error, prevent submission and display the error
+		if (error_messages.length > 0 && !has_table_data ) {
+			feedback('mainwp-add-multi-new-site-message-zone', error_messages.join("<br/>"), "red");
+		} else {
+			jQuery('#mainwp_managesites_add_form').submit();
+		}
+		return false;
+	});
+
+	// Handle click remove website on management webiste.
+	jQuery(document).on('click', '#mainwp-managesites-remove-site', function(){
+		jQuery('#mainwp-remove-site-button').trigger('click');
+	});
 });
 
 /**
@@ -4516,50 +4534,10 @@ jQuery(function ($) {
     window.location.href = 'admin.php?page=MainWPTools&action=download-connect&_wpnonce=' + jQuery(this).attr('data-nonce') + '&pass=' + encodeURIComponent(jQuery('#download-mainwp-connect-pass').val().trim());
     return false;
   });
-
-
-  $(document).on('click', '#delete_uptime_monitor_btn', function () {
-    let is_sub = $('#monitor_edit_is_sub_url')?.val();
-
-    let confirmation = __("Are you sure you want to delete this uptime monitor?");
-
-    if (is_sub) {
-      confirmation = __("Are you sure you want to delete this uptime sub-url monitor?");
-    }
-
-    mainwp_confirm(confirmation, () => {
-      let wpid = $('#mainwp_edit_monitor_site_id').val();
-      let moid = $('#mainwp_edit_monitor_id').val();
-
-      mainwp_uptime_monitoring_remove(wpid, moid);
-    });
-
-  });
-
-  let mainwp_uptime_monitoring_remove = function (wpid, moid) {
-
-    feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + __('Removing Uptime Monitor...'), 'green');
-
-    let data = mainwp_secure_data({
-      action: 'mainwp_uptime_monitoring_remove_monitor',
-      wpid: wpid,
-      moid: moid
-    });
-
-    jQuery.post(ajaxurl, data, function (response) {
-      if (response?.success) {
-        feedback('mainwp-message-zone', __('Monitor have been removed.'), 'green');
-        setTimeout(function () {
-          window.location = 'admin.php?page=managesites&monitor_wpid=' + wpid;
-        }, 2000);
-
-      } else if (response?.error) {
-        feedback('mainwp-message-zone', response.error, 'red');
-      } else {
-        feedback('mainwp-message-zone', __('Undefined error. Please try again.'), 'red');
-      }
-    }, 'json');
-    return false;
-  };
-
 });
+
+// Function to check valid email using regular expression.
+const mainwp_validate_email = function (email) {
+	const re = /^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,255}\.[A-Za-z]{2,}$/;
+	return re.test(email);
+}

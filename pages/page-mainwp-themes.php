@@ -1114,15 +1114,15 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         <div class="ui secondary segment main-master-checkbox">
             <div class="ui stackable grid">
-                <div class="one wide center aligned middle aligned column">
+                <div class="one wide left aligned middle aligned column">
                     <span class="trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></span>
                 </div>
                 <div class="one wide center aligned middle aligned column"><div class="ui checkbox main-master  not-auto-init"><input type="checkbox"/><label></label></div></div>
-                <div class="five wide middle aligned column"><?php esc_html_e( 'Theme', 'mainwp' ); ?></div>
+                <div class="six wide middle aligned column"><?php esc_html_e( 'Theme', 'mainwp' ); ?></div>
                 <div class="two wide center aligned middle aligned column"></div>
                 <div class="two wide center aligned middle aligned column"></div>
                 <div class="two wide center aligned middle aligned column"></div>
-                <div class="two wide center aligned middle aligned column"><?php esc_html_e( 'Themes', 'mainwp' ); ?></div>
+                <div class="two wide right aligned middle aligned column"><?php esc_html_e( 'Themes', 'mainwp' ); ?></div>
             </div>
         </div>
         <div class="mainwp-manage-themes-wrapper main-child-checkbox">
@@ -1136,17 +1136,17 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <div class="ui accordion mainwp-manage-theme-accordion mainwp-manage-theme-item main-child-checkbox"  id="<?php echo esc_html( $item_id ); ?>">
                 <div class="title master-checkbox">
                     <div class="ui stackable grid">
-                        <div class="one wide center aligned middle aligned column"><i class="dropdown icon dropdown-trigger"></i></div>
+                        <div class="one wide left aligned middle aligned column"><i class="dropdown icon dropdown-trigger"></i></div>
                         <div class="one wide center aligned middle aligned column"><div class="ui checkbox master"><input type="checkbox"><label></label></div></div>
-                        <div class="three wide middle aligned column"><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $site_id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo intval( $site_id ); ?>"><?php echo esc_html( $site_name ); ?></a></div>
+                        <div class="four wide middle aligned column"><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $site_id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo intval( $site_id ); ?>"><?php echo esc_html( $site_name ); ?></a></div>
                         <div class="two wide center aligned middle aligned column"></div>
                         <div class="two wide center aligned middle aligned column"></div>
                         <div class="two wide center aligned middle aligned column"></div>
                         <div class="two wide center aligned middle aligned column"></div>
-                        <div class="two wide center aligned middle aligned column"><div class="ui label"><i class="icon tint"></i> <?php echo intval( $count_themes ); ?></div></div>
+                        <div class="two wide right aligned middle aligned column"><div class="ui label"><?php echo intval( $count_themes ) . ' ' . esc_html( _n( 'Theme', 'Themes', intval( $count_themes ), 'mainwp' ) ); ?></div></div>
                     </div>
                 </div>
-            <div class="content child-checkbox">
+                <div class="content child-checkbox">
                     <?php
                     foreach ( $slugVersions as $slug_ver => $theme ) :
 
@@ -1213,10 +1213,10 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 <?php elseif ( $actived ) : ?>
                                     <span data-tooltip="<?php echo esc_html__( 'Active theme on the site can not be deleted.', 'mainwp' ); ?>" data-position="right center" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>
                                 <?php else : ?>
-                                <div class="ui checkbox">
-                                    <input type="checkbox"  class="mainwp-selected-theme-site" />
-                                    <label></label>
-                                </div>
+                                    <div class="ui checkbox">
+                                        <input type="checkbox"  class="mainwp-selected-theme-site" />
+                                        <label></label>
+                                    </div>
                                 <?php endif; ?>
                                 </div>
                                 <div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_theme_icon( $theme_slug ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
@@ -1225,15 +1225,15 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 <div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny basic green label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny basic grey label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
                                 <div class="one wide center aligned middle aligned column"></div>
                                 <div class="two wide center aligned middle aligned column current-version">
-                                <?php echo esc_html( $theme_version ); ?>
-                                <?php if ( ! empty( $new_version ) ) : ?>
-                                    &rarr;
-                                    <?php
-                                    if ( ! empty( $roll_list[ $site_id ][ $theme_slug ][ $new_version ] ) ) {
-                                        echo MainWP_Updates_Helper::get_roll_msg( $roll_list[ $site_id ][ $theme_slug ][ $new_version ], true, 'notice' ); //phpcs:ignore -- NOSONAR -- ok.
-                                    }
-                                    echo esc_html( $new_version );
-                                    ?>
+                                    <?php echo esc_html( $theme_version ); ?>
+                                    <?php if ( ! empty( $new_version ) ) : ?>
+                                        &rarr;
+                                        <?php
+                                        if ( ! empty( $roll_list[ $site_id ][ $theme_slug ][ $new_version ] ) ) {
+                                            echo MainWP_Updates_Helper::get_roll_msg( $roll_list[ $site_id ][ $theme_slug ][ $new_version ], true, 'notice' ); //phpcs:ignore -- NOSONAR -- ok.
+                                        }
+                                        echo esc_html( $new_version );
+                                        ?>
                                     <?php endif; ?>
                                 </div>
                                 <div class="two wide right aligned middle aligned column update-column">
@@ -1258,7 +1258,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 <?php endif; ?>
                                 </div>
                             </div>
-                                <?php
+                            <?php
                         }
                     endforeach;
                     ?>
@@ -1388,16 +1388,16 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         <div class="ui secondary segment main-master-checkbox">
             <div class="ui stackable grid">
-                <div class="one wide center aligned middle aligned column">
+                <div class="one wide left aligned middle aligned column">
                     <span class="trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></span>
                 </div>
                 <div class="one wide center aligned middle aligned column"><div class="ui checkbox main-master  not-auto-init"><input type="checkbox"/><label></label></div></div>
                 <div class="one wide center aligned middle aligned column"></div>
                 <div class="five wide middle aligned column"><?php esc_html_e( 'Theme', 'mainwp' ); ?></div>
                 <div class="two wide center aligned middle aligned column"></div>
-                <div class="two wide center aligned middle aligned column"><?php esc_html_e( 'Latest Version', 'mainwp' ); ?></div>
+                <div class="two wide right aligned middle aligned column"><?php esc_html_e( 'Latest Version', 'mainwp' ); ?></div>
                 <div class="two wide center aligned middle aligned column"></div>
-                <div class="two wide center aligned middle aligned column"><?php esc_html_e( 'Websites', 'mainwp' ); ?></div>
+                <div class="two wide right aligned middle aligned column"><?php esc_html_e( 'Websites', 'mainwp' ); ?></div>
             </div>
         </div>
         <div class="mainwp-manage-themes-wrapper main-child-checkbox">
@@ -1416,14 +1416,14 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <div class="ui accordion mainwp-manage-theme-accordion mainwp-manage-theme-item main-child-checkbox"  id="<?php echo esc_html( $item_id ); ?>">
                 <div class="title master-checkbox">
                     <div class="ui stackable grid">
-                        <div class="one wide center aligned middle aligned column"><i class="dropdown icon dropdown-trigger"></i></div>
+                        <div class="one wide left aligned middle aligned column"><i class="dropdown icon dropdown-trigger"></i></div>
                         <div class="one wide center aligned middle aligned column"><div class="ui checkbox master"><input type="checkbox"><label></label></div></div>
                         <div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_theme_icon( $theme_slug_first ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
                         <div class="five wide middle aligned column"><strong><?php echo esc_html( $theme_title ); ?></strong></div>
                         <div class="two wide center aligned middle aligned column"></div>
-                        <div class="two wide center aligned middle aligned column lastest-version-info"></div>
+                        <div class="two wide right aligned middle aligned column lastest-version-info"></div>
                         <div class="two wide center aligned middle aligned column"></div>
-                        <div class="two wide center aligned middle aligned column"><div class="ui label"><i class="icon wordpress"></i> <?php echo intval( $count_sites ); // phpcs:ignore -- Prevent modify WP icon. ?></div></div>
+                        <div class="two wide right aligned middle aligned column"><div class="ui label"><?php echo intval( $count_sites ) . ' ' . esc_html( _n( 'Site', 'Sites', intval( $count_sites ), 'mainwp' ) ); ?></div></div>
                     </div>
                 </div>
             <div class="content child-checkbox">
@@ -1498,7 +1498,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 ?>
                             <div class="ui very compact stackable grid mainwp-manage-theme-item-website <?php echo esc_html( $active_status_class ); ?>"  updated="0" site-id="<?php echo intval( $site_id ); ?>" theme-slug="<?php echo esc_attr( $theme_slug ); ?>" theme-name="<?php echo esc_html( wp_strip_all_tags( $themesName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>"  id="<?php echo esc_html( $item_id ); ?>" not-delete="<?php echo $not_delete ? 1 : 0; ?>" >
                             <div class="one wide center aligned middle aligned column"></div>
-                                <div class="one wide center aligned middle aligned column">
+                                <div class="one wide left aligned middle aligned column">
 
                                 <?php if ( '' !== $parent_str ) : ?>
                                     <?php echo $parent_str; //phpcs:ignore -- escaped. ?>
@@ -1516,7 +1516,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 <div class="one wide center aligned middle aligned column"><?php echo $theme_status; // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
                                 <div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny basic green label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny basic grey label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
                                 <div class="one wide center aligned middle aligned column"></div>
-                                <div class="two wide center aligned middle aligned column current-version">
+                                <div class="two wide right aligned middle aligned column current-version">
                                     <?php echo esc_html( $theme_version ); ?>
                                     <?php if ( ! empty( $new_version ) ) : ?>
                                     &rarr;

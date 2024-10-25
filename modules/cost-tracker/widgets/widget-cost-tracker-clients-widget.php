@@ -154,6 +154,12 @@ class Cost_Tracker_Clients_Widget {
                 jQuery( '#mainwp-module-cost-tracker-costs-widget-table' ).DataTable( {
                     "lengthMenu": [ [5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"] ],
                     "stateSave" : true,
+                    "info": false,
+                    "layout": {
+                        "bottom": 'paging',
+                        "bottomStart": null,
+                        "bottomEnd": null
+                    },
                     "order"     : [ [1, 'asc'] ],
                     "columnDefs": [ {
                         "targets": 'no-sort',

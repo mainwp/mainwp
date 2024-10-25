@@ -47,7 +47,7 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
     if (import_stop_by_user)
         return;
 
-    let is_page_setup = jQuery("#mainwp-import-sites-modal").hasClass("mainwp-qsw-import-modal");
+		let page_href = jQuery("#mainwp-import-sites-modal").attr('data-page-url');
 
     jQuery('#mainwp-importing-sites').hide();
 
@@ -63,15 +63,15 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
         if (import_count_fails == 0) {
             jQuery('#mainwp_managesites_import_logging .log').html('<div style="text-align:center;margin:50px 0;"><h2 class="ui icon header"><i class="green check icon"></i><div class="content">Congratulations!<div class="sub header">' + import_count_success + ' sites imported successfully.</div></div></h2></div>');
             jQuery('#mainwp_managesites_btn_import').hide();
-            if ( is_page_setup ) {
-                setTimeout(function () {
-                    window.location.href = 'admin.php?page=mainwp-setup&step=add_client';
-                }, 2000);
-            } else {
-                setTimeout(function () {
-                    window.location.href = 'admin.php?page=managesites';
-                }, 2000);
-            }
+						if (page_href !== undefined && page_href !== '') {
+							setTimeout(function () {
+								window.location.href = page_href;
+							}, 2000);
+						}else{
+							setTimeout(function () {
+                location.reload();
+							}, 2000);
+						}
         } else {
             jQuery('#mainwp_managesites_import_logging .log').append('<div class="ui yellow message">Process completed with errors. ' + import_count_fails + ' site(s) failed to import. Please review logs to resolve problems and try again.</div>');
             jQuery('#mainwp_managesites_btn_import').hide();
@@ -81,6 +81,11 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
 
         jQuery('#mainwp_managesites_import_logging').scrollTop(jQuery('#mainwp_managesites_import_logging .log').height());
         return;
+    }
+
+    // Call the customer constructor without the website on the last run.
+    if (import_current == import_total) {
+      mainwp_managesites_import_client_no_website();
     }
 
     let import_data = jQuery('#mainwp_managesites_import_csv_line_' + import_current).attr('encoded-data');
@@ -143,7 +148,7 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
         http_user: import_http_username,
         http_pass: import_http_password
     });
-    
+
     jQuery.post(ajaxurl, data, function (res_things) {
         let response = res_things.response ?? '';
 
@@ -239,7 +244,7 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
 // Handle add new client
 const mainwp_managesites_import_client = function (index, siteid) {
     let import_client_data = jQuery('#mainwp_managesites_import_client_line_' + index).attr('encoded-data');
-    
+
     if (typeof (import_client_data) == "undefined")
         import_client_data = '';
 
@@ -249,11 +254,30 @@ const mainwp_managesites_import_client = function (index, siteid) {
             client: import_client_data,
             site_id: siteid
         });
-    
+
         jQuery.post(ajaxurl, data, function (res) {});
     }
 
     return true;
+}
+
+// Handle add new client no website
+const mainwp_managesites_import_client_no_website = function() {
+  let client_data = [];
+  jQuery('.mainwp_managesites_import_client_no_site_lines').each(function(){
+    let data = jQuery(this).attr('encoded-data');
+    client_data.push(data);
+  });
+
+  if (client_data.length > 0) {
+    const data = mainwp_secure_data({
+      action: 'mainwp_import_website_add_client_no_site',
+      client: client_data,
+    });
+
+    jQuery.post(ajaxurl, data, function (res) { });
+  }
+  return true;
 }
 
 // Handle page import website
@@ -439,7 +463,7 @@ const mainwp_managesites_save_row_temp_data = function (row_index) {
 };
 // Function to get the domain part from the entered URL
 const mainwp_managesites_import_sites_extract_domain = function (url) { // NOSONAR - to compatible.
-    
+
     try {
         // Use URL API to parse URL and get only protocol and host part
         return new URL(url);
@@ -566,7 +590,7 @@ const mainwp_managesites_import_sites_add_row = function (row_index) {
                     "mainwp-managesites-import-admin-name"
                 )}
             </div>
-            <div class="one wide column">
+            <div class="two wide column">
                 ${mainwp_managesites_import_sites_render_input(
                     row_index,
                     "tag",
@@ -574,7 +598,7 @@ const mainwp_managesites_import_sites_add_row = function (row_index) {
                     "mainwp-managesites-import-tag"
                 )}
             </div>
-            <div class="two wide column">
+            <div class="one wide column">
                 ${mainwp_managesites_import_sites_render_input(
                     row_index,
                     "security_id",
@@ -677,38 +701,15 @@ const mainwp_managesites_import_sites_render_button_remove = function (
             <i class="trash alternate outline icon"></i>
         </a>`;
 };
-
+// validate form before submitting form managesites_import.
 const mainwp_managesites_import_handle_form_before_submit = function () {
-    let hasTable_data = false;
-    let csv_selected =
-        jQuery(`input[name="mainwp_managesites_file_bulkupload"]`).val() !== ""; // Check if CSV file is selected
+    let has_table_data = false;
+    let csv_selected = jQuery(`input[name="mainwp_managesites_file_bulkupload"]`).val() !== ""; // Check if CSV file is selected
     let zip_file = jQuery("#mainwp_managesites_file_managewp").val();
     let error_messages = [];
 
     // Iterate through each row in the rows
-    jQuery(
-        "#mainwp-managesites-row-import-sites .mainwp-managesites-import-rows"
-    ).each(function (index) {
-        let site_url = jQuery(
-        `input[name="mainwp_managesites_import[${index}][site_url]"]`
-        ).val();
-        let admin_name = jQuery(
-        `input[name="mainwp_managesites_import[${index}][admin_name]"]`
-        ).val();
-        // If there is data in any row of the table, check the required fields
-        if (site_url || admin_name) {
-        hasTable_data = true;
-        let msg = "";
-        if (!site_url) {
-            msg = sprintf(__("Site URL is required in row %1", index + 1));
-            error_messages.push(msg);
-        }
-        if (!admin_name) {
-            msg = sprintf(__("Admin Name is required in row %1", index + 1));
-            error_messages.push(msg);
-        }
-        }
-    });
+    has_table_data = mainwp_managesites_validate_import_rows(error_messages);
 
     // Check zip file format.
     if (zip_file != "") {
@@ -720,7 +721,7 @@ const mainwp_managesites_import_handle_form_before_submit = function () {
     }
 
     // Check if both CSV and table have data
-    if (csv_selected && hasTable_data && zip_file) {
+    if (csv_selected && has_table_data && zip_file) {
         error_messages.push(
         __(
             "You can only submit either the table data or a CSV file, not both at the same time"
@@ -729,9 +730,51 @@ const mainwp_managesites_import_handle_form_before_submit = function () {
     }
 
     // Check if both are empty
-    if (!csv_selected && !hasTable_data && !zip_file) {
+    if (!csv_selected && !has_table_data && !zip_file) {
         error_messages.push(__("Please fill in the table or select a CSV file or ManageWP file."));
     }
 
     return error_messages;
 };
+
+// Check data in model table add new website.
+const mainwp_managesites_validate_import_rows = function (error_messages, is_valid_row = false) {
+  let has_table_data = false;
+  let valid_row_count = 0;
+  jQuery(
+    "#mainwp-managesites-row-import-sites .mainwp-managesites-import-rows"
+  ).each(function (index) {
+    let site_url = jQuery(
+      `input[name="mainwp_managesites_import[${index}][site_url]"]`
+    ).val();
+    let admin_name = jQuery(
+      `input[name="mainwp_managesites_import[${index}][admin_name]"]`
+    ).val();
+
+    // If there is data in any row of the table, check the required fields
+    if (site_url || admin_name) {
+      has_table_data = true;
+
+      let msg = "";
+      if (!site_url) {
+        msg = __("Site URL is required in row %1", index + 1);
+        error_messages.push(msg);
+      }
+      if (!admin_name) {
+        msg = __("Admin Name is required in row %1", index + 1);
+        error_messages.push(msg);
+      }
+
+      // If both site_url and admin_name have values, increment the counter variable.
+      if (site_url && admin_name) {
+        valid_row_count++;
+      }
+    }
+
+  });
+  if (is_valid_row && error_messages.length === 0 && valid_row_count === 0){
+    error_messages.push(__("At least one row must have both Site URL and Admin Name."));
+  }
+
+  return has_table_data;
+}

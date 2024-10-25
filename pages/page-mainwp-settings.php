@@ -1378,7 +1378,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                         <em><?php esc_html_e( 'If you have confirmed the placement of your openssl.cnf and are still receiving an error banner, click the "Error Fixed" button to dismiss it.', 'mainwp' ); ?></em>
                                     </div>
                                 </div>
-                    <?php } ?>
+                        <?php } ?>
 
                         <h3 class="ui dividing header">
                         <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-cross-ip' ); ?>
@@ -1489,8 +1489,11 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             esc_html_e( 'Maximum simultaneous uptime monitoring requests (Default: 10)', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column ui input"  data-tooltip="<?php esc_attr_e( 'This option allows you to control how many update and install requests your MainWP Dashboard should process at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" class="settings-field-value-change-handler" name="mainwp_maximum_uptime_monitoring_requests" id="mainwp_maximum_uptime_monitoring_requests" value="<?php echo intval( $maximum_monitoring_requests ); ?>"/>
+                            <div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'This option allows you to control how many update and install requests your MainWP Dashboard should process at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <div class="ui bottom aligned labeled slider" id="mainwp_maximumInstallUpdateRequests_slider"></div>
+                                <div class="ui input">
+                                    <input type="hidden" class="settings-field-value-change-handler" name="mainwp_maximumInstallUpdateRequests" id="mainwp_maximumInstallUpdateRequests" value="<?php echo false === get_option( 'mainwp_maximumInstallUpdateRequests' ) ? 3 : esc_attr( get_option( 'mainwp_maximumInstallUpdateRequests' ) ); ?>"/>
+                                </div>
                             </div>
                         </div>
 
@@ -1608,6 +1611,104 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     </form>
                 </div>
             </div>
+            <script>
+            const maximumRequests = <?php echo ! empty( get_option( 'mainwp_maximumRequests' ) ) ? esc_js( get_option( 'mainwp_maximumRequests' ) ) : 4; ?>;
+            jQuery('#mainwp_maximumRequests_slider').slider({
+                min: 1,
+                max: 20,
+                start: maximumRequests,
+                step: 1,
+                restrictedLabels: [1,20],
+                showThumbTooltip: true,
+                tooltipConfig: {
+                    position: 'top center',
+                    variation: 'small visible black'
+                },
+                onChange: function(value) {
+                    jQuery('#mainwp_maximumRequests').val(value);
+                }
+            });
+            const minimumDelay = <?php echo ! empty( get_option( 'mainwp_minimumDelay' ) ) ? esc_js( get_option( 'mainwp_minimumDelay' ) ) : 200; ?>;
+            jQuery('#mainwp_minimumDelay_slider').slider({
+                min: 100,
+                max: 5000,
+                start: minimumDelay,
+                step: 100,
+                restrictedLabels: [100,5000],
+                showThumbTooltip: true,
+                tooltipConfig: {
+                    position: 'top center',
+                    variation: 'small visible black'
+                },
+                onChange: function(value) {
+                    jQuery('#mainwp_minimumDelay').val(value);
+                }
+            });
+            const maximumIPRequests = <?php echo ! empty( get_option( 'mainwp_maximumIPRequests' ) ) ? esc_js( get_option( 'mainwp_maximumIPRequests' ) ) : 1; ?>;
+            jQuery('#mainwp_maximumIPRequests_slider').slider({
+                min: 1,
+                max: 10,
+                start: maximumIPRequests,
+                step: 1,
+                restrictedLabels: [1,10],
+                showThumbTooltip: true,
+                tooltipConfig: {
+                    position: 'top center',
+                    variation: 'small visible black'
+                },
+                onChange: function(value) {
+                    jQuery('#mainwp_maximumIPRequests').val(value);
+                }
+            });
+            const minimumIPDelay = <?php echo ! empty( get_option( 'mainwp_minimumIPDelay' ) ) ? esc_js( get_option( 'mainwp_minimumIPDelay' ) ) : 1000; ?>;
+            jQuery('#mainwp_minimumIPDelay_slider').slider({
+                min: 500,
+                max: 5000,
+                start: minimumIPDelay,
+                step: 100,
+                restrictedLabels: [500,5000],
+                showThumbTooltip: true,
+                tooltipConfig: {
+                    position: 'top center',
+                    variation: 'small visible black'
+                },
+                onChange: function(value) {
+                    jQuery('#mainwp_minimumIPDelay').val(value);
+                }
+            });
+            const maximumSyncRequests = <?php echo ! empty( get_option( 'mainwp_maximumSyncRequests' ) ) ? esc_js( get_option( 'mainwp_maximumSyncRequests' ) ) : 8; ?>;
+            jQuery('#mainwp_maximumSyncRequests_slider').slider({
+                min: 1,
+                max: 20,
+                start: maximumSyncRequests,
+                step: 1,
+                restrictedLabels: [1,20],
+                showThumbTooltip: true,
+                tooltipConfig: {
+                    position: 'top center',
+                    variation: 'small visible black'
+                },
+                onChange: function(value) {
+                    jQuery('#mainwp_maximumSyncRequests').val(value);
+                }
+            });
+            const maximumInstallUpdateRequests = <?php echo ! empty( get_option( 'mainwp_maximumInstallUpdateRequests' ) ) ? esc_js( get_option( 'mainwp_maximumInstallUpdateRequests' ) ) : 3; ?>;
+            jQuery('#mainwp_maximumInstallUpdateRequests_slider').slider({
+                min: 1,
+                max: 20,
+                start: maximumInstallUpdateRequests,
+                step: 1,
+                restrictedLabels: [1,20],
+                showThumbTooltip: true,
+                tooltipConfig: {
+                    position: 'top center',
+                    variation: 'small visible black'
+                },
+                onChange: function(value) {
+                    jQuery('#mainwp_maximumInstallUpdateRequests').val(value);
+                }
+            });
+            </script>
         <?php
         static::render_footer( 'Advanced' );
     }
@@ -1717,7 +1818,17 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             esc_html_e( 'Download the MainWP Dashboard Connect plugin', 'mainwp' );
                             ?>
                             </label>
-                            <div class="five wide column">
+                            <div class="ten wide column">
+                                <div class="ui blue message">
+                                    <div><?php esc_html_e( 'The MainWP Dashboard Connect Plugin allows you to easily migrate to MainWP from any other WordPress management system. The plugin is designed to automatically install the MainWP Child plugin on your sites and connect them to your MainWP Dashboard without any manual intervention.', 'mainwp' ); ?></div>
+                                    <ol>
+                                        <li><?php esc_html_e( 'Although the process authenticates via an automatically generated REST API key, you have the option to enter a custom passphrase for additional security if desired.', 'mainwp' ); ?></li>
+                                        <li><?php esc_html_e( 'Click the Download button to download the plugin.', 'mainwp' ); ?></li>
+                                        <li><?php esc_html_e( 'Use your current WordPress management system to install and activate the plugin on the sites you want to add to your MainWP Dashboard.', 'mainwp' ); ?></li>
+                                        <li><?php esc_html_e( 'Once the plugin is installed and activated, the MainWP Dashboard Connect plugin will automatically connect your sites to the MainWP Dashboard. It will then remove itself, allowing you to click the Continue button to proceed to the next step of the Quick Setup Wizard.', 'mainwp' ); ?></li>
+                                    </ol>
+                                </div>
+
                                 <div class="ui action input" <?php echo ! empty( $tip ) ? 'data-inverted="" data-position="top left" data-tooltip="' . esc_attr( $tip ) . '" ' : ''; ?> >
                                     <span data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Enter an optional passphrase for additional security when adding site(s) through the MainWP Dashboard Connect plugin.', 'mainwp' ); ?>"><input type="text" class="settings-field-value-change-handler" name="download-mainwp-connect-pass" id="download-mainwp-connect-pass" <?php echo $zip_supported && ! $disabled_download_connect ? '' : 'disabled'; ?> value=""></span>
                                     <button id="download-mainwp-dashboard-connect-button"  data-nonce="<?php echo esc_attr( wp_create_nonce( 'download-connect-nonce' ) ); ?>" <?php echo $zip_supported && ! $disabled_download_connect ? '' : ' disabled="disabled" '; ?>" <?php echo ! empty( $btn_tip ) ? 'data-inverted="" data-position="top right" data-tooltip="' . esc_attr( $btn_tip ) . '"' : ''; ?> class="ui green basic right labeled icon button <?php echo $zip_supported && ! $disabled_download_connect ? '' : 'disabled'; ?>" ><i class="download icon"></i> <?php esc_attr_e( 'Download', 'mainwp' ); ?></button>

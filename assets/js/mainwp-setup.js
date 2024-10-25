@@ -265,8 +265,8 @@ let mainwp_setup_managesites_add = function () {
             });
 
             setTimeout(function () {
-              window.location.href = 'admin.php?page=mainwp-setup&step=connect_first_site';
-            }, 1000);
+              window.location.href = 'admin.php?page=mainwp-setup&step=add_client';
+            }, 3000);
           }
 
           jQuery('#mainwp_managesites_add').prop("disabled", false);

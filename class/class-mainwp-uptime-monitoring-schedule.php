@@ -191,8 +191,9 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
             if ( is_array( $process_init ) && ! empty( $process_init ) ) {
 
                 if ( 'init' !== $process_run_status ) {
-                    $this->set_uptime_notification_status( 'init' );
+                    $this->update_uptime_notification_status( 'init' );
                     MainWP_Utility::update_option( 'mainwp_uptime_monitoring_notification_last_time', $local_time );
+                    MainWP_Logger::instance()->log_uptime_notice( 'Uptime notice starting.' );
                 }
 
                 foreach ( $process_init as $uptime_notice ) {
@@ -218,17 +219,19 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
                     }
                 }
             } elseif ( 'init' === $process_run_status ) {
-                $this->set_uptime_notification_status( 'running' );
+                $this->update_uptime_notification_status( 'running' );
             }
             return;
         }
 
-        if( 'running' === $process_run_status ){
+        if ( 'running' === $process_run_status ) {
             $process_notices = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_notification_to_continue_send( array( 'limit' => 5 ) );
             if ( is_array( $process_notices ) && ! empty( $process_notices ) ) {
+                MainWP_Logger::instance()->log_uptime_notice( 'Uptime notice continue :: [count=' . ( $process_notices ? count( $process_notices ) : 0 ) . '].' );
                 MainWP_System_Cron_Jobs::instance()->send_uptime_notification_down_status( $process_notices );
             } else {
-                $this->set_uptime_notification_status( 'finished' );
+                MainWP_Logger::instance()->log_uptime_notice( 'Uptime notice finished.' );
+                $this->update_uptime_notification_status( 'finished' );
             }
         }
     }
@@ -272,7 +275,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
             if ( ! empty( $uptime_notice->process_id ) ) {
                 MainWP_DB::instance()->update_process(
                     array(
-                        'process_id'        => $uptime_notice->process_id,
+                        'process_id'       => $uptime_notice->process_id,
                         'dts_process_stop' => $local_time,
                     )
                 );
@@ -297,12 +300,12 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
-     * set_uptime_notification_status
+     * update_uptime_notification_status
      *
      * @param  string $new_status
      * @return void
      */
-    public function set_uptime_notification_status( $new_status ) {
+    public function update_uptime_notification_status( $new_status ) {
         MainWP_Utility::update_option( 'mainwp_process_uptime_notification_run_status', $new_status );
     }
 }

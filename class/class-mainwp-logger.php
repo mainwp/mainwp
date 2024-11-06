@@ -25,6 +25,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     const API_BACKUPS_LOG_PRIORITY     = 20240130;
     const CONNECT_LOG_PRIORITY         = 20241001;
     const UPTIME_CHECK_LOG_PRIORITY    = 20241017;
+    const UPTIME_NOTICE_LOG_PRIORITY   = 202411106;
     const DISABLED                     = - 1;
     const LOG                          = 0;
     const WARNING                      = 1;
@@ -318,6 +319,15 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public function log_uptime_check( $text = '' ) {
         $this->log_action( $text, static::UPTIME_CHECK_LOG_PRIORITY );
+    }
+
+    /**
+     * Method log_uptime_notice().
+     *
+     * @param string $text Log update check.
+     */
+    public function log_uptime_notice( $text = '' ) {
+        $this->log_action( $text, static::UPTIME_NOTICE_LOG_PRIORITY );
     }
 
     /**

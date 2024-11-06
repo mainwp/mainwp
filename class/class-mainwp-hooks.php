@@ -112,7 +112,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
 
         add_filter( 'mainwp_getactivateextensionnotice', array( &$this, 'get_activate_extension_notice' ), 10, 1 );
         add_action( 'mainwp_enqueue_meta_boxes_scripts', array( &$this, 'enqueue_meta_boxes_scripts' ), 10, 1 );
-        add_filter( 'mainwp_addsite', array( &$this, 'mainwp_add_site' ), 10, 1 );
+        add_filter( 'mainwp_addsite', array( &$this, 'hook_add_site' ), 10, 1 );
         add_filter( 'mainwp_deletesite', array( &$this, 'hook_delete_site' ), 10, 1 );
         add_filter( 'mainwp_clonesite', array( &$this, 'filter_clone_site' ), 10, 6 );
         add_filter( 'mainwp_delete_clonesite', array( &$this, 'filter_delete_clone_site' ), 10, 4 );
@@ -293,7 +293,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
     }
 
     /**
-     * Method mainwp_add_site()
+     * Method hook_add_site()
      *
      * Hook to add Child Site.
      *
@@ -310,7 +310,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @uses  \MainWP\Dashboard\MainWP_Manage_Sites_View::add_wp_site()
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-    public function mainwp_add_site( $params ) {
+    public function hook_add_site( $params ) {
         $ret = array();
 
         if ( is_array( $params ) ) {

@@ -266,7 +266,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_Client::init();
         MainWP_Rest_Api_Page::init();
         MainWP_Non_MainWP_Actions::instance();
-        MainWP_Dashboard_Connect_Handle::instance()->init();
+        MainWP_Uptime_Monitoring_Schedule::instance();
 
         if ( defined( 'WP_CLI' ) && WP_CLI ) {
             MainWP_WP_CLI_Command::init();
@@ -510,6 +510,16 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public function mainwp_cron_uptime_monitoring_check_action() {
         MainWP_Uptime_Monitoring_Schedule::instance()->cron_uptime_check();
     }
+
+        /**
+         * Method mainwp_cron_perform_general_schedules_action()
+         *
+         * Run cron uptime monitoring check action.
+         */
+    public function mainwp_cron_perform_general_schedules_action() {
+        MainWP_System_Cron_Jobs::instance()->cron_perform_general_process();
+    }
+
 
     /**
      * Method mainwp_crondeactivatedlicensesalert_action()
@@ -819,7 +829,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             'installedBulkSettingsManager'     => is_plugin_active( 'mainwp-bulk-settings-manager/mainwp-bulk-settings-manager.php' ) ? 1 : 0,
             'maximumSyncRequests'              => ( get_option( 'mainwp_maximumSyncRequests' ) === false ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ),
             'maximumInstallUpdateRequests'     => ( get_option( 'mainwp_maximumInstallUpdateRequests' ) === false ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ),
-            'maximumUptimeMonitoringRequests'  => (int)get_option( 'mainwp_maximum_uptime_monitoring_requests', 10 ),
+            'maximumUptimeMonitoringRequests'  => (int) get_option( 'mainwp_maximum_uptime_monitoring_requests', 10 ),
             '_wpnonce'                         => wp_create_nonce( 'mainwp-admin-nonce' ),
             'demoMode'                         => MainWP_Demo_Handle::is_demo_mode() ? 1 : 0,
             'roll_ui_icon'                     => MainWP_Updates_Helper::get_roll_icon( '', true ),

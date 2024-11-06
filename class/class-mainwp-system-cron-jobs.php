@@ -73,7 +73,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         add_action( 'mainwp_cronsitehealthcheck_action', array( $this, 'cron_check_websites_health' ) );
         add_action( 'mainwp_crondeactivatedlicensesalert_action', array( $this, 'cron_deactivated_licenses_alert' ) );
         add_action( 'mainwp_cronuptimemonitoringcheck_action', array( MainWP_Uptime_Monitoring_Schedule::instance(), 'cron_uptime_check' ) );
-        add_action( 'mainwp_cron_perform_process', array( $this, 'cron_perform_process' ) );
+        add_action( 'mainwp_cron_perform_general_process', array( $this, 'cron_perform_general_process' ) );
 
         // phpcs:ignore -- required for dashboard's minutely scheduled jobs.
         add_filter( 'cron_schedules', array( $this, 'get_cron_schedules' ), 9 );
@@ -98,7 +98,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             'mainwp_cronupdatescheck_action'             => 'minutely',
             'mainwp_crondeactivatedlicensesalert_action' => 'daily',
             'mainwp_cronuptimemonitoringcheck_action'    => 'minutely',
-            'mainwp_cron_perform_process'                => 'minutely',
+            'mainwp_cron_perform_general_process'        => 'minutely',
         );
 
         if ( ! $useWPCron && ! get_option( 'mainwp_individual_uptime_monitoring_schedule_enabled' ) ) {
@@ -1648,11 +1648,11 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
 
     /**
-     * perform_sequence_process
+     * cron_perform_general_process
      *
      * @return void
      */
-    public function cron_perform_process() {
+    public function cron_perform_general_process() {
         $this->perform_sequence_process();
     }
 

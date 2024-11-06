@@ -46,15 +46,6 @@ jQuery(function () {
 
     return false;
   });
-  // Handle download dashboard connect button
-  jQuery(document).on('click', '#download-mainwp-dashboard-connect-button', function () {
-    jQuery('#mainwp-qsw-toggle-verify-mainwp-child-active').hide();
-    jQuery('#mainwp_managesites_add_import').hide();
-    jQuery('#mainwp_addsite_continue_button').fadeIn(500);
-    if(jQuery('#mainwp-qsw-verify-mainwp-child-active').is(':checked') ){
-      jQuery('#mainwp-qsw-toggle-verify-mainwp-child-active').trigger('click');
-    }
-  });
 
   jQuery('#mainwp_qsw_client_name_field').on('keyup', function () {
     if (jQuery(this).val()) {

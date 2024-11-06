@@ -209,6 +209,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
         $params['url']                     = isset( $data['url'] ) ? sanitize_text_field( wp_unslash( $data['url'] ) ) : '';
         $params['name']                    = isset( $data['name'] ) ? sanitize_text_field( wp_unslash( $data['name'] ) ) : '';
         $params['wpadmin']                 = isset( $data['admin'] ) ? sanitize_text_field( wp_unslash( $data['admin'] ) ) : '';
+        $params['adminpwd']                = isset( $data['adminpassword'] ) ? sanitize_text_field( wp_unslash( $data['adminpassword'] ) ) : '';
         $params['unique_id']               = isset( $data['uniqueid'] ) ? sanitize_text_field( wp_unslash( $data['uniqueid'] ) ) : '';
         $params['ssl_verify']              = empty( $data['ssl_verify'] ) ? false : intval( $data['ssl_verify'] );
         $params['force_use_ipv4']          = ( ! isset( $data['force_use_ipv4'] ) || ( empty( $data['force_use_ipv4'] ) && ( '0' !== $data['force_use_ipv4'] ) ) ? null : intval( $data['force_use_ipv4'] ) );

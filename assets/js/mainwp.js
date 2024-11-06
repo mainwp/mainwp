@@ -4576,13 +4576,6 @@ jQuery(document).ready(function () {
   });
 });
 
-jQuery(function ($) {
-  $(document).on('click', '#download-mainwp-dashboard-connect-button', function () {
-    window.location.href = 'admin.php?page=MainWPTools&action=download-connect&_wpnonce=' + jQuery(this).attr('data-nonce') + '&pass=' + encodeURIComponent(jQuery('#download-mainwp-connect-pass').val().trim());
-    return false;
-  });
-});
-
 // Function to check valid email using regular expression.
 const mainwp_validate_email = function (email) {
   const re = /^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,255}\.[A-Za-z]{2,}$/;

@@ -28,12 +28,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     public static function handle_settings_post() { // phpcs:ignore -- NOSONAR - complex.
         if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) && MainWP_System_Utility::is_admin() ) {
-            
-      		MainWP_Utility::update_option( 'mainwp_disableSitesChecking', ( ! isset( $_POST['mainwp_disableSitesChecking'] ) ? 1 : 0 ) );
-            $val = isset( $_POST['mainwp_frequency_sitesChecking'] ) ? intval( $_POST['mainwp_frequency_sitesChecking'] ) : 1440;
-            MainWP_Utility::update_option( 'mainwp_frequencySitesChecking', $val );
-      
-			//global uptime monitoring settings.
+            // global uptime monitoring settings.
             MainWP_Uptime_Monitoring_Edit::instance()->handle_save_settings();
             MainWP_Utility::update_option( 'mainwp_disableSitesHealthMonitoring', ( ! isset( $_POST['mainwp_disable_sitesHealthMonitoring'] ) ? 1 : 0 ) );
             $val = isset( $_POST['mainwp_site_healthThreshold'] ) ? intval( $_POST['mainwp_site_healthThreshold'] ) : 80;
@@ -43,75 +38,59 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
         return false;
     }
 
-    /**
-     * Check to purge monitoring records.
-     *
-     * @return bool True for cleaning.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Monitoring::purge_monitoring_records()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
-     */
-    public static function check_to_purge_records() {
-        $last_purge_records = get_option( 'mainwp_cron_checksites_purge_records_last_timestamp', 0 );
-        $twice_a_day        = 12 * HOUR_IN_SECONDS; // twice a day.
-        if ( time() > $last_purge_records + $twice_a_day ) {
-            MainWP_DB_Monitoring::instance()->purge_monitoring_records();
-            MainWP_Utility::update_option( 'mainwp_cron_checksites_purge_records_last_timestamp', time() );
-            return true;
-        }
-        return false;
-    }
 
     /**
      * Check a website HTTP header status.
      *
      * @param object $website Object containing the website info.
      *
-     * @return array Check result.
+     * @return mixed Check result.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::check_website_status()
      * @uses \MainWP\Dashboard\MainWP_Connect::check_ignored_http_code()
-     * @uses \MainWP\Dashboard\MainWP_DB_Monitoring::insert_website_status()
      * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
      */
     public static function handle_check_website( $website ) {
 
-        $result = MainWP_Connect::check_website_status( $website );
+        $result_comp = MainWP_Connect::check_website_status( $website );
 
-        if ( ! is_array( $result ) ) {
+        if ( ! is_array( $result_comp ) ) {
             return false;
         }
 
-        $new_code        = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? (int) $result['httpCode'] : 0;
-        $online_detected = MainWP_Connect::check_ignored_http_code( $new_code );
-        $time            = time();
-        // Computes duration before update website checking values.
-        $duration    = static::get_duration_for_status( $website, $time );
-        $new_noticed = static::get_http_noticed_status_value( $website, $new_code );
+        $new_code = ( is_array( $result_comp ) && isset( $result_comp['httpCode'] ) ) ? (int) $result_comp['httpCode'] : 0;
+
+        if ( isset( $result_comp['new_uptime_status'] ) ) {
+            $is_online = $result_comp['new_uptime_status'];
+        } else {
+            $is_online = MainWP_Connect::check_ignored_http_code( $new_code ); //legacy check http code.
+        }
+
+        $importance = isset( $result_comp['importance'] ) ? $result_comp['importance'] : 0;
+
+        $time = isset( $result_comp['check_time'] ) ? $result_comp['check_time'] : time();
+
+        $noticed_value = $website->http_code_noticed;
+
+        // it is noticed.
+        if ( ! empty( $noticed_value ) ) {
+            $new_noticed = empty( $is_online ) && $importance ? 0 : 1; // 0 => need to send notification.
+        } else {
+            $new_noticed = $noticed_value; // no change.
+        }
 
         // Save last status.
         MainWP_DB::instance()->update_website_values(
             $website->id,
             array(
-                'offline_check_result' => $online_detected ? 1 : -1,
+                'offline_check_result' => $is_online ? 1 : -1, // 1 - online, -1 offline.
                 'offline_checks_last'  => $time,
                 'http_response_code'   => $new_code,
-                'http_code_noticed'    => $new_noticed,
+                'http_code_noticed'    => $new_noticed, // http_code_noticed = 0, not noticed yet, ready to notice.
             )
         );
 
-        // Save status.
-        MainWP_DB_Monitoring::instance()->insert_website_status(
-            array(
-                'wpid'            => $website->id,
-                'event_timestamp' => $time,
-                'http_code'       => $new_code,
-                'status'          => static::get_site_checking_status( $new_code ),
-                'duration'        => $duration,
-            )
-        );
-
-        return $result;
+        return $result_comp; // return results for ajax check requests.
     }
 
     /**
@@ -122,7 +101,29 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * @return int $noticed_value New HTTP status.
      */
-    private static function get_http_noticed_status_value( $website, $new_code ) {
+    public static function get_http_noticed_status_value( $website, $new_code ) {
+        $old_code      = (int) $website->http_response_code;
+        $noticed_value = $website->http_code_noticed;
+        if ( 200 !== $new_code && (int) $old_code !== $new_code ) {
+            $noticed_value = 0;
+        } elseif ( 200 !== $old_code && 200 === $new_code ) {
+            if ( 0 === $noticed_value ) {
+                $noticed_value = 1;
+            }
+        }
+        return $noticed_value;
+    }
+
+
+    /**
+     * Get a new HTTP status notice.
+     *
+     * @param object $website  Object containing the website info.
+     * @param int    $new_code The new HTTP code value.
+     *
+     * @return int $noticed_value New HTTP status.
+     */
+    public static function get_http_noticed_importance( $website, $new_code ) {
         $old_code      = (int) $website->http_response_code;
         $noticed_value = $website->http_code_noticed;
         if ( 200 !== $new_code && (int) $old_code !== $new_code ) {
@@ -160,44 +161,6 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
-     * Computes duration status value.
-     *
-     * @param object $website Object containing the website info.
-     * @param int    $time The current compution time.
-     *
-     * @return int Duration value.
-     */
-    private static function get_duration_for_status( $website, $time ) {
-
-        $use_indi_interval  = ( 0 < $website->status_check_interval ) ? true : false;
-        $duration_site_last = 0;
-        if ( 0 !== $website->offline_checks_last ) {
-            $duration_site_last = $time - $website->offline_checks_last; // duration equal now (time()) minus last time checked.
-        }
-
-        if ( $use_indi_interval ) { // if use individual interval for this site.
-            if ( 0 < $duration_site_last ) {
-                $duration = $duration_site_last;
-            } else {
-                $duration = $website->status_check_interval * 60; // in seconds.
-            }
-        } elseif ( 0 < $duration_site_last ) { // use global interval for this site.
-                $duration = $duration_site_last;
-        } else {
-            $freq_minutes = get_option( 'mainwp_frequencySitesChecking', 60 );
-            $duration     = $freq_minutes * 60; // in seconds.
-
-        }
-
-        // to limit duration 24 hours.
-        if ( 60 * 60 * 24 < $duration ) {
-            $duration = 60 * 60 * 24;
-        }
-
-        return $duration;
-    }
-
-    /**
      * Determin if site is up or down based on HTTP code.
      *
      * @param int $http_code HTTP code.
@@ -206,35 +169,6 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $code200 = 200 === (int) $http_code ? 1 : 0;
         return empty( $http_code ) ? 0 : $code200;
     }
-
-
-    /**
-     * Check child site status via AJAX.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::end_session()
-     */
-    public static function ajax_check_status_site() {
-        $website = null;
-        if ( isset( $_POST['wp_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            $website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['wp_id'] ) ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        }
-
-        if ( null === $website ) {
-            die( wp_json_encode( array( 'error' => esc_html__( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
-        }
-
-        MainWP_Utility::end_session();
-        $result = static::handle_check_website( $website );
-        MainWP_Utility::end_session();
-
-        if ( is_array( $result ) ) {
-            die( wp_json_encode( array( 'result' => 'success' ) ) );
-        } else {
-            die( wp_json_encode( array( 'error' => esc_html__( 'Request failed. Please, try again.', 'mainwp' ) ) ) );
-        }
-    }
-
 
     /**
      * Basic site uptime monitoring.

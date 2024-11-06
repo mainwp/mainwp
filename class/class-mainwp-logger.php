@@ -422,6 +422,10 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $do_log = apply_filters( 'mainwp_log_do_to_db', $do_log, $website );
 
+        if ( ! $forced && ! $do_log ) {
+            return false;
+        }
+
         $text = $this->prepare_log_info( $text );
 
         do_action( 'mainwp_before_log_data', $text, $priority, $log_color );
@@ -430,39 +434,35 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $text = 'CRON :: ' . $text;
         }
 
-        if ( $forced || $do_log ) {
+        /**
+         * Current user global.
+         *
+         * @global string
+         */
+        global $current_user;
 
-            /**
-             * Current user global.
-             *
-             * @global string
-             */
-            global $current_user;
-
-            $user = '';
-            if ( ! empty( $current_user ) && ! empty( $current_user->user_login ) ) {
-                $user = $current_user->user_login;
-            } elseif ( defined( 'WP_CLI' ) ) {
-                $user = 'WP_CLI';
-            } elseif ( defined( 'DOING_CRON' ) ) {
-                $user = 'DOING_CRON';
-            }
-
-            $data = array();
-
-            $data['log_content']   = $text;
-            $data['log_user']      = $user;
-            $data['log_type']      = $priority;
-            $data['log_color']     = intval( $log_color );
-            $data['log_timestamp'] = time();
-
-            $data = apply_filters( 'mainwp_log_to_db_data', $data );
-
-            MainWP_DB_Common::instance()->insert_action_log( $data );
-
-            return true;
+        $user = '';
+        if ( ! empty( $current_user ) && ! empty( $current_user->user_login ) ) {
+            $user = $current_user->user_login;
+        } elseif ( defined( 'WP_CLI' ) ) {
+            $user = 'WP_CLI';
+        } elseif ( defined( 'DOING_CRON' ) ) {
+            $user = 'DOING_CRON';
         }
-        return false;
+
+        $data = array();
+
+        $data['log_content']   = $text;
+        $data['log_user']      = $user;
+        $data['log_type']      = $priority;
+        $data['log_color']     = intval( $log_color );
+        $data['log_timestamp'] = time();
+
+        $data = apply_filters( 'mainwp_log_to_db_data', $data );
+
+        MainWP_DB_Common::instance()->insert_action_log( $data );
+
+        return true;
     }
 
     /**
@@ -783,14 +783,33 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             --$paged;
         }
 
+        $params = array();
+
+        if ( isset( $_GET['hour'] ) && ! empty( $_GET['hour'] ) ) {
+            $params['hour'] = intval( $_GET['hour'] );
+        } else {
+            $params['hour'] = $limit;
+        }
+
         $order = isset( $_GET['order'] ) ? sanitize_text_field( wp_unslash( $_GET['order'] ) ) : '';
 
-        $rows = MainWP_DB::instance()->query( MainWP_DB_Common::instance()->get_sql_log( $paged, $order, array( 'limit' => $limit ) ) );
+        $total = MainWP_DB::instance()->get_var_field( MainWP_DB_Common::instance()->get_sql_log( $paged, $order, array( 'count' => true ) ) );
 
-        if ( isset( $_GET['paged'] ) ) {
-            $total = MainWP_DB::instance()->get_var_field( MainWP_DB_Common::instance()->get_sql_log( $paged, $order, array( 'count' => true ) ) );
-            $from  = $limit * $paged;
-            echo '<p><strong>' . esc_html__( 'Showing ', 'mainwp' ) . ':</strong> ' . ( $from . ' - ' . ( $from + $limit ) . ' of ' . $total . ' total.' );
+        $rows = MainWP_DB::instance()->query( MainWP_DB_Common::instance()->get_sql_log( $paged, $order, $params ) );
+
+        $count = $rows ? MainWP_DB::num_rows( $rows ) : 0;
+
+        $show_info = '';
+
+        if ( isset( $_GET['hour'] ) ) {
+            $show_info = $count . ' latest items from a total of ' . $total;
+        } elseif ( isset( $_GET['paged'] ) ) {
+            $from      = $limit * $paged;
+            $show_info = $count . ' items, from ' . $from . ' - ' . ( $from + $limit ) . ' of ' . $total . ' total.';
+        }
+
+        if ( ! empty( $show_info ) ) {
+            echo '<p><strong>' . esc_html__( 'Showing ', 'mainwp' ) . ':</strong> ' . $show_info;
         }
 
         $start_wrapper = '<span class="ui mini label mainwp-action-log-show-more">Click to See Response</span><div class="mainwp-action-log-site-response" style="display: none;">';

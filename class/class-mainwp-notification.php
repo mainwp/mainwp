@@ -321,7 +321,7 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @param string $email send to email.
      * @param string $subject email content.
-     * @param bool   $mail_content Text format.
+     * @param string $mail_content Text format.
      * @param string $content_type email content.
      */
     public static function send_wp_mail( $email, $subject, $mail_content, $content_type = '' ) {

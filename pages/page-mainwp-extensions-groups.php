@@ -396,7 +396,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
         );
 
         $extensions_and_leftmenus[] = array(
-            'title'                => esc_html__( 'Uptime Monitoring', 'mainwp' ),
+            'title'                => esc_html__( 'Monitoring', 'mainwp' ),
             'parent_key'           => 'Extensions-Mainwp-Monitoring',
             'slug'                 => 'MonitoringSites',
             'href'                 => 'admin.php?page=MonitoringSites',

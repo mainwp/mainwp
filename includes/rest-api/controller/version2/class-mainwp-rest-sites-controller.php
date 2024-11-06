@@ -1570,7 +1570,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $data = $this->filter_response_data_by_allowed_fields( $website, 'simple_view' );
 
         if ( false !== $new_code ) {
-            $data['status']    = MainWP_Monitoring_Handler::get_site_checking_status( $new_code );
+            if ( is_array( $result ) && isset( $result['new_uptime_status'] ) ) {
+                $data['status'] = $result['new_uptime_status'];
+            } else {
+                $data['status']    = MainWP_Monitoring_Handler::get_site_checking_status( $new_code );
+            }
             $data['http_code'] = $new_code;
         }
 
@@ -1986,25 +1990,12 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     'default' => '',
                     'context' => array( 'view' ),
                 ),
-                'disable_status_check'   => array(
-                    'type'    => 'string',
-                    'default' => '',
-                    'context' => array( 'view' ),
-                ),
                 'disable_health_check'   => array(
                     'type'        => 'integer',
                     'default'     => 0,
                     'description' => __( 'Disable health check', 'mainwp' ),
                     'context'     => array( 'edit' ),
                     'enum'        => array( 0, 1 ),
-                    'arg_options' => array(
-                        'sanitize_callback' => 'absint',
-                    ),
-                ),
-                'status_check_interval'  => array(
-                    'type'        => 'integer',
-                    'default'     => 0,
-                    'context'     => array( 'view' ),
                     'arg_options' => array(
                         'sanitize_callback' => 'absint',
                     ),
@@ -2110,8 +2101,6 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             'ssl_version'            => 'sslversion',
             'uniqueId'               => 'uniqueid',
             'protocol'               => 'protocol',
-            'disable_status_check'   => 'disablechecking',
-            'status_check_interval'  => 'checkinterval',
             'disable_health_check'   => 'disablehealthchecking',
             'health_threshold'       => 'healththreshold',
             'suspended'              => 'suspended',
@@ -2186,11 +2175,9 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 'url'                   => $site_object->url,
                 'name'                  => $site_object->name,
                 'offline_checks_last'   => $site_object->offline_checks_last,
-                'offline_check_result'  => $site_object->offline_check_result,
+                'offline_check_result'  => $site_object->offline_check_result, // 1 - online, -1 offline.
                 'http_response_code'    => $site_object->http_response_code,
-                'disable_status_check'  => $site_object->disable_status_check,
                 'disable_health_check'  => $site_object->disable_health_check,
-                'status_check_interval' => $site_object->status_check_interval,
                 'health_threshold'      => $site_object->health_threshold,
                 'note'                  => $site_object->note,
                 'plugin_upgrades'       => $site_object->plugin_upgrades,

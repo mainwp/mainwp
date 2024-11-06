@@ -120,6 +120,10 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             $columns['site_preview'] = esc_html__( 'Site preview', 'mainwp' );
         }
 
+        if ( isset( $columns['last24_status'] ) ) {
+            $columns['last24_status'] = esc_html__( 'Last 24h Status', 'mainwp' );
+        }
+
         if ( isset( $columns['lighthouse_desktop_score'] ) ) {
             $columns['lighthouse_desktop_score'] = esc_html__( 'Lighthouse Desktop Score', 'mainwp' );
         }
@@ -186,6 +190,11 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                                             <input type="checkbox"
                                             <?php
                                             $show_col = ! isset( $show_cols[ $name ] ) || ( 1 === (int) $show_cols[ $name ] );
+
+                                            if ( in_array( $name, array( 'site_preview', 'atarim_tasks' ) ) && ! isset( $show_cols[ $name ] ) ) {
+                                                $show_col = false;
+                                            }
+
                                             if ( $show_col ) {
                                                 echo 'checked="checked"';
                                             }

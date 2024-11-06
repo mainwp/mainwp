@@ -128,6 +128,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $this->update_install();
         $this->plugin_slug = plugin_basename( $mainwp_plugin_file );
 
+        add_action( 'shutdown', array( $this, 'hook_wp_shutdown' ) );
+
         do_action( 'mainwp_system_init' );
 
         if ( is_admin() ) {
@@ -343,12 +345,10 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_settings_show_widgets',
                 'mainwp_clients_show_widgets',
                 'mainwp_settings_show_manage_sites_columns',
-                'mainwp_disableSitesChecking',
+                'mainwp_individual_uptime_monitoring_schedule_enabled',
                 'mainwp_disableSitesHealthMonitoring',
-                'mainwp_frequencySitesChecking',
                 'mainwp_sitehealthThreshold',
                 'mainwp_settings_notification_emails',
-                'mainwp_ignore_HTTP_response_status',
                 'mainwp_check_http_response',
                 'mainwp_extmenu',
                 'mainwp_opensslLibLocation',
@@ -366,6 +366,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_batch_updates_is_running',
                 'mainwp_batch_individual_updates_is_running',
                 'mainwp_maximum_uptime_monitoring_requests',
+                'mainwp_actionlogs',
             );
 
             $options = apply_filters( 'mainwp_init_load_all_options', $options );
@@ -517,17 +518,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public function mainwp_crondeactivatedlicensesalert_action() {
         MainWP_System_Cron_Jobs::instance()->cron_deactivated_licenses_alert();
-    }
-
-    /**
-     * Method mainwp_croncheckstatus_action()
-     *
-     * Run cron check sites status action.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System_Cron_Jobs::cron_check_websites_status()
-     */
-    public function mainwp_croncheckstatus_action() {
-        MainWP_System_Cron_Jobs::instance()->cron_check_websites_status();
     }
 
     /**
@@ -815,6 +805,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $en_params[] = 'jquery-ui-datepicker';
         }
         wp_enqueue_script( 'mainwp', MAINWP_PLUGIN_URL . 'assets/js/mainwp.js', $en_params, $this->current_version, true );
+        wp_enqueue_script( 'mainwp-uptime', MAINWP_PLUGIN_URL . 'assets/js/mainwp-uptime.js', $en_params, $this->current_version, true );
+
         $disable_backup_checking = true; // removed option.
         $mainwpParams            = array(
             'image_url'                        => MAINWP_PLUGIN_URL . 'assets/images/',
@@ -827,6 +819,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             'installedBulkSettingsManager'     => is_plugin_active( 'mainwp-bulk-settings-manager/mainwp-bulk-settings-manager.php' ) ? 1 : 0,
             'maximumSyncRequests'              => ( get_option( 'mainwp_maximumSyncRequests' ) === false ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ),
             'maximumInstallUpdateRequests'     => ( get_option( 'mainwp_maximumInstallUpdateRequests' ) === false ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ),
+            'maximumUptimeMonitoringRequests'  => (int)get_option( 'mainwp_maximum_uptime_monitoring_requests', 10 ),
             '_wpnonce'                         => wp_create_nonce( 'mainwp-admin-nonce' ),
             'demoMode'                         => MainWP_Demo_Handle::is_demo_mode() ? 1 : 0,
             'roll_ui_icon'                     => MainWP_Updates_Helper::get_roll_icon( '', true ),
@@ -875,6 +868,18 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         if ( ! current_user_can( 'update_core' ) ) {
             remove_action( 'admin_notices', 'update_nag', 3 );
+        }
+    }
+
+    /**
+     * Method hook_wp_shutdown()
+     */
+    public function hook_wp_shutdown() {
+        if ( MainWP_Logger::DISABLED !== (int) get_option( 'mainwp_actionlogs' ) ) {
+            $error = error_get_last();
+            if ( is_array( $error ) && isset( $error['type'] ) && ( $error['type'] === E_ERROR || $error['type'] === E_CORE_ERROR || $error['type'] === E_COMPILE_ERROR || $error['type'] === E_PARSE ) ) {
+                MainWP_Logger::instance()->log_action( '[Fatal ERROR detected=' . print_r( $error, true ) . ']', false, MainWP_Logger::WARNING_COLOR, true );
+            }
         }
     }
 
@@ -1035,12 +1040,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
 
         if ( static::is_mainwp_pages() ) {
-
-            if ( isset( $_GET['page'] ) && $this->is_slider_conflict_pages( $_GET['page'] ) ) {
-                wp_dequeue_script( 'jquery-ui-slider' );
-                wp_deregister_script( 'jquery-ui-slider' );
-            }
-
             wp_enqueue_script( 'jquery-migrate' );
             wp_enqueue_script( 'mainwp-updates', MAINWP_PLUGIN_URL . 'assets/js/mainwp-updates.js', array(), $this->current_version, true );
             wp_enqueue_script( 'mainwp-managesites-action', MAINWP_PLUGIN_URL . 'assets/js/mainwp-managesites-action.js', array(), $this->current_version, true );
@@ -1054,7 +1053,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             wp_enqueue_script( 'mainwp-extensions', MAINWP_PLUGIN_URL . 'assets/js/mainwp-extensions.js', array(), $this->current_version, true );
             wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'assets/js/moment/moment.min.js', array(), $this->current_version, true );
             wp_enqueue_script( 'fomantic-ui', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.js', array( 'jquery' ), $this->current_version, false );
-            wp_enqueue_script( 'fomantic-ui-slider', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/slider.min.js', array( 'jquery' ), $this->current_version, false );
 
             wp_enqueue_script( 'datatables', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.js', array( 'jquery' ), $this->current_version, false );
             wp_enqueue_script( 'datatables-semanticui', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.semanticui.js', array( 'datatables' ), $this->current_version, false );
@@ -1109,14 +1107,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
     }
 
-
-    /**
-     * Method is_slider_conflict_pages()
-     */
-    public function is_slider_conflict_pages( $page ) {
-        return ( in_array( $page, array( 'managesites' ) ) && isset( $_GET['monitor_wpid'] ) || in_array( $page, array( 'Settings' ) ) ) ? true : false;
-    }
-
     /**
      * Method admin_enqueue_styles()
      *
@@ -1147,7 +1137,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             wp_enqueue_style( 'mainwp-fonts', MAINWP_PLUGIN_URL . 'assets/css/mainwp-fonts.css', array(), $this->current_version );
             wp_enqueue_style( 'fomantic-ui', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.css', array(), $this->current_version );
             wp_enqueue_style( 'mainwp-fomantic', MAINWP_PLUGIN_URL . 'assets/css/mainwp-fomantic.css', array(), $this->current_version );
-            wp_enqueue_style( 'fomantic-ui-slider', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/slider.min.css', array(), $this->current_version );
 
             wp_enqueue_style( 'datatables', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.dataTables.css', array(), $this->current_version );
             wp_enqueue_style( 'datatables-semanticui', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.semanticui.css', array(), $this->current_version );

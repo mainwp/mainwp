@@ -843,27 +843,28 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      */
     public static function mainwp_options() { // phpcs:ignore -- NOSONAR - current complexity required to achieve desired results. Pull request solutions appreaciated.
         $mainwp_options = array(
-            'mainwp_number_of_child_sites'           => esc_html__( 'Number of connected sites', 'mainwp' ),
-            'mainwp_wp_cron'                         => esc_html__( 'Use WP Cron', 'mainwp' ),
-            'mainwp_optimize'                        => esc_html__( 'Optimize data loading', 'mainwp' ),
-            'mainwp_automaticDailyUpdate'            => esc_html__( 'WP Core advanced automatic updates enabled', 'mainwp' ),
-            'mainwp_pluginAutomaticDailyUpdate'      => esc_html__( 'Plugin advanced automatic updates enabled', 'mainwp' ),
-            'mainwp_themeAutomaticDailyUpdate'       => esc_html__( 'Theme advanced automatic updates enabled', 'mainwp' ),
-            'mainwp_numberdays_Outdate_Plugin_Theme' => esc_html__( 'Abandoned plugins/themes tolerance', 'mainwp' ),
-            'mainwp_maximumPosts'                    => esc_html__( 'Maximum number of posts to return', 'mainwp' ),
-            'mainwp_maximumPages'                    => esc_html__( 'Maximum number of pages to return', 'mainwp' ),
-            'mainwp_maximumComments'                 => esc_html__( 'Maximum number of comments', 'mainwp' ),
-            'mainwp_enableLegacyBackupFeature'       => esc_html__( 'MainWP legacy backups enabled', 'mainwp' ),
-            'mainwp_primaryBackup'                   => esc_html__( 'Primary backup system', 'mainwp' ),
-            'mainwp_disableSitesChecking'            => esc_html__( 'Basic uptime monitoring enabled', 'mainwp' ),
-            'mainwp_disableSitesHealthMonitoring'    => esc_html__( 'Site health monitoring enabled', 'mainwp' ),
-            'mainwp_maximumRequests'                 => esc_html__( 'Maximum simultaneous requests', 'mainwp' ),
-            'mainwp_minimumDelay'                    => esc_html__( 'Minimum delay between requests', 'mainwp' ),
-            'mainwp_maximumIPRequests'               => esc_html__( 'Maximum simultaneous requests per ip', 'mainwp' ),
-            'mainwp_minimumIPDelay'                  => esc_html__( 'Minimum delay between requests to the same ip', 'mainwp' ),
-            'mainwp_maximumSyncRequests'             => esc_html__( 'Maximum simultaneous sync requests', 'mainwp' ),
-            'mainwp_maximumInstallUpdateRequests'    => esc_html__( 'Maximum simultaneous install and update requests', 'mainwp' ),
-            'mainwp_auto_purge_cache'                => esc_html__( 'Cache control enabled', 'mainwp' ),
+            'mainwp_number_of_child_sites'                => esc_html__( 'Number of connected sites', 'mainwp' ),
+            'mainwp_wp_cron'                              => esc_html__( 'Use WP Cron', 'mainwp' ),
+            'mainwp_optimize'                             => esc_html__( 'Optimize data loading', 'mainwp' ),
+            'mainwp_automaticDailyUpdate'                 => esc_html__( 'WP Core advanced automatic updates enabled', 'mainwp' ),
+            'mainwp_pluginAutomaticDailyUpdate'           => esc_html__( 'Plugin advanced automatic updates enabled', 'mainwp' ),
+            'mainwp_themeAutomaticDailyUpdate'            => esc_html__( 'Theme advanced automatic updates enabled', 'mainwp' ),
+            'mainwp_numberdays_Outdate_Plugin_Theme'      => esc_html__( 'Abandoned plugins/themes tolerance', 'mainwp' ),
+            'mainwp_maximumPosts'                         => esc_html__( 'Maximum number of posts to return', 'mainwp' ),
+            'mainwp_maximumPages'                         => esc_html__( 'Maximum number of pages to return', 'mainwp' ),
+            'mainwp_maximumComments'                      => esc_html__( 'Maximum number of comments', 'mainwp' ),
+            'mainwp_enableLegacyBackupFeature'            => esc_html__( 'MainWP legacy backups enabled', 'mainwp' ),
+            'mainwp_primaryBackup'                        => esc_html__( 'Primary backup system', 'mainwp' ),
+            'is_enable_automatic_check_uptime_monitoring' => esc_html__( 'Enable Uptime Monitoring', 'mainwp' ),
+            'mainwp_disableSitesHealthMonitoring'         => esc_html__( 'Site health monitoring enabled', 'mainwp' ),
+            'mainwp_maximumRequests'                      => esc_html__( 'Maximum simultaneous requests', 'mainwp' ),
+            'mainwp_minimumDelay'                         => esc_html__( 'Minimum delay between requests', 'mainwp' ),
+            'mainwp_maximumIPRequests'                    => esc_html__( 'Maximum simultaneous requests per ip', 'mainwp' ),
+            'mainwp_minimumIPDelay'                       => esc_html__( 'Minimum delay between requests to the same ip', 'mainwp' ),
+            'mainwp_maximumSyncRequests'                  => esc_html__( 'Maximum simultaneous sync requests', 'mainwp' ),
+            'mainwp_maximumInstallUpdateRequests'         => esc_html__( 'Maximum simultaneous install and update requests', 'mainwp' ),
+            'mainwp_maximum_uptime_monitoring_requests'   => esc_html__( 'Maximum simultaneous uptime monitoring requests (Default: 10)', 'mainwp' ),
+            'mainwp_auto_purge_cache'                     => esc_html__( 'Cache control enabled', 'mainwp' ),
         );
 
         if ( ! is_plugin_active( 'mainwp-comments-extension/mainwp-comments-extension.php' ) ) {
@@ -872,7 +873,13 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
 
         $options_value = array();
         foreach ( $mainwp_options as $opt => $label ) {
-            $value = get_option( $opt, false );
+            if ( 'is_enable_automatic_check_uptime_monitoring' === $opt ) {
+                $global = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+                $value  = $global['active'];
+            } else {
+                $value = get_option( $opt, false );
+            }
+            $save_value = $value;
             switch ( $opt ) {
                 case 'mainwp_number_of_child_sites':
                     $value = MainWP_DB::instance()->get_websites_count();
@@ -903,8 +910,11 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 case 'mainwp_maximumInstallUpdateRequests':
                     $value = ( false === $value ) ? 3 : $value;
                     break;
-                case 'mainwp_disableSitesChecking':
-                    $value = empty( $value ) ? esc_html__( 'Yes', 'mainwp' ) : esc_html__( 'No', 'mainwp' );
+                case 'mainwp_maximum_uptime_monitoring_requests':
+                    $value = ( false === $value ) ? 10 : $value;
+                    break;
+                case 'is_enable_automatic_check_uptime_monitoring':
+                    $value = ! empty( $value ) ? esc_html__( 'Yes', 'mainwp' ) : esc_html__( 'No', 'mainwp' );
                     break;
                 case 'mainwp_disableSitesHealthMonitoring':
                     $value = empty( $value ) ? esc_html__( 'Yes', 'mainwp' ) : esc_html__( 'No', 'mainwp' );
@@ -914,14 +924,18 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                     break;
             }
             $options_value[ $opt ] = array(
-                'label' => $label,
-                'value' => $value,
+                'label'      => $label,
+                'value'      => $value,
+                'save_value' => $save_value,
+                'name'       => $opt,
             );
         }
 
-        $options_value[ $opt ] = array(
-            'label' => esc_html__( 'REST API enabled', 'mainwp' ),
-            'value' => Rest_Api_V1::instance()->is_rest_api_enabled() ? esc_html__( 'Yes', 'mainwp' ) : esc_html__( 'No', 'mainwp' ),
+        $options_value['mainwp_rest_api_enabled'] = array(
+            'label'      => esc_html__( 'REST API enabled', 'mainwp' ),
+            'value'      => Rest_Api_V1::instance()->is_rest_api_enabled() ? esc_html__( 'Yes', 'mainwp' ) : esc_html__( 'No', 'mainwp' ),
+            'save_value' => '',
+            'name'       => 'mainwp_rest_api_enabled',
         );
 
         /**
@@ -951,8 +965,10 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             }
             if ( $chk ) {
                 $options_value['mainwp_primaryBackup'] = array(
-                    'label' => esc_html__( 'Primary Backup System', 'mainwp' ),
-                    'value' => $value,
+                    'label'      => esc_html__( 'Primary Backup System', 'mainwp' ),
+                    'value'      => $value,
+                    'save_value' => $primaryBackup,
+                    'name'       => 'mainwp_primaryBackup',
                 );
             }
         }

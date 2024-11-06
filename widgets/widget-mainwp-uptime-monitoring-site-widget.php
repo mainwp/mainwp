@@ -35,92 +35,199 @@ class MainWP_Uptime_Monitoring_Site_Widget {
     }
 
     /**
-     * Method render_uptime_widget().
+     * ajax_get_response_times
+     *
+     * @return void
      */
-    public function render_uptime_widget() {
-        if ( ! isset( $_GET['page'] ) || 'managesites' !== $_GET['page'] || !isset($_GET['dashboard'])) { //phpcs:ignore -- ok.
-            return;
+    public function ajax_get_response_times() {
+
+        mainwp_secure_request( 'mainwp_uptime_monitoring_get_response_times' );
+
+        $site_id        = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : 0;
+        $current_period = isset( $_POST['period'] ) ? sanitize_text_field( wp_unslash( $_POST['period'] ) ) : '';
+
+        if ( empty( $current_period ) ) {
+            $current_period = get_user_option( 'mainwp_uptime_monitoring_widget_stat_selected_period' );
         }
 
-        $site_id = intval( $_GET['dashboard'] );
+        $current_period = static::get_valid_days_periods( $current_period );
+
+        MainWP_Utility::update_user_option( 'mainwp_uptime_monitoring_widget_stat_selected_period', $current_period );
+
+        $days_number = static::get_days_number_by_period( $current_period );
+
         if ( empty( $site_id ) ) {
-            return;
+            die( wp_json_encode( array( 'error' => esc_html__( 'The Site ID is invalid or not found. Please try again.', 'mainwp' ) ) ) );
         }
 
-        ?>
-        <div class="ui grid mainwp-widget-header">
-            <div class="twelve wide column">
-                <h3 class="ui header handle-drag">
-                    <?php esc_html_e( 'Uptime Monitoring', 'mainwp' ); ?>
-                    <div class="sub header"><?php esc_html_e( 'Monitor uptime', 'mainwp' ); ?></div>
-                </h3>
-            </div>
-        </div>
-        <h4 class="ui header">
-        <?php
-            $last = MainWP_DB_Uptime_Monitoring::instance()->get_last_site_heartbeat( $site_id );
-            esc_html_e( 'Current Status:', 'mainwp' );
-        if ( $last ) {
-            echo $last->status ? ' <span class="ui green text">UP</span>' : ' <span class="ui red text">DOWN</span>';
+        if ( empty( $_POST['dtsstart'] ) || empty( $_POST['dtsstop'] ) ) {
+            die( wp_json_encode( array( 'error' => esc_html__( 'Start and end dates cannot be empty. Please try again.', 'mainwp' ) ) ) );
         }
 
-        $incidents_count = MainWP_DB_Uptime_Monitoring::instance()->get_last_site_incidents_stats( $site_id );
+        $params = array(
+            'start' => $_POST['dtsstart'] . ' 00:00:00',
+            'end'   => $_POST['dtsstop'] . ' 23:59:59',
+            'issub' => 0,
+        );
 
-        if ( ! is_array( $incidents_count ) ) {
-            $incidents_count = array();
+        if ( strtotime( $params['start'] ) > strtotime( $params['end'] ) ) {
+            die( wp_json_encode( array( 'error' => esc_html__( 'The start date must be earlier than the end date. Please try again.', 'mainwp' ) ) ) );
         }
 
-        $ratios_count = MainWP_DB_Uptime_Monitoring::instance()->get_last_site_uptime_ratios_stats( $site_id );
+        $params['group_time_by'] = $this->prepare_group_time_option_for_ui_chart_data_only( $site_id, $params, true );
+
+        $results = MainWP_Uptime_Monitoring_Handle::instance()->get_site_response_time_chart_data( $site_id, $params );
+
+        $prepare_chart_dt = array();
+
+        if ( ! empty( $results['response_time_data_lists'] ) ) {
+            $prepare_chart_dt = $this->prepare_response_time_ui_chart_data( $results['response_time_data_lists'], $params );
+        }
+
+        $last_incidents_count = MainWP_DB_Uptime_Monitoring::instance()->get_site_count_last_incidents( $site_id, $days_number );
+
+        if ( ! is_array( $last_incidents_count ) ) {
+            $last_incidents_count = array();
+        }
+
+        $ratios_count = MainWP_DB_Uptime_Monitoring::instance()->get_last_site_uptime_ratios_values( $site_id, $days_number );
 
         if ( ! is_array( $ratios_count ) ) {
             $ratios_count = array();
         }
 
-        ?>
-        </h4>
-        <div class="mainwp-scrolly-overflow">
-            <div id="mainwp-widget-uptime-content">
+        $data_stats = ! empty( $results['resp_stats'] ) && is_array( $results['resp_stats'] ) ? $results['resp_stats'] : array();
 
-                <div class="ui dividing header"><?php esc_html_e( 'Number of Incidents', 'mainwp' ); ?></div>
-                <div class="ui three columns tablet stackable grid">
-                    <div class="center aligned middle aligned column">
-                        <div class="mainwp-lighthouse-score ui massive  circular basic label" id="mainwp-widget-uptime-incidents-24hours"><?php echo isset( $incidents_count['total24'] ) ? intval( $incidents_count['total24'] ) : 'N/A'; ?></div>
-                        <h4 class="ui header"><?php esc_html_e( 'Last 24 hours', 'mainwp' ); ?></h4>
-                    </div>
-                    <div class="center aligned middle aligned column">
-                        <div class="mainwp-lighthouse-score ui massive  circular basic label" id="mainwp-widget-uptime-incidents-7days"><?php echo isset( $incidents_count['total24'] ) ? intval( $incidents_count['total7'] ) : 'N/A'; ?></div>
-                        <h4 class="ui header"><?php esc_html_e( 'Last 7 days', 'mainwp' ); ?></h4>
-                    </div>
-                    <div class="center aligned middle aligned column">
-                        <div class="mainwp-lighthouse-score ui massive  circular basic label" id="mainwp-widget-uptime-incidents-30days"><?php echo isset( $incidents_count['total24'] ) ? intval( $incidents_count['total30'] ) : 'N/A'; ?></div>
-                        <h4 class="ui header"><?php esc_html_e( 'Last 30 days', 'mainwp' ); ?></h4>
-                    </div>
-                </div>
-                <div class="ui dividing header"><?php esc_html_e( 'Uptime Ratios', 'mainwp' ); ?></div>
-                <div class="ui three columns tablet stackable grid">
-                    <div class="center aligned middle aligned column">
-                        <div class="mainwp-lighthouse-score ui massive  circular basic label" id="mainwp-widget-uptime-ratios-24hours"><?php echo ! empty( $ratios_count['total24'] ) ? number_format( $ratios_count['up24'] * 100 / $ratios_count['total24'], 2 ) . '%' : 'N/A'; ?></div>
-                        <h4 class="ui header"><?php esc_html_e( 'Last 24 hours', 'mainwp' ); ?></h4>
-                    </div>
-                    <div class="center aligned middle aligned column">
-                        <div class="mainwp-lighthouse-score ui massive  circular basic label" id="mainwp-widget-uptime-ratios-7days"><?php echo ! empty( $ratios_count['total7'] ) ? number_format( $ratios_count['up7'] * 100 / $ratios_count['total7'], 2 ) . '%' : 'N/A'; ?></div>
-                        <h4 class="ui header"><?php esc_html_e( 'Last 7 days', 'mainwp' ); ?></h4>
-                    </div>
-                    <div class="center aligned middle aligned column">
-                        <div class="mainwp-lighthouse-score ui massive  circular basic label" id="mainwp-widget-uptime-ratios-30days"><?php echo ! empty( $ratios_count['total30'] ) ? number_format( $ratios_count['up30'] * 100 / $ratios_count['total30'], 2 ) . '%' : 'N/A'; ?></div>
-                        <h4 class="ui header"><?php esc_html_e( 'Last 30 days', 'mainwp' ); ?></h4>
-                    </div>
+        $active_monitor = 0;
 
-                </div>
-            </div>
-        </div>
-        <?php
+        $primary_monitor = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site_id, 'issub', 0 );
+        if ( $primary_monitor ) {
+            $global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+            $active_monitor  = MainWP_Uptime_Monitoring_Connect::get_apply_setting( 'active', (int) $primary_monitor->active, $global_settings, -1, 60 );
+        }
+        $data_stats['active_monitor'] = $active_monitor ? 1 : 0;
+
+        $last = MainWP_DB_Uptime_Monitoring::instance()->get_last_site_heartbeat( $site_id, false );
+
+        if ( $last ) {
+            $data_stats['current_status'] = $last->status;
+        }
+
+        $data_stats['incidents_count'] = isset( $last_incidents_count['count'] ) ? $last_incidents_count['count'] : 'N/A';
+
+        if ( ! empty( $ratios_count['total_value'] ) ) {
+            $data_stats['ratios_number'] = number_format( $ratios_count['up_value'] / $ratios_count['total_value'], 2 );
+        }
+
+        die(
+            wp_json_encode(
+                array(
+                    'data'       => $prepare_chart_dt,
+                    'data_stats' => $data_stats,
+                ),
+            )
+        );
+    }
+
+
+    /**
+     * get_valid_days_periods
+     *
+     * @param  string|null $period
+     * @return mixed
+     */
+    public static function get_valid_days_periods( $period = null ) {
+        $values = array(
+            'day'   => 0,
+            'week'  => 7,
+            'month' => 30,
+            'year'  => 365,
+        );
+        if ( null === $period ) {
+            return $values;
+        }
+        return isset( $values[ $period ] ) ? $period : 'day';
     }
 
     /**
-     * Method render_response_time_widget().
+     * get_days_number_by_period
+     *
+     * @param  string|false $period
+     * @return mixed
      */
-    public function render_response_time_widget() {
+    public static function get_days_number_by_period( $period ) {
+        if ( empty( $period ) || ! is_scalar( $period ) ) {
+            return 0;
+        }
+        $values = static::get_valid_days_periods();
+        return isset( $values[ $period ] ) ? $values[ $period ] : 0;
+    }
+
+    /**
+     * Renders the top widget.
+     */
+    public static function render_top_widget() {
+
+        $current_period = get_user_option( 'mainwp_uptime_monitoring_widget_stat_selected_period' );
+
+        $current_period = static::get_valid_days_periods( $current_period );
+
+        ?>
+        <div class="ui grid mainwp-widget-header">
+            <div class="twelve wide column">
+                <h3 class="ui header handle-drag">
+                    <?php
+                    /**
+                     * Filter: mainwp_uptime_monitoring_response_time_widget_title
+                     *
+                     * Filters the widget title text.
+                     *
+                     * @since 5.3
+                     */
+                    echo esc_html( apply_filters( 'mainwp_uptime_monitoring_response_time_widget_title', esc_html__( 'Uptime Monitoring', 'mainwp' ) ) );
+                    ?>
+                    <div class="sub header"><?php esc_html_e( 'Monitor site uptime status and response time history.', 'mainwp' ); ?></div>
+                </h3>
+
+            </div>
+
+            <div class="four wide column right aligned">
+                <div class="ui dropdown right pointing mainwp-dropdown-tab not-auto-init" id="uptime-monitoring-widget-response-times-top-select" tabindex="0">
+                    <input type="hidden" value="<?php echo esc_attr( $current_period ); ?>">
+                    <i class="vertical ellipsis icon"></i>
+                    <div class="menu">
+                        <a class="item" data-value="day" title="<?php esc_html_e( 'Last 24 hours' ); ?>" ><?php esc_html_e( 'Last 24 hours' ); ?></a>
+                        <a class="item" data-value="week" title="<?php esc_html_e( 'Last 7 days' ); ?>" ><?php esc_html_e( 'Last 7 days' ); ?></a>
+                        <a class="item" data-value="month" title="<?php esc_html_e( 'Last 30 days' ); ?>" ><?php esc_html_e( 'Last 30 days' ); ?></a>
+                        <a class="item" data-value="year" title="<?php esc_html_e( 'Last 365 days' ); ?>" ><?php esc_html_e( 'Last 365 days' ); ?></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            jQuery( document ).ready( function () {
+
+                mainwp_uptime_monitoring_response_time_filter('<?php echo esc_js( $current_period ); ?>');
+
+                jQuery( '#uptime-monitoring-widget-response-times-top-select' ).dropdown( {
+                    onChange: function( value ) {
+                        console.log( value );
+                        mainwp_uptime_monitoring_response_time_filter(value);
+                    }
+                });
+
+            } );
+        </script>
+        <?php
+    }
+
+
+    /**
+     * Handle render costs widget.
+     */
+    public function render_response_times_widget() {
+
         if ( ! isset( $_GET['page'] ) || 'managesites' !== $_GET['page'] || !isset($_GET['dashboard']) ) { //phpcs:ignore -- ok.
             return;
         }
@@ -131,222 +238,397 @@ class MainWP_Uptime_Monitoring_Site_Widget {
             return;
         }
 
-        $filter_dtsstart = gmdate( 'Y-m-d', time() - 7 * DAY_IN_SECONDS );
-        $filter_dtsstop  = gmdate( 'Y-m-d', time() );
-
-        $params = array(
-            'start' => $filter_dtsstart,
-            'end'   => $filter_dtsstop,
-        );
-
-        $results = MainWP_Uptime_Monitoring_Handle::instance()->get_site_response_time_per_days_stats( $site_id, $params );
-
-        if ( ! is_array( $results ) ) {
-            $results = array();
-        }
-
-        $data       = ! empty( $results['response_time_data_lists'] ) && is_array( $results['response_time_data_lists'] ) ? $results['response_time_data_lists'] : array();
-        $resp_stats = ! empty( $results['resp_stats'] ) && is_array( $results['resp_stats'] ) ? $results['resp_stats'] : array();
-
+        static::render_top_widget();
         ?>
-        <div class="ui grid mainwp-widget-header">
-            <div class="twelve wide column">
-                <h3 class="ui header handle-drag">
-                    <?php esc_html_e( 'Uptime Monitoring Response Time', 'mainwp' ); ?>
-                    <div class="sub header"><?php esc_html_e( 'Measure response time', 'mainwp' ); ?></div>
-                </h3>
-            </div>
-        </div>
-        <input type="hidden" id="mainwp-uptime-response-times-siteid" value="<?php echo intval( $site_id ); ?>">
-
         <div id="mainwp-response-time-message-zone" class="ui message" style="display:none;"></div>
 
-        <div id="mainwp-widget-uptime-response-time-calendar-wrapper">
-            <div class="ui stackable compact grid mini form" id="mainwp-module-cost-tracker-costs-filters-row">
-                <div class="thirteen wide column ui compact grid">
-                    <div class="three wide middle aligned column">
-                        <div class="ui calendar fluid mainwp_datepicker">
-                            <div class="ui fluid input left icon">
-                                <i class="calendar icon"></i>
-                                <input type="text" autocomplete="off" placeholder="<?php esc_attr_e( 'Start date', 'mainwp' ); ?>" id="uptime-response-times-widget-filter-dtsstart" value="<?php echo ! empty( $filter_dtsstart ) ? esc_attr( $filter_dtsstart ) : ''; ?>"/>
-                            </div>
+        <div class="mainwp-scrolly-overflow">
+            <div id="mainwp-monitor-widget-loader">
+                <div class="ui active inverted dimmer">
+                    <div class="ui text loader"><?php esc_html_e( 'Loading', 'mainwp' ); ?></div>
+                </div>
+                <p></p>
+            </div>
+            <?php $this->render_content_response_time_widget( $site_id ); ?>
+        </div>
+        <div class="mainwp-widget-footer"></div>
+        <?php
+    }
+
+
+    /**
+     * render_content_response_time_widget
+     *
+     * @param  mixed $site_id
+     * @return void
+     */
+    public function render_content_response_time_widget( $site_id ) {
+
+        $days_periods = static::get_valid_days_periods();
+        $end_dts      = time();
+
+        $select_dates = array();
+
+        foreach ( $days_periods as $period => $num ) {
+            $select_dates[ $period ] = array(
+                'start' => gmdate( 'Y-m-d', $end_dts - $num * DAY_IN_SECONDS ),
+                'end'   => gmdate( 'Y-m-d', $end_dts ),
+            );
+        }
+
+        ?>
+        <input type="hidden" id="mainwp-uptime-response-times-siteid" value="<?php echo intval( $site_id ); ?>">
+
+        <div id="mainwp-widget-uptime-response-time-content" style="display:none;">
+
+            <div class="ui three cards">
+                <div class="ui small card">
+                    <div class="content">
+                        <div class="header">
+                            <span class="ui large text" id="mainwp-widget-uptime-current-status"></span>
+                        </div>
+                        <div class="description">
+                            <strong><?php esc_html_e( 'Current Status', 'mainwp' ); ?></strong>
                         </div>
                     </div>
-                    <div class="three wide middle aligned column">
-                        <div class="ui calendar fluid mainwp_datepicker">
-                            <div class="ui fluid input left icon">
-                                <i class="calendar icon"></i>
-                                <input type="text" autocomplete="off" placeholder="<?php esc_attr_e( 'End date', 'mainwp' ); ?>" id="uptime-response-times-widget-filter-dtsstop" value="<?php echo ! empty( $filter_dtsstop ) ? esc_attr( $filter_dtsstop ) : ''; ?>"/>
-                            </div>
+                </div>
+
+                <div class="ui small card">
+                    <div class="content">
+                        <div class="header">
+                            <span class="ui large text" id="mainwp-widget-uptime-incidents-count"></span>
+                        </div>
+                        <div class="description">
+                            <strong><?php esc_html_e( 'Incidents', 'mainwp' ); ?></strong>
                         </div>
                     </div>
-                    <div class="three wide middle aligned right aligned column">
-                        <button onclick="mainwp_uptime_monitoring_response_time_filter()" class="ui mini green button"><?php esc_html_e( 'Filter Response', 'mainwp' ); ?></button>
+                </div>
+
+                <div class="ui small card">
+                    <div class="content">
+                        <div class="header">
+                            <span class="ui large text" id="mainwp-widget-uptime-ratios-number"></span>
+                        </div>
+                        <div class="description">
+                            <strong><?php esc_html_e( 'Uptime ratio', 'mainwp' ); ?></strong>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
+            <div id="mainwp-uptime-monitoring-site-widget-chart-wrapper"></div>
 
-        <div class="mainwp-scrolly-overflow">
-            <div id="mainwp-widget-uptime-response-time-content">
-
-            <div id="mainwp-uptime-monitoring-site-widget-chart-wrapper" ></div>
-
-                <div class="ui three columns tablet stackable grid">
-                    <div class="center aligned middle aligned column">
-                        <div class="mainwp-lighthouse-score ui massive  circular basic label" id="mainwp-widget-uptime-resp-time-avg"><?php echo ! empty( $resp_stats['avg_resp_time'] ) ? esc_html( $resp_stats['avg_resp_time'] ) : 'N/A'; ?></div>
-                        <h4 class="ui header"><?php esc_html_e( 'Avg Response Time (s)', 'mainwp' ); ?></h4>
-                    </div>
-                    <div class="center aligned middle aligned column">
-                        <div class="mainwp-lighthouse-score ui massive  circular basic label" id="mainwp-widget-uptime-resp-time-min"><?php echo ! empty( $resp_stats['min_resp_time'] ) ? esc_html( $resp_stats['min_resp_time'] ) : 'N/A'; ?></div>
-                        <h4 class="ui header"><?php esc_html_e( 'Min Response Time (s)', 'mainwp' ); ?></h4>
-                    </div>
-                    <div class="center aligned middle aligned column">
-                        <div class="mainwp-lighthouse-score ui massive  circular basic label" id="mainwp-widget-uptime-resp-time-max"><?php echo ! empty( $resp_stats['max_resp_time'] ) ? esc_html( $resp_stats['max_resp_time'] ) : 'N/A'; ?></div>
-                        <h4 class="ui header"><?php esc_html_e( 'Max Response Time (s)', 'mainwp' ); ?></h4>
+            <div class="ui internally celled three column grid">
+                <div class="column">
+                    <div class="content">
+                        <div class="header">
+                            <span class="ui large text" id="mainwp-widget-uptime-resp-time-avg"></span>
+                        </div>
+                        <div class="description">
+                            <strong><?php esc_html_e( 'Average', 'mainwp' ); ?></strong>
+                        </div>
                     </div>
                 </div>
 
-                <script type="text/javascript">
+                <div class="column">
+                    <div class="content">
+                        <div class="header">
+                            <span class="ui large text" id="mainwp-widget-uptime-resp-time-min"></span>
+                        </div>
+                        <div class="description">
+                            <strong><?php esc_html_e( 'Minimum', 'mainwp' ); ?></strong>
+                        </div>
+                    </div>
+                </div>
 
-                    jQuery( document ).ready( function() {
-                        const data = <?php echo json_encode( $data ); ?>;
-                        mainwp_uptime_monitoring_response_time_show_chart(data, 1000 );
-                        // to fix issue not loaded calendar js library
-                        if (jQuery('.ui.calendar').length > 0) {
-                            if (mainwpParams.use_wp_datepicker == 1) {
-                                jQuery('#mainwp-widget-uptime-response-time-calendar-wrapper .ui.calendar input[type=text]').datepicker({ dateFormat: "yy-mm-dd" });
-                            } else {
-                                jQuery('#mainwp-widget-uptime-response-time-calendar-wrapper .ui.calendar').calendar({
-                                    type: 'date',
-                                    monthFirst: false,
-                                    today: true,
-                                    touchReadonly: false,
-                                    formatter: {
-                                        date : 'YYYY-MM-DD'
-                                    }
-                                });
-                            }
-                        }
-                    });
+                <div class="column">
+                    <div class="content">
+                        <div class="header">
+                            <span class="ui large text" id="mainwp-widget-uptime-resp-time-max"></span>
+                        </div>
+                        <div class="description">
+                            <strong><?php esc_html_e( 'Maximum', 'mainwp' ); ?></strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                    var up_monitoring;
+            <script type="text/javascript">
 
-                    let mainwp_uptime_monitoring_response_time_filter = function () {
+                const select_dates = <?php echo json_encode( $select_dates ); ?>;
 
-                        let sdt = jQuery('#uptime-response-times-widget-filter-dtsstart').val();
-                        let edt = jQuery('#uptime-response-times-widget-filter-dtsstop').val();
+                let mainwp_uptime_monitoring_response_time_filter = function (selected_period ) {
 
-                        if(sdt == '' && edt == '' ){
-                            return false;
-                        }
-                        jQuery['##mainwp-uptime-monitoring-site-widget-chart-wrapper']
-                        let data = mainwp_secure_data( {
-                            action: 'mainwp_uptime_monitoring_get_response_times',
-                            siteid: jQuery( '#mainwp-uptime-response-times-siteid').val(),
-                            dtsstart: sdt,
-                            dtsstop: edt,
-                        } );
+                    let start_dt = select_dates[selected_period]?.start ?? select_dates.day.start;
+                    let end_dt = select_dates[selected_period]?.end ?? select_dates.day.start;
 
-                        mainwp_showhide_message('mainwp-response-time-message-zone', '<i class="notched circle loading icon"></i> ' + __('Running...'), 'green');
-                        jQuery.post(ajaxurl, data, function (response) {
-                            mainwp_showhide_message('mainwp-response-time-message-zone', '' );
-                            if (response?.data ) {
-                                let resp_stats = response?.data_stats ?? {};
-                                mainwp_uptime_monitoring_response_time_show_chart(response?.data);
-                                jQuery('#mainwp-widget-uptime-resp-time-avg').html( resp_stats?.avg_resp_time ?? 'N/A');
-                                jQuery('#mainwp-widget-uptime-resp-time-min').html( resp_stats?.min_resp_time ?? 'N/A');
-                                jQuery('#mainwp-widget-uptime-resp-time-max').html( resp_stats?.max_resp_time ?? 'N/A');
-                            } else if (response?.error) {
-                                mainwp_showhide_message('mainwp-response-time-message-zone', response.error, 'red');
-                            } else {
-                                mainwp_showhide_message('mainwp-response-time-message-zone', __('Undefined error. Please try again.'), 'red');
-                            }
-                        }, 'json');
+                    if( start_dt == '' || end_dt == '' ){
                         return false;
                     }
 
+                    jQuery('#mainwp-monitor-widget-loader').hide();
 
-                    let mainwp_uptime_monitoring_response_time_show_chart = function (data, delay ) {
+                    let data = mainwp_secure_data( {
+                        action: 'mainwp_uptime_monitoring_get_response_times',
+                        siteid: jQuery( '#mainwp-uptime-response-times-siteid').val(),
+                        dtsstart: start_dt,
+                        dtsstop: end_dt,
+                        period: selected_period,
+                    } );
 
-                        if(typeof delay === 'undefined' ){
-                            delay = 100;
-                        }
+                    jQuery('#mainwp-monitor-widget-loader').show();
 
-                        const categories = data.map(item => item.date);
-                        const values = data.map(item => item.value);
+                    jQuery.post(ajaxurl, data, function (response) {
 
-                        console.log(categories);
-                        console.log(values);
+                        jQuery('#mainwp-widget-uptime-response-time-content').show();
 
-                        if( !up_monitoring){
-                                // Chart configuration.
-                                const options = {
-                                    chart: {
-                                        type: 'line',
-                                        height: 350,
-                                        stacked: true,
-                                        toolbar: false
-                                    },
-                                    series: [{
-                                        name: 'Resp Time',
-                                        data: values
-                                    }],
-                                    xaxis: {
-                                        categories: categories
-                                    },
-                                    title: {
-                                        text: '',
-                                        align: 'center'
-                                    },
-                                    stroke: {
-                                        curve: 'smooth'
-                                    },
-                                    fill: {
-                                        opacity: 1
-                                    },
-                                    yaxis:{
-                                        type: 'string',
-                                        labels: {
-                                            formatter: function (value) {
-                                                return value + ' s';
-                                            },
-                                            style: {
-                                                colors: '#999999',
-                                            },
-                                        },
-                                    },
-                                    legend: {
-                                        show: false
-                                    },
-                                    tooltip: {
-                                        theme: 'dark'
-                                    }
-                                };
+                        if (response?.data ) {
+                            mainwp_uptime_monitoring_response_time_show_chart(response?.data);
+                            let resp_stats = response?.data_stats ?? {};
 
-                            up_monitoring = new ApexCharts(document.querySelector("#mainwp-uptime-monitoring-site-widget-chart-wrapper"), options);
-                            setTimeout(() => {
-                                up_monitoring.render();
-                            }, delay );
+                            let curr_status = resp_stats?.current_status ??'';
+
+                            if( resp_stats?.active_monitor == 0  ){
+                                curr_status = '<span class="ui gray text"><i class="circle outline gray icon"></i> ' + __('DISABLED') + '</span>'
+                            } else {
+                                if( curr_status === '1'){
+                                    curr_status = ' <span class="ui green text"><i class="chevron circle up green icon"></i> ' + __('UP') + '</span>';
+                                } else if( curr_status === '0'){
+                                    curr_status =  '<span class="ui red text"><i class="chevron circle down red icon"></i> ' + __('DOWN') + '</span>';
+                                } else {
+                                    curr_status =  '<span class="ui black text"><i class="circle black icon"></i> ' + __('PENDING') + '</span>';
+                                }
+                            }
+
+                            jQuery('#mainwp-widget-uptime-current-status').html( curr_status );
+                            jQuery('#mainwp-widget-uptime-incidents-count').html( resp_stats?.incidents_count ?? 'N/A');
+                            jQuery('#mainwp-widget-uptime-ratios-number').html( resp_stats?.ratios_number*100 + '%'  ?? 'N/A');
+
+
+                            jQuery('#mainwp-widget-uptime-resp-time-avg').html( resp_stats?.avg_resp_time + '<span class="ui tiny text">(seconds)</span>' ?? 'N/A');
+                            jQuery('#mainwp-widget-uptime-resp-time-min').html( resp_stats?.min_resp_time + '<span class="ui tiny text">(seconds)</span>' ?? 'N/A');
+                            jQuery('#mainwp-widget-uptime-resp-time-max').html( resp_stats?.max_resp_time + '<span class="ui tiny text">(seconds)</span>' ?? 'N/A');
+
+
+                            mainwp_showhide_message('mainwp-response-time-message-zone', '' );
+                            jQuery('#mainwp-monitor-widget-loader').hide();
+
+                        } else if (response?.error) {
+                            mainwp_showhide_message('mainwp-response-time-message-zone', '<i class="close icon"></i>' + response.error, 'red');
                         } else {
-                            var newOptions = {
-                                series: [{
-                                    name: 'Values',
-                                    data: values
-                                }],
-                                xaxis: {
-                                    categories: categories
-                                },
-                            };
-                            // Update the chart with new options.
-                            up_monitoring.updateOptions(newOptions);
+                            mainwp_showhide_message('mainwp-response-time-message-zone', '<i class="close icon"></i>' + __('Undefined error. Please try again.'), 'red');
                         }
+                    }, 'json');
+                    return false;
+                }
+
+                var up_monitoring;
+
+                let mainwp_uptime_monitoring_response_time_show_chart = function (data, delay ) {
+
+                    if(typeof delay === 'undefined' ){
+                        delay = 100;
                     }
 
-                </script>
-            </div>
-        </div>
+                    const categories = data.map(item => item.date);
+                    const values = data.map(item => item.value);
+                    let x_counter = -1;
+                    let x_div = Math.ceil(categories.length / 12);
+                    console.log(categories ? categories.length : 0);
+                    if( !up_monitoring){
+                            // Chart configuration.
+                            const options = {
+                                chart: {
+                                    type: 'area',
+                                    height: '75%',
+                                    stacked: true,
+                                    toolbar: false,
+                                },
+                                series: [{
+                                    name: '',
+                                    data: values
+                                }],
+                                dataLabels: {
+                                    enabled: false
+                                },
+                                xaxis: {
+                                    categories: categories,
+                                    show: true,
+                                    tooltip: {
+                                        enabled: false
+                                    },
+                                    labels: {
+                                        formatter: function (value) {
+                                            if(typeof value !== "undefined"){
+                                                x_counter++;
+                                                return x_counter % x_div === 0 ? value : '';
+                                            }
+                                            return value;
+                                        },
+                                        style: {
+                                            colors: '#999999',
+                                        },
+                                    },
+                                },
+                                title: {
+                                    text: '',
+                                    align: 'center'
+                                },
+                                stroke: {
+                                    curve: 'smooth'
+                                },
+                                fill: {
+                                    opacity: 1
+                                },
+                                yaxis:{
+                                    type: 'string',
+                                    labels: {
+                                        formatter: function (value) {
+                                            return value;
+                                        },
+                                        style: {
+                                            colors: '#999999',
+                                        },
+                                    },
+                                },
+                                legend: {
+                                    show: false
+                                },
+                                tooltip: {
+                                    theme: 'dark',
+                                },
+                                colors: ['#7fb100'],
+                                grid: {
+                                    borderColor: '#99999910',
+                                },
+                            };
+
+                        up_monitoring = new ApexCharts(document.querySelector("#mainwp-uptime-monitoring-site-widget-chart-wrapper"), options);
+                        setTimeout(() => {
+                            up_monitoring.render();
+                        }, delay );
+
+                    } else {
+                        var newOptions = {
+                            series: [{
+                                data: values
+                            }],
+                            xaxis: {
+                                categories: categories,
+                                labels: {
+                                    formatter: function (value) {
+                                        if(typeof value !== "undefined"){
+                                            x_counter++;
+                                            return x_counter % x_div === 0 ? value : '';
+                                        }
+                                        return value;
+                                    },
+                                },
+                            },
+                        };
+                        // Update the chart with new options.
+                        up_monitoring.updateOptions(newOptions);
+                    }
+                }
+
+            </script>
+    </div>
         <?php
+    }
+
+
+
+    /**
+     * Set 'group_time_by' option for chart data query.
+     *
+     * Do not use for other query data.
+     *
+     * @param  int   $site_id site id.
+     * @param  array $params params, 'start' and 'end' date must in format: Y-m-d H:i:s.
+     * @param  bool  $ajax_working ajax working.
+     *
+     * @return string
+     */
+    private function prepare_group_time_option_for_ui_chart_data_only( $site_id, &$params, $ajax_working = false ) {
+        $group_time = 'date';
+
+        if ( ! is_array( $params ) || empty( $params['start'] ) || empty( $params['end'] ) ) {
+            return $group_time;
+        }
+
+        $start_ts = strtotime( $params['start'] ); // start,end format: Y-m-d H:i:s.
+        $end_ts   = strtotime( $params['end'] );
+
+        // check other.
+
+        $apply_interval  = false;
+        $primary_monitor = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site_id, 'issub', 0 );
+        if ( $primary_monitor ) {
+            $apply_interval = MainWP_Uptime_Monitoring_Connect::get_apply_setting( 'interval', (int) $primary_monitor->interval, false, -1, 60 );
+        }
+
+        if ( false !== $apply_interval ) {
+            $length_time = $end_ts - $start_ts;
+
+            if ( $ajax_working ) {
+                $is_get_all = $length_time <= DAY_IN_SECONDS && $apply_interval <= 60;
+            } elseif ( $apply_interval <= 60 ) {
+                $is_get_all = true;
+            }
+
+            $is_group_hours = $length_time <= 3 * DAY_IN_SECONDS && $length_time > DAY_IN_SECONDS && $apply_interval >= 5 ? true : false;
+
+            if ( ! $is_group_hours && $length_time <= 7 * DAY_IN_SECONDS && $apply_interval >= 60 ) {
+                $is_group_hours = 'hour';
+            }
+
+            if ( $is_get_all ) {
+                $group_time = 'get_all';
+            } elseif ( $is_group_hours ) {
+                $group_time = 'hour';
+            }
+        }
+
+        return $group_time;
+    }
+
+    /**
+     * Prepare response time for ui chart data.
+     *
+     * @param  array  $chart_data array: date and value.
+     * @param  array  $params params.
+     * @param  string $slug for date format hook.
+     * @return array prepared.
+     */
+    public function prepare_response_time_ui_chart_data( $chart_data, $params = array(), $slug = 'uptime' ) {
+
+        $format_date = ''; // need to be empty for process.
+        if ( ! empty( $params['group_time_by'] ) ) {
+            if ( 'hour' === $params['group_time_by'] ) {
+                $format_date = 'd H a'; // 09 am.
+            } elseif ( 'get_all' === $params['group_time_by'] ) {
+                $format_date = 'H:i'; // 10:15.
+            }
+        }
+
+        $format_date = apply_filters( 'mainwp_widgets_chart_date_format', $format_date, $params, $slug );
+
+        if ( is_array( $chart_data ) ) {
+            $chart_data = array_map(
+                function ( $value ) use ( $format_date ) {
+                    $local_datetime = MainWP_Utility::get_timestamp( strtotime( $value['date'] ) );
+                    if ( ! empty( $format_date ) ) {
+                        $value['date'] = gmdate( $format_date, $local_datetime );
+                    } else {
+                        $value['date'] = MainWP_Utility::format_date( $local_datetime );
+                    }
+                    return $value;
+                },
+                $chart_data // map data.
+            );
+        } else {
+            $chart_data = array();
+        }
+        return $chart_data;
     }
 }

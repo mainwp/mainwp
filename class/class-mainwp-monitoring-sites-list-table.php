@@ -28,6 +28,26 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
     protected $column_headers;
 
     /**
+     * Instance variable.
+     *
+     * @var null Instance variable.
+     */
+    private static $instance = null;
+
+    /**
+     * Create instance.
+     *
+     * @return mixed $instance.
+     */
+    public static function instance() {
+        if ( null === static::$instance ) {
+            static::$instance = new self();
+        }
+
+        return static::$instance;
+    }
+
+    /**
      * MainWP_Monitoring_Sites_List_Table constructor.
      *
      * Run each time the class is called.
@@ -78,6 +98,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             case 'last_check':
             case 'site_health':
             case 'preview':
+            case 'last24_status':
             case 'site_actions':
                 return '';
             default:
@@ -98,6 +119,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             'last_check'  => array( 'last_check', false ),
             'site_health' => array( 'site_health', false ),
             'client_name' => array( 'client_name', false ),
+            'type'        => array( 'type', false ),
+            'interval'    => array( 'interval', false ),
         );
     }
 
@@ -106,20 +129,35 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      *
      * @return array Array of default column names.
      */
-    public function get_default_columns() {
-        return array(
-            'cb'           => '<input type="checkbox" />',
-            'status'       => '',
-            'favicon'      => '',
-            'site'         => esc_html__( 'Site', 'mainwp' ),
-            'login'        => '<i class="sign in alternate icon"></i>',
-            'url'          => esc_html__( 'URL', 'mainwp' ),
-            'client_name'  => esc_html__( 'Client', 'mainwp' ),
-            'site_health'  => esc_html__( 'Site Health', 'mainwp' ),
-            'status_code'  => esc_html__( 'Status Code', 'mainwp' ),
-            'last_check'   => esc_html__( 'Last Check', 'mainwp' ),
-            'site_preview' => '<i class="camera icon"></i>',
+    public function get_default_columns( $sub = false ) {
+        $cols = array(
+            'cb'            => '<input type="checkbox" />',
+            'show_subpage'  => '',
+            'status'        => '',
+            'favicon'       => '',
+            'site'          => esc_html__( 'Site', 'mainwp' ),
+            'login'         => '<i class="sign in alternate icon"></i>',
+            'url'           => esc_html__( 'URL', 'mainwp' ),
+            'type'          => esc_html__( 'Type', 'mainwp' ),
+            'interval'      => esc_html__( 'Frequency (mins)', 'mainwp' ),
+            'client_name'   => esc_html__( 'Client', 'mainwp' ),
+            'site_health'   => esc_html__( 'Site Health', 'mainwp' ),
+            'status_code'   => esc_html__( 'Status Code', 'mainwp' ),
+            'last_check'    => esc_html__( 'Last Check', 'mainwp' ),
+            'site_preview'  => '<i class="camera icon"></i>',
+            'last24_status' => esc_html__( 'Last 24h Status', 'mainwp' ),
         );
+
+        if ( $sub ) {
+            unset( $cols['show_subpage'] );
+            unset( $cols['site_health'] );
+            unset( $cols['client_name'] );
+            unset( $cols['site_preview'] );
+            unset( $cols['site'] );
+            unset( $cols['favicon'] );
+            unset( $cols['login'] );
+        }
+        return $cols;
     }
 
     /**
@@ -127,25 +165,27 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      *
      * Combine all columns.
      *
+     * @param  bool $sub_rows
+     *
      * @return array $columns Array of column names.
      */
-    public function get_columns() {
+    public function get_columns( $sub_rows = false ) {
 
-        $columns = $this->get_default_columns();
+        $columns = $this->get_default_columns( $sub_rows );
 
-        /**
-         * Filter: mainwp_monitoring_sitestable_getcolumns
-         *
-         * Filters the Monitoring Sites table columns. Allows user to create a new column.
-         *
-         * @param array $columns Array containing table columns.
-         *
-         * @since 4.1
-         */
-        $columns = apply_filters( 'mainwp_monitoring_sitestable_getcolumns', $columns, $columns );
-
+        if ( ! $sub_rows ) {
+            /**
+             * Filter: mainwp_monitoring_sitestable_getcolumns
+             *
+             * Filters the Monitoring Sites table columns. Allows user to create a new column.
+             *
+             * @param array $columns Array containing table columns.
+             *
+             * @since 4.1
+             */
+            $columns = apply_filters( 'mainwp_monitoring_sitestable_getcolumns', $columns, $columns );
+        }
         $columns['site_actions'] = '';
-
         return $columns;
     }
 
@@ -187,9 +227,24 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             'className' => 'mainwp-url-cell',
         );
         $defines[] = array(
-            'targets'   => array( 'manage-login-column', 'manage-last_check-column', 'manage-status_code-column', 'manage-site_health-column', 'manage-site_actions-column', 'extra-column', 'manage-client_name-column' ),
+            'targets'   => array( 'manage-login-column', 'manage-last_check-column', 'manage-last24_status-column', 'manage-status_code-column', 'manage-site_health-column', 'manage-site_actions-column', 'extra-column', 'manage-client_name-column' ),
             'className' => 'collapsing',
         );
+        $defines[] = array(
+            'targets'   => array( 'manage-last24_status-column' ),
+            'className' => 'not-selectable dt-right',
+        );
+
+        $defines[] = array(
+            'targets'   => array( 'manage-show_subpage-column' ),
+            'className' => 'not-selectable no-sort dt-control',
+        );
+
+        $defines[] = array(
+            'targets'   => array( 'manage-interval-column' ),
+            'className' => 'dt-right collapsing',
+        );
+
         $defines[] = array(
             'targets'   => 'manage-favicon-column',
             'className' => 'collapsing',
@@ -256,7 +311,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
         <div class="ui grid">
             <div class="equal width row ui mini form">
             <div class="middle aligned column">
-                    <div id="mainwp-sites-bulk-actions-menu" class="ui selection dropdown">
+                    <div id="mainwp-uptime-monitoring-bulk-actions-menu" class="ui selection dropdown">
                         <div class="default text"><?php esc_html_e( 'Bulk actions', 'mainwp' ); ?></div>
                         <i class="dropdown icon"></i>
                         <div class="menu">
@@ -275,7 +330,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                             ?>
                         </div>
                     </div>
-                    <button class="ui tiny basic button" id="mainwp-do-sites-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
+                    <button class="ui tiny basic button" id="mainwp-do-monitors-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
                 </div>
                 <div class="right aligned middle aligned column">
                         <?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
@@ -384,6 +439,10 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                     $orderby = 'wp_sync.health_value ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'client_name' === $req_orderby ) {
                     $orderby = 'client_name ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+                } elseif ( 'type' === $req_orderby ) {
+                    $orderby = ' mo.type ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+                } elseif ( 'interval' === $req_orderby ) {
+                    $orderby = ' mo.interval ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 }
             }
         }
@@ -457,7 +516,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             } elseif ( 'undefined' === $site_status ) {
                 $where = 'wp.http_response_code = ""';
             } elseif ( 'offline' === $site_status ) {
-                $where = 'wp.offline_check_result <> "" AND wp.offline_check_result <> 1';
+                $where = 'wp.offline_check_result <> "" AND wp.offline_check_result <> 1'; // 1 - online, -1 offline.
             }
         }
 
@@ -529,6 +588,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             }
         }
 
+        $params['view'] = 'monitor_view';
+
         $total_websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $total_params ) );
         $totalRecords   = ( $total_websites ? MainWP_DB::num_rows( $total_websites ) : 0 );
         if ( $total_websites ) {
@@ -599,7 +660,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                 <?php printf( esc_html__( 'Monitor your sites uptime and site health.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
             </div>
         <?php endif; ?>
-        <table id="mainwp-manage-sites-monitor-table" style="width:100%" class="ui single line selectable unstackable table mainwp-with-preview-table mainwp-manage-wpsites-table">
+        <table id="mainwp-manage-sites-table" style="width:100%" class="ui single line selectable unstackable table mainwp-with-preview-table mainwp-manage-wpsites-table">
             <thead>
             <tr>
                 <?php $this->print_column_headers( $optimize, true ); ?>
@@ -614,7 +675,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                 <tr>
                     <?php $this->print_column_headers( $optimize, false ); ?>
                 </tr>
-    </tfoot>
+            </tfoot>
     </table>
     <div id="mainwp-loading-sites" style="display: none;">
     <div class="ui active inverted dimmer">
@@ -650,7 +711,6 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
         ?>
     <script type="text/javascript">
             jQuery( document ).ready( function( $ ) {
-
                 mainwp_manage_sites_screen_options = function () {
                     jQuery( '#mainwp-manage-sites-screen-options-modal' ).modal( {
                         allowMultiple: true,
@@ -658,8 +718,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                             let val = jQuery( '#mainwp_default_monitoring_sites_per_page' ).val();
                             let saved = jQuery( '#mainwp_default_monitoring_sites_per_page' ).attr( 'saved-value' );
                             if ( saved != val ) {
-                                jQuery( '#mainwp-manage-sites-monitor-table' ).DataTable().page.len( val );
-                                jQuery( '#mainwp-manage-sites-monitor-table' ).DataTable().state.save();
+                                jQuery( '#mainwp-manage-sites-table' ).DataTable().page.len( val );
+                                jQuery( '#mainwp-manage-sites-table' ).DataTable().state.save();
                             }
                         }
                     } ).modal( 'show' );
@@ -678,53 +738,70 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                     responsive = false;
                 }
 
-
-            <?php if ( ! $optimize ) { ?>
-                try {
-                    $manage_sites_table = jQuery( '#mainwp-manage-sites-monitor-table' ).DataTable( {
-                        "responsive" : responsive,
-                        "searching" : <?php echo esc_js( $table_features['searching'] ); ?>,
-                        "paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
-                        "pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
-                        "info" : <?php echo esc_js( $table_features['info'] ); ?>,
-                        "colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
-                        "stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
-                        "stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
-                        "order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
-                        "scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
-                        "columnDefs": [
-                            {
-                                "targets": 'no-sort',
-                                "orderable": false
+                _init_sub_rows_uptime_monitoring_sub_pages_table = function(tblWrapper){
+                    let tblSelector = jQuery(tblWrapper).find( '.uptime-monitors-sub-pages-table' );
+                    try {
+                        $manage_sub_pages_table = jQuery(tblSelector).DataTable( {
+                            "responsive" : responsive,
+                            paging: false,
+                            order:[[2, 'desc']],
+                            "columnDefs": [
+                                {
+                                    "targets": 'no-sort',
+                                    "orderable": false
+                                },
+                                {
+                                    "targets": 'manage-site-column',
+                                    "type": 'natural-nohtml'
+                                },
+                                <?php do_action( 'mainwp_manage_sites_table_columns_defs' ); ?>
+                            ],
+                            "drawCallback": function( settings ) {
+                                jQuery(tblSelector).find('.ui.dropdown' ).dropdown({
+                                    className: {
+                                        leftward:'right' // fix layout.
+                                    }
+                                });
+                                jQuery(tblSelector).find('.ui.checkbox' ).checkbox();
+                                _init_uptime_status_popup(jQuery(tblSelector));
                             },
-                            {
-                                "targets": 'manage-site-column',
-                                "type": 'natural-nohtml'
-                            },
-                            <?php do_action( 'mainwp_manage_sites_table_columns_defs' ); ?>
-                        ],
-                        "lengthMenu" : [ [<?php echo esc_js( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All" ] ],
-                        "pageLength": <?php echo intval( $sites_per_page ); ?>
-                    } );
-                } catch(err) {
-                    // to fix js error.
+                        } );
+                    } catch(err) {
+                        // to fix js error.
+                    }
                 }
-                mainwp_datatable_fix_menu_overflow( '#mainwp-manage-sites-monitor-table' );
-            <?php } else { ?>
+
+
+                let _init_uptime_status_popup = function( wrapper ){
+                    let popWrapper = '';
+                    if( typeof wrapper === 'undefined' ){
+                        popWrapper = jQuery('#mainwp-manage-sites-table .mainwp-html-popup');
+                    } else {
+                        popWrapper = jQuery(wrapper).find('.mainwp-html-popup');
+                    }
+                    if( popWrapper !== '' ) {
+                        jQuery(popWrapper).each(
+                            function(){
+                                mainwp_init_html_popup(this);
+                            }
+                        );
+                    }
+                }
+
                 try {
-                    $manage_sites_table = jQuery( '#mainwp-manage-sites-monitor-table' ).on( 'processing.dt', function ( e, settings, processing ) {
+                    $manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).on( 'processing.dt', function ( e, settings, processing ) {
                         jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
                         if (!processing) {
-                            let tb = jQuery( '#mainwp-manage-sites-monitor-table' );
+                            let tb = jQuery( '#mainwp-manage-sites-table' );
                             tb.find( 'th[cell-cls]' ).each( function(){
                                 let ceIdx = this.cellIndex;
                                 let cls = jQuery( this ).attr( 'cell-cls' );
-                                jQuery( '#mainwp-manage-sites-monitor-table tr' ).each(function(){
+                                jQuery( '#mainwp-manage-sites-table tr' ).each(function(){
                                     jQuery(this).find( 'td:eq(' + ceIdx + ')' ).addClass(cls);
                                 } );
                             } );
-                            $( '#mainwp-manage-sites-monitor-table .ui.dropdown' ).dropdown();
-                            $( '#mainwp-manage-sites-monitor-table .ui.checkbox' ).checkbox();
+                            $( '#mainwp-manage-sites-table .ui.dropdown' ).dropdown();
+                            $( '#mainwp-manage-sites-table .ui.checkbox' ).checkbox();
                         }
 
                     } ).DataTable( {
@@ -746,6 +823,11 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                                     json.data[i].rowClass = json.rowsInfo[i].rowClass;
                                     json.data[i].siteID = json.rowsInfo[i].siteID;
                                     json.data[i].siteUrl = json.rowsInfo[i].siteUrl;
+                                    json.data[i].monitorID = json.rowsInfo[i].monitorID;
+
+                                    json.data[i].niceurl = json.rowsInfo[i].niceurl;
+                                    json.data[i].urlpage = json.rowsInfo[i].urlpage;
+
                                 }
                                 return json.data;
                             }
@@ -767,19 +849,30 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                         "columns": <?php echo wp_json_encode( $this->get_columns_init() ); ?>,
                         "drawCallback": function( settings ) {
                             this.api().tables().body().to$().attr( 'id', 'mainwp-manage-sites-body-table' );
-                            mainwp_datatable_fix_menu_overflow( '#mainwp-manage-sites-monitor-table' );
+                            mainwp_datatable_fix_menu_overflow( '#mainwp-manage-sites-table' );
                             if ( typeof mainwp_preview_init_event !== "undefined" ) {
                                 mainwp_preview_init_event();
                             }
+                            _init_uptime_status_popup();
                         },
                         rowCallback: function (row, data) {
                             jQuery( row ).addClass(data.rowClass);
                             jQuery( row ).attr( 'site-url', data.siteUrl );
                             jQuery( row ).attr( 'siteid', data.siteID );
                             jQuery( row ).attr( 'id', "child-site-" + data.siteID );
+                            jQuery( row ).attr( 'itemid', data.monitorID );
+                            jQuery( row ).attr( 'niceurl', data.niceurl );
+                            jQuery( row ).attr( 'urlpage', data.urlpage );
+
                             if ( data.syncError ) {
                                 jQuery( row ).find( 'td.column-site-bulk' ).addClass( 'site-sync-error' );
                             };
+
+                            this.api().tables().to$().on('requestChild', function (e, row) {
+                                row.child(manage_uptime_monitors_table_get_child_row(row)).show();
+                            });
+
+                            _init_uptime_status_popup();
                         },
                         'select': {
                             items: 'row',
@@ -801,16 +894,56 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                     }).on( 'columns-reordered', function () {
                         console.log('columns-reordered');
                         setTimeout(() => {
-                            $( '#mainwp-manage-sites-monitor-table .ui.dropdown' ).dropdown();
-                            $( '#mainwp-manage-sites-monitor-table .ui.checkbox' ).checkbox();
-                            mainwp_datatable_fix_menu_overflow( '#mainwp-manage-sites-monitor-table' );
+                            $( '#mainwp-manage-sites-table .ui.dropdown' ).dropdown();
+                            $( '#mainwp-manage-sites-table .ui.checkbox' ).checkbox();
+                            mainwp_datatable_fix_menu_overflow( '#mainwp-manage-sites-table' );
                         }, 1000 );
+                        _init_uptime_status_popup();
                     } );
+
+
+                    $manage_sites_table.on('requestChild.dt', function (e, row) {
+                        row.child(manage_uptime_monitors_table_get_child_row(row)).show();
+                    });
+
+
+                    // Add event listener for opening and closing details
+                    $manage_sites_table.on('click', 'td.dt-control', function (e) {
+                        let tr = e.target.closest('tr');
+                        let row = $manage_sites_table.row(tr);
+
+                        if (row.child.isShown()) {
+                            // This row is already open - close it
+                            row.child.hide();
+                        }
+                        else {
+                            // Open this row
+                            row.child('<div class="ui message green">' + '<i class="notched circle loading icon"></i> ' + __('Loading...') + '</div>').show();
+                            manage_uptime_monitors_table_get_child_row(row);
+                        }
+                    });
+
+                    function manage_uptime_monitors_table_get_child_row( row ) {
+                        let tr = row.node();
+                        let data = mainwp_secure_data({
+                            action: 'mainwp_uptime_monitoring_table_get_child_rows',
+                            siteid: jQuery(tr).attr('siteid')
+                        });
+                        jQuery.post(ajaxurl, data, function (response) {
+                            row.child(response).show();
+                            let sub_tr = jQuery(tr).next();
+                            if( jQuery(sub_tr).find('.uptime-monitors-sub-pages-table').length ){
+                                _init_sub_rows_uptime_monitoring_sub_pages_table(jQuery(sub_tr));
+                                _init_uptime_status_popup(jQuery(sub_tr));
+                            }
+
+                        }, 'html' );
+                    }
+
                 } catch(err) {
                     // to fix js error.
                 }
 
-                <?php } ?>
                 _init_manage_sites_screen = function() {
                         <?php
                         if ( empty( $count ) ) {
@@ -883,15 +1016,23 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      *
      * @param bool $optimize true|false Whether or not to optimise.
      * @param bool $top true|false.
+     * @param bool $sub_rows true|false.
+     * @param int $parent_site_id site parent id.
      */
-    public function print_column_headers( $optimize, $top = true ) { //phpcs:ignore -- NOSONAR - complex.
-        list( $columns, $sortable ) = $this->get_column_info();
+    public function print_column_headers( $optimize = false, $top = true, $sub_rows = false, $parent_site_id = false ) { //phpcs:ignore -- NOSONAR - complex.
+
+        list( $columns, $sortable ) = $this->get_column_info( $sub_rows );
 
         if ( ! empty( $columns['cb'] ) ) {
-            $columns['cb'] = '<div class="ui checkbox"><input id="' . ( $top ? 'cb-select-all-top' : 'cb-select-all-bottom' ) . '" type="checkbox" /></div>';
+            if ( $sub_rows ) {
+                $columns['cb'] = '<div class="ui checkbox"><input class="sub-pages-checkbox ' . ( $top ? 'cb-select-all-parent-top' : 'cb-select-all-parent-bottom' ) . '" type="checkbox"  cb-parent-selector=".monitors-sub-pages-table-body-' . ( false !== $parent_site_id ? intval( $parent_site_id ) : 0 ) . '" /></div>';
+            } else {
+                $columns['cb'] = '<div class="ui checkbox"><input id="' . ( $top ? 'cb-select-all-top' : 'cb-select-all-bottom' ) . '" type="checkbox" /></div>';
+            }
         }
 
-        $def_columns                 = $this->get_default_columns();
+        $def_columns = $this->get_default_columns( $sub_rows );
+
         $def_columns['site_actions'] = '';
 
         foreach ( $columns as $column_mon_key => $column_display_name ) {
@@ -927,8 +1068,11 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
     /**
      * Get column info.
+     *
+     * @param   bool $sub_rows
+     * @return mixed
      */
-    protected function get_column_info() {
+    protected function get_column_info( $sub_rows = false ) {
 
         if ( isset( $this->column_headers ) && is_array( $this->column_headers ) ) {
             $column_headers = array( array(), array(), array(), $this->get_default_primary_column_name() );
@@ -939,7 +1083,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             return $column_headers;
         }
 
-        $columns = $this->get_columns();
+        $columns = $this->get_columns( $sub_rows );
 
         $sortable_columns = $this->get_sortable_columns();
 
@@ -969,35 +1113,20 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
     /**
      * Single row.
      *
-     * @param mixed $website Object containing the site info.
+     * @param mixed $monitor_subpage Object containing the site info.
      *
      * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize_file_name()
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_site_health()
      */
-    public function single_row( $website ) {
-        $classes = $this->get_groups_classes( $website );
+    public function single_row( $monitor_subpage ) {
+        $classes = $this->get_groups_classes( $monitor_subpage );
+        $classes = trim( $classes );
 
-        $health_status = isset( $website['health_site_status'] ) ? json_decode( $website['health_site_status'], true ) : array();
+        $classes = ' class="child-site mainwp-child-site-' . intval( $monitor_subpage['wpid'] ) . ' ' . esc_html( $classes ) . '"';
 
-        $hstatus     = MainWP_Utility::get_site_health( $health_status );
-        $hval        = $hstatus['val'];
-        $critical    = $hstatus['critical'];
-        $good_health = false;
-
-        if ( 80 <= $hval && empty( $critical ) ) {
-            $good_health = true;
-        }
-        $statusOnline   = ( 1 === (int) $website['offline_check_result'] );
-        $classes        = trim( $classes );
-        $status_classes = $statusOnline ? '' : 'error';
-        if ( empty( $status_classes ) ) {
-            $status_classes = $good_health ? '' : 'warning';
-        }
-
-        $classes = ' class="child-site mainwp-child-site-' . intval( $website['id'] ) . ' ' . esc_html( $status_classes ) . ' ' . esc_html( $classes ) . '"';
-
-        echo '<tr id="child-site-' . intval( $website['id'] ) . '"' . esc_html( $classes ) . ' siteid="' . intval( $website['id'] ) . '" site-url="' . esc_url( $website['url'] ) . '">';
-        $this->single_row_columns( $website, $good_health );
+        $check_url = empty( $monitor_subpage['issub'] ) ? $monitor_subpage['url'] : $monitor_subpage['url'] . $monitor_subpage['suburl'];
+        echo '<tr id="monitor-sub-page-' . intval( $monitor_subpage['wpid'] ) . '"' . esc_html( $classes ) . ' siteid="' . intval( $monitor_subpage['wpid'] ) . '" urlpage="' . esc_url( $check_url ) . '" itemid="' . intval( $monitor_subpage['monitor_id'] ) . '"  niceurl="' . esc_attr( MainWP_Utility::get_nice_url( $check_url ) ) . '">';
+        $this->single_row_columns( $monitor_subpage );
         echo '</tr>';
     }
 
@@ -1005,8 +1134,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
     /**
      * Columns for a single row.
      *
-     * @param mixed $website     Object containing the site info.
-     * @param bool  $good_health Good site health info.
+     * @param object $website     Object containing the site info.
+     * @param array  $good_health  Deprecated.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::get_favico_url()
      * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
@@ -1016,35 +1145,17 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      */
     protected function single_row_columns( $website, $good_health = false ) { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-        $statusUndefined = empty( $website['http_response_code'] );
-        $statusOnline    = ( 1 === (int) $website['offline_check_result'] );
+        $monitor_subpage = $website;
 
         list( $columns ) = $this->get_column_info();
 
-        $use_favi = get_option( 'mainwp_use_favicon', 1 );
-
-        if ( $good_health ) {
-            $h_color = 'green';
-            $h_text  = esc_html__( 'Good', 'mainwp' );
-        } else {
-            $h_color = 'orange';
-            $h_text  = esc_html__( 'Should be improved', 'mainwp' );
-        }
-
         $http_error_codes = MainWP_Utility::get_http_codes();
 
-        $website = apply_filters( 'mainwp_monitoring_sitestable_website', $website );
+        $global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
 
-        $imgfavi = '';
-        if ( $use_favi ) {
-            $siteObj  = (object) $website;
-            $favi_url = MainWP_Connect::get_favico_url( $siteObj );
-            if ( ! empty( $favi_url ) ) {
-                $imgfavi = '<img src="' . esc_attr( $favi_url ) . '" style="width:28px;height:28px;" class="ui circular image" />';
-            } else {
-                $imgfavi = '<i class="icon big wordpress" style="width:28px;height:28px;"></i> '; // phpcs:ignore -- Prevent modify WP icon.
-            }
-        }
+        $last24_time = MainWP_Uptime_Monitoring_Handle::get_hourly_key_by_timestamp( time() - DAY_IN_SECONDS );
+
+        $uptime_status = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_monitor_stat_hourly_by( $monitor_subpage['monitor_id'], 'last24', $last24_time );
 
         foreach ( $columns as $column_name => $column_display_name ) {
 
@@ -1054,102 +1165,83 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             ?>
             <?php if ( 'cb' === $column_name ) { ?>
                 <td class="check-column">
-                    <div class="ui checkbox">
-                        <input type="checkbox" value="<?php echo intval( $website['id'] ); ?>" name=""/>
+                    <div class="ui checkbox cb-uptime-monitor">
+                        <input type="checkbox" value="<?php echo intval( $monitor_subpage['id'] ); ?>" name=""/>
                     </div>
                 </td>
-            <?php } elseif ( 'status' === $column_name ) { ?>
-                <td class="center aligned collapsing">
-                    <?php if ( $statusUndefined ) : ?>
-                        <a href="#"><i class="circular inverted exclamation red icon"></i></a>
+                <?php
+            } elseif ( 'status' === $column_name ) {
+                ?>
+                <td class="manage-type-column">
+                <?php
+                $this->render_uptime_status( $monitor_subpage['last_status'] );
+                ?>
+                </td>
+                <?php
+            } elseif ( 'type' === $column_name ) {
+                ?>
+                <td class="manage-type-column">
+                    <?php
+                    $mo_type      = MainWP_Uptime_Monitoring_Connect::get_apply_setting( 'type', $monitor_subpage['type'], $global_settings, 'useglobal', 'http' );
+                    $mo_type_text = '';
+                    if ( 'http' === $mo_type ) {
+                        $mo_type_text = 'Http(s)';
+                    } elseif ( 'ping' === $mo_type ) {
+                        $mo_type_text = 'Ping';
+                    } elseif ( 'keyword' === $mo_type ) {
+                        $mo_type_text = 'Keyword';
+                    }
+                    echo esc_html( $mo_type_text );
+                    ?>
+                </td>
+            <?php } elseif ( 'interval' === $column_name ) { ?>
+                <td class="manage-interval-column dt-right collapsing">
+                    <?php
+                    $mo_interval = MainWP_Uptime_Monitoring_Connect::get_apply_setting( 'interval', (int) $monitor_subpage['interval'], $global_settings, -1, 60 );
+                    echo intval( $mo_interval );
+                    ?>
+                </td>
+                <?php
+            } elseif ( 'last24_status' === $column_name ) {
+                ?>
+                <td class="not-selectable dt-right collapsing">
+                <?php
+                    $this->render_last24_uptime_status( $monitor_subpage['monitor_id'], $uptime_status, $last24_time );
+                ?>
+                </td>
+                <?php
+            } elseif ( 'url' === $column_name ) {
+                ?>
+                <td class="mainwp-url-cell"><a href="<?php echo esc_url( $monitor_subpage['url'] . $monitor_subpage['suburl'] ); ?>" class="mainwp-may-hide-referrer open_site_url" target="_blank"><?php echo esc_html( MainWP_Utility::get_nice_url( $monitor_subpage['url'] . $monitor_subpage['suburl'] ) ); ?></a></td>
+                    <?php } elseif ( 'status_code' === $column_name ) { ?>
+                <td class="collapsing" data-order="<?php echo esc_html( $monitor_subpage['http_response_code'] ); ?>">
                         <?php
-                    elseif ( $statusOnline ) :
-                        if ( ! $good_health ) {
-                            ?>
-                            <i class="circular inverted yellow heartbeat icon"></i>
-                            <?php
-                        } else {
-                            ?>
-                            <i class="circular inverted green check icon"></i>
-                            <?php
+                        if ( $monitor_subpage['http_response_code'] ) {
+                            $code = $monitor_subpage['http_response_code'];
+                            echo esc_html( $code );
+                            if ( isset( $http_error_codes[ $code ] ) ) {
+                                echo ' - ' . esc_html( $http_error_codes[ $code ] );
+                            }
                         }
                         ?>
-
-                    <?php else : ?>
-                        <a href="#"><i class="circular inverted exclamation red icon"></i></a>
-                        <?php
-                    endif;
-                    ?>
-                </td>
-                <?php } elseif ( 'favicon' === $column_name ) { ?>
-                    <td class="collapsing"><?php echo $imgfavi; // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
-                <?php
-                } elseif ( 'site' === $column_name ) {
-                    $cls_site = '';
-                    if ( ! $statusOnline ) {
-                        $cls_site = 'site-sync-error';
-                    }
-                    ?>
-                <td class="column-site-bulk mainwp-site-cell <?php echo esc_html( $cls_site ); ?>"><a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $website['id'] ); ?>"><?php echo esc_html( stripslashes( $website['name'] ) ); ?></a><i class="ui active inline loader tiny" style="display:none"></i><span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span></td>
-                <?php } elseif ( 'login' === $column_name ) { ?>
-                <td class="collapsing">
-                    <?php if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
-                    <i class="sign in icon"></i>
-                    <?php else : ?>
-                    <a href="<?php MainWP_Site_Open::get_open_site_url( $website['id'] ); ?>" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
-                        <?php
-                    endif;
-                    ?>
-                </td>
-                    <?php
-                } elseif ( 'client_name' === $column_name ) {
-                    ?>
-                <td class="collapsing">
-                <a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website['client_id'] ); ?>"><?php echo esc_html( $website['client_name'] ); ?></a>
-                </td>
-                    <?php
-                } elseif ( 'url' === $column_name ) {
-                    ?>
-                <td class="mainwp-url-cell"><a href="<?php echo esc_url( $website['url'] ); ?>" class="mainwp-may-hide-referrer open_site_url" target="_blank"><?php echo esc_html( MainWP_Utility::get_nice_url( $website['url'] ) ); ?></a></td>
-                <?php } elseif ( 'status_code' === $column_name ) { ?>
-                <td class="collapsing" data-order="<?php echo esc_html( $website['http_response_code'] ); ?>">
-                    <?php
-                    if ( $website['http_response_code'] ) {
-                        $code = $website['http_response_code'];
-                        echo esc_html( $code );
-                        if ( isset( $http_error_codes[ $code ] ) ) {
-                            echo ' - ' . esc_html( $http_error_codes[ $code ] );
-                        }
-                    }
-                    ?>
                 </td>
             <?php } elseif ( 'last_check' === $column_name ) { ?>
-                <td class="collapsing"><?php echo ! empty( $website['offline_checks_last'] ) ? esc_html( MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['offline_checks_last'] ) ) ) : ''; ?></td>
-            <?php } elseif ( 'site_health' === $column_name ) { ?>
-                <td class="collapsing"><span><a class="open_newwindow_wpadmin" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo esc_attr( base64_encode( 'site-health.php' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_attr( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><span class="ui <?php echo esc_html( $h_color ); ?> empty circular label"></span></a> <?php echo esc_html( $h_text ); ?></span></td>
-            <?php } elseif ( 'site_actions' === $column_name ) { ?>
+                <td class="collapsing"><?php echo ! empty( $monitor_subpage['offline_checks_last'] ) ? esc_html( MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $monitor_subpage['offline_checks_last'] ) ) ) : ''; ?></td>
+                        <?php
+            } elseif ( 'site_actions' === $column_name ) {
+                ?>
                     <td class="collapsing">
                         <div class="ui right pointing dropdown icon mini basic green button" style="z-index:999;">
                             <i class="ellipsis horizontal icon"></i>
-                            <div class="menu" siteid=<?php echo intval( $website['id'] ); ?>>
-                            <a class="managesites_checknow item" href="#"><?php esc_html_e( 'Check Now', 'mainwp' ); ?></a>
-                    <?php if ( empty( $website['sync_errors'] ) ) : ?>
-                            <a class="managesites_syncdata item" href="#"><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
-                            <?php endif; ?>
-                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) ) : ?>
-                            <a class="item" href="admin.php?page=managesites&dashboard=<?php echo intval( $website['id'] ); ?>"><?php esc_html_e( 'Overview', 'mainwp' ); ?></a>
-                            <?php endif; ?>
+                            <div class="menu" siteid="<?php echo intval( $monitor_subpage['id'] ); ?>" itemid="<?php echo intval( $monitor_subpage['monitor_id'] ); ?>">
+                                <a class="managemonitors_uptime_checknow item" href="#"><?php esc_html_e( 'Check Now', 'mainwp' ); ?></a>
                             </div>
                         </div>
                     </td>
                 <?php
-            } elseif ( method_exists( $this, 'column_' . $column_name ) ) {
-                echo "<td $attributes>";  // phpcs:ignore WordPress.Security.EscapeOutput
-                echo call_user_func( array( $this, 'column_' . $column_name ), $website ); // phpcs:ignore WordPress.Security.EscapeOutput
-                echo '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput
             } else {
                 echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
-                echo $this->column_default( $website, $column_name ); // phpcs:ignore WordPress.Security.EscapeOutput
+                echo $this->column_default( $monitor_subpage, $column_name ); // phpcs:ignore WordPress.Security.EscapeOutput
                 echo '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput
             }
         }
@@ -1177,12 +1269,18 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
         $use_favi = get_option( 'mainwp_use_favicon', 1 );
 
         if ( $this->items ) {
+
+            $global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+
             foreach ( $this->items as $website ) {
 
                 $imgfavi = '';
+
                 if ( $use_favi ) {
-                    $siteObj  = (object) $website;
-                    $favi_url = MainWP_Connect::get_favico_url( $siteObj );
+                    $siteObj      = new \stdClass();
+                    $siteObj->id  = $website['id'];
+                    $siteObj->url = $website['url'];
+                    $favi_url     = MainWP_Connect::get_favico_url( $siteObj );
                     if ( ! empty( $favi_url ) ) {
                         $imgfavi = '<img src="' . esc_attr( $favi_url ) . '" style="width:28px;height:28px;" class="ui circular image" />';
                     } else {
@@ -1191,9 +1289,6 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                 }
 
                 $rw_classes = '';
-
-                $statusUndefined = empty( $website['http_response_code'] );
-                $statusOnline    = ( 1 === (int) $website['offline_check_result'] );
 
                 $health_status = isset( $website['health_site_status'] ) ? json_decode( $website['health_site_status'], true ) : array();
 
@@ -1208,18 +1303,18 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
                 $rw_classes = trim( $rw_classes );
 
-                $status_classes = $statusOnline ? '' : 'error';
-                if ( empty( $status_classes ) ) {
-                    $status_classes = $good_health ? '' : 'warning';
-                }
+                $rw_classes = 'child-site mainwp-child-site-' . intval( $website['id'] ) . ' ' . esc_html( $rw_classes );
 
-                $rw_classes = 'child-site mainwp-child-site-' . intval( $website['id'] ) . ' ' . esc_html( $status_classes ) . ' ' . esc_html( $rw_classes );
+                $check_url = ! $website['issub'] ? $website['url'] : $website['url'] . $website['suburl'];
 
                 $info_item = array(
                     'rowClass'  => esc_html( $rw_classes ),
                     'siteID'    => $website['id'],
                     'siteUrl'   => $website['url'],
                     'syncError' => ( '' !== $website['sync_errors'] ? true : false ),
+                    'monitorID' => $website['monitor_id'],
+                    'niceurl'   => MainWP_Utility::get_nice_url( $check_url ),
+                    'urlpage'   => $check_url,
                 );
 
                 if ( $good_health ) {
@@ -1234,52 +1329,54 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
                 $cols_data = array();
 
+                $last24_time = MainWP_Uptime_Monitoring_Handle::get_hourly_key_by_timestamp( time() - DAY_IN_SECONDS );
+
+                $uptime_status = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_monitor_stat_hourly_by( $website['monitor_id'], 'last24', $last24_time );
+
                 foreach ( $columns as $column_name => $column_display_name ) {
                     ob_start();
                     ?>
-                        <?php if ( 'cb' === $column_name ) { ?>
-                            <div class="ui checkbox"><input type="checkbox" value="<?php echo intval( $website['id'] ); ?>" /></div>
-                            <?php } elseif ( 'status' === $column_name ) { ?>
-                                <?php if ( $statusUndefined ) : ?>
-                                    <a href="#"><i class="circular inverted exclamation red icon"></i></a>
-                                    <?php
-                                elseif ( $statusOnline ) :
-                                    if ( ! $good_health ) {
-                                        ?>
-                                    <i class="circular inverted yellow heartbeat icon"></i>
-                                        <?php
-                                    } else {
-                                        ?>
-                                    <i class="circular green check inverted icon"></i>
-                                        <?php
-                                    }
-                                    ?>
-                                <?php else : ?>
-                                    <a href="#"><i class="circular inverted exclamation red icon"></i></a>
-                                <?php endif; ?>
-
-                            <?php } elseif ( 'favicon' === $column_name ) { ?>
+                    <?php if ( 'cb' === $column_name ) : ?>
+                        <div class="ui checkbox cb-uptime-monitor"><input type="checkbox" class="cb-select-all-parent-top" cb-parent-selector="#monitors-sub-pages-table-<?php echo intval( $website['id'] ); ?>" value="<?php echo intval( $website['id'] ); ?>" /></div>
+                    <?php elseif ( 'status' === $column_name ) : ?>
+                        <?php $this->render_uptime_status( false, $website['offline_check_result'] ); ?>
+                    <?php elseif ( 'show_subpage' === $column_name ) : ?>
+                    <?php elseif ( 'last24_status' === $column_name ) : ?>
+                            <?php $this->render_last24_uptime_status( $website['monitor_id'], $uptime_status, $last24_time ); ?>
+                    <?php elseif ( 'favicon' === $column_name ) : ?>
                                 <?php echo $imgfavi; // phpcs:ignore WordPress.Security.EscapeOutput ?>
-                            <?php } elseif ( 'site' === $column_name ) { ?>
+                    <?php elseif ( 'site' === $column_name ) : ?>
                                 <a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $website['id'] ); ?>"><?php echo esc_html( stripslashes( $website['name'] ) ); ?></a><i class="ui active inline loader tiny" style="display:none"></i><span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span>
-                            <?php } elseif ( 'login' === $column_name ) { ?>
+                    <?php elseif ( 'login' === $column_name ) : ?>
                                 <?php if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
                                     <i class="sign in icon"></i>
                                 <?php else : ?>
                                     <a href="<?php MainWP_Site_Open::get_open_site_url( $website['id'] ); ?>" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
                                 <?php endif; ?>
-                                <?php
-                            } elseif ( 'client_name' === $column_name ) {
-                                ?>
-                                <td class="collapsing">
+                    <?php elseif ( 'type' === $column_name ) : ?>
+                        <?php
+                        $mo_type      = MainWP_Uptime_Monitoring_Connect::get_apply_setting( 'type', $website['type'], $global_settings, 'useglobal', 'http' );
+                        $mo_type_text = '';
+                        if ( 'http' === $mo_type ) {
+                            $mo_type_text = 'Http(s)';
+                        } elseif ( 'ping' === $mo_type ) {
+                            $mo_type_text = 'Ping';
+                        } elseif ( 'keyword' === $mo_type ) {
+                            $mo_type_text = 'Keyword';
+                        }
+                        echo esc_html( $mo_type_text );
+                        ?>
+                    <?php elseif ( 'interval' === $column_name ) : ?>
+                        <?php
+                        $mo_interval = MainWP_Uptime_Monitoring_Connect::get_apply_setting( 'interval', (int) $website['interval'], $global_settings, -1, 60 );
+                        echo intval( $mo_interval );
+                        ?>
+                    <?php elseif ( 'client_name' === $column_name ) : ?>
                                 <a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website['client_id'] ); ?>"><?php echo esc_html( $website['client_name'] ); ?></a>
-                                </td>
-                                <?php
-                            } elseif ( 'url' === $column_name ) {
-                                ?>
+                    <?php elseif ( 'url' === $column_name ) : ?>
                                 <a href="<?php echo esc_url( $website['url'] ); ?>" class="mainwp-may-hide-referrer open_site_url" target="_blank"><?php echo esc_html( MainWP_Utility::get_nice_url( $website['url'] ) ); ?></a>
+                    <?php elseif ( 'status_code' === $column_name ) : ?>
                                 <?php
-                            } elseif ( 'status_code' === $column_name ) {
                                 if ( $website['http_response_code'] ) {
                                     $code = $website['http_response_code'];
                                     echo esc_html( $code );
@@ -1287,33 +1384,34 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                                         echo ' - ' . esc_html( $http_error_codes[ $code ] );
                                     }
                                 }
-                            } elseif ( 'last_check' === $column_name ) {
                                 ?>
+                    <?php elseif ( 'last_check' === $column_name ) : ?>
                                 <?php echo ! empty( $website['offline_checks_last'] ) ? esc_html( MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['offline_checks_last'] ) ) ) : ''; ?>
-                            <?php } elseif ( 'site_health' === $column_name ) { ?>
+                    <?php elseif ( 'site_health' === $column_name ) : ?>
                                     <span><a class="open_newwindow_wpadmin" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo esc_attr( base64_encode( 'site-health.php' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_attr( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><span class="ui <?php echo esc_html( $h_color ); ?> empty circular label"></span></a> <?php echo esc_html( $h_text ); ?></span>
-                                    <?php
-                            } elseif ( 'site_actions' === $column_name ) {
-                                ?>
-                                    <div class="ui right pointing dropdown icon mini basic green button"  style="z-index:999;">
-                                        <i class="ellipsis horizontal icon"></i>
-                                        <div class="menu" siteid="<?php echo intval( $website['id'] ); ?>">
-                                            <a class="managesites_checknow item" href="#"><?php esc_html_e( 'Check Now', 'mainwp' ); ?></a>
-                                            <?php if ( empty( $website['sync_errors'] ) ) : ?>
-                                            <a class="managesites_syncdata item" href="#"><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
-                                            <?php endif; ?>
-                                            <?php if ( mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) ) : ?>
-                                            <a class="item" href="admin.php?page=managesites&dashboard=<?php echo intval( $website['id'] ); ?>"><?php esc_html_e( 'Overview', 'mainwp' ); ?></a>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                        <?php
-                            } elseif ( method_exists( $this, 'column_' . $column_name ) ) {
-                                echo call_user_func( array( $this, 'column_' . $column_name ), $website ); // phpcs:ignore WordPress.Security.EscapeOutput
-                            } else {
-                                echo $this->column_default( $website, $column_name ); // phpcs:ignore WordPress.Security.EscapeOutput
-                            }
-                            $cols_data[ $column_name ] = ob_get_clean();
+                        <?php
+                    elseif ( 'site_actions' === $column_name ) :
+                        $monitor_id = ! empty( $website['monitor_id'] ) ? intval( $website['monitor_id'] ) : 0;
+                        ?>
+                            <div class="ui right pointing dropdown icon mini basic green button"  style="z-index:999;">
+                                <i class="ellipsis horizontal icon"></i>
+                                <div class="menu" siteid="<?php echo intval( $website['id'] ); ?>" itemid="<?php echo intval( $monitor_id ); ?>">
+                                    <a class="managemonitors_uptime_checknow item" href="#"><?php esc_html_e( 'Check Now', 'mainwp' ); ?></a>
+                                    <?php if ( empty( $website['sync_errors'] ) ) : ?>
+                                    <a class="managesites_syncdata item" href="#"><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
+                                    <?php endif; ?>
+                                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) ) : ?>
+                                    <a class="item" href="admin.php?page=managesites&dashboard=<?php echo intval( $website['id'] ); ?>"><?php esc_html_e( 'Overview', 'mainwp' ); ?></a>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                    <?php elseif ( method_exists( $this, 'column_' . $column_name ) ) : ?>
+                                <?php echo call_user_func( array( $this, 'column_' . $column_name ), $website ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                    <?php else : ?>
+                                <?php echo $this->column_default( $website, $column_name ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                    <?php endif; ?>
+                    <?php
+                    $cols_data[ $column_name ] = ob_get_clean();
                 }
                 $all_rows[]  = $cols_data;
                 $info_rows[] = $info_item;
@@ -1325,5 +1423,126 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             'recordsFiltered' => $this->total_items,
             'rowsInfo'        => $info_rows,
         );
+    }
+
+    /**
+     * Renders uptime status.
+     *
+     * @param int $uptime_status uptime status.
+     * @param int $compatible_offline uptime status.
+     *
+     * @return void
+     */
+    public function render_uptime_status( $uptime_status = false, $compatible_offline = false ) {
+
+        if ( false !== $compatible_offline ) {
+            $uptime_status = 99; // pendding.
+            if ( -1 === (int) $compatible_offline ) {
+                $uptime_status = 0; // to compatible value 'offline_check_result' with 'last_status'.
+            } elseif ( 1 === (int) $compatible_offline ) {
+                $uptime_status = 1;
+            }
+        }
+
+        if ( 1 === (int) $uptime_status ) {
+            echo '<i class="big circle green chevron up icon"></i>';
+        } elseif ( 0 === (int) $uptime_status ) {
+            echo '<i class="big circle red chevron down icon"></i>';
+        } else {
+            echo '<i class="big circle outline icon"></i>';
+        }
+    }
+
+    /**
+     * Render last24 uptime status.
+     *
+     * @param  array $data
+     * @param  int   $last24_starttime
+     * @return void
+     */
+    public function render_last24_uptime_status( $monitor_id, $data, $last24_starttime ) {
+
+        if ( empty( $data ) || ! is_array( $data ) ) {
+            $data = array();
+        }
+
+        $uptime_data = array();
+
+        foreach ( $data as $value ) {
+            $uptime_data[ $value['timestamp'] ] = $value;
+        }
+
+        $hourly_key = MainWP_Uptime_Monitoring_Handle::get_hourly_key_by_timestamp( $last24_starttime );
+
+        $empty = array(
+            'up'       => 0,
+            'down'     => 0,
+            'ping_avg' => 0,
+            'ping_min' => 0,
+            'ping_max' => 0,
+        );
+
+        $total_up   = 0;
+        $total_down = 0;
+        for ( $i = 0; $i < 24; $i++ ) {
+            if ( isset( $uptime_data[ $hourly_key ] ) ) {
+                $up_stats = $uptime_data[ $hourly_key ];
+                $color    = $up_stats['up'] ? 'green' : 'red';
+                $text     = $up_stats['up'] ? __( 'Up', 'mainwp' ) : __( 'Down', 'mainwp' );
+            } else {
+                $up_stats = $empty;
+                $color    = 'gray';
+                $text     = __( 'Pending', 'mainwp' );
+            }
+            $total_up   += $up_stats['up'];
+            $total_down += $up_stats['down'];
+
+            $local_time = MainWP_Utility::get_timestamp( $hourly_key );
+            $time_from  = MainWP_Utility::format_timestamp( $local_time ) . ' ' . MainWP_Utility::format_time( $local_time + HOUR_IN_SECONDS );
+            ?>
+            <span class="mainwp-html-popup" data-inverted="" data-position="top center" html-popup-content="<?php echo esc_html( $time_from ) . '<br/><strong>' . esc_html( $text ) . ' ' . ( $up_stats['up'] ? (int) ( $up_stats['up'] * 100 / ( $up_stats['up'] + $up_stats['down'] ) ) . '%' : '' ); ?></strong>"><label class="mainwp-uptime-status-indicator ui label <?php echo esc_attr( $color ); ?>"></label></span>
+            <?php
+            $hourly_key = MainWP_Uptime_Monitoring_Handle::get_hourly_key_by_timestamp( $hourly_key + HOUR_IN_SECONDS );
+        }
+        ?>
+        <?php
+        echo '<br/><span class="ui small text">' . ( $total_up ? esc_html__( 'Up', 'mainwp' ) . ' ' . number_format( $total_up * 100 / ( $total_up + $total_down ), 2 ) . ' %' : esc_html__( 'Down', 'mainwp' ) ) . '</span>';
+    }
+
+
+
+
+    /**
+     * Get monitors table child rows.
+     *
+     * @param  int   $site_id
+     * @param  array $sub_pages
+     * @return string format html content.
+     */
+    public function get_monitors_table_child_rows( $site_id, $sub_pages ) {
+
+        if ( empty( $sub_pages ) || ! is_array( $sub_pages ) ) {
+            return '<div class="ui message green">' . esc_html__( 'This site has no sub-pages monitors.', 'mainwp' ) . '</div>';
+        }
+
+        ob_start();
+        ?>
+        <table id="monitors-sub-pages-table-<?php echo intval( $site_id ); ?>" class="ui table mainwp-manage-updates-table uptime-monitors-sub-pages-table">
+            <thead class="mainwp-768-hide">
+                <tr>
+                <?php $this->print_column_headers( false, true, true, $site_id ); ?>
+                </tr>
+            </thead>
+            <tbody class="uptime-monitoring-sub-pages-monitors-body monitors-sub-pages-table-body-<?php echo intval( $site_id ); ?>">
+            <?php
+            foreach ( $sub_pages as $mo_page ) :
+                $this->single_row( $mo_page );
+            endforeach;
+            ?>
+            </tbody>
+        </table>
+        <?php
+
+        return ob_get_clean();
     }
 }

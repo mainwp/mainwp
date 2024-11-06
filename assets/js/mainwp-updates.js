@@ -36,8 +36,15 @@ window.mainwp_updates_get_rollback_msg = function (error) {
 
 window.mainwp_init_html_popup = function (popupSelector, content) {
     jQuery(popupSelector).popup({
-        inline: true,
-        html: '<div class="mainwp-html-popup-body">' + content + '</div>',
+        html: function(){
+            if(typeof content === 'undefined' ){
+                if(typeof popupSelector !== 'string'){
+                    // popup selector is object.
+                    content = jQuery(popupSelector).attr('html-popup-content')??''
+                }
+            }
+            return '<div class="mainwp-html-popup-body">' + content + '</div>';
+        }
     });
 };
 
@@ -2871,7 +2878,7 @@ let updatesoverview_unignore_cores_by_site = function (id, ver) {
     });
     jQuery.post(ajaxurl, data, function (pVer, pId) {
         return function (response) {
-            if (response.result && 'success' == response.result ) {
+            if (response.result && 'success' == response.result) {
                 let siteElement = jQuery('tr[site-id="' + pId + '"][ignored-ver="' + pVer + '"]');
 
                 if (!siteElement.find('div').is(':visible')) {
@@ -2912,7 +2919,7 @@ let updatesoverview_unignore_cores_by_site_all = function (what) {
 
     jQuery.post(ajaxurl, data, function (pWhat) {
         return function (response) {
-            if (response.result && 'success' == response.result ) {
+            if (response.result && 'success' == response.result) {
                 let parent = jQuery('#ignored-cores-list');
                 parent.find('tr').remove();
                 parent.append('<tr><td colspan="999">' + __('No ignored WordPress') + '</td></tr>');

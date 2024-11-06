@@ -497,8 +497,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 }
 
                 MainWP_Utility::update_option( 'mainwp_numberdays_Outdate_Plugin_Theme', ! empty( $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] ) ? intval( $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] ) : 365 );
-                $ignore_http = isset( $_POST['mainwp_ignore_http_response_status'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_ignore_http_response_status'] ) ) : '';
-                MainWP_Utility::update_option( 'mainwp_ignore_HTTP_response_status', $ignore_http );
 
                 $check_http_response = ( isset( $_POST['mainwp_check_http_response'] ) ? 1 : 0 );
                 MainWP_Utility::update_option( 'mainwp_check_http_response', $check_http_response );
@@ -816,30 +814,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 <input type="checkbox" class="settings-field-value-change-handler" inverted-value="1" name="mainwp_check_http_response" id="mainwp_check_http_response" <?php echo 1 === (int) get_option( 'mainwp_check_http_response', 0 ) ? 'checked="true"' : ''; ?>/>
                             </div>
                         </div>
-                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates">
-                            <label class="six wide column middle aligned">
-                            <?php
-                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_ignore_HTTP_response_status', (int) get_option( 'mainwp_ignore_HTTP_response_status', 0 ) );
-                            esc_html_e( 'Ignored HTTP response statuses', 'mainwp' );
-                            ?>
-                            </label>
-                            <div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'Select response codes that you want your MainWP Dashboard to ignore.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <div class="ui multiple selection dropdown" init-value="<?php echo esc_attr( ( get_option( 'mainwp_ignore_HTTP_response_status', '' ) ) ); ?>">
-                                    <input name="mainwp_ignore_http_response_status" class="settings-field-value-change-handler" type="hidden">
-                                    <i class="dropdown icon"></i>
-                                    <div class="default text"></div>
-                                    <div class="menu">
-                                        <?php
-                                        foreach ( $http_error_codes as $error_code => $label ) {
-                                            ?>
-                                            <div class="item" data-value="<?php echo esc_attr( $error_code ); ?>"><?php echo esc_html( $error_code . ' (' . $label . ')' ); ?></div>
-                                            <?php
-                                        }
-                                        ?>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+
                         <?php if ( ( $enableLegacyBackupFeature && empty( $primaryBackup ) ) || ( empty( $enableLegacyBackupFeature ) && ! empty( $primaryBackup ) ) ) { ?>
                         <div class="ui grid field mainwp-parent-toggle settings-field-indicator-wrapper settings-field-indicator-updates">
                             <label class="six wide column middle aligned">
@@ -1319,7 +1294,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             MainWP_Utility::update_option( 'mainwp_maximum_uptime_monitoring_requests', ! empty( $_POST['mainwp_maximum_uptime_monitoring_requests'] ) ? intval( $_POST['mainwp_maximum_uptime_monitoring_requests'] ) : 10 );
 
             //required check.
-            MainWP_Uptime_Monitoring_Schedule::instance()->check_to_disable_schedule_individual_uptime_monitoring( $use_wpcron );
+            MainWP_Uptime_Monitoring_Schedule::instance()->check_to_disable_schedule_individual_uptime_monitoring(); // required a check to sync the settings.
 
             if ( isset( $_POST['mainwp_openssl_lib_location'] ) ) {
                 $openssl_loc = ! empty( $_POST['mainwp_openssl_lib_location'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_openssl_lib_location'] ) ) : '';
@@ -1742,14 +1717,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     <div><?php esc_html_e( 'To create a custom theme, copy the `mainwp-dark-theme.css` file from the MainWP Custom Dashboard Extension located in the `css` directory, make your edits and upload the file to the `../wp-content/uploads/mainwp/custom-dashboard/` directory.', 'mainwp' ); ?></div>
                 </div>
             <?php endif; ?>
-            <?php
-            if ( isset( $_GET['message'] ) && '-1' === $_GET['message'] ) {
-                ?>
-                <div class="ui yellow message">
-                    <i class="close icon"></i>
-                    <?php esc_html_e( 'Unable to download the MainWP Dashboard Connect plugin. Please check your server settings or contact MainWP support for assistance.', 'mainwp' ); ?>
-                </div>
-            <?php } ?>
                 <?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) : ?>
                     <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
                 <?php endif; ?>
@@ -1791,48 +1758,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 </div>
                                 <div class="ui toggle checkbox">
                                     <input type="checkbox" class="settings-field-value-change-handler" name="mainwp-guided-tours-option" id="mainwp-guided-tours-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ? 'checked="true"' : ''; ?> />
-                                </div>
-                            </div>
-                        </div>
-
-                        <?php
-                        $permalink                 = get_option( 'permalink_structure' );
-                        $zip_supported             = MainWP_Dashboard_Connect_Handle::instance()->is_zip_archive_supported();
-                        $disabled_download_connect = empty( $permalink ) || static::is_basic_auth_dashboard_enabled();
-
-                        $tip     = '';
-                        $btn_tip = '';
-
-                        if ( ! $zip_supported ) {
-                            $tip = esc_attr__( 'Unable to download the MainWP Dashboard Connect plugin. The ZipArchive library is not available on your server. Please contact your hosting provider to enable this library.', 'mainwp' );
-                        } elseif ( $disabled_download_connect ) {
-                            $tip = esc_attr__( 'Unable to download the MainWP Dashboard Connect plugin. The permalink settings are not configured, or HTTP Basic Authentication is enabled. Please update your permalink settings or disable HTTP Basic Authentication and try again.', 'mainwp' );
-                        } else {
-                            $btn_tip = esc_attr__( 'Click here to download the MainWP Dashboard Connect plugin.', 'mainwp' );
-                        }
-
-                        ?>
-                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools" default-indi-value="" >
-                            <label class="six wide column middle aligned">
-                            <?php
-                            MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', '' );
-                            esc_html_e( 'Download the MainWP Dashboard Connect plugin', 'mainwp' );
-                            ?>
-                            </label>
-                            <div class="ten wide column">
-                                <div class="ui blue message">
-                                    <div><?php esc_html_e( 'The MainWP Dashboard Connect Plugin allows you to easily migrate to MainWP from any other WordPress management system. The plugin is designed to automatically install the MainWP Child plugin on your sites and connect them to your MainWP Dashboard without any manual intervention.', 'mainwp' ); ?></div>
-                                    <ol>
-                                        <li><?php esc_html_e( 'Although the process authenticates via an automatically generated REST API key, you have the option to enter a custom passphrase for additional security if desired.', 'mainwp' ); ?></li>
-                                        <li><?php esc_html_e( 'Click the Download button to download the plugin.', 'mainwp' ); ?></li>
-                                        <li><?php esc_html_e( 'Use your current WordPress management system to install and activate the plugin on the sites you want to add to your MainWP Dashboard.', 'mainwp' ); ?></li>
-                                        <li><?php esc_html_e( 'Once the plugin is installed and activated, the MainWP Dashboard Connect plugin will automatically connect your sites to the MainWP Dashboard and remove itself from the child site.', 'mainwp' ); ?></li>
-                                    </ol>
-                                </div>
-
-                                <div class="ui action input" <?php echo ! empty( $tip ) ? 'data-inverted="" data-position="top left" data-tooltip="' . esc_attr( $tip ) . '" ' : ''; ?> >
-                                    <span data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Enter an optional passphrase for additional security when adding site(s) through the MainWP Dashboard Connect plugin.', 'mainwp' ); ?>"><input type="text" class="settings-field-value-change-handler" name="download-mainwp-connect-pass" id="download-mainwp-connect-pass" <?php echo $zip_supported && ! $disabled_download_connect ? '' : 'disabled'; ?> value=""></span>
-                                    <button id="download-mainwp-dashboard-connect-button"  data-nonce="<?php echo esc_attr( wp_create_nonce( 'download-connect-nonce' ) ); ?>" <?php echo $zip_supported && ! $disabled_download_connect ? '' : ' disabled="disabled" '; ?>" <?php echo ! empty( $btn_tip ) ? 'data-inverted="" data-position="top right" data-tooltip="' . esc_attr( $btn_tip ) . '"' : ''; ?> class="ui green basic right labeled icon button <?php echo $zip_supported && ! $disabled_download_connect ? '' : 'disabled'; ?>" ><i class="download icon"></i> <?php esc_attr_e( 'Download', 'mainwp' ); ?></button>
                                 </div>
                             </div>
                         </div>

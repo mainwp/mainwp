@@ -709,31 +709,6 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             </div>
                             <div class="ui hidden divider"></div>
                             <div class="ui hidden divider"></div>
-                            <div class="ui hidden divider"></div>
-                            <div class="ui hidden divider"></div>
-                            <div class="ui horizontal left aligned divider">
-                                <?php esc_attr_e( 'or use dashboard connect plugin', 'mainwp' ); ?>
-                            </div>
-                            <div class="ui hidden divider"></div>
-                            <div class="ui hidden divider"></div>
-                            <div class="ui hidden divider"></div>
-                            <div class="ui hidden divider"></div>
-                            <div class="field">
-                                <label><?php esc_html_e( 'MainWP Dashboard Connect', 'mainwp' ); ?></label>
-                                <div class="ui blue message">
-                                    <div><?php esc_html_e( 'The MainWP Dashboard Connect Plugin allows you to easily migrate to MainWP from any other WordPress management system. The plugin is designed to automatically install the MainWP Child plugin on your sites and connect them to your MainWP Dashboard without any manual intervention.', 'mainwp' ); ?></div>
-                                    <ol>
-                                        <li><?php esc_html_e( 'Although the process authenticates via an automatically generated REST API key, you have the option to enter a custom passphrase for additional security if desired.', 'mainwp' ); ?></li>
-                                        <li><?php esc_html_e( 'Click the Download button to download the plugin.', 'mainwp' ); ?></li>
-                                        <li><?php esc_html_e( 'Use your current WordPress management system to install and activate the plugin on the sites you want to add to your MainWP Dashboard.', 'mainwp' ); ?></li>
-                                        <li><?php esc_html_e( 'Once the plugin is installed and activated, the MainWP Dashboard Connect plugin will automatically connect your sites to the MainWP Dashboard and remove itself.', 'mainwp' ); ?></li>
-                                        <li><?php esc_html_e( 'Click the Continue button to proceed to the next step of the Quick Setup Wizard.', 'mainwp' ); ?></li>
-                                    </ol>
-                                </div>
-                            </div>
-                            <div class="ui hidden divider"></div>
-                            <div class="ui hidden divider"></div>
-                            <?php self::mainwp_dashboard_connect(); ?>
                         </div>
                     </div>
                 </div>
@@ -1024,9 +999,6 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public function mwp_setup_monitoring() {
 
-        $disableSitesMonitoring = (int) get_option( 'mainwp_disableSitesChecking', 1 );
-        $frequencySitesChecking = (int) get_option( 'mainwp_frequencySitesChecking', 60 );
-
         $disableSitesHealthMonitoring = get_option( 'mainwp_disableSitesHealthMonitoring', 1 );
         $sitehealthThreshold          = get_option( 'mainwp_sitehealthThreshold', 80 ); // "Should be improved" threshold.
 
@@ -1039,35 +1011,6 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <div class="ui hidden divider"></div>
         <form method="post" class="ui form">
             <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-            <div class="ui grid field settings-field-indicator-wrapper" default-indi-value="1">
-                <div class="ui info message"><?php printf( esc_html__( 'Excessive checking can cause server resource issues. For frequent checks or lots of sites, we recommend the %1$sMainWP Advanced Uptime Monitoring%2$s extension.', 'mainwp' ), '<a href="https://mainwp.com/extension/advanced-uptime-monitor" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
-                <label class="six wide column middle aligned">
-                <?php
-                MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_disableSitesChecking', (int) $disableSitesMonitoring );
-                esc_html_e( 'Enable uptime monitoring', 'mainwp' );
-                ?>
-                </label>
-                <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring" style="max-width:100px !important;">
-                    <input type="checkbox" class="settings-field-value-change-handler" inverted-value="1"  name="mainwp_setup_disableSitesChecking" id="mainwp_setup_disableSitesChecking" <?php echo 1 === $disableSitesMonitoring ? '' : 'checked="true"'; ?>/>
-                    <label class=""></label>
-                </div>
-            </div>
-
-            <div class="ui grid field" <?php echo $disableSitesMonitoring ? 'style="display:none"' : ''; ?> hide-element="monitoring">
-                <label class="six wide column middle aligned"><?php esc_html_e( 'Check interval', 'mainwp' ); ?></label>
-                <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Select preferred checking interval.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                    <select name="mainwp_setup_frequency_sitesChecking" id="mainwp_setup_frequency_sitesChecking" class="ui dropdown">
-                        <option value="5" <?php echo 5 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Every 5 minutes', 'mainwp' ); ?></option>
-                        <option value="10" <?php echo 10 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Every 10 minutes', 'mainwp' ); ?></option>
-                        <option value="30" <?php echo 30 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Every 30 minutes', 'mainwp' ); ?></option>
-                        <option value="60" <?php echo 60 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Every hour', 'mainwp' ); ?></option>
-                        <option value="180" <?php echo 180 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Every 3 hours', 'mainwp' ); ?></option>
-                        <option value="360" <?php echo 360 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Every 6 hours', 'mainwp' ); ?></option>
-                        <option value="720" <?php echo 720 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Twice a day', 'mainwp' ); ?></option>
-                        <option value="1440" <?php echo 1440 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Once a day', 'mainwp' ); ?></option>
-                    </select>
-                </div>
-            </div>
             <h1 class="ui header">
                 <?php esc_html_e( 'Site Health Monitoring', 'mainwp' ); ?>
             </h1>
@@ -1121,10 +1064,6 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     public function mwp_setup_monitoring_save() {
         check_admin_referer( 'mwp-setup' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        MainWP_Utility::update_option( 'mainwp_disableSitesChecking', ( ! isset( $_POST['mainwp_setup_disableSitesChecking'] ) ? 1 : 0 ) );
-        $val = isset( $_POST['mainwp_setup_frequency_sitesChecking'] ) ? intval( $_POST['mainwp_setup_frequency_sitesChecking'] ) : 1440;
-        MainWP_Utility::update_option( 'mainwp_frequencySitesChecking', $val );
-        MainWP_Utility::update_option( 'mainwp_disableSitesHealthMonitoring', ( ! isset( $_POST['mainwp_setup_disable_sitesHealthMonitoring'] ) ? 1 : 0 ) );
         $val = isset( $_POST['mainwp_setup_site_healthThreshold'] ) ? intval( $_POST['mainwp_setup_site_healthThreshold'] ) : 80;
         MainWP_Utility::update_option( 'mainwp_sitehealthThreshold', $val );
         // phpcs:enable
@@ -1171,47 +1110,5 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             a.appendChild(r);
       })(window, document, 'https://www.usetiful.com/dist/usetiful.js');</script>
         ";
-    }
-
-    /**
-     * Method mainwp_dashboard_connect()
-     *
-     * Render field mainwp dashboard connect.
-     *
-     * @uses MainWP_Settings_Indicator::render_not_default_indicator()
-     * @uses MainWP_Dashboard_Connect_Handle::instance()->is_zip_archive_supported()
-     * @uses MainWP_Settings::is_basic_auth_dashboard_enabled()
-     */
-    public static function mainwp_dashboard_connect() {
-        $permalink                 = get_option( 'permalink_structure' );
-        $zip_supported             = MainWP_Dashboard_Connect_Handle::instance()->is_zip_archive_supported();
-        $disabled_download_connect = empty( $permalink ) || MainWP_Settings::is_basic_auth_dashboard_enabled();
-
-        $tip     = '';
-        $btn_tip = '';
-
-        if ( ! $zip_supported ) {
-            $tip = esc_attr__( 'Unable to download the MainWP Dashboard Connect plugin. The ZipArchive library is not available on your server. Please contact your hosting provider to enable this library.', 'mainwp' );
-        } elseif ( $disabled_download_connect ) {
-            $tip = esc_attr__( 'Unable to download the MainWP Dashboard Connect plugin. The permalink settings are not configured, or HTTP Basic Authentication is enabled. Please update your permalink settings or disable HTTP Basic Authentication and try again.', 'mainwp' );
-        } else {
-            $btn_tip = esc_attr__( 'Click here to download the MainWP Dashboard Connect plugin.', 'mainwp' );
-        }
-        ?>
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools" default-indi-value="" >
-            <label class="six wide column middle aligned" style="display: none;" for="">
-            <?php
-            MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', '' );
-            esc_html_e( 'Download the MainWP Dashboard Connect plugin', 'mainwp' );
-            ?>
-            </label>
-            <div class="ten wide column">
-                <div class="ui action input" <?php echo ! empty( $tip ) ? 'data-inverted="" data-position="top left" data-tooltip="' . esc_attr( $tip ) . '" ' : ''; ?> >
-                    <span data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Enter an optional passphrase for additional security when adding site(s) through the MainWP Dashboard Connect plugin.', 'mainwp' ); ?>"><input type="text" class="settings-field-value-change-handler" name="download-mainwp-connect-pass" id="download-mainwp-connect-pass" <?php echo $zip_supported && ! $disabled_download_connect ? '' : 'disabled'; ?> value=""></span>
-                    <button id="download-mainwp-dashboard-connect-button"  data-nonce="<?php echo esc_attr( wp_create_nonce( 'download-connect-nonce' ) ); ?>" <?php echo $zip_supported && ! $disabled_download_connect ? '' : ' disabled="disabled" '; ?>" <?php echo ! empty( $btn_tip ) ? 'data-inverted="" data-position="top right" data-tooltip="' . esc_attr( $btn_tip ) . '"' : ''; ?> class="ui green basic right labeled icon button <?php echo $zip_supported && ! $disabled_download_connect ? '' : 'disabled'; ?>" ><i class="download icon"></i> <?php esc_attr_e( 'Download', 'mainwp' ); ?></button>
-                </div>
-            </div>
-        </div>
-        <?php
     }
 }

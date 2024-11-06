@@ -239,17 +239,33 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * Check if http error code is being ignored.
      *
-     * @param mixed $value http error code.
+     * @param mixed        $value http error code.
+     * @param object|false $website website.
      *
      * @return bolean True|False.
      */
-    public static function check_ignored_http_code( $value ) {
+    public static function check_ignored_http_code( $value, $website = false ) {
         $value = (int) $value;
         if ( 200 === $value ) {
             return true;
         }
-        $ignored_code = get_option( 'mainwp_ignore_HTTP_response_status', '' );
-        $ignored_code = trim( $ignored_code );
+
+        if ( ! is_object( $website ) || empty( $website->id ) ) {
+            return false;
+        }
+
+        $ignored_code = '';
+        if ( ! property_exists( $website, 'monitor_id' ) ) {
+            $primary_monitor = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site_id, 'issub', 0 );
+
+            if ( $primary_monitor ) {
+                $global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+                $ignored_code    = MainWP_Uptime_Monitoring_Connect::instance()->get_up_codes( $primary_monitor, $global_settings );
+            } else {
+                return false;
+            }
+        }
+
         if ( ! empty( $ignored_code ) ) {
             $ignored_code = explode( ',', $ignored_code );
             foreach ( $ignored_code as $code ) {
@@ -263,17 +279,26 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
-     * Method check_website_status()
+     * Method check website status.
      *
      * Check if the Website returns and http errors.
      *
-     * @param array $website Child Site information.
+     * @param object $website Child Site information.
      *
      * @return mixed False|try visit result.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::is_domain_valid()
      */
     public static function check_website_status( $website ) {
+
+        if ( is_object( $website ) && isset( $website->id ) ) {
+            $primary_monitor = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $website->id, 'issub', 0 );
+            if ( $primary_monitor ) {
+                //return compatible uptime status here.
+                return MainWP_Uptime_Monitoring_Handle::check_website_uptime_monitoring_status( $primary_monitor );
+            }
+        }
+
         $http_user         = null;
         $http_pass         = null;
         $sslVersion        = null;

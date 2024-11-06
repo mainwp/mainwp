@@ -65,7 +65,21 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
                 $output = array();
 
-                $information = MainWP_Connect::fetch_url_not_authed( $url, $admin, 'stats', null, false, $verify_cert, $http_user, $http_pass, $ssl_version, array( 'force_use_ipv4' => $force_use_ipv4 ), $output ); // Fetch the stats with the given admin name.
+                $information = MainWP_Connect::fetch_url_not_authed(
+                    $url,
+                    $admin,
+                    'stats',
+                    null,
+                    false,
+                    $verify_cert,
+                    $http_user,
+                    $http_pass,
+                    $ssl_version,
+                    array(
+                        'force_use_ipv4' => $force_use_ipv4,
+                    ),
+                    $output
+                ); // Fetch the stats with the given admin name.
 
                 if ( isset( $information['wpversion'] ) ) {
                     $ret['response'] = 'OK';
@@ -348,7 +362,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             $website = $site;
         }
 
-        $information = false;
+        $information = array();
 
         if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 
@@ -412,7 +426,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
         }
 
-        return $information;
+        return $information ? $information : false;
     }
 
     /**

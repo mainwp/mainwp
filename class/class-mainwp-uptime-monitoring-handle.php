@@ -50,7 +50,9 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
     public function admin_init() {
         MainWP_Uptime_Monitoring_Edit::instance()->handle_save_settings();
         MainWP_Post_Handler::instance()->add_action( 'mainwp_uptime_monitoring_remove_monitor', array( &$this, 'ajax_remove_monitor' ) );
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_uptime_monitoring_get_response_times', array( &$this, 'ajax_get_response_times' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_uptime_monitoring_get_response_times', array( MainWP_Uptime_Monitoring_Site_Widget::instance(), 'ajax_get_response_times' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_uptime_monitoring_table_get_child_rows', array( &$this, 'ajax_monitoring_table_get_child_rows' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_uptime_monitoring_uptime_check', array( &$this, 'ajax_check_uptime' ) );
 
         $pages = array( 'managesites' );
 
@@ -65,6 +67,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
                 }
             );
         }
+        $this->clear_outdated_hourly_uptime_stats();
     }
 
 
@@ -76,30 +79,61 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
      */
     public static function get_default_monitoring_settings( $individual ) {
         $default = array(
-            'monitor_id'          => 0,
-            'wpid'                => 0,
-            'type'                => 'useglobal',
-            'active'              => 2, // use global setting default.
-            'keyword'             => '',
-            'interval'            => -1, // use global setting default.
-            'maxretries'          => -1, // use global setting default.
-            'up_statuscodes_json' => 'useglobal', // default.
-            'suburl'              => '',
-            'method'              => 'useglobal',
-            'timeout'             => -1, // use global setting default.
+            'monitor_id'      => 0,
+            'wpid'            => 0,
+            'type'            => 'useglobal',
+            'active'          => -1, // use global setting default.
+            'keyword'         => '',
+            'interval'        => -1, // use global setting default.
+            'maxretries'      => -1, // use global setting default.
+            'up_status_codes' => 'useglobal', // default.
+            'suburl'          => '',
+            'method'          => 'useglobal',
+            'timeout'         => -1, // use global setting default.
         );
         if ( ! $individual ) {
             // global defaults.
-            $default['up_statuscodes_json'] = '';
-            $default['active']              = 1;
-            $default['type']                = 'http';
-            $default['maxretries']          = 1;
-            $default['method']              = 'get';
-            $default['timeout']             = 60; // seconds.
-            $default['interval']            = 60; // mins.
+            $default['up_status_codes'] = '';
+            $default['active']          = 0;
+            $default['type']            = 'http';
+            $default['maxretries']      = 1;
+            $default['method']          = 'get';
+            $default['timeout']         = 60; // seconds.
+            $default['interval']        = 60; // mins.
             unset( $default['suburl'] );
         }
         return $default;
+    }
+
+
+    /**
+     * get_global_monitoring_settings.
+     *
+     * @return array
+     */
+    public static function get_global_monitoring_settings() {
+        $global_settings = get_option( 'mainwp_global_uptime_monitoring_settings', array() );
+        if ( empty( $global_settings ) || ! is_array( $global_settings ) ) {
+            $global_settings = static::get_default_monitoring_settings( false );
+        }
+        return $global_settings;
+    }
+
+
+    /**
+     * update_uptime_global_settings
+     *
+     * @param  array $settings
+     * @return void
+     */
+    public static function update_uptime_global_settings( $settings ) {
+        // first enabled after new monitoring version update.
+        if ( ! empty( $settings['first_enable_update'] ) && ! empty( $settings['active'] ) ) {
+            unset( $settings['first_enable_update'] ); // do one time.
+            MainWP_DB_Uptime_Monitoring::instance()->update_db_legacy_first_enable_monitoring_create_monitors();
+        }
+        $settings = apply_filters( 'mainwp_update_uptime_monitor_data', $settings );
+        MainWP_Utility::update_option( 'mainwp_global_uptime_monitoring_settings', $settings );
     }
 
 
@@ -126,96 +160,103 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
         if ( $deleted ) {
             die( wp_json_encode( array( 'success' => 1 ) ) );
         }
-        die( wp_json_encode( array( 'error' => esc_html__( 'Failed to delete monitor.', 'mainwp' ) ) ) );
+        die( wp_json_encode( array( 'error' => esc_html__( 'Monitor could not be deleted. Please try again.', 'mainwp' ) ) ) );
     }
 
 
+
     /**
-     * ajax_get_response_times
+     * Ajax handle get monitoring table child rows.
      *
      * @return void
      */
-    public function ajax_get_response_times() {
+    public function ajax_monitoring_table_get_child_rows() {
 
-        mainwp_secure_request( 'mainwp_uptime_monitoring_get_response_times' );
+        mainwp_secure_request( 'mainwp_uptime_monitoring_table_get_child_rows' );
 
         $site_id = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : 0;
 
         if ( empty( $site_id ) ) {
-            die( wp_json_encode( array( 'error' => esc_html__( 'The Site ID is invalid or not found. Please try again.', 'mainwp' ) ) ) );
+            die( '<div class="ui message red">' . esc_html__( 'The Site ID is invalid or could not be found. Please try again.', 'mainwp' ) . '</div>' );
         }
 
-        if ( empty( $_POST['dtsstart'] ) || empty( $_POST['dtsstop'] ) ) {
-            die( wp_json_encode( array( 'error' => esc_html__( 'Start and end dates cannot be empty. Please try again.', 'mainwp' ) ) ) );
-        }
+        $sub_pages = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_sub_pages( array( 'wpid' => $site_id ) );
 
-        $params = array(
-            'start' => $_POST['dtsstart'],
-            'end'   => $_POST['dtsstop'],
-        );
+        $safe_format = MainWP_Monitoring_Sites_List_Table::instance()->get_monitors_table_child_rows( $site_id, $sub_pages );
 
-        if ( strtotime( $params['start'] ) > strtotime( $params['end'] ) ) {
-            die( wp_json_encode( array( 'error' => esc_html__( 'The start date must be earlier than the end date. Please try again.', 'mainwp' ) ) ) );
-        }
-
-        $results = $this->get_site_response_time_per_days_stats( $site_id, $params );
-
-        die(
-            wp_json_encode(
-                array(
-                    'data'       => ! empty( $results['response_time_data_lists'] ) ? $results['response_time_data_lists'] : array(),
-                    'data_stats' => ! empty( $results['resp_stats'] ) ? $results['resp_stats'] : array(),
-                ),
-            )
-        );
+        die( $safe_format );
     }
 
+    /**
+     * Method ajax_check_uptime()
+     *
+     * Check Child Sites.
+     */
+    public function ajax_check_uptime() {
+        mainwp_secure_request( 'mainwp_uptime_monitoring_uptime_check' );
+
+        $monitor_id = 0;
+        $monitor    = false;
+
+        if ( isset( $_POST['mo_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            $monitor_id = intval( $_POST['mo_id'] );
+        }
+
+        if ( ! empty( $monitor_id ) ) {
+            $monitor = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( false, 'monitor_id', $monitor_id ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        }
+
+        if ( empty( $monitor ) && ! empty( $_POST['wp_id'] ) ) {
+            $site_id = intval( $_POST['wp_id'] );
+            $monitor = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site_id, 'issub', 0 ); // get primary monitor.
+        }
+
+        if ( empty( $monitor ) ) {
+            die( wp_json_encode( array( 'error' => esc_html__( 'Monitor ID invalid or Monitor not found. Please try again.', 'mainwp' ) ) ) );
+        }
+
+        // return compatible uptime status here.
+        $result = static::check_website_uptime_monitoring_status( $monitor );
+
+        if ( is_array( $result ) ) {
+            die( wp_json_encode( array( 'result' => 'success' ) ) );
+        } else {
+            die( wp_json_encode( array( 'error' => esc_html__( 'Request failed. Please, try again.', 'mainwp' ) ) ) );
+        }
+    }
 
     /**
-     * get_site_response_time_per_days_stats
+     * Get site response time chart data
      *
      * @param  int   $site_id
      * @param  array $params
      * @return array
      */
-    public function get_site_response_time_per_days_stats( $site_id, $params = array() ) {
-        $results = MainWP_DB_Uptime_Monitoring::instance()->get_site_response_time_days_stats( $site_id, $params );
+    public function get_site_response_time_chart_data( $site_id, $params = array() ) {
 
-        if ( ! is_array( $results ) ) {
-            $results = array();
+        $results_db = MainWP_DB_Uptime_Monitoring::instance()->get_db_site_response_time_stats_data( $site_id, $params );
+
+        if ( ! is_array( $results_db ) ) {
+            $results_db = array();
         }
 
-        $data = array();
-        if ( ! empty( $results ) && ! empty( $results['data'] ) ) {
-
-            $start = strtotime( $results['start'] );
-            $end   = strtotime( $results['end'] );
-
+        $data_output = array();
+        if ( ! empty( $results_db ) && ! empty( $results_db['resp_time_list'] ) ) {
             $data_list = array();
-
-            $step = $start;
-
-            while ( $step < $end ) {
-                $_dt               = gmdate( 'Y-m-d', $step );
-                $data_list[ $_dt ] = array(
-                    'date'  => $_dt,
-                    'value' => 0,
-                );
-                $step             += DAY_IN_SECONDS;
-            }
-
-            foreach ( $results['data'] as $resp ) {
-                if ( ! isset( $resp['resp_date'] ) ) {
+            foreach ( $results_db['resp_time_list'] as $resp ) {
+                if ( ! isset( $resp['resp_time'] ) ) {
                     continue;
                 }
-                $data_list[ $resp['resp_date'] ] = array(
-                    'date'  => $resp['resp_date'],
-                    'value' => number_format( $resp['resp_ms'] / 1000, 2 ), // convert milliseconds to seconds.
+                $data_list[] = array(
+                    'date'  => $resp['resp_time'], // exactly time.
+                    'value' => number_format( $resp['resp_total_ms'] / 1000, 2 ), // convert milliseconds to seconds.
                 );
             }
-            $data = array_values( $data_list );
+
+            $data_output = array_values( $data_list );
         }
-        $resp_times = ! empty( $results['resp_stats_data'] ) && is_array( $results['resp_stats_data'] ) ? $results['resp_stats_data'] : array();
+
+        $resp_times = ! empty( $results_db['resp_stats_data'] ) && is_array( $results_db['resp_stats_data'] ) ? $results_db['resp_stats_data'] : array();
         $times_sec  = array();
 
         if ( isset( $resp_times['avg_time_ms'] ) ) {
@@ -234,8 +275,10 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
         }
 
         return array(
-            'response_time_data_lists' => $data,
+            'response_time_data_lists' => $data_output,
             'resp_stats'               => $times_sec,
+            'start'                    => ! empty( $results_db['start'] ) ? $results_db['start'] : '',
+            'end'                      => ! empty( $results_db['end'] ) ? $results_db['end'] : '',
         );
     }
 
@@ -246,9 +289,10 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
      * @param  mixed $site_id
      * @param  mixed $start_date Y-m-d.
      * @param  mixed $end_date Y-m-d.
+     * @param  array $params params.
      * @return mixed
      */
-    public function hook_get_reports_data( $site_id, $start_date = false, $end_date = false ) {
+    public function hook_get_reports_data( $site_id, $start_date = false, $end_date = false, $params = array() ) {
 
         if ( ! empty( $site_id ) ) {
             $primary_monitor = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site_id, 'issub', 0 );
@@ -261,21 +305,35 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
             );
         }
 
-        $start_dt = ! empty( $start_date ) ? $start_date : gmdate( 'Y-m-d', time() - 7 * DAY_IN_SECONDS );
-        $end_dt   = ! empty( $end_date ) ? $end_date : gmdate( 'Y-m-d', time() );
-
-        $args = array(
-            'start' => $start_dt,
-            'end'   => $end_dt,
-        );
-
-        $results = $this->get_site_response_time_per_days_stats( $site_id, $args );
-
-        if ( ! is_array( $results ) ) {
-            $results = array();
+        if ( ! is_array( $params ) ) {
+            $params = array();
         }
 
-        $resp_stats = ! empty( $results['resp_stats'] ) && is_array( $results['resp_stats'] ) ? $results['resp_stats'] : array();
+        $start_dt = strtotime( $start_date );
+        $end_dt   = strtotime( $end_date );
+
+        if ( empty( $start_dt ) || empty( $end_dt ) || ( $start_dt > $end_dt ) ) {
+            return array(
+                'success' => 0,
+                'error'   => 'Error: Invalid start or end date. The start date must be earlier than the end date. Please try again.',
+            );
+        }
+
+        $params = array_merge(
+            $params,
+            array(
+                'start' => gmdate( 'Y-m-d', $start_dt ),
+                'end'   => gmdate( 'Y-m-d', $end_dt ),
+            )
+        );
+
+        $results_db = $this->get_site_response_time_chart_data( $site_id, $params );
+
+        if ( ! is_array( $results_db ) ) {
+            $results_db = array();
+        }
+
+        $resp_stats = ! empty( $results_db['resp_stats'] ) && is_array( $results_db['resp_stats'] ) ? $results_db['resp_stats'] : array();
 
         $period_days = array(
             'uptimeratiosall' => 365, // Last 365 days.
@@ -286,11 +344,11 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
             'uptimeratios60'  => 60,
         );
 
-        $args['period_days'] = $period_days;
+        $params['period_days'] = $period_days;
 
         $uptime_ratios = array();
 
-        $uptime_ratios = MainWP_DB_Uptime_Monitoring::instance()->get_site_uptime_ratios_reports_data( $site_id, $args );
+        $uptime_ratios = MainWP_DB_Uptime_Monitoring::instance()->get_site_uptime_ratios_reports_data( $site_id, $params );
 
         if ( ! is_array( $uptime_ratios ) ) {
             $uptime_ratios = array();
@@ -312,18 +370,15 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
         // Data prepare for pro reports.
         $data = array(
             'success'                  => 1,
-            'start_date'               => $start_dt,
-            'end_date'                 => $end_dt,
             'avg_resp_time'            => isset( $resp_stats['avg_resp_time'] ) ? $resp_stats['avg_resp_time'] : 'N/A',
             'min_resp_time'            => isset( $resp_stats['min_resp_time'] ) ? $resp_stats['min_resp_time'] : 'N/A',
             'max_resp_time'            => isset( $resp_stats['max_resp_time'] ) ? $resp_stats['max_resp_time'] : 'N/A',
-
             'avg_time_ms'              => isset( $resp_stats['avg_time_ms'] ) ? $resp_stats['avg_time_ms'] : 'N/A',
             'min_time_ms'              => isset( $resp_stats['min_time_ms'] ) ? $resp_stats['min_time_ms'] : 'N/A',
             'max_time_ms'              => isset( $resp_stats['max_time_ms'] ) ? $resp_stats['max_time_ms'] : 'N/A',
-            'incidents_data'           => MainWP_DB_Uptime_Monitoring::instance()->get_site_incidents_stats( $site_id, $args ),
+            'incidents_data'           => MainWP_DB_Uptime_Monitoring::instance()->get_site_incidents_stats( $site_id, $params ),
             'uptime_ratios_data'       => $report_ratios,
-            'uptime_events_data'       => MainWP_DB_Uptime_Monitoring::instance()->get_site_monitoring_events_stats( $site_id, $args ),
+            'uptime_events_data'       => MainWP_DB_Uptime_Monitoring::instance()->get_site_monitoring_events_stats( $site_id, $params ),
             'monitor'                  => array(
                 'name'                 => $primary_monitor->name,
                 'url'                  => $primary_monitor->url,
@@ -335,8 +390,218 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
                 'keyword'              => ! empty( $primary_monitor->keyword ) ? $primary_monitor->keyword : 'N/A',
                 'http_code'            => ! empty( $primary_monitor->http_response_code ) ? $primary_monitor->http_response_code : 'N/A',
             ),
-            'response_time_chart_data' => ! empty( $results['response_time_data_lists'] ) && is_array( $results['response_time_data_lists'] ) ? $results['response_time_data_lists'] : array(),
+            'response_time_chart_data' => ! empty( $results_db['response_time_data_lists'] ) && is_array( $results_db['response_time_data_lists'] ) ? $results_db['response_time_data_lists'] : array(),
+            'start_date'               => ! empty( $results_db['start'] ) ? $results_db['start'] : gmdate( 'Y-m-d 00:00:00', $start_dt ),
+            'end_date'                 => ! empty( $results_db['end'] ) ? $results_db['end'] : gmdate( 'Y-m-d 23:59:59', $end_dt ),
         );
         return $data;
+    }
+
+    /**
+     * Handle update website legacy HTTP status.
+     *
+     * @param object $website website.
+     * @param array  $params params.
+     *
+     * @return mixed Check result.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::check_ignored_http_code()
+     * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
+     */
+    public function handle_update_website_legacy_uptime_status( $website, $params ) {
+
+        if ( ! is_array( $params ) || ! isset( $params['httpCode'] ) ) {
+            return false;
+        }
+
+        $new_code   = isset( $params['httpCode'] ) ? (int) $params['httpCode'] : 0;
+        $status     = isset( $params['new_uptime_status'] ) ? (int) $params['new_uptime_status'] : 0;
+        $importance = isset( $params['importance'] ) ? $params['importance'] : 0;
+
+        $noticed_value = $website->http_code_noticed;
+
+        if ( empty( $noticed_value ) ) {
+            $new_noticed = empty( $status ) && $importance ? 1 : 0;
+        } else {
+            $new_noticed = $noticed_value;
+        }
+
+        $time = isset( $params['check_time'] ) ? $params['check_time'] : time();
+
+        // Save last status.
+        MainWP_DB::instance()->update_website_values(
+            $website->id,
+            array(
+                'offline_check_result' => $status ? 1 : -1, // 1 - online, -1 offline.
+                'offline_checks_last'  => $time,
+                'http_response_code'   => $new_code,
+                'http_code_noticed'    => $new_noticed,
+            )
+        );
+
+        return true;
+    }
+
+    /**
+     * Method to compatible with check_website_status()
+     *
+     * Check if the Website returns and http errors.
+     *
+     * @param object $monitor Child Site monitor.
+     *
+     * @return mixed False|try visit result.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::is_domain_valid()
+     */
+    public static function check_website_uptime_monitoring_status( $monitor ) {
+        $glo_settings = static::get_global_monitoring_settings();
+        return MainWP_Uptime_Monitoring_Connect::instance()->fetch_uptime_monitor( $monitor, $glo_settings, false, array( 'ignore_compatible_save' => 1 ) ); // Avoid updating compatible data.
+    }
+
+
+    /**
+     * calc_and_save_site_uptime_stat_hourly_data
+     *
+     * @param  mixed $monitor_id
+     * @param  mixed $ping_data
+     * @return void
+     */
+    public function calc_and_save_site_uptime_stat_hourly_data( $monitor_id, $ping_data ) {
+
+        if ( ! $monitor_id || ! is_array( $ping_data ) || empty( $ping_data['time'] ) ) {
+            return;
+        }
+
+        $hourly_key = static::get_hourly_key_by_timestamp( strtotime( $ping_data['time'] ) );
+
+        $existed = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_monitor_stat_hourly_by( $monitor_id, 'timestamp', $hourly_key );
+
+        $update_stat_id = 0;
+
+        if ( ! empty( $existed ) ) {
+            $update_stat_id = $existed['stat_hourly_id'];
+            $current_stat   = $existed;
+        } else {
+            $current_stat = array(
+                'up'       => 0,
+                'down'     => 0,
+                'ping_avg' => 0,
+                'ping_min' => 0,
+                'ping_max' => 0,
+            );
+        }
+
+        $update_dt = false;
+
+        if ( $ping_data['status'] === MainWP_Uptime_Monitoring_Connect::UP ) {
+            $update    = array(
+                'monitor_id' => $monitor_id,
+                'up'         => ( $current_stat['up'] + 1 ),
+                'ping_avg'   => intval( ( $current_stat['ping_avg'] * $current_stat['up'] + $ping_data['ping_ms'] ) / ( $current_stat['up'] + 1 ) ),
+                'ping_min'   => min( $current_stat['ping_min'], $ping_data['ping_ms'] ),
+                'ping_max'   => max( $current_stat['ping_max'], $ping_data['ping_ms'] ),
+                'timestamp'  => $hourly_key,
+            );
+            $update_dt = true;
+        } elseif ( $ping_data['status'] === MainWP_Uptime_Monitoring_Connect::DOWN ) {
+            // do not update ping_avg, ping_min, ping_max here.
+            $update    = array(
+                'monitor_id' => $monitor_id,
+                'down'       => ( $current_stat['down'] + 1 ),
+                'timestamp'  => $hourly_key,
+            );
+            $update_dt = true;
+        }
+
+        // make sure save UP & DOWN status only.
+        if ( $update_dt ) {
+            if ( ! empty( $update_stat_id ) ) {
+                $update['stat_hourly_id'] = $update_stat_id; // update stat.
+            }
+            MainWP_DB_Uptime_Monitoring::instance()->update_site_uptime_stat_hourly( $update );
+        }
+    }
+
+
+    /**
+     * get_hourly_key_by_timestamp
+     *
+     * @param  int $timestamp
+     * @return int
+     */
+    public static function get_hourly_key_by_timestamp( $timestamp ) {
+        return strtotime( gmdate( 'Y-m-d H:00:00', $timestamp ) );
+    }
+
+    /**
+     * Get uptime websites monitors offline to notice.
+     *
+     * @return void
+     */
+    public function get_uptime_websites_monitors_offline_to_notice() {
+
+        $glo_settings = static::get_global_monitoring_settings();
+
+        $glo_active = 1;
+
+        if ( isset( $glo_settings['active'] ) ) {
+            $glo_active = 1 === (int) $glo_settings['active'] ? 1 : 0;
+        }
+
+        $where = ' wp.offline_check_result = -1 AND wp.http_code_noticed = 0 '; // offline check - 1, http_code_noticed = 0: not noticed yet.
+
+        $where .= ' AND ( mo.active = 1 OR ( mo.active = -1 AND 1 = ' . (int) $glo_active . ') ) ';
+
+        $params = array(
+            'view'        => 'monitor_view',
+            'extra_view'  => array( 'monitoring_notification_emails', 'settings_notification_emails' ),
+            'extra_where' => $where,
+        );
+        return MainWP_DB::instance()->get_results_result( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
+    }
+
+    /**
+     * Get uptime websites monitors offline to notice.
+     *
+     * @return void
+     */
+    public function get_uptime_monitors_with_down_status_to_notice() {
+
+        $glo_settings = static::get_global_monitoring_settings();
+
+        $glo_active = 1;
+
+        if ( isset( $glo_settings['active'] ) ) {
+            $glo_active = 1 === (int) $glo_settings['active'] ? 1 : 0;
+        }
+
+        $where = ' mo.status = 0 AND mo.importance = 1 '; // offline check - 1, http_code_noticed = 0: not noticed yet.
+
+        $where .= ' AND ( mo.active = 1 OR ( mo.active = -1 AND 1 = ' . (int) $glo_active . ') ) ';
+
+        $params = array(
+            'view'        => 'monitor_view',
+            'extra_view'  => array( 'monitoring_notification_emails', 'settings_notification_emails' ),
+            'extra_where' => $where,
+        );
+        return MainWP_DB::instance()->get_results_result( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
+    }
+
+
+    /**
+     * clear_outdated_hourly_uptime_stats
+     *
+     * @return void
+     */
+    public function clear_outdated_hourly_uptime_stats() {
+        $now      = MainWP_Utility::get_timestamp();
+        $midnight = strtotime( gmdate( 'Y-m-d 00:00:01', $now ) );
+        if ( ( $now - $midnight < 2 * HOUR_IN_SECONDS ) && ( $now - $midnight > HOUR_IN_SECONDS ) ) {
+            $lasttime = (int) get_option( 'mainwp_uptime_monitoring_lasttime_clear_hourly_stats' );
+            if ( empty( $lasttime ) || ( $now > $lasttime + 20 * HOUR_IN_SECONDS ) ) {
+                MainWP_DB_Uptime_Monitoring::instance()->remove_outdated_hourly_uptime_stats();
+                MainWP_Utility::update_option( 'mainwp_uptime_monitoring_lasttime_clear_hourly_stats', $now );
+            }
+        }
     }
 }

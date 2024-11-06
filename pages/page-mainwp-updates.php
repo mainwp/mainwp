@@ -634,8 +634,14 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             ++$allThemes[ $slug ]['cnt'];
                         }
 
+                        $up_th_name = isset( $theme_upgrade['Name'] ) ? esc_html( $theme_upgrade['Name'] ) : '';
+
+                        if ( empty( $up_th_name ) ) {
+                            $up_th_name = isset( $theme_upgrade['name'] ) ? esc_html( $theme_upgrade['name'] ) : 'N/A';
+                        }
+
                         $themesInfo[ $slug ] = array(
-                            'name'    => esc_html( $theme_upgrade['Name'] ),
+                            'name'    => $up_th_name,
                             'premium' => ( isset( $theme_upgrade['premium'] ) ? esc_html( $theme_upgrade['premium'] ) : 0 ),
                         );
                     }
@@ -2175,156 +2181,6 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             </menu></div>
         </div>
         <br/>
-        <?php
-    }
-
-    /**
-     * Renders the HTTP Check html content.
-     *
-     * @param object $websites Child Sites.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
-     */
-    public static function render_http_checks( $websites ) {  //phpcs:ignore -- NOSONAR - complex.
-
-        $enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
-        $mainwp_primaryBackup = get_option( 'mainwp_primaryBackup' );
-
-        /**
-         * Custom backup pages
-         *
-         * Filters backup options to set correct page for restore options.
-         *
-         * @since 4.0
-         */
-        $customPage = apply_filters_deprecated( 'mainwp-getcustompage-backups', array( false ), '4.0.7.2', 'mainwp_getcustompage_backups' ); // @deprecated Use 'mainwp_getcustompage_backups' instead. NOSONAR - not IP.
-        $customPage = apply_filters( 'mainwp_getcustompage_backups', $customPage );
-
-        $restorePageSlug = '';
-        if ( empty( $enable_legacy_backup ) && ! empty( $mainwp_primaryBackup ) && is_array( $customPage ) && isset( $customPage['managesites_slug'] ) ) {
-            $restorePageSlug = 'admin.php?page=ManageSites' . $customPage['managesites_slug'];
-        } elseif ( $enable_legacy_backup ) {
-            $restorePageSlug = 'admin.php?page=managesites';
-        }
-        ?>
-        <div class="" id="mainwp-http-response-issues">
-            <?php
-            /**
-             * Action: mainwp_updates_before_http_response_table
-             *
-             * Fires before the HTTP responses table on the Updates pages
-             *
-             * @since 4.1
-             */
-            do_action( 'mainwp_updates_before_http_response_table' );
-            ?>
-            <table class="ui single line inverted unstackable table" id="mainwp-http-response-issues-table">
-                <thead>
-                    <tr>
-                        <th scope="col" class="no-sort" colspan="3"><?php esc_html_e( 'HTTP Response Check Results', 'mainwp' ); ?></th>
-                    </tr>
-                    <tr>
-                        <th scope="col"><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-                        <th scope="col"><?php esc_html_e( 'HTTP Code', 'mainwp' ); ?></th>
-                        <th scope="col" class="collapsing no-sort"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php
-                MainWP_DB::data_seek( $websites, 0 );
-                while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-                    if ( 1 === (int) $website->offline_check_result || '-1' === $website->http_response_code ) {
-                        continue;
-                    }
-
-                    $restoreSlug = '';
-
-                    if ( ! empty( $restorePageSlug ) ) {
-                        if ( $enable_legacy_backup ) {
-                            $restoreSlug = $restorePageSlug . '&backupid=' . intval( $website->id );
-                        } elseif ( static::activated_primary_backup_plugin( $mainwp_primaryBackup, $website ) ) {
-                            $restoreSlug = $restorePageSlug . '&id=' . intval( $website->id );
-                        }
-                    }
-                    ?>
-                    <tr id="child-site-<?php echo intval( $website->id ); ?>" class="child-site mainwp-child-site-<?php echo intval( $website->id ); ?>" siteid="<?php echo intval( $website->id ); ?>" site-url="<?php echo esc_url( $website->url ); ?>">
-                        <td>
-                            <?php static::render_site_link_dashboard( $website ); ?>
-                        </td>
-                        <td id="wp_http_response_code_<?php echo esc_attr( $website->id ); ?>">
-                            <label class="ui red label http-code"><?php echo 'HTTP ' . esc_html( $website->http_response_code ); ?></label>
-                        </td>
-                        <td class="right aligned">
-                            <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" class="ui mini button" target="_blank"><?php esc_html_e( 'WP Admin', 'mainwp' ); ?></a>
-                            <a href="javascript:void(0)" onclick="return updatesoverview_recheck_http( this, <?php echo intval( $website->id ); ?> )" class="ui basic mini green button"><?php esc_html_e( 'Recheck', 'mainwp' ); ?></a>
-                            <?php if ( ! empty( $website->sync_errors ) ) { ?>
-                            <a href="#" class="mainwp_site_reconnect ui green mini button"><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
-                            <?php } ?>
-                            <a href="javascript:void(0)" onClick="return updatesoverview_ignore_http_response( this, <?php echo intval( $website->id ); ?> )" class="ui basic mini button"><?php esc_html_e( 'Ignore', 'mainwp' ); ?></a>
-                    <?php if ( ! empty( $restoreSlug ) ) { ?>
-                            <a href="<?php echo esc_url( $restoreSlug ); ?>" class="ui green mini basic button"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
-                        <?php } ?>
-                        </td>
-                    </tr>
-                    <?php
-                }
-                ?>
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <th scope="col" ><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-                        <th scope="col" ><?php esc_html_e( 'HTTP Code', 'mainwp' ); ?></th>
-                        <th scope="col" class="collapsing no-sort"></th>
-                    </tr>
-                </tfoot>
-            </table>
-            <?php
-            /**
-             * Action: mainwp_updates_after_http_response_table
-             *
-             * Fires after the HTTP responses table on the Updates pages.
-             *
-             * @since 4.1
-             */
-            do_action( 'mainwp_updates_after_http_response_table' );
-
-            $table_features = array(
-                'searching'  => 'false',
-                'paging'     => 'false',
-                'stateSave'  => 'true',
-                'info'       => 'false',
-                'responsive' => 'true',
-            );
-
-            /**
-             * Filter: mainwp_updates_http_responses_datatable_features
-             *
-             * Filters the DataTable options for the HTTP Responses table on the Updates page.
-             *
-             * @since 4.1
-             */
-            $table_features = apply_filters( 'mainwp_updates_http_responses_datatable_features', $table_features );
-            ?>
-            <script>
-                jQuery( document ).ready( function() {
-                    let responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
-                    if( jQuery( window ).width() > 1140 ) {
-                        responsive = false;
-                    }
-                    jQuery( '#mainwp-http-response-issues-table' ).DataTable( {
-                            "responsive": responsive,
-                            "searching": <?php echo esc_html( $table_features['searching'] ); ?>,
-                            "paging" : <?php echo esc_html( $table_features['paging'] ); ?>,
-                            "stateSave": <?php echo esc_html( $table_features['stateSave'] ); ?>,
-                            "info" : <?php echo esc_html( $table_features['info'] ); ?>,
-                            "columnDefs" : [ { "orderable": false, "targets": "no-sort" } ],
-                            "language" : { "emptyTable": "No HTTP issues detected." },
-                    } );
-                } );
-            </script>
-        </div>
-        <div class="ui hidden clearing divider"></div>
         <?php
     }
 

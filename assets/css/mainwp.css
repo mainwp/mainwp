@@ -1329,3 +1329,12 @@ th .down.icon {
 .mainwp-managesites-more-import-row{
 	cursor: pointer;
 }
+
+.mainwp-uptime-status-indicator {
+    width: 2px !important;
+    height: 20px !important;
+    margin: 0 !important;
+    padding: 2px !important;
+    display: inline-block !important;
+    border-radius: 0px !important;
+}

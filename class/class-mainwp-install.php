@@ -25,7 +25,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.0.41'; // NOSONAR - no IP.
+    protected $mainwp_db_version = '9.0.0.46'; // NOSONAR - no IP.
 
     /**
      * Protected variable to hold the database option name.
@@ -114,9 +114,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   offline_check_result int(11) NOT NULL,
   http_response_code int(11) NOT NULL DEFAULT 0,
   http_code_noticed tinyint(1) NOT NULL DEFAULT 1,
-  disable_status_check tinyint(1) NOT NULL DEFAULT 0,
   disable_health_check tinyint(1) NOT NULL DEFAULT 0,
-  status_check_interval tinyint(1) NOT NULL DEFAULT 0,
   health_threshold int(11) NOT NULL DEFAULT 0,
   note text NOT NULL,
   statsUpdate int(11) NOT NULL,
@@ -400,11 +398,28 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $tbl  .= ') ' . $charset_collate . ';';
         $sql[] = $tbl;
 
-        MainWP_DB_Uptime_Monitoring::instance()->get_db_schema( $sql, $currentVersion);
+        $tbl = 'CREATE TABLE ' . $this->table_name( 'schedule_processes' ) . " (
+    process_id int(11) NOT NULL auto_increment,
+    item_id int(11) NOT NULL,
+    `type` varchar(32) NOT NULL,
+    `process_slug` varchar(64) NOT NULL,
+    `status` varchar(32) NOT NULL DEFAULT '',
+    dts_process_start int(11) NOT NULL DEFAULT 0,
+    dts_process_stop int(11) NOT NULL DEFAULT 0";
+
+        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.0.45', '<' ) ) {
+            $tbl .= ',
+    PRIMARY KEY  (process_id)  ';
+        }
+
+        $tbl  .= ') ' . $charset_collate . ';';
+        $sql[] = $tbl;
 
         // End of tables.
 
         $sql = apply_filters( 'mainwp_db_install_tables', $sql, $currentVersion, $charset_collate );
+
+        MainWP_DB_Uptime_Monitoring::instance()->get_db_schema( $sql, $currentVersion );
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php'; // NOSONAR - WP compatible.
 
@@ -421,6 +436,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $wpdb->suppress_errors( $suppress );
 
         $this->post_update();
+
+        do_action( 'mainwp_db_after_update', $currentVersion, $this->mainwp_db_version ); // new version: $this->mainwp_db_version.
 
         if ( ! is_multisite() ) {
             MainWP_Utility::update_option( $this->option_db_key, $this->mainwp_db_version );
@@ -500,11 +517,6 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             foreach ( $delColumns as $column ) {
                 $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'users' ) . ' DROP COLUMN ' . $column );
             }
-        }
-
-        // change columns.
-        if ( version_compare( $currentVersion, '8.40', '<' ) && version_compare( $currentVersion, '8.30', '>' ) ) {
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_status' ) . ' CHANGE COLUMN `timestamp_status` `event_timestamp` int(11) NOT NULL' );
         }
 
         // delete columns.

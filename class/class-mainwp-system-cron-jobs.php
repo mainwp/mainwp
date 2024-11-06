@@ -70,10 +70,10 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         add_action( 'mainwp_cronbackups_continue_action', array( $this, 'cron_backups_continue' ) );
         add_action( 'mainwp_cronupdatescheck_action', array( $this, 'cron_updates_check' ) );
         add_action( 'mainwp_cronpingchilds_action', array( $this, 'cron_ping_childs' ) );
-        add_action( 'mainwp_croncheckstatus_action', array( $this, 'cron_check_websites_status' ) );
         add_action( 'mainwp_cronsitehealthcheck_action', array( $this, 'cron_check_websites_health' ) );
         add_action( 'mainwp_crondeactivatedlicensesalert_action', array( $this, 'cron_deactivated_licenses_alert' ) );
         add_action( 'mainwp_cronuptimemonitoringcheck_action', array( MainWP_Uptime_Monitoring_Schedule::instance(), 'cron_uptime_check' ) );
+        add_action( 'mainwp_cron_perform_process', array( $this, 'cron_perform_process' ) );
 
         // phpcs:ignore -- required for dashboard's minutely scheduled jobs.
         add_filter( 'cron_schedules', array( $this, 'get_cron_schedules' ), 9 );
@@ -98,21 +98,11 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             'mainwp_cronupdatescheck_action'             => 'minutely',
             'mainwp_crondeactivatedlicensesalert_action' => 'daily',
             'mainwp_cronuptimemonitoringcheck_action'    => 'minutely',
+            'mainwp_cron_perform_process'                => 'minutely',
         );
 
-        if ( ! $useWPCron && get_option( 'mainwp_disable_schedule_individual_uptime_monitoring' ) ) {
+        if ( ! $useWPCron && ! get_option( 'mainwp_individual_uptime_monitoring_schedule_enabled' ) ) {
             unset( $jobs['mainwp_cronuptimemonitoringcheck_action'] );
-        }
-
-        $disableChecking = get_option( 'mainwp_disableSitesChecking', 1 );
-        if ( ! $disableChecking ) {
-            $jobs['mainwp_croncheckstatus_action'] = 'minutely';
-        } else {
-            // disable check sites status cron.
-            $sched = wp_next_scheduled( 'mainwp_croncheckstatus_action' );
-            if ( false !== $sched ) {
-                wp_unschedule_event( $sched, 'mainwp_croncheckstatus_action' );
-            }
         }
 
         $disableHealthChecking = get_option( 'mainwp_disableSitesHealthMonitoring', 1 ); // disabled by default.
@@ -1198,7 +1188,6 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      *
      * @return bool True|False
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_offline_check_status()
      * @uses \MainWP\Dashboard\MainWP_Notification::send_http_check_notification()
      * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_general_email_settings()
      * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_site_email_settings()
@@ -1210,7 +1199,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $sitesHttpCheck       = array();
         $email_settings_sites = array();
 
-        $sites_offline = MainWP_DB::instance()->get_websites_offline_check_status();
+        $sites_offline = MainWP_DB::instance()->get_websites_http_check_status();
         if ( is_array( $sites_offline ) && ! empty( $sites_offline ) ) {
             foreach ( $sites_offline as $site ) {
                 if ( 200 === (int) $site->http_response_code ) { // to fix: ignored 200 http code.
@@ -1523,85 +1512,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
     }
 
     /**
-     * Method cron_check_websites_status()
-     *
-     * Cron job to check child sites status.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_to_check_status()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
-     * @uses \MainWP\Dashboard\MainWP_Logger::info()
-     * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::check_to_purge_records()
-     * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::handle_check_website()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
-     */
-    public function cron_check_websites_status() {
-
-        $disableChecking = get_option( 'mainwp_disableSitesChecking', 1 );
-        // to disable if run custom cron.
-        if ( $disableChecking ) {
-            return;
-        }
-
-        /**
-         * Filter: mainwp_check_sites_status_chunk_size
-         *
-         * Filters the chunk size (number of sites) to process in status check action.
-         *
-         * @since Unknown
-         */
-        $chunkSize = apply_filters( 'mainwp_check_sites_status_chunk_size', 5 );
-
-        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_to_check_individual_status( $chunkSize ) );
-        // start notice.
-        if ( empty( $websites ) ) {
-            $plain_text = get_option( 'mainwp_daily_digest_plain_text', false );
-            $this->start_notification_uptime_status( $plain_text );
-        }
-
-        while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-            MainWP_Monitoring_Handler::handle_check_website( $website );
-        }
-        MainWP_DB::free_result( $websites );
-
-        // global settings sites check.
-
-        $running           = get_option( 'mainwp_cron_checksites_running' );
-        $freq_minutes      = get_option( 'mainwp_frequencySitesChecking', 60 );
-        $lasttime_to_check = get_option( 'mainwp_cron_checksites_last_timestamp', 0 ); // get last check time to continue.
-        if ( ( 'yes' !== $running ) && time() < $lasttime_to_check + $freq_minutes * MINUTE_IN_SECONDS ) {
-            return;
-        }
-
-        if ( 'yes' !== $running ) {
-            MainWP_Logger::instance()->info( 'check sites status :: starting.' );
-            MainWP_Utility::update_option( 'mainwp_cron_checksites_running', 'yes' );
-            if ( MainWP_Monitoring_Handler::check_to_purge_records() ) {
-                return; // to run next time.
-            }
-        }
-
-        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_to_check_status( $lasttime_to_check, $chunkSize ) );
-
-        // start notice.
-        if ( empty( $websites ) ) {
-            $plain_text = get_option( 'mainwp_daily_digest_plain_text', false );
-            $this->start_notification_uptime_status( $plain_text );
-            MainWP_Logger::instance()->info( 'check sites status :: finished.' );
-            MainWP_Utility::update_option( 'mainwp_cron_checksites_last_timestamp', time() );
-            MainWP_Utility::update_option( 'mainwp_cron_checksites_running', false );
-            return;
-        }
-
-        while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-            MainWP_Monitoring_Handler::handle_check_website( $website );
-        }
-        MainWP_DB::free_result( $websites );
-    }
-
-    /**
-     * Method start_notification_uptime_status().
+     * Method start notification uptime status.
      *
      * Prepare uptime status notification.
      *
@@ -1617,8 +1528,8 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      */
     public function start_notification_uptime_status( $plain_text ) {
 
-        $offlineSites = MainWP_DB_Common::instance()->get_websites_offline_status_to_send_notice();
-        MainWP_Logger::instance()->info( 'check sites status :: notice site http :: found ' . ( $offlineSites ? count( $offlineSites ) : 0 ) );
+        $offlineSites = MainWP_Uptime_Monitoring_Handle::instance()->get_uptime_websites_monitors_offline_to_notice();
+        MainWP_Logger::instance()->info( 'Notice site http status :: found ' . ( $offlineSites ? count( $offlineSites ) : 0 ) );
 
         if ( empty( $offlineSites ) ) {
             return false;
@@ -1733,5 +1644,77 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         }
 
         return true;
+    }
+
+
+    /**
+     * perform_sequence_process
+     *
+     * @return void
+     */
+    public function cron_perform_process() {
+        $this->perform_sequence_process();
+    }
+
+    /**
+     * perform_sequence_process
+     *
+     * @return void
+     */
+    public function perform_sequence_process() {
+
+        $register_process = apply_filters( 'mainwp_register_regular_sequence_process', array() );
+        $list_processes   = get_option( 'mainwp_regular_sequence_process_saved', array() );
+        if ( ! empty( $list_processes ) ) {
+            $list_processes = json_decode( $list_processes, true );
+        }
+        $current_pid = get_option( 'mainwp_regular_sequence_current_process_pid', array() );
+
+        $register_process = is_array( $register_process ) ? $register_process : array();
+        $list_processes   = is_array( $list_processes ) ? $list_processes : array();
+
+        $updated = false;
+        foreach ( $register_process as $name => $info ) {
+            if ( ! isset( $list_processes[ $name ] ) ) {
+                $list_processes[ $name ] = $info;
+                $updated                 = true;
+            } elseif ( array_diff( $info, $list_processes[ $name ] ) ) {
+                $list_processes[ $name ] = array_merger( $list_processes[ $name ], $info );
+                $updated                 = true;
+            }
+            if ( ! isset( $list_processes[ $name ]['priority'] ) ) {
+                $list_processes[ $name ]['priority'] = max( array_column( $list_processes, 'priority' ) ) + 1;
+                $updated                             = true;
+            }
+        }
+
+        if ( $updated ) {
+            usort(
+                $list_processes,
+                function ( $a, $b ) {
+                    return $a['priority'] <=> $b['priority'];
+                }
+            );
+            MainWP_Utility::update_option( 'mainwp_regular_sequence_process_saved', wp_json_encode( $list_processes ) );
+        }
+
+        $processes_list_value = array_values( $list_processes );
+
+        if ( $current_pid > count( $processes_list_value ) ) {
+            $current_pid = 0;
+        }
+
+        $process = isset( $processes_list_value[ $current_pid ] ) ? $processes_list_value[ $current_pid ] : array();
+
+        while ( $current_pid <= count( $processes_list_value ) ) {
+            if ( is_array( $process ) && isset( $process['callback'] ) && is_callable( $process['callback'] ) ) {
+                update_option( 'mainwp_regular_sequence_current_process_pid', $current_pid );
+                call_user_func( $process['callback'] );
+                break;
+            } else {
+                ++$current_pid;
+                $process = isset( $processes_list_value[ $current_pid ] ) ? $processes_list_value[ $current_pid ] : false;
+            }
+        }
     }
 }

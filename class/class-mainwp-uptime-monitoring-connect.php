@@ -106,15 +106,16 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
-     * fetch_uptime_monitor
+     * fetch uptime monitor.
      *
      * @param  mixed $monitor
      * @param  mixed $global_settings
      * @param  bool  $second_try
+     * @param  array $params params.
      *
      * @return mixed
      */
-    public function fetch_uptime_monitor( &$monitor, $global_settings = array(), $second_try = false ) {
+    public function fetch_uptime_monitor( &$monitor, $global_settings = array(), $second_try = false, $params = array() ) {
 
         $mo_url = static::get_apply_monitor_url( $monitor );
 
@@ -207,6 +208,52 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             $http_error = curl_error( $ch );
         }
 
+        $realurl = curl_getinfo( $ch, CURLINFO_EFFECTIVE_URL );
+
+        $host   = wp_parse_url( ( empty( $realurl ) ? $mo_url : $realurl ), PHP_URL_HOST );
+        $ip     = false;
+        $target = false;
+
+        $found     = false;
+        $dnsRecord = @dns_get_record( $host );
+
+        if ( false !== $dnsRecord && is_array( $dnsRecord ) ) {
+            if ( ! isset( $dnsRecord['ip'] ) ) {
+                foreach ( $dnsRecord as $dnsRec ) {
+                    if ( isset( $dnsRec['ip'] ) ) {
+                        $ip = $dnsRec['ip'];
+                        break;
+                    }
+                }
+            } else {
+                $ip = $dnsRecord['ip'];
+            }
+
+            if ( ! isset( $dnsRecord['host'] ) ) {
+                foreach ( $dnsRecord as $dnsRec ) {
+                    if ( $dnsRec['host'] === $host ) {
+                        if ( 'CNAME' === $dnsRec['type'] ) {
+                            $target = $dnsRec['target'];
+                        }
+                        $found = true;
+                        break;
+                    }
+                }
+            } else {
+                $found = ( $dnsRecord['host'] === $host );
+                if ( 'CNAME' === $dnsRecord['type'] ) {
+                    $target = $dnsRecord['target'];
+                }
+            }
+        }
+
+        if ( false === $ip ) {
+            $ip = gethostbynamel( $host );
+        }
+        if ( ( false !== $target ) && ( $target !== $host ) ) {
+            $host .= ' (CNAME: ' . $target . ')';
+        }
+
         // Close the curl session.
         curl_close( $ch );
 
@@ -218,7 +265,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $is_notallowed = static::is_http_code_type( 'notallowed', $http_code );
 
         if ( $retry_later ) {
-            $max_retries = static::get_apply_setting( 'maxretries', $monitor, $global_settings, -1, 0 );
+            $max_retries = static::get_apply_setting( 'maxretries', (int) $monitor->maxretries, $global_settings, -1, 0 );
             if ( $max_retries > 0 && $monitor->retries < $max_retries ) {
                 $is_pending = true;
                 ++$down_count;
@@ -226,7 +273,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             }
         } elseif ( ! $is_notallowed && empty( $data ) && 'ping' !== $mo_apply_type && ! $second_try ) {
             usleep( 200000 );
-            $this->fetch_uptime_monitor( $monitor, $global_settings, true );
+            $this->fetch_uptime_monitor( $monitor, $global_settings, true, $params );
         }
 
         $output                  = new \stdClass();
@@ -247,7 +294,28 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         $output->requests_info                         = array();
         $output->requests_info[ $monitor->monitor_id ] = $resp_info;
-        $this->handle_response_fetch_uptime( $data, $monitor, $output );
+
+        $handle_data = $this->handle_response_fetch_uptime( $data, $monitor, $output, $params );
+
+        // data compatible with data from try_visit().
+        $compatible_data = array(
+            'host'           => $host,
+            'httpCode'       => $http_code,
+            'httpCodeString' => MainWP_Utility::get_http_codes( $http_code ),
+            'check_time'     => is_array( $handle_data ) && isset( $handle_data['check_time'] ) ? $handle_data['check_time'] : time(),
+        );
+
+        if ( false !== $ip ) {
+            $compatible_data['ip'] = $ip;
+            $found                 = true;
+        }
+        $compatible_data['error'] = '' === $http_error && false === $found ? 'Invalid host.' : $http_error;
+
+        $status = MainWP_Monitoring_Handler::get_http_noticed_status_value( $monitor, $http_code );
+
+        $compatible_data['new_uptime_status'] = is_array( $handle_data ) && isset( $handle_data['new_uptime_status'] ) ? $handle_data['new_uptime_status'] : $status;
+
+        return $compatible_data;
     }
 
     /**
@@ -440,7 +508,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
                         $_try_second = false;
                         if ( $retry_later ) {
-                            $max_retries = static::get_apply_setting( 'maxretries', $website, $global_settings, -1, 0 );
+                            $max_retries = static::get_apply_setting( 'maxretries', (int) $website->maxretries, $global_settings, -1, 0 );
                             if ( $max_retries > 0 && $website->retries < $max_retries ) {
                                 $is_pending = true;
                                 ++$down_count;
@@ -472,7 +540,6 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                         $output->requests_info[ $mo_id ]['retry']      = $set_retry ? 1 : 0;
                         $output->requests_info[ $mo_id ]['down_count'] = $down_count;
                         $output->requests_info[ $mo_id ]['end']        = microtime( true );
-                        $output->requests_info[ $mo_id ]['use_me']     = microtime( true );
                     }
 
                     if ( null !== $handler ) {
@@ -543,7 +610,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $mo_apply_timeout = static::get_apply_setting( 'timeout', (int) $website->timeout, $global_settings, -1, 60 );
 
         if ( $retry_later ) {
-            $max_retries = static::get_apply_setting( 'maxretries', $website, $global_settings, -1, 0 );
+            $max_retries = static::get_apply_setting( 'maxretries', (int) $website->maxretries, $global_settings, -1, 0 );
             if ( $max_retries > 0 && $website->retries < $max_retries ) {
                 $is_pending = true;
                 ++$down_count;
@@ -596,9 +663,10 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
      * @param  mixed $data
      * @param  mixed $site
      * @param  mixed $output
+     * @param  array $params params.
      * @return mixed
      */
-    public function handle_response_fetch_uptime( $data, $monitor, &$output ) {
+    public function handle_response_fetch_uptime( $data, $monitor, &$output, $params = array() ) {
 
         $request_info = ! empty( $output->requests_info ) && is_array( $output->requests_info ) ? $output->requests_info : array();
         $resp_info    = ! empty( $request_info[ $monitor->monitor_id ] ) && is_array( $request_info[ $monitor->monitor_id ] ) ? $request_info[ $monitor->monitor_id ] : array();
@@ -655,7 +723,11 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             $heart_msg .= " {$code_msg}";
         }
 
-        $mo_apply_type = static::get_apply_setting( 'type', $monitor->type, $global_settings, 'useglobal', 'http' );
+        $mo_apply_type   = static::get_apply_setting( 'type', $monitor->type, $global_settings, 'useglobal', 'http' );
+        $use_mo_active   = static::get_apply_setting( 'active', (int) $monitor->active, $global_settings, -1, 0 );
+        $use_mo_interval = static::get_apply_setting( 'interval', (int) $monitor->interval, $global_settings, -1, 60 );
+
+        $keywordFound = true; // set it as found.
 
         if ( 'keyword' === $mo_apply_type ) {
             if ( ! is_string( $data ) ) {
@@ -675,6 +747,11 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             }
         }
 
+        // forced status down.
+        if ( ! $keywordFound ) {
+            $status = static::DOWN;
+        }
+
         if ( ! empty( $error ) ) {
             $heart_msg .= " {$error}";
         }
@@ -688,12 +765,12 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         }
         $sec_since_last = $previous_heartbeat && ! empty( $previous_heartbeat->time ) ? (int) $end - strtotime( $previous_heartbeat->time ) : 1;
 
-        $is_importance = $this->is_importance_status( $previous_status, $status ) ? 1 : 0;
-        $db_datetime   = mainwp_get_current_utc_datetime_db();
+        $importance  = $this->is_importance_status( $previous_status, $status ) ? 1 : 0;
+        $db_datetime = mainwp_get_current_utc_datetime_db();
 
         $heartbeat = array(
             'monitor_id' => $monitor->monitor_id,
-            'importance' => $is_importance,
+            'importance' => $importance,
             'status'     => $status,
             'time'       => $db_datetime,
             'ping_ms'    => (int) ( $ping * 1000 ), // convert seconds to milliseconds.
@@ -705,8 +782,26 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         MainWP_DB_Uptime_Monitoring::instance()->update_heartbeat( $heartbeat );
 
-        if ( ! empty( $monitor->wpid ) ) {
-            MainWP_DB::instance()->update_website_values( $monitor->wpid, array( 'http_response_code' => $http_code ) );
+        MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor(
+            array(
+                'monitor_id'  => $monitor->monitor_id,
+                'last_status' => $status,
+            )
+        );
+
+        MainWP_Uptime_Monitoring_Handle::instance()->calc_and_save_site_uptime_stat_hourly_data( $monitor->monitor_id, $heartbeat );
+
+        if ( ! empty( $monitor->wpid ) && empty( $monitor->issub ) && empty( $params['ignore_compatible_save'] ) ) {
+            // legacy compatible.
+            MainWP_Uptime_Monitoring_Handle::instance()->handle_update_website_legacy_uptime_status(
+                $monitor,
+                array(
+                    'httpCode'          => $http_code,
+                    'new_uptime_status' => $status,
+                    'importance'        => $importance,
+                    'check_time'        => strtotime( $db_datetime ),
+                )
+            );
         }
 
         MainWP_Uptime_Monitoring_Schedule::instance()->update_monitoring_time( $monitor, $set_retry ); // update monitor check info, and retry or not.
@@ -718,7 +813,9 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         MainWP_Logger::instance()->log_uptime_check( $debug );
 
         $debug  = ' [siteid=' . $monitor->wpid . '] :: [monitor_id=' . $monitor->monitor_id . ']';
+        $debug .= ' :: [monitor_active=' . $monitor->active . '] :: [apply_monitor_active=' . $use_mo_active . ']';
         $debug .= ' :: [monitor_type=' . $monitor->type . '] :: [apply_monitor_type=' . $use_mo_type . ']';
+        $debug .= ' :: [monitor_interval=' . $monitor->interval . '] :: [apply_monitor_interval=' . $use_mo_interval . ']';
         $debug .= ' :: [monitor_method=' . $monitor->method . '] :: [apply_monitor_method=' . $use_mo_method . ']';
         $debug .= ' :: [monitor_timeout=' . $monitor->timeout . '] :: [apply_monitor_timeout=' . $use_mo_timeout . ']';
         $debug .= ' :: [ping_ms=' . $heartbeat['ping_ms'] . ']';
@@ -730,6 +827,14 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         if ( empty( $data ) ) {
             MainWP_Logger::instance()->log_uptime_check( '[data=EMPTY]' );
         }
+
+        // for compatible http status data.
+        return array(
+            'httpCode'          => $http_code,
+            'new_uptime_status' => $status,
+            'importance'        => $importance,
+            'check_time'        => strtotime( $db_datetime ),
+        );
     }
 
 
@@ -808,16 +913,16 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
      *
      * @return array
      */
-    public static function get_mapping_status_code_names(){
+    public static function get_mapping_status_code_names() {
         return array(
-            static::TIMEOUTED_ERROR => 'TIMEOUTED_ERROR',
-            static::CERT_ERROR => 'CERT_ERROR',
+            static::TIMEOUTED_ERROR   => 'TIMEOUTED_ERROR',
+            static::CERT_ERROR        => 'CERT_ERROR',
             static::RESOLVEHOST_ERROR => 'RESOLVEHOST_ERROR',
-            static::UNDEFINED_ERROR => 'UNDEFINED_ERROR',
-            static::DOWN => 'DOWN',
-            static::NOTALLOWED => 'NOTALLOWED',
-            static::RETRY => 'RETRY',
-            static::UP => 'RETRY',
+            static::UNDEFINED_ERROR   => 'UNDEFINED_ERROR',
+            static::DOWN              => 'DOWN',
+            static::NOTALLOWED        => 'NOTALLOWED',
+            static::RETRY             => 'RETRY',
+            static::UP                => 'UP',
         );
     }
 
@@ -890,6 +995,11 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
      * @return mixed
      */
     public static function get_apply_setting( $name, $indiv_settings, $glo_settings, $apply_global_value, $default_value ) {
+
+        if ( false === $glo_settings ) {
+            $glo_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+        }
+
         if ( is_object( $indiv_settings ) && property_exists( $indiv_settings, $name ) ) {
             $indi_value = $indiv_settings->{$name};
         } elseif ( is_array( $indiv_settings ) && isset( $indiv_settings[ $name ] ) ) {
@@ -900,6 +1010,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             $indi_value = $default_value;
         }
         $glo_value = is_array( $glo_settings ) && isset( $glo_settings[ $name ] ) ? $glo_settings[ $name ] : $default_value;
+
+        // NOTE: need to match type of values.
         return ( $indi_value === $apply_global_value ) ? $glo_value : $indi_value; //phpcs:ignore -- NOSONAR - compatible.
     }
 
@@ -911,7 +1023,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
      * @return mixed
      */
     public function get_up_codes( $monitor, $global_settings ) {
-        return static::get_apply_setting( 'up_statuscodes_json', $monitor, $global_settings, 'useglobal', '' );
+        return static::get_apply_setting( 'up_status_codes', $monitor, $global_settings, 'useglobal', '' );
     }
 
 

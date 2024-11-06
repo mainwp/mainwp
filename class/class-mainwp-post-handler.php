@@ -1205,7 +1205,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
 
         $result       = MainWP_Monitoring_Handler::handle_check_website( $website );
         $http_code    = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
-        $check_result = MainWP_Connect::check_ignored_http_code( $http_code );
+        $check_result = MainWP_Connect::check_ignored_http_code( $http_code, $website );
+
+        if ( is_array( $result ) && isset( $result['new_uptime_status'] ) ) {
+            $check_result = $result['new_uptime_status'];
+        }
+
         die(
             wp_json_encode(
                 array(

@@ -325,11 +325,6 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 update_option( 'mainwp_default_monitoring_sites_per_page', ( isset( $_POST['mainwp_default_monitoring_sites_per_page'] ) ? intval( $_POST['mainwp_default_monitoring_sites_per_page'] ) : 25 ) );
             }
 
-            update_option( 'mainwp_disableSitesChecking', ( ! isset( $_POST['mainwp_disableSitesChecking'] ) ? 1 : 0 ) );
-
-            $val = isset( $_POST['mainwp_frequency_sitesChecking'] ) ? intval( $_POST['mainwp_frequency_sitesChecking'] ) : 1440;
-            update_option( 'mainwp_frequencySitesChecking', $val );
-
             update_option( 'mainwp_disableSitesHealthMonitoring', ( ! isset( $_POST['mainwp_disable_sitesHealthMonitoring'] ) ? 1 : 0 ) );
 
             $val = isset( $_POST['mainwp_site_healthThreshold'] ) ? intval( $_POST['mainwp_site_healthThreshold'] ) : 80;

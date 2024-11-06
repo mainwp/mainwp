@@ -291,7 +291,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         MainWP_System::enqueue_postbox_scripts();
 
         if ( isset( $_REQUEST['do'] ) ) {
-            if ( 'new' === $_REQUEST['do'] ) {
+            if ( 'new' === $_REQUEST['do'] || 'bulknew' === $_REQUEST['do'] ) {
                 return;
             }
         } elseif ( isset( $_GET['id'] ) || isset( $_GET['scanid'] ) || isset( $_GET['backupid'] ) || isset( $_GET['updateid'] ) || isset( $_GET['monitor_wpid'] ) || isset( $_GET['emailsettingsid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,ized
@@ -834,6 +834,15 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the website Administrator username.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                     <div class="ui left labeled input">
                         <input type="text" id="mainwp_managesites_add_wpadmin" name="mainwp_managesites_add_wpadmin" value="" />
+                    </div>
+                </div>
+            </div>
+            <input type="password" id="fake-disable-autofill" style="display:none;" name="fake-disable-autofill" />
+            <div class="ui grid field">
+                <label class="six wide column middle aligned"><?php esc_html_e( 'Administrator password', 'mainwp' ); ?></label>
+                <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the website Administrator password.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                    <div class="ui left labeled input">
+                        <input type="password" id="mainwp_managesites_add_admin_pwd" name="mainwp_managesites_add_admin_pwd" autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" value="" />
                     </div>
                 </div>
             </div>
@@ -1411,13 +1420,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
 
         // Load the Uptime monitoring widget.
-        if ( mainwp_current_user_have_right( 'dashboard', 'manage_uptime_monitoring' ) && static::$enable_widgets['uptime_monitoring_info'] ) {
-            MainWP_UI::add_widget_box( 'uptime_monitoring_info', array( MainWP_Uptime_Monitoring_Site_Widget::instance(), 'render_uptime_widget' ), static::$page, array( 1, 1, 4, 8 ) );
-        }
-
-        // Load the Uptime monitoring widget.
         if ( mainwp_current_user_have_right( 'dashboard', 'manage_uptime_monitoring' ) && static::$enable_widgets['uptime_monitoring_response_time'] ) {
-            MainWP_UI::add_widget_box( 'uptime_monitoring_response_time', array( MainWP_Uptime_Monitoring_Site_Widget::instance(), 'render_response_time_widget' ), static::$page, array( 1, 1, 4, 8 ) );
+            MainWP_UI::add_widget_box( 'uptime_monitoring_response_time', array( MainWP_Uptime_Monitoring_Site_Widget::instance(), 'render_response_times_widget' ), static::$page, array( 1, 1, 4, 8 ) );
         }
 
         // Load the Updates Overview widget.
@@ -1862,8 +1866,6 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $url       = ( isset( $_POST['mainwp_managesites_edit_wpurl_with_www'] ) && ( 'www' === sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_wpurl_with_www'] ) ) ) ? 'www.' : '' ) . MainWP_Utility::remove_http_www_prefix( $website->url, true );
             $url       = ( isset( $_POST['mainwp_managesites_edit_siteurl_protocol'] ) && ( 'https' === sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_siteurl_protocol'] ) ) ) ? 'https' : 'http' ) . '://' . MainWP_Utility::remove_http_prefix( $url, true );
 
-            $disableChecking       = isset( $_POST['mainwp_managesites_edit_disableChecking'] ) ? 0 : 1;
-            $checkInterval         = isset( $_POST['mainwp_managesites_edit_checkInterval'] ) ? intval( $_POST['mainwp_managesites_edit_checkInterval'] ) : 1440;
             $disableHealthChecking = isset( $_POST['mainwp_managesites_edit_disableSiteHealthMonitoring'] ) ? 0 : 1;
             $healthThreshold       = isset( $_POST['mainwp_managesites_edit_healthThreshold'] ) ? intval( $_POST['mainwp_managesites_edit_healthThreshold'] ) : 80;
 
@@ -1873,7 +1875,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $uniqueId          = isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_uniqueId'] ) ) : '';
             $ssl_version       = isset( $_POST['mainwp_managesites_edit_ssl_version'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_ssl_version'] ) ) : '';
 
-            MainWP_DB::instance()->update_website( $website->id, $url, $current_user->ID, $site_name, $site_admin, $groupids, $groupnames, $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifycertificate, $archiveFormat, $uniqueId, $http_user, $http_pass, $ssl_version, $disableChecking, $checkInterval, $disableHealthChecking, $healthThreshold );
+            MainWP_DB::instance()->update_website( $website->id, $url, $current_user->ID, $site_name, $site_admin, $groupids, $groupnames, $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifycertificate, $archiveFormat, $uniqueId, $http_user, $http_pass, $ssl_version, $disableHealthChecking, $healthThreshold );
 
             $new_client_id = isset( $_POST['mainwp_managesites_edit_client_id'] ) ? intval( $_POST['mainwp_managesites_edit_client_id'] ) : 0;
 
@@ -1926,7 +1928,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
             $monitoring_emails = isset( $_POST['mainwp_managesites_edit_monitoringNotificationEmails'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_monitoringNotificationEmails'] ) ) : '';
             $monitoring_emails = MainWP_Utility::valid_input_emails( $monitoring_emails );
-            MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', $monitoring_emails );
+            MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', trim( $monitoring_emails ) );
 
             $added = isset( $_POST['mainwp_managesites_edit_dt_added'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_dt_added'] ) ) : '';
             if ( ! empty( $added ) ) {
@@ -2357,6 +2359,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @param string $column_class class css for column.
      */
     public static function mainwp_managesites_form_import_sites_file_managewp( $label_class = 'three', $column_class = 'nine' ) {
+
         ?>
         <h3 class="ui dividing header">
             <?php echo esc_html_e( 'Import a Site in ManageWP', 'mainwp' ); ?>

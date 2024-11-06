@@ -1014,10 +1014,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'Ping childs sites'           => array( 'mainwp_cron_last_ping', 'mainwp_cronpingchilds_action', esc_html__( 'Once daily', 'mainwp' ), 'daily' ),
         );
 
-        $disableSitesMonitoring = get_option( 'mainwp_disableSitesChecking', 1 );
-        if ( ! $disableSitesMonitoring ) {
-            $cron_jobs['Child site uptime monitoring'] = array( 'mainwp_cron_checksites_last_timestamp', 'mainwp_croncheckstatus_action', esc_html__( 'Once every minute', 'mainwp' ), 'minutely' );
-        }
+        $cron_jobs['Child site uptime monitoring'] = array( 'mainwp_uptimecheck_auto_main_counter_lasttime_started', 'mainwp_cronuptimemonitoringcheck_action', esc_html__( 'Once every minute', 'mainwp' ), 'minutely' );
 
         $disableHealthChecking = get_option( 'mainwp_disableSitesHealthMonitoring', 1 );  // disabled by default.
         if ( ! $disableHealthChecking ) {
@@ -1896,9 +1893,19 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     public static function display_mainwp_options() {
         $options = MainWP_Server_Information_Handler::mainwp_options();
+
+        $enable_individual_uptime_monitoring = false;
+        if ( get_option( 'mainwp_individual_uptime_monitoring_schedule_enabled' ) ) {
+            $enable_individual_uptime_monitoring = true;
+        }
+
         // phpcs:disable WordPress.Security.EscapeOutput
         foreach ( $options as $option ) {
-            echo '<tr><td>' . $option['label'] . '</td><td>' . $option['value'] . '</td></tr>';
+            $addition_info = '';
+            if ( 'is_enable_automatic_check_uptime_monitoring' === $option['name'] && empty( $option['save_value'] ) && $enable_individual_uptime_monitoring ) { // global monitoring disabled.
+                $addition_info = '<br><em>' . esc_html__( 'Individual uptime monitoring is running', 'mainwp' ) . '</em>';
+            }
+            echo '<tr><td>' . $option['label'] . '</td><td>' . $option['value'] . $addition_info . '</td></tr>';
         }
         // phpcs:enable
     }

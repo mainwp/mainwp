@@ -130,7 +130,7 @@ class Connector_Posts extends Log_Connector {
         $default_other      = array(
             'post_date'     => '',
             'post_date_gmt' => '',
-            'new_status'    => '',
+            'new_uptime_status'    => '',
             'old_status'    => '',
             'post_id'       => '',
         );
@@ -193,7 +193,7 @@ class Connector_Posts extends Log_Connector {
             'singular_name' => '',
             'post_date'     => '',
             'post_date_gmt' => '',
-            'new_status'    => '',
+            'new_uptime_status'    => '',
             'old_status'    => '',
         );
 

@@ -388,6 +388,8 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $count_only = ! empty( $params['count'] ) ? true : false;
         $limit      = ! empty( $params['limit'] ) ? intval( $params['limit'] ) : 500;
 
+        $last_hours = ! empty( $params['hour'] ) ? intval( $params['hour'] ) : 0;
+
         $order = strtoupper( $order );
 
         $order = 'DESC' === $order || 'ASC' === $order ? $order : 'DESC';
@@ -398,6 +400,13 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             return 'SELECT count(*)
                 FROM ' . $this->table_name( 'action_log' ) . ' log
                 WHERE 1 ';
+        }
+
+        if ( ! empty( $last_hours ) ) {
+            return 'SELECT log.*
+                FROM ' . $this->table_name( 'action_log' ) . ' log
+                WHERE ' . $this->wpdb->prepare( ' log_timestamp > %d ', time() - $last_hours * HOUR_IN_SECONDS ) .
+                ' ORDER BY log_timestamp ' . $this->escape( $order );
         }
 
         return 'SELECT log.*
@@ -882,7 +891,6 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * 'uniqueid'.
      * 'verify'.
      * 'protocol'.
-     * 'disablechecking'.
      * 'checkinterval'.
      * 'disablehealthchecking'.
      * 'healththreshold'.
@@ -930,14 +938,6 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         if ( isset( $data['protocol'] ) && ( 'http' === $data['protocol'] || 'https' === $data['protocol'] ) ) {
             $url      = $data['protocol'] . '://' . MainWP_Utility::remove_http_prefix( $website->url, true );
             $sql_set .= ' url = "' . $this->escape( $url ) . '",';
-        }
-
-        if ( isset( $data['disablechecking'] ) ) {
-            $sql_set .= ' disable_status_check= "' . ( $data['disablechecking'] ? 1 : 0 ) . '",';
-        }
-
-        if ( isset( $data['checkinterval'] ) ) {
-            $sql_set .= ' status_check_interval= "' . intval( $data['checkinterval'] ) . '",';
         }
 
         if ( isset( $data['disablehealthchecking'] ) ) {
@@ -1016,7 +1016,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
         if ( isset( $data['monitoring_emails'] ) ) {
             $monitoring_emails = MainWP_Utility::valid_input_emails( $data['monitoring_emails'] );
-            MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', $monitoring_emails );
+            MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', ( $monitoring_emails ) );
 
         }
 

@@ -46,8 +46,8 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
     /**
      * Method render_indicator().
      *
-     * @param bool $indi_type Indicator type.
-     * @param bool $wrapper_cls field wrapper class.
+     * @param string $indi_type Indicator type.
+     * @param string $wrapper_cls field wrapper class.
      * @param bool $visible Current indicator status.
      */
     public static function render_indicator( $indi_type = 'field', $wrapper_cls = '', $visible = true ) {
@@ -141,11 +141,9 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'mainwp_disable_update_confirmations'        => 0,
             'mainwp_show_language_updates'               => 1,
             'mainwp_check_http_response'                 => 0,
-            'mainwp_ignore_HTTP_response_status'         => '',
             'mainwp_backup_before_upgrade'               => 0,
             'mainwp_backup_before_upgrade_days'          => 7,
             'mainwp_numberdays_Outdate_Plugin_Theme'     => 365,
-            'mainwp_disableSitesChecking'                => 1, // default disable.
             'mainwp_disableSitesHealthMonitoring'        => 1,
             'mainwp_sitehealthThreshold'                 => 80,
             'mainwp_enableLegacyBackupFeature'           => 0,
@@ -180,7 +178,6 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'mainwp_site_is_ignoreCoreUpdates'           => 0,
             'mainwp_site_is_ignorePluginUpdates'         => 0,
             'mainwp_site_is_ignoreThemeUpdates'          => 0,
-            'mainwp_site_status_check_interval'          => 0, // Use global setting.
             'mainwp_site_monitoring_notification_emails' => '',
             'mainwp_site_disable_health_check'           => 0,
             'mainwp_site_verify_certificate'             => 1,
@@ -197,19 +194,14 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'cost_tracker_thousand_separator'            => is_array( $defauls_currency_settings ) && isset( $defauls_currency_settings['thousand_separator'] ) ? $defauls_currency_settings['thousand_separator'] : null,
             'cost_tracker_decimal_separator'             => is_array( $defauls_currency_settings ) && isset( $defauls_currency_settings['decimal_separator'] ) ? $defauls_currency_settings['decimal_separator'] : null,
             'cost_tracker_decimals'                      => is_array( $defauls_currency_settings ) && isset( $defauls_currency_settings['decimals'] ) ? (int) $defauls_currency_settings['decimals'] : null,
-            'mainwp_frequencySitesChecking'              => 60,
             'mainwp_frequency_AutoUpdate'                => 'daily',
             'mainwp_dayinweek_AutoUpdate'                => 0,
             'mainwp_dayinmonth_AutoUpdate'               => 1,
             'mainwp_time_AutoUpdate'                     => '00:00',
-            'mainwp_edit_monitor_up_statuscodes_json'    => 'useglobal',
-            'mainwp_edit_monitor_active'                 => 2,
-            'mainwp_edit_monitor_active_global'          => 1,
+            'mainwp_edit_monitor_up_status_codes'    => 'useglobal',
             'mainwp_edit_monitor_maxretries'             => -1, // use global.
             'mainwp_edit_monitor_maxretries_global'      => 1,
             'mainwp_edit_monitor_monitoring_emails'      => '',
-            'mainwp_edit_monitor_method'                 => 'useglobal',
-            'mainwp_edit_monitor_method_global'          => 'get',
         );
 
         if ( 'all' === $field ) {

@@ -2,7 +2,7 @@
 /**
  * MainWP Check Childs Cron.
  *
- * Include cron/bootstrap.php & run mainwp_croncheckstatus_action.
+ * Include cron/bootstrap.php & run mainwp_cronchecksitehealth_action.
  *
  * @package MainWP/Dashboard
  */

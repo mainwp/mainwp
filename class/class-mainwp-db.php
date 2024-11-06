@@ -2376,6 +2376,13 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     public function update_website_values( $websiteid, $fields ) {
         if ( ! empty( $fields ) ) {
+            // Lock the data stream to prevent other processes from updating at the same time.
+            $sql = $this->wpdb->prepare(
+                'SELECT * FROM ' . $this->table_name( 'wp' ) . ' WHERE id = %d FOR UPDATE',
+                $websiteid
+            );
+            $this->wpdb->get_row( $sql );
+
             return $this->wpdb->update( $this->table_name( 'wp' ), $fields, array( 'id' => $websiteid ) );
         }
 

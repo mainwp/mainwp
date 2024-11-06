@@ -1416,3 +1416,9 @@ th .down.icon {
 #plugin-information-footer{
     display: none !important;
 }
+#widget-advanced-cost-tracker-widget .mainwp-scrolly-overflow {
+	height: calc(100% - 120px) !important;
+}
+#widget-advanced-cost-tracker-widget #mainwp-module-cost-tracker-costs-widget-table_wrapper .row:last-child {
+	overflow-x: auto;
+}

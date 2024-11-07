@@ -1496,6 +1496,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             $row_item = array(
                 'site_url'           => $this->mainwp_get_sanitized_post( 'site_url' ),
                 'admin_name'         => $this->mainwp_get_sanitized_post( 'admin_name' ),
+                'admin_password'     => $this->mainwp_get_sanitized_post( 'admin_password' ),
                 'site_name'          => $this->mainwp_get_sanitized_post( 'site_name' ),
                 'tag'                => $this->mainwp_get_sanitized_post( 'tag' ),
                 'security_id'        => $this->mainwp_get_sanitized_post( 'security_id' ),

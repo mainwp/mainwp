@@ -1774,6 +1774,7 @@ let mainwp_managesites_add = function () {
           jQuery('#mainwp_managesites_add_wpurl').val('');
           jQuery('#mainwp_managesites_add_wpurl_protocol').val('https');
           jQuery('#mainwp_managesites_add_wpadmin').val('');
+					jQuery('#mainwp_managesites_add_admin_pwd').val('');
           jQuery('#mainwp_managesites_add_uniqueId').val('');
           jQuery('#mainwp_managesites_add_addgroups').dropdown('clear');
           jQuery('#mainwp_managesites_verify_certificate').val(1);

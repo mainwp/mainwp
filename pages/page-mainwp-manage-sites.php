@@ -2130,17 +2130,20 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <div class="ui mainwp-widget segment">
             <div class="ui middle aligned left aligned compact stackable grid" id="mainwp-managesites-row-import-sites">
                 <div class="ui row">
-                    <div class="<?php echo $is_page_setup ? 'five' : 'two'; ?> wide column" >
+                    <div class="<?php echo $is_page_setup ? 'four' : 'two'; ?> wide column" >
                         <span class="ui text small"><strong><?php esc_html_e( 'Site URL (required)', 'mainwp' ); ?></strong></span>
                     </div>
-                    <div class="<?php echo $is_page_setup ? 'five' : 'two'; ?> wide column">
+                    <div class="<?php echo $is_page_setup ? 'four' : 'two'; ?> wide column">
                         <span class="ui text small"><?php esc_html_e( 'Site Name', 'mainwp' ); ?></span>
                     </div>
-                    <div class="<?php echo $is_page_setup ? 'five' : 'two'; ?> wide column">
+                    <div class="<?php echo $is_page_setup ? 'four' : 'two'; ?> wide column">
                         <span class="ui text small"><strong><?php esc_html_e( 'Admin Name (required)', 'mainwp' ); ?></strong></span>
                     </div>
+                    <div class="<?php echo $is_page_setup ? 'three' : 'two'; ?> wide column">
+                        <span class="ui text small"><strong><?php esc_html_e( 'Admin Password (required)', 'mainwp' ); ?></strong></span>
+                    </div>
                     <?php if ( ! $is_page_setup ) : ?>
-                        <div class="two wide column">
+                        <div class="one wide column">
                             <span class="ui text small"><?php esc_html_e( 'Tag', 'mainwp' ); ?></span>
                         </div>
                         <div class="one wide column">
@@ -2149,7 +2152,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <div class="two wide column">
                             <span class="ui text small"><?php esc_html_e( 'HTTP Username', 'mainwp' ); ?></span>
                         </div>
-                        <div class="two wide column">
+                        <div class="one wide column">
                             <span class="ui text small"><?php esc_html_e( 'HTTP Password', 'mainwp' ); ?></span>
                         </div>
                         <div class="one wide column">
@@ -2191,20 +2194,26 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $default_class = 'mainwp-managesites-import';
         return array(
             'fields'          => array(
-                'site_url'   => array(
+                'site_url'       => array(
                     'label' => 'Site URL',
                     'class' => $default_class . '-site-url',
                     'id'    => $default_class . '-site-url',
                 ),
-                'site_name'  => array(
+                'site_name'      => array(
                     'label' => 'Site Name',
                     'class' => $default_class . '-site-name',
                     'id'    => $default_class . '-site-name',
                 ),
-                'admin_name' => array(
+                'admin_name'     => array(
                     'label' => 'Admin Name',
                     'class' => $default_class . '-admin-name',
                     'id'    => $default_class . '-admin-name',
+                ),
+                'admin_password' => array(
+                    'label' => 'Admin Password',
+                    'class' => $default_class . '-admin-password',
+                    'id'    => $default_class . '-admin-password',
+                    'type'  => 'password',
                 ),
             ),
             'optional_fields' => array(
@@ -2292,33 +2301,33 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     public static function mainwp_managesites_form_import_sites_row( $index, $site, $is_page_setup, $display_none, $fields ) { // phpcs:ignore -- NOSONAR - complex.
         $general_fields  = $fields['fields'];
         $optional_fields = $fields['optional_fields'];
-        $row_class       = $is_page_setup ? 'five' : 'two';
+        $row_class       = $is_page_setup ? 'four' : 'two';
         ?>
         <div class="row mainwp-managesites-import-rows" id="mainwp-managesites-import-row-<?php echo esc_attr( $index ); ?>" data-index="<?php echo esc_attr( $index ); ?>">
         <?php
         foreach ( $general_fields as $key => $field ) :
-            if ( 'admin_name' === $key ) {
-                $row_class = $is_page_setup ? 'five' : 'two';
+            if ( 'admin_password' === $key ) {
+                $row_class = $is_page_setup ? 'three' : 'two';
             }
             $field_value = self::mainwp_managesites_form_import_sites_get_value( $site, $key, '' );
             $field_id    = $field['id'] . '-' . $index;
             ?>
             <div class="<?php echo esc_attr( $row_class ); ?> wide column">
                 <div class="ui mini fluid input">
-                    <input type="text" name="mainwp_managesites_import[<?php echo esc_attr( $index ); ?>][<?php echo esc_attr( $key ); ?>]" class="<?php echo esc_attr( $field['class'] ); ?>" value="<?php echo esc_attr( $field_value ); ?>"  data-row-index="<?php echo esc_attr( $index ); ?>" id="<?php echo esc_attr( $field_id ); ?>"/>
+                    <input type="<?php echo isset( $field['type'] ) && 'password' === $field['type'] ? 'password' : 'text'; ?>" name="mainwp_managesites_import[<?php echo esc_attr( $index ); ?>][<?php echo esc_attr( $key ); ?>]" class="<?php echo esc_attr( $field['class'] ); ?>" value="<?php echo esc_attr( $field_value ); ?>"  data-row-index="<?php echo esc_attr( $index ); ?>" id="<?php echo esc_attr( $field_id ); ?>"/>
                 </div>
             </div>
         <?php endforeach; ?>
         <?php if ( ! $is_page_setup ) : ?>
             <?php foreach ( $optional_fields as $key_optional => $field_optional ) : ?>
-                <?php $one_class = array( 'security_id', 'verify_certificate', 'ssl_version' ); ?>
+                <?php $one_class = array( 'security_id', 'verify_certificate', 'ssl_version', 'tag', 'http_password' ); ?>
                 <div class="<?php echo in_array( $key_optional, $one_class, true ) ? 'one' : 'two'; ?> wide column">
                     <?php self::mainwp_managesites_form_import_sites_render_input( $index, $key_optional, $field_optional, $field, $site ); ?>
                 </div>
             <?php endforeach; ?>
             <div class="column">
                 <div class="">
-                    <a class="mainwp-managesites-delete-import-row" href="#" onclick="mainwp_managesites_import_sites_delete_row(<?php echo esc_attr( $index ); ?>)">
+                    <a class="mainwp-managesites-delete-import-row" href="javascript:void(0)" onclick="mainwp_managesites_import_sites_delete_row(<?php echo esc_attr( $index ); ?>)">
                         <i class="trash alternate outline icon"></i>
                     </a>
                 </div>
@@ -2326,7 +2335,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <?php else : ?>
             <div class="one wide column">
                 <div class="ui mini fluid input">
-                    <a class="mainwp-managesites-more-import-row " onclick="mainwp_managesites_import_sites_more_row(<?php echo esc_attr( $index ); ?>)" style="margin-right: 10px !important;">
+                    <a class="mainwp-managesites-more-import-row " onclick="mainwp_managesites_import_sites_more_row(<?php echo esc_attr( $index ); ?>)" style="margin-right: 10px !important;" href="javascript:void(0)">
                         <i class="eye outline icon"  id="icon-visible-<?php echo esc_attr( $index ); ?>"></i>
                         <i class="eye slash outline icon" id="icon-hidden-<?php echo esc_attr( $index ); ?>" style="<?php echo esc_attr( $display_none ); ?>"></i>
                     </a>
@@ -2338,10 +2347,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <?php foreach ( $optional_fields as $key_optional => $field_optional ) : ?>
                 <div class="<?php echo ( 'verify_certificate' === $key_optional || 'ssl_version' === $key_optional ) ? 'two' : 'three'; ?> wide column mainwp-managesites-import-column-more-<?php echo esc_attr( $index ); ?>" style="<?php echo esc_attr( $display_none ); ?>">
                     <div class="">
-                        <div class="">
-                            <span class="ui small text"><?php echo esc_html( $field_optional['label'] ); ?></span>
-                            <?php self::mainwp_managesites_form_import_sites_render_input( $index, $key_optional, $field_optional, $field, $site ); ?>
-                        </div>
+                        <span class="ui small text"><?php echo esc_html( $field_optional['label'] ); ?></span>
+                        <?php self::mainwp_managesites_form_import_sites_render_input( $index, $key_optional, $field_optional, $field, $site ); ?>
                     </div>
                 </div>
             <?php endforeach; ?>

@@ -115,40 +115,40 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 do_action( 'mainwp_non_mainwp_changes_widget_top', $website );
                 ?>
                 <?php if ( $actions_info ) : ?>
-                <?php
-                /**
-                 * Action: mainwp_non_mainwp_changes_table_top
-                 *
-                 * Fires at the top of the Site Info table in Site Info widget on the Individual site overview page.
-                 *
-                 * @param object $website Object containing the child site info.
-                 *
-                 * @since 4.0
-                 */
-                do_action( 'mainwp_non_mainwp_changes_table_top', $website );
-                ?>
+                    <?php
+                    /**
+                     * Action: mainwp_non_mainwp_changes_table_top
+                     *
+                     * Fires at the top of the Site Info table in Site Info widget on the Individual site overview page.
+                     *
+                     * @param object $website Object containing the child site info.
+                     *
+                     * @since 4.0
+                     */
+                    do_action( 'mainwp_non_mainwp_changes_table_top', $website );
+                    ?>
                 <div class="ui small feed" id="mainwp-non-mainwp-changes-feed">
                     <?php foreach ( $actions_info as $data ) : ?>
-                    <?php
-                    if ( empty( $data->action_user ) || empty( $data->meta_data ) ) {
-                        continue;
-                    }
+                        <?php
+                        if ( empty( $data->action_user ) || empty( $data->meta_data ) ) {
+                            continue;
+                        }
 
-                    $meta_data = json_decode( $data->meta_data );
+                        $meta_data = json_decode( $data->meta_data );
 
-                    $action_class = '';
-                    if ( 'activated' === $data->action ) {
-                        $action_class = 'green check';
-                    } elseif ( 'deactivated' === $data->action ) {
-                        $action_class = 'yellow times';
-                    } elseif ( 'installed' === $data->action ) {
-                        $action_class = 'download blue';
-                    } elseif ( 'updated' === $data->action ) {
-                        $action_class = 'sync grey';
-                    } elseif ( 'deleted' === $data->action ) {
-                        $action_class = 'trash alternate outline red';
-                    }
-                    ?>
+                        $action_class = '';
+                        if ( 'activated' === $data->action ) {
+                            $action_class = 'green check';
+                        } elseif ( 'deactivated' === $data->action ) {
+                            $action_class = 'yellow times';
+                        } elseif ( 'installed' === $data->action ) {
+                            $action_class = 'download blue';
+                        } elseif ( 'updated' === $data->action ) {
+                            $action_class = 'sync grey';
+                        } elseif ( 'deleted' === $data->action ) {
+                            $action_class = 'trash alternate outline red';
+                        }
+                        ?>
                     <div class="event">
                         <div class="label">
                             <i class="<?php echo esc_attr( $action_class ); ?> icon"></i>

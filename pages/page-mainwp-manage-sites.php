@@ -1428,7 +1428,6 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( static::$enable_widgets['overview'] ) {
             MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), static::$page, array( 1, 1, 4, 18 ) );
         }
-
     }
 
     /**

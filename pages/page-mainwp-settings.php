@@ -178,8 +178,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             );
         }
 
-
-
         if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsEmail' ) ) {
             add_submenu_page(
                 'mainwp_tab',
@@ -1293,7 +1291,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
             MainWP_Utility::update_option( 'mainwp_maximum_uptime_monitoring_requests', ! empty( $_POST['mainwp_maximum_uptime_monitoring_requests'] ) ? intval( $_POST['mainwp_maximum_uptime_monitoring_requests'] ) : 10 );
 
-            //required check.
+            // required check.
             MainWP_Uptime_Monitoring_Schedule::instance()->check_to_disable_schedule_individual_uptime_monitoring(); // required a check to sync the settings.
 
             if ( isset( $_POST['mainwp_openssl_lib_location'] ) ) {
@@ -1453,8 +1451,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 <div class="ui bottom aligned labeled slider" id="mainwp_maximumInstallUpdateRequests_slider"></div>
                                 <div class="ui input">
                                 <input type="hidden" class="settings-field-value-change-handler" name="mainwp_maximumInstallUpdateRequests" id="mainwp_maximumInstallUpdateRequests" value="<?php echo false === get_option( 'mainwp_maximumInstallUpdateRequests' ) ? 3 : esc_attr( get_option( 'mainwp_maximumInstallUpdateRequests' ) ); ?>"/>
-                             </div>
-                           </div>
+                            </div>
+                            </div>
                         </div>
 
                         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-frontend-request" default-indi-value="10">

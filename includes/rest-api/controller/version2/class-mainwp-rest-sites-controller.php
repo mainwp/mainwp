@@ -1573,7 +1573,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             if ( is_array( $result ) && isset( $result['new_uptime_status'] ) ) {
                 $data['status'] = $result['new_uptime_status'];
             } else {
-                $data['status']    = MainWP_Monitoring_Handler::get_site_checking_status( $new_code );
+                $data['status'] = MainWP_Monitoring_Handler::get_site_checking_status( $new_code );
             }
             $data['http_code'] = $new_code;
         }
@@ -2171,36 +2171,36 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
 
         if ( ! empty( $args['full_data'] ) ) {
             $formatted_extra = array(
-                'id'                    => $site_object->id,
-                'url'                   => $site_object->url,
-                'name'                  => $site_object->name,
-                'offline_checks_last'   => $site_object->offline_checks_last,
-                'offline_check_result'  => $site_object->offline_check_result, // 1 - online, -1 offline.
-                'http_response_code'    => $site_object->http_response_code,
-                'disable_health_check'  => $site_object->disable_health_check,
-                'health_threshold'      => $site_object->health_threshold,
-                'note'                  => $site_object->note,
-                'plugin_upgrades'       => $site_object->plugin_upgrades,
-                'theme_upgrades'        => $site_object->theme_upgrades,
-                'translation_upgrades'  => $site_object->translation_upgrades,
-                'securityIssues'        => $site_object->securityIssues,
-                'themes'                => $site_object->themes,
-                'plugins'               => $site_object->plugins,
-                'automatic_update'      => ! empty( $site_object->automatic_update ) ? $site_object->automatic_update : 0,
-                'sync_errors'           => $site_object->sync_errors,
-                'last_post_gmt'         => $site_object->last_post_gmt,
-                'health_value'          => $site_object->health_value,
-                'phpversion'            => $site_object->phpversion,
-                'wp_upgrades'           => $site_object->wp_upgrades,
-                'security_stats'        => $site_object->security_stats,
-                'client_id'             => $site_object->client_id,
-                'adminname'             => $site_object->adminname,
-                'http_user'             => $site_object->http_user,
-                'http_pass'             => $site_object->http_pass,
-                'ssl_version'           => $site_object->ssl_version,
-                'signature_algo'        => $site_object->signature_algo,
-                'verify_method'         => $site_object->verify_method,
-                'verify_certificate'    => $site_object->verify_certificate,
+                'id'                   => $site_object->id,
+                'url'                  => $site_object->url,
+                'name'                 => $site_object->name,
+                'offline_checks_last'  => $site_object->offline_checks_last,
+                'offline_check_result' => $site_object->offline_check_result, // 1 - online, -1 offline.
+                'http_response_code'   => $site_object->http_response_code,
+                'disable_health_check' => $site_object->disable_health_check,
+                'health_threshold'     => $site_object->health_threshold,
+                'note'                 => $site_object->note,
+                'plugin_upgrades'      => $site_object->plugin_upgrades,
+                'theme_upgrades'       => $site_object->theme_upgrades,
+                'translation_upgrades' => $site_object->translation_upgrades,
+                'securityIssues'       => $site_object->securityIssues,
+                'themes'               => $site_object->themes,
+                'plugins'              => $site_object->plugins,
+                'automatic_update'     => ! empty( $site_object->automatic_update ) ? $site_object->automatic_update : 0,
+                'sync_errors'          => $site_object->sync_errors,
+                'last_post_gmt'        => $site_object->last_post_gmt,
+                'health_value'         => $site_object->health_value,
+                'phpversion'           => $site_object->phpversion,
+                'wp_upgrades'          => $site_object->wp_upgrades,
+                'security_stats'       => $site_object->security_stats,
+                'client_id'            => $site_object->client_id,
+                'adminname'            => $site_object->adminname,
+                'http_user'            => $site_object->http_user,
+                'http_pass'            => $site_object->http_pass,
+                'ssl_version'          => $site_object->ssl_version,
+                'signature_algo'       => $site_object->signature_algo,
+                'verify_method'        => $site_object->verify_method,
+                'verify_certificate'   => $site_object->verify_certificate,
             );
 
             $format_date = array( 'dtsAutomaticSync', 'dtsAutomaticSyncStart', 'dtsSync', 'dtsSyncStart' );

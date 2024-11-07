@@ -43,16 +43,16 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * @var array $enable_widgets
      */
     private static $enable_widgets = array(
-        'overview'           => true,
-        'connection_status'  => true,
+        'overview'                 => true,
+        'connection_status'        => true,
         'uptime_monitoring_status' => true,
-        'recent_posts'       => true,
-        'recent_pages'       => true,
-        'security_issues'    => true,
-        'backup_tasks'       => true,
-        'non_mainwp_changes' => true,
-        'clients'            => true,
-        'get-started'        => true,
+        'recent_posts'             => true,
+        'recent_pages'             => true,
+        'security_issues'          => true,
+        'backup_tasks'             => true,
+        'non_mainwp_changes'       => true,
+        'clients'                  => true,
+        'get-started'              => true,
     );
 
     /**

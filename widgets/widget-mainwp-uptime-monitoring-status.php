@@ -38,7 +38,7 @@ class MainWP_Uptime_Monitoring_Status { // phpcs:ignore Generic.Classes.OpeningB
 
         $up_number   = isset( $result['count_up'] ) ? intval( $result['count_up'] ) : 0;
         $down_number = isset( $result['count_down'] ) ? intval( $result['count_down'] ) : 0;
-        $total = $up_number + $down_number;
+        $total       = $up_number + $down_number;
 
         ?>
 

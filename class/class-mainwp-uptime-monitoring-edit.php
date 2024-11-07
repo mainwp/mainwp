@@ -149,7 +149,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                         }
                     } else {
                         $params = array(
-                            //'dev_log_query' => true,
+                            // 'dev_log_query' => true,
                         );
 
                         // add new sub monitor.

@@ -531,8 +531,8 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      *
      * Check if $_mainwp_disable_menus_items contains any menu items to hide.
      *
-     * @param string $level The level the menu item is on.
-     * @param array|string  $item The menu items meta data.
+     * @param string       $level The level the menu item is on.
+     * @param array|string $item The menu items meta data.
      *
      * @return bool True|False, default is False.
      */

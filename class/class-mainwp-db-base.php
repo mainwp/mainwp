@@ -120,7 +120,7 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @return mixed MySQL vresion.
      */
-    public function get_var_field($sql) {
+    public function get_var_field( $sql ) {
         return $this->wpdb->get_var( $sql );
     }
 

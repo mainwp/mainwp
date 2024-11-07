@@ -106,9 +106,9 @@ if ( empty( $heading ) ) {
                                                 <strong><?php esc_html_e( 'Event timestamp: ', 'mainwp' ); ?></strong>
                                                 <?php
                                                     $last_time = $site->offline_checks_last;
-                                                    if ( ! empty( $site->lasttime_check ) ) {
-                                                        $last_time = $site->lasttime_check;
-                                                    }
+                                                if ( ! empty( $site->lasttime_check ) ) {
+                                                    $last_time = $site->lasttime_check;
+                                                }
                                                     echo MainWP\Dashboard\MainWP_Utility::format_timestamp( $last_time ); // phpcs:ignore WordPress.Security.EscapeOutput
                                                 ?>
                                             </td>

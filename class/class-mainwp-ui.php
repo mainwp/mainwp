@@ -1395,7 +1395,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         }
         ?>
         <a href="profile.php" class="ui icon button" style="padding:0;overflow:hidden;" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Edit your profile.', 'mainwp' ); ?>" aria-label="<?php esc_attr_e( 'Edit your profile.', 'mainwp' ); ?>">
-            <?php echo get_avatar( $current_user, 36, '', '', array( 'extra_attr'=>'style="margin-bottom:-2px;"' ) ); ?>
+            <?php echo get_avatar( $current_user, 36, '', '', array( 'extra_attr' => 'style="margin-bottom:-2px;"' ) ); ?>
         </a>
         <?php
         return ob_get_clean();

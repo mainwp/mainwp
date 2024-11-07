@@ -424,7 +424,6 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
      * Method ajax_checksites()
      *
      * Check Child Sites.
-     *
      */
     public function ajax_checksites() {
         $this->secure_request( 'mainwp_checksites' );

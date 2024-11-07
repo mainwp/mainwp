@@ -329,7 +329,7 @@ KEY idx_wpid (wpid)";
             $params = array();
         }
 
-        $params['issub']         = 1;
+        $params['issub'] = 1;
 
         if ( empty( $params['view'] ) ) {
             $params['view'] = 'monitor_view';
@@ -1189,7 +1189,7 @@ KEY idx_wpid (wpid)";
      * @param  int    $monitor_id
      * @param  string $by
      * @param  mixed  $value
-     * @param  int  $obj
+     * @param  int    $obj
      * @return mixed
      */
     public function get_uptime_monitor_stat_hourly_by( $monitor_id, $by, $value = false, $obj = ARRAY_A ) {

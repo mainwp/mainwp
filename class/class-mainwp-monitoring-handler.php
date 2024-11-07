@@ -63,7 +63,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
         if ( isset( $result_comp['new_uptime_status'] ) ) {
             $is_online = $result_comp['new_uptime_status'];
         } else {
-            $is_online = MainWP_Connect::check_ignored_http_code( $new_code ); //legacy check http code.
+            $is_online = MainWP_Connect::check_ignored_http_code( $new_code ); // legacy check http code.
         }
 
         $importance = isset( $result_comp['importance'] ) ? $result_comp['importance'] : 0;

@@ -93,7 +93,7 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             do_action( 'mainwp_clients_info_widget_top', $website );
             ?>
 
-            <?php 
+            <?php
             if ( $client_info ) {
                 $default_client_fields = MainWP_Client_Handler::get_default_client_fields();
                 $custom_fields         = MainWP_DB_Client::instance()->get_client_fields( true, $website->client_id );
@@ -123,24 +123,24 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                             <div class="meta">
                                 <a href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $client_info['client_id'] ); ?>"><i class="envelope icon"></i> <?php echo esc_html( $client_info['client_email'] ); ?></a>
                             </div>
-                            <?php if ( isset( $client_info['note'] ) && !empty( $client_info['note'] ) ) : ?>
+                            <?php if ( isset( $client_info['note'] ) && ! empty( $client_info['note'] ) ) : ?>
                             <div class="description">
                                 <?php echo $client_info['note']; ?>
                             </div>
                             <?php endif; ?>
                         </div>
                         <div class="extra content">
-                            <span class="right floated" data-tooltip="<?php echo esc_attr__( 'Created on ', 'mainwp' ) . esc_attr( MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $client_info['created'] ) ) ) ; ?>" data-inverted="" data-position="top right"><?php echo esc_html( MainWP_Utility::time_elapsed_string( $client_info['created'] ) ); ?></span>
-                            <?php if ( isset( $client_info['client_facebook'] ) && !empty( $client_info['client_facebook'] ) ) : ?>
+                            <span class="right floated" data-tooltip="<?php echo esc_attr__( 'Created on ', 'mainwp' ) . esc_attr( MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $client_info['created'] ) ) ); ?>" data-inverted="" data-position="top right"><?php echo esc_html( MainWP_Utility::time_elapsed_string( $client_info['created'] ) ); ?></span>
+                            <?php if ( isset( $client_info['client_facebook'] ) && ! empty( $client_info['client_facebook'] ) ) : ?>
                                 <a href="<?php echo esc_url( $client_info['client_facebook'] ); ?>"><i class="facebook icon"></i></a>
                             <?php endif; ?>
-                            <?php if ( isset( $client_info['client_twitter'] ) && !empty( $client_info['client_twitter'] ) ) : ?>
+                            <?php if ( isset( $client_info['client_twitter'] ) && ! empty( $client_info['client_twitter'] ) ) : ?>
                                 <a href="<?php echo esc_url( $client_info['client_twitter'] ); ?>"><i class="twitter icon"></i></a>
                             <?php endif; ?>
-                            <?php if ( isset( $client_info['client_instagram'] ) && !empty( $client_info['client_instagram'] ) ) : ?>
+                            <?php if ( isset( $client_info['client_instagram'] ) && ! empty( $client_info['client_instagram'] ) ) : ?>
                                 <a href="<?php echo esc_url( $client_info['client_instagram'] ); ?>"><i class="instagram icon"></i></a>
                             <?php endif; ?>
-                            <?php if ( isset( $client_info['client_linkedin'] ) && !empty( $client_info['client_linkedin'] ) ) : ?>
+                            <?php if ( isset( $client_info['client_linkedin'] ) && ! empty( $client_info['client_linkedin'] ) ) : ?>
                                 <a href="<?php echo esc_url( $client_info['client_linkedin'] ); ?>"><i class="linkedin icon"></i></a>
                             <?php endif; ?>
                         </div>
@@ -159,10 +159,10 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                 do_action( 'mainwp_clients_info_table_bottom', $website );
                 ?>
                 <?php
-                } else {
-                    MainWP_UI::render_empty_element_placeholder();
-                }
-                ?>
+            } else {
+                MainWP_UI::render_empty_element_placeholder();
+            }
+            ?>
                 <?php
                 /**
                  * Action: mainwp_clients_info_widget_bottom

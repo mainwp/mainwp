@@ -299,10 +299,10 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         // data compatible with data from try_visit().
         $compatible_data = array(
-            'host'           => $host,
-            'httpCode'       => $http_code,
-            'httpCodeString' => MainWP_Utility::get_http_codes( $http_code ),
-            'check_offline_time'     => is_array( $handle_data ) && isset( $handle_data['check_offline_time'] ) ? $handle_data['check_offline_time'] : time(),
+            'host'               => $host,
+            'httpCode'           => $http_code,
+            'httpCodeString'     => MainWP_Utility::get_http_codes( $http_code ),
+            'check_offline_time' => is_array( $handle_data ) && isset( $handle_data['check_offline_time'] ) ? $handle_data['check_offline_time'] : time(),
         );
 
         if ( false !== $ip ) {
@@ -797,10 +797,10 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             MainWP_Uptime_Monitoring_Handle::instance()->handle_update_website_legacy_uptime_status(
                 $monitor,
                 array(
-                    'httpCode'          => $http_code,
-                    'new_uptime_status' => $status,
-                    'importance'        => $importance,
-                    'check_offline_time'        => strtotime( $db_datetime ),
+                    'httpCode'           => $http_code,
+                    'new_uptime_status'  => $status,
+                    'importance'         => $importance,
+                    'check_offline_time' => strtotime( $db_datetime ),
                 )
             );
         }
@@ -831,10 +831,10 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         // for compatible http status data.
         return array(
-            'httpCode'          => $http_code,
-            'new_uptime_status' => $status,
-            'importance'        => $importance,
-            'check_offline_time'        => strtotime( $db_datetime ),
+            'httpCode'           => $http_code,
+            'new_uptime_status'  => $status,
+            'importance'         => $importance,
+            'check_offline_time' => strtotime( $db_datetime ),
         );
     }
 

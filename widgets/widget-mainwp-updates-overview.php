@@ -404,14 +404,14 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         $can_total_update = ( $user_can_update_wordpress && $user_can_update_plugins && $user_can_update_themes && $user_can_update_translation ) ? true : false;
 
-        $cards = "four";
+        $cards = 'four';
         if ( 1 === (int) $mainwp_show_language_updates ) {
-            $cards = "five";
+            $cards = 'five';
         }
         if ( ! $globalView ) {
-            $cards = "";
+            $cards = '';
         }
-        
+
         static::render_updates_overview_widget_header( $lastSyncMsg );
         ?>
         <div class="mainwp-scrolly-overflow">
@@ -423,7 +423,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 <?php static::render_plugins_update( $user_can_update_plugins, $total_plugin_upgrades, $globalView, $current_wpid, $count_websites, $count_plugins ); ?>
                 <?php static::render_themes_update( $user_can_update_themes, $total_theme_upgrades, $globalView, $current_wpid, $count_websites, $count_themes ); ?>
                 <?php if ( 1 === (int) $mainwp_show_language_updates ) : ?>
-                <?php static::render_language_update( $user_can_update_translation, $total_translation_upgrades, $globalView, $current_wpid ); ?>
+                    <?php static::render_language_update( $user_can_update_translation, $total_translation_upgrades, $globalView, $current_wpid ); ?>
                 <?php endif; ?>
                 <?php static::render_abandoned_plugins( $total_plugins_outdate, $globalView, $current_wpid, $count_websites, $count_plugins ); ?>
                 <?php static::render_abandoned_themes( $total_themes_outdate, $globalView, $current_wpid, $count_websites, $count_themes ); ?>
@@ -460,7 +460,6 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $all_translations_updates
         );
         static::render_bottom( $websites, $globalView );
-
     }
 
     /**
@@ -468,8 +467,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      *
      * @param string $lastSyncMsg last sync info.
      */
-
-     public static function render_updates_overview_widget_header( $lastSyncMsg ) {
+    public static function render_updates_overview_widget_header( $lastSyncMsg ) {
         ?>
         <div class="ui grid mainwp-widget-header">
             <div class="sixteen wide column">
@@ -489,22 +487,21 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             </div>
         </div>
         <?php
-     }
+    }
 
-     /**
+    /**
      * Renders Updates Overview widget footer.
      *
      * @param string $lastSyncMsg last sync info.
      */
-
-     public static function render_updates_overview_widget_footer( $lastSyncMsg ) {
+    public static function render_updates_overview_widget_footer( $lastSyncMsg ) {
         ?>
         <div class="ui two column grid mainwp-widget-footer">
             <div class="left aligned middle aligned column"></div>
             <div class="right aligned middle aligned column"></div>
         </div>
         <?php
-     }
+    }
 
     /**
      * Render total update.
@@ -515,7 +512,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @param int             $limit_updates_all limit number of update per request, 0 is no limit.
      */
     public static function render_total_update( $total_upgrades, $can_total_update, $limit_updates_all, $count_websites, $count_plugins, $count_themes ) { // phpcs:ignore -- NOSONAR - complex.
-        
+
         $is_demo      = MainWP_Demo_Handle::is_demo_mode();
         $current_wpid = MainWP_System_Utility::get_current_wpid();
         $globalView   = true;
@@ -528,10 +525,10 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         } else {
             $outdated_percentage = '0.00%';
         }
-        
-        $fluid = "fluid";
+
+        $fluid = 'fluid';
         if ( ! $globalView ) {
-            $fluid = "";
+            $fluid = '';
         }
         ?>
         <input type="hidden" name="updatesoverview_limit_updates_all" id="updatesoverview_limit_updates_all" value="<?php echo intval( $limit_updates_all ); ?>">
@@ -589,7 +586,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
          *
          * @since 4.1
          */
-        do_action( 'mainwp_updates_overview_after_total_updates' );    
+        do_action( 'mainwp_updates_overview_after_total_updates' );
     }
 
     /**
@@ -610,7 +607,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         } else {
             $outdated_percentage = '0.00%';
         }
-        
+
         $is_demo                   = MainWP_Demo_Handle::is_demo_mode();
         $wpcore_update_disabled_by = '';
         if ( $globalView ) {
@@ -620,9 +617,9 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $wpcore_update_disabled_by = MainWP_System_Utility::disabled_wpcore_update_by( $current_wpid );
         }
 
-        $fluid = "fluid";
+        $fluid = 'fluid';
         if ( ! $globalView ) {
-            $fluid = "";
+            $fluid = '';
         }
         /**
          * Action: mainwp_updates_overview_before_update_details
@@ -646,7 +643,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         <div class="ui <?php echo esc_attr( $fluid ); ?> card">
             <div class="content">
                 <div class="header">
-                    <span class="ui large text"><i class="wordpress icon"></i> <?php echo MainWP_Utility::short_number_format( intval( $total_wp_upgrades ) ); ?></span>
+                    <span class="ui large text"><i class="WordPress icon"></i> <?php echo MainWP_Utility::short_number_format( intval( $total_wp_upgrades ) ); ?></span>
                     <?php if ( intval( $total_wp_upgrades ) > 0 ) : ?>
                         <span class="ui small red text">(<?php echo esc_html( $outdated_percentage ); ?>)</span>
                     <?php else : ?>
@@ -709,8 +706,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         } else {
             $outdated_percentage = '0.00%';
         }
-        
-        
+
         $is_demo = MainWP_Demo_Handle::is_demo_mode();
         if ( $globalView ) {
             $detail_plugins_up  = 'admin.php?page=UpdatesManage&tab=plugins-updates';
@@ -720,9 +716,9 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $update_all_tooltip = esc_html__( 'Clicking this button will update all Plugins on the website.', 'mainwp' );
         }
 
-        $fluid = "fluid";
+        $fluid = 'fluid';
         if ( ! $globalView ) {
-            $fluid = "";
+            $fluid = '';
         }
         /**
          * Action: mainwp_updates_overview_before_plugin_updates
@@ -803,13 +799,13 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $detail_themes_up   = 'admin.php?page=UpdatesManage&tab=themes-updates';
             $update_all_tooltip = esc_html__( 'Clicking this button will update all Themes on All your websites.', 'mainwp' );
         } else {
-            $detail_themes_up = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=themes-updates';
+            $detail_themes_up   = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=themes-updates';
             $update_all_tooltip = esc_html__( 'Clicking this button will update all Themes on the website.', 'mainwp' );
         }
 
-        $fluid = "fluid";
+        $fluid = 'fluid';
         if ( ! $globalView ) {
-            $fluid = "";
+            $fluid = '';
         }
         /**
          * Action: mainwp_updates_overview_before_theme_updates
@@ -880,15 +876,15 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
     public static function render_language_update( $user_can_update_translation, $total_translation_upgrades, $globalView, $current_wpid ) {
         $is_demo = MainWP_Demo_Handle::is_demo_mode();
         if ( $globalView ) {
-            $detail_trans_up = 'admin.php?page=UpdatesManage&tab=translations-updates';
+            $detail_trans_up    = 'admin.php?page=UpdatesManage&tab=translations-updates';
             $update_all_tooltip = esc_html__( 'Clicking this button will update all Translations on All your websites.', 'mainwp' );
         } else {
-            $detail_trans_up = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=translations-updates';
+            $detail_trans_up    = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=translations-updates';
             $update_all_tooltip = esc_html__( 'Clicking this button will update all Translations on the website.', 'mainwp' );
         }
-        $fluid = "fluid";
+        $fluid = 'fluid';
         if ( ! $globalView ) {
-            $fluid = "";
+            $fluid = '';
         }
         /**
          * Action: mainwp_updates_overview_before_translation_updates
@@ -955,16 +951,15 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $detail_aban_plugins = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=abandoned-plugins';
         }
 
-        
         if ( 0 < $count_plugins ) {
             $outdated_percentage = round( ( ( intval( $total_plugins_outdate ) / $count_plugins ) * 100 ), 2 ) . '%';
         } else {
             $outdated_percentage = '0.00%';
         }
-        
-        $fluid = "fluid";
+
+        $fluid = 'fluid';
         if ( ! $globalView ) {
-            $fluid = "";
+            $fluid = '';
         }
         /**
          * Action: mainwp_updates_overview_before_abandoned_plugins_themes
@@ -1014,7 +1009,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @param bool $globalView global    View or not.
      * @param int  $current_wpid         Current site ID.
      */
-    public static function render_abandoned_themes( $total_themes_outdate, $globalView, $current_wpid, $count_websites ,$count_themes ) {
+    public static function render_abandoned_themes( $total_themes_outdate, $globalView, $current_wpid, $count_websites, $count_themes ) {
         if ( $globalView ) {
             $detail_aban_themes = 'admin.php?page=UpdatesManage&tab=abandoned-themes';
         } else {
@@ -1026,9 +1021,9 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         } else {
             $outdated_percentage = '0.00%';
         }
-        $fluid = "fluid";
+        $fluid = 'fluid';
         if ( ! $globalView ) {
-            $fluid = "";
+            $fluid = '';
         }
         ?>
         <div class="ui <?php echo esc_attr( $fluid ); ?> light card">

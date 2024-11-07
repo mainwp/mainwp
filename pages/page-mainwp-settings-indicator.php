@@ -48,7 +48,7 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * @param string $indi_type Indicator type.
      * @param string $wrapper_cls field wrapper class.
-     * @param bool $visible Current indicator status.
+     * @param bool   $visible Current indicator status.
      */
     public static function render_indicator( $indi_type = 'field', $wrapper_cls = '', $visible = true ) {
         echo static::get_indicator( $indi_type, $wrapper_cls, $visible );  //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -198,7 +198,7 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'mainwp_dayinweek_AutoUpdate'                => 0,
             'mainwp_dayinmonth_AutoUpdate'               => 1,
             'mainwp_time_AutoUpdate'                     => '00:00',
-            'mainwp_edit_monitor_up_status_codes'    => 'useglobal',
+            'mainwp_edit_monitor_up_status_codes'        => 'useglobal',
             'mainwp_edit_monitor_maxretries'             => -1, // use global.
             'mainwp_edit_monitor_maxretries_global'      => 1,
             'mainwp_edit_monitor_monitoring_emails'      => '',

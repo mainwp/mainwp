@@ -45,6 +45,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
     private static $enable_widgets = array(
         'overview'           => true,
         'connection_status'  => true,
+        'uptime_monitoring_status' => true,
         'recent_posts'       => true,
         'recent_pages'       => true,
         'security_issues'    => true,
@@ -284,6 +285,11 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         // Load the Connection Status widget.
         if ( ! MainWP_System_Utility::get_current_wpid() && static::$enable_widgets['connection_status'] ) {
             MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
+        }
+
+        // Load the Connection Status widget.
+        if ( ! MainWP_System_Utility::get_current_wpid() && static::$enable_widgets['uptime_monitoring_status'] ) {
+            MainWP_UI::add_widget_box( 'uptime_monitoring_status', array( MainWP_Uptime_Monitoring_Status::get_class_name(), 'render_status' ), $page, array( 1, 1, 4, 9 ) );
         }
 
         // Load the Non-MainWP Changes widget.

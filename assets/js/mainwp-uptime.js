@@ -97,7 +97,7 @@ let uptime_monitoring_check_done = function () {
     if (mainwpVars.itemsDone == successSites) {
       mainwpVars.bulkTaskRunning = false;
       setTimeout(function () {
-        mainwpPopup('#mainwp-sync-sites-modal').close(true);
+        //mainwpPopup('#mainwp-sync-sites-modal').close(true);
       }, 3000);
     } else {
       mainwpVars.bulkTaskRunning = false;
@@ -117,7 +117,7 @@ let uptime_monitoring_check_next = function () {
   mainwpVars.currentThreads++;
   mainwpVars.itemsLeft--;
   let itemId = mainwpVars.itemsToCheck[mainwpVars.currentItem];
-  let siteId = mainwpVars.itemsToCheck[mainwpVars.currentItem];
+  let siteId = mainwpVars.sitesIds[mainwpVars.currentItem];
 
   mainwpVars.currentItem++;
 

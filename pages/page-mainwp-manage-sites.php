@@ -1376,6 +1376,11 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             }
         }
 
+        // Load the Uptime monitoring widget.
+        if ( mainwp_current_user_have_right( 'dashboard', 'manage_uptime_monitoring' ) && static::$enable_widgets['uptime_monitoring_response_time'] ) {
+            MainWP_UI::add_widget_box( 'uptime_monitoring_response_time', array( MainWP_Uptime_Monitoring_Site_Widget::instance(), 'render_response_times_widget' ), static::$page, array( 1, 1, 12, 14 ) );
+        }
+
         // Load the Notes widget.
         if ( static::$enable_widgets['notes'] ) {
             MainWP_UI::add_widget_box( 'notes', array( MainWP_Notes::get_class_name(), 'render' ), static::$page, array( 1, 1, 4, 11 ) );
@@ -1417,17 +1422,13 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         // Load the Securtiy Issues widget.
         if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) && static::$enable_widgets['security_issues'] ) {
             MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), static::$page, array( 1, 1, 4, 8 ) );
-        }
-
-        // Load the Uptime monitoring widget.
-        if ( mainwp_current_user_have_right( 'dashboard', 'manage_uptime_monitoring' ) && static::$enable_widgets['uptime_monitoring_response_time'] ) {
-            MainWP_UI::add_widget_box( 'uptime_monitoring_response_time', array( MainWP_Uptime_Monitoring_Site_Widget::instance(), 'render_response_times_widget' ), static::$page, array( 1, 1, 4, 8 ) );
-        }
+        }        
 
         // Load the Updates Overview widget.
         if ( static::$enable_widgets['overview'] ) {
             MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), static::$page, array( 1, 1, 4, 18 ) );
         }
+
     }
 
     /**

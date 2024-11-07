@@ -66,6 +66,7 @@ wpid int(11) NOT NULL,
 `retry_interval` int(11) NOT NULL DEFAULT 1,
 `up_status_codes` text NOT NULL DEFAULT '',
 `last_status` tinyint(1) DEFAULT 99,
+ `lasttime_check` int(11) NOT NULL,
 `retries` tinyint(1) DEFAULT 0,
 `maxretries` tinyint(1) DEFAULT -1,
 `maxredirects` tinyint(1) DEFAULT 2,
@@ -853,6 +854,23 @@ KEY idx_wpid (wpid)";
         return $this->wpdb->get_row( $sql );
     }
 
+    /**
+     * Count up down monitors.
+     *
+     * @param int   $siteid.
+     * @param array $days_num.
+     *
+     * @return array data.
+     */
+    public function get_count_up_down_monitors() {
+        $sql = ' SELECT ' .
+        ' ( SELECT count(*) FROM ' . $this->table_name( 'monitors' ) . ' up WHERE  up.last_status = 1 ) AS count_up, ' .
+        ' ( SELECT count(*) FROM ' . $this->table_name( 'monitors' ) . ' down WHERE  down.last_status = 0 ) AS count_down ' .
+        ' FROM ' . $this->table_name( 'monitors' ) . ' mo LIMIT 1';
+
+        return $this->wpdb->get_row( $sql, ARRAY_A );
+    }
+
 
     /**
      * Count last site's incidents.
@@ -1171,10 +1189,10 @@ KEY idx_wpid (wpid)";
      * @param  int    $monitor_id
      * @param  string $by
      * @param  mixed  $value
-     * @param  array  $params
+     * @param  int  $obj
      * @return mixed
      */
-    public function get_uptime_monitor_stat_hourly_by( $monitor_id, $by, $value = false, $params = array(), $obj = ARRAY_A ) {
+    public function get_uptime_monitor_stat_hourly_by( $monitor_id, $by, $value = false, $obj = ARRAY_A ) {
         if ( 'timestamp' === $by ) {
             if ( empty( $value ) ) {
                 return false;

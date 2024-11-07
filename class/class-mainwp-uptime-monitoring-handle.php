@@ -51,7 +51,6 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
         MainWP_Uptime_Monitoring_Edit::instance()->handle_save_settings();
         MainWP_Post_Handler::instance()->add_action( 'mainwp_uptime_monitoring_remove_monitor', array( &$this, 'ajax_remove_monitor' ) );
         MainWP_Post_Handler::instance()->add_action( 'mainwp_uptime_monitoring_get_response_times', array( MainWP_Uptime_Monitoring_Site_Widget::instance(), 'ajax_get_response_times' ) );
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_uptime_monitoring_table_get_child_rows', array( &$this, 'ajax_monitoring_table_get_child_rows' ) );
         MainWP_Post_Handler::instance()->add_action( 'mainwp_uptime_monitoring_uptime_check', array( &$this, 'ajax_check_uptime' ) );
 
         $pages = array( 'managesites' );
@@ -163,29 +162,6 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
         die( wp_json_encode( array( 'error' => esc_html__( 'Monitor could not be deleted. Please try again.', 'mainwp' ) ) ) );
     }
 
-
-
-    /**
-     * Ajax handle get monitoring table child rows.
-     *
-     * @return void
-     */
-    public function ajax_monitoring_table_get_child_rows() {
-
-        mainwp_secure_request( 'mainwp_uptime_monitoring_table_get_child_rows' );
-
-        $site_id = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : 0;
-
-        if ( empty( $site_id ) ) {
-            die( '<div class="ui message red">' . esc_html__( 'The Site ID is invalid or could not be found. Please try again.', 'mainwp' ) . '</div>' );
-        }
-
-        $sub_pages = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_sub_pages( array( 'wpid' => $site_id ) );
-
-        $safe_format = MainWP_Monitoring_Sites_List_Table::instance()->get_monitors_table_child_rows( $site_id, $sub_pages );
-
-        die( $safe_format );
-    }
 
     /**
      * Method ajax_check_uptime()
@@ -417,6 +393,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
         $new_code   = isset( $params['httpCode'] ) ? (int) $params['httpCode'] : 0;
         $status     = isset( $params['new_uptime_status'] ) ? (int) $params['new_uptime_status'] : 0;
         $importance = isset( $params['importance'] ) ? $params['importance'] : 0;
+        $time       = isset( $params['check_offline_time'] ) ? $params['check_offline_time'] : time();
 
         $noticed_value = $website->http_code_noticed;
 
@@ -425,8 +402,6 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
         } else {
             $new_noticed = $noticed_value;
         }
-
-        $time = isset( $params['check_time'] ) ? $params['check_time'] : time();
 
         // Save last status.
         MainWP_DB::instance()->update_website_values(
@@ -448,14 +423,15 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
      * Check if the Website returns and http errors.
      *
      * @param object $monitor Child Site monitor.
+     * @param array  $params Params.
      *
      * @return mixed False|try visit result.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::is_domain_valid()
      */
-    public static function check_website_uptime_monitoring_status( $monitor ) {
+    public static function check_website_uptime_monitoring_status( $monitor, $params = array() ) {
         $glo_settings = static::get_global_monitoring_settings();
-        return MainWP_Uptime_Monitoring_Connect::instance()->fetch_uptime_monitor( $monitor, $glo_settings, false, array( 'ignore_compatible_save' => 1 ) ); // Avoid updating compatible data.
+        return MainWP_Uptime_Monitoring_Connect::instance()->fetch_uptime_monitor( $monitor, $glo_settings, false, $params ); // Avoid updating compatible data.
     }
 
 
@@ -530,7 +506,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
      * @return int
      */
     public static function get_hourly_key_by_timestamp( $timestamp ) {
-        return strtotime( gmdate( 'Y-m-d H:00:00', $timestamp ) );
+        return strtotime( gmdate( 'Y-m-d H:00:00', (int) $timestamp ) );
     }
 
     /**

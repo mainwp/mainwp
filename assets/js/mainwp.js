@@ -3657,15 +3657,17 @@ jQuery(document).on('change', '#cb-select-all-top, #cb-select-all-bottom', funct
 
 jQuery(document).on('change', '.cb-select-all-parent-top, .cb-select-all-parent-bottom', function () {
 
-  let parentChecked = jQuery(this).prop('checked');
+  let parentChecked = jQuery(this).is(":checked");
   let parentSelector = jQuery(this).attr('cb-parent-selector') ?? false;
 
   if(false === parentSelector){
     return;
   }
-
+  console.log(parentSelector);
   jQuery(parentSelector + ' .ui.checkbox' ).find(':checkbox')
-    .prop('checked', function () {
+    .prop('checked', function() {
+      console.log(this);
+      console.log(parentChecked);
       if (parentChecked) {
         jQuery(this).closest('tr').addClass('selected');
         return true;

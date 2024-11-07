@@ -444,15 +444,6 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         </div>
         <?php
 
-        /**
-         * Action: mainwp_updates_overview_after_update_details
-         *
-         * Fires at the bottom of the Update Details section in the Updates Overview widget.
-         *
-         * @since 4.1
-         */
-        do_action( 'mainwp_updates_overview_after_update_details', $currentSite, $globalView, $userExtension );
-
         static::render_global_update(
             $user_can_update_wordpress,
             $total_wp_upgrades,

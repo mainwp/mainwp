@@ -68,7 +68,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         $importance = isset( $result_comp['importance'] ) ? $result_comp['importance'] : 0;
 
-        $time = isset( $result_comp['check_time'] ) ? $result_comp['check_time'] : time();
+        $time = isset( $result_comp['check_offline_time'] ) ? $result_comp['check_offline_time'] : time();
 
         $noticed_value = $website->http_code_noticed;
 

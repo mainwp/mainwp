@@ -302,7 +302,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             'host'           => $host,
             'httpCode'       => $http_code,
             'httpCodeString' => MainWP_Utility::get_http_codes( $http_code ),
-            'check_time'     => is_array( $handle_data ) && isset( $handle_data['check_time'] ) ? $handle_data['check_time'] : time(),
+            'check_offline_time'     => is_array( $handle_data ) && isset( $handle_data['check_offline_time'] ) ? $handle_data['check_offline_time'] : time(),
         );
 
         if ( false !== $ip ) {
@@ -784,8 +784,9 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor(
             array(
-                'monitor_id'  => $monitor->monitor_id,
-                'last_status' => $status,
+                'monitor_id'     => $monitor->monitor_id,
+                'last_status'    => $status,
+                'lasttime_check' => strtotime( $db_datetime ),
             )
         );
 
@@ -799,7 +800,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                     'httpCode'          => $http_code,
                     'new_uptime_status' => $status,
                     'importance'        => $importance,
-                    'check_time'        => strtotime( $db_datetime ),
+                    'check_offline_time'        => strtotime( $db_datetime ),
                 )
             );
         }
@@ -833,7 +834,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             'httpCode'          => $http_code,
             'new_uptime_status' => $status,
             'importance'        => $importance,
-            'check_time'        => strtotime( $db_datetime ),
+            'check_offline_time'        => strtotime( $db_datetime ),
         );
     }
 

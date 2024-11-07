@@ -103,7 +103,14 @@ if ( empty( $heading ) ) {
                                         </tr>
                                         <tr>
                                             <td style="vertical-align:top;text-align:left;padding:30px 30px 0 30px;">
-                                                <strong><?php esc_html_e( 'Event timestamp: ', 'mainwp' ); ?></strong><?php echo MainWP\Dashboard\MainWP_Utility::format_timestamp( $site->offline_checks_last ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                                                <strong><?php esc_html_e( 'Event timestamp: ', 'mainwp' ); ?></strong>
+                                                <?php
+                                                    $last_time = $site->offline_checks_last;
+                                                    if ( ! empty( $site->lasttime_check ) ) {
+                                                        $last_time = $site->lasttime_check;
+                                                    }
+                                                    echo MainWP\Dashboard\MainWP_Utility::format_timestamp( $last_time ); // phpcs:ignore WordPress.Security.EscapeOutput
+                                                ?>
                                             </td>
                                         </tr>
                                 <?php } ?>

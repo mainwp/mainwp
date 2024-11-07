@@ -81,12 +81,12 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     /**
      * Get wp_options database table view.
      *
-     * @param array $fields Extra option fields.
-     * @param bool  $default_value Whether or not to get default option fields.
+     * @param array  $fields Extra option fields.
+     * @param string $view_query view query.
      *
      * @return array wp_options view.
      */
-    public function get_option_view( $fields = array(), $default_value = true ) {
+    public function get_option_view( $fields = array(), $view_query = 'default' ) {
 
         if ( ! is_array( $fields ) ) {
             $fields = array();
@@ -96,7 +96,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         $included_opts = array();
 
-        if ( empty( $fields ) || $default_value ) {
+        if ( empty( $fields ) || 'default' === $view_query ) {
             $view                 .= ',(SELECT recent_comments.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_comments WHERE  recent_comments.wpid = intwp.id AND recent_comments.name = "recent_comments" LIMIT 1) AS recent_comments,
                     (SELECT recent_posts.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_posts WHERE  recent_posts.wpid = intwp.id AND recent_posts.name = "recent_posts" LIMIT 1) AS recent_posts,
                     (SELECT recent_pages.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_pages WHERE  recent_pages.wpid = intwp.id AND recent_pages.name = "recent_pages" LIMIT 1) AS recent_pages,
@@ -1521,7 +1521,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $params = array();
         }
 
-        $view           = isset( $params['view'] ) ? $params['view'] : '';
+        $view           = isset( $params['view'] ) ? $params['view'] : 'default'; // must be default to compatible with get_option_view().
         $selectgroups   = isset( $params['selectgroups'] ) && $params['selectgroups'] ? true : false;
         $search_site    = isset( $params['search'] ) ? $this->escape( trim( $params['search'] ) ) : null;
         $orderBy        = isset( $params['orderby'] ) ? $params['orderby'] : 'wp.url';
@@ -1775,7 +1775,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgroup.groupid = gr.id
 
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-            JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+            JOIN ' . $this->get_option_view( $extra_view, $view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
             WHERE 1 ' . $where . $where_group . $where_client . '
             GROUP BY wp.id, wp_sync.sync_id ' .
             $orderBy;
@@ -1786,7 +1786,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $join_client .
             $join_monitors . '
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-            JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+            JOIN ' . $this->get_option_view( $extra_view, $view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
             WHERE 1 ' . $where . $where_group . $where_client . '
             GROUP BY wp.id, wp_sync.sync_id ' .
             $orderBy;
@@ -1797,8 +1797,11 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         } elseif ( false !== $rowcount ) {
             $qry .= ' LIMIT ' . $rowcount;
         }
-        //phpcs:ignore
-        // error_log( $qry ); // NOSONAR - for dev.
+
+        if ( ! empty( $params['dev_log_query'] ) ) {
+            error_log( $qry ); //phpcs:ignore -- NOSONAR - for dev.
+        }
+
         return $qry;
     }
 
@@ -2208,7 +2211,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                  LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
                  LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
                  JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-                 JOIN ' . $this->get_option_view( $extra_view, true ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+                 JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
                  WHERE wpgroup.groupid = ' . $id . ' ' .
                 ( empty( $where ) ? '' : ' AND ' . $where ) . $where_allowed . $where_search . '
                  GROUP BY wp.id, wp_sync.sync_id
@@ -2217,7 +2220,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $qry = 'SELECT wp.*,wp_optionview.*, wp_sync.* FROM ' . $this->table_name( 'wp' ) . ' wp
                         JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid
                         JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-                        JOIN ' . $this->get_option_view( $extra_view, false ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+                        JOIN ' . $this->get_option_view( $extra_view, 'group' ) . ' wp_optionview ON wp.id = wp_optionview.wpid
                         WHERE wpgroup.groupid = ' . $id . ' ' . $where_allowed . $where_search .
                 ( empty( $where ) ? '' : ' AND ' . $where ) . ' ORDER BY ' . $orderBy;
             }

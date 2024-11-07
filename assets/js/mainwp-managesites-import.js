@@ -97,6 +97,7 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
     let import_wpname = decodedVal.name;
     let import_wpurl = decodedVal.url;
     let import_wpadmin = decodedVal.adminname;
+	let import_wpadmin_pwd = decodedVal.adminpwd;
     let import_wpgroups = decodedVal.wpgroups;
     let import_uniqueId = decodedVal.uniqueId;
     let import_http_username = decodedVal.http_user;
@@ -113,6 +114,9 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
         import_wpgroups = '';
     if (typeof (import_uniqueId) == "undefined")
         import_uniqueId = '';
+		if (typeof (import_wpadmin_pwd) == "undefined") {
+				import_wpadmin_pwd = '';
+		}
 
     jQuery('#mainwp_managesites_import_logging .log').append('<strong>[' + import_current + '] << ' + import_line_orig + '</strong><br/>');
 
@@ -176,17 +180,18 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
         } else if (response == 'OK') {
             let groupids = [];
             let data = mainwp_secure_data({
-                action: 'mainwp_addwp',
-                managesites_add_wpname: import_wpname,
-                managesites_add_wpurl: url,
-                managesites_add_wpadmin: import_wpadmin,
-                managesites_add_uniqueId: import_uniqueId,
-                'groupids[]': groupids,
-                groupnames_import: import_wpgroups,
-                add_me: import_current,
-                verify_certificate: import_verify_certificate,
-                managesites_add_http_user: import_http_username,
-                managesites_add_http_pass: import_http_password
+				action: "mainwp_addwp",
+				managesites_add_wpname: import_wpname,
+				managesites_add_wpurl: url,
+				managesites_add_wpadmin: import_wpadmin,
+				managesites_add_adminpwd: import_wpadmin_pwd,
+				managesites_add_uniqueId: import_uniqueId,
+				"groupids[]": groupids,
+				groupnames_import: import_wpgroups,
+				add_me: import_current,
+				verify_certificate: import_verify_certificate,
+				managesites_add_http_user: import_http_username,
+				managesites_add_http_pass: import_http_password,
             });
 
             jQuery.post(ajaxurl, data, function (res_things) {
@@ -401,65 +406,71 @@ jQuery(document).ready(function ($) {
 
 // Function to send temporary data of a row to the server.
 const mainwp_managesites_save_row_temp_data = function (row_index) {
-    const row = jQuery("#mainwp-managesites-import-row-" + row_index);
-    const site_url = row
-        .find(`input[name="mainwp_managesites_import[${row_index}][site_url]"]`)
-        .val();
-    const admin_name = row
-        .find(`input[name="mainwp_managesites_import[${row_index}][admin_name]"]`)
-        .val();
+	const row = jQuery("#mainwp-managesites-import-row-" + row_index);
+	const site_url = row
+		.find(`input[name="mainwp_managesites_import[${row_index}][site_url]"]`)
+		.val();
+	const admin_name = row
+		.find(`input[name="mainwp_managesites_import[${row_index}][admin_name]"]`)
+		.val();
+	const admin_password = row
+		.find(
+			`input[name="mainwp_managesites_import[${row_index}][admin_password]"]`
+		)
+		.val();
 
-    // Check if the fields site_url, admin_name are not empty.
-    if (site_url && admin_name) {
-        const site_name = row
-            .find(`input[name="mainwp_managesites_import[${row_index}][site_name]"]`)
-            .val();
-        const tag = row
-            .find(`input[name="mainwp_managesites_import[${row_index}][tag]"]`)
-            .val();
-        const security_id = row
-            .find(
-                `input[name="mainwp_managesites_import[${row_index}][security_id]"]`
-            )
-            .val();
-        const http_username = row
-            .find(
-                `input[name="mainwp_managesites_import[${row_index}][http_username]"]`
-            )
-            .val();
-        const http_password = row
-            .find(
-                `input[name="mainwp_managesites_import[${row_index}][http_password]"]`
-            )
-            .val();
-        const verify_certificate = row
-            .find(
-                `input[name="mainwp_managesites_import[${row_index}][verify_certificate]"]`
-            )
-            .val();
-        const ssl_version = row
-            .find(
-                `input[name="mainwp_managesites_import[${row_index}][ssl_version]"]`
-            )
-            .val();
-        const data = mainwp_secure_data({
-            action: "mainwp_save_temp_import_website",
-            status: "save_temp",
-            row_index: Number(row_index),
-            site_url: site_url,
-            admin_name: admin_name,
-            site_name: site_name,
-            tag: tag,
-            security_id: security_id,
-            http_username: http_username,
-            http_password: http_password,
-            verify_certificate: verify_certificate,
-            ssl_version: ssl_version,
-        });
+	// Check if the fields site_url, admin_name and admin_password are not empty.
+	if (site_url && admin_name && admin_password) {
+		const site_name = row
+			.find(`input[name="mainwp_managesites_import[${row_index}][site_name]"]`)
+			.val();
+		const tag = row
+			.find(`input[name="mainwp_managesites_import[${row_index}][tag]"]`)
+			.val();
+		const security_id = row
+			.find(
+				`input[name="mainwp_managesites_import[${row_index}][security_id]"]`
+			)
+			.val();
+		const http_username = row
+			.find(
+				`input[name="mainwp_managesites_import[${row_index}][http_username]"]`
+			)
+			.val();
+		const http_password = row
+			.find(
+				`input[name="mainwp_managesites_import[${row_index}][http_password]"]`
+			)
+			.val();
+		const verify_certificate = row
+			.find(
+				`input[name="mainwp_managesites_import[${row_index}][verify_certificate]"]`
+			)
+			.val();
+		const ssl_version = row
+			.find(
+				`input[name="mainwp_managesites_import[${row_index}][ssl_version]"]`
+			)
+			.val();
+		const data = mainwp_secure_data({
+			action: "mainwp_save_temp_import_website",
+			status: "save_temp",
+			row_index: Number(row_index),
+			site_url: site_url,
+			admin_name: admin_name,
+			admin_password: admin_password,
+			site_name: site_name,
+			tag: tag,
+			security_id: security_id,
+			http_username: http_username,
+			http_password: http_password,
+			verify_certificate: verify_certificate,
+			ssl_version: ssl_version,
+		});
 
-        // Send row save data to server.
-        jQuery.post(ajaxurl, data, function (response) { });
-    }
+		// Send row save data to server.
+		jQuery.post(ajaxurl, data, function (response) { });
+	}
 };
 // Function to get the domain part from the entered URL
 const mainwp_managesites_import_sites_extract_domain = function (url) { // NOSONAR - to compatible.
@@ -503,61 +514,104 @@ const mainwp_managesites_import_sites_more_row = function (index) {
     return false;
 };
 
-const mainwp_managesites_import_sites_page_setup_add_row = function (
-    row_index
-) {
-    row_index--;
-    return `<div class="row mainwp-managesites-import-rows" id="mainwp-managesites-import-row-${row_index}" data-index="${row_index}">
-        <div class="five wide column">
+const mainwp_managesites_import_sites_page_setup_add_row = function ( row_index ) {
+	row_index--;
+	return `<div class="row mainwp-managesites-import-rows" id="mainwp-managesites-import-row-${row_index}" data-index="${row_index}">
+        <div class="four wide column">
             ${mainwp_managesites_import_sites_render_input(
-            row_index,
-            "site_url",
-            "mainwp-managesites-import-site-url-" + row_index,
-            "mainwp-managesites-import-site-url"
-            )}
+		row_index,
+		"site_url",
+		"mainwp-managesites-import-site-url-" + row_index,
+		"mainwp-managesites-import-site-url"
+	)}
         </div>
-        <div class="five wide column">
+        <div class="four wide column">
             ${mainwp_managesites_import_sites_render_input(
-            row_index,
-            "site_name",
-            "mainwp-managesites-import-site-name-" + row_index,
-            "mainwp-managesites-import-site-name"
-            )}
+		row_index,
+		"site_name",
+		"mainwp-managesites-import-site-name-" + row_index,
+		"mainwp-managesites-import-site-name"
+	)}
         </div>
-        <div class="five wide column">
+        <div class="four wide column">
             ${mainwp_managesites_import_sites_render_input(
-            row_index,
-            "admin_name",
-            'mainwp-managesites-import-admin-name"-' + row_index,
-            "mainwp-managesites-import-admin-name"
-            )}
+		row_index,
+		"admin_name",
+		"mainwp-managesites-import-admin-name-" + row_index,
+		"mainwp-managesites-import-admin-name"
+	)}
+        </div>
+        <div class="three wide column">
+            ${mainwp_managesites_import_sites_render_input(
+		row_index,
+		"admin_password",
+		"mainwp-managesites-import-admin-password-" + row_index,
+		"mainwp-managesites-import-admin-password",
+		"",
+		"",
+		"password"
+	)}
         </div>
         <div class="one wide column">
             <div class="ui mini fluid input">
-            <a class="mainwp-managesites-more-import-row" href="#" onclick="mainwp_managesites_import_sites_more_row(${row_index})" style="margin-right: 10px !important;">
+            <a class="mainwp-managesites-more-import-row" href="javascript:void(0)" onclick="mainwp_managesites_import_sites_more_row(${row_index})" style="margin-right: 10px !important;">
                 <i class="eye outline icon" id="icon-visible-${row_index}" ></i>
                 <i class="eye slash outline icon" id="icon-hidden-${row_index}" style="display: none;"></i>
             </a>
             ${mainwp_managesites_import_sites_render_button_remove(row_index)}
             </div>
         </div>
-        <div class="seven wide column mainwp-managesites-import-column-more-${row_index}" style="display:none">
-            ${mainwp_managesites_import_sites_render_column(row_index, "Tag", "tag", "tag")}
+        <div class="three wide column mainwp-managesites-import-column-more-${row_index}" style="display:none">
+            ${mainwp_managesites_import_sites_render_column(
+		row_index,
+		"Tag",
+		"tag",
+		"tag"
+	)}
         </div>
-        <div class="seven wide column mainwp-managesites-import-column-more-${row_index}" style="display:none">
-            ${mainwp_managesites_import_sites_render_column( row_index, "Security ID", "security_id", "security-id" )}
+        <div class="three wide column mainwp-managesites-import-column-more-${row_index}" style="display:none">
+            ${mainwp_managesites_import_sites_render_column(
+		row_index,
+		"Security ID",
+		"security_id",
+		"security-id"
+	)}
         </div>
-        <div class="seven wide column mainwp-managesites-import-column-more-${row_index}" style="display:none">
-            ${mainwp_managesites_import_sites_render_column( row_index, "HTTP Username", "http_username", "http-username" )}
+        <div class="three wide column mainwp-managesites-import-column-more-${row_index}" style="display:none">
+            ${mainwp_managesites_import_sites_render_column(
+		row_index,
+		"HTTP Username",
+		"http_username",
+		"http-username"
+	)}
         </div>
-        <div class="seven wide column mainwp-managesites-import-column-more-${row_index}" style="display:none">
-            ${mainwp_managesites_import_sites_render_column( row_index, "HTTP Password", "http_password", "http-password" )}
+        <div class="three wide column mainwp-managesites-import-column-more-${row_index}" style="display:none">
+            ${mainwp_managesites_import_sites_render_column(
+		row_index,
+		"HTTP Password",
+		"http_password",
+		"http-password"
+	)}
         </div>
-        <div class="seven wide column mainwp-managesites-import-column-more-${row_index}" style="display:none">
-            ${mainwp_managesites_import_sites_render_column( row_index, "Verify Certificate", "verify_certificate", "verify-certificate", "number", 1 )}
+        <div class="two wide column mainwp-managesites-import-column-more-${row_index}" style="display:none">
+            ${mainwp_managesites_import_sites_render_column(
+		row_index,
+		"Verify Certificate",
+		"verify_certificate",
+		"verify-certificate",
+		"number",
+		1
+	)}
         </div>
-        <div class="seven wide column mainwp-managesites-import-column-more-${row_index}" style="display:none">
-            ${mainwp_managesites_import_sites_render_column( row_index, "SSL Version", "ssl_version", "ssl-version", "", "auto" )}
+        <div class="two wide column mainwp-managesites-import-column-more-${row_index}" style="display:none">
+            ${mainwp_managesites_import_sites_render_column(
+		row_index,
+		"SSL Version",
+		"ssl_version",
+		"ssl-version",
+		"",
+		"auto"
+	)}
         </div>
     </div>`;
 };
@@ -568,82 +622,94 @@ const mainwp_managesites_import_sites_add_row = function (row_index) {
         <div class="row mainwp-managesites-import-rows" id="mainwp-managesites-import-row-${row_index}" data-index="${row_index}" data-temp-id="${row_index}">
             <div class="two wide column">
                 ${mainwp_managesites_import_sites_render_input(
-                    row_index,
-                    "site_url",
-                    "mainwp-managesites-import-site-url-" + row_index,
-                    "mainwp-managesites-import-site-url"
+					row_index,
+					"site_url",
+					"mainwp-managesites-import-site-url-" + row_index,
+					"mainwp-managesites-import-site-url"
                 )}
             </div>
             <div class="two wide column">
                 ${mainwp_managesites_import_sites_render_input(
-                    row_index,
-                    "site_name",
-                    "mainwp-managesites-import-site-name-" + row_index,
-                    "mainwp-managesites-import-site-name"
+					row_index,
+					"site_name",
+					"mainwp-managesites-import-site-name-" + row_index,
+					"mainwp-managesites-import-site-name"
                 )}
             </div>
             <div class="two wide column">
                 ${mainwp_managesites_import_sites_render_input(
-                    row_index,
-                    "admin_name",
-                    "mainwp-managesites-import-admin-name-" + row_index,
-                    "mainwp-managesites-import-admin-name"
+					row_index,
+					"admin_name",
+					"mainwp-managesites-import-admin-name-" + row_index,
+					"mainwp-managesites-import-admin-name"
                 )}
             </div>
             <div class="two wide column">
                 ${mainwp_managesites_import_sites_render_input(
-                    row_index,
-                    "tag",
-                    "mainwp-managesites-import-tag-" + row_index,
-                    "mainwp-managesites-import-tag"
+					row_index,
+					"admin_password",
+					"mainwp-managesites-import-admin-password-" + row_index,
+					"mainwp-managesites-import-admin-password",
+					"",
+					"",
+					"password"
+                )}
+            </div>
+
+            <div class="one wide column">
+                ${mainwp_managesites_import_sites_render_input(
+					row_index,
+					"tag",
+					"mainwp-managesites-import-tag-" + row_index,
+					"mainwp-managesites-import-tag"
                 )}
             </div>
             <div class="one wide column">
                 ${mainwp_managesites_import_sites_render_input(
-                    row_index,
-                    "security_id",
-                    "mainwp-managesites-import-security-id-" + row_index,
-                    "mainwp-managesites-import-security-id"
+					row_index,
+					"security_id",
+					"mainwp-managesites-import-security-id-" + row_index,
+					"mainwp-managesites-import-security-id"
                 )}
             </div>
             <div class="two wide column">
                 ${mainwp_managesites_import_sites_render_input(
-                    row_index,
-                    "http_username",
-                    "mainwp-managesites-import-http-username-" + row_index,
-                    "mainwp-managesites-import-http-username"
-                )}
-            </div>
-            <div class="two wide column">
-                ${mainwp_managesites_import_sites_render_input(
-                    row_index,
-                    "http_password",
-                    "mainwp-managesites-import-http-password-" + row_index,
-                    "mainwp-managesites-import-http-password"
+					row_index,
+					"http_username",
+					"mainwp-managesites-import-http-username-" + row_index,
+					"mainwp-managesites-import-http-username"
                 )}
             </div>
             <div class="one wide column">
                 ${mainwp_managesites_import_sites_render_input(
-                    row_index,
-                    "verify_certificate",
-                    "mainwp-managesites-import-verify-certificate-" + row_index,
-                    "mainwp-managesites-import-verify-certificate",
-                    "number",
-                    1
+					row_index,
+					"http_password",
+					"mainwp-managesites-import-http-password-" + row_index,
+					"mainwp-managesites-import-http-password"
                 )}
             </div>
             <div class="one wide column">
                 ${mainwp_managesites_import_sites_render_input(
-                    row_index,
-                    "ssl_version",
-                    "mainwp-managesites-import-ssl-version" + row_index,
-                    "mainwp-managesites-import-ssl-version",
-                    "",
-                    "auto"
+					row_index,
+					"verify_certificate",
+					"mainwp-managesites-import-verify-certificate-" + row_index,
+					"mainwp-managesites-import-verify-certificate",
+					"number",
+					1
                 )}
             </div>
             <div class="one wide column">
-                ${mainwp_managesites_import_sites_render_button_remove(row_index)}
+                ${mainwp_managesites_import_sites_render_input(
+					row_index,
+					"ssl_version",
+					"mainwp-managesites-import-ssl-version" + row_index,
+					"mainwp-managesites-import-ssl-version",
+					"",
+					"auto"
+                )}
+            </div>
+            <div class="one wide column">
+                ${mainwp_managesites_import_sites_render_button_remove( row_index )}
             </div>
         </div>`;
 };
@@ -659,17 +725,15 @@ const mainwp_managesites_import_sites_render_column = function (
 ) {
     return `
         <div class="">
-            <div class="">
-                <span class="ui small text">${label}</span>
-                ${mainwp_managesites_import_sites_render_input(
-                    row_index,
-                    input_name,
-                    "mainwp-managesites-import-" + input_class + "-" + row_index,
-                    "mainwp-managesites-import-" + input_class,
-                    input_type,
-                    value
-                )}
-            </div>
+            <span class="ui small text">${label}</span>
+            ${mainwp_managesites_import_sites_render_input(
+                row_index,
+                input_name,
+                "mainwp-managesites-import-" + input_class + "-" + row_index,
+                "mainwp-managesites-import-" + input_class,
+                input_type,
+                value
+            )}
         </div>`;
 };
 
@@ -680,16 +744,13 @@ const mainwp_managesites_import_sites_render_input = function (
     id = "",
     class_st = "",
     type = "",
-    value = ""
+    value = "",
+    filed_type = "text",
 ) {
     return `
-            <div class="ui mini fluid input">
-                <input type="text" value="${value}" id="${id}" class="mini ${class_st}" name="mainwp_managesites_import[${row_index}][${name}]" data-row-index="${row_index}" ${
-                    type === "number"
-                    ? "oninput=\"this.value = this.value.replace(/[^0-9]/g, '')\""
-                    : ""
-                }/>
-            </div>`;
+		<div class="ui mini fluid input">
+			<input type="${filed_type}" value="${value}" id="${id}" class="mini ${class_st}" name="mainwp_managesites_import[${row_index}][${name}]" data-row-index="${row_index}" ${type === "number" ? "oninput=\"this.value = this.value.replace(/[^0-9]/g, '')\"" : "" }/>
+		</div>`;
 };
 
 // Render button remove row.
@@ -739,42 +800,49 @@ const mainwp_managesites_import_handle_form_before_submit = function () {
 
 // Check data in model table add new website.
 const mainwp_managesites_validate_import_rows = function (error_messages, is_valid_row = false) {
-  let has_table_data = false;
-  let valid_row_count = 0;
-  jQuery(
-    "#mainwp-managesites-row-import-sites .mainwp-managesites-import-rows"
-  ).each(function (index) {
-    let site_url = jQuery(
-      `input[name="mainwp_managesites_import[${index}][site_url]"]`
-    ).val();
-    let admin_name = jQuery(
-      `input[name="mainwp_managesites_import[${index}][admin_name]"]`
-    ).val();
+	let has_table_data = false;
+	let valid_row_count = 0;
+	jQuery(
+		"#mainwp-managesites-row-import-sites .mainwp-managesites-import-rows"
+	).each(function (index) {
+		let site_url = jQuery(
+			`input[name="mainwp_managesites_import[${index}][site_url]"]`
+		).val();
+		let admin_name = jQuery(
+			`input[name="mainwp_managesites_import[${index}][admin_name]"]`
+		).val();
+		let admin_password = jQuery(
+			`input[name="mainwp_managesites_import[${index}][admin_password]"]`
+		).val();
 
-    // If there is data in any row of the table, check the required fields
-    if (site_url || admin_name) {
-      has_table_data = true;
+		// If there is data in any row of the table, check the required fields
+		if (site_url || admin_name || admin_password) {
+			has_table_data = true;
 
-      let msg = "";
-      if (!site_url) {
-        msg = __("Site URL is required in row %1", index + 1);
-        error_messages.push(msg);
-      }
-      if (!admin_name) {
-        msg = __("Admin Name is required in row %1", index + 1);
-        error_messages.push(msg);
-      }
+			let msg = "";
+			if (!site_url) {
+				msg = __("Site URL is required in row %1", index + 1);
+				error_messages.push(msg);
+			}
+			if (!admin_name) {
+				msg = __("Admin Name is required in row %1", index + 1);
+				error_messages.push(msg);
+			}
+			if (!admin_password) {
+				msg = __("Admin Password is required in row %1", index + 1);
+				error_messages.push(msg);
+			}
 
-      // If both site_url and admin_name have values, increment the counter variable.
-      if (site_url && admin_name) {
-        valid_row_count++;
-      }
-    }
+			// If both site_url, admin_name and admin_password have values, increment the counter variable.
+			if (site_url && admin_name && admin_password) {
+				valid_row_count++;
+			}
+		}
 
-  });
-  if (is_valid_row && error_messages.length === 0 && valid_row_count === 0){
-    error_messages.push(__("At least one row must have both Site URL and Admin Name."));
-  }
+	});
+	if (is_valid_row && error_messages.length === 0 && valid_row_count === 0) {
+		error_messages.push(__("At least one row must have both Site URL, Admin Name and Admin Password."));
+	}
 
-  return has_table_data;
+	return has_table_data;
 }

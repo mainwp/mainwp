@@ -498,7 +498,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 $errors[] = esc_html__( 'Upload failed. Please, try again.', 'mainwp' ) . '<br />';
             }
         } elseif ( check_admin_referer( 'mainwp-admin-nonce' ) && isset( $_FILES['mainwp_managesites_file_managewp']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_managewp']['error'] ) {
-            $file = isset( $_FILES['mainwp_managesites_file_managewp'] ) ? $_FILES['mainwp_managesites_file_managewp'] : array();
+            $file = isset( $_FILES['mainwp_managesites_file_managewp'] ) ? $_FILES['mainwp_managesites_file_managewp'] : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             if ( isset( $file['tmp_name'] ) && is_uploaded_file( $file['tmp_name'] ) ) {
                 self::handle_import_site_file_zip_upload( $file, $errors );
             } else {
@@ -506,7 +506,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             }
         } elseif ( ! empty( $_POST['mainwp_managesites_import'] ) && check_admin_referer( 'mainwp-admin-nonce' ) ) {
             // Set site data by POST value.
-            $sites_data = $_POST['mainwp_managesites_import'] ? wp_unslash( $_POST['mainwp_managesites_import'] ) : array();
+            $sites_data = ! empty( $_POST['mainwp_managesites_import'] ) ? wp_unslash( $_POST['mainwp_managesites_import'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             if ( ! empty( $sites_data ) ) {
                 $import_data = array(); // Create default import data.
                 // Map data sites data to import_data.
@@ -520,6 +520,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         'name'               => ! empty( $site['site_name'] ) ? sanitize_text_field( wp_unslash( $site['site_name'] ) ) : '',
                         'url'                => ! empty( $site['site_url'] ) ? sanitize_text_field( wp_unslash( $site['site_url'] ) ) : '',
                         'adminname'          => ! empty( $site['admin_name'] ) ? sanitize_text_field( wp_unslash( $site['admin_name'] ) ) : '',
+                        'adminpwd'           => ! empty( $site['admin_password'] ) ? sanitize_text_field( wp_unslash( $site['admin_password'] ) ) : '',
                         'wpgroups'           => ! empty( $site['tag'] ) ? sanitize_text_field( wp_unslash( $site['tag'] ) ) : '',
                         'uniqueId'           => ! empty( $site['security_id'] ) ? sanitize_text_field( wp_unslash( $site['security_id'] ) ) : '',
                         'http_user'          => ! empty( $site['http_username'] ) ? sanitize_text_field( wp_unslash( $site['http_username'] ) ) : '',
@@ -527,6 +528,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         'verify_certificate' => ! empty( $site['verify_certificate'] ) && 1 !== (int) $site['verify_certificate'] ? intval( wp_unslash( $site['verify_certificate'] ) ) : 1,
                         'ssl_version'        => ! empty( $site['ssl_version'] ) ? sanitize_text_field( wp_unslash( $site['ssl_version'] ) ) : 'auto',
                     );
+
                 }
                 // Import website if import data is not empty.
                 if ( ! empty( $import_data ) ) {

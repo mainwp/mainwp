@@ -702,6 +702,24 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
         $table_features = apply_filters( 'mainwp_monitoring_table_features', $table_features );
         ?>
     <script type="text/javascript">
+
+                let _init_uptime_status_bar_popup_tooltip = function( wrapper ){
+                    let popWrapper = '';
+                    if( typeof wrapper === 'undefined' ){
+                        popWrapper = jQuery('#mainwp-manage-sites-table .mainwp-html-popup');
+                    } else {
+                        popWrapper = jQuery(wrapper).find('.mainwp-html-popup');
+                    }
+                    if( popWrapper !== '' ) {
+                        jQuery(popWrapper).each(
+                            function(){
+                                mainwp_init_html_popup(this);
+                            }
+                        );
+                    }
+                }
+
+
             jQuery( document ).ready( function( $ ) {
                 mainwp_manage_sites_screen_options = function () {
                     jQuery( '#mainwp-manage-sites-screen-options-modal' ).modal( {
@@ -891,22 +909,6 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                 }
 
                 _init_uptime_status_bar_popup_tooltip();
-
-                let _init_uptime_status_bar_popup_tooltip = function( wrapper ){
-                    let popWrapper = '';
-                    if( typeof wrapper === 'undefined' ){
-                        popWrapper = jQuery('#mainwp-manage-sites-table .mainwp-html-popup');
-                    } else {
-                        popWrapper = jQuery(wrapper).find('.mainwp-html-popup');
-                    }
-                    if( popWrapper !== '' ) {
-                        jQuery(popWrapper).each(
-                            function(){
-                                mainwp_init_html_popup(this);
-                            }
-                        );
-                    }
-                }
 
                 _init_manage_sites_screen = function() {
                         <?php

@@ -1422,7 +1422,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         // Load the Securtiy Issues widget.
         if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) && static::$enable_widgets['security_issues'] ) {
             MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), static::$page, array( 1, 1, 4, 8 ) );
-        }        
+        }
 
         // Load the Updates Overview widget.
         if ( static::$enable_widgets['overview'] ) {

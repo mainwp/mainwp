@@ -423,6 +423,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     'name'               => '',
                     'url'                => '',
                     'adminname'          => '',
+                    'adminpwd'           => '',
                     'wpgroups'           => '',
                     'uniqueId'           => '',
                     'http_user'          => '',
@@ -497,13 +498,6 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             } else {
                 $errors[] = esc_html__( 'Upload failed. Please, try again.', 'mainwp' ) . '<br />';
             }
-        } elseif ( check_admin_referer( 'mainwp-admin-nonce' ) && isset( $_FILES['mainwp_managesites_file_managewp']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_managewp']['error'] ) {
-            $file = isset( $_FILES['mainwp_managesites_file_managewp'] ) ? $_FILES['mainwp_managesites_file_managewp'] : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            if ( isset( $file['tmp_name'] ) && is_uploaded_file( $file['tmp_name'] ) ) {
-                self::handle_import_site_file_zip_upload( $file, $errors );
-            } else {
-                $errors[] = esc_html__( 'Upload failed. Please, try again.', 'mainwp' ) . '<br />';
-            }
         } elseif ( ! empty( $_POST['mainwp_managesites_import'] ) && check_admin_referer( 'mainwp-admin-nonce' ) ) {
             // Set site data by POST value.
             $sites_data = ! empty( $_POST['mainwp_managesites_import'] ) ? wp_unslash( $_POST['mainwp_managesites_import'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -573,170 +567,6 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             </div>
             <?php
         }
-    }
-
-    /**
-     * Method handle_import_site_file_zip_upload().
-     *
-     * Process uploaded ZIP file.
-     *
-     * @uses \ZipArchive
-     * @uses self::handle_import_site_file_zip_data()
-     * @uses self::handle_import_site_render_input_field()
-     *
-     * @param mixed $file file data.
-     * @param mixed $errors error message.
-     */
-    public static function handle_import_site_file_zip_upload($file, &$errors) { //phpcs:ignore -- NOSONAR - complex.
-        if ( 'application/zip' === $file['type'] || 'application/x-zip-compressed' === $file['type'] ) {
-            $tmp_path = isset( $_FILES['mainwp_managesites_file_managewp']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_managesites_file_managewp']['tmp_name'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification
-
-            $zip = new \ZipArchive();
-            if ( $zip->open( $tmp_path ) ) {
-                // Get the list of files in the ZIP.
-                $sites = self::handle_import_site_file_zip_data( $zip, 'sites.json' );
-                // Check if the sites.json file exists in the ZIP.
-                if ( ! empty( $sites ) && is_array( $sites ) ) {
-                    $site_values = array();
-                    $clients     = self::handle_import_site_file_zip_data( $zip, 'clients.json' );
-                    // Map site value.
-                    foreach ( $sites as $val_site ) {
-                        if ( null === $val_site['deletedAt'] ) {
-                            $site = array(
-                                'name'               => $val_site['wpTitle'] ?? '',
-                                'url'                => $val_site['wpUrl'] ?? '',
-                                'adminname'          => $val_site['wpUsername'] ?? '',
-                                'wpgroups'           => '',
-                                'uniqueId'           => '',
-                                'http_user'          => $val_site['httpUser'] ?? '',
-                                'http_pass'          => $val_site['httpPassword'] ?? '',
-                                'verify_certificate' => 1,
-                                'ssl_version'        => 'auto',
-                            );
-
-                            $site_values[] = array(
-                                'site'      => $site,
-                                'client_id' => $val_site['clientId'] ? intval( $val_site['clientId'] ) : '',
-                            );
-                        }
-                    }
-                    // Map client value form file client.json.
-                    $client_value = array();
-                    if ( ! empty( $clients ) ) {
-                        foreach ( $clients as $val_client ) {
-                            $full_name                  = trim( ( $val_client['firstName'] ?? '' ) . ' ' . ( $val_client['lastName'] ?? '' ) );
-                            $client_id                  = intval( $val_client['id'] );
-                            $client_value[ $client_id ] = array(
-                                'image'              => $val_client['imageUrl'] ?? '',
-                                'name'               => $full_name,
-                                'address_1'          => '',
-                                'address_2'          => '',
-                                'city'               => '',
-                                'zip'                => '',
-                                'state'              => '',
-                                'country'            => $val_client['countryCode'] ?? '',
-                                'note'               => $val_client['note'] ?? '',
-                                'selected_icon_info' => 'selected:wordpress;color:#34424d',
-                                'client_email'       => $val_client['email'] ?? '',
-                                'client_phone'       => $val_client['tel'] ?? '',
-                                'client_facebook'    => '',
-                                'client_twitter'     => '',
-                                'client_instagram'   => '',
-                                'client_linkedin'    => '',
-                                'suspended'          => 0,
-                                'primary_contact_id' => 0,
-                            );
-                        }
-                    }
-
-                    if ( ! empty( $site_values ) ) {
-                        static::handle_import_site_render_input_field( $site_values, $client_value );
-                    }
-                } else {
-
-                    $errors[] = esc_html__( 'Invalid data. Please, review the import file.', 'mainwp' ) . '<br />';
-                }
-            } else {
-                $errors[] = esc_html__( 'Cannot open ZIP file.', 'mainwp' ) . '<br />';
-            }
-        } else {
-            $errors[] = esc_html__( 'Please upload a valid ZIP file.', 'mainwp' ) . '<br />';
-        }
-    }
-
-    /**
-     * Method handle_import_site_file_zip_data()
-     *
-     *  Read data from a JSON file and then return an array containing the results.
-     *
-     * @param mixed  $zip ZipArchive class.
-     * @param string $file_path file path.
-     *
-     * @return array|bool The array containing data or results is incorrect.
-     */
-    public static function handle_import_site_file_zip_data( $zip, $file_path ) {
-        if ( false !== $zip->locateName( $file_path ) ) {
-            $json_content = $zip->getFromName( $file_path );
-            $content      = json_decode( $json_content, true );
-            // Check if the decryption was successful.
-            if ( json_last_error() === JSON_ERROR_NONE && ! empty( $content ) && is_array( $content ) ) {
-                return $content;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Method handle_import_site_render_input_field()
-     *
-     * Render input field modal import sites.
-     *
-     * @param array $site_values website value.
-     * @param array $client_values client value.
-     */
-    public static function handle_import_site_render_input_field( $site_values, $client_values ) {
-        $header_line        = trim( 'Site Name, Url, Admin Name, Tag,Security ID,HTTP Username,HTTP Password,Verify Certificate,SSL Version' ); // Set Header Line.
-        $client_has_website = array();
-        foreach ( $site_values as $k_item => $item ) {
-            $site = $item['site'];
-            $line = trim( implode( ',', $site ) );
-            ?>
-                <input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo esc_attr( $k_item + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $site ) ); ?>" original="<?php echo esc_attr( $line ); ?>" />
-            <?php
-            if ( isset( $item['client_id'] ) && ! empty( $item['client_id'] ) && isset( $client_values[ $item['client_id'] ] ) ) {
-                $client               = $client_values[ $item['client_id'] ];
-                $client_line          = trim( implode( ',', $client ) );
-                $client_has_website[] = $item['client_id'];
-                ?>
-                <input class="mainwp_managesites_import_client_lines" type="hidden" id="mainwp_managesites_import_client_line_<?php echo esc_attr( $k_item + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $client ) ); ?>" original="<?php echo esc_attr( $client_line ); ?>" />
-                <?php
-            }
-        }
-
-        // Render all customers without a website.
-        if ( ! empty( $client_values ) ) {
-            foreach ( $client_values as $k_client => $val_client ) {
-                if ( ! empty( $client_has_website ) && in_array( $k_client, $client_has_website ) ) {
-                    continue;
-                }
-                $client_line = trim( implode( ',', $val_client ) );
-                ?>
-                    <input class="mainwp_managesites_import_client_no_site_lines" type="hidden" id="mainwp_managesites_import_client_no_site_line_<?php echo esc_attr( $k_client + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $val_client ) ); ?>" original="<?php echo esc_attr( $client_line ); ?>" />
-                <?php
-            }
-        }
-        ?>
-        <input type="hidden" id="mainwp_managesites_do_import" value="1"/>
-        <input type="hidden" id="mainwp_managesites_total_import" value="<?php echo esc_attr( count( $site_values ) ); ?>"/>
-        <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_logging">
-            <span class="log ui small text">
-                <?php echo esc_html( $header_line ) . '<br/>'; ?>
-            </span>
-        </div>
-        <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_fail_logging" style="display: none;">
-            <?php echo esc_html( $header_line ); ?>
-        </div>
-        <?php
     }
 
     /**

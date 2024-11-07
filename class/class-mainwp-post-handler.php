@@ -1732,7 +1732,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      * @return mixed data value.
      */
     public function mainwp_get_sanitized_post( $key, $callback = 'sanitize_text_field' ) {
-        return isset( $_POST[ $key ] ) ? $callback( wp_unslash( $_POST[ $key ] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification
+        return isset( $_POST[ $key ] ) ? $callback( wp_unslash( $_POST[ $key ] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
     }
 
     /**

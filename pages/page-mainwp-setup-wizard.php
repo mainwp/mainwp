@@ -543,9 +543,8 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public function mwp_setup_connect_first_site() {
 
-        $has_file_upload    = isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_bulkupload']['error'];
-        $has_import_data    = ! empty( $_POST['mainwp_managesites_import'] );
-        $has_manage_wp_data = isset( $_FILES['mainwp_managesites_file_managewp'] ) && isset( $_FILES['mainwp_managesites_file_managewp']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_managewp']['error'];
+        $has_file_upload = isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_bulkupload']['error'];
+        $has_import_data = ! empty( $_POST['mainwp_managesites_import'] );
         ?>
         <h1><?php esc_html_e( 'Connect Your First Child Site', 'mainwp' ); ?></h1>
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-qsw-add-site-message' ) ) { ?>
@@ -575,14 +574,10 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 </div>
             </div>
         </div>
-            <?php if ( ( $has_file_upload || $has_import_data || $has_manage_wp_data ) && check_admin_referer( 'mainwp-admin-nonce' ) ) : ?>
+            <?php if ( ( $has_file_upload || $has_import_data ) && check_admin_referer( 'mainwp-admin-nonce' ) ) : ?>
                 <?php
-                    $url = 'admin.php?page=mainwp-setup';
-                if ( $has_manage_wp_data ) {
-                    $url .= '&step=monitoring';
-                } else {
+                    $url  = 'admin.php?page=mainwp-setup';
                     $url .= '&step=add_client';
-                }
                     MainWP_Manage_Sites::render_import_sites_modal( $url, 'Import Sites' );
                 ?>
             <?php else : ?>
@@ -644,18 +639,6 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         </div>
                     </div>
                     <div class="ui bottom attached tab segment" data-tab="multiple-site">
-                        <div class="ui form">
-                            <div class="ui hidden divider"></div>
-                            <div class="field">
-                                <p><strong><?php esc_html_e( 'Do you want to migrate sites form another WordPress management tool?', 'mainwp' ); ?></strong></p>
-                                <div class="ui hidden divider"></div>
-                                <div class="ui toggle checkbox">
-                                    <input type="checkbox" name="mainwp-qsw-migrate-managewp-umbrella" id="mainwp-qsw-migrate-managewp-umbrella">
-                                    <label for="mainwp-qsw-migrate-managewp-umbrella"><?php esc_html_e( 'Enable if you wish to migrate', 'mainwp' ); ?></label>
-                                </div>
-                            </div>
-                            <div class="ui hidden divider"></div>
-                        </div>
                         <div class="mainwp-wish-to-csv mainwp-wish-to-migrate">
                             <div class="ui blue message"><?php MainWP_Manage_Sites::mainwp_managesites_information_import_sites( true ); ?></div>
                             <?php MainWP_Manage_Sites::mainwp_managesites_form_import_sites(); ?>
@@ -685,33 +668,6 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                     </div>
                                 </div>
                             </div>
-                            <div class="ui hidden divider"></div>
-                        </div>
-                        <div class="mainwp-wish-to-zip mainwp-wish-to-migrate" style="display: none;">
-                            <div class="field">
-                                <label><?php esc_html_e( 'Import sites from ManageWP', 'mainwp' ); ?></label>
-                                <div class="ui blue message">
-                                    <div><?php esc_html_e( 'This option allows you to easily migrate form ManageWP to MainWP.', 'mainwp' ); ?></div>
-                                    <ol>
-                                        <li><?php esc_html_e( 'Go to your ManageWP dashboard', 'mainwp' ); ?></li>
-                                        <li><?php esc_html_e( 'Click on your name or profile image in the top-right corner of the ManageWP Dashboard', 'mainwp' ); ?></li>
-                                        <li><?php esc_html_e( 'From the dropdown menu, select Settings, then navigate to the Profile tab', 'mainwp' ); ?></li>
-                                        <li><?php esc_html_e( 'Scroll down to the "Export Personal Data" section', 'mainwp' ); ?></li>
-                                        <li><?php esc_html_e( 'Click the Request Data Export button', 'mainwp' ); ?></li>
-                                        <li><?php esc_html_e( 'ManageWP will prepare your data in a JSON format, and you will be notified once the export is complete', 'mainwp' ); ?></li>
-                                        <li><?php esc_html_e( 'Once you have the export, return here to the MainWP Quick Setup to continue the import process', 'mainwp' ); ?></li>
-                                        <li><?php esc_html_e( 'Upload the ZIP file obtained from exporting your data from ManageWP', 'mainwp' ); ?></li>
-                                        <li><?php esc_html_e( 'Click the Connect Sites button to proceed', 'mainwp' ); ?></li>
-                                    </ol>
-                                    <div><?php esc_html_e( 'This will import your sites along with associated client data.', 'mainwp' ); ?></div>
-                                </div>
-                                <div class="ui hidden divider"></div>
-                                <div class="ui hidden divider"></div>
-                                <div class="ui file input">
-                                    <input type="file" name="mainwp_managesites_file_managewp" id="mainwp_managesites_file_managewp" accept=".zip"/>
-                                </div>
-                            </div>
-                            <div class="ui hidden divider"></div>
                             <div class="ui hidden divider"></div>
                         </div>
                     </div>

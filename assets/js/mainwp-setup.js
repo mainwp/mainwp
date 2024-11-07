@@ -9,21 +9,7 @@ jQuery(function () {
       jQuery('.menu-connect-first-site .item').tab('change tab', tab_active);
     }
   });
-
-  jQuery('#mainwp-qsw-migrate-managewp-umbrella').change(function () {
-    jQuery('.mainwp-wish-to-migrate').fadeToggle(100);
-    jQuery('#mainwp_addsite_continue_button').hide();
-    jQuery('#mainwp-qsw-toggle-verify-mainwp-child-active').show();
-    jQuery('#mainwp_managesites_add_import').show();
-    if (jQuery(this).is(':checked')) {
-      jQuery('.mainwp-wish-to-migrate.mainwp-wish-to-zip').fadeIn(500);
-      jQuery('#mainwp-wish-to-migrate.mainwp-wish-to-csv').hide();
-    } else {
-      jQuery('.mainwp-wish-to-migrate.mainwp-wish-to-csv').fadeIn(500);
-      jQuery('#mainwp-wish-to-migrate.mainwp-wish-to-csv').hide();
-    }
-  });
-
+  
   jQuery('#mainwp-qsw-verify-mainwp-child-active').on('change', function () {
     if (jQuery(this).is(':checked')) {
       jQuery('#mainwp_managesites_add').attr("disabled", false);
@@ -39,7 +25,7 @@ jQuery(function () {
     let error_messages = mainwp_managesites_import_handle_form_before_submit();
     // If there is an error, prevent submission and display the error
     if (error_messages.length > 0) {
-			feedback('mainwp-message-zone', error_messages.join("<br/>"), "red");
+      feedback('mainwp-message-zone', error_messages.join("<br/>"), "red");
     } else {
       jQuery('#mainwp_connect_first_site_form').trigger('submit');
     }
@@ -201,7 +187,7 @@ let mainwp_setup_managesites_add = function () {
           managesites_add_wpname: name,
           managesites_add_wpurl: url,
           managesites_add_wpadmin: jQuery('#mainwp_managesites_add_wpadmin').val(),
-					managesites_add_adminpwd: jQuery('#mainwp_managesites_add_admin_pwd').val(),
+          managesites_add_adminpwd: jQuery('#mainwp_managesites_add_admin_pwd').val(),
           managesites_add_uniqueId: jQuery('#mainwp_managesites_add_uniqueId').val(),
           groupids: group_ids,
           qsw_page: true,
@@ -245,7 +231,7 @@ let mainwp_setup_managesites_add = function () {
             jQuery('#mainwp_managesites_add_wpurl').val('');
             jQuery('#mainwp_managesites_add_wpurl_protocol').val('https');
             jQuery('#mainwp_managesites_add_wpadmin').val('');
-						jQuery('#mainwp_managesites_add_admin_pwd').val('');
+            jQuery('#mainwp_managesites_add_admin_pwd').val('');
             jQuery('#mainwp_managesites_add_uniqueId').val('');
 
             jQuery("input[name^='creport_token_']").each(function () {

@@ -1218,14 +1218,13 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $title_page = esc_html__( 'Import Sites', 'mainwp' );
         $showpage   = 'BulkAddNew';
         static::render_header( $showpage );
-        $has_file_upload    = isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_bulkupload']['error'];
-        $has_import_data    = ! empty( $_POST['mainwp_managesites_import'] );
-        $has_manage_wp_data = isset( $_FILES['mainwp_managesites_file_managewp'] ) && isset( $_FILES['mainwp_managesites_file_managewp']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_managewp']['error'];
+        $has_file_upload = isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_bulkupload']['error'];
+        $has_import_data = ! empty( $_POST['mainwp_managesites_import'] );
 
         if ( ! mainwp_current_user_have_right( 'dashboard', 'add_sites' ) ) {
             mainwp_do_not_have_permissions( esc_html__( 'add sites', 'mainwp' ) );
             return;
-        } elseif ( ( $has_file_upload || $has_import_data || $has_manage_wp_data ) && check_admin_referer( 'mainwp-admin-nonce' ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Missing
+        } elseif ( ( $has_file_upload || $has_import_data ) && check_admin_referer( 'mainwp-admin-nonce' ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Missing
             static::render_import_sites_modal( 'admin.php?page=managesites&do=bulknew', $title_page );
         } else {
             ?>
@@ -1234,10 +1233,6 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <a class="item active" data-tab="mainwp-import-csv">
                         <i class="file excel icon"></i>
                         <?php esc_html_e( 'CSV Import', 'mainwp' ); ?>
-                    </a>
-                    <a class="item" data-tab="mainwp-import-manage-json">
-                        <i class="file import icon"></i>
-                        <?php esc_html_e( 'ManageWP JSON Import', 'mainwp' ); ?>
                     </a>
                 </div>
                 <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-sites-info-message' ) ) : ?>
@@ -1268,10 +1263,6 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                 <label for="mainwp_managesites_chk_header_first"><?php esc_html_e( 'CSV file contains a header', 'mainwp' ); ?></label>
                             </div>
                         </div>
-                    </div>
-                    <div class="ui bottom attached tab segment" data-tab="mainwp-import-manage-json">
-                        <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
-                        <?php self::mainwp_managesites_form_import_sites_file_managewp(); ?>
                     </div>
                     <div class="ui segment">
                         <div class="ui divider"></div>
@@ -2353,49 +2344,6 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 </div>
             <?php endforeach; ?>
         <?php endif; ?>
-        </div>
-        <?php
-    }
-
-    /**
-     * Method mainwp_managesites_form_import_sites_file_managewp()
-     *
-     * Render form import sites file.
-     *
-     * @param string $label_class class css for label.
-     * @param string $column_class class css for column.
-     */
-    public static function mainwp_managesites_form_import_sites_file_managewp( $label_class = 'three', $column_class = 'nine' ) {
-
-        ?>
-        <h3 class="ui dividing header">
-            <?php echo esc_html_e( 'Import a Site in ManageWP', 'mainwp' ); ?>
-            <div class="sub header"><?php esc_html_e( 'Import multiple websites from ManageWP to your MainWP Dashboard.', 'mainwp' ); ?></div>
-        </h3>
-        <div class="ui blue message">
-            <div><?php esc_html_e( 'This option allows you to easily migrate form ManageWP to MainWP.', 'mainwp' ); ?></div>
-            <ol>
-                <li><?php esc_html_e( 'Go to your ManageWP dashboard', 'mainwp' ); ?></li>
-                <li><?php esc_html_e( 'Click on your name or profile image in the top-right corner of the ManageWP Dashboard', 'mainwp' ); ?></li>
-                <li><?php esc_html_e( 'From the dropdown menu, select Settings, then navigate to the Profile tab', 'mainwp' ); ?></li>
-                <li><?php esc_html_e( 'Scroll down to the "Export Personal Data" section', 'mainwp' ); ?></li>
-                <li><?php esc_html_e( 'Click the Request Data Export button', 'mainwp' ); ?></li>
-                <li><?php esc_html_e( 'ManageWP will prepare your data in a JSON format, and you will be notified once the export is complete', 'mainwp' ); ?></li>
-                <li><?php esc_html_e( 'Once you have the export, return here to the MainWP Quick Setup to continue the import process', 'mainwp' ); ?></li>
-                <li><?php esc_html_e( 'Upload the ZIP file obtained from exporting your data from ManageWP', 'mainwp' ); ?></li>
-                <li><?php esc_html_e( 'Click the Connect Sites button to proceed', 'mainwp' ); ?></li>
-            </ol>
-            <div><?php esc_html_e( 'This will import your sites along with associated client data.', 'mainwp' ); ?></div>
-        </div>
-        <div class="ui grid field">
-            <label class="<?php echo esc_attr( $label_class ); ?> wide column middle aligned" for="mainwp_managesites_file_managewp">
-                <?php esc_html_e( 'Upload ZIP file', 'mainwp' ); ?>
-            </label>
-            <div class="<?php echo esc_attr( $column_class ); ?> wide column">
-                <div class="ui file input">
-                    <input type="file" name="mainwp_managesites_file_managewp" id="mainwp_managesites_file_managewp" accept=".zip"/>
-                </div>
-            </div>
         </div>
         <?php
     }

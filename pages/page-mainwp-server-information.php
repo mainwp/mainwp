@@ -937,7 +937,13 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 static::render_row_with_description( esc_html__( 'PHP Version', 'mainwp' ), '>=', '7.4', 'get_php_version', '', '', null );
                 static::render_row_with_description( esc_html__( 'SSL Extension Enabled', 'mainwp' ), '=', true, 'get_ssl_support', '', '', null );
                 static::render_row_with_description( esc_html__( 'cURL Extension Enabled', 'mainwp' ), '=', true, 'get_curl_support', '', '', null );
-                $openssl_version = 'OpenSSL/1.1.0';
+
+                $ssl_version     = OPENSSL_VERSION_TEXT;
+				$openssl_version = 'OpenSSL/1.1.0';
+				if ( false !== strpos( $ssl_version, 'LibreSSL' ) ) {
+					$openssl_version = 'LibreSSL/2.5.0';
+				}
+
                 static::render_row_with_description(
                     'cURL SSL Version',
                     '>=',
@@ -950,7 +956,20 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 );
 
                 if ( ! MainWP_Server_Information_Handler::curlssl_compare( $openssl_version, '>=' ) ) {
-                    echo "<tr class='warning'><td colspan='4'><i class='attention icon'></i>" . sprintf( esc_html__( 'Your host needs to update OpenSSL to at least version 1.1.0 which is already over 4 years old and contains patches for over 60 vulnerabilities.%1$sThese range from Denial of Service to Remote Code Execution. %2$sClick here for more information.%3$s', 'mainwp' ), '<br/>', '<a href="https://community.letsencrypt.org/t/openssl-client-compatibility-changes-for-let-s-encrypt-certificates/143816" target="_blank">', '</a>' ) . '</td></tr>';
+                    ?>
+						<tr class='warning'>
+							<td colspan='4'>
+								<i class='attention icon'></i>
+								<?php
+                                if ( false !== strpos( $ssl_version, 'LibreSSL' ) ) {
+                                    printf( esc_html__( 'Your host needs to update LibreSSL to at least version 2.5.0 which is already over 4 years old and contains patches for over 60 vulnerabilities.%1$sThese range from Denial of Service to Remote Code Execution. %2$sClick here for more information.%3$s', 'mainwp' ), '<br/>', '<a href="https://www.libressl.org/" target="_blank">', '</a>' );
+                                } else {
+                                    printf( esc_html__( 'Your host needs to update OpenSSL to at least version 1.1.0 which is already over 4 years old and contains patches for over 60 vulnerabilities.%1$sThese range from Denial of Service to Remote Code Execution. %2$sClick here for more information.%3$s', 'mainwp' ), '<br/>', '<a href="https://community.letsencrypt.org/t/openssl-client-compatibility-changes-for-let-s-encrypt-certificates/143816" target="_blank">', '</a>' );
+                                }
+								?>
+							</td>
+						</tr>
+					<?php
                 }
                 static::render_row_with_description( esc_html__( 'MySQL Version', 'mainwp' ), '>=', '5.0', 'get_mysql_version', '', '', null );
                 ?>

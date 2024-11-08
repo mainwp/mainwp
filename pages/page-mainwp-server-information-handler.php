@@ -106,10 +106,26 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
     public static function curlssl_compare( $version, $operator ) {
         if ( function_exists( 'curl_version' ) ) {
             $ver = static::get_curl_ssl_version();
-            return version_compare( $ver, $version, $operator );
+            return version_compare( static::extract_version( $ver ), static::extract_version( $version ), $operator );
         }
         return false;
     }
+
+	/**
+	 * Method extract_version()
+	 *
+	 * Function to extract version from string for both OpenSSL and LibreSSL
+	 *
+	 * @param string $version_string Version OpenSSL and LibreSSL.
+	 *
+	 * @return mixed null|string
+	 */
+	public static function extract_version( $version_string ) {
+		if ( preg_match( '/(?:LibreSSL|OpenSSL)[\/ ]([\d.]+)/', $version_string, $matches ) ) {
+			return $matches[1];
+		}
+		return null;
+	}
 
     /**
      * Gets file system method.

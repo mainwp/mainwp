@@ -111,21 +111,21 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         return false;
     }
 
-	/**
-	 * Method extract_version()
-	 *
-	 * Function to extract version from string for both OpenSSL and LibreSSL
-	 *
-	 * @param string $version_string Version OpenSSL and LibreSSL.
-	 *
-	 * @return mixed null|string
-	 */
-	public static function extract_version( $version_string ) {
-		if ( preg_match( '/(?:LibreSSL|OpenSSL)[\/ ]([\d.]+)/', $version_string, $matches ) ) {
-			return $matches[1];
-		}
-		return null;
-	}
+    /**
+     * Method extract_version()
+     *
+     * Function to extract version from string for both OpenSSL and LibreSSL
+     *
+     * @param string $version_string Version OpenSSL and LibreSSL.
+     *
+     * @return mixed null|string
+     */
+    public static function extract_version( $version_string ) {
+        if ( preg_match( '/(?:LibreSSL|OpenSSL)[\/ ]([\d.]+)/', $version_string, $matches ) ) {
+            return $matches[1];
+        }
+        return null;
+    }
 
     /**
      * Gets file system method.

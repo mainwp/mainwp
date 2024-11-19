@@ -2041,8 +2041,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 die( 'Not found sites' );
             }
 
-            $keys           = array( 'name', 'url', 'adminname', 'wpgroups', 'uniqueId', 'http_user', 'http_pass', 'verify_certificate', 'ssl_version' );
-            $allowedHeaders = array( 'site name', 'url', 'admin name', 'group', 'security id', 'http username', 'http password', 'verify certificate', 'ssl version' );
+            $keys           = array( 'name', 'url', 'adminname', 'adminpasswd', 'wpgroups', 'uniqueId', 'http_user', 'http_pass', 'verify_certificate', 'ssl_version' );
+            $allowedHeaders = array( 'site name', 'url', 'admin name', 'admin password', 'tag', 'security id', 'http username', 'http password', 'verify certificate', 'ssl version' );
 
             $csv = implode( ',', $allowedHeaders ) . "\r";
             MainWP_DB::data_seek( $websites, 0 );

@@ -68,8 +68,8 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
      * @return string Backup Site html.
      */
     public static function render_backup_site( &$website ) {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'execute_backups' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'execute backups', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'execute backups', 'mainwp' ) );
             return;
         }
 

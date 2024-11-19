@@ -580,4 +580,35 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
             }
         }
     }
+
+    /**
+     * Update monitor notification.
+     *
+     * @param  int $monitor_id
+     *
+     * @return void
+     */
+    public function update_monitor_notification( $monitor_id ) {
+
+        $current = MainWP_DB::instance()->get_regular_process_by_item_id_type_slug( $monitor_id, 'monitor', 'uptime_notification' );
+
+        if ( ! empty( $current ) ) {
+            MainWP_DB::instance()->update_regular_process(
+                array(
+                    'process_id'        => $current->process_id,
+                    'status'            => 'active',
+                )
+            );
+        } else {
+            // insert process.
+            MainWP_DB::instance()->update_regular_process(
+                array(
+                    'item_id'           => $monitor_id,
+                    'type'              => 'monitor',
+                    'process_slug'      => 'uptime_notification',
+                    'status'            => 'active',
+                )
+            );
+        }
+    }
 }

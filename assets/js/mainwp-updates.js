@@ -3166,7 +3166,7 @@ let updatesoverview_group_upgrade_plugintheme_all = function (what, id, noCheck,
                 }
             });
 
-            // proccessed by popup
+            // processed by popup
             //updatesoverview_upgrade_plugintheme_list( what, pId, list, true, groupId );
             let siteName = jQuery("#wp_" + pWhat + "_upgrades_" + pId + '_group_' + groupId).attr('site_name');
             updatesoverview_upgrade_plugintheme_list_popup(what, pId, siteName, list);

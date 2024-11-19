@@ -24,7 +24,7 @@ if ( ! function_exists( 'mainwpdir' ) ) {
 }
 
 
-if ( ! function_exists( 'mainwp_do_not_have_permissions' ) ) {
+if ( ! function_exists( '\mainwp_do_not_have_permissions' ) ) {
 
     /**
      * Detect permission level & display message to end user.

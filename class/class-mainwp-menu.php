@@ -365,7 +365,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         foreach ( $item_rights as $group_right => $rights ) {
                             if ( is_array( $rights ) ) {
                                 foreach ( $rights as $func_right ) {
-                                    if ( mainwp_current_user_have_right( $group_right, $func_right ) ) {
+                                    if ( \mainwp_current_user_can( $group_right, $func_right ) ) {
                                         $accessable = true;
                                         break;
                                     }
@@ -1366,7 +1366,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 $right_group = 'extension';
                 $right       = str_replace( 'extension_', '', $right );
             }
-            if ( empty( $right ) || ( ! empty( $right ) && mainwp_current_user_have_right( $right_group, $right ) ) ) {
+            if ( empty( $right ) || ( ! empty( $right ) && \mainwp_current_user_can( $right_group, $right ) ) ) {
                 ?>
                 <a class="item <?php echo $level2_active ? 'active level-two-active' : ''; ?> <?php echo esc_attr( $item_classes ); ?>" href="<?php echo esc_url( $href ); ?>" id="<?php echo esc_attr( $slug ); ?>" <?php echo $_blank ? 'target="_blank"' : ''; ?>>
                     <?php echo $before_title . $title; //phpcs:ignore -- requires escaped. ?>

@@ -8,15 +8,8 @@
 
 namespace MainWP\Dashboard\Module\CostTracker;
 
-use MainWP\Dashboard\MainWP_Menu;
 use MainWP\Dashboard\MainWP_UI;
 use MainWP\Dashboard\MainWP_Utility;
-use MainWP\Dashboard\MainWP_DB_Client;
-use MainWP\Dashboard\MainWP_DB_Common;
-use MainWP\Dashboard\MainWP_Post_Handler;
-use MainWP\Dashboard\MainWP_Logger;
-use function MainWP\Dashboard\mainwp_current_user_have_right;
-use function MainWP\Dashboard\mainwp_do_not_have_permissions;
 
 /**
  * Class Log_Insights_Page
@@ -325,8 +318,8 @@ class Cost_Tracker_Summary {
      * @return void
      */
     public function render_summary_page() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'access_cost_summary_dashboard' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'cost summary', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'access_cost_summary_dashboard' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'cost summary', 'mainwp' ) );
             return;
         }
         $this->on_show_page();

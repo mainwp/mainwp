@@ -158,7 +158,8 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 true,
                 $pForceFetch
             );
-            $return      = static::sync_information_array( $pWebsite, $information, '', false, false, $pAllowDisconnect );
+
+            $return = static::sync_information_array( $pWebsite, $information, '', false, false, $pAllowDisconnect );
             MainWP_Logger::instance()->log_execution_time( 'sync :: [siteid=' . $pWebsite->id . ']' );
             return $return;
         } catch ( MainWP_Exception $e ) {

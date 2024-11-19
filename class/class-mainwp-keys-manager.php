@@ -232,7 +232,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @return mixed Result.
      */
-    private function save_key_file( $key_file, $key_val ) {
+    public function save_key_file( $key_file, $key_val ) {
         static::init_keys_dir();
         $key_dir   = static::get_keys_dir();
         $file_path = $key_dir . $key_file;

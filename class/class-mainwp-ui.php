@@ -547,7 +547,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             if ( isset( $_GET['do'] ) && 'new' === $_GET['do'] ) {
                 $tour_id = '13210';
             } elseif ( isset( $_GET['do'] ) && 'bulknew' === $_GET['do'] ) {
-                $tour_id = '27274';
+                $tour_id = '60206';
             } elseif ( ! isset( $_GET['dashboard'] ) && ! isset( $_GET['id'] ) && ! isset( $_GET['updateid'] ) && ! isset( $_GET['emailsettingsid'] ) && ! isset( $_GET['scanid'] ) ) {
                 if ( 'grid' === $siteViewMode ) {
                     $tour_id = '27217';

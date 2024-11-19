@@ -27,7 +27,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '5.3'; // NOSONAR.
+    public static $version = '5.3-RC1'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -186,7 +186,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $systemHandler = MainWP_System_Handler::instance();
 
-        add_action( 'plugins_loaded', array( &$this, 'localization' ) );
+        add_action( 'init', array( &$this, 'localization' ) );
         add_filter( 'site_transient_update_plugins', array( $systemHandler, 'check_update_custom' ) );
         add_filter( 'pre_set_site_transient_update_plugins', array( $systemHandler, 'pre_check_update_custom' ) );
         add_filter( 'plugins_api', array( $systemHandler, 'plugins_api_extension_info' ), 10, 3 );
@@ -367,6 +367,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_batch_individual_updates_is_running',
                 'mainwp_maximum_uptime_monitoring_requests',
                 'mainwp_actionlogs',
+                'mainwp_process_uptime_notification_run_status',
             );
 
             $options = apply_filters( 'mainwp_init_load_all_options', $options );
@@ -598,10 +599,11 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
          */
         $_mainwp_disable_menus_items = apply_filters( 'mainwp_main_menu_disable_menu_items', $_mainwp_disable_menus_items );
 
+        // to compatible.
         if ( ! function_exists( 'MainWP\Dashboard\mainwp_current_user_have_right' ) ) {
 
             /**
-             * Method mainwp_current_user_have_right()
+             * Method \mainwp_current_user_can()
              *
              * Check permission level by hook mainwp_currentusercan of Team Control extension.
              *
@@ -977,7 +979,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $_pos        = strlen( $request_uri ) - strlen( '/wp-admin/' );
         if ( ! empty( $request_uri ) && strpos( $request_uri, '/wp-admin/' ) !== false && strpos( $request_uri, '/wp-admin/' ) === $_pos ) {
             $referer = wp_get_referer();
-            if ( ! empty( $referer ) && strpos( $referer, 'wp-login.php?redirect_to' ) !== false && strpos( $referer, '&reauth=1' ) !== false && mainwp_current_user_have_right( 'dashboard', 'access_global_dashboard' ) ) {
+            if ( ! empty( $referer ) && strpos( $referer, 'wp-login.php?redirect_to' ) !== false && strpos( $referer, '&reauth=1' ) !== false && \mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) {
                 wp_safe_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
                 die();
             }

@@ -1336,3 +1336,6 @@ th .down.icon {
     margin: 0 !important;
     padding: 2px !important;
 }
+.uptime-monitors-sub-pages-table > thead{
+    display: none !important;
+}

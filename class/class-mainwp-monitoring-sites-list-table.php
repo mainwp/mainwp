@@ -222,9 +222,15 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             'targets'   => array( 'manage-login-column', 'manage-last_check-column', 'manage-last24_status-column', 'manage-status_code-column', 'manage-site_health-column', 'manage-site_actions-column', 'extra-column', 'manage-client_name-column' ),
             'className' => 'collapsing',
         );
+
+        $defines[] = array(
+            'targets'   => 'manage-site_actions-column',
+            'className' => 'parent-site-actions-column',
+        );
+
         $defines[] = array(
             'targets'   => array( 'manage-last24_status-column' ),
-            'className' => 'not-selectable dt-right',
+            'className' => 'dt-right',
         );
 
         $defines[] = array(
@@ -500,11 +506,11 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
         if ( '' !== $site_status && 'all' !== $site_status ) {
             if ( 'online' === $site_status ) {
-                $where = 'wp.offline_check_result = 1';
+                $where .= ' wp.offline_check_result = 1';
             } elseif ( 'undefined' === $site_status ) {
-                $where = 'wp.http_response_code = ""';
+                $where .= ' wp.http_response_code = ""';
             } elseif ( 'offline' === $site_status ) {
-                $where = 'wp.offline_check_result <> "" AND wp.offline_check_result <> 1'; // 1 - online, -1 offline.
+                $where .= ' wp.offline_check_result <> "" AND wp.offline_check_result <> 1'; // 1 - online, -1 offline.
             }
         }
 
@@ -737,6 +743,9 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                     jQuery( '#manage-sites-screen-options-form' ).submit( function() {
                         if ( jQuery('input[name=reset_monitoringsites_columns_order]').attr('value') == 1 ) {
                             $manage_sites_table.colReorder.reset();
+                            jQuery( '.uptime-monitors-sub-pages-table' ).each(function(){
+                                jQuery(this).DataTable().colReorder.reset();
+                            });
                         }
                         jQuery( '#mainwp-manage-sites-screen-options-modal' ).modal( 'hide' );
                     } );
@@ -825,8 +834,6 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                                 tdrow.show();
                                 _init_uptime_monitoring_table_sub_rows(jQuery(tdrow.child()[0]));
                             }
-
-
                             if ( data.syncError ) {
                                 jQuery( row ).find( 'td.column-site-bulk' ).addClass( 'site-sync-error' );
                             };
@@ -836,7 +843,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                             style: 'multi+shift',
                             selector: 'tr>td:not(.not-selectable)'
                         }
-                    } ).on('select', function (e, dt, type, indexes) {
+                    }).on('select', function (e, dt, type, indexes) {
                         if( 'row' == type ){
                             dt.rows(indexes)
                             .nodes()
@@ -857,6 +864,9 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                         }, 1000 );
                         _init_uptime_status_bar_popup_tooltip();
                     } );
+
+                    _init_uptime_status_bar_popup_tooltip();
+
                 } catch(err) {
                     // to fix js error.
                 }
@@ -888,6 +898,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                             "drawCallback": function( settings ) {
                                 jQuery(tblSelector).find('.ui.dropdown' ).dropdown();
                                 jQuery(tblSelector).find('.ui.checkbox' ).checkbox();
+                                _init_manage_monitors_screen_settings(tblSelector);
                                 _init_uptime_status_bar_popup_tooltip(jQuery(tblSelector));
                             },
                             'select': {
@@ -895,7 +906,19 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                                 style: 'multi+shift',
                                 selector: 'tr>td:not(.not-selectable)'
                             }
-                        } ).on( 'columns-reordered', function () {
+                        } ).on('select', function (e, dt, type, indexes) {
+                            if( 'row' == type ){
+                                dt.rows(indexes)
+                                .nodes()
+                                .to$().find('td.check-column .ui.checkbox' ).checkbox('set checked');
+                            }
+                        }).on('deselect', function (e, dt, type, indexes) {
+                            if( 'row' == type ){
+                                dt.rows(indexes)
+                                .nodes()
+                                .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
+                            }
+                        }).on( 'columns-reordered', function () {
                             console.log('sub pages columns-reordered');
                             setTimeout(() => {
                                 $( tblSelector + ' .ui.dropdown' ).dropdown();
@@ -903,12 +926,25 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                             }, 1000 );
                             _init_uptime_status_bar_popup_tooltip(jQuery(tblSelector));
                         } );
+                        _init_uptime_status_bar_popup_tooltip(jQuery(tblSelector));
                     } catch(err) {
                         // to fix js error.
                     }
                 }
 
-                _init_uptime_status_bar_popup_tooltip();
+
+                _init_manage_monitors_screen_settings = function(tblSelector) {
+                    let $sub_pages_table = jQuery(tblSelector).DataTable();
+                    jQuery( '#mainwp-manage-sites-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
+                        let col_id = jQuery( this ).attr( 'id' );
+                        col_id = col_id.replace( "mainwp_show_column_", "" );
+                        try {
+                            $sub_pages_table.column( '#' + col_id ).visible( jQuery(this).is( ':checked' ) );
+                        } catch(err) {
+                            // to fix js error.
+                        }
+                    } );
+                }
 
                 _init_manage_sites_screen = function() {
                         <?php
@@ -919,16 +955,24 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                                 col_id = col_id.replace( "mainwp_show_column_", "" );
                                 try {
                                     $manage_sites_table.column( '#' + col_id ).visible( false );
+                                    jQuery( '.uptime-monitors-sub-pages-table' ).each(function(){
+                                        let $sub_pages_table = jQuery(this).DataTable();
+                                        $sub_pages_table.column( '#' + col_id ).visible( false );
+                                    });
                                 } catch(err) {
                                     // to fix js error.
                                 }
                             } );
 
                             //default columns: Site, Open Admin, URL, Updates, Site Health, Status Code and Actions.
-                            let cols = ['site','login','url','site_health','status_code','site_actions'];
+                            let cols = ['site','status','site_actions'];
                             jQuery.each( cols, function ( index, value ) {
                                 try {
                                     $manage_sites_table.column( '#' + value ).visible( true );
+                                    jQuery( '.uptime-monitors-sub-pages-table' ).each(function(){
+                                        let $sub_pages_table = jQuery(this).DataTable();
+                                        $sub_pages_table.column( '#' + value ).visible( true );
+                                    });
                                 } catch(err) {
                                     // to fix js error.
                                 }
@@ -947,6 +991,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                             } );
                     <?php } ?>
                     };
+
                     _init_manage_sites_screen();
 
                 } );
@@ -1132,7 +1177,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             ?>
             <?php if ( 'cb' === $column_name ) { ?>
                 <td class="check-column no-sort">
-                    <div class="ui checkbox cb-uptime-monitor">
+                    <div class="ui checkbox <?php echo ! empty( $monitor_subpage['monitor_id'] ) ? 'cb-uptime-monitor' : ''; ?>">
                         <input type="checkbox" value="<?php echo intval( $monitor_subpage['id'] ); ?>" name=""/>
                     </div>
                 </td>
@@ -1179,7 +1224,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                 <?php
             } elseif ( 'last24_status' === $column_name ) {
                 ?>
-                <td class="not-selectable dt-right collapsing">
+                <td class="dt-right collapsing">
                 <?php
                     $this->render_last24_uptime_status( $uptime_status, $last24_time );
                 ?>
@@ -1277,7 +1322,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                     ob_start();
                     ?>
                     <?php if ( 'cb' === $column_name ) : ?>
-                        <div class="ui checkbox cb-uptime-monitor"><input type="checkbox" value="<?php echo intval( $website['id'] ); ?>" /></div>
+                        <div class="ui checkbox <?php echo ! empty( $website['monitor_id'] ) ? 'cb-uptime-monitor' : ''; ?>"><input type="checkbox" value="<?php echo intval( $website['id'] ); ?>" /></div>
                     <?php elseif ( 'status' === $column_name ) : ?>
                         <?php $this->render_uptime_status( false, $website['offline_check_result'] ); ?>
                         <?php
@@ -1308,7 +1353,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                                 <?php if ( empty( $website['sync_errors'] ) ) : ?>
                                 <a class="managesites_syncdata item" href="#"><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
                                 <?php endif; ?>
-                                <?php if ( mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) ) : ?>
+                                <?php if ( \mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ) : ?>
                                 <a class="item" href="admin.php?page=managesites&dashboard=<?php echo intval( $website['id'] ); ?>"><?php esc_html_e( 'Overview', 'mainwp' ); ?></a>
                                 <?php endif; ?>
                             </div>
@@ -1344,7 +1389,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      */
     public function column_site( $website ) {
         ?>
-        <?php if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
+        <?php if ( ! \mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
             <i class="sign in icon"></i>
         <?php else : ?>
             <a href="<?php MainWP_Site_Open::get_open_site_url( $website['id'] ); ?>" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
@@ -1430,7 +1475,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
         } elseif ( 0 === (int) $uptime_status ) {
             echo '<span class="ui big circular icon red looping pulsating transition label"><i class="chevron down icon"></i></span>';
         } else {
-            echo '<span class="ui big circular icon grey looping pulsating transition label"><i class="big circle outline icon"></i></span>';
+            echo '<span class="ui big circular icon grey looping pulsating transition label"><i class="circle outline icon"></i></span>';
         }
     }
 

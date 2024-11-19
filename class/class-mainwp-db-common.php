@@ -903,7 +903,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * 'ignore_theme_updates'.
      * 'monitoring_emails'.
      *
-     * @return bool true|false.
+     * @return mixed array|true|false.
      */
     public function rest_api_update_website( $websiteid, $data ) { // phpcs:ignore -- NOSONAR - complex function.
 

@@ -58,7 +58,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         // Widget: RightNow.
         $this->add_action( 'mainwp_syncerrors_dismiss', array( &$this, 'mainwp_syncerrors_dismiss' ) );
 
-        if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
             // Page: SecurityIssues.
             $this->add_action( 'mainwp_security_issues_request', array( &$this, 'mainwp_security_issues_request' ) );
             $this->add_action( 'mainwp_security_issues_fix', array( &$this, 'mainwp_security_issues_fix' ) );
@@ -74,7 +74,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $this->add_action( 'mainwp_guided_tours_option_update', array( &$this, 'ajax_guided_tours_option_update' ) );
 
         // Page: Recent Posts.
-        if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
             $this->add_action( 'mainwp_post_unpublish', array( &$this, 'mainwp_post_unpublish' ) );
             $this->add_action( 'mainwp_post_publish', array( &$this, 'mainwp_post_publish' ) );
             $this->add_action( 'mainwp_post_trash', array( &$this, 'mainwp_post_trash' ) );
@@ -84,7 +84,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         }
         $this->add_action( 'mainwp_post_addmeta', array( MainWP_Post_Page_Handler::get_class_name(), 'ajax_add_meta' ) );
         // Page: Pages.
-        if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
             $this->add_action( 'mainwp_page_unpublish', array( &$this, 'mainwp_page_unpublish' ) );
             $this->add_action( 'mainwp_page_publish', array( &$this, 'mainwp_page_publish' ) );
             $this->add_action( 'mainwp_page_trash', array( &$this, 'mainwp_page_trash' ) );
@@ -150,6 +150,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
 
         // Page:: mainwp-setup.
         $this->add_action( 'mainwp_clients_add_multi_client', array( &$this, 'ajax_clients_add_multi_client' ) );
+        $this->add_action( 'mainwp_increase_connection_security', array( &$this, 'ajax_increase_connection_security' ) );
     }
 
     /**
@@ -527,7 +528,21 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             MainWP_Utility::update_option( 'mainwp_notice_wp_mail_failed', 'hide' );
             die( 'ok' );
         }
+        $time_set = isset( $_POST['time_set'] ) && 1 === intval( $_POST['time_set'] ) ? true : false;
+        $this->hide_dashboard_notice_status( $no_id, $time_set );
+        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        die( 1 );
+    }
 
+    /**
+     * Method hide dashboard notice status.
+     *
+     * @param  mixed $no_id
+     * @param  mixed $time_set
+     * @param  bool  $hide_noti
+     * @return void
+     */
+    public function hide_dashboard_notice_status( $no_id, $time_set = false, $hide_noti = true ) {
         /**
          * Current user global.
          *
@@ -541,17 +556,21 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
                 $status = array();
             }
             if ( ! empty( $no_id ) ) {
-                $time_set = isset( $_POST['time_set'] ) && 1 === intval( $_POST['time_set'] ) ? true : false;
-                if ( $time_set ) {
-                    $status[ $no_id ] = time();
-                } else {
-                    $status[ $no_id ] = 1;
+                if ( 'mainwp_secure_priv_key_notice' === $no_id ) {
+                    MainWP_Utility::update_option( 'mainwp_not_start_encrypt_keys', 1 ); // to show the button.
+                }
+                if ( $hide_noti ) {
+                    if ( $time_set ) {
+                        $status[ $no_id ] = time();
+                    } else {
+                        $status[ $no_id ] = 1;
+                    }
+                } elseif ( ! empty( $status[ $no_id ] ) ) {
+                    unset( $status[ $no_id ] );
                 }
                 update_user_option( $user_id, 'mainwp_notice_saved_status', $status );
             }
         }
-        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        die( 1 );
     }
 
     /**
@@ -1720,6 +1739,35 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
 
         wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
     }
+
+    /**
+     * Method ajax_increase_connection_security
+     */
+    public function ajax_increase_connection_security() {
+        $this->check_security( 'mainwp_increase_connection_security' );
+        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
+        while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+            // try to decrypt priv key.
+            $de_privkey = MainWP_Encrypt_Data_Lib::instance()->decrypt_privkey( base64_decode( $website->privkey ), $website->id );
+            if ( empty( $de_privkey ) ) { // key is not encrypted.
+                $en_privkey = MainWP_Encrypt_Data_Lib::instance()->encrypt_privkey( base64_decode( $website->privkey ), $website->id, true ); // create encrypt priv key for the site.
+                if ( ! empty( $en_privkey['en_data'] ) ) {
+                    MainWP_DB::instance()->update_website_values(
+                        $website->id,
+                        array(
+                            'privkey' => base64_encode( $en_privkey['en_data'] ),
+                        )
+                    );
+                }
+            }
+        }
+        MainWP_DB::free_result( $websites );
+        $this->hide_dashboard_notice_status( 'mainwp_secure_priv_key_notice' );
+        delete_option( 'mainwp_not_start_encrypt_keys' );
+        wp_die( wp_json_encode( array( 'success' => 1 ) ) );
+    }
+
+
 
     /**
      * Method mainwp_get_sanitized_post()

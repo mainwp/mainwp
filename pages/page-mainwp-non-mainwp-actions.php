@@ -113,8 +113,8 @@ class MainWP_Non_MainWP_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     public function render_actions_list() {
 
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_non_mainwp_actions' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'manage non-mainwp actions', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_non_mainwp_actions' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage non-mainwp actions', 'mainwp' ) );
             return;
         }
 

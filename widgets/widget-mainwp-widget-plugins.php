@@ -188,7 +188,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         <input class="pluginSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $actived_plugins[ $i ]['slug'] ) ); ?>"/>
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
                         <div class="right floated pluginsAction">
-                            <?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
+                            <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
                                 <div class="ui right pointing dropdown icon mini button">
                                     <i class="ellipsis horizontal icon"></i>
                                     <div class="menu">
@@ -251,10 +251,10 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                             <div class="ui right pointing dropdown icon mini button">
                                 <i class="ellipsis horizontal icon"></i>
                                 <div class="menu">
-                                <?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
+                                <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
                                     <a href="#" class="mainwp-plugin-activate item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Activate', 'mainwp' );// phpcs:ignore WordPress.Security.EscapeOutput ?></a>
                                 <?php } ?>
-                                <?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_plugins' ) ) { ?>
+                                <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
                                     <a href="#" class="mainwp-plugin-delete item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Delete', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
                                 <?php } ?>
                                 </div>

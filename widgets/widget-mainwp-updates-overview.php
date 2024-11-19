@@ -397,10 +397,10 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $lastSyncMsg = esc_html__( 'Last synchronization completed on: ', 'mainwp' ) . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $last_dtsSync ) );
         }
 
-        $user_can_update_translation = mainwp_current_user_have_right( 'dashboard', 'update_translations' );
-        $user_can_update_wordpress   = mainwp_current_user_have_right( 'dashboard', 'update_wordpress' );
-        $user_can_update_themes      = mainwp_current_user_have_right( 'dashboard', 'update_themes' );
-        $user_can_update_plugins     = mainwp_current_user_have_right( 'dashboard', 'update_plugins' );
+        $user_can_update_translation = \mainwp_current_user_can( 'dashboard', 'update_translations' );
+        $user_can_update_wordpress   = \mainwp_current_user_can( 'dashboard', 'update_wordpress' );
+        $user_can_update_themes      = \mainwp_current_user_can( 'dashboard', 'update_themes' );
+        $user_can_update_plugins     = \mainwp_current_user_can( 'dashboard', 'update_plugins' );
 
         $can_total_update = ( $user_can_update_wordpress && $user_can_update_plugins && $user_can_update_themes && $user_can_update_translation ) ? true : false;
 
@@ -427,7 +427,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 <?php endif; ?>
                 <?php static::render_abandoned_plugins( $total_plugins_outdate, $globalView, $current_wpid, $count_websites, $count_plugins ); ?>
                 <?php static::render_abandoned_themes( $total_themes_outdate, $globalView, $current_wpid, $count_websites, $count_themes ); ?>
-                
+
                 <?php
                 /**
                  * Action: mainwp_updates_overview_after_update_details
@@ -438,7 +438,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                  */
                 do_action( 'mainwp_updates_overview_after_update_details', $currentSite, $globalView, $userExtension );
                 ?>
-                
+
             </div>
 
         </div>
@@ -559,7 +559,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     <?php else : ?>
                         <span class="ui small green text">(0.00%)</span>
                     <?php endif; ?>
-                </div>      
+                </div>
                 <div class="description"><?php esc_html_e( 'Available updates.', 'mainwp' ); ?></div>
             </div>
             <div class="extra content">
@@ -738,7 +738,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     <?php else : ?>
                         <span class="ui small green text">(0.00%)</span>
                     <?php endif; ?>
-                </div>      
+                </div>
                 <div class="description"><?php esc_html_e( 'Available plugin updates.', 'mainwp' ); ?></div>
             </div>
             <div class="extra content">
@@ -825,7 +825,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     <?php else : ?>
                         <span class="ui small green text">(0.00%)</span>
                     <?php endif; ?>
-                </div>      
+                </div>
                 <div class="description"><?php esc_html_e( 'Available theme updates.', 'mainwp' ); ?></div>
             </div>
             <div class="extra content">
@@ -851,7 +851,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     </div>
                 </div>
             </div>
-        </div> 
+        </div>
         <?php
         /**
          * Action: mainwp_updates_overview_after_theme_updates
@@ -899,7 +899,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             <div class="content">
                 <div class="header">
                     <span class="ui large text"><i class="font icon"></i> <?php echo MainWP_Utility::short_number_format( intval( $total_translation_upgrades ) ); ?></span>
-                </div>      
+                </div>
                 <div class="description"><?php esc_html_e( 'Available translation updates.', 'mainwp' ); ?></div>
             </div>
             <div class="extra content">
@@ -977,7 +977,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         <i class="icons">
                             <i class="plug icon"></i>
                             <i class="inverted corner clock icon"></i>
-                        </i> 
+                        </i>
                         <?php echo MainWP_Utility::short_number_format( intval( $total_plugins_outdate ) ); ?>
                     </span>
                     <?php if ( intval( $total_plugins_outdate ) > 0 ) : ?>
@@ -985,13 +985,13 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     <?php else : ?>
                         <span class="ui small green text">(0.00%)</span>
                     <?php endif; ?>
-                </div>      
+                </div>
                 <div class="description"><?php esc_html_e( 'Detected abandoned plugins.', 'mainwp' ); ?></div>
             </div>
             <div class="extra content">
                 <div class="ui two column grid">
                     <div class="left aligned middle aligned column">
-                   
+
                     </div>
                     <div class="right aligned middle aligned column">
                         <a href="<?php echo esc_url( $detail_aban_plugins ); ?>"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
@@ -1033,7 +1033,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         <i class="icons">
                             <i class="tint icon"></i>
                             <i class="inverted corner clock icon"></i>
-                        </i> 
+                        </i>
                         <?php echo MainWP_Utility::short_number_format( intval( $total_themes_outdate ) ); ?>
                     </span>
                     <?php if ( intval( $total_themes_outdate ) > 0 ) : ?>
@@ -1041,13 +1041,13 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     <?php else : ?>
                         <span class="ui small green text">(0.00%)</span>
                     <?php endif; ?>
-                </div>      
+                </div>
                 <div class="description"><?php esc_html_e( 'Detected abandoned themes.', 'mainwp' ); ?></div>
             </div>
             <div class="extra content">
                 <div class="ui two column grid">
                     <div class="left aligned middle aligned column">
-                   
+
                     </div>
                     <div class="right aligned middle aligned column">
                         <a href="<?php echo esc_url( $detail_aban_themes ); ?>"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>

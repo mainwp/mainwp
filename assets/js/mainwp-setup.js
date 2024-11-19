@@ -9,7 +9,7 @@ jQuery(function () {
       jQuery('.menu-connect-first-site .item').tab('change tab', tab_active);
     }
   });
-  
+
   jQuery('#mainwp-qsw-verify-mainwp-child-active').on('change', function () {
     if (jQuery(this).is(':checked')) {
       jQuery('#mainwp_managesites_add').attr("disabled", false);
@@ -187,7 +187,7 @@ let mainwp_setup_managesites_add = function () {
           managesites_add_wpname: name,
           managesites_add_wpurl: url,
           managesites_add_wpadmin: jQuery('#mainwp_managesites_add_wpadmin').val(),
-          managesites_add_adminpwd: jQuery('#mainwp_managesites_add_admin_pwd').val(),
+          managesites_add_adminpwd: encodeURIComponent(jQuery('#mainwp_managesites_add_admin_pwd').val()),
           managesites_add_uniqueId: jQuery('#mainwp_managesites_add_uniqueId').val(),
           groupids: group_ids,
           qsw_page: true,

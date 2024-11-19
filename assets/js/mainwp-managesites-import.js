@@ -184,7 +184,7 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
                 managesites_add_wpname: import_wpname,
                 managesites_add_wpurl: url,
                 managesites_add_wpadmin: import_wpadmin,
-                managesites_add_adminpwd: import_wpadmin_pwd,
+                managesites_add_adminpwd: encodeURIComponent(import_wpadmin_pwd),
                 managesites_add_uniqueId: import_uniqueId,
                 "groupids[]": groupids,
                 groupnames_import: import_wpgroups,
@@ -622,91 +622,91 @@ const mainwp_managesites_import_sites_add_row = function (row_index) {
         <div class="row mainwp-managesites-import-rows" id="mainwp-managesites-import-row-${row_index}" data-index="${row_index}" data-temp-id="${row_index}">
             <div class="two wide column">
                 ${mainwp_managesites_import_sites_render_input(
-                    row_index,
-                    "site_url",
-                    "mainwp-managesites-import-site-url-" + row_index,
-                    "mainwp-managesites-import-site-url"
-                )}
+        row_index,
+        "site_url",
+        "mainwp-managesites-import-site-url-" + row_index,
+        "mainwp-managesites-import-site-url"
+    )}
             </div>
             <div class="two wide column">
                 ${mainwp_managesites_import_sites_render_input(
-                    row_index,
-                    "site_name",
-                    "mainwp-managesites-import-site-name-" + row_index,
-                    "mainwp-managesites-import-site-name"
-                )}
+        row_index,
+        "site_name",
+        "mainwp-managesites-import-site-name-" + row_index,
+        "mainwp-managesites-import-site-name"
+    )}
             </div>
             <div class="two wide column">
                 ${mainwp_managesites_import_sites_render_input(
-                    row_index,
-                    "admin_name",
-                    "mainwp-managesites-import-admin-name-" + row_index,
-                    "mainwp-managesites-import-admin-name"
-                )}
+        row_index,
+        "admin_name",
+        "mainwp-managesites-import-admin-name-" + row_index,
+        "mainwp-managesites-import-admin-name"
+    )}
             </div>
             <div class="two wide column">
                 ${mainwp_managesites_import_sites_render_input(
-                    row_index,
-                    "admin_password",
-                    "mainwp-managesites-import-admin-password-" + row_index,
-                    "mainwp-managesites-import-admin-password",
-                    "",
-                    "",
-                    "password"
-                )}
+        row_index,
+        "admin_password",
+        "mainwp-managesites-import-admin-password-" + row_index,
+        "mainwp-managesites-import-admin-password",
+        "",
+        "",
+        "password"
+    )}
             </div>
 
             <div class="one wide column">
                 ${mainwp_managesites_import_sites_render_input(
-                    row_index,
-                    "tag",
-                    "mainwp-managesites-import-tag-" + row_index,
-                    "mainwp-managesites-import-tag"
-                )}
+        row_index,
+        "tag",
+        "mainwp-managesites-import-tag-" + row_index,
+        "mainwp-managesites-import-tag"
+    )}
             </div>
             <div class="one wide column">
                 ${mainwp_managesites_import_sites_render_input(
-                    row_index,
-                    "security_id",
-                    "mainwp-managesites-import-security-id-" + row_index,
-                    "mainwp-managesites-import-security-id"
-                )}
+        row_index,
+        "security_id",
+        "mainwp-managesites-import-security-id-" + row_index,
+        "mainwp-managesites-import-security-id"
+    )}
             </div>
             <div class="two wide column">
                 ${mainwp_managesites_import_sites_render_input(
-                    row_index,
-                    "http_username",
-                    "mainwp-managesites-import-http-username-" + row_index,
-                    "mainwp-managesites-import-http-username"
-                )}
+        row_index,
+        "http_username",
+        "mainwp-managesites-import-http-username-" + row_index,
+        "mainwp-managesites-import-http-username"
+    )}
             </div>
             <div class="one wide column">
                 ${mainwp_managesites_import_sites_render_input(
-                    row_index,
-                    "http_password",
-                    "mainwp-managesites-import-http-password-" + row_index,
-                    "mainwp-managesites-import-http-password"
-                )}
+        row_index,
+        "http_password",
+        "mainwp-managesites-import-http-password-" + row_index,
+        "mainwp-managesites-import-http-password"
+    )}
             </div>
             <div class="one wide column">
                 ${mainwp_managesites_import_sites_render_input(
-                    row_index,
-                    "verify_certificate",
-                    "mainwp-managesites-import-verify-certificate-" + row_index,
-                    "mainwp-managesites-import-verify-certificate",
-                    "number",
-                    1
-                )}
+        row_index,
+        "verify_certificate",
+        "mainwp-managesites-import-verify-certificate-" + row_index,
+        "mainwp-managesites-import-verify-certificate",
+        "number",
+        1
+    )}
             </div>
             <div class="one wide column">
                 ${mainwp_managesites_import_sites_render_input(
-                    row_index,
-                    "ssl_version",
-                    "mainwp-managesites-import-ssl-version" + row_index,
-                    "mainwp-managesites-import-ssl-version",
-                    "",
-                    "auto"
-                )}
+        row_index,
+        "ssl_version",
+        "mainwp-managesites-import-ssl-version" + row_index,
+        "mainwp-managesites-import-ssl-version",
+        "",
+        "auto"
+    )}
             </div>
             <div class="one wide column">
                 ${mainwp_managesites_import_sites_render_button_remove(row_index)}

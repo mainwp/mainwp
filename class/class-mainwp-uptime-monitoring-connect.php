@@ -197,6 +197,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         curl_setopt( $ch, CURLOPT_TIMEOUT, $mo_apply_timeout ); // seconds.
 
+        MainWP_Utility::end_session();
+
         // Execute the curl request.
         $data = curl_exec( $ch );
 
@@ -765,13 +767,14 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         }
         $sec_since_last = $previous_heartbeat && ! empty( $previous_heartbeat->time ) ? (int) $end - strtotime( $previous_heartbeat->time ) : 1;
 
-        $importance  = $this->is_importance_status( $previous_status, $status ) ? 1 : 0;
+        $importance = $this->is_importance_status( $previous_status, $status ) ? 1 : 0;
+
         $db_datetime = mainwp_get_current_utc_datetime_db();
 
         $heartbeat = array(
             'monitor_id' => $monitor->monitor_id,
-            'importance' => $importance,
             'status'     => $status,
+            'importance' => $importance,
             'time'       => $db_datetime,
             'ping_ms'    => (int) ( $ping * 1000 ), // convert seconds to milliseconds.
             'duration'   => $sec_since_last, // milliseconds - timestamp.
@@ -780,15 +783,26 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             'http_code'  => $http_code,
         );
 
+        $importance = apply_filters( 'mainwp_uptime_monitoring_check_importance', $importance, $heartbeat );
+
+        $heartbeat['importance'] = $importance;
+
         MainWP_DB_Uptime_Monitoring::instance()->update_heartbeat( $heartbeat );
+
+        $db_timestamp = strtotime( $db_datetime );
 
         MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor(
             array(
                 'monitor_id'     => $monitor->monitor_id,
                 'last_status'    => $status,
-                'lasttime_check' => strtotime( $db_datetime ),
+                'last_http_code' => $http_code,
+                'lasttime_check' => $db_timestamp,
             )
         );
+
+        if ( empty( $status ) && $importance ) {
+            MainWP_Uptime_Monitoring_Handle::instance()->update_monitor_notification( $monitor->monitor_id );
+        }
 
         MainWP_Uptime_Monitoring_Handle::instance()->calc_and_save_site_uptime_stat_hourly_data( $monitor->monitor_id, $heartbeat );
 
@@ -800,7 +814,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                     'httpCode'           => $http_code,
                     'new_uptime_status'  => $status,
                     'importance'         => $importance,
-                    'check_offline_time' => strtotime( $db_datetime ),
+                    'check_offline_time' => $db_timestamp,
                 )
             );
         }
@@ -834,7 +848,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             'httpCode'           => $http_code,
             'new_uptime_status'  => $status,
             'importance'         => $importance,
-            'check_offline_time' => strtotime( $db_datetime ),
+            'check_offline_time' => $db_timestamp,
         );
     }
 

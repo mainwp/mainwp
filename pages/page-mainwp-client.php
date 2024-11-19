@@ -186,7 +186,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <div class="wp-submenu sub-open" style="">
                 <div class="mainwp_boxout">
                     <div class="mainwp_boxoutin"></div>
-                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'manage_clients' ) ) { ?>
+                    <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) { ?>
                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageClients' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Clients', 'mainwp' ); ?></a>
                     <?php } ?>
                     <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ClientAddNew' ) ) { ?>
@@ -415,7 +415,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $renderItems = array();
 
-        if ( mainwp_current_user_have_right( 'dashboard', 'manage_clients' ) ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
             $renderItems[] = array(
                 'title'  => esc_html__( 'Clients', 'mainwp' ),
                 'href'   => 'admin.php?page=ManageClients',
@@ -495,8 +495,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             return;
         }
 
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_clients' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'manage clients', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage clients', 'mainwp' ) );
             return;
         }
 

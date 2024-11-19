@@ -867,7 +867,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
     }
 
     /**
-     * Method mainwp_current_user_have_right()
+     * Method \mainwp_current_user_can()
      *
      * Check permission level by hook mainwp_currentusercan of Team Control extension
      *
@@ -879,8 +879,8 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      */
     public function hook_current_user_can( $input, $can_type, $which ) {
 
-        if ( function_exists( 'mainwp_current_user_have_right' ) ) {
-            return mainwp_current_user_have_right( $can_type, $which );
+        if ( function_exists( '\mainwp_current_user_can' ) ) {
+            return \mainwp_current_user_can( $can_type, $which );
         }
 
         return $input;
@@ -1317,8 +1317,8 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      */
     public function upgrade_wp() {
 
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'update_wordpress' ) ) {
-            die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'update WordPress', 'mainwp' ), false ) ) ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'update_wordpress' ) ) {
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'update WordPress', 'mainwp' ), false ) ) ) );
         }
 
         try {
@@ -1359,10 +1359,10 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
             $erCode    = '';
             // phpcs:enable
 
-            if ( 'plugin' === $type && ! mainwp_current_user_have_right( 'dashboard', 'update_plugins' ) ) {
-                $error = mainwp_do_not_have_permissions( esc_html__( 'update plugins', 'mainwp' ), false );
-            } elseif ( 'theme' === $type && ! mainwp_current_user_have_right( 'dashboard', 'update_themes' ) ) {
-                $error = mainwp_do_not_have_permissions( esc_html__( 'update themes', 'mainwp' ), false );
+            if ( 'plugin' === $type && ! \mainwp_current_user_can( 'dashboard', 'update_plugins' ) ) {
+                $error = \mainwp_do_not_have_permissions( esc_html__( 'update plugins', 'mainwp' ), false );
+            } elseif ( 'theme' === $type && ! \mainwp_current_user_can( 'dashboard', 'update_themes' ) ) {
+                $error = \mainwp_do_not_have_permissions( esc_html__( 'update themes', 'mainwp' ), false );
             }
 
             $website = MainWP_DB::instance()->get_website_by_id( $websiteId );

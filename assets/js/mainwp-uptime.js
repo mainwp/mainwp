@@ -97,7 +97,7 @@ let uptime_monitoring_check_done = function () {
     if (mainwpVars.itemsDone == successSites) {
       mainwpVars.bulkTaskRunning = false;
       setTimeout(function () {
-        //mainwpPopup('#mainwp-sync-sites-modal').close(true);
+        mainwpPopup('#mainwp-sync-sites-modal').close(true);
       }, 3000);
     } else {
       mainwpVars.bulkTaskRunning = false;
@@ -173,19 +173,27 @@ let mainwp_managemonitors_doaction = function (action) { // NOSONAR - complex.
 
   if (action == 'checknow') {
     let checkItems = [];
-    jQuery('#mainwp-manage-sites-body-table .check-column .cb-uptime-monitor INPUT:checkbox:checked').each(function(){
+    jQuery('#mainwp-manage-sites-body-table .check-column .cb-uptime-monitor INPUT:checkbox:checked').each(function () {
       let row = jQuery(this).closest('tr');
       checkItems.push({ siteid: row.attr('siteid'), id: row.attr('itemid'), url: row.attr('urlpage'), niceurl: row.attr('niceurl') });
     });
+    // if number monitors checked boxes is empty, unchecked all others and return.
+    if (checkItems.length === 0) {
+      jQuery('#mainwp-manage-sites-body-table .check-column .ui.checkbox').each(function () {
+        jQuery(this).checkbox('set unchecked');
+      });
+      return;
+    }
+
     console.log(checkItems);
     mainwp_uptime_monitor_check_now(checkItems);
     return false;
-  } else if('sync' === action){
-      managesites_bulk_init( true ); // to sync sites not sub pages.
-      mainwpVars.bulkManageSitesTaskRunning = true; // to compatible with: mainwp_sync_sites_data().
-      let selectedIds = jQuery.map(jQuery("#mainwp-manage-sites-body-table .check-column INPUT:checkbox:not(.sub-pages-checkbox):checked"), function (el) {
-        return jQuery(el).val();
-      });
-      mainwp_sync_sites_data(selectedIds);
+  } else if ('sync' === action) {
+    managesites_bulk_init(true); // to sync sites not sub pages.
+    mainwpVars.bulkManageSitesTaskRunning = true; // to compatible with: mainwp_sync_sites_data().
+    let selectedIds = jQuery.map(jQuery("#mainwp-manage-sites-body-table .check-column INPUT:checkbox:not(.sub-pages-checkbox):checked"), function (el) {
+      return jQuery(el).val();
+    });
+    mainwp_sync_sites_data(selectedIds);
   }
 }

@@ -394,20 +394,20 @@ class MainWP_Uptime_Monitoring_Site_Widget {
                                 if( curr_status === '1'){
                                     curr_status = ' <span class="ui big circular icon green looping pulsating transition label"><i class="chevron up icon"></i></span> ' + __('UP') + '</span>';
                                 } else if( curr_status === '0'){
-                                    curr_status =  '<span class="ui big circular icon red looping pulsating transition label"><i class="chevron down icon"></i></span> ' + __('DOWN') + '</span>';
+                                    curr_status = '<span class="ui big circular icon red looping pulsating transition label"><i class="chevron down icon"></i></span> ' + __('DOWN') + '</span>';
                                 } else {
-                                    curr_status =  '<span class="ui big circular icon grey looping pulsating transition label"><i class="big circle outline icon"></i></span> ' + __('PENDING') + '</span>';
+                                    curr_status = '<span class="ui big circular icon grey looping pulsating transition label"><i class="circle outline icon"></i></span> ' + __('PENDING') + '</span>';
                                 }
                             }
 
                             jQuery('#mainwp-widget-uptime-current-status').html( curr_status );
                             jQuery('#mainwp-widget-uptime-incidents-count').html( resp_stats?.incidents_count ?? 'N/A');
-                            jQuery('#mainwp-widget-uptime-ratios-number').html( resp_stats?.ratios_number*100 + '%'  ?? 'N/A');
+                            jQuery('#mainwp-widget-uptime-ratios-number').html( resp_stats?.ratios_number && '' !== resp_stats?.ratios_number ? Number(resp_stats.ratios_number * 100).toFixed(2) + '%'  : 'N/A');
 
 
-                            jQuery('#mainwp-widget-uptime-resp-time-avg').html( resp_stats?.avg_resp_time + '<span class="ui tiny text">(seconds)</span>' ?? 'N/A');
-                            jQuery('#mainwp-widget-uptime-resp-time-min').html( resp_stats?.min_resp_time + '<span class="ui tiny text">(seconds)</span>' ?? 'N/A');
-                            jQuery('#mainwp-widget-uptime-resp-time-max').html( resp_stats?.max_resp_time + '<span class="ui tiny text">(seconds)</span>' ?? 'N/A');
+                            jQuery('#mainwp-widget-uptime-resp-time-avg').html( resp_stats?.avg_resp_time ? resp_stats.avg_resp_time + '<span class="ui tiny text">(seconds)</span>' : 'N/A');
+                            jQuery('#mainwp-widget-uptime-resp-time-min').html( resp_stats?.min_resp_time ? resp_stats.min_resp_time + '<span class="ui tiny text">(seconds)</span>' : 'N/A');
+                            jQuery('#mainwp-widget-uptime-resp-time-max').html( resp_stats?.max_resp_time ? resp_stats.max_resp_time + '<span class="ui tiny text">(seconds)</span>' : 'N/A');
 
 
                             mainwp_showhide_message('mainwp-response-time-message-zone', '' );

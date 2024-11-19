@@ -255,7 +255,7 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                         jQuery('input[name=mainwp_default_monitoring_sites_per_page]').val(25);
                         jQuery('.mainwp_hide_wpmenu_checkboxes input[id^="mainwp_show_column_"]').prop( 'checked', false );
                         //default columns: Site, Open Admin, URL, Site Health, Status Code and Actions.
-                        let cols = ['site','login','url','site_health','status_code','site_actions'];
+                        let cols = ['site','status','site_actions'];
                         jQuery.each( cols, function ( index, value ) {
                             jQuery('.mainwp_hide_wpmenu_checkboxes input[id="mainwp_show_column_' + value + '"]').prop( 'checked', true );
                         } );
@@ -276,8 +276,8 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
      */
     public static function render_all_sites() {
 
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'monitoring_sites' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'monitoring sites', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'monitoring_sites' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'monitoring sites', 'mainwp' ) );
 
             return;
         }

@@ -2067,6 +2067,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $item_fields['url']            = isset( $request['url'] ) ? sanitize_text_field( wp_unslash( $request['url'] ) ) : '';
         $item_fields['name']           = isset( $request['name'] ) ? sanitize_text_field( wp_unslash( $request['name'] ) ) : '';
         $item_fields['wpadmin']        = isset( $request['admin'] ) ? sanitize_text_field( wp_unslash( $request['admin'] ) ) : '';
+        $item_fields['adminpwd']       = isset( $request['adminpassword'] ) ? wp_unslash( $request['adminpassword'] ) : '';
         $item_fields['unique_id']      = isset( $request['uniqueid'] ) ? sanitize_text_field( wp_unslash( $request['uniqueid'] ) ) : '';
         $item_fields['ssl_verify']     = empty( $request['ssl_verify'] ) ? false : intval( $request['ssl_verify'] );
         $item_fields['force_use_ipv4'] = isset( $request['force_use_ipv4'] ) && mainwp_string_to_bool( $request['force_use_ipv4'] ) ? 1 : 0;

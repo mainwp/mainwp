@@ -419,8 +419,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_remote_port()
      */
     public static function render() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
-            mainwp_do_not_have_permissions( 'server information', 'mainwp' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+            \mainwp_do_not_have_permissions( 'server information', 'mainwp' );
             return;
         }
         static::render_header( '' );
@@ -1012,8 +1012,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      */
     public static function render_cron() { // phpcs:ignore -- NOSONAR - complex.
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
-            mainwp_do_not_have_permissions( 'cron schedules', 'mainwp' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+            \mainwp_do_not_have_permissions( 'cron schedules', 'mainwp' );
             return;
         }
 
@@ -1429,8 +1429,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * Includes last_lines() function by phant0m, licensed under cc-wiki and GPLv2+
      */
     public static function render_error_log_page() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
-            mainwp_do_not_have_permissions( 'error log', 'mainwp' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+            \mainwp_do_not_have_permissions( 'error log', 'mainwp' );
             return;
         }
         static::render_header( 'ErrorLog' );
@@ -1581,8 +1581,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return void
      */
     public static function render_wp_config() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
-            mainwp_do_not_have_permissions( 'WP-Config.php', 'mainwp' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+            \mainwp_do_not_have_permissions( 'WP-Config.php', 'mainwp' );
             return;
         }
 
@@ -1846,8 +1846,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return void
      */
     public static function render_htaccess() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
-            mainwp_do_not_have_permissions( '.htaccess', 'mainwp' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+            \mainwp_do_not_have_permissions( '.htaccess', 'mainwp' );
             return;
         }
         static::render_header( '.htaccess' );

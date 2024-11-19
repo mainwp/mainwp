@@ -61,7 +61,8 @@ if ( empty( $heading ) ) {
                                 $site        = $current_email_site;
                                 $site_name   = $site->name;
                                 $site_url    = $site->url;
-                                $code        = $site->http_response_code;
+                                $mo_url      = empty( $site->issub ) ? $site_url : $site_url . $site->suburl;
+                                $code        = $site->last_http_code;
                                 $code_string = MainWP\Dashboard\MainWP_Utility::get_http_codes( $code );
                                 if ( ! empty( $code_string ) ) {
                                     $code .= ' - ' . $code_string;
@@ -72,7 +73,7 @@ if ( empty( $heading ) ) {
                                     <strong><?php esc_html_e( 'Hi there', 'mainwp' ); ?>,</strong>
                                     <p><?php esc_html_e( 'Based on the HTTP response from your monitor, it appears that your child site is DOWN.', 'mainwp' ); ?></p>
                                     <p><strong><?php esc_html_e( 'Monitor', 'mainwp' ); ?>:</strong> <?php echo esc_html( $site_name ); ?></p>
-                                    <p><strong><?php esc_html_e( 'Site URL', 'mainwp' ); ?>:</strong> <a href="<?php echo esc_url( $site_url ); ?>" target="_blank"><?php echo esc_html( $site_url ); ?></a></p>
+                                    <p><strong><?php esc_html_e( 'Monitor URL', 'mainwp' ); ?>:</strong> <a href="<?php echo esc_url( $mo_url ); ?>" target="_blank"><?php echo esc_html( $mo_url ); ?></a></p>
                                     <p><strong><?php esc_html_e( 'Status Code', 'mainwp' ); ?>:</strong> <?php echo esc_html( $code ); ?></p>
                                 </td>
                             </tr>
@@ -86,7 +87,8 @@ if ( empty( $heading ) ) {
                                 foreach ( $sites as $site ) {
                                     $site_name   = $site->name;
                                     $site_url    = $site->url;
-                                    $code        = $site->http_response_code;
+                                    $mo_url      = empty( $site->issub ) ? $site_url : $site_url . $site->suburl;
+                                    $code        = $site->last_http_code;
                                     $code_string = MainWP\Dashboard\MainWP_Utility::get_http_codes( $code );
                                     if ( ! empty( $code_string ) ) {
                                         $code .= ' - ' . $code_string;
@@ -97,7 +99,7 @@ if ( empty( $heading ) ) {
                                                 <strong><?php esc_html_e( 'Hi there', 'mainwp' ); ?>,</strong>
                                                 <p><?php esc_html_e( 'Based on the HTTP response from your monitor, it appears that your child site is DOWN.', 'mainwp' ); ?></p>
                                                 <p><strong><?php esc_html_e( 'Monitor', 'mainwp' ); ?>:</strong> <?php echo esc_html( $site_name ); ?></p>
-                                                <p><strong><?php esc_html_e( 'Site URL', 'mainwp' ); ?>:</strong> <a href="<?php echo esc_url( $site_url ); ?>" target="_blank"><?php echo esc_html( $site_url ); ?></a></p>
+                                                <p><strong><?php esc_html_e( 'Monitor URL', 'mainwp' ); ?>:</strong> <a href="<?php echo esc_url( $mo_url ); ?>" target="_blank"><?php echo esc_html( $mo_url ); ?></a></p>
                                                 <p><strong><?php esc_html_e( 'Status Code', 'mainwp' ); ?>:</strong> <?php echo esc_html( $code ); ?></p>
                                             </td>
                                         </tr>

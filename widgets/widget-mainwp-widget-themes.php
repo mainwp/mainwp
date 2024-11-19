@@ -152,10 +152,10 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                                 <div class="ui right pointing dropdown icon mini button">
                                     <i class="ellipsis horizontal icon"></i>
                                     <div class="menu">
-                                        <?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_themes' ) ) : ?>
+                                        <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_themes' ) ) : ?>
                                             <a href="#" class="mainwp-theme-activate item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Activate', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>
                                         <?php endif; ?>
-                                        <?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) ) : ?>
+                                        <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_themes' ) ) : ?>
                                             <a href="#" class="<?php echo $is_parent ? '' : 'mainwp-theme-delete'; ?> item <?php echo $is_demo ? 'disabled' : ''; ?>" <?php echo $is_parent ? 'disabled onclick="javascript:void(0)"' : ''; ?>><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
                                         <?php endif; ?>
                                     </div>

@@ -613,7 +613,7 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                 <td class="column-site-bulk mainwp-site-cell all <?php echo esc_html( $cls_site ); ?>"><a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $website['id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Open the site overview', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><?php echo esc_html( stripslashes( $website['name'] ) ); ?></a><i class="ui active inline loader tiny" style="display:none"></i><span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span></td>
             <?php } elseif ( 'login' === $column_name ) { ?>
                 <td class="collapsing">
-                <?php if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
+                <?php if ( ! \mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
                     <i class="sign in icon"></i>
                 <?php else : ?>
                     <a href="<?php MainWP_Site_Open::get_open_site_url( $website['id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>" data-position="right center" data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
@@ -636,10 +636,10 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                             <?php else : ?>
                             <a class="managesites_syncdata item" href="#"><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
                             <?php endif; ?>
-                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) ) : ?>
+                    <?php if ( \mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ) : ?>
                             <a class="item" href="admin.php?page=managesites&dashboard=<?php echo intval( $website['id'] ); ?>"><?php esc_html_e( 'Overview', 'mainwp' ); ?></a>
                             <?php endif; ?>
-                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) : ?>
+                    <?php if ( \mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) : ?>
                             <a class="item" href="admin.php?page=managesites&id=<?php echo intval( $website['id'] ); ?>"><?php esc_html_e( 'Settings', 'mainwp' ); ?></a>
                             <?php endif; ?>
                             </div>

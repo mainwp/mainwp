@@ -175,7 +175,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             <div class="wp-submenu sub-open" style="">
                 <div class="mainwp_boxout">
                     <div class="mainwp_boxoutin"></div>
-                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) { ?>
+                    <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) { ?>
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=PageBulkManage' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Pages', 'mainwp' ); ?></a>
                         <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PageBulkAdd' ) ) { ?>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=PageBulkAdd' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
@@ -377,7 +377,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         $renderItems = array();
 
-        if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
             $renderItems[] = array(
                 'title'  => esc_html__( 'Manage Pages', 'mainwp' ),
                 'href'   => 'admin.php?page=PageBulkManage',
@@ -439,8 +439,8 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
      */
     public static function render() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'manage pages', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage pages', 'mainwp' ) );
             return;
         }
 
@@ -1330,8 +1330,8 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @return void
      */
     public static function render_bulk_add() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'manage pages', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage pages', 'mainwp' ) );
             return;
         }
 
@@ -1355,8 +1355,8 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @return void
      */
     public static function render_bulk_edit() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'manage pages', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage pages', 'mainwp' ) );
             return;
         }
 

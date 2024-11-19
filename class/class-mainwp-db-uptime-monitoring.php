@@ -66,7 +66,8 @@ wpid int(11) NOT NULL,
 `retry_interval` int(11) NOT NULL DEFAULT 1,
 `up_status_codes` text NOT NULL DEFAULT '',
 `last_status` tinyint(1) DEFAULT 99,
- `lasttime_check` int(11) NOT NULL,
+`last_http_code` int(11) NOT NULL DEFAULT 0,
+`lasttime_check` int(11) NOT NULL,
 `retries` tinyint(1) DEFAULT 0,
 `maxretries` tinyint(1) DEFAULT -1,
 `maxredirects` tinyint(1) DEFAULT 2,
@@ -445,49 +446,19 @@ KEY idx_wpid (wpid)";
     }
 
     /**
-     * count_busy_main_round_check
-     *
-     * @param  array $global
-     * @return int
-     */
-    public function count_busy_main_round_check( $global, $lasttime_counter ) {
-
-        if ( ! is_array( $global ) ) {
-            $global = array();
-        }
-
-        $glo_active = 1;
-        if ( is_array( $global ) && isset( $global['active'] ) ) {
-            $glo_active = 1 === (int) $global['active'] ? 1 : 0;
-        }
-
-        $where_round_run  = ' AND ( mo.active = 1 OR ( mo.active = -1 AND 1 = ' . intval( $glo_active ) . ') ) '; // make sure active monitor.
-        $where_round_run .= ' AND ( mo.dts_auto_monitoring_time < mo.dts_auto_monitoring_start ) '; // make sure check uptime running, busy.
-        $where_round_run .= ' AND ( mo.dts_auto_monitoring_start < ' . intval( $lasttime_counter ) . ' ) '; // make sure current main round check running.
-
-        $sql = 'SELECT count(*) FROM ' . $this->table_name( 'monitors' ) . ' mo WHERE 1 ' . $where_round_run;
-
-        return $this->wpdb->get_var( $sql );
-    }
-
-
-    /**
      * Get uptime notifcation to send.
      *
-     * @param  int $last_starttime
      * @param  int $limit
      * @return mixed
      */
-    public function get_uptime_notification_to_start_send( $last_starttime, $limit = 50 ) {
+    public function get_uptime_notification_to_start_send( $limit = 50 ) {
 
         $sql = $this->wpdb->prepare(
             ' SELECT pro.process_id, mo.* FROM ' . $this->table_name( 'monitors' ) . ' mo ' .
             ' LEFT JOIN ' . $this->table_name( 'schedule_processes' ) . ' pro ON mo.monitor_id = pro.item_id ' .
-            " WHERE ( pro.type = 'monitor' AND pro.process_slug = 'uptime_notification' AND pro.dts_process_start < %d" .
-            " AND pro.dts_process_stop < pro.dts_process_start AND pro.status = 'active' ) " .
-            ' OR pro.type IS NULL ' .
+            " WHERE ( pro.type = 'monitor' AND pro.process_slug = 'uptime_notification' " .
+            " AND ( pro.dts_process_stop > pro.dts_process_start OR pro.dts_process_start = 0 ) AND pro.status = 'active' ) " . // get active process and stop > start - it is finished status of previous process.
             ' ORDER BY pro.dts_process_start ASC LIMIT %d ',
-            $last_starttime,
             $limit
         );
 
@@ -505,9 +476,11 @@ KEY idx_wpid (wpid)";
             $params = array();
         }
 
-        $params['view']         = 'uptime_notification';
-        $params['custom_where'] = " AND ( ( pro.type = 'monitor' AND pro.process_slug = 'uptime_notification' AND pro.status = 'active' )  OR pro.type IS NULL ) ";
-        $params['extra_view']   = array( 'monitoring_notification_emails', 'settings_notification_emails', 'site_info' );
+        $params['view']          = 'uptime_notification';
+        $params['custom_where']  = " AND ( pro.type = 'monitor' AND pro.process_slug = 'uptime_notification' AND pro.status = 'active' AND pro.dts_process_stop < pro.dts_process_start ) ";
+        $params['others_fields'] = array( 'monitoring_notification_emails', 'settings_notification_emails', 'site_info' ); // other wp options fields.
+
+        // $params['dev_log_query'] = true; //phpcs:ignore -- NOSONAR - dev.
 
         $sql = $this->get_sql_monitor( $params );
 
@@ -572,6 +545,9 @@ KEY idx_wpid (wpid)";
 
         $view = ! empty( $params['view'] ) ? $params['view'] : 'default';
 
+        // deprecated: Use 'others_fields' as a replacement.
+        $extra_view = ! empty( $params['extra_view'] ) ? $params['extra_view'] : array();
+
         $site_id   = isset( $params['wpid'] ) ? intval( $params['wpid'] ) : false;
         $monitorid = isset( $params['monitor_id'] ) ? intval( $params['monitor_id'] ) : false;
         $sub_url   = isset( $params['suburl'] ) ? $params['suburl'] : false;
@@ -585,6 +561,11 @@ KEY idx_wpid (wpid)";
         $for_manager   = isset( $params['for_manager'] ) && $params['for_manager'] ? true : false;
         $custom_where  = ! empty( $params['custom_where'] ) ? $params['custom_where'] : ''; // requires: custom_where validated.
         $order_by      = isset( $params['order_by'] ) && ! empty( $params['order_by'] ) ? $params['order_by'] : '';
+
+        // to compatible.
+        if ( ! empty( $extra_view ) && is_array( $extra_view ) && is_array( $others_fields ) ) {
+            $others_fields = array_unique( array_merge( $extra_view, $others_fields ) );
+        }
 
         $select_clients = '';
         $join_clients   = '';
@@ -670,7 +651,8 @@ KEY idx_wpid (wpid)";
         } elseif ( 'base_view' === $view ) {
             $select_fields = $base_fields;
         } elseif ( 'uptime_notification' === $view ) {
-            $select_fields = $light_fields;
+            $select_fields   = $light_fields;
+            $select_fields[] = 'pro.*';
         } else {
             $select_fields = $default_fields;
         }
@@ -744,27 +726,46 @@ KEY idx_wpid (wpid)";
         }
 
         if ( ! empty( $params['monitor_id'] ) ) {
-            $sql = $this->wpdb->prepare( 'SELECT monitor_id FROM ' . $this->table_name( 'monitors' ) . ' WHERE monitor_id=%d', $params['monitor_id'] );
+            $sql = $this->wpdb->prepare( 'SELECT monitor_id, wpid FROM ' . $this->table_name( 'monitors' ) . ' WHERE monitor_id=%d', $params['monitor_id'] );
         } elseif ( ! empty( $params['wpid'] ) ) {
-            $sql = $this->wpdb->prepare( 'SELECT monitor_id FROM ' . $this->table_name( 'monitors' ) . ' WHERE wpid=%d AND issub = 0 ', $params['wpid'] ); // get primary monitor.
+            $sql = $this->wpdb->prepare( 'SELECT monitor_id, wpid FROM ' . $this->table_name( 'monitors' ) . ' WHERE wpid=%d AND issub = 0 ', $params['wpid'] ); // get primary monitor.
         }
 
-        $monitor_id = 0;
+        $current = 0;
 
         if ( ! empty( $sql ) ) {
-            $monitor_id = $this->wpdb->get_var( $sql );
+            $current = $this->wpdb->get_row( $sql );
         }
 
-        if ( empty( $monitor_id ) ) {
+        if ( empty( $current ) ) {
             return false;
         }
 
-        if ( $monitor_id && $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'monitors' ) . ' WHERE monitor_id=%d', $monitor_id ) ) ) {
-            $this->delete_heartbeat( $monitor_id );
-            $this->delete_stats( $monitor_id );
-            return true;
+        $monitor_id = $current->monitor_id;
+        $wp_id      = $current->wpid;
+
+        // if it is sub page, delete the monitor only.
+        if ( ! empty( $current->issub ) ) { // it is sub page.
+            if ( $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'monitors' ) . ' WHERE monitor_id=%d', $monitor_id ) ) ) {
+                $this->delete_heartbeat( $monitor_id );
+                $this->delete_stats( $monitor_id );
+                return true;
+            }
+            return false;
         }
 
+        // if it is primary monitor, delete sub pages too.
+        $sql      = $this->wpdb->prepare( 'SELECT monitor_id FROM ' . $this->table_name( 'monitors' ) . ' WHERE wpid=%d ', $wp_id );
+        $monitors = $this->wpdb->get_results( $sql );
+        if ( $monitors ) {
+            foreach ( $monitors as $mo ) {
+                if ( $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'monitors' ) . ' WHERE monitor_id=%d', $mo->monitor_id ) ) ) {
+                    $this->delete_heartbeat( $mo->monitor_id );
+                    $this->delete_stats( $mo->monitor_id );
+                }
+            }
+            return true;
+        }
         return false;
     }
 

@@ -54,9 +54,9 @@ class MainWP_Uptime_Monitoring_Status { // phpcs:ignore Generic.Classes.OpeningB
                          *
                          * @since 5.3
                          */
-                        echo esc_html( apply_filters( 'mainwp_uptime_monitoring_status_widget_title', esc_html__( 'Monitors uptime status', 'mainwp' ) ) );
+                        echo esc_html( apply_filters( 'mainwp_uptime_monitoring_status_widget_title', esc_html__( 'Uptime Monitoring', 'mainwp' ) ) );
                         ?>
-                        <div class="sub header"><?php esc_html_e( 'Monitors uptime status', 'mainwp' ); ?></div>
+                        <div class="sub header"><?php esc_html_e( 'Current uptime status.', 'mainwp' ); ?></div>
                     </h3>
                 </div>
 

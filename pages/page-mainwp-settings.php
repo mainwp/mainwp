@@ -570,8 +570,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * @uses \MainWP\Dashboard\MainWP_Utility::get_http_codes()
      */
     public static function render() { //phpcs:ignore -- NOSONAR - complex method.
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
             return;
         }
 
@@ -1260,8 +1260,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
      */
     public static function render_advanced() { //phpcs:ignore -- NOSONAR - complex method.
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
             return;
         }
 
@@ -1693,8 +1693,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * @uses \MainWP\Dashboard\MainWP_UI::render_screen_options()
      */
     public static function render_mainwp_tools() { // phpcs:ignore -- NOSONAR - complex.
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
             return;
         }
         static::render_header( 'MainWPTools' );
@@ -1759,7 +1759,14 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 </div>
                             </div>
                         </div>
-
+                        <?php if ( get_option( 'mainwp_not_start_encrypt_keys' ) ) { ?>
+                        <div class="ui grid field">
+                            <label class="six wide column middle aligned"><?php esc_html_e( 'OpenSSL Key Encryption', 'mainwp' ); ?></label>
+                            <div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'To enhance security, we\'ve added a feature to encrypt your private keys stored in the database.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <input type="button" name="" id="increase-connection-security-btn"  data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'To enhance security, we\'ve added a feature to encrypt your private keys stored in the database.', 'mainwp' ); ?>" class="ui green basic button" value="<?php esc_attr_e( 'Encrypt Keys Now', 'mainwp' ); ?>" />
+                            </div>
+                        </div>
+                        <?php } ?>
                         <div class="ui grid field">
                             <label class="six wide column middle aligned"><?php esc_html_e( 'Force your MainWP Dashboard to establish a new connection', 'mainwp' ); ?></label>
                             <div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'Force your MainWP Dashboard to reconnect with your child sites. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>" data-inverted="" data-position="top left">

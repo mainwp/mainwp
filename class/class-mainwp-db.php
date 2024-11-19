@@ -381,7 +381,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $fields = array_unique( array_merge( $fields, $other_fields ) );
         }
 
-        $view = '(SELECT intwp.id AS wpid ';
+        $view_query = '(SELECT intwp.id AS wpid ';
 
         if ( ! in_array( 'signature_algo', $fields ) ) {
             $fields[] = 'signature_algo';
@@ -397,13 +397,13 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 continue;
             }
 
-            $view .= ', ';
-            $view .= '(SELECT ' . $this->escape( $field ) . '.value FROM ' . $this->table_name( 'wp_options' ) . ' ' . $this->escape( $field ) . ' WHERE  ' . $this->escape( $field ) . '.wpid = intwp.id AND ' . $this->escape( $field ) . '.name = "' . $this->escape( $field ) . '" LIMIT 1) AS ' . $this->escape( $field );
+            $view_query .= ', ';
+            $view_query .= '(SELECT ' . $this->escape( $field ) . '.value FROM ' . $this->table_name( 'wp_options' ) . ' ' . $this->escape( $field ) . ' WHERE  ' . $this->escape( $field ) . '.wpid = intwp.id AND ' . $this->escape( $field ) . '.name = "' . $this->escape( $field ) . '" LIMIT 1) AS ' . $this->escape( $field );
         }
 
-        $view .= ' FROM ' . $this->table_name( 'wp' ) . ' intwp)';
+        $view_query .= ' FROM ' . $this->table_name( 'wp' ) . ' intwp)';
 
-        return $view;
+        return $view_query;
     }
 
     /**
@@ -2338,13 +2338,17 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             if ( '/' !== substr( $url, - 1 ) ) {
                 $url .= '/';
             }
+
+            $en_pk_data = MainWP_Encrypt_Data_Lib::instance()->encrypt_privkey( base64_decode( $privkey ) );
+            $en_privkey = isset( $en_pk_data['en_data'] ) ? $en_pk_data['en_data'] : '';
+
             $values = array(
                 'userid'                => $userid,
                 'adminname'             => $this->escape( $admin ),
                 'name'                  => $this->escape( wp_strip_all_tags( $name ) ),
                 'url'                   => $this->escape( $url ),
                 'pubkey'                => $this->escape( $pubkey ),
-                'privkey'               => $this->escape( $privkey ),
+                'privkey'               => $this->escape( base64_encode( $en_privkey ) ),
                 'siteurl'               => '',
                 'ga_id'                 => '',
                 'gas_id'                => 0,
@@ -2386,7 +2390,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 'sync_errors'           => '',
             );
             if ( $this->wpdb->insert( $this->table_name( 'wp' ), $values ) ) {
-                $websiteid          = $this->wpdb->insert_id;
+                $websiteid = $this->wpdb->insert_id;
+                MainWP_Encrypt_Data_Lib::instance()->encrypt_save_keys( $websiteid, $en_pk_data );
                 $syncValues['wpid'] = $websiteid;
                 $this->wpdb->insert( $this->table_name( 'wp_sync' ), $syncValues );
                 $this->wpdb->insert(
@@ -2442,6 +2447,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_group' ) . ' WHERE wpid=%d', $websiteid ) );
             $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_sync' ) . ' WHERE wpid=%d', $websiteid ) );
             $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid=%d', $websiteid ) );
+            MainWP_Encrypt_Data_Lib::remove_key_file( $websiteid );
             MainWP_DB_Uptime_Monitoring::instance()->delete_monitor( array( 'wpid' => $websiteid ) );
             return $nr;
         }
@@ -2846,7 +2852,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 return false;
             }
 
-            if ( ! mainwp_current_user_have_right( 'site', $websiteid ) ) {
+            if ( ! \mainwp_current_user_can( 'site', $websiteid ) ) {
                 return false;
             }
 
@@ -3173,12 +3179,12 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
 
     /**
-     * update_process
+     * Update regular process.
      *
      * @param  array $data
      * @return void
      */
-    public function update_process( $data ) {
+    public function update_regular_process( $data ) {
         if ( is_array( $data ) ) {
             if ( isset( $data['process_id'] ) ) {
                 $process_id = $data['process_id'];
@@ -3191,6 +3197,17 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         return false;
     }
 
+
+    /**
+     * get_regular_process_by_item_id_type_slug
+     *
+     * @param  string $by
+     * @param  mixed  $value
+     * @return void
+     */
+    public function get_regular_process_by_item_id_type_slug( $item_id, $type, $process_slug ) {
+        return $this->wpdb->get_row( $this->wpdb->prepare( ' SELECT pr.* FROM ' . $this->table_name( 'schedule_processes' ) . ' pr WHERE pr.item_id = %d AND pr.type = %s AND pr.process_slug = %s', $item_id, $type, $process_slug ) );
+    }
 
     /**
      * log_system_query

@@ -49,7 +49,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 <div class="mainwp_boxout">
                     <div class="mainwp_boxoutin"></div>
                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Sites', 'mainwp' ); ?></a>
-                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'add_sites' ) ) { ?>
+                    <?php if ( \mainwp_current_user_can( 'dashboard', 'add_sites' ) ) { ?>
                         <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'managesites_add_new' ) ) { ?>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
                         <?php } ?>
@@ -196,12 +196,12 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'AddNew'          => array(
                 'href'   => 'admin.php?page=managesites&do=new',
                 'title'  => esc_html__( 'Add New', 'mainwp' ),
-                'access' => mainwp_current_user_have_right( 'dashboard', 'add_sites' ),
+                'access' => \mainwp_current_user_can( 'dashboard', 'add_sites' ),
             ),
             'BulkAddNew'      => array(
                 'href'   => 'admin.php?page=managesites&do=bulknew',
                 'title'  => esc_html__( 'Import Sites', 'mainwp' ),
-                'access' => mainwp_current_user_have_right( 'dashboard', 'add_sites' ),
+                'access' => \mainwp_current_user_can( 'dashboard', 'add_sites' ),
             ),
             'MonitoringSites' => array(
                 'href'   => 'admin.php?page=MonitoringSites',
@@ -218,33 +218,33 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'ManageSitesDashboard'     => array(
                 'href'   => 'admin.php?page=managesites&dashboard=' . $site_id,
                 'title'  => esc_html__( 'Overview', 'mainwp' ),
-                'access' => mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ),
+                'access' => \mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ),
             ),
             'ManageSitesEdit'          => array(
                 'href'   => 'admin.php?page=managesites&id=' . $site_id,
                 'title'  => esc_html__( 'Settings', 'mainwp' ),
-                'access' => mainwp_current_user_have_right( 'dashboard', 'edit_sites' ),
+                'access' => \mainwp_current_user_can( 'dashboard', 'edit_sites' ),
             ),
             'ManageSitesUpdates'       => array(
                 'href'        => 'admin.php?page=managesites&updateid=' . $site_id,
                 'title'       => esc_html__( 'Updates', 'mainwp' ),
-                'access'      => mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ),
+                'access'      => \mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ),
                 'after_title' => $after_title,
             ),
             'ManageSitesMonitor'       => array(
                 'href'   => 'admin.php?page=managesites&monitor_wpid=' . $site_id,
                 'title'  => esc_html__( 'Monitor Settings', 'mainwp' ),
-                'access' => mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ),
+                'access' => \mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ),
             ),
             'ManageSitesEmailSettings' => array(
                 'href'   => 'admin.php?page=managesites&emailsettingsid=' . $site_id,
                 'title'  => esc_html__( 'Email Settings', 'mainwp' ),
-                'access' => mainwp_current_user_have_right( 'dashboard', 'edit_sites' ),
+                'access' => \mainwp_current_user_can( 'dashboard', 'edit_sites' ),
             ),
             'ManageSitesBackups'       => array(
                 'href'   => 'admin.php?page=managesites&backupid=' . $site_id,
                 'title'  => esc_html__( 'Backups', 'mainwp' ),
-                'access' => mainwp_current_user_have_right( 'dashboard', 'execute_backups' ),
+                'access' => \mainwp_current_user_can( 'dashboard', 'execute_backups' ),
             ),
             'SecurityScan'             => array(
                 'href'   => 'admin.php?page=managesites&scanid=' . $site_id,
@@ -514,11 +514,11 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         'name'               => ! empty( $site['site_name'] ) ? sanitize_text_field( wp_unslash( $site['site_name'] ) ) : '',
                         'url'                => ! empty( $site['site_url'] ) ? sanitize_text_field( wp_unslash( $site['site_url'] ) ) : '',
                         'adminname'          => ! empty( $site['admin_name'] ) ? sanitize_text_field( wp_unslash( $site['admin_name'] ) ) : '',
-                        'adminpwd'           => ! empty( $site['admin_password'] ) ? sanitize_text_field( wp_unslash( $site['admin_password'] ) ) : '',
+                        'adminpwd'           => ! empty( $site['admin_password'] ) ? wp_unslash( $site['admin_password'] ) : '',
                         'wpgroups'           => ! empty( $site['tag'] ) ? sanitize_text_field( wp_unslash( $site['tag'] ) ) : '',
                         'uniqueId'           => ! empty( $site['security_id'] ) ? sanitize_text_field( wp_unslash( $site['security_id'] ) ) : '',
                         'http_user'          => ! empty( $site['http_username'] ) ? sanitize_text_field( wp_unslash( $site['http_username'] ) ) : '',
-                        'http_pass'          => ! empty( $site['http_password'] ) ? sanitize_text_field( wp_unslash( $site['http_password'] ) ) : '',
+                        'http_pass'          => ! empty( $site['http_password'] ) ? wp_unslash( $site['http_password'] ) : '',
                         'verify_certificate' => ! empty( $site['verify_certificate'] ) && 1 !== (int) $site['verify_certificate'] ? intval( wp_unslash( $site['verify_certificate'] ) ) : 1,
                         'ssl_version'        => ! empty( $site['ssl_version'] ) ? sanitize_text_field( wp_unslash( $site['ssl_version'] ) ) : 'auto',
                     );
@@ -655,8 +655,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Overview::render_dashboard_body()
      */
     public static function render_dashboard( &$website ) {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'individual dashboard', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'individual dashboard', 'mainwp' ) );
             return;
         }
         ?>
@@ -732,8 +732,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      */
     public static function render_scan_site( &$website ) {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'security scan', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'security scan', 'mainwp' ) );
             return;
         }
         ?>
@@ -754,7 +754,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             if ( empty( $website ) ) {
                 return;
             }
-            if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
+            if ( \mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
                 do_action_deprecated( 'mainwp-securityissues-sites', array( $website ), '4.0.7.2', 'mainwp_securityissues_sites' ); // @deprecated Use 'mainwp_securityissues_sites' instead. NOSONAR - not IP.
 
                 /**
@@ -774,7 +774,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
             <?php
             // Hook in MainWP Sucuri Extension.
-            if ( mainwp_current_user_have_right( 'extension', 'mainwp-sucuri-extension' ) && is_plugin_active( 'mainwp-sucuri-extension/mainwp-sucuri-extension.php' ) ) {
+            if ( \mainwp_current_user_can( 'extension', 'mainwp-sucuri-extension' ) && is_plugin_active( 'mainwp-sucuri-extension/mainwp-sucuri-extension.php' ) ) {
                 do_action_deprecated( 'mainwp-sucuriscan-sites', array( $website ), '4.0.7.2', 'mainwp_sucuriscan_sites' ); // @deprecated Use 'mainwp_sucuriscan_sites' instead. NOSONAR - not IP.
 
                 /**
@@ -794,7 +794,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
             <?php
             // Hook in MainWP Wordfence Extension.
-            if ( mainwp_current_user_have_right( 'extension', 'mainwp-wordfence-extension' ) && is_plugin_active( 'mainwp-wordfence-extension/mainwp-wordfence-extension.php' ) ) {
+            if ( \mainwp_current_user_can( 'extension', 'mainwp-wordfence-extension' ) && is_plugin_active( 'mainwp-wordfence-extension/mainwp-wordfence-extension.php' ) ) {
                 do_action_deprecated( 'mainwp-wordfence-sites', array( $website ), '4.0.7.2', 'mainwp_wordfence_sites' ); // @deprecated Use 'mainwp_wordfence_sites' instead. NOSONAR - not IP.
 
                 /**
@@ -834,8 +834,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses  \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
      */
     public static function render_edit_site( $websiteid, $updated ) { // phpcs:ignore -- NOSONAR - complex.
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'edit sites', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'edit sites', 'mainwp' ) );
             return;
         }
 
@@ -1120,7 +1120,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         <input type="checkbox" name="mainwp_automaticDailyUpdate" class="settings-field-value-change-handler" id="mainwp_automaticDailyUpdate" <?php echo 1 === (int) $website->automatic_update ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_automaticDailyUpdate"></label>
                     </div>
                 </div>
-                <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
+                <?php if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
                     <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general">
                         <label class="six wide column middle aligned">
                         <?php
@@ -1905,11 +1905,15 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         $err    = urldecode( $information['error'] );
                         $_error = MainWP_Utility::esc_content( $err );
                     } elseif ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
+
+                        $en_pk_data = MainWP_Encrypt_Data_Lib::instance()->encrypt_privkey( $privkey, $website->id, true );
+                        $en_privkey = isset( $en_pk_data['en_data'] ) ? $en_pk_data['en_data'] : '';
+
                         MainWP_DB::instance()->update_website_values(
                             $website->id,
                             array(
                                 'pubkey'   => base64_encode( $pubkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for backwards compatibility.
-                                'privkey'  => base64_encode( $privkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for backwards compatibility.
+                                'privkey'  => base64_encode( $en_privkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for backwards compatibility.
                                 'uniqueId' => ( isset( $information['uniqueId'] ) ? $information['uniqueId'] : '' ),
                             )
                         );
@@ -1970,7 +1974,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $params['url']                = isset( $_POST['managesites_add_wpurl'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpurl'] ) ) : '';
         $params['name']               = isset( $_POST['managesites_add_wpname'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpname'] ) ) : '';
         $params['wpadmin']            = isset( $_POST['managesites_add_wpadmin'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpadmin'] ) ) : '';
-        $params['adminpwd']           = isset( $_POST['managesites_add_adminpwd'] ) ? rawurlencode( sanitize_text_field( wp_unslash( $_POST['managesites_add_adminpwd'] ) ) ) : '';
+        $params['adminpwd']           = isset( $_POST['managesites_add_adminpwd'] ) ?   wp_unslash( $_POST['managesites_add_adminpwd'] ) : ''; //phpcs:ignore -- NOSONAR - requires urlencoded passwd, do not sanitize for specical chars.
         $params['unique_id']          = isset( $_POST['managesites_add_uniqueId'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_uniqueId'] ) ) : '';
         $params['ssl_verify']         = empty( $_POST['verify_certificate'] ) ? false : intval( $_POST['verify_certificate'] );
         $params['ssl_version']        = empty( $_POST['ssl_version'] ) ? false : intval( $_POST['ssl_version'] );
@@ -2178,6 +2182,23 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                             if ( ! empty( $information['regverify'] ) ) {
                                 MainWP_DB::instance()->update_website_option( $website, 'register_verify_key', $information['regverify'] );
+                            }
+
+                            $glo_settings          = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+                            $monitoring_glo_active = is_array( $glo_settings ) && isset( $glo_settings['active'] ) ? (int) $glo_settings['active'] : 1;
+                            if ( $monitoring_glo_active ) {
+                                MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor(
+                                    array(
+                                        'wpid'            => $id,
+                                        'active'          => -1,
+                                        'interval'        => -1, // -1 - use global setting.
+                                        'timeout'         => -1,
+                                        'method'          => 'useglobal',
+                                        'type'            => 'useglobal',
+                                        'up_status_codes' => 'useglobal',
+                                        'issub'           => 0, // primary monitor.
+                                    )
+                                );
                             }
 
                             /**

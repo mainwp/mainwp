@@ -50,7 +50,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
         $this->add_action( 'mainwp_get_site_icon', array( &$this, 'get_site_icon' ) );
         $this->add_action( 'mainwp_check_abandoned', array( &$this, 'check_abandoned' ) );
 
-        if ( mainwp_current_user_have_right( 'dashboard', 'test_connection' ) ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'test_connection' ) ) {
             $this->add_action( 'mainwp_testwp', array( &$this, 'mainwp_testwp' ) );
         }
 
@@ -346,8 +346,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
      * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::remove_site()
      */
     public function mainwp_removesite() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'delete_sites' ) ) {
-            die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'delete sites', 'mainwp' ), false ) ) ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'delete_sites' ) ) {
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'delete sites', 'mainwp' ), false ) ) ) );
         }
 
         $this->secure_request( 'mainwp_removesite' );

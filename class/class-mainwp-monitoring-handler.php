@@ -197,6 +197,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 )
             );
             if ( ! empty( $mail_content ) ) {
+                MainWP_Logger::instance()->log_uptime_notice( 'Uptime notification is being sent for admin.' );
                 MainWP_Notification::send_websites_uptime_monitoring( $admin_email, $subject, $mail_content, $plain_text );
                 usleep( 100000 );
             }
@@ -204,9 +205,9 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return;
         }
 
-        $email = '';
-        // for individual notification, one site loop.
+        // Send individual notifications by iterating through each site.
         foreach ( $websites as $site ) {
+            $email = '';
             $addition_emails = $site->monitoring_notification_emails;
             if ( ! empty( $addition_emails ) ) {
                 $email .= ',' . $addition_emails; // send to addition emails too.
@@ -227,6 +228,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $email = trim( $email, ',' );
 
             if ( ! empty( $mail_content ) ) {
+                MainWP_Logger::instance()->log_uptime_notice( 'Uptime notification is being sent for individual site.' );
                 MainWP_Notification::send_websites_uptime_monitoring( $email, $subject, $mail_content, $plain_text );
                 // update noticed value.
                 MainWP_DB::instance()->update_website_values(

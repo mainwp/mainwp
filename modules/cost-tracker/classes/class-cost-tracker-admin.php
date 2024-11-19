@@ -18,8 +18,6 @@ use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_Settings_Indicator;
 use MainWP\Dashboard\MainWP_Exception;
 
-use function MainWP\Dashboard\mainwp_current_user_have_right;
-
 /**
  * Class Cost_Tracker_Admin
  */
@@ -416,7 +414,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
 
         $renderItems = array();
 
-        if ( mainwp_current_user_have_right( 'dashboard', 'manage_cost_tracker' ) ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_cost_tracker' ) ) {
             $renderItems[] = array(
                 'title'  => esc_html__( 'Overview', 'mainwp' ),
                 'href'   => 'admin.php?page=ManageCostTracker',

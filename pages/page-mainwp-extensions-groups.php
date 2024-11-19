@@ -993,7 +993,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
             <?php foreach ( $extensions as $extension ) { ?>
                     <?php
-                    if ( ! mainwp_current_user_have_right( 'extension', dirname( $extension['slug'] ) ) ) {
+                    if ( ! \mainwp_current_user_can( 'extension', dirname( $extension['slug'] ) ) ) {
                         continue;
                     }
 

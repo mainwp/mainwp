@@ -630,8 +630,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         static::render_header( $showpage );
         $has_import_data = ! empty( $_POST['mainwp_managesites_import'] );
 
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'add_sites' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'add sites', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'add_sites' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'add sites', 'mainwp' ) );
             return;
         } elseif ( $has_import_data && check_admin_referer( 'mainwp-admin-nonce' ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Missing
             static::render_import_sites_modal( 'admin.php?page=managesites&do=new', $title_page );
@@ -685,7 +685,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         </div>
                         <h3 class="ui dividing header">
                             <?php echo esc_html__( 'Connect a Single Site', 'mainwp' ); ?>
-                            <div class="sub header"><?php echo esc_html__( 'Connect your site to your MainWP Dashboarad for centralized management.', 'mainwp' ); ?></div>
+                            <div class="sub header"><?php echo esc_html__( 'Connect your site to your MainWP Dashboard for centralized management.', 'mainwp' ); ?></div>
                         </h3>
                         <?php static::render_new_site_add_new_site( $groups );  // NOSONAR - render html form. ?>
                     </div>
@@ -824,9 +824,9 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         <div id="mainwp-add-site-hidden-form" style="display:none">
             <h3 class="ui dividing header">
-                <?php esc_html_e( 'Required Settings', 'mainwp' ); ?>
+                <?php esc_html_e( 'Connection Settings', 'mainwp' ); ?>
                 <div class="sub header">
-                    <?php esc_html_e( 'Enter administrator username and site title.', 'mainwp' ); ?>
+                    <?php esc_html_e( 'Enter site connection details', 'mainwp' ); ?>
                 </div>
             </h3>
             <div class="ui grid field">
@@ -837,12 +837,59 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     </div>
                 </div>
             </div>
-            <input type="password" id="fake-disable-autofill" style="display:none;" name="fake-disable-autofill" />
             <div class="ui grid field">
-                <label class="six wide column middle aligned"><?php esc_html_e( 'Administrator password', 'mainwp' ); ?></label>
-                <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the website Administrator password.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                    <div class="ui left labeled input">
-                        <input type="password" id="mainwp_managesites_add_admin_pwd" name="mainwp_managesites_add_admin_pwd" autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" value="" />
+                <label class="six wide column top aligned"><?php esc_html_e( 'Connection authentication method(s)', 'mainwp' ); ?></label>
+                <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Select which connection authentication processes you are using.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                    <div class="ui toggle checked checkbox not-auto-init" id="addsite-adminpwd" style="margin-right:2em;">
+                        <input type="checkbox" id="mainwp-administrator-password-checkbox-field" checked=""><label><?php esc_html_e( 'Administrator password', 'mainwp' ); ?></label>
+                    </div>
+                    <div class="ui toggle checkbox not-auto-init" id="addsite-uniqueid">
+                        <input type="checkbox" id="mainwp-unique-security-id-checkbox-field"><label><?php esc_html_e( 'Unique Security ID', 'mainwp' ); ?></label>
+                    </div>
+
+                    <div class="ui fluid accordion" id="mainwp-connection-authentication-accordion" style="margin-top:1em">
+                        <div class="title">
+                            <i class="dropdown icon"></i>
+                            <?php esc_html_e( 'Connection authentication methods explained', 'mainwp' ); ?>
+                        </div>
+                        <div class="content">
+                            <span class="ui text"><?php esc_html_e( 'Choose options based on your MainWP Child plugin setup on the WordPress site you want to connect.', 'mainwp' ); ?></span>
+                            <div class="ui bulleted small list">
+                                <div class="item"><?php esc_html_e( 'Default Setup: Use only the Password field if you haven\'t changed the default settings.', 'mainwp' ); ?></div>
+                                <div class="item"><?php esc_html_e( 'Advanced Setup: If you\'ve turned off all verification on the child site, switch off both fields.', 'mainwp' ); ?></div>
+                            </div>
+                            <span class="ui text"><?php esc_html_e( 'Use the sliders to control the fields shown:', 'mainwp' ); ?></span>
+                            <div class="ui bulleted small list">
+                                <div class="item"><?php esc_html_e( 'Password On: Displays the Password field.', 'mainwp' ); ?></div>
+                                <div class="item"><?php esc_html_e( 'Security Key On: Displays the Security Key field.', 'mainwp' ); ?></div>
+                                <div class="item"><?php esc_html_e( 'Both On: Displays both fields.', 'mainwp' ); ?></div>
+                                <div class="item"><?php esc_html_e( 'Both Off: Hides both fields.', 'mainwp' ); ?></div>
+                            </div>
+                            <span class="ui  text"><strong><?php esc_html_e( 'This needs to match what is set on your child site. Default is Administrator password.', 'mainwp' ); ?></strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="mainwp-administrator-password-field">
+                <input type="password" id="fake-disable-autofill" style="display:none;" name="fake-disable-autofill" />
+                <div class="ui grid field">
+                    <label class="six wide column top aligned"><?php esc_html_e( 'Administrator password', 'mainwp' ); ?></label>
+                    <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the website Administrator password.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                        <div class="ui left labeled input">
+                            <input type="password" id="mainwp_managesites_add_admin_pwd" name="mainwp_managesites_add_admin_pwd" autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" value="" />
+                        </div>
+                        <div class="ui hidden fitted divider"></div>
+                        <span class="ui small text"><?php esc_html_e( 'Your password is never stored by your Dashboard and never sent to MainWP.com. Once this initial connection is complete, your MainWP Dashboard generates a secure Public and Private key pair (2048 bits) using OpenSSL, allowing future connections without needing your password again. For added security, you can even change this admin password once connected—just be sure not to delete the admin account, as this would disrupt the connection.', 'mainwp' ); ?></span>
+                    </div>
+                </div>
+            </div>
+            <div id="mainwp-unique-security-id-field" style="display:none">
+                <div class="ui grid field">
+                    <label class="six wide column middle aligned"><?php esc_html_e( 'Unique security ID', 'mainwp' ); ?></label>
+                    <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If in use, enter the website Unique ID.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                        <div class="ui left labeled input">
+                            <input type="text" id="mainwp_managesites_add_uniqueId" name="mainwp_managesites_add_uniqueId" value="" />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -871,158 +918,222 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 </div>
             </h3>
 
+
+
             <div class="ui grid field">
-                <label class="six wide column middle aligned"><?php esc_html_e( 'Unique security ID (optional)', 'mainwp' ); ?></label>
-                <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If in use, enter the website Unique ID.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                    <div class="ui left labeled input">
-                        <input type="text" id="mainwp_managesites_add_uniqueId" name="mainwp_managesites_add_uniqueId" value="" />
+                <label class="six wide column middle aligned">
+                    <?php esc_html_e( 'Upload site icon', 'mainwp' ); ?>
+                </label>
+                <input type="hidden" name="mainwp_managesites_add_site_uploaded_icon_hidden" id="mainwp_managesites_add_site_uploaded_icon_hidden" value="">
+
+                <div class="three wide middle aligned column" data-tooltip="<?php esc_attr_e( 'Upload the site icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+                    <div class="ui green button basic mainwp-managesites-add-site-icon-customable" iconItemId="" iconFileSlug="" icon-src="">
+                        <?php esc_html_e( 'Upload Icon', 'mainwp' ); ?>
+                    </div>
+                    <div style="display:inline-block;" id="mainw_managesites_add_edit_site_upload_custom_icon"></div>
+                    <?php // used for icon holder. ?>
+                </div>
+            </div>
+
+            <?php
+                $default_icons         = MainWP_UI::get_default_icons();
+                $selected_default_icon = 'wordpress'; //phpcs:ignore -- WP icon.
+                $selected_site_color   = '#34424D';
+            ?>
+
+            <div class="ui grid field">
+                <label class="six wide column middle aligned">
+                    <?php esc_html_e( 'Select icon', 'mainwp' ); ?>
+                </label>
+                <input type="hidden" name="mainwp_managesites_add_site_select_icon_hidden" id="mainwp_managesites_add_site_select_icon_hidden" value="">
+                <div class="six wide column" data-tooltip="<?php esc_attr_e( 'Select an icon if not using original site icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+                    <div class="ui left action input mainwp-dropdown-color-picker-field">
+                        <div class="ui five column selection search dropdown not-auto-init" id="mainwp_manage_add_edit_site_icon_select">
+                            <div class="text">
+                                <span style="color:<?php echo esc_attr( $selected_site_color ); ?>" ><?php echo ! empty( $selected_default_icon ) ? '<i class="' . esc_attr( $selected_default_icon ) . ' icon"></i>' : ''; ?></span>
+                            </div>
+                            <i class="dropdown icon"></i>
+                            <div class="menu">
+                                <?php foreach ( $default_icons as $icon ) : ?>
+                                    <?php echo '<div class="item" style="color:' . esc_attr( $selected_site_color ) . '" data-value="' . esc_attr( $icon ) . '"><i class="' . esc_attr( $icon ) . ' icon"></i></div>'; ?>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                        <input type="color" data-tooltip="Color will update on save" data-position="top center" data-inverted="" name="mainwp_managesites_add_site_color" class="mainwp-color-picker-input" id="mainwp_managesites_add_site_color"  value="<?php echo esc_attr( $selected_site_color ); ?>" />
                     </div>
                 </div>
+                <div class="one wide column"></div>
             </div>
-
-        <div class="ui grid field">
-            <label class="six wide column middle aligned">
-                <?php esc_html_e( 'Upload site icon', 'mainwp' ); ?>
-            </label>
-            <input type="hidden" name="mainwp_managesites_add_site_uploaded_icon_hidden" id="mainwp_managesites_add_site_uploaded_icon_hidden" value="">
-
-            <div class="three wide middle aligned column" data-tooltip="<?php esc_attr_e( 'Upload the site icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                <div class="ui green button basic mainwp-managesites-add-site-icon-customable" iconItemId="" iconFileSlug="" icon-src="">
-                    <?php esc_html_e( 'Upload Icon', 'mainwp' ); ?>
-                </div>
-                <div style="display:inline-block;" id="mainw_managesites_add_edit_site_upload_custom_icon"></div>
-                <?php // used for icon holder. ?>
-            </div>
-        </div>
-
-        <?php
-            $default_icons         = MainWP_UI::get_default_icons();
-            $selected_default_icon = 'wordpress'; //phpcs:ignore -- WP icon.
-            $selected_site_color   = '#34424D';
-        ?>
-
-        <div class="ui grid field">
-            <label class="six wide column middle aligned">
-                <?php esc_html_e( 'Select icon', 'mainwp' ); ?>
-            </label>
-            <input type="hidden" name="mainwp_managesites_add_site_select_icon_hidden" id="mainwp_managesites_add_site_select_icon_hidden" value="">
-            <div class="six wide column" data-tooltip="<?php esc_attr_e( 'Select an icon if not using original site icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                <div class="ui left action input mainwp-dropdown-color-picker-field">
-                    <div class="ui five column selection search dropdown not-auto-init" id="mainwp_manage_add_edit_site_icon_select">
-                        <div class="text">
-                            <span style="color:<?php echo esc_attr( $selected_site_color ); ?>" ><?php echo ! empty( $selected_default_icon ) ? '<i class="' . esc_attr( $selected_default_icon ) . ' icon"></i>' : ''; ?></span>
-                        </div>
+            <div class="ui grid field">
+                <label class="six wide column middle aligned">
+                    <?php esc_html_e( 'Tags (optional)', 'mainwp' ); ?>
+                </label>
+                <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add the website to existing tag(s).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                    <div class="ui multiple search selection dropdown" init-value="" id="mainwp_managesites_add_addgroups">
                         <i class="dropdown icon"></i>
+                        <div class="default text"></div>
                         <div class="menu">
-                            <?php foreach ( $default_icons as $icon ) : ?>
-                                <?php echo '<div class="item" style="color:' . esc_attr( $selected_site_color ) . '" data-value="' . esc_attr( $icon ) . '"><i class="' . esc_attr( $icon ) . ' icon"></i></div>'; ?>
-                            <?php endforeach; ?>
+                            <?php foreach ( $groups as $group ) { ?>
+                                <div class="item" data-value="<?php echo intval( $group->id ); ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
+                            <?php } ?>
                         </div>
                     </div>
-                    <input type="color" data-tooltip="Color will update on save" data-position="top center" data-inverted="" name="mainwp_managesites_add_site_color" class="mainwp-color-picker-input" id="mainwp_managesites_add_site_color"  value="<?php echo esc_attr( $selected_site_color ); ?>" />
                 </div>
             </div>
-            <div class="one wide column"></div>
-        </div>
-        <div class="ui grid field">
-            <label class="six wide column middle aligned">
-                <?php esc_html_e( 'Tags (optional)', 'mainwp' ); ?>
-            </label>
-            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add the website to existing tag(s).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                <div class="ui multiple search selection dropdown" init-value="" id="mainwp_managesites_add_addgroups">
-                    <i class="dropdown icon"></i>
-                    <div class="default text"></div>
-                    <div class="menu">
-                        <?php foreach ( $groups as $group ) { ?>
-                            <div class="item" data-value="<?php echo intval( $group->id ); ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
-                        <?php } ?>
+            <?php
+            $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
+            ?>
+            <div class="ui grid field">
+                <label class="six wide column middle aligned"><?php esc_html_e( 'Client (optional)', 'mainwp' ); ?></label>
+                <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add a client to the website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                    <div class="ui search selection dropdown" init-value="" id="mainwp_managesites_add_client_id">
+                        <i class="dropdown icon"></i>
+                        <div class="default text"></div>
+                        <div class="menu">
+                            <div class="item" data-value="0"><?php esc_attr_e( 'Select client', 'mainwp' ); ?></div>
+                            <?php foreach ( $clients as $client ) { ?>
+                                <div class="item" data-value="<?php echo intval( $client->client_id ); ?>"><?php echo esc_html( $client->name ); ?></div>
+                            <?php } ?>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <?php
-        $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
-        ?>
-        <div class="ui grid field">
-            <label class="six wide column middle aligned"><?php esc_html_e( 'Client (optional)', 'mainwp' ); ?></label>
-            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add a client to the website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                <div class="ui search selection dropdown" init-value="" id="mainwp_managesites_add_client_id">
-                    <i class="dropdown icon"></i>
-                    <div class="default text"></div>
-                    <div class="menu">
-                        <div class="item" data-value="0"><?php esc_attr_e( 'Select client', 'mainwp' ); ?></div>
-                        <?php foreach ( $clients as $client ) { ?>
-                            <div class="item" data-value="<?php echo intval( $client->client_id ); ?>"><?php echo esc_html( $client->name ); ?></div>
-                        <?php } ?>
+
+            <div class="ui grid field settings-field-indicator-wrapper">
+                <label class="six wide column middle aligned"><?php esc_html_e( 'Verify SSL certificate (optional)', 'mainwp' ); ?></label>
+                <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Do you want to verify SSL certificate.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                    <input type="checkbox" name="mainwp_managesites_verify_certificate" id="mainwp_managesites_verify_certificate" checked="true" />
+                </div>
+            </div>
+
+            <div class="ui grid field">
+                <label class="six wide column middle aligned"><?php esc_html_e( 'SSL version (optional)', 'mainwp' ); ?></label>
+                <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select SSL Version. If you are not sure, select "Auto Detect".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                    <select class="ui dropdown" id="mainwp_managesites_add_ssl_version" name="mainwp_managesites_add_ssl_version">
+                        <option value="0"><?php esc_html_e( 'Auto detect', 'mainwp' ); ?></option>
+                        <option value="6"><?php esc_html_e( 'TLS v1.2', 'mainwp' ); ?></option>
+                        <option value="1"><?php esc_html_e( 'TLS v1.x', 'mainwp' ); ?></option>
+                        <option value="2"><?php esc_html_e( 'SSL v2', 'mainwp' ); ?></option>
+                        <option value="3"><?php esc_html_e( 'SSL v3', 'mainwp' ); ?></option>
+                        <option value="4"><?php esc_html_e( 'TLS v1.0', 'mainwp' ); ?></option>
+                        <option value="5"><?php esc_html_e( 'TLS v1.1', 'mainwp' ); ?></option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- fake fields are a workaround for chrome autofill getting the wrong fields. -->
+            <input style="display:none" type="text" name="fakeusernameremembered"/>
+            <input style="display:none" type="password" name="fakepasswordremembered"/>
+
+            <div class="ui grid field">
+                <label class="six wide column middle aligned"><?php esc_html_e( 'HTTP username (optional)', 'mainwp' ); ?></label>
+                <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If the child site is HTTP Basic Auth protected, enter the HTTP username here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                    <div class="ui left labeled input">
+                        <input type="text" id="mainwp_managesites_add_http_user" name="mainwp_managesites_add_http_user" value="" autocomplete="off" />
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper">
-            <label class="six wide column middle aligned"><?php esc_html_e( 'Verify SSL certificate (optional)', 'mainwp' ); ?></label>
-            <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Do you want to verify SSL certificate.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                <input type="checkbox" name="mainwp_managesites_verify_certificate" id="mainwp_managesites_verify_certificate" checked="true" />
-            </div>
-        </div>
-
-        <div class="ui grid field">
-            <label class="six wide column middle aligned"><?php esc_html_e( 'SSL version (optional)', 'mainwp' ); ?></label>
-            <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select SSL Version. If you are not sure, select "Auto Detect".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                <select class="ui dropdown" id="mainwp_managesites_add_ssl_version" name="mainwp_managesites_add_ssl_version">
-                    <option value="0"><?php esc_html_e( 'Auto detect', 'mainwp' ); ?></option>
-                    <option value="6"><?php esc_html_e( 'TLS v1.2', 'mainwp' ); ?></option>
-                    <option value="1"><?php esc_html_e( 'TLS v1.x', 'mainwp' ); ?></option>
-                    <option value="2"><?php esc_html_e( 'SSL v2', 'mainwp' ); ?></option>
-                    <option value="3"><?php esc_html_e( 'SSL v3', 'mainwp' ); ?></option>
-                    <option value="4"><?php esc_html_e( 'TLS v1.0', 'mainwp' ); ?></option>
-                    <option value="5"><?php esc_html_e( 'TLS v1.1', 'mainwp' ); ?></option>
-                </select>
-            </div>
-        </div>
-
-        <!-- fake fields are a workaround for chrome autofill getting the wrong fields. -->
-        <input style="display:none" type="text" name="fakeusernameremembered"/>
-        <input style="display:none" type="password" name="fakepasswordremembered"/>
-
-        <div class="ui grid field">
-            <label class="six wide column middle aligned"><?php esc_html_e( 'HTTP username (optional)', 'mainwp' ); ?></label>
-            <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If the child site is HTTP Basic Auth protected, enter the HTTP username here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                <div class="ui left labeled input">
-                    <input type="text" id="mainwp_managesites_add_http_user" name="mainwp_managesites_add_http_user" value="" autocomplete="off" />
+            <div class="ui grid field">
+                <label class="six wide column middle aligned"><?php esc_html_e( 'HTTP password (optional)', 'mainwp' ); ?></label>
+                <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If the child site is HTTP Basic Auth protected, enter the HTTP password here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                    <div class="ui left labeled input">
+                        <input type="password" id="mainwp_managesites_add_http_pass" name="mainwp_managesites_add_http_pass" value="" autocomplete="new-password" />
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="ui grid field">
-            <label class="six wide column middle aligned"><?php esc_html_e( 'HTTP password (optional)', 'mainwp' ); ?></label>
-            <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If the child site is HTTP Basic Auth protected, enter the HTTP password here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                <div class="ui left labeled input">
-                    <input type="password" id="mainwp_managesites_add_http_pass" name="mainwp_managesites_add_http_pass" value="" autocomplete="new-password" />
-                </div>
+            <?php MainWP_Manage_Sites_View::render_sync_exts_settings(); ?>
             </div>
-        </div>
 
-        <?php MainWP_Manage_Sites_View::render_sync_exts_settings(); ?>
-        </div>
+            <?php
+            do_action_deprecated( 'mainwp-manage-sites-edit', array( false ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead. NOSONAR - not IP.
 
+            /**
+             * Edit site
+             *
+             * Fires on the Edit child site page and allows user to hook in new site options.
+             *
+             * @param bool false
+             */
+            do_action( 'mainwp_manage_sites_edit', false );
+            ?>
+
+            <div class="ui divider"></div>
+                <input type="button" name="mainwp_managesites_add" id="mainwp_managesites_add" class="ui button green big" value="<?php esc_attr_e( 'Add Site', 'mainwp' ); ?>" />
+                <div class="ui hidden clearing divider"></div>
+            </div>
         <?php
-        do_action_deprecated( 'mainwp-manage-sites-edit', array( false ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead. NOSONAR - not IP.
+        static::render_add_site_scripts();
+    }
 
-        /**
-         * Edit site
-         *
-         * Fires on the Edit child site page and allows user to hook in new site options.
-         *
-         * @param bool false
-         */
-        do_action( 'mainwp_manage_sites_edit', false );
+    /**
+     * Render add site scripts.
+     *
+     * @return void
+     */
+    public static function render_add_site_scripts() {
         ?>
+        <script type="text/javascript">
+            jQuery( document ).ready( function () {
+                let adminwpTip = jQuery('#mainwp-connection-authentication-accordion').accordion({
+                    onChange:function(){
+                        mainwp_ui_state_save( 'adminpwd_tip_showhide', jQuery(this).hasClass('active') ? 1 : 0 );
+                    }
+                });
 
-        <div class="ui divider"></div>
-            <input type="button" name="mainwp_managesites_add" id="mainwp_managesites_add" class="ui button green big" value="<?php esc_attr_e( 'Add Site', 'mainwp' ); ?>" />
-            <div class="ui hidden clearing divider"></div>
-        </div>
+                mainwp_ui_state_init('adminpwd_tip_showhide', function(state){
+                    if( '1' === state ){
+                        adminwpTip.accordion('open', 0);
+                    } else {
+                        adminwpTip.accordion('close', 0);
+                    }
+                });
+
+                let chkbx1 = jQuery('#addsite-adminpwd').checkbox({
+                    onChange:function(){
+                        mainwp_ui_state_save( 'addsite-adminpwd', jQuery(this).is(':checked') ? 2 : 0 );
+                        if(jQuery(this).is(':checked')){
+                            jQuery('#mainwp-administrator-password-field').fadeIn(500);
+                        } else {
+                            jQuery('#mainwp-administrator-password-field').fadeOut(500);
+                        }
+                    }
+                });
+
+                let chkbx2 = jQuery('#addsite-uniqueid').checkbox({
+                    onChange:function(){
+                        mainwp_ui_state_save( 'addsite-uniqueid', jQuery(this).is(':checked') ? 2 : 0 );
+                        if(jQuery(this).is(':checked')){
+                            jQuery('#mainwp-unique-security-id-field').fadeIn(500);
+                        } else {
+                            jQuery('#mainwp-unique-security-id-field').fadeOut(500);
+                        }
+                    }
+                });
+
+                mainwp_ui_state_init('addsite-adminpwd', function(state){
+                    if( '1' === state || '0' === state ){
+                        chkbx1.checkbox('set unchecked');
+                        jQuery('#mainwp-administrator-password-field').fadeOut(500);
+                    } else {
+                        chkbx1.checkbox('set checked');
+                        jQuery('#mainwp-administrator-password-field').fadeIn(500);
+                    }
+                });
+
+
+                mainwp_ui_state_init('addsite-uniqueid', function(state){
+                    if( '1' === state || '0' === state ){
+                        chkbx2.checkbox('set unchecked');
+                        jQuery('#mainwp-unique-security-id-field').fadeOut(500);
+                    } else {
+                        chkbx2.checkbox('set checked');
+                        jQuery('#mainwp-unique-security-id-field').fadeIn(500);
+                    }
+                });
+            });
+        </script>
         <?php
     }
 
@@ -1038,7 +1149,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <div class="ui fitted hidden divider"></div>
         <h3 class="ui dividing header">
             <?php echo esc_html__( 'Connect Multiple Sites', 'mainwp' ); ?>
-            <div class="sub header"><?php echo esc_html__( 'Connect multiple sites to your MainWP Dashboarad for centralized management.', 'mainwp' ); ?></div>
+            <div class="sub header"><?php echo esc_html__( 'Connect multiple sites to your MainWP Dashboard for centralized management.', 'mainwp' ); ?></div>
         </h3>
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-multiple-sites-info-message' ) ) : ?>
             <div class="ui blue message">
@@ -1221,8 +1332,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $has_file_upload = isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_bulkupload']['error'];
         $has_import_data = ! empty( $_POST['mainwp_managesites_import'] );
 
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'add_sites' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'add sites', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'add_sites' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'add sites', 'mainwp' ) );
             return;
         } elseif ( ( $has_file_upload || $has_import_data ) && check_admin_referer( 'mainwp-admin-nonce' ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Missing
             static::render_import_sites_modal( 'admin.php?page=managesites&do=bulknew', $title_page );
@@ -1368,7 +1479,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
 
         // Load the Uptime monitoring widget.
-        if ( mainwp_current_user_have_right( 'dashboard', 'manage_uptime_monitoring' ) && static::$enable_widgets['uptime_monitoring_response_time'] ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_uptime_monitoring' ) && static::$enable_widgets['uptime_monitoring_response_time'] ) {
             MainWP_UI::add_widget_box( 'uptime_monitoring_response_time', array( MainWP_Uptime_Monitoring_Site_Widget::instance(), 'render_response_times_widget' ), static::$page, array( 1, 1, 12, 14 ) );
         }
 
@@ -1383,12 +1494,12 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
 
         // Load the Recent Pages widget.
-        if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) && static::$enable_widgets['recent_pages'] ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_pages' ) && static::$enable_widgets['recent_pages'] ) {
             MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), static::$page, array( 1, 1, 6, 11 ) );
         }
 
         // Load the Recent Posts widget.
-        if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) && static::$enable_widgets['recent_posts'] ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_posts' ) && static::$enable_widgets['recent_posts'] ) {
             MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), static::$page, array( 1, 1, 6, 11 ) );
         }
 
@@ -1411,7 +1522,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         MainWP_UI::add_widget_box( 'child_site_info', array( MainWP_Site_Info::get_class_name(), 'render' ), static::$page, array( 1, 1, 4, 18 ) );
 
         // Load the Securtiy Issues widget.
-        if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) && static::$enable_widgets['security_issues'] ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) && static::$enable_widgets['security_issues'] ) {
             MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), static::$page, array( 1, 1, 4, 8 ) );
         }
 
@@ -1828,7 +1939,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $updated = false;
-        if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && isset( $_REQUEST['id'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsite' . sanitize_key( $_REQUEST['id'] ) ) && mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
+        if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && isset( $_REQUEST['id'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsite' . sanitize_key( $_REQUEST['id'] ) ) && \mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
             // update site.
             $groupids   = array();
             $groupnames = array();
@@ -1909,7 +2020,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 'suspended'             => $suspended,
             );
 
-            if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) {
+            if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
                 $newValues['is_ignoreCoreUpdates']   = ! empty( $_POST['mainwp_is_ignoreCoreUpdates'] ) ? 1 : 0;
                 $newValues['is_ignorePluginUpdates'] = ! empty( $_POST['mainwp_is_ignorePluginUpdates'] ) ? 1 : 0;
                 $newValues['is_ignoreThemeUpdates']  = ! empty( $_POST['mainwp_is_ignoreThemeUpdates'] ) ? 1 : 0;
@@ -2077,6 +2188,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <li><?php esc_html_e( 'Fill in the Site URL field by entering the URL of the website you want to connect.', 'mainwp' ); ?></li>
             <li><?php esc_html_e( 'Enter the username of your Administrator account on the site.', 'mainwp' ); ?></li>
             <li><?php esc_html_e( 'Optionally, enter a custom Site Name, or MainWP will automatically generate a name for it.', 'mainwp' ); ?></li>
+            <li><?php esc_html_e( 'Enter the administrator account password. If the requirement is disabled in the MainWP Child plugin settings, leave blank.', 'mainwp' ); ?></li>
             <?php if ( $is_qsw ) : ?>
             <li><?php esc_html_e( 'To show additional fields (Tags, Security ID, HTTP Username, HTTP Password, SSL Version, and SSL Verification, click the eye icon at the end of the row.', 'mainwp' ); ?></li>
             <?php endif; ?>
@@ -2131,7 +2243,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <span class="ui text small"><strong><?php esc_html_e( 'Admin Name (required)', 'mainwp' ); ?></strong></span>
                     </div>
                     <div class="<?php echo $is_page_setup ? 'three' : 'two'; ?> wide column">
-                        <span class="ui text small"><strong><?php esc_html_e( 'Admin Password (required)', 'mainwp' ); ?></strong></span>
+                        <span class="ui text small"><strong><?php esc_html_e( 'Admin Password', 'mainwp' ); ?></strong></span>
                     </div>
                     <?php if ( ! $is_page_setup ) : ?>
                         <div class="one wide column">

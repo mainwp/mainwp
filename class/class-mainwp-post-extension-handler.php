@@ -54,7 +54,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
 
         $this->add_action( 'mainwp_extension_plugin_action', array( &$this, 'ajax_extension_plugin_action' ) );
 
-        if ( mainwp_current_user_have_right( 'dashboard', 'bulk_install_and_activate_extensions' ) ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'bulk_install_and_activate_extensions' ) ) {
             $this->add_action( 'mainwp_extension_grabapikey', array( &$this, 'grab_extension_api_key' ) );
             $this->add_action( 'mainwp_extension_saveextensionapilogin', array( &$this, 'save_extensions_api_login' ) );
             $this->add_action( 'mainwp_extension_getpurchased', array( MainWP_Extensions::get_class_name(), 'ajax_get_purchased_extensions' ) );

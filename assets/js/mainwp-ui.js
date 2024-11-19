@@ -532,6 +532,15 @@ window.mainwp_ui_state_load = function (ident) {
     return '1'; // show if Storage undefined.
 };
 
+window.mainwp_ui_state_init = function (ident, callback ) {
+    if (typeof (Storage) !== 'undefined') {
+        let state = mainwp_ui_state_load(ident);
+        if(typeof callback === 'function'){
+            callback(state);
+        }
+    }
+};
+
 window.mainwp_sites_filter_select = function (objInput) {
     let filter = jQuery(objInput).val().toLowerCase();
     let parent = jQuery(objInput).closest('.mainwp_select_sites_wrapper');

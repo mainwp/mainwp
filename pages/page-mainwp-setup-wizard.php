@@ -616,25 +616,50 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                 <input type="text" id="mainwp_managesites_add_wpadmin" name="mainwp_managesites_add_wpadmin" value="" />
                             </div>
                             <div class="field">
+                                <label for=""><?php esc_html_e( 'Choose your connection authentication method:', 'mainwp' ); ?></label>
+                                <div class="ui hidden fitted divider"></div>
+                                <div class="ui toggle checked checkbox not-auto-init" id="addsite-adminpwd" style="margin-right:2em;">
+                                    <input type="checkbox" id="mainwp-administrator-password-checkbox-field" checked=""><label><?php esc_html_e( 'Administrator password', 'mainwp' ); ?></label>
+                                </div>
+                                <div class="ui toggle checkbox not-auto-init" id="addsite-uniqueid">
+                                    <input type="checkbox" id="mainwp-unique-security-id-checkbox-field"><label><?php esc_html_e( 'Unique Security ID', 'mainwp' ); ?></label>
+                                </div>
+                            </div>
+                            <div class="ui hidden fitted divider"></div>
+                            <div class="ui fluid accordion" id="mainwp-connection-authentication-accordion" style="margin-top:1em">
+                                <div class="title">
+                                    <i class="dropdown icon"></i>
+                                    <?php esc_html_e( 'Connection authentication methods explained', 'mainwp' ); ?>
+                                </div>
+                                <div class="content">
+                                    <span class="ui text"><?php esc_html_e( 'Choose options based on your MainWP Child plugin setup on the WordPress site you want to connect.', 'mainwp' ); ?></span>
+                                    <div class="ui bulleted small list">
+                                        <div class="item"><?php esc_html_e( 'Default Setup: Use only the Password field if you haven\'t changed the default settings.', 'mainwp' ); ?></div>
+                                        <div class="item"><?php esc_html_e( 'Advanced Setup: If you\'ve turned off all verification on the child site, switch off both fields.', 'mainwp' ); ?></div>
+                                    </div>
+                                    <span class="ui text"><?php esc_html_e( 'Use the sliders to control the fields shown:', 'mainwp' ); ?></span>
+                                    <div class="ui bulleted small list">
+                                        <div class="item"><?php esc_html_e( 'Password On: Displays the Password field.', 'mainwp' ); ?></div>
+                                        <div class="item"><?php esc_html_e( 'Security Key On: Displays the Security Key field.', 'mainwp' ); ?></div>
+                                        <div class="item"><?php esc_html_e( 'Both On: Displays both fields.', 'mainwp' ); ?></div>
+                                        <div class="item"><?php esc_html_e( 'Both Off: Hides both fields.', 'mainwp' ); ?></div>
+                                    </div>
+                                    <span class="ui  text"><strong><?php esc_html_e( 'This needs to match what is set on your child site. Default is Administrator password.', 'mainwp' ); ?></strong></span>
+                                </div>
+                            </div>
+                            <div class="ui hidden fitted divider"></div>
+                            <div class="ui hidden fitted divider"></div>
+                            <div class="field" id="mainwp-administrator-password-field">
                                 <label for="mainwp_managesites_add_admin_pwd"><?php esc_html_e( 'What is your administrator password on that site?', 'mainwp' ); ?></label>
                                 <input type="password" id="mainwp_managesites_add_admin_pwd" name="mainwp_managesites_add_admin_pwd" value="" />
+                            </div>
+                            <div class="field" id="mainwp-unique-security-id-field" style="display:none" >
+                                <label for="mainwp_managesites_add_uniqueId"><?php esc_html_e( 'Did you generate unique security ID on the site? If yes, copy it here, if not, leave this field blank. ', 'mainwp' ); ?></label>
+                                <input type="text" id="mainwp_managesites_add_uniqueId" name="mainwp_managesites_add_uniqueId" value="" />
                             </div>
                             <div class="field">
                                 <label for="mainwp_managesites_add_wpname"><?php esc_html_e( 'Add site title. If left blank URL is used.', 'mainwp' ); ?></label>
                                 <input type="text" id="mainwp_managesites_add_wpname" name="mainwp_managesites_add_wpname" value="" />
-                            </div>
-                            <div class="ui hidden divider"></div>
-                            <a href="#" id="mainwp-toggle-optional-settings"><i class="ui eye icon"></i> <?php esc_html_e( 'Advanced options', 'mainwp' ); ?></a>
-                            <div class="ui hidden divider"></div>
-                            <div id="mainwp-qsw-optional-settings-form" style="display:none">
-                                <div class="ui hidden divider"></div>
-                                <div class="ui horizontal left aligned divider"><?php esc_html_e( 'Advanced Options (optional)', 'mainwp' ); ?></div>
-                                <div class="ui hidden divider"></div>
-                                <div class="ui hidden divider"></div>
-                                <div class="field">
-                                    <label for="mainwp_managesites_add_uniqueId"><?php esc_html_e( 'Did you generate unique security ID on the site? If yes, copy it here, if not, leave this field blank. ', 'mainwp' ); ?></label>
-                                    <input type="text" id="mainwp_managesites_add_uniqueId" name="mainwp_managesites_add_uniqueId" value="" />
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -707,6 +732,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             });
         </script>
         <?php
+        MainWP_Manage_Sites::render_add_site_scripts();
     }
 
     /**

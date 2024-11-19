@@ -359,8 +359,10 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
             $args['orderby'] = $request['orderby'];
         }
 
-        if ( ! empty( $request['paged'] ) ) {
-            $args['paged'] = $request['paged'];
+        if ( ! empty( $request['page'] ) ) {
+            $args['paged'] = $request['page'];
+        } elseif ( ! empty( $request['paged'] ) ) {
+            $args['paged'] = $request['paged']; // compatible.
         }
 
         if ( ! empty( $request['per_page'] ) ) {

@@ -1711,7 +1711,7 @@ let mainwp_managesites_add = function () {
         managesites_add_wpname: name,
         managesites_add_wpurl: url,
         managesites_add_wpadmin: jQuery('#mainwp_managesites_add_wpadmin').val(),
-        managesites_add_adminpwd: jQuery('#mainwp_managesites_add_admin_pwd').val().trim(),
+        managesites_add_adminpwd: encodeURIComponent(jQuery('#mainwp_managesites_add_admin_pwd').val().trim()),
         managesites_add_uniqueId: jQuery('#mainwp_managesites_add_uniqueId').val(),
         ssl_verify: jQuery('#mainwp_managesites_verify_certificate').is(':checked') ? 1 : 0,
         ssl_version: jQuery('#mainwp_managesites_add_ssl_version').val(),
@@ -1774,7 +1774,7 @@ let mainwp_managesites_add = function () {
           jQuery('#mainwp_managesites_add_wpurl').val('');
           jQuery('#mainwp_managesites_add_wpurl_protocol').val('https');
           jQuery('#mainwp_managesites_add_wpadmin').val('');
-					jQuery('#mainwp_managesites_add_admin_pwd').val('');
+          jQuery('#mainwp_managesites_add_admin_pwd').val('');
           jQuery('#mainwp_managesites_add_uniqueId').val('');
           jQuery('#mainwp_managesites_add_addgroups').dropdown('clear');
           jQuery('#mainwp_managesites_verify_certificate').val(1);
@@ -1835,9 +1835,6 @@ let mainwp_managesites_add_valid = function () {
   }
   if (jQuery('#mainwp_managesites_add_wpadmin').val().trim() == '') {
     errors.push(__('Please enter a username of the website administrator.'));
-  }
-  if (jQuery('#mainwp_managesites_add_admin_pwd').val().trim() == '') {
-    errors.push(__('Please enter password of the website administrator.'));
   }
 
   if (errors.length > 0) {
@@ -3661,12 +3658,12 @@ jQuery(document).on('change', '.cb-select-all-parent-top, .cb-select-all-parent-
   let parentChecked = jQuery(this).is(":checked");
   let parentSelector = jQuery(this).attr('cb-parent-selector') ?? false;
 
-  if(false === parentSelector){
+  if (false === parentSelector) {
     return;
   }
   console.log(parentSelector);
-  jQuery(parentSelector + ' .ui.checkbox' ).find(':checkbox')
-    .prop('checked', function() {
+  jQuery(parentSelector + ' .ui.checkbox').find(':checkbox')
+    .prop('checked', function () {
       console.log(this);
       console.log(parentChecked);
       if (parentChecked) {
@@ -3675,7 +3672,7 @@ jQuery(document).on('change', '.cb-select-all-parent-top, .cb-select-all-parent-
       }
       jQuery(this).closest('tr').removeClass('selected');
       return false;
-  });
+    });
 
 });
 
@@ -4588,47 +4585,68 @@ const mainwp_validate_email = function (email) {
 
 jQuery(function ($) {
 
-    $(document).on('click', '#delete_uptime_monitor_btn', function () {
-      let is_sub = $('#monitor_edit_is_sub_url')?.val();
+  $(document).on('click', '#delete_uptime_monitor_btn', function () {
+    let is_sub = $('#monitor_edit_is_sub_url')?.val();
 
-      let confirmation = __("Are you sure you want to delete this uptime monitor?");
+    let confirmation = __("Are you sure you want to delete this uptime monitor?");
 
-      if (is_sub) {
-        confirmation = __("Are you sure you want to delete this uptime sub-page monitor?");
-      }
+    if (is_sub) {
+      confirmation = __("Are you sure you want to delete this uptime sub-page monitor?");
+    }
 
-      mainwp_confirm(confirmation, () => {
-        let wpid = $('#mainwp_edit_monitor_site_id').val();
-        let moid = $('#mainwp_edit_monitor_id').val();
+    mainwp_confirm(confirmation, () => {
+      let wpid = $('#mainwp_edit_monitor_site_id').val();
+      let moid = $('#mainwp_edit_monitor_id').val();
 
-        mainwp_uptime_monitoring_remove(wpid, moid);
-      }, false, false, true );
+      mainwp_uptime_monitoring_remove(wpid, moid);
+    }, false, false, true);
+  });
+
+  let mainwp_uptime_monitoring_remove = function (wpid, moid) {
+
+    feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + __('Removing Uptime Monitor...'), 'green');
+
+    let data = mainwp_secure_data({
+      action: 'mainwp_uptime_monitoring_remove_monitor',
+      wpid: wpid,
+      moid: moid
     });
 
-    let mainwp_uptime_monitoring_remove = function (wpid, moid) {
+    jQuery.post(ajaxurl, data, function (response) {
+      if (response?.success) {
+        feedback('mainwp-message-zone', __('Monitor have been removed.'), 'green');
+        setTimeout(function () {
+          window.location = 'admin.php?page=managesites&monitor_wpid=' + wpid;
+        }, 2000);
 
-      feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + __('Removing Uptime Monitor...'), 'green');
+      } else if (response?.error) {
+        feedback('mainwp-message-zone', response.error, 'red');
+      } else {
+        feedback('mainwp-message-zone', __('Undefined error. Please try again.'), 'red');
+      }
+    }, 'json');
+    return false;
+  };
 
-      let data = mainwp_secure_data({
-        action: 'mainwp_uptime_monitoring_remove_monitor',
-        wpid: wpid,
-        moid: moid
-      });
+  $(document).on('click', '#increase-connection-security-btn', function () {
+    feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + __('Encryption in progress! Securing your OpenSSL private keys, this may take a few moments. Please wait until completed.'), 'green');
+    let data = mainwp_secure_data({
+      action: 'mainwp_increase_connection_security',
+    });
+    jQuery.post(ajaxurl, data, function (response) {
+      if (response?.success) {
+        setTimeout(function () {
+          window.location.href = location.href
+        }, 2000);
 
-      jQuery.post(ajaxurl, data, function (response) {
-        if (response?.success) {
-          feedback('mainwp-message-zone', __('Monitor have been removed.'), 'green');
-          setTimeout(function () {
-            window.location = 'admin.php?page=managesites&monitor_wpid=' + wpid;
-          }, 2000);
+      } else if (response?.error) {
+        feedback('mainwp-message-zone', response.error, 'red');
+      } else {
+        feedback('mainwp-message-zone', __('Undefined error. Please try again.'), 'red');
+      }
+    }, 'json');
+    return false;
+  });
 
-        } else if (response?.error) {
-          feedback('mainwp-message-zone', response.error, 'red');
-        } else {
-          feedback('mainwp-message-zone', __('Undefined error. Please try again.'), 'red');
-        }
-      }, 'json');
-      return false;
-    };
 });
 

@@ -69,11 +69,11 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
             }
 
             if ( 2 === $updated ) {
-                $message = __( 'Invalid data found. The sub-page monitor could not be saved. Please try again.', 'mainwp' );
+                $message = __( 'Invalid data found. The sub-monitor could not be saved. Please try again.', 'mainwp' );
             } elseif ( 3 === $updated || 4 === $updated ) {
-                $message = __( 'Sub URL is currently in use. Unable to save the sub-page monitor. Please try again.', 'mainwp' );
+                $message = __( 'Sub URL is currently in use. Unable to save the sub-monitor. Please try again.', 'mainwp' );
             } elseif ( 5 === $updated ) {
-                $message = __( 'Sub URL are empty. Unable to save the sub-page monitor. Please try again.', 'mainwp' );
+                $message = __( 'Sub URL are empty. Unable to save the sub-monitor. Please try again.', 'mainwp' );
             }
 
             if ( ! empty( $message ) ) {
@@ -91,7 +91,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
      */
     public function handle_save_settings() {
 
-        if ( isset( $_POST['wp_nonce_uptime_settings'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_uptime_settings'] ), 'UpdateMonitorSettings' ) && mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
+        if ( isset( $_POST['wp_nonce_uptime_settings'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_uptime_settings'] ), 'UpdateMonitorSettings' ) && \mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
             $up_status_codes = isset( $_POST['mainwp_edit_monitor_up_status_codes'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_edit_monitor_up_status_codes'] ) ) : '';
             if ( false !== strpos( $up_status_codes, 'useglobal' ) ) {
                 $up_status_codes = 'useglobal'; // save "useglobal" only.
@@ -269,7 +269,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
         }
 
         if ( isset( $_GET['action'] ) && 'add_submonitor' === $_GET['action'] ) {
-            $title                             = __( 'Add New Sub-Page Monitor', 'mainwp' );
+            $title                             = __( 'Add New Sub Monitor', 'mainwp' );
             $edit_sub_monitor                  = true;
             $is_sub_url                        = 1;
             $is_editing_monitor_or_sub_monitor = false;
@@ -328,7 +328,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 <input type="hidden" name="update_submonitor" value="1" />
                 <div class="ui grid field settings-field-indicator-wrapper">
                     <label class="six wide column middle aligned">
-                    <?php esc_html_e( 'Site Url', 'mainwp' ); ?>
+                    <?php esc_html_e( 'Site URL', 'mainwp' ); ?>
                     </label>
                     <div class="ten wide column ui labeled input" data-tooltip="<?php esc_attr_e( 'Click to edit the main site monitor.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <a class="" href="admin.php?page=managesites&monitor_wpid=<?php echo intval( $site_id ); ?>"><?php echo esc_html( $mo_settings['url'] ); ?></a>
@@ -339,10 +339,10 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                         <label class="six wide column middle aligned">
                         <?php
                         MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_edit_monitor_sub_url', $mo_settings['suburl'], true, '' );
-                        esc_html_e( 'Sub-Page', 'mainwp' );
+                        esc_html_e( 'Sub-Monitor', 'mainwp' );
                         ?>
                         </label>
-                        <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter a Sub-Page monitor excluding the site URL.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                        <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter a Sub Monitor excluding the site URL.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <div class="ui left labeled input">
                                 <input type="text" class="settings-field-value-change-handler" id="mainwp_edit_monitor_sub_url" name="mainwp_edit_monitor_sub_url" value="<?php echo ! empty( $mo_settings['suburl'] ) ? esc_html( $mo_settings['suburl'] ) : ''; ?>"/>
                             </div>
@@ -533,21 +533,18 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                     $sub_monitors = MainWP_DB_Uptime_Monitoring::instance()->get_monitors( $_params, ARRAY_A );
                     ?>
                     <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-monitor-general">
-                            <label class="six wide column middle aligned">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Sub-Monitors', 'mainwp' ); ?></label>
+                        <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Click to create a sub-monitor.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <?php
-                            esc_html_e( 'Sub-Page monitors', 'mainwp' );
-                            ?>
-                            </label>
-                            <div class="ui six wide column"  data-tooltip="<?php esc_attr_e( 'Click to edit the sub-page monitor.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <?php
-                                $this->render_sub_urls_monitoring( $mo_settings, $sub_monitors );
-                                if ( ! $edit_sub_monitor ) {
-                                    ?>
-                                    <a class="ui button green big" href="admin.php?page=managesites&monitor_wpid=<?php echo intval( $site_id ); ?>&action=add_submonitor"><?php esc_html_e( 'Add Sub-Page Monitor', 'mainwp' ); ?></a>
-                                    <?php
-                                }
+                            $this->render_sub_urls_monitoring( $mo_settings, $sub_monitors );
+                            ?><div class="ui hidden divider"></div><?php
+                            if ( ! $edit_sub_monitor ) {
                                 ?>
-                            </div>
+                                <a class="ui mini green basic button" href="admin.php?page=managesites&monitor_wpid=<?php echo intval( $site_id ); ?>&action=add_submonitor"><?php esc_html_e( 'Create Sub-Monitor', 'mainwp' ); ?></a>
+                                <?php
+                            }
+                            ?>
+                        </div>
                     </div>
                     <?php
                 }
@@ -656,7 +653,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
             return;
         }
         if ( empty( $sub_urls_monitors ) || ! is_array( $sub_urls_monitors ) ) {
-            esc_html_e( 'This site has no sub-pages monitors.', 'mainwp' );
+            esc_html_e( 'This site has no sub-monitors.', 'mainwp' );
         } else {
             ?>
             <ul>
@@ -809,13 +806,13 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
         ?>
                 </div>
                 <div class="actions">
-                    <div class="ui one columns stackable grid">
-                        <div class="right aligned column">
-                            <input type="submit" name="submit" id="submit" class="ui button green big" value="<?php esc_html_e( 'Save', 'mainwp' ); ?>">
+                    <div class="ui one column grid">
+                        <div class="left aligned column">
+                            <input type="submit" name="submit" id="submit" class="ui green button" value="<?php esc_html_e( 'Save', 'mainwp' ); ?>">
                                 <?php
                                 if ( $is_editing ) {
                                     ?>
-                                    <input type="button" name="delete_uptime_monitor_btn" id="delete_uptime_monitor_btn" class="ui button basic big" value="<?php esc_html_e( 'Delete', 'mainwp' ); ?>">
+                                    <input type="button" name="delete_uptime_monitor_btn" id="delete_uptime_monitor_btn" class="ui basic button" value="<?php esc_html_e( 'Delete', 'mainwp' ); ?>">
                                     <?php
                                 }
                                 ?>

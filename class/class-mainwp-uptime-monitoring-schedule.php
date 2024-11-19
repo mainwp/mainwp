@@ -113,9 +113,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
             MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor( $update );
         }
 
-        $busy_counter = MainWP_DB_Uptime_Monitoring::instance()->count_busy_main_round_check( $global_settings, $lasttimeAutomaticMainCounterLastTime );
-
-        if ( $uptimecheck_running && empty( $checkuptime_monitors ) && 0 === (int) $busy_counter ) {
+        if ( $uptimecheck_running && empty( $checkuptime_monitors ) ) {
             MainWP_Logger::instance()->log_uptime_check( 'Uptime Monitoring has finished.' );
             MainWP_Utility::update_option( 'mainwp_uptimecheck_last_timestamp_finished', mainwp_get_timestamp() );
             MainWP_Utility::update_option( 'mainwp_uptimecheck_running', 0 );
@@ -177,16 +175,14 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
      */
     public function run_schedule_uptime_notification() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- NOSONAR Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-        $local_time = mainwp_get_timestamp();
-
-        $lasttime_send = get_option( 'mainwp_uptime_monitoring_notification_last_time', $local_time );
-
         $process_run_status = get_option( 'mainwp_process_uptime_notification_run_status' );
 
         // if notification process is not 'running'.
         if ( empty( $process_run_status ) || in_array( $process_run_status, array( 'finished', 'init' ) ) ) {
 
-            $process_init = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_notification_to_start_send( $lasttime_send, 50 );
+            $local_time = mainwp_get_timestamp();
+
+            $process_init = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_notification_to_start_send( 50 );
 
             if ( is_array( $process_init ) && ! empty( $process_init ) ) {
 
@@ -197,25 +193,13 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
                 }
 
                 foreach ( $process_init as $uptime_notice ) {
-
                     if ( ! empty( $uptime_notice->process_id ) ) {
-                        MainWP_DB::instance()->update_process(
+                        MainWP_DB::instance()->update_regular_process(
                             array(
                                 'process_id'        => $uptime_notice->process_id,
-                                'dts_process_start' => $local_time,
+                                'dts_process_start' => $local_time, // set start time to current time, to continue processs.
                             )
                         );
-                    } else {
-                        // insert process.
-                        MainWP_DB::instance()->update_process(
-                            array(
-                                'item_id'           => $uptime_notice->monitor_id,
-                                'type'              => 'uptime_notification',
-                                'status'            => 'active',
-                                'dts_process_start' => $local_time,
-                            )
-                        );
-
                     }
                 }
             } elseif ( 'init' === $process_run_status ) {
@@ -225,12 +209,13 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
         }
 
         if ( 'running' === $process_run_status ) {
-            $process_notices = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_notification_to_continue_send( array( 'limit' => 5 ) );
+            $limit_send      = apply_filters( 'mainwp_uptime_monitoring_send_notification_limit', 5 );
+            $process_notices = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_notification_to_continue_send( array( 'limit' => $limit_send ) );
             if ( is_array( $process_notices ) && ! empty( $process_notices ) ) {
                 MainWP_Logger::instance()->log_uptime_notice( 'Uptime notice continue :: [count=' . ( $process_notices ? count( $process_notices ) : 0 ) . '].' );
-                MainWP_System_Cron_Jobs::instance()->send_uptime_notification_down_status( $process_notices );
+                $this->send_uptime_notification_down_status( $process_notices );
             } else {
-                MainWP_Logger::instance()->log_uptime_notice( 'Uptime notice finished.' );
+                MainWP_Logger::instance()->log_uptime_notice( 'Uptime notice completed.' );
                 $this->update_uptime_notification_status( 'finished' );
             }
         }
@@ -263,7 +248,15 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
 
         // general uptime notification, to administrator.
         $email_settings = MainWP_Notification_Settings::get_general_email_settings( 'uptime' );
+
+        $debug_settings = array(
+            'admin_email'            => $admin_email,
+            'general_email_settings' => $admin_email,
+            'site_email_settings'    => array(),
+        );
+
         if ( ! $email_settings['disable'] ) {
+            MainWP_Logger::instance()->log_uptime_notice( 'General uptime notifications are now being sent to the admin.' );
             MainWP_Monitoring_Handler::notice_sites_uptime_monitoring( $process_notices, $admin_email, $email_settings, $plain_text );
         }
 
@@ -271,12 +264,15 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
         // individual uptime notification.
         foreach ( $process_notices as $uptime_notice ) {
             $email_settings = MainWP_Notification_Settings::get_site_email_settings( 'uptime', $uptime_notice );
+            MainWP_Logger::instance()->log_uptime_notice( 'Uptime site email settings:' . print_r( $email_settings, true ) );
+            $debug_settings['site_email_settings'][ $uptime_notice->id ] = $email_settings;
 
             if ( ! empty( $uptime_notice->process_id ) ) {
-                MainWP_DB::instance()->update_process(
+                MainWP_DB::instance()->update_regular_process(
                     array(
                         'process_id'       => $uptime_notice->process_id,
-                        'dts_process_stop' => $local_time,
+                        'dts_process_stop' => $local_time + 1, // prevent stop = start.
+                        'status'           => 'processed',
                     )
                 );
             }
@@ -293,19 +289,27 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
             $admin_email_settings['disable']    = 0;
             $admin_email_settings['recipients'] = ''; // sent to admin only.
             // send to admin, all individual sites in one email.
+            MainWP_Logger::instance()->log_uptime_notice( 'Send all individual uptime notifications to the admin in a single email. [count=' . count( $individual_admin_uptimeSites ) . ']' );
             MainWP_Monitoring_Handler::notice_sites_uptime_monitoring( $individual_admin_uptimeSites, $admin_email, $admin_email_settings, $plain_text, true );
         }
+
+        MainWP_Logger::instance()->log_uptime_notice( 'Uptime notifications email settings :: debug :: ' . print_r( $debug_settings, true ) );
 
         return true;
     }
 
     /**
-     * update_uptime_notification_status
+     * Update uptime notification status.
      *
      * @param  string $new_status
+     * @param  bool   $check_value
+     *
      * @return void
      */
-    public function update_uptime_notification_status( $new_status ) {
+    public function update_uptime_notification_status( $new_status, $check_value = false ) {
+        if ( $check_value && $new_status === get_option( 'mainwp_process_uptime_notification_run_status' ) ) {
+            return;
+        }
         MainWP_Utility::update_option( 'mainwp_process_uptime_notification_run_status', $new_status );
     }
 }

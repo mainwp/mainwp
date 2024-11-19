@@ -319,7 +319,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function user_can_ignore_updates() {
         if ( null === static::$user_can_ignore_updates ) {
-            static::$user_can_ignore_updates = mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' );
+            static::$user_can_ignore_updates = \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' );
         }
         return static::$user_can_ignore_updates;
     }
@@ -331,7 +331,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function user_can_update_trans() {
         if ( null === static::$user_can_update_trans ) {
-            static::$user_can_update_trans = mainwp_current_user_have_right( 'dashboard', 'update_translations' );
+            static::$user_can_update_trans = \mainwp_current_user_can( 'dashboard', 'update_translations' );
         }
         return static::$user_can_update_trans;
     }
@@ -343,7 +343,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function user_can_update_wp() {
         if ( null === static::$user_can_update_wp ) {
-            static::$user_can_update_wp = mainwp_current_user_have_right( 'dashboard', 'update_wordpress' );
+            static::$user_can_update_wp = \mainwp_current_user_can( 'dashboard', 'update_wordpress' );
         }
         return static::$user_can_update_wp;
     }
@@ -355,7 +355,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function user_can_update_themes() {
         if ( null === static::$user_can_update_themes ) {
-            static::$user_can_update_themes = mainwp_current_user_have_right( 'dashboard', 'update_themes' );
+            static::$user_can_update_themes = \mainwp_current_user_can( 'dashboard', 'update_themes' );
         }
         return static::$user_can_update_themes;
     }
@@ -367,7 +367,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function user_can_update_plugins() {
         if ( null === static::$user_can_update_plugins ) {
-            static::$user_can_update_plugins = mainwp_current_user_have_right( 'dashboard', 'update_plugins' );
+            static::$user_can_update_plugins = \mainwp_current_user_can( 'dashboard', 'update_plugins' );
         }
         return static::$user_can_update_plugins;
     }

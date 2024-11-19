@@ -983,7 +983,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $sites             = array();
         $siteThemes        = array();
-        $themesName = array();
+        $themesName        = array();
         $themesNameSites   = array();
         $themesRealVersion = array();
         $themesSlug        = array();
@@ -1047,7 +1047,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param array  $sites List of sites.
      * @param array  $themesName List of themes.
      * @param array  $siteThemes List of themes for the site.
-     * @param array $themesSlug List of theme slugs.
+     * @param array  $themesSlug List of theme slugs.
      * @param array  $themesNameSites Installed theme version.
      * @param string $themesRealVersion Current theme version.
      * @param array  $roll_list roll items list.
@@ -1320,7 +1320,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param array  $sites List of sites.
      * @param array  $themesName List of themes.
      * @param array  $siteThemes List of themes for the site.
-     * @param array $themesSlug List of theme slugs.
+     * @param array  $themesSlug List of theme slugs.
      * @param array  $themesNameSites Installed theme version.
      * @param string $themesRealVersion Current theme version.
      * @param array  $roll_list roll items list.

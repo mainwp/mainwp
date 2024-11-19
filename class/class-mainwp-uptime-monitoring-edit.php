@@ -537,7 +537,9 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                         <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Click to create a sub-monitor.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <?php
                             $this->render_sub_urls_monitoring( $mo_settings, $sub_monitors );
-                            ?><div class="ui hidden divider"></div><?php
+                            ?>
+                            <div class="ui hidden divider"></div>
+                            <?php
                             if ( ! $edit_sub_monitor ) {
                                 ?>
                                 <a class="ui mini green basic button" href="admin.php?page=managesites&monitor_wpid=<?php echo intval( $site_id ); ?>&action=add_submonitor"><?php esc_html_e( 'Create Sub-Monitor', 'mainwp' ); ?></a>

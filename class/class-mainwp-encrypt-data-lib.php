@@ -84,7 +84,7 @@ class MainWP_Encrypt_Data_Lib { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Remove key file.
      *
-     * @param  int  $site_id
+     * @param  int $site_id
      *
      * @return void
      */

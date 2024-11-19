@@ -595,18 +595,18 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
         if ( ! empty( $current ) ) {
             MainWP_DB::instance()->update_regular_process(
                 array(
-                    'process_id'        => $current->process_id,
-                    'status'            => 'active',
+                    'process_id' => $current->process_id,
+                    'status'     => 'active',
                 )
             );
         } else {
             // insert process.
             MainWP_DB::instance()->update_regular_process(
                 array(
-                    'item_id'           => $monitor_id,
-                    'type'              => 'monitor',
-                    'process_slug'      => 'uptime_notification',
-                    'status'            => 'active',
+                    'item_id'      => $monitor_id,
+                    'type'         => 'monitor',
+                    'process_slug' => 'uptime_notification',
+                    'status'       => 'active',
                 )
             );
         }

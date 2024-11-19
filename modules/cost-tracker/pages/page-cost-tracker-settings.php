@@ -7,6 +7,7 @@
  */
 
 namespace MainWP\Dashboard\Module\CostTracker;
+
 use MainWP\Dashboard\MainWP_Settings_Indicator;
 
 /**

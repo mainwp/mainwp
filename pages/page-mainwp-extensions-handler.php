@@ -106,7 +106,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * Clean up MainWP Extention names.
      *
      * @param string $extension Array of MainWP Extentsions.
-     * @param bool $forced forced polish.
+     * @param bool   $forced forced polish.
      *
      * @return string $menu_name Final Menu Name.
      */

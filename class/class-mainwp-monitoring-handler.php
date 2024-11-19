@@ -207,7 +207,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         // Send individual notifications by iterating through each site.
         foreach ( $websites as $site ) {
-            $email = '';
+            $email           = '';
             $addition_emails = $site->monitoring_notification_emails;
             if ( ! empty( $addition_emails ) ) {
                 $email .= ',' . $addition_emails; // send to addition emails too.

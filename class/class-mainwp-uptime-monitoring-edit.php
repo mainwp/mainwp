@@ -796,8 +796,8 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
      *
      * Renders Modal.
      *
-     * @param  int   $site_id site id.
-     * @param  bool  $is_editing is editing.
+     * @param  int  $site_id site id.
+     * @param  bool $is_editing is editing.
      * @return void
      */
     public function render_add_edit_sub_page_monitor_end_form_in_modal( $site_id, $is_editing = true ) {

@@ -98,7 +98,7 @@ class MainWP_Encrypt_Data_Lib { // phpcs:ignore Generic.Classes.OpeningBraceSame
      *
      * @param  mixed $value value.
      * @param  int   $site_id site_id.
-     * @param  bool  $create_keys_file create_keys_file
+     * @param  bool  $create_keys_file create_keys_file.
      * @return mixed
      */
     public function encrypt_privkey( $value, $site_id = false, $create_keys_file = false ) {

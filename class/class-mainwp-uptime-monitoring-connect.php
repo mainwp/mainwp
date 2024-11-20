@@ -404,7 +404,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                 curl_setopt( $ch, CURLOPT_NOBODY, true ); // We only care about the response code, not the content.
             } else {
                 // Set curl options.
-                curl_setopt( $ch, CURLOPT_POST, strtolower( $website->method ) === 'post' ? true : false ); // GET
+                curl_setopt( $ch, CURLOPT_POST, strtolower( $website->method ) === 'post' ? true : false ); // GET.
                 curl_setopt( $ch, CURLOPT_POSTFIELDS, http_build_query( array( 'time' => time() ) ) );
 
             }
@@ -709,7 +709,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $mo_url = static::get_apply_monitor_url( $monitor );
 
         $_status_str = '';
-        if ( $status === static::UP ) {
+        if ( static::UP === $status ) {
             $_status_str = 'up!';
         } elseif ( static::PENDING === $status ) {
             $_status_str = 'pending.';
@@ -823,7 +823,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         $debug  = 'Check Uptime - ' . ( $success ? 'succeeded' : 'not succeed' );
         $debug .= ' :: [monitor_url=' . $mo_url . ']';
-        $debug .= ' :: [status=' . ( $status === static::UP ? 'UP' : 'DOWN' ) . ']';
+        $debug .= ' :: [status=' . ( static::UP === $status ? 'UP' : 'DOWN' ) . ']';
         $debug .= ' :: [msg=' . $heart_msg . ']';
         MainWP_Logger::instance()->log_uptime_check( $debug );
 

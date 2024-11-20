@@ -7,6 +7,8 @@
 
 namespace MainWP\Dashboard;
 
+// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
+
 /**
  * Class MainWP_Post_Handler
  *
@@ -15,8 +17,6 @@ namespace MainWP\Dashboard;
  * @uses \MainWP\Dashboard\MainWP_Post_Base_Handler
  */
 class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- NOSONAR - Complex.
-
-    // phpcs:disable Generic.Metrics.CyclomaticComplexity -- This is the only way to achieve desired results, pull request solutions appreciated.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -694,7 +694,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             $val         = isset( $_POST['value'] ) ? sanitize_text_field( wp_unslash( $_POST['value'] ) ) : '';
             MainWP_Utility::update_option( $option_name, $val );
         }
-        // phpcs:enable
+        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         die( 'ok' );
     }
 

@@ -77,7 +77,7 @@ wpid int(11) NOT NULL,
 `dts_auto_monitoring_start` int(11) NOT NULL DEFAULT 0,
 `dts_auto_monitoring_retry_time` int(11) NOT NULL DEFAULT 0,
 KEY idx_wpid (wpid)";
-        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.0.41', '<' ) ) {
+        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.0.41', '<' ) ) { // NOSONAR - no ip.
             $tbl .= ',
     PRIMARY KEY (monitor_id) ';
         }
@@ -98,7 +98,7 @@ KEY idx_wpid (wpid)";
     KEY idx_monitor_id (monitor_id),
     KEY idx_monitor_time (`time`)';
 
-        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.0.41', '<' ) ) {
+        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.0.41', '<' ) ) { // NOSONAR - no ip.
             $tbl .= ',
         PRIMARY KEY (heartbeat_id) ';
         }
@@ -118,7 +118,7 @@ KEY idx_wpid (wpid)";
     KEY idx_monitor_id (monitor_id),
     KEY idx_hourly_timestamp (`timestamp`)';
 
-        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.0.42', '<' ) ) {
+        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.0.42', '<' ) ) { // NOSONAR - no ip.
             $tbl .= ',
         PRIMARY KEY (stat_hourly_id) ';
         }
@@ -152,7 +152,7 @@ KEY idx_wpid (wpid)";
      */
     public function update_db_90041( $current_version ) { //phpcs:ignore -- NOSONAR - complexity.
 
-        $update_ver = '9.0.0.41';
+        $update_ver = '9.0.0.41'; // NOSONAR - no ip.
 
         if ( ! empty( $current_version ) && version_compare( $current_version, $update_ver, '<' ) ) {
             // To compatible with basic monitoring settings.
@@ -222,8 +222,8 @@ KEY idx_wpid (wpid)";
      * @return void
      */
     public function update_db_90043( $current_version ) {
-        $update_ver  = '9.0.0.43';
-        $update_ver2 = '9.0.0.41';
+        $update_ver  = '9.0.0.43'; // NOSONAR - no ip.
+        $update_ver2 = '9.0.0.41'; // NOSONAR - no ip.
         if ( ! empty( $current_version ) && version_compare( $current_version, $update_ver, '<' ) && version_compare( $current_version, $update_ver2, '>=' ) ) {
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' CHANGE up_statuscodes_json up_status_codes text NOT NULL DEFAULT ""' ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         }
@@ -1010,7 +1010,7 @@ KEY idx_wpid (wpid)";
      * Get site's reports uptime ratios.
      *
      * @param int   $siteid site id.
-     * @param array $params 'start' and 'end' date format: Y-m-d .
+     * @param array $params 'start' and 'end' date format Y-m-d .
      *
      *  'period_days' : array(
      *       'uptimeratiosall' => 365, // Last 365 days.
@@ -1209,7 +1209,7 @@ KEY idx_wpid (wpid)";
     /**
      * Method remove_outdated_hourly_uptime_stats
      *
-     * @param  int $days
+     * @param  int $days days.
      * @return void
      */
     public function remove_outdated_hourly_uptime_stats( $days = 30 ) {
@@ -1250,7 +1250,7 @@ KEY idx_wpid (wpid)";
     /**
      * Delete stats by monitor id.
      *
-     * @param  int $monitorid
+     * @param  int $monitorid monitor id.
      * @return bool
      */
     public function delete_stats( $monitorid ) {

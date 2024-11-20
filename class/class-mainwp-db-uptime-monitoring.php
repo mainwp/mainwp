@@ -134,7 +134,7 @@ KEY idx_wpid (wpid)";
      *
      * @param string $current_version current version.
      *
-     * @return object|null
+     * @return void
      */
     public function update_db_data( $current_version ) {
         $suppress = $this->wpdb->suppress_errors();
@@ -148,7 +148,7 @@ KEY idx_wpid (wpid)";
      *
      * @param string $current_version current version.
      *
-     * @return object|null
+     * @return void
      */
     public function update_db_90041( $current_version ) {
 
@@ -219,7 +219,7 @@ KEY idx_wpid (wpid)";
      *
      * @param string $current_version current version.
      *
-     * @return object|null
+     * @return void
      */
     public function update_db_90043( $current_version ) {
         $update_ver  = '9.0.0.43';
@@ -283,11 +283,11 @@ KEY idx_wpid (wpid)";
     /**
      * Method get_monitor_by
      *
-     * @param  int|false $site_id site id
-     * @param  string    $by get by
-     * @param  mixed     $value value
-     * @param  array     $params params
-     * @param  int       $obj OBJECT|ARRAY_A
+     * @param  int|false $site_id site id.
+     * @param  string    $by get by.
+     * @param  mixed     $value value.
+     * @param  array     $params params.
+     * @param  int       $obj OBJECT|ARRAY_A.
      * @return object|null
      */
     public function get_monitor_by( $site_id, $by, $value, $params = array(), $obj = OBJECT ) {
@@ -321,8 +321,8 @@ KEY idx_wpid (wpid)";
     /**
      * Get moniyor's sub page.
      *
-     * @param  array $params params
-     * @return mixed result
+     * @param  array $params params.
+     * @return mixed result.
      */
     public function get_monitor_sub_pages( $params ) {
 
@@ -531,7 +531,7 @@ KEY idx_wpid (wpid)";
     /**
      * Get child site monitor by id via SQL.
      *
-     * @param array $params params .
+     * @param array $params params.
      *
      * @return object|null Database query result or null on failure.
      */
@@ -1010,7 +1010,7 @@ KEY idx_wpid (wpid)";
      * Get site's reports uptime ratios.
      *
      * @param int   $siteid site id.
-     * @param array $params. 'start' and 'end' date format: Y-m-d.
+     * @param array $params 'start' and 'end' date format: Y-m-d.
      *
      *  'period_days' : array(
      *       'uptimeratiosall' => 365, // Last 365 days.

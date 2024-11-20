@@ -133,18 +133,9 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
         $cols = array(
             'cb'            => '<input type="checkbox" />',
             'status'        => esc_html__( 'Status', 'mainwp' ),
-            // 'favicon'       => '',
             'site'          => esc_html__( 'Monitor', 'mainwp' ),
-
-            // 'login'         => '<i class="sign in alternate icon"></i>',
-            // 'url'           => esc_html__( 'URL', 'mainwp' ),
             'type'          => esc_html__( 'Monitor Type', 'mainwp' ),
             'interval'      => esc_html__( 'Check Frequency', 'mainwp' ),
-            // 'client_name'   => esc_html__( 'Client', 'mainwp' ),
-            // 'site_health'   => esc_html__( 'Site Health', 'mainwp' ),
-            // 'status_code'   => esc_html__( 'Status Code', 'mainwp' ),
-
-            // 'site_preview'  => '<i class="camera icon"></i>',
             'last24_status' => esc_html__( 'Last 24h Status', 'mainwp' ),
             'last_check'    => esc_html__( 'Last Check', 'mainwp' ),
         );
@@ -157,7 +148,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      *
      * Combine all columns.
      *
-     * @param  bool $sub_rows
+     * @param  bool $sub_rows sub rows.
      *
      * @return array $columns Array of column names.
      */
@@ -1381,7 +1372,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
     /**
      * Method column_site.
      *
-     * @param  mixed $website
+     * @param  mixed $website website.
      *
      * @return void
      */
@@ -1430,8 +1421,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
     /**
      * Method column_last_check
      *
-     * @param  mixed $monitor
-     * @param  bool  $sub_page
+     * @param  mixed $monitor monitor.
+     * @param  bool  $sub_page sub page.
      *
      * @return void
      */
@@ -1480,8 +1471,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
     /**
      * Render last24 uptime status.
      *
-     * @param  array $data data
-     * @param  int   $last24_starttime
+     * @param  array $data data.
+     * @param  int   $last24_starttime last24 start time.
      * @return void
      */
     public function render_last24_uptime_status( $data, $last24_starttime ) {

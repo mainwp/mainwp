@@ -24,6 +24,8 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
     private static $instance = null;
 
     /**
+     * Last auto logging.
+     *
      * @var int Last time auto logs.
      */
     public $last_auto_logging = 0;
@@ -350,7 +352,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Method update_auto_sync_time
      *
-     * @param  int $site_id
+     * @param  int $site_id site id.
      * @return void
      */
     public function update_auto_sync_time( $site_id ) {

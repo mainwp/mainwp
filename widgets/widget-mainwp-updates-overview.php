@@ -506,12 +506,12 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Render total update.
      *
-     * @param int             $total_upgrades number of update.
-     * @param bool true|false $can_total_update permission to update all.
-     * @param int             $limit_updates_all limit number of update per request, 0 is no limit.
-     * @param int             $count_websites count websites.
-     * @param int             $count_plugins count plugins.
-     * @param int             $count_themes count themes.
+     * @param int  $total_upgrades number of update.
+     * @param bool $can_total_update permission to update all.
+     * @param int  $limit_updates_all limit number of update per request, 0 is no limit.
+     * @param int  $count_websites count websites.
+     * @param int  $count_plugins count plugins.
+     * @param int  $count_themes count themes.
      */
     public static function render_total_update( $total_upgrades, $can_total_update, $limit_updates_all, $count_websites, $count_plugins, $count_themes ) { // phpcs:ignore -- NOSONAR - complex.
 
@@ -598,7 +598,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @param int  $total_wp_upgrades         Total number of WordPress update.
      * @param bool $globalView                Global view or not.
      * @param int  $current_wpid              Current site ID.
-     * @param int  $count_websites             Number of sites
+     * @param int  $count_websites             Number of sites.
      *
      * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
      * @uses \MainWP\Dashboard\MainWP_Updates::get_continue_update_selector()

@@ -537,9 +537,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
     /**
      * Method hide dashboard notice status.
      *
-     * @param  mixed $no_id notice id
-     * @param  mixed $time_set time
-     * @param  bool  $hide_noti hide notice
+     * @param  mixed $no_id notice id.
+     * @param  mixed $time_set time.
+     * @param  bool  $hide_noti hide notice.
      * @return void
      */
     public function hide_dashboard_notice_status( $no_id, $time_set = false, $hide_noti = true ) {

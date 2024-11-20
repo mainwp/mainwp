@@ -108,9 +108,9 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
     /**
      * Method fetch uptime monitor.
      *
-     * @param  mixed $monitor monitor
-     * @param  mixed $global_settings global settings
-     * @param  bool  $second_try second try
+     * @param  mixed $monitor monitor.
+     * @param  mixed $global_settings global settings.
+     * @param  bool  $second_try second try.
      * @param  array $params params.
      *
      * @return mixed
@@ -323,10 +323,10 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
     /**
      * Fetch uptime urls.
      *
-     * @param  array  $monitors monitors
+     * @param  array  $monitors monitors.
      * @param  array  $handler callable.
-     * @param  object $output output
-     * @param  array  $params params
+     * @param  object $output output.
+     * @param  array  $params params.
      * @return mixed
      */
     public static function fetch_uptime_urls( &$websites, $handler, &$output, $params = array() ) { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
@@ -403,7 +403,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             if ( 'ping' === $mo_apply_type ) {
                 curl_setopt( $ch, CURLOPT_NOBODY, true ); // We only care about the response code, not the content.
             } else {
-                // Set curl options
+                // Set curl options.
                 curl_setopt( $ch, CURLOPT_POST, ( 'POST' === $website->method ? true : false ) ); // GET
                 curl_setopt( $ch, CURLOPT_POSTFIELDS, http_build_query( array( 'time' => time() ) ) );
 
@@ -577,12 +577,12 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
     /**
      * Fetch single curl exec.
      *
-     * @param  mixed  $ch ch
-     * @param  mixed  $handler handler
-     * @param  object $website website
-     * @param  object $output output
-     * @param  array  $params params
-     * @param  bool   $try_second try second
+     * @param  mixed  $ch ch.
+     * @param  mixed  $handler handler.
+     * @param  object $website website.
+     * @param  object $output output.
+     * @param  array  $params params.
+     * @param  bool   $try_second try second.
      * @return mixed
      */
     public static function fetch_single_uptime_url( $ch, $handler, $website, $output, $params, $try_second = false ) {  //phpcs:ignore -- NOSONAR - complexity.
@@ -662,9 +662,9 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
     /**
      * Method handle response fetch uptime.
      *
-     * @param  mixed $data data
-     * @param  mixed $site site
-     * @param  mixed $output output
+     * @param  mixed $data data.
+     * @param  mixed $site site.
+     * @param  mixed $output output.
      * @param  array $params params.
      * @return mixed
      */
@@ -711,7 +711,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $_status_str = '';
         if ( $status === static::UP ) {
             $_status_str = 'up!';
-        } elseif ( $status === static::PENDING ) {
+        } elseif ( static::PENDING === $status ) {
             $_status_str = 'pending.';
         } else {
             $_status_str = 'down.';
@@ -856,8 +856,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
     /**
      * Method is_http_code_type
      *
-     * @param  mixed $type type
-     * @param  mixed $code code
+     * @param  mixed $type type.
+     * @param  mixed $code code.
      * @return bool
      */
     public static function is_http_code_type( $type, $code ) {
@@ -874,8 +874,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
     /**
      * Parse response status.
      *
-     * @param  mixed $httpCode http code
-     * @param  mixed $error error
+     * @param  mixed $httpCode http code.
+     * @param  mixed $error error.
      * @return mixed
      */
     public function parse_response_status( $httpCode, $error = false ) {
@@ -945,7 +945,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
     /**
      * Get apply monitor url.
      *
-     * @param  mixed $monitor monitor
+     * @param  mixed $monitor monitor.
      *
      * @return string
      */
@@ -1002,12 +1002,12 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
     /**
      * Get apply setting.
      *
-     * @param  mixed $name name
-     * @param  mixed $indiv_settings indiv settings
-     * @param  mixed $glo_settings glo settings
-     * @param  mixed $apply_global_value apply global value
-     * @param  mixed $default_value default value
-     * @return mixed
+     * @param  mixed $name name.
+     * @param  mixed $indiv_settings indiv settings.
+     * @param  mixed $glo_settings glo settings.
+     * @param  mixed $apply_global_value apply global value.
+     * @param  mixed $default_value default value.
+     * @return mixed.z
      */
     public static function get_apply_setting( $name, $indiv_settings, $glo_settings, $apply_global_value, $default_value ) {
 
@@ -1033,8 +1033,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
     /**
      * Method get_up_codes
      *
-     * @param  mixed $monitor monitor
-     * @param  mixed $global_settings global settings
+     * @param  mixed $monitor monitor.
+     * @param  mixed $global_settings global settings.
      * @return mixed
      */
     public function get_up_codes( $monitor, $global_settings ) {

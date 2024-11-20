@@ -114,11 +114,11 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
-     * Method get_var()
+     * Method get_var_field()
      *
-     * Get MySQL Version.
+     * @param string $sql SQL Query.
      *
-     * @return mixed MySQL vresion.
+     * @return mixed
      */
     public function get_var_field( $sql ) {
         return $this->wpdb->get_var( $sql );

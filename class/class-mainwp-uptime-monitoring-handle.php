@@ -73,7 +73,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
     /**
      * Method get_default_monitoring_settings
      *
-     * @param  bool $individual individual
+     * @param  bool $individual individual.
      * @return array
      */
     public static function get_default_monitoring_settings( $individual ) {
@@ -122,7 +122,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
     /**
      * Method update_uptime_global_settings
      *
-     * @param  array $settings settings
+     * @param  array $settings settings.
      * @return void
      */
     public static function update_uptime_global_settings( $settings ) {
@@ -144,7 +144,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
     public function ajax_remove_monitor() {
 
         mainwp_secure_request( 'mainwp_uptime_monitoring_remove_monitor' );
-
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $monitor_id = isset( $_POST['moid'] ) ? intval( $_POST['moid'] ) : 0;
 
         if ( ! empty( $monitor_id ) ) {
@@ -154,6 +154,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
         if ( empty( $monitor_id ) || empty( $monitor ) ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'The monitor ID is invalid or could not be found. Please try again.', 'mainwp' ) ) ) );
         }
+        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         $deleted = MainWP_DB_Uptime_Monitoring::instance()->delete_monitor( array( 'monitor_id' => $monitor_id ) );
         if ( $deleted ) {
@@ -207,8 +208,8 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
     /**
      * Get site response time chart data
      *
-     * @param  int   $site_id site id
-     * @param  array $params params
+     * @param  int   $site_id site id.
+     * @param  array $params params.
      * @return array
      */
     public function get_site_response_time_chart_data( $site_id, $params = array() ) {
@@ -265,7 +266,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
     /**
      * Method hook_get_reports_data
      *
-     * @param  mixed $site_id site id
+     * @param  mixed $site_id site id.
      * @param  mixed $start_date Y-m-d.
      * @param  mixed $end_date Y-m-d.
      * @param  array $params params.
@@ -441,8 +442,8 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
     /**
      * Method calc_and_save_site_uptime_stat_hourly_data
      *
-     * @param  mixed $monitor_id monitor id
-     * @param  mixed $ping_data ping data
+     * @param  mixed $monitor_id monitor id.
+     * @param  mixed $ping_data ping data.
      * @return void
      */
     public function calc_and_save_site_uptime_stat_hourly_data( $monitor_id, $ping_data ) {
@@ -505,7 +506,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
     /**
      * Method get_hourly_key_by_timestamp
      *
-     * @param  int $timestamp timestamp
+     * @param  int $timestamp timestamp.
      * @return int
      */
     public static function get_hourly_key_by_timestamp( $timestamp ) {
@@ -587,7 +588,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
     /**
      * Update monitor notification.
      *
-     * @param  int $monitor_id monitor id
+     * @param  int $monitor_id monitor id.
      *
      * @return void
      */

@@ -267,7 +267,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
         // individual uptime notification.
         foreach ( $process_notices as $uptime_notice ) {
             $email_settings = MainWP_Notification_Settings::get_site_email_settings( 'uptime', $uptime_notice );
-            MainWP_Logger::instance()->log_uptime_notice( 'Uptime site email settings:' . print_r( $email_settings, true ) );
+            MainWP_Logger::instance()->log_uptime_notice( 'Uptime site email settings:' . print_r( $email_settings, true ) ); //phpcs:ignore -- NOSONAR -ok.
             $debug_settings['site_email_settings'][ $uptime_notice->id ] = $email_settings;
 
             if ( ! empty( $uptime_notice->process_id ) ) {
@@ -296,7 +296,8 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
             MainWP_Monitoring_Handler::notice_sites_uptime_monitoring( $individual_admin_uptimeSites, $admin_email, $admin_email_settings, $plain_text, true );
         }
 
-        MainWP_Logger::instance()->log_uptime_notice( 'Uptime notifications email settings :: debug :: ' . print_r( $debug_settings, true ) );
+        MainWP_Logger::instance()->log_uptime_notice( 'Uptime notifications email settings :: debug :: ' . print_r( $debug_settings, true ) ); //phpcs:ignore -- NOSONAR -ok.
+        $debug_settings['site_email_settings'][ $uptime_notice->id ] = $email_settings;
 
         return true;
     }
@@ -304,13 +305,13 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
     /**
      * Update uptime notification status.
      *
-     * @param  string $new_status new status
-     * @param  bool   $check_value check value
+     * @param  string $new_status new status.
+     * @param  bool   $check_value check value.
      *
      * @return void
      */
     public function update_uptime_notification_status( $new_status, $check_value = false ) {
-        if ( $check_value && $new_status === get_option( 'mainwp_process_uptime_notification_run_status' ) ) {
+        if ( $check_value && get_option( 'mainwp_process_uptime_notification_run_status' ) === $new_status ) {
             return;
         }
         MainWP_Utility::update_option( 'mainwp_process_uptime_notification_run_status', $new_status );

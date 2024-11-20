@@ -80,7 +80,7 @@ class MainWP_Uptime_Monitoring_Status { // phpcs:ignore Generic.Classes.OpeningB
                             <span class="ui large text"><span class="ui big circular icon red looping pulsating transition label"><i class="chevron down icon"></i></span> <?php echo esc_html( MainWP_Utility::short_number_format( $down_number ) ); ?></span>
                         </div>
                         <div class="meta">
-                            <div class="ui tiny progress mainwp-monitors-status-progress" id="" data-total="<?php echo esc_attr(  $total ); ?>" data-value="<?php echo esc_attr( $down_number ); ?>">
+                            <div class="ui tiny progress mainwp-monitors-status-progress" id="" data-total="<?php echo esc_attr( $total ); ?>" data-value="<?php echo esc_attr( $down_number ); ?>">
                                 <div class="red bar"></div>
                             </div>
                         </div>

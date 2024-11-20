@@ -889,7 +889,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public function hook_wp_shutdown() {
         if ( MainWP_Logger::DISABLED !== (int) get_option( 'mainwp_actionlogs' ) ) {
             $error = error_get_last();
-            if ( is_array( $error ) && isset( $error['type'] ) && ( $error['type'] === E_ERROR || $error['type'] === E_CORE_ERROR || $error['type'] === E_COMPILE_ERROR || $error['type'] === E_PARSE ) ) {
+            if ( is_array( $error ) && isset( $error['type'] ) && ( E_ERROR === $error['type'] || E_CORE_ERROR === $error['type'] || E_COMPILE_ERROR === $error['type'] || E_PARSE === $error['type'] ) ) {
                 MainWP_Logger::instance()->log_action( '[Fatal ERROR detected=' . print_r( $error, true ) . ']', false, MainWP_Logger::WARNING_COLOR, true );
             }
         }

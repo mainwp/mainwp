@@ -135,7 +135,7 @@ class MainWP_Uptime_Monitoring_Site_Widget {
     /**
      * Method get_valid_days_periods
      *
-     * @param  string|null $period period
+     * @param  string|null $period period.
      * @return mixed
      */
     public static function get_valid_days_periods( $period = null ) {
@@ -154,7 +154,7 @@ class MainWP_Uptime_Monitoring_Site_Widget {
     /**
      * Method get_days_number_by_period
      *
-     * @param  string|false $period period
+     * @param  string|false $period period.
      * @return mixed
      */
     public static function get_days_number_by_period( $period ) {
@@ -261,7 +261,7 @@ class MainWP_Uptime_Monitoring_Site_Widget {
     /**
      * Method render_content_response_time_widget
      *
-     * @param  mixed $site_id site id
+     * @param  mixed $site_id site id.
      * @return void
      */
     public function render_content_response_time_widget( $site_id ) {

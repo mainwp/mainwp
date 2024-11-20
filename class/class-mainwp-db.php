@@ -1950,9 +1950,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     /**
      * Get child site by id and params.
      *
-     * @param int                    $id           Child site ID.
-     * @param array                  $params params.
-     * @param string  OBJECT|ARRAY_A.
+     * @param int    $id           Child site ID.
+     * @param array  $params params.
+     * @param string $obj OBJECT|ARRAY_A.
      *
      * @return object|null Database query results or null on failure.
      */
@@ -2348,7 +2348,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 'name'                  => $this->escape( wp_strip_all_tags( $name ) ),
                 'url'                   => $this->escape( $url ),
                 'pubkey'                => $this->escape( $pubkey ),
-                'privkey'               => $this->escape( base64_encode( $en_privkey ) ),
+                'privkey'               => $this->escape( base64_encode( $en_privkey ) ), // phpcs:ignore -- NOSONAR - trust.
                 'siteurl'               => '',
                 'ga_id'                 => '',
                 'gas_id'                => 0,
@@ -2514,7 +2514,6 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @param string $http_user HTTP Basic Authentication username.
      * @param string $http_pass HTTP Basic Authentication password.
      * @param int    $sslVersion SSL Version.
-     * @param int    $disableChecking Wether or not disable sites status checking.
      * @param bool   $disableHealthChecking Disable Site health threshold.
      * @param int    $healthThreshold Site health threshold.
      * @param int    $wpe Is it WP Engine hosted site.
@@ -3187,7 +3186,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     /**
      * Update regular process.
      *
-     * @param  array $data process data
+     * @param  array $data process data.
      * @return mixed
      */
     public function update_regular_process( $data ) {
@@ -3207,9 +3206,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     /**
      * Method get_regular_process_by_item_id_type_slug
      *
-     * @param  integer $item_id
-     * @param  string  $type
-     * @param  string  $process_slug
+     * @param  integer $item_id item id.
+     * @param  string  $type type.
+     * @param  string  $process_slug process slug.
      *
      * @return mixed  result
      */
@@ -3220,8 +3219,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     /**
      * Method log_system_query
      *
-     * @param  array  $params params
-     * @param  string $sql query
+     * @param  array  $params params.
+     * @param  string $sql query.
      * @return void
      */
     public function log_system_query( $params, $sql ) {

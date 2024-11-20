@@ -65,8 +65,8 @@ class MainWP_Encrypt_Data_Lib { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Get key filename.
      *
-     * @param  int  $site_id site id
-     * @param  bool $fullpath full path
+     * @param  int  $site_id site id.
+     * @param  bool $fullpath full path.
      *
      * @return string
      */
@@ -84,7 +84,7 @@ class MainWP_Encrypt_Data_Lib { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Remove key file.
      *
-     * @param  int $site_id site id
+     * @param  int $site_id site id.
      *
      * @return void
      */
@@ -96,8 +96,8 @@ class MainWP_Encrypt_Data_Lib { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Encrypt data.
      *
-     * @param  mixed $value value
-     * @param  int   $site_id site_id
+     * @param  mixed $value value.
+     * @param  int   $site_id site_id.
      * @param  bool  $create_keys_file create_keys_file
      * @return mixed
      */
@@ -115,8 +115,8 @@ class MainWP_Encrypt_Data_Lib { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Decrypt data.
      *
-     * @param  mixed $encrypted encrypted
-     * @param  int   $site_id site id
+     * @param  mixed $encrypted encrypted.
+     * @param  int   $site_id site id.
      * @return mixed
      */
     public function decrypt_privkey( $encrypted, $site_id = false ) {
@@ -135,8 +135,8 @@ class MainWP_Encrypt_Data_Lib { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Encrypt save keys.
      *
-     * @param  int   $site_id site id
-     * @param  array $encrypted_data encrypted data
+     * @param  int   $site_id site id.
+     * @param  array $encrypted_data encrypted data.
      * @return mixed
      */
     public static function encrypt_save_keys( $site_id, $encrypted_data ) {
@@ -151,7 +151,7 @@ class MainWP_Encrypt_Data_Lib { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Encrypt data.
      *
-     * @param  mixed $data data
+     * @param  mixed $data data.
      * @return mixed
      */
     private function encrypt_data( $data ) {
@@ -192,8 +192,8 @@ class MainWP_Encrypt_Data_Lib { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Decrypt data.
      *
-     * @param  mixed $encryptedData encrypted data
-     * @param  array $load_keys load keys
+     * @param  mixed $encryptedData encrypted data.
+     * @param  array $load_keys load keys.
      * @return mixed
      */
     public function decrypt_data( $encryptedData, $load_keys ) {

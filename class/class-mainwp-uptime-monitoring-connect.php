@@ -404,7 +404,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                 curl_setopt( $ch, CURLOPT_NOBODY, true ); // We only care about the response code, not the content.
             } else {
                 // Set curl options.
-                curl_setopt( $ch, CURLOPT_POST,  strtolower( $website->method ) === 'post' ? true : false ); // GET
+                curl_setopt( $ch, CURLOPT_POST, strtolower( $website->method ) === 'post' ? true : false ); // GET
                 curl_setopt( $ch, CURLOPT_POSTFIELDS, http_build_query( array( 'time' => time() ) ) );
 
             }

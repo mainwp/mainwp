@@ -785,7 +785,8 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $limit = 500;
 
-        $paged = isset( $_GET['paged'] ) ? intval( $_GET['paged'] ) : 0;
+        //phpcs:disable WordPress.Security.NonceVerification
+        $paged = isset( $_GET['paged'] ) ? intval( $_GET['paged'] ) : 0; //phpcs:ignore -- NOSONAR -ok.
 
         if ( $paged <= 0 ) {
             $paged = 0;
@@ -795,13 +796,13 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $params = array();
 
-        if ( isset( $_GET['hour'] ) && ! empty( $_GET['hour'] ) ) {
-            $params['hour'] = intval( $_GET['hour'] );
+        if ( isset( $_GET['hour'] ) && ! empty( $_GET['hour'] ) ) { // phpcs:ignore -- local time.
+            $params['hour'] = intval( $_GET['hour'] ); // phpcs:ignore -- local time.
         } else {
             $params['hour'] = $limit;
         }
 
-        $order = isset( $_GET['order'] ) ? sanitize_text_field( wp_unslash( $_GET['order'] ) ) : '';
+        $order = isset( $_GET['order'] ) ? sanitize_text_field( wp_unslash( $_GET['order'] ) ) : ''; //phpcs:ignore -- NOSONAR -ok.
 
         $total = MainWP_DB::instance()->get_var_field( MainWP_DB_Common::instance()->get_sql_log( $paged, $order, array( 'count' => true ) ) );
 
@@ -813,7 +814,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         if ( isset( $_GET['hour'] ) ) {
             $show_info = $count . ' latest items from a total of ' . $total;
-        } elseif ( isset( $_GET['paged'] ) ) {
+        } elseif ( isset( $_GET['paged'] ) ) { //phpcs:ignore -- NOSONAR -ok.
             $from      = $limit * $paged;
             $show_info = $count . ' items, from ' . $from . ' - ' . ( $from + $limit ) . ' of ' . $total . ' total.';
         }
@@ -821,6 +822,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         if ( ! empty( $show_info ) ) {
             echo '<p><strong>' . esc_html__( 'Showing ', 'mainwp' ) . ':</strong> ' . $show_info;
         }
+        //phpcs:enable WordPress.Security.NonceVerification
 
         $start_wrapper = '<span class="ui mini label mainwp-action-log-show-more">Click to See Response</span><div class="mainwp-action-log-site-response" style="display: none;">';
         $end_wrapper   = '</div>';

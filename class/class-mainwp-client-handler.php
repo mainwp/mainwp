@@ -540,7 +540,7 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param string $type type of image.
      * @param string $what image for what.
      */
-    public static function get_client_contact_image( $item, $type = 'client', $what = 'default' ) { // phpcs:ignore -- NOSONAR - complex 
+    public static function get_client_contact_image( $item, $type = 'client', $what = 'default' ) { // phpcs:ignore -- NOSONAR - complex
 
         if ( empty( $item ) ) {
             return '';

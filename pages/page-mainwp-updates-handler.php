@@ -1065,6 +1065,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     }
 
                     if ( 'plugin' === $type ) {
+                        $website = MainWP_DB::instance()->get_website_by_id( $id, false ); // Call new data the before a updated.
                         if ( ! empty( $website->plugin_upgrades ) ) {
                             $plugin_upgrades = json_decode( $website->plugin_upgrades, true );
                             if ( is_array( $plugin_upgrades ) ) {

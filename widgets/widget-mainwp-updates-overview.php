@@ -507,9 +507,11 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * Render total update.
      *
      * @param int             $total_upgrades number of update.
-     * @param string          $lastSyncMsg last sync info.
      * @param bool true|false $can_total_update permission to update all.
      * @param int             $limit_updates_all limit number of update per request, 0 is no limit.
+     * @param int             $count_websites count websites.
+     * @param int             $count_plugins count plugins.
+     * @param int             $count_themes count themes.
      */
     public static function render_total_update( $total_upgrades, $can_total_update, $limit_updates_all, $count_websites, $count_plugins, $count_themes ) { // phpcs:ignore -- NOSONAR - complex.
 
@@ -553,7 +555,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         <div class="ui <?php echo esc_attr( $fluid ); ?> inverted card">
             <div class="content">
                 <div class="header">
-                    <span class="ui large text"><i class="sync alternate icon"></i> <?php echo MainWP_Utility::short_number_format( intval( $total_upgrades ) ); ?></span>
+                    <span class="ui large text"><i class="sync alternate icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( intval( $total_upgrades ) ) ); ?></span>
                     <?php if ( intval( $total_upgrades ) > 0 ) : ?>
                         <span class="ui small red text">(<?php echo esc_html( $outdated_percentage ); ?>)</span>
                     <?php else : ?>
@@ -643,7 +645,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         <div class="ui <?php echo esc_attr( $fluid ); ?> card">
             <div class="content">
                 <div class="header">
-                    <span class="ui large text"><i class="WordPress icon"></i> <?php echo MainWP_Utility::short_number_format( intval( $total_wp_upgrades ) ); ?></span>
+                    <span class="ui large text"><i class="WordPress icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( intval( $total_wp_upgrades ) ) ); ?></span>
                     <?php if ( intval( $total_wp_upgrades ) > 0 ) : ?>
                         <span class="ui small red text">(<?php echo esc_html( $outdated_percentage ); ?>)</span>
                     <?php else : ?>
@@ -732,7 +734,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         <div class="ui <?php echo esc_attr( $fluid ); ?> card">
             <div class="content">
                 <div class="header">
-                    <span class="ui large text"><i class="plug icon"></i> <?php echo MainWP_Utility::short_number_format( intval( $total_plugin_upgrades ) ); ?></span>
+                    <span class="ui large text"><i class="plug icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( intval( $total_plugin_upgrades ) ) ); ?></span>
                     <?php if ( intval( $total_plugin_upgrades ) > 0 ) : ?>
                         <span class="ui small red text">(<?php echo esc_html( $outdated_percentage ); ?>)</span>
                     <?php else : ?>
@@ -819,7 +821,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         <div class="ui <?php echo esc_attr( $fluid ); ?> card">
             <div class="content">
                 <div class="header">
-                    <span class="ui large text"><i class="tint icon"></i> <?php echo MainWP_Utility::short_number_format( intval( $total_theme_upgrades ) ); ?></span>
+                    <span class="ui large text"><i class="tint icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( intval( $total_theme_upgrades ) ) ); ?></span>
                     <?php if ( intval( $total_theme_upgrades ) > 0 ) : ?>
                         <span class="ui small red text">(<?php echo esc_html( $outdated_percentage ); ?>)</span>
                     <?php else : ?>
@@ -898,7 +900,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         <div class="ui <?php echo esc_attr( $fluid ); ?> card">
             <div class="content">
                 <div class="header">
-                    <span class="ui large text"><i class="font icon"></i> <?php echo MainWP_Utility::short_number_format( intval( $total_translation_upgrades ) ); ?></span>
+                    <span class="ui large text"><i class="font icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( intval( $total_translation_upgrades ) ) ); ?></span>
                 </div>
                 <div class="description"><?php esc_html_e( 'Available translation updates.', 'mainwp' ); ?></div>
             </div>
@@ -978,7 +980,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                             <i class="plug icon"></i>
                             <i class="inverted corner clock icon"></i>
                         </i>
-                        <?php echo MainWP_Utility::short_number_format( intval( $total_plugins_outdate ) ); ?>
+                        <?php echo esc_html( MainWP_Utility::short_number_format( intval( $total_plugins_outdate ) ) ); ?>
                     </span>
                     <?php if ( intval( $total_plugins_outdate ) > 0 ) : ?>
                         <span class="ui small red text">(<?php echo esc_html( $outdated_percentage ); ?>)</span>
@@ -1034,7 +1036,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                             <i class="tint icon"></i>
                             <i class="inverted corner clock icon"></i>
                         </i>
-                        <?php echo MainWP_Utility::short_number_format( intval( $total_themes_outdate ) ); ?>
+                        <?php echo esc_html( MainWP_Utility::short_number_format( intval( $total_themes_outdate ) ) ); ?>
                     </span>
                     <?php if ( intval( $total_themes_outdate ) > 0 ) : ?>
                         <span class="ui small red text">(<?php echo esc_html( $outdated_percentage ); ?>)</span>

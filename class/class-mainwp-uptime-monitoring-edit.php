@@ -47,11 +47,11 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
     /**
      * Method render_update_messages
      *
-     * @param  mixed $individual
+     * @param  mixed $individual individual
      * @return void
      */
     public static function render_update_messages( $individual = false ) {
-        if ( ! empty( $_GET['message'] ) ) {
+        if ( ! empty( $_GET['message'] ) ) { //phpcs:ignore -- ok.
             $updated = intval( $_GET['message'] );
 
             $message = '';
@@ -87,7 +87,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
     /**
      * Method handle_save_settings
      *
-     * @return array
+     * @return void
      */
     public function handle_save_settings() {  //phpcs:ignore -- NOSONAR - complexity.
 
@@ -148,9 +148,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                             exit();
                         }
                     } else {
-                        $params = array(
-                            // 'dev_log_query' => true,
-                        );
+                        $params = array();
 
                         // add new sub monitor.
                         $current = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site_id, 'suburl', $update['suburl'], $params, ARRAY_A );
@@ -203,7 +201,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
     /**
      * Method render_monitor_settings
      *
-     * @param  mixed $site_id
+     * @param  mixed $site_id site id
      * @param  bool  $individual Individual settings.
      * @return void
      */
@@ -232,8 +230,8 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 return;
             }
 
-            if ( ! empty( $_GET['monitor_id'] ) ) {
-                $mo_settings = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site_id, 'monitor_id', $_GET['monitor_id'], array(), ARRAY_A );
+            if ( ! empty( $_GET['monitor_id'] ) ) {  //phpcs:ignore -- NOSONAR -ok.
+                $mo_settings = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site_id, 'monitor_id', $_GET['monitor_id'], array(), ARRAY_A ); //phpcs:ignore -- NOSONAR -ok.
                 if ( empty( $mo_settings ) ) {
                     ?>
                     <div class="ui message error"><i class="close icon"></i> <?php esc_html_e( 'Monitor not found or invalid. Please try again.', 'mainwp' ); ?></div>
@@ -268,7 +266,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
             $mo_settings = get_option( 'mainwp_global_uptime_monitoring_settings', false );
         }
 
-        if ( isset( $_GET['action'] ) && 'add_submonitor' === $_GET['action'] ) {
+        if ( isset( $_GET['action'] ) && 'add_submonitor' === $_GET['action'] ) { //phpcs:ignore -- ok.
             $title                             = __( 'Add New Sub Monitor', 'mainwp' );
             $edit_sub_monitor                  = true;
             $is_sub_url                        = 1;
@@ -528,7 +526,6 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                     $_params = array(
                         'issub' => 1,
                         'wpid'  => $site_id,
-                        // 'dev_log_query' => true,
                     );
                     $sub_monitors = MainWP_DB_Uptime_Monitoring::instance()->get_monitors( $_params, ARRAY_A );
                     ?>
@@ -567,8 +564,8 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
             <script type="text/javascript">
                         <?php
                         $all_intervals = static::get_interval_values( $individual );
-                        echo 'var interval_label = ' . json_encode( array_values( $all_intervals ) ) . ";\n";
-                        echo 'var interval_values = ' . json_encode( array_keys( $all_intervals ) ) . ";\n";
+                        echo 'var interval_label = ' . wp_json_encode( array_values( $all_intervals ) ) . ";\n";
+                        echo 'var interval_values = ' . wp_json_encode( array_keys( $all_intervals ) ) . ";\n";
                         ?>
                         jQuery('#mainwp_edit_monitor_interval_slider').slider({
                             interpretLabel: function(value) {
@@ -595,8 +592,8 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
 
                         <?php
                         $all_timeouts = static::get_timeout_values( $individual );
-                        echo 'var timeouts_label = ' . json_encode( array_values( $all_timeouts ) ) . ";\n";
-                        echo 'var timeouts_values = ' . json_encode( array_keys( $all_timeouts ) ) . ";\n";
+                        echo 'var timeouts_label = ' . wp_json_encode( array_values( $all_timeouts ) ) . ";\n";
+                        echo 'var timeouts_values = ' . wp_json_encode( array_keys( $all_timeouts ) ) . ";\n";
                         ?>
                         jQuery('#mainwp_edit_monitor_timeout_slider').slider({
                             interpretLabel: function(value) {
@@ -638,8 +635,8 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
     /**
      * Method render_sub_urls_monitoring
      *
-     * @param  array $mo_settings
-     * @param  array $sub_urls_monitors
+     * @param  array $mo_settings monitoring settings
+     * @param  array $sub_urls_monitors sub urls monitors
      * @return void
      */
     public function render_sub_urls_monitoring( $mo_settings, $sub_urls_monitors ) {
@@ -677,7 +674,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
     /**
      * Method get_allowed_methods
      *
-     * @param  mixed $individual
+     * @param  mixed $individual individual
      * @return array
      */
     public static function get_allowed_methods( $individual = true ) {
@@ -705,8 +702,8 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
     /**
      * Method get_interval_values
      *
-     * @param  mixed $individual
-     * @param  mixed $flip_values
+     * @param  mixed $individual individual
+     * @param  mixed $flip_values flip values
      * @return array
      */
     public static function get_interval_values( $individual = true, $flip_values = false ) {
@@ -738,8 +735,8 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
     /**
      * Method get_timeout_values
      *
-     * @param  mixed $individual
-     * @param  mixed $flip_values
+     * @param  mixed $individual individual
+     * @param  mixed $flip_values flip values
      * @return array
      */
     public static function get_timeout_values( $individual = true, $flip_values = false ) {
@@ -781,7 +778,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
      *
      * Renders Modal.
      *
-     * @param  mixed $title
+     * @param  mixed $title title
      * @return void
      */
     public function render_add_edit_sub_page_monitor_begin_form_in_modal( $title ) {
@@ -798,9 +795,9 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
      *
      * Renders Modal.
      *
-     * @param  int   $site_id
-     * @param  array $monitor
-     * @param  bool  $is_editing
+     * @param  int   $site_id site id
+     * @param  array $monitor monitor
+     * @param  bool  $is_editing is editing
      * @return void
      */
     public function render_add_edit_sub_page_monitor_end_form_in_modal( $site_id, $is_editing = true ) {

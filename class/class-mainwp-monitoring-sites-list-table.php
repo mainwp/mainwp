@@ -584,8 +584,6 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
         $params['view'] = 'monitor_view';
 
-        // $params['dev_log_query'] = true;
-
         $total_params['view'] = 'monitor_view';
 
         $total_websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $total_params ) );
@@ -1083,7 +1081,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
     /**
      * Get column info.
      *
-     * @param   bool $sub_rows
+     * @param   bool $sub_rows sub rows.
      * @return mixed
      */
     protected function get_column_info( $sub_rows = false ) {
@@ -1412,7 +1410,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
     /**
      * Method column_type
      *
-     * @param  string $mo_type
+     * @param  string $mo_type mointor type.
      *
      * @return void
      */
@@ -1482,7 +1480,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
     /**
      * Render last24 uptime status.
      *
-     * @param  array $data
+     * @param  array $data data
      * @param  int   $last24_starttime
      * @return void
      */
@@ -1543,8 +1541,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
     /**
      * Get monitors table child rows.
      *
-     * @param  int   $site_id
-     * @param  array $sub_pages
+     * @param  int   $site_id the site id.
+     * @param  array $sub_pages sub page.
      * @return string format html content.
      */
     public function get_monitors_table_child_rows( $site_id, $sub_pages ) {

@@ -42,7 +42,7 @@ class MainWP_Uptime_Monitoring_Site_Widget {
     public function ajax_get_response_times() {
 
         mainwp_secure_request( 'mainwp_uptime_monitoring_get_response_times' );
-
+        //phpcs:disable WordPress.Security.NonceVerification
         $site_id        = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : 0;
         $current_period = isset( $_POST['period'] ) ? sanitize_text_field( wp_unslash( $_POST['period'] ) ) : '';
 
@@ -69,6 +69,8 @@ class MainWP_Uptime_Monitoring_Site_Widget {
             'end'   => $_POST['dtsstop'] . ' 23:59:59',
             'issub' => 0,
         );
+
+        //phpcs:enable WordPress.Security.NonceVerification
 
         if ( strtotime( $params['start'] ) > strtotime( $params['end'] ) ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'The start date must be earlier than the end date. Please try again.', 'mainwp' ) ) ) );
@@ -133,7 +135,7 @@ class MainWP_Uptime_Monitoring_Site_Widget {
     /**
      * Method get_valid_days_periods
      *
-     * @param  string|null $period
+     * @param  string|null $period period
      * @return mixed
      */
     public static function get_valid_days_periods( $period = null ) {
@@ -152,7 +154,7 @@ class MainWP_Uptime_Monitoring_Site_Widget {
     /**
      * Method get_days_number_by_period
      *
-     * @param  string|false $period
+     * @param  string|false $period period
      * @return mixed
      */
     public static function get_days_number_by_period( $period ) {
@@ -259,7 +261,7 @@ class MainWP_Uptime_Monitoring_Site_Widget {
     /**
      * Method render_content_response_time_widget
      *
-     * @param  mixed $site_id
+     * @param  mixed $site_id site id
      * @return void
      */
     public function render_content_response_time_widget( $site_id ) {

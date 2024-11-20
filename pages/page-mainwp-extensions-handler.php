@@ -888,7 +888,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 if ( $clone_site && $clone_site->is_staging ) {
 
                     // try to decrypt priv key.
-                    $de_privkey = MainWP_Encrypt_Data_Lib::instance()->decrypt_privkey( base64_decode( $website->privkey ), $website->id );
+                    $de_privkey = MainWP_Encrypt_Data_Lib::instance()->decrypt_privkey( base64_decode( $website->privkey ), $website->id ); // phpcs:ignore -- NOSONAR - base64_encode trust.
                     if ( ! empty( $de_privkey ) ) {
                         $en_privkey = MainWP_Encrypt_Data_Lib::instance()->encrypt_privkey( $de_privkey, $clone_site->id, true ); // create encrypt priv key for clone site.
                     } else {
@@ -901,7 +901,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                             array(
                                 'adminname'          => $website->adminname,
                                 'pubkey'             => $website->pubkey,
-                                'privkey'            => base64_encode( $en_privkey ),
+                                'privkey'            => base64_encode( $en_privkey ), //phpcs:ignore -- NOSONAR -ok.
                                 'verify_certificate' => $website->verify_certificate,
                                 'uniqueId'           => ( null !== $website->uniqueId ? $website->uniqueId : '' ),
                                 'http_user'          => $website->http_user,
@@ -940,7 +940,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $de_privkey = MainWP_Encrypt_Data_Lib::instance()->decrypt_privkey( $de_privkey, $site_id );
 
             if ( ! empty( $de_privkey ) ) {
-                $de_privkey = base64_encode( $de_privkey );
+                $de_privkey = base64_encode( $de_privkey ); //phpcs:ignore -- NOSONAR -ok.
             } else {
                 $de_privkey = $website->privkey; // compatible - encoded.
             }

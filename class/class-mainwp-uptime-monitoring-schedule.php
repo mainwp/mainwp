@@ -49,8 +49,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
     /**
      * Method hook_regular_sequence_process
      *
-     * @param  array $process process.
-     * @return array $process update.
+     * @param  array $list process list.
      */
     public function hook_regular_sequence_process( $list ) {
         if ( is_array( $list ) ) {
@@ -63,6 +62,11 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
     }
 
 
+    /**
+     * Method cron_uptime_check
+     *
+     * @return void
+     */
     public function cron_uptime_check() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- NOSONAR Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $disable_uptime_check = apply_filters( 'mainwp_automatic_disable_uptime_monitoring_check', false );
@@ -89,7 +93,6 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
             'main_counter_lasttime' => $lasttimeAutomaticMainCounterLastTime,
             'global_settings'       => $global_settings,
             'limit'                 => $limit,
-            // 'dev_log_query'       => true,
         );
 
         $checkuptime_monitors = MainWP_DB_Uptime_Monitoring::instance()->get_monitors_to_check_uptime( $params ); // to sync sites data.
@@ -301,8 +304,8 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
     /**
      * Update uptime notification status.
      *
-     * @param  string $new_status
-     * @param  bool   $check_value
+     * @param  string $new_status new status
+     * @param  bool   $check_value check value
      *
      * @return void
      */

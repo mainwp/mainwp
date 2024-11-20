@@ -2339,7 +2339,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $url .= '/';
             }
 
-            $en_pk_data = MainWP_Encrypt_Data_Lib::instance()->encrypt_privkey( base64_decode( $privkey ) );
+            $en_pk_data = MainWP_Encrypt_Data_Lib::instance()->encrypt_privkey( base64_decode( $privkey ) ); // phpcs:ignore -- NOSONAR - base64_encode trust.
             $en_privkey = isset( $en_pk_data['en_data'] ) ? $en_pk_data['en_data'] : '';
 
             $values = array(
@@ -2465,6 +2465,13 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     public function update_website_values( $websiteid, $fields ) {
         if ( ! empty( $fields ) ) {
+            // Lock the data stream to prevent other processes from updating at the same time.
+            $sql = $this->wpdb->prepare(
+                'SELECT * FROM ' . $this->table_name( 'wp' ) . ' WHERE id = %d FOR UPDATE',
+                $websiteid
+            );
+            $this->wpdb->get_row( $sql );
+
             return $this->wpdb->update( $this->table_name( 'wp' ), $fields, array( 'id' => $websiteid ) );
         }
 
@@ -2508,7 +2515,6 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @param string $http_pass HTTP Basic Authentication password.
      * @param int    $sslVersion SSL Version.
      * @param int    $disableChecking Wether or not disable sites status checking.
-     * @param int    $checkInterval Status checking interval.
      * @param bool   $disableHealthChecking Disable Site health threshold.
      * @param int    $healthThreshold Site health threshold.
      * @param int    $wpe Is it WP Engine hosted site.
@@ -3181,8 +3187,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     /**
      * Update regular process.
      *
-     * @param  array $data
-     * @return void
+     * @param  array $data process data
+     * @return mixed
      */
     public function update_regular_process( $data ) {
         if ( is_array( $data ) ) {
@@ -3214,8 +3220,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     /**
      * Method log_system_query
      *
-     * @param  array  $params
-     * @param  string $sql
+     * @param  array  $params params
+     * @param  string $sql query
      * @return void
      */
     public function log_system_query( $params, $sql ) {

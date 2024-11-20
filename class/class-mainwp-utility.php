@@ -1749,10 +1749,10 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function short_number_format( $number ) {
         if ( $number > 999 && $number < 1000000 ) {
-            // Anything between 1000 and 1000000
+            // Anything between 1000 and 1000000.
             $number = number_format( $number / 1000, 1 ) . 'K';
         } elseif ( $number >= 1000000000 ) {
-            // 1000000 or higher
+            // 1000000 or higher.
             $number = number_format( $number / 1000000, 2 ) . 'M';
         }
         return $number;
@@ -1761,8 +1761,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Returns date in time ago format
      *
-     * @param  mixed $datetime Date stamp.
-     * @param  bool  $full     Full or short format.
+     * @param  mixed $ptime Date stamp.
      * @return string $string   Time elapsed string.
      */
     public static function time_elapsed_string( $ptime ) {

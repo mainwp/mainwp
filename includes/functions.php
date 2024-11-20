@@ -114,9 +114,9 @@ if ( ! function_exists( 'mainwp_modules_is_enabled' ) ) {
 if ( ! function_exists( 'mainwp_get_timestamp' ) ) {
 
     /**
-     * mainwp_get_timestamp.
+     * Function mainwp_get_timestamp.
      *
-     * @param  int $add_time
+     * @param  int $add_time add time
      * @return int
      */
     function mainwp_get_timestamp( $add_time = 0 ) {
@@ -128,9 +128,8 @@ if ( ! function_exists( 'mainwp_get_timestamp' ) ) {
 
 if ( ! function_exists( 'mainwp_get_current_utc_datetime_db' ) ) {
     /**
-     * mainwp_get_timestamp.
+     * Function mainwp_get_current_utc_datetime_db.
      *
-     * @param  int $add_time
      * @return int
      */
     function mainwp_get_current_utc_datetime_db() {
@@ -142,10 +141,10 @@ if ( ! function_exists( 'mainwp_get_current_utc_datetime_db' ) ) {
 if ( ! function_exists( 'mainwp_secure_request' ) ) {
 
     /**
-     * mainwp_secure_request.
+     * Function mainwp_secure_request.
      *
-     * @param  string $action
-     * @return null or die
+     * @param  string $action request action.
+     * @return void
      */
     function mainwp_secure_request( $action ) {
         \MainWP\Dashboard\MainWP_Post_Handler::instance()->secure_request( $action );

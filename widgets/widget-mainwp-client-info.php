@@ -115,7 +115,7 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                         <div class="content">
                             <div class="ui right floated">
                                 <?php $client_display_image = MainWP_Client_Handler::get_client_contact_image( $client_info ); ?>
-                                <?php echo $client_display_image; ?>
+                                <?php echo $client_display_image; //phpcs:ignore -- NOSONAR - ok. ?>
                             </div>
                             <div class="header" style="margin-bottom:0">
                                 <a href="admin.php?page=ManageClients&client_id=<?php echo intval( $client_info['client_id'] ); ?>"><?php echo esc_html( $client_info['name'] ); ?></a>
@@ -125,7 +125,11 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                             </div>
                             <?php if ( isset( $client_info['note'] ) && ! empty( $client_info['note'] ) ) : ?>
                             <div class="description">
-                                <?php echo $client_info['note']; ?>
+                                <?php
+                                $note     = html_entity_decode( $client_info['note'] );
+                                $esc_note = MainWP_Utility::esc_content( $note );
+                                echo $esc_note; //phpcs:ignore -- NOSONAR -ok.
+                                ?>
                             </div>
                             <?php endif; ?>
                         </div>
@@ -179,10 +183,10 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
 
         <div class="ui stackable two columns grid mainwp-widget-footer">
             <div class="left aligne middle aligned column">
-                
+
             </div>
             <div class="right aligned middle aligned column">
-                
+
             </div>
         </div>
         <?php

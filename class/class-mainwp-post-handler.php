@@ -537,9 +537,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
     /**
      * Method hide dashboard notice status.
      *
-     * @param  mixed $no_id
-     * @param  mixed $time_set
-     * @param  bool  $hide_noti
+     * @param  mixed $no_id notice id
+     * @param  mixed $time_set time
+     * @param  bool  $hide_noti hide notice
      * @return void
      */
     public function hide_dashboard_notice_status( $no_id, $time_set = false, $hide_noti = true ) {
@@ -1748,14 +1748,14 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
             // try to decrypt priv key.
-            $de_privkey = MainWP_Encrypt_Data_Lib::instance()->decrypt_privkey( base64_decode( $website->privkey ), $website->id );
+            $de_privkey = MainWP_Encrypt_Data_Lib::instance()->decrypt_privkey( base64_decode( $website->privkey ), $website->id );  // phpcs:ignore -- NOSONAR - base64_encode trust.
             if ( empty( $de_privkey ) ) { // key is not encrypted.
                 $en_privkey = MainWP_Encrypt_Data_Lib::instance()->encrypt_privkey( base64_decode( $website->privkey ), $website->id, true ); // create encrypt priv key for the site.
                 if ( ! empty( $en_privkey['en_data'] ) ) {
                     MainWP_DB::instance()->update_website_values(
                         $website->id,
                         array(
-                            'privkey' => base64_encode( $en_privkey['en_data'] ),
+                            'privkey' => base64_encode( $en_privkey['en_data'] ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- NOSONAR - base64_encode trust.
                         )
                     );
                 }

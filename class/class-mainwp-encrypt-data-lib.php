@@ -65,8 +65,8 @@ class MainWP_Encrypt_Data_Lib { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Get key filename.
      *
-     * @param  int  $site_id
-     * @param  bool $fullpath
+     * @param  int  $site_id site id
+     * @param  bool $fullpath full path
      *
      * @return string
      */
@@ -84,21 +84,21 @@ class MainWP_Encrypt_Data_Lib { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Remove key file.
      *
-     * @param  int $site_id
+     * @param  int $site_id site id
      *
      * @return void
      */
     public static function remove_key_file( $site_id ) {
         $file = static::get_key_file( $site_id );
-        MainWP_Keys_Manager::instance()->delete_key_file($file);
+        MainWP_Keys_Manager::instance()->delete_key_file( $file );
     }
 
     /**
      * Encrypt data.
      *
-     * @param  mixed $value
-     * @param  int   $site_id
-     * @param  bool  $create_keys_file
+     * @param  mixed $value value
+     * @param  int   $site_id site_id
+     * @param  bool  $create_keys_file create_keys_file
      * @return mixed
      */
     public function encrypt_privkey( $value, $site_id = false, $create_keys_file = false ) {
@@ -115,8 +115,8 @@ class MainWP_Encrypt_Data_Lib { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Decrypt data.
      *
-     * @param  mixed $encrypted
-     * @param  int   $site_id
+     * @param  mixed $encrypted encrypted
+     * @param  int   $site_id site id
      * @return mixed
      */
     public function decrypt_privkey( $encrypted, $site_id = false ) {
@@ -135,14 +135,14 @@ class MainWP_Encrypt_Data_Lib { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Encrypt save keys.
      *
-     * @param  int   $site_id
-     * @param  array $encrypted_data
+     * @param  int   $site_id site id
+     * @param  array $encrypted_data encrypted data
      * @return mixed
      */
     public static function encrypt_save_keys( $site_id, $encrypted_data ) {
         if ( is_array( $encrypted_data ) && ! empty( $encrypted_data['en_data'] ) ) {
             $priv_file    = static::get_key_file( $site_id );
-            $keys_encoded = base64_encode( $encrypted_data['priv_key'] ) . '-' . base64_encode( $encrypted_data['en_key'] ) . '-' . base64_encode( $encrypted_data['en_iv'] );
+            $keys_encoded = base64_encode( $encrypted_data['priv_key'] ) . '-' . base64_encode( $encrypted_data['en_key'] ) . '-' . base64_encode( $encrypted_data['en_iv'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode trust.
             return MainWP_Keys_Manager::instance()->save_key_file( $priv_file, $keys_encoded );
         }
         return false;
@@ -151,7 +151,7 @@ class MainWP_Encrypt_Data_Lib { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Encrypt data.
      *
-     * @param  mixed $data
+     * @param  mixed $data data
      * @return mixed
      */
     private function encrypt_data( $data ) {
@@ -192,16 +192,17 @@ class MainWP_Encrypt_Data_Lib { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Decrypt data.
      *
-     * @param  mixed $encryptedData
-     * @param  array $load_keys
+     * @param  mixed $encryptedData encrypted data
+     * @param  array $load_keys load keys
      * @return mixed
      */
     public function decrypt_data( $encryptedData, $load_keys ) {
         try {
-
+            //phpcs:disable WordPress.PHP.DiscouragedPHPFunctions -- base64_encode trust.
             $loadPrivateKeyString = base64_decode( $load_keys[0] );
             $rsaEncryptedKey      = base64_decode( $load_keys[1] );
             $rsaEncryptedIV       = base64_decode( $load_keys[2] );
+            //phpcs:enable
 
             // Load or generate RSA keys.
             $privateKey = RSA::loadPrivateKey( $loadPrivateKeyString );

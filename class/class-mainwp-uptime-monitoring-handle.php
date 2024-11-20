@@ -73,7 +73,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
     /**
      * Method get_default_monitoring_settings
      *
-     * @param  bool $individual
+     * @param  bool $individual individual
      * @return array
      */
     public static function get_default_monitoring_settings( $individual ) {
@@ -122,7 +122,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
     /**
      * Method update_uptime_global_settings
      *
-     * @param  array $settings
+     * @param  array $settings settings
      * @return void
      */
     public static function update_uptime_global_settings( $settings ) {
@@ -174,12 +174,13 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
         $monitor_id = 0;
         $monitor    = false;
 
-        if ( isset( $_POST['mo_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        if ( isset( $_POST['mo_id'] ) ) {
             $monitor_id = intval( $_POST['mo_id'] );
         }
 
         if ( ! empty( $monitor_id ) ) {
-            $monitor = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( false, 'monitor_id', $monitor_id ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            $monitor = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( false, 'monitor_id', $monitor_id );
         }
 
         if ( empty( $monitor ) && ! empty( $_POST['wp_id'] ) ) {
@@ -190,6 +191,8 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
         if ( empty( $monitor ) ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'Monitor ID invalid or Monitor not found. Please try again.', 'mainwp' ) ) ) );
         }
+
+        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         // return compatible uptime status here.
         $result = static::check_website_uptime_monitoring_status( $monitor );
@@ -204,8 +207,8 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
     /**
      * Get site response time chart data
      *
-     * @param  int   $site_id
-     * @param  array $params
+     * @param  int   $site_id site id
+     * @param  array $params params
      * @return array
      */
     public function get_site_response_time_chart_data( $site_id, $params = array() ) {
@@ -262,7 +265,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
     /**
      * Method hook_get_reports_data
      *
-     * @param  mixed $site_id
+     * @param  mixed $site_id site id
      * @param  mixed $start_date Y-m-d.
      * @param  mixed $end_date Y-m-d.
      * @param  array $params params.
@@ -438,8 +441,8 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
     /**
      * Method calc_and_save_site_uptime_stat_hourly_data
      *
-     * @param  mixed $monitor_id
-     * @param  mixed $ping_data
+     * @param  mixed $monitor_id monitor id
+     * @param  mixed $ping_data ping data
      * @return void
      */
     public function calc_and_save_site_uptime_stat_hourly_data( $monitor_id, $ping_data ) {
@@ -469,7 +472,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
 
         $update_dt = false;
 
-        if ( $ping_data['status'] === MainWP_Uptime_Monitoring_Connect::UP ) {
+        if ( MainWP_Uptime_Monitoring_Connect::UP === $ping_data['status'] ) {
             $update    = array(
                 'monitor_id' => $monitor_id,
                 'up'         => ( $current_stat['up'] + 1 ),
@@ -479,7 +482,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
                 'timestamp'  => $hourly_key,
             );
             $update_dt = true;
-        } elseif ( $ping_data['status'] === MainWP_Uptime_Monitoring_Connect::DOWN ) {
+        } elseif ( MainWP_Uptime_Monitoring_Connect::DOWN === $ping_data['status'] ) {
             // do not update ping_avg, ping_min, ping_max here.
             $update    = array(
                 'monitor_id' => $monitor_id,
@@ -502,7 +505,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
     /**
      * Method get_hourly_key_by_timestamp
      *
-     * @param  int $timestamp
+     * @param  int $timestamp timestamp
      * @return int
      */
     public static function get_hourly_key_by_timestamp( $timestamp ) {
@@ -512,7 +515,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
     /**
      * Get uptime websites monitors offline to notice.
      *
-     * @return void
+     * @return mixed
      */
     public function get_uptime_websites_monitors_offline_to_notice() {
 
@@ -539,7 +542,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
     /**
      * Get uptime websites monitors offline to notice.
      *
-     * @return void
+     * @return mixed
      */
     public function get_uptime_monitors_with_down_status_to_notice() {
 
@@ -584,7 +587,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
     /**
      * Update monitor notification.
      *
-     * @param  int $monitor_id
+     * @param  int $monitor_id monitor id
      *
      * @return void
      */

@@ -45,8 +45,8 @@ class MainWP_DB_Uptime_Monitoring extends MainWP_DB { // phpcs:ignore Generic.Cl
     /**
      * Method get_db_schema()
      *
-     * @param  array  $sql
-     * @param  string $currentVersion
+     * @param  array  $sql sql.
+     * @param  string $currentVersion current version.
      * @return void
      */
     public function get_db_schema( &$sql,  $currentVersion ) { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
@@ -132,7 +132,7 @@ KEY idx_wpid (wpid)";
     /**
      * Method update_db_data action.
      *
-     * @param string $current_version.
+     * @param string $current_version current version.
      *
      * @return object|null
      */
@@ -146,7 +146,7 @@ KEY idx_wpid (wpid)";
     /**
      * Method update_db_data action.
      *
-     * @param string $current_version.
+     * @param string $current_version current version.
      *
      * @return object|null
      */
@@ -217,7 +217,7 @@ KEY idx_wpid (wpid)";
     /**
      * Method update_db_data action.
      *
-     * @param string $current_version.
+     * @param string $current_version current version.
      *
      * @return object|null
      */
@@ -232,8 +232,8 @@ KEY idx_wpid (wpid)";
     /**
      * Method update_db_legacy_first_enable_monitoring_create_monitors
      *
-     * @param  mixed $disabled_monitors
-     * @param  mixed $active
+     * @param  mixed $disabled_monitors disabled monitors.
+     * @param  mixed $active active
      * @return void
      */
     public function update_db_legacy_first_enable_monitoring_create_monitors( $disabled_monitors = null, $active = null ) {
@@ -283,10 +283,10 @@ KEY idx_wpid (wpid)";
     /**
      * Method get_monitor_by
      *
-     * @param  int|false $site_id
-     * @param  string    $by
-     * @param  mixed     $value
-     * @param  array     $params
+     * @param  int|false $site_id site id
+     * @param  string    $by get by
+     * @param  mixed     $value value
+     * @param  array     $params params
      * @param  int       $obj OBJECT|ARRAY_A
      * @return object|null
      */
@@ -321,7 +321,7 @@ KEY idx_wpid (wpid)";
     /**
      * Get moniyor's sub page.
      *
-     * @param  array $params
+     * @param  array $params params
      * @return mixed result
      */
     public function get_monitor_sub_pages( $params ) {
@@ -448,7 +448,7 @@ KEY idx_wpid (wpid)";
     /**
      * Get uptime notifcation to send.
      *
-     * @param  int $limit
+     * @param  int $limit limit.
      * @return mixed
      */
     public function get_uptime_notification_to_start_send( $limit = 50 ) {
@@ -468,7 +468,7 @@ KEY idx_wpid (wpid)";
     /**
      * Get uptime notifcation to continue send.
      *
-     * @param  array $params
+     * @param  array $params params.
      * @return mixed result
      */
     public function get_uptime_notification_to_continue_send( $params ) {
@@ -479,8 +479,6 @@ KEY idx_wpid (wpid)";
         $params['view']          = 'uptime_notification';
         $params['custom_where']  = " AND ( pro.type = 'monitor' AND pro.process_slug = 'uptime_notification' AND pro.status = 'active' AND pro.dts_process_stop < pro.dts_process_start ) ";
         $params['others_fields'] = array( 'monitoring_notification_emails', 'settings_notification_emails', 'site_info' ); // other wp options fields.
-
-        // $params['dev_log_query'] = true; //phpcs:ignore -- NOSONAR - dev.
 
         $sql = $this->get_sql_monitor( $params );
 
@@ -772,7 +770,7 @@ KEY idx_wpid (wpid)";
     /**
      * Method delete_heartbeat by monitor id.
      *
-     * @param  int $monitorid
+     * @param  int $monitorid monitor id.
      * @return bool
      */
     public function delete_heartbeat( $monitorid ) {
@@ -819,7 +817,7 @@ KEY idx_wpid (wpid)";
     /**
      * Get last monitor heartbeat.
      *
-     * @param int $monitor_id.
+     * @param int $monitor_id monitor id.
      *
      * @return object|null Database query results or null on failure.
      */
@@ -832,8 +830,8 @@ KEY idx_wpid (wpid)";
     /**
      * Get last site's heartbeat.
      *
-     * @param int  $siteid.
-     * @param bool $include_suburl.
+     * @param int  $siteid site id.
+     * @param bool $include_suburl include suburl.
      *
      * @return object|null Database query results or null on failure.
      */
@@ -858,9 +856,6 @@ KEY idx_wpid (wpid)";
     /**
      * Count up down monitors.
      *
-     * @param int   $siteid.
-     * @param array $days_num.
-     *
      * @return array data.
      */
     public function get_count_up_down_monitors() {
@@ -876,8 +871,8 @@ KEY idx_wpid (wpid)";
     /**
      * Count last site's incidents.
      *
-     * @param int   $siteid.
-     * @param array $days_num.
+     * @param int   $siteid site id.
+     * @param array $days_num days number.
      *
      * @return array data.
      */
@@ -904,7 +899,7 @@ KEY idx_wpid (wpid)";
     /**
      * Get last site's incidents stats.
      *
-     * @param int $siteid.
+     * @param int $siteid. site id.
      *
      * @return object|null Database query results or null on failure.
      */
@@ -927,8 +922,8 @@ KEY idx_wpid (wpid)";
     /**
      * Get site's incidents stats.
      *
-     * @param int   $siteid.
-     * @param array $params.
+     * @param int   $siteid site id.
+     * @param array $params params.
      *
      * @return array data.
      */
@@ -960,8 +955,8 @@ KEY idx_wpid (wpid)";
     /**
      * Get last site's uptime ratios stats.
      *
-     * @param int $siteid.
-     * @param int $days_num.
+     * @param int $siteid. site id.
+     * @param int $days_num day number.
      *
      * @return object|null Database query results or null on failure.
      */
@@ -987,7 +982,7 @@ KEY idx_wpid (wpid)";
     /**
      * Get last site's uptime ratios stats.
      *
-     * @param int $siteid.
+     * @param int $siteid site id.
      *
      * @return object|null Database query results or null on failure.
      */
@@ -1014,7 +1009,7 @@ KEY idx_wpid (wpid)";
     /**
      * Get site's reports uptime ratios.
      *
-     * @param int   $siteid.
+     * @param int   $siteid site id.
      * @param array $params. 'start' and 'end' date format: Y-m-d.
      *
      *  'period_days' : array(
@@ -1090,8 +1085,8 @@ KEY idx_wpid (wpid)";
     /**
      * Get monitor response time stats.
      *
-     * @param int   $siteid.
-     * @param array $params.
+     * @param int   $siteid site id.
+     * @param array $params params.
      * array 'start' and 'end' format : 'Y-m-d'.
      *
      * @return array Database query results or empty.
@@ -1161,8 +1156,8 @@ KEY idx_wpid (wpid)";
     /**
      * Get monitoring events stats.
      *
-     * @param int   $siteid.
-     * @param array $params.
+     * @param int   $siteid site id.
+     * @param array $params params.
      *
      * @return object|null Database query results or null on failure.
      */

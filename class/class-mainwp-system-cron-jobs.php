@@ -24,7 +24,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
     private static $instance = null;
 
     /**
-     * Last time auto logs.
+     * @var int Last time auto logs.
      */
     public $last_auto_logging = 0;
 
@@ -1700,13 +1700,15 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         $processes_list_value = array_values( $list_processes );
 
-        if ( $current_pid > count( $processes_list_value ) ) {
+        $count = count( $processes_list_value );
+
+        if ( $current_pid > $count ) {
             $current_pid = 0;
         }
 
         $process = isset( $processes_list_value[ $current_pid ] ) ? $processes_list_value[ $current_pid ] : array();
 
-        while ( $current_pid <= count( $processes_list_value ) ) {
+        while ( $current_pid <= $count ) {
             if ( is_array( $process ) && isset( $process['callback'] ) && is_callable( $process['callback'] ) ) {
                 update_option( 'mainwp_regular_sequence_current_process_pid', $current_pid );
                 call_user_func( $process['callback'] );

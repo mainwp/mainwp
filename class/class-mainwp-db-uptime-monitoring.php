@@ -1012,18 +1012,17 @@ KEY idx_wpid (wpid)";
      * @param int   $siteid site id.
      * @param array $params params.
      *
-     *  'period_days' : array(
-     *       'uptimeratiosall' => 365, // Last 365 days.
-     *       'uptimeratios7'   => 7,
-     *       'uptimeratios15'  => 15,
-     *       'uptimeratios30'  => 30,
-     *       'uptimeratios45'  => 45,
-     *      'uptimeratios60'  => 60,
-     * )
-     *
      * @return array data.
      */
     public function get_site_uptime_ratios_reports_data( $siteid, $params = array() ) {
+
+        // 'period_days' :.
+        // 'uptimeratiosall' => 365, // Last 365 days.
+        // 'uptimeratios7'   => 7.
+        // 'uptimeratios15'  => 15
+        // 'uptimeratios30'  => 30.
+        // 'uptimeratios45'  => 45.
+        // 'uptimeratios60'  => 60.
 
         $period_days = isset( $params['period_days'] ) ? $params['period_days'] : array();
         if ( empty( $period_days ) || empty( $params['start'] ) || empty( $params['end'] ) ) {

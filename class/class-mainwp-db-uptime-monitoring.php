@@ -233,7 +233,7 @@ KEY idx_wpid (wpid)";
      * Method update_db_legacy_first_enable_monitoring_create_monitors
      *
      * @param  mixed $disabled_monitors disabled monitors.
-     * @param  mixed $active active
+     * @param  mixed $active active.
      * @return void
      */
     public function update_db_legacy_first_enable_monitoring_create_monitors( $disabled_monitors = null, $active = null ) {
@@ -283,11 +283,11 @@ KEY idx_wpid (wpid)";
     /**
      * Method get_monitor_by
      *
-     * @param  int|false $site_id site id.
-     * @param  string    $by get by.
-     * @param  mixed     $value value.
-     * @param  array     $params params.
-     * @param  int       $obj OBJECT|ARRAY_A.
+     * @param  int    $site_id site id.
+     * @param  string $by Get by.
+     * @param  mixed  $value value.
+     * @param  array  $params params.
+     * @param  string $obj OBJECT|ARRAY_A.
      * @return object|null
      */
     public function get_monitor_by( $site_id, $by, $value, $params = array(), $obj = OBJECT ) {
@@ -899,7 +899,7 @@ KEY idx_wpid (wpid)";
     /**
      * Get last site's incidents stats.
      *
-     * @param int $siteid. site id.
+     * @param int $siteid site id.
      *
      * @return object|null Database query results or null on failure.
      */
@@ -955,7 +955,7 @@ KEY idx_wpid (wpid)";
     /**
      * Get last site's uptime ratios stats.
      *
-     * @param int $siteid. site id.
+     * @param int $siteid site id.
      * @param int $days_num day number.
      *
      * @return object|null Database query results or null on failure.
@@ -1010,7 +1010,7 @@ KEY idx_wpid (wpid)";
      * Get site's reports uptime ratios.
      *
      * @param int   $siteid site id.
-     * @param array $params 'start' and 'end' date format: Y-m-d.
+     * @param array $params 'start' and 'end' date format: Y-m-d .
      *
      *  'period_days' : array(
      *       'uptimeratiosall' => 365, // Last 365 days.
@@ -1182,10 +1182,10 @@ KEY idx_wpid (wpid)";
     /**
      * Get monitor uptime hourly stats by.
      *
-     * @param  int    $monitor_id
-     * @param  string $by
-     * @param  mixed  $value
-     * @param  int    $obj
+     * @param  int    $monitor_id monitor id.
+     * @param  string $by by.
+     * @param  mixed  $value value.
+     * @param  string $obj obj.
      * @return mixed
      */
     public function get_uptime_monitor_stat_hourly_by( $monitor_id, $by, $value = false, $obj = ARRAY_A ) {

@@ -892,7 +892,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     if ( ! empty( $de_privkey ) ) {
                         $en_privkey = MainWP_Encrypt_Data_Lib::instance()->encrypt_privkey( $de_privkey, $clone_site->id, true ); // create encrypt priv key for clone site.
                     } else {
-                        $en_privkey = base64_decode( $website->privkey ); // compatible.
+                        $en_privkey = base64_decode( $website->privkey ); // phpcs:ignore -- NOSONAR -trust - compatible.
                     }
 
                     if ( $force_update ) {
@@ -936,7 +936,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 'isStaging'         => 1,
             );
 
-            $de_privkey = base64_decode( $website->privkey );
+            $de_privkey = base64_decode( $website->privkey ); //phpcs:ignore -- NOSONAR -trust - compatible.
             $de_privkey = MainWP_Encrypt_Data_Lib::instance()->decrypt_privkey( $de_privkey, $site_id );
 
             if ( ! empty( $de_privkey ) ) {

@@ -147,7 +147,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             curl_setopt( $ch, CURLOPT_NOBODY, true ); // We only care about the response code, not the content.
         } else {
             // Set curl options.
-            curl_setopt( $ch, CURLOPT_POST, 'post' === strtolower( $mo_apply_method ) ? true : false );
+            curl_setopt( $ch, CURLOPT_POST, strtolower( $mo_apply_method ) === 'post' ? true : false );
             curl_setopt( $ch, CURLOPT_POSTFIELDS, http_build_query( array( 'time' => time() ) ) );
         }
         curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, strtoupper( $mo_apply_method ) );
@@ -217,7 +217,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $target = false;
 
         $found     = false;
-        $dnsRecord = @dns_get_record( $host );
+        $dnsRecord = @dns_get_record( $host ); //phpcs:ignore --ok.
 
         if ( false !== $dnsRecord && is_array( $dnsRecord ) ) {
             if ( ! isset( $dnsRecord['ip'] ) ) {
@@ -323,7 +323,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
     /**
      * Fetch uptime urls.
      *
-     * @param  array  $monitors monitors.
+     * @param  array  $websites websites.
      * @param  array  $handler callable.
      * @param  object $output output.
      * @param  array  $params params.
@@ -404,7 +404,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                 curl_setopt( $ch, CURLOPT_NOBODY, true ); // We only care about the response code, not the content.
             } else {
                 // Set curl options.
-                curl_setopt( $ch, CURLOPT_POST, ( 'POST' === $website->method ? true : false ) ); // GET
+                curl_setopt( $ch, CURLOPT_POST,  strtolower( $website->method ) === 'post' ? true : false ); // GET
                 curl_setopt( $ch, CURLOPT_POSTFIELDS, http_build_query( array( 'time' => time() ) ) );
 
             }
@@ -462,7 +462,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             MainWP_System_Utility::set_time_limit( 3600 );
 
             if ( empty( $disabled_functions ) || ( false === stristr( $disabled_functions, 'curl_multi_exec' ) ) ) {
-                @curl_multi_add_handle( $mh, $ch );
+                curl_multi_add_handle( $mh, $ch );
             }
 
             $resource_id = MainWP_Connect::get_resource_id( $ch );
@@ -663,7 +663,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
      * Method handle response fetch uptime.
      *
      * @param  mixed $data data.
-     * @param  mixed $site site.
+     * @param  mixed $monitor monitor.
      * @param  mixed $output output.
      * @param  array $params params.
      * @return mixed

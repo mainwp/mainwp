@@ -234,7 +234,7 @@ class MainWP_Uptime_Monitoring_Site_Widget {
             return;
         }
 
-        $site_id = intval( $_GET['dashboard'] );
+        $site_id = intval( $_GET['dashboard'] ); //phpcs:ignore -- ok.
 
         if ( empty( $site_id ) ) {
             return;
@@ -357,7 +357,7 @@ class MainWP_Uptime_Monitoring_Site_Widget {
 
             <script type="text/javascript">
 
-                const select_dates = <?php echo json_encode( $select_dates ); ?>;
+                const select_dates = <?php echo wp_json_encode( $select_dates ); ?>;
 
                 let mainwp_uptime_monitoring_response_time_filter = function (selected_period ) {
 

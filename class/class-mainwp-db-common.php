@@ -377,9 +377,9 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * Get sql log.
      *
-     * @param int   $paged paged
-     * @param int   $order order
-     * @param array $params params
+     * @param int   $paged paged.
+     * @param int   $order order.
+     * @param array $params params.
      *
      * @return string sql query.
      */

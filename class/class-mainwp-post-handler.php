@@ -1750,7 +1750,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             // try to decrypt priv key.
             $de_privkey = MainWP_Encrypt_Data_Lib::instance()->decrypt_privkey( base64_decode( $website->privkey ), $website->id );  // phpcs:ignore -- NOSONAR - base64_encode trust.
             if ( empty( $de_privkey ) ) { // key is not encrypted.
-                $en_privkey = MainWP_Encrypt_Data_Lib::instance()->encrypt_privkey( base64_decode( $website->privkey ), $website->id, true ); // create encrypt priv key for the site.
+                $en_privkey = MainWP_Encrypt_Data_Lib::instance()->encrypt_privkey( base64_decode( $website->privkey ), $website->id, true ); //phpcs:ignore -- NOSONAR - trust - create encrypt priv key for the site.
                 if ( ! empty( $en_privkey['en_data'] ) ) {
                     MainWP_DB::instance()->update_website_values(
                         $website->id,

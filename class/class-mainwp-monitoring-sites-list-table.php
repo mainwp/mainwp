@@ -129,7 +129,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      *
      * @return array Array of default column names.
      */
-    public function get_default_columns( $sub = false ) {
+    public function get_default_columns() {
         return array(
             'cb'            => '<input type="checkbox" />',
             'status'        => esc_html__( 'Status', 'mainwp' ),

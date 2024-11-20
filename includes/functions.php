@@ -116,7 +116,7 @@ if ( ! function_exists( 'mainwp_get_timestamp' ) ) {
     /**
      * Function mainwp_get_timestamp.
      *
-     * @param  int $add_time add time
+     * @param  int $add_time add time.
      * @return int
      */
     function mainwp_get_timestamp( $add_time = 0 ) {

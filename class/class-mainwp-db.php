@@ -2672,11 +2672,12 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
+     *
+     * Get websites offline status.
+     *
      * @deprecated see new compatible uptime monitoring.
      *
      * @since 5.3.
-     *
-     * Get websites offline status.
      *
      * @return array Child site monitoring status.
      */

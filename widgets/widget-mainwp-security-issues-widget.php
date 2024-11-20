@@ -69,6 +69,7 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
      *
      * @param mixed $websites Array of websites.
      * @param mixed $total_securityIssues Total security Issues.
+     * @param int   $current_wpid current wpid.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::data_seek()

@@ -820,7 +820,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
 
         if ( ! empty( $show_info ) ) {
-            echo '<p><strong>' . esc_html__( 'Showing ', 'mainwp' ) . ':</strong> ' . $show_info;
+            echo '<p><strong>' . esc_html__( 'Showing ', 'mainwp' ) . ':</strong> ' . $show_info; //phpcs:ignore -- NOSONAR ok.
         }
         //phpcs:enable WordPress.Security.NonceVerification
 

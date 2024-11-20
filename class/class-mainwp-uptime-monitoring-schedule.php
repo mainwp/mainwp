@@ -49,16 +49,16 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
     /**
      * Method hook_regular_sequence_process
      *
-     * @param  array $list process list.
+     * @param  array $list_values process list.
      */
-    public function hook_regular_sequence_process( $list ) {
-        if ( is_array( $list ) ) {
-            $list['uptime_notification'] = array(
+    public function hook_regular_sequence_process( $list_values ) {
+        if ( is_array( $list_values ) ) {
+            $list_values['uptime_notification'] = array(
                 'priority' => 2,
                 'callback' => array( $this, 'run_schedule_uptime_notification' ),
             );
         }
-        return $list;
+        return $list_values;
     }
 
 

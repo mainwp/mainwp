@@ -340,7 +340,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * Get non-empty groups.
      *
      * @param mixed $userid Current user ID.
-     * @param bool $enableOfflineSites Include offline sites? Default: true.
+     * @param bool  $enableOfflineSites Include offline sites? Default: true.
      *
      * @return object|null Database query result for non-empty groups or null on failure.
      *

@@ -523,7 +523,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
 
                 if ( ! $edit_sub_monitor ) {
 
-                    $_params = array(
+                    $_params      = array(
                         'issub' => 1,
                         'wpid'  => $site_id,
                     );

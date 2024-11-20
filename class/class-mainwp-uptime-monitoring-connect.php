@@ -994,7 +994,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         // DOWN -> DOWN = not important
         // * DOWN -> UP = important
 
-        return static::FIRST === $previous || (static::UP ===  $previous && static::DOWN === $current ) ||
+        return static::FIRST === $previous || ( static::UP === $previous && static::DOWN === $current ) ||
         ( static::PENDING === $previous && static::DOWN === $current ) ||
         ( static::DOWN === $previous && static::UP === $current );
     }

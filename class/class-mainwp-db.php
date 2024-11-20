@@ -1950,8 +1950,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     /**
      * Get child site by id and params.
      *
-     * @param int   $id           Child site ID.
-     * @param array $params params.
+     * @param int                    $id           Child site ID.
+     * @param array                  $params params.
      * @param string  OBJECT|ARRAY_A.
      *
      * @return object|null Database query results or null on failure.

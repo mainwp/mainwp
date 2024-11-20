@@ -1668,7 +1668,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $this->secure_request( 'mainwp_import_website_add_client_no_site' ); // Check secure.
         $error_msg = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
         try {
-            $data = ! empty( $_POST['client'] ) ? rest_sanitize_array( $_POST['client'] ) : array(); //phpcs:ignore WordPress.Security.NonceVerification
+            $data = ! empty( $_POST['client'] ) ? rest_sanitize_array( $_POST['client'] ) : array(); //phpcs:ignore -- NonceVerification.
 
             if ( empty( $data ) || ! is_array( $data ) ) {
                 wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
@@ -1693,7 +1693,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
     public function ajax_clients_add_multi_client() {
         $error_msg = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
         $this->check_security( 'mainwp_clients_add_multi_client' );
-        $dataes = isset( $_POST['data'] ) ? $_POST['data'] : array(); //phpcs:ignore WordPress.Security.NonceVerification
+        $dataes = isset( $_POST['data'] ) ? $_POST['data'] : array(); //phpcs:ignore -- NonceVerification.
         try {
             if ( ! empty( $dataes ) ) {
                 foreach ( $dataes as $val_data ) {
@@ -1780,7 +1780,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      * @return mixed data value.
      */
     public function mainwp_get_sanitized_post( $key, $callback = 'sanitize_text_field' ) {
-        return isset( $_POST[ $key ] ) ? $callback( wp_unslash( $_POST[ $key ] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        return isset( $_POST[ $key ] ) ? $callback( wp_unslash( $_POST[ $key ] ) ) : ''; //phpcs:ignore -- NonceVerification.
     }
 
     /**

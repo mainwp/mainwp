@@ -40,6 +40,11 @@ class MainWP_QQ2_Uploaded_File_Form { // phpcs:ignore Generic.Classes.OpeningBra
 
         $tmp_name = isset( $_FILES['qqfile']['tmp_name'] ) && MainWP_Utility::valid_file_check( $_FILES['qqfile']['tmp_name'] ) ? $_FILES['qqfile']['tmp_name'] : ''; //phpcs:ignore -- valid.
 
+        //phpcs:disable WordPress.WP.AlternativeFunctions -- custom process.
+        if ( ! is_dir( dirname( $path ) ) ) {
+            mkdir( dirname( $path ), 0777, true );
+        }
+        
         if ( ! empty( $tmp_name ) ) {
             if ( $wpFileSystem ) { //phpcs:ignore -- to valid.
                 $moved = $wp_filesystem->put_contents( $path, $wp_filesystem->get_contents( $tmp_name ) );

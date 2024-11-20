@@ -44,7 +44,7 @@ class MainWP_QQ2_Uploaded_File_Form { // phpcs:ignore Generic.Classes.OpeningBra
         if ( ! is_dir( dirname( $path ) ) ) {
             mkdir( dirname( $path ), 0777, true );
         }
-        
+
         if ( ! empty( $tmp_name ) ) {
             if ( $wpFileSystem ) { //phpcs:ignore -- to valid.
                 $moved = $wp_filesystem->put_contents( $path, $wp_filesystem->get_contents( $tmp_name ) );

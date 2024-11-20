@@ -106,7 +106,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
-     * fetch uptime monitor.
+     * Method fetch uptime monitor.
      *
      * @param  mixed $monitor
      * @param  mixed $global_settings
@@ -115,7 +115,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
      *
      * @return mixed
      */
-    public function fetch_uptime_monitor( &$monitor, $global_settings = array(), $second_try = false, $params = array() ) {
+    public function fetch_uptime_monitor( &$monitor, $global_settings = array(), $second_try = false, $params = array() ) { //phpcs:ignore -- NOSONAR - complexity.
 
         $mo_url = static::get_apply_monitor_url( $monitor );
 
@@ -585,7 +585,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
      * @param  bool   $try_second
      * @return mixed
      */
-    public static function fetch_single_uptime_url( $ch, $handler, $website, $output, $params, $try_second = false ) {
+    public static function fetch_single_uptime_url( $ch, $handler, $website, $output, $params, $try_second = false ) {  //phpcs:ignore -- NOSONAR - complexity.
 
         $global_settings = $output->global_settings;
 
@@ -660,7 +660,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
-     * handle response fetch uptime.
+     * Method handle response fetch uptime.
      *
      * @param  mixed $data
      * @param  mixed $site
@@ -668,7 +668,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
      * @param  array $params params.
      * @return mixed
      */
-    public function handle_response_fetch_uptime( $data, $monitor, &$output, $params = array() ) {
+    public function handle_response_fetch_uptime( $data, $monitor, &$output, $params = array() ) { //phpcs:ignore -- NOSONAR - complexity.
 
         $request_info = ! empty( $output->requests_info ) && is_array( $output->requests_info ) ? $output->requests_info : array();
         $resp_info    = ! empty( $request_info[ $monitor->monitor_id ] ) && is_array( $request_info[ $monitor->monitor_id ] ) ? $request_info[ $monitor->monitor_id ] : array();
@@ -854,7 +854,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
 
     /**
-     * is_http_code_type
+     * Method is_http_code_type
      *
      * @param  mixed $type
      * @param  mixed $code
@@ -924,7 +924,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
-     * get_mapping_status_code_names
+     * Method get_mapping_status_code_names
      *
      * @return array
      */
@@ -976,7 +976,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
-     * is_importance_status
+     * Method is_importance_status
      *
      * @param  int $previous
      * @param  int $current
@@ -1031,7 +1031,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
-     * get_up_codes
+     * Method get_up_codes
      *
      * @param  mixed $monitor
      * @param  mixed $global_settings
@@ -1043,7 +1043,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
 
     /**
-     * get_user_agent
+     * Method get_user_agent
      *
      * @return string
      */

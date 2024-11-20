@@ -1952,7 +1952,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *
      * @param int   $id           Child site ID.
      * @param array $params params.
-     * @param int   $obj OBJECT|ARRAY_A.
+     * @param string  OBJECT|ARRAY_A.
      *
      * @return object|null Database query results or null on failure.
      */
@@ -3199,18 +3199,20 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
 
     /**
-     * get_regular_process_by_item_id_type_slug
+     * Method get_regular_process_by_item_id_type_slug
      *
-     * @param  string $by
-     * @param  mixed  $value
-     * @return void
+     * @param  integer $item_id
+     * @param  string  $type
+     * @param  string  $process_slug
+     *
+     * @return mixed  result
      */
     public function get_regular_process_by_item_id_type_slug( $item_id, $type, $process_slug ) {
         return $this->wpdb->get_row( $this->wpdb->prepare( ' SELECT pr.* FROM ' . $this->table_name( 'schedule_processes' ) . ' pr WHERE pr.item_id = %d AND pr.type = %s AND pr.process_slug = %s', $item_id, $type, $process_slug ) );
     }
 
     /**
-     * log_system_query
+     * Method log_system_query
      *
      * @param  array  $params
      * @param  string $sql

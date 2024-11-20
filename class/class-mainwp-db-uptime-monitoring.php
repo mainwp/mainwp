@@ -130,7 +130,7 @@ KEY idx_wpid (wpid)";
     }
 
     /**
-     * update_db_data action.
+     * Method update_db_data action.
      *
      * @param string $current_version.
      *
@@ -144,7 +144,7 @@ KEY idx_wpid (wpid)";
     }
 
     /**
-     * update_db_data action.
+     * Method update_db_data action.
      *
      * @param string $current_version.
      *
@@ -215,7 +215,7 @@ KEY idx_wpid (wpid)";
     }
 
     /**
-     * update_db_data action.
+     * Method update_db_data action.
      *
      * @param string $current_version.
      *
@@ -230,7 +230,7 @@ KEY idx_wpid (wpid)";
     }
 
     /**
-     * update_db_legacy_first_enable_monitoring_create_monitors
+     * Method update_db_legacy_first_enable_monitoring_create_monitors
      *
      * @param  mixed $disabled_monitors
      * @param  mixed $active
@@ -281,7 +281,7 @@ KEY idx_wpid (wpid)";
 
 
     /**
-     * get_monitor_by
+     * Method get_monitor_by
      *
      * @param  int|false $site_id
      * @param  string    $by
@@ -770,7 +770,7 @@ KEY idx_wpid (wpid)";
     }
 
     /**
-     * delete_heartbeat by monitor id.
+     * Method delete_heartbeat by monitor id.
      *
      * @param  int $monitorid
      * @return bool
@@ -1212,7 +1212,7 @@ KEY idx_wpid (wpid)";
 
 
     /**
-     * remove_outdated_hourly_uptime_stats
+     * Method remove_outdated_hourly_uptime_stats
      *
      * @param  int $days
      * @return void

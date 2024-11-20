@@ -47,7 +47,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
-     * hook_regular_sequence_process
+     * Method hook_regular_sequence_process
      *
      * @param  array $process process.
      * @return array $process update.
@@ -134,7 +134,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
-     * update_monitoring_time
+     * Method update_monitoring_time
      *
      * @param  object $monitor monitor.
      * @param  bool   $set_retry retry time if > 0.
@@ -154,7 +154,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
-     * check_to_disable_schedule_individual_uptime_monitoring
+     * Method check_to_disable_schedule_individual_uptime_monitoring
      *
      * @return void
      */

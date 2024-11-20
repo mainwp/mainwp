@@ -45,7 +45,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
 
 
     /**
-     * render_update_messages
+     * Method render_update_messages
      *
      * @param  mixed $individual
      * @return void
@@ -85,11 +85,11 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
     }
 
     /**
-     * handle_save_settings
+     * Method handle_save_settings
      *
      * @return array
      */
-    public function handle_save_settings() {
+    public function handle_save_settings() {  //phpcs:ignore -- NOSONAR - complexity.
 
         if ( isset( $_POST['wp_nonce_uptime_settings'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_uptime_settings'] ), 'UpdateMonitorSettings' ) && \mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
             $up_status_codes = isset( $_POST['mainwp_edit_monitor_up_status_codes'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_edit_monitor_up_status_codes'] ) ) : '';
@@ -201,13 +201,13 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
 
 
     /**
-     * render_monitor_settings
+     * Method render_monitor_settings
      *
      * @param  mixed $site_id
      * @param  bool  $individual Individual settings.
      * @return void
      */
-    public function render_monitor_settings( $site_id = false, $individual = false ) {
+    public function render_monitor_settings( $site_id = false, $individual = false ) {  //phpcs:ignore -- NOSONAR - complexity.
 
         $title = __( 'Update Monitor', 'mainwp' );
 
@@ -250,7 +250,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 // if not found main site monitor.
                 if ( empty( $mo_settings ) ) {
                     // get site to create new main monitor.
-                    $mo_settings = MainWP_DB::instance()->get_website_by_id_params( $site_id, false, ARRAY_A );
+                    $mo_settings = MainWP_DB::instance()->get_website_by_id_params( $site_id, array(), ARRAY_A );
 
                 }
             }
@@ -636,7 +636,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
 
 
     /**
-     * render_sub_urls_monitoring
+     * Method render_sub_urls_monitoring
      *
      * @param  array $mo_settings
      * @param  array $sub_urls_monitors
@@ -675,7 +675,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
 
 
     /**
-     * get_allowed_methods
+     * Method get_allowed_methods
      *
      * @param  mixed $individual
      * @return array
@@ -703,7 +703,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
 
 
     /**
-     * get_interval_values
+     * Method get_interval_values
      *
      * @param  mixed $individual
      * @param  mixed $flip_values
@@ -736,7 +736,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
 
 
     /**
-     * get_timeout_values
+     * Method get_timeout_values
      *
      * @param  mixed $individual
      * @param  mixed $flip_values

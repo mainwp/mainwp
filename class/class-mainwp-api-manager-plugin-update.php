@@ -143,6 +143,7 @@ class MainWP_Api_Manager_Plugin_Update { // phpcs:ignore Generic.Classes.Opening
         if ( isset( $response ) && is_object( $response ) && false !== $response ) {
             return $response;
         }
+        return false;
     }
 
     /**

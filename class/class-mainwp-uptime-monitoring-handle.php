@@ -71,7 +71,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
 
 
     /**
-     * get_default_monitoring_settings
+     * Method get_default_monitoring_settings
      *
      * @param  bool $individual
      * @return array
@@ -106,7 +106,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
 
 
     /**
-     * get_global_monitoring_settings.
+     * Method get_global_monitoring_settings.
      *
      * @return array
      */
@@ -120,7 +120,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
 
 
     /**
-     * update_uptime_global_settings
+     * Method update_uptime_global_settings
      *
      * @param  array $settings
      * @return void
@@ -137,7 +137,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
 
 
     /**
-     * ajax_remove_monitor
+     * Method ajax_remove_monitor
      *
      * @return void
      */
@@ -260,7 +260,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
 
 
     /**
-     * hook_get_reports_data
+     * Method hook_get_reports_data
      *
      * @param  mixed $site_id
      * @param  mixed $start_date Y-m-d.
@@ -268,7 +268,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
      * @param  array $params params.
      * @return mixed
      */
-    public function hook_get_reports_data( $site_id, $start_date = false, $end_date = false, $params = array() ) {
+    public function hook_get_reports_data( $site_id, $start_date = false, $end_date = false, $params = array() ) {  //phpcs:ignore -- NOSONAR - complexity.
 
         if ( ! empty( $site_id ) ) {
             $primary_monitor = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site_id, 'issub', 0 );
@@ -436,7 +436,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
 
 
     /**
-     * calc_and_save_site_uptime_stat_hourly_data
+     * Method calc_and_save_site_uptime_stat_hourly_data
      *
      * @param  mixed $monitor_id
      * @param  mixed $ping_data
@@ -500,7 +500,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
 
 
     /**
-     * get_hourly_key_by_timestamp
+     * Method get_hourly_key_by_timestamp
      *
      * @param  int $timestamp
      * @return int
@@ -565,7 +565,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
 
 
     /**
-     * clear_outdated_hourly_uptime_stats
+     * Method clear_outdated_hourly_uptime_stats
      *
      * @return void
      */

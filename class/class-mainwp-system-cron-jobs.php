@@ -348,7 +348,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
     }
 
     /**
-     * update_auto_sync_time
+     * Method update_auto_sync_time
      *
      * @param  int $site_id
      * @return void
@@ -1648,7 +1648,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
 
     /**
-     * cron_perform_general_process
+     * Method cron_perform_general_process
      *
      * @return void
      */
@@ -1657,7 +1657,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
     }
 
     /**
-     * perform_sequence_process
+     * Method perform_sequence_process
      *
      * @return void
      */

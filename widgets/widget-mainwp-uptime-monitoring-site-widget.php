@@ -35,7 +35,7 @@ class MainWP_Uptime_Monitoring_Site_Widget {
     }
 
     /**
-     * ajax_get_response_times
+     * Method ajax_get_response_times
      *
      * @return void
      */
@@ -131,7 +131,7 @@ class MainWP_Uptime_Monitoring_Site_Widget {
 
 
     /**
-     * get_valid_days_periods
+     * Method get_valid_days_periods
      *
      * @param  string|null $period
      * @return mixed
@@ -150,7 +150,7 @@ class MainWP_Uptime_Monitoring_Site_Widget {
     }
 
     /**
-     * get_days_number_by_period
+     * Method get_days_number_by_period
      *
      * @param  string|false $period
      * @return mixed
@@ -257,7 +257,7 @@ class MainWP_Uptime_Monitoring_Site_Widget {
 
 
     /**
-     * render_content_response_time_widget
+     * Method render_content_response_time_widget
      *
      * @param  mixed $site_id
      * @return void

@@ -1381,7 +1381,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
     }
 
     /**
-     * column_site.
+     * Method column_site.
      *
      * @param  mixed $website
      *
@@ -1410,7 +1410,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
     }
 
     /**
-     * column_type
+     * Method column_type
      *
      * @param  string $mo_type
      *
@@ -1430,7 +1430,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
     }
 
     /**
-     * column_last_check
+     * Method column_last_check
      *
      * @param  mixed $monitor
      * @param  bool  $sub_page

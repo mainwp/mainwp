@@ -68,7 +68,7 @@ class MainWP_Format { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
 
     /**
-     * remove_duplicate_updates
+     * Method remove_duplicate_updates
      *
      * @param  array  $checks
      * @param  array  $inputs

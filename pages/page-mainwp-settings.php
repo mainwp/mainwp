@@ -707,8 +707,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         $enableLegacyBackupFeature    = get_option( 'mainwp_enableLegacyBackupFeature' );
                         $primaryBackup                = get_option( 'mainwp_primaryBackup' );
                         $disableUpdateConfirmations   = (int) get_option( 'mainwp_disable_update_confirmations', 0 );
-
-                        $http_error_codes = MainWP_Utility::get_http_codes();
                         ?>
                         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates">
                             <label class="six wide column middle aligned">

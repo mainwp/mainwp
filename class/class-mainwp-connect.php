@@ -289,7 +289,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::is_domain_valid()
      */
-    public static function check_website_status( $website ) {
+    public static function check_website_status( $website ) { //phpcs:ignore -- NOSONAR - complexity.
 
         if ( is_object( $website ) && isset( $website->id ) ) {
             $primary_monitor = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $website->id, 'issub', 0 );

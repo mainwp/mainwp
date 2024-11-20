@@ -420,13 +420,13 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
                 <?php static::render_total_update( $total_upgrades, $can_total_update, $limit_updates_all, $count_websites, $count_plugins, $count_themes ); ?>
                 <?php static::render_wordpress_update( $user_can_update_wordpress, $total_wp_upgrades, $globalView, $current_wpid, $count_websites ); ?>
-                <?php static::render_plugins_update( $user_can_update_plugins, $total_plugin_upgrades, $globalView, $current_wpid, $count_websites, $count_plugins ); ?>
-                <?php static::render_themes_update( $user_can_update_themes, $total_theme_upgrades, $globalView, $current_wpid, $count_websites, $count_themes ); ?>
+                <?php static::render_plugins_update( $user_can_update_plugins, $total_plugin_upgrades, $globalView, $current_wpid, $count_plugins ); ?>
+                <?php static::render_themes_update( $user_can_update_themes, $total_theme_upgrades, $globalView, $current_wpid, $count_themes ); ?>
                 <?php if ( 1 === (int) $mainwp_show_language_updates ) : ?>
                     <?php static::render_language_update( $user_can_update_translation, $total_translation_upgrades, $globalView, $current_wpid ); ?>
                 <?php endif; ?>
-                <?php static::render_abandoned_plugins( $total_plugins_outdate, $globalView, $current_wpid, $count_websites, $count_plugins ); ?>
-                <?php static::render_abandoned_themes( $total_themes_outdate, $globalView, $current_wpid, $count_websites, $count_themes ); ?>
+                <?php static::render_abandoned_plugins( $total_plugins_outdate, $globalView, $current_wpid, $count_plugins ); ?>
+                <?php static::render_abandoned_themes( $total_themes_outdate, $globalView, $current_wpid, $count_themes ); ?>
 
                 <?php
                 /**
@@ -491,10 +491,8 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
     /**
      * Renders Updates Overview widget footer.
-     *
-     * @param string $lastSyncMsg last sync info.
      */
-    public static function render_updates_overview_widget_footer( $lastSyncMsg ) {
+    public static function render_updates_overview_widget_footer() {
         ?>
         <div class="ui two column grid mainwp-widget-footer">
             <div class="left aligned middle aligned column"></div>
@@ -603,7 +601,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
      * @uses \MainWP\Dashboard\MainWP_Updates::get_continue_update_selector()
      */
-    public static function render_wordpress_update( $user_can_update_wordpress, $total_wp_upgrades, $globalView, $current_wpid, $count_websites ) {
+    public static function render_wordpress_update( $user_can_update_wordpress, $total_wp_upgrades, $globalView, $current_wpid, $count_websites ) { //phpcs:ignore -- NOSONAR - complexity.
         if ( 0 < $count_websites ) {
             $outdated_percentage = round( ( ( intval( $total_wp_upgrades ) / $count_websites ) * 100 ), 2 ) . '%';
         } else {
@@ -694,15 +692,16 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Renders Plugins update detail.
      *
-     * @param bool true|false $user_can_update_plugins permission to update.
-     * @param int             $total_plugin_upgrades  total number of update.
-     * @param bool true|false $globalView global view or not.
-     * @param int             $current_wpid  current site id.
+     * @param bool $user_can_update_plugins permission to update.
+     * @param int  $total_plugin_upgrades  total number of update.
+     * @param bool $globalView global view or not.
+     * @param int  $current_wpid  current site id.
+     * @param int  $count_plugins  count plugin.
      *
      * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
      * @uses \MainWP\Dashboard\MainWP_Updates::get_continue_update_selector()
      */
-    public static function render_plugins_update( $user_can_update_plugins, $total_plugin_upgrades, $globalView, $current_wpid, $count_websites, $count_plugins ) {
+    public static function render_plugins_update( $user_can_update_plugins, $total_plugin_upgrades, $globalView, $current_wpid, $count_plugins ) { //phpcs:ignore -- NOSONAR - complexity.
         if ( 0 < $count_plugins ) {
             $outdated_percentage = round( ( ( intval( $total_plugin_upgrades ) / $count_plugins ) * 100 ), 2 ) . '%';
         } else {
@@ -781,15 +780,16 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Render Themes update detail.
      *
-     * @param bool true|false $user_can_update_themes permission to update.
-     * @param int             $total_theme_upgrades  total number of update.
-     * @param bool true|false $globalView global view or not.
-     * @param int             $current_wpid  current site id.
+     * @param bool $user_can_update_themes permission to update.
+     * @param int  $total_theme_upgrades  total number of update.
+     * @param bool $globalView global view or not.
+     * @param int  $current_wpid  current site id.
+     * @param int  $count_themes  count themes.
      *
      * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
      * @uses \MainWP\Dashboard\MainWP_Updates::get_continue_update_selector()
      */
-    public static function render_themes_update( $user_can_update_themes, $total_theme_upgrades, $globalView, $current_wpid, $count_websites, $count_themes ) {
+    public static function render_themes_update( $user_can_update_themes, $total_theme_upgrades, $globalView, $current_wpid, $count_themes ) { //phpcs:ignore -- NOSONAR - complexity.
         if ( 0 < $count_themes ) {
             $outdated_percentage = round( ( ( intval( $total_theme_upgrades ) / $count_themes ) * 100 ), 2 ) . '%';
         } else {
@@ -945,8 +945,9 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @param int  $total_plugins_outdate  total number of update.
      * @param bool $globalView global view or not.
      * @param int  $current_wpid  current site id.
+     * @param int  $count_plugins  count plugins.
      */
-    public static function render_abandoned_plugins( $total_plugins_outdate, $globalView, $current_wpid, $count_websites, $count_plugins ) {
+    public static function render_abandoned_plugins( $total_plugins_outdate, $globalView, $current_wpid, $count_plugins ) {
         if ( $globalView ) {
             $detail_aban_plugins = 'admin.php?page=UpdatesManage&tab=abandoned-plugins';
         } else {
@@ -1010,8 +1011,9 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @param int  $total_themes_outdate Total number of update.
      * @param bool $globalView global    View or not.
      * @param int  $current_wpid         Current site ID.
+     * @param int  $count_themes         count themes.
      */
-    public static function render_abandoned_themes( $total_themes_outdate, $globalView, $current_wpid, $count_websites, $count_themes ) {
+    public static function render_abandoned_themes( $total_themes_outdate, $globalView, $current_wpid, $count_themes ) {
         if ( $globalView ) {
             $detail_aban_themes = 'admin.php?page=UpdatesManage&tab=abandoned-themes';
         } else {

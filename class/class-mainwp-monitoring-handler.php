@@ -114,28 +114,6 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
         return $noticed_value;
     }
 
-
-    /**
-     * Get a new HTTP status notice.
-     *
-     * @param object $website  Object containing the website info.
-     * @param int    $new_code The new HTTP code value.
-     *
-     * @return int $noticed_value New HTTP status.
-     */
-    public static function get_http_noticed_importance( $website, $new_code ) {
-        $old_code      = (int) $website->http_response_code;
-        $noticed_value = $website->http_code_noticed;
-        if ( 200 !== $new_code && (int) $old_code !== $new_code ) {
-            $noticed_value = 0;
-        } elseif ( 200 !== $old_code && 200 === $new_code ) {
-            if ( 0 === $noticed_value ) {
-                $noticed_value = 1;
-            }
-        }
-        return $noticed_value;
-    }
-
     /**
      * Get new site health value.
      *

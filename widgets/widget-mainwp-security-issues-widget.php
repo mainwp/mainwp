@@ -99,7 +99,7 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
                         <div class="sub header"><?php esc_html_e( 'Identify and strengthen weak spots to boost site hardening', 'mainwp' ); ?></div>
                     </h3>
                 </div>
-                
+
                 <div class="two wide column right aligned">
                     <div id="widget-security-issues-dropdown-selector" class="ui dropdown top right tiny pointing not-auto-init mainwp-dropdown-tab">
                         <i class="vertical ellipsis icon"></i>
@@ -167,7 +167,7 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
                         $count_security_issues = intval( $website->securityIssues );
                     }
                     ?>
-                    <div class="item" <?php echo '' !== $count_security_issues && $count_security_issues > 0 ? 'status="queue"' : ''; ?> siteid="<?php echo intval( $website->id ); ?>">    
+                    <div class="item" <?php echo '' !== $count_security_issues && $count_security_issues > 0 ? 'status="queue"' : ''; ?> siteid="<?php echo intval( $website->id ); ?>">
                         <div class="right floated">
                             <div class="ui right pointing dropdown icon mini basic green button">
                                 <i class="ellipsis horizontal icon"></i>
@@ -211,7 +211,7 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
                         <?php else : ?>
                             <div><span class="ui small text"><?php echo esc_html( $count_security_issues ); ?> <?php echo esc_html( _n( 'issue detected', 'issues detected', $count_security_issues, 'mainwp' ) ); ?></span></div>
                         <?php endif; ?>
-                            
+
                         <?php
                         /**
                          * Action: mainwp_security_issues_list_item_column
@@ -230,7 +230,7 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
                          */
                         do_action( 'mainwp_security_issues_list_item_column', $website );
                         ?>
-                        
+
                     </div>
                 <?php } ?>
             </div>
@@ -250,7 +250,7 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
                 <a href="javascript:void(0)" class="<?php echo $is_demo ? 'disabled' : ''; ?> fix-all-security-issues ui button mini green" id="mainwp-fix-all-security-issues-widget-list" data-tooltip="<?php esc_attr_e( 'Clicking this buttin will resolve all detected security issue on all your child sites.', 'mainwp' ); ?>" data-inverted="" data-position="bottom right"><?php esc_html_e( 'Fix All Issues', 'mainwp' ); ?></a>
             </div>
             <div class="right aligned middle aligned column">
-                
+
             </div>
         </div>
         <div class="ui active inverted dimmer" style="display:none" id="mainwp-secuirty-issues-loader"><div class="ui text loader"><?php esc_html_e( 'Please wait...', 'mainwp' ); ?></div></div>

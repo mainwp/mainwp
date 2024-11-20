@@ -156,7 +156,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <div class="content">
                             <div class="summary">
                                 <?php echo esc_html( $data->action_user ); ?>
-                                <?php echo esc_html( ucfirst( $data->action ) ); ?> <?php echo isset( $meta_data->name ) && '' !== $meta_data->name ? esc_html( $meta_data->name ) : 'WP Core'; ?> <?php echo 'wordpress' !== $data->context ? esc_html( rtrim( $data->context, 's' ) ) : 'WordPress'; //phpcs:ignore -- text. ?> 
+                                <?php echo esc_html( ucfirst( $data->action ) ); ?> <?php echo isset( $meta_data->name ) && '' !== $meta_data->name ? esc_html( $meta_data->name ) : 'WP Core'; ?> <?php echo 'wordpress' !== $data->context ? esc_html( rtrim( $data->context, 's' ) ) : 'WordPress'; //phpcs:ignore -- text. ?>
                                 <?php if ( empty( $website ) || isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
                                 on <a href="admin.php?page=managesites&dashboard=<?php echo esc_attr( $data->wpid ); ?>"><?php echo esc_html( $data->name ); ?></a>
                                 <?php endif; ?>
@@ -166,7 +166,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             </div>
                             <div class="extra text"><a href="javascript:void(0)" class="mainwp-event-action-dismiss" action-id="<?php echo intval( $data->action_id ); ?>"><?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></div>
                         </div>
-                        
+
                     </div>
                     <?php endforeach; ?>
                     <?php
@@ -196,7 +196,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <div class="mainwp-widget-footer">
             <div class="ui two columns stackable grid">
                 <div class="left aligned middle aligned column">
-                    
+
                 </div>
                 <div class="right aligned middle aligned column">
                     <?php if ( $totalRecords ) : ?>

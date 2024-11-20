@@ -150,7 +150,7 @@ KEY idx_wpid (wpid)";
      *
      * @return void
      */
-    public function update_db_90041( $current_version ) {
+    public function update_db_90041( $current_version ) { //phpcs:ignore -- NOSONAR - complexity.
 
         $update_ver = '9.0.0.41';
 
@@ -366,7 +366,7 @@ KEY idx_wpid (wpid)";
      *
      * @return object|null Database query result or null on failure.
      */
-    public function get_monitors_to_check_uptime( $params = array() ) {
+    public function get_monitors_to_check_uptime( $params = array() ) { //phpcs:ignore -- NOSONAR - complexity.
 
         $params = apply_filters( 'mainwp_uptime_monitoring_get_monitors_to_check_params', $params );
 
@@ -535,7 +535,7 @@ KEY idx_wpid (wpid)";
      *
      * @return object|null Database query result or null on failure.
      */
-    public function get_sql_monitor( $params ) {
+    public function get_sql_monitor( $params ) { //phpcs:ignore -- NOSONAR - complexity.
 
         if ( ! is_array( $params ) ) {
             $params = array();

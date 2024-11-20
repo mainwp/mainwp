@@ -39,7 +39,7 @@ class MainWP_Uptime_Monitoring_Site_Widget {
      *
      * @return void
      */
-    public function ajax_get_response_times() {
+    public function ajax_get_response_times() { //phpcs:ignore -- NOSONAR - complexity.
 
         mainwp_secure_request( 'mainwp_uptime_monitoring_get_response_times' );
         //phpcs:disable WordPress.Security.NonceVerification
@@ -551,7 +551,7 @@ class MainWP_Uptime_Monitoring_Site_Widget {
      *
      * @return string
      */
-    private function prepare_group_time_option_for_ui_chart_data_only( $site_id, &$params, $ajax_working = false ) {
+    private function prepare_group_time_option_for_ui_chart_data_only( $site_id, &$params, $ajax_working = false ) { //phpcs:ignore -- NOSONAR - complexity.
         $group_time = 'date';
 
         if ( ! is_array( $params ) || empty( $params['start'] ) || empty( $params['end'] ) ) {

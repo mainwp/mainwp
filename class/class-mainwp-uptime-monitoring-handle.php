@@ -348,7 +348,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
 
         $global_settings = get_option( 'mainwp_global_uptime_monitoring_settings', array() );
         // Data prepare for pro reports.
-        $data = array(
+        return array(
             'success'                  => 1,
             'avg_resp_time'            => isset( $resp_stats['avg_resp_time'] ) ? $resp_stats['avg_resp_time'] : 'N/A',
             'min_resp_time'            => isset( $resp_stats['min_resp_time'] ) ? $resp_stats['min_resp_time'] : 'N/A',
@@ -374,7 +374,6 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
             'start_date'               => ! empty( $results_db['start'] ) ? $results_db['start'] : gmdate( 'Y-m-d 00:00:00', $start_dt ),
             'end_date'                 => ! empty( $results_db['end'] ) ? $results_db['end'] : gmdate( 'Y-m-d 23:59:59', $end_dt ),
         );
-        return $data;
     }
 
     /**

@@ -259,7 +259,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      *
      * @return bool Valid or not to run.
      */
-    public function check_conds_to_run_auto_update( &$next_time, &$run_timestamp = false, &$frequence_in_seconds = false ) {
+    public function check_conds_to_run_auto_update( &$next_time, &$run_timestamp = false, &$frequence_in_seconds = false ) { //phpcs:ignore -- NOSONAR - complexity.
         $local_timestamp = MainWP_Utility::get_timestamp();
         $today_0h = strtotime( date("Y-m-d 00:00:00", $local_timestamp) ); // phpcs:ignore -- to localtime.
 
@@ -293,14 +293,12 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         // Adjust the runtime according to the runtime settings, in certain sudden cases.
         // Apply at intervals of more than 2 hours.
-        if ( $frequence_in_seconds >= 2 * HOUR_IN_SECONDS ) {
+        if ( $frequence_in_seconds >= 2 * HOUR_IN_SECONDS && $local_timestamp < $next_time && $lasttimeScheStartAutoUpdate + $frequence_in_seconds > $next_time + HOUR_IN_SECONDS ) {
             // Process it within the next scheduled run timeframe.
             // make sure of this.
             // The difference is more than 1 hour.
-            if ( $local_timestamp < $next_time && $lasttimeScheStartAutoUpdate + $frequence_in_seconds > $next_time + HOUR_IN_SECONDS ) {
-                MainWP_Utility::update_option( 'mainwp_adjust_auto_sync_run_time', $next_time );
-                MainWP_Logger::instance()->log_update_check( 'updates check :: adjust next run time :: next_time :: ' . gmdate( 'Y-m-d H:i:s', $next_time ) . ' :: local_timestamp :: ' . gmdate( 'Y-m-d H:i:s', $local_timestamp ) );
-            }
+            MainWP_Utility::update_option( 'mainwp_adjust_auto_sync_run_time', $next_time );
+            MainWP_Logger::instance()->log_update_check( 'updates check :: adjust next run time :: next_time :: ' . gmdate( 'Y-m-d H:i:s', $next_time ) . ' :: local_timestamp :: ' . gmdate( 'Y-m-d H:i:s', $local_timestamp ) );
         }
 
         $adjust_run_time = get_option( 'mainwp_adjust_auto_sync_run_time' );
@@ -1663,7 +1661,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      *
      * @return void
      */
-    public function perform_sequence_process() {
+    public function perform_sequence_process() { //phpcs:ignore -- NOSONAR - complexity.
 
         $register_process = apply_filters( 'mainwp_register_regular_sequence_process', array() );
         $list_processes   = get_option( 'mainwp_regular_sequence_process_saved', array() );

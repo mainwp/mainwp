@@ -542,7 +542,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      * @param  bool  $hide_noti hide notice.
      * @return void
      */
-    public function hide_dashboard_notice_status( $no_id, $time_set = false, $hide_noti = true ) {
+    public function hide_dashboard_notice_status( $no_id, $time_set = false, $hide_noti = true ) { //phpcs:ignore -- NOSONAR - complexity.
         /**
          * Current user global.
          *

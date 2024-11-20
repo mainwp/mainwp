@@ -778,7 +778,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * Grab log file and build output to screen.
      */
-    public function show_log_db() {
+    public function show_log_db() { //phpcs:ignore -- NOSONAR - complexity.
 
         echo '<div class="ui hidden divider"></div>';
         echo '<div class="ui divided padded relaxed list" local-datetime="' . date( 'Y-m-d H:i:s' ) . '">'; // phpcs:ignore -- local time.

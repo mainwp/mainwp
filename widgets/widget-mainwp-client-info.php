@@ -95,8 +95,6 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
 
             <?php
             if ( $client_info ) {
-                $default_client_fields = MainWP_Client_Handler::get_default_client_fields();
-                $custom_fields         = MainWP_DB_Client::instance()->get_client_fields( true, $website->client_id );
                 ?>
                 <?php
                 /**

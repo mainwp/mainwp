@@ -130,7 +130,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      * @return array Array of default column names.
      */
     public function get_default_columns( $sub = false ) {
-        $cols = array(
+        return array(
             'cb'            => '<input type="checkbox" />',
             'status'        => esc_html__( 'Status', 'mainwp' ),
             'site'          => esc_html__( 'Monitor', 'mainwp' ),
@@ -139,8 +139,6 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             'last24_status' => esc_html__( 'Last 24h Status', 'mainwp' ),
             'last_check'    => esc_html__( 'Last Check', 'mainwp' ),
         );
-
-        return $cols;
     }
 
     /**
@@ -1475,7 +1473,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      * @param  int   $last24_starttime last24 start time.
      * @return void
      */
-    public function render_last24_uptime_status( $data, $last24_starttime ) {
+    public function render_last24_uptime_status( $data, $last24_starttime ) { //phpcs:ignore -- NOSONAR - complexity.
 
         if ( empty( $data ) || ! is_array( $data ) ) {
             $data = array();

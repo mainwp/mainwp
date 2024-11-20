@@ -407,7 +407,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     dts_process_start int(11) NOT NULL DEFAULT 0,
     dts_process_stop int(11) NOT NULL DEFAULT 0";
 
-        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.0.45', '<' ) ) {
+        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.0.45', '<' ) ) { //phpcs:ignore -- NOSONAR - no ip.
             $tbl .= ',
     PRIMARY KEY  (process_id)  ';
         }

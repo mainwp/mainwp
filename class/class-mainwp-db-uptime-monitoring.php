@@ -1010,7 +1010,7 @@ KEY idx_wpid (wpid)";
      * Get site's reports uptime ratios.
      *
      * @param int   $siteid site id.
-     * @param array $params 'start' and 'end' date format Y-m-d .
+     * @param array $params 'start' and 'end' date format Y m d.
      *
      *  'period_days' : array(
      *       'uptimeratiosall' => 365, // Last 365 days.

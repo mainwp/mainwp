@@ -412,7 +412,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $dirs = static::get_mainwp_dir();
 
         $userdir = $dirs[0] . $userid;
-        $newdir = $userdir;
+        $newdir  = $userdir;
 
         if ( '/' === $dir || null === $dir ) {
             $newdir .= DIRECTORY_SEPARATOR;

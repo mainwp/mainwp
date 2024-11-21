@@ -411,7 +411,9 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         $dirs = static::get_mainwp_dir();
 
-        $newdir = $dirs[0] . $userid;
+        $userdir = $dirs[0] . $userid;
+        $newdir = $userdir;
+
         if ( '/' === $dir || null === $dir ) {
             $newdir .= DIRECTORY_SEPARATOR;
         } else {
@@ -419,6 +421,11 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
+
+            // need to check user dir first.
+            if ( ! $wp_filesystem->is_dir( $userdir ) ) {
+                $wp_filesystem->mkdir( $userdir, 0777 );
+            }
 
             if ( ! $wp_filesystem->is_dir( $newdir ) ) {
                 $wp_filesystem->mkdir( $newdir, 0777 );
@@ -429,6 +436,11 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 $wp_filesystem->put_contents( $file_htaccess, 'deny from all' );
             }
         } else {
+
+            // need to check user dir first.
+            if ( ! file_exists( $userdir ) ) {
+                mkdir( $userdir, 0777, true ); // NOSONAR - @newdir is valid.
+            }
 
             if ( ! file_exists( $newdir ) ) {
                 mkdir( $newdir, 0777, true ); // NOSONAR - @newdir is valid.

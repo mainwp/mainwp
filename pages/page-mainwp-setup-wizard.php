@@ -988,6 +988,13 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $disableSitesHealthMonitoring = get_option( 'mainwp_disableSitesHealthMonitoring', 1 );
         $sitehealthThreshold          = get_option( 'mainwp_sitehealthThreshold', 80 ); // "Should be improved" threshold.
 
+        $global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+
+        $glo_active = 0;
+        if ( isset( $global_settings['active'] ) ) {
+            $glo_active = 1 === (int) $global_settings['active'] ? 1 : 0;
+        }
+
         ?>
         <h1 class="ui header">
             <?php esc_html_e( 'Uptime Monitoring', 'mainwp' ); ?>
@@ -997,6 +1004,32 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <div class="ui hidden divider"></div>
         <form method="post" class="ui form">
             <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+
+            <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-monitor-general" default-indi-value="0">
+                <label class="six wide column middle aligned">
+                <?php
+                MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_setup_enableUptimeMonitoring', (int) $glo_active, true, 0 );
+                esc_html_e( 'Enable Uptime Monitoring', 'mainwp' );
+                ?>
+                </label>
+                <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="uptime-monitoring">
+                    <input type="checkbox" value="1" class="settings-field-value-change-handler" name="mainwp_setup_enableUptimeMonitoring" id="mainwp_setup_enableUptimeMonitoring" <?php echo 1 === (int) $glo_active ? 'checked="true"' : ''; ?>/>
+                </div>
+            </div>
+
+            <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-monitor-general" default-indi-value="60" <?php echo $glo_active ? '' : 'style="display:none"'; ?> hide-element="uptime-monitoring">
+                <label class="six wide column middle aligned">
+                <?php
+                MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_setup_monitor_interval_hidden', (int) $global_settings['interval'], true, 60 );
+                esc_html_e( 'Monitor Interval (minutes)', 'mainwp' );
+                ?>
+                </label>
+                <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set Monitor Interval.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                    <div class="ui labeled ticked slider settings-field-value-change-handler" id="mainwp_setup_monitor_interval_slider"></div>
+                    <input type="hidden" name="mainwp_setup_monitor_interval_hidden" class="settings-field-value-change-handler" id="mainwp_setup_monitor_interval_hidden" value="<?php echo intval( $global_settings['interval'] ); ?>" />
+                </div>
+            </div>
+
             <h1 class="ui header">
                 <?php esc_html_e( 'Site Health Monitoring', 'mainwp' ); ?>
             </h1>
@@ -1037,6 +1070,37 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
             <?php wp_nonce_field( 'mwp-setup' ); ?>
         </form>
+
+        <script type="text/javascript">
+                <?php
+                $all_intervals = MainWP_Uptime_Monitoring_Edit::get_interval_values( false );
+                echo 'var interval_label = ' . wp_json_encode( array_values( $all_intervals ) ) . ";\n";
+                echo 'var interval_values = ' . wp_json_encode( array_keys( $all_intervals ) ) . ";\n";
+                ?>
+                jQuery('#mainwp_setup_monitor_interval_slider').slider({
+                    interpretLabel: function(value) {
+                        return interval_label[value];
+                    },
+                    autoAdjustLabels: false,
+                    min: 0,
+                    smooth: true,
+                    restrictedLabels: [interval_label[0],interval_label[<?php echo count( $all_intervals ) - 1; ?>]],
+                    showThumbTooltip: true,
+                    tooltipConfig: {
+                        position: 'bottom center',
+                        variation: 'small visible black'
+                    },
+                    max: <?php echo count( value: $all_intervals ) - 1; ?>,
+                    onChange: function(value) {
+                        jQuery('#mainwp_setup_monitor_interval_hidden').val(interval_values[value]).change();
+                    },
+                    onMove: function(value) {
+                        jQuery(this).find('.thumb').attr('data-tooltip', interval_label[value]);
+                    }
+                });
+                jQuery('#mainwp_setup_monitor_interval_slider').slider('set value', interval_values.indexOf(<?php echo intval( $global_settings['interval'] ); ?>));
+            </script>
+
         <?php
     }
 
@@ -1050,6 +1114,14 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     public function mwp_setup_monitoring_save() {
         check_admin_referer( 'mwp-setup' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+        $global_settings             = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+        $global_settings['active']   = ! empty( $_POST['mainwp_setup_enableUptimeMonitoring'] ) ? 1 : 0;
+        $global_settings['interval'] = isset( $_POST['mainwp_setup_monitor_interval_hidden'] ) ? intval( $_POST['mainwp_setup_monitor_interval_hidden'] ) : 60;
+
+        MainWP_Uptime_Monitoring_Handle::update_uptime_global_settings( $global_settings );
+
+        MainWP_Utility::update_option( 'mainwp_disableSitesHealthMonitoring', ( ! isset( $_POST['mainwp_setup_disable_sitesHealthMonitoring'] ) ? 1 : 0 ) );
         $val = isset( $_POST['mainwp_setup_site_healthThreshold'] ) ? intval( $_POST['mainwp_setup_site_healthThreshold'] ) : 80;
         MainWP_Utility::update_option( 'mainwp_sitehealthThreshold', $val );
         // phpcs:enable

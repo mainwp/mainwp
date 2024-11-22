@@ -519,7 +519,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         'uniqueId'           => ! empty( $site['security_id'] ) ? sanitize_text_field( wp_unslash( $site['security_id'] ) ) : '',
                         'http_user'          => ! empty( $site['http_username'] ) ? sanitize_text_field( wp_unslash( $site['http_username'] ) ) : '',
                         'http_pass'          => ! empty( $site['http_password'] ) ? wp_unslash( $site['http_password'] ) : '',
-                        'verify_certificate' => ! empty( $site['verify_certificate'] ) && 1 !== (int) $site['verify_certificate'] ? intval( wp_unslash( $site['verify_certificate'] ) ) : 1,
+                        'verify_certificate' => isset( $site['verify_certificate'] ) ? intval( $site['verify_certificate'] ) : 1,
                         'ssl_version'        => ! empty( $site['ssl_version'] ) ? sanitize_text_field( wp_unslash( $site['ssl_version'] ) ) : 'auto',
                     );
 

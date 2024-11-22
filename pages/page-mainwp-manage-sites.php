@@ -2387,7 +2387,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return mixed value of input
      */
     public static function mainwp_managesites_form_import_sites_get_value( $site, $key, $default_value = '' ) {
-        return ! empty( $site[ $key ] ) ? esc_attr( $site[ $key ] ) : $default_value;
+		return isset( $site[ $key ] ) ? esc_attr( $site[ $key ] ) : $default_value;
     }
 
     /**

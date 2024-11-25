@@ -60,7 +60,7 @@ class MainWP_Exception extends \Exception { // phpcs:ignore Generic.Classes.Open
      * @return $messageExtra Extra messages.
      */
     public function get_message_extra( $escape_msg = true ) {
-        return $escape_msg ? esc_html( strip_tags( $this->messageExtra ) ) : $this->messageExtra;
+        return $escape_msg ? esc_html( wp_strip_all_tags( $this->messageExtra ) ) : $this->messageExtra;
     }
 
     /**

@@ -36,7 +36,7 @@ class MainWP_Error_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
 
         if ( $escape_msg ) {
-            return esc_html( strip_tags( $error ) );
+            return esc_html( wp_strip_all_tags( $error ) );
         }
 
         return $error;

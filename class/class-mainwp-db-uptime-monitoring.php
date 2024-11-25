@@ -230,7 +230,7 @@ KEY idx_wpid (wpid)";
 
         $update_ver3 = '9.0.0.49'; // NOSONAR - no ip.
         if ( empty( $current_version ) || version_compare( $current_version, $update_ver3, '<' ) ) {
-            //default up codes for new install.
+            // default up codes for new install.
             $up_codes = array( 200, 201, 202, 203, 204, 205, 206 );
 
             $global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();

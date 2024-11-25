@@ -1208,7 +1208,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             $args['cookies'] = $cookies;
         }
 
-        $site_url = get_option( 'siteurl' );
+        $site_url = get_option( 'home' );
         $response = wp_remote_post( $site_url . '/wp-json', $args );
         $body     = wp_remote_retrieve_body( $response );
         $data     = is_string( $body ) ? json_decode( $body, true ) : false;

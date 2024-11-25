@@ -602,6 +602,30 @@ body.mainwp-ui.mainwp-custom-theme,
   color: var(--font-color);
 }
 
+.mainwp-ui.mainwp-custom-theme .ui.cards .card .extra a:not(.ui) {
+  color: var(--accent-color);
+}
+
+/* Invert Steps */
+
+.mainwp-ui.mainwp-custom-theme .ui.steps .step {
+  background-color: var(--background-color-3) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.steps .step .description {
+  color: var(--font-color) !important;
+}
+
+/* Invert Feed */
+
+.mainwp-ui.mainwp-custom-theme .ui.feed .summary {
+  color: var(--font-color) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.feed .summary .date {
+  color: var(--font-light-color) !important;
+}
+
 /* Invert Modal */
 
 .mainwp-ui.mainwp-custom-theme .ui.modal i.icon.close {

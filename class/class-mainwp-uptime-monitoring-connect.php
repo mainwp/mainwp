@@ -143,13 +143,16 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $mo_apply_type   = static::get_apply_setting( 'type', $monitor->type, $global_settings, 'useglobal', 'http' );
         $mo_apply_method = static::get_apply_setting( 'method', $monitor->method, $global_settings, 'useglobal', 'get' );
 
-        if ( 'ping' === $mo_apply_type ) {
-            curl_setopt( $ch, CURLOPT_NOBODY, true ); // We only care about the response code, not the content.
-        } else {
-            // Set curl options.
+        if ( 'head' !== $mo_apply_method ) {
             curl_setopt( $ch, CURLOPT_POST, strtolower( $mo_apply_method ) === 'post' ? true : false );
             curl_setopt( $ch, CURLOPT_POSTFIELDS, http_build_query( array( 'time' => time() ) ) );
         }
+
+        if ( 'ping' === $mo_apply_type || 'head' === $mo_apply_method ) {
+            curl_setopt( $ch, CURLOPT_NOBODY, true ); // We only care about the response code, not the content.
+        }
+
+        curl_setopt( $ch, CURLOPT_HEADER, true );
         curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, strtoupper( $mo_apply_method ) );
         curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true ); // We want to get the output as a string.
         curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
@@ -398,16 +401,17 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
             $mo_apply_type   = static::get_apply_setting( 'type', $website->type, $global_settings, 'useglobal', 'http' );
             $mo_apply_method = static::get_apply_setting( 'method', $website->method, $global_settings, 'useglobal', 'get' );
-            curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, strtoupper( $mo_apply_method ) );
 
-            if ( 'ping' === $mo_apply_type ) {
-                curl_setopt( $ch, CURLOPT_NOBODY, true ); // We only care about the response code, not the content.
-            } else {
-                // Set curl options.
-                curl_setopt( $ch, CURLOPT_POST, strtolower( $website->method ) === 'post' ? true : false ); // GET.
+            if ( 'head' !== $mo_apply_method ) {
+                curl_setopt( $ch, CURLOPT_POST, strtolower( $mo_apply_method ) === 'post' ? true : false );
                 curl_setopt( $ch, CURLOPT_POSTFIELDS, http_build_query( array( 'time' => time() ) ) );
-
             }
+
+            if ( 'ping' === $mo_apply_type || 'head' === $mo_apply_method ) {
+                curl_setopt( $ch, CURLOPT_NOBODY, true ); // We only care about the response code, not the content.
+            }
+
+            curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, strtoupper( $mo_apply_method ) );
 
             curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
             curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
@@ -787,6 +791,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         $heartbeat['importance'] = $importance;
 
+        $heartbeat = apply_filters( 'mainwp_uptime_monitoring_uptime_data', $heartbeat, $monitor, $previous_heartbeat );
+
         MainWP_DB_Uptime_Monitoring::instance()->update_heartbeat( $heartbeat );
 
         $db_timestamp = strtotime( $db_datetime );
@@ -820,6 +826,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         }
 
         MainWP_Uptime_Monitoring_Schedule::instance()->update_monitoring_time( $monitor, $set_retry ); // update monitor check info, and retry or not.
+
+        do_action( 'mainwp_uptime_monitoring_after_check_uptime', $heartbeat, $monitor, $previous_heartbeat );
 
         $debug  = 'Check Uptime - ' . ( $success ? 'succeeded' : 'not succeed' );
         $debug .= ' :: [monitor_url=' . $mo_url . ']';

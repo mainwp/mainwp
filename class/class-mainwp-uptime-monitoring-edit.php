@@ -581,7 +581,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                                 position: 'bottom center',
                                 variation: 'small visible black'
                             },
-                            max: <?php echo count( value: $all_intervals ) - 1; ?>,
+                            max: <?php echo count( $all_intervals ) - 1; ?>,
                             onChange: function(value) {
                                 jQuery('#mainwp_edit_monitor_interval_hidden').val(interval_values[value]).change();
                             },
@@ -684,6 +684,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
             'mainwp_uptime_monitoring_allowed_methods',
             array(
                 'useglobal' => esc_html__( 'Use global settings', 'mainwp' ),
+                'head'      => 'HEAD',
                 'get'       => 'GET',
                 'post'      => 'POST',
                 'push'      => 'PUSH',

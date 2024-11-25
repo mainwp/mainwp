@@ -192,6 +192,10 @@
     border-radius: 0px !important;
 }
 
+.mainwp-individual-site-view #mainwp-page-navigation-wrapper #mainwp-site-preview-image {
+    max-width: 100%;
+}
+
 .mainwp-individual-site-view #mainwp-site-mode-wrap {
     width: calc(100% - 170px);
     float: right;

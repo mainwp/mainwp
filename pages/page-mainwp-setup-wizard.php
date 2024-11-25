@@ -1090,7 +1090,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         position: 'bottom center',
                         variation: 'small visible black'
                     },
-                    max: <?php echo count( value: $all_intervals ) - 1; ?>,
+                    max: <?php echo count( $all_intervals ) - 1; ?>,
                     onChange: function(value) {
                         jQuery('#mainwp_setup_monitor_interval_hidden').val(interval_values[value]).change();
                     },

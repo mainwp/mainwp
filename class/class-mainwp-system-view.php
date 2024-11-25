@@ -1069,7 +1069,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         <div class="ui tiny modal" id="mainwp-modal-confirm">
         <i class="close icon"></i>
             <div class="header"><?php esc_html_e( 'Confirmation', 'mainwp' ); ?></div>
-            <div class="content">
+            <div class="scrolling content">
                 <div class="content-massage"></div>
                 <div class="ui mini yellow message hidden update-confirm-notice" ><?php printf( esc_html__( 'To disable update confirmations, go to the %1$sSettings%2$s page and disable the "Disable update confirmations" option', 'mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?></div>
                 <div class="ui form hidden" id="mainwp-confirm-form" style="display:none;">

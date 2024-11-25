@@ -408,7 +408,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             do_action( 'mainwp_after_plugin_action', $information, $action, $plugin, $website );
 
         } catch ( MainWP_Exception $e ) {
-            die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
+            die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e, true ) ) ) ); // escaped.
         }
 
         if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {

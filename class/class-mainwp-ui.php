@@ -1439,7 +1439,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 // phpcs:enable
                 $website = MainWP_DB::instance()->get_website_by_id( $id );
                 ?>
-                <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" src="//s0.wordpress.com/mshots/v1/<?php echo esc_html( rawurlencode( $website->url ) ); ?>?w=170">
+                <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" src="//s0.wordpress.com/mshots/v1/<?php echo esc_html( rawurlencode( $website->url ) ); ?>?w=170" id="mainwp-site-preview-image">
             <?php endif; ?>
 
             <div class="ui vertical menu mainwp-page-navigation">

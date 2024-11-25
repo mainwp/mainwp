@@ -227,6 +227,21 @@ KEY idx_wpid (wpid)";
         if ( ! empty( $current_version ) && version_compare( $current_version, $update_ver, '<' ) && version_compare( $current_version, $update_ver2, '>=' ) ) {
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' CHANGE up_statuscodes_json up_status_codes text NOT NULL DEFAULT ""' ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         }
+
+        $update_ver3 = '9.0.0.49'; // NOSONAR - no ip.
+        if ( empty( $current_version ) || version_compare( $current_version, $update_ver3, '<' ) ) {
+            //default up codes for new install.
+            $up_codes = array( 200, 201, 202, 203, 204, 205, 206 );
+
+            $global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+
+            $current_codes = ! empty( $global_settings['up_status_codes'] ) ? explode( ',', $global_settings['up_status_codes'] ) : array();
+            if ( ! empty( $current_codes ) ) {
+                $up_codes = array_unique( array_merge( $up_codes, $current_codes ) );
+            }
+            $global_settings['up_status_codes'] = implode( ',', $up_codes );
+            MainWP_Uptime_Monitoring_Handle::update_uptime_global_settings( $global_settings );
+        }
     }
 
     /**

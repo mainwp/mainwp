@@ -85,48 +85,48 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         <div class="mainwp-widget-header">
             <h3 class="ui header handle-drag">
-            <?php
-            /**
-             * Filter: mainwp_non_mainwp_changes_widget_title
-             *
-             * Filters the Site info widget title text.
-             *
-             * @param object $website Object containing the child site info.
-             *
-             * @since 4.1
-             */
-            echo esc_html( apply_filters( 'mainwp_non_mainwp_changes_widget_title', esc_html__( 'Non-MainWP Changes', 'mainwp' ), $website ) );
-            ?>
+                <?php
+                /**
+                 * Filter: mainwp_non_mainwp_changes_widget_title
+                 *
+                 * Filters the Site info widget title text.
+                 *
+                 * @param object $website Object containing the child site info.
+                 *
+                 * @since 4.1
+                 */
+                echo esc_html( apply_filters( 'mainwp_non_mainwp_changes_widget_title', esc_html__( 'Non-MainWP Changes', 'mainwp' ), $website ) );
+                ?>
                 <div class="sub header"><?php esc_html_e( 'The most recent changes made to your Child Sites that were not done through your MainWP Dashboard.', 'mainwp' ); ?></div>
             </h3>
         </div>
 
         <div id="mainwp-widget-site-actions" class="mainwp-scrolly-overflow">
+            <?php
+            /**
+             * Actoin: mainwp_non_mainwp_changes_widget_top
+             *
+             * Fires at the top of the Site Info widget on the Individual site overview page.
+             *
+             * @param object $website Object containing the child site info.
+             *
+             * @since 4.0
+             */
+            do_action( 'mainwp_non_mainwp_changes_widget_top', $website );
+            ?>
+            <?php if ( $actions_info ) : ?>
                 <?php
                 /**
-                 * Actoin: mainwp_non_mainwp_changes_widget_top
+                 * Action: mainwp_non_mainwp_changes_table_top
                  *
-                 * Fires at the top of the Site Info widget on the Individual site overview page.
+                 * Fires at the top of the Site Info table in Site Info widget on the Individual site overview page.
                  *
                  * @param object $website Object containing the child site info.
                  *
                  * @since 4.0
                  */
-                do_action( 'mainwp_non_mainwp_changes_widget_top', $website );
+                do_action( 'mainwp_non_mainwp_changes_table_top', $website );
                 ?>
-                <?php if ( $actions_info ) : ?>
-                    <?php
-                    /**
-                     * Action: mainwp_non_mainwp_changes_table_top
-                     *
-                     * Fires at the top of the Site Info table in Site Info widget on the Individual site overview page.
-                     *
-                     * @param object $website Object containing the child site info.
-                     *
-                     * @since 4.0
-                     */
-                    do_action( 'mainwp_non_mainwp_changes_table_top', $website );
-                    ?>
                 <div class="ui small feed" id="mainwp-non-mainwp-changes-feed">
                     <?php foreach ( $actions_info as $data ) : ?>
                         <?php
@@ -155,6 +155,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         </div>
                         <div class="content">
                             <div class="summary">
+                                <a href="javascript:void(0)" class="mainwp-event-action-dismiss right floated" action-id="<?php echo intval( $data->action_id ); ?>"><i class="times icon"></i></a>
                                 <?php echo esc_html( $data->action_user ); ?>
                                 <?php echo esc_html( ucfirst( $data->action ) ); ?> <?php echo isset( $meta_data->name ) && '' !== $meta_data->name ? esc_html( $meta_data->name ) : 'WP Core'; ?> <?php echo 'wordpress' !== $data->context ? esc_html( rtrim( $data->context, 's' ) ) : 'WordPress'; //phpcs:ignore -- text. ?>
                                 <?php if ( empty( $website ) || isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
@@ -163,8 +164,9 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                 <div class="date">
                                     <?php echo esc_html( MainWP_Utility::time_elapsed_string( $data->created ) ); ?>
                                 </div>
+                                
                             </div>
-                            <div class="extra text"><a href="javascript:void(0)" class="mainwp-event-action-dismiss" action-id="<?php echo intval( $data->action_id ); ?>"><?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></div>
+                            
                         </div>
 
                     </div>

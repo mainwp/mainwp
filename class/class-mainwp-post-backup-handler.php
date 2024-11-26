@@ -44,10 +44,10 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     public function init() {
         // Page: ManageBackups.
         $this->add_action( 'mainwp_addbackup', array( &$this, 'mainwp_addbackup' ) );
-        if ( mainwp_current_user_have_right( 'dashboard', 'edit_backup_tasks' ) ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) ) {
             $this->add_action( 'mainwp_updatebackup', array( &$this, 'mainwp_updatebackup' ) );
         }
-        if ( mainwp_current_user_have_right( 'dashboard', 'delete_backup_tasks' ) ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'delete_backup_tasks' ) ) {
             $this->add_action( 'mainwp_removebackup', array( &$this, 'mainwp_removebackup' ) );
         }
         $this->add_action( 'mainwp_pausebackup', array( &$this, 'mainwp_pausebackup' ) );
@@ -55,16 +55,16 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
 
         $this->add_action( 'mainwp_backuptask_get_sites', array( &$this, 'mainwp_backuptask_get_sites' ) );
 
-        if ( mainwp_current_user_have_right( 'dashboard', 'run_backup_tasks' ) ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
             $this->add_action( 'mainwp_backuptask_run_site', array( &$this, 'mainwp_backuptask_run_site' ) );
         }
         $this->add_action( 'mainwp_backup_upload_file', array( &$this, 'mainwp_backup_upload_file' ) );
 
         // Page: backup.
-        if ( mainwp_current_user_have_right( 'dashboard', 'run_backup_tasks' ) ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
             $this->add_action( 'mainwp_backup_run_site', array( &$this, 'mainwp_backup_run_site' ) );
         }
-        if ( mainwp_current_user_have_right( 'dashboard', 'execute_backups' ) ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
             $this->add_action( 'mainwp_backup', array( &$this, 'ajax_mainwp_backup' ) );
         }
         $this->add_action( 'mainwp_checkbackups', array( &$this, 'mainwp_checkbackups' ) );

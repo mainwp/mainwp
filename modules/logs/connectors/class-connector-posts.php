@@ -128,11 +128,11 @@ class Connector_Posts extends Log_Connector {
         $args    = MainWP_Utility::right_array_merge( $default, $data );
 
         $default_other      = array(
-            'post_date'     => '',
-            'post_date_gmt' => '',
-            'new_status'    => '',
-            'old_status'    => '',
-            'post_id'       => '',
+            'post_date'         => '',
+            'post_date_gmt'     => '',
+            'new_uptime_status' => '',
+            'old_status'        => '',
+            'post_id'           => '',
         );
         $other              = MainWP_Utility::right_array_merge( $default_other, $data );
         $args['siteurl']    = $website->url;
@@ -189,12 +189,12 @@ class Connector_Posts extends Log_Connector {
         }
 
         $default = array(
-            'post_title'    => '',
-            'singular_name' => '',
-            'post_date'     => '',
-            'post_date_gmt' => '',
-            'new_status'    => '',
-            'old_status'    => '',
+            'post_title'        => '',
+            'singular_name'     => '',
+            'post_date'         => '',
+            'post_date_gmt'     => '',
+            'new_uptime_status' => '',
+            'old_status'        => '',
         );
 
         $args = MainWP_Utility::right_array_merge( $default, $data );

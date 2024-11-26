@@ -339,8 +339,8 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * Get non-empty groups.
      *
-     * @param null $userid Current user ID.
-     * @param bool $enableOfflineSites Include offline sites? Default: true.
+     * @param mixed $userid Current user ID.
+     * @param bool  $enableOfflineSites Include offline sites? Default: true.
      *
      * @return object|null Database query result for non-empty groups or null on failure.
      *
@@ -377,12 +377,42 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * Get sql log.
      *
+     * @param int   $paged paged.
+     * @param int   $order order.
+     * @param array $params params.
+     *
      * @return string sql query.
      */
-    public function get_sql_log() {
+    public function get_sql_log( $paged = 0, $order = '', $params = array() ) {
+
+        $count_only = ! empty( $params['count'] ) ? true : false;
+        $limit      = ! empty( $params['limit'] ) ? intval( $params['limit'] ) : 500;
+
+        $last_hours = ! empty( $params['hour'] ) ? intval( $params['hour'] ) : 0;
+
+        $order = strtoupper( $order );
+
+        $order = 'DESC' === $order || 'ASC' === $order ? $order : 'DESC';
+
+        $start = ! empty( $paged ) ? absint( $paged * $limit ) : 0;
+
+        if ( $count_only ) {
+            return 'SELECT count(*)
+                FROM ' . $this->table_name( 'action_log' ) . ' log
+                WHERE 1 ';
+        }
+
+        if ( ! empty( $last_hours ) ) {
+            return 'SELECT log.*
+                FROM ' . $this->table_name( 'action_log' ) . ' log
+                WHERE ' . $this->wpdb->prepare( ' log_timestamp > %d ', time() - $last_hours * HOUR_IN_SECONDS ) .
+                ' ORDER BY log_timestamp ' . $this->escape( $order );
+        }
+
         return 'SELECT log.*
                 FROM ' . $this->table_name( 'action_log' ) . ' log
-                WHERE 1 LIMIT 0, 300 ';
+                WHERE 1 ORDER BY ' .
+                $this->wpdb->prepare( 'log_timestamp ' . $this->escape( $order ) . ' LIMIT %d, %d', $start, $limit );
     }
 
     /**
@@ -861,7 +891,6 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * 'uniqueid'.
      * 'verify'.
      * 'protocol'.
-     * 'disablechecking'.
      * 'checkinterval'.
      * 'disablehealthchecking'.
      * 'healththreshold'.
@@ -874,7 +903,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * 'ignore_theme_updates'.
      * 'monitoring_emails'.
      *
-     * @return bool true|false.
+     * @return mixed array|true|false.
      */
     public function rest_api_update_website( $websiteid, $data ) { // phpcs:ignore -- NOSONAR - complex function.
 
@@ -909,14 +938,6 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         if ( isset( $data['protocol'] ) && ( 'http' === $data['protocol'] || 'https' === $data['protocol'] ) ) {
             $url      = $data['protocol'] . '://' . MainWP_Utility::remove_http_prefix( $website->url, true );
             $sql_set .= ' url = "' . $this->escape( $url ) . '",';
-        }
-
-        if ( isset( $data['disablechecking'] ) ) {
-            $sql_set .= ' disable_status_check= "' . ( $data['disablechecking'] ? 1 : 0 ) . '",';
-        }
-
-        if ( isset( $data['checkinterval'] ) ) {
-            $sql_set .= ' status_check_interval= "' . intval( $data['checkinterval'] ) . '",';
         }
 
         if ( isset( $data['disablehealthchecking'] ) ) {
@@ -995,7 +1016,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
         if ( isset( $data['monitoring_emails'] ) ) {
             $monitoring_emails = MainWP_Utility::valid_input_emails( $data['monitoring_emails'] );
-            MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', $monitoring_emails );
+            MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', ( $monitoring_emails ) );
 
         }
 

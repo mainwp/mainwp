@@ -265,7 +265,7 @@ let mainwp_fetch_users = function () {
 
     let data = mainwp_secure_data({
         action: 'mainwp_users_search',
-        role: role,
+        urole: role,
         search: name,
         'groups[]': selected_groups,
         'sites[]': selected_sites,

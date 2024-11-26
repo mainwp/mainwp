@@ -18,7 +18,7 @@ use MainWP\Dashboard\MainWP_Utility;
  *
  * Displays the Yearly Renewwals.
  */
-class Cost_Tracker_Yearly_Renewals {
+class Cost_Tracker_Yearly_Renewals { // phpcs:ignore -- NOSONAR - multi methods.
 
     /**
      * Protected static variable to hold the single instance of the class.
@@ -65,8 +65,7 @@ class Cost_Tracker_Yearly_Renewals {
             <div class="four wide column right aligned">
                 <div class="ui dropdown right pointing mainwp-dropdown-tab not-auto-init" id="cost-tracker-widget-yearly-renewals-top-select">
                     <input type="hidden" value="yearly-renewals-month">
-                        <div class="text"><?php esc_html_e( 'Select period', 'mainwp' ); ?></div>
-                        <i class="dropdown icon"></i>
+                        <i class="vertical ellipsis icon"></i>
                         <div class="menu">
                             <a class="item yearly_renewals_today_lnk" data-tab="yearly-renewals-today" data-value="yearly-renewals-today" title="<?php esc_attr_e( 'Today', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Today', 'mainwp' ); ?></a>
                             <a class="item yearly_renewals_tomorrow_lnk" data-tab="yearly-renewals-tomorrow"  data-value="yearly-renewals-tomorrow" title="<?php esc_attr_e( 'Tomorrow', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Tomorrow', 'mainwp' ); ?></a>
@@ -124,6 +123,7 @@ class Cost_Tracker_Yearly_Renewals {
         }
         ?>
         </div>
+        <div class="mainwp-widget-footer"></div>
         <?php
     }
 
@@ -202,16 +202,13 @@ class Cost_Tracker_Yearly_Renewals {
              */
             do_action( 'mainwp_module_yearly_renewals_before_costs_list', $tab, $cost_data );
             if ( empty( $lists ) ) {
-                echo '<div class="ui hidden divider"></div>';
-                echo '<div class="ui hidden divider"></div>';
-                echo '<div class="ui hidden divider"></div>';
                 MainWP_UI::render_empty_element_placeholder( __( 'No upcoming renewals for the selected priod.', 'mainwp' ) );
             } else {
                 ?>
                 <table class="ui stacking table" id="mainwp-yearly-renewals-table-<?php echo esc_attr( $tab ); ?>">
                     <thead>
                         <tr>
-                            <th scope="col" ><?php echo esc_html__( 'Name', 'mainwp' ); ?></a></th>
+                            <th scope="col" ><?php echo esc_html__( 'Name', 'mainwp' ); ?></th>
                             <th scope="col" ><?php echo esc_html__( 'Renews at', 'mainwp' ); ?></th>
                             <th scope="col" class="collapsing right aligned"><?php echo esc_html__( 'Price', 'mainwp' ); ?></th>
                         </tr>
@@ -222,7 +219,7 @@ class Cost_Tracker_Yearly_Renewals {
                     ?>
                     <tr>
                         <td><a href="admin.php?page=CostTrackerAdd&id=<?php echo intval( $item->id ); ?>"><?php echo esc_html( $item->name ); ?></a></td>
-                        <td><?php echo MainWP_Utility::format_date( $next_renewal ); //phpcs:ignore -- ok. ?></td>
+                        <td  data-order="<?php echo esc_attr( $next_renewal ); ?>"><?php echo MainWP_Utility::format_date( $next_renewal ); //phpcs:ignore -- ok. ?></td>
                         <td class="right aligned"><?php Cost_Tracker_Utility::cost_tracker_format_price( $item->price ); ?></td>
                     </tr>
                     <?php

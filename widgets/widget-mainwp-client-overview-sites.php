@@ -189,9 +189,8 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
 
                 $table_features = array(
                     'searching'     => 'true',
-                    'paging'        => 'false',
-                    'pagingType'    => 'full_numbers',
-                    'info'          => 'true',
+                    'paging'        => 'true',
+                    'info'          => 'false',
                     'colReorder'    => '{ columns:":not(.manage-status-column):not(.manage-site_actions-column)"} ',
                     'stateSave'     => 'true',
                     'stateDuration' => '0',
@@ -213,8 +212,12 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                             "searching" : <?php echo esc_js( $table_features['searching'] ); ?>,
                             "responsive": responsive,
                             "paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
-                            "pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
                             "info" : <?php echo esc_js( $table_features['info'] ); ?>,
+                            "layout": {
+                                "bottom": 'paging',
+                                "bottomStart": null,
+                                "bottomEnd": null
+                            },
                             "scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
                             "colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
                             "stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
@@ -610,7 +613,7 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                 <td class="column-site-bulk mainwp-site-cell all <?php echo esc_html( $cls_site ); ?>"><a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $website['id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Open the site overview', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><?php echo esc_html( stripslashes( $website['name'] ) ); ?></a><i class="ui active inline loader tiny" style="display:none"></i><span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span></td>
             <?php } elseif ( 'login' === $column_name ) { ?>
                 <td class="collapsing">
-                <?php if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
+                <?php if ( ! \mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
                     <i class="sign in icon"></i>
                 <?php else : ?>
                     <a href="<?php MainWP_Site_Open::get_open_site_url( $website['id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>" data-position="right center" data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
@@ -633,11 +636,11 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                             <?php else : ?>
                             <a class="managesites_syncdata item" href="#"><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
                             <?php endif; ?>
-                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) ) : ?>
+                    <?php if ( \mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ) : ?>
                             <a class="item" href="admin.php?page=managesites&dashboard=<?php echo intval( $website['id'] ); ?>"><?php esc_html_e( 'Overview', 'mainwp' ); ?></a>
                             <?php endif; ?>
-                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) : ?>
-                            <a class="item" href="admin.php?page=managesites&id=<?php echo intval( $website['id'] ); ?>"><?php esc_html_e( 'Edit Site', 'mainwp' ); ?></a>
+                    <?php if ( \mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) : ?>
+                            <a class="item" href="admin.php?page=managesites&id=<?php echo intval( $website['id'] ); ?>"><?php esc_html_e( 'Settings', 'mainwp' ); ?></a>
                             <?php endif; ?>
                             </div>
                         </div>

@@ -547,7 +547,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             if ( isset( $_GET['do'] ) && 'new' === $_GET['do'] ) {
                 $tour_id = '13210';
             } elseif ( isset( $_GET['do'] ) && 'bulknew' === $_GET['do'] ) {
-                $tour_id = '27274';
+                $tour_id = '60206';
             } elseif ( ! isset( $_GET['dashboard'] ) && ! isset( $_GET['id'] ) && ! isset( $_GET['updateid'] ) && ! isset( $_GET['emailsettingsid'] ) && ! isset( $_GET['scanid'] ) ) {
                 if ( 'grid' === $siteViewMode ) {
                     $tour_id = '27217';
@@ -712,7 +712,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                                 </div>
                                 <div class="item">
                                     <i class="edit icon"></i>
-                                    <a href="<?php echo 'admin.php?page=managesites&id=' . intval( $website->id ); ?>"><?php esc_html_e( 'Edit Site', 'mainwp' ); ?></a>
+                                    <a href="<?php echo 'admin.php?page=managesites&id=' . intval( $website->id ); ?>"><?php esc_html_e( 'Settings', 'mainwp' ); ?></a>
                                 </div>
                                 <div class="item">
                                     <i class="sync alt icon"></i>
@@ -1262,11 +1262,12 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count()
      */
-    public static function render_header_actions() { //phpcs:ignore -- NOSONAR - complex method.
+    public static function render_header_actions() { // phpcs:ignore -- NOSONAR - complex method.
         $sites_count   = MainWP_DB::instance()->get_websites_count();
         $sidebar_pages = array( 'ManageGroups', 'PostBulkManage', 'PostBulkAdd', 'PageBulkManage', 'PageBulkAdd', 'ThemesManage', 'ThemesInstall', 'ThemesAutoUpdate', 'PluginsManage', 'PluginsInstall', 'PluginsAutoUpdate', 'UserBulkManage', 'UserBulkAdd', 'UpdateAdminPasswords', 'Extensions' );
         $sidebar_pages = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages ); // deprecated filter.
         $sidebar_pages = apply_filters( 'mainwp_sidebar_pages', $sidebar_pages );
+        $current_user  = get_current_user_id();
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
@@ -1283,6 +1284,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 $id = intval( $_GET['emailsettingsid'] );
             } elseif ( isset( $_GET['scanid'] ) ) {
                 $id = intval( $_GET['scanid'] );
+            } elseif ( isset( $_GET['monitor_wpid'] ) ) {
+                $id = intval( $_GET['monitor_wpid'] );
             }
 
             $website = MainWP_DB::instance()->get_website_by_id( $id );
@@ -1314,7 +1317,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             </div>
         </div>
 
-        <?php if ( ( 'mainwp_tab' === $page ) || isset( $_GET['dashboard'] ) || in_array( $page, $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended ?>
+        <?php if ( ( 'mainwp_tab' === $page ) || isset( $_GET['dashboard'] ) || in_array( $page, $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Recommended ?>
         <a id="mainwp-screen-options-button" class="ui button icon" onclick="jQuery( '#mainwp-overview-screen-options-modal' ).modal({allowMultiple:true}).modal( 'show' ); return false;" data-inverted="" data-position="bottom right" href="#" aria-label="<?php esc_attr_e( 'Page Settings', 'mainwp' ); ?>" data-tooltip="<?php esc_html_e( 'Page Settings', 'mainwp' ); ?>">
             <i class="cog icon"></i>
         </a>
@@ -1390,6 +1393,11 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             </a>
             <?php
         }
+        ?>
+        <a href="profile.php" class="ui icon button" style="padding:0;overflow:hidden;" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Edit your profile.', 'mainwp' ); ?>" aria-label="<?php esc_attr_e( 'Edit your profile.', 'mainwp' ); ?>">
+            <?php echo get_avatar( $current_user, 36, '', '', array( 'extra_attr' => 'style="margin-bottom:-2px;"' ) ); ?>
+        </a>
+        <?php
         return ob_get_clean();
     }
 
@@ -1413,8 +1421,29 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $subitems = apply_filters( 'mainwp_page_navigation', $subitems, $name_caller );
         ?>
         <div id="mainwp-page-navigation-wrapper">
+            <?php if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+                <?php
+                //phpcs:disable WordPress.Security.NonceVerification
+                $id = 0;
+                if ( isset( $_GET['dashboard'] ) ) {
+                    $id = intval( $_GET['dashboard'] );
+                } elseif ( isset( $_GET['id'] ) ) {
+                    $id = intval( $_GET['id'] );
+                } elseif ( isset( $_GET['updateid'] ) ) {
+                    $id = intval( $_GET['updateid'] );
+                } elseif ( isset( $_GET['emailsettingsid'] ) ) {
+                    $id = intval( $_GET['emailsettingsid'] );
+                } elseif ( isset( $_GET['scanid'] ) ) {
+                    $id = intval( $_GET['scanid'] );
+                }
+                // phpcs:enable
+                $website = MainWP_DB::instance()->get_website_by_id( $id );
+                ?>
+                <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" src="//s0.wordpress.com/mshots/v1/<?php echo esc_html( rawurlencode( $website->url ) ); ?>?w=170" id="mainwp-site-preview-image">
+            <?php endif; ?>
 
             <div class="ui vertical menu mainwp-page-navigation">
+                
                 <?php
 
                 if ( is_array( $subitems ) ) {
@@ -1443,7 +1472,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         }
 
                         ?>
-
                         <a class="<?php echo esc_attr( $class ); ?> item" style="<?php echo esc_attr( $style ); ?>" href="<?php echo esc_url( $item['href'] ); ?>">
                         <?php echo isset( $item['before_title'] ) ? $item['before_title'] : ''; ?> <?php echo esc_html( $item['title'] ); ?> <?php echo isset( $item['after_title'] ) ? $item['after_title'] : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                         </a>
@@ -1466,15 +1494,15 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         <?php
     }
 
-            /**
-             * Method render_header()
-             *
-             * Render page title.
-             *
-             * @param string $title Page title.
-             *
-             * @return void Render page title and hidden divider html.
-             */
+    /**
+     * Method render_header()
+     *
+     * Render page title.
+     *
+     * @param string $title Page title.
+     *
+     * @return void Render page title and hidden divider html.
+     */
     public static function render_header( $title = '' ) {
         static::render_top_header( array( 'title' => $title ) );
         echo '<div class="ui hidden clearing fitted divider"></div>';
@@ -2234,17 +2262,15 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
          */
     public static function render_empty_element_placeholder( $placeholder = '' ) {
         ?>
-        <div class="ui one column grid">
-            <div class="middle aligned center aligned column">
-                <img alt="<?php esc_attr_e( 'Nothing to show here, check back later!', 'mainwp' ); ?>" src="<?php echo esc_url( MAINWP_PLUGIN_URL ); ?>assets/images/mainwp-widget-placeholder.png" style="max-width:200px" class="mainwp-no-results-placeholder ui middle aligned image"/>
+        <div class="mainwp-empty-widget-placeholder">
+            <img alt="<?php esc_attr_e( 'Nothing to show here, check back later!', 'mainwp' ); ?>" src="<?php echo esc_url( MAINWP_PLUGIN_URL ); ?>assets/images/mainwp-widget-placeholder.png" class="mainwp-no-results-placeholder"/>
             <?php if ( '' !== $placeholder ) : ?>
-                    <p><?php echo $placeholder; //phpcs:ignore -- requires escaped. ?></p>
-                <?php else : ?>
-                    <p><?php echo esc_html__( 'Nothing to show here, check back later!', 'mainwp' ); ?></p>
-                <?php endif; ?>
-            </div>
+                <p><?php echo $placeholder; //phpcs:ignore -- requires escaped. ?></p>
+            <?php else : ?>
+                <p><?php echo esc_html__( 'Nothing to show here, check back later!', 'mainwp' ); ?></p>
+            <?php endif; ?>
         </div>
-            <?php
+        <?php
     }
 
         /**

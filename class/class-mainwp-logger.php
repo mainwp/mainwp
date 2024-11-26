@@ -23,12 +23,14 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     const LOGS_AUTO_PURGE_LOG_PRIORITY = 16;
     const COST_TRACKER_LOG_PRIORITY    = 20230112;
     const API_BACKUPS_LOG_PRIORITY     = 20240130;
-
-    const DISABLED = - 1;
-    const LOG      = 0;
-    const WARNING  = 1;
-    const INFO     = 2;
-    const DEBUG    = 3;
+    const CONNECT_LOG_PRIORITY         = 20241001;
+    const UPTIME_CHECK_LOG_PRIORITY    = 20241017;
+    const UPTIME_NOTICE_LOG_PRIORITY   = 202411106;
+    const DISABLED                     = - 1;
+    const LOG                          = 0;
+    const WARNING                      = 1;
+    const INFO                         = 2;
+    const DEBUG                        = 3;
 
     const LOG_COLOR     = '#999999';
     const DEBUG_COLOR   = '#666666';
@@ -91,6 +93,13 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     private $logSpecific = 0;
 
+    /**
+     * Private varibale to hold the log Specific priotrity.
+     *
+     * @var string Disabled
+     */
+    private $autoEnableLoggingActions = array();
+
 
     /**
      * Private static varibale to hold the instance.
@@ -131,6 +140,10 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $specific = apply_filters( 'mainwp_log_specific', $specific );
 
         $this->set_log_priority( $enabled, $specific );
+
+        $this->autoEnableLoggingActions = array(
+            static::CONNECT_LOG_PRIORITY,
+        );
     }
 
     /**
@@ -145,6 +158,26 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $this->logPriority = (int) $logPriority;
         $this->logSpecific = (int) $spec_log; // 1 - specific log, 0 - not specific log.
     }
+
+
+        /**
+         * Method enable_log_priority()
+         *
+         * Sets the log priority.
+         *
+         * @param mixed $logPriority Log priority value.
+         * @param mixed $spec_log Specific log.
+         */
+    public function enable_log_priority( $logPriority, $spec_log = 1 ) {
+        $spec_log    = $spec_log ? 1 : 0;
+        $logPriority = intval( $logPriority );
+        MainWP_Utility::update_option( 'mainwp_specific_logs', $spec_log );
+        MainWP_Utility::update_option( 'mainwp_actionlogs', $logPriority );
+        MainWP_Utility::update_option( 'mainwp_actionlogs_enabled_timestamp', time() );
+        $this->log_action( 'Action logs set to: ' . $this->get_log_text( $logPriority ), ( $spec_log ? $logPriority : static::LOG ), 2, true );
+        $this->set_log_priority( $logPriority, $spec_log );
+    }
+
 
     /**
      * Method get_log_status()
@@ -280,6 +313,24 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     }
 
     /**
+     * Method log_update_check().
+     *
+     * @param string $text Log update check.
+     */
+    public function log_uptime_check( $text = '' ) {
+        $this->log_action( $text, static::UPTIME_CHECK_LOG_PRIORITY );
+    }
+
+    /**
+     * Method log_uptime_notice().
+     *
+     * @param string $text Log update check.
+     */
+    public function log_uptime_notice( $text = '' ) {
+        $this->log_action( $text, static::UPTIME_NOTICE_LOG_PRIORITY );
+    }
+
+    /**
      * Method debug_for_website()
      *
      * Grab website debug and info.
@@ -381,6 +432,10 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $do_log = apply_filters( 'mainwp_log_do_to_db', $do_log, $website );
 
+        if ( ! $forced && ! $do_log ) {
+            return false;
+        }
+
         $text = $this->prepare_log_info( $text );
 
         do_action( 'mainwp_before_log_data', $text, $priority, $log_color );
@@ -389,39 +444,35 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $text = 'CRON :: ' . $text;
         }
 
-        if ( $forced || $do_log ) {
+        /**
+         * Current user global.
+         *
+         * @global string
+         */
+        global $current_user;
 
-            /**
-             * Current user global.
-             *
-             * @global string
-             */
-            global $current_user;
-
-            $user = '';
-            if ( ! empty( $current_user ) && ! empty( $current_user->user_login ) ) {
-                $user = $current_user->user_login;
-            } elseif ( defined( 'WP_CLI' ) ) {
-                $user = 'WP_CLI';
-            } elseif ( defined( 'DOING_CRON' ) ) {
-                $user = 'DOING_CRON';
-            }
-
-            $data = array();
-
-            $data['log_content']   = $text;
-            $data['log_user']      = $user;
-            $data['log_type']      = $priority;
-            $data['log_color']     = intval( $log_color );
-            $data['log_timestamp'] = time();
-
-            $data = apply_filters( 'mainwp_log_to_db_data', $data );
-
-            MainWP_DB_Common::instance()->insert_action_log( $data );
-
-            return true;
+        $user = '';
+        if ( ! empty( $current_user ) && ! empty( $current_user->user_login ) ) {
+            $user = $current_user->user_login;
+        } elseif ( defined( 'WP_CLI' ) ) {
+            $user = 'WP_CLI';
+        } elseif ( defined( 'DOING_CRON' ) ) {
+            $user = 'DOING_CRON';
         }
-        return false;
+
+        $data = array();
+
+        $data['log_content']   = $text;
+        $data['log_user']      = $user;
+        $data['log_type']      = $priority;
+        $data['log_color']     = intval( $log_color );
+        $data['log_timestamp'] = time();
+
+        $data = apply_filters( 'mainwp_log_to_db_data', $data );
+
+        MainWP_DB_Common::instance()->insert_action_log( $data );
+
+        return true;
     }
 
     /**
@@ -438,6 +489,10 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @return bool true|false Default is False.
      */
     private function log( $text, $priority,  $log_color = 0, $forced = false, $website = false ) { // phpcs:ignore -- NOSONAR - complex function.
+
+        if ( in_array( $priority, $this->autoEnableLoggingActions ) && (int) $this->logPriority !== (int) $priority ) {
+            $this->enable_log_priority( $priority, 1 );
+        }
 
         if ( static::DISABLED === $this->logPriority ) {
             return;
@@ -723,12 +778,51 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * Grab log file and build output to screen.
      */
-    public function show_log_db() {
+    public function show_log_db() { //phpcs:ignore -- NOSONAR - complexity.
 
         echo '<div class="ui hidden divider"></div>';
         echo '<div class="ui divided padded relaxed list" local-datetime="' . date( 'Y-m-d H:i:s' ) . '">'; // phpcs:ignore -- local time.
 
-        $rows = MainWP_DB::instance()->query( MainWP_DB_Common::instance()->get_sql_log() );
+        $limit = 500;
+
+        //phpcs:disable WordPress.Security.NonceVerification
+        $paged = isset( $_GET['paged'] ) ? intval( $_GET['paged'] ) : 0; //phpcs:ignore -- NOSONAR -ok.
+
+        if ( $paged <= 0 ) {
+            $paged = 0;
+        } else {
+            --$paged;
+        }
+
+        $params = array();
+
+        if ( isset( $_GET['hour'] ) && ! empty( $_GET['hour'] ) ) { // phpcs:ignore -- local time.
+            $params['hour'] = intval( $_GET['hour'] ); // phpcs:ignore -- local time.
+        } else {
+            $params['hour'] = $limit;
+        }
+
+        $order = isset( $_GET['order'] ) ? sanitize_text_field( wp_unslash( $_GET['order'] ) ) : ''; //phpcs:ignore -- NOSONAR -ok.
+
+        $total = MainWP_DB::instance()->get_var_field( MainWP_DB_Common::instance()->get_sql_log( $paged, $order, array( 'count' => true ) ) );
+
+        $rows = MainWP_DB::instance()->query( MainWP_DB_Common::instance()->get_sql_log( $paged, $order, $params ) );
+
+        $count = $rows ? MainWP_DB::num_rows( $rows ) : 0;
+
+        $show_info = '';
+
+        if ( isset( $_GET['hour'] ) ) {
+            $show_info = $count . ' latest items from a total of ' . $total;
+        } elseif ( isset( $_GET['paged'] ) ) { //phpcs:ignore -- NOSONAR -ok.
+            $from      = $limit * $paged;
+            $show_info = $count . ' items, from ' . $from . ' - ' . ( $from + $limit ) . ' of ' . $total . ' total.';
+        }
+
+        if ( ! empty( $show_info ) ) {
+            echo '<p><strong>' . esc_html__( 'Showing ', 'mainwp' ) . ':</strong> ' . $show_info; //phpcs:ignore -- NOSONAR ok.
+        }
+        //phpcs:enable WordPress.Security.NonceVerification
 
         $start_wrapper = '<span class="ui mini label mainwp-action-log-show-more">Click to See Response</span><div class="mainwp-action-log-site-response" style="display: none;">';
         $end_wrapper   = '</div>';
@@ -739,9 +833,10 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 $line = '[Data row too long]';
             }
 
-            $time = gmdate( $this->logDateFormat, $row->log_timestamp );
+            $time = gmdate( $this->logDateFormat, MainWP_Utility::get_timestamp( $row->log_timestamp ) );
 
-            $showInfo     = $this->get_log_type_info( $row->log_type, $row->log_color );
+            $showInfo = $this->get_log_type_info( $row->log_type, $row->log_color );
+
             $currentColor = $showInfo['log_color'];
 
             $prefix = $time . ' ' . $showInfo['log_prefix'];

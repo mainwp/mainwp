@@ -27,7 +27,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '5.2.2'; // NOSONAR.
+    public static $version = '5.3'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -128,6 +128,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $this->update_install();
         $this->plugin_slug = plugin_basename( $mainwp_plugin_file );
 
+        add_action( 'shutdown', array( $this, 'hook_wp_shutdown' ) );
+
         do_action( 'mainwp_system_init' );
 
         if ( is_admin() ) {
@@ -184,7 +186,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $systemHandler = MainWP_System_Handler::instance();
 
-        add_action( 'plugins_loaded', array( &$this, 'localization' ) );
+        add_action( 'init', array( &$this, 'localization' ) );
         add_filter( 'site_transient_update_plugins', array( $systemHandler, 'check_update_custom' ) );
         add_filter( 'pre_set_site_transient_update_plugins', array( $systemHandler, 'pre_check_update_custom' ) );
         add_filter( 'plugins_api', array( $systemHandler, 'plugins_api_extension_info' ), 10, 3 );
@@ -196,6 +198,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_Client_Overview::instance();
 
         MainWP_Manage_Sites::init();
+        MainWP_Uptime_Monitoring_Handle::instance();
 
         MainWP_Hooks::get_instance();
         MainWP_Menu::get_instance();
@@ -263,6 +266,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_Client::init();
         MainWP_Rest_Api_Page::init();
         MainWP_Non_MainWP_Actions::instance();
+        MainWP_Uptime_Monitoring_Schedule::instance();
 
         if ( defined( 'WP_CLI' ) && WP_CLI ) {
             MainWP_WP_CLI_Command::init();
@@ -341,12 +345,10 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_settings_show_widgets',
                 'mainwp_clients_show_widgets',
                 'mainwp_settings_show_manage_sites_columns',
-                'mainwp_disableSitesChecking',
+                'mainwp_individual_uptime_monitoring_schedule_enabled',
                 'mainwp_disableSitesHealthMonitoring',
-                'mainwp_frequencySitesChecking',
                 'mainwp_sitehealthThreshold',
                 'mainwp_settings_notification_emails',
-                'mainwp_ignore_HTTP_response_status',
                 'mainwp_check_http_response',
                 'mainwp_extmenu',
                 'mainwp_opensslLibLocation',
@@ -357,14 +359,15 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_update_check_version',
                 'mainwp_setting_demo_mode_enabled',
                 'mainwp_log_wait_lasttime',
-                'mainwp_updatescheck_start_last_schedule_timestamp',
                 'mainwp_cron_license_deactivated_alert_lasttime',
                 'mainwp_updatescheck_is_running',
                 'mainwp_automatic_updates_is_running',
                 'mainwp_frequency_AutoUpdate',
                 'mainwp_batch_updates_is_running',
                 'mainwp_batch_individual_updates_is_running',
-
+                'mainwp_maximum_uptime_monitoring_requests',
+                'mainwp_actionlogs',
+                'mainwp_process_uptime_notification_run_status',
             );
 
             $options = apply_filters( 'mainwp_init_load_all_options', $options );
@@ -501,23 +504,31 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     }
 
     /**
+     * Method mainwp_cron_uptime_monitoring_check_action()
+     *
+     * Run cron uptime monitoring check action.
+     */
+    public function mainwp_cron_uptime_monitoring_check_action() {
+        MainWP_Uptime_Monitoring_Schedule::instance()->cron_uptime_check();
+    }
+
+        /**
+         * Method mainwp_cron_perform_general_schedules_action()
+         *
+         * Run cron uptime monitoring check action.
+         */
+    public function mainwp_cron_perform_general_schedules_action() {
+        MainWP_System_Cron_Jobs::instance()->cron_perform_general_process();
+    }
+
+
+    /**
      * Method mainwp_crondeactivatedlicensesalert_action()
      *
      * Run cron activated licenses alert action.
      */
     public function mainwp_crondeactivatedlicensesalert_action() {
         MainWP_System_Cron_Jobs::instance()->cron_deactivated_licenses_alert();
-    }
-
-    /**
-     * Method mainwp_croncheckstatus_action()
-     *
-     * Run cron check sites status action.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System_Cron_Jobs::cron_check_websites_status()
-     */
-    public function mainwp_croncheckstatus_action() {
-        MainWP_System_Cron_Jobs::instance()->cron_check_websites_status();
     }
 
     /**
@@ -556,7 +567,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public static function is_mainwp_site_page() {
         //phpcs:disable WordPress.Security.NonceVerification.Recommended
-        if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) || ( 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] ) ) ) {
+        if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['monitor_wpid'] ) && ! empty( $_GET['monitor_wpid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) || ( 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] ) ) ) {
             return true;
         }
         //phpcs:enable
@@ -588,10 +599,11 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
          */
         $_mainwp_disable_menus_items = apply_filters( 'mainwp_main_menu_disable_menu_items', $_mainwp_disable_menus_items );
 
+        // to compatible.
         if ( ! function_exists( 'MainWP\Dashboard\mainwp_current_user_have_right' ) ) {
 
             /**
-             * Method mainwp_current_user_have_right()
+             * Method \mainwp_current_user_can()
              *
              * Check permission level by hook mainwp_currentusercan of Team Control extension.
              *
@@ -805,6 +817,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $en_params[] = 'jquery-ui-datepicker';
         }
         wp_enqueue_script( 'mainwp', MAINWP_PLUGIN_URL . 'assets/js/mainwp.js', $en_params, $this->current_version, true );
+        wp_enqueue_script( 'mainwp-uptime', MAINWP_PLUGIN_URL . 'assets/js/mainwp-uptime.js', $en_params, $this->current_version, true );
+
         $disable_backup_checking = true; // removed option.
         $mainwpParams            = array(
             'image_url'                        => MAINWP_PLUGIN_URL . 'assets/images/',
@@ -817,6 +831,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             'installedBulkSettingsManager'     => is_plugin_active( 'mainwp-bulk-settings-manager/mainwp-bulk-settings-manager.php' ) ? 1 : 0,
             'maximumSyncRequests'              => ( get_option( 'mainwp_maximumSyncRequests' ) === false ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ),
             'maximumInstallUpdateRequests'     => ( get_option( 'mainwp_maximumInstallUpdateRequests' ) === false ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ),
+            'maximumUptimeMonitoringRequests'  => (int) get_option( 'mainwp_maximum_uptime_monitoring_requests', 10 ),
             '_wpnonce'                         => wp_create_nonce( 'mainwp-admin-nonce' ),
             'demoMode'                         => MainWP_Demo_Handle::is_demo_mode() ? 1 : 0,
             'roll_ui_icon'                     => MainWP_Updates_Helper::get_roll_icon( '', true ),
@@ -865,6 +880,18 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         if ( ! current_user_can( 'update_core' ) ) {
             remove_action( 'admin_notices', 'update_nag', 3 );
+        }
+    }
+
+    /**
+     * Method hook_wp_shutdown()
+     */
+    public function hook_wp_shutdown() {
+        if ( MainWP_Logger::DISABLED !== (int) get_option( 'mainwp_actionlogs' ) ) {
+            $error = error_get_last();
+            if ( is_array( $error ) && isset( $error['type'] ) && ( E_ERROR === $error['type'] || E_CORE_ERROR === $error['type'] || E_COMPILE_ERROR === $error['type'] || E_PARSE === $error['type'] ) ) {
+                MainWP_Logger::instance()->log_action( '[Fatal ERROR detected=' . print_r( $error, true ) . ']', false, MainWP_Logger::WARNING_COLOR, true ); //phpcs:ignore -- NOSONAR.
+            }
         }
     }
 
@@ -952,7 +979,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $_pos        = strlen( $request_uri ) - strlen( '/wp-admin/' );
         if ( ! empty( $request_uri ) && strpos( $request_uri, '/wp-admin/' ) !== false && strpos( $request_uri, '/wp-admin/' ) === $_pos ) {
             $referer = wp_get_referer();
-            if ( ! empty( $referer ) && strpos( $referer, 'wp-login.php?redirect_to' ) !== false && strpos( $referer, '&reauth=1' ) !== false && mainwp_current_user_have_right( 'dashboard', 'access_global_dashboard' ) ) {
+            if ( ! empty( $referer ) && strpos( $referer, 'wp-login.php?redirect_to' ) !== false && strpos( $referer, '&reauth=1' ) !== false && \mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) {
                 wp_safe_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
                 die();
             }
@@ -1002,6 +1029,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             MainWP_Cache::init_cache( $ca ); // to re-set cache.
         }
     }
+
 
     /**
      * Method admin_enqueue_scripts()

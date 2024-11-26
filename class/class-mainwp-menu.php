@@ -118,6 +118,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         'manage_security_issues',
                         'test_connection',
                         'manage_groups',
+                        'manage_uptime_monitoring',
                     ),
                 ),
                 'init_menu_callback' => array( MainWP_Manage_Sites::class, 'init_menu' ),
@@ -364,7 +365,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         foreach ( $item_rights as $group_right => $rights ) {
                             if ( is_array( $rights ) ) {
                                 foreach ( $rights as $func_right ) {
-                                    if ( mainwp_current_user_have_right( $group_right, $func_right ) ) {
+                                    if ( \mainwp_current_user_can( $group_right, $func_right ) ) {
                                         $accessable = true;
                                         break;
                                     }
@@ -530,8 +531,8 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      *
      * Check if $_mainwp_disable_menus_items contains any menu items to hide.
      *
-     * @param string $level The level the menu item is on.
-     * @param array  $item The menu items meta data.
+     * @param string       $level The level the menu item is on.
+     * @param array|string $item The menu items meta data.
      *
      * @return bool True|False, default is False.
      */
@@ -1092,8 +1093,8 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                 <div class="item accordion">
                                     <div class="title"><a href="admin.php?page=UpdatesManage"><?php esc_html_e( 'Updates', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
                                     <div class="content menu">
-                                        <a class="item" href="admin.php?page=UpdatesManage&tab=plugins-updates"><?php esc_html_e( 'Plugins Updates', 'mainwp' ); ?></a>
-                                        <a class="item" href="admin.php?page=UpdatesManage&tab=themes-updates"><?php esc_html_e( 'Themes Updates', 'mainwp' ); ?></a>
+                                        <a class="item" href="admin.php?page=UpdatesManage&tab=plugins-updates"><?php esc_html_e( 'Plugin Updates', 'mainwp' ); ?></a>
+                                        <a class="item" href="admin.php?page=UpdatesManage&tab=themes-updates"><?php esc_html_e( 'Theme Updates', 'mainwp' ); ?></a>
                                         <a class="item" href="admin.php?page=UpdatesManage&tab=wordpress-updates"><?php esc_html_e( 'WordPress Updates', 'mainwp' ); ?></a>
                                     <?php if ( $mainwp_show_language_updates ) : ?>
                                         <a class="item" href="admin.php?page=UpdatesManage&tab=translations-updates"><?php esc_html_e( 'Translation Plugins', 'mainwp' ); ?></a>
@@ -1365,7 +1366,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 $right_group = 'extension';
                 $right       = str_replace( 'extension_', '', $right );
             }
-            if ( empty( $right ) || ( ! empty( $right ) && mainwp_current_user_have_right( $right_group, $right ) ) ) {
+            if ( empty( $right ) || ( ! empty( $right ) && \mainwp_current_user_can( $right_group, $right ) ) ) {
                 ?>
                 <a class="item <?php echo $level2_active ? 'active level-two-active' : ''; ?> <?php echo esc_attr( $item_classes ); ?>" href="<?php echo esc_url( $href ); ?>" id="<?php echo esc_attr( $slug ); ?>" <?php echo $_blank ? 'target="_blank"' : ''; ?>>
                     <?php echo $before_title . $title; //phpcs:ignore -- requires escaped. ?>

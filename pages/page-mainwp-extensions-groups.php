@@ -396,7 +396,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
         );
 
         $extensions_and_leftmenus[] = array(
-            'title'                => esc_html__( 'Basic Monitoring', 'mainwp' ),
+            'title'                => esc_html__( 'Monitoring', 'mainwp' ),
             'parent_key'           => 'Extensions-Mainwp-Monitoring',
             'slug'                 => 'MonitoringSites',
             'href'                 => 'admin.php?page=MonitoringSites',
@@ -821,6 +821,8 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'level'                => 2,
         );
 
+        $extensions_and_leftmenus = apply_filters( 'mainwp_menu_extensions_left_menu', $extensions_and_leftmenus );
+
         foreach ( $extensions_and_leftmenus as $item ) {
             if ( isset( $item['type'] ) && 'extension' === $item['type'] ) {
                 static::add_extension_menu( $item );
@@ -983,7 +985,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             <img class="right floated mini ui image" alt="<?php esc_attr_e( 'Extension icon placeholder', 'mainwp' ); ?>" src="<?php echo esc_url( MAINWP_PLUGIN_URL ) . 'assets/images/extensions/placeholder.png'; ?>">
                             <div class="header"><a href="admin.php?page=MonitoringSites"><?php esc_html_e( 'Basic Monitoring', 'mainwp' ); ?></a></div>
                             <a href="admin.php?page=MonitoringSites" class="ui green ribbon label"><?php echo esc_html__( 'MainWP core feature', 'mainwp' ); ?></a>
-                            <div class="description"><?php esc_html_e( 'The MainWP Basic Uptime Monitoring function operates independently of third-party services, providing a straightforward and no-cost option for uptime monitoring across all your managed sites.', 'mainwp' ); ?></div>
+                            <div class="description"><?php esc_html_e( 'The MainWP Uptime Monitoring function operates independently of third-party services, providing a straightforward and no-cost option for uptime monitoring across all your managed sites.', 'mainwp' ); ?></div>
                         </div>
                     </div>
                 <?php endif; ?>
@@ -991,7 +993,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
             <?php foreach ( $extensions as $extension ) { ?>
                     <?php
-                    if ( ! mainwp_current_user_have_right( 'extension', dirname( $extension['slug'] ) ) ) {
+                    if ( ! \mainwp_current_user_can( 'extension', dirname( $extension['slug'] ) ) ) {
                         continue;
                     }
 

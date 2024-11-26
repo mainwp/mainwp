@@ -10,9 +10,6 @@
 
 namespace MainWP\Dashboard\Module\ApiBackups;
 
-use function MainWP\Dashboard\mainwp_current_user_have_right;
-use function MainWP\Dashboard\mainwp_do_not_have_permissions;
-
 /**
  * MainWP API Backups Overview
  */
@@ -111,8 +108,8 @@ class Api_Backups_Overview {
      */
     public function render_backups_list() {
 
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_api_backups' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'manage api backups', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_api_backups' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage api backups', 'mainwp' ) );
             return;
         }
         Api_Backups_Admin::render_header();

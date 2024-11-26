@@ -9,13 +9,9 @@
 namespace MainWP\Dashboard\Module\CostTracker;
 
 use MainWP\Dashboard\MainWP_Post_Handler;
-use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_UI;
-use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_System_Utility;
 use MainWP\Dashboard\MainWP_Settings_Indicator;
-use function MainWP\Dashboard\mainwp_current_user_have_right;
-use function MainWP\Dashboard\mainwp_do_not_have_permissions;
 
 /**
  * Class Cost_Tracker_Add_Edit
@@ -66,8 +62,8 @@ class Cost_Tracker_Add_Edit {
      */
     public function render_add_edit_page() {
 
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_cost_tracker' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'manage cost tracker', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_cost_tracker' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage cost tracker', 'mainwp' ) );
             return;
         }
 

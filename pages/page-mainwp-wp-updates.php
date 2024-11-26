@@ -74,7 +74,7 @@ class MainWP_WP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             /**
              * Action: mainwp_cores_before_ignored_updates
              *
-             * Fires on the top of the Ignored Plugins Updates page.
+             * Fires on the top of the Ignored Plugin Updates page.
              *
              * @since 5.2
              */
@@ -95,7 +95,7 @@ class MainWP_WP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             /**
              * Action: mainwp_cores_after_ignored_updates
              *
-             * Fires on the bottom of the Ignored Plugins Updates page.
+             * Fires on the bottom of the Ignored Plugin Updates page.
              *
              * @since 4.1
              */
@@ -135,7 +135,7 @@ class MainWP_WP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                             <tr ignored-ver="<?php echo esc_attr( $ignored_ver ); ?>">
                                 <td><?php echo 'all_versions' === $ignored_ver ? esc_html__( 'All', 'mainwp' ) : esc_html( $ignored_ver ); ?></td>
                                 <td class="right aligned">
-                                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+                                    <?php if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
                                         <a href="#" class="ui mini button" onClick="return updatesoverview_cores_unignore_globally( '<?php echo esc_js( rawurlencode( $ignored_ver ) ); ?>' )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
                                     <?php endif; ?>
                                 </td>
@@ -144,7 +144,7 @@ class MainWP_WP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                         <?php // phpcs:enable ?>
                     <?php endif; ?>
                 </tbody>
-                <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+                <?php if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
                     <?php if ( $ig_vers ) : ?>
                         <tfoot class="full-width">
                             <tr>
@@ -240,7 +240,7 @@ class MainWP_WP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                                 <td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
                                 <td class="right aligned">
                                 <?php
-                                if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) :
+                                if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) :
                                     ?>
                                         <a href="#" class="ui mini button" onClick="return updatesoverview_unignore_cores_by_site( <?php echo intval( $website->id ); ?>, '<?php echo esc_js( rawurlencode( $ignored_ver ) ); ?>' )"> <?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
                                     <?php endif; ?>
@@ -255,7 +255,7 @@ class MainWP_WP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                     }
                     ?>
             </tbody>
-            <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) && $count ) : ?>
+            <?php if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) && $count ) : ?>
                     <tfoot class="full-width">
                         <tr>
                             <th scope="col" colspan="5">

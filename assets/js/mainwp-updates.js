@@ -36,8 +36,15 @@ window.mainwp_updates_get_rollback_msg = function (error) {
 
 window.mainwp_init_html_popup = function (popupSelector, content) {
     jQuery(popupSelector).popup({
-        inline: true,
-        html: '<div class="mainwp-html-popup-body">' + content + '</div>',
+        html: function(){
+            if(typeof content === 'undefined' ){
+                if(typeof popupSelector !== 'string'){
+                    // popup selector is object.
+                    content = jQuery(popupSelector).attr('html-popup-content')??''
+                }
+            }
+            return '<div class="mainwp-html-popup-body">' + content + '</div>';
+        }
     });
 };
 
@@ -2648,11 +2655,21 @@ let updatesoverview_unignore_plugintheme_by_site_all = function (what) {
 
 /**Plugins part**/
 let updatesoverview_plugins_ignore_detail = function (slug, name, id, obj, ignore_ver) {
-    let msg = __('Are you sure you want to ignore the %1 plugin updates? The updates will no longer be visible in your MainWP Dashboard.', name);
-    mainwp_confirm(msg, function () {
-        return updatesoverview_ignore_plugintheme_by_site('plugin', slug, name, id, obj, ignore_ver);
-    }, false);
-    return false;
+		const row = jQuery(obj).closest("tr");
+		const site_name = jQuery(row).attr("site_name");
+		let msg = __(
+			"Are you sure you want to ignore %1 plugin updates on %2? The updates will no longer be visible in your MainWP Dashboard.",
+			decodeURIComponent(name),
+			site_name ?? ''
+		);
+		mainwp_confirm(
+			msg,
+			function () {
+					return updatesoverview_ignore_plugintheme_by_site( 'plugin', slug, name, id, obj, ignore_ver );
+			},
+			false
+		);
+		return false;
 };
 let updatesoverview_plugins_unignore_detail = function (slug, id, ver) {
     return updatesoverview_unignore_plugintheme_by_site('plugin', slug, id, ver);
@@ -2661,7 +2678,7 @@ let updatesoverview_plugins_unignore_detail_all = function () {
     return updatesoverview_unignore_plugintheme_by_site_all('plugin');
 };
 let updatesoverview_themes_ignore_detail = function (slug, name, id, obj, ignore_ver) {
-    let msg = __('Are you sure you want to ignore the %1 theme updates? The updates will no longer be visible in your MainWP Dashboard.', name);
+    let msg = __("Are you sure you want to ignore the %1 theme updates? The updates will no longer be visible in your MainWP Dashboard.",name);
     mainwp_confirm(msg, function () {
         return updatesoverview_ignore_plugintheme_by_site('theme', slug, name, id, obj, ignore_ver);
     }, false);
@@ -2674,7 +2691,21 @@ let updatesoverview_themes_unignore_detail_all = function () {
     return updatesoverview_unignore_plugintheme_by_site_all('theme');
 };
 let updatesoverview_plugins_ignore_all = function (slug, name, obj, ver) {
-    let msg = __('Are you sure you want to ignore the %1 plugin updates? The updates will no longer be visible in your MainWP Dashboard.', name);
+		const row = jQuery(obj).closest("tr");
+		const site_name = jQuery(row).attr("site_name");
+		let msg = '';
+		if(site_name !== undefined) {
+				msg = __(
+						"Are you sure you want to ignore EXAMPLE plugin updates on EXAMPLE SITE? The updates will no longer be visible in your MainWP Dashboard.",
+						decodeURIComponent(name),
+						site_name
+				);
+		} else {
+				msg = __(
+						"Are you sure you want to ignore the %1 plugin updates? The updates will no longer be visible in your MainWP Dashboard.",
+						decodeURIComponent(name)
+				);
+		}
     mainwp_confirm(msg, function () {
         let data = mainwp_secure_data({
             action: 'mainwp_ignorepluginsthemes',
@@ -2871,7 +2902,7 @@ let updatesoverview_unignore_cores_by_site = function (id, ver) {
     });
     jQuery.post(ajaxurl, data, function (pVer, pId) {
         return function (response) {
-            if (response.result && 'success' == response.result ) {
+            if (response.result && 'success' == response.result) {
                 let siteElement = jQuery('tr[site-id="' + pId + '"][ignored-ver="' + pVer + '"]');
 
                 if (!siteElement.find('div').is(':visible')) {
@@ -2912,7 +2943,7 @@ let updatesoverview_unignore_cores_by_site_all = function (what) {
 
     jQuery.post(ajaxurl, data, function (pWhat) {
         return function (response) {
-            if (response.result && 'success' == response.result ) {
+            if (response.result && 'success' == response.result) {
                 let parent = jQuery('#ignored-cores-list');
                 parent.find('tr').remove();
                 parent.append('<tr><td colspan="999">' + __('No ignored WordPress') + '</td></tr>');
@@ -3159,7 +3190,7 @@ let updatesoverview_group_upgrade_plugintheme_all = function (what, id, noCheck,
                 }
             });
 
-            // proccessed by popup
+            // processed by popup
             //updatesoverview_upgrade_plugintheme_list( what, pId, list, true, groupId );
             let siteName = jQuery("#wp_" + pWhat + "_upgrades_" + pId + '_group_' + groupId).attr('site_name');
             updatesoverview_upgrade_plugintheme_list_popup(what, pId, siteName, list);

@@ -93,10 +93,15 @@ class MainWP_Connect_Lib { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * @param mixed $data The data.
      * @param mixed $signature The signature.
      * @param mixed $privkey The privkey.
+     * @param int   $site_id site id.
      */
-    public static function connect_sign( $data, &$signature, $privkey ) {
+    public static function connect_sign( $data, &$signature, $privkey, $site_id ) {
         try {
-            $private   = PublicKeyLoader::loadPrivateKey( $privkey );
+            $de_privkey = MainWP_Encrypt_Data_Lib::instance()->decrypt_privkey( $privkey, $site_id );
+            if ( empty( $de_privkey ) ) {
+                $de_privkey = $privkey; // compatible.
+            }
+            $private   = PublicKeyLoader::loadPrivateKey( $de_privkey );
             $signature = $private->sign( $data );
             if ( ! empty( $signature ) ) {
                 return true;

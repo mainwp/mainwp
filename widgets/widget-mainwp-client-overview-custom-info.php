@@ -157,7 +157,7 @@ class MainWP_Client_Overview_Custom_Info { // phpcs:ignore Generic.Classes.Openi
                 ?>
             </div>
             <div class="ui two columns grid mainwp-widget-footer">
-                <div class="column"><a href="admin.php?page=ClientAddField" title="" class="ui button basic green"><?php echo esc_html__( 'Add Custom Client Info', 'mainwp' ); ?></a></div>
+                <div class="column"><a href="admin.php?page=ClientAddField" title="" class="ui button mini basic green"><?php echo esc_html__( 'Add Custom Client Info', 'mainwp' ); ?></a></div>
                 <div class="column"></div>
             </div>
             <?php

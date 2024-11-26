@@ -233,7 +233,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
     /**
      * Method render_plugins_updates()
      *
-     * Render Plugins updates
+     * Render Plugin updates
      *
      * @param object $websites the websites.
      * @param int    $total_plugin_upgrades total plugin updates.
@@ -532,10 +532,10 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
     /**
      * Method render_themes_updates()
      *
-     * Render themes updates
+     * Render theme updates
      *
      * @param object $websites the websites.
-     * @param int    $total_theme_upgrades total themes updates.
+     * @param int    $total_theme_upgrades total theme updates.
      * @param mixed  $userExtension The user extension.
      * @param array  $all_groups_sites all groups of sites.
      * @param array  $all_groups all groups.

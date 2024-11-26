@@ -11,6 +11,7 @@ use MainWP\Dashboard\MainWP_DB_Client;
 use MainWP\Dashboard\MainWP_Client_Handler;
 use MainWP\Dashboard\Module\CostTracker\Cost_Tracker_DB;
 use MainWP\Dashboard\Module\CostTracker\Cost_Tracker_Rest_Api_Handle_V1;
+use MainWP\Dashboard\MainWP_Utility;
 
 /**
  * Class MainWP_Rest_Clients_Controller
@@ -265,7 +266,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      */
     public function get_request_item( $request ) {
         $route = $request->get_route();
-        if ( str_ends_with( $route, '/batch' ) ) {
+        if ( MainWP_Utility::string_ends_by( $route, '/batch' ) ) {
             $by    = 'id';
             $value = intval( $request['id'] );
         } else {

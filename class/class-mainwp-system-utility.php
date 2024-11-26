@@ -330,12 +330,19 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return string Sig Download URL.
      */
     public static function get_download_sig( $fullFile ) {
-        $key_value  = uniqid( 'sig_', true ) . filesize( $fullFile ) . time();
+        $key_value    = uniqid( 'sig_', true ) . filesize( $fullFile ) . time();
+        $secret_value = uniqid( 'sig_secret_', true ) . filesize( $fullFile ) . time();
+
+        $hashkey = wp_hash( $key_value );
+
         $sig_values = array(
             'sig'       => md5( filesize( $fullFile ) ), // NOSONAR - safe for sig file size.
             'key_value' => $key_value,
-            'hash_key'  => wp_hash( $key_value ),
+            'hash_key'  => $secret_value,
         );
+
+        set_site_transient( 'mainwp_fdl_' . $hashkey, $secret_value, 3 * HOUR_IN_SECONDS );
+
         $sig_values = wp_json_encode( $sig_values );
         $sig_values = rawurlencode( $sig_values );
         return $sig_values;
@@ -359,8 +366,10 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return false;
         }
 
-        $hash_key = wp_hash( $value['key_value'] );
-        if ( ! hash_equals( $hash_key, $value['hash_key'] ) ) {
+        $hash_key   = wp_hash( $value['key_value'] );
+        $secure_key = get_site_transient( 'mainwp_fdl_' . $hash_key );
+
+        if ( empty( $secure_key ) || empty( $value['hash_key'] ) || ! hash_equals( $secure_key, $value['hash_key'] ) ) {
             return false;
         }
 
@@ -402,7 +411,9 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         $dirs = static::get_mainwp_dir();
 
-        $newdir = $dirs[0] . $userid;
+        $userdir = $dirs[0] . $userid;
+        $newdir  = $userdir;
+
         if ( '/' === $dir || null === $dir ) {
             $newdir .= DIRECTORY_SEPARATOR;
         } else {
@@ -410,6 +421,11 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
+
+            // need to check user dir first.
+            if ( ! $wp_filesystem->is_dir( $userdir ) ) {
+                $wp_filesystem->mkdir( $userdir, 0777 );
+            }
 
             if ( ! $wp_filesystem->is_dir( $newdir ) ) {
                 $wp_filesystem->mkdir( $newdir, 0777 );
@@ -420,6 +436,11 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 $wp_filesystem->put_contents( $file_htaccess, 'deny from all' );
             }
         } else {
+
+            // need to check user dir first.
+            if ( ! file_exists( $userdir ) ) {
+                mkdir( $userdir, 0777, true ); // NOSONAR - @newdir is valid.
+            }
 
             if ( ! file_exists( $newdir ) ) {
                 mkdir( $newdir, 0777, true ); // NOSONAR - @newdir is valid.

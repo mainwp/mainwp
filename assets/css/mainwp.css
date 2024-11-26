@@ -1,6 +1,3 @@
-/* END V4
-********************************************************************************/
-
 /* Genaral Style */
 
 .mainwp-main-content {
@@ -193,6 +190,10 @@
 .mainwp-individual-site-view #mainwp-page-navigation-wrapper .mainwp-page-navigation .item:last-child {
     box-shadow: none !important;
     border-radius: 0px !important;
+}
+
+.mainwp-individual-site-view #mainwp-page-navigation-wrapper #mainwp-site-preview-image {
+    max-width: 100%;
 }
 
 .mainwp-individual-site-view #mainwp-site-mode-wrap {
@@ -450,6 +451,29 @@
 .mainwp-widget {
     border: 1px solid #dadada !important;
     margin: none !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.mainwp-widget .mainwp-resize-handle {
+    position: absolute;
+    bottom: .1rem;
+    right: .1rem;
+}
+
+.mainwp-widget .mainwp-widget-header {
+    padding-bottom: 1rem !important;
+}
+
+.mainwp-widget .mainwp-scrolly-overflow {
+    flex-grow:1;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.mainwp-widget .mainwp-widget-footer {
+    padding-top: 1rem !important;
 }
 
 .mainwp-widget img {
@@ -458,133 +482,41 @@
     height: auto;
 }
 
-#mainwp-update-everything-button {
-    font-size: 14px;
-}
-
 .mainwp-widget .dt-search.ui.input {
     padding: 5px;
     max-width: 160px;
 }
 
+.mainwp-widget.ui.segment.gs-w {
+    position: absolute;
+}
+
+.mainwp-widget .handle-drag {
+    cursor: move !important;
+}
+
+.mainwp-empty-widget-placeholder {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.mainwp-empty-widget-placeholder img.mainwp-no-results-placeholder {
+    margin-bottom: 2rem;
+}
+
+/* Forms - Import Sites */
+.mainwp-managesites-import-rows:nth-of-type(odd) {
+    background-color: rgba(0,0,0,.04);
+}
+
 
 @media only screen and (min-width: 1368px) {
-
-    .mainwp-widget.ui.segment.gs-w {
-        position: absolute;
-    }
-
-    .mainwp-widget-header {
-        margin-bottom: 20px !important;
-    }
-
-    .mainwp-widget .handle-drag {
-        cursor: move !important;
-    }
-
-    .mainwp-scrolly-overflow {
-        overflow-y: auto;
-        overflow-x: hidden;
-        padding: 0 10px 0 0;
-        margin-bottom: 20px;
-    }
-
-    .mainwp-widget-footer {
-        position: absolute;
-        bottom: 1rem;
-        width: 100%;
-    }
-
-    #widget-recent_posts .mainwp-scrolly-overflow,
-    #widget-recent_pages .mainwp-scrolly-overflow {
-        height: calc(100% - 125px);
-    }
-
-    #widget-connection_status .mainwp-scrolly-overflow {
-        height: calc(100% - 135px);
-    }
-
-    #widget-security_issues .mainwp-scrolly-overflow {
-        height: calc(100% - 100px);
-    }
-
-    #widget-non_mainwp_changes .mainwp-scrolly-overflow {
-        height: calc(100% - 120px) !important;
-    }
-
-    #widget-clients .mainwp-scrolly-overflow {
-        height: calc(100% - 100px) !important;
-    }
-
-    #widget-client_info .mainwp-scrolly-overflow {
-        height: calc(100% - 100px) !important;
-    }
-
-    #widget-child_site_info .mainwp-scrolly-overflow {
-        height: calc(100% - 60px) !important;
-    }
-
-    #widget-notes .mainwp-scrolly-overflow {
-        height: calc(100% - 100px) !important;
-    }
-
-    #widget-plugins .mainwp-scrolly-overflow {
-        height: calc(100% - 70px) !important;
-    }
-
-    #widget-themes .mainwp-scrolly-overflow {
-        height: calc(100% - 70px) !important;
-    }
-
-    #widget-overview .mainwp-scrolly-overflow {
-        height: calc(100% - 120px) !important;
-        padding: 10px 0;
-    }
-
-    #widget-advanced-cost-tracker-costs .mainwp-scrolly-overflow {
-        height: calc(100% - 120px) !important;
-        padding: 10px 0;
-    }
-
-    #widget-fields_info .mainwp-scrolly-overflow {
-        height: calc(100% - 100px) !important;
-    }
-
-    #widget-websites .mainwp-scrolly-overflow {
-        height: calc(100% - 70px) !important;
-    }
-
-    [id^="widget-contact_"] .mainwp-scrolly-overflow {
-        height: calc(100% - 70px) !important;
-    }
-
-    #widget-note .mainwp-scrolly-overflow {
-        height: calc(100% - 100px) !important;
-    }
-
-    #widget-advanced-matomo .mainwp-scrolly-overflow {
-        height: calc(100% - 70px) !important;
-    }
-
-    #widget-get-started .mainwp-scrolly-overflow {
-        height: calc(100% - 70px) !important;
-    }
-
     #mainwp-plugin-privacy {
         width: 800px;
     }
-
-    #widget-cost_upcomming_renewals .mainwp-scrolly-overflow,
-    #widget-cost_monthly_renewals .mainwp-scrolly-overflow,
-    #widget-cost_yearly_renewals .mainwp-scrolly-overflow {
-        height: calc(100% - 100px) !important;
-    }
-
-    #widget-cost_monthly_totals .mainwp-scrolly-overflow,
-    #widget-cost_category_totals .mainwp-scrolly-overflow {
-        height: calc(100% - 70px) !important;
-    }
-
 }
 
 .mainwp-ui .mainwp-widget .ui.form .ui.input,
@@ -739,6 +671,7 @@ table.mainwp-manage-wpsites-table .error a {
 .ui.accordion.mainwp-manage-plugin-item,
 .ui.accordion.mainwp-manage-theme-item {
     border-bottom: 1px solid rgba(34, 36, 38, 0.1);
+    padding: 1em !important;
 }
 
 .ui.accordion.mainwp-manage-plugin-item .title,
@@ -776,7 +709,7 @@ table.mainwp-manage-wpsites-table .error a {
     border-bottom: 1px solid rgba(34, 36, 38, 0.1);
     border-top: 1px solid rgba(34, 36, 38, 0.1);
     background: #fafafa;
-    padding: 1em;
+    padding: 1em !important;
     margin: 0 0 -1px !important;
 }
 
@@ -865,31 +798,6 @@ table.mainwp-manage-wpsites-table .error a {
 
 /* END V4
 ********************************************************************************/
-
-
-.mainwp-notice {
-    margin: 5px 0 15px;
-    padding: .6em;
-    background: #fff;
-    box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
-    vertical-align: middle;
-}
-
-.mainwp-notice-green {
-    border-left: 4px solid #7fb100;
-}
-
-.mainwp-notice-blue {
-    border-left: 4px solid #0073AA;
-}
-
-.mainwp-notice-red {
-    border-left: 4px solid #a00;
-}
-
-.mainwp-notice-yellow {
-    border-left: 4px solid #FFB901;
-}
 
 .mainwp_action {
     text-decoration: none;
@@ -1414,5 +1322,30 @@ th .down.icon {
     height: 100vh;
 }
 #plugin-information-footer{
+    display: none !important;
+}
+#widget-advanced-cost-tracker-widget .mainwp-scrolly-overflow {
+	height: calc(100% - 120px) !important;
+}
+#widget-advanced-cost-tracker-widget #mainwp-module-cost-tracker-costs-widget-table_wrapper .row:last-child {
+	overflow-x: auto;
+}
+
+.menu-connect-first-site .item.active,
+.mainwp-qsw-add-client .item.active {
+	background: var(--grey-light) !important;
+}
+.mainwp-qsw-add-client-more-row,
+.mainwp-managesites-more-import-row{
+	cursor: pointer;
+}
+
+.mainwp-uptime-status-indicator {
+    width: 4px !important;
+    height: 20px !important;
+    margin: 0 !important;
+    padding: 2px !important;
+}
+.uptime-monitors-sub-pages-table > thead{
     display: none !important;
 }

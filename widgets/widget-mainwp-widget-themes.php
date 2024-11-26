@@ -94,158 +94,99 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         $inactive_themes = MainWP_Utility::sortmulti( $inactive_themes, 'name', 'asc' );
 
         ?>
-        <div class="ui grid mainwp-widget-header">
-            <div class="twelve wide column">
-                <h3 class="ui header handle-drag">
-                    <?php
-                    /**
-                     * Filter: mainwp_themes_widget_title
-                     *
-                     * Filters the Themes widget title text.
-                     *
-                     * @since 4.1
-                     */
-                    echo esc_html( apply_filters( 'mainwp_themes_widget_title', esc_html__( 'Themes', 'mainwp' ), $website ) );
-                    ?>
-                    <div class="sub header"><?php esc_html_e( 'Installed themes on the child site', 'mainwp' ); ?></div>
-                </h3>
-            </div>
-            <div class="four wide column right aligned">
-                <div class="ui dropdown right pointing mainwp-dropdown-tab">
-                    <div class="text"><?php esc_html_e( 'Active', 'mainwp' ); ?></div>
-                    <i class="dropdown icon"></i>
-                    <div class="menu">
-                        <a class="item" data-tab="active_themes" data-value="active_themes" title="<?php esc_attr_e( 'Active', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Active', 'mainwp' ); ?></a>
-                        <a class="item" data-tab="inactive_themes" data-value="inactive_themes" title="<?php esc_attr_e( 'Inactive', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Inactive', 'mainwp' ); ?></a>
-                    </div>
-                </div>
-            </div>
+        <div class="mainwp-widget-header">
+            <h3 class="ui header handle-drag">
+                <?php
+                /**
+                 * Filter: mainwp_themes_widget_title
+                 *
+                 * Filters the Themes widget title text.
+                 *
+                 * @since 4.1
+                 */
+                echo esc_html( apply_filters( 'mainwp_themes_widget_title', esc_html__( 'Themes', 'mainwp' ), $website ) );
+                ?>
+                <div class="sub header"><?php esc_html_e( 'Inactive themes on the child site', 'mainwp' ); ?></div>
+            </h3>
         </div>
         <div class="mainwp-scrolly-overflow">
-        <?php
-        /**
-         * Action: mainwp_themes_widget_top
-         *
-         * Fires at the top of the Themes widget on the Individual site overview page.
-         *
-         * @param object $website   Object containing the child site info.
-         * @param array  $allThemes Array containing all detected themes data.
-         *
-         * @since 4.1
-         */
-        do_action( 'mainwp_themes_widget_top', $website, $allThemes );
-        ?>
-        <div id="mainwp-widget-active-themes" class="ui tab active" data-tab="active_themes">
             <?php
             /**
-             * Action: mainwp_before_active_themes_list
+             * Action: mainwp_themes_widget_top
              *
-             * Fires before the active theme list in the Themes widget on the Individual site overview page.
+             * Fires at the top of the Themes widget on the Individual site overview page.
              *
-             * @param object $website        Object containing the child site info.
-             * @param array  $actived_themes Array containing all active themes data.
+             * @param object $website   Object containing the child site info.
+             * @param array  $allThemes Array containing all detected themes data.
              *
              * @since 4.1
              */
-            do_action( 'mainwp_before_active_themes_list', $website, $actived_themes );
+            do_action( 'mainwp_themes_widget_top', $website, $allThemes );
             ?>
-            <div class="ui divided selection list">
+            <div id="mainwp-widget-inactive-themes">
                 <?php
-                $_count = count( $actived_themes );
-                for ( $i = 0; $i < $_count; $i++ ) {
-                    $slug = $actived_themes[ $i ]['slug'];
-                    ?>
-                    <div class="item">
-                        <input class="themeSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $actived_themes[ $i ]['slug'] ) ); ?>"/>
-                        <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
-                        <div class="right floated content themesAction">
-                                <span  data-position="left center" data-tooltip="<?php esc_attr_e( 'Active theme cannot be deactivated.', 'mainwp' ); ?>" data-inverted=""><a href="javascript:void(0);" disabled class="button ui mini grey basic"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a></span>
+                /**
+                 * Action: mainwp_before_inactive_themes_list
+                 *
+                 * Fires before the inactive themes list in the Themes widget on the Individual site overview page.
+                 *
+                 * @param object $website        Object containing the child site info.
+                 * @param array  $inactive_themes Array containing all inactive themes data.
+                 *
+                 * @since 4.1
+                 */
+                do_action( 'mainwp_before_inactive_themes_list', $website, $inactive_themes );
+                ?>
+                <div class="ui divided selection list">
+                    <?php
+                    $_count = count( $inactive_themes );
+                    for ( $i = 0; $i < $_count; $i++ ) {
+                        $slug      = $inactive_themes[ $i ]['slug'];
+                        $is_parent = ( isset( $inactive_themes[ $i ]['parent_active'] ) && 1 === (int) $inactive_themes[ $i ]['parent_active'] ) ? true : false;
+                        ?>
+                        <div class="item row-manage-item">
+                            <input class="themeName" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) ); ?>"/>
+                            <input class="themeSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_themes[ $i ]['slug'] ) ); ?>"/>
+                            <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
+                            <div class="right floated content themesAction">
+                                <div class="ui right pointing dropdown icon mini button">
+                                    <i class="ellipsis horizontal icon"></i>
+                                    <div class="menu">
+                                        <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_themes' ) ) : ?>
+                                            <a href="#" class="mainwp-theme-activate item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Activate', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>
+                                        <?php endif; ?>
+                                        <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_themes' ) ) : ?>
+                                            <a href="#" class="<?php echo $is_parent ? '' : 'mainwp-theme-delete'; ?> item <?php echo $is_demo ? 'disabled' : ''; ?>" <?php echo $is_parent ? 'disabled onclick="javascript:void(0)"' : ''; ?>><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="middle aligned content">
+                                <?php echo MainWP_System_Utility::get_theme_icon( $slug ); // phpcs:ignore WordPress.Security.EscapeOutput ?>&nbsp;&nbsp;&nbsp;&nbsp;
+                                <?php echo esc_html( $inactive_themes[ $i ]['name'] . ' ' . $inactive_themes[ $i ]['version'] ); ?>
+                            </div>
+                            <div class="mainwp-row-actions-working">
+                                <i class="ui active inline loader tiny"></i> <?php esc_html_e( 'Please wait...', 'mainwp' ); ?>
+                            </div>
                         </div>
-                        <div class="middle aligned content">
-                            <?php echo MainWP_System_Utility::get_theme_icon( $slug ); // phpcs:ignore WordPress.Security.EscapeOutput ?>&nbsp;&nbsp;&nbsp;&nbsp;
-                            <?php echo esc_html( $actived_themes[ $i ]['name'] . ' ' . $actived_themes[ $i ]['version'] ); ?>
-                        </div>
-                        <div class="mainwp-row-actions-working">
-                            <i class="ui active inline loader tiny"></i> <?php esc_html_e( 'Please wait...', 'mainwp' ); ?>
-                        </div>
-                    </div>
-                <?php } ?>
-            </div>
-            <?php
-            /**
-             * Action: mainwp_after_active_themes_list
-             *
-             * Fires after the active themes list in the Themes widget on the Individual site overview page.
-             *
-             * @param object $website        Object containing the child site info.
-             * @param array  $actived_themes Array containing all active themes data.
-             *
-             * @since 4.1
-             */
-            do_action( 'mainwp_after_active_themes_list', $website, $actived_themes );
-            ?>
-        </div>
-        <div id="mainwp-widget-inactive-themes" class="ui tab" data-tab="inactive_themes">
-            <?php
-            /**
-             * Action: mainwp_before_inactive_themes_list
-             *
-             * Fires before the inactive themes list in the Themes widget on the Individual site overview page.
-             *
-             * @param object $website        Object containing the child site info.
-             * @param array  $inactive_themes Array containing all inactive themes data.
-             *
-             * @since 4.1
-             */
-            do_action( 'mainwp_before_inactive_themes_list', $website, $inactive_themes );
-            ?>
-            <div class="ui divided selection list">
+                    <?php } ?>
+                </div>
                 <?php
-                $_count = count( $inactive_themes );
-                for ( $i = 0; $i < $_count; $i++ ) {
-                    $slug      = $inactive_themes[ $i ]['slug'];
-                    $is_parent = ( isset( $inactive_themes[ $i ]['parent_active'] ) && 1 === (int) $inactive_themes[ $i ]['parent_active'] ) ? true : false;
-                    ?>
-                    <div class="item row-manage-item">
-                        <input class="themeName" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) ); ?>"/>
-                        <input class="themeSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_themes[ $i ]['slug'] ) ); ?>"/>
-                        <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
-                        <div class="right floated content themesAction">
-                            <?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
-                                    <span  data-position="left center" data-tooltip="<?php echo esc_attr__( 'Activate the ', 'mainwp' ) . wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) . ' ' . esc_attr__( 'theme on the child site.', 'mainwp' ); ?>" data-inverted=""><a href="#" class="mainwp-theme-activate ui mini green button <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Activate', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a></span>
-                            <?php } ?>
-                            <?php
-                            if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) ) {
-                                $parent_str = sprintf( esc_html__( 'Parent theme of the active theme (%s) on the site can not be deleted.', 'mainwp' ), isset( $inactive_themes[ $i ]['child_theme'] ) ? $inactive_themes[ $i ]['child_theme'] : '' );
-                                ?>
-                                    <span  data-position="left center" data-tooltip="<?php echo ! $is_parent ? esc_attr__( 'Delete the ', 'mainwp' ) . wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) . ' ' . esc_attr__( 'theme from the child site.', 'mainwp' ) : $parent_str; // phpcs:ignore WordPress.Security.EscapeOutput ?>"  data-inverted="" ><a href="#" class="<?php echo $is_parent ? '' : 'mainwp-theme-delete'; ?> ui mini basic button <?php echo $is_demo ? 'disabled' : ''; ?>" <?php echo $is_parent ? 'disabled onclick="javascript:void(0)"' : ''; ?>><?php esc_html_e( 'Delete', 'mainwp' ); ?></a><span>
-                            <?php } ?>
-                        </div>
-                        <div class="middle aligned content">
-                            <?php echo MainWP_System_Utility::get_theme_icon( $slug ); // phpcs:ignore WordPress.Security.EscapeOutput ?>&nbsp;&nbsp;&nbsp;&nbsp;
-                            <?php echo esc_html( $inactive_themes[ $i ]['name'] . ' ' . $inactive_themes[ $i ]['version'] ); ?>
-                        </div>
-                        <div class="mainwp-row-actions-working">
-                            <i class="ui active inline loader tiny"></i> <?php esc_html_e( 'Please wait...', 'mainwp' ); ?>
-                        </div>
-                    </div>
-                <?php } ?>
+                /**
+                 * Action: mainwp_after_inactive_themes_list
+                 *
+                 * Fires after the inactive themes list in the Themes widget on the Individual site overview page.
+                 *
+                 * @param object $website        Object containing the child site info.
+                 * @param array  $inactive_themes Array containing all inactive themes data.
+                 *
+                 * @since 4.1
+                 */
+                do_action( 'mainwp_after_inactive_themes_list', $website, $inactive_themes );
+                ?>
             </div>
-            <?php
-            /**
-             * Action: mainwp_after_inactive_themes_list
-             *
-             * Fires after the inactive themes list in the Themes widget on the Individual site overview page.
-             *
-             * @param object $website        Object containing the child site info.
-             * @param array  $inactive_themes Array containing all inactive themes data.
-             *
-             * @since 4.1
-             */
-            do_action( 'mainwp_after_inactive_themes_list', $website, $inactive_themes );
-            ?>
         </div>
-        </div>
+
         <?php
         /**
          * Action: mainwp_themes_widget_bottom
@@ -258,6 +199,14 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
          * @since 4.1
          */
         do_action( 'mainwp_themes_widget_bottom', $website, $allThemes );
+        ?>
+        <div class="ui two column grid mainwp-widget-footer">
+            <div class="left aligned middle aligned column"></div>
+            <div class="right aligned middle aligned column">
+                <a href="admin.php?page=ThemesManage"><?php esc_html_e( 'Manage Themes', 'mainwp' ); ?></a>
+            </div>
+        </div>
+        <?php
     }
 
     /**

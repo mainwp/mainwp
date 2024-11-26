@@ -120,6 +120,10 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             $columns['site_preview'] = esc_html__( 'Site preview', 'mainwp' );
         }
 
+        if ( isset( $columns['last24_status'] ) ) {
+            $columns['last24_status'] = esc_html__( 'Last 24h Status', 'mainwp' );
+        }
+
         if ( isset( $columns['lighthouse_desktop_score'] ) ) {
             $columns['lighthouse_desktop_score'] = esc_html__( 'Lighthouse Desktop Score', 'mainwp' );
         }
@@ -186,6 +190,11 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                                             <input type="checkbox"
                                             <?php
                                             $show_col = ! isset( $show_cols[ $name ] ) || ( 1 === (int) $show_cols[ $name ] );
+
+                                            if ( in_array( $name, array( 'site_preview', 'atarim_tasks' ) ) && ! isset( $show_cols[ $name ] ) ) {
+                                                $show_col = false;
+                                            }
+
                                             if ( $show_col ) {
                                                 echo 'checked="checked"';
                                             }
@@ -246,7 +255,7 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                         jQuery('input[name=mainwp_default_monitoring_sites_per_page]').val(25);
                         jQuery('.mainwp_hide_wpmenu_checkboxes input[id^="mainwp_show_column_"]').prop( 'checked', false );
                         //default columns: Site, Open Admin, URL, Site Health, Status Code and Actions.
-                        let cols = ['site','login','url','site_health','status_code','site_actions'];
+                        let cols = ['site','status','site_actions'];
                         jQuery.each( cols, function ( index, value ) {
                             jQuery('.mainwp_hide_wpmenu_checkboxes input[id="mainwp_show_column_' + value + '"]').prop( 'checked', true );
                         } );
@@ -267,8 +276,8 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
      */
     public static function render_all_sites() {
 
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'monitoring_sites' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'monitoring sites', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'monitoring_sites' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'monitoring sites', 'mainwp' ) );
 
             return;
         }

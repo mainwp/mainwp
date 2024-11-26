@@ -114,7 +114,7 @@ abstract class MainWP_Post_Base_Handler { // phpcs:ignore Generic.Classes.Openin
      * Add ajax action.
      *
      * @param string $action Action to perform.
-     * @param string $callback Callback to perform.
+     * @param mixed  $callback Callback to perform.
      * @param int    $priority priority aciton.
      * @param int    $accepted number args.
      */

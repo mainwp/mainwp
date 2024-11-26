@@ -1,14 +1,36 @@
 jQuery(function () {
-  jQuery('#mainwp-qsw-verify-mainwp-child-active').on('change', function () {
-    if (jQuery(this).is(':checked')) {
+  jQuery('.mainwp-field-tab-connect input[name=tab_connect]').change(function () {
+    const tab_active = this.value;
+    if (tab_active !== '') {
       jQuery('#mainwp-qsw-connect-site-form').fadeIn(500);
       jQuery('#mainwp_managesites_add').show();
+      jQuery('#mainwp-qsw-toggle-verify-mainwp-child-active').show();
       jQuery('#mainwp_addsite_continue_button').hide();
-    } else {
-      jQuery('#mainwp-qsw-connect-site-form').fadeOut(500);
-      jQuery('#mainwp_managesites_add').hide();
-      jQuery('#mainwp_addsite_continue_button').show();
+      jQuery('.menu-connect-first-site .item').tab('change tab', tab_active);
     }
+  });
+
+  jQuery('#mainwp-qsw-verify-mainwp-child-active').on('change', function () {
+    if (jQuery(this).is(':checked')) {
+      jQuery('#mainwp_managesites_add').attr("disabled", false);
+      jQuery('#mainwp_managesites_add_import').attr("disabled", false);
+    } else {
+      jQuery('#mainwp_managesites_add').attr("disabled", true);
+      jQuery('#mainwp_managesites_add_import').attr("disabled", true);
+    }
+  });
+
+  // Handle submit import file CVS.
+  jQuery(document).on('click', '#mainwp_managesites_add_import', function () {
+    let error_messages = mainwp_managesites_import_handle_form_before_submit();
+    // If there is an error, prevent submission and display the error
+    if (error_messages.length > 0) {
+      feedback('mainwp-message-zone', error_messages.join("<br/>"), "red");
+    } else {
+      jQuery('#mainwp_connect_first_site_form').trigger('submit');
+    }
+
+    return false;
   });
 
   jQuery('#mainwp_qsw_client_name_field').on('keyup', function () {
@@ -65,6 +87,18 @@ jQuery(function () {
 
 });
 
+// Handle tab onvisible.
+const mainwp_menu_connect_first_site_onvisible_callback = function (objItem) {
+  const tab = jQuery(objItem).attr("data-tab");
+  jQuery('.mainwp-field-tab-connect input[name=tab_connect]').filter(`[value="${tab}"]`).parent().trigger('click'); // set checked class ui checkbox
+  if (tab === 'multiple-site') {
+    jQuery('#mainwp_managesites_add_import').show();
+    jQuery('#mainwp_managesites_add').hide();
+  } else if (tab === 'single-site') {
+    jQuery('#mainwp_managesites_add').show();
+    jQuery('#mainwp_managesites_add_import').hide();
+  }
+}
 // Connect a new website
 let mainwp_setup_managesites_add = function () {
   mainwp_set_message_zone('#mainwp-message-zone');
@@ -153,6 +187,7 @@ let mainwp_setup_managesites_add = function () {
           managesites_add_wpname: name,
           managesites_add_wpurl: url,
           managesites_add_wpadmin: jQuery('#mainwp_managesites_add_wpadmin').val(),
+          managesites_add_adminpwd: encodeURIComponent(jQuery('#mainwp_managesites_add_admin_pwd').val()),
           managesites_add_uniqueId: jQuery('#mainwp_managesites_add_uniqueId').val(),
           groupids: group_ids,
           qsw_page: true,
@@ -196,6 +231,7 @@ let mainwp_setup_managesites_add = function () {
             jQuery('#mainwp_managesites_add_wpurl').val('');
             jQuery('#mainwp_managesites_add_wpurl_protocol').val('https');
             jQuery('#mainwp_managesites_add_wpadmin').val('');
+            jQuery('#mainwp_managesites_add_admin_pwd').val('');
             jQuery('#mainwp_managesites_add_uniqueId').val('');
 
             jQuery("input[name^='creport_token_']").each(function () {
@@ -208,8 +244,8 @@ let mainwp_setup_managesites_add = function () {
             });
 
             setTimeout(function () {
-              window.location.href = 'admin.php?page=mainwp-setup&step=connect_first_site';
-            }, 1000);
+              window.location.href = 'admin.php?page=mainwp-setup&step=add_client';
+            }, 3000);
           }
 
           jQuery('#mainwp_managesites_add').prop("disabled", false);

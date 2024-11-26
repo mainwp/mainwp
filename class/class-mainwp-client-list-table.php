@@ -673,7 +673,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                 echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
                 ?>
                 <?php $client_display_image = MainWP_Client_Handler::get_client_contact_image( $item ); ?>
-                <a class="item" href="admin.php?page=ManageClients&client_id=<?php echo intval( $item['client_id'] ); ?>"><?php echo $client_display_image; //phpcs:ignore --- ok.?></a>
+                <a class="item" href="admin.php?page=ManageClients&client_id=<?php echo intval( $item['client_id'] ); ?>"><?php echo $client_display_image; //phpcs:ignore -- NOSONAR - ok.?></a>
                 <?php
                 echo '</td>';
             } elseif ( 'name' === $column_name ) {

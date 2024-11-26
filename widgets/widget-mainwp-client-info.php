@@ -61,11 +61,10 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
      * @param object $website Object containing the child site info.
      */
     public static function render_info( $website ) { //phpcs:ignore -- NOSONAR - complex.
-
         $client_info = $website->client_id ? MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $website->client_id, ARRAY_A ) : false;
 
         ?>
-            <h3 class="ui header handle-drag">
+        <h3 class="ui header handle-drag mainwp-widget-header">
             <?php
             /**
              * Filter: mainwp_clients_info_widget_title
@@ -78,129 +77,94 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
              */
             echo esc_html( apply_filters( 'mainwp_clients_info_widget_title', esc_html__( 'Client Info', 'mainwp' ), $website ) );
             ?>
-                <div class="sub header"><?php esc_html_e( 'Client Information', 'mainwp' ); ?></div>
-            </h3>
-            <div class="mainwp-widget-site-info mainwp-scrolly-overflow">
+            <div class="sub header"><?php esc_html_e( 'Client Information', 'mainwp' ); ?></div>
+        </h3>
+        <div class="mainwp-widget-site-info mainwp-scrolly-overflow">
+            <?php
+            /**
+             * Actoin: mainwp_clients_info_widget_top
+             *
+             * Fires at the top of the Site Info widget on the Individual site overview page.
+             *
+             * @param object $website Object containing the child site info.
+             *
+             * @since 4.0
+             */
+            do_action( 'mainwp_clients_info_widget_top', $website );
+            ?>
+
+            <?php
+            if ( $client_info ) {
+                ?>
                 <?php
                 /**
-                 * Actoin: mainwp_clients_info_widget_top
+                 * Action: mainwp_clients_info_table_top
                  *
-                 * Fires at the top of the Site Info widget on the Individual site overview page.
+                 * Fires at the top of the Site Info table in Site Info widget on the Individual site overview page.
                  *
                  * @param object $website Object containing the child site info.
                  *
                  * @since 4.0
                  */
-                do_action( 'mainwp_clients_info_widget_top', $website );
+                do_action( 'mainwp_clients_info_table_top', $website );
+                ?>
+                <div class="ui cards">
+                    <div class="ui fluid small card">
+                        <div class="content">
+                            <div class="ui right floated">
+                                <?php $client_display_image = MainWP_Client_Handler::get_client_contact_image( $client_info ); ?>
+                                <?php echo $client_display_image; //phpcs:ignore -- NOSONAR - ok. ?>
+                            </div>
+                            <div class="header" style="margin-bottom:0">
+                                <a href="admin.php?page=ManageClients&client_id=<?php echo intval( $client_info['client_id'] ); ?>"><?php echo esc_html( $client_info['name'] ); ?></a>
+                            </div>
+                            <div class="meta">
+                                <a href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $client_info['client_id'] ); ?>"><i class="envelope icon"></i> <?php echo esc_html( $client_info['client_email'] ); ?></a>
+                            </div>
+                            <?php if ( isset( $client_info['note'] ) && ! empty( $client_info['note'] ) ) : ?>
+                            <div class="description">
+                                <?php
+                                $note     = html_entity_decode( $client_info['note'] );
+                                $esc_note = MainWP_Utility::esc_content( $note );
+                                echo $esc_note; //phpcs:ignore -- NOSONAR -ok.
+                                ?>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="extra content">
+                            <span class="right floated" data-tooltip="<?php echo esc_attr__( 'Created on ', 'mainwp' ) . esc_attr( MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $client_info['created'] ) ) ); ?>" data-inverted="" data-position="top right"><?php echo esc_html( MainWP_Utility::time_elapsed_string( $client_info['created'] ) ); ?></span>
+                            <?php if ( isset( $client_info['client_facebook'] ) && ! empty( $client_info['client_facebook'] ) ) : ?>
+                                <a href="<?php echo esc_url( $client_info['client_facebook'] ); ?>"><i class="facebook icon"></i></a>
+                            <?php endif; ?>
+                            <?php if ( isset( $client_info['client_twitter'] ) && ! empty( $client_info['client_twitter'] ) ) : ?>
+                                <a href="<?php echo esc_url( $client_info['client_twitter'] ); ?>"><i class="twitter icon"></i></a>
+                            <?php endif; ?>
+                            <?php if ( isset( $client_info['client_instagram'] ) && ! empty( $client_info['client_instagram'] ) ) : ?>
+                                <a href="<?php echo esc_url( $client_info['client_instagram'] ); ?>"><i class="instagram icon"></i></a>
+                            <?php endif; ?>
+                            <?php if ( isset( $client_info['client_linkedin'] ) && ! empty( $client_info['client_linkedin'] ) ) : ?>
+                                <a href="<?php echo esc_url( $client_info['client_linkedin'] ); ?>"><i class="linkedin icon"></i></a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+                <?php
+                /**
+                 * Action: mainwp_clients_info_table_bottom
+                 *
+                 * Fires at the bottom of the Site Info table in Site Info widget on the Individual site overview page.
+                 *
+                 * @param object $website Object containing the child site info.
+                 *
+                 * @since 4.0
+                 */
+                do_action( 'mainwp_clients_info_table_bottom', $website );
                 ?>
                 <?php
-                if ( $client_info ) {
-                    $default_client_fields = MainWP_Client_Handler::get_default_client_fields();
-                    $custom_fields         = MainWP_DB_Client::instance()->get_client_fields( true, $website->client_id );
-
-                    ?>
-                <table class="ui celled striped table">
-                    <tbody>
-                    <?php
-                    /**
-                     * Action: mainwp_clients_info_table_top
-                     *
-                     * Fires at the top of the Site Info table in Site Info widget on the Individual site overview page.
-                     *
-                     * @param object $website Object containing the child site info.
-                     *
-                     * @since 4.0
-                     */
-                    do_action( 'mainwp_clients_info_table_top', $website );
-                    ?>
-                    <?php
-
-                    foreach ( $default_client_fields as $field ) {
-
-                        $db_field = isset( $field['db_field'] ) ? $field['db_field'] : '';
-                        $val      = ( ! empty( $db_field ) && isset( $client_info[ $db_field ] ) ) ? $client_info[ $db_field ] : '';
-
-                        if ( empty( $val ) ) {
-                            continue;
-                        }
-
-                        ?>
-                            <tr>
-                                <td><?php echo esc_html( $field['title'] ); ?></td>
-                                <td>
-                                <?php
-                                if ( 'name' === $db_field ) {
-                                    ?>
-                                    <a class="item" href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $client_info['client_id'] ); ?>"><?php echo esc_html( $client_info['name'] ); ?></a>
-                                    <?php
-                                } elseif ( 'email' === $db_field ) {
-                                    ?>
-                                    <a class="item" href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $client_info['client_id'] ); ?>"><?php echo esc_html( $client_info['email'] ); ?></a>
-                                    <?php
-
-                                } elseif ( 'created' === $db_field ) {
-                                    ?>
-                                    <?php echo MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( esc_html( $client_info['created'] ) ) ); //phpcs:ignore ?>
-                                    <?php
-
-                                } elseif ( 'note' === $db_field ) {
-                                    $note       = html_entity_decode( $client_info['note'] );
-                                    $esc_note   = MainWP_Utility::esc_content( $note );
-                                    $strip_note = wp_strip_all_tags( $esc_note );
-
-                                    if ( empty( $client_info['note'] ) ) :
-                                        ?>
-                                        <a href="javascript:void(0)" class="mainwp-edit-client-note" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Edit client notes.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
-                                    <?php else : ?>
-                                        <a href="javascript:void(0)" class="mainwp-edit-client-note" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
-                                    <?php endif; ?>
-                                    <span style="display: none" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
-                                    <?php
-                                } else {
-                                    echo esc_html( $val );
-                                }
-
-                                ?>
-                                </td>
-                            </tr>
-                    <?php } ?>
-
-                    <?php
-
-                    if ( is_array( $custom_fields ) && ! empty( $custom_fields ) ) {
-                        foreach ( $custom_fields as $field ) {
-                            if ( empty( $field->field_value ) ) {
-                                continue;
-                            }
-                            ?>
-                            <tr>
-                            <td><?php echo esc_html( $field->field_desc ); ?></td>
-                            <td><?php echo esc_html( $field->field_value ); ?></td>
-                            </tr>
-                            <?php
-                        }
-                    }
-
-                    ?>
-                    <?php
-                    /**
-                     * Action: mainwp_clients_info_table_bottom
-                     *
-                     * Fires at the bottom of the Site Info table in Site Info widget on the Individual site overview page.
-                     *
-                     * @param object $website Object containing the child site info.
-                     *
-                     * @since 4.0
-                     */
-                    do_action( 'mainwp_clients_info_table_bottom', $website );
-                    ?>
-                    </tbody>
-                </table>
-                    <?php
-                } else {
-                    MainWP_UI::render_empty_element_placeholder();
-                }
-                ?>
+            } else {
+                MainWP_UI::render_empty_element_placeholder();
+            }
+            ?>
                 <?php
                 /**
                  * Action: mainwp_clients_info_widget_bottom
@@ -213,17 +177,16 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                  */
                 do_action( 'mainwp_clients_info_widget_bottom', $website );
                 ?>
+        </div>
+
+        <div class="ui stackable two columns grid mainwp-widget-footer">
+            <div class="left aligne middle aligned column">
+
             </div>
-            <div class="ui stackable two columns grid mainwp-widget-footer">
-                <div class="middle aligned column">
-                    <?php if ( $client_info ) { ?>
-                    <a href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $client_info['client_id'] ); ?>" title="" class="ui mini fluid button green basic"><?php echo esc_html__( 'Edit Client', 'mainwp' ); ?></a>
-                    <?php } ?>
-                </div>
-                <div class="middle aligned column">
-                    <a href="admin.php?page=ClientAddNew" title="" class="ui mini fluid button green"><?php echo esc_html__( 'Add New Client', 'mainwp' ); ?></a>
-                </div>
+            <div class="right aligned middle aligned column">
+
             </div>
-            <?php
+        </div>
+        <?php
     }
 }

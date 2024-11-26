@@ -13,7 +13,6 @@ namespace MainWP\Dashboard\Module\ApiBackups;
 use MainWP\Dashboard\MainWP_Logger;
 use MainWP\Dashboard\MainWP_UI;
 use MainWP\Dashboard\MainWP_Menu;
-use function MainWP\Dashboard\mainwp_current_user_have_right;
 
 
 /**
@@ -160,7 +159,7 @@ class Api_Backups_Admin {
                 $output = '<span class="mainwp-red">Never</span><br/>';
             }
 
-            if ( mainwp_current_user_have_right( 'dashboard', 'execute_backups' ) ) {
+            if ( \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
                 $link    = sprintf( '<a href="admin.php?page=ManageSitesApiBackups&id=%d">' . __( 'Backup Now', 'it-l10n-mainwp-backupbuddy' ) . '</a>', $site_id );
                 $output .= $link;
             }

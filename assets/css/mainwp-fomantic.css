@@ -63,6 +63,10 @@
   padding-top: 0;
 }
 
+.mainwp-ui .green.pulsating.transition {
+  box-shadow: 0 0 0 0 rgba(127, 177, 0, 0.5)
+}
+
 #mainwp-ignored-abandoned-plugins,
 #mainwp-ignored-plugins,
 #mainwp-ignored-abandoned-themes,
@@ -173,6 +177,7 @@
 .mainwp-ui [data-tooltip][data-inverted]:after {
   z-index: 99 !important;
 }
+
 .mainwp-ui [data-tooltip][data-inverted]:after {
   white-space: normal;
   width: max-content;
@@ -234,9 +239,17 @@
 .mainwp-ui .ui.dimmer.modals.active {
   z-index: 1001;
 }
+
 .mainwp-ui .ui.modal .mainwp-html-popup {
   overflow: visible;
   z-index: 9999 !important;
+}
+
+.mainwp-ui .dt-scroll-body .ui.modal .mainwp-html-popup {
+  overflow: visible;
+  z-index: 9999 !important;
+  border: 1px dashed red;
+  position: absolute
 }
 
 .mainwp-ui .icon.card {
@@ -265,29 +278,38 @@
   text-align: left !important;
 }
 
+.mainwp-ui #widget-uptime_monitoring_response_time .ui.card {
+  min-width: 100px !important;
+}
+
 /* classic theme */
-.mainwp-ui .dt-scroll-body tbody tr.selected .ui.red.button{
+.mainwp-ui .dt-scroll-body tbody tr.selected .ui.red.button {
   color: #fff !important;
 }
-.mainwp-ui .dt-scroll-body tbody tr.selected .ui.basic.red.button{
+
+.mainwp-ui .dt-scroll-body tbody tr.selected .ui.basic.red.button {
   color: var(--mainwp-red) !important;
 }
-.mainwp-ui .dt-scroll-body tbody tr.selected .ui.button.green{
+
+.mainwp-ui .dt-scroll-body tbody tr.selected .ui.button.green {
   color: #fff !important;
 }
-.mainwp-ui .dt-scroll-body tbody tr.selected .ui.button.basic.green{
+
+.mainwp-ui .dt-scroll-body tbody tr.selected .ui.button.basic.green {
   color: var(--mainwp-green) !important;
 }
+
 /* end */
 
-.mainwp-ui div.dt-container .dt-scroll-body{
+.mainwp-ui div.dt-container .dt-scroll-body {
   border-bottom: none !important;
 }
 
 /* end */
 
 /* to fix auto align left */
-.mainwp-ui table.dataTable.ui.table th.dt-type-numeric, .mainwp-ui table.dataTable.ui.table th.dt-type-date,
+.mainwp-ui table.dataTable.ui.table th.dt-type-numeric,
+.mainwp-ui table.dataTable.ui.table th.dt-type-date,
 .mainwp-ui table.dataTable.ui.table td.dt-type-numeric,
 .mainwp-ui table.dataTable.ui.table td.dt-type-date {
   text-align: left;

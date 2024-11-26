@@ -154,7 +154,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
 
         $renderItems = array();
 
-        if ( mainwp_current_user_have_right( 'dashboard', 'manage_groups' ) ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_groups' ) ) {
             $renderItems[] = array(
                 'title'  => esc_html__( 'Manage Tags', 'mainwp' ),
                 'href'   => 'admin.php?page=ManageGroups',
@@ -279,8 +279,8 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * @return string MainWP Groups Table.
      */
     public static function render_all_groups() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_groups' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'manage groups', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_groups' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage groups', 'mainwp' ) );
 
             return;
         }

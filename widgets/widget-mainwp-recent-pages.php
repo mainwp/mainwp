@@ -148,11 +148,12 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         ?>
 
         <div class="ui stackable grid mainwp-widget-footer">
-            <div class="eight wide column">
-                <a href="<?php echo esc_url( admin_url( 'admin.php?page=PageBulkManage' ) ); ?>" title="" class="ui button fluid mini green basic"><?php esc_html_e( 'Manage Pages', 'mainwp' ); ?></a>
+            <div class="eight wide left aligned middle aligned column">
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=PageBulkAdd' ) ); ?>" class="ui button mini green"><?php esc_html_e( 'Create a New Page', 'mainwp' ); ?></a>
+                
             </div>
-            <div class="eight wide column right aligned">
-                <a href="<?php echo esc_url( admin_url( 'admin.php?page=PageBulkAdd' ) ); ?>" title="" class="ui button fluid mini green"><?php esc_html_e( 'New Page', 'mainwp' ); ?></a>
+            <div class="eight wide right aligned middle aligned column">
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=PageBulkManage' ) ); ?>" ><?php esc_html_e( 'Manage Pages', 'mainwp' ); ?></a>
             </div>
         </div>
         <?php
@@ -192,16 +193,15 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 </h3>
             </div>
             <div class="four wide column right aligned">
-                <div class="ui dropdown right pointing mainwp-dropdown-tab">
-                        <div class="text"><?php esc_html_e( 'Published', 'mainwp' ); ?></div>
-                        <i class="dropdown icon"></i>
-                        <div class="menu">
-                            <a class="item recent_posts_published_lnk" data-tab="page-published" data-value="published" title="<?php esc_attr_e( 'Published', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Published', 'mainwp' ); ?></a>
-                            <a class="item recent_posts_draft_lnk" data-tab="page-draft" data-value="draft" title="<?php esc_attr_e( 'Draft', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Draft', 'mainwp' ); ?></a>
-                            <a class="item recent_posts_pending_lnk" data-tab="page-pending" data-value="pending" title="<?php esc_attr_e( 'Pending', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Pending', 'mainwp' ); ?></a>
-                            <a class="item recent_posts_future_lnk" data-tab="page-future" data-value="future" title="<?php esc_attr_e( 'Scheduled', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Scheduled', 'mainwp' ); ?></a>
-                            <a class="item recent_posts_trash_lnk" data-tab="page-trash" data-value="trash" title="<?php esc_attr_e( 'Trash', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
-                        </div>
+                <div class="ui dropdown right tiny pointing mainwp-dropdown-tab">
+                    <i class="vertical ellipsis icon"></i>
+                    <div class="menu">
+                        <a class="item recent_posts_published_lnk" data-tab="page-published" data-value="published" title="<?php esc_attr_e( 'Published', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Published', 'mainwp' ); ?></a>
+                        <a class="item recent_posts_draft_lnk" data-tab="page-draft" data-value="draft" title="<?php esc_attr_e( 'Draft', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Draft', 'mainwp' ); ?></a>
+                        <a class="item recent_posts_pending_lnk" data-tab="page-pending" data-value="pending" title="<?php esc_attr_e( 'Pending', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Pending', 'mainwp' ); ?></a>
+                        <a class="item recent_posts_future_lnk" data-tab="page-future" data-value="future" title="<?php esc_attr_e( 'Scheduled', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Scheduled', 'mainwp' ); ?></a>
+                        <a class="item recent_posts_trash_lnk" data-tab="page-trash" data-value="trash" title="<?php esc_attr_e( 'Trash', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
+                    </div>
                 </div>
             </div>
             </div>

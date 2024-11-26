@@ -50,7 +50,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
         $this->add_action( 'mainwp_get_site_icon', array( &$this, 'get_site_icon' ) );
         $this->add_action( 'mainwp_check_abandoned', array( &$this, 'check_abandoned' ) );
 
-        if ( mainwp_current_user_have_right( 'dashboard', 'test_connection' ) ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'test_connection' ) ) {
             $this->add_action( 'mainwp_testwp', array( &$this, 'mainwp_testwp' ) );
         }
 
@@ -69,7 +69,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
         // Widget: RightNow.
         $this->add_action( 'mainwp_syncsites', array( &$this, 'mainwp_syncsites' ) );
 
-        $this->add_action( 'mainwp_checksites', array( &$this, 'mainwp_checksites' ) );
+        $this->add_action( 'mainwp_checksites', array( &$this, 'ajax_checksites' ) );
         $this->add_action( 'mainwp_manage_sites_suspend_site', array( &$this, 'manage_suspend_site' ) );
         $this->add_action( 'mainwp_group_sites_add', array( &$this, 'ajax_group_sites_add' ) );
     }
@@ -346,8 +346,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
      * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::remove_site()
      */
     public function mainwp_removesite() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'delete_sites' ) ) {
-            die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'delete sites', 'mainwp' ), false ) ) ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'delete_sites' ) ) {
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'delete sites', 'mainwp' ), false ) ) ) );
         }
 
         $this->secure_request( 'mainwp_removesite' );
@@ -421,15 +421,31 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
     }
 
     /**
-     * Method mainwp_checksites()
+     * Method ajax_checksites()
      *
      * Check Child Sites.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::ajax_check_status_site()
      */
-    public function mainwp_checksites() {
+    public function ajax_checksites() {
         $this->secure_request( 'mainwp_checksites' );
-        MainWP_Monitoring_Handler::ajax_check_status_site();
+
+        $website = null;
+        if ( isset( $_POST['wp_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            $website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['wp_id'] ) ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        }
+
+        if ( null === $website ) {
+            die( wp_json_encode( array( 'error' => esc_html__( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
+        }
+
+        MainWP_Utility::end_session();
+        $result = MainWP_Monitoring_Handler::handle_check_website( $website );
+        MainWP_Utility::end_session();
+
+        if ( is_array( $result ) ) {
+            die( wp_json_encode( array( 'result' => 'success' ) ) );
+        } else {
+            die( wp_json_encode( array( 'error' => esc_html__( 'Request failed. Please, try again.', 'mainwp' ) ) ) );
+        }
     }
 
     /**

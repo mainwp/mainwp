@@ -540,7 +540,7 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param string $type type of image.
      * @param string $what image for what.
      */
-    public static function get_client_contact_image( $item, $type = 'client', $what = 'default' ) {
+    public static function get_client_contact_image( $item, $type = 'client', $what = 'default' ) { // phpcs:ignore -- NOSONAR - complex
 
         if ( empty( $item ) ) {
             return '';
@@ -580,8 +580,9 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $img = '';
 
         if ( ! empty( $image_path ) && file_exists( $dirs[0] . $image_path ) ) {
-            $full_url = $dirs[1] . $image_path;
-            $img      = '<img ' . $icon_wrapper_attr . ' src="' . esc_attr( $full_url ) . '" alt="' . esc_attr( $item['name'] ) . '">';
+            $full_url   = $dirs[1] . $image_path;
+            $image_name = ! empty( $item['contact_name'] ) ? $item['contact_name'] : '';
+            $img        = '<img ' . $icon_wrapper_attr . ' src="' . esc_attr( $full_url ) . '" alt="' . esc_attr( $image_name ) . '">';
         } elseif ( ! empty( $icon_info ) ) {
             $img = MainWP_Client::get_cust_client_icon( $icon_info, 'display', $what );
         }

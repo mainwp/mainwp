@@ -68,8 +68,8 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
      * @return string Backup Site html.
      */
     public static function render_backup_site( &$website ) {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'execute_backups' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'execute backups', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'execute backups', 'mainwp' ) );
             return;
         }
 
@@ -86,7 +86,7 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
         <div id="ajax-information-zone" class="updated" style="display: none;"></div>
 
         <?php if ( empty( $primaryBackupMethods ) ) { ?>
-            <div class="mainwp-notice mainwp-notice-blue"><?php printf( esc_html__( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %1$sExtensions Site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
+            <div class="ui blue message"><?php printf( esc_html__( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %1$sExtensions Site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
             <?php
         }
         ?>

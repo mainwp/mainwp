@@ -402,6 +402,19 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
+     * Method format_time()
+     *
+     * Format the given timestamp.
+     *
+     * @param mixed $timestamp Timestamp to format.
+     *
+     * @return string Formatted timestamp.
+     */
+    public static function format_time( $timestamp ) {
+        return date_i18n( get_option( 'time_format' ), $timestamp );
+    }
+
+    /**
      * Format duration time to show.
      *
      * @param  float $time timestamp.
@@ -1708,5 +1721,79 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             },
             $data
         );
+    }
+
+    /**
+     * String ends by.
+     *
+     * @param  mixed $str str.
+     * @param  mixed $ends ends.
+     * @return bool value value.
+     */
+    public static function string_ends_by( $str, $ends ) {
+        if ( function_exists( '\str_ends_with' ) ) {
+            return \str_ends_with( $str, $ends );
+        } else {
+            $ends_len = strlen( $ends );
+            if ( $ends_len > strlen( $str ) ) {
+                return false;
+            }
+            return substr( $str, -$ends_len ) === $ends;
+        }
+    }
+    /**
+     * Returns number in shorter format.
+     *
+     * @param  int $number str.
+     * @return string $number Shorer number.
+     */
+    public static function short_number_format( $number ) {
+        if ( $number > 999 && $number < 1000000 ) {
+            // Anything between 1000 and 1000000.
+            $number = number_format( $number / 1000, 1 ) . 'K';
+        } elseif ( $number >= 1000000000 ) {
+            // 1000000 or higher.
+            $number = number_format( $number / 1000000, 2 ) . 'M';
+        }
+        return $number;
+    }
+
+    /**
+     * Returns date in time ago format
+     *
+     * @param  mixed $ptime Date stamp.
+     * @return string $string   Time elapsed string.
+     */
+    public static function time_elapsed_string( $ptime ) {
+        $etime = time() - $ptime;
+
+        if ( $etime < 1 ) {
+            return '0 seconds';
+        }
+
+        $a        = array(
+            365 * 24 * 60 * 60 => 'year',
+            30 * 24 * 60 * 60  => 'month',
+            24 * 60 * 60       => 'day',
+            60 * 60            => 'hour',
+            60                 => 'minute',
+            1                  => 'second',
+        );
+        $a_plural = array(
+            'year'   => 'years',
+            'month'  => 'months',
+            'day'    => 'days',
+            'hour'   => 'hours',
+            'minute' => 'minutes',
+            'second' => 'seconds',
+        );
+
+        foreach ( $a as $secs => $str ) {
+            $d = $etime / $secs;
+            if ( $d >= 1 ) {
+                $r = round( $d );
+                return $r . ' ' . ( $r > 1 ? $a_plural[ $str ] : $str ) . ' ago';
+            }
+        }
     }
 }

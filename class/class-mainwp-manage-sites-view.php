@@ -49,7 +49,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 <div class="mainwp_boxout">
                     <div class="mainwp_boxoutin"></div>
                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Sites', 'mainwp' ); ?></a>
-                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'add_sites' ) ) { ?>
+                    <?php if ( \mainwp_current_user_can( 'dashboard', 'add_sites' ) ) { ?>
                         <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'managesites_add_new' ) ) { ?>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
                         <?php } ?>
@@ -153,14 +153,14 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * Build Sites page header.
      *
      * @param string $shownPage Current Page.
-     * @param string $subPages Sites subpages.
+     * @param array  $subPages Sites subpages.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::get_favico_url()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
      * @uses \MainWP\Dashboard\MainWP_UI::render_second_top_header()
      */
-    public static function render_header( $shownPage = '', $subPages = '' ) { // phpcs:ignore -- NOSONAR - complex.
+    public static function render_header( $shownPage = '', $subPages = array() ) { // phpcs:ignore -- NOSONAR - complex.
 
         if ( '' === $shownPage || 'managesites' === $shownPage ) {
             $shownPage = 'ManageSites';
@@ -182,6 +182,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $site_id = intval( $_GET['emailsettingsid'] );
         } elseif ( isset( $_GET['cacheControlId'] ) && ! empty( $_GET['cacheControlId'] ) ) {
             $site_id = intval( $_GET['cacheControlId'] );
+        } elseif ( ! empty( $_GET['monitor_wpid'] ) ) {
+            $site_id = intval( $_GET['monitor_wpid'] );
         }
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
@@ -194,12 +196,12 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'AddNew'          => array(
                 'href'   => 'admin.php?page=managesites&do=new',
                 'title'  => esc_html__( 'Add New', 'mainwp' ),
-                'access' => mainwp_current_user_have_right( 'dashboard', 'add_sites' ),
+                'access' => \mainwp_current_user_can( 'dashboard', 'add_sites' ),
             ),
             'BulkAddNew'      => array(
                 'href'   => 'admin.php?page=managesites&do=bulknew',
                 'title'  => esc_html__( 'Import Sites', 'mainwp' ),
-                'access' => mainwp_current_user_have_right( 'dashboard', 'add_sites' ),
+                'access' => \mainwp_current_user_can( 'dashboard', 'add_sites' ),
             ),
             'MonitoringSites' => array(
                 'href'   => 'admin.php?page=MonitoringSites',
@@ -216,28 +218,33 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'ManageSitesDashboard'     => array(
                 'href'   => 'admin.php?page=managesites&dashboard=' . $site_id,
                 'title'  => esc_html__( 'Overview', 'mainwp' ),
-                'access' => mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ),
+                'access' => \mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ),
             ),
             'ManageSitesEdit'          => array(
                 'href'   => 'admin.php?page=managesites&id=' . $site_id,
-                'title'  => esc_html__( 'Edit', 'mainwp' ),
-                'access' => mainwp_current_user_have_right( 'dashboard', 'edit_sites' ),
+                'title'  => esc_html__( 'Settings', 'mainwp' ),
+                'access' => \mainwp_current_user_can( 'dashboard', 'edit_sites' ),
             ),
             'ManageSitesUpdates'       => array(
                 'href'        => 'admin.php?page=managesites&updateid=' . $site_id,
                 'title'       => esc_html__( 'Updates', 'mainwp' ),
-                'access'      => mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ),
+                'access'      => \mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ),
                 'after_title' => $after_title,
+            ),
+            'ManageSitesMonitor'       => array(
+                'href'   => 'admin.php?page=managesites&monitor_wpid=' . $site_id,
+                'title'  => esc_html__( 'Monitor Settings', 'mainwp' ),
+                'access' => \mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ),
             ),
             'ManageSitesEmailSettings' => array(
                 'href'   => 'admin.php?page=managesites&emailsettingsid=' . $site_id,
                 'title'  => esc_html__( 'Email Settings', 'mainwp' ),
-                'access' => mainwp_current_user_have_right( 'dashboard', 'edit_sites' ),
+                'access' => \mainwp_current_user_can( 'dashboard', 'edit_sites' ),
             ),
             'ManageSitesBackups'       => array(
                 'href'   => 'admin.php?page=managesites&backupid=' . $site_id,
                 'title'  => esc_html__( 'Backups', 'mainwp' ),
-                'access' => mainwp_current_user_have_right( 'dashboard', 'execute_backups' ),
+                'access' => \mainwp_current_user_can( 'dashboard', 'execute_backups' ),
             ),
             'SecurityScan'             => array(
                 'href'   => 'admin.php?page=managesites&scanid=' . $site_id,
@@ -384,18 +391,20 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      */
     public static function render_import_sites() { // phpcs:ignore -- NOSONAR - complex.
         ?>
-        <div id="mainwp-importing-sites" class="ui active inverted dimmer" style="display:none">
+        <div id="mainwp-importing-sites" class="ui active inverted dimmer">
             <div class="ui medium text loader"><?php esc_html_e( 'Importing', 'mainwp' ); ?></div>
+        </div>
+        <div class="ui message" id="mainwp-import-sites-status-message">
+            <?php echo '<i class="notched circle loading icon"></i> ' . esc_html__( 'Importing...', 'mainwp' ); ?>
         </div>
         <?php
         $errors = array();
         //phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
         if ( isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_bulkupload']['error'] && check_admin_referer( 'mainwp-admin-nonce' ) ) {
             if ( isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) && is_uploaded_file( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) {
-                $tmp_path = isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) : '';
+                $tmp_path = isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification
                 MainWP_System_Utility::get_wp_file_system();
-        //phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
-
+                //phpcs:enable
                 /**
                  * WordPress files system object.
                  *
@@ -414,6 +423,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     'name'               => '',
                     'url'                => '',
                     'adminname'          => '',
+                    'adminpwd'           => '',
                     'wpgroups'           => '',
                     'uniqueId'           => '',
                     'http_user'          => '',
@@ -473,7 +483,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <input type="hidden" id="mainwp_managesites_total_import" value="<?php echo esc_attr( $row ); ?>"/>
 
                     <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_logging">
-                        <span class="log ui small text"><?php echo esc_html( $header_line ) . '<br/>'; ?></span>
+                        <span class="log ui medium text"><?php echo esc_html( $header_line ) . '<br/>'; ?></span>
                     </div>
                     <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_fail_logging" style="display: none;">
                     <?php
@@ -488,8 +498,62 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             } else {
                 $errors[] = esc_html__( 'Upload failed. Please, try again.', 'mainwp' ) . '<br />';
             }
+        } elseif ( ! empty( $_POST['mainwp_managesites_import'] ) && check_admin_referer( 'mainwp-admin-nonce' ) ) {
+            // Set site data by POST value.
+            $sites_data = ! empty( $_POST['mainwp_managesites_import'] ) ? wp_unslash( $_POST['mainwp_managesites_import'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            if ( ! empty( $sites_data ) ) {
+                $import_data = array(); // Create default import data.
+                // Map data sites data to import_data.
+                foreach ( $sites_data as $site ) {
+                    // Break site if site_url and admin_name empty.
+                    if ( empty( $site['site_url'] ) && empty( $site['admin_name'] ) ) {
+                        continue;
+                    }
+                    // Map POST data to import data.
+                    $import_data[] = array(
+                        'name'               => ! empty( $site['site_name'] ) ? sanitize_text_field( wp_unslash( $site['site_name'] ) ) : '',
+                        'url'                => ! empty( $site['site_url'] ) ? sanitize_text_field( wp_unslash( $site['site_url'] ) ) : '',
+                        'adminname'          => ! empty( $site['admin_name'] ) ? sanitize_text_field( wp_unslash( $site['admin_name'] ) ) : '',
+                        'adminpwd'           => ! empty( $site['admin_password'] ) ? wp_unslash( $site['admin_password'] ) : '',
+                        'wpgroups'           => ! empty( $site['tag'] ) ? sanitize_text_field( wp_unslash( $site['tag'] ) ) : '',
+                        'uniqueId'           => ! empty( $site['security_id'] ) ? sanitize_text_field( wp_unslash( $site['security_id'] ) ) : '',
+                        'http_user'          => ! empty( $site['http_username'] ) ? sanitize_text_field( wp_unslash( $site['http_username'] ) ) : '',
+                        'http_pass'          => ! empty( $site['http_password'] ) ? wp_unslash( $site['http_password'] ) : '',
+                        'verify_certificate' => isset( $site['verify_certificate'] ) ? intval( $site['verify_certificate'] ) : 1,
+                        'ssl_version'        => ! empty( $site['ssl_version'] ) ? sanitize_text_field( wp_unslash( $site['ssl_version'] ) ) : 'auto',
+                    );
+
+                }
+                // Import website if import data is not empty.
+                if ( ! empty( $import_data ) ) {
+                    $header_line = trim( 'Site Name, Url, Admin Name, Tag,Security ID,HTTP Username,HTTP Password,Verify Certificate,SSL Version' ); // Set Header Line.
+                    // Map import data to input html.
+                    foreach ( $import_data as $key_import => $val_import ) {
+                        $line = trim( implode( ',', $val_import ) )
+                        ?>
+                        <input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo esc_attr( $key_import + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $val_import ) ); ?>" original="<?php echo esc_attr( $line ); ?>" />
+                    <?php } ?>
+                    <input type="hidden" id="mainwp_managesites_do_managesites_import" value="1"/>
+                    <input type="hidden" id="mainwp_managesites_do_import" value="1"/>
+                    <input type="hidden" id="mainwp_managesites_total_import" value="<?php echo esc_attr( count( $import_data ) ); ?>"/>
+
+                    <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_logging">
+                        <span class="log ui small text">
+                            <?php echo esc_html( $header_line ) . '<br/>'; ?>
+                        </span>
+                    </div>
+                    <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_fail_logging" style="display: none;">
+                        <?php echo esc_html( $header_line ); ?>
+                    </div>
+                    <?php
+                } else {
+                    $errors[] = esc_html__( 'An error occurred. Please, try again.', 'mainwp' ) . '<br />';
+                }
+            } else {
+                $errors[] = esc_html__( 'Import failed. Please, try again.', 'mainwp' ) . '<br />';
+            }
         } else {
-            $errors[] = esc_html__( 'Upload failed. Please, try again.', 'mainwp' ) . '<br />';
+            $errors[] = esc_html__( 'Import failed. Please, try again.', 'mainwp' ) . '<br />';
         }
 
         if ( ! empty( $errors ) ) {
@@ -591,8 +655,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Overview::render_dashboard_body()
      */
     public static function render_dashboard( &$website ) {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'individual dashboard', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'individual dashboard', 'mainwp' ) );
             return;
         }
         ?>
@@ -636,10 +700,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                 <i class="dropdown icon"></i>
                                 <div class="menu">
                                     <div class="<?php echo 'WordPress' === $active_tab ? 'active' : ''; ?> item" data-tab="wordpress" data-value="wordpress"><?php esc_html_e( 'WordPress Updates', 'mainwp' ); ?></div>
-                                    <div class="<?php echo 'plugins' === $active_tab ? 'active' : ''; ?> item" data-tab="plugins" data-value="plugins"><?php esc_html_e( 'Plugins Updates', 'mainwp' ); ?></div>
-                                    <div class="<?php echo 'themes' === $active_tab ? 'active' : ''; ?> item" data-tab="themes" data-value="themes"><?php esc_html_e( 'Themes Updates', 'mainwp' ); ?></div>
+                                    <div class="<?php echo 'plugins' === $active_tab ? 'active' : ''; ?> item" data-tab="plugins" data-value="plugins"><?php esc_html_e( 'Plugin Updates', 'mainwp' ); ?></div>
+                                    <div class="<?php echo 'themes' === $active_tab ? 'active' : ''; ?> item" data-tab="themes" data-value="themes"><?php esc_html_e( 'Theme Updates', 'mainwp' ); ?></div>
                                     <?php if ( $show_language_updates ) { ?>
-                                    <div class="<?php echo 'trans' === $active_tab ? 'active' : ''; ?> item" data-tab="translations" data-value="translations"><?php esc_html_e( 'Translations Updates', 'mainwp' ); ?></div>
+                                    <div class="<?php echo 'trans' === $active_tab ? 'active' : ''; ?> item" data-tab="translations" data-value="translations"><?php esc_html_e( 'Translation Updates', 'mainwp' ); ?></div>
                                     <?php } ?>
                                     <div class="<?php echo 'abandoned-plugins' === $active_tab ? 'active' : ''; ?> item" data-tab="abandoned-plugins" data-value="abandoned-plugins"><?php esc_html_e( 'Abandoned Plugins', 'mainwp' ); ?></div>
                                     <div class="<?php echo 'abandoned-themes' === $active_tab ? 'active' : ''; ?> item" data-tab="abandoned-themes" data-value="abandoned-themes"><?php esc_html_e( 'Abandoned Themes', 'mainwp' ); ?></div>
@@ -668,8 +732,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      */
     public static function render_scan_site( &$website ) {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'security scan', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'security scan', 'mainwp' ) );
             return;
         }
         ?>
@@ -690,7 +754,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             if ( empty( $website ) ) {
                 return;
             }
-            if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
+            if ( \mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
                 do_action_deprecated( 'mainwp-securityissues-sites', array( $website ), '4.0.7.2', 'mainwp_securityissues_sites' ); // @deprecated Use 'mainwp_securityissues_sites' instead. NOSONAR - not IP.
 
                 /**
@@ -710,7 +774,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
             <?php
             // Hook in MainWP Sucuri Extension.
-            if ( mainwp_current_user_have_right( 'extension', 'mainwp-sucuri-extension' ) && is_plugin_active( 'mainwp-sucuri-extension/mainwp-sucuri-extension.php' ) ) {
+            if ( \mainwp_current_user_can( 'extension', 'mainwp-sucuri-extension' ) && is_plugin_active( 'mainwp-sucuri-extension/mainwp-sucuri-extension.php' ) ) {
                 do_action_deprecated( 'mainwp-sucuriscan-sites', array( $website ), '4.0.7.2', 'mainwp_sucuriscan_sites' ); // @deprecated Use 'mainwp_sucuriscan_sites' instead. NOSONAR - not IP.
 
                 /**
@@ -730,7 +794,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
             <?php
             // Hook in MainWP Wordfence Extension.
-            if ( mainwp_current_user_have_right( 'extension', 'mainwp-wordfence-extension' ) && is_plugin_active( 'mainwp-wordfence-extension/mainwp-wordfence-extension.php' ) ) {
+            if ( \mainwp_current_user_can( 'extension', 'mainwp-wordfence-extension' ) && is_plugin_active( 'mainwp-wordfence-extension/mainwp-wordfence-extension.php' ) ) {
                 do_action_deprecated( 'mainwp-wordfence-sites', array( $website ), '4.0.7.2', 'mainwp_wordfence_sites' ); // @deprecated Use 'mainwp_wordfence_sites' instead. NOSONAR - not IP.
 
                 /**
@@ -770,8 +834,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses  \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
      */
     public static function render_edit_site( $websiteid, $updated ) { // phpcs:ignore -- NOSONAR - complex.
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'edit sites', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'edit sites', 'mainwp' ) );
             return;
         }
 
@@ -828,7 +892,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                 <option <?php echo MainWP_Utility::starts_with( $website->url, 'http:' ) ? 'selected' : ''; ?> value="http">http://</option>
                                 <option <?php echo MainWP_Utility::starts_with( $website->url, 'https:' ) ? 'selected' : ''; ?> value="https">https://</option>
                             </select>
-                            <div class="ui compact selection dropdown">
+                            <div class="ui compact selection dropdown" id="mainwp-edit-site-edit-url-www">
                                 <input type="hidden" name="mainwp_managesites_edit_wpurl_with_www" value="<?php echo false !== stripos( $website->url, '/www.' ) ? 'www' : 'none-www'; ?>">
                                 <i class="dropdown icon"></i>
                                 <div class="default text"><?php esc_html_e( 'www', 'mainwp' ); ?></div>
@@ -1049,14 +1113,14 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_automatic_update', (int) $website->automatic_update );
-                    esc_html_e( 'Install trusted updates', 'mainwp' );
+                    esc_html_e( 'Auto update WP Core', 'mainwp' );
                     ?>
                     </label>
                     <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want MainWP to automatically update WP Core on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <input type="checkbox" name="mainwp_automaticDailyUpdate" class="settings-field-value-change-handler" id="mainwp_automaticDailyUpdate" <?php echo 1 === (int) $website->automatic_update ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_automaticDailyUpdate"></label>
                     </div>
                 </div>
-                <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
+                <?php if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
                     <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general">
                         <label class="six wide column middle aligned">
                         <?php
@@ -1108,45 +1172,12 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                 <h3 class="ui dividing header">
                 <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-edit-site-uptime' ); ?>
-                <?php esc_html_e( 'Child Site Uptime Monitoring (Optional)', 'mainwp' ); ?></h3>
-                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-uptime" defaul-value="0">
-                    <label class="six wide column middle aligned">
-                    <?php
-                    $indi_compatible_val = ! $website->disable_status_check ? 1 : 0;
-                    MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_disableSitesChecking', $indi_compatible_val );
-                    esc_html_e( 'Enable basic uptime monitoring (optional)', 'mainwp' );
-                    ?>
-                    </label>
-                    <div class="six wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring" data-tooltip="<?php esc_attr_e( 'Enable if you want to monitoring this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_managesites_edit_disableChecking" id="mainwp_managesites_edit_disableChecking" <?php echo 0 === (int) $website->disable_status_check ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_managesites_edit_disableChecking"></label>
-                    </div>
-                </div>
+                    <?php esc_html_e( 'Uptime Monitoring (Optional)', 'mainwp' ); ?>
+                </h3>
                 <?php
-                $check_interval = (int) $website->status_check_interval;
-                $hide_style     = 'style="display:none"';
+                $hide_style = 'style="display:none"';
                 ?>
-                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-uptime" <?php echo 1 === (int) $website->disable_status_check ? $hide_style : ''; //phpcs:ignore -- ok. ?> hide-element="monitoring">
-                    <label class="six wide column middle aligned">
-                    <?php
-                    MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_status_check_interval', (int) $check_interval );
-                    esc_html_e( 'Check interval (optional)', 'mainwp' );
-                    ?>
-                    </label>
-                    <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Check interval (optional)', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <select name="mainwp_managesites_edit_checkInterval" id="mainwp_managesites_edit_checkInterval" class="ui dropdown  settings-field-value-change-handler">
-                            <option value="5" <?php echo 5 === $check_interval ? 'selected' : ''; ?>><?php esc_html_e( 'Every 5 minutes', 'mainwp' ); ?></option>
-                            <option value="10" <?php echo 10 === $check_interval ? 'selected' : ''; ?>><?php esc_html_e( 'Every 10 minutes', 'mainwp' ); ?></option>
-                            <option value="30" <?php echo 30 === $check_interval ? 'selected' : ''; ?>><?php esc_html_e( 'Every 30 minutes', 'mainwp' ); ?></option>
-                            <option value="60" <?php echo 60 === $check_interval ? 'selected' : ''; ?>><?php esc_html_e( 'Every hour', 'mainwp' ); ?></option>
-                            <option value="180" <?php echo 180 === $check_interval ? 'selected' : ''; ?>><?php esc_html_e( 'Every 3 hours', 'mainwp' ); ?></option>
-                            <option value="360" <?php echo 360 === $check_interval ? 'selected' : ''; ?>><?php esc_html_e( 'Every 6 hours', 'mainwp' ); ?></option>
-                            <option value="720" <?php echo 720 === $check_interval ? 'selected' : ''; ?>><?php esc_html_e( 'Twice a day', 'mainwp' ); ?></option>
-                            <option value="1440" <?php echo 1440 === $check_interval ? 'selected' : ''; ?>><?php esc_html_e( 'Once a day', 'mainwp' ); ?></option>
-                            <option value="0" <?php echo 0 === $check_interval ? 'selected' : ''; ?>><?php echo $text_use_global; //phpcs:ignore --ok. ?></option>
-                        </select>
-                    </div>
-                </div>
-                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-uptime" <?php echo 1 === (int) $website->disable_status_check ? $hide_style : ''; //phpcs:ignore -- ok.?> hide-element="monitoring">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-uptime" default-indi-value=""  hide-element="monitoring">
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_monitoring_notification_emails', $website->monitoring_notification_emails );
@@ -1191,6 +1222,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         </select>
                     </div>
                 </div>
+
                 <h3 class="ui dividing header">
                     <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-edit-site-advanced' ); ?>
                     <?php esc_html_e( 'Advanced Settings (Optional)', 'mainwp' ); ?></h3>
@@ -1334,6 +1366,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ?>
                 <div class="ui divider"></div>
                 <input type="submit" name="submit" id="submit" class="ui button green big" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                <input type="button" name="submit_remove_webiste" id="mainwp-managesites-remove-site" class="ui button red big floated right" value="<?php esc_attr_e( 'Remove Site', 'mainwp' ); ?>"/>
             </form>
         </div>
         <div class="ui modal" id="mainwp-test-connection-modal">
@@ -1849,14 +1882,17 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         $pubkey  = '-1';
                     }
 
+                    $verify_reg = MainWP_DB::instance()->get_website_option( $website, 'register_verify_key', '' );
+
                     $information = MainWP_Connect::fetch_url_not_authed(
                         $website->url,
                         $website->adminname,
                         'register',
                         array(
-                            'pubkey'   => $pubkey,
-                            'server'   => get_admin_url(),
-                            'uniqueId' => $website->uniqueId,
+                            'pubkey'    => $pubkey,
+                            'server'    => get_admin_url(),
+                            'uniqueId'  => $website->uniqueId,
+                            'regverify' => $verify_reg,
                         ),
                         true,
                         $website->verify_certificate,
@@ -1869,16 +1905,25 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         $err    = urldecode( $information['error'] );
                         $_error = MainWP_Utility::esc_content( $err );
                     } elseif ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
-                            MainWP_DB::instance()->update_website_values(
-                                $website->id,
-                                array(
-                                    'pubkey'   => base64_encode( $pubkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for backwards compatibility.
-                                    'privkey'  => base64_encode( $privkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for backwards compatibility.
-                                    'uniqueId' => ( isset( $information['uniqueId'] ) ? $information['uniqueId'] : '' ),
-                                )
-                            );
-                            MainWP_Sync::sync_information_array( $website, $information );
-                            $success = true;
+
+                        $en_pk_data = MainWP_Encrypt_Data_Lib::instance()->encrypt_privkey( $privkey, $website->id, true );
+                        $en_privkey = isset( $en_pk_data['en_data'] ) ? $en_pk_data['en_data'] : '';
+
+                        MainWP_DB::instance()->update_website_values(
+                            $website->id,
+                            array(
+                                'pubkey'   => base64_encode( $pubkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for backwards compatibility.
+                                'privkey'  => base64_encode( $en_privkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for backwards compatibility.
+                                'uniqueId' => ( isset( $information['uniqueId'] ) ? $information['uniqueId'] : '' ),
+                            )
+                        );
+
+                        if ( ! empty( $information['regverify'] ) ) {
+                            MainWP_DB::instance()->update_website_option( $website, 'register_verify_key', $information['regverify'] );
+                        }
+
+                        MainWP_Sync::sync_information_array( $website, $information );
+                        $success = true;
                     } else {
                         $_error = esc_html__( 'Undefined error!', 'mainwp' );
                     }
@@ -1924,11 +1969,12 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @return self add_wp_site()
      */
-    public static function add_site( $website = false, &$output = array() ) { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
-        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+    public static function add_site( $website = false, &$output = array() ) { //phpcs:ignore -- NOSONAR - complexity.
+        //phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $params['url']                = isset( $_POST['managesites_add_wpurl'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpurl'] ) ) : '';
         $params['name']               = isset( $_POST['managesites_add_wpname'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpname'] ) ) : '';
         $params['wpadmin']            = isset( $_POST['managesites_add_wpadmin'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpadmin'] ) ) : '';
+        $params['adminpwd']           = isset( $_POST['managesites_add_adminpwd'] ) ?   wp_unslash( $_POST['managesites_add_adminpwd'] ) : ''; //phpcs:ignore -- NOSONAR - requires urlencoded passwd, do not sanitize for specical chars.
         $params['unique_id']          = isset( $_POST['managesites_add_uniqueId'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_uniqueId'] ) ) : '';
         $params['ssl_verify']         = empty( $_POST['verify_certificate'] ) ? false : intval( $_POST['verify_certificate'] );
         $params['ssl_version']        = empty( $_POST['ssl_version'] ) ? false : intval( $_POST['ssl_version'] );
@@ -1945,7 +1991,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( isset( $_POST['qsw_page'] ) ) {
             $params['qsw_page'] = sanitize_text_field( wp_unslash( $_POST['qsw_page'] ) );
         }
-        // phpcs:enable
+        //phpcs:enable
 
         return static::add_wp_site( $website, $params, $output );
     }
@@ -1970,14 +2016,20 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_openssl_conf()
      * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
      */
-    public static function add_wp_site( $website, $params = array(), &$output = array() ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function add_wp_site( $website, $params = array(), &$output = array() ) { //phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $error      = '';
         $message    = '';
         $id         = 0;
         $fetch_data = null;
+        $existed_id = 0;
 
         if ( $website ) {
             $error = esc_html__( 'The site is already connected to your MainWP Dashboard', 'mainwp' );
+            if ( is_array( $website ) && ! empty( $website[0] ) && is_object( $website[0] ) ) {
+                $existed_id = $website[0]->id;
+            } elseif ( is_object( $website ) && property_exists( $website, 'id' ) ) {
+                $existed_id = $website->id;
+            }
         } else {
             try {
                 if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
@@ -2012,7 +2064,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 $http_user         = isset( $params['http_user'] ) ? $params['http_user'] : '';
                 $http_pass         = isset( $params['http_pass'] ) ? $params['http_pass'] : '';
                 $force_use_ipv4    = isset( $params['force_use_ipv4'] ) ? $params['force_use_ipv4'] : null;
-                $information       = MainWP_Connect::fetch_url_not_authed(
+
+                MainWP_Logger::instance()->debug( ' :: register site :: ' . $url );
+
+                $information = MainWP_Connect::fetch_url_not_authed(
                     $url,
                     $params['wpadmin'],
                     'register',
@@ -2020,6 +2075,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         'pubkey'   => $pubkey,
                         'server'   => get_admin_url(),
                         'uniqueId' => $addUniqueId,
+                        'userpwd'  => isset( $params['adminpwd'] ) ? $params['adminpwd'] : '', // require urlencoded.
                     ),
                     false,
                     $verifyCertificate,
@@ -2035,9 +2091,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 if ( isset( $information['error'] ) && '' !== $information['error'] ) {
                     $error = MainWP_Utility::esc_content( $information['error'] );
                 } elseif ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
-                        $groupids   = array();
-                        $groupnames = array();
-                        $tmpArr     = array();
+                    $groupids   = array();
+                    $groupnames = array();
+                    $tmpArr     = array();
                     if ( isset( $params['groupids'] ) && is_array( $params['groupids'] ) ) {
                         foreach ( $params['groupids'] as $group ) {
                             if ( is_numeric( $group ) ) {
@@ -2117,12 +2173,34 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             set_transient( 'mainwp_transient_just_connected_site_id', $id, HOUR_IN_SECONDS );
                             $message = sprintf( esc_html__( '%1$sCongratulations you have connected %2$s.%3$s After finishing the Quick Setup Wizard, you can add additional sites from the Add New Sites page.', 'mainwp' ), '<div class="ui header">', '<strong>' . esc_html( $params['name'] ) . '</strong>', '</div>' );
                         } else {
-                            $message = sprintf( esc_html__( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . esc_html__( 'Dashboard', 'mainwp' ) . '">', '</a>' );
+                            $message = sprintf( esc_html__( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.%3$s', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . esc_html__( 'Dashboard', 'mainwp' ) . '">', '</a>', '<br/>' );
                         }
 
                         $website = MainWP_DB::instance()->get_website_by_id( $id );
 
                         if ( $website ) { // to fix.
+
+                            if ( ! empty( $information['regverify'] ) ) {
+                                MainWP_DB::instance()->update_website_option( $website, 'register_verify_key', $information['regverify'] );
+                            }
+
+                            $glo_settings          = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+                            $monitoring_glo_active = is_array( $glo_settings ) && isset( $glo_settings['active'] ) ? (int) $glo_settings['active'] : 1;
+                            if ( $monitoring_glo_active ) {
+                                MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor(
+                                    array(
+                                        'wpid'            => $id,
+                                        'active'          => -1,
+                                        'interval'        => -1, // -1 - use global setting.
+                                        'timeout'         => -1,
+                                        'method'          => 'useglobal',
+                                        'type'            => 'useglobal',
+                                        'up_status_codes' => 'useglobal',
+                                        'issub'           => 0, // primary monitor.
+                                    )
+                                );
+                            }
+
                             /**
                              * Fires immediately after a new website is added.
                              *
@@ -2161,7 +2239,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             }
         }
 
-        return array( $message, $error, $id, $fetch_data );
+        return array( $message, $error, $id, $fetch_data, $existed_id );
     }
 
     /**

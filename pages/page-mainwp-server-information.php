@@ -419,8 +419,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_remote_port()
      */
     public static function render() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
-            mainwp_do_not_have_permissions( 'server information', 'mainwp' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+            \mainwp_do_not_have_permissions( 'server information', 'mainwp' );
             return;
         }
         static::render_header( '' );
@@ -937,7 +937,13 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 static::render_row_with_description( esc_html__( 'PHP Version', 'mainwp' ), '>=', '7.4', 'get_php_version', '', '', null );
                 static::render_row_with_description( esc_html__( 'SSL Extension Enabled', 'mainwp' ), '=', true, 'get_ssl_support', '', '', null );
                 static::render_row_with_description( esc_html__( 'cURL Extension Enabled', 'mainwp' ), '=', true, 'get_curl_support', '', '', null );
+
+                $ssl_version     = OPENSSL_VERSION_TEXT;
                 $openssl_version = 'OpenSSL/1.1.0';
+                if ( false !== strpos( $ssl_version, 'LibreSSL' ) ) {
+                    $openssl_version = 'LibreSSL/2.5.0';
+                }
+
                 static::render_row_with_description(
                     'cURL SSL Version',
                     '>=',
@@ -950,7 +956,20 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 );
 
                 if ( ! MainWP_Server_Information_Handler::curlssl_compare( $openssl_version, '>=' ) ) {
-                    echo "<tr class='warning'><td colspan='4'><i class='attention icon'></i>" . sprintf( esc_html__( 'Your host needs to update OpenSSL to at least version 1.1.0 which is already over 4 years old and contains patches for over 60 vulnerabilities.%1$sThese range from Denial of Service to Remote Code Execution. %2$sClick here for more information.%3$s', 'mainwp' ), '<br/>', '<a href="https://community.letsencrypt.org/t/openssl-client-compatibility-changes-for-let-s-encrypt-certificates/143816" target="_blank">', '</a>' ) . '</td></tr>';
+                    ?>
+                        <tr class='warning'>
+                            <td colspan='4'>
+                                <i class='attention icon'></i>
+                                <?php
+                                if ( false !== strpos( $ssl_version, 'LibreSSL' ) ) {
+                                    printf( esc_html__( 'Your host needs to update LibreSSL to at least version 2.5.0 which is already over 4 years old and contains patches for over 60 vulnerabilities.%1$sThese range from Denial of Service to Remote Code Execution. %2$sClick here for more information.%3$s', 'mainwp' ), '<br/>', '<a href="https://www.libressl.org/" target="_blank">', '</a>' );
+                                } else {
+                                    printf( esc_html__( 'Your host needs to update OpenSSL to at least version 1.1.0 which is already over 4 years old and contains patches for over 60 vulnerabilities.%1$sThese range from Denial of Service to Remote Code Execution. %2$sClick here for more information.%3$s', 'mainwp' ), '<br/>', '<a href="https://community.letsencrypt.org/t/openssl-client-compatibility-changes-for-let-s-encrypt-certificates/143816" target="_blank">', '</a>' );
+                                }
+                                ?>
+                            </td>
+                        </tr>
+                    <?php
                 }
                 static::render_row_with_description( esc_html__( 'MySQL Version', 'mainwp' ), '>=', '5.0', 'get_mysql_version', '', '', null );
                 ?>
@@ -993,8 +1012,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      */
     public static function render_cron() { // phpcs:ignore -- NOSONAR - complex.
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
-            mainwp_do_not_have_permissions( 'cron schedules', 'mainwp' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+            \mainwp_do_not_have_permissions( 'cron schedules', 'mainwp' );
             return;
         }
 
@@ -1014,10 +1033,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'Ping childs sites'           => array( 'mainwp_cron_last_ping', 'mainwp_cronpingchilds_action', esc_html__( 'Once daily', 'mainwp' ), 'daily' ),
         );
 
-        $disableSitesMonitoring = get_option( 'mainwp_disableSitesChecking', 1 );
-        if ( ! $disableSitesMonitoring ) {
-            $cron_jobs['Child site uptime monitoring'] = array( 'mainwp_cron_checksites_last_timestamp', 'mainwp_croncheckstatus_action', esc_html__( 'Once every minute', 'mainwp' ), 'minutely' );
-        }
+        $cron_jobs['Child site uptime monitoring'] = array( 'mainwp_uptimecheck_auto_main_counter_lasttime_started', 'mainwp_cronuptimemonitoringcheck_action', esc_html__( 'Once every minute', 'mainwp' ), 'minutely' );
 
         $disableHealthChecking = get_option( 'mainwp_disableSitesHealthMonitoring', 1 );  // disabled by default.
         if ( ! $disableHealthChecking ) {
@@ -1413,8 +1429,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * Includes last_lines() function by phant0m, licensed under cc-wiki and GPLv2+
      */
     public static function render_error_log_page() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
-            mainwp_do_not_have_permissions( 'error log', 'mainwp' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+            \mainwp_do_not_have_permissions( 'error log', 'mainwp' );
             return;
         }
         static::render_header( 'ErrorLog' );
@@ -1462,6 +1478,10 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     "language": {
                         "emptyTable": '<?php esc_html_e( 'Error logging disabled.', 'mainwp' ); ?><?php echo '<br/>' . sprintf( esc_html__( 'To enable error logging, please check this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://codex.wordpress.org/Debugging_in_WordPress" target="_blank">', '</a>' ); ?>'
                     },
+                    columnDefs: [{
+                        "defaultContent": "-",
+                        "targets": "_all"
+                    }]
                 } );
             } );
         </script>
@@ -1523,9 +1543,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $lines = array_filter( $lines );
 
         if ( empty( $lines ) ) {
-
-            echo '<tr><td>' . esc_html__( 'MainWP is unable to find your error logs, please contact your host for server error logs.', 'mainwp' ) . '</td></tr>';
-
+            echo '<tr><td colspan="2">' . esc_html__( 'MainWP is unable to find your error logs, please contact your host for server error logs.', 'mainwp' ) . '</td></tr>';
             return;
         }
 
@@ -1563,8 +1581,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return void
      */
     public static function render_wp_config() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
-            mainwp_do_not_have_permissions( 'WP-Config.php', 'mainwp' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+            \mainwp_do_not_have_permissions( 'WP-Config.php', 'mainwp' );
             return;
         }
 
@@ -1663,8 +1681,11 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $enabled          = (int) MainWP_Logger::instance()->get_log_status();
         $specific_default = array(
             MainWP_Logger::UPDATE_CHECK_LOG_PRIORITY    => esc_html__( 'Update Checking', 'mainwp' ),
+            MainWP_Logger::UPTIME_CHECK_LOG_PRIORITY    => esc_html__( 'Uptime monitoring', 'mainwp' ),
+            MainWP_Logger::UPTIME_NOTICE_LOG_PRIORITY   => esc_html__( 'Uptime notification', 'mainwp' ),
             MainWP_Logger::EXECUTION_TIME_LOG_PRIORITY  => esc_html__( 'Execution time', 'mainwp' ),
             MainWP_Logger::LOGS_AUTO_PURGE_LOG_PRIORITY => esc_html__( 'Logs Auto Purge', 'mainwp' ),
+            MainWP_Logger::CONNECT_LOG_PRIORITY         => esc_html__( 'Dashboard Connect', 'mainwp' ),
         );
         $specific_logs    = apply_filters( 'mainwp_specific_action_logs', $specific_default ); // deprecated since 4.3.1, use 'mainwp_log_specific_actions' instead.
         $specific_logs    = apply_filters( 'mainwp_log_specific_actions', $specific_logs );
@@ -1825,8 +1846,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return void
      */
     public static function render_htaccess() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
-            mainwp_do_not_have_permissions( '.htaccess', 'mainwp' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+            \mainwp_do_not_have_permissions( '.htaccess', 'mainwp' );
             return;
         }
         static::render_header( '.htaccess' );
@@ -1892,9 +1913,19 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     public static function display_mainwp_options() {
         $options = MainWP_Server_Information_Handler::mainwp_options();
+
+        $enable_individual_uptime_monitoring = false;
+        if ( get_option( 'mainwp_individual_uptime_monitoring_schedule_enabled' ) ) {
+            $enable_individual_uptime_monitoring = true;
+        }
+
         // phpcs:disable WordPress.Security.EscapeOutput
         foreach ( $options as $option ) {
-            echo '<tr><td>' . $option['label'] . '</td><td>' . $option['value'] . '</td></tr>';
+            $addition_info = '';
+            if ( 'is_enable_automatic_check_uptime_monitoring' === $option['name'] && empty( $option['save_value'] ) && $enable_individual_uptime_monitoring ) { // global monitoring disabled.
+                $addition_info = '<br><em>' . esc_html__( 'Individual uptime monitoring is running', 'mainwp' ) . '</em>';
+            }
+            echo '<tr><td>' . $option['label'] . '</td><td>' . $option['value'] . $addition_info . '</td></tr>';
         }
         // phpcs:enable
     }

@@ -142,7 +142,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             <div class="wp-submenu sub-open" style="">
                 <div class="mainwp_boxout">
                     <div class="mainwp_boxoutin"></div>
-                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'manage_users' ) ) { ?>
+                    <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_users' ) ) { ?>
                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=UserBulkManage' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Users', 'mainwp' ); ?></a>
                     <?php } ?>
                     <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'UserBulkAdd' ) ) { ?>
@@ -307,7 +307,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         $renderItems = array();
 
-        if ( mainwp_current_user_have_right( 'dashboard', 'manage_users' ) ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_users' ) ) {
             $renderItems[] = array(
                 'title'  => esc_html__( 'Manage Users', 'mainwp' ),
                 'href'   => 'admin.php?page=UserBulkManage',
@@ -373,8 +373,8 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
      */
     public static function render() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_users' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'manage users', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_users' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage users', 'mainwp' ) );
 
             return;
         }

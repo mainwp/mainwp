@@ -396,7 +396,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
 
         $renderItems = array();
 
-        if ( mainwp_current_user_have_right( 'dashboard', 'manage_restapi' ) ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_restapi' ) ) {
             $renderItems[] = array(
                 'title'  => esc_html__( 'Manage API Keys', 'mainwp' ),
                 'href'   => 'admin.php?page=RESTAPI',
@@ -542,8 +542,8 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
 
     /** Render REST API SubPage */
     public static function render_all_api_keys() { // phpcs:ignore -- NOSONAR - complex.
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_restapi' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'manage dashboard REST API', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_restapi' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage dashboard REST API', 'mainwp' ) );
             return;
         }
         static::render_header();
@@ -750,8 +750,8 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
 
     /** Render REST API SubPage */
     public static function render_rest_api_setings() { //phpcs:ignore -- NOSONAR - complex.
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_restapi' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'manage dashboard REST API', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_restapi' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage dashboard REST API', 'mainwp' ) );
             return;
         }
 
@@ -1208,7 +1208,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             $args['cookies'] = $cookies;
         }
 
-        $site_url = get_option( 'siteurl' );
+        $site_url = get_option( 'home' );
         $response = wp_remote_post( $site_url . '/wp-json', $args );
         $body     = wp_remote_retrieve_body( $response );
         $data     = is_string( $body ) ? json_decode( $body, true ) : false;

@@ -451,6 +451,8 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
 
         static::render_browser_extensions_notice();
 
+        static::render_secure_priv_key_connection();
+
         static::mainwp_tmpfile_check();
     }
 
@@ -508,6 +510,24 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     <a href="https://mainwp.com/mainwp-browser-extension/" target="_blank" class="ui tiny button"><?php echo esc_html__( 'Read More', 'mainwp' ); // NOSONAR - noopener - open safe. ?></a>
                 </div>
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp_browser_extensions_notice"></i>
+            </div>
+            <?php
+        }
+    }
+
+    /**
+     * Renders Browsers extensions notice.
+     *
+     * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
+     */
+    public static function render_secure_priv_key_connection() {
+        if ( MainWP_DB::instance()->get_websites_count() > 0 && MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_secure_priv_key_notice' ) ) {
+            ?>
+            <div class="ui attention message">
+                <h3><?php esc_html_e( 'New Security Feature: OpenSSL Key Encryption', 'mainwp' ); ?></h3>
+                <div><?php esc_html_e( 'To enhance security, we\'ve added a feature to encrypt your private keys stored in the database. This provides an extra layer of protection in the unlikely event your database is compromised.', 'mainwp' ); ?> <a href="https://kb.mainwp.com/docs/openssl-keys-encryption/" target="_blank"><?php esc_html_e( 'Learn more here.', 'mainwp' ); ?></a></div>
+                <p><button class="ui green mini button" id="increase-connection-security-btn"><?php echo esc_html__( 'Encrypt Keys Now', 'mainwp' ); ?></button></p>
+                <i class="close icon mainwp-notice-dismiss" notice-id="mainwp_secure_priv_key_notice"></i>
             </div>
             <?php
         }
@@ -928,10 +948,10 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             if ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] && isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) {
                 $class_string .= ' mainwp-individual-client-overview ';
             }
-            if ( isset( $_GET['page'] ) && ( 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] ) ) {
+            if ( isset( $_GET['page'] ) && ( 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsMonitors' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] ) ) {
                 $class_string .= ' mainwp-individual-site-view ';
             }
-            if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) ) {
+            if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['monitor_wpid'] ) && ! empty( $_GET['monitor_wpid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) ) {
                 $class_string .= ' mainwp-individual-site-view ';
             }
             // phpcs:enable
@@ -1049,7 +1069,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         <div class="ui tiny modal" id="mainwp-modal-confirm">
         <i class="close icon"></i>
             <div class="header"><?php esc_html_e( 'Confirmation', 'mainwp' ); ?></div>
-            <div class="content">
+            <div class="scrolling content">
                 <div class="content-massage"></div>
                 <div class="ui mini yellow message hidden update-confirm-notice" ><?php printf( esc_html__( 'To disable update confirmations, go to the %1$sSettings%2$s page and disable the "Disable update confirmations" option', 'mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?></div>
                 <div class="ui form hidden" id="mainwp-confirm-form" style="display:none;">

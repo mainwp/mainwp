@@ -53,12 +53,48 @@ class MainWP_Format { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $notTrustedPluginsToUpdate = array();
         }
 
+        $pluginsNewUpdate           = static::remove_duplicate_updates( $pluginsNewUpdate, $pluginsToUpdate );
+        $pluginsToUpdate            = static::remove_duplicate_updates( $pluginsToUpdate );
+        $notTrustedPluginsNewUpdate = static::remove_duplicate_updates( $notTrustedPluginsNewUpdate, $notTrustedPluginsToUpdate );
+        $notTrustedPluginsToUpdate  = static::remove_duplicate_updates( $notTrustedPluginsToUpdate );
+
         $update_items = array();
         $update_items = MainWP_Utility::array_merge( $pluginsNewUpdate, $pluginsToUpdate );
         $update_items = MainWP_Utility::array_merge( $update_items, $notTrustedPluginsNewUpdate );
         $update_items = MainWP_Utility::array_merge( $update_items, $notTrustedPluginsToUpdate );
 
         return $update_items;
+    }
+
+
+    /**
+     * Method remove_duplicate_updates
+     *
+     * @param  array $checks checks.
+     * @param  array $inputs inputs.
+     * @return mixed
+     */
+    public static function remove_duplicate_updates( $checks, $inputs = array() ) {
+        $tmp     = array();
+        $filters = array();
+        $done    = false;
+        if ( is_array( $inputs ) ) {
+            foreach ( $inputs as $item ) {
+                if ( isset( $item['slug'] ) && isset( $item['id'] ) && isset( $item['current'] ) && ! isset( $filters[ $item['id'] . '_' . $item['slug'] . '_' . $item['current'] ] ) ) {
+                    $filters[ $item['id'] . '_' . $item['slug'] . '_' . $item['current'] ] = 1;
+                    $done = true;
+                }
+            }
+        }
+        // check not duplicate item in both arrays, for $checks array.
+        foreach ( $checks as $item ) {
+            if ( isset( $item['slug'] ) && isset( $item['id'] ) && isset( $item['current'] ) && ! isset( $filters[ $item['id'] . '_' . $item['slug'] . '_' . $item['current'] ] ) ) {
+                $filters[ $item['id'] . '_' . $item['slug'] . '_' . $item['current'] ] = 1;
+                $tmp[] = $item;
+                $done  = true;
+            }
+        }
+        return $done ? $tmp : $checks; // to prevent bad format data.
     }
 
     /**
@@ -88,6 +124,11 @@ class MainWP_Format { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         if ( ! is_array( $notTrustedThemesToUpdate ) ) {
             $notTrustedThemesToUpdate = array();
         }
+
+        $themesNewUpdate           = static::remove_duplicate_updates( $themesNewUpdate, $themesToUpdate );
+        $themesToUpdate            = static::remove_duplicate_updates( $themesToUpdate );
+        $notTrustedThemesNewUpdate = static::remove_duplicate_updates( $notTrustedThemesNewUpdate, $notTrustedThemesToUpdate );
+        $notTrustedThemesToUpdate  = static::remove_duplicate_updates( $notTrustedThemesToUpdate );
 
         $update_items = array();
 

@@ -167,7 +167,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=ThemesManage' ) ); ?>" class="mainwp-submenu">
                         <?php esc_html_e( 'Manage Themes', 'mainwp' ); ?>
                     </a>
-                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'install_themes' ) ) { ?>
+                    <?php if ( \mainwp_current_user_can( 'dashboard', 'install_themes' ) ) { ?>
                         <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ThemesInstall' ) ) { ?>
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=ThemesInstall' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Install Themes', 'mainwp' ); ?></a>
                         <?php } ?>
@@ -308,7 +308,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'active' => ( 'Manage' === $shownPage ) ? true : false,
             );
 
-            if ( mainwp_current_user_have_right( 'dashboard', 'install_themes' ) ) {
+            if ( \mainwp_current_user_can( 'dashboard', 'install_themes' ) ) {
                 $renderItems[] = array(
                     'title'  => esc_html__( 'Install', 'mainwp' ),
                     'href'   => 'admin.php?page=ThemesInstall',
@@ -983,6 +983,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $sites             = array();
         $siteThemes        = array();
+        $themesName        = array();
         $themesNameSites   = array();
         $themesRealVersion = array();
         $themesSlug        = array();
@@ -1046,7 +1047,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param array  $sites List of sites.
      * @param array  $themesName List of themes.
      * @param array  $siteThemes List of themes for the site.
-     * @param string $themesSlug List of theme slugs.
+     * @param array  $themesSlug List of theme slugs.
      * @param array  $themesNameSites Installed theme version.
      * @param string $themesRealVersion Current theme version.
      * @param array  $roll_list roll items list.
@@ -1114,15 +1115,15 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         <div class="ui secondary segment main-master-checkbox">
             <div class="ui stackable grid">
-                <div class="one wide center aligned middle aligned column">
+                <div class="one wide left aligned middle aligned column">
                     <span class="trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></span>
                 </div>
                 <div class="one wide center aligned middle aligned column"><div class="ui checkbox main-master  not-auto-init"><input type="checkbox"/><label></label></div></div>
-                <div class="five wide middle aligned column"><?php esc_html_e( 'Theme', 'mainwp' ); ?></div>
+                <div class="six wide middle aligned column"><?php esc_html_e( 'Theme', 'mainwp' ); ?></div>
                 <div class="two wide center aligned middle aligned column"></div>
                 <div class="two wide center aligned middle aligned column"></div>
                 <div class="two wide center aligned middle aligned column"></div>
-                <div class="two wide center aligned middle aligned column"><?php esc_html_e( 'Themes', 'mainwp' ); ?></div>
+                <div class="two wide right aligned middle aligned column"><?php esc_html_e( 'Themes', 'mainwp' ); ?></div>
             </div>
         </div>
         <div class="mainwp-manage-themes-wrapper main-child-checkbox">
@@ -1136,17 +1137,17 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <div class="ui accordion mainwp-manage-theme-accordion mainwp-manage-theme-item main-child-checkbox"  id="<?php echo esc_html( $item_id ); ?>">
                 <div class="title master-checkbox">
                     <div class="ui stackable grid">
-                        <div class="one wide center aligned middle aligned column"><i class="dropdown icon dropdown-trigger"></i></div>
+                        <div class="one wide left aligned middle aligned column"><i class="dropdown icon dropdown-trigger"></i></div>
                         <div class="one wide center aligned middle aligned column"><div class="ui checkbox master"><input type="checkbox"><label></label></div></div>
-                        <div class="three wide middle aligned column"><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $site_id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo intval( $site_id ); ?>"><?php echo esc_html( $site_name ); ?></a></div>
+                        <div class="four wide middle aligned column"><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $site_id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo intval( $site_id ); ?>"><?php echo esc_html( $site_name ); ?></a></div>
                         <div class="two wide center aligned middle aligned column"></div>
                         <div class="two wide center aligned middle aligned column"></div>
                         <div class="two wide center aligned middle aligned column"></div>
                         <div class="two wide center aligned middle aligned column"></div>
-                        <div class="two wide center aligned middle aligned column"><div class="ui label"><i class="icon tint"></i> <?php echo intval( $count_themes ); ?></div></div>
+                        <div class="two wide right aligned middle aligned column"><div class="ui label"><?php echo intval( $count_themes ) . ' ' . esc_html( _n( 'Theme', 'Themes', intval( $count_themes ), 'mainwp' ) ); ?></div></div>
                     </div>
                 </div>
-            <div class="content child-checkbox">
+                <div class="content child-checkbox">
                     <?php
                     foreach ( $slugVersions as $slug_ver => $theme ) :
 
@@ -1213,10 +1214,10 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 <?php elseif ( $actived ) : ?>
                                     <span data-tooltip="<?php echo esc_html__( 'Active theme on the site can not be deleted.', 'mainwp' ); ?>" data-position="right center" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>
                                 <?php else : ?>
-                                <div class="ui checkbox">
-                                    <input type="checkbox"  class="mainwp-selected-theme-site" />
-                                    <label></label>
-                                </div>
+                                    <div class="ui checkbox">
+                                        <input type="checkbox"  class="mainwp-selected-theme-site" />
+                                        <label></label>
+                                    </div>
                                 <?php endif; ?>
                                 </div>
                                 <div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_theme_icon( $theme_slug ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
@@ -1225,15 +1226,15 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 <div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny basic green label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny basic grey label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
                                 <div class="one wide center aligned middle aligned column"></div>
                                 <div class="two wide center aligned middle aligned column current-version">
-                                <?php echo esc_html( $theme_version ); ?>
-                                <?php if ( ! empty( $new_version ) ) : ?>
-                                    &rarr;
-                                    <?php
-                                    if ( ! empty( $roll_list[ $site_id ][ $theme_slug ][ $new_version ] ) ) {
-                                        echo MainWP_Updates_Helper::get_roll_msg( $roll_list[ $site_id ][ $theme_slug ][ $new_version ], true, 'notice' ); //phpcs:ignore -- NOSONAR -- ok.
-                                    }
-                                    echo esc_html( $new_version );
-                                    ?>
+                                    <?php echo esc_html( $theme_version ); ?>
+                                    <?php if ( ! empty( $new_version ) ) : ?>
+                                        &rarr;
+                                        <?php
+                                        if ( ! empty( $roll_list[ $site_id ][ $theme_slug ][ $new_version ] ) ) {
+                                            echo MainWP_Updates_Helper::get_roll_msg( $roll_list[ $site_id ][ $theme_slug ][ $new_version ], true, 'notice' ); //phpcs:ignore -- NOSONAR -- ok.
+                                        }
+                                        echo esc_html( $new_version );
+                                        ?>
                                     <?php endif; ?>
                                 </div>
                                 <div class="two wide right aligned middle aligned column update-column">
@@ -1243,22 +1244,22 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 </div>
                                 <div class="two wide center aligned middle aligned column column-actions">
                                 <?php if ( $actived ) : ?>
-                                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
+                                    <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
                                         <a href="javascript:void(0)" disabled class="ui mini fluid <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
                                     <?php } ?>
                                 <?php else : ?>
                                     <div class="ui mini fluid buttons">
-                                        <?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
+                                        <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
                                         <a href="javascript:void(0)" class="mainwp-manages-theme-activate ui green <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
                                         <?php } ?>
-                                        <?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) && ! $not_delete ) { ?>
+                                        <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_themes' ) && ! $not_delete ) { ?>
                                         <a href="javascript:void(0)" class="mainwp-manages-theme-delete ui <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
                                         <?php } ?>
                                     </div>
                                 <?php endif; ?>
                                 </div>
                             </div>
-                                <?php
+                            <?php
                         }
                     endforeach;
                     ?>
@@ -1319,7 +1320,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param array  $sites List of sites.
      * @param array  $themesName List of themes.
      * @param array  $siteThemes List of themes for the site.
-     * @param string $themesSlug List of theme slugs.
+     * @param array  $themesSlug List of theme slugs.
      * @param array  $themesNameSites Installed theme version.
      * @param string $themesRealVersion Current theme version.
      * @param array  $roll_list roll items list.
@@ -1388,16 +1389,16 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         <div class="ui secondary segment main-master-checkbox">
             <div class="ui stackable grid">
-                <div class="one wide center aligned middle aligned column">
+                <div class="one wide left aligned middle aligned column">
                     <span class="trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></span>
                 </div>
                 <div class="one wide center aligned middle aligned column"><div class="ui checkbox main-master  not-auto-init"><input type="checkbox"/><label></label></div></div>
                 <div class="one wide center aligned middle aligned column"></div>
                 <div class="five wide middle aligned column"><?php esc_html_e( 'Theme', 'mainwp' ); ?></div>
                 <div class="two wide center aligned middle aligned column"></div>
-                <div class="two wide center aligned middle aligned column"><?php esc_html_e( 'Latest Version', 'mainwp' ); ?></div>
+                <div class="two wide right aligned middle aligned column"><?php esc_html_e( 'Latest Version', 'mainwp' ); ?></div>
                 <div class="two wide center aligned middle aligned column"></div>
-                <div class="two wide center aligned middle aligned column"><?php esc_html_e( 'Websites', 'mainwp' ); ?></div>
+                <div class="two wide right aligned middle aligned column"><?php esc_html_e( 'Websites', 'mainwp' ); ?></div>
             </div>
         </div>
         <div class="mainwp-manage-themes-wrapper main-child-checkbox">
@@ -1416,14 +1417,14 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <div class="ui accordion mainwp-manage-theme-accordion mainwp-manage-theme-item main-child-checkbox"  id="<?php echo esc_html( $item_id ); ?>">
                 <div class="title master-checkbox">
                     <div class="ui stackable grid">
-                        <div class="one wide center aligned middle aligned column"><i class="dropdown icon dropdown-trigger"></i></div>
+                        <div class="one wide left aligned middle aligned column"><i class="dropdown icon dropdown-trigger"></i></div>
                         <div class="one wide center aligned middle aligned column"><div class="ui checkbox master"><input type="checkbox"><label></label></div></div>
                         <div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_theme_icon( $theme_slug_first ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
                         <div class="five wide middle aligned column"><strong><?php echo esc_html( $theme_title ); ?></strong></div>
                         <div class="two wide center aligned middle aligned column"></div>
-                        <div class="two wide center aligned middle aligned column lastest-version-info"></div>
+                        <div class="two wide right aligned middle aligned column lastest-version-info"></div>
                         <div class="two wide center aligned middle aligned column"></div>
-                        <div class="two wide center aligned middle aligned column"><div class="ui label"><i class="icon wordpress"></i> <?php echo intval( $count_sites ); // phpcs:ignore -- Prevent modify WP icon. ?></div></div>
+                        <div class="two wide right aligned middle aligned column"><div class="ui label"><?php echo intval( $count_sites ) . ' ' . esc_html( _n( 'Site', 'Sites', intval( $count_sites ), 'mainwp' ) ); ?></div></div>
                     </div>
                 </div>
             <div class="content child-checkbox">
@@ -1498,7 +1499,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 ?>
                             <div class="ui very compact stackable grid mainwp-manage-theme-item-website <?php echo esc_html( $active_status_class ); ?>"  updated="0" site-id="<?php echo intval( $site_id ); ?>" theme-slug="<?php echo esc_attr( $theme_slug ); ?>" theme-name="<?php echo esc_html( wp_strip_all_tags( $themesName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>"  id="<?php echo esc_html( $item_id ); ?>" not-delete="<?php echo $not_delete ? 1 : 0; ?>" >
                             <div class="one wide center aligned middle aligned column"></div>
-                                <div class="one wide center aligned middle aligned column">
+                                <div class="one wide left aligned middle aligned column">
 
                                 <?php if ( '' !== $parent_str ) : ?>
                                     <?php echo $parent_str; //phpcs:ignore -- escaped. ?>
@@ -1516,7 +1517,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 <div class="one wide center aligned middle aligned column"><?php echo $theme_status; // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
                                 <div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny basic green label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny basic grey label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
                                 <div class="one wide center aligned middle aligned column"></div>
-                                <div class="two wide center aligned middle aligned column current-version">
+                                <div class="two wide right aligned middle aligned column current-version">
                                     <?php echo esc_html( $theme_version ); ?>
                                     <?php if ( ! empty( $new_version ) ) : ?>
                                     &rarr;
@@ -1535,15 +1536,15 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 </div>
                                 <div class="two wide center aligned middle aligned column column-actions">
                                 <?php if ( $actived ) : ?>
-                                            <?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
+                                            <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
                                                 <a href="javascript:void(0)" disabled class="ui mini fluid <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
                                             <?php } ?>
                                     <?php else : ?>
                                         <div class="ui mini fluid buttons">
-                                        <?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
+                                        <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
                                             <a href="javascript:void(0)" class="mainwp-manages-theme-activate ui green <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
                                         <?php } ?>
-                                            <?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) && ! $not_delete ) { ?>
+                                            <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_themes' ) && ! $not_delete ) { ?>
                                             <a href="javascript:void(0)" class="mainwp-manages-theme-delete ui <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
                                         <?php } ?>
                                         </div>
@@ -1624,10 +1625,10 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         ?>
         <select class="ui dropdown" id="mainwp-bulk-actions">
             <option value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
-                <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+                <?php if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
                     <option data-value="ignore_updates" value="ignore_updates"><?php esc_html_e( 'Ignore updates', 'mainwp' ); ?></option>
                 <?php endif; ?>
-                <?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_themes' ) ) : ?>
+                <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_themes' ) ) : ?>
                     <?php if ( 'inactive' === $status ) : ?>
                     <option data-value="activate" value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></option>
                     <?php else : ?>
@@ -1635,19 +1636,19 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <?php endif; ?>
                 <?php endif; ?>
                 <?php if ( 'inactive' === $status ) : ?>
-                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) ) : ?>
+                    <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_themes' ) ) : ?>
                     <option data-value="delete" value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
                     <?php endif; ?>
                 <?php else : ?>
-                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) ) : ?>
+                    <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_themes' ) ) : ?>
                         <option data-value="delete" disabled value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
                     <?php endif; ?>
                 <?php endif; ?>
                 <?php if ( 'all' === $status ) : ?>
-                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_themes' ) ) : ?>
+                    <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_themes' ) ) : ?>
                         <option data-value="activate" disabled value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></option>
                     <?php endif; ?>
-                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) ) : ?>
+                    <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_themes' ) ) : ?>
                         <option data-value="delete" disabled value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
                 <?php endif; ?>
                 <?php endif; ?>
@@ -1714,8 +1715,8 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @uses \MainWP\Dashboard\MainWP_Install_Bulk::render_upload()
      */
     public static function render_themes_table() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'install_themes' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'install themes', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'install_themes' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'install themes', 'mainwp' ) );
             return;
         }
         $favorites_enabled = is_plugin_active( 'mainwp-favorites-extension/mainwp-favorites-extension.php' );
@@ -1965,8 +1966,8 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         static::render_header( 'AutoUpdate' );
 
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'trust_untrust_updates' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'trust/untrust updates', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'trust_untrust_updates' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'trust/untrust updates', 'mainwp' ) );
             return;
         } else {
             $snThemeAutomaticDailyUpdate = get_option( 'mainwp_themeAutomaticDailyUpdate' );
@@ -2422,7 +2423,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             /**
              * Action: mainwp_themes_before_ignored_updates
              *
-             * Fires on the top of the Ignored Themes Updates page.
+             * Fires on the top of the Ignored Theme Updates page.
              *
              * @since 4.1
              */
@@ -2443,7 +2444,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         /**
          * Action: mainwp_themes_after_ignored_updates
          *
-         * Fires on the bottom of the Ignored Themes Updates page.
+         * Fires on the bottom of the Ignored Theme Updates page.
          *
          * @since 4.1
          */
@@ -2495,7 +2496,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                     <td><?php echo esc_html( $ignoredTheme ); ?></td>
                                     <td><?php echo 'all_versions' === $ignored_ver ? esc_html__( 'All', 'mainwp' ) : esc_html( $ignored_ver ); ?></td>
                                     <td class="right aligned">
-                                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+                                    <?php if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
                                         <a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_globally( '<?php echo esc_js( rawurlencode( $ignoredTheme ) ); ?>', '<?php echo esc_js( rawurlencode( $ignored_ver ) ); ?>' )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
                                     <?php endif; ?>
                                     </td>
@@ -2504,7 +2505,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </tbody>
-                <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+                <?php if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
                     <?php if ( $ignoredThemes ) : ?>
                     <tfoot class="full-width">
                         <tr>
@@ -2599,7 +2600,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 <td><?php echo esc_html( $ignoredTheme ); ?></td>
                                 <td><?php echo 'all_versions' === $ignored_ver ? esc_html__( 'All', 'mainwp' ) : esc_html( $ignored_ver ); ?></td>
                                 <td class="right aligned">
-                                <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+                                <?php if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
                                     <a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_detail( '<?php echo esc_js( rawurlencode( $ignoredTheme ) ); ?>', <?php echo intval( $website->id ); ?>, '<?php echo esc_js( rawurlencode( $ignored_ver ) ); ?>' )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
                                 <?php endif; ?>
                                 </td>
@@ -2612,7 +2613,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 ?>
                 <?php endif; ?>
             </tbody>
-            <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+            <?php if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
                 <?php if ( 0 < $cnt ) : ?>
                 <tfoot class="full-width">
                 <tr>
@@ -2735,7 +2736,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         <td><?php echo esc_html( $ignoredThemeName ); ?></td>
                         <td><?php echo esc_html( $ignoredTheme ); ?></td>
                         <td class="right aligned">
-                        <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+                        <?php if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
                             <a href="#" class="ui mini button" onClick="return updatesoverview_themes_abandoned_unignore_globally( '<?php echo esc_js( rawurlencode( $ignoredTheme ) ); ?>' )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
                         <?php endif; ?>
                         </td>
@@ -2743,7 +2744,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <?php endforeach; ?>
                 <?php endif; ?>
                 </tbody>
-                <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+                <?php if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
                     <?php if ( $ignoredThemes ) : ?>
                     <tfoot class="full-width">
                         <tr>
@@ -2823,7 +2824,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         <td><?php echo esc_html( $ignoredThemeName ); ?></td>
                         <td><?php echo esc_html( $ignoredTheme ); ?></td>
                         <td class="right aligned">
-                        <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+                        <?php if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
                             <a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_abandoned_detail( '<?php echo esc_js( rawurlencode( $ignoredTheme ) ); ?>', <?php echo intval( $website->id ); ?> )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
                         <?php endif; ?>
                         </td>
@@ -2835,7 +2836,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 ?>
             <?php endif; ?>
             </tbody>
-            <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+            <?php if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
                 <?php if ( 0 < $cnt ) : ?>
                 <tfoot class="full-width">
                     <tr>

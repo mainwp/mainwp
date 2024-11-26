@@ -114,20 +114,36 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
+     * Method get_var_field()
+     *
+     * @param string $sql SQL Query.
+     *
+     * @return mixed
+     */
+    public function get_var_field( $sql ) {
+        return $this->wpdb->get_var( $sql );
+    }
+
+    /**
      * Method get_row_result()
      *
      * Get row result.
      *
      * @param mixed $sql SQL Query.
+     * @param int   $obj OBJECT|ARRAY_A.
      *
      * @return mixed null|Row
      */
-    public function get_row_result( $sql ) {
+    public function get_row_result( $sql, $obj = OBJECT ) {
         if ( null === $sql ) {
             return null;
         }
 
-        return $this->wpdb->get_row( $sql, OBJECT );
+        if ( ! in_array( $obj, array( OBJECT, ARRAY_A ) ) ) {
+            $obj = OBJECT;
+        }
+
+        return $this->wpdb->get_row( $sql, $obj );
     }
 
     /**

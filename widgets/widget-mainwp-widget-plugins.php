@@ -141,8 +141,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             </div>
             <div class="four wide column right aligned">
                 <div class="ui dropdown right pointing mainwp-dropdown-tab">
-                    <div class="text"><?php esc_html_e( 'Active', 'mainwp' ); ?></div>
-                    <i class="dropdown icon"></i>
+                    <i class="vertical ellipsis icon"></i>
                     <div class="menu">
                         <a class="item" data-tab="active_plugins" data-value="active_plugins" title="<?php esc_attr_e( 'Active', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Active', 'mainwp' ); ?></a>
                         <a class="item" data-tab="inactive_plugins" data-value="inactive_plugins" title="<?php esc_attr_e( 'Inactive', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Inactive', 'mainwp' ); ?></a>
@@ -189,8 +188,13 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         <input class="pluginSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $actived_plugins[ $i ]['slug'] ) ); ?>"/>
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
                         <div class="right floated pluginsAction">
-                            <?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-                                    <span data-position="left center" data-tooltip="<?php echo esc_attr__( 'Deactivate the ', 'mainwp' ) . esc_html( $actived_plugins[ $i ]['name'] ) . ' ' . esc_attr__( 'plugin on the child site.', 'mainwp' ); ?>" data-inverted=""><div class="mainwp-plugin-deactivate ui mini button green <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></div></span>
+                            <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
+                                <div class="ui right pointing dropdown icon mini button">
+                                    <i class="ellipsis horizontal icon"></i>
+                                    <div class="menu">
+                                        <div class="mainwp-plugin-deactivate item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></div>
+                                    </div>
+                                </div>
                             <?php } ?>
                         </div>
                         <div class="middle aligned content">
@@ -244,12 +248,17 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         <input class="pluginSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_plugins[ $i ]['slug'] ) ); ?>"/>
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
                         <div class="right floated content pluginsAction">
-                            <?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-                                    <span  data-position="left center" data-tooltip="<?php echo esc_attr__( 'Activate the ', 'mainwp' ) . wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ) . ' ' . esc_attr__( 'plugin on the child site.', 'mainwp' ); ?>" data-inverted=""><a href="#" class="mainwp-plugin-activate ui mini green button <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Activate', 'mainwp' );// phpcs:ignore WordPress.Security.EscapeOutput ?></a></span>
-                            <?php } ?>
-                            <?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_plugins' ) ) { ?>
-                                    <span  data-position="left center" data-tooltip="<?php echo esc_attr__( 'Delete the ', 'mainwp' ) . wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ) . ' ' . esc_attr__( 'plugin from the child site.', 'mainwp' ); ?>" data-inverted=""><a href="#" class="mainwp-plugin-delete ui mini basic button <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Delete', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></a></span>
-                            <?php } ?>
+                            <div class="ui right pointing dropdown icon mini button">
+                                <i class="ellipsis horizontal icon"></i>
+                                <div class="menu">
+                                <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
+                                    <a href="#" class="mainwp-plugin-activate item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Activate', 'mainwp' );// phpcs:ignore WordPress.Security.EscapeOutput ?></a>
+                                <?php } ?>
+                                <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
+                                    <a href="#" class="mainwp-plugin-delete item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Delete', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
+                                <?php } ?>
+                                </div>
+                            </div>
                         </div>
                         <div class="middle aligned content">
                             <?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?>&nbsp;&nbsp;&nbsp;&nbsp;
@@ -277,6 +286,12 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             do_action( 'mainwp_after_inactive_plugins_list', $website, $inactive_plugins );
             ?>
         </div>
+        </div>
+        <div class="ui two column grid mainwp-widget-footer">
+            <div class="left aligned middle aligned column"></div>
+            <div class="right aligned middle aligned column">
+                <a href="admin.php?page=PluginsManage"><?php esc_html_e( 'Manage Plugins', 'mainwp' ); ?></a>
+            </div>
         </div>
         <?php
         /**
@@ -393,7 +408,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             do_action( 'mainwp_after_plugin_action', $information, $action, $plugin, $website );
 
         } catch ( MainWP_Exception $e ) {
-            die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
+            die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e, true ) ) ) ); // escaped.
         }
 
         if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {

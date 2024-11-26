@@ -30,9 +30,9 @@ if ( empty( $heading ) ) {
         <div id="mainwp-email-wrapper" style="padding: 30px 0;">
             <?php
             /**
-             * Basic Uptime Monitoring Email Header
+             * Uptime Monitoring Email Header
              *
-             * Fires at the top of the basic uptime monitoring email template.
+             * Fires at the top of the uptime monitoring email template.
              *
              * @since 4.1
              */
@@ -61,7 +61,8 @@ if ( empty( $heading ) ) {
                                 $site        = $current_email_site;
                                 $site_name   = $site->name;
                                 $site_url    = $site->url;
-                                $code        = $site->http_response_code;
+                                $mo_url      = empty( $site->issub ) ? $site_url : $site_url . $site->suburl;
+                                $code        = $site->last_http_code;
                                 $code_string = MainWP\Dashboard\MainWP_Utility::get_http_codes( $code );
                                 if ( ! empty( $code_string ) ) {
                                     $code .= ' - ' . $code_string;
@@ -72,7 +73,7 @@ if ( empty( $heading ) ) {
                                     <strong><?php esc_html_e( 'Hi there', 'mainwp' ); ?>,</strong>
                                     <p><?php esc_html_e( 'Based on the HTTP response from your monitor, it appears that your child site is DOWN.', 'mainwp' ); ?></p>
                                     <p><strong><?php esc_html_e( 'Monitor', 'mainwp' ); ?>:</strong> <?php echo esc_html( $site_name ); ?></p>
-                                    <p><strong><?php esc_html_e( 'Site URL', 'mainwp' ); ?>:</strong> <a href="<?php echo esc_url( $site_url ); ?>" target="_blank"><?php echo esc_html( $site_url ); ?></a></p>
+                                    <p><strong><?php esc_html_e( 'Monitor URL', 'mainwp' ); ?>:</strong> <a href="<?php echo esc_url( $mo_url ); ?>" target="_blank"><?php echo esc_html( $mo_url ); ?></a></p>
                                     <p><strong><?php esc_html_e( 'Status Code', 'mainwp' ); ?>:</strong> <?php echo esc_html( $code ); ?></p>
                                 </td>
                             </tr>
@@ -86,7 +87,8 @@ if ( empty( $heading ) ) {
                                 foreach ( $sites as $site ) {
                                     $site_name   = $site->name;
                                     $site_url    = $site->url;
-                                    $code        = $site->http_response_code;
+                                    $mo_url      = empty( $site->issub ) ? $site_url : $site_url . $site->suburl;
+                                    $code        = $site->last_http_code;
                                     $code_string = MainWP\Dashboard\MainWP_Utility::get_http_codes( $code );
                                     if ( ! empty( $code_string ) ) {
                                         $code .= ' - ' . $code_string;
@@ -97,13 +99,20 @@ if ( empty( $heading ) ) {
                                                 <strong><?php esc_html_e( 'Hi there', 'mainwp' ); ?>,</strong>
                                                 <p><?php esc_html_e( 'Based on the HTTP response from your monitor, it appears that your child site is DOWN.', 'mainwp' ); ?></p>
                                                 <p><strong><?php esc_html_e( 'Monitor', 'mainwp' ); ?>:</strong> <?php echo esc_html( $site_name ); ?></p>
-                                                <p><strong><?php esc_html_e( 'Site URL', 'mainwp' ); ?>:</strong> <a href="<?php echo esc_url( $site_url ); ?>" target="_blank"><?php echo esc_html( $site_url ); ?></a></p>
+                                                <p><strong><?php esc_html_e( 'Monitor URL', 'mainwp' ); ?>:</strong> <a href="<?php echo esc_url( $mo_url ); ?>" target="_blank"><?php echo esc_html( $mo_url ); ?></a></p>
                                                 <p><strong><?php esc_html_e( 'Status Code', 'mainwp' ); ?>:</strong> <?php echo esc_html( $code ); ?></p>
                                             </td>
                                         </tr>
                                         <tr>
                                             <td style="vertical-align:top;text-align:left;padding:30px 30px 0 30px;">
-                                                <strong><?php esc_html_e( 'Event timestamp: ', 'mainwp' ); ?></strong><?php echo MainWP\Dashboard\MainWP_Utility::format_timestamp( $site->offline_checks_last ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                                                <strong><?php esc_html_e( 'Event timestamp: ', 'mainwp' ); ?></strong>
+                                                <?php
+                                                    $last_time = $site->offline_checks_last;
+                                                if ( ! empty( $site->lasttime_check ) ) {
+                                                    $last_time = $site->lasttime_check;
+                                                }
+                                                    echo MainWP\Dashboard\MainWP_Utility::format_timestamp( $last_time ); // phpcs:ignore WordPress.Security.EscapeOutput
+                                                ?>
                                             </td>
                                         </tr>
                                 <?php } ?>
@@ -123,9 +132,9 @@ if ( empty( $heading ) ) {
             </div>
             <?php
             /**
-             * Basic Uptime Monitoring Email Footer
+             * Uptime Monitoring Email Footer
              *
-             * Fires at the bottom of the basic uptime monitoring email template.
+             * Fires at the bottom of the uptime monitoring email template.
              *
              * @since 4.1
              */

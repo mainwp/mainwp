@@ -65,7 +65,21 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
                 $output = array();
 
-                $information = MainWP_Connect::fetch_url_not_authed( $url, $admin, 'stats', null, false, $verify_cert, $http_user, $http_pass, $ssl_version, array( 'force_use_ipv4' => $force_use_ipv4 ), $output ); // Fetch the stats with the given admin name.
+                $information = MainWP_Connect::fetch_url_not_authed(
+                    $url,
+                    $admin,
+                    'stats',
+                    null,
+                    false,
+                    $verify_cert,
+                    $http_user,
+                    $http_pass,
+                    $ssl_version,
+                    array(
+                        'force_use_ipv4' => $force_use_ipv4,
+                    ),
+                    $output
+                ); // Fetch the stats with the given admin name.
 
                 if ( isset( $information['wpversion'] ) ) {
                     $ret['response'] = 'OK';
@@ -195,6 +209,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
         $params['url']                     = isset( $data['url'] ) ? sanitize_text_field( wp_unslash( $data['url'] ) ) : '';
         $params['name']                    = isset( $data['name'] ) ? sanitize_text_field( wp_unslash( $data['name'] ) ) : '';
         $params['wpadmin']                 = isset( $data['admin'] ) ? sanitize_text_field( wp_unslash( $data['admin'] ) ) : '';
+        $params['adminpwd']                = isset( $data['adminpassword'] ) ? wp_unslash( $data['adminpassword'] ) : '';
         $params['unique_id']               = isset( $data['uniqueid'] ) ? sanitize_text_field( wp_unslash( $data['uniqueid'] ) ) : '';
         $params['ssl_verify']              = empty( $data['ssl_verify'] ) ? false : intval( $data['ssl_verify'] );
         $params['force_use_ipv4']          = ( ! isset( $data['force_use_ipv4'] ) || ( empty( $data['force_use_ipv4'] ) && ( '0' !== $data['force_use_ipv4'] ) ) ? null : intval( $data['force_use_ipv4'] ) );
@@ -348,7 +363,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             $website = $site;
         }
 
-        $information = false;
+        $information = array();
 
         if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 
@@ -360,7 +375,10 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
              */
             if ( ! $website->is_staging && ! $is_demo_wp ) {
                 try {
-                    $information = MainWP_Connect::fetch_url_authed( $website, 'deactivate' );
+                    $information = MainWP_Connect::fetch_url_authed(
+                        $website,
+                        'deactivate',
+                    );
                 } catch ( MainWP_Exception $e ) {
                     $information['error'] = $e->getMessage();
                 }
@@ -412,7 +430,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
         }
 
-        return $information;
+        return $information ? $information : false;
     }
 
     /**

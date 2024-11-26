@@ -38,8 +38,8 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
 
         static::verify_open_nonce();
 
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'WP-Admin on child sites', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'WP-Admin on child sites', 'mainwp' ) );
 
             return;
         }

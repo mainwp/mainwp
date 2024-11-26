@@ -709,7 +709,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
      * Return the user data for the given consumer_key.
      *
      * @param string $consumer_key Consumer key.
-     * @return array
+     * @return mixed
      */
     private function get_user_data_by_consumer_key( $consumer_key ) {
         global $wpdb;
@@ -718,7 +718,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         $user         = $wpdb->get_row(
             $wpdb->prepare(
                 '
-            SELECT key_id, user_id, permissions, consumer_key, consumer_secret, nonces, enabled FROM ' .
+            SELECT * FROM ' .
                 MainWP_DB::instance()->get_table_name( 'api_keys' ) . '
             WHERE consumer_key = %s
             ',
@@ -730,7 +730,13 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             $this->set_error( new \WP_Error( 'mainwp_rest_authentication_disabled_key', __( 'The REST API Key are disabled.', 'mainwp' ), array( 'status' => 401 ) ) );
             return false;
         }
-
+        // phpcs:disable WordPress.Security.NonceVerification
+        $pass = ! empty( $_REQUEST['key_pass'] ) ? wp_unslash( $_REQUEST['key_pass'] ) : '';
+        // phpcs:enable WordPress.Security.NonceVerification
+        if ( 1 === (int) $user->key_type && $pass !== $user->key_pass ) {
+            $this->set_error( new \WP_Error( 'mainwp_rest_authentication_invalid_key_pass', __( 'The REST API passphrase is invalid.', 'mainwp' ), array( 'status' => 401 ) ) );
+            return false;
+        }
         return $user;
     }
 
@@ -743,12 +749,13 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
      */
     private function check_permissions( $method ) {
         $permissions = $this->user->permissions;
-
+        $msg         = '';
+        $flag        = true;
         switch ( $method ) {
             case 'HEAD':
             case 'GET':
                 if ( 'read' !== $permissions && 'read_write' !== $permissions ) {
-                    return new WP_Error( 'mainwp_rest_authentication_error', __( 'The API key provided does not have read permissions.', 'mainwp' ), array( 'status' => 401 ) );
+                    $msg = __( 'The API key provided does not have read permissions.', 'mainwp' );
                 }
                 break;
             case 'POST':
@@ -756,17 +763,22 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             case 'PATCH':
             case 'DELETE':
                 if ( 'write' !== $permissions && 'read_write' !== $permissions ) {
-                    return new WP_Error( 'mainwp_rest_authentication_error', __( 'The API key provided does not have write permissions.', 'mainwp' ), array( 'status' => 401 ) );
+                    $msg = __( 'The API key provided does not have write permissions.', 'mainwp' );
                 }
                 break;
             case 'OPTIONS':
-                return true;
-
+                $flag = true;
+                break;
             default:
-                return new WP_Error( 'mainwp_rest_authentication_error', __( 'Unknown request method.', 'mainwp' ), array( 'status' => 401 ) );
+                $msg = __( 'Unknown request method.', 'mainwp' );
         }
 
-        return true;
+        if ( ! empty( $msg ) ) {
+            return new WP_Error( 'mainwp_rest_authentication_error', $msg, array( 'status' => 401 ) );
+
+        }
+
+        return $flag;
     }
 
     /**
@@ -843,11 +855,20 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
     }
 
     /**
+     * Method get_rest_valid_user().
+     *
+     * @return mixed|object User api key object.
+     */
+    public function get_rest_valid_user() {
+        return $this->user;
+    }
+
+    /**
      * Valid REST permissions.
      *
      * @param WP_REST_Request $request Request used to generate the response.
      *
-     * @return objext user rest data.
+     * @return mixed user rest data.
      */
     public function is_valid_permissions( $request ) {
         return $this->check_permissions( $request->get_method() );

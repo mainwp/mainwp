@@ -66,7 +66,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
         $mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
 
         $active_tab  = 'plugins';
-        $active_text = esc_html__( 'Plugins Updates', 'mainwp' );
+        $active_text = esc_html__( 'Plugin Updates', 'mainwp' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_GET['tab'] ) ) {
             if ( 'wordpress-updates' === $_GET['tab'] ) {
@@ -74,10 +74,10 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                 $active_text = esc_html__( 'WordPress Updates', 'mainwp' );
             } elseif ( 'themes-updates' === $_GET['tab'] ) {
                 $active_tab  = 'themes';
-                $active_text = esc_html__( 'Themes Updates', 'mainwp' );
+                $active_text = esc_html__( 'Theme Updates', 'mainwp' );
             } elseif ( 'translations-updates' === $_GET['tab'] ) {
                 $active_tab  = 'trans';
-                $active_text = esc_html__( 'Translations Updates', 'mainwp' );
+                $active_text = esc_html__( 'Translation Updates', 'mainwp' );
             } elseif ( 'abandoned-plugins' === $_GET['tab'] ) {
                 $active_tab  = 'abandoned-plugins';
                 $active_text = esc_html__( 'Abandoned Plugins', 'mainwp' );
@@ -318,7 +318,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
      */
     public static function render_wpcore_updates( $website, $active_tab, $userExtension ) { // phpcs:ignore -- NOSONAR - complex.
-        $user_can_update_wp = mainwp_current_user_have_right( 'dashboard', 'update_wordpress' );
+        $user_can_update_wp = \mainwp_current_user_can( 'dashboard', 'update_wordpress' );
         $is_demo            = MainWP_Demo_Handle::is_demo_mode();
         ?>
         <div class="ui <?php echo 'WordPress' === $active_tab ? 'active' : ''; ?> tab" data-tab="wordpress">
@@ -429,8 +429,8 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
             $trustedPlugins = array();
         }
 
-        $user_can_update_plugins  = mainwp_current_user_have_right( 'dashboard', 'update_plugins' );
-        $user_can_ignore_unignore = mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' );
+        $user_can_update_plugins  = \mainwp_current_user_can( 'dashboard', 'update_plugins' );
+        $user_can_ignore_unignore = \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' );
         ?>
         <div id="plugins-updates-global" class="ui <?php echo 'plugins' === $active_tab ? 'active' : ''; ?> tab" data-tab="plugins">
             <?php if ( ! $website->is_ignorePluginUpdates ) : ?>
@@ -613,7 +613,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
     /**
      * Method render_themes_updates()
      *
-     * Render the Themes Updates Tab.
+     * Render the Themes Update Tab.
      *
      * @param mixed $website Child Site info.
      * @param mixed $active_tab Current active tab.
@@ -631,8 +631,8 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
 
         $is_demo = MainWP_Demo_Handle::is_demo_mode();
 
-        $user_can_update_themes   = mainwp_current_user_have_right( 'dashboard', 'update_themes' );
-        $user_can_ignore_unignore = mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' );
+        $user_can_update_themes   = \mainwp_current_user_can( 'dashboard', 'update_themes' );
+        $user_can_ignore_unignore = \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' );
 
         ?>
         <div id="themes-updates-global" class="ui <?php echo 'themes' === $active_tab ? 'active' : ''; ?> tab" data-tab="themes">
@@ -763,7 +763,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      * @param mixed $active_tab Current active tab.
      */
     public static function render_language_updates( $website, $active_tab ) {
-        $user_can_update_translation = mainwp_current_user_have_right( 'dashboard', 'update_translations' );
+        $user_can_update_translation = \mainwp_current_user_can( 'dashboard', 'update_translations' );
         $is_demo                     = MainWP_Demo_Handle::is_demo_mode();
         ?>
         <div class="ui <?php echo 'trans' === $active_tab ? 'active' : ''; ?> tab" data-tab="translations">
@@ -829,7 +829,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      */
     public static function render_abandoned_plugins( $website, $active_tab, $userExtension ) {
 
-        $user_can_ignore_unignore = mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' );
+        $user_can_ignore_unignore = \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' );
 
         $plugins_outdate = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
         $plugins_outdate = ! empty( $plugins_outdate ) ? json_decode( $plugins_outdate, true ) : array();
@@ -914,7 +914,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      */
     public static function render_abandoned_themes( $website, $active_tab, $userExtension ) {
 
-        $user_can_ignore_unignore = mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' );
+        $user_can_ignore_unignore = \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' );
 
         $themes_outdate = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' );
         $themes_outdate = ! empty( $themes_outdate ) ? json_decode( $themes_outdate, true ) : array();

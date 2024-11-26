@@ -85,60 +85,49 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         <div class="mainwp-widget-header">
             <h3 class="ui header handle-drag">
-            <?php
-            /**
-             * Filter: mainwp_non_mainwp_changes_widget_title
-             *
-             * Filters the Site info widget title text.
-             *
-             * @param object $website Object containing the child site info.
-             *
-             * @since 4.1
-             */
-            echo esc_html( apply_filters( 'mainwp_non_mainwp_changes_widget_title', esc_html__( 'Non-MainWP Changes', 'mainwp' ), $website ) );
-            ?>
+                <?php
+                /**
+                 * Filter: mainwp_non_mainwp_changes_widget_title
+                 *
+                 * Filters the Site info widget title text.
+                 *
+                 * @param object $website Object containing the child site info.
+                 *
+                 * @since 4.1
+                 */
+                echo esc_html( apply_filters( 'mainwp_non_mainwp_changes_widget_title', esc_html__( 'Non-MainWP Changes', 'mainwp' ), $website ) );
+                ?>
                 <div class="sub header"><?php esc_html_e( 'The most recent changes made to your Child Sites that were not done through your MainWP Dashboard.', 'mainwp' ); ?></div>
             </h3>
         </div>
 
         <div id="mainwp-widget-site-actions" class="mainwp-scrolly-overflow">
+            <?php
+            /**
+             * Actoin: mainwp_non_mainwp_changes_widget_top
+             *
+             * Fires at the top of the Site Info widget on the Individual site overview page.
+             *
+             * @param object $website Object containing the child site info.
+             *
+             * @since 4.0
+             */
+            do_action( 'mainwp_non_mainwp_changes_widget_top', $website );
+            ?>
+            <?php if ( $actions_info ) : ?>
                 <?php
                 /**
-                 * Actoin: mainwp_non_mainwp_changes_widget_top
+                 * Action: mainwp_non_mainwp_changes_table_top
                  *
-                 * Fires at the top of the Site Info widget on the Individual site overview page.
+                 * Fires at the top of the Site Info table in Site Info widget on the Individual site overview page.
                  *
                  * @param object $website Object containing the child site info.
                  *
                  * @since 4.0
                  */
-                do_action( 'mainwp_non_mainwp_changes_widget_top', $website );
+                do_action( 'mainwp_non_mainwp_changes_table_top', $website );
                 ?>
-            <?php if ( $actions_info ) : ?>
-                <table class="ui table" id="mainwp-non-mainwp-changes-table">
-                    <thead>
-                        <tr>
-                            <th scope="col"><?php esc_html_e( 'Change', 'mainwp' ); ?></th>
-                            <?php if ( empty( $website ) || isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
-                            <th scope="col" class="collapsing"><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-                            <?php endif; ?>
-                            <th scope="col" class="collapsing"><?php esc_html_e( 'User', 'mainwp' ); ?></th>
-                            <th scope="col" class="collapsing no-sort"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    <?php
-                    /**
-                     * Action: mainwp_non_mainwp_changes_table_top
-                     *
-                     * Fires at the top of the Site Info table in Site Info widget on the Individual site overview page.
-                     *
-                     * @param object $website Object containing the child site info.
-                     *
-                     * @since 4.0
-                     */
-                    do_action( 'mainwp_non_mainwp_changes_table_top', $website );
-                    ?>
+                <div class="ui small feed" id="mainwp-non-mainwp-changes-feed">
                     <?php foreach ( $actions_info as $data ) : ?>
                         <?php
                         if ( empty( $data->action_user ) || empty( $data->meta_data ) ) {
@@ -149,28 +138,38 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
                         $action_class = '';
                         if ( 'activated' === $data->action ) {
-                            $action_class = 'green';
+                            $action_class = 'green check';
                         } elseif ( 'deactivated' === $data->action ) {
-                            $action_class = 'red';
+                            $action_class = 'yellow times';
                         } elseif ( 'installed' === $data->action ) {
-                            $action_class = 'blue';
+                            $action_class = 'download blue';
+                        } elseif ( 'updated' === $data->action ) {
+                            $action_class = 'sync grey';
+                        } elseif ( 'deleted' === $data->action ) {
+                            $action_class = 'trash alternate outline red';
                         }
-
                         ?>
-                        <tr>
-                            <td data-order="<?php echo esc_attr( $data->created ); ?>">
-                                <strong><?php echo isset( $meta_data->name ) && '' !== $meta_data->name ? esc_html( $meta_data->name ) : 'WP Core'; ?></strong> <?php echo 'wordpress' !== $data->context ? esc_html( ucfirst( rtrim( $data->context, 's' ) ) ) : 'WordPress'; //phpcs:ignore -- text. ?><br/>
-                                <div><strong><span class="ui medium <?php echo esc_attr( $action_class ); ?> text"><?php echo esc_html( ucfirst( $data->action ) ); ?></span></strong></div>
-                                <span class="ui small text"><?php echo esc_html( MainWP_Utility::format_timestamp( $data->created ) ); ?></span>
-                            </td>
-                            <?php if ( empty( $website ) || isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
-                                <td class="collapsing"><a href="admin.php?page=managesites&dashboard=<?php echo esc_attr( $data->wpid ); ?>"><?php echo esc_html( $data->name ); ?></a></td>
-                            <?php endif; ?>
-                            <td class="collapsing"><?php echo esc_html( $data->action_user ); ?></td>
-                            <td class="collapsing">
-                                <a href="javascript:void(0)" aria-label="<?php esc_attr_e( 'Dismiss the notice.', 'mainwp' ); ?>" class="mainwp-action-dismiss ui mini icon button" action-id="<?php echo intval( $data->action_id ); ?>" data-tooltip="<?php esc_attr_e( 'Dismiss the notice.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="times icon"></i></a>
-                            </td>
-                        </tr>
+                    <div class="event">
+                        <div class="label">
+                            <i class="<?php echo esc_attr( $action_class ); ?> icon"></i>
+                        </div>
+                        <div class="content">
+                            <div class="summary">
+                                <a href="javascript:void(0)" class="mainwp-event-action-dismiss right floated" action-id="<?php echo intval( $data->action_id ); ?>"><i class="times icon"></i></a>
+                                <?php echo esc_html( $data->action_user ); ?>
+                                <?php echo esc_html( ucfirst( $data->action ) ); ?> <?php echo isset( $meta_data->name ) && '' !== $meta_data->name ? esc_html( $meta_data->name ) : 'WP Core'; ?> <?php echo 'wordpress' !== $data->context ? esc_html( rtrim( $data->context, 's' ) ) : 'WordPress'; //phpcs:ignore -- text. ?>
+                                <?php if ( empty( $website ) || isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
+                                on <a href="admin.php?page=managesites&dashboard=<?php echo esc_attr( $data->wpid ); ?>"><?php echo esc_html( $data->name ); ?></a>
+                                <?php endif; ?>
+                                <div class="date">
+                                    <?php echo esc_html( MainWP_Utility::time_elapsed_string( $data->created ) ); ?>
+                                </div>
+                                
+                            </div>
+                            
+                        </div>
+
+                    </div>
                     <?php endforeach; ?>
                     <?php
                     /**
@@ -184,23 +183,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                      */
                     do_action( 'mainwp_non_mainwp_changes_table_bottom', $website );
                     ?>
-                    </tbody>
-                </table>
-                <script type="text/javascript">
-                jQuery( document ).ready( function() {
-                    jQuery.fn.DataTable.ext.pager.numbers_length = 4;
-                    jQuery( '#mainwp-non-mainwp-changes-table' ).DataTable( {
-                        "pageLength": 10,
-                        "lengthMenu": [ [5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"] ],
-                        "stateSave" : true,
-                        "stateDuration" : 0,
-                        "columnDefs": [ {
-                            "targets": 'no-sort',
-                            "orderable": false
-                        } ],
-                    } );
-                } );
-                </script>
+                </div>
             <?php else : ?>
                 <?php MainWP_UI::render_empty_element_placeholder(); ?>
             <?php endif; ?>
@@ -214,12 +197,14 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         ?>
         <div class="mainwp-widget-footer">
             <div class="ui two columns stackable grid">
-                <div class="middle aligned column">
+                <div class="left aligned middle aligned column">
+
+                </div>
+                <div class="right aligned middle aligned column">
                     <?php if ( $totalRecords ) : ?>
-                    <a href="admin.php?page=NonMainWPChanges" class="ui button mini fluid green"><?php printf( esc_html__( 'See all %d Non-MainWP Changes', 'mainwp' ), intval( $totalRecords ) ); ?></a>
+                        <a href="admin.php?page=NonMainWPChanges"><?php printf( esc_html__( 'See all %d', 'mainwp' ), intval( $totalRecords ) ); ?></a>
                     <?php endif; ?>
                 </div>
-                <div class="middle aligned column"></div>
             </div>
         </div>
         <?php

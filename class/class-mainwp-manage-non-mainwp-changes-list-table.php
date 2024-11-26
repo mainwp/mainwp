@@ -63,6 +63,8 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
     public function get_sortable_columns() {
         return array(
             'name'        => array( 'name', false ),
+            'action'      => array( 'action', false ),
+            'date'        => array( 'date', false ),
             'site'        => array( 'site', false ),
             'action_user' => array( 'action_user', false ),
         );
@@ -76,7 +78,9 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
     public function get_default_columns() {
         return array(
             'cb'          => '',
-            'name'        => esc_html__( 'Change', 'mainwp' ),
+            'name'        => esc_html__( 'Changed Item', 'mainwp' ),
+            'action'      => esc_html__( 'Action', 'mainwp' ),
+            'date'        => esc_html__( 'Date', 'mainwp' ),
             'site'        => esc_html__( 'Website', 'mainwp' ),
             'action_user' => esc_html__( 'User', 'mainwp' ),
         );
@@ -211,7 +215,7 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
         );
         $defines[] = array(
             'targets'   => array( 'manage-name-column', 'manage-site-column', 'manage-action_user-column' ),
-            'className' => 'collapsing',
+            'className' => '',
         );
         $defines[] = array(
             'targets'   => 'no-sort',
@@ -219,7 +223,7 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
         );
         $defines[] = array(
             'targets'   => 'manage-data_actions-column',
-            'className' => 'collapsing not-selectable',
+            'className' => 'collapsing not-selectable right aligned',
         );
         return $defines;
     }
@@ -254,6 +258,10 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
                 $orderby = 'wa.summary ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
             } elseif ( 'site' === $req_orderby ) {
                 $orderby = 'wp.name ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+            } elseif ( 'action' === $req_orderby ) {
+                $orderby = 'wa.action ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+            } elseif ( 'date' === $req_orderby ) {
+                $orderby = 'wa.created ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
             } elseif ( 'action_user' === $req_orderby ) {
                 $orderby = 'wa.action_user ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
             }
@@ -329,30 +337,30 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
                         }
                         ?>
                         <td class="collapsing">
-                            <strong><?php echo isset( $meta_data->name ) && '' !== $meta_data->name ? esc_html( $meta_data->name ) : 'WP Core'; ?></strong> <?php echo 'wordpress' !== $data->context ? esc_html( ucfirst( rtrim( $data->context, 's' ) ) ) : 'WordPress'; //phpcs:ignore -- text. ?><br/>
-                            <div><strong><span class="ui medium <?php echo esc_attr( $action_class ); ?> text"><?php echo esc_html( ucfirst( $data->action ) ); ?></span></strong></div>
-                            <span class="ui small text"><?php echo esc_html( MainWP_Utility::format_timestamp( $data->created ) ); ?></span>
+                            <strong><?php echo isset( $meta_data->name ) && '' !== $meta_data->name ? esc_html( $meta_data->name ) : 'WP Core'; ?></strong> <?php echo 'wordpress' !== $data->context ? esc_html( ucfirst( rtrim( $data->context, 's' ) ) ) : 'WordPress'; //phpcs:ignore -- text. ?>
                         </td>
+                        <?php
+                    } elseif ( 'action' === $column_name ) {
+                        ?>
+                            <td class="collapsing"><strong><span class="ui medium <?php echo esc_attr( $action_class ); ?> text"><?php echo esc_html( ucfirst( $data->action ) ); ?></span></strong></td>
+                        <?php
+                    } elseif ( 'action_user' === $column_name ) {
+                        ?>
+                            <td class="collapsing"><?php echo esc_html( $data->action_user ); ?></td>
                         <?php
                     } elseif ( 'site' === $column_name ) {
                         ?>
-                        <td class="collapsing"><a href="admin.php?page=managesites&dashboard=<?php echo esc_attr( $data->wpid ); ?>"><?php echo esc_html( $data->name ); ?></a></td>
-                                <?php
-                    } elseif ( 'action_user' === $column_name ) {
+                            <td class="collapsing"><a href="admin.php?page=managesites&dashboard=<?php echo esc_attr( $data->wpid ); ?>"><?php echo esc_html( $data->name ); ?></a></td>
+                        <?php
+                    } elseif ( 'date' === $column_name ) {
                         ?>
-                        <td class="collapsing"><?php echo esc_html( $data->action_user ); ?></td>
-                                <?php
+                            <td class="collapsing"><?php echo esc_html( MainWP_Utility::format_timestamp( $data->created ) ); ?></td>
+                        <?php
                     } elseif ( 'data_actions' === $column_name ) {
                         ?>
-                        <td class="collapsing no-sort">
-                                <div class="ui right pointing dropdown icon mini basic green button" style="z-index: 99;">
-                                    <i class="ellipsis horizontal icon"></i>
-                                    <div class="menu"  action-id="<?php echo intval( $data->action_id ); ?>">
-                                        <a class="item non-mainwp-action-row-dismiss" href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Dismiss the change.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a>
-                                    </div>
-                                </div>
-                            </td>
-
+                        <div action-id="<?php echo intval( $data->action_id ); ?>">
+                            <a class="ui mini green button non-mainwp-action-row-dismiss" href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Dismiss the change.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a>
+                        </div>
                         <?php
                     }
                     $cols_data[ $column_name ] = ob_get_clean();
@@ -413,7 +421,7 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
                 <tr><?php $this->print_column_headers( $optimize, true ); ?></tr>
             </thead>
             <tfoot>
-            <tr><?php $this->print_column_headers( $optimize, false ); ?></tr>
+                <tr><?php $this->print_column_headers( $optimize, false ); ?></tr>
             </tfoot>
         </table>
         <?php
@@ -426,11 +434,11 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
          */
         do_action( 'mainwp_after_manage_sites_table' );
         ?>
-    <div id="mainwp-loading-sites" style="display: none;">
-    <div class="ui active inverted dimmer">
-    <div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading ...', 'mainwp' ); ?></div>
-    </div>
-    </div>
+        <div id="mainwp-loading-sites" style="display: none;">
+            <div class="ui active inverted dimmer">
+                <div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading ...', 'mainwp' ); ?></div>
+            </div>
+        </div>
 
         <?php
         $table_features = array(
@@ -449,119 +457,119 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
 
         ?>
 
-    <script type="text/javascript">
+        <script type="text/javascript">
             let responsive = <?php echo esc_js( $table_features['responsive'] ); ?>;
             if( jQuery( window ).width() > 1140 ) {
                 responsive = false;
             }
 
             jQuery( document ).ready( function( $ ) {
-                    try {
-                        jQuery( '#mainwp-sites-table-loader' ).hide();
-                        $manage_sites_table = jQuery( '#mainwp-manage-non-mainwp-actions-table' ).on( 'processing.dt', function ( e, settings, processing ) {
-                            jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
-                            if (!processing) {
-                                let tb = jQuery( '#mainwp-manage-non-mainwp-actions-table' );
-                                tb.find( 'th[cell-cls]' ).each( function(){
-                                    let ceIdx = this.cellIndex;
-                                    let cls = jQuery( this ).attr( 'cell-cls' );
-                                    jQuery( '#mainwp-manage-non-mainwp-actions-table tr' ).each(function(){
-                                        jQuery(this).find( 'td:eq(' + ceIdx + ')' ).addClass(cls);
-                                    } );
+                try {
+                    jQuery( '#mainwp-sites-table-loader' ).hide();
+                    $manage_sites_table = jQuery( '#mainwp-manage-non-mainwp-actions-table' ).on( 'processing.dt', function ( e, settings, processing ) {
+                        jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
+                        if (!processing) {
+                            let tb = jQuery( '#mainwp-manage-non-mainwp-actions-table' );
+                            tb.find( 'th[cell-cls]' ).each( function(){
+                                let ceIdx = this.cellIndex;
+                                let cls = jQuery( this ).attr( 'cell-cls' );
+                                jQuery( '#mainwp-manage-non-mainwp-actions-table tr' ).each(function(){
+                                    jQuery(this).find( 'td:eq(' + ceIdx + ')' ).addClass(cls);
                                 } );
-                                $( '#mainwp-manage-non-mainwp-actions-table .ui.dropdown' ).dropdown();
-                                $( '#mainwp-manage-non-mainwp-actions-table .ui.checkbox' ).checkbox();
-                            }
-                        } ).DataTable( {
-                            "ajax": {
-                                "url": ajaxurl,
-                                "type": "POST",
-                                "data":  function ( d ) {
-                                    return $.extend( {}, d, mainwp_secure_data( {
-                                        action: 'mainwp_non_mainwp_changes_display_rows',
-                                    } )
-                                );
-                                },
-                                "dataSrc": function ( json ) {
-                                    for ( let i=0, ien=json.data.length ; i < ien ; i++ ) {
-                                        json.data[i].rowClass = json.rowsInfo[i].rowClass;
-                                        json.data[i].siteID = json.rowsInfo[i].siteID;
-                                        json.data[i].siteUrl = json.rowsInfo[i].siteUrl;
-                                        json.data[i].actionID = json.rowsInfo[i].actionID;
-                                    }
-                                    return json.data;
+                            } );
+                            $( '#mainwp-manage-non-mainwp-actions-table .ui.dropdown' ).dropdown();
+                            $( '#mainwp-manage-non-mainwp-actions-table .ui.checkbox' ).checkbox();
+                        }
+                    } ).DataTable( {
+                        "ajax": {
+                            "url": ajaxurl,
+                            "type": "POST",
+                            "data":  function ( d ) {
+                                return $.extend( {}, d, mainwp_secure_data( {
+                                    action: 'mainwp_non_mainwp_changes_display_rows',
+                                } )
+                            );
+                            },
+                            "dataSrc": function ( json ) {
+                                for ( let i=0, ien=json.data.length ; i < ien ; i++ ) {
+                                    json.data[i].rowClass = json.rowsInfo[i].rowClass;
+                                    json.data[i].siteID = json.rowsInfo[i].siteID;
+                                    json.data[i].siteUrl = json.rowsInfo[i].siteUrl;
+                                    json.data[i].actionID = json.rowsInfo[i].actionID;
                                 }
-                            },
-                            "responsive": responsive,
-                            "searching" : <?php echo esc_js( $table_features['searching'] ); ?>,
-                            "paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
-                            "pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
-                            "info" : <?php echo esc_js( $table_features['info'] ); ?>,
-                            "colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
-                            "scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
-                            "stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
-                            "stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
-                            "order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
-                            "fixedColumns" : <?php echo ! empty( $table_features['fixedColumns'] ) ? esc_js( $table_features['fixedColumns'] ) : '""'; ?>,
-                            "lengthMenu" : [ [<?php echo esc_js( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All"] ],
-                            serverSide: true,
-                            "pageLength": <?php echo intval( $sites_per_page ); ?>,
-                            "columnDefs": <?php echo wp_json_encode( $this->get_columns_defines() ); ?>,
-                            "columns": <?php echo wp_json_encode( $this->get_columns_init() ); ?>,
-                            "language": {
-                                "emptyTable": "<?php esc_html_e( 'No items found.', 'mainwp' ); ?>"
-                            },
-                            "drawCallback": function( settings ) {
-                                this.api().tables().body().to$().attr( 'id', 'mainwp-manage-sites-body-table' );
-                                mainwp_datatable_fix_menu_overflow();
-                                if ( typeof mainwp_preview_init_event !== "undefined" ) {
-                                    mainwp_preview_init_event();
-                                }
-                                jQuery( '#mainwp-sites-table-loader' ).hide();
-                                if ( jQuery('#mainwp-manage-sites-body-table td.dt-empty').length > 0 && jQuery('#sites-table-count-empty').length ){
-                                    jQuery('#mainwp-manage-sites-body-table td.dt-empty').html(jQuery('#sites-table-count-empty').html());
-                                }
-                            },
-                            "initComplete": function( settings, json ) {
-                            },
-                            rowCallback: function (row, data) {
-                                jQuery( row ).addClass(data.rowClass);
-                                jQuery( row ).attr( 'site-url', data.siteUrl );
-                                jQuery( row ).attr( 'siteid', data.siteID );
-                                jQuery( row ).attr( 'action-id', data.actionID );
-                                jQuery( row ).attr( 'id', "child-site-" + data.siteID );
-                            },
-                            select: {
-                                items: 'row',
-                                style: 'multi+shift',
-                                selector: 'tr>td:not(.not-selectable)'
+                                return json.data;
                             }
-                        } ).on( 'columns-reordered', function () {
-                            console.log('columns-reordered');
-                            setTimeout(() => {
-                                mainwp_datatable_fix_menu_overflow('#mainwp-manage-non-mainwp-actions-table');
-                                $( '#mainwp-manage-non-mainwp-actions-table .ui.dropdown' ).dropdown();
-                                $( '#mainwp-manage-non-mainwp-actions-table .ui.checkbox' ).checkbox();
-                            }, 1000 );
-                        } ).on('select', function (e, dt, type, indexes) {
-                            if( 'row' == type ){
-                                dt.rows(indexes)
-                                .nodes()
-                                .to$().find('td.check-column .ui.checkbox' ).checkbox('set checked');
+                        },
+                        "responsive": responsive,
+                        "searching" : <?php echo esc_js( $table_features['searching'] ); ?>,
+                        "paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
+                        "pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
+                        "info" : <?php echo esc_js( $table_features['info'] ); ?>,
+                        "colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
+                        "scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
+                        "stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
+                        "stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
+                        "order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
+                        "fixedColumns" : <?php echo ! empty( $table_features['fixedColumns'] ) ? esc_js( $table_features['fixedColumns'] ) : '""'; ?>,
+                        "lengthMenu" : [ [<?php echo esc_js( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All"] ],
+                        serverSide: true,
+                        "pageLength": <?php echo intval( $sites_per_page ); ?>,
+                        "columnDefs": <?php echo wp_json_encode( $this->get_columns_defines() ); ?>,
+                        "columns": <?php echo wp_json_encode( $this->get_columns_init() ); ?>,
+                        "language": {
+                            "emptyTable": "<?php esc_html_e( 'No items found.', 'mainwp' ); ?>"
+                        },
+                        "drawCallback": function( settings ) {
+                            this.api().tables().body().to$().attr( 'id', 'mainwp-manage-sites-body-table' );
+                            mainwp_datatable_fix_menu_overflow();
+                            if ( typeof mainwp_preview_init_event !== "undefined" ) {
+                                mainwp_preview_init_event();
                             }
-                        }).on('deselect', function (e, dt, type, indexes) {
-                            if( 'row' == type ){
-                                dt.rows(indexes)
-                                .nodes()
-                                .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
+                            jQuery( '#mainwp-sites-table-loader' ).hide();
+                            if ( jQuery('#mainwp-manage-sites-body-table td.dt-empty').length > 0 && jQuery('#sites-table-count-empty').length ){
+                                jQuery('#mainwp-manage-sites-body-table td.dt-empty').html(jQuery('#sites-table-count-empty').html());
                             }
-                        });
-                    } catch(err) {
-                        // to fix js error.
-                    }
-                    setTimeout( function () {
-                        mainwp_datatable_fix_menu_overflow();
-                    }, 1000 );
+                        },
+                        "initComplete": function( settings, json ) {
+                        },
+                        rowCallback: function (row, data) {
+                            jQuery( row ).addClass(data.rowClass);
+                            jQuery( row ).attr( 'site-url', data.siteUrl );
+                            jQuery( row ).attr( 'siteid', data.siteID );
+                            jQuery( row ).attr( 'action-id', data.actionID );
+                            jQuery( row ).attr( 'id', "child-site-" + data.siteID );
+                        },
+                        select: {
+                            items: 'row',
+                            style: 'multi+shift',
+                            selector: 'tr>td:not(.not-selectable)'
+                        }
+                    } ).on( 'columns-reordered', function () {
+                        console.log('columns-reordered');
+                        setTimeout(() => {
+                            mainwp_datatable_fix_menu_overflow('#mainwp-manage-non-mainwp-actions-table');
+                            $( '#mainwp-manage-non-mainwp-actions-table .ui.dropdown' ).dropdown();
+                            $( '#mainwp-manage-non-mainwp-actions-table .ui.checkbox' ).checkbox();
+                        }, 1000 );
+                    } ).on('select', function (e, dt, type, indexes) {
+                        if( 'row' == type ){
+                            dt.rows(indexes)
+                            .nodes()
+                            .to$().find('td.check-column .ui.checkbox' ).checkbox('set checked');
+                        }
+                    }).on('deselect', function (e, dt, type, indexes) {
+                        if( 'row' == type ){
+                            dt.rows(indexes)
+                            .nodes()
+                            .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
+                        }
+                    });
+                } catch(err) {
+                    // to fix js error.
+                }
+                setTimeout( function () {
+                    mainwp_datatable_fix_menu_overflow();
+                }, 1000 );
             } );
         </script>
         <?php

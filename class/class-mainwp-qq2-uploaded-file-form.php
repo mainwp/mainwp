@@ -20,13 +20,13 @@ class MainWP_QQ2_Uploaded_File_Form { // phpcs:ignore Generic.Classes.OpeningBra
     /**
      * Save the file to the specified path.
      *
-     * @param string $path Path to save file to.
+     * @param string $file_path Path to save file to.
      * @return boolean TRUE on success|false on failure.
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_base_dir()
      */
-    public function save( $path ) {
+    public function save( $file_path ) {
         $wpFileSystem = MainWP_System_Utility::get_wp_file_system();
 
         /**
@@ -42,9 +42,9 @@ class MainWP_QQ2_Uploaded_File_Form { // phpcs:ignore Generic.Classes.OpeningBra
 
         if ( ! empty( $tmp_name ) ) {
             if ( $wpFileSystem ) { //phpcs:ignore -- to valid.
-                $moved = $wp_filesystem->put_contents( $path, $wp_filesystem->get_contents( $tmp_name ) );
+                $moved = $wp_filesystem->put_contents( $file_path, $wp_filesystem->get_contents( $tmp_name ) );
             } else {
-                $moved = move_uploaded_file( $tmp_name, $path );
+                $moved = move_uploaded_file( $tmp_name, $file_path );
             }
         }
 

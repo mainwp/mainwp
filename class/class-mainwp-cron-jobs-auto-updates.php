@@ -241,6 +241,10 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
             $websiteCoreUpgrades = ! empty( $website->wp_upgrades ) ? json_decode( $website->wp_upgrades, true ) : array();
             $websiteIgnoredCores = ! empty( $website->ignored_wp_upgrades ) ? json_decode( $website->ignored_wp_upgrades, true ) : array();
 
+            if ( ! is_array( $websiteCoreUpgrades ) ) {
+                $websiteCoreUpgrades = array();
+            }
+
             if ( ! is_array( $websiteIgnoredCores ) ) {
                 $websiteIgnoredCores = array();
             }
@@ -280,11 +284,11 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                 'id'          => $website->id,
                 'name'        => $website->name,
                 'url'         => $website->url,
-                'current'     => $websiteCoreUpgrades['current'],
-                'new_version' => $websiteCoreUpgrades['new'],
+                'current'     => isset( $websiteCoreUpgrades['current'] ) ? $websiteCoreUpgrades['current'] : '',
+                'new_version' => isset( $websiteCoreUpgrades['new'] ) ? $websiteCoreUpgrades['new'] : '',
             );
 
-            if ( 1 === (int) $website->automatic_update && 1 === (int) $enable_automaticCoreUpdates && isset( $websiteCoreUpgrades['current'] ) && ! $website->is_ignoreCoreUpdates && ! MainWP_Common_Functions::instance()->is_ignored_updates( $item, $websiteIgnoredCores, 'core' ) && ! MainWP_Common_Functions::instance()->is_ignored_updates( $item, $decodedIgnoredCores, 'core' ) ) {
+            if ( ! empty( $website->automatic_update ) && 1 === (int) $website->automatic_update && 1 === (int) $enable_automaticCoreUpdates && isset( $websiteCoreUpgrades['current'] ) && ! $website->is_ignoreCoreUpdates && ! MainWP_Common_Functions::instance()->is_ignored_updates( $item, $websiteIgnoredCores, 'core' ) && ! MainWP_Common_Functions::instance()->is_ignored_updates( $item, $decodedIgnoredCores, 'core' ) ) {
                 $_update_now = false;
                 if ( ! empty( $delay_autoupdate ) ) {
                     if ( empty( $websiteCoreUpdateCheck ) ) {

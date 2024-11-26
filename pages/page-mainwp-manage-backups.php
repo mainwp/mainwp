@@ -125,7 +125,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         } elseif ( $enable_legacy_backup ) {
                     add_submenu_page( 'mainwp_tab', esc_html__( 'Backups', 'mainwp' ), '<span id="mainwp-Backups">' . esc_html__( 'Backups', 'mainwp' ) . '</span>', 'read', 'ManageBackups', array( static::get_class_name(), 'render_manager' ) );
-            if ( mainwp_current_user_have_right( 'dashboard', 'add_backup_tasks' ) ) {
+            if ( \mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) {
                 if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsAddNew' ) ) {
                     add_submenu_page( 'mainwp_tab', esc_html__( 'Add New Schedule', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New', 'mainwp' ) . '</div>', 'read', 'ManageBackupsAddNew', array( static::get_class_name(), 'render_new' ) );
                 }
@@ -172,7 +172,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         ?>
                         <div class="mainwp_boxoutin"></div>
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackups' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Backups', 'mainwp' ); ?></a>
-                        <?php if ( mainwp_current_user_have_right( 'dashboard', 'add_backup_tasks' ) ) { ?>
+                        <?php if ( \mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) { ?>
                             <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsAddNew' ) ) { ?>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackupsAddNew' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
                             <?php } ?>
@@ -277,7 +277,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $renderItems[] = array(
                 'title'    => esc_html__( 'Add New', 'mainwp' ),
                 'href'     => 'admin.php?page=ManageBackupsAddNew',
-                'access'   => mainwp_current_user_have_right( 'dashboard', 'add_backup_tasks' ),
+                'access'   => \mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ),
                 'active'   => ( 'AddNew' === $shownPage ) ? true : false,
                 'disabled' => MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsAddNew' ) ? true : false,
             );
@@ -330,8 +330,8 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $backupTask = null;
         //phpcs:disable WordPress.Security.NonceVerification.Recommended
         if ( isset( $_GET['id'] ) ) {
-            if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_backup_tasks' ) ) {
-                mainwp_do_not_have_permissions( esc_html__( 'edit backup tasks', 'mainwp' ) );
+            if ( ! \mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) ) {
+                \mainwp_do_not_have_permissions( esc_html__( 'edit backup tasks', 'mainwp' ) );
                 return;
             }
             $backupTaskId = intval( $_GET['id'] );
@@ -366,10 +366,10 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             static::render_header( '' );
             ?>
             <?php if ( 0 === count( $primaryBackupMethods ) ) { ?>
-                <div class="mainwp-notice mainwp-notice-blue"><?php printf( esc_html__( 'Did you know that MainWP has extensions for working with popular backup plugins? Visit the %1$sextensions site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
+                <div class="ui blue message"><?php printf( esc_html__( 'Did you know that MainWP has extensions for working with popular backup plugins? Visit the %1$sextensions site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
             <?php } ?>
             <div class="ui alt segment">
-                <div id="mainwp_managebackups_add_message" class="mainwp-notice mainwp-notice-green" style="display:
+                <div id="mainwp_managebackups_add_message" class="ui green message" style="display:
                 <?php
                 if ( isset( $_GET['a'] ) && '1' === $_GET['a'] ) {
                     echo 'block';
@@ -418,7 +418,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public function display( $backup_items ) {  //phpcs:ignore -- NOSONAR - complex.
         $can_trigger = true;
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'run_backup_tasks' ) ) {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
             $can_trigger = false;
         }
         ?>
@@ -537,19 +537,19 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             'delete' => sprintf( '<a class="submitdelete item" href="#" task_id="%s" onClick="return managebackups_remove(this);"><i class="trash alternate outline icon"></i> ' . esc_html__( 'Delete', 'mainwp' ) . '</a>', $item->id ),
         );
 
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_backup_tasks' ) ) {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) ) {
             unset( $actions['edit'] );
         }
 
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'delete_backup_tasks' ) ) {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'delete_backup_tasks' ) ) {
             unset( $actions['delete'] );
         }
 
         if ( 1 === (int) $item->paused ) {
-            if ( mainwp_current_user_have_right( 'dashboard', 'pause_resume_backup_tasks' ) ) {
+            if ( \mainwp_current_user_can( 'dashboard', 'pause_resume_backup_tasks' ) ) {
                 $actions['resume'] = sprintf( '<a href="#" class="item" task_id="%s" onClick="return managebackups_resume(this)"><i class="play icon"></i> ' . esc_html__( 'Resume', 'mainwp' ) . '</a>', $item->id );
             }
-        } elseif ( mainwp_current_user_have_right( 'dashboard', 'pause_resume_backup_tasks' ) ) {
+        } elseif ( \mainwp_current_user_can( 'dashboard', 'pause_resume_backup_tasks' ) ) {
                 $actions['pause'] = sprintf( '<a href="#" class="item" task_id="%s" onClick="return managebackups_pause(this)"><i class="pause icon"></i> ' . esc_html__( 'Pause', 'mainwp' ) . '</a>', $item->id );
         }
 
@@ -694,8 +694,8 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
     /** Render New Task Form. */
     public static function render_new() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'add_backup_tasks' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'add backup tasks', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'add backup tasks', 'mainwp' ) );
             return;
         }
         static::render_header( 'AddNew' );
@@ -771,8 +771,8 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $backupTaskId = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         if ( ! empty( $backupTaskId ) ) {
-            if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_backup_tasks' ) ) {
-                mainwp_do_not_have_permissions( esc_html__( 'edit backup tasks', 'mainwp' ) );
+            if ( ! \mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) ) {
+                \mainwp_do_not_have_permissions( esc_html__( 'edit backup tasks', 'mainwp' ) );
                 return;
             }
 

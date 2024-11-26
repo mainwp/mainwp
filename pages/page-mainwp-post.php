@@ -329,7 +329,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             <div class="wp-submenu sub-open">
                 <div class="mainwp_boxout">
                     <div class="mainwp_boxoutin"></div>
-                    <?php if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) { ?>
+                    <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) { ?>
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkManage' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Posts', 'mainwp' ); ?></a>
                         <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PostBulkAdd' ) ) { ?>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkAdd' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
@@ -453,7 +453,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
             $renderItems = array();
 
-        if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
             $renderItems[] = array(
                 'title'  => esc_html__( 'Manage Posts', 'mainwp' ),
                 'href'   => 'admin.php?page=PostBulkManage',
@@ -517,8 +517,8 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
      */
     public static function render() { // phpcs:ignore -- NOSONAR - complex.
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'manage posts', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage posts', 'mainwp' ) );
             return;
         }
 
@@ -2618,8 +2618,8 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @return string Bulk add tab html.
      */
     public static function render_bulk_add() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'manage posts', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage posts', 'mainwp' ) );
             return;
         }
 
@@ -2643,8 +2643,8 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @return string Bulk edit tab html.
      */
     public static function render_bulk_edit() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'manage posts', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage posts', 'mainwp' ) );
             return;
         }
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized

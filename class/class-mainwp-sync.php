@@ -146,6 +146,11 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 'pingnonce'                       => MainWP_Utility::instance()->create_site_nonce( 'pingnonce', $pWebsite->id ),
             );
 
+            $reg_verify = MainWP_DB::instance()->get_website_option( $pWebsite, 'register_verify_key', '' );
+            if ( empty( $reg_verify ) ) {
+                $postdata['sync_regverify'] = 1;
+            }
+
             $information = MainWP_Connect::fetch_url_authed(
                 $pWebsite,
                 'stats',
@@ -153,23 +158,21 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 true,
                 $pForceFetch
             );
-            $return      = static::sync_information_array( $pWebsite, $information, '', 1, false, $pAllowDisconnect );
+
+            $return = static::sync_information_array( $pWebsite, $information, '', false, false, $pAllowDisconnect );
             MainWP_Logger::instance()->log_execution_time( 'sync :: [siteid=' . $pWebsite->id . ']' );
             return $return;
         } catch ( MainWP_Exception $e ) {
-            $sync_errors  = '';
-            $check_result = 1;
+            $sync_errors = '';
 
             if ( $e->getMessage() === 'HTTPERROR' ) {
-                $sync_errors  = esc_html__( 'HTTP error', 'mainwp' ) . ( ! empty( $e->get_message_extra() ) ? ' - ' . $e->get_message_extra() : '' );
-                $check_result = - 1;
+                $sync_errors = esc_html__( 'HTTP error', 'mainwp' ) . ( ! empty( $e->get_message_extra() ) ? ' - ' . $e->get_message_extra() : '' );
             } elseif ( $e->getMessage() === 'NOMAINWP' ) {
-                $sync_errors  = MainWP_Error_Helper::get_error_not_detected_connect();
-                $check_result = 1;
+                $sync_errors = MainWP_Error_Helper::get_error_not_detected_connect();
             }
 
             MainWP_Logger::instance()->log_execution_time( 'sync :: [siteid=' . $pWebsite->id . ']' );
-            return static::sync_information_array( $pWebsite, $information, $sync_errors, $check_result, true, $pAllowDisconnect );
+            return static::sync_information_array( $pWebsite, $information, $sync_errors, false, true, $pAllowDisconnect );
         }
     }
 
@@ -195,7 +198,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_site_health()
      */
-    public static function sync_information_array( &$pWebsite, &$information, $sync_errors = '', $check_result = 1, $error = false, $pAllowDisconnect = true ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function sync_information_array( &$pWebsite, &$information, $sync_errors = '', $check_result = false, $error = false, $pAllowDisconnect = true ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $emptyArray        = wp_json_encode( array() );
         $websiteValues     = array(
             'directories'          => $emptyArray,
@@ -207,7 +210,6 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             'plugins'              => $emptyArray,
             'users'                => $emptyArray,
             'categories'           => $emptyArray,
-            'offline_check_result' => $check_result,
         );
         $websiteSyncValues = array(
             'sync_errors' => $sync_errors,
@@ -240,6 +242,11 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
          * @since 3.4
          */
         $information = apply_filters( 'mainwp_before_save_sync_result', $information, $pWebsite );
+
+        if ( ! empty( $information['regverify_info'] ) ) {
+            MainWP_DB::instance()->update_website_option( $pWebsite, 'register_verify_key', $information['regverify_info'] );
+            $done = true;
+        }
 
         if ( isset( $information['siteurl'] ) ) {
             $websiteValues['siteurl'] = $information['siteurl'];

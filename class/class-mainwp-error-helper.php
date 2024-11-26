@@ -22,16 +22,21 @@ class MainWP_Error_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Check for http error and or "nomainwp" error.
      *
      * @param object $pException Exception object.
+     * @param bool   $escape_msg escape message or not.
      *
      * @return string $error Error message.
      */
-    public static function get_error_message( $pException ) {
+    public static function get_error_message( $pException, $escape_msg = false ) {
         $error = $pException->getMessage();
 
         if ( $pException->getMessage() === 'HTTPERROR' ) {
             $error = 'HTTP error' . ( ! empty( $pException->get_message_extra() ) ? ' - ' . $pException->get_message_extra() : '' );
         } elseif ( $pException->getMessage() === 'NOMAINWP' ) {
             $error = static::get_error_not_detected_connect();
+        }
+
+        if ( $escape_msg ) {
+            return esc_html( wp_strip_all_tags( $error ) );
         }
 
         return $error;

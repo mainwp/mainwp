@@ -490,6 +490,37 @@ window.scrollElementTop = function (id) {
     shake_element('#' + id); // shake the error message to get attention :)
 }
 
+window.mainwp_showhide_message = function (id, content, cls, append, scroll) {
+
+  if ('' === content) {
+    jQuery('#' + id).html('').fadeOut(500);
+    return;
+  }
+
+  if (append) {
+    let html = jQuery('#' + id).html();
+    if (html == null)
+      html = "";
+    if (html != '') {
+      html += '<br />' + content;
+    } else {
+      html = content;
+    }
+    jQuery('#' + id).html(html);
+  } else {
+    jQuery('#' + id).html(content);
+  }
+
+  jQuery('#' + id).removeClass('yellow green red');
+  jQuery('#' + id).addClass(cls);
+  jQuery('#' + id).show();
+
+  if (typeof scroll !== 'undefined' && scroll) {
+    scrollElementTop(id);
+  }
+
+};
+
 jQuery(function () {
   jQuery('div.mainwp-hidden').parent().parent().css("display", "none");
 });
@@ -1371,23 +1402,34 @@ jQuery(function ($) {
   });
   jQuery('.mainwp-checkbox-showhide-elements').on('click', function () {
     let hiel = $(this).attr('hide-parent');
-    mainwp_showhide_elements(hiel, $(this).find('input').is(':checked'));
+    let chk = this;
+    // support multi hide values.
+    hiel.split(';').forEach(function (hi) {
+      mainwp_showhide_elements(hi, $(chk).find('input').is(':checked'));
+    });
   });
 
   jQuery('.mainwp-selecter-showhide-elements').on('change', function () {
     let hiel = $(this).attr('hide-parent');
     let hival = $(this).attr('hide-value');
-    hival = hival.split('-'); // support multi hide values.
+    hival = hival.split(';'); // support multi hide values.
     let selectedval = $(this).val();
     mainwp_showhide_elements(hiel, hival.includes(selectedval));
   });
 });
 
 function mainwp_showhide_elements(attEl, valHi) {
+  // support multi attr to hide.
   if (valHi) {
-    jQuery('[hide-element=' + attEl + ']').fadeOut(300);
+    attEl.split(';').forEach(function (att) {
+      jQuery('[hide-element=' + att.trim() + ']').fadeOut(300);
+      jQuery('[hide-sub-element=' + att.trim() + ']').fadeOut(300);
+    });
   } else {
-    jQuery('[hide-element=' + attEl + ']').fadeIn(200);
+    attEl.split(';').forEach(function (att) {
+      jQuery('[hide-element=' + att.trim() + ']').fadeIn(300);
+      jQuery('[hide-sub-element=' + att.trim() + ']').fadeIn(300);
+    });
   }
 }
 
@@ -1669,6 +1711,7 @@ let mainwp_managesites_add = function () {
         managesites_add_wpname: name,
         managesites_add_wpurl: url,
         managesites_add_wpadmin: jQuery('#mainwp_managesites_add_wpadmin').val(),
+        managesites_add_adminpwd: encodeURIComponent(jQuery('#mainwp_managesites_add_admin_pwd').val().trim()),
         managesites_add_uniqueId: jQuery('#mainwp_managesites_add_uniqueId').val(),
         ssl_verify: jQuery('#mainwp_managesites_verify_certificate').is(':checked') ? 1 : 0,
         ssl_version: jQuery('#mainwp_managesites_add_ssl_version').val(),
@@ -1731,6 +1774,7 @@ let mainwp_managesites_add = function () {
           jQuery('#mainwp_managesites_add_wpurl').val('');
           jQuery('#mainwp_managesites_add_wpurl_protocol').val('https');
           jQuery('#mainwp_managesites_add_wpadmin').val('');
+          jQuery('#mainwp_managesites_add_admin_pwd').val('');
           jQuery('#mainwp_managesites_add_uniqueId').val('');
           jQuery('#mainwp_managesites_add_addgroups').dropdown('clear');
           jQuery('#mainwp_managesites_verify_certificate').val(1);
@@ -2166,9 +2210,13 @@ jQuery(function () {
     mainwp_managesites_add();
   });
 
+  // Hanlde click submit form import website
   jQuery(document).on('click', '#mainwp_managesites_bulkadd', function () {
-    if (jQuery('#mainwp_managesites_file_bulkupload').val() == '') {
-      setHtml('#mainwp-message-zone', __('Please enter csv file for upload.'), false);
+
+    let error_messages = mainwp_managesites_import_handle_form_before_submit();
+    // If there is an error, prevent submission and display the error
+    if (error_messages.length > 0) {
+      feedback('mainwp-message-zone', error_messages.join("<br/>"), "red");
     } else {
       jQuery('#mainwp_managesites_bulkadd_form').submit();
     }
@@ -2185,6 +2233,24 @@ jQuery(function () {
     mainwp_managesites_edit_test();
   });
 
+  // Handle submit add multi website
+  jQuery(document).on('click', '#mainwp_managesites_add_multi_site', function () {
+    let error_messages = [];
+    let has_table_data = false;
+    has_table_data = mainwp_managesites_validate_import_rows(error_messages, true);
+    // If there is an error, prevent submission and display the error
+    if (error_messages.length > 0 && !has_table_data) {
+      feedback('mainwp-add-multi-new-site-message-zone', error_messages.join("<br/>"), "red");
+    } else {
+      jQuery('#mainwp_managesites_add_form').submit();
+    }
+    return false;
+  });
+
+  // Handle click remove website on management webiste.
+  jQuery(document).on('click', '#mainwp-managesites-remove-site', function () {
+    jQuery('#mainwp-remove-site-button').trigger('click');
+  });
 });
 
 /**
@@ -2759,7 +2825,7 @@ let mainwp_upload_bulk_start_next = function (type, urls, activatePlugin, overwr
 
     let msg = mainwp_install_bulk_you_know_msg(type, jQuery('#bulk_upload_info').attr('number-files'));
 
-    jQuery('#bulk_upload_info').html('<div class="mainwp-notice mainwp-notice-blue">' + msg + '</div>');
+    jQuery('#bulk_upload_info').html('<div class="bui blue message">' + msg + '</div>');
 
     if (jQuery('.mainwp_cost_tracker_assistant_installed_items').length > 0) { // to support add to cost tracker pro.
       let cost_tracker_items = [];
@@ -3495,6 +3561,19 @@ jQuery(document).on('click', '.mainwp-action-dismiss', function () {
   return false;
 });
 
+jQuery(document).on('click', '.mainwp-event-action-dismiss', function () {
+  let action_id = jQuery(this).attr('action-id');
+  jQuery(this).closest('.event').fadeOut("slow");
+  let data = {
+    action: 'mainwp_site_actions_dismiss'
+  };
+  data['action_id'] = action_id;
+  jQuery.post(ajaxurl, mainwp_secure_data(data), function () {
+
+  });
+  return false;
+});
+
 jQuery(document).on('click', '#mainwp-delete-all-nonmainwp-actions-button', function () {
   mainwp_confirm('Are you sure you want to delete all Non-MainWP changes? This action can not be undone!', function () {
     mainwp_delete_nonmainwp_data_start();
@@ -3571,6 +3650,30 @@ jQuery(document).on('change', '#cb-select-all-top, #cb-select-all-bottom', funct
   let dtApi = jQuery($table).dataTable().api();
   let setStatus = controlChecked ? 'selected' : 'deselected';
   mainwp_datatable_fix_to_update_selected_rows_status(dtApi, setStatus);
+});
+
+
+jQuery(document).on('change', '.cb-select-all-parent-top, .cb-select-all-parent-bottom', function () {
+
+  let parentChecked = jQuery(this).is(":checked");
+  let parentSelector = jQuery(this).attr('cb-parent-selector') ?? false;
+
+  if (false === parentSelector) {
+    return;
+  }
+  console.log(parentSelector);
+  jQuery(parentSelector + ' .ui.checkbox').find(':checkbox')
+    .prop('checked', function () {
+      console.log(this);
+      console.log(parentChecked);
+      if (parentChecked) {
+        jQuery(this).closest('tr').addClass('selected');
+        return true;
+      }
+      jQuery(this).closest('tr').removeClass('selected');
+      return false;
+    });
+
 });
 
 jQuery(function ($) {
@@ -4289,16 +4392,25 @@ function mainwp_getCookie() {
   return false;
 }
 
-let mainwp_setttings_fields_indicator_show = function () {
+let mainwp_setttings_fields_indicator_show = function (specific_header_indicator) {
+  if (typeof specific_header_indicator !== "undefined") {
+    mainwp_setttings_fields_indicator_specific_show(specific_header_indicator);
+    return;
+  }
   // for each header indicator.
   jQuery('.settings-field-header-indicator').each(function () {
-    let cls = jQuery(this).attr('field-indicator-wrapper-class');
-    if ('' != cls && jQuery('.' + cls + ' .settings-field-icon-indicator').length > 0) {
-      jQuery(this).attr('style', 'display:inline-block;');
-      jQuery(this).addClass('visible-indicator');
-    }
+    mainwp_setttings_fields_indicator_specific_show(this);
   });
 }
+
+let mainwp_setttings_fields_indicator_specific_show = function (obj) {
+  let cls = jQuery(obj).attr('field-indicator-wrapper-class');
+  if ('' != cls && jQuery('.' + cls + ' .settings-field-icon-indicator.visible-indicator').length > 0) {
+    jQuery(this).attr('style', 'display:inline-block;');
+    jQuery(this).addClass('visible-indicator');
+  }
+}
+
 
 jQuery(function ($) {
   if (jQuery('.mainwp-ui-page').length) {
@@ -4356,7 +4468,6 @@ jQuery(function ($) {
       }
     }
   }
-
 });
 
 
@@ -4455,12 +4566,87 @@ window.mainwp_init_ui_calendar = ($selectors) => {
 }
 
 
-jQuery( document ).ready( function () {
+jQuery(document).ready(function () {
   jQuery('.dt-scroll-head').css({
-    'overflow-x':'auto'
-  }).on('scroll', function(e){
+    'overflow-x': 'auto'
+  }).on('scroll', function (e) {
     let scrollBody = jQuery(this).parent().find('.dt-scroll-body').get(0);
     scrollBody.scrollLeft = this.scrollLeft;
     jQuery(scrollBody).trigger('scroll');
   });
-} );
+});
+
+// Function to check valid email using regular expression.
+const mainwp_validate_email = function (email) {
+  const re = /^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,255}\.[A-Za-z]{2,}$/;
+  return re.test(email);
+}
+
+
+jQuery(function ($) {
+
+  $(document).on('click', '#delete_uptime_monitor_btn', function () {
+    let is_sub = $('#monitor_edit_is_sub_url')?.val();
+
+    let confirmation = __("Are you sure you want to delete this uptime monitor?");
+
+    if (is_sub) {
+      confirmation = __("Are you sure you want to delete this uptime sub-page monitor?");
+    }
+
+    mainwp_confirm(confirmation, () => {
+      let wpid = $('#mainwp_edit_monitor_site_id').val();
+      let moid = $('#mainwp_edit_monitor_id').val();
+
+      mainwp_uptime_monitoring_remove(wpid, moid);
+    }, false, false, true);
+  });
+
+  let mainwp_uptime_monitoring_remove = function (wpid, moid) {
+
+    feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + __('Removing Uptime Monitor...'), 'green');
+
+    let data = mainwp_secure_data({
+      action: 'mainwp_uptime_monitoring_remove_monitor',
+      wpid: wpid,
+      moid: moid
+    });
+
+    jQuery.post(ajaxurl, data, function (response) {
+      if (response?.success) {
+        feedback('mainwp-message-zone', __('Monitor have been removed.'), 'green');
+        setTimeout(function () {
+          window.location = 'admin.php?page=managesites&monitor_wpid=' + wpid;
+        }, 2000);
+
+      } else if (response?.error) {
+        feedback('mainwp-message-zone', response.error, 'red');
+      } else {
+        feedback('mainwp-message-zone', __('Undefined error. Please try again.'), 'red');
+      }
+    }, 'json');
+    return false;
+  };
+
+  $(document).on('click', '#increase-connection-security-btn', function () {
+    feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + __('Encryption in progress! Securing your OpenSSL private keys, this may take a few moments. Please wait until completed.'), 'green');
+    let data = mainwp_secure_data({
+      action: 'mainwp_increase_connection_security',
+    });
+    jQuery.post(ajaxurl, data, function (response) {
+      if (response?.success) {
+        setTimeout(function () {
+          window.location.href = location.href
+        }, 2000);
+
+      } else if (response?.error) {
+        feedback('mainwp-message-zone', response.error, 'red');
+      } else {
+        feedback('mainwp-message-zone', __('Undefined error. Please try again.'), 'red');
+      }
+    }, 'json');
+    return false;
+  });
+
+});
+

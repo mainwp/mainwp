@@ -152,15 +152,15 @@ body.mainwp-ui.mainwp-custom-theme,
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1) !important;
   border-top: 0px solid var(--border-color) !important;
   border-bottom: 1px solid var(--border-color) !important;
-  border-left: 1px solid var(--border-color) !important;
+  border-left: 0px solid var(--border-color) !important;
   border-right: 1px solid var(--border-color) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-page-navigation-wrapper .menu {
   margin-bottom: 0px !important;
-  border-top: 1px solid var(--border-color) !important;
+  border-top: 0px solid var(--border-color) !important;
   border-bottom: 0px solid var(--border-color) !important;
-  border-left: 1px solid var(--border-color) !important;
+  border-left: 0px solid var(--border-color) !important;
   border-right: 1px solid var(--border-color) !important;
   color: var(--font-color);
   background-color: var(--background-color-3);
@@ -524,6 +524,10 @@ body.mainwp-ui.mainwp-custom-theme,
   background-color: var(--background-color-2) !important;
 }
 
+.mainwp-ui.mainwp-custom-theme .mainwp-managesites-import-rows:nth-of-type(odd) {
+  background-color: rgba(255, 255, 255, .06) !important;
+}
+
 /* Invert Messages */
 
 .mainwp-ui.mainwp-custom-theme .ui.message .header {
@@ -596,6 +600,30 @@ body.mainwp-ui.mainwp-custom-theme,
 .mainwp-ui.mainwp-custom-theme .ui.cards .card .content {
   border-top: 1px solid var(--border-color) !important;
   color: var(--font-color);
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.cards .card .extra a:not(.ui) {
+  color: var(--accent-color);
+}
+
+/* Invert Steps */
+
+.mainwp-ui.mainwp-custom-theme .ui.steps .step {
+  background-color: var(--background-color-3) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.steps .step .description {
+  color: var(--font-color) !important;
+}
+
+/* Invert Feed */
+
+.mainwp-ui.mainwp-custom-theme .ui.feed .summary {
+  color: var(--font-color) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.feed .summary .date {
+  color: var(--font-light-color) !important;
 }
 
 /* Invert Modal */

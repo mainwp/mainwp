@@ -12,8 +12,6 @@ use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_DB_Client;
-use function MainWP\Dashboard\mainwp_current_user_have_right;
-use function MainWP\Dashboard\mainwp_do_not_have_permissions;
 
 /**
  * Class Cost_Tracker_Dashboard
@@ -194,8 +192,8 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
      * When the page loads render the body content.
      */
     public function render_overview_page() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_cost_tracker' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'manage cost tracker', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_cost_tracker' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage cost tracker', 'mainwp' ) );
             return;
         }
 
@@ -1776,7 +1774,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
         <div class="ui small modal" id="mainwp-module-cost-tracker-sites-site-preview-screen-options-modal">
             <div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
             <div class="scrolling content ui form">
-                <span><?php esc_html_e( 'Would you like to turn on home screen previews?  This function queries WordPress.com servers to capture a screenshot of your site the same way comments shows you preview of URLs.', 'mainwp' ); ?>
+                <span><?php esc_html_e( 'Would you like to turn on home screen previews? This function queries WordPress.com servers to capture a screenshot of your site the same way comments shows you preview of URLs.', 'mainwp' ); ?>
             </div>
             <div class="actions">
                 <div class="ui ok button"><?php esc_html_e( 'Yes', 'mainwp' ); ?></div>

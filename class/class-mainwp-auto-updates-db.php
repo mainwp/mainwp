@@ -65,8 +65,8 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
         if ( true === $not_suspended ) {
             $where .= ' wp.suspended = 0 AND';
         }
-
-        return $this->wpdb->get_results( 'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid JOIN ' . $this->get_option_view( array( 'favi_icon' ), false ) . ' wp_optionview ON wp.id = wp_optionview.wpid WHERE ' . $where . ' ( wp_sync.dtsAutomaticSyncStart = 0 OR ( wp_sync.dtsAutomaticSyncStart <= ' . intval( $lasttime_start ) . ' ) ) ORDER BY wp_sync.dtsAutomaticSyncStart ASC LIMIT ' . $limit, OBJECT );
+        $sql = 'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid JOIN ' . $this->get_option_view( array( 'favi_icon' ) ) . ' wp_optionview ON wp.id = wp_optionview.wpid WHERE ' . $where . ' ( wp_sync.dtsAutomaticSyncStart = 0 OR  wp_sync.dtsAutomaticSyncStart < ' . intval( $lasttime_start ) . ' ) ORDER BY wp_sync.dtsAutomaticSyncStart ASC LIMIT ' . $limit;
+        return $this->wpdb->get_results( $sql, OBJECT );
     }
 
 
@@ -114,7 +114,7 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
             return false;
         }
 
-        $where = ' ( wp_sync.dtsAutomaticSyncStart > 0 AND wp_sync.dtsAutomaticSync < wp_sync.dtsAutomaticSyncStart AND wp_sync.dtsAutomaticSyncStart <= ' . intval( $lasttime_start ) . ' ) AND'; // less than to sure that exactly trigger start updates timestamp.
+        $where = ' ( wp_sync.dtsAutomaticSyncStart > 0 AND wp_sync.dtsAutomaticSync < wp_sync.dtsAutomaticSyncStart AND wp_sync.dtsAutomaticSyncStart < ' . intval( $lasttime_start ) . ' ) AND'; // less than to sure that exactly trigger start updates timestamp.
         if ( true === $connected ) {
             $where .= ' wp_sync.sync_errors = "" AND';
         }

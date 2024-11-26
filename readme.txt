@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.6.2
 Requires PHP: 7.4
-Stable tag: 5.2.2
+Stable tag: 5.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -143,44 +143,36 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
-= 5.2.2 - 9-26-2024 =
+5.3 - 11-26-2024 =
 
-* Fixed: An issue where the daily digest email included ignored updates.
-* Fixed: Fixed connection issues caused by the recent update of the cURL extension to version 8.10.0.
-* Fixed: Resolved an issue with the auto-sync process that caused synchronization delays or failures in specific setups.
+* Security Enhancement: Enhanced the pre-connection process with additional security features to address recommendations from a security company. [Read more](https://mainwp.com/addressing-misguided-security-reports-why-mainwp-is-updating-its-connection-process/)
+* Fixed: Issue with the Manage Sites filter for available updates.
+* Fixed: Incorrect labeling of the "Install Trusted Updates" option on the Site Settings page.
+* Fixed: DataTables error on the empty error log page.
+* Fixed: Excessive sort indicator icons on the Translation Updates page.
+* Fixed: Issue with updating trusted plugins.
+* Fixed: Issue with sending Daily Digest emails on certain setups.
+* Fixed: Incorrect WordPress REST API base URL check ([#713](https://github.com/mainwp/mainwp/pull/713)) – thanks to [**Franz Armas**](https://github.com/franzarmas).
+* Fixed Missing folder creation during file uploads ([#712](https://github.com/mainwp/mainwp/pull/712)) – thanks to [**Sixela**](https://github.com/sixela).
+* Added: Basic Uptime Monitoring has been greatly upgraded and turned into a full-fledged Uptime Monitoring feature
+* Added: Password authentication to the connect site process for added security.
+* Added: "Connect Multiple Sites" feature for faster site management.
+* Added: Translations for French (fr_FR), Spanish (es_ES), German (de_DE), and Portuguese (pt_BR).
+* Added: Site thumbnails in the page navigation within individual site areas.
+* Added: "Remove Site" button on the Site Settings page.
+* Added: Various informational messages throughout the platform.
+* Added: Tabular menu on the "Add Site" page.
+* Updated: Quick Setup Wizard with bulk "Add Sites" and "Add Clients" forms.
+* Updated: Verbiage on the Plugin Updates and Theme Updates pages for clarity.
+* Updated: Button colors and tooltips for "View Ignored Plugin Updates," "View Ignored Theme Updates," and "View Ignored WP Core Updates" buttons.
+* Updated: Input types on the Advanced Options page replaced with slider elements.
+* Updated: Sub-item padding in the Manage Plugins and Themes tables for improved readability.
+* Updated: Label of "Site Edit" page updated to "Site Settings" for consistency.
+* Updated: Message element styling on the Manage Pages page.
+* Updated: Widget scrollbar positioning for better separation from content.
+* Updated: Layout of the "Add Site" form.
+* Updated: Border radius for the www/non-www dropdown in the Site Settings form.
 
-= 5.2.1 - 9-16-2024 =
-
-* Fixed: An issue with the auto-sync process that caused synchronization delays or failures.
-* Updated: The "Show Columns" option checkbox labels by replacing icons with text labels for improved clarity.
-
-= 5.2 - 8-28-2024 =
-
-* Fixed: Icon selection dropdown overflow issue on the Cost Tracker settings page.
-* Fixed: Issue with inserting multiple galleries in a post.
-* Fixed: Bug causing issues with triggering Rocket and Cache Control actions in the Sites bulk action menu.
-* Fixed: Font weight inconsistency on the Manage Plugins page for a more uniform appearance.
-* Fixed: Issue with saving plugin and theme notes on the Auto Updates page.
-* Fixed: Issue with removing the featured image when updating a post.
-* Fixed: Incorrect ordering of the "Renews" column in Cost Tracker.
-* Fixed: Broken file upload functionality on Windows servers.
-* Fixed: Missing WP icon in the site card element.
-* Added: MainWP REST API v2 for enhanced API capabilities.
-* Added: "Create New API Key" button on the REST API keys page for easier key management.
-* Added: Ability to ignore updates for specific plugin and theme versions, allowing more control over updates.
-* Added: Option to schedule automatic updates at a specific time for better update management.
-* Added: Support for Kinsta API in the API Backups feature.
-* Added: Link to Client name in the Updates per item table.
-* Updated: Readjusted the MainWP icon size and position in the header element for better alignment.
-* Updated: Changed the "Ignored" success message to a green checkmark icon for consistency.
-* Updated: Updated the "Ignoring..." process indicator from text to a notched circle loader icon for a consistent user experience.
-* Updated: Modified ignoring plugins and themes confirmations to operate independently of the Updates confirmation settings.
-* Updated: Revised help documentation links for accuracy and relevance.
-* Updated: Renamed "Twitter" labels to "X" to reflect the platform’s rebranding.
-* Updated: Removed non-MainWP related notices from the MainWP interface to reduce clutter.
-* Updated: Enhanced tooltip elements to ensure they display properly.
-* Removed: Unused CSS code
-
-[See Video Changelog](https://www.youtube.com/watch?v=GrA_faZKcfQ)
+[See Video Changelog](https://youtu.be/DF0vC1RiCVI)
 
 [See changelog for all versions.](https://mainwp.com/changelog.txt)

@@ -113,8 +113,8 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
      */
     public function render_all_settings( $updated ) {
 
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
             return;
         }
 
@@ -221,8 +221,8 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
      */
     public function render_edit_settings( $type, $updated_templ ) {
 
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
-            mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
             return;
         }
 
@@ -433,7 +433,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
     public static function get_notification_types( $type = '' ) {
         $types = array(
             'daily_digest'              => esc_html__( 'Daily Digest Email', 'mainwp' ),
-            'uptime'                    => esc_html__( 'Basic Uptime Monitoring Email', 'mainwp' ),
+            'uptime'                    => esc_html__( 'Uptime Monitoring Email', 'mainwp' ),
             'site_health'               => esc_html__( 'Site Health Monitoring Email', 'mainwp' ),
             'deactivated_license_alert' => esc_html__( 'Extension License Deactivation Notification Email', 'mainwp' ),
         );

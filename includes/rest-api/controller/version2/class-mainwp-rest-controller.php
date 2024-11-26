@@ -21,6 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Client;
+use MainWP\Dashboard\MainWP_Utility;
 
 /**
  * Abstract Rest Controller Class
@@ -84,7 +85,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
      */
     public function get_site_item( $request ) {
         $route = $request->get_route();
-        if ( str_ends_with( $route, '/batch' ) ) {
+        if ( MainWP_Utility::string_ends_by( $route, '/batch' ) ) {
             $by    = 'id';
             $value = $request['id'];
         } else {
@@ -358,8 +359,10 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
             $args['orderby'] = $request['orderby'];
         }
 
-        if ( ! empty( $request['paged'] ) ) {
-            $args['paged'] = $request['paged'];
+        if ( ! empty( $request['page'] ) ) {
+            $args['paged'] = $request['page'];
+        } elseif ( ! empty( $request['paged'] ) ) {
+            $args['paged'] = $request['paged']; // compatible.
         }
 
         if ( ! empty( $request['per_page'] ) ) {
@@ -563,7 +566,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
         }
 
         $route = $request->get_route();
-        if ( str_ends_with( $route, '/sites/batch' ) ) {
+        if ( MainWP_Utility::string_ends_by( $route, '/sites/batch' ) ) {
             if ( ! empty( $items['sync'] ) ) {
                 foreach ( $items['sync'] as $id ) {
                     $id = (int) $id;
@@ -1299,6 +1302,14 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
         return true;
     }
 
+    /**
+     * Method get_rest_api_user().
+     *
+     * @return mixed
+     */
+    public function get_rest_api_user() {
+        return \MainWP_REST_Authentication::get_instance()->get_rest_valid_user();
+    }
 
     /**
      * Get the query params for collections of attachments.

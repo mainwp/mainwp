@@ -24,7 +24,7 @@ if ( ! function_exists( 'mainwpdir' ) ) {
 }
 
 
-if ( ! function_exists( 'mainwp_do_not_have_permissions' ) ) {
+if ( ! function_exists( '\mainwp_do_not_have_permissions' ) ) {
 
     /**
      * Detect permission level & display message to end user.
@@ -108,5 +108,45 @@ if ( ! function_exists( 'mainwp_modules_is_enabled' ) ) {
             'api-backups'  => defined( 'MAINWP_MODULE_API_BACKUPS_ENABLED' ) && MAINWP_MODULE_API_BACKUPS_ENABLED ? true : false,
         );
         return ! empty( $enable_mainwp_modules[ $module ] ) ? true : false;
+    }
+}
+
+if ( ! function_exists( 'mainwp_get_timestamp' ) ) {
+
+    /**
+     * Function mainwp_get_timestamp.
+     *
+     * @param  int $add_time add time.
+     * @return int
+     */
+    function mainwp_get_timestamp( $add_time = 0 ) {
+        return (int) $add_time + (int) \MainWP\Dashboard\MainWP_Utility::get_timestamp();
+    }
+
+
+}
+
+if ( ! function_exists( 'mainwp_get_current_utc_datetime_db' ) ) {
+    /**
+     * Function mainwp_get_current_utc_datetime_db.
+     *
+     * @return int
+     */
+    function mainwp_get_current_utc_datetime_db() {
+        $utcTime = new \DateTime( 'now', new \DateTimeZone( 'UTC' ) );
+        return $utcTime->format( 'Y-m-d H:i:s' ); // Outputs: YYYY-MM-DD HH:MM:SS.
+    }
+}
+
+if ( ! function_exists( 'mainwp_secure_request' ) ) {
+
+    /**
+     * Function mainwp_secure_request.
+     *
+     * @param  string $action request action.
+     * @return void
+     */
+    function mainwp_secure_request( $action ) {
+        \MainWP\Dashboard\MainWP_Post_Handler::instance()->secure_request( $action );
     }
 }

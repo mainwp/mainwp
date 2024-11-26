@@ -48,17 +48,19 @@ class MainWP_Exception extends \Exception { // phpcs:ignore Generic.Classes.Open
      */
     public function __construct( $message, $extra = null, $errCode = '' ) {
         parent::__construct( $message );
-        $this->messageExtra = esc_html( $extra ); // add more secure.
+        $this->messageExtra = $extra; // escape in get method.
         $this->errorCode    = esc_html( $errCode );
     }
 
     /**
      * Method get_message_extra()
      *
+     * @param bool $escape_msg Exception message.
+     *
      * @return $messageExtra Extra messages.
      */
-    public function get_message_extra() {
-        return $this->messageExtra;
+    public function get_message_extra( $escape_msg = true ) {
+        return $escape_msg ? esc_html( wp_strip_all_tags( $this->messageExtra ) ) : $this->messageExtra;
     }
 
     /**

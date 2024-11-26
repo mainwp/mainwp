@@ -5231,7 +5231,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         $backup_data = array(
             'tag' => 'MainWP API Backups - ' . $website['name'],
         );
-        $backup_data = json_encode( $backup_data );
+        $backup_data = wp_json_encode( $backup_data );
 
         // Send Payload & create backup.
         $api_response = static::call_kinsta_api( 'POST', '/sites/environments/' . $kinsta_env_id . '/manual-backups', $kinsta_baseurl, $kinsta_api_key, $backup_data );
@@ -5326,7 +5326,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
             'backup_id'        => $backup_id,
             'notified_user_id' => $company_user_id,
         );
-        $backup_data = json_encode( $backup_data );
+        $backup_data = wp_json_encode( $backup_data );
 
         // Send Payload & create backup.
         $api_response = static::call_kinsta_api( 'POST', $payload_url, $kinsta_baseurl, $kinsta_api_key, '', $backup_data );

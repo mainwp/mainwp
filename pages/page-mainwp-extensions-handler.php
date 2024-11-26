@@ -105,8 +105,8 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
     /**
      * Clean up MainWP Extention names.
      *
-     * @param array $extension Array of MainWP Extentsions.
-     * @param array $forced forced polish.
+     * @param string $extension Array of MainWP Extentsions.
+     * @param bool   $forced forced polish.
      *
      * @return string $menu_name Final Menu Name.
      */
@@ -158,8 +158,8 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $extensions         = get_option( 'mainwp_extensions', array() );
             foreach ( $extensions as $extension ) {
                 $slug = $extension['slug'];
-                if ( function_exists( 'mainwp_current_user_have_right' ) ) { // to fix later init, it's ok to check user have right.
-                    if ( mainwp_current_user_have_right( 'extension', dirname( $slug ) ) ) {
+                if ( function_exists( '\mainwp_current_user_can' ) ) { // to fix later init, it's ok to check user have right.
+                    if ( \mainwp_current_user_can( 'extension', dirname( $slug ) ) ) {
                         static::$extensions[] = $extension;
                     }
                 } else {
@@ -754,7 +754,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return false;
         }
 
-        if ( $for_manager && ( ! defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) || ! mainwp_current_user_have_right( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) ) {
+        if ( $for_manager && ( ! defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) || ! \mainwp_current_user_can( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) ) {
             return false;
         }
         MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
@@ -779,7 +779,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return false;
         }
 
-        if ( $for_manager && ( ! defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) || ! mainwp_current_user_have_right( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) ) {
+        if ( $for_manager && ( ! defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) || ! \mainwp_current_user_can( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) ) {
             return false;
         }
 
@@ -886,13 +886,22 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             if ( $clone_sites ) {
                 $clone_site = current( $clone_sites );
                 if ( $clone_site && $clone_site->is_staging ) {
+
+                    // try to decrypt priv key.
+                    $de_privkey = MainWP_Encrypt_Data_Lib::instance()->decrypt_privkey( base64_decode( $website->privkey ), $website->id ); // phpcs:ignore -- NOSONAR - base64_encode trust.
+                    if ( ! empty( $de_privkey ) ) {
+                        $en_privkey = MainWP_Encrypt_Data_Lib::instance()->encrypt_privkey( $de_privkey, $clone_site->id, true ); // create encrypt priv key for clone site.
+                    } else {
+                        $en_privkey = base64_decode( $website->privkey ); // phpcs:ignore -- NOSONAR -trust - compatible.
+                    }
+
                     if ( $force_update ) {
                         MainWP_DB::instance()->update_website_values(
                             $clone_site->id,
                             array(
                                 'adminname'          => $website->adminname,
                                 'pubkey'             => $website->pubkey,
-                                'privkey'            => $website->privkey,
+                                'privkey'            => base64_encode( $en_privkey ), //phpcs:ignore -- NOSONAR -ok.
                                 'verify_certificate' => $website->verify_certificate,
                                 'uniqueId'           => ( null !== $website->uniqueId ? $website->uniqueId : '' ),
                                 'http_user'          => $website->http_user,
@@ -927,7 +936,16 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 'isStaging'         => 1,
             );
 
-            $id = MainWP_DB::instance()->add_website( $current_user->ID, $clone_name, $clone_url, $website->adminname, $website->pubkey, $website->privkey, $others );
+            $de_privkey = base64_decode( $website->privkey ); //phpcs:ignore -- NOSONAR -trust - compatible.
+            $de_privkey = MainWP_Encrypt_Data_Lib::instance()->decrypt_privkey( $de_privkey, $site_id );
+
+            if ( ! empty( $de_privkey ) ) {
+                $de_privkey = base64_encode( $de_privkey ); //phpcs:ignore -- NOSONAR -ok.
+            } else {
+                $de_privkey = $website->privkey; // compatible - encoded.
+            }
+
+            $id = MainWP_DB::instance()->add_website( $current_user->ID, $clone_name, $clone_url, $website->adminname, $website->pubkey, $de_privkey, $others );
 
             /** This action is documented in class\class-mainwp-manage-sites-view.php */
             do_action( 'mainwp_added_new_site', $id, $website );

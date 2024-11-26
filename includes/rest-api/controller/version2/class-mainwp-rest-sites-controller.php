@@ -20,6 +20,7 @@ use MainWP\Dashboard\Module\CostTracker\Cost_Tracker_Rest_Api_Handle_V1;
 use MainWP\Dashboard\MainWP_DB_Common;
 use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_DB_Site_Actions;
+use MainWP\Dashboard\MainWP_Logger;
 /**
  * Class MainWP_Rest_Sites_Controller
  *
@@ -1569,7 +1570,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $data = $this->filter_response_data_by_allowed_fields( $website, 'simple_view' );
 
         if ( false !== $new_code ) {
-            $data['status']    = MainWP_Monitoring_Handler::get_site_checking_status( $new_code );
+            if ( is_array( $result ) && isset( $result['new_uptime_status'] ) ) {
+                $data['status'] = $result['new_uptime_status'];
+            } else {
+                $data['status'] = MainWP_Monitoring_Handler::get_site_checking_status( $new_code );
+            }
             $data['http_code'] = $new_code;
         }
 
@@ -1985,25 +1990,12 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     'default' => '',
                     'context' => array( 'view' ),
                 ),
-                'disable_status_check'   => array(
-                    'type'    => 'string',
-                    'default' => '',
-                    'context' => array( 'view' ),
-                ),
                 'disable_health_check'   => array(
                     'type'        => 'integer',
                     'default'     => 0,
                     'description' => __( 'Disable health check', 'mainwp' ),
                     'context'     => array( 'edit' ),
                     'enum'        => array( 0, 1 ),
-                    'arg_options' => array(
-                        'sanitize_callback' => 'absint',
-                    ),
-                ),
-                'status_check_interval'  => array(
-                    'type'        => 'integer',
-                    'default'     => 0,
-                    'context'     => array( 'view' ),
                     'arg_options' => array(
                         'sanitize_callback' => 'absint',
                     ),
@@ -2075,6 +2067,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $item_fields['url']            = isset( $request['url'] ) ? sanitize_text_field( wp_unslash( $request['url'] ) ) : '';
         $item_fields['name']           = isset( $request['name'] ) ? sanitize_text_field( wp_unslash( $request['name'] ) ) : '';
         $item_fields['wpadmin']        = isset( $request['admin'] ) ? sanitize_text_field( wp_unslash( $request['admin'] ) ) : '';
+        $item_fields['adminpwd']       = isset( $request['adminpassword'] ) ? wp_unslash( $request['adminpassword'] ) : '';
         $item_fields['unique_id']      = isset( $request['uniqueid'] ) ? sanitize_text_field( wp_unslash( $request['uniqueid'] ) ) : '';
         $item_fields['ssl_verify']     = empty( $request['ssl_verify'] ) ? false : intval( $request['ssl_verify'] );
         $item_fields['force_use_ipv4'] = isset( $request['force_use_ipv4'] ) && mainwp_string_to_bool( $request['force_use_ipv4'] ) ? 1 : 0;
@@ -2109,8 +2102,6 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             'ssl_version'            => 'sslversion',
             'uniqueId'               => 'uniqueid',
             'protocol'               => 'protocol',
-            'disable_status_check'   => 'disablechecking',
-            'status_check_interval'  => 'checkinterval',
             'disable_health_check'   => 'disablehealthchecking',
             'health_threshold'       => 'healththreshold',
             'suspended'              => 'suspended',
@@ -2181,38 +2172,36 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
 
         if ( ! empty( $args['full_data'] ) ) {
             $formatted_extra = array(
-                'id'                    => $site_object->id,
-                'url'                   => $site_object->url,
-                'name'                  => $site_object->name,
-                'offline_checks_last'   => $site_object->offline_checks_last,
-                'offline_check_result'  => $site_object->offline_check_result,
-                'http_response_code'    => $site_object->http_response_code,
-                'disable_status_check'  => $site_object->disable_status_check,
-                'disable_health_check'  => $site_object->disable_health_check,
-                'status_check_interval' => $site_object->status_check_interval,
-                'health_threshold'      => $site_object->health_threshold,
-                'note'                  => $site_object->note,
-                'plugin_upgrades'       => $site_object->plugin_upgrades,
-                'theme_upgrades'        => $site_object->theme_upgrades,
-                'translation_upgrades'  => $site_object->translation_upgrades,
-                'securityIssues'        => $site_object->securityIssues,
-                'themes'                => $site_object->themes,
-                'plugins'               => $site_object->plugins,
-                'automatic_update'      => $site_object->automatic_update,
-                'sync_errors'           => $site_object->sync_errors,
-                'last_post_gmt'         => $site_object->last_post_gmt,
-                'health_value'          => $site_object->health_value,
-                'phpversion'            => $site_object->phpversion,
-                'wp_upgrades'           => $site_object->wp_upgrades,
-                'security_stats'        => $site_object->security_stats,
-                'client_id'             => $site_object->client_id,
-                'adminname'             => $site_object->adminname,
-                'http_user'             => $site_object->http_user,
-                'http_pass'             => $site_object->http_pass,
-                'ssl_version'           => $site_object->ssl_version,
-                'signature_algo'        => $site_object->signature_algo,
-                'verify_method'         => $site_object->verify_method,
-                'verify_certificate'    => $site_object->verify_certificate,
+                'id'                   => $site_object->id,
+                'url'                  => $site_object->url,
+                'name'                 => $site_object->name,
+                'offline_checks_last'  => $site_object->offline_checks_last,
+                'offline_check_result' => $site_object->offline_check_result, // 1 - online, -1 offline.
+                'http_response_code'   => $site_object->http_response_code,
+                'disable_health_check' => $site_object->disable_health_check,
+                'health_threshold'     => $site_object->health_threshold,
+                'note'                 => $site_object->note,
+                'plugin_upgrades'      => $site_object->plugin_upgrades,
+                'theme_upgrades'       => $site_object->theme_upgrades,
+                'translation_upgrades' => $site_object->translation_upgrades,
+                'securityIssues'       => $site_object->securityIssues,
+                'themes'               => $site_object->themes,
+                'plugins'              => $site_object->plugins,
+                'automatic_update'     => ! empty( $site_object->automatic_update ) ? $site_object->automatic_update : 0,
+                'sync_errors'          => $site_object->sync_errors,
+                'last_post_gmt'        => $site_object->last_post_gmt,
+                'health_value'         => $site_object->health_value,
+                'phpversion'           => $site_object->phpversion,
+                'wp_upgrades'          => $site_object->wp_upgrades,
+                'security_stats'       => $site_object->security_stats,
+                'client_id'            => $site_object->client_id,
+                'adminname'            => $site_object->adminname,
+                'http_user'            => $site_object->http_user,
+                'http_pass'            => $site_object->http_pass,
+                'ssl_version'          => $site_object->ssl_version,
+                'signature_algo'       => $site_object->signature_algo,
+                'verify_method'        => $site_object->verify_method,
+                'verify_certificate'   => $site_object->verify_certificate,
             );
 
             $format_date = array( 'dtsAutomaticSync', 'dtsAutomaticSyncStart', 'dtsSync', 'dtsSyncStart' );
@@ -2374,13 +2363,18 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      *
      * @return WP_Error|WP_REST_Response
      */
-    public function create_item( $request ) {
+    public function create_item( $request ) {  //phpcs:ignore -- NOSONAR - complex.
         $resp_data            = array();
         $resp_data['success'] = 0;
+        $site_id              = 0;
+        $url                  = '';
+        $data                 = array(); //phpcs:ignore -- NOSONAR - not used data.
+        $found_id             = 0;
         try {
-            $item                              = $this->prepare_object_for_database( $request );
-            $website                           = MainWP_DB::instance()->get_websites_by_url( $item['url'] );
-            list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::add_wp_site( $website, $item );
+            $item    = $this->prepare_object_for_database( $request );
+            $url     = $item['url'];
+            $website = MainWP_DB::instance()->get_websites_by_url( $item['url'] );
+            list( $message, $error, $site_id, $data, $found_id ) = MainWP_Manage_Sites_View::add_wp_site( $website, $item );
 
             if ( ! empty( $site_id ) ) {
                 $site                 = MainWP_DB::instance()->get_website_by_id( $site_id );
@@ -2398,6 +2392,35 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         } catch ( Exception $e ) {
             $resp_data['error'] = wp_strip_all_tags( $e->getMessage() );
         }
+
+        $user                 = $this->get_rest_api_user();
+        $is_dashboard_connect = ! empty( $user ) && 1 === (int) $user->key_type ? true : false;
+
+        if ( $is_dashboard_connect ) {
+            if ( ! empty( $resp_data['error'] ) ) {
+                MainWP_Logger::instance()->log_action( 'Dashboard Connect add Site :: [url=' . $url . '] :: [result=Failed] :: [error=' . esc_html( $resp_data['error'] ) . ']', MainWP_Logger::CONNECT_LOG_PRIORITY );
+            } elseif ( ! empty( $resp_data['success'] ) ) {
+                MainWP_Logger::instance()->log_action( 'Dashboard Connect add Site :: [url=' . $url . '] :: [result=Success]', MainWP_Logger::CONNECT_LOG_PRIORITY );
+            }
+        }
+
+        if ( ! empty( $found_id ) ) {
+            $resp_data['found_id'] = $found_id;
+            // if found connected and is dashboard connect request then try to reconnect to prevent incorrect connection.
+            if ( $is_dashboard_connect ) {
+                $reconnect = false;
+                $site      = MainWP_DB::instance()->get_website_by_id( $found_id );
+                try {
+                    $reconnect                      = MainWP_Manage_Sites_View::m_reconnect_site( $site );
+                    $resp_data['reconnect_success'] = $reconnect ? 1 : 0;
+                } catch ( \Exception $e ) {
+                    // failed.
+                    $resp_data['reconnect_error'] = $e->getMessage();
+                }
+                MainWP_Logger::instance()->log_action( 'Dashboard Connect reconnect site :: [url=' . $url . '] :: [result=' . ( $reconnect ? 'success' : 'failed' ) . ']', MainWP_Logger::CONNECT_LOG_PRIORITY );
+            }
+        }
+
         return rest_ensure_response( $resp_data );
     }
 

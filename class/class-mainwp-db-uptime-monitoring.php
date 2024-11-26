@@ -396,7 +396,7 @@ KEY idx_wpid (wpid)";
             $glo_interval = 60;
         }
 
-        if ( $limit < 1 || $limit > 20 ) {
+        if ( $limit < 1 || $limit > 100 ) {
             $limit = 10;
         }
 

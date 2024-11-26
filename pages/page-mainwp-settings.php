@@ -1287,7 +1287,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             $use_wpcron = ! isset( $_POST['mainwp_options_wp_cron'] ) ? 0 : 1;
             MainWP_Utility::update_option( 'mainwp_wp_cron', $use_wpcron );
             MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
-            MainWP_Utility::update_option( 'mainwp_maximum_uptime_monitoring_requests', ! empty( $_POST['mainwp_maximum_uptime_monitoring_requests'] ) ? intval( $_POST['mainwp_maximum_uptime_monitoring_requests'] ) : 10 );
+            MainWP_Utility::update_option( 'mainwp_maximum_uptime_monitoring_requests', ! empty( $_POST['mainwp_maximumUptimeMonitoringRequests'] ) ? intval( $_POST['mainwp_maximumUptimeMonitoringRequests'] ) : 10 );
 
             // required check.
             MainWP_Uptime_Monitoring_Schedule::instance()->check_to_disable_schedule_individual_uptime_monitoring(); // required a check to sync the settings.
@@ -1461,10 +1461,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             esc_html_e( 'Maximum simultaneous uptime monitoring requests (Default: 10)', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'This option allows you to control how many update and install requests your MainWP Dashboard should process at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <div class="ui bottom aligned labeled slider" id="mainwp_maximumInstallUpdateRequests_slider"></div>
+                            <div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'This option allows you to control how many uptime monitoring requests your MainWP Dashboard should process at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <div class="ui bottom aligned labeled slider settings-field-value-change-handler" id="mainwp_maximumUptimeMonitoringRequests_slider"></div>
                                 <div class="ui input">
-                                    <input type="hidden" class="settings-field-value-change-handler" name="mainwp_maximumInstallUpdateRequests" id="mainwp_maximumInstallUpdateRequests" value="<?php echo false === get_option( 'mainwp_maximumInstallUpdateRequests' ) ? 3 : esc_attr( get_option( 'mainwp_maximumInstallUpdateRequests' ) ); ?>"/>
+                                    <input type="hidden" class="settings-field-value-change-handler" name="mainwp_maximumUptimeMonitoringRequests" id="mainwp_maximumUptimeMonitoringRequests" value="<?php echo false === get_option( 'mainwp_maximum_uptime_monitoring_requests' ) ? 10 : esc_attr( get_option( 'mainwp_maximum_uptime_monitoring_requests' ) ); ?>"/>
                                 </div>
                             </div>
                         </div>
@@ -1680,6 +1680,23 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     jQuery('#mainwp_maximumInstallUpdateRequests').val(value);
                 }
             });
+            const maximumUptimeMonitoringRequests = <?php echo ! empty( get_option( 'mainwp_maximum_uptime_monitoring_requests' ) ) ? esc_js( get_option( 'mainwp_maximum_uptime_monitoring_requests' ) ) : 10; ?>;
+            jQuery('#mainwp_maximumUptimeMonitoringRequests_slider').slider({
+                min: 1,
+                max: 100,
+                start: maximumUptimeMonitoringRequests,
+                step: 1,
+                restrictedLabels: [1,100],
+                showThumbTooltip: true,
+                tooltipConfig: {
+                    position: 'top center',
+                    variation: 'small visible black'
+                },
+                onChange: function(value) {
+                    jQuery('#mainwp_maximumUptimeMonitoringRequests').val(value).change();
+                }
+            });
+            jQuery('#mainwp_maximumUptimeMonitoringRequests_slider').slider('set value', maximumUptimeMonitoringRequests);
             </script>
         <?php
         static::render_footer( 'Advanced' );

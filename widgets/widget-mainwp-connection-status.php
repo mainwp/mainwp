@@ -395,6 +395,11 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
             </div>
             <div class="content">
                 <div class="header">
+                    <?php if ( $is_demo ) : ?>
+                        <a href="<?php echo esc_html( $website->url ) . 'wp-admin.html'; ?>" target="_blank"><i class="sign in alternate icon"></i></a>
+                    <?php else : ?>
+                        <a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><i class="sign in alternate icon"></i></a>
+                    <?php endif; ?>
                     <a href="
                         <?php
                         /**
@@ -454,6 +459,11 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
             </div>
             <div class="content">
                 <div class="header">
+                    <?php if ( $is_demo ) : ?>
+                        <a href="<?php echo esc_html( $website->url ) . 'wp-admin.html'; ?>" target="_blank"><i class="sign in alternate icon"></i></a>
+                    <?php else : ?>
+                        <a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><i class="sign in alternate icon"></i></a>
+                    <?php endif; ?>
                     <a href="
                         <?php
                         /**
@@ -510,6 +520,11 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
             </div>
             <div class="content">
                 <div class="header">
+                    <?php if ( $is_demo ) : ?>
+                        <a href="<?php echo esc_html( $website->url ) . 'wp-admin.html'; ?>" target="_blank"><i class="sign in alternate icon"></i></a>
+                    <?php else : ?>
+                        <a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><i class="sign in alternate icon"></i></a>
+                    <?php endif; ?>
                     <a href="
                         <?php
                         /**

@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.6.2
 Requires PHP: 7.4
-Stable tag: 5.3
+Stable tag: 5.3.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -143,7 +143,21 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
-5.3 - 11-26-2024 =
+= 5.3.1 - 11-27-2024 =
+
+* Fixed: Issue with saving the state of the last configuration in the Site Hardening widget.
+* Fixed: Issue with the "Fix All Issues" button overflow in the Site Hardening widget.
+* Added: Missing option to unset the Uptime Monitoring widget in the Overview page settings.
+* Added: Link to the Monitoring page in the Uptime Monitoring widget footer.
+* Added: "Jump to WP Admin" link in the Connection Status widget list items.
+* Added: "Jump to WP Admin" link in the Site Hardening widget list items.
+* Updated: Icon in the Available Translations card element in the Updates Overview widget.
+* Updated: Mini-label text in the Total Available Updates card element in the Updates Overview widget.
+* Updated: Font weight of feed elements in the Non-MainWP Changes widget for better readability.
+* Updated: Scrollbar colors in the Dark theme
+* Updated: Error message returned in case Child Site already contains connection data and needs reset
+
+= 5.3 - 11-26-2024 =
 
 * Security Enhancement: Enhanced the pre-connection process with additional security features to address recommendations from a security company. [Read more](https://mainwp.com/addressing-misguided-security-reports-why-mainwp-is-updating-its-connection-process/)
 * Fixed: Issue with the Manage Sites filter for available updates.

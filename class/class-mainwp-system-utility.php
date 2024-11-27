@@ -839,6 +839,31 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     }
 
     /**
+     * Check register error
+     *
+     * @param string $error Error message.
+     *
+     * @return string
+     */
+    public static function check_register_error( $error ) {
+        if ( is_string( $error ) ) {
+            $error_langs = array(
+                'This site already contains a link. Please deactivate and reactivate the',
+                'Diese Website enthält bereits diesen Link',
+                'Este sitio ya contiene un enlace. Por favor, desactive y vuelva a activar el',
+                'Ce site contient déjà un lien. Veuillez désactiver et réactiver l’extension',
+                'Este site já contém um link. Desative e reative o plug-in',
+            );
+            foreach ( $error_langs as $err ) {
+                if ( false !== stripos( $error, $err ) ) {
+                    return esc_html__( 'The child site already contains connection data. To proceed, you need to clear the connection data on the child site. Navigate to WP Admin > Settings > MainWP Child > MainWP Child Settings, and click the Clear Connection Data button. After clearing the data, try reconnecting the site.', 'mainwp' );
+                }
+            }
+        }
+        return $error;
+    }
+
+    /**
      * Method get_child_response()
      *
      * Get response from Child Site.
@@ -853,6 +878,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( is_array( $resp ) ) {
             if ( isset( $resp['error'] ) ) {
                 $resp['error'] = MainWP_Utility::esc_content( $resp['error'] );
+                $resp['error'] = static::check_register_error( $resp['error'] );
             }
 
             if ( isset( $resp['message'] ) && is_string( $resp['message'] ) ) {

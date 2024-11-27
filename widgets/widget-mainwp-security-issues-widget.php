@@ -105,14 +105,28 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
                     <div id="widget-security-issues-dropdown-selector" class="ui dropdown top right tiny pointing not-auto-init mainwp-dropdown-tab">
                         <i class="vertical ellipsis icon"></i>
                         <div class="menu">
-                            <a href="javascript:void(0)" class="item" id="mainwp-show-security-issues-widget-list"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+                            <a href="javascript:void(0)" class="item"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
                         </div>
                     </div>
                 </div>
             </div>
             <script type="text/javascript">
                 jQuery( document ).ready( function () {
-                    jQuery( '#widget-security-issues-dropdown-selector' ).dropdown();
+                    let $issuesSelect = jQuery( '#widget-security-issues-dropdown-selector' ).dropdown( {
+                        onChange: function( value ) {
+                            mainwp_ui_state_save('security-widget-issues', value);
+                            if(value){
+                                jQuery('#mainwp-security-issues-widget-list').fadeIn(1000);
+                            } else {
+                                jQuery('#mainwp-security-issues-widget-list').hide();
+                            }
+                        }
+                    } );
+                    let curTab = mainwp_ui_state_load('security-widget-issues');
+                    if(  curTab != '' && curTab != null ){
+                        $issuesSelect.dropdown( 'set selected', curTab );
+                        jQuery('#mainwp-security-issues-widget-list').fadeIn(1000);
+                    }
                 } );
             </script>
             <?php
@@ -125,6 +139,19 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
              */
             do_action( 'mainwp_security_issues_widget_top' );
             ?>
+            
+        </div>
+        <?php
+        /**
+         * Action: mainwp_security_issues_widget_top
+         *
+         * Fires at the bottom of the Security Issues widget.
+         *
+         * @since 4.1
+         */
+        do_action( 'mainwp_security_issues_widget_top' );
+        ?>
+        <div class="mainwp-scrolly-overflow">
             <div class="ui cards">
                 <div class="ui fluid small card">
                     <div class="content">
@@ -145,18 +172,6 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
             <script type="text/javascript">
                 jQuery('.mainwp-site-hardening-progress').progress();
             </script>
-        </div>
-        <?php
-        /**
-         * Action: mainwp_security_issues_widget_top
-         *
-         * Fires at the bottom of the Security Issues widget.
-         *
-         * @since 4.1
-         */
-        do_action( 'mainwp_security_issues_widget_top' );
-        ?>
-        <div class="mainwp-scrolly-overflow">
             <div class="ui middle aligned divided selection list" id="mainwp-security-issues-widget-list" style="display:none">
                 <?php
                 $count_security_issues = '';
@@ -182,6 +197,11 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
                                 </div>
                             </div>
                         </div>
+                        <?php if ( $is_demo ) : ?>
+                            <a href="<?php echo esc_html( $website->url ) . 'wp-admin.html'; ?>" target="_blank"><i class="sign in alternate icon"></i></a>
+                        <?php else : ?>
+                            <a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><i class="sign in alternate icon"></i></a>
+                        <?php endif; ?>
                         <a href="
                         <?php
                         /**
@@ -248,7 +268,7 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
         ?>
         <div class="ui two column grid mainwp-widget-footer">
             <div class="left aligned middle aligned column">
-                <a href="javascript:void(0)" class="<?php echo $is_demo ? 'disabled' : ''; ?> fix-all-security-issues ui button mini green" id="mainwp-fix-all-security-issues-widget-list" data-tooltip="<?php esc_attr_e( 'Clicking this buttin will resolve all detected security issue on all your child sites.', 'mainwp' ); ?>" data-inverted="" data-position="bottom right"><?php esc_html_e( 'Fix All Issues', 'mainwp' ); ?></a>
+                <a href="javascript:void(0)" class="<?php echo $is_demo ? 'disabled' : ''; ?> fix-all-security-issues ui button mini green" id="mainwp-fix-all-security-issues-widget-list" data-tooltip="<?php esc_attr_e( 'Resolve all detected security issue on all child sites.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><?php esc_html_e( 'Fix All Issues', 'mainwp' ); ?></a>
             </div>
             <div class="right aligned middle aligned column">
 

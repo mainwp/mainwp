@@ -603,14 +603,6 @@ window.securityIssues_fix = function (feature) {
   }, 'json');
 };
 
-// Securtiy issues Widget
-
-// Show/Hide the list
-jQuery(document).on('click', '#mainwp-show-security-issues-widget-list', function () {
-  jQuery('#mainwp-security-issues-widget-list').toggle();
-  return false;
-});
-
 // Fix all sites all security issues
 jQuery(document).on('click', '.fix-all-security-issues', function () {
 

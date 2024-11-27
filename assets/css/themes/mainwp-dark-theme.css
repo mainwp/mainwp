@@ -1032,3 +1032,33 @@ body.mainwp-ui.mainwp-custom-theme,
   color: #fff !important;
 }
 /* end */
+
+
+/*******************************
+         Scrollbars
+*******************************/
+
+/* For WebKit Browsers (e.g., Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+  width: 5px; /* Width of the scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: #1c1d1b; /* Background of the track */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #666666; /* Color of the scrollbar thumb */
+  border-radius: 5px; /* Round edges for the thumb */
+  border: 2px solid #1c1d1b; /* Optional: creates padding between thumb and track */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #666666; /* Thumb color on hover */
+}
+
+/* For Firefox (using CSS Scrollbars Module Level 1) */
+* {
+  scrollbar-width: thin; /* Options: auto, thin */
+  scrollbar-color: #666666 #1c1d1b; /* thumb color, track color */
+}

@@ -1443,7 +1443,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <?php endif; ?>
 
             <div class="ui vertical menu mainwp-page-navigation">
-                
+
                 <?php
 
                 if ( is_array( $subitems ) ) {
@@ -2024,19 +2024,21 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
     public static function render_screen_options( $setting_page = true ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
                 $default_widgets = array(
-                    'overview'           => esc_html__( 'Updates Overview', 'mainwp' ),
-                    'recent_posts'       => esc_html__( 'Recent Posts', 'mainwp' ),
-                    'recent_pages'       => esc_html__( 'Recent Pages', 'mainwp' ),
-                    'plugins'            => esc_html__( 'Plugins (Individual Site Overview page)', 'mainwp' ),
-                    'themes'             => esc_html__( 'Themes (Individual Site Overview page)', 'mainwp' ),
-                    'connection_status'  => esc_html__( 'Connection Status', 'mainwp' ),
-                    'security_issues'    => esc_html__( 'Security Issues', 'mainwp' ),
-                    'notes'              => esc_html__( 'Notes (Individual Site Overview page)', 'mainwp' ),
-                    'clients'            => esc_html__( 'Clients', 'mainwp' ),
-                    'child_site_info'    => esc_html__( 'Child site info (Individual Site Overview page)', 'mainwp' ),
-                    'client_info'        => esc_html__( 'Client info (Individual Site Overview page)', 'mainwp' ),
-                    'non_mainwp_changes' => esc_html__( 'Non-MainWP Changes', 'mainwp' ),
-                    'get-started'        => esc_html__( 'Get Started with MainWP', 'mainwp' ),
+                    'overview'                        => esc_html__( 'Updates Overview', 'mainwp' ),
+                    'recent_posts'                    => esc_html__( 'Recent Posts', 'mainwp' ),
+                    'recent_pages'                    => esc_html__( 'Recent Pages', 'mainwp' ),
+                    'plugins'                         => esc_html__( 'Plugins (Individual Site Overview page)', 'mainwp' ),
+                    'themes'                          => esc_html__( 'Themes (Individual Site Overview page)', 'mainwp' ),
+                    'connection_status'               => esc_html__( 'Connection Status', 'mainwp' ),
+                    'security_issues'                 => esc_html__( 'Security Issues', 'mainwp' ),
+                    'notes'                           => esc_html__( 'Notes (Individual Site Overview page)', 'mainwp' ),
+                    'clients'                         => esc_html__( 'Clients', 'mainwp' ),
+                    'child_site_info'                 => esc_html__( 'Child site info (Individual Site Overview page)', 'mainwp' ),
+                    'client_info'                     => esc_html__( 'Client info (Individual Site Overview page)', 'mainwp' ),
+                    'non_mainwp_changes'              => esc_html__( 'Non-MainWP Changes', 'mainwp' ),
+                    'get-started'                     => esc_html__( 'Get Started with MainWP', 'mainwp' ),
+                    'uptime_monitoring_status'        => esc_html__( 'Uptime Monitoring', 'mainwp' ),
+                    'uptime_monitoring_response_time' => esc_html__( 'Uptime Monitoring (Individual Site Overview page)', 'mainwp' ),
                 );
 
                 $custom_opts = apply_filters_deprecated( 'mainwp-widgets-screen-options', array( array() ), '4.0.7.2', 'mainwp_widgets_screen_options' );  // @deprecated Use 'mainwp_widgets_screen_options' instead. NOSONAR - not IP.

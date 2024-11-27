@@ -154,10 +154,10 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <i class="<?php echo esc_attr( $action_class ); ?> icon"></i>
                         </div>
                         <div class="content">
-                            <div class="summary">
+                            <div class="summary" style="font-weight:400">
                                 <a href="javascript:void(0)" class="mainwp-event-action-dismiss right floated" action-id="<?php echo intval( $data->action_id ); ?>"><i class="times icon"></i></a>
-                                <?php echo esc_html( $data->action_user ); ?>
-                                <?php echo esc_html( ucfirst( $data->action ) ); ?> <?php echo isset( $meta_data->name ) && '' !== $meta_data->name ? esc_html( $meta_data->name ) : 'WP Core'; ?> <?php echo 'wordpress' !== $data->context ? esc_html( rtrim( $data->context, 's' ) ) : 'WordPress'; //phpcs:ignore -- text. ?>
+                                <strong><?php echo esc_html( $data->action_user ); ?></strong>
+                                <?php echo esc_html( $data->action ); ?> <strong><?php echo isset( $meta_data->name ) && '' !== $meta_data->name ? esc_html( $meta_data->name ) : 'WP Core'; ?> <?php echo 'wordpress' !== $data->context ? esc_html( rtrim( $data->context, 's' ) ) : 'WordPress'; //phpcs:ignore -- text. ?></strong>
                                 <?php if ( empty( $website ) || isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
                                 on <a href="admin.php?page=managesites&dashboard=<?php echo esc_attr( $data->wpid ); ?>"><?php echo esc_html( $data->name ); ?></a>
                                 <?php endif; ?>

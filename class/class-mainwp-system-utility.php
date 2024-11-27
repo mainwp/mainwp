@@ -846,7 +846,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return string
      */
     public static function check_register_error( $error ) {
-        if ( is_string( $error) ) {
+        if ( is_string( $error ) ) {
             $error_langs = array(
                 'This site already contains a link. Please deactivate and reactivate the',
                 'Diese Website enthält bereits diesen Link',

@@ -143,7 +143,7 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
-5.3.1 - 11-27-2024 =
+= 5.3.1 - 11-27-2024 =
 
 * Fixed: Issue with saving the state of the last configuration in the Site Hardening widget.
 * Fixed: Issue with the "Fix All Issues" button overflow in the Site Hardening widget.
@@ -157,7 +157,7 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 * Updated: Scrollbar colors in the Dark theme
 * Updated: Error message returned in case Child Site already contains connection data and needs reset
 
-5.3 - 11-26-2024 =
+= 5.3 - 11-26-2024 =
 
 * Security Enhancement: Enhanced the pre-connection process with additional security features to address recommendations from a security company. [Read more](https://mainwp.com/addressing-misguided-security-reports-why-mainwp-is-updating-its-connection-process/)
 * Fixed: Issue with the Manage Sites filter for available updates.

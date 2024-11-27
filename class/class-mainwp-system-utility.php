@@ -846,7 +846,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return string
      */
     public static function check_register_error( $error ) {
-        if ( is_string($error) ) {
+        if ( is_string( $error) ) {
             $error_langs = array(
                 'This site already contains a link. Please deactivate and reactivate the',
                 'Diese Website enthält bereits diesen Link',
@@ -855,8 +855,8 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 'Este site já contém um link. Desative e reative o plug-in',
             );
             foreach ( $error_langs as $err ) {
-                if ( false !== stripos($error, $err ) ) {
-                    return esc_html__('The child site already contains connection data. To proceed, you need to clear the connection data on the child site. Navigate to WP Admin > Settings > MainWP Child > MainWP Child Settings, and click the Clear Connection Data button. After clearing the data, try reconnecting the site.', 'mainwp');
+                if ( false !== stripos( $error, $err ) ) {
+                    return esc_html__( 'The child site already contains connection data. To proceed, you need to clear the connection data on the child site. Navigate to WP Admin > Settings > MainWP Child > MainWP Child Settings, and click the Clear Connection Data button. After clearing the data, try reconnecting the site.', 'mainwp' );
                 }
             }
         }
@@ -878,7 +878,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( is_array( $resp ) ) {
             if ( isset( $resp['error'] ) ) {
                 $resp['error'] = MainWP_Utility::esc_content( $resp['error'] );
-                $resp['error'] = static::check_register_error($resp['error']);
+                $resp['error'] = static::check_register_error( $resp['error'] );
             }
 
             if ( isset( $resp['message'] ) && is_string( $resp['message'] ) ) {

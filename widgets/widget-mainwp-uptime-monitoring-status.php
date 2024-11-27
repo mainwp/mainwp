@@ -29,19 +29,13 @@ class MainWP_Uptime_Monitoring_Status { // phpcs:ignore Generic.Classes.OpeningB
      * Render connection status summary section.
      */
     public static function render_status() {
-
         $result = MainWP_DB_Uptime_Monitoring::instance()->get_count_up_down_monitors();
-
         if ( ! is_array( $result ) ) {
             $result = array();
         }
-
         $up_number   = isset( $result['count_up'] ) ? intval( $result['count_up'] ) : 0;
         $down_number = isset( $result['count_down'] ) ? intval( $result['count_down'] ) : 0;
-        $total       = $up_number + $down_number;
-
         ?>
-
         <div class="mainwp-widget-header">
             <div class="ui grid">
                 <div class="twelve wide column">

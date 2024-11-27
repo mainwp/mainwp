@@ -87,6 +87,6 @@ class MainWP_Uptime_Monitoring_Status { // phpcs:ignore Generic.Classes.OpeningB
                 <a href="<?php echo esc_url( admin_url( 'admin.php?page=MonitoringSites' ) ); ?>"><?php esc_html_e( 'See Monitors', 'mainwp' ); ?></a>
             </div>
         </div>
-    <?php
+        <?php
     }
 }

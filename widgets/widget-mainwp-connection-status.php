@@ -189,9 +189,9 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 </script>
 
             </div>
-			<div class="mainwp-scrolly-overflow">
-            	<?php static::render_multi_status( $count_connected, $count_disconnected ); ?>
-			</div>
+            <div class="mainwp-scrolly-overflow">
+                <?php static::render_multi_status( $count_connected, $count_disconnected ); ?>
+            </div>
         </div>
         <?php
         /**

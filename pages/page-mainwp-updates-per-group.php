@@ -872,7 +872,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         <td>
                             <div class="ui main-master checkbox">
                                 <input type="checkbox" name="" data-group-id="<?php echo esc_attr( $group_id ); ?>">
-								<label for=""> <?php echo esc_html( stripslashes( $group_name ) ); ?></label>
+                                <label for=""> <?php echo esc_html( stripslashes( $group_name ) ); ?></label>
                             </div>
                         </td>
                         <td total-uid="uid_translation_updates_<?php echo esc_attr( $group_id ); ?>" sort-value="0"></td>

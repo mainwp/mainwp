@@ -643,7 +643,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         <div class="ui <?php echo esc_attr( $fluid ); ?> card">
             <div class="content">
                 <div class="header">
-                    <span class="ui large text"><i class="WordPress icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( intval( $total_wp_upgrades ) ) ); ?></span>
+                    <span class="ui large text"><i class="wordpress icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( intval( $total_wp_upgrades ) ) ); ?></span>
                     <?php if ( intval( $total_wp_upgrades ) > 0 ) : ?>
                         <span class="ui small red text">(<?php echo esc_html( $outdated_percentage ); ?>)</span>
                     <?php else : ?>

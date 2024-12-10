@@ -275,7 +275,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             if ( $website ) {
                 $reconnect = '';
                 if ( $site_id && $website && '' !== $website->sync_errors ) {
-                    $reconnect = '<a href="#" class="mainwp-updates-overview-reconnect-site item" siteid="' . intval( $site_id ) . '"><i class="sync alternate icon"></i> Reconnect</a>';
+                    $reconnect = '<a href="#" class="mainwp-updates-overview-reconnect-site item" adminuser="' . esc_attr( $website->adminname ) . '" siteid="' . intval( $site_id ) . '"><i class="sync alternate icon"></i> Reconnect</a>';
                 }
                 $wp_admin_href = MainWP_Site_Open::get_open_site_url( $site_id, false, false );
                 $dropdown      = $reconnect . '
@@ -307,6 +307,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( $manage_sites ) {
             $which = strtolower( $shownPage );
             MainWP_UI::render_second_top_header( $which );
+        }
+
+        if ( ! empty( $site_id ) ) {
+            MainWP_UI::render_modal_reconnect();
         }
     }
 
@@ -1826,6 +1830,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @param object $website The website object.
      * @param bool   $sync_first True try to sync before reconnect.
+     * @param array  $params others params.
      *
      * @return boolean true|false.
      * @throws \MainWP_Exception Exception On errors.
@@ -1839,10 +1844,11 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
      */
-    public static function m_reconnect_site( $website, $sync_first = true ) { //phpcs:ignore -- NOSONAR - complex method.
+    public static function m_reconnect_site( $website, $sync_first = true, $params = array() ) { //phpcs:ignore -- NOSONAR - complex method.
         if ( MainWP_System_Utility::can_edit_website( $website ) ) {
-            $success = false;
-            $_error  = '';
+            $success    = false;
+            $_error     = '';
+            $error_code = '';
             try {
                 if ( $sync_first ) {
                     $success = MainWP_Sync::sync_site( $website, true );
@@ -1884,16 +1890,31 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                     $verify_reg = MainWP_DB::instance()->get_website_option( $website, 'register_verify_key', '' );
 
+                    $register_data = array(
+                        'pubkey'    => $pubkey,
+                        'server'    => get_admin_url(),
+                        'uniqueId'  => $website->uniqueId,
+                        'regverify' => $verify_reg,
+                    );
+
+                    $recon_user    = '';
+                    $recon_userpwd = '';
+
+                    if ( is_array( $params ) && ! empty( $params['wpadmin'] ) && ! empty( $params['adminpwd'] ) ) {
+                        $recon_user    = ! empty( $params['wpadmin'] ) ? $params['wpadmin'] : '';
+                        $recon_userpwd = ! empty( $params['adminpwd'] ) ? $params['adminpwd'] : '';
+                    }
+
+                    if ( ! empty( $recon_user ) && ! empty( $recon_userpwd ) ) {
+                        $register_data['user']    = $recon_user;
+                        $register_data['userpwd'] = $recon_userpwd;
+                    }
+
                     $information = MainWP_Connect::fetch_url_not_authed(
                         $website->url,
                         $website->adminname,
                         'register',
-                        array(
-                            'pubkey'    => $pubkey,
-                            'server'    => get_admin_url(),
-                            'uniqueId'  => $website->uniqueId,
-                            'regverify' => $verify_reg,
-                        ),
+                        $register_data,
                         true,
                         $website->verify_certificate,
                         $website->http_user,
@@ -1902,20 +1923,27 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     );
 
                     if ( isset( $information['error'] ) && '' !== $information['error'] ) {
-                        $err    = urldecode( $information['error'] );
-                        $_error = MainWP_Utility::esc_content( $err );
+                        $err        = urldecode( $information['error'] );
+                        $_error     = MainWP_Utility::esc_content( $err );
+                        $error_code = isset( $information['error_code'] ) ? sanitize_text_field( wp_unslash( $information['error_code'] ) ) : '';
                     } elseif ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
 
                         $en_pk_data = MainWP_Encrypt_Data_Lib::instance()->encrypt_privkey( $privkey, $website->id, true );
                         $en_privkey = isset( $en_pk_data['en_data'] ) ? $en_pk_data['en_data'] : '';
 
+                        $site_values = array(
+                            'pubkey'   => base64_encode( $pubkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for backwards compatibility.
+                            'privkey'  => base64_encode( $en_privkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for backwards compatibility.
+                            'uniqueId' => ( isset( $information['uniqueId'] ) ? $information['uniqueId'] : '' ),
+                        );
+
+                        if ( ! empty( $recon_user ) && ! empty( $recon_userpwd ) && ( $website->adminname !== $recon_user ) ) {
+                            $site_values['adminname'] = $recon_user;
+                        }
+
                         MainWP_DB::instance()->update_website_values(
                             $website->id,
-                            array(
-                                'pubkey'   => base64_encode( $pubkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for backwards compatibility.
-                                'privkey'  => base64_encode( $en_privkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for backwards compatibility.
-                                'uniqueId' => ( isset( $information['uniqueId'] ) ? $information['uniqueId'] : '' ),
-                            )
+                            $site_values
                         );
 
                         if ( ! empty( $information['regverify'] ) ) {
@@ -1950,7 +1978,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             }
 
             if ( ! empty( $_error ) ) {
-                throw new MainWP_Exception( $_error ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                throw new MainWP_Exception( $_error, '', $error_code ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
         } else {
             throw new MainWP_Exception( esc_html__( 'This operation is not allowed!', 'mainwp' ) );

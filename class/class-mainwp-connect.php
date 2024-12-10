@@ -295,7 +295,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $primary_monitor = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $website->id, 'issub', 0 );
             if ( $primary_monitor ) {
                 // return compatible uptime status here.
-                return MainWP_Uptime_Monitoring_Handle::check_website_uptime_monitoring_status( $primary_monitor, array( 'ignore_compatible_save' => 1 ) );
+                return MainWP_Uptime_Monitoring_Handle::check_website_uptime_monitoring_status( $primary_monitor, array( 'ignore_compatible_save' => 1 ) ); // to ignore save compatible uptime status.
             }
         }
 

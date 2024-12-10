@@ -1609,6 +1609,11 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $where .= ' AND ' . $extraWhere;
         }
 
+        $staging_enabled = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php' ) || is_plugin_active( 'mainwp-timecapsule-extension/mainwp-timecapsule-extension.php' );
+        if ( ! $staging_enabled ) {
+            $is_staging = 'no';
+        }
+
         if ( ! $for_manager ) {
             $where .= $this->get_sql_where_allow_access_sites( 'wp', $is_staging );
         }

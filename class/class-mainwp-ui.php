@@ -1748,24 +1748,24 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         }
 
         if ( ! isset( $wp_meta_boxes ) ) {
-            $wp_meta_boxes = array();
+            $wp_meta_boxes = array(); //phpcs:ignore -- NOSONAR - ok.
         }
 
         $page = MainWP_Post::get_fix_metabox_page( $screen_page_id );
 
         if ( ! isset( $wp_meta_boxes[ $page ] ) ) {
-            $wp_meta_boxes[ $page ] = array();
+            $wp_meta_boxes[ $page ] = array(); //phpcs:ignore -- NOSONAR - ok.
         }
 
         $context  = ! empty( $params['context'] ) ? $params['context'] : 'normal';
         $priority = ! empty( $params['priority'] ) ? $params['priority'] : 'default';
 
         if ( ! isset( $wp_meta_boxes[ $page ][ $context ] ) ) {
-            $wp_meta_boxes[ $page ][ $context ] = array();
+            $wp_meta_boxes[ $page ][ $context ] = array(); //phpcs:ignore -- NOSONAR - ok.
         }
 
         if ( ! isset( $wp_meta_boxes[ $page ][ $context ][ $priority ] ) ) {
-            $wp_meta_boxes[ $page ][ $context ][ $priority ] = array();
+            $wp_meta_boxes[ $page ][ $context ][ $priority ] = array(); //phpcs:ignore -- NOSONAR - ok.
         }
 
         if ( ! empty( $params['id'] ) ) {
@@ -1777,7 +1777,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         if ( empty( $params['metabox-custom'] ) ) {
             $params['metabox-custom'] = 'bulkpost';
         }
-        $wp_meta_boxes[ $page ][ $context ][ $priority ][ $boxid ] = $params;
+        $wp_meta_boxes[ $page ][ $context ][ $priority ][ $boxid ] = $params; //phpcs:ignore -- NOSONAR - ok.
     }
 
     /**

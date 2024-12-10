@@ -120,8 +120,8 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
                 $params = array();
 
-                if ( is_array( $params ) && ! empty( $_POST['managesites_add_wpadmin'] ) && ! empty( $_POST['managesites_add_adminpwd'] ) ) {
-                    $params['wpadmin']  = isset( $_POST['managesites_add_wpadmin'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpadmin'] ) ) : '';
+                if ( is_array( $params ) && ! empty( $_POST['managesites_add_wpadmin'] ) && ! empty( $_POST['managesites_add_adminpwd'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+                    $params['wpadmin']  = isset( $_POST['managesites_add_wpadmin'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpadmin'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
                     $params['adminpwd']  = isset( $_POST['managesites_add_adminpwd'] ) ?   wp_unslash( $_POST['managesites_add_adminpwd'] ) : ''; //phpcs:ignore -- NOSONAR - requires urlencoded passwd, do not sanitize for specical chars.
                 }
 

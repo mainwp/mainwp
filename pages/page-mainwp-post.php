@@ -149,7 +149,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
     }
 
     /**
-     * init custom bulkpost metaboxes.
+     * Init custom bulkpost metaboxes.
      *
      * @return void
      */

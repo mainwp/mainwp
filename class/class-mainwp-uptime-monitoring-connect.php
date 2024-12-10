@@ -158,9 +158,13 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         if ( 'get' === $mo_apply_method ) {
             // to fix Content-Length.
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                'Content-Length:', // removes the Content-Length header.
-            ) );
+            curl_setopt(
+                $ch,
+                CURLOPT_HTTPHEADER,
+                array(
+                    'Content-Length:', // removes the Content-Length header.
+                )
+            );
         }
 
         curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true ); // We want to get the output as a string.
@@ -425,9 +429,13 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
             if ( 'get' === $mo_apply_method ) {
                 // to fix Content-Length.
-                curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                    'Content-Length:', // removes the Content-Length header.
-                ) );
+                curl_setopt(
+                    $ch,
+                    CURLOPT_HTTPHEADER,
+                    array(
+                        'Content-Length:', // removes the Content-Length header.
+                    )
+                );
             }
 
             curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );

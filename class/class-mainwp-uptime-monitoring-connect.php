@@ -145,7 +145,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $mo_apply_method = strtolower( $mo_apply_method );
 
         if ( 'head' !== $mo_apply_method ) {
-            curl_setopt( $ch, CURLOPT_POST, $mo_apply_method === 'post' ? true : false );
+            curl_setopt( $ch, CURLOPT_POST, 'post' === $mo_apply_method ? true : false );
             curl_setopt( $ch, CURLOPT_POSTFIELDS, http_build_query( array( 'time' => time() ) ) );
         }
 
@@ -417,7 +417,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             $mo_apply_method = strtolower( $mo_apply_method );
 
             if ( 'head' !== $mo_apply_method ) {
-                curl_setopt( $ch, CURLOPT_POST, $mo_apply_method === 'post' ? true : false );
+                curl_setopt( $ch, CURLOPT_POST, 'post' === $mo_apply_method ? true : false );
                 curl_setopt( $ch, CURLOPT_POSTFIELDS, http_build_query( array( 'time' => time() ) ) );
             }
 

@@ -407,6 +407,14 @@ window.mainwp_js_get_error_not_detected_connect = function (jsonStr, what, elemI
   return __('MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the MainWP Community for help.');
 }
 
+window.mainwp_get_reconnect_failed_error = function (response) { // NOSONAR - complexity.
+  if ('RECONNECT_ERROR' === response) {
+    return __('Failed to reconnect to the site. Please enter administrator password or deactivate & reactivate the MainWP Child plugin on the child site and try again.');
+  } else {
+    return response;
+  }
+}
+
 function shake_element(select) {
   let pos = jQuery(select).position();
   let type = jQuery(select).css('position');
@@ -1597,28 +1605,28 @@ let mainwp_reconnect_with_pw = function (siteid) {
   });
 
   jQuery.post(ajaxurl, data, function (response) {
-      response = response.trim();
-      mainwp_set_message_zone('#mainwp-message-zone-reconnect');
-      if (response.substring(0, 5) == 'ERROR') {
-        let error;
-        if (response.length == 5) {
-          error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://kb.mainwp.com/docs/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
-          mainwp_set_message_zone('#mainwp-message-zone-reconnect', error, 'red');
-        } else {
-          error = response.substring(6);
-          let err = mainwp_js_get_error_not_detected_connect(error, 'html_msg', 'mainwp-message-zone-reconnect');
-          if (false === err) {
-            mainwp_set_message_zone('#mainwp-message-zone-reconnect', error, 'red');  // it is not json error string.
-          }
-        }
-      } else if ('RECONNECT_ERROR' === response) {
-        // do not show reconnect popup again.
+    response = response.trim();
+    mainwp_set_message_zone('#mainwp-message-zone-reconnect');
+    if (response.substring(0, 5) == 'ERROR') {
+      let error;
+      if (response.length == 5) {
         error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://kb.mainwp.com/docs/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
         mainwp_set_message_zone('#mainwp-message-zone-reconnect', error, 'red');
       } else {
-        mainwp_set_message_zone('#mainwp-message-zone-reconnect', response, 'green');
-        window.location.href = location.href;
+        error = response.substring(6);
+        let err = mainwp_js_get_error_not_detected_connect(error, 'html_msg', 'mainwp-message-zone-reconnect');
+        if (false === err) {
+          mainwp_set_message_zone('#mainwp-message-zone-reconnect', error, 'red');  // it is not json error string.
+        }
       }
+    } else if ('RECONNECT_ERROR' === response) {
+      // do not show reconnect popup again.
+      error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://kb.mainwp.com/docs/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
+      mainwp_set_message_zone('#mainwp-message-zone-reconnect', error, 'red');
+    } else {
+      mainwp_set_message_zone('#mainwp-message-zone-reconnect', response, 'green');
+      window.location.href = location.href;
+    }
   });
 };
 
@@ -1647,6 +1655,8 @@ let mainwp_managesites_reconnect = function (pElement) {
             feedback('mainwp-message-zone', error, 'red');  // it is not json error string.
           }
         }
+      } else if ('RECONNECT_ERROR' === response) {
+        feedback('mainwp-message-zone', mainwp_get_reconnect_failed_error(response), 'error');
       } else {
         feedback('mainwp-message-zone', response, 'green');
       }
@@ -1681,6 +1691,8 @@ let mainwp_managesites_cards_reconnect = function (element) {
             feedback('mainwp-message-zone', error, 'red');  // it is not json error string.
           }
         }
+      } else if ('RECONNECT_ERROR' === response) {
+        feedback('mainwp-message-zone', mainwp_get_reconnect_failed_error(response), 'error');
       } else {
         feedback('mainwp-message-zone', response, 'green');
       }

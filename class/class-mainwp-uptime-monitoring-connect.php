@@ -145,7 +145,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $mo_apply_method = strtolower( $mo_apply_method );
 
         if ( 'head' !== $mo_apply_method ) {
-            curl_setopt( $ch, CURLOPT_POST,  $mo_apply_method === 'post' ? true : false );
+            curl_setopt( $ch, CURLOPT_POST, $mo_apply_method === 'post' ? true : false );
             curl_setopt( $ch, CURLOPT_POSTFIELDS, http_build_query( array( 'time' => time() ) ) );
         }
 
@@ -156,10 +156,10 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         curl_setopt( $ch, CURLOPT_HEADER, true );
         curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, strtoupper( $mo_apply_method ) );
 
-        if ( 'get' === $mo_apply_method ){
+        if ( 'get' === $mo_apply_method ) {
             // to fix Content-Length.
             curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                'Content-Length:' // removes the Content-Length header.
+                'Content-Length:', // removes the Content-Length header.
             ) );
         }
 
@@ -423,13 +423,12 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
             curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, strtoupper( $mo_apply_method ) );
 
-            if( 'get' === $mo_apply_method ){
+            if ( 'get' === $mo_apply_method ) {
                 // to fix Content-Length.
                 curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                    'Content-Length:' // removes the Content-Length header.
+                    'Content-Length:', // removes the Content-Length header.
                 ) );
             }
-
 
             curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
             curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
@@ -737,7 +736,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             $_status_str = 'pending.';
         } else {
             $_status_str = 'down.';
-            $status = static::DOWN; // to fix.
+            $status      = static::DOWN; // to fix.
         }
 
         $heart_msg = "{$http_code} - " . $_status_str;

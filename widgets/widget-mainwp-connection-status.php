@@ -131,7 +131,6 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
         static::render_details( $html_all_sites, $html_online_sites, $html_other_sites );
 
         MainWP_UI::render_modal_reconnect();
-
     }
 
     /**

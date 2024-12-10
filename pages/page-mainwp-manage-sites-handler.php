@@ -111,7 +111,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
      * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::m_reconnect_site()
      * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-    public static function reconnect_site() {
+    public static function reconnect_site() { //phpcs:ignore -- NOSONAR - complexity.
         $siteId = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 
         try {

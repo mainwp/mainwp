@@ -871,9 +871,9 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         <td class="accordion-trigger"><i class="dropdown icon"></i></td>
                         <td>
                             <div class="ui main-master checkbox">
-                                <input type="checkbox" name="">
+                                <input type="checkbox" name="" data-group-id="<?php echo esc_attr( $group_id ); ?>">
+                                <label for=""> <?php echo esc_html( stripslashes( $group_name ) ); ?></label>
                             </div>
-                            <?php echo esc_html( stripslashes( $group_name ) ); ?>
                         </td>
                         <td total-uid="uid_translation_updates_<?php echo esc_attr( $group_id ); ?>" sort-value="0"></td>
                         <td class="right aligned">
@@ -884,7 +884,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         <?php } ?>
                         </td>
                     </tr>
-                    <tr class="content" class="main-child-checkbox">
+                    <tr class="content main-child-checkbox">
                         <td colspan="4">
                             <table class="ui grey table mainwp-per-group-table mainwp-manage-updates-table" id="mainwp-translations-sites-table">
                                 <thead class="mainwp-768-hide">

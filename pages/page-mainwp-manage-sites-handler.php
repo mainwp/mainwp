@@ -118,14 +118,15 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             if ( MainWP_Utility::ctype_digit( $siteId ) ) {
                 $website = MainWP_DB::instance()->get_website_by_id( $siteId );
 
-                $params = array();
-
+                $params     = array();
+                $sync_first = true;
                 if ( is_array( $params ) && ! empty( $_POST['managesites_add_wpadmin'] ) && ! empty( $_POST['managesites_add_adminpwd'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
                     $params['wpadmin']  = isset( $_POST['managesites_add_wpadmin'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpadmin'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
                     $params['adminpwd']  = isset( $_POST['managesites_add_adminpwd'] ) ?   wp_unslash( $_POST['managesites_add_adminpwd'] ) : ''; //phpcs:ignore -- NOSONAR - requires urlencoded passwd, do not sanitize for specical chars.
+                    $sync_first         = false; // reconnect use user's passwd so do not sync first.
                 }
 
-                MainWP_Manage_Sites_View::m_reconnect_site( $website, true, $params );
+                MainWP_Manage_Sites_View::m_reconnect_site( $website, $sync_first, $params );
             } else {
                 throw new MainWP_Exception( esc_html__( 'Site could not be connected. Please check the Status page and be sure that all system requirments pass.', 'mainwp' ) );
             }

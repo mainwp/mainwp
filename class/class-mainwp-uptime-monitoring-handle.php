@@ -96,7 +96,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
             $default['active']          = 0;
             $default['type']            = 'http';
             $default['maxretries']      = 1;
-            $default['method']          = 'get';
+            $default['method']          = 'head';
             $default['timeout']         = 60; // seconds.
             $default['interval']        = 60; // mins.
             unset( $default['suburl'] );

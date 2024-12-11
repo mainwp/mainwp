@@ -564,6 +564,8 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         MainWP_DB::instance()->update_website_sync_values( $pWebsite->id, $websiteSyncValues );
         MainWP_DB::instance()->update_website_values( $pWebsite->id, $websiteValues );
 
+        $error = apply_filters( 'mainwp_sync_site_after_sync_result', $error, $pWebsite, $information );
+
         // Sync action.
         if ( ! $error ) {
             do_action_deprecated( 'mainwp-site-synced', array( $pWebsite, $information ), '4.0.7.2', 'mainwp_site_synced' ); // @deprecated Use 'mainwp_site_synced' instead. NOSONAR - not IP.

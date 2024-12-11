@@ -129,6 +129,8 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
         static::render_status( $count_connected, $count_disconnected );
 
         static::render_details( $html_all_sites, $html_online_sites, $html_other_sites );
+
+        MainWP_UI::render_modal_reconnect();
     }
 
     /**
@@ -156,7 +158,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         <div class="sub header"><?php esc_html_e( 'Child sites connection status', 'mainwp' ); ?></div>
                     </h3>
                 </div>
-                
+
                 <div class="four wide column right aligned">
                     <div id="widget-connect-status-dropdown-selector" class="ui dropdown top right tiny pointing not-auto-init mainwp-dropdown-tab">
                         <i class="vertical ellipsis icon"></i>
@@ -168,8 +170,8 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         </div>
                     </div>
                 </div>
-                
-                
+
+
                 <script type="text/javascript">
                     jQuery( document ).ready( function () {
                         jQuery( '#widget-connect-status-dropdown-selector' ).dropdown( {
@@ -189,7 +191,9 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 </script>
 
             </div>
-            <?php static::render_multi_status( $count_connected, $count_disconnected ); ?>
+            <div class="mainwp-scrolly-overflow">
+                <?php static::render_multi_status( $count_connected, $count_disconnected ); ?>
+            </div>
         </div>
         <?php
         /**
@@ -386,7 +390,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <?php endif; ?>
                     <a href="<?php echo esc_html( $website->url ); ?>" class="item" target="_blank"><?php esc_html_e( 'Visit Site', 'mainwp' ); ?></a>
                     <?php if ( $hasSyncErrors ) : ?>
-                        <a href="javascript:void(0)" class="mainwp-updates-overview-reconnect-site item" siteid="<?php echo intval( $website->id ); ?>"><?php esc_html_e( 'Reconnect Site', 'mainwp' ); ?></a>
+                        <a href="javascript:void(0)" class="mainwp-updates-overview-reconnect-site item" adminuser="<?php echo esc_attr( $website->adminname ); ?>" siteid="<?php echo intval( $website->id ); ?>"><?php esc_html_e( 'Reconnect Site', 'mainwp' ); ?></a>
                     <?php else : ?>
                         <a href="javascript:void(0)" class="item" siteid="<?php echo intval( $website->id ); ?>" onClick="updatesoverview_wp_sync( '<?php echo intval( $website->id ); ?>' )"><?php esc_html_e( 'Sync Site', 'mainwp' ); ?></a>
                     <?php endif; ?>
@@ -514,7 +518,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         <a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" class="item"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
                     <?php endif; ?>
                     <a href="<?php echo esc_html( $website->url ); ?>" class="item" target="_blank"><?php esc_html_e( 'Visit Site', 'mainwp' ); ?></a>
-                    <a href="javascript:void(0)" class="mainwp-updates-overview-reconnect-site item" siteid="<?php echo intval( $website->id ); ?>"><?php esc_html_e( 'Reconnect Site', 'mainwp' ); ?></a>
+                    <a href="javascript:void(0)" class="mainwp-updates-overview-reconnect-site item" adminuser="<?php echo esc_attr( $website->adminname ); ?>" siteid="<?php echo intval( $website->id ); ?>"><?php esc_html_e( 'Reconnect Site', 'mainwp' ); ?></a>
                     </div>
                 </div>
             </div>

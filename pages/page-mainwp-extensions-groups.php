@@ -983,7 +983,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <div class="ui extension card">
                         <div class="content">
                             <img class="right floated mini ui image" alt="<?php esc_attr_e( 'Extension icon placeholder', 'mainwp' ); ?>" src="<?php echo esc_url( MAINWP_PLUGIN_URL ) . 'assets/images/extensions/placeholder.png'; ?>">
-                            <div class="header"><a href="admin.php?page=MonitoringSites"><?php esc_html_e( 'Basic Monitoring', 'mainwp' ); ?></a></div>
+                            <div class="header"><a href="admin.php?page=MonitoringSites"><?php esc_html_e( 'Uptime Monitoring', 'mainwp' ); ?></a></div>
                             <a href="admin.php?page=MonitoringSites" class="ui green ribbon label"><?php echo esc_html__( 'MainWP core feature', 'mainwp' ); ?></a>
                             <div class="description"><?php esc_html_e( 'The MainWP Uptime Monitoring function operates independently of third-party services, providing a straightforward and no-cost option for uptime monitoring across all your managed sites.', 'mainwp' ); ?></div>
                         </div>

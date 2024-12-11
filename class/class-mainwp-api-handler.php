@@ -26,7 +26,7 @@ class MainWP_API_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
     /**
      * Check if extension has an update.
      *
-     * @return array $output List of results.
+     * @return mixed $output List of results.
      *
      * @uses MainWP_Api_Manager_Plugin_Update::bulk_update_check()
      * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()

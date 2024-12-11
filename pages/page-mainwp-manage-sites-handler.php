@@ -111,19 +111,36 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
      * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::m_reconnect_site()
      * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-    public static function reconnect_site() {
+    public static function reconnect_site() { //phpcs:ignore -- NOSONAR - complexity.
         $siteId = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 
         try {
             if ( MainWP_Utility::ctype_digit( $siteId ) ) {
                 $website = MainWP_DB::instance()->get_website_by_id( $siteId );
-                MainWP_Manage_Sites_View::m_reconnect_site( $website );
+
+                $params     = array();
+                $sync_first = true;
+                if ( is_array( $params ) && ! empty( $_POST['managesites_add_wpadmin'] ) && ! empty( $_POST['managesites_add_adminpwd'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+                    $params['wpadmin']  = isset( $_POST['managesites_add_wpadmin'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpadmin'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+                    $params['adminpwd']  = isset( $_POST['managesites_add_adminpwd'] ) ?   wp_unslash( $_POST['managesites_add_adminpwd'] ) : ''; //phpcs:ignore -- NOSONAR - requires urlencoded passwd, do not sanitize for specical chars.
+                    $sync_first         = false; // reconnect use user's passwd so do not sync first.
+                }
+
+                MainWP_Manage_Sites_View::m_reconnect_site( $website, $sync_first, $params );
             } else {
                 throw new MainWP_Exception( esc_html__( 'Site could not be connected. Please check the Status page and be sure that all system requirments pass.', 'mainwp' ) );
             }
         } catch ( \Exception $e ) {
             $msg     = $e->getMessage();
             $arr_msg = MainWP_Utility::parse_html_error_message( $msg );
+
+            if ( $e instanceof MainWP_Exception ) {
+                $error_code = $e->get_message_error_code();
+                if ( 'reconnect_failed' === $error_code ) {
+                    die( $error_code ); // phpcs:ignore WordPress.Security.EscapeOutput
+                }
+            }
+
             if ( is_array( $arr_msg ) ) {
                 die( 'ERROR ' . wp_json_encode( $arr_msg ) ); // phpcs:ignore WordPress.Security.EscapeOutput
             }

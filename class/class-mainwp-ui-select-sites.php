@@ -213,14 +213,14 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         if ( $show_select_all || $show_selectall_disc || $show_new_tag ) :
             ?>
             <div id="mainwp-select-sites-select-all-actions" class="ui two columns grid">
-                <div class="ui middle aligned column">
+                <div class="ui middle aligned twelve wide column">
                 <?php if ( $show_select_all ) : ?>
                 <button onClick="return mainwp_ss_select( this, true )" onKeyUp="" class="mainwp-ss-select mainwp-sites-select-deselect-button"><i class="square outline icon"></i> <?php esc_attr_e( 'Select All', 'mainwp' ); ?></button>
                 <button onClick="return mainwp_ss_select( this, false )" onKeyUp="" class="mainwp-ss-deselect mainwp-sites-select-deselect-button" style="display:none;padding-top:0;"><i class="check square outline icon"></i> <?php esc_attr_e( 'Deselect All', 'mainwp' ); ?></button>
                 <?php endif; ?>
                 <?php echo $select_all_disconnected; //phpcs:ignore WordPress.Security.EscapeOutput ?>
             </div>
-                <div class="ui right aligned middle aligned column">
+                <div class="ui right aligned middle aligned four wide column">
                     <?php if ( $show_new_tag ) { ?>
                     <a class="ui mini basic icon button" href="javascript:void(0)" id="mainwp-create-new-tag-button" aria-label="<?php esc_attr_e( 'Create a tag with selected sites.', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Create a tag with selected sites.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="tag icon"></i></a>
                     <?php } ?>

@@ -146,7 +146,18 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         if ( 'head' !== $mo_apply_method ) {
             curl_setopt( $ch, CURLOPT_POST, 'post' === $mo_apply_method ? true : false );
-            curl_setopt( $ch, CURLOPT_POSTFIELDS, http_build_query( array( 'time' => time() ) ) );
+        }
+
+        if ( 'post' === $mo_apply_method ) {
+            $body = http_build_query( array( 'time' => time() ) );
+            curl_setopt( $ch, CURLOPT_POSTFIELDS, $body );
+            curl_setopt(
+                $ch,
+                CURLOPT_HTTPHEADER,
+                array(
+                    'Content-Length: ' . strlen( $body ),
+                )
+            );
         }
 
         if ( 'ping' === $mo_apply_type || 'head' === $mo_apply_method ) {
@@ -418,7 +429,18 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
             if ( 'head' !== $mo_apply_method ) {
                 curl_setopt( $ch, CURLOPT_POST, 'post' === $mo_apply_method ? true : false );
-                curl_setopt( $ch, CURLOPT_POSTFIELDS, http_build_query( array( 'time' => time() ) ) );
+            }
+
+            if ( 'post' === $mo_apply_method ) {
+                $body = http_build_query( array( 'time' => time() ) );
+                curl_setopt( $ch, CURLOPT_POSTFIELDS, $body );
+                curl_setopt(
+                    $ch,
+                    CURLOPT_HTTPHEADER,
+                    array(
+                        'Content-Length: ' . strlen( $body ),
+                    )
+                );
             }
 
             if ( 'ping' === $mo_apply_type || 'head' === $mo_apply_method ) {
@@ -1041,7 +1063,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
      * @param  mixed $glo_settings glo settings.
      * @param  mixed $apply_global_value apply global value.
      * @param  mixed $default_value default value.
-     * @return mixed.z
+     * @return mixed value
      */
     public static function get_apply_setting( $name, $indiv_settings, $glo_settings, $apply_global_value, $default_value ) {
 

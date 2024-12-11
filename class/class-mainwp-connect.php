@@ -1524,7 +1524,6 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 @curl_multi_select( $mh );
                 while ( $info = @curl_multi_info_read( $mh ) ) {
                     $data = @curl_multi_getcontent( $info['handle'] );
-
                     $http_status = @curl_getinfo( $info['handle'], CURLINFO_HTTP_CODE );
                     $err         = @curl_error( $info['handle'] );
                     $real_url    = @curl_getinfo( $info['handle'], CURLINFO_EFFECTIVE_URL );

@@ -2696,7 +2696,7 @@ let updatesoverview_plugins_ignore_all = function (slug, name, obj, ver) {
 		let msg = '';
 		if(site_name !== undefined) {
 				msg = __(
-						"Are you sure you want to ignore EXAMPLE plugin updates on EXAMPLE SITE? The updates will no longer be visible in your MainWP Dashboard.",
+						"Are you sure you want to ignore %1 plugin updates on %2 site? The updates will no longer be visible in your MainWP Dashboard.",
 						decodeURIComponent(name),
 						site_name
 				);

@@ -251,7 +251,7 @@ let mainwp_managesites_bulk_reconnect_specific = function (pCheckedBox) {
         }
       }
     } else {
-      msg = siteUrl + ' - ' + mainwp_get_reconnect_failed_error(response);
+      msg = siteUrl + ' - ' + mainwp_get_reconnect_error(response);
     }
 
     if (msg != '') {

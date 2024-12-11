@@ -135,8 +135,8 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
             if ( $e instanceof MainWP_Exception ) {
                 $error_code = $e->get_message_error_code();
-                if ( 'reconnect_failed' === $error_code || 'REG_ERROR2' === $error_code ) {
-                    die( 'RECONNECT_ERROR' ); // phpcs:ignore WordPress.Security.EscapeOutput
+                if ( 'reconnect_failed' === $error_code ) {
+                    die( $error_code ); // phpcs:ignore WordPress.Security.EscapeOutput
                 }
             }
 

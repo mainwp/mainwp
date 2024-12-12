@@ -2677,30 +2677,6 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
-     *
-     * Get websites offline status.
-     *
-     * @deprecated see new compatible uptime monitoring.
-     *
-     * @since 5.3.
-     *
-     * @return array Child site monitoring status.
-     */
-    public function get_websites_offline_status_to_send_notice() {
-        $where      = $this->get_sql_where_allow_access_sites( 'wp' );
-        $extra_view = array( 'monitoring_notification_emails', 'settings_notification_emails' );
-
-        return $this->wpdb->get_results(
-            'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp
-            JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-            JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
-            WHERE wp.disable_status_check <> 1 AND wp.offline_check_result <> 1 AND wp.offline_check_result <> 0 AND wp.http_code_noticed = 0' . // http_code_noticed = 0: not noticed yet.
-            $where,
-            OBJECT
-        );
-    }
-
-    /**
      * Method get_websites_to_notice_health_threshold()
      *
      * Get websites to notice site health.

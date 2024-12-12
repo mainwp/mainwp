@@ -200,6 +200,20 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
 
 
     /**
+     * Method is_enable_global_monitoring
+     *
+     * @return int
+     */
+    public static function is_enable_global_monitoring() {
+        $global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+        $glo_active      = 0;
+        if ( isset( $global_settings['active'] ) ) {
+            $glo_active = 1 === (int) $global_settings['active'] ? 1 : 0;
+        }
+        return 1 === $glo_active ? true : false;
+    }
+
+    /**
      * Method render_monitor_settings
      *
      * @param  mixed $site_id site id.

@@ -238,6 +238,10 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             'added_datetime' => array( 'added_datetime', false ),
         );
 
+        if ( ! MainWP_Uptime_Monitoring_Edit::is_enable_global_monitoring() ) {
+            unset( $sortable_columns['status_code'] );
+        }
+
         $sortable_columns = apply_filters( 'mainwp_sitestable_sortable_columns', $sortable_columns );
 
         return $sortable_columns;
@@ -251,7 +255,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      * @return array Array of default columns names.
      */
     public function get_default_columns() {
-        return array(
+        $columns = array(
             'cb'             => '<input type="checkbox" />',
             'status'         => '',
             'favicon'        => '',
@@ -274,6 +278,11 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             'site_preview'   => '<i class="camera icon"></i>',
             'notes'          => esc_html__( 'Notes', 'mainwp' ),
         );
+
+        if ( ! MainWP_Uptime_Monitoring_Edit::is_enable_global_monitoring() ) {
+            unset( $columns['status_code'] );
+        }
+        return $columns;
     }
 
     /**

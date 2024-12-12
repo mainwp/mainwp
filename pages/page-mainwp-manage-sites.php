@@ -1479,7 +1479,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
 
         // Load the Uptime monitoring widget.
-        if ( \mainwp_current_user_can( 'dashboard', 'manage_uptime_monitoring' ) && static::$enable_widgets['uptime_monitoring_response_time'] ) {
+        if ( MainWP_Uptime_Monitoring_Edit::is_enable_global_monitoring() && \mainwp_current_user_can( 'dashboard', 'manage_uptime_monitoring' ) && static::$enable_widgets['uptime_monitoring_response_time'] ) {
             MainWP_UI::add_widget_box( 'uptime_monitoring_response_time', array( MainWP_Uptime_Monitoring_Site_Widget::instance(), 'render_response_times_widget' ), static::$page, array( 1, 1, 12, 14 ) );
         }
 

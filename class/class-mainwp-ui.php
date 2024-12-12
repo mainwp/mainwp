@@ -2098,6 +2098,11 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     'uptime_monitoring_response_time' => esc_html__( 'Uptime Monitoring (Individual Site Overview page)', 'mainwp' ),
                 );
 
+                if ( ! MainWP_Uptime_Monitoring_Edit::is_enable_global_monitoring() ) {
+                    unset( $default_widgets['uptime_monitoring_status'] );
+                    unset( $default_widgets['uptime_monitoring_response_time'] );
+                }
+
                 $custom_opts = apply_filters_deprecated( 'mainwp-widgets-screen-options', array( array() ), '4.0.7.2', 'mainwp_widgets_screen_options' );  // @deprecated Use 'mainwp_widgets_screen_options' instead. NOSONAR - not IP.
 
                 /**
@@ -2396,8 +2401,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     <div class="ui message" id="mainwp-message-zone-reconnect" style="display:none;"></div>
                     <div class="ui grid field" >
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Administrator username', 'mainwp' ); ?></label>
-                        <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the website Administrator username.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                            <div class="ui left labeled input" tabindex="0">
+                        <div class="ui ten wide fluid column" data-tooltip="<?php esc_attr_e( 'Enter the website Administrator username.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <div class="ui left fluid labeled input" tabindex="0">
                                 <input type="text" id="mainwp_managesites_add_wpadmin" name="mainwp_managesites_add_wpadmin" value="" />
                             </div>
                         </div>
@@ -2406,8 +2411,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         <input type="password" id="fake-disable-autofill" style="display:none;" name="fake-disable-autofill" />
                         <div class="ui grid field">
                             <label class="six wide column top aligned"><?php esc_html_e( 'Administrator password', 'mainwp' ); ?></label>
-                            <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the website Administrator password.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <div class="ui left labeled input">
+                            <div class="ui ten wide column" data-tooltip="<?php esc_attr_e( 'Enter the website Administrator password.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <div class="ui left fluid labeled input">
                                     <input type="password" id="mainwp_managesites_add_admin_pwd" name="mainwp_managesites_add_admin_pwd" autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" value="" />
                                 </div>
                                 <div class="ui hidden fitted divider"></div>

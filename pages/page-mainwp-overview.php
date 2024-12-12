@@ -283,7 +283,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         }
 
         // Load the Connection Status widget.
-        if ( ! MainWP_System_Utility::get_current_wpid() && static::$enable_widgets['uptime_monitoring_status'] ) {
+        if ( MainWP_Uptime_Monitoring_Edit::is_enable_global_monitoring() && ! MainWP_System_Utility::get_current_wpid() && static::$enable_widgets['uptime_monitoring_status'] ) {
             MainWP_UI::add_widget_box( 'uptime_monitoring_status', array( MainWP_Uptime_Monitoring_Status::get_class_name(), 'render_status' ), $page, array( 1, 1, 2, 9 ) );
         }
 

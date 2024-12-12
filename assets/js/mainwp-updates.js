@@ -2935,7 +2935,7 @@ let updatesoverview_unignore_cores_by_site = function (id, ver) {
 };
 
 // Unignore all Plugins / Themses ignored per site
-let updatesoverview_unignore_cores_by_site_all = function (what) {
+let updatesoverview_unignore_cores_by_site_all = function () {
     let data = mainwp_secure_data({
         action: 'mainwp_updates_unignore_upgrades',
         id: '_ALL_',
@@ -2950,7 +2950,7 @@ let updatesoverview_unignore_cores_by_site_all = function (what) {
                 jQuery('.mainwp-unignore-detail-all').addClass('disabled');
             }
         }
-    }(what), 'json');
+    }, 'json');
     return false;
 };
 

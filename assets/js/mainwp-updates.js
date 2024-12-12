@@ -16,7 +16,7 @@ window.mainwp_put_actions_errors_msg = function (action, itemId, msgType, errorM
 
 window.mainwp_get_actions_errors_msg = function (action, itemId, msgType) {
     let errors = mainwpVars.actionsErrors?.[action]?.[itemId]?.[msgType] || [];
-    let array = errors.map(function (val, idx) {
+    let array = errors.map(function (val) {
         return val;
     });
     array = array.filter(function (el) {
@@ -2941,7 +2941,7 @@ let updatesoverview_unignore_cores_by_site_all = function (what) {
         id: '_ALL_',
     });
 
-    jQuery.post(ajaxurl, data, function (pWhat) {
+    jQuery.post(ajaxurl, data, function () {
         return function (response) {
             if (response.result && 'success' == response.result) {
                 let parent = jQuery('#ignored-cores-list');

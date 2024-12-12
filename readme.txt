@@ -143,7 +143,7 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
-= 5.3.2 - 12-22-2024 =
+= 5.3.2 - 12-12-2024 =
 
 * Fixed: Issue where the Uptime Monitor widget and Manage Sites table column were not removed after disabling the Uptime Monitoring feature.
 * Fixed: Incorrect encoding of plugin and theme names in confirmation modals when ignoring item updates.

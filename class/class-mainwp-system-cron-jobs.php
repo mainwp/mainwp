@@ -899,7 +899,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                             $notTrustedPluginsToUpdate[] = $item;
                         }
                         if ( isset( $websitePluginsUpdateCheck[ $pluginSlug ] ) ) {
-                            unsset( $websitePluginsUpdateCheck[ $pluginSlug ] );
+                            unset( $websitePluginsUpdateCheck[ $pluginSlug ] );
                         }
                     }
                 }
@@ -954,7 +954,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                             $notTrustedThemesToUpdate[] = $item;
                         }
                         if ( isset( $websiteThemesUpdateCheck[ $themeSlug ] ) ) {
-                            unsset( $websiteThemesUpdateCheck[ $themeSlug ] );
+                            unset( $websiteThemesUpdateCheck[ $themeSlug ] );
                         }
                     }
                 }

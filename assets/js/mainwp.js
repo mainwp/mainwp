@@ -108,11 +108,11 @@ window.mainwp_set_message_zone = window.mainwp_set_message_zone || function (zon
     jQuery(zone_selector).html('');
   }
 
-  if (colors) {
-    jQuery(zone_selector).removeClass('green yellow green');
+  if (typeof colors !== "undefined" && colors != '') {
+    jQuery(zone_selector).removeClass('green yellow red');
     jQuery(zone_selector).addClass(colors);
   } else if (colors === '' || colors === undefined) {
-    jQuery(zone_selector).removeClass('green yellow green');
+    jQuery(zone_selector).removeClass('green yellow red');
   }
 
   if (true === show || (false !== show && msg_html)) {
@@ -405,6 +405,14 @@ window.mainwp_js_get_error_not_detected_connect = function (jsonStr, what, elemI
     }
   }
   return __('MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the MainWP Community for help.');
+}
+
+window.mainwp_get_reconnect_error = function (response, siteId) { // NOSONAR - complexity.
+  if ('reconnect_failed' === response) {
+    return __('Reconnect failed. Please try again from the %1Site Settings page%2.', '<a href="admin.php?page=managesites&id=' + siteId + '">', '</a>');
+  } else {
+    return response;
+  }
 }
 
 function shake_element(select) {
@@ -1550,19 +1558,85 @@ let mainwp_site_overview_reconnect = function (pElement) {
             feedback('mainwp-message-zone', error, 'red');  // it is not json error string.
           }
         }
+      } else if ('reconnect_failed' === response) {
+        mainwp_set_message_zone('#mainwp-message-zone');
+
+        jQuery('#mainwp-reconnect-site-with-user-passwd-modal').modal({
+          onHide: function () {
+            window.location.href = location.href;
+          },
+          closable: false
+        }).modal('show');
+        jQuery('#mainwp_managesites_add_wpadmin').val(pElement.attr('adminuser'));
+        jQuery(document).on('click', '#mainwp-popup-reconnect-site-btn', function () {
+          mainwp_reconnect_with_pw(pElement.attr('siteid'));
+          return false;
+        });
       } else {
-        location.reload();
+        mainwp_set_message_zone('#mainwp-message-zone');
+        window.location.href = location.href;
       }
     }
   }());
 };
 
+let mainwp_reconnect_with_pw = function (siteid) {
+  mainwp_set_message_zone('#mainwp-message-zone-reconnect');
+  let errors = [];
+  if (jQuery('#mainwp_managesites_add_wpadmin').val().trim() == '') {
+    errors.push('Please enter a username of the website administrator.');
+  }
+
+  if (jQuery('#mainwp_managesites_add_admin_pwd').val().trim() == '') {
+    errors.push('Please enter password of the website administrator.');
+  }
+
+  if (errors.length > 0) {
+    mainwp_set_message_zone('#mainwp-message-zone-reconnect', errors.join('</br>'), 'red');
+    return;
+  }
+
+  mainwp_set_message_zone('#mainwp-message-zone-reconnect', '<i class="notched circle loading icon"></i> ' + 'Trying to reconnect. Please wait...', 'green');
+  let data = mainwp_secure_data({
+    action: 'mainwp_reconnectwp',
+    managesites_add_wpadmin: jQuery('#mainwp_managesites_add_wpadmin').val(),
+    managesites_add_adminpwd: encodeURIComponent(jQuery('#mainwp_managesites_add_admin_pwd').val()),
+    siteid: siteid
+  });
+
+  jQuery.post(ajaxurl, data, function (response) {
+    response = response.trim();
+    mainwp_set_message_zone('#mainwp-message-zone-reconnect');
+    if (response.substring(0, 5) == 'ERROR') {
+      let error;
+      if (response.length == 5) {
+        error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://kb.mainwp.com/docs/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
+        mainwp_set_message_zone('#mainwp-message-zone-reconnect', error, 'red');
+      } else {
+        error = response.substring(6);
+        let err = mainwp_js_get_error_not_detected_connect(error, 'html_msg', 'mainwp-message-zone-reconnect');
+        if (false === err) {
+          mainwp_set_message_zone('#mainwp-message-zone-reconnect', error, 'red');  // it is not json error string.
+        }
+      }
+    } else if ('reconnect_failed' === response) {
+      // do not show reconnect popup again.
+      mainwp_set_message_zone('#mainwp-message-zone-reconnect', mainwp_get_reconnect_error(response, siteid), 'red');
+    } else {
+      mainwp_set_message_zone('#mainwp-message-zone-reconnect', response, 'green');
+      window.location.href = location.href;
+    }
+  });
+};
+
+
 let mainwp_managesites_reconnect = function (pElement) {
   let wrapElement = pElement.closest('tr');
   wrapElement.html('<td colspan="999"><i class="notched circle loading icon"></i> ' + 'Trying to reconnect. Please wait...' + '</td>');
+  let siteid = wrapElement.attr('siteid');
   let data = mainwp_secure_data({
     action: 'mainwp_reconnectwp',
-    siteid: wrapElement.attr('siteid')
+    siteid: siteid
   });
 
   jQuery.post(ajaxurl, data, function (pWrapElement) {
@@ -1581,6 +1655,8 @@ let mainwp_managesites_reconnect = function (pElement) {
             feedback('mainwp-message-zone', error, 'red');  // it is not json error string.
           }
         }
+      } else if ('reconnect_failed' === response) {
+        feedback('mainwp-message-zone', mainwp_get_reconnect_error(response, siteid), 'error');
       } else {
         feedback('mainwp-message-zone', response, 'green');
       }
@@ -1594,9 +1670,10 @@ let mainwp_managesites_reconnect = function (pElement) {
 
 let mainwp_managesites_cards_reconnect = function (element) {
   element.html('<i class="notched loading circle icon"></i> Reconnecting...');
+  let siteid = element.attr('site-id');
   let data = mainwp_secure_data({
     action: 'mainwp_reconnectwp',
-    siteid: element.attr('site-id')
+    siteid: siteid
   });
 
   jQuery.post(ajaxurl, data, function (element) {
@@ -1615,6 +1692,8 @@ let mainwp_managesites_cards_reconnect = function (element) {
             feedback('mainwp-message-zone', error, 'red');  // it is not json error string.
           }
         }
+      } else if ('reconnect_failed' === response) {
+        feedback('mainwp-message-zone', mainwp_get_reconnect_error(response, siteid), 'error');
       } else {
         feedback('mainwp-message-zone', response, 'green');
       }
@@ -4561,7 +4640,7 @@ window.mainwp_init_ui_calendar = ($selectors) => {
 jQuery(document).ready(function () {
   jQuery('.dt-scroll-head').css({
     'overflow-x': 'auto'
-  }).on('scroll', function (e) {
+  }).on('scroll', function () {
     let scrollBody = jQuery(this).parent().find('.dt-scroll-body').get(0);
     scrollBody.scrollLeft = this.scrollLeft;
     jQuery(scrollBody).trigger('scroll');

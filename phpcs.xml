@@ -11,6 +11,7 @@
 	<exclude-pattern>*/tests/*</exclude-pattern>
 	<exclude-pattern>libs/</exclude-pattern>
 	<exclude-pattern>assets/js/apexcharts/*</exclude-pattern>
+	<exclude-pattern>cron/</exclude-pattern>
 
     <arg value="sp" />
 	<arg name="extensions" value="php" />

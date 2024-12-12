@@ -121,7 +121,7 @@ window.managesites_reset_bulk_actions_params = function () {
 
 let mainwp_managesites_doaction_process = function (action) {
 
-  managesites_bulk_init( false );
+  managesites_bulk_init(false);
 
   bulkManageSitesTotal = jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked[status="queue"]').length;
   mainwpVars.bulkManageSitesTaskRunning = true;
@@ -251,7 +251,7 @@ let mainwp_managesites_bulk_reconnect_specific = function (pCheckedBox) {
         }
       }
     } else {
-      msg = siteUrl + ' - ' + response;
+      msg = siteUrl + ' - ' + mainwp_get_reconnect_error(response, siteId);
     }
 
     if (msg != '') {
@@ -328,14 +328,14 @@ let bulkManageSitesFinished = 0;
 mainwpVars.bulkManageSitesTaskRunning = false;
 
 
-let managesites_bulk_init = function ( isMonitorsBulk ) {
+let managesites_bulk_init = function (isMonitorsBulk) {
   mainwp_set_message_zone('#mainwp-message-zone-client');
   if (!mainwpVars.bulkManageSitesTaskRunning) {
     bulkManageSitesCurrentThreads = 0;
     bulkManageSitesTotal = 0;
     bulkManageSitesFinished = 0;
 
-    if(isMonitorsBulk){
+    if (isMonitorsBulk) {
       bulkManageSitesMaxThreads = mainwpParams?.maximumUptimeMonitoringRequests && mainwpParams.maximumUptimeMonitoringRequests ? mainwpParams.maximumUptimeMonitoringRequests : 10;
       jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox:not(.sub-pages-checkbox)').each(function () {
         jQuery(this).attr('status', 'queue')

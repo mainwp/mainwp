@@ -142,10 +142,22 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         $mo_apply_type   = static::get_apply_setting( 'type', $monitor->type, $global_settings, 'useglobal', 'http' );
         $mo_apply_method = static::get_apply_setting( 'method', $monitor->method, $global_settings, 'useglobal', 'get' );
+        $mo_apply_method = strtolower( $mo_apply_method );
 
         if ( 'head' !== $mo_apply_method ) {
-            curl_setopt( $ch, CURLOPT_POST, strtolower( $mo_apply_method ) === 'post' ? true : false );
-            curl_setopt( $ch, CURLOPT_POSTFIELDS, http_build_query( array( 'time' => time() ) ) );
+            curl_setopt( $ch, CURLOPT_POST, 'post' === $mo_apply_method ? true : false );
+        }
+
+        if ( 'post' === $mo_apply_method ) {
+            $body = http_build_query( array( 'time' => time() ) );
+            curl_setopt( $ch, CURLOPT_POSTFIELDS, $body );
+            curl_setopt(
+                $ch,
+                CURLOPT_HTTPHEADER,
+                array(
+                    'Content-Length: ' . strlen( $body ),
+                )
+            );
         }
 
         if ( 'ping' === $mo_apply_type || 'head' === $mo_apply_method ) {
@@ -154,6 +166,18 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         curl_setopt( $ch, CURLOPT_HEADER, true );
         curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, strtoupper( $mo_apply_method ) );
+
+        if ( 'get' === $mo_apply_method ) {
+            // to fix Content-Length.
+            curl_setopt(
+                $ch,
+                CURLOPT_HTTPHEADER,
+                array(
+                    'Content-Length:', // removes the Content-Length header.
+                )
+            );
+        }
+
         curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true ); // We want to get the output as a string.
         curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
 
@@ -401,10 +425,22 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
             $mo_apply_type   = static::get_apply_setting( 'type', $website->type, $global_settings, 'useglobal', 'http' );
             $mo_apply_method = static::get_apply_setting( 'method', $website->method, $global_settings, 'useglobal', 'get' );
+            $mo_apply_method = strtolower( $mo_apply_method );
 
             if ( 'head' !== $mo_apply_method ) {
-                curl_setopt( $ch, CURLOPT_POST, strtolower( $mo_apply_method ) === 'post' ? true : false );
-                curl_setopt( $ch, CURLOPT_POSTFIELDS, http_build_query( array( 'time' => time() ) ) );
+                curl_setopt( $ch, CURLOPT_POST, 'post' === $mo_apply_method ? true : false );
+            }
+
+            if ( 'post' === $mo_apply_method ) {
+                $body = http_build_query( array( 'time' => time() ) );
+                curl_setopt( $ch, CURLOPT_POSTFIELDS, $body );
+                curl_setopt(
+                    $ch,
+                    CURLOPT_HTTPHEADER,
+                    array(
+                        'Content-Length: ' . strlen( $body ),
+                    )
+                );
             }
 
             if ( 'ping' === $mo_apply_type || 'head' === $mo_apply_method ) {
@@ -412,6 +448,17 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             }
 
             curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, strtoupper( $mo_apply_method ) );
+
+            if ( 'get' === $mo_apply_method ) {
+                // to fix Content-Length.
+                curl_setopt(
+                    $ch,
+                    CURLOPT_HTTPHEADER,
+                    array(
+                        'Content-Length:', // removes the Content-Length header.
+                    )
+                );
+            }
 
             curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
             curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
@@ -719,6 +766,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             $_status_str = 'pending.';
         } else {
             $_status_str = 'down.';
+            $status      = static::DOWN; // to fix.
         }
 
         $heart_msg = "{$http_code} - " . $_status_str;
@@ -1015,7 +1063,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
      * @param  mixed $glo_settings glo settings.
      * @param  mixed $apply_global_value apply global value.
      * @param  mixed $default_value default value.
-     * @return mixed.z
+     * @return mixed value
      */
     public static function get_apply_setting( $name, $indiv_settings, $glo_settings, $apply_global_value, $default_value ) {
 

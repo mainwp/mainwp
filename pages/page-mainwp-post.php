@@ -149,6 +149,34 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
     }
 
     /**
+     * Init custom bulkpost metaboxes.
+     *
+     * @return void
+     */
+    public static function init_custom_metaboxes() {
+        $metaboxes = apply_filters( 'mainwp_edit_bulkpost_getmetaboxes', array() ); // hooks load widgets for individual overview page and for manage sites's subpage.
+        foreach ( $metaboxes as $idx => $metaBox ) {
+            MainWP_UI::add_bulkpost_widget_box( $idx, $metaBox );
+        }
+    }
+
+    /**
+     * Method get_fix_metabox_page().
+     *
+     * @param string $page page.
+     *
+     * @return string
+     */
+    public static function get_fix_metabox_page( $page ) {
+        if ( 'mainwp_page_PostBulkAdd' === $page || 'mainwp_page_PostBulkEdit' === $page ) {
+            $page = 'bulkpost';
+        } elseif ( 'mainwp_page_PageBulkAdd' === $page || 'mainwp_page_PageBulkEdit' === $page ) {
+            $page = 'bulkpage';
+        }
+        return $page;
+    }
+
+    /**
      * Method on_load_add_edit()
      *
      * Get the post ID,
@@ -180,6 +208,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         }
 
         static::on_load_bulkpost( $post_id );
+        static::init_custom_metaboxes();
     }
 
     /**
@@ -1880,7 +1909,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $page = 'bulkpage';
         }
 
-        printf( '<div id="%s-sortables" class="meta-box-sortables">', esc_attr( $context ) );
+        printf( '<div id="%s-sortables" class="meta-box-sortables ui secondary segment">', esc_attr( $context ) );
 
         $sorted = get_user_option( "meta-box-order_$page" );
         if ( ! $already_sorted && $sorted ) {
@@ -1901,12 +1930,12 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             foreach ( array( 'high', 'sorted', 'core', 'default', 'low' ) as $priority ) {
                 if ( isset( $wp_meta_boxes[ $page ][ $context ][ $priority ] ) ) {
                     foreach ( (array) $wp_meta_boxes[ $page ][ $context ][ $priority ] as $box ) {
-                        if ( false === $box || ! $box['title'] ) {
+                        if ( false === $box || ! isset( $box['title'] ) ) {
                             continue;
                         }
 
                         $block_compatible = true;
-                        if ( is_array( $box['args'] ) ) {
+                        if ( isset( $box['args'] ) && is_array( $box['args'] ) ) {
                             if ( $screen->is_block_editor() && isset( $box['args']['__back_compat_meta_box'] ) && $box['args']['__back_compat_meta_box'] ) {
                                 continue;
                             }
@@ -1932,7 +1961,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         if ( 'dashboard_browser_nag' !== $box['id'] ) {
                             $widget_title = $box['title'];
 
-                            if ( is_array( $box['args'] ) && isset( $box['args']['__widget_basename'] ) ) {
+                            if ( isset( $box['args'] ) && is_array( $box['args'] ) && isset( $box['args']['__widget_basename'] ) ) {
                                 $widget_title = $box['args']['__widget_basename'];
                                 unset( $box['args']['__widget_basename'] );
                             }
@@ -1942,11 +1971,17 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             echo '<span class="toggle-indicator" aria-hidden="true"></span>';
                             echo '</button>';
                         }
-                        echo "<h2 class='hndle'><span>{" . esc_html( $box['title'] ) . "}</span></h2>\n";
+
+                        $title = $box['title'];
+                        if ( empty( $box['metabox-custom'] ) && ! empty( $title ) ) {
+                            $title = '{' . $title . '}';
+                        }
+
+                        echo "<h2 class='hndle'><span>" . esc_html( $title ) . "</span></h2>\n";
                         echo '<div class="inside">' . "\n";
 
                          // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-                        if ( defined( 'WP_DEBUG' ) && WP_DEBUG && ! $block_compatible && 'edit' === $screen->parent_base && ! $screen->is_block_editor() && ! isset( $_GET['meta-box-loader'] ) ) {
+                        if ( defined( 'WP_DEBUG' ) && WP_DEBUG && empty( $box['metabox-custom'] ) && ! $block_compatible && 'edit' === $screen->parent_base && ! $screen->is_block_editor() && ! isset( $_GET['meta-box-loader'] ) ) {
                             $plugin = _get_plugin_from_callback( $box['callback'] );
                             if ( $plugin ) {
                                 ?>
@@ -1961,7 +1996,9 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             }
                         }
                          // phpcs:enable
-                        call_user_func( $box['callback'], $input_obj, $box );
+                        if ( is_callable( $box['callback'] ) ) {
+                            call_user_func( $box['callback'], $input_obj, $box );
+                        }
                         echo "</div>\n";
                         echo "</div>\n";
                     }
@@ -2193,7 +2230,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 <?php static::post_custom_meta_box( $post ); ?>
                 </div>
 
-                <div class="field postbox-container">
+                <div class="field">
                 <?php
 
                 /**
@@ -2206,7 +2243,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                  */
                 do_action( 'mainwp_bulkpost_edit', $post, $post_type );
 
-                static::do_meta_boxes( null, 'normal', $post );
+                static::do_meta_boxes( null, 'top', $post );
 
                 static::do_meta_boxes( null, 'advanced', $post );
 
@@ -2222,7 +2259,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                  */
                 do_action( 'add_meta_boxes', $post_type, $post );
 
-                static::do_meta_boxes( $post_type, 'normal', $post );
+                static::do_meta_boxes( null, 'normal', $post );
 
                 ?>
                 </div>
@@ -2278,7 +2315,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     }
                     static::render_post_fields( $post, $post_type );
                     ?>
-                    <?php static::do_meta_boxes( $post_type, 'side', $post ); ?>
+                    <?php static::do_meta_boxes( null, 'side', $post ); ?>
                     <div class="ui fitted divider"></div>
                     <?php
                     /**

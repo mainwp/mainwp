@@ -16,7 +16,7 @@ window.mainwp_put_actions_errors_msg = function (action, itemId, msgType, errorM
 
 window.mainwp_get_actions_errors_msg = function (action, itemId, msgType) {
     let errors = mainwpVars.actionsErrors?.[action]?.[itemId]?.[msgType] || [];
-    let array = errors.map(function (val, idx) {
+    let array = errors.map(function (val) {
         return val;
     });
     array = array.filter(function (el) {
@@ -2696,7 +2696,7 @@ let updatesoverview_plugins_ignore_all = function (slug, name, obj, ver) {
 		let msg = '';
 		if(site_name !== undefined) {
 				msg = __(
-						"Are you sure you want to ignore EXAMPLE plugin updates on EXAMPLE SITE? The updates will no longer be visible in your MainWP Dashboard.",
+						"Are you sure you want to ignore %1 plugin updates on %2 site? The updates will no longer be visible in your MainWP Dashboard.",
 						decodeURIComponent(name),
 						site_name
 				);
@@ -2935,13 +2935,13 @@ let updatesoverview_unignore_cores_by_site = function (id, ver) {
 };
 
 // Unignore all Plugins / Themses ignored per site
-let updatesoverview_unignore_cores_by_site_all = function (what) {
+let updatesoverview_unignore_cores_by_site_all = function () {
     let data = mainwp_secure_data({
         action: 'mainwp_updates_unignore_upgrades',
         id: '_ALL_',
     });
 
-    jQuery.post(ajaxurl, data, function (pWhat) {
+    jQuery.post(ajaxurl, data, function () {
         return function (response) {
             if (response.result && 'success' == response.result) {
                 let parent = jQuery('#ignored-cores-list');
@@ -2950,7 +2950,7 @@ let updatesoverview_unignore_cores_by_site_all = function (what) {
                 jQuery('.mainwp-unignore-detail-all').addClass('disabled');
             }
         }
-    }(what), 'json');
+    }, 'json');
     return false;
 };
 

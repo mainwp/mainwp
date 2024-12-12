@@ -1291,7 +1291,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             $website = MainWP_DB::instance()->get_website_by_id( $id );
             ?>
             <?php if ( $id && $website && '' !== $website->sync_errors ) : ?>
-                <a href="#" class="mainwp-updates-overview-reconnect-site ui green icon button" siteid="<?php echo intval( $website->id ); ?>" data-position="bottom right" aria-label="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted=""><i class="undo alternate icon"></i></a>
+                <a href="#" class="mainwp-updates-overview-reconnect-site ui green icon button" adminuser="<?php echo esc_attr( $website->adminname ); ?>" siteid="<?php echo intval( $website->id ); ?>" data-position="bottom right" aria-label="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted=""><i class="undo alternate icon"></i></a>
             <?php else : ?>
                 <a class="ui icon button green <?php echo 0 < $sites_count ? '' : 'disabled'; ?>" id="mainwp-sync-sites" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>" data-inverted="" data-position="bottom right" aria-label="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>" >
                     <i class="sync icon"></i>
@@ -1723,11 +1723,68 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 <?php
     }
 
-            /**
-             * Method render_empty_bulk_actions()
-             *
-             * Render empty bulk actions when drop down is disabled.
-             */
+    /**
+     * Method add_bulkpost_widget_box()
+     *
+     * @param mixed $boxid box id.
+     * @param mixed $params parameters.
+     */
+    public static function add_bulkpost_widget_box( $boxid, $params ) {
+        /**
+        * MainWP widget boxes array.
+        *
+        * @global object
+        */
+        global $wp_meta_boxes;
+
+        $screen_page_id = MainWP_System_Utility::get_page_id();
+
+        if ( empty( $screen_page_id ) ) {
+            return;
+        }
+
+        if ( ! is_array( $params ) ) {
+            $params = array();
+        }
+
+        if ( ! isset( $wp_meta_boxes ) ) {
+            $wp_meta_boxes = array(); //phpcs:ignore -- NOSONAR - ok.
+        }
+
+        $page = MainWP_Post::get_fix_metabox_page( $screen_page_id );
+
+        if ( ! isset( $wp_meta_boxes[ $page ] ) ) {
+            $wp_meta_boxes[ $page ] = array(); //phpcs:ignore -- NOSONAR - ok.
+        }
+
+        $context  = ! empty( $params['context'] ) ? $params['context'] : 'normal';
+        $priority = ! empty( $params['priority'] ) ? $params['priority'] : 'default';
+
+        if ( ! isset( $wp_meta_boxes[ $page ][ $context ] ) ) {
+            $wp_meta_boxes[ $page ][ $context ] = array(); //phpcs:ignore -- NOSONAR - ok.
+        }
+
+        if ( ! isset( $wp_meta_boxes[ $page ][ $context ][ $priority ] ) ) {
+            $wp_meta_boxes[ $page ][ $context ][ $priority ] = array(); //phpcs:ignore -- NOSONAR - ok.
+        }
+
+        if ( ! empty( $params['id'] ) ) {
+            $params['id'] = 'bulkpost-metabox-' . $params['id'];
+        } else {
+            $params['id'] = '';
+        }
+
+        if ( empty( $params['metabox-custom'] ) ) {
+            $params['metabox-custom'] = 'bulkpost';
+        }
+        $wp_meta_boxes[ $page ][ $context ][ $priority ][ $boxid ] = $params; //phpcs:ignore -- NOSONAR - ok.
+    }
+
+    /**
+     * Method render_empty_bulk_actions()
+     *
+     * Render empty bulk actions when drop down is disabled.
+     */
     public static function render_empty_bulk_actions() {
         ?>
         <select class="ui disabled dropdown" id="mainwp-bulk-actions">
@@ -2041,6 +2098,11 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     'uptime_monitoring_response_time' => esc_html__( 'Uptime Monitoring (Individual Site Overview page)', 'mainwp' ),
                 );
 
+                if ( ! MainWP_Uptime_Monitoring_Edit::is_enable_global_monitoring() ) {
+                    unset( $default_widgets['uptime_monitoring_status'] );
+                    unset( $default_widgets['uptime_monitoring_response_time'] );
+                }
+
                 $custom_opts = apply_filters_deprecated( 'mainwp-widgets-screen-options', array( array() ), '4.0.7.2', 'mainwp_widgets_screen_options' );  // @deprecated Use 'mainwp_widgets_screen_options' instead. NOSONAR - not IP.
 
                 /**
@@ -2275,13 +2337,13 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         <?php
     }
 
-        /**
-         * Method render_modal_save_segment()
-         *
-         * Render modal window.
-         *
-         * @return void
-         */
+    /**
+     * Method render_modal_save_segment()
+     *
+     * Render modal window.
+     *
+     * @return void
+     */
     public static function render_modal_save_segment() {
         ?>
         <div id="mainwp-common-filter-segment-modal" class="ui tiny modal">
@@ -2323,6 +2385,48 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <?php
     }
 
+    /**
+     * Method render_modal_reconnect()
+     *
+     * Render modal window.
+     *
+     * @return void
+     */
+    public static function render_modal_reconnect() {
+        ?>
+        <div class="ui modal" id="mainwp-reconnect-site-with-user-passwd-modal">
+            <i class="close icon"></i>
+            <div class="header"><?php esc_html_e( 'Reconnect Site', 'mainwp' ); ?></div>
+            <div class="content">
+                    <div class="ui message" id="mainwp-message-zone-reconnect" style="display:none;"></div>
+                    <div class="ui grid field" >
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Administrator username', 'mainwp' ); ?></label>
+                        <div class="ui ten wide fluid column" data-tooltip="<?php esc_attr_e( 'Enter the website Administrator username.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <div class="ui left fluid labeled input" tabindex="0">
+                                <input type="text" id="mainwp_managesites_add_wpadmin" name="mainwp_managesites_add_wpadmin" value="" />
+                            </div>
+                        </div>
+                    </div>
+                    <div id="mainwp-administrator-password-field">
+                        <input type="password" id="fake-disable-autofill" style="display:none;" name="fake-disable-autofill" />
+                        <div class="ui grid field">
+                            <label class="six wide column top aligned"><?php esc_html_e( 'Administrator password', 'mainwp' ); ?></label>
+                            <div class="ui ten wide column" data-tooltip="<?php esc_attr_e( 'Enter the website Administrator password.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <div class="ui left fluid labeled input">
+                                    <input type="password" id="mainwp_managesites_add_admin_pwd" name="mainwp_managesites_add_admin_pwd" autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" value="" />
+                                </div>
+                                <div class="ui hidden fitted divider"></div>
+                                <span class="ui small text"><?php esc_html_e( 'Your password is never stored by your Dashboard and never sent to MainWP.com. Once this initial connection is complete, your MainWP Dashboard generates a secure Public and Private key pair (2048 bits) using OpenSSL, allowing future connections without needing your password again. For added security, you can even change this admin password once connected—just be sure not to delete the admin account, as this would disrupt the connection.', 'mainwp' ); ?></span>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+            <div class="actions">
+                <input type="button" autofocus name="mainwp-popup-reconnect-site-btn" id="mainwp-popup-reconnect-site-btn" class="ui button green big focus" value="<?php esc_attr_e( 'Reconnect', 'mainwp' ); ?>" />
+            </div>
+        </div>
+        <?php
+    }
 
     /**
      * Method get_default_icons().

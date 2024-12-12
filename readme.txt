@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 6.2
-Tested up to: 6.6.2
+Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 5.3.1
+Stable tag: 5.3.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -142,6 +142,17 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.3.2 - 12-12-2024 =
+
+* Fixed: Issue where the Uptime Monitor widget and Manage Sites table column were not removed after disabling the Uptime Monitoring feature.
+* Fixed: Incorrect encoding of plugin and theme names in confirmation modals when ignoring item updates.
+* Fixed: Misaligned labels for the "Select All/None" action in the site selection element when the translation string exceeds the original string's length.
+* Fixed: Uptime monitoring issue with detecting status code 500 in specific cases.
+* Fixed: Overflow issue in the Connection Status widget.
+* Fixed: Typo in the Updates Overview widget ((#718)[https://github.com/mainwp/mainwp/pull/718]) - thanks to (david-prv)[https://github.com/david-prv]
+* Added: New "Forced Reconnect" feature for cases requiring re-authentication.
+* Updated: Default Uptime Monitor method set to HEAD.
 
 = 5.3.1 - 11-27-2024 =
 

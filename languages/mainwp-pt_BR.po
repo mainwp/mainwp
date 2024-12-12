@@ -1081,7 +1081,7 @@ msgstr ""
 
 #: assets/js/mainwp-updates.js:2699
 msgid ""
-"Are you sure you want to ignore EXAMPLE plugin updates on EXAMPLE SITE? The "
+"Are you sure you want to ignore %1 plugin updates on %2 site? The "
 "updates will no longer be visible in your MainWP Dashboard."
 msgstr ""
 "Tem certeza de que deseja ignorar as atualizações do plug-in %1? As "

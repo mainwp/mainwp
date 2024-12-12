@@ -295,7 +295,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $primary_monitor = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $website->id, 'issub', 0 );
             if ( $primary_monitor ) {
                 // return compatible uptime status here.
-                return MainWP_Uptime_Monitoring_Handle::check_website_uptime_monitoring_status( $primary_monitor, array( 'ignore_compatible_save' => 1 ) );
+                return MainWP_Uptime_Monitoring_Handle::check_website_uptime_monitoring_status( $primary_monitor, array( 'ignore_compatible_save' => 1 ) ); // to ignore save compatible uptime status.
             }
         }
 
@@ -1523,8 +1523,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 @curl_multi_exec( $mh, $running );
                 @curl_multi_select( $mh );
                 while ( $info = @curl_multi_info_read( $mh ) ) {
-                    $data = @curl_multi_getcontent( $info['handle'] );
-
+                    $data        = @curl_multi_getcontent( $info['handle'] );
                     $http_status = @curl_getinfo( $info['handle'], CURLINFO_HTTP_CODE );
                     $err         = @curl_error( $info['handle'] );
                     $real_url    = @curl_getinfo( $info['handle'], CURLINFO_EFFECTIVE_URL );

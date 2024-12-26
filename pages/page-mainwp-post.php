@@ -1914,7 +1914,6 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             return;
         }
 
-
         printf( '<div id="%s-sortables" class="meta-box-sortables ui secondary postbox-container segment">', esc_attr( $context ) );
 
         $sorted = get_user_option( "meta-box-order_$page" );

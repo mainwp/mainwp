@@ -139,7 +139,6 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         add_filter( 'mainwp_db_get_websites_for_current_user', array( &$this, 'db_get_websites_for_current_user' ), 10, 2 );
         add_filter( 'mainwp_db_get_sql_websites_for_current_user', array( &$this, 'hook_get_sql_websites_by_params' ), 10, 2 );
 
-
         // Sync website.
         add_filter( 'mainwp_sync_website', array( &$this, 'hook_sync_website' ), 10, 3 );
 

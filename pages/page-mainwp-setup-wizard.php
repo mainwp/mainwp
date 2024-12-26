@@ -155,7 +155,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         ob_start();
         $this->setup_wizard_header();
-        
+
         $this->setup_wizard_content();
         $this->setup_wizard_footer();
         ?>
@@ -258,8 +258,8 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Render Setup Wizard's footer.
      */
     public function setup_wizard_footer() {
-        ?>          
-                </div>
+        ?>
+                        </div>
             </body>
         </html>
         <?php

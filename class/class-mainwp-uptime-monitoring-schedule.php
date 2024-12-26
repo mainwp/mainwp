@@ -124,12 +124,9 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
         }
 
         if ( ! $uptimecheck_running && empty( $checkuptime_monitors ) ) {
-            MainWP_Logger::instance()->log_update_check( 'Uptime check waitting interval to run :: [local_time=' . gmdate( 'Y-m-d H:i:s', $local_time ) . ']' );
+            MainWP_Logger::instance()->log_uptime_check( 'Uptime check waitting interval to run :: [local_time=' . gmdate( 'Y-m-d H:i:s', $local_time ) . ']' );
         }
 
-        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-            add_filter( 'mainwp_fetch_uptime_disable_check_multi_exec', '__return_false' );
-        }
         // Check the uptime for the detected monitors.
         if ( count( $checkuptime_monitors ) ) {
             MainWP_Uptime_Monitoring_Connect::instance()->check_monitors( $checkuptime_monitors, $global_settings );

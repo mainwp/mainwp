@@ -1756,6 +1756,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $html .= '<div class="content active"';
         $html .= $content;
         $html .= '</div>';
+        $html .= '</div>';
 
         /**
          * Filters the admin post thumbnail HTML markup to return.
@@ -1909,7 +1910,11 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $page = 'bulkpage';
         }
 
-        printf( '<div id="%s-sortables" class="meta-box-sortables ui secondary segment">', esc_attr( $context ) );
+        if ( ! is_array( $wp_meta_boxes ) || empty( $wp_meta_boxes[ $page ][ $context ] ) ) {
+            return;
+        }
+
+        printf( '<div id="%s-sortables" class="meta-box-sortables ui secondary postbox-container segment">', esc_attr( $context ) );
 
         $sorted = get_user_option( "meta-box-order_$page" );
         if ( ! $already_sorted && $sorted ) {
@@ -1958,18 +1963,8 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
                         ++$i;
                         echo '<div id="' . esc_attr( $box['id'] ) . '" class="postbox" >' . "\n";
-                        if ( 'dashboard_browser_nag' !== $box['id'] ) {
-                            $widget_title = $box['title'];
-
-                            if ( isset( $box['args'] ) && is_array( $box['args'] ) && isset( $box['args']['__widget_basename'] ) ) {
-                                $widget_title = $box['args']['__widget_basename'];
-                                unset( $box['args']['__widget_basename'] );
-                            }
-
-                            echo '<button type="button" class="handlediv" aria-expanded="true">';
-                            echo '<span class="screen-reader-text">' . sprintf( esc_html__( 'Toggle panel: %s', 'mainwp' ), esc_html( $widget_title ) ) . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput
-                            echo '<span class="toggle-indicator" aria-hidden="true"></span>';
-                            echo '</button>';
+                        if ( 'dashboard_browser_nag' !== $box['id'] && isset( $box['args'] ) && is_array( $box['args'] ) && isset( $box['args']['__widget_basename'] ) ) {
+                            unset( $box['args']['__widget_basename'] );
                         }
 
                         $title = $box['title'];
@@ -1977,7 +1972,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             $title = '{' . $title . '}';
                         }
 
-                        echo "<h2 class='hndle'><span>" . esc_html( $title ) . "</span></h2>\n";
+                        echo '<div class="postbox-header"><h2 class="hndle"><span>' . esc_html( $title ) . "</span></h2></div>\n";
                         echo '<div class="inside">' . "\n";
 
                          // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -2044,6 +2039,8 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         }
 
         $post_ID = $post->ID;
+
+        $GLOBAL['bulkpost_edit'] = $post;
 
         /**
          * Current user global.

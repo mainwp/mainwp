@@ -118,7 +118,7 @@ class MainWP_Uptime_Monitoring_Site_Widget {
         $data_stats['incidents_count'] = isset( $last_incidents_count['count'] ) ? $last_incidents_count['count'] : 'N/A';
 
         if ( ! empty( $ratios_count['total_value'] ) ) {
-            $data_stats['ratios_number'] = number_format( $ratios_count['up_value'] / $ratios_count['total_value'], 2 );
+            $data_stats['ratios_number'] = number_format( $ratios_count['up_value'] / $ratios_count['total_value'], 10 ); // 10 to fix.
         }
 
         die(

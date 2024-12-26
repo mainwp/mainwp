@@ -667,7 +667,9 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         }
     }
 
-    /** Renders MainWP Dashboard & Child Plugin auto update Alert. */
+    /**
+     * Renders MainWP Dashboard & Child Plugin auto update Alert.
+     */
     public static function render_notice_trust_update() {
         $is_demo = MainWP_Demo_Handle::is_demo_mode();
         if ( ! $is_demo ) {
@@ -682,15 +684,18 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         }
     }
 
-    /** Renders MainWP 30 day review request. */
+    /**
+     * Renders MainWP 30 day review request.
+     */
     public static function render_rating_notice_1() {
         ?>
-        <div class="ui green icon message" style="margin-bottom: 0; border-radius: 0;">
-            <i class="star icon"></i>
-            <div class="content">
+        <div class="ui huge icon message" style="margin-bottom: 0; border-radius: 0;">
+            <i class="star yellow icon"></i>
+            <div>
                 <p><?php esc_html_e( 'Hi, I noticed you have been using MainWP for over 30 days and that\'s awesome!', 'mainwp' ); ?></p>
                 <p><?php esc_html_e( 'Could you please do me a BIG favor and give it a 5-star rating? Reviews from users like YOU really help the MainWP community to grow.', 'mainwp' ); ?></p>
-                <div class="ui green floating mini labeled icon dropdown button">
+                <p><?php esc_html_e( 'Thanks, Dennis.', 'mainwp' ); ?></p>
+                <div class="ui green floating mini labeled icon top pointing dropdown button">
                     <i class="star icon"></i>
                     <span class="text">Rate MainWP</span>
                     <div class="menu">
@@ -705,23 +710,26 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     </a>
                     </div>
                 </div>
-                <a href="" class="ui mini green basic button mainwp-events-notice-dismiss" notice="request_reviews1"><?php esc_html_e( 'Nope, maybe later.', 'mainwp' ); ?></a>
-                <a href="" class="ui mini green basic button mainwp-events-notice-dismiss" notice="request_reviews1_forever"><?php esc_html_e( 'I already did.', 'mainwp' ); ?></a>
+                <a href="" class="ui mini button mainwp-events-notice-dismiss" notice="request_reviews1"><?php esc_html_e( 'Nope, maybe later', 'mainwp' ); ?></a>
+                <a href="" class="ui mini button mainwp-events-notice-dismiss" notice="request_reviews1_forever"><?php esc_html_e( 'I already did', 'mainwp' ); ?></a>
             </div>
             <i class="close icon mainwp-events-notice-dismiss" notice="request_reviews1_forever"></i>
         </div>
         <?php
     }
 
-    /** Renders MainWP review notice after a few extensions have been installed. */
+    /**
+     * Renders MainWP review notice after a few extensions have been installed.
+     */
     public static function render_rating_notice_2() {
         ?>
-        <div class="ui green icon message" style="margin-bottom: 0; border-radius: 0;">
-            <i class="star icon"></i>
-            <div class="content">
+        <div class="ui huge icon message" style="margin-bottom: 0; border-radius: 0;">
+            <i class="star yellow icon"></i>
+            <div>
                 <p><?php esc_html_e( 'Hi, I noticed you have a few MainWP Extensions installed and that\'s awesome!', 'mainwp' ); ?></p>
                 <p><?php esc_html_e( 'Could you please do me a BIG favor and give it a 5-star rating? Reviews from users like YOU really help the MainWP community to grow.', 'mainwp' ); ?></p>
-                <div class="ui green floating mini labeled icon dropdown button">
+                <p><?php esc_html_e( 'Thanks, Dennis.', 'mainwp' ); ?></p>
+                <div class="ui green floating mini labeled icon top pointing dropdown button">
                     <i class="star icon"></i>
                     <span class="text">Rate MainWP</span>
                     <div class="menu">
@@ -736,8 +744,8 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     </a>
                     </div>
                 </div>
-                <a href="" class="ui mini green basic button mainwp-events-notice-dismiss" notice="request_reviews2"><?php esc_html_e( 'Nope, maybe later.', 'mainwp' ); ?></a>
-                <a href="" class="ui mini green basic button mainwp-events-notice-dismiss" notice="request_reviews2_forever"><?php esc_html_e( 'I already did.', 'mainwp' ); ?></a>
+                <a href="" class="ui mini button mainwp-events-notice-dismiss" notice="request_reviews2"><?php esc_html_e( 'Nope, maybe later', 'mainwp' ); ?></a>
+                <a href="" class="ui mini button mainwp-events-notice-dismiss" notice="request_reviews2_forever"><?php esc_html_e( 'I already did', 'mainwp' ); ?></a>
             </div>
             <i class="close icon mainwp-events-notice-dismiss" notice="request_reviews2_forever"></i>
         </div>

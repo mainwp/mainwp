@@ -155,7 +155,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         ob_start();
         $this->setup_wizard_header();
-        $this->setup_wizard_steps();
+
         $this->setup_wizard_content();
         $this->setup_wizard_footer();
         ?>
@@ -236,10 +236,20 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <script type="text/javascript">let mainwp_ajax_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_ajax' ) ); ?>", mainwp_js_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_nonce' ) ); ?>";</script>
             </head>
             <body class="mainwp-ui <?php echo ! empty( $selected_theme ) ? 'mainwp-custom-theme' : ''; ?> mainwp-ui-setup">
-                <div class="ui hidden divider"></div>
-                <div class="ui hidden divider"></div>
-                <div id="mainwp-quick-setup-wizard" class="ui padded container segment">
-                <?php
+                <div class="ui stackable padded grid">
+                    <div class="three wide left aligned middle aligned column">
+                        <img src="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/images/mainwp-icon.svg' ); ?>" alt="<?php esc_attr_e( 'MainWP', 'mainwp' ); ?>" style="width:40px;height40px;" />
+                    </div>
+                    <div class="ten wide center aligned middle aligned column">
+                        <?php $this->setup_wizard_steps(); ?>
+                    </div>
+                    <div class="three wide right aligned middle aligned column">
+                        <?php esc_html_e( 'Go to', 'mainwp' ); ?> <a class="" href="<?php echo esc_url( admin_url( 'index.php' ) ); ?>"><?php esc_html_e( 'WP Admin', 'mainwp' ); ?></a> <?php esc_html_e( 'or', 'mainwp' ); ?> <a class="" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp_tab' ) ); ?>"><?php esc_html_e( 'MainWP', 'mainwp' ); ?></a>
+                    </div>
+                </div>
+
+                <div id="mainwp-quick-setup-wizard" class="ui container">
+        <?php
     }
 
     /**
@@ -249,14 +259,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public function setup_wizard_footer() {
         ?>
-                </div>
-                <div class="ui grid">
-                    <div class="row">
-                        <div class="center aligned column">
-                            <a class="" href="<?php echo esc_url( admin_url( 'index.php' ) ); ?>"><?php esc_html_e( 'Quit MainWP Quick Setup Wizard and Go to WP Admin', 'mainwp' ); ?></a> | <a class="" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp_tab' ) ); ?>"><?php esc_html_e( 'Quit MainWP Quick Setup Wizard and Go to MainWP', 'mainwp' ); ?></a>
                         </div>
-                    </div>
-                </div>
             </body>
         </html>
         <?php
@@ -270,7 +273,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     public function setup_wizard_steps() {
         $ouput_steps = $this->steps;
         ?>
-        <div id="mainwp-quick-setup-wizard-steps" class="ui ordered fluid steps" style="">
+        <div id="mainwp-quick-setup-wizard-steps" class="ui ordered fluid mini steps" style="">
             <?php foreach ( $ouput_steps as $step_key => $step ) { ?>
                 <?php
                 if ( isset( $step['hidden'] ) && $step['hidden'] ) {
@@ -318,29 +321,61 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public function mwp_setup_welcome() {
         delete_option( 'mainwp_run_quick_setup' );
-        $is_new       = MainWP_Demo_Handle::get_instance()->is_new_instance();
-        $enabled_demo = apply_filters( 'mainwp_demo_mode_enabled', false );
-        $count_sites  = MainWP_DB::instance()->get_websites_count();
         ?>
-        <h1 class="ui header"><?php esc_html_e( 'Welcome to your MainWP Dashboard!', 'mainwp' ); ?></h1>
-        <div class="ui message" id="mainwp-message-zone" style="display:none"></div>
-        <div class="ui hidden divider"></div>
-        <h3><?php esc_html_e( 'Are you ready to get started adding your sites?', 'mainwp' ); ?></h3>
-        <a class="ui big green basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp-setup&step=introduction' ) ); ?>"><?php esc_html_e( 'Start the MainWP Quick Setup Wizard', 'mainwp' ); ?></a>
-        <?php if ( empty( $count_sites ) ) : ?>
+        <div class="ui center aligned vertical segment">
+            <h1 class="ui header"><?php esc_html_e( 'Welcome to MainWP - Your WordPress Management Dashboard!', 'mainwp' ); ?></h1>
+            <p><strong><?php esc_html_e( 'We\'re thrilled to have you onboard!', 'mainwp' ); ?></strong></p>
+            <p><?php esc_html_e( 'The Quick Setup Wizard is designed to get your MainWP Dashboard up and running in just a few minutes.', 'mainwp' ); ?><br/><?php esc_html_e( 'We\'ll walk you through the key steps to ensure everything is configured correctly and ready for managing your WordPress sites.', 'mainwp' ); ?></p>
             <div class="ui hidden divider"></div>
-            <h3><?php esc_html_e( 'Would you like to see Demo content first? ', 'mainwp' ); ?> - <?php printf( esc_html__( '%1$sWhat is this?%2$s', 'mainwp' ), '<a href="https://www.youtube.com/watch?v=fCHT47AKt7s" target="_blank">', '</a>' ); ?></h3>
-            <p><?php esc_attr_e( 'Explore MainWP\'s capabilities using our pre-loaded demo content.', 'mainwp' ); ?></p>
-            <p><?php esc_attr_e( 'It\'s the perfect way to experience the benefits and ease of use MainWP provides without connecting to any of your own sites.', 'mainwp' ); ?></p>
-            <p><?php esc_html_e( 'The demo content serves as placeholder data to give you a feel for the MainWP Dashboard. Please note that because no real websites are connected in this demo, some functionality will be restricted. Features that require a connection to actual websites will be disabled for the duration of the demo.', 'mainwp' ); ?></p>
-            <p><?php esc_attr_e( 'Click this button to import the Demo content to your MainWP Dashboard and enable the Demo mode.', 'mainwp' ); ?></p>
-            <p><span><button class="ui big green button mainwp-import-demo-data-button" page-import="qsw-import" <?php echo ! $is_new || $enabled_demo ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Enable Demo Mode With Guided Tours', 'mainwp' ); ?></button></span></p>
-            <div class="ui blue message">
-                <?php printf( esc_html__( 'Guided tours feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
+            <div class="ui hidden divider"></div>
+            <h2><?php esc_html_e( 'What to Expect in the Setup Wizard', 'mainwp' ); ?></h2>
+            <p><?php esc_html_e( 'Here\'s a quick overview of what we\'ll cover:', 'mainwp' ); ?></p>
+            <div class="ui compact segment" style="margin: 0 auto;border:none;box-shadow:none;">
+                <div class="ui bulleted list">
+                    <div class="item" style="text-align:left">
+                        <strong><?php esc_html_e( 'System Check', 'mainwp' ); ?></strong> - <?php esc_html_e( 'Ensure your server is ready for MainWP.', 'mainwp' ); ?>
+                    </div>
+                    <div class="item" style="text-align:left">
+                        <strong><?php esc_html_e( 'Adding Your First Site', 'mainwp' ); ?></strong> - <?php esc_html_e( 'Connect your first WordPress site.', 'mainwp' ); ?>
+                    </div>
+                    <div class="item" style="text-align:left">
+                        <strong><?php esc_html_e( 'Adding Your First Client', 'mainwp' ); ?></strong> - <?php esc_html_e( 'Set up a client profile.', 'mainwp' ); ?>
+                    </div>
+                    <div class="item" style="text-align:left">
+                        <strong><?php esc_html_e( 'Monitoring Configuration', 'mainwp' ); ?></strong> - <?php esc_html_e( 'Configure uptime and site health monitoring.', 'mainwp' ); ?>
+                    </div>
+                </div>
+
             </div>
-        <?php endif; ?>
+            <div class="ui hidden divider"></div>
+            <div><strong><?php esc_html_e( 'Estimated Time to Complete', 'mainwp' ); ?></strong> - <?php esc_html_e( '5 minutes or less.', 'mainwp' ); ?></div>
+            <div class="ui hidden divider"></div>
+            <div class="ui hidden divider"></div>
+            <a class="ui big green basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp-setup&step=introduction' ) ); ?>"><?php esc_html_e( 'Start the MainWP Quick Setup Wizard', 'mainwp' ); ?></a>
+            <div class="ui hidden divider"></div>
+            <div class="ui hidden divider"></div>
+            <div>
+                <a class="ui basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp_tab' ) ); ?>"><?php esc_html_e( 'Skip Setup Wizard', 'mainwp' ); ?></a>
+            </div>
+
+            <div class="ui top pointing grey basic label" style="line-height:1.5em">
+            <div><?php esc_html_e( 'Your Dashboard may seem limited until you add sites or clients.', 'mainwp' ); ?></div>
+            <div><?php esc_html_e( 'Completing the setup ensures you\'re ready to unlock the full potential of MainWP.', 'mainwp' ); ?></div>
+            </div>
+            <div class="ui hidden divider"></div>
+            <div class="ui hidden divider"></div>
+            <h2><?php esc_html_e( 'Key Concepts for MainWP Beginners', 'mainwp' ); ?></h2>
+            <div class="ui horizontal segments">
+                <div class="ui left aligned segment">
+                    <p><strong><?php esc_html_e( 'MainWP Dashboard', 'mainwp' ); ?></strong> - <?php esc_html_e( 'This is your "Mission Control"! It\'s your WordPress site where you\'ll manage all your other websites. You\'ll use the MainWP Dashboard plugin to keep track of everything in one place.', 'mainwp' ); ?></p>
+                </div>
+                <div class="ui left aligned  segment">
+                    <p><strong><?php esc_html_e( 'MainWP Child', 'mainwp' ); ?></strong> - <?php esc_html_e( 'This plugin connects your websites to the Dashboard. You install it on each site you want to manage. Think of it as a "link" between your sites and the Dashboard.', 'mainwp' ); ?></p>
+                </div>
+            </div>
+
+        </div>
         <?php
-        MainWP_System_View::render_comfirm_modal();
     }
 
     /**
@@ -611,10 +646,12 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                     <input type="text" id="mainwp_managesites_add_wpurl" name="mainwp_managesites_add_wpurl" value="" placeholder="yoursite.com" />
                                 </div>
                             </div>
+                            <div class="ui hidden divider"></div>
                             <div class="field">
                                 <label for="mainwp_managesites_add_wpadmin"><?php esc_html_e( 'What is your administrator username on that site? ', 'mainwp' ); ?></label>
                                 <input type="text" id="mainwp_managesites_add_wpadmin" name="mainwp_managesites_add_wpadmin" value="" />
                             </div>
+                            <div class="ui hidden divider"></div>
                             <div class="field">
                                 <label for=""><?php esc_html_e( 'Choose your connection authentication method:', 'mainwp' ); ?></label>
                                 <div class="ui hidden fitted divider"></div>
@@ -625,7 +662,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                     <input type="checkbox" id="mainwp-unique-security-id-checkbox-field"><label><?php esc_html_e( 'Unique Security ID', 'mainwp' ); ?></label>
                                 </div>
                             </div>
-                            <div class="ui hidden fitted divider"></div>
+                            <div class="ui hidden divider"></div>
                             <div class="ui fluid accordion" id="mainwp-connection-authentication-accordion" style="margin-top:1em">
                                 <div class="title">
                                     <i class="dropdown icon"></i>
@@ -647,16 +684,19 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                     <span class="ui  text"><strong><?php esc_html_e( 'This needs to match what is set on your child site. Default is Administrator password.', 'mainwp' ); ?></strong></span>
                                 </div>
                             </div>
-                            <div class="ui hidden fitted divider"></div>
-                            <div class="ui hidden fitted divider"></div>
+                            <div class="ui hidden divider"></div>
+                            <div class="ui hidden divider"></div>
                             <div class="field" id="mainwp-administrator-password-field">
                                 <label for="mainwp_managesites_add_admin_pwd"><?php esc_html_e( 'What is your administrator password on that site?', 'mainwp' ); ?></label>
                                 <input type="password" id="mainwp_managesites_add_admin_pwd" name="mainwp_managesites_add_admin_pwd" value="" />
+                                <div class="ui up pointing basic grey label" style="line-height:1.5em"><?php esc_html_e( 'Your password is never stored by your Dashboard and never sent to MainWP.com. Once this initial connection is complete, your MainWP Dashboard generates a secure Public and Private key pair (2048 bits) using OpenSSL, allowing future connections without needing your password again. For added security, you can even change this admin password once connected, just be sure not to delete the admin account, as this would disrupt the connection.', 'mainwp' ); ?></div>
                             </div>
+                            <div class="ui hidden divider"></div>
                             <div class="field" id="mainwp-unique-security-id-field" style="display:none" >
                                 <label for="mainwp_managesites_add_uniqueId"><?php esc_html_e( 'Did you generate unique security ID on the site? If yes, copy it here, if not, leave this field blank. ', 'mainwp' ); ?></label>
                                 <input type="text" id="mainwp_managesites_add_uniqueId" name="mainwp_managesites_add_uniqueId" value="" />
                             </div>
+                            <div class="ui hidden divider"></div>
                             <div class="field">
                                 <label for="mainwp_managesites_add_wpname"><?php esc_html_e( 'Add site title. If left blank URL is used.', 'mainwp' ); ?></label>
                                 <input type="text" id="mainwp_managesites_add_wpname" name="mainwp_managesites_add_wpname" value="" />

@@ -897,13 +897,16 @@ KEY idx_wpid (wpid)";
             $days_num = 1;
         }
 
+        $start_date = gmdate( 'Y-m-d 00:00:00', time() - $days_num * DAY_IN_SECONDS );
+
         $sql = $this->wpdb->prepare(
             'SELECT ' .
-            ' ( SELECT count(*) FROM ' . $this->table_name( 'monitor_heartbeat' ) . ' he2 WHERE ( he2.time > NOW() - INTERVAL ' . intval( $days_num ) . ' DAY ) AND he2.monitor_id = he.monitor_id AND he2.status = 0 AND he2.importance = 1 ) AS count ' .
+            ' ( SELECT count(*) FROM ' . $this->table_name( 'monitor_heartbeat' ) . ' he2 WHERE he2.time > %s AND he2.monitor_id = he.monitor_id AND he2.status = 0 AND he2.importance = 1 ) AS count ' .
             ' FROM ' . $this->table_name( 'monitors' ) . ' mo ' .
             ' LEFT JOIN ' . $this->table_name( 'monitor_heartbeat' ) . ' he ' .
             ' ON mo.monitor_id = he.monitor_id ' .
             ' WHERE mo.wpid = %d LIMIT 1',
+            $start_date,
             $siteid
         );
 
@@ -981,14 +984,18 @@ KEY idx_wpid (wpid)";
             $days_num = 1;
         }
 
+        $start_date = gmdate( 'Y-m-d 00:00:00', time() - $days_num * DAY_IN_SECONDS );
+
         $sql = $this->wpdb->prepare(
             'SELECT ' .
-            ' ( SELECT SUM(he.duration) FROM ' . $this->table_name( 'monitor_heartbeat' ) . ' he WHERE ( he.time >= NOW() - INTERVAL ' . intval( $days_num ) . ' DAY ) AND he.monitor_id = he.monitor_id AND he.status = 1 ) AS up_value,' .
-            ' ( SELECT SUM(he.duration) FROM ' . $this->table_name( 'monitor_heartbeat' ) . ' he WHERE ( he.time >= NOW() - INTERVAL ' . intval( $days_num ) . ' DAY ) AND he.monitor_id = he.monitor_id AND ( he.status = 0 OR he.status = 1 )  ) AS total_value ' .
+            ' ( SELECT SUM(he.duration) FROM ' . $this->table_name( 'monitor_heartbeat' ) . ' he WHERE he.time > %s AND he.monitor_id = he.monitor_id AND he.status = 1 ) AS up_value,' .
+            ' ( SELECT SUM(he.duration) FROM ' . $this->table_name( 'monitor_heartbeat' ) . ' he WHERE he.time > %s AND he.monitor_id = he.monitor_id AND ( he.status = 0 OR he.status = 1 )  ) AS total_value ' .
             ' FROM ' . $this->table_name( 'monitors' ) . ' mo ' .
             ' LEFT JOIN ' . $this->table_name( 'monitor_heartbeat' ) . ' he ' .
             ' ON mo.monitor_id = he.monitor_id ' .
             ' WHERE mo.wpid = %d LIMIT 1',
+            $start_date,
+            $start_date,
             $siteid
         );
         return $this->wpdb->get_row( $sql, ARRAY_A );

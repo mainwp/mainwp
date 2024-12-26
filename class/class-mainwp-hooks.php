@@ -137,6 +137,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         add_filter( 'mainwp_db_free_result', array( &$this, 'db_free_result' ), 10, 2 );
         add_filter( 'mainwp_db_num_rows', array( &$this, 'db_num_rows' ), 10, 2 );
         add_filter( 'mainwp_db_get_websites_for_current_user', array( &$this, 'db_get_websites_for_current_user' ), 10, 2 );
+        add_filter( 'mainwp_db_get_sql_websites_for_current_user', array( &$this, 'hook_get_sql_websites_by_params' ), 10, 2 );
 
         // Sync website.
         add_filter( 'mainwp_sync_website', array( &$this, 'hook_sync_website' ), 10, 3 );
@@ -983,8 +984,6 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
     /**
      * Method db_get_websites_for_current_user()
      *
-     * To escape response data.
-     *
      * @param mixed $input_value     input value.
      * @param array $params     params data.
      *
@@ -1003,6 +1002,22 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
             $extra_view = array( 'favi_icon' );
         }
         return MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, $orderBy, false, false, null, false, $extra_view ) );
+    }
+
+    /**
+     * Method hook_get_sql_websites_by_params()
+     *
+     * @param mixed $in_val     input value.
+     * @param array $params     params data.
+     *
+     * @return mixed websites.
+     */
+    public function hook_get_sql_websites_by_params( $in_val = false, $params = array() ) {
+        unset( $in_val );
+        if ( ! is_array( $params ) ) {
+            $params = array();
+        }
+        return MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params );
     }
 
 

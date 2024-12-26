@@ -415,6 +415,10 @@ body.mainwp-ui.mainwp-custom-theme,
   border-top: 1px solid var(--border-color) !important;
 }
 
+.mainwp-ui.mainwp-custom-theme table.dataTable.table > tbody > tr.selected > * {
+  color: var(--font-color);
+}
+
 /* Invert Form Fields */
 
 .mainwp-ui.mainwp-custom-theme .ui.tab textarea,
@@ -442,6 +446,8 @@ body.mainwp-ui.mainwp-custom-theme,
   color: var(--font-color);
   border-color: var(--border-color);
 }
+
+
 
 .mainwp-ui.mainwp-custom-theme .ui.form input:focus,
 .mainwp-ui.mainwp-custom-theme .ui.form select:focus,
@@ -776,7 +782,7 @@ body.mainwp-ui.mainwp-custom-theme,
 .mainwp-ui.mainwp-custom-theme .ui.dropdown .menu .item.active,
 .mainwp-ui.mainwp-custom-theme .ui.dropdown .menu .item.selected,
 .mainwp-ui.mainwp-custom-theme .ui.dropdown .menu .item:hover {
-  color: var(--background-color-3);
+  background-color: var(--background-color-3) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-first-level-navigation {

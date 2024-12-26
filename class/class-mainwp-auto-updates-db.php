@@ -114,7 +114,7 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
             return false;
         }
 
-        $where = ' ( wp_sync.dtsAutomaticSyncStart > 0 AND wp_sync.dtsAutomaticSync < wp_sync.dtsAutomaticSyncStart AND wp_sync.dtsAutomaticSyncStart < ' . intval( $lasttime_start ) . ' ) AND'; // less than to sure that exactly trigger start updates timestamp.
+        $where = ' ( wp_sync.dtsAutomaticSyncStart > 0 AND wp_sync.dtsAutomaticSync < wp_sync.dtsAutomaticSyncStart AND wp_sync.dtsAutomaticSyncStart <= ' . intval( $lasttime_start ) . ' ) AND'; // less than to sure that exactly trigger start updates timestamp.
         if ( true === $connected ) {
             $where .= ' wp_sync.sync_errors = "" AND';
         }
@@ -125,12 +125,15 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
         $where = rtrim( $where, 'AND' );
 
         $params = array(
-            'view'  => 'updates_view',
-            'where' => $where,
-            'limit' => $limit,
+            'view'    => 'updates_view',
+            'where'   => $where,
+            'limit'   => $limit,
+            'orderby' => ' wp_sync.dtsAutomaticSync ASC ', // to fix.
         );
 
-        $results = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params ) );
+        $sql = MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params );
+
+        $results = MainWP_DB::instance()->query( $sql );
 
         $websites = array();
         while ( $results && $website = static::fetch_object( $results ) ) {

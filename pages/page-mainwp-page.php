@@ -159,7 +159,10 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             wp_die( esc_html__( 'Invalid post.' ) );
         }
 
+        $GLOBALS['bulkpost_edit_id'] = $post_id;
+
         MainWP_Post::on_load_bulkpost( $post_id );
+        MainWP_Post::init_bulkpost_metaboxes( $post_id );
     }
 
     /**

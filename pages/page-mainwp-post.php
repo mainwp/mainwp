@@ -151,14 +151,44 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
     /**
      * Init custom bulkpost metaboxes.
      *
+     * @param int $post_id bulkpost id.
+     *
      * @return void
      */
-    public static function init_custom_metaboxes() {
+    public static function init_custom_metaboxes( $post_id ) {
+
+        /**
+         * Hook mainwp_edit_bulkpost_getmetaboxes.
+         *
+         * @deprecated see mainwp_edit_bulkpost_get_metaboxes
+         *
+         * @since v5.3.3
+        */
         $metaboxes = apply_filters( 'mainwp_edit_bulkpost_getmetaboxes', array() ); // hooks load widgets for individual overview page and for manage sites's subpage.
         foreach ( $metaboxes as $idx => $metaBox ) {
-            MainWP_UI::add_bulkpost_widget_box( $idx, $metaBox );
+            MainWP_UI::add_bulkpost_widget_box( $idx, $metaBox, $post_id );
         }
     }
+
+        /**
+         * Init custom bulkpost metaboxes.
+         *
+         * @param int $post_id bulkpost id.
+         *
+         * @return void
+         */
+    public static function init_bulkpost_metaboxes( $post_id ) {
+        /**
+         * Hook mainwp_edit_bulkpost_get_metaboxes.
+         *
+         * @since v5.3.5
+        */
+        $metaboxes = apply_filters( 'mainwp_edit_bulkpost_get_metaboxes', array() ); // hooks load widgets for individual overview page and for manage sites's subpage.
+        foreach ( $metaboxes as $idx => $metaBox ) {
+            MainWP_UI::add_bulkpost_metaboxes_box( $idx, $metaBox, $post_id );
+        }
+    }
+
 
     /**
      * Method get_fix_metabox_page().
@@ -207,8 +237,11 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             wp_die( esc_html__( 'Invalid post.', 'mainwp' ) );
         }
 
+        $GLOBALS['bulkpost_edit_id'] = $post_id;
+
         static::on_load_bulkpost( $post_id );
-        static::init_custom_metaboxes();
+        static::init_bulkpost_metaboxes( $post_id );
+        static::init_custom_metaboxes( $post_id );
     }
 
     /**
@@ -1963,8 +1996,149 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
                         ++$i;
                         echo '<div id="' . esc_attr( $box['id'] ) . '" class="postbox" >' . "\n";
-                        if ( 'dashboard_browser_nag' !== $box['id'] && isset( $box['args'] ) && is_array( $box['args'] ) && isset( $box['args']['__widget_basename'] ) ) {
-                            unset( $box['args']['__widget_basename'] );
+                        if ( 'dashboard_browser_nag' !== $box['id'] ) {
+                            $widget_title = $box['title'];
+
+                            if ( isset( $box['args'] ) && is_array( $box['args'] ) && isset( $box['args']['__widget_basename'] ) ) {
+                                $widget_title = $box['args']['__widget_basename'];
+                                unset( $box['args']['__widget_basename'] );
+                            }
+                        }
+
+                        $title = $box['title'];
+                        if ( empty( $box['metabox-custom'] ) && ! empty( $title ) ) {
+                            $title = '{' . $title . '}';
+                        }
+
+                        echo '<div class="postbox-header"><h2 class="hndle"><span>' . esc_html( $title ) . "</span></h2></div>\n";
+                        echo '<div class="inside">' . "\n";
+
+                         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+                        if ( defined( 'WP_DEBUG' ) && WP_DEBUG && empty( $box['metabox-custom'] ) && ! $block_compatible && 'edit' === $screen->parent_base && ! $screen->is_block_editor() && ! isset( $_GET['meta-box-loader'] ) ) {
+                            $plugin = _get_plugin_from_callback( $box['callback'] );
+                            if ( $plugin ) {
+                                ?>
+                                    <div class="error inline">
+                                        <p>
+                                        <?php
+                                            printf( esc_html__( 'This meta box, from the %s plugin, is not compatible with the block editor.', 'mainwp' ), '<strong>{' . esc_html( $plugin['Name'] ) . '}</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput
+                                        ?>
+                                        </p>
+                                    </div>
+                                <?php
+                            }
+                        }
+                         // phpcs:enable
+                        if ( is_callable( $box['callback'] ) ) {
+                            call_user_func( $box['callback'], $input_obj, $box );
+                        }
+                        echo "</div>\n";
+                        echo "</div>\n";
+                    }
+                }
+            }
+        }
+
+        echo '</div>';
+
+        return $i;
+    }
+
+    /**
+     * Method do_bulkpost_meta_boxes()
+     *
+     * Render meta boxes.
+     *
+     * @param mixed $screen Current page tab.
+     * @param mixed $context Context.
+     * @param mixed $input_obj Object.
+     *
+     * @return string Metabox html
+     */
+    public static function do_bulkpost_meta_boxes( $screen, $context, $input_obj ) { // phpcs:ignore -- NOSONAR - current complexity required to achieve desired results. Purll Request solutions appreciated.
+
+        /**
+         * WordPress Meta Boxes array.
+         *
+         * @global object
+         */
+        global $mainwp_bulkpost_meta_boxes;
+        static $already_sorted = false;
+
+        if ( empty( $screen ) ) {
+            $screen = get_current_screen();
+        } elseif ( is_string( $screen ) ) {
+            $screen = convert_to_screen( $screen );
+        }
+
+        $page = $screen->id;
+
+        if ( 'mainwp_page_PostBulkAdd' === $page || 'mainwp_page_PostBulkEdit' === $page ) {
+            $page = 'bulkpost';
+        } elseif ( 'mainwp_page_PageBulkAdd' === $page || 'mainwp_page_PageBulkEdit' === $page ) {
+            $page = 'bulkpage';
+        }
+
+        if ( ! is_array( $mainwp_bulkpost_meta_boxes ) || empty( $mainwp_bulkpost_meta_boxes[ $page ][ $context ] ) ) {
+            return;
+        }
+
+        printf( '<div id="%s-sortables" class="meta-box-sortables ui secondary postbox-container segment">', esc_attr( $context ) );
+
+        $sorted = get_user_option( "meta-box-order_$page" );
+        if ( ! $already_sorted && $sorted ) {
+            foreach ( $sorted as $widget_context => $ids ) {
+                foreach ( explode( ',', $ids ) as $id ) {
+                    if ( $id && 'dashboard_browser_nag' !== $id ) {
+                        add_meta_box( $id, null, null, $screen, $widget_context, 'sorted' );
+                    }
+                }
+            }
+        }
+
+        $already_sorted = true;
+
+        $i = 0;
+
+        if ( isset( $mainwp_bulkpost_meta_boxes[ $page ][ $context ] ) ) {
+            foreach ( array( 'high', 'sorted', 'core', 'default', 'low' ) as $priority ) {
+                if ( isset( $mainwp_bulkpost_meta_boxes[ $page ][ $context ][ $priority ] ) ) {
+                    foreach ( (array) $mainwp_bulkpost_meta_boxes[ $page ][ $context ][ $priority ] as $box ) {
+                        if ( false === $box || ! isset( $box['title'] ) ) {
+                            continue;
+                        }
+
+                        $block_compatible = true;
+                        if ( isset( $box['args'] ) && is_array( $box['args'] ) ) {
+                            if ( $screen->is_block_editor() && isset( $box['args']['__back_compat_meta_box'] ) && $box['args']['__back_compat_meta_box'] ) {
+                                continue;
+                            }
+
+                            if ( isset( $box['args']['__block_editor_compatible_meta_box'] ) ) {
+                                $block_compatible = (bool) $box['args']['__block_editor_compatible_meta_box'];
+                                unset( $box['args']['__block_editor_compatible_meta_box'] );
+                            }
+
+                            if ( ! $block_compatible && $screen->is_block_editor() ) {
+                                $box['old_callback'] = $box['callback'];
+                                $box['callback']     = 'do_block_editor_incompatible_meta_box';
+                            }
+
+                            if ( isset( $box['args']['__back_compat_meta_box'] ) ) {
+                                $block_compatible = $block_compatible || (bool) $box['args']['__back_compat_meta_box'];
+                                unset( $box['args']['__back_compat_meta_box'] );
+                            }
+                        }
+
+                        ++$i;
+                        echo '<div id="' . esc_attr( $box['id'] ) . '" class="postbox" >' . "\n";
+                        if ( 'dashboard_browser_nag' !== $box['id'] ) {
+                            $widget_title = $box['title'];
+
+                            if ( isset( $box['args'] ) && is_array( $box['args'] ) && isset( $box['args']['__widget_basename'] ) ) {
+                                $widget_title = $box['args']['__widget_basename'];
+                                unset( $box['args']['__widget_basename'] );
+                            }
                         }
 
                         $title = $box['title'];
@@ -2039,8 +2213,6 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         }
 
         $post_ID = $post->ID;
-
-        $GLOBAL['bulkpost_edit'] = $post;
 
         /**
          * Current user global.
@@ -2228,37 +2400,42 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 </div>
 
                 <div class="field">
-                <?php
+                    <div id="poststuff">
 
-                /**
-                 * Edit bulkpost
-                 *
-                 * First on the Edit post screen after default fields.
-                 *
-                 * @param object $post      Object containing the Post data.
-                 * @param string $post_type Post type.
-                 */
-                do_action( 'mainwp_bulkpost_edit', $post, $post_type );
+                    <?php
 
-                static::do_meta_boxes( null, 'top', $post );
+                    /**
+                     * Edit bulkpost
+                     *
+                     * First on the Edit post screen after default fields.
+                     *
+                     * @param object $post      Object containing the Post data.
+                     * @param string $post_type Post type.
+                     */
+                    do_action( 'mainwp_bulkpost_edit', $post, $post_type );
 
-                static::do_meta_boxes( null, 'advanced', $post );
+                    static::do_bulkpost_meta_boxes( null, 'top', $post );
 
-                /**
-                 * Edit bulkpost metaboxes
-                 *
-                 * Fires after all built-in meta boxes have been added.
-                 *
-                 * @param object $post      Object containing the Post data.
-                 * @param string $post_type Post type.
-                 *
-                 * @see https://developer.wordpress.org/reference/hooks/add_meta_boxes/
-                 */
-                do_action( 'add_meta_boxes', $post_type, $post );
+                    static::do_meta_boxes( null, 'top', $post );
 
-                static::do_meta_boxes( null, 'normal', $post );
+                    static::do_meta_boxes( null, 'advanced', $post );
 
-                ?>
+                    /**
+                     * Edit bulkpost metaboxes
+                     *
+                     * Fires after all built-in meta boxes have been added.
+                     *
+                     * @param object $post      Object containing the Post data.
+                     * @param string $post_type Post type.
+                     *
+                     * @see https://developer.wordpress.org/reference/hooks/add_meta_boxes/
+                     */
+                    do_action( 'add_meta_boxes', $post_type, $post );
+
+                    static::do_meta_boxes( null, 'normal', $post );
+
+                    ?>
+                    </div>
                 </div>
             </div>
                 <?php
@@ -2313,6 +2490,9 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     static::render_post_fields( $post, $post_type );
                     ?>
                     <?php static::do_meta_boxes( null, 'side', $post ); ?>
+
+                    <?php static::do_bulkpost_meta_boxes( null, 'side', $post ); ?>
+
                     <div class="ui fitted divider"></div>
                     <?php
                     /**

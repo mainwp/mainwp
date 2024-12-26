@@ -1728,8 +1728,9 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      *
      * @param mixed $boxid box id.
      * @param mixed $params parameters.
+     * @param int   $post_id bulkpost id.
      */
-    public static function add_bulkpost_widget_box( $boxid, $params ) {
+    public static function add_bulkpost_widget_box( $boxid, $params, $post_id ) {
         /**
         * MainWP widget boxes array.
         *
@@ -1739,7 +1740,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
 
         $screen_page_id = MainWP_System_Utility::get_page_id();
 
-        if ( empty( $screen_page_id ) ) {
+        if ( empty( $screen_page_id ) || empty( $post_id ) ) {
             return;
         }
 
@@ -1778,6 +1779,69 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             $params['metabox-custom'] = 'bulkpost';
         }
         $wp_meta_boxes[ $page ][ $context ][ $priority ][ $boxid ] = $params; //phpcs:ignore -- NOSONAR - ok.
+    }
+
+
+    /**
+     * Method add_bulkpost_metaboxes_box()
+     *
+     * @param mixed $boxid box id.
+     * @param mixed $params parameters.
+     * @param int   $post_id bulkpost id.
+     */
+    public static function add_bulkpost_metaboxes_box( $boxid, $params, $post_id ) {
+        /**
+        * MainWP widget boxes array.
+        *
+        * @global object
+        */
+        global $mainwp_bulkpost_meta_boxes;
+
+
+        $screen_page_id = MainWP_System_Utility::get_page_id();
+
+        if ( empty( $screen_page_id ) || empty( $post_id ) ) {
+            return;
+        }
+
+        if ( ! is_array( $params ) ) {
+            $params = array();
+        }
+
+        if ( ! isset( $mainwp_bulkpost_meta_boxes ) ) {
+            $mainwp_bulkpost_meta_boxes = array(); //phpcs:ignore -- NOSONAR - ok.
+        }
+
+        $page = MainWP_Post::get_fix_metabox_page( $screen_page_id );
+
+        if ( ! isset( $mainwp_bulkpost_meta_boxes[ $page ] ) ) {
+            $mainwp_bulkpost_meta_boxes[ $page ] = array(); //phpcs:ignore -- NOSONAR - ok.
+        }
+
+        $context  = ! empty( $params['context'] ) ? $params['context'] : 'top';
+        $priority = ! empty( $params['priority'] ) ? $params['priority'] : 'default';
+
+        if ( ! isset( $mainwp_bulkpost_meta_boxes[ $page ][ $context ] ) ) {
+            $mainwp_bulkpost_meta_boxes[ $page ][ $context ] = array(); //phpcs:ignore -- NOSONAR - ok.
+        }
+
+        if ( ! isset( $mainwp_bulkpost_meta_boxes[ $page ][ $context ][ $priority ] ) ) {
+            $mainwp_bulkpost_meta_boxes[ $page ][ $context ][ $priority ] = array(); //phpcs:ignore -- NOSONAR - ok.
+        }
+
+        if ( ! empty( $params['id'] ) ) {
+            $params['id'] = 'bulkpost-metabox-' . $params['id'];
+        } else {
+            $params['id'] = '';
+        }
+
+        if ( empty( $params['metabox-custom'] ) ) {
+            $params['metabox-custom'] = 'bulkpost';
+        }
+
+
+        $mainwp_bulkpost_meta_boxes[ $page ][ $context ][ $priority ][ $boxid ] = $params; //phpcs:ignore -- NOSONAR - ok.
+
     }
 
     /**

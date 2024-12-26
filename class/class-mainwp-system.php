@@ -1214,6 +1214,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         wp_enqueue_script( 'common' );
         wp_enqueue_script( 'wp-lists' );
         wp_enqueue_script( 'postbox' );
+        wp_enqueue_style( 'wp-edit-post' );
     }
 
     /**

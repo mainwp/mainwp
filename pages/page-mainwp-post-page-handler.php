@@ -1184,7 +1184,13 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
         foreach ( $post_custom as $meta_key => $meta_values ) {
             foreach ( $meta_values as $meta_value ) {
-                    update_post_meta( $new_post_id, $meta_key, $meta_value );
+                if ( in_array( $meta_key, array( '_yoast_wpseo_twitter-image', '_yoast_wpseo_opengraph-image' ) ) && ! empty( $meta_value ) ) {
+                    $meta_val = static::download_custom_meta_images( $meta_value );
+                    if ( ! empty( $meta_val ) ) {
+                        $meta_value = $meta_val;
+                    }
+                }
+                update_post_meta( $new_post_id, $meta_key, $meta_value );
             }
         }
 
@@ -1218,6 +1224,26 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $ret['success'] = true;
         $ret['id']      = $new_post_id;
         return $ret;
+    }
+
+
+    /**
+     * Method download_custom_meta_images()
+     *
+     * @param string $img_scr Image src.
+     *
+     * @return string local image url.
+     */
+    public static function download_custom_meta_images( $img_scr ) {
+        try {
+            $upload = static::upload_image( $img_scr );
+            if ( ! empty( $upload ) ) {
+                return $upload['url'];
+            }
+        } catch ( \Exception $e ) {
+            // error happen.
+        }
+        return '';
     }
 
     /**

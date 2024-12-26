@@ -1184,13 +1184,18 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
         foreach ( $post_custom as $meta_key => $meta_values ) {
             foreach ( $meta_values as $meta_value ) {
+                $meta_img_id = 0;
                 if ( in_array( $meta_key, array( '_yoast_wpseo_twitter-image', '_yoast_wpseo_opengraph-image' ) ) && ! empty( $meta_value ) ) {
-                    $meta_val = static::download_custom_meta_images( $meta_value );
-                    if ( ! empty( $meta_val ) ) {
-                        $meta_value = $meta_val;
+                    $uploaded = static::download_custom_meta_images( $meta_value );
+                    if ( ! empty( $uploaded ) && ! empty( $uploaded['url'] ) ) {
+                        $meta_value  = $uploaded['url'];
+                        $meta_img_id = $uploaded['id'];
                     }
                 }
                 update_post_meta( $new_post_id, $meta_key, $meta_value );
+                if ( $meta_img_id ) {
+                    update_post_meta( $new_post_id, $meta_key . '-id', $meta_img_id );
+                }
             }
         }
 
@@ -1238,7 +1243,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         try {
             $upload = static::upload_image( $img_scr );
             if ( ! empty( $upload ) ) {
-                return $upload['url'];
+                return $upload;
             }
         } catch ( \Exception $e ) {
             // error happen.

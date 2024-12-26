@@ -687,7 +687,6 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
     /**
      * Renders MainWP 30 day review request.
      */
-
     public static function render_rating_notice_1() {
         ?>
         <div class="ui huge icon message" style="margin-bottom: 0; border-radius: 0;">

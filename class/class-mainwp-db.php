@@ -2366,6 +2366,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 'theme_upgrades'        => '',
                 'translation_upgrades'  => '',
                 'securityIssues'        => '',
+                'premium_upgrades'      => '',
                 'themes'                => '',
                 'ignored_themes'        => '',
                 'plugins'               => '',

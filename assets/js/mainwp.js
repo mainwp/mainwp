@@ -4260,9 +4260,9 @@ jQuery(function () {
     mainwp_force_destroy_sessions();
   });
 
-  jQuery(document).on('click', '.mainwp-import-demo-data-button', function () {
+  jQuery(document).on('click', '.mainwp-import-demo-data-button', function (event) {
     mainwp_import_demo_data_action(this);
-    return false; //required this return.
+    event.preventDefault();
   });
 
   jQuery(document).on('click', '.mainwp-remove-demo-data-button', function () {

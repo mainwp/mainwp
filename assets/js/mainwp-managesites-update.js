@@ -3,6 +3,7 @@
 window.mainwpVars = window.mainwpVars || {};
 
 let ugradingWebsiteAll = false;
+let ignoredBackupBeforeUpdate = false;
 let ugradingAllCurrentStep = '';
 let managesitesContinueAfterBackup;
 
@@ -90,8 +91,8 @@ window.mainwp_update_pluginsthemes = function (updateType, updateSiteIds) {
                     statusText: __('updated'),
                     callback: function () {
                         mainwpVars.bulkManageSitesTaskRunning = false;
-                        window.location.href = location.href;
-                    }
+                    },
+                    allowMultiple: true
                 };
                 if (title != '')
                     initData.title = title;
@@ -103,7 +104,13 @@ window.mainwp_update_pluginsthemes = function (updateType, updateSiteIds) {
             managesitesContinueAfterBackup = undefined;
         }
     }(updateType, nrOfWebsites, allWebsiteIds);
-    mainwp_managesites_checkBackups(allWebsiteIds, siteNames);
+
+    if (!ignoredBackupBeforeUpdate) {
+        mainwp_managesites_checkBackups(allWebsiteIds, siteNames);
+    } else if (managesitesContinueAfterBackup != undefined) {
+        managesitesContinueAfterBackup();
+    }
+
 };
 
 let websitesUpdateError = 0;
@@ -272,6 +279,7 @@ let managesites_update_pluginsthemes_next = function (pType) {
 jQuery(document).on('click', '#managesites-backup-ignore', function () {
     console.log(typeof managesitesContinueAfterBackup);
     if (managesitesContinueAfterBackup != undefined) {
+        ignoredBackupBeforeUpdate = true;
         mainwpPopup('#managesites-backup-box').close();
         managesitesContinueAfterBackup();
         managesitesContinueAfterBackup = undefined;
@@ -292,8 +300,8 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
         mainwpPopup('#managesites-backup-box').init({
             title: __("Checking backup settings..."), callback: function () {
                 mainwpVars.bulkManageSitesTaskRunning = false;
-                window.location.href = location.href;
-            }
+            },
+            allowMultiple: true
         });
 
     };
@@ -333,8 +341,8 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
                     mainwpPopup('#managesites-backup-box').init({
                         title: __("Full backup required!"), callback: function () {
                             managesitesContinueAfterBackup = undefined;
-                            window.location.href = location.href;
-                        }
+                        },
+                        allowMultiple: true
                     });
 
                     return;
@@ -552,11 +560,11 @@ window.managesites_wordpress_global_upgrade_all = function (updateSiteIds, updat
                 title: title,
                 progressMax: progressLen,
                 totalSites: nrOfWebsites,
+                allowMultiple: true,
                 statusText: __('updated'),
                 callback: function () {
                     mainwpVars.bulkManageSitesTaskRunning = false;
-                    window.location.href = location.href;
-                }
+                },
             });
             managesites_wordpress_upgrade_all_int(pAllWebsiteIds);
             managesites_wordpress_upgrade_all_loop_next();

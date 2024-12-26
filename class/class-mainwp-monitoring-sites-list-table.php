@@ -642,7 +642,9 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-monitoring-info-message' ) ) : ?>
             <div class="ui info message">
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-monitoring-info-message"></i>
-                <?php printf( esc_html__( 'Monitor your sites uptime and site health.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
+                <div><?php esc_html_e( 'The Uptime Monitoring feature runs directly on your server, which means it utilizes your server\'s resources to perform checks. A high frequency checks could place additional load on your server, especially for resource-intensive environments.', 'mainwp' ); ?></div><br/>
+                <div><?php esc_html_e( 'We recommend setting a check interval that balances your uptime monitoring needs with your server\'s performance. For most sites, a 5-minute or 10-minute interval provides reliable monitoring without unnecessary strain.', 'mainwp' ); ?></div><br/>
+                <div><?php printf( esc_html__( 'If you need further guidance, feel free to visit our %1$sKnowledge Base%2$s or reach out to support.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
             </div>
         <?php endif; ?>
         <table id="mainwp-manage-sites-table" style="width:100%" class="ui single line selectable unstackable table mainwp-with-preview-table mainwp-manage-wpsites-table">

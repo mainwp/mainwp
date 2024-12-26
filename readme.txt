@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 5.3.2
+Stable tag: 5.3.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -150,7 +150,7 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 * Fixed: Misaligned labels for the "Select All/None" action in the site selection element when the translation string exceeds the original string's length.
 * Fixed: Uptime monitoring issue with detecting status code 500 in specific cases.
 * Fixed: Overflow issue in the Connection Status widget.
-* Fixed: Typo in the Updates Overview widget ((#718)[https://github.com/mainwp/mainwp/pull/718]) - thanks to (david-prv)[https://github.com/david-prv]
+* Fixed: Typo in the Updates Overview widget ([#718](https://github.com/mainwp/mainwp/pull/718)) - thanks to [david-prv](https://github.com/david-prv)
 * Added: New "Forced Reconnect" feature for cases requiring re-authentication.
 * Updated: Default Uptime Monitor method set to HEAD.
 

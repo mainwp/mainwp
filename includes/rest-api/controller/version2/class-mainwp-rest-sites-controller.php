@@ -2371,7 +2371,13 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $data                 = array(); //phpcs:ignore -- NOSONAR - not used data.
         $found_id             = 0;
         try {
-            $item    = $this->prepare_object_for_database( $request );
+            $item = $this->prepare_object_for_database( $request );
+
+            if ( empty( $item['name'] ) && ! empty( $item['url'] ) ) {
+                $item['name'] = MainWP_Utility::remove_http_prefix( $item['url'], true );
+                $item['name'] = rtrim( $item['name'], '/' );
+            }
+
             $url     = $item['url'];
             $website = MainWP_DB::instance()->get_websites_by_url( $item['url'] );
             list( $message, $error, $site_id, $data, $found_id ) = MainWP_Manage_Sites_View::add_wp_site( $website, $item );

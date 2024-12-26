@@ -2058,8 +2058,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
             $keys           = array( 'name', 'url', 'adminname', 'adminpasswd', 'wpgroups', 'uniqueId', 'http_user', 'http_pass', 'verify_certificate', 'ssl_version' );
             $allowedHeaders = array( 'site name', 'url', 'admin name', 'admin password', 'tag', 'security id', 'http username', 'http password', 'verify certificate', 'ssl version' );
-
-            $csv = implode( ',', $allowedHeaders ) . "\r";
+            $csv            = "#\r";
+            $csv           .= '# Your password is never stored by your Dashboard and never sent to MainWP.com. Once this initial connection is complete, your MainWP Dashboard generates a secure Public and Private key pair (2048 bits) using OpenSSL, allowing future connections without needing your password again. For added security, you can even change this admin password once connected, just be sure not to delete the admin account, as this would disrupt the connection.' . "\r";
+            $csv           .= "#\r";
+            $csv           .= implode( ',', $allowedHeaders ) . "\r";
             MainWP_DB::data_seek( $websites, 0 );
             while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
                 if ( empty( $website ) ) {

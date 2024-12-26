@@ -97,7 +97,8 @@
                     this.$overlayElementId.modal({
                         onHide: function () {
                             self.onHideModal();
-                        }
+                        },
+                        allowMultiple: this.allowMultiple ?? false
                     }).modal('setting', 'closable', false).modal('show').modal('set active'); // trick to fix diplay issue.
                 },
                 onHideModal: function () {

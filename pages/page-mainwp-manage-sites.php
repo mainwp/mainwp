@@ -879,7 +879,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <input type="password" id="mainwp_managesites_add_admin_pwd" name="mainwp_managesites_add_admin_pwd" autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" value="" />
                         </div>
                         <div class="ui hidden fitted divider"></div>
-                        <span class="ui small text"><?php esc_html_e( 'Your password is never stored by your Dashboard and never sent to MainWP.com. Once this initial connection is complete, your MainWP Dashboard generates a secure Public and Private key pair (2048 bits) using OpenSSL, allowing future connections without needing your password again. For added security, you can even change this admin password once connected—just be sure not to delete the admin account, as this would disrupt the connection.', 'mainwp' ); ?></span>
+                        <span class="ui small text"><?php esc_html_e( 'Your password is never stored by your Dashboard and never sent to MainWP.com. Once this initial connection is complete, your MainWP Dashboard generates a secure Public and Private key pair (2048 bits) using OpenSSL, allowing future connections without needing your password again. For added security, you can even change this admin password once connected, just be sure not to delete the admin account, as this would disrupt the connection.', 'mainwp' ); ?></span>
                     </div>
                 </div>
             </div>
@@ -2205,6 +2205,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <li><?php esc_html_e( 'After filling in all the required information, confirm that you have the MainWP Child plugin installed and activated and click the Connect Sites button to proceed.', 'mainwp' ); ?></li>
             <?php endif; ?>
         </ol>
+        <span class="ui small text">* <?php esc_html_e( 'Your password is never stored by your Dashboard and never sent to MainWP.com. Once this initial connection is complete, your MainWP Dashboard generates a secure Public and Private key pair (2048 bits) using OpenSSL, allowing future connections without needing your password again. For added security, you can even change this admin password once connected, just be sure not to delete the admin account, as this would disrupt the connection.', 'mainwp' ); ?></span>
         <?php
     }
 
@@ -2243,7 +2244,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <span class="ui text small"><strong><?php esc_html_e( 'Admin Name (required)', 'mainwp' ); ?></strong></span>
                     </div>
                     <div class="<?php echo $is_page_setup ? 'three' : 'two'; ?> wide column">
-                        <span class="ui text small"><strong><?php esc_html_e( 'Admin Password', 'mainwp' ); ?></strong></span>
+                        <span class="ui text small"><strong><?php esc_html_e( 'Admin Password *', 'mainwp' ); ?></strong></span>
                     </div>
                     <?php if ( ! $is_page_setup ) : ?>
                         <div class="one wide column">

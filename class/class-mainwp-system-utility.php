@@ -1315,10 +1315,14 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     private static function get_plugin_theme_icon( $slug, $type ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
+        $icon_placeholder_cls = '';
+
         if ( 'plugin' === $type ) {
-            $option_name = 'plugins_icons';
+            $option_name          = 'plugins_icons';
+            $icon_placeholder_cls = 'plug circular inverted';
         } elseif ( 'theme' === $type ) {
-            $option_name = 'themes_icons';
+            $option_name          = 'themes_icons';
+            $icon_placeholder_cls = 'tint';
         } else {
             return '<i style="font-size: 17px"   class="plug circular inverted icon" not-cached-path="true"></i>';
         }
@@ -1363,16 +1367,16 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 if ( ! empty( $scr ) ) {
                     $icon = '<img style="display:inline-block" class="ui mini circular image ' . ( $is_custom_icon ? $cls_uploadable : $cls_expired ) . '" ' . $attr_slug . 'src="' . esc_attr( $scr ) . '" alt="Icon"/>'; // to update expired icon.
                 } else {
-                    $icon = '<i style="font-size: 17px" class="plug circular inverted icon ' . $cls_expired . $cls_uploadable . '" ' . $attr_slug . '></i>'; // to update expired icon.
+                    $icon = '<i style="font-size: 17px" class="' . esc_attr( $icon_placeholder_cls ) . ' icon ' . $cls_expired . $cls_uploadable . '" ' . $attr_slug . '></i>'; // to update expired icon.
                 }
             } elseif ( ! empty( $scr ) ) {
                 $use_cls_expired = $set_expired ? $cls_expired : '';
                 $icon            = '<img style="display:inline-block" class="ui mini circular image ' . ( $is_custom_icon ? $cls_uploadable : $use_cls_expired ) . '" ' . $attr_slug . ' cached-path-icon="true" src="' . esc_attr( $scr ) . '" alt="Icon"/>';
             } else {
-                $icon = '<i style="font-size: 17px" class="plug circular inverted icon ' . ( $set_expired ? $cls_expired : '' ) . $cls_uploadable . '" ' . $attr_slug . ' cached-path-icon="true"></i>';
+                $icon = '<i style="font-size: 17px" class="' . esc_attr( $icon_placeholder_cls ) . ' icon ' . ( $set_expired ? $cls_expired : '' ) . $cls_uploadable . '" ' . $attr_slug . ' cached-path-icon="true"></i>';
             }
         } elseif ( empty( $icon ) ) {
-            $icon = '<i style="font-size: 17px" class="plug circular inverted icon ' . $cls_expired . '" ' . $attr_slug . ' not-cached-path="true"></i>'; // not upload when not existed in the cached.
+            $icon = '<i style="font-size: 17px" class="' . esc_attr( $icon_placeholder_cls ) . ' icon ' . $cls_expired . '" ' . $attr_slug . ' not-cached-path="true"></i>'; // not upload when not existed in the cached.
         }
         return $icon;
     }

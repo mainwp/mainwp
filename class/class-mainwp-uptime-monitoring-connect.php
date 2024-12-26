@@ -819,7 +819,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         }
         $sec_since_last = $previous_heartbeat && ! empty( $previous_heartbeat->time ) ? (int) $end - strtotime( $previous_heartbeat->time ) : 1;
 
-        $importance = $this->is_importance_status( $previous_status, $status ) ? 1 : 0;
+        $importance = $this->is_importance_status( (int) $previous_status, (int) $status ) ? 1 : 0;
 
         $db_datetime = mainwp_get_current_utc_datetime_db();
 

@@ -1963,13 +1963,8 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
                         ++$i;
                         echo '<div id="' . esc_attr( $box['id'] ) . '" class="postbox" >' . "\n";
-                        if ( 'dashboard_browser_nag' !== $box['id'] ) {
-                            $widget_title = $box['title'];
-
-                            if ( isset( $box['args'] ) && is_array( $box['args'] ) && isset( $box['args']['__widget_basename'] ) ) {
-                                $widget_title = $box['args']['__widget_basename'];
-                                unset( $box['args']['__widget_basename'] );
-                            }
+                        if ( 'dashboard_browser_nag' !== $box['id'] && isset( $box['args'] ) && is_array( $box['args'] ) && isset( $box['args']['__widget_basename'] ) ) {
+                            unset( $box['args']['__widget_basename'] );
                         }
 
                         $title = $box['title'];

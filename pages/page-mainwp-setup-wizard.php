@@ -247,7 +247,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <?php esc_html_e( 'Go to', 'mainwp' ); ?> <a class="" href="<?php echo esc_url( admin_url( 'index.php' ) ); ?>"><?php esc_html_e( 'WP Admin', 'mainwp' ); ?></a> <?php esc_html_e( 'or', 'mainwp' ); ?> <a class="" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp_tab' ) ); ?>"><?php esc_html_e( 'MainWP', 'mainwp' ); ?></a>
                     </div>
                 </div>
-                
+
                 <div id="mainwp-quick-setup-wizard" class="ui container">
         <?php
     }
@@ -321,9 +321,6 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public function mwp_setup_welcome() {
         delete_option( 'mainwp_run_quick_setup' );
-        $is_new       = MainWP_Demo_Handle::get_instance()->is_new_instance();
-        $enabled_demo = apply_filters( 'mainwp_demo_mode_enabled', false );
-        $count_sites  = MainWP_DB::instance()->get_websites_count();
         ?>
         <div class="ui center aligned vertical segment">
             <h1 class="ui header"><?php esc_html_e( 'Welcome to MainWP - Your WordPress Management Dashboard!', 'mainwp' ); ?></h1>
@@ -348,7 +345,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <strong><?php esc_html_e( 'Monitoring Configuration', 'mainwp' ); ?></strong> - <?php esc_html_e( 'Configure uptime and site health monitoring.', 'mainwp' ); ?>
                     </div>
                 </div>
-                
+
             </div>
             <div class="ui hidden divider"></div>
             <div><strong><?php esc_html_e( 'Estimated Time to Complete', 'mainwp' ); ?></strong> - <?php esc_html_e( '5 minutes or less.', 'mainwp' ); ?></div>
@@ -360,7 +357,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <div>
                 <a class="ui basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp_tab' ) ); ?>"><?php esc_html_e( 'Skip Setup Wizard', 'mainwp' ); ?></a>
             </div>
-            
+
             <div class="ui top pointing grey basic label" style="line-height:1.5em">
             <div><?php esc_html_e( 'Your Dashboard may seem limited until you add sites or clients.', 'mainwp' ); ?></div>
             <div><?php esc_html_e( 'Completing the setup ensures you\'re ready to unlock the full potential of MainWP.', 'mainwp' ); ?></div>
@@ -376,7 +373,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <p><strong><?php esc_html_e( 'MainWP Child', 'mainwp' ); ?></strong> - <?php esc_html_e( 'This plugin connects your websites to the Dashboard. You install it on each site you want to manage. Think of it as a "link" between your sites and the Dashboard.', 'mainwp' ); ?></p>
                 </div>
             </div>
-            
+
         </div>
         <?php
     }

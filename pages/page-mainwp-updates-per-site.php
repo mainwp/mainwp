@@ -349,7 +349,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                         }
 
                                         ?>
-                                        <tr plugin_slug="<?php echo esc_attr( $plugin_name ); ?>" last-version="<?php echo esc_attr( rawurlencode( $last_version ) ); ?>" site_name="<?php echo esc_attr(  stripslashes( $website->name ) ); ?>" premium="<?php echo isset( $plugin_upgrade['premium'] ) && ! empty( $plugin_upgrade['premium'] ) ? 1 : 0; ?>" updated="0">
+                                        <tr plugin_slug="<?php echo esc_attr( $plugin_name ); ?>" last-version="<?php echo esc_attr( rawurlencode( $last_version ) ); ?>" site_name="<?php echo esc_attr( stripslashes( $website->name ) ); ?>" premium="<?php echo isset( $plugin_upgrade['premium'] ) && ! empty( $plugin_upgrade['premium'] ) ? 1 : 0; ?>" updated="0">
                                             <?php
                                             $row_columns     = $updates_table_helper->render_columns( $row_columns, $website, $others );
                                             $action_rendered = isset( $row_columns['action'] ) ? true : false;

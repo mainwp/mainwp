@@ -667,7 +667,9 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         }
     }
 
-    /** Renders MainWP Dashboard & Child Plugin auto update Alert. */
+    /**
+     * Renders MainWP Dashboard & Child Plugin auto update Alert.
+     */
     public static function render_notice_trust_update() {
         $is_demo = MainWP_Demo_Handle::is_demo_mode();
         if ( ! $is_demo ) {
@@ -682,7 +684,10 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         }
     }
 
-    // Renders MainWP 30 day review request.
+    /**
+     * Renders MainWP 30 day review request.
+     */
+
     public static function render_rating_notice_1() {
         ?>
         <div class="ui huge icon message" style="margin-bottom: 0; border-radius: 0;">
@@ -714,7 +719,9 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         <?php
     }
 
-    // Renders MainWP review notice after a few extensions have been installed.
+    /**
+     * Renders MainWP review notice after a few extensions have been installed.
+     */
     public static function render_rating_notice_2() {
         ?>
         <div class="ui huge icon message" style="margin-bottom: 0; border-radius: 0;">

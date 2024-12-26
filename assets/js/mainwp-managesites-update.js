@@ -453,14 +453,14 @@ let managesites_backup_run_next = function () {
             } else {
                 appendToDiv(backupContentEl, '[' + pSiteName + '] ' + __('Backup file created successfully!'));
 
-                managesites_backupnow_download_file({ 'id': pSiteId, 'name': pSiteName }, response.result.type, response.result.url, response.result.local, response.result.regexfile, response.result.size, response.result.subfolder);
+                managesites_backupnow_download_file({ 'id': pSiteId, 'name': pSiteName }, response.result.type, response.result.url, response.result.local, response.result.size);
             }
 
         }
     }(siteId, siteName), 'json');
 };
 
-let managesites_backupnow_download_file = function (siteInfo, type, url, file, regexfile, size, subfolder) {
+let managesites_backupnow_download_file = function (siteInfo, type, url, file, size) {
     let pSiteId = siteInfo['id'];
     let pSiteName = siteInfo['name'];
     let backupContentEl = mainwpPopup('#managesites-backup-box').getContentEl();

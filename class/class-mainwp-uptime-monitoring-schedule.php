@@ -43,7 +43,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
      * Run each time the class is called.
      */
     public function __construct() {
-        add_filter( 'mainwp_register_regular_sequence_process', array( $this, 'hook_regular_sequence_process' ), 10 ,1 );
+        add_filter( 'mainwp_register_regular_sequence_process', array( $this, 'hook_regular_sequence_process' ), 10, 1 );
     }
 
     /**

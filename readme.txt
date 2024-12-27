@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.7.1
 Requires PHP: 7.4
-Stable tag: 5.3.3
+Stable tag: 5.3.4
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -142,6 +142,10 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.3.4 - 12-27-2024 =
+
+* Fixed: Database error when saving data in the Custom Event Monitor during automated update checks.
 
 = 5.3.3 - 12-26-2024 =
 

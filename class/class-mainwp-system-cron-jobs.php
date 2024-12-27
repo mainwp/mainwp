@@ -1682,6 +1682,32 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             if ( isset( $fix_keys[0] ) && 0 === (int) $fix_keys[0] && isset( $fix_keys[1] ) && 1 === (int) $fix_keys[1] ) {
                 $list_processes = array();
             }
+
+            // second check saved processes.
+            if ( is_array( $list_processes ) ) {
+                $valid_list = array();
+
+                foreach ( $list_processes as $name => $pro ) {
+                    if ( is_array( $pro ) && is_array( $pro['callback'] ) && ! empty( $pro['callback'][0] ) && ! empty( $pro['callback'][1] ) ) {
+                        $call_class  = $pro['callback'][0];
+                        $call_method = $pro['callback'][1];
+                        if ( is_string( $call_class ) && is_string( $call_method ) && class_exists( $call_class ) ) {
+                            $call_inst = new $call_class();
+                            if ( method_exists( $call_inst, $call_method ) ) {
+                                $valid_list[ $name ] = $pro;
+                            }
+                        }
+                    }
+                }
+
+                $count1 = count( $valid_list );
+                $count2 = count( $list_processes );
+
+                if ( $count1 !== $count2 ) {
+                    MainWP_Utility::update_option( 'mainwp_regular_sequence_process_saved', wp_json_encode( $valid_list ) );
+                    $list_processes = $valid_list;
+                }
+            }
         }
 
         $current_pid = get_option( 'mainwp_regular_sequence_current_process_pid', array() );
@@ -1690,14 +1716,22 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $list_processes   = is_array( $list_processes ) ? $list_processes : array();
 
         $updated = false;
+
         foreach ( $register_process as $name => $info ) {
+            if ( ! is_array( $info ) || empty( $info ) || ! is_string( $name ) ) {
+                continue;
+            }
+
             if ( ! isset( $list_processes[ $name ] ) ) {
                 $list_processes[ $name ] = $info;
                 $updated                 = true;
-            } elseif ( array_diff( $info, $list_processes[ $name ] ) ) {
-                $list_processes[ $name ] = array_merge( $list_processes[ $name ], $info );
-                $updated                 = true;
+            } elseif ( is_array( $list_processes[ $name ] ) ) {
+                if ( $info !== $list_processes[ $name ] ) {
+                    $list_processes[ $name ] = $info;
+                    $updated                 = true;
+                }
             }
+
             if ( ! isset( $list_processes[ $name ]['priority'] ) ) {
                 $list_processes[ $name ]['priority'] = max( array_column( $list_processes, 'priority' ) ) + 1;
                 $updated                             = true;
@@ -1705,10 +1739,9 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         }
 
         if ( $updated ) {
+            MainWP_Logger::instance()->log_update_check( 'Update schedule' ); //phpcs:ignore -- ok.
             MainWP_Utility::array_sort( $list_processes, 'priority' );
-            if ( is_array( $list_processes ) && 50 > count( $list_processes ) ) {
-                MainWP_Utility::update_option( 'mainwp_regular_sequence_process_saved', wp_json_encode( $list_processes ) );
-            }
+            MainWP_Utility::update_option( 'mainwp_regular_sequence_process_saved', wp_json_encode( $list_processes ) );
         }
 
         $processes_list_value = array_values( $list_processes );
@@ -1726,9 +1759,19 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         }
 
         while ( $current_pid <= $count ) {
-            if ( is_array( $process ) && isset( $process['callback'] ) && is_callable( $process['callback'] ) ) {
+            if ( is_array( $process ) && is_array( $process['callback'] ) && ! empty( $process['callback'][0] ) && ! empty( $process['callback'][1] ) ) {
+                $call_class  = $process['callback'][0];
+                $call_method = $process['callback'][1];
+                if ( is_string( $call_class ) && is_string( $call_method ) && class_exists( $call_class ) ) {
+                    $call_inst = new $call_class();
+                    if ( method_exists( $call_inst, $call_method ) ) {
+                        $call_inst->{$call_method}();
+                        if ( $this->is_log_time() ) {
+                            MainWP_Logger::instance()->log_update_check( 'Run process: [process=' . ( is_array($process) ? print_r($process, true ): '' ) . ']' ); //phpcs:ignore -- ok.
+                        }
+                    }
+                }
                 update_option( 'mainwp_regular_sequence_current_process_pid', $current_pid );
-                call_user_func( $process['callback'] );
                 break;
             } else {
                 ++$current_pid;

@@ -314,11 +314,9 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 delete_option( 'mainwp_adjust_auto_sync_run_time' ); // Adjusted the runtime.
             }
             MainWP_Logger::instance()->log_update_check( 'updates check :: time to frequency run today :: next_time :: ' . gmdate( 'Y-m-d H:i:s', $next_time ) . ' :: local_timestamp :: ' . gmdate( 'Y-m-d H:i:s', $local_timestamp ) );
-        } else {
+        } elseif ( $this->is_log_time() ) {
             // do not logging much in short time.
-            if ( $this->is_log_time() ) {
-                MainWP_Logger::instance()->log_update_check( 'updates check :: wait frequency today :: daily sync time  :: ' . gmdate( 'Y-m-d H:i:s', $run_timestamp ) . ' :: next_time :: ' . gmdate( 'Y-m-d H:i:s', $next_time ) . ' :: local_timestamp :: ' . gmdate( 'Y-m-d H:i:s', $local_timestamp ) );
-            }
+            MainWP_Logger::instance()->log_update_check( 'updates check :: wait frequency today :: daily sync time  :: ' . gmdate( 'Y-m-d H:i:s', $run_timestamp ) . ' :: next_time :: ' . gmdate( 'Y-m-d H:i:s', $next_time ) . ' :: local_timestamp :: ' . gmdate( 'Y-m-d H:i:s', $local_timestamp ) );
         }
 
         $check_to_run = false;

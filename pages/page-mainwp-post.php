@@ -2130,8 +2130,10 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             }
                         }
 
+                        $class = apply_filters( 'mainwp_edit_bulkpost_metabox_class', 'postbox' );
+
                         ++$i;
-                        echo '<div id="' . esc_attr( $box['id'] ) . '" class="postbox" >' . "\n";
+                        echo '<div id="' . esc_attr( $box['id'] ) . '" class="' . esc_attr( $class ) . '" >' . "\n";
                         if ( 'dashboard_browser_nag' !== $box['id'] ) {
                             $widget_title = $box['title'];
 

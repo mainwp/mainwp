@@ -585,31 +585,37 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
     }
 
     /**
-     * Update monitor notification.
+     * Update monitor notification process.
      *
      * @param  int $monitor_id monitor id.
+     * @param  int $check_time monitor time.
      *
      * @return void
      */
-    public function update_monitor_notification( $monitor_id ) {
+    public function update_process_monitor_notification( $monitor_id, $check_time ) {
 
         $current = MainWP_DB::instance()->get_regular_process_by_item_id_type_slug( $monitor_id, 'monitor', 'uptime_notification' );
 
         if ( ! empty( $current ) ) {
-            MainWP_DB::instance()->update_regular_process(
-                array(
-                    'process_id' => $current->process_id,
-                    'status'     => 'active',
-                )
+            $prc_update = array(
+                'process_id' => $current->process_id,
+                'status'     => 'active',
             );
+
+            if ( empty( $current->dts_process_init_time ) ) { // process init time for this mo notification.
+                $prc_update['dts_process_init_time'] = $check_time;
+            }
+
+            MainWP_DB::instance()->update_regular_process( $prc_update );
         } else {
             // insert process.
             MainWP_DB::instance()->update_regular_process(
                 array(
-                    'item_id'      => $monitor_id,
-                    'type'         => 'monitor',
-                    'process_slug' => 'uptime_notification',
-                    'status'       => 'active',
+                    'item_id'               => $monitor_id,
+                    'type'                  => 'monitor',
+                    'process_slug'          => 'uptime_notification',
+                    'status'                => 'active',
+                    'dts_process_init_time' => $check_time, // use UTC time to compatible with monitor heartbeat db time.
                 )
             );
         }

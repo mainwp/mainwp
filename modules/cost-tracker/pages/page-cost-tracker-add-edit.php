@@ -221,10 +221,11 @@ class Cost_Tracker_Add_Edit {
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $cust_prod_src );
                     esc_html_e( 'Upload product icon', 'mainwp' );
+                    $delnonce = MainWP_System_Utility::get_custom_nonce( 'product', esc_attr( $cust_prod_icon_file ) );
                     ?>
                     </label>
                     <div class="two wide middle aligned column" data-tooltip="<?php esc_attr_e( 'Upload the product icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                        <div class="ui green button basic module-cost-tracker-product-icon-customable" iconItemId="<?php echo intval( $edit_id ); ?>" iconFileSlug="<?php echo esc_attr( $cust_prod_icon_file ); ?>" icon-src="<?php echo esc_attr( $cust_prod_src ); ?>"><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
+                        <div class="ui green button basic module-cost-tracker-product-icon-customable" iconItemId="<?php echo intval( $edit_id ); ?>" iconFileSlug="<?php echo esc_attr( $cust_prod_icon_file ); ?>" del-icon-nonce="<?php echo esc_attr( $delnonce ); ?>" icon-src="<?php echo esc_attr( $cust_prod_src ); ?>"><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
                     </div>
                     <div class="one wide middle aligned center aligned column">
                         <?php if ( $edit_cost ) { ?>
@@ -462,7 +463,7 @@ class Cost_Tracker_Add_Edit {
                     </div>
                 </div>
                 <input type="hidden" name="mainwp_module_cost_tracker_edit_id" value="<?php echo $edit_cost ? intval( $edit_cost->id ) : 0; ?>">
-                <input type="hidden" name="nonce" value="<?php echo esc_attr( wp_create_nonce( 'module_cost_tracker_edit_nonce' ) ); ?>">
+                <input type="hidden" name="nonce" value="<?php echo esc_attr( wp_create_nonce( 'module_cost_tracker_edit_nonce' . ( $edit_cost ? $edit_cost->id : '' ) ) ); ?>">
                 <input type="hidden" name="mwp_cost_tracker_editing_submit" value="1">
             </div>
         </div>
@@ -572,6 +573,7 @@ class Cost_Tracker_Add_Edit {
                                         let icon_src = typeof response.iconsrc !== undefined ? response.iconsrc : '';
                                         iconObj.attr('icon-src', icon_src);
                                         iconObj.attr('iconFileSlug', response.iconfile); // to support delete file when iconItemId = 0.
+                                        iconObj.attr('del-icon-nonce', response.iconnonce);
                                         jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', icon_src);
                                         jQuery('#module_cost_tracker_upload_custom_icon_img_display').html(icon_img);
                                         jQuery('#module_cost_tracker_upload_custom_icon_img_display').show();
@@ -600,8 +602,12 @@ class Cost_Tracker_Add_Edit {
         $iconfile_slug   = isset( $_POST['iconFileSlug'] ) ? sanitize_text_field( wp_unslash( $_POST['iconFileSlug'] ) ) : '';
         $delete          = isset( $_POST['delete'] ) ? intval( $_POST['delete'] ) : 0;
         $icon_product_id = isset( $_POST['iconItemId'] ) ? intval( $_POST['iconItemId'] ) : 0;
+        $delnonce        = isset( $_POST['delnonce'] ) ? sanitize_key( $_POST['delnonce'] ) : '';
 
         if ( $delete ) {
+            if ( ! MainWP_System_Utility::is_valid_custom_nonce( 'product', $iconfile_slug, $delnonce ) ) {
+                die( 'Invalid nonce!' );
+            }
             if ( $icon_product_id ) {
                 $cost = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'id', $icon_product_id );
                 if ( $cost && '' !== $cost->cost_icon && false === strpos( $cost->cost_icon, 'deficon:' ) ) {
@@ -633,10 +639,11 @@ class Cost_Tracker_Add_Edit {
             wp_die(
                 wp_json_encode(
                     array(
-                        'result'   => 'success',
-                        'iconfile' => esc_html( $uploaded_icon ),
-                        'iconsrc'  => esc_html( $cust_icon ),
-                        'iconimg'  => '<img class="ui mini circular image" src="' . esc_attr( $cust_icon ) . '" style="width:32px;height:auto;display:inline-block;" alt="Cost custom icon">',
+                        'result'    => 'success',
+                        'iconfile'  => esc_html( $uploaded_icon ),
+                        'iconsrc'   => esc_html( $cust_icon ),
+                        'iconimg'   => '<img class="ui mini circular image" src="' . esc_attr( $cust_icon ) . '" style="width:32px;height:auto;display:inline-block;" alt="Cost custom icon">',
+                        'iconnonce' => MainWP_System_Utility::get_custom_nonce( 'product', esc_html( $uploaded_icon ) ),
                     )
                 )
             );

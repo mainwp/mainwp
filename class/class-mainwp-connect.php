@@ -72,8 +72,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( $no_body ) {
             curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'HEAD' ); // HTTP request is 'HEAD', but sometime return 4xx - error code.
         }
+
+        $follow_loc = apply_filters( 'mainwp_try_visit_follow_location', false ); // to support for case compatible.
+
         curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-        curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+        curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, $follow_loc ? true : false );
         curl_setopt( $ch, CURLOPT_POST, true );
         curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
         curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
@@ -170,7 +173,6 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
         }
 
-        MainWP_Logger::instance()->debug( ' :: tryVisit :: [url=' . $url . '] [http_status=' . $http_status . '] [error=' . $err . '] [data-start]' . $data . '[data-end]' );
         MainWP_Logger::instance()->log_execution_time( 'tryVisit :: [url=' . $url . '] [http_status=' . $http_status . ']' );
 
         $host   = wp_parse_url( ( empty( $realurl ) ? $url : $realurl ), PHP_URL_HOST );
@@ -224,6 +226,14 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             'httpCodeString' => MainWP_Utility::get_http_codes( $http_status ),
         );
 
+        $hidden_data = '[hidden response data]';
+
+        if ( false === $ip || $ip === $host || ! static::validate_ip( $ip ) ) { // Failed to resolve hostname.
+            $data = $hidden_data;
+        }
+
+        MainWP_Logger::instance()->debug( ' :: tryVisit :: [url=' . $url . '] [http_status=' . $http_status . '] [error=' . $err . '] [data-start]' . $data . '[data-end]' );
+
         if ( false !== $ip ) {
             $out['ip'] = $ip;
             $found     = true;
@@ -232,6 +242,21 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $out['error'] = ( '' === $err && false === $found ? 'Invalid host.' : $err );
 
         return $out;
+    }
+
+
+    /**
+     * Method validate_ip().
+     *
+     * @param  string $ip IP check.
+     * @return bool Check IP result.
+     */
+    public static function validate_ip( $ip ) {
+        // Validate the IP and check for private and reserved ranges.
+        if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -1551,7 +1576,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $raw_response = isset( $others['raw_response'] ) && 'yes' === $others['raw_response'] ? true : false;
 
-        $output['fetch_data']  = $data;
+        $hidden_data = '[hidden response data]';
+
+        $output['fetch_data'] = $hidden_data;
+
         $output['http_status'] = (int) $http_status;
 
         MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'http status: [' . $http_status . '] err: [' . $err . ']' );
@@ -1583,7 +1611,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'Response: [RAW]' );
             return $data;
         } else {
-            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] Error: NOMAINWP [data=' . ( is_string( $data ) ? $data : 'OBJECT' ) . ']' );
+            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] Error: NOMAINWP [data=' . $hidden_data . ']' );
             $detect_wsidchk = is_string( $data ) ? strpos( $data, 'wsidchk' ) : false;
             if ( false !== $detect_wsidchk ) {
                 $thr_error = new MainWP_Exception( 'ERROR:Connection Failed. We suspect that Imunify360, a security layer added by your host, is causing this problem. Please contact your host to whitelist your Dashboard IP in their system. If you need help determining your MainWP Dashboard site IP address, check with your hosting provider.', $url );
@@ -1593,7 +1621,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         if ( null !== $thr_error ) {
-            $thr_error->set_data( $data );
+            $thr_error->set_data( $hidden_data ); // to compatible.
             throw $thr_error;
         }
     }

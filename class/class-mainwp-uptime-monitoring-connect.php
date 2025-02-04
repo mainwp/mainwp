@@ -821,6 +821,9 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         $importance = $this->is_importance_status( (int) $previous_status, (int) $status ) ? 1 : 0;
 
+        // get this time first.
+        $uptime_init_time = mainwp_get_current_utc_datetime_db( false );
+
         $db_datetime = mainwp_get_current_utc_datetime_db();
 
         $heartbeat = array(
@@ -855,7 +858,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         );
 
         if ( empty( $status ) && $importance ) {
-            MainWP_Uptime_Monitoring_Handle::instance()->update_monitor_notification( $monitor->monitor_id );
+            MainWP_Uptime_Monitoring_Handle::instance()->update_process_monitor_notification( $monitor->monitor_id, $uptime_init_time );
         }
 
         MainWP_Uptime_Monitoring_Handle::instance()->calc_and_save_site_uptime_stat_hourly_data( $monitor->monitor_id, $heartbeat );

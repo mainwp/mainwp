@@ -1660,4 +1660,35 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
         return $view;
     }
+
+    /**
+     * Method get_custom_nonce().
+     *
+     * @param  string $type Type.
+     * @param  string $slug Slug to create nonce.
+     * @return string
+     */
+    public static function get_custom_nonce( $type, $slug ) {
+        global $current_user;
+        if ( empty( $current_user ) || empty( $current_user->ID ) ) {
+            return '';
+        }
+        return wp_create_nonce( $type . '-' . $current_user->ID . '-' . $slug );
+    }
+
+    /**
+     * Method is_valid_custom_nonce().
+     *
+     * @param  string $type Type.
+     * @param  string $slug Slug to create nonce.
+     * @param  string $nonce Nonce value.
+     * @return string
+     */
+    public static function is_valid_custom_nonce( $type, $slug, $nonce ) {
+        global $current_user;
+        if ( empty( $current_user ) || empty( $current_user->ID ) ) {
+            return false;
+        }
+        return wp_verify_nonce( $nonce, $type . '-' . $current_user->ID . '-' . $slug );
+    }
 }

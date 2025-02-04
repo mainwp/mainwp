@@ -373,6 +373,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             );
         } elseif ( in_array( $view, array( 'simple_view', 'base_view', 'monitor_view', 'ping_view', 'uptime_notification' ) ) ) {
             $fields = array();
+            if ( 'monitor_view' === $view ) {
+                $fields[] = 'health_site_status';
+            }
         } else {
             $fields = $default;
         }
@@ -744,6 +747,35 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                     'name' => $option,
                 )
             );
+        }
+    }
+
+
+    /**
+     * Remove child site options.
+     *
+     * @param object $website Child site object.
+     * @param mixed  $options  Option to update.
+     */
+    public function remove_website_option( $website, $options ) {
+
+        if ( empty( $options ) ) {
+            return;
+        }
+
+        if ( is_numeric( $website ) ) {
+            $site_id = intval( $website );
+        } else {
+            $site_id = $website->id;
+        }
+
+        if ( ! is_array( $options ) ) {
+            $options = (array) $options;
+        }
+
+        foreach ( $options as $opt ) {
+            $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid=%d AND name=%s ', $site_id, $opt ) );
+
         }
     }
 

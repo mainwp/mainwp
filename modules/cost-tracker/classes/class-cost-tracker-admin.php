@@ -473,7 +473,9 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
      */
     public static function handle_edit_cost_tracker_post() { //phpcs:ignore -- NOSONAR - complex method.
 
-        if ( ! isset( $_POST['mwp_cost_tracker_editing_submit'] ) || ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'module_cost_tracker_edit_nonce' ) ) {
+        $updating = ! empty( $_POST['mainwp_module_cost_tracker_edit_id'] ) ? intval( $_POST['mainwp_module_cost_tracker_edit_id'] ) : ''; //phpcs:ignore -- -- NOSONAR - ok.
+
+        if ( ! isset( $_POST['mwp_cost_tracker_editing_submit'] ) || ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'module_cost_tracker_edit_nonce' . $updating ) ) {
             return;
         }
         //phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotValidated,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized

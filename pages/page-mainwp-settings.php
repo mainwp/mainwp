@@ -1210,7 +1210,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         $lasttimeAutomatic      = get_option( 'mainwp_updatescheck_last_timestamp' );
         $lasttimeStartAutomatic = get_option( 'mainwp_updatescheck_start_last_timestamp' );
         $local_timestamp        = MainWP_Utility::get_timestamp();
-        $running                = get_option( 'mainwp_cron_checksites_running' );
 
         if ( empty( $lasttimeStartAutomatic ) && ! empty( $lasttimeAutomatic ) ) {
             $lasttimeStartAutomatic = $lasttimeAutomatic;
@@ -1218,7 +1217,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
         if ( empty( $lastAutomaticUpdate ) ) {
             $nextAutomaticUpdate = esc_html__( 'Any minute', 'mainwp' );
-        } elseif ( 'yes' === $running && ( 0 < MainWP_Auto_Updates_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start( $lasttimeStartAutomatic ) || 0 < MainWP_Auto_Updates_DB::instance()->get_websites_check_updates_count( $lasttimeStartAutomatic ) ) ) {
+        } elseif ( 0 < MainWP_Auto_Updates_DB::instance()->get_websites_check_updates_count( $lasttimeStartAutomatic ) ) {
             $nextAutomaticUpdate = esc_html__( 'Processing your websites.', 'mainwp' );
         } else {
             $next_time = MainWP_System_Cron_Jobs::get_next_time_automatic_update_to_show();

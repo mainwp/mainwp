@@ -130,11 +130,13 @@ if ( ! function_exists( 'mainwp_get_current_utc_datetime_db' ) ) {
     /**
      * Function mainwp_get_current_utc_datetime_db.
      *
+     * @param  bool $get_db_datetime To get db datetime.
+     *
      * @return int
      */
-    function mainwp_get_current_utc_datetime_db() {
+    function mainwp_get_current_utc_datetime_db( $get_db_datetime = true ) {
         $utcTime = new \DateTime( 'now', new \DateTimeZone( 'UTC' ) );
-        return $utcTime->format( 'Y-m-d H:i:s' ); // Outputs: YYYY-MM-DD HH:MM:SS.
+        return $get_db_datetime ? $utcTime->format( 'Y-m-d H:i:s' ) : $utcTime->getTimestamp(); // Outputs: YYYY-MM-DD HH:MM:SS.
     }
 }
 

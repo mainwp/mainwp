@@ -179,8 +179,8 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 $currentSite = $website;
             }
 
-            $count_plugins += count( json_decode( $website->plugins ) );
-            $count_themes  += count( json_decode( $website->themes ) );
+            $count_plugins += ! empty( $website->plugins ) ? count( json_decode( $website->plugins, true ) ) : 0;
+            $count_themes  += ! empty( $website->themes ) ? count( json_decode( $website->themes, true ) ) : 0;
 
             $pluginsIgnoredAbandoned_perSites = array();
             $themesIgnoredAbandoned_perSites  = array();

@@ -978,6 +978,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
 
                 $default_icons = MainWP_UI::get_default_icons();
+                $delnonce      = MainWP_System_Utility::get_custom_nonce( 'site', esc_attr( $uploaded_site_icon ) );
 
                 ?>
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit">
@@ -990,7 +991,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     </label>
                     <input type="hidden" name="mainwp_managesites_edit_site_uploaded_icon_hidden" class="settings-field-value-change-handler" id="mainwp_managesites_edit_site_uploaded_icon_hidden" value="<?php echo esc_attr( $uploaded_site_icon ); ?>">
                     <div class="three wide middle aligned column" data-tooltip="<?php esc_attr_e( 'Upload the product icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                        <div class="ui green button basic mainwp-managesites-edit-site-icon-customable" iconItemId="<?php echo intval( $website->id ); ?>" iconFileSlug="<?php echo esc_attr( $uploaded_site_icon ); ?>" icon-src="<?php echo esc_attr( $uploaded_icon_src ); ?>"><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
+                        <div class="ui green button basic mainwp-managesites-edit-site-icon-customable" iconItemId="<?php echo intval( $website->id ); ?>" iconFileSlug="<?php echo esc_attr( $uploaded_site_icon ); ?>" del-icon-nonce="<?php echo esc_attr( $delnonce ); ?>" icon-src="<?php echo esc_attr( $uploaded_icon_src ); ?>"><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
                         <?php if ( ! empty( $uploaded_site_icon ) ) { ?>
                             <?php echo MainWP_Manage_Sites::get_instance()->get_cust_site_icon( $website->cust_site_icon_info, 'display_edit' ); //phpcs:ignore --ok. ?>
                         <?php } else { ?>
@@ -1447,6 +1448,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                                 let icon_src = typeof response.iconsrc !== undefined ? response.iconsrc : '';
                                                 iconObj.attr('icon-src', icon_src);
                                                 iconObj.attr('iconFileSlug', response.iconfile); // to support delete file when iconItemId = 0.
+                                                iconObj.attr('del-icon-nonce', response.iconnonce);
                                                 jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', icon_src);
                                                 jQuery('#mainw_managesites_add_edit_site_upload_custom_icon').html(icon_img).show();
                                             }
@@ -2048,7 +2050,6 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $error      = '';
         $message    = '';
         $id         = 0;
-        $fetch_data = null;
         $existed_id = 0;
 
         if ( $website ) {
@@ -2113,8 +2114,6 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     array( 'force_use_ipv4' => $force_use_ipv4 ),
                     $output
                 );
-
-                $fetch_data = isset( $output['fetch_data'] ) ? $output['fetch_data'] : '';
 
                 if ( isset( $information['error'] ) && '' !== $information['error'] ) {
                     $error = MainWP_Utility::esc_content( $information['error'] );
@@ -2263,11 +2262,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 } else {
                     $error = $e->getMessage();
                 }
-                $fetch_data = $e->get_data();
             }
         }
 
-        return array( $message, $error, $id, $fetch_data, $existed_id );
+        return array( $message, $error, $id, $existed_id );
     }
 
     /**

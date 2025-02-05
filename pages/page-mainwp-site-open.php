@@ -221,7 +221,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
             $url .= ( '/' !== substr( $url, - 1 ) ? '/' : '' );
 
             $postdata                  = MainWP_Connect::get_get_data_authed( $website, 'index.php', 'where', true );
-            $postdata['open_location'] = base64_encode( $open_location ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+            $postdata['open_location'] = $open_location; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
             ?>
             <form method="POST" action="<?php echo esc_url( $url ); ?>" id="redirectForm">
                 <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>

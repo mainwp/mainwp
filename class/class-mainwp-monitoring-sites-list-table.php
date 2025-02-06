@@ -34,6 +34,14 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      */
     private static $instance = null;
 
+
+    /**
+     * Global settings variable.
+     *
+     * @var null Instance variable.
+     */
+    private $global_settings = null;
+
     /**
      * Create instance.
      *
@@ -55,6 +63,9 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      */
     public function __construct() {
         add_action( 'mainwp_managesites_tabletop', array( &$this, 'generate_tabletop' ) );
+        if ( null === $this->global_settings ) {
+            $this->global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+        }
     }
 
     /**
@@ -136,6 +147,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             'site'          => esc_html__( 'Monitor', 'mainwp' ),
             'type'          => esc_html__( 'Monitor Type', 'mainwp' ),
             'interval'      => esc_html__( 'Check Frequency', 'mainwp' ),
+            'status_code'   => esc_html__( 'Status code', 'mainwp' ),
+            'site_health'   => esc_html__( 'Site Health', 'mainwp' ),
             'last24_status' => esc_html__( 'Last 24h Status', 'mainwp' ),
             'last_check'    => esc_html__( 'Last Check', 'mainwp' ),
         );
@@ -208,8 +221,13 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             'className' => 'mainwp-url-cell',
         );
         $defines[] = array(
-            'targets'   => array( 'manage-login-column', 'manage-last_check-column', 'manage-last24_status-column', 'manage-status_code-column', 'manage-site_health-column', 'manage-site_actions-column', 'extra-column', 'manage-client_name-column' ),
+            'targets'   => array( 'manage-login-column', 'manage-last_check-column', 'manage-last24_status-column', 'manage-status_code-column', 'manage-site_actions-column', 'extra-column', 'manage-client_name-column' ),
             'className' => 'collapsing',
+        );
+
+        $defines[] = array(
+            'targets'   => array( 'manage-status_code-column' ),
+            'className' => 'center aligned collapsing',
         );
 
         $defines[] = array(
@@ -1119,7 +1137,6 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      * @param mixed $monitor_subpage Object containing the site info.
      *
      * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize_file_name()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::get_site_health()
      */
     public function single_row( $monitor_subpage ) {
         $classes = $this->get_groups_classes( $monitor_subpage );
@@ -1147,16 +1164,21 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      */
     protected function single_row_columns( $website, $good_health = false ) { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-
+        unset( $good_health ); // compatible params, unuse.
         $monitor_subpage = $website;
 
         list( $columns ) = $this->get_column_info();
 
-        $global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+        $glo_active = 0;
+        if ( isset( $this->global_settings['active'] ) ) {
+            $glo_active = 1 === (int) $this->global_settings['active'] ? 1 : 0;
+        }
 
         $last24_time = MainWP_Uptime_Monitoring_Handle::get_hourly_key_by_timestamp( time() - DAY_IN_SECONDS );
 
         $uptime_status = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_monitor_stat_hourly_by( $monitor_subpage['monitor_id'], 'last24', $last24_time );
+
+        $disabled = ( ! $glo_active && ( -1 === (int) $monitor_subpage['active'] ) ) || 0 === (int) $monitor_subpage['active'] ? true : false;
 
         foreach ( $columns as $column_name => $column_display_name ) {
 
@@ -1175,7 +1197,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                 ?>
                 <td class="manage-type-column">
                 <?php
-                $this->render_uptime_status( $monitor_subpage['last_status'] );
+                $this->render_uptime_status( $monitor_subpage['last_status'], false, $disabled );
                 ?>
                 </td>
                 <?php
@@ -1191,31 +1213,54 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                 ?>
                 <td class="collapsing">
                     <?php
-                    $this->column_last_check( $monitor_subpage, true );
+                    if ( ! $disabled ) {
+                        $this->column_last_check( $monitor_subpage, true );
+                    }
                     ?>
+                </td>
+                <?php
+            } elseif ( 'site_health' === $column_name ) {
+                ?>
+                <td class="collapsing">
                 </td>
                 <?php
             } elseif ( 'type' === $column_name ) {
                 ?>
                 <td class="manage-type-column">
                     <?php
-                    $mo_type = MainWP_Uptime_Monitoring_Connect::get_apply_setting( 'type', $monitor_subpage['type'], $global_settings, 'useglobal', 'http' );
-                    $this->column_type( $mo_type );
+                    if ( ! $disabled ) {
+                        $mo_type = MainWP_Uptime_Monitoring_Connect::get_apply_setting( 'type', $monitor_subpage['type'], $this->global_settings, 'useglobal', 'http' );
+                        $this->column_type( $mo_type );
+                    }
                     ?>
                 </td>
             <?php } elseif ( 'interval' === $column_name ) { ?>
                 <td class="manage-interval-column collapsing">
                     <?php
-                    $mo_interval = MainWP_Uptime_Monitoring_Connect::get_apply_setting( 'interval', (int) $monitor_subpage['interval'], $global_settings, -1, 60 );
-                    echo '<i class="clock outline icon"></i> ' . intval( $mo_interval ) . esc_html__( ' minutes', 'mainwp' );
+                    if ( ! $disabled ) {
+                        $mo_interval = MainWP_Uptime_Monitoring_Connect::get_apply_setting( 'interval', (int) $monitor_subpage['interval'], $this->global_settings, -1, 60 );
+                        echo '<i class="clock outline icon"></i> ' . ( -1 === (int) $mo_interval ? esc_html__( 'Use global setting', 'mainwp' ) : intval( $mo_interval ) . esc_html__( ' minutes', 'mainwp' ) );
+                    }
                     ?>
+                </td>
+                <?php
+            } elseif ( 'status_code' === $column_name ) {
+                ?>
+                <td class="center aligned collapsing">
+                <?php
+                if ( ! $disabled ) {
+                    echo esc_html( $website['http_response_code'] );
+                }
+                ?>
                 </td>
                 <?php
             } elseif ( 'last24_status' === $column_name ) {
                 ?>
                 <td class="dt-right collapsing">
                 <?php
+                if ( ! $disabled ) {
                     $this->render_last24_uptime_status( $uptime_status, $last24_time );
+                }
                 ?>
                 </td>
                 <?php
@@ -1247,7 +1292,6 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::get_favico_url()
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_http_codes()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::get_site_health()
      * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      */
@@ -1258,13 +1302,15 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
         if ( $this->items ) {
 
-            $global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+            $glo_active = 0;
+            if ( isset( $this->global_settings['active'] ) ) {
+                $glo_active = 1 === (int) $this->global_settings['active'] ? 1 : 0;
+            }
 
             foreach ( $this->items as $website ) {
+                $rw_classes = 'child-site mainwp-child-site-' . intval( $website['id'] ) . ' ';
 
-                $rw_classes = '';
-
-                $health_status = isset( $website['health_site_status'] ) ? json_decode( $website['health_site_status'], true ) : array();
+                $health_status = ! empty( $website['health_site_status'] ) ? json_decode( $website['health_site_status'], true ) : array();
 
                 $hstatus     = MainWP_Utility::get_site_health( $health_status );
                 $hval        = $hstatus['val'];
@@ -1275,9 +1321,13 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                     $good_health = true;
                 }
 
-                $rw_classes = trim( $rw_classes );
-
-                $rw_classes = 'child-site mainwp-child-site-' . intval( $website['id'] ) . ' ' . esc_html( $rw_classes );
+                if ( $good_health ) {
+                    $h_color = 'green';
+                    $h_text  = esc_html__( 'Good', 'mainwp' );
+                } else {
+                    $h_color = 'orange';
+                    $h_text  = esc_html__( 'Should be improved', 'mainwp' );
+                }
 
                 $check_url = ! $website['issub'] ? $website['url'] : $website['url'] . $website['suburl'];
 
@@ -1291,14 +1341,6 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                     'urlpage'   => $check_url,
                 );
 
-                if ( $good_health ) {
-                    $h_color = 'green';
-                    $h_text  = esc_html__( 'Good', 'mainwp' );
-                } else {
-                    $h_color = 'orange';
-                    $h_text  = esc_html__( 'Should be improved', 'mainwp' );
-                }
-
                 $columns = $this->get_columns();
 
                 $cols_data = array();
@@ -1307,34 +1349,60 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
                 $uptime_status = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_monitor_stat_hourly_by( $website['monitor_id'], 'last24', $last24_time );
 
+                $disabled = ( ! $glo_active && ( -1 === (int) $website['active'] ) ) || 0 === (int) $website['active'] ? true : false;
+
                 foreach ( $columns as $column_name => $column_display_name ) {
                     ob_start();
                     ?>
                     <?php if ( 'cb' === $column_name ) : ?>
                         <div class="ui checkbox <?php echo ! empty( $website['monitor_id'] ) ? 'cb-uptime-monitor' : ''; ?>"><input type="checkbox" value="<?php echo intval( $website['id'] ); ?>" /></div>
-                    <?php elseif ( 'status' === $column_name ) : ?>
-                        <?php $this->render_uptime_status( false, $website['offline_check_result'] ); ?>
+                        <?php
+                    elseif ( 'status' === $column_name ) :
+                        ?>
+                        <?php $this->render_uptime_status( false, $website['offline_check_result'], $disabled ); ?>
                         <?php
                     elseif ( 'site' === $column_name ) :
                         $this->column_site( $website );
                     elseif ( 'type' === $column_name ) :
-                        $mo_type = MainWP_Uptime_Monitoring_Connect::get_apply_setting( 'type', $website['type'], $global_settings, 'useglobal', 'http' );
-                        $this->column_type( $mo_type );
+                        if ( ! $disabled ) {
+                            $mo_type = MainWP_Uptime_Monitoring_Connect::get_apply_setting( 'type', $website['type'], $this->global_settings, 'useglobal', 'http' );
+                            $this->column_type( $mo_type );
+                        }
                         ?>
                     <?php elseif ( 'interval' === $column_name ) : ?>
                         <?php
-                        $mo_interval = MainWP_Uptime_Monitoring_Connect::get_apply_setting( 'interval', (int) $website['interval'], $global_settings, -1, 60 );
-                        echo '<i class="clock outline icon"></i> ' . intval( $mo_interval ) . esc_html__( ' minutes', 'mainwp' );
+                        if ( ! $disabled ) {
+                            $mo_interval = MainWP_Uptime_Monitoring_Connect::get_apply_setting( 'interval', (int) $website['interval'], $this->global_settings, -1, 60 );
+                            echo '<i class="clock outline icon"></i> ' . ( -1 === (int) $mo_interval ? esc_html__( 'Use global setting', 'mainwp' ) : intval( $mo_interval ) . esc_html__( ' minutes', 'mainwp' ) );
+                        }
+                        ?>
+                    <?php elseif ( 'status_code' === $column_name ) : ?>
+                        <?php
+                        if ( ! $disabled ) {
+                            echo esc_html( $website['http_response_code'] );
+                        }
                         ?>
                     <?php elseif ( 'last24_status' === $column_name ) : ?>
-                        <?php $this->render_last24_uptime_status( $uptime_status, $last24_time ); ?>
+                        <?php
+                        if ( ! $disabled ) {
+                            $this->render_last24_uptime_status( $uptime_status, $last24_time );
+                        }
+                        ?>
                         <?php
                     elseif ( 'last_check' === $column_name ) :
-                        $this->column_last_check( $website );
+                        if ( ! $disabled ) {
+                            $this->column_last_check( $website );
+                        }
                         ?>
-                    <?php elseif ( 'site_health' === $column_name ) : ?>
+                        <?php
+                    elseif ( 'site_health' === $column_name ) :
+                        if ( ! $disabled ) :
+                            ?>
                         <span><a class="open_newwindow_wpadmin" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo esc_attr( base64_encode( 'site-health.php' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_attr( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><span class="ui <?php echo esc_html( $h_color ); ?> empty circular label"></span></a> <?php echo esc_html( $h_text ); ?></span>
-                    <?php elseif ( 'site_actions' === $column_name ) : ?>
+                            <?php
+                        endif;
+                    elseif ( 'site_actions' === $column_name ) :
+                        ?>
                         <div class="ui left pointing dropdown icon mini basic green button"  style="z-index:999;">
                             <i class="ellipsis horizontal icon"></i>
                             <div class="menu" siteid="<?php echo intval( $website['id'] ); ?>">
@@ -1443,12 +1511,18 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
     /**
      * Renders uptime status.
      *
-     * @param int $uptime_status uptime status.
-     * @param int $compatible_offline uptime status.
+     * @param int  $uptime_status uptime status.
+     * @param int  $compatible_offline uptime status.
+     * @param bool $mo_disabled Disabled monitor or not.
      *
      * @return void
      */
-    public function render_uptime_status( $uptime_status = false, $compatible_offline = false ) {
+    public function render_uptime_status( $uptime_status = false, $compatible_offline = false, $mo_disabled = false ) {
+
+        if ( $mo_disabled ) {
+            echo '<span class="ui big circular icon grey looping transition label"><i class="stop circle outline icon"></i></span>';
+            return;
+        }
 
         if ( false !== $compatible_offline ) {
             $uptime_status = 99; // pendding.

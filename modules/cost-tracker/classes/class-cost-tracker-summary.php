@@ -12,7 +12,7 @@ use MainWP\Dashboard\MainWP_UI;
 use MainWP\Dashboard\MainWP_Utility;
 
 /**
- * Class Log_Insights_Page
+ * Class class Cost_Tracker_Summary {
  *
  * @package MainWP\Dashboard
  */

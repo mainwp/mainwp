@@ -503,6 +503,31 @@ KEY idx_wpid (wpid)";
     }
 
     /**
+     * Get uptime monitor notifcation heartbeats to send.
+     *
+     * @param  int $mo_id Monitor id.
+     * @param  int $hb_timestamp Heartbeat init time.
+     *
+     * @return mixed result
+     */
+    public function get_monitor_notification_heartbeats_to_send( $mo_id, $hb_timestamp ) {
+
+        if ( empty( $hb_timestamp ) ) {
+            return false;
+        }
+
+        $hb_time = gmdate( 'Y-m-d H:i:S', $hb_timestamp );
+
+        $sql = $this->wpdb->prepare(
+            'SELECT he.* FROM ' . $this->table_name( 'monitor_heartbeat' ) . ' he ' .
+            ' WHERE he.monitor_id = %d AND he.status = 0 AND he.time >= "' . $this->escape( $hb_time ) . '" ' .
+            ' AND he.importance = 1 ',
+            $mo_id
+        );
+        return $this->wpdb->get_results( $sql );
+    }
+
+    /**
      * Update site monitor.
      *
      * @param array $data data.

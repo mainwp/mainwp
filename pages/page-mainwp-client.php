@@ -282,8 +282,12 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $iconfile_slug = isset( $_POST['iconFileSlug'] ) ? sanitize_text_field( wp_unslash( $_POST['iconFileSlug'] ) ) : '';
         $delete        = isset( $_POST['delete'] ) ? intval( $_POST['delete'] ) : 0;
         $client_id     = isset( $_POST['iconItemId'] ) ? intval( $_POST['iconItemId'] ) : 0;
+        $delnonce      = isset( $_POST['delnonce'] ) ? sanitize_key( $_POST['delnonce'] ) : '';
 
         if ( $delete ) {
+            if ( ! MainWP_System_Utility::is_valid_custom_nonce( 'client', $iconfile_slug, $delnonce ) ) {
+                die( 'Invalid nonce!' );
+            }
             if ( $client_id ) {
                 $client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id );
                 if ( $client && ! empty( $client->image ) ) {
@@ -314,10 +318,11 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             wp_die(
                 wp_json_encode(
                     array(
-                        'result'   => 'success',
-                        'iconfile' => esc_html( $uploaded_icon ),
-                        'iconsrc'  => esc_html( $icon_url ),
-                        'iconimg'  => '<img class="ui mini circular image" src="' . esc_attr( $icon_url ) . '" style="width:32px;height:auto;display:inline-block;" alt="Client custom icon">',
+                        'result'    => 'success',
+                        'iconfile'  => esc_html( $uploaded_icon ),
+                        'iconsrc'   => esc_html( $icon_url ),
+                        'iconimg'   => '<img class="ui mini circular image" src="' . esc_attr( $icon_url ) . '" style="width:32px;height:auto;display:inline-block;" alt="Client custom icon">',
+                        'iconnonce' => MainWP_System_Utility::get_custom_nonce( 'client', esc_html( $uploaded_icon ) ),
                     )
                 )
             );
@@ -336,8 +341,12 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $iconfile_slug = isset( $_POST['iconFileSlug'] ) ? sanitize_text_field( wp_unslash( $_POST['iconFileSlug'] ) ) : '';
         $delete        = isset( $_POST['delete'] ) ? intval( $_POST['delete'] ) : 0;
         $contact_id    = isset( $_POST['iconItemId'] ) ? intval( $_POST['iconItemId'] ) : 0;
+        $delnonce      = isset( $_POST['delnonce'] ) ? sanitize_key( $_POST['delnonce'] ) : '';
 
         if ( $delete ) {
+            if ( ! MainWP_System_Utility::is_valid_custom_nonce( 'contact', $iconfile_slug, $delnonce ) ) {
+                die( 'Invalid nonce!' );
+            }
             if ( $contact_id ) {
                 $contact_data = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'contact_id', $contact_id );
                 if ( $contact_data && ! empty( $contact_data->contact_image ) ) {
@@ -368,10 +377,11 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             wp_die(
                 wp_json_encode(
                     array(
-                        'result'   => 'success',
-                        'iconfile' => esc_html( $uploaded_icon ),
-                        'iconsrc'  => esc_html( $icon_url ),
-                        'iconimg'  => '<img class="ui mini circular image" src="' . esc_attr( $icon_url ) . '" style="width:32px;height:auto;display:inline-block;" alt="Client custom icon">',
+                        'result'    => 'success',
+                        'iconfile'  => esc_html( $uploaded_icon ),
+                        'iconsrc'   => esc_html( $icon_url ),
+                        'iconimg'   => '<img class="ui mini circular image" src="' . esc_attr( $icon_url ) . '" style="width:32px;height:auto;display:inline-block;" alt="Client custom icon">',
+                        'iconnonce' => MainWP_System_Utility::get_custom_nonce( 'contact', esc_html( $uploaded_icon ) ),
                     )
                 )
             );
@@ -1014,6 +1024,12 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $client_fields = array();
         }
 
+        $editing_client_id = isset( $client_fields['client_id'] ) ? intval( $client_fields['client_id'] ) : 0;
+
+        if ( ! empty( $editing_client_id ) && ! wp_verify_nonce( $_POST['nonce_client_id'], 'editing-client-' . $editing_client_id ) ) { //phpcs:ignore -- NOSONAR - ok.
+            die( 'Invalid nonce!' );
+        }
+
         if ( ! isset( $client_fields['default_field']['client.name'] ) || empty( $client_fields['default_field']['client.name'] ) ) {
             echo wp_json_encode( array( 'error' => esc_html__( 'Client name are empty. Please try again.', 'mainwp' ) ) );
             return;
@@ -1156,6 +1172,12 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 $contact_id = isset( $client_fields['contacts_field']['contact_id'][ $indx ] ) ? intval( $client_fields['contacts_field']['contact_id'][ $indx ] ) : 0;
 
                 if ( empty( $contact_id ) ) {
+                    continue;
+                }
+
+                $editing_contact_nonce_id = sanitize_key( $client_fields['contacts_field']['nonce_contact_id'][ $indx ] );
+
+                if ( ! wp_verify_nonce( $editing_contact_nonce_id, 'editing-' . $client_id . '-contact-' . $contact_id ) ) {
                     continue;
                 }
 
@@ -1358,8 +1380,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <?php endif; ?>
         </h3>
         <div class="ui form">
+            <input type="hidden" name="nonce_client_id" id="nonce_client_id" value="<?php echo esc_attr( wp_create_nonce( 'editing-client-' . $client_id ) ); ?>">
             <?php
-
             foreach ( $default_client_fields as $field_name => $field ) {
                 $db_field = isset( $field['db_field'] ) ? $field['db_field'] : '';
                 $val      = $edit_client && '' !== $db_field && property_exists( $edit_client, $db_field ) ? $edit_client->{$db_field} : '';
@@ -1426,12 +1448,13 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 <?php
                                 $indi_val = $client_image && $edit_client ? 1 : 0;
                                 MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $indi_val );
+                                $delnonce = MainWP_System_Utility::get_custom_nonce( 'client', esc_attr( $client_image ) );
                                 ?>
                                 <?php esc_html_e( 'Client photo', 'mainwp' ); ?>
                             </label>
                             <input type="hidden" name="mainwp_add_edit_client_uploaded_icon_hidden" class="settings-field-value-change-handler" id="mainwp_add_edit_client_uploaded_icon_hidden" value="<?php echo esc_attr( $client_image ); ?>">
                             <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Upload a client photo.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                                <div class="ui green button basic mainwp-add-edit-client-icon-customable" iconItemId="<?php echo intval( $client_id ); ?>" iconFileSlug="<?php echo esc_attr( $client_image ); ?>" icon-src="<?php echo esc_attr( $uploaded_icon_src ); ?>"><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
+                                <div class="ui green button basic mainwp-add-edit-client-icon-customable" iconItemId="<?php echo intval( $client_id ); ?>" iconFileSlug="<?php echo esc_attr( $client_image ); ?>" del-icon-nonce="<?php echo esc_attr( $delnonce ); ?>" icon-src="<?php echo esc_attr( $uploaded_icon_src ); ?>"><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
                                 <?php if ( ! empty( $client_image ) ) { ?>
                                     <?php echo MainWP_Client_Handler::get_client_contact_image( $icon_info_array, 'client', 'display_edit' ); //phpcs:ignore --ok. ?>
                                 <?php } else { ?>
@@ -1562,7 +1585,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
             if ( $client_id && $client_contacts ) {
                 foreach ( $client_contacts as $client_contact ) {
-                    static::get_add_contact_temp( $client_contact, true );
+                    static::get_add_contact_temp( $client_contact, true, $client_id );
                 }
             }
             ?>
@@ -1659,6 +1682,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                     let icon_src = typeof response.iconsrc !== undefined ? response.iconsrc : '';
                                     iconObj.attr('icon-src', icon_src);
                                     iconObj.attr('iconFileSlug', response.iconfile); // to support delete file when iconItemId = 0.
+                                    iconObj.attr('del-icon-nonce', response.iconnonce);
                                     jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', icon_src);
                                     jQuery('#mainwp_add_edit_client_upload_custom_icon').html(icon_img);
                                     jQuery('#mainwp_add_edit_client_upload_custom_icon').show();
@@ -1698,6 +1722,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                     let icon_src = typeof response.iconsrc !== undefined ? response.iconsrc : '';
                                     iconObj.attr('icon-src', icon_src);
                                     iconObj.attr('iconFileSlug', response.iconfile); // to support delete file when iconItemId = 0.
+                                    iconObj.attr('del-icon-nonce', response.iconnonce);
                                     jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', icon_src);
                                     jQuery(parent).find('.mainwp_add_edit_contact_upload_custom_icon').html(icon_img).show();
                                 }
@@ -1767,8 +1792,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @param mixed $edit_contact The contact data to edit.
      * @param bool  $echo_out Echo template or not.
+     * @param int   $client_id Client id.
      */
-    public static function get_add_contact_temp( $edit_contact = false, $echo_out = false ) { //phpcs:ignore -- NOSONAR - complex.
+    public static function get_add_contact_temp( $edit_contact = false, $echo_out = false, $client_id = 0 ) { //phpcs:ignore -- NOSONAR - complex.
 
         $input_name    = 'new_contacts_field';
         $contact_id    = 0;
@@ -1835,12 +1861,13 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 <?php
                                 $indi_val = $edit_contact && $contact_image ? 1 : 0;
                                 MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $indi_val );
+                                $delnonce = MainWP_System_Utility::get_custom_nonce( 'contact', esc_attr( $contact_image ) );
                                 ?>
                                 <?php esc_html_e( 'Contact photo', 'mainwp' ); ?>
                             </label>
                             <input type="hidden" name="mainwp_add_edit_contact_uploaded_icon_hidden[<?php echo esc_html( $input_name ); ?>][]" class="settings-field-value-change-handler mainwp_add_edit_contact_uploaded_icon_hidden" value="<?php echo esc_attr( $contact_image ); ?>">
                             <div class="three wide middle aligned column" data-tooltip="<?php esc_attr_e( 'Upload a contact photo.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                                <div class="ui green button basic mainwp-add-edit-contact-icon-customable" iconItemId="<?php echo intval( $contact_id ); ?>" iconFileSlug="<?php echo esc_attr( $contact_image ); ?>" icon-src="<?php echo esc_attr( $uploaded_icon_src ); ?>"><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
+                                <div class="ui green button basic mainwp-add-edit-contact-icon-customable" iconItemId="<?php echo intval( $contact_id ); ?>" iconFileSlug="<?php echo esc_attr( $contact_image ); ?>" del-icon-nonce="<?php echo esc_attr( $delnonce ); ?>" icon-src="<?php echo esc_attr( $uploaded_icon_src ); ?>"><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
                                 <?php
                                 if ( ! empty( $contact_image ) ) {
                                     ?>
@@ -1899,8 +1926,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         <?php
                         if ( $edit_contact ) {
                             ?>
-                        <input type="hidden" value="<?php echo intval( $edit_contact->contact_id ); ?>" name="client_fields[contacts_field][contact_id][]"/>
-                                <?php
+                            <input type="hidden" value="<?php echo intval( $edit_contact->contact_id ); ?>" name="client_fields[contacts_field][contact_id][]"/>
+                            <input type="hidden" value="<?php echo esc_attr( wp_create_nonce( 'editing-' . $client_id . '-contact-' . $edit_contact->contact_id ) ); ?>" name="client_fields[contacts_field][nonce_contact_id][]"/>
+                            <?php
                         }
                         ?>
                 </div>

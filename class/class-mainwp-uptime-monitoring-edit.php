@@ -299,6 +299,13 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
         } else {
             $disableGeneralSitesMonitoring = empty( $mo_settings['active'] ) ? true : false;
         }
+
+        $disabled_methods_individual = false;
+
+        if ( $individual && ( 'ping' === $mo_settings['type'] || 'keyword' === $mo_settings['type'] ) ) {
+            $disabled_methods_individual = true;
+        }
+
         ?>
         <?php
         if ( $individual ) {
@@ -416,7 +423,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 </div>
             </div>
 
-            <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-monitor-general" default-indi-value="<?php echo $individual ? 'useglobal' : 'get'; ?>" <?php echo $disableGeneralSitesMonitoring ? 'style="display:none"' : ''; ?> hide-element="uptime-monitoring">
+            <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-monitor-general" id="mainwp_edit_monitor_method_wrapper" default-indi-value="<?php echo $individual ? 'useglobal' : 'get'; ?>" <?php echo $disableGeneralSitesMonitoring || $disabled_methods_individual ? 'style="display:none"' : ''; ?> hide-element="uptime-monitoring">
                 <label class="six wide column middle aligned">
                 <?php
                 MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_edit_monitor_method', $mo_settings['method'], true, $individual ? 'useglobal' : 'get' );
@@ -632,6 +639,17 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                             }
                         });
                         jQuery('#mainwp_edit_monitor_timeout_slider').slider('set value', timeouts_values.indexOf(<?php echo intval( $mo_settings['timeout'] ); ?>));
+
+                        jQuery( document ).ready( function() {
+                            jQuery( '#mainwp_edit_monitor_type' ).on( 'change', function() {
+                                const val = jQuery(this).val();
+                                if( val === 'keyword' || val === 'ping' ){
+                                    jQuery( '#mainwp_edit_monitor_method_wrapper' ).hide();
+                                } else {
+                                    jQuery( '#mainwp_edit_monitor_method_wrapper' ).show();
+                                }
+                            } );
+                        } );
                 </script>
 
             <?php if ( $individual ) { ?>

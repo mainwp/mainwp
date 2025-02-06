@@ -50,6 +50,13 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
     public $primary_backup = null;
 
     /**
+     * Public variable.
+     *
+     * @var bool
+     */
+    public $site_health_disabled = false;
+
+    /**
      * MainWP_Manage_Sites_List_Table constructor.
      *
      * Run each time the class is called.
@@ -57,6 +64,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      */
     public function __construct() {
         add_action( 'mainwp_managesites_tabletop', array( &$this, 'generate_tabletop' ) );
+        $this->site_health_disabled = get_option( 'mainwp_disableSitesHealthMonitoring', 1 ) ? true : false;  // disabled by default.
     }
 
     /**
@@ -242,7 +250,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             unset( $sortable_columns['status_code'] );
         }
 
-        $sortable_columns = apply_filters( 'mainwp_sitestable_sortable_columns', $sortable_columns );
+        // disable this hook for sortable columns.
+        // $sortable_columns = apply_filters( 'mainwp_sitestable_sortable_columns', $sortable_columns ); //.
 
         return $sortable_columns;
     }
@@ -282,6 +291,11 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         if ( ! MainWP_Uptime_Monitoring_Edit::is_enable_global_monitoring() ) {
             unset( $columns['status_code'] );
         }
+
+        if ( $this->site_health_disabled ) {
+            unset( $columns['site_health'] );
+        }
+
         return $columns;
     }
 
@@ -1734,7 +1748,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                 <?php echo ! empty( $website['dtsSync'] ) ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['dtsSync'] ) ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                             <?php } elseif ( 'last_post' === $column_name ) { ?>
                                 <?php echo ! empty( $website['last_post_gmt'] ) ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['last_post_gmt'] ) ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>
-                            <?php } elseif ( 'site_health' === $column_name ) { ?>
+                            <?php } elseif ( ! $this->site_health_disabled && 'site_health' === $column_name ) { ?>
                                 <a class="open_newwindow_wpadmin" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo esc_attr( base64_encode( 'site-health.php' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><span class="ui <?php echo esc_attr( $h_color ); ?> empty circular label"></span></a> <?php echo esc_html( $h_text ); ?>
                                 <?php
                             } elseif ( 'status_code' === $column_name ) {

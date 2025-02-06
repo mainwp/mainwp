@@ -1280,7 +1280,7 @@ jQuery(document).on('click', '#updatesoverview-backup-ignore', function () {
 
 let updatesoverviewShowBusyFunction;
 let updatesoverviewShowBusyTimeout;
-mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNamesx) {
+mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNames) {
     if (mainwpParams['disable_checkBackupBeforeUpgrade']) {
         if (updatesoverviewContinueAfterBackup != undefined) {
             updatesoverviewContinueAfterBackup();

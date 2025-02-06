@@ -38,14 +38,9 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
         $url = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
         $url = urldecode( $url );
 
-        $invalid = false;
-        $info    = wp_parse_url( $url );
+        $is_valid = static::is_valid_wp_url( $url );
 
-        if ( is_array( $info ) && ! empty( $info['port'] ) && ( 21 === intval( $info['port'] ) || 22 === intval( $info['port'] ) ) ) { // port 21, 22.
-            $invalid = true;
-        }
-
-        if ( $invalid || ( 0 !== strpos( $url, 'http://' ) && 0 !== strpos( $url, 'https://' ) ) || false !== strpos( $url, '?=' ) ) { // to fix: valid url to check.
+        if ( ! $is_valid ) { // to fix: valid url to check.
             die( wp_json_encode( array( 'error' => esc_html__( 'Invalid URL! Please enter valid URL to the Site URL field.', 'mainwp' ) ) ) );
         }
 
@@ -99,6 +94,35 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
         die( wp_json_encode( $ret ) );
         // phpcs:enable
     }
+
+    /**
+     * Method is_valid_wp_url().
+     *
+     * @param string $url Site url.
+     *
+     * @return bool Valid or not.
+     */
+    public static function is_valid_wp_url( $url ) {
+
+        if ( empty( $url ) ) {
+            return false;
+        }
+
+        $valid = true;
+
+        $info = wp_parse_url( $url );
+
+        if ( is_array( $info ) && ! empty( $info['port'] ) && ( 21 === intval( $info['port'] ) || 22 === intval( $info['port'] ) ) ) { // port 21, 22.
+            $valid = false;
+        }
+
+        if ( $valid && ( ( 0 !== strpos( $url, 'http://' ) && 0 !== strpos( $url, 'https://' ) ) || false !== strpos( $url, '?=' ) ) ) { // to fix: valid url to check.
+            $valid = false;
+        }
+
+        return $valid;
+    }
+
 
     /**
      * Method reconnect_site()
@@ -159,27 +183,21 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
      * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::add_site()
      */
     public static function add_site() {
-        $ret        = array();
-        $error      = '';
-        $message    = '';
-        $site_id    = 0;
-        $output     = array();
-        $fetch_data = null;
+        $ret     = array();
+        $error   = '';
+        $message = '';
+        $site_id = 0;
+        $output  = array();
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_POST['managesites_add_wpurl'] ) && isset( $_POST['managesites_add_wpadmin'] ) ) {
             // Check if already in DB.
-            $website                                        = MainWP_DB::instance()->get_websites_by_url( sanitize_text_field( wp_unslash( $_POST['managesites_add_wpurl'] ) ) );
-            list( $message, $error, $site_id, $fetch_data ) = MainWP_Manage_Sites_View::add_site( $website, $output );
+            $website                           = MainWP_DB::instance()->get_websites_by_url( sanitize_text_field( wp_unslash( $_POST['managesites_add_wpurl'] ) ) );
+            list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::add_site( $website, $output );
         }
 
         $ret['add_me'] = ( isset( $_POST['add_me'] ) ? intval( $_POST['add_me'] ) : null );
         if ( '' !== $error ) {
-
-            if ( ! empty( $fetch_data ) ) {
-                $ret['resp_data'] = $fetch_data;
-            }
-
             $ret['response'] = 'ERROR ' . $error;
             die( wp_json_encode( $ret ) );
         }
@@ -188,8 +206,6 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
         if ( isset( $output['fetch_data'] ) ) {
             $ret['resp_data'] = $output['fetch_data'];
-        } elseif ( ! empty( $fetch_data ) ) { //phpcs:ignore -- to valid.
-            $ret['resp_data'] = $fetch_data;
         }
         // phpcs:enable
 

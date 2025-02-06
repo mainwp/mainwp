@@ -113,6 +113,7 @@ class MainWP_Uptime_Monitoring_Site_Widget {
 
         if ( $last ) {
             $data_stats['current_status'] = $last->status;
+            $data_stats['http_code']      = $last->http_code;
         }
 
         $data_stats['incidents_count'] = isset( $last_incidents_count['count'] ) ? $last_incidents_count['count'] : 'N/A';
@@ -290,7 +291,7 @@ class MainWP_Uptime_Monitoring_Site_Widget {
                             <span class="ui large text" id="mainwp-widget-uptime-current-status"></span>
                         </div>
                         <div class="description">
-                            <strong><?php esc_html_e( 'Current Status', 'mainwp' ); ?></strong>
+                            <strong><?php esc_html_e( 'Current Status', 'mainwp' ); ?> <span id="mainwp-widget-uptime-http-code"></span></strong>
                         </div>
                     </div>
                 </div>
@@ -389,9 +390,11 @@ class MainWP_Uptime_Monitoring_Site_Widget {
                             let resp_stats = response?.data_stats ?? {};
 
                             let curr_status = resp_stats?.current_status ??'';
+                            let curr_code = resp_stats?.http_code ??'';
+
 
                             if( resp_stats?.active_monitor == 0  ){
-                                curr_status = '<span class="ui gray text"><i class="circle outline gray icon"></i> ' + __('DISABLED') + '</span>'
+                                curr_status = '<span class="ui gray text"><i class="stop circle outline icon"></i> ' + __('DISABLED') + '</span>'
                             } else {
                                 if( curr_status === '1'){
                                     curr_status = ' <span class="ui big circular icon green looping pulsating transition label"><i class="chevron up icon"></i></span> ' + __('UP') + '</span>';
@@ -402,7 +405,12 @@ class MainWP_Uptime_Monitoring_Site_Widget {
                                 }
                             }
 
+                            if(curr_code !== '' ){
+                                curr_code = ' - ' + curr_code;
+                            }
+
                             jQuery('#mainwp-widget-uptime-current-status').html( curr_status );
+                            jQuery('#mainwp-widget-uptime-http-code').html( curr_code );
                             jQuery('#mainwp-widget-uptime-incidents-count').html( resp_stats?.incidents_count ?? 'N/A');
                             jQuery('#mainwp-widget-uptime-ratios-number').html( resp_stats?.ratios_number && '' !== resp_stats?.ratios_number ? Number(resp_stats.ratios_number * 100).toFixed(2) + '%'  : 'N/A');
 

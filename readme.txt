@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.7.1
 Requires PHP: 7.4
-Stable tag: 5.3.4
+Stable tag: 5.3.5
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -142,6 +142,17 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.3.5 - 2-6-2024 =
+
+* Security Enhancement: Implemented nonce verification in the icon deletion process.
+* Security Enhancement: Sanitized child site responses in the Test Connection and Add Site processes.
+* Fixed: Issue where the modal screen did not properly indicate that updates were completed.
+* Fixed: Several PHP warnings.
+* Added: Option to hide or show all items in the Site Hardening widget.
+* Added: HTTP status code display in the Uptime Monitoring widget.
+* Updated: Adjusted the position of the "Go to WP Admin" icon in the Update modal.
+* Updated:  Irrelevant options in Uptime Monitoring settings are now hidden when the monitor type is set to Ping or Keyword.
 
 = 5.3.4 - 12-27-2024 =
 

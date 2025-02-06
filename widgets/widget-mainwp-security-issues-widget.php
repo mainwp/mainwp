@@ -105,29 +105,44 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
                     <div id="widget-security-issues-dropdown-selector" class="ui dropdown top right tiny pointing not-auto-init mainwp-dropdown-tab">
                         <i class="vertical ellipsis icon"></i>
                         <div class="menu">
-                            <a href="javascript:void(0)" class="item"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+                            <a href="javascript:void(0)" class="item" data-value="show"><?php esc_html_e( 'Show All', 'mainwp' ); ?></a>
+                            <a href="javascript:void(0)" class="item" data-value="issues"><?php esc_html_e( 'Show Issues', 'mainwp' ); ?></a>
+                            <a href="javascript:void(0)" class="item" data-value="hide"><?php esc_html_e( 'Hide All', 'mainwp' ); ?></a>
                         </div>
                     </div>
                 </div>
             </div>
             <script type="text/javascript">
                 jQuery( document ).ready( function () {
+                    let curTab = mainwp_ui_state_load('security-widget-issues');
+                    curTab = ['hide', 'issues', 'show' ].includes(curTab) ? curTab : 'show';
+                    _showhide_issues(curTab);
                     let $issuesSelect = jQuery( '#widget-security-issues-dropdown-selector' ).dropdown( {
                         onChange: function( value ) {
                             mainwp_ui_state_save('security-widget-issues', value);
-                            if(value){
-                                jQuery('#mainwp-security-issues-widget-list').fadeIn(1000);
-                            } else {
-                                jQuery('#mainwp-security-issues-widget-list').hide();
-                            }
+                            _showhide_issues(value);
                         }
-                    } );
-                    let curTab = mainwp_ui_state_load('security-widget-issues');
-                    if(  curTab != '' && curTab != null ){
-                        $issuesSelect.dropdown( 'set selected', curTab );
+                    } ).dropdown("set selected", curTab);
+                    $issuesSelect.dropdown( 'set selected', curTab );
+                } );
+
+                const _showhide_issues = function(value){
+                    if('hide' === value ){
+                        jQuery('#mainwp-security-issues-widget-list').hide();
+                    } else {
                         jQuery('#mainwp-security-issues-widget-list').fadeIn(1000);
                     }
-                } );
+                    if('issues' === value){
+                        jQuery('#mainwp-security-issues-widget-list').fadeIn(1000);
+                        jQuery('#mainwp-security-issues-widget-list > .item').show();
+                        jQuery('#mainwp-security-issues-widget-list > .item[count-issues=0]').hide();
+                    } else if('show' === value){
+                        jQuery('#mainwp-security-issues-widget-list').fadeIn(1000);
+                        jQuery('#mainwp-security-issues-widget-list > .item').fadeIn(1000);
+                    } else  {
+                        jQuery('#mainwp-security-issues-widget-list').hide();
+                    }
+                }
             </script>
             <?php
             /**
@@ -139,7 +154,7 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
              */
             do_action( 'mainwp_security_issues_widget_top' );
             ?>
-            
+
         </div>
         <?php
         /**
@@ -183,7 +198,7 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
                         $count_security_issues = intval( $website->securityIssues );
                     }
                     ?>
-                    <div class="item" <?php echo '' !== $count_security_issues && $count_security_issues > 0 ? 'status="queue"' : ''; ?> siteid="<?php echo intval( $website->id ); ?>">
+                    <div class="item" count-issues="<?php echo (int) $count_security_issues; ?>" <?php echo '' !== $count_security_issues && $count_security_issues > 0 ? 'status="queue"' : ''; ?> siteid="<?php echo intval( $website->id ); ?>">
                         <div class="right floated">
                             <div class="ui right pointing dropdown icon mini basic green button">
                                 <i class="ellipsis horizontal icon"></i>

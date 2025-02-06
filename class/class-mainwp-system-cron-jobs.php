@@ -315,7 +315,6 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             }
             MainWP_Logger::instance()->log_update_check( 'updates check :: time to frequency run today :: next_time :: ' . gmdate( 'Y-m-d H:i:s', $next_time ) . ' :: local_timestamp :: ' . gmdate( 'Y-m-d H:i:s', $local_timestamp ) );
         } elseif ( $this->is_log_time() ) {
-            // do not logging much in short time.
             MainWP_Logger::instance()->log_update_check( 'updates check :: wait frequency today :: daily sync time  :: ' . gmdate( 'Y-m-d H:i:s', $run_timestamp ) . ' :: next_time :: ' . gmdate( 'Y-m-d H:i:s', $next_time ) . ' :: local_timestamp :: ' . gmdate( 'Y-m-d H:i:s', $local_timestamp ) );
         }
 
@@ -337,6 +336,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $this->last_auto_logging = get_option( 'mainwp_log_wait_lasttime', 0 ); // load last time logging.
         }
         $time = time();
+        // do not logging much in short time.
         if ( $this->last_auto_logging + 15 * MINUTE_IN_SECONDS < $time ) {
             MainWP_Utility::update_option( 'mainwp_log_wait_lasttime', $time ); //phpcs:ignore -- local time.
             return true;
@@ -547,7 +547,6 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             }
 
             if ( ! $run_auto_checks ) {
-                // do not logging much in short time.
                 if ( $this->is_log_time() ) {
                     MainWP_Logger::instance()->log_update_check( 'updates check :: wait frequency today :: [frequencyDailyUpdate=' . $frequencyDailyUpdate . '] :: [frequence=' . gmdate( 'H:i:s', $frequence_period_in_seconds ) . ']' );
                 }
@@ -1520,60 +1519,6 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
     }
 
     /**
-     * Method start notification uptime status.
-     *
-     * Prepare uptime status notification.
-     *
-     * @param bool $plain_text Text format value.
-     *
-     * @return bool True|False
-     *
-     * @uses \MainWP\Dashboard\MainWP_Logger::info()
-     * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::notice_sites_uptime_monitoring()
-     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_general_email_settings()
-     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_site_email_settings()
-     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_default_emails_fields()
-     */
-    public function start_notification_uptime_status( $plain_text ) {
-
-        $offlineSites = MainWP_Uptime_Monitoring_Handle::instance()->get_uptime_websites_monitors_offline_to_notice();
-        MainWP_Logger::instance()->info( 'Notice site http status :: found ' . ( $offlineSites ? count( $offlineSites ) : 0 ) );
-
-        if ( empty( $offlineSites ) ) {
-            return false;
-        }
-
-        $admin_email = MainWP_Notification_Settings::get_general_email();
-
-        // general uptime notification, to administrator.
-        $email_settings = MainWP_Notification_Settings::get_general_email_settings( 'uptime' );
-        if ( ! $email_settings['disable'] ) {
-            MainWP_Monitoring_Handler::notice_sites_uptime_monitoring( $offlineSites, $admin_email, $email_settings, $plain_text );
-        }
-
-        $individual_admin_uptimeSites = array();
-        // individual uptime notification.
-        foreach ( $offlineSites as $site ) {
-            $email_settings = MainWP_Notification_Settings::get_site_email_settings( 'uptime', $site );
-            if ( $email_settings['disable'] ) {
-                continue; // disabled send notification for this site.
-            }
-            $individual_admin_uptimeSites[] = $site;
-            MainWP_Monitoring_Handler::notice_sites_uptime_monitoring( array( $site ), $admin_email, $email_settings, $plain_text );
-        }
-
-        if ( ! empty( $individual_admin_uptimeSites ) ) {
-            $admin_email_settings               = MainWP_Notification_Settings::get_default_emails_fields( 'uptime', '', true ); // get default subject and heading only.
-            $admin_email_settings['disable']    = 0;
-            $admin_email_settings['recipients'] = ''; // sent to admin only.
-            // send to admin, all individual sites in one email.
-            MainWP_Monitoring_Handler::notice_sites_uptime_monitoring( $individual_admin_uptimeSites, $admin_email, $admin_email_settings, $plain_text, true );
-        }
-
-        return true;
-    }
-
-    /**
      * Method cron_check_websites_health()
      *
      * Cron job to check site health.
@@ -1677,106 +1622,120 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         if ( ! empty( $list_processes ) ) {
             $list_processes = json_decode( $list_processes, true );
-
+            // fix incorrect data.
             $fix_keys = array_keys( $list_processes );
             if ( isset( $fix_keys[0] ) && 0 === (int) $fix_keys[0] && isset( $fix_keys[1] ) && 1 === (int) $fix_keys[1] ) {
                 $list_processes = array();
-            }
-
-            // second check saved processes.
-            if ( is_array( $list_processes ) ) {
-                $valid_list = array();
-
-                foreach ( $list_processes as $name => $pro ) {
-                    if ( is_array( $pro ) && is_array( $pro['callback'] ) && ! empty( $pro['callback'][0] ) && ! empty( $pro['callback'][1] ) ) {
-                        $call_class  = $pro['callback'][0];
-                        $call_method = $pro['callback'][1];
-                        if ( is_string( $call_class ) && is_string( $call_method ) && class_exists( $call_class ) ) {
-                            $call_inst = new $call_class();
-                            if ( method_exists( $call_inst, $call_method ) ) {
-                                $valid_list[ $name ] = $pro;
-                            }
-                        }
-                    }
-                }
-
-                $count1 = count( $valid_list );
-                $count2 = count( $list_processes );
-
-                if ( $count1 !== $count2 ) {
-                    MainWP_Utility::update_option( 'mainwp_regular_sequence_process_saved', wp_json_encode( $valid_list ) );
-                    $list_processes = $valid_list;
-                }
+                MainWP_Utility::update_option( 'mainwp_regular_sequence_process_saved', wp_json_encode( $list_processes ) );
             }
         }
-
-        $current_pid = get_option( 'mainwp_regular_sequence_current_process_pid', array() );
 
         $register_process = is_array( $register_process ) ? $register_process : array();
         $list_processes   = is_array( $list_processes ) ? $list_processes : array();
 
-        $updated = false;
+        $reg_update = false;
 
-        foreach ( $register_process as $name => $info ) {
-            if ( ! is_array( $info ) || empty( $info ) || ! is_string( $name ) ) {
+        foreach ( $register_process as $name => $reg_process ) {
+
+            if ( ! is_array( $reg_process ) || empty( $reg_process ) || ! is_string( $name ) || empty( $name ) ) {
                 continue;
             }
 
+            $valid_process = false;
+
             if ( ! isset( $list_processes[ $name ] ) ) {
-                $list_processes[ $name ] = $info;
-                $updated                 = true;
+                $valid_process = $reg_process;
             } elseif ( is_array( $list_processes[ $name ] ) ) {
-                if ( $info !== $list_processes[ $name ] ) {
-                    $list_processes[ $name ] = $info;
-                    $updated                 = true;
+                if ( $reg_process !== $list_processes[ $name ] ) {
+                    $valid_process = $reg_process;
                 }
             }
 
-            if ( ! isset( $list_processes[ $name ]['priority'] ) ) {
-                $list_processes[ $name ]['priority'] = max( array_column( $list_processes, 'priority' ) ) + 1;
-                $updated                             = true;
+            if ( empty( $valid_process ) || empty( $this->is_process_callable( $valid_process ) ) ) {
+                continue;
+            }
+
+            if ( is_callable( $valid_process ) ) {
+                if ( ! isset( $valid_process['priority'] ) ) {
+                    $valid_process['priority'] = max( array_column( $valid_process, 'priority' ) ) + 1;
+                }
+                $list_processes[ $name ] = $valid_process;
+                $reg_update              = true;
             }
         }
 
-        if ( $updated ) {
-            MainWP_Logger::instance()->log_update_check( 'Update schedule' ); //phpcs:ignore -- ok.
-            MainWP_Utility::array_sort( $list_processes, 'priority' );
-            MainWP_Utility::update_option( 'mainwp_regular_sequence_process_saved', wp_json_encode( $list_processes ) );
+        $updated_list = false;
+        $valid_list   = array();
+        if ( $reg_update && ! empty( $list_processes ) ) {
+            foreach ( $list_processes as $name => $pro ) {
+                if ( ! empty( $this->is_process_callable( $pro ) ) ) {
+                    $valid_list[ $name ] = $pro;
+                    $updated_list        = true;
+                }
+            }
         }
 
-        $processes_list_value = array_values( $list_processes );
+        if ( $updated_list ) {
+            MainWP_Logger::instance()->log_custom_events( 'regular-schedule', 'Update scheduled processes.' );
+            MainWP_Utility::array_sort( $list_processes, 'priority' );
+            MainWP_Utility::update_option( 'mainwp_regular_sequence_process_saved', wp_json_encode( $valid_list ) );
+        }
 
-        $count = count( $processes_list_value );
+        $managed_processes = array_values( $list_processes );
+
+        $count = count( $managed_processes );
+
+        $current_pid = (int) get_option( 'mainwp_regular_sequence_current_process_pid', 0 );
 
         if ( $current_pid > $count ) {
             $current_pid = 0;
         }
 
-        $process = isset( $processes_list_value[ $current_pid ] ) ? $processes_list_value[ $current_pid ] : array();
+        $process = isset( $managed_processes[ $current_pid ] ) ? $managed_processes[ $current_pid ] : array();
 
-        if ( $this->is_log_time() ) {
-            MainWP_Logger::instance()->log_update_check( 'Run regular schedule: [current_pid=' . $current_pid . ' :: [total=' . $count . '] :: [process=' . ( is_array($process) ? print_r($process, true ): '' ) . ']' ); //phpcs:ignore -- ok.
-        }
+        MainWP_Logger::instance()->log_custom_events( 'regular-schedule', '[current_pid=' . $current_pid . ' :: [total=' . $count . '] :: [process=' . ( is_array($process) ? print_r($process, true ): '' ) . ']' ); //phpcs:ignore -- ok.
 
+        $performed = false;
         while ( $current_pid <= $count ) {
-            if ( is_array( $process ) && is_array( $process['callback'] ) && ! empty( $process['callback'][0] ) && ! empty( $process['callback'][1] ) ) {
-                $call_class  = $process['callback'][0];
-                $call_method = $process['callback'][1];
-                if ( is_string( $call_class ) && is_string( $call_method ) && class_exists( $call_class ) ) {
-                    $call_inst = new $call_class();
-                    if ( method_exists( $call_inst, $call_method ) ) {
-                        $call_inst->{$call_method}();
-                        if ( $this->is_log_time() ) {
-                            MainWP_Logger::instance()->log_update_check( 'Run process: [process=' . ( is_array($process) ? print_r($process, true ): '' ) . ']' ); //phpcs:ignore -- ok.
-                        }
-                    }
-                }
-                update_option( 'mainwp_regular_sequence_current_process_pid', $current_pid );
+            $callable = $this->is_process_callable( $process );
+            if ( ! empty( $callable ) && is_callable( $callable ) ) {
+                call_user_func( $callable );
+                $performed = true;
+                MainWP_Logger::instance()->log_custom_events( 'regular-schedule', 'Run process: [process=' . ( is_array($process) ? print_r($process, true ): '' ) . ']' ); //phpcs:ignore -- ok.
+            }
+            if ( $performed ) {
                 break;
             } else {
                 ++$current_pid;
-                $process = isset( $processes_list_value[ $current_pid ] ) ? $processes_list_value[ $current_pid ] : false;
+                $process = isset( $managed_processes[ $current_pid ] ) ? $managed_processes[ $current_pid ] : false;
             }
         }
+    }
+
+    /**
+     * Method is_process_callable().
+     *
+     * @param  array $process process.
+     * @return mixed false|string|array callable.
+     */
+    public function is_process_callable( $process ) { //phpcs:ignore -- NOSONAR - complex.
+        if ( is_array( $process ) && ! empty( $process['callback'] ) && is_array( $process['callback'] ) ) {
+            $class_name  = ! empty( $process['callback'][0] ) ? $process['callback'][0] : '';
+            $method_name = ! empty( $process['callback'][1] ) ? $process['callback'][1] : '';
+            if ( ! empty( $class_name ) && ! empty( $method_name ) ) {
+                if ( is_callable( $class_name . '::' . $method_name ) ) {
+                    return $class_name . '::' . $method_name;
+                } elseif ( class_exists( $class_name ) ) {
+                    $call_inst = new $class_name();
+                    $callback  = array( $call_inst, $method_name );
+                    if ( is_callable( $callback ) ) {
+                        return $callback;
+                    }
+                }
+            } elseif ( ! empty( $method_name ) && is_callable( $method_name ) ) {
+                return $method_name;
+            }
+        }
+        return false;
     }
 }

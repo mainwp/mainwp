@@ -1683,6 +1683,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             MainWP_Logger::UPDATE_CHECK_LOG_PRIORITY    => esc_html__( 'Update Checking', 'mainwp' ),
             MainWP_Logger::UPTIME_CHECK_LOG_PRIORITY    => esc_html__( 'Uptime monitoring', 'mainwp' ),
             MainWP_Logger::UPTIME_NOTICE_LOG_PRIORITY   => esc_html__( 'Uptime notification', 'mainwp' ),
+            MainWP_Logger::LOGS_REGULAR_SCHEDULE        => esc_html__( 'Regular Schedule', 'mainwp' ),
             MainWP_Logger::EXECUTION_TIME_LOG_PRIORITY  => esc_html__( 'Execution time', 'mainwp' ),
             MainWP_Logger::LOGS_AUTO_PURGE_LOG_PRIORITY => esc_html__( 'Logs Auto Purge', 'mainwp' ),
             MainWP_Logger::CONNECT_LOG_PRIORITY         => esc_html__( 'Dashboard Connect', 'mainwp' ),

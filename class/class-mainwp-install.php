@@ -25,7 +25,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.0.49'; // NOSONAR - no IP.
+    protected $mainwp_db_version = '9.0.0.50'; // NOSONAR - no IP.
 
     /**
      * Protected variable to hold the database option name.
@@ -405,6 +405,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     `process_slug` varchar(64) NOT NULL,
     `status` varchar(32) NOT NULL DEFAULT '',
     dts_process_start int(11) NOT NULL DEFAULT 0,
+    dts_process_init_time int(11) NOT NULL DEFAULT 0,
     dts_process_stop int(11) NOT NULL DEFAULT 0";
 
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.0.45', '<' ) ) { //phpcs:ignore -- NOSONAR - no ip.

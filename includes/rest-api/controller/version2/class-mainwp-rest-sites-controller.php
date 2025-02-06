@@ -2380,7 +2380,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
 
             $url     = $item['url'];
             $website = MainWP_DB::instance()->get_websites_by_url( $item['url'] );
-            list( $message, $error, $site_id, $data, $found_id ) = MainWP_Manage_Sites_View::add_wp_site( $website, $item );
+            list( $message, $error, $site_id, $found_id ) = MainWP_Manage_Sites_View::add_wp_site( $website, $item );
 
             if ( ! empty( $site_id ) ) {
                 $site                 = MainWP_DB::instance()->get_website_by_id( $site_id );

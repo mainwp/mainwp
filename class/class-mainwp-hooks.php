@@ -120,6 +120,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         add_action( 'mainwp_add_sub_leftmenu', array( &$this, 'hook_add_sub_left_menu' ), 10, 6 );
         add_filter( 'mainwp_getwebsiteoptions', array( &$this, 'hook_get_site_options' ), 10, 3 );
         add_filter( 'mainwp_updatewebsiteoptions', array( &$this, 'hook_update_site_options' ), 10, 4 );
+        add_filter( 'mainwp_deletewebsiteoptions', array( &$this, 'hook_delete_site_options' ), 10, 2 );
 
         add_filter( 'mainwp_getwebsitesbyuserid', array( &$this, 'hook_get_websites_by_user_id' ), 10, 5 );
         add_filter( 'mainwp_getwebsite_by_id', array( &$this, 'hook_get_website_by_id' ), 10, 4 );
@@ -753,6 +754,31 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         }
         return MainWP_DB::instance()->update_website_option( $website, $option, $value );
     }
+
+
+    /**
+     * Method hook_delete_site_options()
+     *
+     * Hook to remove Child site options.
+     *
+     * @since  5.4
+     * @param object $website Child site object.
+     * @param string $options Option name.
+     *
+     * @return string|null Database query result (as string), or null on failure
+     */
+    public function hook_delete_site_options( $website, $options ) {
+        if ( is_numeric( $website ) ) {
+            $obj     = new \stdClass();
+            $obj->id = intval( $website );
+            $website = $obj;
+        } elseif ( ! is_object( value: $website ) || ! property_exists( $website, 'id' ) ) {
+            return false;
+        }
+
+        return MainWP_DB::instance()->remove_website_option( $website, $options );
+    }
+
 
     /**
      * Get sites by user ID.

@@ -680,6 +680,7 @@ let mainwp_upload_custom_icon = function (iconObj) {
     formdata.append("slug", slug);
     formdata.append("delete", deleteIcon ? 1 : 0);
     formdata.append("security", security_nonces['mainwp_upload_custom_icon']);
+    formdata.append("delnonce", jQuery(iconObj).attr('del-icon-nonce'));
 
     jQuery.ajax({
         type: 'POST',
@@ -728,6 +729,8 @@ let mainwp_upload_custom_types_icon = function (iconObj, uploadAct, iconItemId, 
 
     let upload_act = typeof uploadAct !== "undefined" && '' != uploadAct ? uploadAct : 'mainwp_upload_custom_types_icon';
     let elemid = undefined !== jQuery(iconObj).attr('data-element-id') ? jQuery(iconObj).attr('data-element-id') : '';
+    let delNonce = undefined !== jQuery(iconObj).attr('del-icon-nonce') ? jQuery(iconObj).attr('del-icon-nonce') : '';
+
     //Add via ajax!!
     let formdata = new FormData(jQuery('#uploadicon_form')[0]);
     formdata.append("action", upload_act);
@@ -736,6 +739,8 @@ let mainwp_upload_custom_types_icon = function (iconObj, uploadAct, iconItemId, 
     formdata.append("delete", deleteIcon ? 1 : 0);
     formdata.append("security", security_nonces[upload_act]);
     formdata.append("elementid", elemid);
+    formdata.append("delnonce", delNonce);
+
     jQuery.ajax({
         type: 'POST',
         url: ajaxurl,

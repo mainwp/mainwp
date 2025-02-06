@@ -765,6 +765,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                             let icon_src = typeof response.iconsrc !== undefined ? response.iconsrc : '';
                                             iconObj.attr('icon-src', icon_src);
                                             iconObj.attr('iconFileSlug', response.iconfile); // to support delete file when iconItemId = 0.
+                                            iconObj.attr('del-icon-nonce', response.iconnonce);
                                             jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', icon_src);
                                             jQuery('#mainw_managesites_add_edit_site_upload_custom_icon').html(icon_img).show();
                                         }
@@ -927,7 +928,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <input type="hidden" name="mainwp_managesites_add_site_uploaded_icon_hidden" id="mainwp_managesites_add_site_uploaded_icon_hidden" value="">
 
                 <div class="three wide middle aligned column" data-tooltip="<?php esc_attr_e( 'Upload the site icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                    <div class="ui green button basic mainwp-managesites-add-site-icon-customable" iconItemId="" iconFileSlug="" icon-src="">
+                    <div class="ui green button basic mainwp-managesites-add-site-icon-customable" iconItemId="" iconFileSlug="" icon-src="" del-icon-nonce="">
                         <?php esc_html_e( 'Upload Icon', 'mainwp' ); ?>
                     </div>
                     <div style="display:inline-block;" id="mainw_managesites_add_edit_site_upload_custom_icon"></div>
@@ -1178,8 +1179,12 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $iconfile_slug = isset( $_POST['iconFileSlug'] ) ? sanitize_text_field( wp_unslash( $_POST['iconFileSlug'] ) ) : '';
         $delete        = isset( $_POST['delete'] ) ? intval( $_POST['delete'] ) : 0;
         $site_id       = isset( $_POST['iconItemId'] ) ? intval( $_POST['iconItemId'] ) : 0;
+        $delnonce      = isset( $_POST['delnonce'] ) ? sanitize_key( $_POST['delnonce'] ) : '';
 
         if ( $delete ) {
+            if ( ! MainWP_System_Utility::is_valid_custom_nonce( 'site', $iconfile_slug, $delnonce ) ) {
+                die( 'Invalid nonce!' );
+            }
             if ( $site_id ) {
                 $website = MainWP_DB::instance()->get_website_by_id( $site_id );
                 if ( $website && ! empty( $website->cust_site_icon_info ) ) {
@@ -1211,10 +1216,11 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             wp_die(
                 wp_json_encode(
                     array(
-                        'result'   => 'success',
-                        'iconfile' => esc_html( $uploaded_icon ),
-                        'iconsrc'  => esc_html( $icon_url ),
-                        'iconimg'  => '<img class="ui mini circular image" src="' . esc_attr( $icon_url ) . '" style="width:32px;height:auto;display:inline-block;" alt="Custom icon">',
+                        'result'    => 'success',
+                        'iconfile'  => esc_html( $uploaded_icon ),
+                        'iconsrc'   => esc_html( $icon_url ),
+                        'iconimg'   => '<img class="ui mini circular image" src="' . esc_attr( $icon_url ) . '" style="width:32px;height:auto;display:inline-block;" alt="Custom icon">',
+                        'iconnonce' => MainWP_System_Utility::get_custom_nonce( 'site', esc_html( $uploaded_icon ) ),
                     )
                 )
             );

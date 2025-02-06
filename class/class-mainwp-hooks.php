@@ -765,7 +765,6 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @param object $website Child site object.
      * @param string $options Option name.
      *
-     *
      * @return string|null Database query result (as string), or null on failure
      */
     public function hook_delete_site_options( $website, $options ) {

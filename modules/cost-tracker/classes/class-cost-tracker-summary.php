@@ -13,7 +13,6 @@ use MainWP\Dashboard\MainWP_Utility;
 
 /**
  * Class class Cost_Tracker_Summary {
-
  *
  * @package MainWP\Dashboard
  */

@@ -3348,9 +3348,6 @@ let updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteN
                 }
             }
         }
-        else {
-            updatesoverview_plugins_upgrade_all_update_site_status(pId, '<i class="green check icon"></i>');
-        }
 
         if (bulk_errors.length) {
             jQuery('.updatesoverview-upgrade-status-wp[siteid="' + pId + '"]').html('<span class="mainwp-html-popup" data-position="left center" data-html="">' + _icon + '</span>');
@@ -3359,8 +3356,10 @@ let updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteN
 
         mainwpPopup('#mainwp-sync-sites-modal').setProgressSite(1);
         if (!hasError) {
+            updatesoverview_plugins_upgrade_all_update_site_status(pId, '<i class="green check icon"></i>');
             setTimeout(function () {
                 mainwpPopup('#mainwp-sync-sites-modal').close();
+                window.location.href = location.href;
             }, 3000);
         }
     }, 'json');

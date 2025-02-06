@@ -147,7 +147,7 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 * Fixed: Resolved a syntax error caused by the incorrect use of a named argument, ensuring compatibility with PHP 7.x and earlier versions.
 
-= 5.3.5 - 2-6-2024 =
+= 5.3.5 - 2-6-2025 =
 
 * Security Enhancement: Implemented nonce verification in the icon deletion process.
 * Security Enhancement: Sanitized child site responses in the Test Connection and Add Site processes.

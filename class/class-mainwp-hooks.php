@@ -772,7 +772,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
             $obj     = new \stdClass();
             $obj->id = intval( $website );
             $website = $obj;
-        } elseif ( ! is_object( value: $website ) || ! property_exists( $website, 'id' ) ) {
+        } elseif ( ! is_object( $website ) || ! property_exists( $website, 'id' ) ) {
             return false;
         }
 

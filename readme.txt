@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.7.1
 Requires PHP: 7.4
-Stable tag: 5.3.5
+Stable tag: 5.3.5.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -142,6 +142,10 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.3.5.1 - 2-6-2025 =
+
+* Fixed: Resolved a syntax error caused by the incorrect use of a named argument, ensuring compatibility with PHP 7.x and earlier versions.
 
 = 5.3.5 - 2-6-2025 =
 

@@ -251,7 +251,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         }
 
         // disable this hook for sortable columns.
-        // $sortable_columns = apply_filters( 'mainwp_sitestable_sortable_columns', $sortable_columns );
+        // $sortable_columns = apply_filters( 'mainwp_sitestable_sortable_columns', $sortable_columns ); //.
 
         return $sortable_columns;
     }

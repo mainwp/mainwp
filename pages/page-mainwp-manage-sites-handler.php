@@ -116,7 +116,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             $valid = false;
         }
 
-        if ( $valid && ( 0 !== strpos( $url, 'http://' ) && 0 !== strpos( $url, 'https://' ) ) || false !== strpos( $url, '?=' ) ) { // to fix: valid url to check.
+        if ( $valid && ( ( 0 !== strpos( $url, 'http://' ) && 0 !== strpos( $url, 'https://' ) ) || false !== strpos( $url, '?=' ) ) ) { // to fix: valid url to check.
             $valid = false;
         }
 

@@ -311,7 +311,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
      * @uses \MainWP\Dashboard\MainWP_Notification::send_websites_uptime_monitoring()
      * @uses \MainWP\Dashboard\MainWP_Notification_Template::get_template_html()
      */
-    public static function send_uptime_notification_heartbeats_down_status( $uptime_notices, $admin_email, $email_settings, $plain_text, $to_admin = false ) {
+    public static function send_uptime_notification_heartbeats_down_status( $uptime_notices, $admin_email, $email_settings, $plain_text, $to_admin = false ) { //phpcs:ignore -- NOSONAR - complex.
         if ( is_array( $uptime_notices ) ) {
             foreach ( $uptime_notices as $notice ) {
                 $heartbeats_notices = array();

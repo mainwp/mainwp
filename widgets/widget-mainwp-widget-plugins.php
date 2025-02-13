@@ -190,7 +190,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         <div class="right floated pluginsAction">
                             <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
                                 <div class="ui right pointing dropdown icon mini button">
-                                    <i class="ellipsis horizontal icon"></i>
+                                    <i class="ellipsis vertical icon"></i>
                                     <div class="menu">
                                         <div class="mainwp-plugin-deactivate item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></div>
                                     </div>
@@ -249,7 +249,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
                         <div class="right floated content pluginsAction">
                             <div class="ui right pointing dropdown icon mini button">
-                                <i class="ellipsis horizontal icon"></i>
+                                <i class="ellipsis vertical icon"></i>
                                 <div class="menu">
                                 <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
                                     <a href="#" class="mainwp-plugin-activate item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Activate', 'mainwp' );// phpcs:ignore WordPress.Security.EscapeOutput ?></a>

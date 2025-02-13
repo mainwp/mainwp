@@ -912,8 +912,8 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                             break;
                         case 'actions':
                             ?>
-                            <div class="ui right pointing dropdown icon mini basic green button">
-                                <a href="javascript:void(0)" aria-label="<?php esc_attr_e( 'Actions menu', 'mainwp' ); ?>"><i class="ellipsis horizontal icon"></i></a>
+                            <div class="ui right pointing dropdown">
+                                <a href="javascript:void(0)" aria-label="<?php esc_attr_e( 'Actions menu', 'mainwp' ); ?>"><i class="ellipsis vertical icon"></i></a>
                                 <div class="menu">
                                     <a class="item" href="admin.php?page=CostTrackerAdd&id=<?php echo intval( $subscription->id ); ?>"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
                                     <?php if ( empty( $subscription->note ) ) : ?>

@@ -648,7 +648,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
                 if ( is_array( $wgids ) && is_array( $order ) ) {
                     foreach ( $wgids as $idx => $wgid ) {
                         if ( isset( $order[ $idx ] ) ) {
-                            $pre = 'widget-';
+                            $pre = 'widget-'; // #compatible-widgetid.
                             if ( 0 === strpos( $wgid, $pre ) ) {
                                 $wgid = substr( $wgid, strlen( $pre ) );
                             }
@@ -1425,9 +1425,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             wp_die( 'failed' );
         }
         $update = array(
-            'dismiss' => 1,
+            'state' => 9,
         );
-        MainWP_DB_Site_Actions::instance()->update_action_by_id( $action_id, $update );
+        MainWP_DB_Site_Actions::instance()->update_non_mainwp_action_by_id( $action_id, $update );
         wp_die( 'success' );
     }
 

@@ -365,6 +365,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         $screen = get_current_screen();
 
         MainWP_Demo_Handle::get_instance()->init_data_demo();
+        static::render_top_page();
         ?>
         <div class="mainwp-primary-content-wrap">
             <div class="ui segment" style="padding-top:0px;padding-bottom:0px;margin-bottom:0px;">
@@ -418,6 +419,23 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         <?php
         MainWP_UI::render_modal_upload_icon();
         MainWP_Updates::render_plugin_details_modal();
+    }
+
+    /**
+     * Render Overview Top.
+     *
+     */
+    public static function render_top_page() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
+        ?>
+        <div class="mainwp-sub-header">
+            <div class="ui stackable grid" id="mainwp-manage-widgets-layout-row">
+                <div class="twelve wide middle aligned column">
+                </div>
+                <?php MainWP_Ui_Manage_Widgets_Layout::render_edit_layout(); ?>
+            </div>
+        </div>
+        <?php
+        MainWP_Ui_Manage_Widgets_Layout::render_modal_save_layout();
     }
 
     /**

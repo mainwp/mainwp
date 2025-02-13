@@ -7,6 +7,9 @@
 
 namespace MainWP\Dashboard;
 
+use MainWP\Dashboard\Module\Log\Log_Record;
+use MainWP\Dashboard\Module\Log\Log_Author;
+
 /**
  * Class MainWP_Manage_Non_MainWP_Changes_List_Table
  *
@@ -275,11 +278,11 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
             'search'   => $search,
         );
 
-        $actions = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params );
+        $actions = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params, OBJECT, true );
 
         $params_total                = $params;
         $params_total['total_count'] = true;
-        $totalRecords                = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params_total );
+        $totalRecords                = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params_total, OBJECT, true);
 
         $this->items       = $actions;
         $this->total_items = $totalRecords;

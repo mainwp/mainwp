@@ -1257,13 +1257,22 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     continue;
                 }
 
-                if ( ! empty( $primaryBackup ) ) {
+                $backup_method = '';
+                if ( property_exists( $website, 'primary_backup_method' ) ) {
+                    if ( '' === $website->primary_backup_method || 'global' === $website->primary_backup_method ) {
+                        $backup_method = $primaryBackup;
+                    } else {
+                        $backup_method = $website->primary_backup_method;
+                    }
+                }
+
+                if ( ! empty( $backup_method ) ) {
                     $lastBackup = MainWP_DB::instance()->get_website_option( $website, 'primary_lasttime_backup' );
 
                     if ( -1 !== $lastBackup ) { // installed backup plugin.
                         $output['sites'][ $siteId ] = ( $lastBackup < ( time() - ( $mainwp_backup_before_upgrade_days * 24 * 60 * 60 ) ) ? false : true );
                     }
-                    $output['primary_backup'] = $primaryBackup;
+                    $output['primary_backup'] = $backup_method;
                 } else {
                     $dir = MainWP_System_Utility::get_mainwp_specific_dir( $siteId );
                     // Check if backup ok.

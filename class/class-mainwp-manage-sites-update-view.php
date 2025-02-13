@@ -103,7 +103,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
             static::render_themes_updates( $website, $active_tab, $userExtension );
 
             if ( $mainwp_show_language_updates ) :
-                static::render_language_updates( $website, $active_tab );
+                static::render_language_updates( $website, $active_tab, $userExtension );
             endif;
 
             static::render_abandoned_plugins( $website, $active_tab, $userExtension );
@@ -365,15 +365,15 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                                     if ( ! empty( $wp_upgrades ) ) :
                                         if ( '' !== $wpcore_update_disabled_by ) {
                                             ?>
-                                            <span data-tooltip="<?php echo esc_html( $wpcore_update_disabled_by ); ?>" data-inverted="" data-position="left center"><a href="javascript:void(0)" class="ui green button mini disabled"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a></span>
+                                            <span data-tooltip="<?php echo esc_html( $wpcore_update_disabled_by ); ?>" data-inverted="" data-position="left center"><a href="javascript:void(0)" class="ui green button mini disabled"><?php esc_html_e( 'Update', 'mainwp' ); ?></a></span>
                                             <?php
                                         } else {
                                             if ( $is_demo ) {
-                                                MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green button mini disabled" disabled="disabled">' . esc_html__( 'Update Now', 'mainwp' ) . '</a>' );
+                                                MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green button mini disabled" disabled="disabled">' . esc_html__( 'Update', 'mainwp' ) . '</a>' );
                                             } else {
                                                 ?>
                                                 <div class="ui mini buttons">
-                                                    <div class="ui button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></div>
+                                                    <div class="ui button"><?php esc_html_e( 'Ignore', 'mainwp' ); ?></div>
                                                     <div class="ui floating dropdown icon button">
                                                         <i class="dropdown icon"></i>
                                                         <div class="menu">
@@ -383,7 +383,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update', 'mainwp' ) . ' ' . esc_attr( $website->name ); ?>" data-inverted="" data-position="left center" class="ui green button mini" onClick="return updatesoverview_upgrade(<?php echo intval( $website->id ); ?>, this )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
+                                                <a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update', 'mainwp' ) . ' ' . esc_attr( $website->name ); ?>" data-inverted="" data-position="left center" class="ui green button mini" onClick="return updatesoverview_upgrade(<?php echo intval( $website->id ); ?>, this )"><?php esc_html_e( 'Update', 'mainwp' ); ?></a>
                                                 <?php
                                             }
                                             ?>
@@ -517,7 +517,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                             <td>
                                 <?php if ( $user_can_ignore_unignore ) : ?>
                                     <div class="ui mini buttons">
-                                        <div class="ui button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></div>
+                                        <div class="ui button"><?php esc_html_e( 'Ignore', 'mainwp' ); ?></div>
                                         <div class="ui floating dropdown icon button">
                                             <i class="dropdown icon"></i>
                                             <div class="menu">
@@ -532,10 +532,10 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                                 if ( $user_can_update_plugins ) :
                                     $is_demo = MainWP_Demo_Handle::is_demo_mode();
                                     if ( $is_demo ) {
-                                        MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button"  disabled="disabled">' . esc_html__( 'Update Now', 'mainwp' ) . '</a>' );
+                                        MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button"  disabled="disabled">' . esc_html__( 'Update', 'mainwp' ) . '</a>' );
                                     } else {
                                         ?>
-                                    <a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_plugin( <?php echo intval( $website->id ); ?>, '<?php echo esc_js( $plugin_name ); ?>' )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
+                                    <a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_plugin( <?php echo intval( $website->id ); ?>, '<?php echo esc_js( $plugin_name ); ?>' )"><?php esc_html_e( 'Update', 'mainwp' ); ?></a>
                                     <?php } ?>
                                 <?php endif; ?>
                             </td>
@@ -717,7 +717,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                                 <td>
                                     <?php if ( $user_can_ignore_unignore ) : ?>
                                         <div class="ui mini buttons">
-                                            <div class="ui button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></div>
+                                            <div class="ui button"><?php esc_html_e( 'Ignore', 'mainwp' ); ?></div>
                                             <div class="ui floating dropdown icon button">
                                                 <i class="dropdown icon"></i>
                                                 <div class="menu">
@@ -731,10 +731,10 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                                     <?php
                                     if ( $user_can_update_themes ) :
                                         if ( $is_demo ) {
-                                            MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button disabled" disabled="disabled">' . esc_html__( 'Update Now', 'mainwp' ) . '</a>' );
+                                            MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button disabled" disabled="disabled">' . esc_html__( 'Update', 'mainwp' ) . '</a>' );
                                         } else {
                                             ?>
-                                        <a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_theme( <?php echo intval( $website->id ); ?>, '<?php echo esc_js( $theme_name ); ?>' )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
+                                        <a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_theme( <?php echo intval( $website->id ); ?>, '<?php echo esc_js( $theme_name ); ?>' )"><?php esc_html_e( 'Update', 'mainwp' ); ?></a>
                                     <?php } ?>
                                     <?php endif; ?>
                                 </td>
@@ -759,10 +759,21 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      *
      * Render the Language Updates Tab.
      *
-     * @param mixed $website Child Site info.
-     * @param mixed $active_tab Current active tab.
+     * @param mixed  $website Child Site info.
+     * @param mixed  $active_tab Current active tab.
+     * @param object $userExtension User extension data.
      */
-    public static function render_language_updates( $website, $active_tab ) {
+    public static function render_language_updates( $website, $active_tab, $userExtension ) {
+        $trustedPlugins = ! empty( $userExtension->trusted_plugins ) ? json_decode( $userExtension->trusted_plugins, true ) : array();
+        if ( ! is_array( $trustedPlugins ) ) {
+            $trustedPlugins = array();
+        }
+
+        $trustedThemes = json_decode( $userExtension->trusted_themes, true );
+        if ( ! is_array( $trustedThemes ) ) {
+            $trustedThemes = array();
+        }
+
         $user_can_update_translation = \mainwp_current_user_can( 'dashboard', 'update_translations' );
         $is_demo                     = MainWP_Demo_Handle::is_demo_mode();
         ?>
@@ -772,6 +783,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                     <tr>
                         <th scope="col" ><?php esc_html_e( 'Translation', 'mainwp' ); ?></th>
                         <th scope="col" ><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+                        <th scope="col" ><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
                         <th scope="col" class="collapsing no-sort"></th>
                     </tr>
                 </thead>
@@ -790,14 +802,20 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                         <td>
                             <?php echo esc_html( $translation_upgrade['version'] ); ?>
                         </td>
+                        <td class="trans-trust-col">
+                        <?php
+                        $is_trust = static::is_trans_trusted_update( $translation_upgrade, $trustedPlugins, $trustedThemes );
+                        echo static::get_column_trusted($is_trust ); //phpcs:ignore -- NOSONAR - escaped.
+                        ?>
+                        </td>
                         <td>
                             <?php
                             if ( $user_can_update_translation ) {
                                 if ( $is_demo ) {
-                                    MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button disabled" disabled="disabled">' . esc_html__( 'Update Now', 'mainwp' ) . '</a>' );
+                                    MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button disabled" disabled="disabled">' . esc_html__( 'Update', 'mainwp' ) . '</a>' );
                                 } else {
                                     ?>
-                                <a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_translation( <?php echo intval( $website->id ); ?>, '<?php echo esc_js( $translation_slug ); ?>' )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
+                                <a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_translation( <?php echo intval( $website->id ); ?>, '<?php echo esc_js( $translation_slug ); ?>' )"><?php esc_html_e( 'Update', 'mainwp' ); ?></a>
                                 <?php } ?>
                             <?php } ?>
                         </td>
@@ -808,6 +826,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                     <tr>
                         <th scope="col" ><?php esc_html_e( 'Translation', 'mainwp' ); ?></th>
                         <th scope="col" ><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+                        <th scope="col" ><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
                         <th scope="col" class="collapsing no-sort"></th>
                     </tr>
                 </tfoot>
@@ -815,6 +834,45 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
         </div>
         <?php
     }
+
+
+    /**
+     * Get trusted column.
+     *
+     * @param mixed $value Value of column.
+     */
+    public static function get_column_trusted( $value ) {
+        if ( $value ) {
+            $label = '<span class="ui tiny basic green label mainwp-768-fluid">Trusted</span>';
+        } else {
+            $label = '<span class="ui tiny basic grey label mainwp-768-fluid">Not Trusted</span>';
+        }
+        return '<td class="mainwp-768-half-width-cell">' . $label . '</td>';
+    }
+
+    /**
+     * Check if trans is trusted update.
+     *
+     * @param string $tran_info Translation slug.
+     * @param array  $trusted_plugins Trusted update plugins.
+     */
+    public static function is_trans_trusted_update( $tran_info, $trusted_plugins, $trusted_themes ) {
+        if ( is_array( $tran_info ) && isset( $tran_info['type'] ) && isset( $tran_info['slug'] ) ) {
+            $tran_slug = $tran_info['slug'];
+            if ( 'plugin' === $tran_info['type'] && is_array( $trusted_plugins ) ) {
+                foreach ( $trusted_plugins as $slug ) {
+                    $_slug = explode( '/', $slug )[0];
+                    if ( $tran_slug === $_slug ) {
+                        return true;
+                    }
+                }
+            } elseif ( 'theme' === $tran_info['type'] && is_array( $trusted_themes ) && in_array( $tran_slug, $trusted_themes ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     /**
      * Method render_abandoned_plugins()

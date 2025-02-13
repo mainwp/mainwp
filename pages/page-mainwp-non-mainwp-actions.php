@@ -193,7 +193,7 @@ class MainWP_Non_MainWP_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSa
     public static function ajax_optimize_display_rows() {
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_non_mainwp_changes_display_rows' );
         $actionsTable = new MainWP_Manage_Non_MainWP_Changes_List_Table();
-        $actionsTable->prepare_items( true );
+        $actionsTable->prepare_items();
         $output = $actionsTable->ajax_get_datatable_rows();
         $actionsTable->clear_items();
         wp_send_json( $output );

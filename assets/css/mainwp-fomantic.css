@@ -264,8 +264,6 @@
 .mainwp-ui .left.action.input .mainwp-color-picker-input {
   min-height: 2.71428571em;
   padding: 5px !important;
-  border-radius: 0 10px 10px 0 !important;
-  -webkit-border-radius: 0 10px 10px 0 !important;
   max-width: 65px !important;
 }
 

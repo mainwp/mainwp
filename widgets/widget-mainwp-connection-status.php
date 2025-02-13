@@ -381,7 +381,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
         <div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( $website->name ) ); ?>">
             <div class="right floated content">
                 <div class="ui right pointing dropdown icon mini button">
-                    <i class="ellipsis horizontal icon"></i>
+                    <i class="ellipsis vertical icon"></i>
                     <div class="menu">
                     <?php if ( $is_demo ) : ?>
                         <a href="<?php echo esc_html( $website->url ) . 'wp-admin.html'; ?>" target="_blank" class="item"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
@@ -449,7 +449,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
         <div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( $website->name ) ); ?>">
             <div class="right floated content">
                 <div class="ui right pointing dropdown icon mini button">
-                    <i class="ellipsis horizontal icon"></i>
+                    <i class="ellipsis vertical icon"></i>
                     <div class="menu">
                     <?php if ( $is_demo ) : ?>
                         <a href="<?php echo esc_html( $website->url ) . 'wp-admin.html'; ?>" target="_blank" class="item"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
@@ -510,7 +510,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
         <div class="red item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( $website->name ) ); ?>">
             <div class="right floated content">
                 <div class="ui right pointing dropdown icon mini button">
-                    <i class="ellipsis horizontal icon"></i>
+                    <i class="ellipsis vertical icon"></i>
                     <div class="menu">
                     <?php if ( $is_demo ) : ?>
                         <a href="<?php echo esc_html( $website->url ) . 'wp-admin.html'; ?>" target="_blank" class="item"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>

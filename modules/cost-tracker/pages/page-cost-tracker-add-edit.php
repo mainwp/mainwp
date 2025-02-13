@@ -642,7 +642,7 @@ class Cost_Tracker_Add_Edit {
                         'result'    => 'success',
                         'iconfile'  => esc_html( $uploaded_icon ),
                         'iconsrc'   => esc_html( $cust_icon ),
-                        'iconimg'   => '<img class="ui mini circular image" src="' . esc_attr( $cust_icon ) . '" style="width:32px;height:auto;display:inline-block;" alt="Cost custom icon">',
+                        'iconimg'   => '<img class="ui circular image" src="' . esc_attr( $cust_icon ) . '" style="width:32px;height:auto;display:inline-block;" alt="Cost custom icon">',
                         'iconnonce' => MainWP_System_Utility::get_custom_nonce( 'product', esc_html( $uploaded_icon ) ),
                     )
                 )

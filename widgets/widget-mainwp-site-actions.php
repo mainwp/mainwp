@@ -9,6 +9,9 @@
 
 namespace MainWP\Dashboard;
 
+use MainWP\Dashboard\Module\Log\Log_Record;
+use MainWP\Dashboard\Module\Log\Log_Author;
+
 /**
  * Class MainWP_Site_Actions
  *
@@ -130,11 +133,17 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <div class="ui small feed" id="mainwp-non-mainwp-changes-feed">
                     <?php foreach ( $actions_info as $data ) : ?>
                         <?php
-                        if ( empty( $data->action_user ) || empty( $data->meta_data ) ) {
-                            continue;
-                        }
 
-                        $meta_data = json_decode( $data->meta_data );
+                        $record = new Log_Record( $data );
+                        $user   = new Log_Author( $record->user_id, $record->user_meta );
+
+                        $action_user = $user->get_display_name();
+
+                        $meta_data = ! empty( $data->extra_info ) ? json_decode( $data->extra_info, true ) : array();
+
+                        if ( ! is_array( $meta_data ) ) {
+                            $meta_data = array();
+                        }
 
                         $action_class = '';
                         if ( 'activated' === $data->action ) {
@@ -155,18 +164,18 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         </div>
                         <div class="content">
                             <div class="summary" style="font-weight:400">
-                                <a href="javascript:void(0)" class="mainwp-event-action-dismiss right floated" action-id="<?php echo intval( $data->action_id ); ?>"><i class="times icon"></i></a>
-                                <strong><?php echo esc_html( $data->action_user ); ?></strong>
-                                <?php echo esc_html( $data->action ); ?> <strong><?php echo isset( $meta_data->name ) && '' !== $meta_data->name ? esc_html( $meta_data->name ) : 'WP Core'; ?> <?php echo 'wordpress' !== $data->context ? esc_html( rtrim( $data->context, 's' ) ) : 'WordPress'; //phpcs:ignore -- text. ?></strong>
+                                <a href="javascript:void(0)" class="mainwp-event-action-dismiss right floated" action-id="<?php echo intval( $data->log_id ); ?>"><i class="times icon"></i></a>
+                                <strong><?php echo esc_html( $action_user ); ?></strong>
+                                <?php echo esc_html( $data->action ); ?> <strong><?php echo isset( $data->meta_name ) && !empty( $data->meta_name ) ? esc_html( $data->meta_name ) : 'WP Core'; ?> <?php echo 'wordpress' !== $data->context ? esc_html( rtrim( $data->context, 's' ) ) : 'WordPress'; //phpcs:ignore -- text. ?></strong>
                                 <?php if ( empty( $website ) || isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
-                                on <a href="admin.php?page=managesites&dashboard=<?php echo esc_attr( $data->wpid ); ?>"><?php echo esc_html( $data->name ); ?></a>
+                                on <a href="admin.php?page=managesites&dashboard=<?php echo esc_attr( $data->site_id ); ?>"><?php echo esc_html( $data->log_site_name ); ?></a>
                                 <?php endif; ?>
                                 <div class="date">
                                     <?php echo esc_html( MainWP_Utility::time_elapsed_string( $data->created ) ); ?>
                                 </div>
-                                
+
                             </div>
-                            
+
                         </div>
 
                     </div>
@@ -202,7 +211,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 </div>
                 <div class="right aligned middle aligned column">
                     <?php if ( $totalRecords ) : ?>
-                        <a href="admin.php?page=NonMainWPChanges"><?php printf( esc_html__( 'See all %d', 'mainwp' ), intval( $totalRecords ) ); ?></a>
+                        <a href="admin.php?page=InsightsManage"><?php printf( esc_html__( 'See all %d', 'mainwp' ), intval( $totalRecords ) ); ?></a>
                     <?php endif; ?>
                 </div>
             </div>

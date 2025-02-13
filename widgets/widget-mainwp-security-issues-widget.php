@@ -200,8 +200,8 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
                     ?>
                     <div class="item" count-issues="<?php echo (int) $count_security_issues; ?>" <?php echo '' !== $count_security_issues && $count_security_issues > 0 ? 'status="queue"' : ''; ?> siteid="<?php echo intval( $website->id ); ?>">
                         <div class="right floated">
-                            <div class="ui right pointing dropdown icon mini basic green button">
-                                <i class="ellipsis horizontal icon"></i>
+                            <div class="ui right pointing dropdown">
+                                <i class="ellipsis vertical icon"></i>
                                 <div class="menu">
                                     <a href="admin.php?page=managesites&scanid=<?php echo esc_attr( $website->id ); ?>" class="item"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
                                     <?php if ( empty( $count_security_issues ) ) { ?>

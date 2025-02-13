@@ -150,7 +150,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
                             <div class="right floated content themesAction">
                                 <div class="ui right pointing dropdown icon mini button">
-                                    <i class="ellipsis horizontal icon"></i>
+                                    <i class="ellipsis vertical icon"></i>
                                     <div class="menu">
                                         <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_themes' ) ) : ?>
                                             <a href="#" class="mainwp-theme-activate item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Activate', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>

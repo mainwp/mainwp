@@ -321,7 +321,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         'result'    => 'success',
                         'iconfile'  => esc_html( $uploaded_icon ),
                         'iconsrc'   => esc_html( $icon_url ),
-                        'iconimg'   => '<img class="ui mini circular image" src="' . esc_attr( $icon_url ) . '" style="width:32px;height:auto;display:inline-block;" alt="Client custom icon">',
+                        'iconimg'   => '<img class="ui circular image" src="' . esc_attr( $icon_url ) . '" style="width:28px;height:auto;display:inline-block;" alt="Client custom icon">',
                         'iconnonce' => MainWP_System_Utility::get_custom_nonce( 'client', esc_html( $uploaded_icon ) ),
                     )
                 )
@@ -380,7 +380,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         'result'    => 'success',
                         'iconfile'  => esc_html( $uploaded_icon ),
                         'iconsrc'   => esc_html( $icon_url ),
-                        'iconimg'   => '<img class="ui mini circular image" src="' . esc_attr( $icon_url ) . '" style="width:32px;height:auto;display:inline-block;" alt="Client custom icon">',
+                        'iconimg'   => '<img class="ui circular image" src="' . esc_attr( $icon_url ) . '" style="width:32px;height:auto;display:inline-block;" alt="Client custom icon">',
                         'iconnonce' => MainWP_System_Utility::get_custom_nonce( 'contact', esc_html( $uploaded_icon ) ),
                     )
                 )
@@ -937,8 +937,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                             <td class="field-name">[<?php echo esc_html( stripslashes( $field->field_name ) ); ?>]</td>
                             <td class="field-description"><?php echo esc_html( stripslashes( $field->field_desc ) ); ?></td>
                             <td>
-                                <div class="ui right pointing dropdown icon mini basic green button">
-                                    <i class="ellipsis horizontal icon"></i>
+                                <div class="ui right pointing dropdown">
+                                    <i class="ellipsis vertical icon"></i>
                                     <div class="menu">
                                         <a class="item" id="mainwp-clients-edit-custom-field" href="#"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
                                         <a class="item" id="mainwp-clients-delete-general-field" href="#"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
@@ -1566,8 +1566,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         </div>
                         <div class="ui four wide column">
                         <?php if ( $client_id > 0 && $field->client_id > 0 ) { // edit client and it is individual field, then show to edit/delete field buttons. ?>
-                            <div class="ui left pointing dropdown icon mini basic green button">
-                                <i class="ellipsis horizontal icon"></i>
+                            <div class="ui right pointing dropdown">
+                                <i class="ellipsis vertical icon"></i>
                                 <div class="menu">
                                     <a class="item" id="mainwp-clients-edit-custom-field" href="#"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
                                     <a class="item" client-id="<?php echo intval( $client_id ); ?>" id="mainwp-clients-delete-individual-field" href="#"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>

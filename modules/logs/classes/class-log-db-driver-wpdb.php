@@ -36,17 +36,27 @@ class Log_DB_Driver_WPDB implements Log_DB_Driver {
      */
     public $table_meta;
 
+
+    /**
+     * Hold wp table name
+     *
+     * @var string
+     */
+    public $table_wp;
+
     /**
      * Class constructor.
      */
     public function __construct() {
         global $wpdb;
-        $this->query      = new Log_Query( $this );
+        $this->query      = new Log_Query();
         $this->table      = MainWP_DB::instance()->get_table_name( 'wp_logs' );
         $this->table_meta = MainWP_DB::instance()->get_table_name( 'wp_logs_meta' );
+        $this->table_wp   = MainWP_DB::instance()->get_table_name( 'wp' );
 
         $wpdb->mainwp_tbl_logs      = $this->table;
         $wpdb->mainwp_tbl_logs_meta = $this->table_meta;
+        $wpdb->mainwp_tbl_wp        = $this->table_wp;
     }
 
     /**

@@ -215,7 +215,18 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
 
         $primaryBackup = MainWP_System_Utility::get_primary_backup();
 
-        if ( 'module-api-backups' !== $primaryBackup ) {
+        $website = Api_Backups_Helper::get_website_by_id( $site_id );
+
+        $backup_method = '';
+        if ( is_array( $website ) && isset( $website['primary_backup_method'] ) ) {
+            if ( '' === $website['primary_backup_method'] || 'global' === $website['primary_backup_method'] ) {
+                $backup_method = $primaryBackup;
+            } else {
+                $backup_method = $website['primary_backup_method'];
+            }
+        }
+
+        if ( 'module-api-backups' !== $backup_method ) {
             return;
         }
 

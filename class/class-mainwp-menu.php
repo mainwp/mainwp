@@ -1341,7 +1341,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         $level2_active = true;
                     }
 
-                    if ( ! $level2_active && ! isset( $_GET['do'] ) && 'NonMainWPChanges' !== $page_name && 'admin.php?page=managesites' === $href ) {
+                    if ( ! $level2_active && ! isset( $_GET['do'] ) && 'NonMainWPChanges' !== $page_name && 'InsightsManage' !== $page_name && 'admin.php?page=managesites' === $href ) {
                         $level2_active = true;
                     }
                 }

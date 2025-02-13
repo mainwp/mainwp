@@ -23,7 +23,7 @@ class Log_Install extends MainWP_Install {
      *
      * @var string DB version info.
      */
-    protected $log_db_version = '1.0.1.2'; // NOSONAR - no IP.
+    protected $log_db_version = '1.0.1.7'; // NOSONAR - no IP.
 
     /**
      * Protected variable to hold the database option name.
@@ -80,6 +80,7 @@ class Log_Install extends MainWP_Install {
         $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_logs' ) . " (
     log_id bigint(20) NOT NULL auto_increment,
     site_id bigint(20) unsigned NULL,
+    object_id varchar(20) NOT NULL DEFAULT '',
     item text NOT NULL,
     user_id int(11) unsigned NOT NULL DEFAULT '0',
     action varchar(100) NOT NULL,
@@ -128,12 +129,25 @@ class Log_Install extends MainWP_Install {
             error_reporting(0); // phpcs:ignore -- try to disabled the error_log somewhere in WP.
         }
 
-        $suppress = $wpdb->suppress_errors();
+        //$suppress = $wpdb->suppress_errors();
         foreach ( $sql as $query ) {
             dbDelta( $query );
         }
-        $wpdb->suppress_errors( $suppress );
+        //$wpdb->suppress_errors( $suppress );
 
         MainWP_Utility::update_option( $this->log_db_option_key, $this->log_db_version );
+
+        $this->update_log_db( $currentVersion );
+    }
+
+    /**
+     * Method update module log tables.
+     *
+     * @param string $currentVersion Current db version.
+     */
+    public function update_log_db( $currentVersion ) {
+        if ( version_compare( $currentVersion, '1.0.1.7', '<' ) ) {
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' ADD INDEX index_site_object_id (site_id, object_id)' );
+        }
     }
 }

@@ -270,8 +270,8 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <span class="ui small text"><?php echo esc_html( $recent_pages_published[ $i ]['dts'] ); ?></span>
                         </div>
                         <div class="two wide column right aligned">
-                            <div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
-                            <i class="ellipsis horizontal icon"></i>
+                            <div class="ui right pointing dropdown" style="z-index:999">
+                            <i class="ellipsis vertical icon"></i>
                                 <div class="menu">
                                     <a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-unpublish" href="#"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></a>
                                     <a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_pages_published[ $i ]['website']->id ); ?>&location=<?php echo esc_html( base64_encode( 'post.php?action=editpost&post=' . esc_attr( $recent_pages_published[ $i ]['id'] ) . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" title="Edit this post" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
@@ -363,8 +363,8 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <span class="ui small text"><?php echo esc_html( $recent_pages_draft[ $i ]['dts'] ); ?></span>
                         </div>
                         <div class="two wide column right aligned">
-                                <div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
-                                    <i class="ellipsis horizontal icon"></i>
+                                <div class="ui right pointing dropdown" style="z-index:999">
+                                    <i class="ellipsis vertical icon"></i>
                                     <div class="menu">
                                         <a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
                                         <a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $recent_pages_draft[ $i ]['website']->id ); ?>&location=<?php echo esc_html( base64_encode( 'post.php?action=editpost&post=' . $recent_pages_draft[ $i ]['id'] . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" title="Edit this post" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
@@ -454,8 +454,8 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <span class="ui small text"><?php echo esc_html( $recent_pages_pending[ $i ]['dts'] ); ?></span>
                         </div>
                         <div class="two wide column right aligned">
-                                <div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
-                                    <i class="ellipsis horizontal icon"></i>
+                                <div class="ui right pointing dropdown" style="z-index:999">
+                                    <i class="ellipsis vertical icon"></i>
                                     <div class="menu">
                                         <a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
                                         <a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $recent_pages_pending[ $i ]['website']->id ); ?>&location=<?php echo esc_html( base64_encode( 'post.php?action=editpost&post=' . $recent_pages_pending[ $i ]['id'] . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" title="Edit this post" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
@@ -546,8 +546,8 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <span class="ui small text"><?php echo esc_html( $recent_pages_future[ $i ]['dts'] ); ?></span>
                     </div>
                     <div class="two wide column right aligned">
-                        <div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
-                            <i class="ellipsis horizontal icon"></i>
+                        <div class="ui right pointing dropdown" style="z-index:999">
+                            <i class="ellipsis vertical icon"></i>
                             <div class="menu">
                                 <a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
                                 <a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_pages_future[ $i ]['website']->id ); ?>&location=<?php echo esc_html( base64_encode( 'post.php?action=editpost&post=' . $recent_pages_future[ $i ]['id'] . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" title="Edit this post" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
@@ -639,8 +639,8 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <span class="ui small text"><?php echo esc_html( $recent_pages_trash[ $i ]['dts'] ); ?></span>
                         </div>
                         <div class="two wide column right aligned">
-                            <div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
-                                <i class="ellipsis horizontal icon"></i>
+                            <div class="ui right pointing dropdown" style="z-index:999">
+                                <i class="ellipsis vertical icon"></i>
                                 <div class="menu">
                                     <a href="#" class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-restore"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
                                     <a href="#" class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-delete"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></a>

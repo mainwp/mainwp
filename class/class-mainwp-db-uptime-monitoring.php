@@ -520,8 +520,8 @@ KEY idx_wpid (wpid)";
 
         $sql = $this->wpdb->prepare(
             'SELECT he.* FROM ' . $this->table_name( 'monitor_heartbeat' ) . ' he ' .
-            ' WHERE he.monitor_id = %d AND he.status = 0 AND he.time >= "' . $this->escape( $hb_time ) . '" ' .
-            ' AND he.importance = 1 ',
+            ' WHERE he.monitor_id = %d AND ( he.status = 0 OR he.status = 1 ) AND he.time >= "' . $this->escape( $hb_time ) . '" ' .
+            ' AND he.importance = 1 ORDER BY he.heartbeat_id ASC ',
             $mo_id
         );
         return $this->wpdb->get_results( $sql );

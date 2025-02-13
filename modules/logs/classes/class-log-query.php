@@ -32,16 +32,24 @@ class Log_Query {
     public function query( $args ) { //phpcs:ignore -- NOSONAR - complex method.
         global $wpdb;
 
+        // To support none mainwp actions.
+        $log_id       = isset( $args['log_id'] ) ? intval( $args['log_id'] ) : 0;
+        $site_id      = isset( $args['wpid'] ) ? $args['wpid'] : 0;
+        $object_id    = isset( $args['object_id'] ) ? sanitize_text_field( $args['object_id'] ) : '';
+        $where_extra  = ''; // compatible.
+        $check_access = isset( $args['check_access'] ) ? $args['check_access'] : true;
+        $dism         = ! empty( $params['dismiss'] ) ? 1 : 0;
+
         $join  = '';
         $where = '';
 
-        if ( ! empty( $args['search'] ) ) {
-            $field = ! empty( $args['search_field'] ) ? $args['search_field'] : 'item';
+        $count_only = ! empty( $args['count_only'] ) ? true : false;
 
-            // Sanitize field.
-            $allowed_fields = array( 'log_id', 'site_id', 'user_id', 'created', 'item', 'connector', 'context', 'action' );
-            if ( in_array( $field, $allowed_fields, true ) ) {
-                $where .= $wpdb->prepare( " AND lg.{$field} LIKE %s", "%{$args['search']}%" ); // @codingStandardsIgnoreLine can't prepare column name
+        if ( ! empty( $args['search'] ) ) {
+            $search_str = MainWP_DB::instance()->escape( $args['search'] );
+            // for searching.
+            if ( ! empty( $search_str ) ) {
+                $where .= ' AND (lg.item LIKE "%' . $search_str . '%" OR lg.action LIKE  "%' . $search_str . '%" OR lg.context LIKE  "%' . $search_str . '%" ) ';
             }
         }
 
@@ -109,11 +117,15 @@ class Log_Query {
             $limits = "LIMIT {$start}, {$per_page}";
         }
 
-        $limits_recent_count = '';
-
         // list recent events.
         if ( ! empty( $args['recent_number'] ) ) {
-            $limits_recent_count = ' LIMIT ' . intval( $args['recent_number'] );
+            $limits = ' LIMIT ' . intval( $args['recent_number'] );
+        }
+
+        // Show the recent records first by default.
+        $order = 'DESC';
+        if ( 'ASC' === strtoupper( $args['order'] ) ) {
+            $order = 'ASC';
         }
 
         /**
@@ -132,23 +144,68 @@ class Log_Query {
             }
         }
 
-        // Show the recent records first by default.
-        $order = 'DESC';
-        if ( 'ASC' === strtoupper( $args['order'] ) ) {
-            $order = 'ASC';
+        if ( 'source' === $args['orderby'] ) {
+            $orderby = " ORDER BY
+            CASE
+            WHEN connector = 'non-mainwp-changes' THEN 1
+            ELSE 2
+            END " . $order;
+        } else {
+            $orderby = sprintf( 'ORDER BY %s %s', $orderby, $order );
         }
 
-        $orderby = sprintf( 'ORDER BY %s %s', $orderby, $order );
+        $where_actions = '';
+
+        if ( ! empty( $log_id ) ) {
+            $where_actions .= ' AND lg.log_id = ' . $log_id;
+        } else {
+            $sql_and = '';
+            if ( ! empty( $site_id ) ) {
+                if ( is_array( $site_id ) ) {
+                    $site_ids = array_map( 'intval', $site_id );
+                    $site_ids = array_filter( $site_ids );
+                    if ( ! empty( $site_ids ) ) {
+                        $site_ids       = implode( ',', $site_ids );
+                        $sql_and        = ' AND ';
+                        $where_actions .= $sql_and . ' lg.site_id IN ( ' . $site_ids . ' )';
+                    }
+                } elseif ( is_numeric( $site_id ) ) {
+                    $sql_and        = ' AND ';
+                    $where_actions .= $sql_and . ' lg.site_id = ' . intval( $site_id );
+                }
+            }
+            if ( ! empty( $object_id ) ) {
+                if ( empty( $sql_and ) ) {
+                    $sql_and = ' AND ';
+                }
+                $where_actions .= $sql_and . ' lg.object_id = "' . $object_id . '" ';
+            }
+        }
+
+        if ( $check_access ) {
+            $where_actions .= MainWP_DB::instance()->get_sql_where_allow_access_sites( 'wp' );
+        }
+
+        $where_dismiss = ! empty( $params['dismiss'] ) ? ' AND state = 9 ' : ' AND state != 9 ';
+
+        $where .= $where_actions . $where_extra . $where_dismiss;
+
+        if ( ! empty( $args['nonemainwp'] ) ) {
+            $where .= ' AND lg.connector = "non-mainwp-changes" ';
+        }
 
         /**
          * PARSE FIELDS PARAMETER
          */
         $selects   = array();
         $selects[] = 'lg.*';
+        $selects[] = 'wp.url as url';
+        $selects[] = 'wp.name as log_site_name';
         $selects[] = 'meta_view.*';
         $select    = implode( ', ', $selects );
 
-        $join = ' LEFT JOIN ' . $this->get_log_meta_view() . ' meta_view ON lg.log_id = meta_view.view_log_id ';
+        $join  = ' LEFT JOIN ' . $wpdb->mainwp_tbl_wp . ' wp ON lg.site_id = wp.id ';
+        $join .= ' LEFT JOIN ' . $this->get_log_meta_view() . ' meta_view ON lg.log_id = meta_view.view_log_id ';
 
         /**
          * BUILD THE FINAL QUERY
@@ -165,7 +222,13 @@ class Log_Query {
         FROM $wpdb->mainwp_tbl_logs as lg
         {$join}
         WHERE `lg`.`connector` != 'compact' {$where}
-        {$limits_recent_count}";
+        {$limits}";
+
+        if ( $count_only ) {
+            return array(
+                'count' => absint( $wpdb->get_var( $count_query ) ),
+            ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        }
 
         //phpcs:ignore Squiz.PHP.CommentedOutCode.Found
         // error_log( print_r( $args, true ) );//.
@@ -192,9 +255,10 @@ class Log_Query {
      */
     public function get_log_meta_view() {
         global $wpdb;
-        $view  = '(SELECT intlog.log_id AS view_log_id ';
-        $view .= ',(SELECT site_name.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' site_name WHERE  site_name.meta_log_id = intlog.log_id AND site_name.meta_key = "site_name" LIMIT 1) AS log_site_name,
-        (SELECT siteurl.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' siteurl WHERE  siteurl.meta_log_id = intlog.log_id AND siteurl.meta_key = "siteurl" LIMIT 1) AS url,';
+        $view  = '(SELECT intlog.log_id AS view_log_id, ';
+        $view .= '(SELECT meta_name.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' meta_name WHERE  meta_name.meta_log_id = intlog.log_id AND meta_name.meta_key = "name" LIMIT 1) AS meta_name, ';
+        $view .= '(SELECT user_meta_json.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' user_meta_json WHERE  user_meta_json.meta_log_id = intlog.log_id AND user_meta_json.meta_key = "user_meta_json" LIMIT 1) AS user_meta_json, ';
+        $view .= '(SELECT usermeta.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' usermeta WHERE  usermeta.meta_log_id = intlog.log_id AND usermeta.meta_key = "user_meta" LIMIT 1) AS usermeta, '; // compatible.
         $view .= '(SELECT extra_info.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' extra_info WHERE  extra_info.meta_log_id = intlog.log_id AND extra_info.meta_key = "extra_info" LIMIT 1) AS extra_info ';
         $view .= ' FROM ' . $wpdb->mainwp_tbl_logs . ' intlog)';
         return $view;

@@ -628,8 +628,8 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                 // @NO_SONAR_START@ - duplicated issue.
                 ?>
                     <td class="collapsing not-selectable">
-                        <div class="ui right pointing dropdown icon mini basic green button" style="z-index: 99;">
-                            <i class="ellipsis horizontal icon"></i>
+                        <div class="ui right pointing dropdown" style="z-index: 99;">
+                            <i class="ellipsis vertical icon"></i>
                             <div class="menu" siteid="<?php echo intval( $website['id'] ); ?>">
                     <?php if ( '' !== $website['sync_errors'] ) : ?>
                             <a class="mainwp_site_reconnect item" href="#"><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>

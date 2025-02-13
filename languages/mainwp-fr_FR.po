@@ -3785,8 +3785,8 @@ msgstr "Nouvelle version"
 #: pages/page-mainwp-updates-per-site.php:604
 #: pages/page-mainwp-updates-per-site.php:744
 #: pages/page-mainwp-updates-per-site.php:747
-msgid "Update Now"
-msgstr "Mettre à jour maintenant"
+msgid "Update"
+msgstr "Mettre à jour"
 
 #: class/class-mainwp-manage-sites-update-view.php:376
 #: class/class-mainwp-manage-sites-update-view.php:520
@@ -3799,8 +3799,8 @@ msgstr "Mettre à jour maintenant"
 #: pages/page-mainwp-updates-per-site.php:138
 #: pages/page-mainwp-updates-per-site.php:361
 #: pages/page-mainwp-updates-per-site.php:587
-msgid "Ignore Update"
-msgstr "Ignorer les mises à jour"
+msgid "Ignore"
+msgstr "Ignorer"
 
 #: class/class-mainwp-manage-sites-update-view.php:380
 #: class/class-mainwp-manage-sites-update-view.php:524

@@ -267,7 +267,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
         if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
             MainWP_Menu::add_left_menu(
                 array(
-                    'title'      => esc_html__( 'Extensions', 'mainwp' ),
+                    'title'      => esc_html__( 'Add-ons', 'mainwp' ),
                     'parent_key' => 'mainwp_tab',
                     'slug'       => 'Extensions',
                     'href'       => 'admin.php?page=Extensions',
@@ -278,7 +278,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
 
             $init_sub_subleftmenu = array(
                 array(
-                    'title'      => esc_html__( 'Manage Extensions', 'mainwp' ),
+                    'title'      => esc_html__( 'Manage Add-ons', 'mainwp' ),
                     'parent_key' => 'Extensions',
                     'href'       => 'admin.php?page=Extensions',
                     'slug'       => 'Extensions',
@@ -666,7 +666,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             }
 
             $html .= '<div class="ui tab" data-tab="search">';
-            $html .= '<h3>Search Extensions</h3>';
+            $html .= '<h3>Search Add-ons</h3>';
             $html .= '<div id="mainwp-search-extensions-install" class="ui fluid search">
                         <div class="ui icon fluid input">
                             <input class="prompt" id="mainwp-search-extensions-install-input" type="text" placeholder="Find extension...">
@@ -781,7 +781,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
     public static function render() {
 
         $params = array(
-            'title' => esc_html__( 'Extensions', 'mainwp' ),
+            'title' => esc_html__( 'Add-ons', 'mainwp' ),
         );
         MainWP_UI::render_top_header( $params );
 
@@ -797,7 +797,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
     public static function mainwp_help_content() {
         if ( isset( $_GET['page'] ) && 'Extensions' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             ?>
-            <p><?php esc_html_e( 'If you need help with your MainWP Extensions, please review following help documents', 'mainwp' ); ?></p>
+            <p><?php esc_html_e( 'If you need help with your MainWP Add-ons, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui list">
                 <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-extensions/" target="_blank"><i class="fa fa-book"></i> What are the MainWP Extensions</a></div> <?php // NOSONAR - noopener - open safe. ?>
                 <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-extensions/#order-extensions" target="_blank"><i class="fa fa-book"></i> Order Extension(s)</a></div> <?php // NOSONAR - noopener - open safe. ?>

@@ -1,3 +1,8 @@
+.mainwp-show-all-updates-button,
+table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
+    display: none !important;
+}
+
 /* Genaral Style */
 
 .mainwp-main-content {
@@ -133,7 +138,7 @@
 .mainwp-ui.mainwp-custom-theme #mainwp-top-header .ui.icon.button:not(.red, .green) {
     background: #1c1d1b !important;
     color: #ffffff !important;
-  }
+}
 
 #mainwp-top-header .ui.menu {
     box-shadow: none;
@@ -152,7 +157,7 @@
 
 .mainwp-sub-header,
 .mainwp-actions-bar {
-    padding: 10px 1em;
+
     background: #f9fafb;
     border-bottom: 1px solid #dadada;
 }
@@ -201,7 +206,7 @@
     float: right;
 }
 
-.mainwp-individual-site-view .mainwp-content-wrap > .ui.message {
+.mainwp-individual-site-view .mainwp-content-wrap>.ui.message {
     width: calc(100% - 170px);
     float: right;
 }
@@ -212,8 +217,8 @@
     border-radius: 0px !important;
     background: #3E3F3D !important;
     box-shadow: 20px 0px 20px -18px rgba(0, 0, 0, 0.15) inset !important;
-  -webkit-box-shadow: 20px 0px 20px -18px rgba(0, 0, 0, 0.15) inset !important;
-  -moz-box-shadow: 20px 0px 20px -18px rgba(0, 0, 0, 0.15) inset !important;
+    -webkit-box-shadow: 20px 0px 20px -18px rgba(0, 0, 0, 0.15) inset !important;
+    -moz-box-shadow: 20px 0px 20px -18px rgba(0, 0, 0, 0.15) inset !important;
 }
 
 
@@ -221,6 +226,7 @@
 .mainwp-ui .ui.pagination.menu .item::before {
     width: 0px;
 }
+
 .mainwp-ui .ui.pagination.menu .item {
     padding: 0;
     border: none;
@@ -234,6 +240,7 @@
     padding: 0;
     border-radius: 0;
 }
+
 .mainwp-ui .ui.pagination.menu .item:hover .page-link,
 .mainwp-ui .ui.pagination.menu .item.active .page-link {
     color: #ffffff;
@@ -467,7 +474,7 @@
 }
 
 .mainwp-widget .mainwp-scrolly-overflow {
-    flex-grow:1;
+    flex-grow: 1;
     overflow-x: hidden;
     overflow-y: auto;
 }
@@ -509,7 +516,7 @@
 
 /* Forms - Import Sites */
 .mainwp-managesites-import-rows:nth-of-type(odd) {
-    background-color: rgba(0,0,0,.04);
+    background-color: rgba(0, 0, 0, .04);
 }
 
 
@@ -596,8 +603,8 @@
     background-color: #fff;
 }
 
-.mainwp-ui table.dataTable > tbody > tr.selected > * {
-    box-shadow: inset 0 0 0 9999px rgba( 0,0,0,.03) !important;
+.mainwp-ui table.dataTable>tbody>tr.selected>* {
+    box-shadow: inset 0 0 0 9999px rgba(0, 0, 0, .03) !important;
 }
 
 /* Manage Sites Table */
@@ -965,6 +972,12 @@ table.mainwp-manage-wpsites-table .error a {
     color: #7fb100;
 }
 
+.mainwp-ui .notice.notice-info,
+.mainwp-ui .notice.notice-success,
+.mainwp-ui .notice.notice-error,
+.mainwp-ui .notice.notice-warning {
+    display: none;
+}
 
 
 
@@ -1291,10 +1304,12 @@ th .down.icon {
 .mainwp-default-theme #mainwp-first-level-navigation-menu #leftbar-item-quick-setup span {
     color: var(--grey-dark) !important;
 }
-.mainwp-ui tr.selected.none-selected-color > *{
+
+.mainwp-ui tr.selected.none-selected-color>* {
     box-shadow: none !important;
 }
-.ui.popup:has(> .mainwp-html-popup-body){
+
+.ui.popup:has(> .mainwp-html-popup-body) {
     background-color: black !important;
     color: white !important;
     max-width: 600px !important;
@@ -1309,7 +1324,8 @@ th .down.icon {
     outline: none;
     animation-duration: .1s;
 }
-.ui.popup:has(> .mainwp-html-popup-body)::before{
+
+.ui.popup:has(> .mainwp-html-popup-body)::before {
     background-color: black !important;
 }
 
@@ -1317,27 +1333,32 @@ th .down.icon {
 .mainwp-module-cost-tracker-select-custom-product-types-icons input.search {
     max-width: 160px !important;
 }
+
 #mainwp-posting-running,
-#mainwp-publish-dimmer{
+#mainwp-publish-dimmer {
     height: 100vh;
 }
-#plugin-information-footer{
+
+#plugin-information-footer {
     display: none !important;
 }
+
 #widget-advanced-cost-tracker-widget .mainwp-scrolly-overflow {
-	height: calc(100% - 120px) !important;
+    height: calc(100% - 120px) !important;
 }
+
 #widget-advanced-cost-tracker-widget #mainwp-module-cost-tracker-costs-widget-table_wrapper .row:last-child {
-	overflow-x: auto;
+    overflow-x: auto;
 }
 
 .menu-connect-first-site .item.active,
 .mainwp-qsw-add-client .item.active {
-	background: var(--grey-light) !important;
+    background: var(--grey-light) !important;
 }
+
 .mainwp-qsw-add-client-more-row,
-.mainwp-managesites-more-import-row{
-	cursor: pointer;
+.mainwp-managesites-more-import-row {
+    cursor: pointer;
 }
 
 .mainwp-uptime-status-indicator {
@@ -1346,6 +1367,12 @@ th .down.icon {
     margin: 0 !important;
     padding: 2px !important;
 }
-.uptime-monitors-sub-pages-table > thead{
+
+.uptime-monitors-sub-pages-table>thead {
     display: none !important;
+}
+
+.mainwp-widget.grid-stack-item {
+    position: absolute !important;
+    padding: 0 !important;
 }

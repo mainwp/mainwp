@@ -1395,7 +1395,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 </div>
                                 <div class="two wide right aligned middle aligned column update-column" updated="0">
                                 <?php if ( ! empty( $upgradeInfo ) && MainWP_Updates::user_can_update_plugins() ) : ?>
-                                    <span data-position="top right" data-tooltip="<?php echo esc_attr__( 'Update ', 'mainwp' ) . esc_html( $plugin_title ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><a href="javascript:void(0)" class="ui mini green basic button <?php echo $is_demo ? 'disabled' : ''; ?>" onClick="return manage_plugins_upgrade( '<?php echo esc_js( rawurlencode( $plugin_slug ) ); ?>', <?php echo esc_attr( $site_id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a></span>
+                                    <span data-position="top right" data-tooltip="<?php echo esc_attr__( 'Update ', 'mainwp' ) . esc_html( $plugin_title ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><a href="javascript:void(0)" class="ui mini green basic button <?php echo $is_demo ? 'disabled' : ''; ?>" onClick="return manage_plugins_upgrade( '<?php echo esc_js( rawurlencode( $plugin_slug ) ); ?>', <?php echo esc_attr( $site_id ); ?> )"><?php esc_html_e( 'Update', 'mainwp' ); ?></a></span>
                                 <?php endif; ?>
                                 </div>
                             <div class="two wide center aligned middle aligned column column-actions">
@@ -1694,7 +1694,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                     </div>
                                     <div class="two wide right aligned middle aligned column update-column" updated="0">
                                     <?php if ( ! empty( $upgradeInfo ) && MainWP_Updates::user_can_update_plugins() ) : ?>
-                                        <span data-position="top right" data-tooltip="<?php echo esc_attr__( 'Update ', 'mainwp' ) . esc_html( $plugin_title ) . ' ' . esc_attr__( 'lugin on this child site.', 'mainwp' ); ?>" data-inverted="" ><a href="javascript:void(0)" class="ui mini green basic button <?php echo $is_demo ? 'disabled' : ''; ?>" onClick="return manage_plugins_upgrade( '<?php echo esc_js( rawurlencode( $plugin_slug ) ); ?>', <?php echo esc_attr( $site_id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a></span>
+                                        <span data-position="top right" data-tooltip="<?php echo esc_attr__( 'Update ', 'mainwp' ) . esc_html( $plugin_title ) . ' ' . esc_attr__( 'lugin on this child site.', 'mainwp' ); ?>" data-inverted="" ><a href="javascript:void(0)" class="ui mini green basic button <?php echo $is_demo ? 'disabled' : ''; ?>" onClick="return manage_plugins_upgrade( '<?php echo esc_js( rawurlencode( $plugin_slug ) ); ?>', <?php echo esc_attr( $site_id ); ?> )"><?php esc_html_e( 'Update', 'mainwp' ); ?></a></span>
                                     <?php endif; ?>
                                     </div>
                                 <div class="two wide center aligned middle aligned column column-actions">

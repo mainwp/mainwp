@@ -62,7 +62,7 @@ if ( empty( $heading ) ) {
                                 $site_name   = $site->name;
                                 $site_url    = $site->url;
                                 $mo_url      = empty( $site->issub ) ? $site_url : $site_url . $site->suburl;
-                                $code        = $site->last_http_code;
+                                $code        = $site->hb_http_code;
                                 $code_string = MainWP\Dashboard\MainWP_Utility::get_http_codes( $code );
                                 if ( ! empty( $code_string ) ) {
                                     $code .= ' - ' . $code_string;
@@ -71,7 +71,11 @@ if ( empty( $heading ) ) {
                             <tr>
                                 <td style="vertical-align:top;text-align:left;padding:30px 30px 0 30px;">
                                     <strong><?php esc_html_e( 'Hi there', 'mainwp' ); ?>,</strong>
+                                    <?php if ( empty( $site->status ) ) { ?>
                                     <p><?php esc_html_e( 'Based on the HTTP response from your monitor, it appears that your child site is DOWN.', 'mainwp' ); ?></p>
+                                    <?php } else { ?>
+                                    <p><?php esc_html_e( 'Based on the HTTP response from your monitor, it appears that your child site is UP.', 'mainwp' ); ?></p>
+                                    <?php } ?>
                                     <p><strong><?php esc_html_e( 'Monitor', 'mainwp' ); ?>:</strong> <?php echo esc_html( $site_name ); ?></p>
                                     <p><strong><?php esc_html_e( 'Monitor URL', 'mainwp' ); ?>:</strong> <a href="<?php echo esc_url( $mo_url ); ?>" target="_blank"><?php echo esc_html( $mo_url ); ?></a></p>
                                     <p><strong><?php esc_html_e( 'Status Code', 'mainwp' ); ?>:</strong> <?php echo esc_html( $code ); ?></p>
@@ -79,7 +83,7 @@ if ( empty( $heading ) ) {
                             </tr>
                             <tr>
                                 <td style="vertical-align:top;text-align:left;padding:30px 30px 0 30px;">
-                                    <strong><?php esc_html_e( 'Event timestamp: ', 'mainwp' ); ?></strong><?php echo MainWP\Dashboard\MainWP_Utility::format_timestamp( $site->offline_checks_last ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                                    <strong><?php esc_html_e( 'Event timestamp: ', 'mainwp' ); ?></strong><?php echo MainWP\Dashboard\MainWP_Utility::format_timestamp( $site->hb_time_check ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
                                 </td>
                             </tr>
                                 <?php
@@ -88,7 +92,7 @@ if ( empty( $heading ) ) {
                                     $site_name   = $site->name;
                                     $site_url    = $site->url;
                                     $mo_url      = empty( $site->issub ) ? $site_url : $site_url . $site->suburl;
-                                    $code        = $site->last_http_code;
+                                    $code        = $site->hb_http_code;
                                     $code_string = MainWP\Dashboard\MainWP_Utility::get_http_codes( $code );
                                     if ( ! empty( $code_string ) ) {
                                         $code .= ' - ' . $code_string;
@@ -97,7 +101,11 @@ if ( empty( $heading ) ) {
                                         <tr>
                                             <td style="vertical-align:top;text-align:left;padding:30px 30px 0 30px;">
                                                 <strong><?php esc_html_e( 'Hi there', 'mainwp' ); ?>,</strong>
+                                                <?php if ( empty( $site->status ) ) { ?>
                                                 <p><?php esc_html_e( 'Based on the HTTP response from your monitor, it appears that your child site is DOWN.', 'mainwp' ); ?></p>
+                                                <?php } else { ?>
+                                                <p><?php esc_html_e( 'Based on the HTTP response from your monitor, it appears that your child site is UP.', 'mainwp' ); ?></p>
+                                                <?php } ?>
                                                 <p><strong><?php esc_html_e( 'Monitor', 'mainwp' ); ?>:</strong> <?php echo esc_html( $site_name ); ?></p>
                                                 <p><strong><?php esc_html_e( 'Monitor URL', 'mainwp' ); ?>:</strong> <a href="<?php echo esc_url( $mo_url ); ?>" target="_blank"><?php echo esc_html( $mo_url ); ?></a></p>
                                                 <p><strong><?php esc_html_e( 'Status Code', 'mainwp' ); ?>:</strong> <?php echo esc_html( $code ); ?></p>
@@ -107,11 +115,11 @@ if ( empty( $heading ) ) {
                                             <td style="vertical-align:top;text-align:left;padding:30px 30px 0 30px;">
                                                 <strong><?php esc_html_e( 'Event timestamp: ', 'mainwp' ); ?></strong>
                                                 <?php
-                                                    $last_time = $site->offline_checks_last;
-                                                if ( ! empty( $site->lasttime_check ) ) {
-                                                    $last_time = $site->lasttime_check;
+                                                $last_time = $site->offline_checks_last;
+                                                if ( ! empty( $site->hb_time_check ) ) {
+                                                    $last_time = $site->hb_time_check;
                                                 }
-                                                    echo MainWP\Dashboard\MainWP_Utility::format_timestamp( $last_time ); // phpcs:ignore WordPress.Security.EscapeOutput
+                                                echo MainWP\Dashboard\MainWP_Utility::format_timestamp( $last_time ); // phpcs:ignore WordPress.Security.EscapeOutput
                                                 ?>
                                             </td>
                                         </tr>
@@ -122,14 +130,16 @@ if ( empty( $heading ) ) {
                                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=MonitoringSites' ) ); ?>" style="color:#7fb100;text-decoration:none;"><?php echo esc_html__( 'Click here', 'mainwp' ); ?></a> <?php echo esc_html__( 'to check your site status.', 'mainwp' ); ?>
                                 </td>
                             </tr>
+                            <tr>
+                                <td style="vertical-align:top;text-align:center;padding:30px 30px 0 30px;">
+                                    <?php esc_html_e( 'Powered by ', 'mainwp' ); ?> <a href="https://mainwp.com/" style="color:#7fb100;"><?php esc_html_e( 'MainWP', 'mainwp' ); // NOSONAR - noopener - open safe. ?></a>.
+                                </td>
+                            </tr>
                             <!-- End Body -->
                         </table>
                     </td>
                 </tr>
             </table>
-            <div style="text-align:center;font-size:11px;margin-bottom:30px;">
-                <?php esc_html_e( 'Powered by ', 'mainwp' ); ?> <a href="https://mainwp.com/" style="color:#7fb100;"><?php esc_html_e( 'MainWP', 'mainwp' ); // NOSONAR - noopener - open safe. ?></a>.
-            </div>
             <?php
             /**
              * Uptime Monitoring Email Footer

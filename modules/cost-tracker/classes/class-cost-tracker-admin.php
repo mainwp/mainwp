@@ -1050,7 +1050,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             $upload_icon = $prod_icon;
         }
 
-        $style = 'width:32px;height:auto;display:inline-block;';
+        $style = 'width:28px;height:auto;display:inline-block;';
 
         if ( empty( $prod_color ) ) {
             $prod_color = '#34424D';
@@ -1077,7 +1077,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             } else {
                 $scr = '';
             }
-            $icon_wrapper_attr = ! empty( $img_id_attr ) ? 'id="' . esc_attr( $img_id_attr ) . '" class="ui mini circular image" ' : 'class="' . esc_attr( $default_cls ) . ' ui mini circular image "';
+            $icon_wrapper_attr = ! empty( $img_id_attr ) ? 'id="' . esc_attr( $img_id_attr ) . '" class="ui circular image" ' : 'class="' . esc_attr( $default_cls ) . ' ui circular image "';
             $icon              = '<div style="display:inline-block;" ' . $icon_wrapper_attr . '><img style="' . $style . '" alt="' . esc_attr__( 'Product icon', 'mainwp' ) . '" src="' . esc_attr( $scr ) . '"/></div>';
         }
         return $icon;

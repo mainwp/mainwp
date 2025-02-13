@@ -204,6 +204,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         add_filter( 'mainwp_insert_lookup_item', array( &$this, 'hook_insert_lookup_item' ), 10, 5 );
         add_filter( 'mainwp_delete_lookup_items', array( &$this, 'hook_delete_lookup_items' ), 10, 3 );
         add_filter( 'mainwp_get_indicator', array( &$this, 'hook_get_indicator' ), 10, 4 );
+        add_filter( 'mainwp_get_time_elapsed_string', array( &$this, 'hook_get_time_elapsed_string' ), 10, 2 );
     }
 
     /**
@@ -1529,7 +1530,8 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
     public function hook_atarim_manage_sites_default_item( $item ) {
         if ( ! is_plugin_active( 'mainwp-atarim-extension/mainwp-atarim-extension.php' ) && is_array( $item ) && isset( $item['url'] ) ) {
             $collaborate_link     = 'https://app.atarim.io/fetching/?_from=mainwp&url=' . $item['url'];
-            $item['atarim_tasks'] = '<a href="' . $collaborate_link . '" target="_balnk" data-tooltip="Collaborate on this website." data-inverted="" data-position="left center"><span class="ui blue icon label"><i class="comments icon"></i></span></a>';
+            $icon_link            = MAINWP_PLUGIN_URL . 'assets/images/atarim-icon.png';
+            $item['atarim_tasks'] = '<a href="' . $collaborate_link . '" target="_balnk" class="ui mini grey basic button" data-tooltip="Collaborate on this website." data-inverted="" data-position="left center"><img src="' . $icon_link . '" style="width:12px"> ' . __( 'Collaborate', 'mainwp' ) . '</a>';
         }
         return $item;
     }
@@ -1977,5 +1979,17 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
     public function hook_get_indicator( $def_value, $indi_type = 'field', $wrapper_cls = '', $visible = true ) {
         unset( $def_value );
         return MainWP_Settings_Indicator::get_indicator( $indi_type, $wrapper_cls, $visible );
+    }
+
+    /**
+     * Method hook_get_time_elapsed_string().
+     *
+     * Returns date in time ago format
+     *
+     * @param  mixed $ptime Date stamp.
+     * @return string $string   Time elapsed string.
+     */
+    public function hook_get_time_elapsed_string( $ptime = 0 ) {
+        return MainWP_Utility::time_elapsed_string( $ptime );
     }
 }

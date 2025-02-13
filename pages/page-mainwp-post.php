@@ -1425,8 +1425,8 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         <input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $post['id'] ); ?>"/>
                         <input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo 'publish' === $post['status'] ? 'unpublish|' : ''; ?><?php echo ( 'pending' === $post['status'] ) ? 'approve|' : ''; ?><?php echo ( 'trash' === $post['status'] ) ? 'restore|' : ''; ?><?php echo ( 'future' === $post['status'] || 'draft' === $post['status'] ) ? 'publish|' : ''; ?>" />
                         <input class="websiteId" type="hidden" name="id" value="<?php echo intval( $website->id ); ?>"/>
-                        <div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999">
-                            <a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
+                        <div class="ui right pointing dropdown" style="z-index: 999">
+                            <a href="javascript:void(0)"><i class="ellipsis vertical icon"></i></a>
                             <div class="menu">
                                 <?php if ( 'future' === $post['status'] || 'draft' === $post['status'] ) : ?>
                                     <a class="item post_submitpublish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>

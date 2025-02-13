@@ -77,6 +77,7 @@ class Log_Connectors {
                     'posts',
                     'installer',
                     'user',
+                    'non-mainwp-changes',
                 )
             );
         }

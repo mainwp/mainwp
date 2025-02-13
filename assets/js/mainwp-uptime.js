@@ -26,7 +26,7 @@ window.mainwp_uptime_monitor_check_now = function (itemsData) {
   let numOfItems = itemsData.length;
   jQuery('#mainwp-sync-sites-modal #sync-sites-status').html('');
   mainwpPopup('#mainwp-sync-sites-modal').init({
-    title: __('Check Now'),
+    title: __('Checking Uptime Status'),
     progressMax: numOfItems,
     statusText: 'checked',
     callback: function () {
@@ -121,7 +121,7 @@ let uptime_monitoring_check_next = function () {
 
   mainwpVars.currentItem++;
 
-  mainwp_uptime_monitoring_check_set_item_status(itemId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Checking...', 'mainwp') + '"><i class="sync alternate loading icon"></i></span>');
+  mainwp_uptime_monitoring_check_set_item_status(itemId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Checking uptime status...', 'mainwp') + '"><i class="sync alternate loading icon"></i></span>');
   let data = mainwp_secure_data({
     action: 'mainwp_uptime_monitoring_uptime_check',
     mo_id: itemId,

@@ -125,9 +125,7 @@ class Connector_User extends Log_Connector {
                 return;
             }
 
-            $args['siteurl']   = $website->url;
-            $args['site_name'] = $website->name;
-            $state             = 1;
+            $state = 1;
 
             $this->log(
                 $message,

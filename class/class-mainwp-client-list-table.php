@@ -656,8 +656,8 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                 $selected_sites = isset( $item['selected_sites'] ) ? trim( $item['selected_sites'] ) : '';
                 ?>
                     <td class="collapsing manage-clients-actions not-selectable">
-                        <div class="ui right pointing dropdown icon mini basic green button" style="z-index:999;">
-                            <i class="ellipsis horizontal icon"></i>
+                        <div class="ui right pointing dropdown" style="z-index:999;">
+                            <i class="ellipsis vertical icon"></i>
                             <div class="menu" clientid=<?php echo intval( $item['client_id'] ); ?>>
                                 <a class="item client_getedit" href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $item['client_id'] ); ?>"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
                                 <a class="item" href="admin.php?page=managesites&client=<?php echo intval( $item['client_id'] ); ?>"><?php esc_html_e( 'View Sites', 'mainwp' ); ?></a>

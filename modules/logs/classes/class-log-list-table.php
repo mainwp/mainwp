@@ -100,7 +100,7 @@ class Log_List_Table {
                 break;
 
             case 'user_id':
-                $user    = new Log_Author( (int) $record->user_id, (array) $record->user_meta );
+                $user    = new Log_Author( $record->user_id, $record->user_meta );
                 $out     = $user->get_display_name() . sprintf( '<br /><small>%s</small>', $user->get_agent_label( $user->get_agent() ) );
                 $escaped = true;
                 break;

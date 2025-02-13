@@ -8,7 +8,6 @@
 
 namespace MainWP\Dashboard\Module\Log;
 
-use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_Updates_Helper;
 
@@ -43,6 +42,14 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
 
     /**
+     * Public variable to hold type value.
+     *
+     * @var array
+     */
+    public $table_type = null;
+
+
+    /**
      * Public variable to hold total items number.
      *
      * @var integer
@@ -63,8 +70,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      *
      * @param Log_Manager $manager Instance of manager object.
      */
-    public function __construct( $manager ) {
-        $this->manager = $manager;
+    public function __construct( $manager, $type = 'widget' ) {
+        $this->manager    = $manager;
+        $this->table_type = $type;
     }
 
     /**
@@ -87,6 +95,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'created'       => array( 'created', false ),
             'log_site_name' => array( 'name', false ),
             'user_id'       => array( 'user_id', false ),
+            'source'        => array( 'connector', false ),
         );
     }
 
@@ -96,11 +105,18 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * @return array Array of default column names.
      */
     public function get_default_columns() {
-        return array(
+        $columns = array(
             'created'       => esc_html__( 'Event', 'mainwp' ),
             'log_site_name' => esc_html__( 'Website', 'mainwp' ),
             'user_id'       => esc_html__( 'User', 'mainwp' ),
+            'source'        => esc_html__( 'Source', 'mainwp' ),
         );
+
+        if ( 'manage' !== $this->table_type ) {
+            unset( $columns['source'] );
+        }
+
+        return $columns;
     }
 
     /**
@@ -162,7 +178,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
     /**
      * Returns the column content for the provided item and column.
      *
-     * @param array  $item         Record data.
+     * @param object $item         Record data.
      * @param string $column_name  Column name.
      * @return string $out Output.
      */
@@ -176,12 +192,16 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             case 'created':
                 $event_title = $this->parse_event_title( $record );
                 $act_label   = $this->get_action_title( $record->action, 'action', true );
+                $sum         = '';
+                if ( 'non-mainwp-changes' === $record->connector ) {
+                    $sum = esc_html( $record->item ) . '<br>';
+                }
                 $date_string = sprintf(
-                    '%s<br>%s<br><time datetime="%s" class="relative-time record-created">%s</time>',
+                    '%s<br>%s<br>' . $sum . '<time datetime="%s" class="relative-time record-created">%s</time>',
                     $event_title,
                     $act_label,
                     mainwp_module_log_get_iso_8601_extended_date( $record->created ),
-                    MainWP_Utility::format_timestamp( $record->created )
+                    MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $record->created ) )
                 );
                 $out         = $date_string;
                 $escaped     = true;
@@ -191,9 +211,15 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $escaped = true;
                 break;
             case 'user_id':
-                $user    = new Log_Author( (int) $record->user_id, (array) $record->user_meta );
-                $out     = $user->get_display_name() . sprintf( '<br /><small>%s</small>', $user->get_agent_label( $user->get_agent() ) );
+                $user = new Log_Author( $record->user_id, $record->user_meta );
+                $out  = $user->get_display_name();
+                if ( empty( $out ) ) {
+                    $out = $user->get_agent_label( $user->get_agent() );
+                }
                 $escaped = true;
+                break;
+            case 'source':
+                $out = 'non-mainwp-changes' === $record->connector ? 'WP Admin' : 'Dashboard';
                 break;
             default:
         }
@@ -340,8 +366,6 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
     /**
      * Html output if no Child Sites are connected.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_count()
      */
     public function no_items() {
         ?>
@@ -478,6 +502,8 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         $pagelength_val   = implode( ',', array_keys( $pages_length ) );
         $pagelength_title = implode( ',', array_values( $pages_length ) );
 
+        $ajaxaction = 'widget' === $this->table_type ? 'mainwp_module_log_events_display_rows' : 'mainwp_module_log_manage_display_rows';
+
         ?>
         <table id="mainwp-module-log-records-table" style="width:100%" class="ui single line selectable unstackable table mainwp-with-preview-table">
             <thead>
@@ -547,7 +573,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                 "type": "POST",
                                 "data":  function ( d ) {
                                     let data = mainwp_secure_data( {
-                                        action: 'mainwp_module_log_events_display_rows',
+                                        action: '<?php echo esc_js( $ajaxaction ); ?>',
                                         range: $( '#mainwp-module-log-filter-ranges').dropdown('get value'),
                                         group: $( '#mainwp-module-log-filter-groups').dropdown('get value'),
                                         client: $( '#mainwp-module-log-filter-clients').dropdown('get value'),
@@ -756,6 +782,8 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         $all_rows  = array();
         $info_rows = array();
 
+        $columns = $this->get_columns();
+
         if ( $this->items ) {
             foreach ( $this->items as $log ) {
                 $rw_classes = 'log-item mainwp-log-item-' . intval( $log->log_id );
@@ -767,8 +795,6 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                     'created'  => $log->created,
                     'state'    => is_null( $log->state ) ? - 1 : $log->state,
                 );
-
-                $columns = $this->get_columns();
 
                 $cols_data = array();
 

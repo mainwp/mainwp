@@ -1103,7 +1103,12 @@ let dashboard_update_next = function (pAction) {
   mainwpVars.currentThreads++;
   mainwpVars.websitesLeft--;
   let websiteId = mainwpVars.websitesToUpdate[mainwpVars.currentWebsite++];
-  dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Syncing...', 'mainwp') + '"><i class="sync alternate loading icon"></i></span>');
+  if ('checknow' == pAction) {
+    dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Checking uptime status...', 'mainwp') + '"><i class="sync alternate loading icon"></i></span>');
+  } else {
+    dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Syncing data...', 'mainwp') + '"><i class="sync alternate loading icon"></i></span>');
+  }
+
   let data = mainwp_secure_data({
     action: ('checknow' == pAction ? 'mainwp_checksites' : 'mainwp_syncsites'),
     wp_id: websiteId,
@@ -3619,19 +3624,6 @@ jQuery(document).on('click', '.mainwp-install-check-dismiss', function () {
   return false;
 });
 
-jQuery(document).on('click', '.mainwp-action-dismiss', function () {
-  let action_id = jQuery(this).attr('action-id');
-  jQuery(this).closest('tr').fadeOut("slow");
-  let data = {
-    action: 'mainwp_site_actions_dismiss'
-  };
-  data['action_id'] = action_id;
-  jQuery.post(ajaxurl, mainwp_secure_data(data), function () {
-
-  });
-  return false;
-});
-
 jQuery(document).on('click', '.mainwp-event-action-dismiss', function () {
   let action_id = jQuery(this).attr('action-id');
   jQuery(this).closest('.event').fadeOut("slow");
@@ -3931,7 +3923,7 @@ window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRig
   console.log('mainwp_datatable_fix_menu_overflow :: ' + tblSelect);
 
   // Fix the overflow prbolem for the actions menu element (right pointing menu).
-  jQuery(tblSelect + ' tr td .ui.right.pointing.dropdown.button').on('click', function () {
+  jQuery(tblSelect + ' tr td .ui.right.pointing.dropdown').on('click', function () {
     jQuery(this).closest(dtScrollBdCls).css('position', '');
     jQuery(this).closest(dtScrollCls).css('position', 'relative');
     jQuery(this).css('position', 'static');
@@ -3957,7 +3949,7 @@ window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRig
   });
 
   // Fix the overflow prbolem for the actions menu element (left pointing menu).
-  jQuery(tblSelect + ' tr td .ui.left.pointing.dropdown.button').on('click', function () {
+  jQuery(tblSelect + ' tr td .ui.left.pointing.dropdown').on('click', function () {
     jQuery(this).closest(dtScrollBdCls).css('position', '');
     jQuery(this).closest(dtScrollCls).css('position', 'relative');
     jQuery(this).css('position', 'static');
@@ -3993,7 +3985,7 @@ let mainwp_datatable_fix_child_menu_overflow = function (chilRow, fix_overflow) 
   let dtScrollBdCls = '.dt-scroll-body';
   let dtScrollCls = '.dt-scroll';
   // Fix the overflow prbolem for the actions child menu element (pointing menu).
-  jQuery(chilRow).find('.ui.pointing.dropdown.button').on('click', function () {
+  jQuery(chilRow).find('.ui.pointing.dropdown').on('click', function () {
 
     let position = jQuery(this).position();
     let left = position.left + 30;
@@ -4608,7 +4600,114 @@ jQuery(function ($) {
       return _instance;
     })();
   }
+
+  if (!window.mainwpUIHandleWidgetsLayout) {
+    window.mainwpUIHandleWidgetsLayout = (function () {
+      const statusElemId = '#mainwp-common-edit-widgets-layout-status';
+      let _instance = {
+        loadingStatus: function () {
+          $(statusElemId).html('<i class="notched circle loading icon"></i> ' + __('Loading layouts. Please wait...')).show();
+        },
+        savingStatus: function () {
+          $(statusElemId).html('<i class="notched circle loading icon"></i> ' + __('Saving layout. Please wait...')).show();
+        },
+        deletingStatus: function () {
+          $(statusElemId).html('<i class="notched circle loading icon"></i> ' + __('Deleting layout. Please wait...')).show();
+
+        },
+        showWorkingStatus: function (status, addClass) {
+          if (addClass) {
+            $(statusElemId).removeClass('red green yellow');
+            $(statusElemId).addClass(addClass);
+          }
+          $(statusElemId).html(status).show();
+        },
+        hideWorkingStatus: function () {
+          $(statusElemId).removeClass('red green').hide();
+        },
+        showLayout: function (showBtn) {
+          jQuery('#mainwp-common-edit-widgets-layout-modal > div.header').html(__('Save Layout'));
+          jQuery('#mainwp-common-edit-widgets-layout-edit-fields').show();
+          jQuery('#mainwp-common-edit-widgets-layout-save-button').show();
+          jQuery('#mainwp-common-layout-widgets-select-fields').hide();
+          jQuery('#mainwp-common-edit-widgets-select-layout-button').hide();
+          jQuery('#mainwp-common-edit-widgets-layout-delete-button').hide();
+
+          if (jQuery('#mainwp-widgets-selected-layout').length > 0) {
+            let name = jQuery('#mainwp-widgets-selected-layout').attr('layout-name');
+            let lay_idx = jQuery('#mainwp-widgets-selected-layout').attr('layout-idx');
+            jQuery('#mainwp-common-edit-widgets-layout-name').val(name);
+            jQuery(showBtn).attr('selected-layout-id', lay_idx);
+          }
+          this.hideWorkingStatus();
+          mainwp_common_show_edit_widgets_layout_modal();
+        },
+        loadSegment: function (loadCallback) {
+          jQuery('#mainwp-common-edit-widgets-layout-edit-fields').hide();
+          jQuery('#mainwp-common-edit-widgets-layout-save-button').hide();
+          jQuery('#mainwp-common-edit-widgets-layout-modal > div.header').html(__('Load a Layout'));
+          jQuery('#mainwp-common-layout-widgets-select-fields').show();
+          jQuery('#mainwp-common-edit-widgets-select-layout-button').show();
+          jQuery('#mainwp-common-edit-widgets-layout-delete-button').show();
+          this.hideWorkingStatus();
+          mainwp_common_show_edit_widgets_layout_modal(loadCallback);
+        },
+        showResults: function (result) {
+          jQuery(statusElemId).hide();
+          jQuery('#mainwp-common-edit-widgets-layout-lists-wrapper').html(result);
+          jQuery('#mainwp-common-edit-widgets-layout-lists-wrapper .ui.dropdown').dropdown();
+          jQuery('#mainwp-common-layout-widgets-select-fields').show();
+        }
+      }
+      return _instance;
+    })();
+  }
+
 });
+
+
+let mainwp_common_show_edit_widgets_layout_modal = function (loadCallback) {
+  jQuery('#mainwp-common-edit-widgets-layout-modal').modal({
+    allowMultiple: false,
+    onShow: function () {
+      if (typeof loadCallback == 'function') {
+        loadCallback();
+      }
+    }
+  }).modal('show');
+};
+
+let mainwp_common_ui_widgets_save_layout = function (itemClass, data, callBack) {
+
+  let orders = [];
+  let wgIds = [];
+
+  const $items = document.querySelectorAll(itemClass);
+
+  if ($items.length == 0) {
+    return;
+  }
+
+  $items.forEach(function (item) {
+    var obj = {};
+    obj["x"] = item.getAttribute('gs-x');
+    obj["y"] = item.getAttribute('gs-y');
+    obj["w"] = item.getAttribute('gs-w');
+    obj["h"] = item.getAttribute('gs-h');
+    orders.push(obj);
+    wgIds.push(item.id);
+  });
+
+  data.action = 'mainwp_ui_save_widgets_layout';
+  data.order = orders;
+  data.wgids = wgIds;
+
+  jQuery.post(ajaxurl, mainwp_secure_data(data), function (res) {
+    if (typeof callBack !== "undefined" && false != callBack) {
+      callBack(res);
+    }
+  }, 'json');
+}
 
 window.mainwp_init_ui_calendar = ($selectors) => {
   jQuery($selectors).calendar({

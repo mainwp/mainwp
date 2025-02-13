@@ -1352,7 +1352,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         do_action( 'mainwp_header_actions_after_select_themes' );
         ?>
         <div class="ui icon top left pointing dropdown button" id="mainwp-help-menu-icon-button">
-            <i class="ellipsis horizontal icon"></i>
+            <i class="ellipsis vertical icon"></i>
             <div class="menu">
                 <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=Settings' ) ); ?>" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Go to MainWP Settings', 'mainwp' ); ?>">
                     <i class="cog icon"></i> <?php esc_html_e( 'Settings', 'mainwp' ); ?></span>
@@ -1583,10 +1583,34 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         if ( empty( $page ) ) {
             return;
         }
-        $wgsorted = get_user_option( 'mainwp_widgets_sorted_' . strtolower( $page ) );
+
+        $wgsorted = false;
+
+        if ( ! empty( $_GET['page'] ) && 'mainwp_tab' === $_GET['page'] && ! empty( $_GET['select_layout'] ) && ! empty( $_GET['_opennonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_opennonce'] ), 'mainwp-admin-nonce' ) && ! empty( $_GET['updated'] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
+            $layid           = sanitize_text_field( wp_unslash( $_GET['updated'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
+            $saved_layouts   = MainWP_Ui_Manage_Widgets_Layout::set_get_widgets_layout();
+            $selected_layout = is_array( $saved_layouts ) && isset( $saved_layouts[ $layid ] ) ? $saved_layouts[ $layid ] : array();
+            if ( is_array( $selected_layout ) && isset( $selected_layout['layout'] ) ) {
+                $wgsorted = $selected_layout['layout'];
+                if ( isset( $selected_layout['name'] ) ) {
+                    // to support saving selected layout.
+                    ?>
+                    <input type="hidden" id="mainwp-widgets-selected-layout" layout-name="<?php echo esc_attr( $selected_layout['name'] ); ?>" layout-idx="<?php echo esc_attr( $layid ); ?>" >
+                    <?php
+                }
+            }
+        }
+
+        if ( empty( $wgsorted ) ) {
+            $wgsorted = get_user_option( 'mainwp_widgets_sorted_' . strtolower( $page ) );
+        }
 
         if ( ! empty( $wgsorted ) && is_string( $wgsorted ) ) {
             $wgsorted = json_decode( $wgsorted, true );
+        }
+
+        if ( ! is_array( $wgsorted ) ) {
+            $wgsorted = array();
         }
 
         $client_id = 0;
@@ -1601,10 +1625,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
 
         $wgsorted = apply_filters( 'mainwp_do_widget_boxes_sorted', $wgsorted, $page, $client_id );
 
-        if ( ! is_array( $wgsorted ) ) {
-            $wgsorted = array();
-        }
-
         if ( 'mainwp_page_manageclients' === $page ) {
             $show_widgets = get_user_option( 'mainwp_clients_show_widgets' );
         } elseif ( 'toplevel_page_mainwp_tab' === $page || 'mainwp_page_managesites' === $page ) {
@@ -1616,7 +1636,9 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         if ( ! is_array( $show_widgets ) ) {
             $show_widgets = array();
         }
-
+        ?>
+        <div id="mainwp-grid-stack-wrapper" class="grid-stack gs-12  grid-stack-animate">
+        <?php
         if ( isset( $mainwp_widget_boxes[ $page ] ) ) {
             foreach ( (array) $mainwp_widget_boxes[ $page ] as $box ) {
                 if ( false === $box || ! isset( $box['callback'] ) ) {
@@ -1631,31 +1653,46 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 $layout = array();
                 if ( isset( $wgsorted[ $box['id'] ] ) ) {
                     $val = $wgsorted[ $box['id'] ];
-                    if ( is_array( $val ) && isset( $val['col'] ) ) {
+                    if ( is_array( $val ) && isset( $val['x'] ) ) {
                         $layout = array(
-                            'col'    => $val['col'],
-                            'row'    => $val['row'],
-                            'size_x' => $val['size_x'],
-                            'size_y' => $val['size_y'],
+                            'x' => $val['x'],
+                            'y' => $val['y'],
+                            'w' => $val['w'],
+                            'h' => $val['h'],
                         );
                     }
                 }
-                if ( ! isset( $layout['col'] ) && isset( $box['layout'][0] ) ) {
-                    $layout = array(
-                        'col'    => $box['layout'][0],
-                        'row'    => $box['layout'][1],
-                        'size_x' => $box['layout'][2],
-                        'size_y' => $box['layout'][3],
-                    );
+
+                // init widget layout settings.
+                // if ( ! isset( $layout['col'] ) && isset( $box['layout']['w'] ) ) {
+                // $layout = array(
+                // 'w'    => $box['layout']['w'],
+                // 'h'    => $box['layout']['h'],
+                // 'x' => $box['layout']['x'],
+                // 'y' => $box['layout']['y'],
+                // );
+                // }
+
+                // default settings.
+                if ( ! isset( $layout['x'] ) ) {
+                    $layout['w'] = 5;
+                    $layout['h'] = 3;
                 }
-                $layout_attrs_escaped = ' data-row="' . ( isset( $layout['row'] ) ? esc_attr( $layout['row'] ) : '' ) . '" data-col="' . ( isset( $layout['col'] ) ? esc_attr( $layout['col'] ) : '' ) . '" data-sizex="' . ( isset( $layout['size_x'] ) ? esc_attr( $layout['size_x'] ) : '' ) . '" data-sizey="' . ( isset( $layout['size_y'] ) ? esc_attr( $layout['size_y'] ) : '' ) . '" ';
-                echo '<div id="widget-' . esc_html( $box['id'] ) . '" class="ui segment mainwp-widget" ' . $layout_attrs_escaped . '>' . "\n"; //phpcs:ignore -- escaped.
-                call_user_func( $box['callback'], $screen_id, $args );
-                echo '<span class="mainwp-resize-handle"></span>' . "\n";
+
+                $layout_attrs_escaped  = ' gs-y="' . ( isset( $layout['y'] ) ? esc_attr( $layout['y'] ) : '' ) . '" gs-x="' . ( isset( $layout['x'] ) ? esc_attr( $layout['x'] ) : '' ) . '" ';
+                $layout_attrs_escaped .= ' gs-w="' . ( isset( $layout['w'] ) ? esc_attr( $layout['w'] ) : '' ) . '" gs-h="' . ( isset( $layout['h'] ) ? esc_attr( $layout['h'] ) : '' ) . '" ';
+
+                echo '<div id="widget-' . esc_html( $box['id'] ) . '" class="grid-stack-item" ' . $layout_attrs_escaped . '>' . "\n"; //phpcs:ignore -- escaped.
+                    echo '<div class="grid-stack-item-content ui segment mainwp-widget">' . "\n";
+                        call_user_func( $box['callback'], $screen_id, $args );
+                    echo "</div>\n";
                 echo "</div>\n";
 
             }
         }
+        ?>
+        </div>
+        <?php
         $breakpoint = apply_filters( 'mainwp_flexible_widgets_breakpoint', 1367 );
         ?>
         <script type="text/javascript">
@@ -1672,40 +1709,41 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     jQuery( ".mainwp-widget" ).each( function () {
                         wgIds.push( jQuery( this ).attr('id') );
                     } );
-
-                    let $mainwp_gridster = jQuery( '.gridster' ).gridster( {
-                        auto_init: true,
-                        autogenerate_stylesheet: true,
-                        shift_larger_widgets_down: false,
-                        shift_widgets_up: true,
-                        widget_selector: "div.mainwp-widget",
-                        widget_margins: [20, 20],
-                        widget_base_dimensions: ["auto", 20],
-                        min_cols: 1,
-                        max_cols: 12,
-                        max_size_x: 12,
-                        max_rows: 500,
-                        avoid_overlapped_widgets: true,
-                        collision: {
-                            wait_for_mouseup: true
-                        },
-                        draggable: {
-                            handle: '.handle-drag',
-                            stop: function (e, ui, $widget) {
-                                mainwp_overview_gridster_reorder(this);
-                            }
-                        },
-                        resize: {
-                            enabled: true,
-                            handle_append_to: ".mainwp-resize-handle",
-                            stop: function (e, ui, $widget) {
-                                mainwp_overview_gridster_reorder(this);
-                            }
+                    let gsOpts = {
+                        cellHeight: 'auto',
+                        cellHeightThrottle: 100,
+                        float:true,
+                        itemClass: 'grid-stack-item',
+                        handleClass: 'handle-drag',
+                        margin: '10px',
+                        resizable: {
+                            handles: 'e,se,s,sw,w'
                         }
-                    } ).data('gridster');
+                    }
+                    let grid = GridStack.init(gsOpts);
+                    grid.on('change', function() {
+                        mainwp_overview_gridstack_save_layout();
+                    });
 
-                    mainwp_overview_gridster_reorder = function( $gridObj ){
-                        let orders = $gridObj.serialize();
+                    mainwp_overview_gridstack_save_layout = function(){
+
+                        let orders = [];
+                        let wgIds = [];
+
+                        const $items = document.querySelectorAll('.grid-stack-item');
+
+                        $items.forEach(function(item) {
+                            var obj = {};
+                            obj["x"] = item.getAttribute('gs-x');
+                            obj["y"] = item.getAttribute('gs-y');
+                            obj["w"] = item.getAttribute('gs-w');
+                            obj["h"] = item.getAttribute('gs-h');
+                            orders.push(obj);
+                            wgIds.push(item.id);
+                        });
+
+                        console.log(orders);
+
                         let postVars = {
                             action:'mainwp_widgets_order',
                             page: page_sortablewidgets,
@@ -1926,16 +1964,16 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 <?php
     }
 
-            /**
-             * Method render_show_all_updates_button()
-             *
-             * Render show all updates button.
-             *
-             * @return void Render Show All Updates button html.
-             */
+    /**
+     * Method render_show_all_updates_button()
+     *
+     * Render show all updates button.
+     *
+     * @return void Render Show All Updates button html.
+     */
     public static function render_show_all_updates_button() {
         ?>
-        <a href="javascript:void(0)" class="ui mini button trigger-all-accordion">
+        <a href="javascript:void(0)" class="ui mini button trigger-all-accordion mainwp-show-all-updates-button">
             <?php
             /**
              * Filter: mainwp_show_all_updates_button_text
@@ -2317,13 +2355,13 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <?php
     }
 
-        /**
-         * Method render_empty_element_placeholder()
-         *
-         * Renders the content for empty elements.
-         *
-         * @param string $placeholder Placelolder text.
-         */
+    /**
+     * Method render_empty_element_placeholder()
+     *
+     * Renders the content for empty elements.
+     *
+     * @param string $placeholder Placelolder text.
+     */
     public static function render_empty_element_placeholder( $placeholder = '' ) {
         ?>
         <div class="mainwp-empty-widget-placeholder">
@@ -2333,6 +2371,42 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <?php else : ?>
                 <p><?php echo esc_html__( 'Nothing to show here, check back later!', 'mainwp' ); ?></p>
             <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    /**
+     * Method render_empty_page_placeholder()
+     *
+     * Renders the content for empty pages.
+     *
+     * @param string $title   Title text.
+     * @param string $message Message text.
+     * @param string $icon    Icon HTML markup.
+     */
+    public static function render_empty_page_placeholder( $title = '', $message = '', $icon = '' ) {
+        ?>
+        <div class="mainwp-empty-page-placeholder ui center aligned middle aligned very padded segment">
+            <div class="ui hidden divider"></div>
+            <h2 class="ui icon header">
+                <?php if ( '' !== $icon ) : ?>
+                    <?php echo $icon; //phpcs:ignore -- requires escaped. ?>
+                <?php else : ?>
+                    <i class="massive green check tada transition icon"></i>
+                <?php endif; ?>
+                <div class="content">
+                    <?php if ( '' !== $title ) : ?>
+                    <?php echo $title; //phpcs:ignore -- requires escaped. ?>
+                    <?php else : ?>
+                        <?php echo esc_html__( 'Nothing to show here!', 'mainwp' ); ?>
+                    <?php endif; ?>
+                    <?php if ( '' !== $message ) : ?>
+                    <div class="sub header"><?php echo $message; //phpcs:ignore -- requires escaped. ?></div>
+                    <?php else : ?>
+                    <div class="sub header"><?php echo esc_html__( 'Check back later.', 'mainwp' ); ?></div>
+                    <?php endif; ?>
+                </div>
+            </h2>
         </div>
         <?php
     }

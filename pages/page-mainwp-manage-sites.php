@@ -398,16 +398,16 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         $list_items = array(
             'login'                    => esc_html__( 'Jump to WP Admin', 'mainwp' ),
-            'update'                   => esc_html__( 'Available updates', 'mainwp' ),
-            'wpcore_update'            => esc_html__( 'Available WP core updates', 'mainwp' ),
-            'plugin_update'            => esc_html__( 'Available plugin updates', 'mainwp' ),
-            'theme_update'             => esc_html__( 'Available theme updates', 'mainwp' ),
+            'update'                   => esc_html__( 'Updates', 'mainwp' ),
+            'wpcore_update'            => esc_html__( 'WP updates', 'mainwp' ),
+            'plugin_update'            => esc_html__( 'Plugin updates', 'mainwp' ),
+            'theme_update'             => esc_html__( 'Theme updates', 'mainwp' ),
             'site-cost-tracker'        => esc_html__( 'Cost Tracker', 'mainwp' ),
             'note'                     => esc_html__( 'Notes', 'mainwp' ),
             'site_preview'             => esc_html__( 'Site preview', 'mainwp' ),
-            'time-tracker-tasks'       => esc_html__( 'Time Tracker Tasks', 'mainwp' ),
-            'lighthouse_desktop_score' => esc_html__( 'Lighthouse Desktop Score', 'mainwp' ),
-            'lighthouse_mobile_score'  => esc_html__( 'Lighthouse Mobile Score', 'mainwp' ),
+            'time-tracker-tasks'       => esc_html__( 'Time Tracker tasks', 'mainwp' ),
+            'lighthouse_desktop_score' => esc_html__( 'Lighthouse desktop score', 'mainwp' ),
+            'lighthouse_mobile_score'  => esc_html__( 'Lighthouse mobile score', 'mainwp' ),
         );
 
         foreach ( $list_items as $idx => $title ) {
@@ -575,11 +575,11 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 } );
                 jQuery('#reset-managersites-settings').on( 'click', function () {
                     mainwp_confirm(__( 'Are you sure.' ), function(){
-                        jQuery('#mainwp_sitesviewmode').dropdown( 'set selected', 'grid' );
+                        jQuery('#mainwp_sitesviewmode').dropdown( 'set selected', 'table' );
                         jQuery('input[name=mainwp_default_sites_per_page]').val(25);
                         jQuery('.mainwp_hide_wpmenu_checkboxes input[id^="mainwp_show_column_"]').prop( 'checked', false );
                         //default columns.
-                        let cols = ['status','site','login','url','update','client_name','site_actions'];
+                        let cols = ['status', 'favicon', 'site_combo','update','client_name', 'security', 'site_actions'];
                         jQuery.each( cols, function ( index, value ) {
                             jQuery('.mainwp_hide_wpmenu_checkboxes input[id="mainwp_show_column_' + value + '"]').prop( 'checked', true );
                         } );
@@ -1219,7 +1219,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         'result'    => 'success',
                         'iconfile'  => esc_html( $uploaded_icon ),
                         'iconsrc'   => esc_html( $icon_url ),
-                        'iconimg'   => '<img class="ui mini circular image" src="' . esc_attr( $icon_url ) . '" style="width:32px;height:auto;display:inline-block;" alt="Custom icon">',
+                        'iconimg'   => '<img class="ui circular image" src="' . esc_attr( $icon_url ) . '" style="width:32px;height:auto;display:inline-block;" alt="Custom icon">',
                         'iconnonce' => MainWP_System_Utility::get_custom_nonce( 'site', esc_html( $uploaded_icon ) ),
                     )
                 )
@@ -1304,16 +1304,16 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         } elseif ( 'color' === $type ) {
             $output = $color;
         } elseif ( 'display' === $type || 'display_edit' === $type ) {
-            $style       = 'width:32px;height:auto;display:inline-block;';
+            $style       = 'width:28px;height:auto;display:inline-block;';
             $default_cls = 'mainw_site_custom_icon_display';
             $icon        = '';
             if ( ! empty( $uploaded ) ) {
                 $dirs              = MainWP_System_Utility::get_mainwp_dir( 'site-icons', true );
                 $icon_base         = $dirs[1];
                 $scr               = $icon_base . $uploaded;
-                $icon_wrapper_attr = ' class="' . esc_attr( $default_cls ) . ' ui mini circular image " ';
+                $icon_wrapper_attr = ' class="' . esc_attr( $default_cls ) . ' ui circular image " ';
                 if ( 'display_edit' === $type ) {
-                    $icon_wrapper_attr = ' id="mainw_managesites_add_edit_site_upload_custom_icon" class="' . esc_attr( $default_cls ) . ' ui mini circular image" ';
+                    $icon_wrapper_attr = ' id="mainw_managesites_add_edit_site_upload_custom_icon" class="' . esc_attr( $default_cls ) . ' ui circular image" ';
                 }
                 $icon = '<div style="display:inline-block;" ' . $icon_wrapper_attr . '><img style="' . $style . '" src="' . esc_attr( $scr ) . '" alt="Site icon"/></div>';
             }
@@ -1973,6 +1973,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $http_pass = isset( $_POST['mainwp_managesites_edit_http_pass'] ) ? wp_unslash( $_POST['mainwp_managesites_edit_http_pass'] ) : '';
             $url       = ( isset( $_POST['mainwp_managesites_edit_wpurl_with_www'] ) && ( 'www' === sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_wpurl_with_www'] ) ) ) ? 'www.' : '' ) . MainWP_Utility::remove_http_www_prefix( $website->url, true );
             $url       = ( isset( $_POST['mainwp_managesites_edit_siteurl_protocol'] ) && ( 'https' === sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_siteurl_protocol'] ) ) ) ? 'https' : 'http' ) . '://' . MainWP_Utility::remove_http_prefix( $url, true );
+            $backup_method = isset( $_POST['mainwp_primaryBackup'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_primaryBackup'] ) ) : 'global';
 
             $disableHealthChecking = isset( $_POST['mainwp_managesites_edit_disableSiteHealthMonitoring'] ) ? 0 : 1;
             $healthThreshold       = isset( $_POST['mainwp_managesites_edit_healthThreshold'] ) ? intval( $_POST['mainwp_managesites_edit_healthThreshold'] ) : 80;
@@ -1983,7 +1984,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $uniqueId          = isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_uniqueId'] ) ) : '';
             $ssl_version       = isset( $_POST['mainwp_managesites_edit_ssl_version'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_ssl_version'] ) ) : '';
 
-            MainWP_DB::instance()->update_website( $website->id, $url, $current_user->ID, $site_name, $site_admin, $groupids, $groupnames, $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifycertificate, $archiveFormat, $uniqueId, $http_user, $http_pass, $ssl_version, $disableHealthChecking, $healthThreshold );
+            MainWP_DB::instance()->update_website( $website->id, $url, $current_user->ID, $site_name, $site_admin, $groupids, $groupnames, $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifycertificate, $archiveFormat, $uniqueId, $http_user, $http_pass, $ssl_version, $disableHealthChecking, $healthThreshold, $backup_method );
 
             $new_client_id = isset( $_POST['mainwp_managesites_edit_client_id'] ) ? intval( $_POST['mainwp_managesites_edit_client_id'] ) : 0;
 

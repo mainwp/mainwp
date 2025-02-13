@@ -121,8 +121,8 @@ class MainWP_Clients { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 ?>
                             </td>
                             <td>
-                                <div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
-                                <i class="ellipsis horizontal icon"></i>
+                                <div class="ui right pointing dropdown mainwp-768-hide" style="z-index:999">
+                                <i class="ellipsis vertical icon"></i>
                                     <div class="menu">
                                         <a class="item" href="admin.php?page=ManageClients&client_id=<?php echo intval( $client['client_id'] ); ?>"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
                                         <a class="item" href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $client['client_id'] ); ?>"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>

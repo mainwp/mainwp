@@ -110,7 +110,7 @@ class Log {
         );
 
         // Add user meta to Log meta.
-        $logs_meta['user_meta'] = $user_meta;
+        $logs_meta['user_meta_json'] = wp_json_encode( $user_meta );
 
         $recordarr = array(
             'site_id'   => (int) $site_id,
@@ -134,6 +134,17 @@ class Log {
         }
         // This is helpful in development environments.
         // error_log( $this->debug_backtrace( $recordarr ) ); //phpcs:ignore -- development.
+        return $this->log_record( $recordarr );
+    }
+
+    /**
+     * Log record.
+     *
+     * @param array $recordarr sprintf (and extra) arguments to use.
+     *
+     * @return bool|WP_Error True if updated, otherwise false|WP_Error
+     */
+    public function log_record( $recordarr ) { //phpcs:ignore -- NOSONAR - compatible.
         return $this->manager->db->insert( $recordarr );
     }
 

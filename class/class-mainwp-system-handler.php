@@ -373,6 +373,8 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             MainWP_Utility::update_option( 'mainwp_pluginAutomaticDailyUpdate', $val );
             $val = ( ! isset( $_POST['mainwp_themeAutomaticDailyUpdate'] ) ? 0 : intval( $_POST['mainwp_themeAutomaticDailyUpdate'] ) );
             MainWP_Utility::update_option( 'mainwp_themeAutomaticDailyUpdate', $val );
+            $val = ( ! isset( $_POST['mainwp_transAutomaticDailyUpdate'] ) ? 0 : intval( $_POST['mainwp_transAutomaticDailyUpdate'] ) );
+            MainWP_Utility::update_option( 'mainwp_transAutomaticDailyUpdate', $val );
             $val = ( ! isset( $_POST['mainwp_automaticDailyUpdate'] ) ? 0 : intval( $_POST['mainwp_automaticDailyUpdate'] ) );
             MainWP_Utility::update_option( 'mainwp_automaticDailyUpdate', $val );
             $val = ( isset( $_POST['mainwp_delay_autoupdate'] ) ? intval( $_POST['mainwp_delay_autoupdate'] ) : 1 );

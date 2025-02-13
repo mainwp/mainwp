@@ -1,0 +1,12 @@
+# It's important if you remove the headerline that the order of the columns remains the same and all colums should be added
+# The header fields may not be renamed
+#
+# Client Name, Client status and Select site are the required columns
+# Client status column there will be states 0:Active, 1:Suspended, 2:Lead, 3:Lost
+#
+Client Name,Client email,Client address 1,Client address 2,Client city,Client state,Client ZIP,Client country,Client status,Select sites
+Client 1,client1@site1.com,CA11,CA21,CC1,CS1,CZ1,CC1,0,http://site1.com;http://site2.com
+Client 2,client2@site2.com,CA12,CA22,CC2,CS2,CZ2,CC2,1,http://site3.com
+Client 3,client3@site3.com,CA13,CA23,CC3,,CZ3,CC3,2,http://site4.com
+Client 4,client4@site4.com,CA14,CA24,CC4,CS4,CZ4,CC4,3,http://site5.com
+Client 5,client5@site5.com,CA15,CA25,CC5,CS5,CZ5,,CC5,1,

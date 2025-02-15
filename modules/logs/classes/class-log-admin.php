@@ -217,7 +217,7 @@ class Log_Admin {
         $end_time   = ! empty( $end_date ) ? strtotime( $end_date . ' 23:59:59' ) : '';
 
         if ( ! is_numeric( $start_time ) || ! is_numeric( $end_time ) || $start_time > $end_time ) {
-            die( wp_json_encode( array( 'error' => esc_html__( 'Invalid Start date or end date. Please try again.' ) ) ) );
+            die( wp_json_encode( array( 'error' => esc_html__( 'Invalid Start date or end date. Please try again.', 'mainwp' ) ) ) );
         }
 
         $this->manager->db->create_compact_and_erase_records( $start_time, $end_time );
@@ -235,7 +235,7 @@ class Log_Admin {
         $year = isset( $_POST['year'] ) ? intval( $_POST['year'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         if ( $year < 2022 ) {
-            die( wp_json_encode( array( 'error' => esc_html__( 'Invalid selected year. Please try again.' ) ) ) );
+            die( wp_json_encode( array( 'error' => esc_html__( 'Invalid selected year. Please try again.', 'mainwp' ) ) ) );
         }
 
         $aday = $year . '-12-15'; // a day in last month.

@@ -268,11 +268,9 @@ class Log_Admin {
         if ( $enable_schedule ) {
             $last_purge = get_option( 'mainwp_module_log_last_time_auto_purge_logs' );
             $next_purge = get_option( 'mainwp_module_log_next_time_auto_purge_logs' );
-            $days       = false;
+            $days       = 100;
             if ( is_array( $this->manager->settings->options ) && isset( $this->manager->settings->options['records_ttl'] ) ) {
                 $days = intval( $this->manager->settings->options['records_ttl'] );
-            } else {
-                $days = 100;
             }
 
             if ( defined( 'MAINWP_MODULE_LOG_KEEP_RECORDS_TTL' ) && is_numeric( MAINWP_MODULE_LOG_KEEP_RECORDS_TTL ) && MAINWP_MODULE_LOG_KEEP_RECORDS_TTL > 0 ) {

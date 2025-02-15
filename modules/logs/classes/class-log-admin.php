@@ -336,21 +336,28 @@ class Log_Admin {
      * @return array Array of users.
      */
     public function get_all_users() {
-        $list_users = array();
-        $all_users  = get_users();
-        if ( is_array( $all_users ) ) {
-            foreach ( $all_users as $user ) {
-                if ( empty( $user->ID ) ) {
-                    continue;
-                }
-                $fields             = array();
-                $fields['id']       = $user->ID;
-                $fields['login']    = $user->user_login;
-                $fields['nicename'] = $user->user_nicename;
-                $list_users[]       = $fields;
-            }
+        $all_users = get_users(
+            array(
+                'fields' => array( 'ID', 'user_login', 'user_nicename' ),
+            )
+        );
+        if ( empty( $all_users ) || ! is_array( $all_users ) ) {
+            return array();
         }
-        return $list_users;
+        $all_users = array_map(
+            function ( $user ) {
+                if ( empty( $user->ID ) ) {
+                    return false;
+                }
+                return array(
+                    'id'       => $user->ID,
+                    'login'    => $user->user_login,
+                    'nicename' => $user->user_nicename,
+                );
+            },
+            $all_users
+        );
+        return array_filter( $all_users );
     }
 
     /**

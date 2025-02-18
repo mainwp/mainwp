@@ -2,7 +2,11 @@
  * MainWP Clients.page
  */
 
-
+let import_client_current = 0;
+let import_client_total = 0;
+let import_client_count_success = 0;
+let import_client_count_fails = 0;
+let import_client_stop_by_user = false;
 jQuery(function () {
 
   // Delete single client.
@@ -100,6 +104,25 @@ jQuery(function () {
       parent.next().remove();
     }
     parent.remove();
+  });
+
+  // Handel Modal import client
+  import_client_total = jQuery('#mainwp_manageclients_total_import').val();
+  if (jQuery('#mainwp_manageclients_do_import').val() == 1) {
+    mainwp_manageclient_import_client();
+  }
+
+  jQuery(document).on('click', '#mainwp_manageclients_btn_import', function () {
+    if (!import_client_stop_by_user) {
+      import_client_stop_by_user = true;
+      jQuery('#mainwp_manageclients_import_logging .log').append(__('Paused import by user.') + "\n");
+      jQuery('#mainwp_manageclients_btn_import').val(__('Continue'));
+    } else {
+      import_client_stop_by_user = false;
+      jQuery('#mainwp_manageclients_import_logging .log').append(__('Continue import.') + "\n");
+      jQuery('#mainwp_manageclients_btn_import').val(__('Pause'));
+      mainwp_manageclient_import_client();
+    }
   });
 
 });
@@ -274,8 +297,8 @@ jQuery(document).on('click', '#bulk_add_multi_create_client', function (e) {
   jQuery('.mainwp-qsw-add-client-rows').each(function () { // NOSONAR -- complex
     let website_id = null;
     const row_index = jQuery(this).attr('id').replace('mainwp-qsw-add-client-row-', '');
-    
-		if (jQuery('#mainwp-qsw-add-client-website-id-' + row_index).length > 0) {
+
+    if (jQuery('#mainwp-qsw-add-client-website-id-' + row_index).length > 0) {
       website_id = jQuery('#mainwp-qsw-add-client-website-id-' + row_index)?.val().trim();
     }
     const site_url = jQuery('#mainwp-qsw-add-client-site-url-' + row_index).val().trim();
@@ -627,3 +650,145 @@ let mainwp_notes_client_save = function () {
 
 };
 
+// Handle import client for csv.
+const mainwp_manageclient_import_client = function () { // NOSONAR.
+  if (import_client_stop_by_user)
+    return;
+
+  jQuery('#mainwp-importing-clients').hide();
+  import_client_current++;
+  if (import_client_current > import_client_total) {
+    jQuery('#mainwp-import-clients-status-message').hide();
+    jQuery('#mainwp_manageclients_btn_import').attr('disabled', 'true'); //Disable
+    if (import_client_count_success < import_client_total) {
+      jQuery('#mainwp_manageclients_btn_save_csv').prop("disabled", false); //Enable
+    }
+
+    if (import_client_count_fails == 0) {
+      jQuery('#mainwp_manageclients_import_logging .log').html('<div style="text-align:center;margin:50px 0;"><h2 class="ui icon header"><i class="green check icon"></i><div class="content">Congratulations!<div class="sub header">' + import_client_count_success + ' clients imported successfully.</div></div></h2></div>');
+      jQuery('#mainwp_manageclients_btn_import').hide();
+      setTimeout(function () {
+        location.reload();
+      }, 2000);
+    } else {
+      jQuery('#mainwp_manageclients_import_logging .log').append('<div class="ui yellow message">Process completed with errors. ' + import_client_count_fails + ' client(s) failed to import. Please review logs to resolve problems and try again.</div>');
+      jQuery('#mainwp_manageclients_btn_import').hide();
+      jQuery('#mainwp-import-clients-modal-try-again').show();
+      jQuery('#mainwp-import-clients-modal-continue').show();
+    }
+
+    jQuery('#mainwp_manageclients_import_logging').scrollTop(jQuery('#mainwp_manageclients_import_logging .log').height());
+    return;
+  }
+
+  let import_client_data = jQuery('#mainwp_manageclients_import_csv_line_' + import_client_current).attr('encoded-data');
+  let import_client_line_orig = jQuery('#mainwp_manageclients_import_csv_line_' + import_client_current).attr('original');
+  let decoded_client_val = JSON.parse(import_client_data);
+
+  let import_city = decoded_client_val['client.city'];
+  let import_address_1 = decoded_client_val['client.contact.address.1'];
+  let import_address_2 = decoded_client_val['client.contact.address.2'];
+  let import_country = decoded_client_val['client.country'];
+  let import_email = decoded_client_val['client.email'];
+  let import_name = decoded_client_val['client.name'];
+  let import_state = decoded_client_val['client.state'];
+  let import_suspended = decoded_client_val['client.suspended'];
+  let import_zip = decoded_client_val['client.zip'];
+  let import_url = decoded_client_val['client.url'];
+
+  if (typeof (import_city) == "undefined")
+    import_city = '';
+  if (typeof (import_address_1) == "undefined")
+    import_address_1 = '';
+  if (typeof (import_address_2) == "undefined")
+    import_address_2 = '';
+  if (typeof (import_country) == "undefined")
+    import_country = '';
+  if (typeof (import_email) == "undefined")
+    import_email = '';
+  if (typeof (import_name) == "undefined") {
+    import_name = '';
+  }
+  if (typeof (import_state) == "undefined") {
+    import_state = '';
+  }
+  if (typeof (import_suspended) == "undefined") {
+    import_suspended = '';
+  }
+  if (typeof (import_zip) == "undefined") {
+    import_zip = '';
+  }
+  if (typeof (import_url) == "undefined") {
+    import_url = [];
+  }
+
+  jQuery('#mainwp_manageclients_import_logging .log').append('<strong>[' + import_client_current + '] << ' + import_client_line_orig + '</strong><br/>');
+
+  let errors = [];
+
+  if (import_name == '') {
+    errors.push(__('Please enter the client name.'));
+  }
+
+  if (import_url == '') {
+    errors.push(__('Please enter the site URL.'));
+  }
+
+  if (import_email == '') {
+    errors.push(__('Please enter email of the client.'));
+  }
+
+  if (errors.length > 0) {
+    jQuery('#mainwp_manageclients_import_logging .log').append('[' + import_client_current + '] >> Error - ' + errors.join(" ") + '<br/>');
+    jQuery('#mainwp_manageclients_import_fail_logging').append('<span>' + import_client_line_orig + '</span>');
+    import_client_count_fails++;
+    mainwp_manageclient_import_client();
+    return;
+  }
+
+  // Checking client exist yet
+  let data_check_client = mainwp_secure_data({
+    action: 'mainwp_clients_check_client',
+    email: import_email,
+  });
+  jQuery.post(ajaxurl, data_check_client, function (response) {
+    if (response.success) {
+      // Create new client.
+      let data = mainwp_secure_data({
+        action: 'mainwp_clients_import_client',
+        name: import_name,
+        email: import_email,
+        urls: import_url,
+        city: import_city,
+        address_1: import_address_1,
+        address_2: import_address_2,
+        country: import_country,
+        state: import_state,
+        suspended: import_suspended,
+        zip: import_zip,
+      });
+      jQuery.post(ajaxurl, data, function (res_client) {
+        let add_result = 'Create a new [' + import_name + '] >> ';
+        if (res_client.success) {
+          import_client_count_success++;
+        } else {
+          jQuery('#mainwp_manageclients_import_fail_logging').append('<span>' + import_client_line_orig + '</span>');
+          import_client_count_fails++;
+        }
+        jQuery('#mainwp_manageclients_import_logging .log').append(add_result + res_client.data.message + "<br/>");
+        mainwp_manageclient_import_client();
+      });
+    } else {
+      let check_result = response?.data?.error;
+      errors.push(check_result);
+    }
+
+    if (errors.length > 0) {
+      jQuery('#mainwp_manageclients_import_fail_logging').append('<span>' + import_client_line_orig + '</span>');
+      jQuery('#mainwp_manageclients_import_logging .log').append(errors.join("\n") + '<br/>');
+      import_client_count_fails++;
+      mainwp_manageclient_import_client();
+    }
+    jQuery('#mainwp_manageclients_import_logging').scrollTop(jQuery('#mainwp_manageclients_import_logging .log').height());
+  }, 'json');
+}

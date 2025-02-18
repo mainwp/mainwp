@@ -142,6 +142,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $this->add_action( 'mainwp_prepare_renew_connections', array( MainWP_Connect_Helper::instance(), 'ajax_prepare_renew_connections' ) );
         $this->add_action( 'mainwp_renew_connections', array( MainWP_Connect_Helper::instance(), 'ajax_renew_connections' ) );
 
+        $this->add_action( 'mainwp_clients_check_client', array( &$this, 'mainwp_clients_check_client' ) );
+        $this->add_action( 'mainwp_clients_import_client', array( &$this, 'mainwp_clients_import_client' ) );
+
         // Page: managesites.
         $this->add_action( 'mainwp_save_temp_import_website', array( &$this, 'ajax_save_temp_import_website' ) );
         $this->add_action( 'mainwp_delete_temp_import_website', array( &$this, 'ajax_delete_temp_import_website' ) );
@@ -1099,6 +1102,112 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         MainWP_DB_Client::instance()->suspend_unsuspend_websites_by_client_id( $clientid, $suspended );
 
         wp_die( 'success' );
+    }
+
+    /**
+     * Method mainwp_clients_check_client()
+     *
+     * The client check has been created in the system yet.
+     *
+     * @uses \MainWP_DB_Client::instance()->get_wp_client_by()
+     */
+    public function mainwp_clients_check_client() {
+        $this->secure_request( 'mainwp_clients_check_client' );
+        // phpcs:disable WordPress.Security.NonceVerification.Missing
+        $client_email = isset( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : '';
+        // phpcs:enable WordPress.Security.NonceVerification.Missing
+        $client_existed = MainWP_DB_Client::instance()->get_wp_client_by( 'client_email', $client_email, ARRAY_A );
+        if ( is_array( $client_existed ) && isset( $client_existed['client_id'] ) ) {
+            return wp_send_json_error( array( 'error' => esc_html__( 'Client email exists. Please try again.', 'mainwp' ) ) );
+        }
+        return wp_send_json_success( array( 'result' => esc_html__( 'Client email not exists.', 'mainwp' ) ) );
+    }
+
+    /**
+     * Method mainwp_clients_import_client()
+     *
+     * Import new client
+     *
+     * @uses \MainWP_DB::instance()->get_websites_by_url()
+     * @uses \MainWP_Client_Handler::get_default_client_fields()
+     * @uses \MainWP_DB_Client::instance()->update_client()
+     * @uses \MainWP_DB_Client::instance()->update_selected_sites_for_client()
+     */
+    public function mainwp_clients_import_client() {  // phpcs:ignore -- NOSONAR 
+        $this->secure_request( 'mainwp_clients_import_client' );
+        // Set value from POST data.
+        $default_values = array(
+            'client.name'              => ! empty( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '',
+            'client.email'             => ! empty( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : '',
+            'client.contact.address.1' => ! empty( $_POST['address_1'] ) ? sanitize_text_field( wp_unslash( $_POST['address_1'] ) ) : '',
+            'client.contact.address.2' => ! empty( $_POST['address_2'] ) ? sanitize_text_field( wp_unslash( $_POST['address_2'] ) ) : '',
+            'client.city'              => ! empty( $_POST['city'] ) ? sanitize_text_field( wp_unslash( $_POST['city'] ) ) : '',
+            'client.state'             => ! empty( $_POST['state'] ) ? sanitize_text_field( wp_unslash( $_POST['state'] ) ) : '',
+            'client.zip'               => ! empty( $_POST['zip'] ) ? sanitize_text_field( wp_unslash( $_POST['zip'] ) ) : '',
+            'client.country'           => ! empty( $_POST['country'] ) ? sanitize_text_field( wp_unslash( $_POST['country'] ) ) : '',
+            'client.suspended'         => ! empty( $_POST['suspended'] ) ? sanitize_text_field( wp_unslash( $_POST['suspended'] ) ) : 0,
+        );
+        // Get Site id.
+        $selected_sites = array();
+        if ( ! empty( $_POST['urls'] ) ) {
+            $urls           = array_map( 'sanitize_text_field', wp_unslash( $_POST['urls'] ) );
+            $selected_sites = array_filter(
+                array_map(
+                    function ( $v_url ) {
+                            $url     = esc_url( $v_url );
+                            $website = MainWP_DB::instance()->get_websites_by_url( $url );
+                            return ! empty( $website ) ? current( $website )->id : null;
+                    },
+                    $urls
+                )
+            );
+        }
+
+        $client_to_add         = array();
+        $default_client_fields = MainWP_Client_Handler::get_default_client_fields(); // Get client field database.
+        foreach ( $default_values as $key_client => $val_client ) {
+            if ( isset( $default_client_fields[ $key_client ] ) && ! empty( $default_client_fields[ $key_client ]['db_field'] ) && ! empty( $val_client ) ) {
+                $client_to_add[ $default_client_fields[ $key_client ]['db_field'] ] = $val_client; // Assign data to customers according to DB Field.
+            }
+        }
+
+        if ( ! empty( $client_to_add ) ) {
+            // Set default values.
+            $client_to_add['created']            = time();
+            $client_to_add['primary_contact_id'] = 0;
+            // Inset client.
+            $inserted = MainWP_DB_Client::instance()->update_client( $client_to_add, true );
+
+            if ( ! empty( $inserted ) && is_object( $inserted ) && ! empty( $selected_sites ) ) {
+                MainWP_DB_Client::instance()->update_selected_sites_for_client( $inserted->client_id, $selected_sites ); // Set client to selected sites.
+                // Set default color and icon .
+                $cust_color = '#34424d';
+                $cust_icon  = 'WordPress';
+                $update     = array(
+                    'client_id'          => $inserted->client_id,
+                    'selected_icon_info' => 'selected:' . $cust_icon . ';color:' . $cust_color,
+                );
+                MainWP_DB_Client::instance()->update_client( $update ); // Update Client.
+            }
+            if ( ! empty( $inserted ) && is_object( $inserted ) ) {
+                return wp_send_json_success(
+                    array(
+                        'message' => esc_html__( 'successful client.', 'mainwp' ),
+                        'client'  => $inserted,
+                    )
+                );
+            }
+            return wp_send_json_error(
+                array(
+                    'message' => esc_html__( 'unsuccessful client.', 'mainwp' ),
+                )
+            );
+        }
+        return wp_send_json_error(
+            array(
+                'message' => esc_html__( 'Error, please try again later.', 'mainwp' ),
+            )
+        );
     }
 
     /**

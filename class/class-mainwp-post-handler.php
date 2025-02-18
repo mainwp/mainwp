@@ -1135,6 +1135,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      */
     public function mainwp_clients_import_client() {  // phpcs:ignore -- NOSONAR 
         $this->secure_request( 'mainwp_clients_import_client' );
+        // phpcs:disable 
         // Set value from POST data.
         $default_values = array(
             'client.name'              => ! empty( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '',
@@ -1162,7 +1163,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
                 )
             );
         }
-
+        // phpcs:enable
         $client_to_add         = array();
         $default_client_fields = MainWP_Client_Handler::get_default_client_fields(); // Get client field database.
         foreach ( $default_values as $key_client => $val_client ) {
@@ -1178,18 +1179,17 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             // Inset client.
             $inserted = MainWP_DB_Client::instance()->update_client( $client_to_add, true );
 
-            if ( ! empty( $inserted ) && is_object( $inserted ) && ! empty( $selected_sites ) ) {
-                MainWP_DB_Client::instance()->update_selected_sites_for_client( $inserted->client_id, $selected_sites ); // Set client to selected sites.
+            if ( ! empty( $inserted ) && is_object( $inserted ) ) {
+                if ( ! empty( $selected_sites ) ) {
+                    MainWP_DB_Client::instance()->update_selected_sites_for_client( $inserted->client_id, $selected_sites ); // Set client to selected sites.
+                }
                 // Set default color and icon .
-                $cust_color = '#34424d';
-                $cust_icon  = 'WordPress';
-                $update     = array(
+                $update = array(
                     'client_id'          => $inserted->client_id,
-                    'selected_icon_info' => 'selected:' . $cust_icon . ';color:' . $cust_color,
+                    'selected_icon_info' => 'selected:wordpress;color:#34424d',
                 );
                 MainWP_DB_Client::instance()->update_client( $update ); // Update Client.
-            }
-            if ( ! empty( $inserted ) && is_object( $inserted ) ) {
+
                 return wp_send_json_success(
                     array(
                         'message' => esc_html__( 'successful client.', 'mainwp' ),

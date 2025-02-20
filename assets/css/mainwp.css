@@ -1,7 +1,29 @@
-.mainwp-show-all-updates-button,
-table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
+/* 22px - 24px */
+.mainwp-ui h1 {
+    font-size: clamp(1.96rem, 0.47vi + 1.86rem, 2.29rem);
+  }
+  /* 20px - 22px */
+  .mainwp-ui h2 {
+    font-size: clamp(1.09rem, 0.4vi + 1.01rem, 1.33rem);
+  }
+  
+  /* 14px - 16px */
+  .mainwp-ui .header:not(.ui),
+  .mainwp-ui .ui.header,
+  .mainwp-ui h3 {
+    font-size: clamp(1.09rem, 0.4vi + 1.01rem, 1.33rem);
+  }
+  
+  .mainwp-ui h1.ui.header .sub.header,
+  .mainwp-ui h2.ui.header .sub.header,
+  .mainwp-ui h3.ui.header .sub.header {
+    font-size: 1rem !important;
+  }
+
+.mainwp-show-all-updates-button, table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     display: none !important;
 }
+
 
 /* Genaral Style */
 
@@ -461,6 +483,8 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    padding: 0px !important;
+    overflow: hidden !important;
 }
 
 .mainwp-widget .mainwp-resize-handle {
@@ -470,17 +494,18 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
 }
 
 .mainwp-widget .mainwp-widget-header {
-    padding-bottom: 1rem !important;
+    padding: 1em !important;
 }
 
 .mainwp-widget .mainwp-scrolly-overflow {
     flex-grow: 1;
     overflow-x: hidden;
     overflow-y: auto;
+    padding: 1em !important;
 }
 
 .mainwp-widget .mainwp-widget-footer {
-    padding-top: 1rem !important;
+    padding: 1em !important;
 }
 
 .mainwp-widget img {
@@ -1372,7 +1397,22 @@ th .down.icon {
     display: none !important;
 }
 
-.mainwp-widget.grid-stack-item {
-    position: absolute !important;
-    padding: 0 !important;
+/* Gridstack Customization */
+
+.mainwp-ui .grid-stack .ui-resizable-se {
+    background-size: contain;
+    width: 18px;  /* Adjust as needed */
+    height: 18px; /* Adjust as needed */
+    opacity: 0.7; /* Make sure it's visible */
+    bottom: 1.25rem !important;
+    right: 1.25rem !important;
+}
+
+.mainwp-ui .grid-stack .ui-resizable-sw {
+    background-size: contain;
+    width: 18px;  /* Adjust as needed */
+    height: 18px; /* Adjust as needed */
+    opacity: 0.7; /* Make sure it's visible */
+    bottom: 1.25rem !important;
+    left: 1.25rem !important;
 }

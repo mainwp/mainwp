@@ -363,6 +363,38 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     }
 
     /**
+     * Method handle_insights_events_screen_settings()
+     *
+     * Handle manage insights events screen settings
+     */
+    public function handle_insights_events_screen_settings() { // phpcs:ignore -- NOSONAR - complex.
+        if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'ManageEventsScrOptions' ) ) {
+            $show_cols = array();
+            foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST ) ) as $key => $val ) {
+                if ( false !== strpos( $key, 'mainwp_show_column_' ) ) {
+                    $col               = str_replace( 'mainwp_show_column_', '', $key );
+                    $show_cols[ $col ] = 1;
+                }
+            }
+            if ( isset( $_POST['show_columns_name'] ) ) {
+                foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST['show_columns_name'] ) ) as $col ) {
+                    if ( ! isset( $show_cols[ $col ] ) ) {
+                        $show_cols[ $col ] = 0; // uncheck, hide columns.
+                    }
+                }
+            }
+
+            $user = wp_get_current_user();
+            if ( $user ) {
+                update_user_option( $user->ID, 'mainwp_settings_show_insights_events_columns', $show_cols, true );
+                update_option( 'mainwp_default_manage_insights_events_per_page', ( isset( $_POST['mainwp_default_sites_per_page'] ) ? intval( $_POST['mainwp_default_sites_per_page'] ) : 25 ) );
+            }
+            wp_safe_redirect( admin_url( 'admin.php?page=InsightsManage&message=savedscreenopts' ) );
+            exit();
+        }
+    }
+
+    /**
      * Method handle_clients_screen_settings()
      *
      * Handle manage clients screen settings
@@ -541,6 +573,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $this->handle_monitoring_sites_screen_settings();
             $this->handle_clients_screen_settings();
             $this->handle_updates_screen_settings();
+            $this->handle_insights_events_screen_settings();
         }
 
         if ( isset( $_POST['select_mainwp_options_siteview'] ) ) {

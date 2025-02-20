@@ -114,11 +114,11 @@ class Log_Events_Filter_Segment {
                         jQuery('#mainwp-common-filter-edit-segment-status').html(__('Please enter segment name.')).addClass('red').show();
                         return false;
                     }
-
+                    const filter_opt = jQuery('#mainwp-common-filter-option-name').val().trim();
                     var data = mainwp_secure_data({
                         action: 'mainwp_module_log_filter_save_segment',
                         name: seg_name,
-                        filter_opt_name: jQuery('#mainwp-common-filter-option-name').val().trim(),
+                        filter_opt_name:filter_opt,
                         seg_ranges: $( '#mainwp-module-log-filter-ranges').dropdown('get value'),
                         seg_dtsstart: $( '#mainwp-module-log-filter-dtsstart input[type=text]').val(),
                         seg_dtsstop: $( '#mainwp-module-log-filter-dtsstop input[type=text]').val(),
@@ -126,6 +126,12 @@ class Log_Events_Filter_Segment {
                         seg_clients:$('#mainwp-module-log-filter-clients').dropdown('get value'),
                         seg_users:$('#mainwp-module-log-filter-users').dropdown('get value'),
                     });
+
+                    if('module_log_manage' === filter_opt){
+                        data.seg_source =$('#mainwp-module-log-filter-source').dropdown('get value');
+                        data.seg_sites =$('#mainwp-module-log-filter-sites').dropdown('get value');
+                        data.seg_events =$('#mainwp-module-log-filter-events').dropdown('get value');
+                    }
 
                     jQuery('#mainwp-common-filter-edit-segment-status').html('<i class="notched circle loading icon"></i> ' + __('Saving segment. Please wait...')).show();
 
@@ -161,7 +167,11 @@ class Log_Events_Filter_Segment {
                         'seg_groups',
                         'seg_clients',
                         'seg_users',
+                        'seg_source',
+                        'seg_sites',
+                        'seg_events',
                     ];
+
                     if('' != seg_values ) {
                         try {
                             seg_values = JSON.parse(seg_values);
@@ -177,7 +187,10 @@ class Log_Events_Filter_Segment {
                                                     jQuery( '#mainwp-module-log-filters-row .ui.dropdown.' + key ).dropdown('clear');
                                                 }
                                                 arrVal = value.split(",");
-                                                jQuery( '#mainwp-module-log-filters-row .ui.dropdown.' + key ).dropdown('set selected', arrVal);
+
+                                                if(jQuery( '#mainwp-module-log-filters-row .ui.dropdown.' + key ).length){
+                                                    jQuery( '#mainwp-module-log-filters-row .ui.dropdown.' + key ).dropdown('set selected', arrVal);
+                                                }
                                             } else {
                                                 jQuery( '#mainwp-module-log-filters-row .ui.calendar.' + key ).calendar('set date', value );
                                             }
@@ -261,7 +274,7 @@ class Log_Events_Filter_Segment {
             'seg_users'   => 'allusers',
         );
 
-        $fields      = array(
+        $fields = array(
             'name',
             'seg_ranges',
             'seg_dtsstart',
@@ -270,6 +283,13 @@ class Log_Events_Filter_Segment {
             'seg_clients',
             'seg_users',
         );
+
+        if ( 'module_log_manage' === $opt_name ) {
+            $fields[] = 'seg_source';
+            $fields[] = 'seg_sites';
+            $fields[] = 'seg_events';
+        }
+
         $save_fields = array();
 
         foreach ( $fields as $field ) {

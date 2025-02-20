@@ -154,16 +154,12 @@ class Api_Backups_Admin {
         }
 
         if ( $site_id ) {
+            $output = '';
             if ( \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
                 if ( ! empty( $last_primary_backup ) ) {
                     $output = '<span data-tooltip="' . esc_attr__( 'Last backup available: ', 'mainwp' ) . esc_html( MainWP_Utility::time_elapsed_string( $last_primary_backup ) ) . '" data-position="left center" data-inverted=""><a class="ui mini grey icon basic button" href="admin.php?page=ManageSitesApiBackups&id=' . $site_id . '" class="green"><i class="history green icon"></i></a></span>';
                 } else {
-                    $output = '<span data-tooltip="' . esc_attr__( 'No backps taken yet. ', 'mainwp' ) . '" data-position="left center" data-inverted=""><a class="ui mini grey icon basic button" href="admin.php?page=ManageSitesApiBackups&id=' . $site_id . '" class="grey"><i class="history grey icon"></i></a></span>';
-                }
-
-                if ( \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
-                    $link    = sprintf( '<a href="admin.php?page=ManageSitesApiBackups&id=%d">' . __( 'Backup Now', 'it-l10n-mainwp-backupbuddy' ) . '</a>', $site_id );
-                    $output .= $link;
+                    $output = '<span data-tooltip="' . esc_attr__( 'No backps taken yet. ', 'mainwp' ) . '" data-position="left center" data-inverted=""><a class="ui mini grey icon basic button" href="admin.php?page=ManageSitesApiBackups&id=' . intval( $site_id ) . '" class="grey"><i class="history grey icon"></i></a></span>';
                 }
             }
             return $output;

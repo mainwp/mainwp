@@ -1637,7 +1637,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             $show_widgets = array();
         }
         ?>
-        <div id="mainwp-grid-stack-wrapper" class="grid-stack gs-12  grid-stack-animate">
+        <div id="mainwp-grid-stack-wrapper" class="grid-stack">
         <?php
         if ( isset( $mainwp_widget_boxes[ $page ] ) ) {
             foreach ( (array) $mainwp_widget_boxes[ $page ] as $box ) {
@@ -1664,22 +1664,22 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 }
 
                 // init widget layout settings.
-                // if ( ! isset( $layout['col'] ) && isset( $box['layout']['w'] ) ) {
-                // $layout = array(
-                // 'w'    => $box['layout']['w'],
-                // 'h'    => $box['layout']['h'],
-                // 'x' => $box['layout']['x'],
-                // 'y' => $box['layout']['y'],
-                // );
-                // }
+                if ( ! isset( $layout['x'] ) && isset( $box['layout']['2'] ) ) {
+                    $layout = array(
+                        'x' => $box['layout']['0'],
+                        'y' => $box['layout']['1'],
+                        'w' => $box['layout']['2'],
+                        'h' => $box['layout']['3'],
+                    );
+                }
 
                 // default settings.
                 if ( ! isset( $layout['x'] ) ) {
-                    $layout['w'] = 5;
-                    $layout['h'] = 3;
+                    $layout['w'] = 4;
+                    $layout['h'] = 4;
                 }
 
-                $layout_attrs_escaped  = ' gs-y="' . ( isset( $layout['y'] ) ? esc_attr( $layout['y'] ) : '' ) . '" gs-x="' . ( isset( $layout['x'] ) ? esc_attr( $layout['x'] ) : '' ) . '" ';
+                $layout_attrs_escaped  = ' gs-y="' . ( isset( $layout['y'] ) && -1 != intval( $layout['y'] ) ? esc_attr( $layout['y'] ) : '' ) . '" gs-x="' . ( isset( $layout['x'] ) -1 != intval( $layout['x'] ) ? esc_attr( $layout['x'] ) : '' ) . '" ';
                 $layout_attrs_escaped .= ' gs-w="' . ( isset( $layout['w'] ) ? esc_attr( $layout['w'] ) : '' ) . '" gs-h="' . ( isset( $layout['h'] ) ? esc_attr( $layout['h'] ) : '' ) . '" ';
 
                 echo '<div id="widget-' . esc_html( $box['id'] ) . '" class="grid-stack-item" ' . $layout_attrs_escaped . '>' . "\n"; //phpcs:ignore -- escaped.
@@ -1692,17 +1692,15 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         }
         ?>
         </div>
-        <?php
-        $breakpoint = apply_filters( 'mainwp_flexible_widgets_breakpoint', 1367 );
-        ?>
+        <?php //$breakpoint = apply_filters( 'mainwp_flexible_widgets_breakpoint', 1367 ); ?>
         <script type="text/javascript">
-            let is_mobile = false;
-            if( jQuery( window ).width() < <?php echo intval( $breakpoint ); ?> ) {
-                is_mobile = true;
-            }
-            console.log('mobile: ' + is_mobile);
+            //let is_mobile = false;
+            //if( jQuery( window ).width() < <?php //echo intval( $breakpoint ); ?> ) {
+            //    is_mobile = true;
+            //}
+            //console.log('mobile: ' + is_mobile);
 
-            if ( ! is_mobile ) {
+            // if ( ! is_mobile ) {
                 let page_sortablewidgets = '<?php echo esc_js( $page ); ?>';
                 jQuery( document ).ready( function( $ ) {
                     let wgIds = [];
@@ -1710,16 +1708,21 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         wgIds.push( jQuery( this ).attr('id') );
                     } );
                     let gsOpts = {
-                        cellHeight: 'auto',
-                        cellHeightThrottle: 100,
-                        float:true,
-                        itemClass: 'grid-stack-item',
-                        handleClass: 'handle-drag',
-                        margin: '10px',
+                        auto: true,
+                        cellHeight: '1rem',
+                        float: false,
                         resizable: {
                             handles: 'e,se,s,sw,w'
-                        }
+                        },
+                        margin: '1rem',
+                        itemClass: 'grid-stack-item',
+                        handleClass: 'handle-drag',
+                        columnOpts: {
+                            breakpointForWindow: true,  // test window vs grid size
+                            breakpoints: [{w:700, c:1}],
+                        },
                     }
+
                     let grid = GridStack.init(gsOpts);
                     grid.on('change', function() {
                         mainwp_overview_gridstack_save_layout();
@@ -1756,7 +1759,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     }
                 });
 
-            }
+            //}
         </script>
                 <?php
     }
@@ -2130,7 +2133,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     'clients'                         => esc_html__( 'Clients', 'mainwp' ),
                     'child_site_info'                 => esc_html__( 'Child site info (Individual Site Overview page)', 'mainwp' ),
                     'client_info'                     => esc_html__( 'Client info (Individual Site Overview page)', 'mainwp' ),
-                    'non_mainwp_changes'              => esc_html__( 'Non-MainWP Changes', 'mainwp' ),
+                    'non_mainwp_changes'              => esc_html__( 'Insights Changes', 'mainwp' ),
                     'get-started'                     => esc_html__( 'Get Started with MainWP', 'mainwp' ),
                     'uptime_monitoring_status'        => esc_html__( 'Uptime Monitoring', 'mainwp' ),
                     'uptime_monitoring_response_time' => esc_html__( 'Uptime Monitoring (Individual Site Overview page)', 'mainwp' ),
@@ -2415,10 +2418,11 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      * Method render_modal_save_segment()
      *
      * Render modal window.
+     * @param string $name Model segment name.
      *
      * @return void
      */
-    public static function render_modal_save_segment() {
+    public static function render_modal_save_segment( $name = '' ) {
         ?>
         <div id="mainwp-common-filter-segment-modal" class="ui tiny modal">
             <i class="close icon" id="mainwp-common-filter-segment-cancel"></i>
@@ -2454,9 +2458,9 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     </div>
                 </div>
             </div>
+            <input type="hidden" id="mainwp-common-filter-segments-model-name" value="<?php echo esc_attr( $name ); ?>" />
         </div>
-
-            <?php
+    <?php
     }
 
     /**

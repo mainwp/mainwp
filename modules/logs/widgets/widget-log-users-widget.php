@@ -78,12 +78,12 @@ class Log_Users_Widget {
 
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
+            <h2 class="ui header handle-drag">
                 <?php esc_html_e( 'User Management Events Summary', 'mainwp' ); ?>
                 <div class="sub header">
                 <?php esc_html_e( 'Displays a tally of user-related actions with a total event count.', 'mainwp' ); ?>
                 </div>
-            </h3>
+            </h2>
         </div>
 
         <div class="mainwp-widget-insights-card">

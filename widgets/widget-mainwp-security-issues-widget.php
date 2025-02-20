@@ -86,7 +86,7 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
         <div class="mainwp-widget-header">
             <div class="ui grid">
                 <div class="fourteen wide column">
-                    <h3 class="ui header handle-drag">
+                    <h2 class="ui header handle-drag">
                         <?php
                         /**
                          * Filter: mainwp_security_issues_widget_title
@@ -98,7 +98,7 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
                         echo esc_html( apply_filters( 'mainwp_security_issues_widget_title', esc_html__( 'Site Hardening', 'mainwp' ) ) );
                         ?>
                         <div class="sub header"><?php esc_html_e( 'Identify and strengthen weak spots to boost site hardening', 'mainwp' ); ?></div>
-                    </h3>
+                    </h2>
                 </div>
 
                 <div class="two wide column right aligned">
@@ -112,7 +112,26 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
                     </div>
                 </div>
             </div>
+            <div class="ui cards">
+                <div class="ui fluid small card">
+                    <div class="content">
+                        <div class="header">
+                            <span class="ui large text"><i class="shield alternate icon"></i> <?php echo intval( $total_securityIssues ); ?></span>
+                        </div>
+                        <div class="meta">
+                            <div class="ui tiny progress mainwp-site-hardening-progress"  data-total="<?php echo esc_attr( $max_issues ); ?>" data-value="<?php echo esc_attr( $resolved_issues ); ?>">
+                                <div class="green bar"></div>
+                            </div>
+                        </div>
+                        <div class="description">
+                            <strong><?php echo esc_html( _n( 'Recommendation', 'Recommendations', $total_securityIssues, 'mainwp' ) ); ?></strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <script type="text/javascript">
+                jQuery('.mainwp-site-hardening-progress').progress();
+
                 jQuery( document ).ready( function () {
                     let curTab = mainwp_ui_state_load('security-widget-issues');
                     curTab = ['hide', 'issues', 'show' ].includes(curTab) ? curTab : 'show';
@@ -166,27 +185,10 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
          */
         do_action( 'mainwp_security_issues_widget_top' );
         ?>
-        <div class="mainwp-scrolly-overflow">
-            <div class="ui cards">
-                <div class="ui fluid small card">
-                    <div class="content">
-                        <div class="header">
-                            <span class="ui large text"><i class="shield alternate icon"></i> <?php echo intval( $total_securityIssues ); ?></span>
-                        </div>
-                        <div class="meta">
-                            <div class="ui tiny progress mainwp-site-hardening-progress"  data-total="<?php echo esc_attr( $max_issues ); ?>" data-value="<?php echo esc_attr( $resolved_issues ); ?>">
-                                <div class="green bar"></div>
-                            </div>
-                        </div>
-                        <div class="description">
-                            <strong><?php echo esc_html( _n( 'Recommendation', 'Recommendations', $total_securityIssues, 'mainwp' ) ); ?></strong>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <script type="text/javascript">
-                jQuery('.mainwp-site-hardening-progress').progress();
-            </script>
+        
+        
+            <div class="mainwp-scrolly-overflow">
+            
             <div class="ui middle aligned divided selection list" id="mainwp-security-issues-widget-list" style="display:none">
                 <?php
                 $count_security_issues = '';
@@ -283,7 +285,6 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
         ?>
         <div class="ui two column grid mainwp-widget-footer">
             <div class="left aligned middle aligned column">
-                <a href="javascript:void(0)" class="<?php echo $is_demo ? 'disabled' : ''; ?> fix-all-security-issues ui button mini green" id="mainwp-fix-all-security-issues-widget-list" data-tooltip="<?php esc_attr_e( 'Resolve all detected security issue on all child sites.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><?php esc_html_e( 'Fix All Issues', 'mainwp' ); ?></a>
             </div>
             <div class="right aligned middle aligned column">
 

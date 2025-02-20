@@ -537,7 +537,7 @@ jQuery(function () {
  * Security Issues
  */
 
-let securityIssues_fixes = ['listing', 'wp_version', 'rsd', 'wlw', 'core_updates', 'plugin_updates', 'theme_updates', 'db_reporting', 'php_reporting', 'versions', 'registered_versions', 'admin', 'readme', 'wp_uptodate', 'phpversion_matched', 'sslprotocol', 'debug_disabled'];
+let securityIssues_fixes = [ 'core_updates', 'plugin_updates', 'theme_updates', 'db_reporting', 'php_reporting', 'wp_uptodate', 'phpversion_matched', 'sslprotocol', 'debug_disabled', 'sec_outdated_plugins', 'sec_inactive_plugins', 'sec_outdated_themes', 'sec_inactive_themes' ];
 jQuery(function () {
   let securityIssueSite = jQuery('#securityIssueSite');
   if ((securityIssueSite.val() != null) && (securityIssueSite.val() != "")) {
@@ -560,6 +560,9 @@ jQuery(function () {
     });
 
     for (let ise of securityIssues_fixes) {
+        if(ise === 'wp_uptodate'){
+            continue;
+        }
       jQuery('#' + ise + '_fix').on('click', function (what) {
         return function () {
           securityIssues_fix(what);
@@ -758,9 +761,6 @@ let securityIssues_handle = function (response) { // NOSONAR - complex.
             jQuery('#' + issue + '_ok').show();
             jQuery('#' + issue + '-status-ok').show();
             jQuery('#' + issue + '-status-nok').hide();
-            if (issue == 'readme') {
-              jQuery('#readme-wpe-nok').hide();
-            }
           } else if (res[issue] == 'N' || res[issue] == 'N_UNABLE') {
             jQuery('#' + issue + '_extra').hide();
             jQuery('#' + issue + '_ok').hide();
@@ -780,25 +780,17 @@ let securityIssues_handle = function (response) { // NOSONAR - complex.
               jQuery('#' + issue + '_extra').html(res[issue]);
               jQuery('#' + issue + '_extra').show();
             }
-          }
-        }
-      }
 
-      let unSetFeatures = jQuery('#mainwp-security-issues-table').attr('un-set');
-      if (unSetFeatures != '') {
-        unSetFeatures = unSetFeatures.split(',');
-        if (unSetFeatures.length > 0) {
-          let issue;
-          for (let ival in unSetFeatures) {
-            issue = unSetFeatures[ival];
-            console.log(res[issue]);
-            if (res[issue] == 'Y') {
-              securityIssues_unfix(issue);
+            if('wp_uptodate' === issue){
+                jQuery('#wp_upgrades').find('div[updated="-1"]').each(function(){
+                    jQuery(this).attr('updated', 0);
+                });
             }
+            jQuery('#' + issue + '-status-ok').hide();
+            jQuery('#' + issue + '-status-nok').show();
           }
         }
       }
-
     } catch (err) {
       result = '<i class="exclamation circle icon"></i> ' + __('Undefined error!');
     }
@@ -3173,6 +3165,9 @@ jQuery(function () {
     jQuery('#mainwp-notes-websiteid').val(id);
     jQuery('#mainwp-which-note').val('site'); // to fix conflict.
     mainwp_notes_show();
+    if(jQuery(this).attr('add-new')){
+        jQuery( '#mainwp-notes-edit' ).trigger( "click" );
+    }
     return false;
   });
 
@@ -3624,19 +3619,6 @@ jQuery(document).on('click', '.mainwp-install-check-dismiss', function () {
   return false;
 });
 
-jQuery(document).on('click', '.mainwp-event-action-dismiss', function () {
-  let action_id = jQuery(this).attr('action-id');
-  jQuery(this).closest('.event').fadeOut("slow");
-  let data = {
-    action: 'mainwp_site_actions_dismiss'
-  };
-  data['action_id'] = action_id;
-  jQuery.post(ajaxurl, mainwp_secure_data(data), function () {
-
-  });
-  return false;
-});
-
 jQuery(document).on('click', '#mainwp-delete-all-nonmainwp-actions-button', function () {
   mainwp_confirm('Are you sure you want to delete all Non-MainWP changes? This action can not be undone!', function () {
     mainwp_delete_nonmainwp_data_start();
@@ -3755,14 +3737,13 @@ jQuery(function ($) {
     mainwp_confirm(confirmMsg, function () { mainwp_non_mainwp_actions_table_bulk_action(bulk_act); });
   });
 
-
-  $(document).on('click', '.non-mainwp-action-row-dismiss', function () {
-    mainwp_non_mainwp_row_actions_dismiss(this);
+  $(document).on('click', '.insights-actions-row-dismiss', function () {
+    return mainwp_insights_row_actions_dismiss(this);
   });
 })
 
 
-let mainwp_non_mainwp_row_actions_dismiss = function (obj) {
+let mainwp_insights_row_actions_dismiss = function (obj) {
 
   let row = jQuery(obj).closest('tr');
   let confirmMsg = __("You are about to dismiss the selected changes?");
@@ -3770,23 +3751,23 @@ let mainwp_non_mainwp_row_actions_dismiss = function (obj) {
   let _callback = () => {
     row.html('<td></td><td colspan="999"><i class="notched circle loading icon"></i> Please wait...</td>');
     let data = mainwp_secure_data({
-      action: 'mainwp_non_mainwp_changes_dismiss_actions',
-      act_id: jQuery(row).attr('action-id')
+      action: 'mainwp_insight_events_dismiss_actions',
+      log_id: jQuery(row).attr('log-id')
     });
     jQuery.post(ajaxurl, data, function (response) {
       if (response) {
         if (response['error']) {
           row.html('<td></td><td colspan="999"><i class="times red icon"></i> ' + response['error'] + '</td>');
         } else if (response['success'] == 'yes') {
-          row.html('<td></td><td colspan="999"><i class="green check icon"></i> Non-MainWP Change has been dismissed.</td>');
+          row.html('<td></td><td colspan="999"><i class="green check icon"></i> Insight Change has been dismissed.</td>');
           setTimeout(function () {
             jQuery(row).fadeOut("slow");
           }, 2000);
         } else {
-          row.html('<td></td><td colspan="999"><i class="times red icon"></i> Non-MainWP Change could not be dismissed.</td>');
+          row.html('<td></td><td colspan="999"><i class="times red icon"></i> Insight Change could not be dismissed.</td>');
         }
       } else {
-        row.html('<td></td><td colspan="999"><i class="times red icon"></i> Non-MainWP Change could not be dismissed.</td>');
+        row.html('<td></td><td colspan="999"><i class="times red icon"></i> Insight Change could not be dismissed.</td>');
       }
     }, 'json');
   };

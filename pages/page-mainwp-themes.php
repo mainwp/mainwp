@@ -119,6 +119,19 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'render_ignore',
             )
         );
+
+        add_submenu_page(
+            'mainwp_tab',
+            __( 'Themes', 'mainwp' ),
+            '<div class="mainwp-hidden">' . esc_html__( 'Abandoned Themes', 'mainwp' ) . '</div>',
+            'read',
+            'ThemesAbandoned',
+            array(
+                static::get_class_name(),
+                'render_abandoned_themes',
+            )
+        );
+
         add_submenu_page(
             'mainwp_tab',
             __( 'Themes', 'mainwp' ),
@@ -259,8 +272,8 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             array(
                 'title'                => esc_html__( 'Abandoned Themes', 'mainwp' ),
                 'parent_key'           => 'ThemesManage',
-                'href'                 => 'admin.php?page=UpdatesManage&tab=abandoned-themes',
-                'slug'                 => 'ThemesManage',
+                'href'                 => 'admin.php?page=ThemesAbandoned',
+                'slug'                 => 'ThemesAbandoned',
                 'right'                => '',
                 'leftsub_order_level2' => 4.1,
             ),
@@ -329,6 +342,14 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     'title'  => esc_html__( 'Ignored Updates', 'mainwp' ),
                     'href'   => 'admin.php?page=ThemesIgnore',
                     'active' => ( 'Ignore' === $shownPage ) ? true : false,
+                );
+            }
+
+            if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ThemesAbandoned' ) ) {
+                $renderItems[] = array(
+                    'title'  => esc_html__( 'Abandoned Themes', 'mainwp' ),
+                    'href'   => 'admin.php?page=ThemesAbandoned',
+                    'active' => ( 'Abandoned' === $shownPage ) ? true : false,
                 );
             }
 
@@ -2644,6 +2665,15 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         } );
         </script>
         <?php
+    }
+
+    /**
+     * Method render_abandoned_themes()
+     *
+     * Render abandoned themes list.
+     */
+    public static function render_abandoned_themes() {
+        MainWP_Updates::render( 'abandoned_themes' );
     }
 
     /**

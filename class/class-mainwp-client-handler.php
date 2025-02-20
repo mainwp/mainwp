@@ -564,7 +564,7 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return $full_url; // return path to uploaded icon.
         }
 
-        $img_cls = 'ui mini ciruclar image';
+        $img_cls = 'ui avatar image';
         if ( 'card' === $what ) {
             $img_cls = 'ui medium circular image';
         }

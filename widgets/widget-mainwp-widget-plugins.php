@@ -123,7 +123,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         ?>
         <div class="ui grid mainwp-widget-header">
             <div class="twelve wide column">
-                <h3 class="ui header handle-drag">
+                <h2 class="ui header handle-drag">
                     <?php
                     /**
                      * Filter: mainwp_plugins_widget_title
@@ -137,7 +137,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     echo esc_html( apply_filters( 'mainwp_plugins_widget_title', esc_html__( 'Plugins', 'mainwp' ), $website ) );
                     ?>
                     <div class="sub header"><?php esc_html_e( 'Installed plugins on the child site', 'mainwp' ); ?></div>
-                </h3>
+                </h2>
             </div>
             <div class="four wide column right aligned">
                 <div class="ui dropdown right pointing mainwp-dropdown-tab">

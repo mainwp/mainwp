@@ -95,7 +95,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
 
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
+            <h2 class="ui header handle-drag">
                 <?php
                 /**
                  * Filter: mainwp_themes_widget_title
@@ -107,7 +107,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 echo esc_html( apply_filters( 'mainwp_themes_widget_title', esc_html__( 'Themes', 'mainwp' ), $website ) );
                 ?>
                 <div class="sub header"><?php esc_html_e( 'Inactive themes on the child site', 'mainwp' ); ?></div>
-            </h3>
+            </h2>
         </div>
         <div class="mainwp-scrolly-overflow">
             <?php

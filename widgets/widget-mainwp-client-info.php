@@ -64,7 +64,7 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
         $client_info = $website->client_id ? MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $website->client_id, ARRAY_A ) : false;
 
         ?>
-        <h3 class="ui header handle-drag mainwp-widget-header">
+        <h2 class="ui header handle-drag mainwp-widget-header">
             <?php
             /**
              * Filter: mainwp_clients_info_widget_title
@@ -78,7 +78,7 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             echo esc_html( apply_filters( 'mainwp_clients_info_widget_title', esc_html__( 'Client Info', 'mainwp' ), $website ) );
             ?>
             <div class="sub header"><?php esc_html_e( 'Client Information', 'mainwp' ); ?></div>
-        </h3>
+        </h2>
         <div class="mainwp-widget-site-info mainwp-scrolly-overflow">
             <?php
             /**

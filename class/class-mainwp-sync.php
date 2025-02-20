@@ -369,16 +369,6 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     $securityStats = array_merge( $securityStats, $filterStats );
                 }
 
-                $unset_scripts = apply_filters( 'mainwp_unset_security_scripts_stylesheets', true );
-                if ( $unset_scripts ) {
-                    if ( isset( $securityStats['versions'] ) ) {
-                        unset( $securityStats['versions'] );
-                    }
-                    if ( isset( $securityStats['registered_versions'] ) ) {
-                        unset( $securityStats['registered_versions'] );
-                    }
-                }
-
                 $tmp_issues           = array_filter(
                     $securityStats,
                     function ( $v ) {

@@ -67,10 +67,10 @@ class Cost_Tracker_Clients_Widget {
         ?>
         <div class="ui grid mainwp-widget-header">
             <div class="twelve wide column">
-                <h3 class="ui header handle-drag">
+                <h2 class="ui header handle-drag">
                     <?php esc_html_e( 'Cost Tracker', 'mainwp' ); ?>
                     <div class="sub header"><?php esc_html_e( 'Manage and monitor your expenses.', 'mainwp' ); ?></div>
-                </h3>
+                </h2>
             </div>
         </div>
         <div class="mainwp-scrolly-overflow">

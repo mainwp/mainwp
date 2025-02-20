@@ -1659,7 +1659,6 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                 </div>
             </div>
         </div>
-
         <?php
     }
 

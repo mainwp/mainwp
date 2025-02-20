@@ -1969,10 +1969,10 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
             $archiveFormat = isset( $_POST['mainwp_archiveFormat'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_archiveFormat'] ) ) : 'global';
 
-            $http_user = isset( $_POST['mainwp_managesites_edit_http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_http_user'] ) ) : '';
-            $http_pass = isset( $_POST['mainwp_managesites_edit_http_pass'] ) ? wp_unslash( $_POST['mainwp_managesites_edit_http_pass'] ) : '';
-            $url       = ( isset( $_POST['mainwp_managesites_edit_wpurl_with_www'] ) && ( 'www' === sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_wpurl_with_www'] ) ) ) ? 'www.' : '' ) . MainWP_Utility::remove_http_www_prefix( $website->url, true );
-            $url       = ( isset( $_POST['mainwp_managesites_edit_siteurl_protocol'] ) && ( 'https' === sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_siteurl_protocol'] ) ) ) ? 'https' : 'http' ) . '://' . MainWP_Utility::remove_http_prefix( $url, true );
+            $http_user     = isset( $_POST['mainwp_managesites_edit_http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_http_user'] ) ) : '';
+            $http_pass     = isset( $_POST['mainwp_managesites_edit_http_pass'] ) ? wp_unslash( $_POST['mainwp_managesites_edit_http_pass'] ) : '';
+            $url           = ( isset( $_POST['mainwp_managesites_edit_wpurl_with_www'] ) && ( 'www' === sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_wpurl_with_www'] ) ) ) ? 'www.' : '' ) . MainWP_Utility::remove_http_www_prefix( $website->url, true );
+            $url           = ( isset( $_POST['mainwp_managesites_edit_siteurl_protocol'] ) && ( 'https' === sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_siteurl_protocol'] ) ) ) ? 'https' : 'http' ) . '://' . MainWP_Utility::remove_http_prefix( $url, true );
             $backup_method = isset( $_POST['mainwp_primaryBackup'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_primaryBackup'] ) ) : 'global';
 
             $disableHealthChecking = isset( $_POST['mainwp_managesites_edit_disableSiteHealthMonitoring'] ) ? 0 : 1;
@@ -2376,10 +2376,11 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public static function mainwp_managesites_form_import_sites_render_input( $index, $key_optional, $field_optional, $field, $site ) {
         $input_optional = isset( $field_optional['default'] ) ? $field_optional['default'] : '';
-        $value          = self::mainwp_managesites_form_import_sites_get_value( $site, $key_optional, $input_optional );
+        $value          = static::mainwp_managesites_form_import_sites_get_value( $site, $key_optional, $input_optional );
+        $index_rand     = wp_rand( 0, 9999 );
         ?>
         <div class="ui mini fluid input">
-            <input type="text" name="mainwp_managesites_import[<?php echo esc_attr( $index ); ?>][<?php echo esc_attr( $key_optional ); ?>]" value="<?php echo esc_attr( $value ); ?>" data-row-index="<?php echo esc_attr( $index ); ?>"  <?php echo isset( $field_optional['input_type'] ) && 'number' === $field_optional['input_type'] ? 'oninput="this.value = this.value.replace(/[^0-9]/g, \'\')"' : ''; ?> id="<?php echo esc_attr( $field['id'] . '-' . $index ); ?>" class="<?php echo esc_attr( $field['class'] ); ?>"/>
+            <input type="text" name="mainwp_managesites_import[<?php echo esc_attr( $index ); ?>][<?php echo esc_attr( $key_optional ); ?>]" value="<?php echo esc_attr( $value ); ?>" data-row-index="<?php echo esc_attr( $index ); ?>"  <?php echo isset( $field_optional['input_type'] ) && 'number' === $field_optional['input_type'] ? 'oninput="this.value = this.value.replace(/[^0-9]/g, \'\')"' : ''; ?> id="<?php echo esc_attr( $field['id'] . '-' . $index . '-' . $index_rand ); ?>" class="<?php echo esc_attr( $field['class'] ); ?>"/>
         </div>
         <?php
     }

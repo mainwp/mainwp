@@ -154,12 +154,13 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @param mixed $recurrence Cron job hook.
      */
     public function init_mainwp_cron( $useWPCron, $cron_hook, $recurrence ) {
-        $sched = wp_next_scheduled( $cron_hook );
+        $sched       = wp_next_scheduled( $cron_hook );
+        $enabled_job = apply_filters( 'mainwp_is_enable_schedule_job', $useWPCron, $cron_hook, $recurrence );
         if ( false === $sched ) {
-            if ( $useWPCron ) {
+            if ( $useWPCron && $enabled_job ) {
                 wp_schedule_event( time(), $recurrence, $cron_hook );
             }
-        } elseif ( ! $useWPCron ) {
+        } elseif ( ! $useWPCron || ! $enabled_job ) {
             wp_unschedule_event( $sched, $cron_hook );
         }
     }

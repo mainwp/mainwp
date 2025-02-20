@@ -59,23 +59,23 @@ class MainWP_Client_Overview_Contacts { // phpcs:ignore Generic.Classes.OpeningB
 
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
-            <?php
-            /**
-             * Filter: mainwp_clients_overview_contact_widget_title
-             *
-             * Filters the Site info widget title text.
-             *
-             * @param object $contact_info Object containing the child site info.
-             *
-             * @since 4.1
-             */
-            echo esc_html( apply_filters( 'mainwp_clients_overview_contact_widget_title', $contact_info['contact_name'], $contact_info ) );
-            ?>
+            <h2 class="ui header handle-drag">
+                <?php
+                /**
+                 * Filter: mainwp_clients_overview_contact_widget_title
+                 *
+                 * Filters the Site info widget title text.
+                 *
+                 * @param object $contact_info Object containing the child site info.
+                 *
+                 * @since 4.1
+                 */
+                echo esc_html( apply_filters( 'mainwp_clients_overview_contact_widget_title', $contact_info['contact_name'], $contact_info ) );
+                ?>
                 <div class="sub header">
                     <?php echo esc_html( apply_filters( 'mainwp_clients_overview_contact_widget_sutbitle', $contact_info['contact_role'], $contact_info ) ); ?>
                 </div>
-            </h3>
+            </h2>
         </div>
             <div class="mainwp-widget-client-card mainwp-scrolly-overflow">
                 <?php

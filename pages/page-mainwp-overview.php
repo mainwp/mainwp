@@ -255,57 +255,58 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
             if ( $enabled ) {
                 if ( 'google-widget' === $id || 'matomo' === $id ) {
-                    MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( 1, 1, 4, 18 ) );
+                    MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( -1, -1, 4, 30 ) );
                 } else {
-                    MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( 1, 1, 4, 11 ) );
+                    MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( -1, -1, 4, 30 ) );
                 }
             }
         }
 
-        // Load the Get started widget.
-        if ( static::$enable_widgets['get-started'] ) {
-            MainWP_UI::add_widget_box( 'get-started', array( MainWP_Get_Started::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
-        }
-
-        // Load the Recent Posts widget.
-        if ( \mainwp_current_user_can( 'dashboard', 'manage_posts' ) && static::$enable_widgets['recent_posts'] ) {
-            MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, array( 1, 1, 6, 10 ) );
-        }
-
-        // Load the Recent Pages widget.
-        if ( \mainwp_current_user_can( 'dashboard', 'manage_pages' ) && static::$enable_widgets['recent_pages'] ) {
-            MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, array( 1, 1, 6, 10 ) );
-        }
-
-        // Load the Security Issues widget.
-        if ( \mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) && static::$enable_widgets['security_issues'] ) {
-            MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), $page, array( 1, 1, 2, 9 ) );
-        }
-
-        // Load the Connection Status widget.
-        if ( MainWP_Uptime_Monitoring_Edit::is_enable_global_monitoring() && ! MainWP_System_Utility::get_current_wpid() && static::$enable_widgets['uptime_monitoring_status'] ) {
-            MainWP_UI::add_widget_box( 'uptime_monitoring_status', array( MainWP_Uptime_Monitoring_Status::get_class_name(), 'render_status' ), $page, array( 1, 1, 2, 9 ) );
-        }
-
-        // Load the Connection Status widget.
-        if ( ! MainWP_System_Utility::get_current_wpid() && static::$enable_widgets['connection_status'] ) {
-            MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
-        }
-
-        // Load the Non-MainWP Changes widget.
-        if ( static::$enable_widgets['non_mainwp_changes'] ) {
-            MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), $page, array( 1, 1, 4, 10 ) );
+        // Load the Updates Overview widget.
+        if ( static::$enable_widgets['overview'] ) {
+            MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), $page, array( 0, 0, 12, 19 ) );
         }
 
         // Load the Clients widget.
         if ( static::$enable_widgets['clients'] ) {
-            MainWP_UI::add_widget_box( 'clients', array( MainWP_Clients::get_class_name(), 'render' ), $page, array( 1, 1, 4, 10 ) );
+            MainWP_UI::add_widget_box( 'clients', array( MainWP_Clients::get_class_name(), 'render' ), $page, array( -1, -1, 4, 30 ) );
         }
 
-        // Load the Updates Overview widget.
-        if ( static::$enable_widgets['overview'] ) {
-            MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), $page, array( 1, 1, 4, 19 ) );
+        // Load the Non-MainWP Changes widget.
+        if ( static::$enable_widgets['non_mainwp_changes'] ) {
+            MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), $page, array( -1, -1, 4, 30 ) );
         }
+
+        // Load the Connection Status widget.
+        if ( ! MainWP_System_Utility::get_current_wpid() && static::$enable_widgets['connection_status'] ) {
+            MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), $page, array( -1, -1, 4, 30 ) );
+        }
+
+        // Load the Connection Status widget.
+        if ( MainWP_Uptime_Monitoring_Edit::is_enable_global_monitoring() && ! MainWP_System_Utility::get_current_wpid() && static::$enable_widgets['uptime_monitoring_status'] ) {
+            MainWP_UI::add_widget_box( 'uptime_monitoring_status', array( MainWP_Uptime_Monitoring_Status::get_class_name(), 'render_status' ), $page, array( -1, -1, 4, 30 ) );
+        }
+
+        // Load the Security Issues widget.
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) && static::$enable_widgets['security_issues'] ) {
+            MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), $page, array( -1, -1, 4, 30 ) );
+        }
+
+        // Load the Recent Pages widget.
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_pages' ) && static::$enable_widgets['recent_pages'] ) {
+            MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, array( -1, -1, 4, 30 ) );
+        }
+
+        // Load the Recent Posts widget.
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_posts' ) && static::$enable_widgets['recent_posts'] ) {
+            MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, array( -1, -1, 4, 30 ) );
+        }
+
+        // Load the Get started widget.
+        //if ( static::$enable_widgets['get-started'] ) {
+        //    MainWP_UI::add_widget_box( 'get-started', array( MainWP_Get_Started::get_class_name(), 'render' ), $page, array( 0, 0, 6, 4 ) );
+        //}
+        
     }
 
     /**
@@ -379,7 +380,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 <?php
             }
             ?>
-    <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
+            <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'widgets' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="widgets"></i>

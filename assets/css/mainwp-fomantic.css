@@ -45,7 +45,7 @@
   background: none !important;
 }
 
-.mainwp-ui:not(.mainwp-ui-setup) .ui.segment {
+.mainwp-ui:not(.mainwp-ui-setup) .ui.segment:not(.mainwp-widget) {
   border-radius: 0;
   border: 0;
   margin-top: 0;
@@ -278,6 +278,12 @@
 
 .mainwp-ui #widget-uptime_monitoring_response_time .ui.card {
   min-width: 100px !important;
+}
+
+.mainwp-ui .mainwp-cards .ui.card {
+  flex: 1 1 100px;
+  min-width: 240px;
+  max-width: 500px;
 }
 
 /* classic theme */

@@ -43,7 +43,7 @@ class MainWP_Clients { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     private static function render_clients( $clients ) { // phpcs:ignore -- NOSONAR - complex.
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
+            <h2 class="ui header handle-drag">
                 <?php
                 /**
                  * Filter: mainwp_clients_widget_title
@@ -55,7 +55,7 @@ class MainWP_Clients { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 echo esc_html( apply_filters( 'mainwp_clients_widget_title', esc_html__( 'Clients', 'mainwp' ) ) );
                 ?>
                 <div class="sub header"><?php esc_html_e( 'View and manage all clients connected to your MainWP Dashboard.', 'mainwp' ); ?></div>
-            </h3>
+            </h2>
         </div>
         <div id="mainwp-clients-widget"  class="mainwp-scrolly-overflow">
                 <?php
@@ -74,10 +74,9 @@ class MainWP_Clients { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 <table class="ui table" id="mainwp-clients-widget-table">
                     <thead>
                         <tr>
-                            <th scope="col" class="no-sort"></th>
                             <th scope="col"><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
-                            <th scope="col"><?php esc_html_e( 'Primary Contact', 'mainwp' ); ?></th>
-                            <th scope="col" class="no-sort"></th>
+                            <th scope="col" class="collapsing"><?php esc_html_e( 'Primary Contact', 'mainwp' ); ?></th>
+                            <th scope="col" class="no-sort collapsing"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -86,17 +85,15 @@ class MainWP_Clients { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         <tr>
                             <td class="left aligned middle aligned">
                                 <a href="admin.php?page=ManageClients&client_id=<?php echo intval( $client['client_id'] ); ?>">
-                                    <?php echo $client_display_image; //phpcs:ignore -- ok. ?>
+                                <?php echo $client_display_image; //phpcs:ignore -- ok. ?> <?php echo esc_html( $client['name'] ); ?>
                                 </a>
-                            </td>
-                            <td class="left aligned middle aligned">
-                            <span><a href="admin.php?page=ManageClients&client_id=<?php echo intval( $client['client_id'] ); ?>"><?php echo esc_html( $client['name'] ); ?></a></span><br/>
-                            <?php if ( isset( $client['client_email'] ) && '' !== $client['client_email'] ) : ?>
-                                <span class="ui small text"><a href="mailto:<?php echo esc_attr( $client['client_email'] ); ?>"><i class="envelope icon"></i> <?php echo esc_html( $client['client_email'] ); ?></a></span><br/>
-                            <?php endif; ?>
-                            <?php if ( isset( $client['client_phone'] ) && '' !== $client['client_phone'] ) : ?>
-                                <span class="ui small text"><a href="tel:<?php echo esc_attr( $client['client_phone'] ); ?>"><i class="phone alternate icon"></i> <?php echo esc_html( $client['client_phone'] ); ?></a></span>
-                            <?php endif; ?>
+                                <br/>
+                                <?php if ( isset( $client['client_email'] ) && '' !== $client['client_email'] ) : ?>
+                                    <span class="ui small text"><a href="mailto:<?php echo esc_attr( $client['client_email'] ); ?>" class="ui grey text"><i class="envelope grey icon"></i> <?php echo esc_html( $client['client_email'] ); ?></a></span><br/>
+                                <?php endif; ?>
+                                <?php if ( isset( $client['client_phone'] ) && '' !== $client['client_phone'] ) : ?>
+                                    <span class="ui small text"><a href="tel:<?php echo esc_attr( $client['client_phone'] ); ?>" class="ui grey text"><i class="phone alternate grey icon"></i> <?php echo esc_html( $client['client_phone'] ); ?></a></span>
+                                <?php endif; ?>
                             </td>
                             <td class="left aligned middle aligned">
                                 <?php
@@ -105,13 +102,13 @@ class MainWP_Clients { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                     $contact = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'contact_id', $client['primary_contact_id'] );
                                     if ( $contact ) {
                                         ?>
-                                    <span><?php echo esc_html( $contact->contact_name ); ?> <?php echo ( isset( $contact->contact_role ) && '' !== $contact->contact_role ) ? ' - ' . esc_html( $contact->contact_role ) : ''; ?></span><br/>
+                                    <?php echo esc_html( $contact->contact_name ); ?> <?php echo ( isset( $contact->contact_role ) && '' !== $contact->contact_role ) ? ' - ' . esc_html( $contact->contact_role ) : ''; ?><br/>
                                         <?php if ( isset( $contact->contact_email ) && '' !== $contact->contact_email ) : ?>
-                                        <span class="ui small text"><a href="mailto:<?php echo esc_attr( $contact->contact_email ); ?>"><i class="envelope icon"></i> <?php echo esc_html( $contact->contact_email ); ?></a></span><br/>
-                                    <?php endif; ?>
+                                            <span class="ui small text"><a href="mailto:<?php echo esc_attr( $contact->contact_email ); ?>" class="ui grey text"><i class="envelope grey icon"></i> <?php echo esc_html( $contact->contact_email ); ?></a></span><br/>
+                                        <?php endif; ?>
                                         <?php if ( isset( $contact->contact_phone ) && '' !== $contact->contact_phone ) : ?>
-                                        <span class="ui small text"><a href="tel:<?php echo esc_attr( $contact->contact_phone ); ?>"><i class="phone alternate icon"></i> <?php echo esc_html( $contact->contact_phone ); ?></a></span>
-                                    <?php endif; ?>
+                                            <span class="ui small text"><a href="tel:<?php echo esc_attr( $contact->contact_phone ); ?>" class="ui grey text"><i class="phone alternate grey icon"></i> <?php echo esc_html( $contact->contact_phone ); ?></a></span>
+                                        <?php endif; ?>
                                         <?php
                                     }
                                 }
@@ -120,7 +117,7 @@ class MainWP_Clients { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 }
                                 ?>
                             </td>
-                            <td>
+                            <td class="right aligned">
                                 <div class="ui right pointing dropdown mainwp-768-hide" style="z-index:999">
                                 <i class="ellipsis vertical icon"></i>
                                     <div class="menu">

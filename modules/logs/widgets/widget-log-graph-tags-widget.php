@@ -65,12 +65,12 @@ class Log_Graph_Tags_Widget {
     public function render_widget() {
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
+            <h2 class="ui header handle-drag">
                 <?php esc_html_e( 'Tag Allocation Overview', 'mainwp' ); ?>
                 <div class="sub header">
                 <?php esc_html_e( 'Distribution of sites and clients associated with each tag for efficient resource categorization and insight.', 'mainwp' ); ?>
                 </div>
-            </h3>
+            </h2>
         </div>
 
         <div class="mainwp-widget-insights-card">

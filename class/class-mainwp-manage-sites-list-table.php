@@ -244,6 +244,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             'phpversion'     => array( 'phpversion', false ),
             'update'         => array( 'update', false ),
             'added_datetime' => array( 'added_datetime', false ),
+            'backup'         => array( 'backup', false ),
         );
 
         if ( ! MainWP_Uptime_Monitoring_Edit::is_enable_global_monitoring() ) {
@@ -703,6 +704,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         $req_orderby = null;
         $req_order   = null;
 
+        $extra_view = apply_filters( 'mainwp_sitestable_prepare_extra_view', array( 'favi_icon', 'health_site_status' ) );
+        $extra_view = array_unique( $extra_view );
+
         if ( $optimize ) {
             // phpcs:disable WordPress.Security.NonceVerification,Missing,Missing,Missing,Missing,Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             if ( isset( $_REQUEST['order'] ) ) {
@@ -758,6 +762,11 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                     $orderby = 'wp_sync.dtsSync ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'security' === $req_orderby ) {
                     $orderby = 'wp.securityIssues ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+                } elseif ( 'backup' === $req_orderby ) {
+                    $orderby = 'wp_optionview.primary_lasttime_backup ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+                    if ( ! in_array( 'primary_lasttime_backup', $extra_view ) ) {
+                        $extra_view[] = 'primary_lasttime_backup';
+                    }
                 }
             }
         }
@@ -983,8 +992,6 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             MainWP_DB::free_result( $total_websites );
         }
 
-        $extra_view           = apply_filters( 'mainwp_sitestable_prepare_extra_view', array( 'favi_icon', 'health_site_status' ) );
-        $extra_view           = array_unique( $extra_view );
         $params['extra_view'] = $extra_view;
         $params['view']       = 'manage_site';
 

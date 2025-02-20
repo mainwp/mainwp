@@ -31,20 +31,6 @@
   
 }
 
-/* 22px - 24px */
-.mainwp-ui.mainwp-custom-theme h1 {
-  font-size: clamp(1.96rem, 0.47vi + 1.86rem, 2.29rem);
-}
-/* 20px - 22px */
-.mainwp-ui.mainwp-custom-theme h2 {
-  font-size: clamp(1.79rem, 0.45vi + 1.68rem, 2.09rem);
-}
-/* 14px - 16px */
-.mainwp-ui.mainwp-custom-theme .header:not(.ui),
-.mainwp-ui.mainwp-custom-theme .ui.header,
-.mainwp-ui.mainwp-custom-theme h3 {
-  font-size: clamp(1.09rem, 0.4vi + 1.01rem, 1.33rem);
-}
 
 .mainwp-ui.mainwp-custom-theme #mainwp-all-active-plugins-table i.circular.icon.cached-icon-customable,
 .mainwp-ui.mainwp-custom-theme #mainwp-globally-ignored-plugins i.circular.icon.cached-icon-customable{

@@ -7,7 +7,7 @@
 
 namespace MainWP\Dashboard;
 
-use MainWP\Dashboard\Module\Log\Log_Manage_Insights_Page;
+use MainWP\Dashboard\Module\Log\Log_Manage_Insights_Events_Page;
 
 // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
@@ -220,6 +220,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         add_action( 'after_setup_theme', array( &$this, 'after_setup_theme' ) );
 
         add_action( 'init', array( &$this, 'parse_init' ) );
+        add_action( 'init', array( &$this, 'init_jobs' ) );
         add_action( 'init', array( &$this, 'init' ), 9999 );
         add_action( 'admin_init', array( $this, 'admin_redirects' ) );
         add_action( 'current_screen', array( &$this, 'current_screen_redirects' ), 15 );
@@ -267,10 +268,9 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_Updates_Overview::init();
         MainWP_Client::init();
         MainWP_Rest_Api_Page::init();
-        MainWP_Non_MainWP_Actions::instance();
 
-        if ( class_exists( '\MainWP\Dashboard\Module\Log\Log_Manage_Insights_Page' ) ) {
-            Log_Manage_Insights_Page::instance();
+        if ( class_exists( '\MainWP\Dashboard\Module\Log\Log_Manage_Insights_Events_Page' ) ) {
+            Log_Manage_Insights_Events_Page::instance();
         }
 
         MainWP_Uptime_Monitoring_Schedule::instance();
@@ -704,6 +704,16 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     }
 
     /**
+     * Method init_jobs()
+     *
+     * Initiate mainwp schedule jobs.
+     */
+    public function init_jobs() {
+        MainWP_System_Cron_Jobs::instance()->init_cron_jobs();
+    }
+
+
+    /**
      * Method after_setup_theme()
      *
      * After setup theme hook, to support post thumbnails.
@@ -860,7 +870,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         wp_enqueue_script( 'thickbox' );
         wp_enqueue_script( 'user-profile' );
         wp_enqueue_style( 'thickbox' );
-
 
         $load_gridstack = false;
 

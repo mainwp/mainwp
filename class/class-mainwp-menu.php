@@ -1099,8 +1099,8 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                     <?php if ( $mainwp_show_language_updates ) : ?>
                                         <a class="item" href="admin.php?page=UpdatesManage&tab=translations-updates"><?php esc_html_e( 'Translation Plugins', 'mainwp' ); ?></a>
                                     <?php endif; ?>
-                                        <a class="item" href="admin.php?page=UpdatesManage&tab=abandoned-plugins"><?php esc_html_e( 'Abandoned Plugins', 'mainwp' ); ?></a>
-                                        <a class="item" href="admin.php?page=UpdatesManage&tab=abandoned-themes"><?php esc_html_e( 'Abandoned Themes', 'mainwp' ); ?></a>
+                                        <a class="item" href="admin.php?page=PluginsAbandoned"><?php esc_html_e( 'Abandoned Plugins', 'mainwp' ); ?></a>
+                                        <a class="item" href="admin.php?page=ThemesAbandoned"><?php esc_html_e( 'Abandoned Themes', 'mainwp' ); ?></a>
                                     </div>
                                 </div>
                                 <div class="item accordion">
@@ -1341,7 +1341,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         $level2_active = true;
                     }
 
-                    if ( ! $level2_active && ! isset( $_GET['do'] ) && 'NonMainWPChanges' !== $page_name && 'InsightsManage' !== $page_name && 'admin.php?page=managesites' === $href ) {
+                    if ( ! $level2_active && ! isset( $_GET['do'] ) && 'InsightsManage' !== $page_name && 'admin.php?page=managesites' === $href ) {
                         $level2_active = true;
                     }
                 }

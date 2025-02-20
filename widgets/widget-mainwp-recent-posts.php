@@ -177,7 +177,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         ?>
         <div class="ui grid mainwp-widget-header">
             <div class="twelve wide column">
-                <h3 class="ui header handle-drag">
+                <h2 class="ui header handle-drag">
                     <?php
                     /**
                      * Filter: mainwp_recent_posts_widget_title
@@ -193,7 +193,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <?php else : ?>
                     <div class="sub header"><?php esc_html_e( 'The most recent posts from your websites', 'mainwp' ); ?></div>
                     <?php endif; ?>
-                </h3>
+                </h2>
             </div>
             <div class="four wide column right aligned">
                 <div class="ui dropdown right tiny pointing mainwp-dropdown-tab">

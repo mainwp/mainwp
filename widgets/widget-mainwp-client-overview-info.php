@@ -62,13 +62,13 @@ class MainWP_Client_Overview_Info { // phpcs:ignore Generic.Classes.OpeningBrace
         }
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
+            <h2 class="ui header handle-drag">
                 <?php echo esc_html( $client_info['name'] ); ?> <?php echo $client_status; //phpcs:ignore -- ok. ?>
                 <div class="ui hidden divider"></div>
                 <div class="sub header">
                     <?php echo MainWP_System_Utility::get_site_tags( $client_info, true ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
                 </div>
-            </h3>
+            </h2>
         </div>
 
         <div class="mainwp-widget-client-card mainwp-scrolly-overflow" client-id="<?php echo intval( $client_id ); ?>">

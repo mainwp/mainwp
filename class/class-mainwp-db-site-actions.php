@@ -51,7 +51,6 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
      */
     public function __construct() {
         parent::__construct();
-        add_filter( 'mainwp_db_install_tables', array( $this, 'hook_db_install_tables' ), 10, 3 );
         add_action( 'mainwp_delete_site', array( $this, 'hook_delete_site' ), 10, 3 );
     }
 
@@ -231,25 +230,6 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
         }
         return $this->wpdb->update( $this->table_name( 'wp_actions' ), $data, array( 'action_id' => intval( $action_id ) ) );
     }
-
-
-    /**
-     * Method update_non_mainwp_action_by_id.
-     *
-     * Create or update action.
-     *
-     * @param int   $log_id action id.
-     * @param array $data action data.
-     *
-     * @return bool
-     */
-    public function update_non_mainwp_action_by_id( $log_id, $data ) {
-        if ( empty( $log_id ) ) {
-            return false;
-        }
-        return $this->wpdb->update( $this->table_name( 'wp_logs' ), $data, array( 'log_id' => intval( $log_id ) ) );
-    }
-
 
     /**
      * Method update_action.

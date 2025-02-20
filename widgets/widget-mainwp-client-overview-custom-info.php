@@ -50,21 +50,21 @@ class MainWP_Client_Overview_Custom_Info { // phpcs:ignore Generic.Classes.Openi
         $default_client_fields = MainWP_Client_Handler::get_default_client_fields();
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
-            <?php
-            /**
-             * Filter: mainwp_clients_overview_info_widget_title
-             *
-             * Filters the Site info widget title text.
-             *
-             * @param object $client_info Object containing the child site info.
-             *
-             * @since 4.1
-             */
-            echo esc_html( apply_filters( 'mainwp_clients_overview_info_widget_title', esc_html__( 'Additional Client Info', 'mainwp' ), $client_info ) );
-            ?>
-            <div class="sub header"></div>
-            </h3>
+            <h2 class="ui header handle-drag">
+                <?php
+                /**
+                 * Filter: mainwp_clients_overview_info_widget_title
+                 *
+                 * Filters the Site info widget title text.
+                 *
+                 * @param object $client_info Object containing the child site info.
+                 *
+                 * @since 4.1
+                 */
+                echo esc_html( apply_filters( 'mainwp_clients_overview_info_widget_title', esc_html__( 'Additional Client Info', 'mainwp' ), $client_info ) );
+                ?>
+                <div class="sub header"></div>
+            </h2>
         </div>
             <div class="mainwp-widget-client-card mainwp-scrolly-overflow">
                 <?php

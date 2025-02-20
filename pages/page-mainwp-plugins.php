@@ -127,6 +127,17 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         add_submenu_page(
             'mainwp_tab',
             __( 'Plugins', 'mainwp' ),
+            '<div class="mainwp-hidden">' . esc_html__( 'Abandoned Plugins', 'mainwp' ) . '</div>',
+            'read',
+            'PluginsAbandoned',
+            array(
+                static::get_class_name(),
+                'render_abandoned_plugins',
+            )
+        );
+        add_submenu_page(
+            'mainwp_tab',
+            __( 'Plugins', 'mainwp' ),
             '<div class="mainwp-hidden">' . esc_html__( 'Ignored Abandoned', 'mainwp' ) . '</div>',
             'read',
             'PluginsIgnoredAbandoned',
@@ -279,8 +290,8 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             array(
                 'title'                => esc_html__( 'Abandoned Plugins', 'mainwp' ),
                 'parent_key'           => 'PluginsManage',
-                'href'                 => 'admin.php?page=UpdatesManage&tab=abandoned-plugins',
-                'slug'                 => 'PluginsManage&tab=abandoned-plugins',
+                'href'                 => 'admin.php?page=PluginsAbandoned',
+                'slug'                 => 'PluginsAbandoned',
                 'right'                => '',
                 'leftsub_order_level2' => 4.1,
             ),
@@ -2507,11 +2518,20 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
+     * Method render_abandoned_plugins()
+     *
+     * Render abandoned plugins list.
+     */
+    public static function render_abandoned_plugins() {
+        MainWP_Updates::render( 'abandoned_plugins' );
+    }
+
+    /**
      * Method render_global_ignored()
      *
      * Render Global Ignored plugins list.
      *
-     * @param array $ignoredPlugins Ignored plugins array.
+     * @param bool  $ignoredPlugins Ignored plugins array.
      * @param array $decodedIgnoredPlugins Decoded ignored plugins array.
      */
     public static function render_global_ignored( $ignoredPlugins, $decodedIgnoredPlugins ) { //phpcs:ignore -- NOSONAR - complex.

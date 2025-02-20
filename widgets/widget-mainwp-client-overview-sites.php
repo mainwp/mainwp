@@ -103,21 +103,21 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
 
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
-            <?php
-            /**
-             * Filter: mainwp_clients_overview_websites_widget_title
-             *
-             * Filters the Site info widget title text.
-             *
-             * @param object $client_info Object containing the child site info.
-             *
-             * @since 4.1
-             */
-            echo esc_html( apply_filters( 'mainwp_clients_overview_websites_widget_title', esc_html__( 'Sites', 'mainwp' ), $client_info ) );
-            ?>
-            <div class="sub header"><?php echo esc_html__( 'Websites that belong to the client.', 'mainwp' ); ?></div>
-            </h3>
+            <h2 class="ui header handle-drag">
+                <?php
+                /**
+                 * Filter: mainwp_clients_overview_websites_widget_title
+                 *
+                 * Filters the Site info widget title text.
+                 *
+                 * @param object $client_info Object containing the child site info.
+                 *
+                 * @since 4.1
+                 */
+                echo esc_html( apply_filters( 'mainwp_clients_overview_websites_widget_title', esc_html__( 'Sites', 'mainwp' ), $client_info ) );
+                ?>
+                <div class="sub header"><?php echo esc_html__( 'Websites that belong to the client.', 'mainwp' ); ?></div>
+            </h2>
         </div>
             <div class="mainwp-widget-client-card mainwp-scrolly-overflow">
                 <?php

@@ -23,7 +23,7 @@ class Log_Install extends MainWP_Install {
      *
      * @var string DB version info.
      */
-    protected $log_db_version = '1.0.1.7'; // NOSONAR - no IP.
+    protected $log_db_version = '1.0.1.8'; // NOSONAR - no IP.
 
     /**
      * Protected variable to hold the database option name.
@@ -89,6 +89,7 @@ class Log_Install extends MainWP_Install {
     state tinyint(1) unsigned NULL,
     created int(11) NOT NULL DEFAULT 0,
     duration float(11,4) NOT NULL DEFAULT '0',
+    dismiss tinyint(1) NOT NULL DEFAULT 0,
     KEY site_id (site_id),
     KEY user_id (user_id),
     KEY created (created),

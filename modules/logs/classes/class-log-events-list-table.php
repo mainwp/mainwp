@@ -2,6 +2,8 @@
 /**
  * Manage Logs List Table.
  *
+ * Insights changes table.
+ *
  * @package     MainWP/Dashboard
  * @version 4.6
  */
@@ -10,6 +12,7 @@ namespace MainWP\Dashboard\Module\Log;
 
 use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_Updates_Helper;
+use phpseclib3\Common\Functions\Strings;
 
 /**
  * Class Log_Events_List_Table
@@ -46,7 +49,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      *
      * @var array
      */
-    public $table_type = null;
+    public $table_id_prefix = null;
 
 
     /**
@@ -69,10 +72,11 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * Run each time the class is called.
      *
      * @param Log_Manager $manager Instance of manager object.
+     * @param Strings     $type Events table type: manage_events|widget_overview|widget_insight.
      */
-    public function __construct( $manager, $type = 'widget' ) {
-        $this->manager    = $manager;
-        $this->table_type = $type;
+    public function __construct( $manager, $type = '' ) {
+        $this->manager         = $manager;
+        $this->table_id_prefix = $type;
     }
 
     /**
@@ -92,10 +96,12 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      */
     public function get_sortable_columns() {
         return array(
+            'event'         => array( 'event', false ),
+            'log_object'    => array( 'log_object', false ),
             'created'       => array( 'created', false ),
             'log_site_name' => array( 'name', false ),
             'user_id'       => array( 'user_id', false ),
-            'source'        => array( 'connector', false ),
+            'source'        => array( 'source', false ),
         );
     }
 
@@ -106,14 +112,18 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      */
     public function get_default_columns() {
         $columns = array(
-            'created'       => esc_html__( 'Event', 'mainwp' ),
+            'event'         => esc_html__( 'Event', 'mainwp' ),
+            'log_object'    => esc_html__( 'Object', 'mainwp' ),
+            'created'       => esc_html__( 'Date', 'mainwp' ),
             'log_site_name' => esc_html__( 'Website', 'mainwp' ),
             'user_id'       => esc_html__( 'User', 'mainwp' ),
             'source'        => esc_html__( 'Source', 'mainwp' ),
+            'col_action'    => '',
         );
 
-        if ( 'manage' !== $this->table_type ) {
+        if ( 'manage-events' !== $this->table_id_prefix ) {
             unset( $columns['source'] );
+            unset( $columns['col_action'] );
         }
 
         return $columns;
@@ -168,7 +178,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'className' => 'mainwp-user-cell',
         );
         $defines[] = array(
-            'targets'   => array( 'extra-column' ),
+            'targets'   => array( 'manage-col_action-column' ),
             'className' => 'collapsing',
         );
         return $defines;
@@ -189,17 +199,19 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
         $escaped = false;
         switch ( $column_name ) {
-            case 'created':
+            case 'event':
+                $act_label = $this->get_action_title( $record->action, 'action', true );
+                $out       = $act_label;
+                $escaped   = true;
+                break;
+            case 'log_object':
                 $event_title = $this->parse_event_title( $record );
-                $act_label   = $this->get_action_title( $record->action, 'action', true );
-                $sum         = '';
-                if ( 'non-mainwp-changes' === $record->connector ) {
-                    $sum = esc_html( $record->item ) . '<br>';
-                }
+                $out         = $event_title;
+                $escaped     = true;
+                break;
+            case 'created':
                 $date_string = sprintf(
-                    '%s<br>%s<br>' . $sum . '<time datetime="%s" class="relative-time record-created">%s</time>',
-                    $event_title,
-                    $act_label,
+                    '<time datetime="%s" class="relative-time record-created">%s</time>',
                     mainwp_module_log_get_iso_8601_extended_date( $record->created ),
                     MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $record->created ) )
                 );
@@ -219,7 +231,20 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $escaped = true;
                 break;
             case 'source':
-                $out = 'non-mainwp-changes' === $record->connector ? 'WP Admin' : 'Dashboard';
+                if ( ! empty( $record->source ) ) {
+                    $out = $record->source; // sub query field.
+                } else {
+                    $out = 'non-mainwp-changes' === $record->connector ? 'WP Admin' : 'Dashboard';
+                }
+                break;
+            case 'col_action':
+                ob_start();
+                ?>
+                <div action-id="<?php echo intval( $record->log_id ); ?>">
+                    <a class="ui mini green button insights-actions-row-dismiss" href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Dismiss the change.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a>
+                </div>
+                <?php
+                $out = ob_get_clean();
                 break;
             default:
         }
@@ -315,6 +340,8 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             }
         } elseif ( 'site' === $record->connector ) {
             $title = esc_html__( 'Website', 'mainwp' );
+        } elseif ( 'non-mainwp-changes' === $record->connector ) {
+            $title = esc_html( $record->item );
         } elseif ( isset( $extra_meta['name'] ) ) {
             $title = $extra_meta['name'];
             if ( 'installer' === $record->connector && ! empty( $extra_meta['rollback_info'] ) ) {
@@ -400,9 +427,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * Prepare the items to be listed.
      *
      * @param bool  $with_prev_data To get previous data.
-     * @param array $insights_filters Insights filters.
+     * @param array $insights_filters Required: Insights filters.
      */
-    public function prepare_items( $with_prev_data = false, $insights_filters = array() ) { //phpcs:ignore -- NOSONAR - complex method.
+    public function prepare_items( $with_prev_data, $insights_filters ) { //phpcs:ignore -- NOSONAR - complex method.
 
         $req_orderby = '';
         $req_order   = null;
@@ -420,6 +447,13 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         $array_groups_ids  = array();
         $array_users_ids   = array();
 
+        $array_source_list = array();
+        $array_sites_ids   = array();
+        $array_events_list = array();
+
+        //phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+        // error_log( print_r( $insights_filters, true ) );
+
         extract( $insights_filters ); //phpcs:ignore -- ok.
 
         if ( ! empty( $filter_dtsstart ) && ! empty( $filter_dtsstop ) && ! is_numeric( $filter_dtsstart ) && ! is_numeric( $filter_dtsstop ) ) { // after extract.
@@ -433,7 +467,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
          // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $perPage = isset( $_REQUEST['length'] ) ? intval( $_REQUEST['length'] ) : false;
         if ( -1 === (int) $perPage || empty( $perPage ) ) {
-            $perPage = 3999999;
+            $perPage = 9999999;
         }
         $start = isset( $_REQUEST['start'] ) ? intval( $_REQUEST['start'] ) : 0;
 
@@ -454,13 +488,19 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'user_ids'      => $array_users_ids,
             'timestart'     => strtotime( $filter_dtsstart . ' 00:00:00' ),
             'timestop'      => strtotime( $filter_dtsstop . ' 23:59:59' ),
+            'dismiss'       => 0,
+            'view'          => 'events_list',
+            'wpid'          => ! empty( $insights_filters['wpid'] ) ? $insights_filters['wpid'] : 0, // int or array of site ids.
+            'sources'       => $array_source_list,
+            'sites_ids'     => $array_sites_ids,
+            'events'        => $array_events_list,
         );
 
         $args['records_per_page'] = $perPage;
 
         $this->items = $this->manager->db->get_records( $args );
 
-        if ( isset( $_REQUEST['recent_number'] ) ) { //phpcs:ignore -- ok.
+        if ( !empty( $_REQUEST['recent_number'] ) ) { //phpcs:ignore -- ok.
             $this->total_items = $this->manager->db->get_found_records_count(); // get this value for recent events request only.
         }
 
@@ -480,7 +520,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      */
     public function display() {
 
-        $sites_per_page = get_option( 'mainwp_default_sites_per_page', 25 );
+        $sites_per_page = get_option( 'mainwp_default_manage_insights_events_per_page', 25 );
 
         $sites_per_page = intval( $sites_per_page );
 
@@ -492,7 +532,10 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             300 => '300',
         );
 
-        $pages_length = $pages_length + array( $sites_per_page => $sites_per_page );
+        if ( ! isset( $pages_length[ $sites_per_page ] ) ) {
+            $pages_length = $pages_length + array( $sites_per_page => $sites_per_page );
+        }
+
         ksort( $pages_length );
 
         if ( isset( $pages_length[-1] ) ) {
@@ -502,10 +545,20 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         $pagelength_val   = implode( ',', array_keys( $pages_length ) );
         $pagelength_title = implode( ',', array_values( $pages_length ) );
 
-        $ajaxaction = 'widget' === $this->table_type ? 'mainwp_module_log_events_display_rows' : 'mainwp_module_log_manage_display_rows';
+        $ajaxaction = 'mainwp_module_log_manage_events_display_rows';
+        if ( 'widget-insight' === $this->table_id_prefix ) {
+            $ajaxaction = 'mainwp_module_log_widget_insights_display_rows';
+        } elseif ( 'widget-overview' === $this->table_id_prefix ) {
+            $ajaxaction = 'mainwp_module_log_widget_events_overview_display_rows';
+        }
+
+        $events_tbl_id = 'mainwp-module-log-records-table';
+        if ( ! empty( $this->table_id_prefix ) ) {
+            $events_tbl_id .= '-' . esc_attr( $this->table_id_prefix );
+        }
 
         ?>
-        <table id="mainwp-module-log-records-table" style="width:100%" class="ui single line selectable unstackable table mainwp-with-preview-table">
+        <table id="<?php echo esc_attr( $events_tbl_id ); ?>" style="width:100%" class="ui single line selectable unstackable table mainwp-with-preview-table">
             <thead>
                 <tr><?php $this->print_column_headers( true ); ?></tr>
             </thead>
@@ -549,23 +602,25 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             if( jQuery( window ).width() > 1140 ) {
                 responsive = false;
             }
+            var $module_log_table = null;
             jQuery( document ).ready( function( $ ) {
-                    let $module_log_table = null;
+                    const manage_tbl_id = '#<?php echo esc_js( $events_tbl_id ); ?>';
+                    const ajax_action = '<?php echo esc_js( $ajaxaction ); ?>';
                     try {
                         jQuery( '#mainwp-sites-table-loader' ).hide();
-                        $module_log_table = jQuery( '#mainwp-module-log-records-table' ).on( 'processing.dt', function ( e, settings, processing ) {
+                        $module_log_table = jQuery( manage_tbl_id ).on( 'processing.dt', function ( e, settings, processing ) {
                             jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
                             if (!processing) {
-                                let tb = jQuery( '#mainwp-module-log-records-table' );
+                                let tb = jQuery( manage_tbl_id );
                                 tb.find( 'th[cell-cls]' ).each( function(){
                                     let ceIdx = this.cellIndex;
                                     let cls = jQuery( this ).attr( 'cell-cls' );
-                                    jQuery( '#mainwp-module-log-records-table tr' ).each(function(){
+                                    jQuery( manage_tbl_id + ' tr' ).each(function(){
                                         jQuery(this).find( 'td:eq(' + ceIdx + ')' ).addClass(cls);
                                     } );
                                 } );
-                                $( '#mainwp-module-log-records-table .ui.dropdown' ).dropdown();
-                                $( '#mainwp-module-log-records-table .ui.checkbox' ).checkbox();
+                                $( manage_tbl_id + ' .ui.dropdown' ).dropdown();
+                                $( manage_tbl_id + ' .ui.checkbox' ).checkbox();
                             }
                         } ).DataTable( {
                             "ajax": {
@@ -573,15 +628,24 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                 "type": "POST",
                                 "data":  function ( d ) {
                                     let data = mainwp_secure_data( {
-                                        action: '<?php echo esc_js( $ajaxaction ); ?>',
-                                        range: $( '#mainwp-module-log-filter-ranges').dropdown('get value'),
-                                        group: $( '#mainwp-module-log-filter-groups').dropdown('get value'),
-                                        client: $( '#mainwp-module-log-filter-clients').dropdown('get value'),
-                                        user: $( '#mainwp-module-log-filter-users').dropdown('get value'),
-                                        dtsstart: $('#mainwp-module-log-filter-dtsstart input[type=text]').val(),
-                                        dtsstop: $('#mainwp-module-log-filter-dtsstop input[type=text]').val(),
-                                        recent_number: 100,
+                                        action: ajax_action,
+                                        range: $( '#mainwp-module-log-filter-ranges').length ? $( '#mainwp-module-log-filter-ranges').dropdown('get value') : '',
+                                        group: $( '#mainwp-module-log-filter-groups').length ? $( '#mainwp-module-log-filter-groups').dropdown('get value') : '',
+                                        client: $( '#mainwp-module-log-filter-clients').length ? $( '#mainwp-module-log-filter-clients').dropdown('get value') : 0,
+                                        user: $( '#mainwp-module-log-filter-users').length ? $( '#mainwp-module-log-filter-users').dropdown('get value') : 0,
+                                        dtsstart: $('#mainwp-module-log-filter-dtsstart input[type=text]').length ? $('#mainwp-module-log-filter-dtsstart input[type=text]').val() : '',
+                                        dtsstop: $('#mainwp-module-log-filter-dtsstop input[type=text]').length ? $('#mainwp-module-log-filter-dtsstop input[type=text]').val() : '',
+                                        current_client_id: $( '#mainwp-widget-filter-current-client-id').length ? $( '#mainwp-widget-filter-current-client-id').val() : 0,
+                                        current_site_id: $( '#mainwp-widget-filter-current-site-id').length ? $( '#mainwp-widget-filter-current-site-id').val() : 0,
+                                        recent_number: $( '#mainwp-widget-filter-events-limit').length ? $( '#mainwp-widget-filter-events-limit').val() : 100,
                                     } );
+
+                                    if('mainwp_module_log_manage_events_display_rows' === ajax_action ){
+                                        data.source =  $( '#mainwp-module-log-filter-source').length ? $( '#mainwp-module-log-filter-source').dropdown('get value') : '';
+                                        data.sites =  $( '#mainwp-module-log-filter-sites').length ? $( '#mainwp-module-log-filter-sites').dropdown('get value') : '';
+                                        data.events =  $( '#mainwp-module-log-filter-events').length ? $( '#mainwp-module-log-filter-events').dropdown('get value') : '';
+                                    }
+
                                     return $.extend( {}, d, data );
                                 },
                                 "dataSrc": function ( json ) {
@@ -629,6 +693,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                             rowCallback: function (row, data) {
                                 jQuery( row ).addClass(data.rowClass);
                                 jQuery( row ).attr( 'id', "log-row-" + data.log_id );
+                                jQuery( row ).attr( 'log-id',  data.log_id );
                                 jQuery( row ).find('.mainwp-date-cell').attr('data-sort', data.created_sort );
                                 jQuery( row ).find('.mainwp-state-cell').attr('data-sort', data.state_sort );
                             }
@@ -647,6 +712,10 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                         }
                     };
                     mainwp_module_log_overview_content_filter = function() {
+                        if(jQuery( '#mainwp-common-filter-segments-model-name').length && 'manage-events' === jQuery( '#mainwp-common-filter-segments-model-name').val() ){
+                            mainwp_module_log_manage_events_filter();
+                            return;
+                        }
                         let range = jQuery( '#mainwp-module-log-filter-ranges').dropdown('get value');
                         let group = jQuery( '#mainwp-module-log-filter-groups').dropdown('get value');
                         let client = jQuery( '#mainwp-module-log-filter-clients').dropdown('get value');
@@ -666,12 +735,12 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                     };
                     mainwp_module_log_overview_content_reset_filters = function(resetObj) {
                         try {
-                            let range = jQuery( '#mainwp-module-log-filter-ranges').dropdown('set selected', 'thismonth');
-                            let group = jQuery( '#mainwp-module-log-filter-groups').dropdown('clear');
-                            let client = jQuery( '#mainwp-module-log-filter-clients').dropdown('clear');
-                            let user = jQuery( '#mainwp-module-log-filter-users').dropdown('clear');
-                            let dtsstart = jQuery('#mainwp-module-log-filter-dtsstart input[type=text]').val('');
-                            let dtsstop = jQuery('#mainwp-module-log-filter-dtsstop input[type=text]').val('');
+                            jQuery( '#mainwp-module-log-filter-ranges').dropdown('set selected', 'thismonth');
+                            jQuery( '#mainwp-module-log-filter-groups').dropdown('clear');
+                            jQuery( '#mainwp-module-log-filter-clients').dropdown('clear');
+                            jQuery( '#mainwp-module-log-filter-users').dropdown('clear');
+                            jQuery('#mainwp-module-log-filter-dtsstart input[type=text]').val('');
+                            jQuery('#mainwp-module-log-filter-dtsstop input[type=text]').val('');
                             jQuery(resetObj).attr('disabled', 'disabled');
                             mainwp_module_log_overview_content_filter();
                         } catch(err) {
@@ -679,8 +748,38 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                             console.log(err);
                         }
                     };
-
+                    _init_manage_events_screen();
             } );
+
+
+            _init_manage_events_screen = function() {
+                jQuery( '#mainwp-manage-events-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
+                    let check_id = jQuery( this ).attr( 'id' );
+                    col_id = check_id.replace( "mainwp_show_column_", "" );
+                    try {
+                        $module_log_table.column( '#' + col_id ).visible( jQuery(this).is( ':checked' ) );
+                    } catch(err) {
+                        // to fix js error.
+                    }
+                } );
+            };
+
+            mainwp_manage_events_screen_options = function () {
+                jQuery( '#mainwp-manage-events-screen-options-modal' ).modal( {
+                    allowMultiple: true,
+                    onHide: function () {
+                        //ok.
+                    }
+                } ).modal( 'show' );
+
+                jQuery( '#manage-events-screen-options-form' ).submit( function() {
+                    if ( jQuery('input[name=reset_manage_events_columns_order]').attr('value') == 1 ) {
+                        $module_log_table.colReorder.reset();
+                    }
+                    jQuery( '#mainwp-manage-events-screen-options-modal' ).modal( 'hide' );
+                } );
+                return false;
+            };
 
         </script>
         <?php

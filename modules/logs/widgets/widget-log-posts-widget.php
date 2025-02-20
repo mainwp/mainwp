@@ -78,12 +78,12 @@ class Log_Posts_Widget {
 
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
+            <h2 class="ui header handle-drag">
                 <?php esc_html_e( 'Posts Management Event Tracker', 'mainwp' ); ?>
                 <div class="sub header">
                 <?php esc_html_e( 'Overview of post-related activities with total events tallied.', 'mainwp' ); ?>
                 </div>
-            </h3>
+            </h2>
         </div>
 
         <div class="mainwp-widget-insights-card">

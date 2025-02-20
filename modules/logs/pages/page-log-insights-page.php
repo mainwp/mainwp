@@ -47,6 +47,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
      */
     protected $list_events_table = null;
 
+
     /**
      * Enabled widgets
      *
@@ -432,7 +433,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
         static::render_header( 'overview' );
         $insights_filters = $this->get_insights_filters( true );
         static::render_logs_overview_top( $insights_filters );
-        $this->load_events_list_table();
+        $this->load_events_list_table(); // for events list in overview page.
         $this->list_events_table->prepare_items( true, $insights_filters );
         $items      = $this->list_events_table->items;
         $items_prev = ! empty( $this->list_events_table->items_prev ) ? $this->list_events_table->items_prev : array();
@@ -799,9 +800,39 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
      * Display table rows, optimize for shared hosting or big networks.
      */
     public function ajax_events_display_rows() {
-        MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_events_display_rows' );
+        MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_widget_insights_display_rows' );
         $this->load_events_list_table();
         $insights_filters = $this->get_insights_filters(); // get ajax filters.
+        $this->list_events_table->prepare_items( false, $insights_filters );
+        $output = $this->list_events_table->ajax_get_datatable_rows();
+        MainWP_Logger::instance()->log_execution_time( 'ajax_events_display_rows()' );
+        wp_send_json( $output );
+    }
+
+    /**
+     * Method ajax_events_overview_display_rows()
+     *
+     * Display table rows, optimize for shared hosting or big networks.
+     */
+    public function ajax_events_overview_display_rows() {
+        MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_widget_events_overview_display_rows' );
+        $this->load_events_list_table();
+
+        $insights_filters = array();
+        //phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        if ( ! empty( $_POST['current_site_id'] ) ) {
+            $insights_filters['site_id'] = intval( $_POST['current_site_id'] );
+        } elseif ( ! empty( $_POST['current_client_id'] ) ) {
+            $client_id = intval( $_POST['current_site_id'] );
+            $websites  = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id );
+            $site_ids  = array();
+            foreach ( $websites as $website ) {
+                $site_ids[] = $website->id;
+            }
+            $insights_filters['site_id'] = $site_ids;
+        }
+        //phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
         $this->list_events_table->prepare_items( false, $insights_filters );
         $output = $this->list_events_table->ajax_get_datatable_rows();
         MainWP_Logger::instance()->log_execution_time( 'ajax_events_display_rows()' );

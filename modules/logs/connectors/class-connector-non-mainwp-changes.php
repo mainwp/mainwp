@@ -79,7 +79,7 @@ class Connector_Non_Mainwp_Changes extends Log_Connector {
      *
      * @action mainwp_sync_site_log_install_actions.
      *
-     * @param array  $website  website.
+     * @param object  $website  website.
      * @param array  $record meta data.
      * @param string $index Object Id.
      */

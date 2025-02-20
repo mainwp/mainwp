@@ -51,7 +51,7 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
     public static function render_content() {
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
+            <h2 class="ui header handle-drag">
                 <?php
                 /**
                  * Filter: mainwp_get_started_widget_title
@@ -63,7 +63,7 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 echo esc_html( apply_filters( 'mainwp_get_started_widget_title', esc_html__( 'Get Started with MainWP', 'mainwp' ) ) );
                 ?>
                 <div class="sub header"><?php esc_html_e( 'Kickstart your MainWP experience with our simple checklist.', 'mainwp' ); ?></div>
-            </h3>
+            </h2>
         </div>
         <div class="mainwp-scrolly-overflow">
             <?php

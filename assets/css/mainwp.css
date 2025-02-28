@@ -6,14 +6,14 @@
   .mainwp-ui h2 {
     font-size: clamp(1.09rem, 0.4vi + 1.01rem, 1.33rem);
   }
-  
+
   /* 14px - 16px */
   .mainwp-ui .header:not(.ui),
   .mainwp-ui .ui.header,
   .mainwp-ui h3 {
     font-size: clamp(1.09rem, 0.4vi + 1.01rem, 1.33rem);
   }
-  
+
   .mainwp-ui h1.ui.header .sub.header,
   .mainwp-ui h2.ui.header .sub.header,
   .mainwp-ui h3.ui.header .sub.header {
@@ -827,6 +827,35 @@ table.mainwp-manage-wpsites-table .error a {
     max-width: 65px !important;
 }
 
+.mainwp-ui #mainwp-help-modal .actions:before {
+    position: absolute;
+    display: block;
+    bottom: 0;
+    right: 5px;
+    content: "\f337";
+    font-family: "icons";
+    color: #fff;
+    rotate: 45deg;
+}
+
+.mainwp-ui #mainwp-help-modal .actions:after {
+    position: absolute;
+    display: block;
+    bottom: 0;
+    left: 5px;
+    content: "\f337";
+    font-family: "icons";
+    color: #fff;
+    rotate: 135deg;
+}
+
+.mainwp-ui #mainwp-help-modal:hover .actions:before {
+    color: #999;
+}
+
+.mainwp-ui #mainwp-help-modal:hover .actions:after {
+    color: #999;
+}
 
 /* END V4
 ********************************************************************************/

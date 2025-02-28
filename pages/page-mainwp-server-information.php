@@ -940,7 +940,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 static::render_row_with_description( esc_html__( 'SSL Extension Enabled', 'mainwp' ), '=', true, 'get_ssl_support', '', '', null );
                 static::render_row_with_description( esc_html__( 'cURL Extension Enabled', 'mainwp' ), '=', true, 'get_curl_support', '', '', null );
 
-                $ssl_version     = OPENSSL_VERSION_TEXT;
+                $ssl_version     = MainWP_Server_Information_Handler::get_curl_ssl_version();
                 $openssl_version = 'OpenSSL/1.1.0';
                 if ( false !== strpos( $ssl_version, 'LibreSSL' ) ) {
                     $openssl_version = 'LibreSSL/2.5.0';

@@ -1010,12 +1010,13 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
                         } else {
                             let res = response.result;
                             let res_error = response.result_error;
-							let _success_icon = `<i class="green check icon"></i> ${render_html_regression_icon(res)}`;
+							let _success_icon = `<i class="green check icon"></i>`;
+							let regression_icon = render_html_regression_icon(res);
                             if (res[sid]) {
                                 if (!done && pBulkMode)
-									updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + _success_icon +'</span>');
+									updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + _success_icon + '</span>' + regression_icon);
                                 websiteHolder.attr('updated', 1);
-								websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + _success_icon +'</span>' + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
+								websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + _success_icon + '</span>' + regression_icon + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
                             } else if (res_error[sid]) {
                                 let _error = res_error[sid];
                                 let roll_error = mainwp_updates_get_rollback_msg(_error);
@@ -1430,11 +1431,11 @@ let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode) {
                         let res_error = response.result_error;
 						let regression_icon = render_html_regression_icon(res);
 						if (res[sid]) {
-							let _success_icon = `<i class="green check icon"></i> ${regression_icon}`;
+							let _success_icon = `<i class="green check icon"></i>`;
                             if (!done && pBulkMode)
-								updatesoverview_themes_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + _success_icon +'</span>' + ' ' + mainwp_links_visit_site_and_admin('', websiteId));
+								updatesoverview_themes_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + _success_icon + '</span>' + regression_icon + ' ' + mainwp_links_visit_site_and_admin('', websiteId));
                             websiteHolder.attr('updated', 1);
-							websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + _success_icon +'</span>' + ' ' + mainwp_links_visit_site_and_admin('', websiteId));
+							websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + _success_icon + '</span>' + regression_icon + ' ' + mainwp_links_visit_site_and_admin('', websiteId));
                         } else {
                             let _error = '';
                             let _icon = '';
@@ -3261,12 +3262,13 @@ let updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck
                     else {
                         let res = response.result;
                         let res_error = response.result_error;
-                        _icon_success = `<i class="green check icon"></i> ${render_html_regression_icon(res)}`;
+						let regression_icon = render_html_regression_icon(res);
+                        _icon_success = `<i class="green check icon"></i>`;
                         for (let item of newList) {
                             let elem = document.getElementById('wp_upgraded_' + pWhat + '_' + pId + strGroup + '_' + item);
                             let parent = jQuery(elem).closest('tr');
                             if (res[item]) {
-                                parent.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful.', 'mainwp') + '">' + _icon_success + '</span>');
+                                parent.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful.', 'mainwp') + '">' + _icon_success + '</span>' + regression_icon);
                             } else if ((what == 'plugin' || what == 'theme') && res_error[item]) {
                                 let _error = res_error[item];
                                 let _icon = '<i class="red times icon"></i>';

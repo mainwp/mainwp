@@ -290,12 +290,11 @@ class Log_Query {
         }
 
         if ( ! empty( $args['dev_log_query'] ) ) {
-            //phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+            //phpcs:disable Squiz.PHP.CommentedOutCode.Found
             error_log( print_r( $args, true ) );
-            //phpcs:ignore Squiz.PHP.CommentedOutCode.Found
             error_log( $query );
-            //phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-            error_log( $count_query );// .
+            error_log( $count_query );
+            //phpcs:enable Squiz.PHP.CommentedOutCode.Found
         }
 
         /**

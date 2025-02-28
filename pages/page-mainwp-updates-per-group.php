@@ -643,7 +643,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
-                                
+
                             </table>
                         </td>
                     </tr>

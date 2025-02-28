@@ -367,7 +367,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                                             ?>
                                             <span data-tooltip="<?php echo esc_html( $wpcore_update_disabled_by ); ?>" data-inverted="" data-position="left center"><a href="javascript:void(0)" class="ui green button mini disabled"><?php esc_html_e( 'Update', 'mainwp' ); ?></a></span>
                                             <?php } else { ?>
-                                            
+
                                                 <div class="ui bottom left pointing dropdown mini button"><?php esc_html_e( 'Ignore', 'mainwp' ); ?>
                                                     <i class="dropdown icon"></i>
                                                     <div class="menu">
@@ -377,7 +377,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                                                     </div>
                                                 </div>
                                                 <a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update', 'mainwp' ) . ' ' . esc_attr( $website->name ); ?>" data-inverted="" data-position="left center" class="ui green button mini" onClick="return updatesoverview_upgrade(<?php echo intval( $website->id ); ?>, this )"><?php esc_html_e( 'Update', 'mainwp' ); ?></a>
-                                               
+
                                             <input type="hidden" id="wp-updated-<?php echo intval( $website->id ); ?>" value="<?php echo ! empty( $wp_upgrades ) ? '0' : '1'; ?>" />
                                             <?php
                                         }
@@ -758,12 +758,10 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                         <td>
                             <?php echo esc_html( $translation_upgrade['version'] ); ?>
                         </td>
-                        <td class="trans-trust-col">
                         <?php
                         $is_trust = static::is_trans_trusted_update( $translation_upgrade, $trustedPlugins, $trustedThemes );
                         echo static::get_column_trusted($is_trust ); //phpcs:ignore -- NOSONAR - escaped.
                         ?>
-                        </td>
                         <td>
                             <?php
                             if ( $user_can_update_translation ) {

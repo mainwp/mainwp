@@ -217,7 +217,7 @@ class Log_Admin {
         $end_time   = ! empty( $end_date ) ? strtotime( $end_date . ' 23:59:59' ) : '';
 
         if ( ! is_numeric( $start_time ) || ! is_numeric( $end_time ) || $start_time > $end_time ) {
-            die( wp_json_encode( array( 'error' => esc_html__( 'Invalid Start date or end date. Please try again.' ) ) ) );
+            die( wp_json_encode( array( 'error' => esc_html__( 'Invalid Start date or end date. Please try again.', 'mainwp' ) ) ) );
         }
 
         $this->manager->db->create_compact_and_erase_records( $start_time, $end_time );
@@ -235,7 +235,7 @@ class Log_Admin {
         $year = isset( $_POST['year'] ) ? intval( $_POST['year'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         if ( $year < 2022 ) {
-            die( wp_json_encode( array( 'error' => esc_html__( 'Invalid selected year. Please try again.' ) ) ) );
+            die( wp_json_encode( array( 'error' => esc_html__( 'Invalid selected year. Please try again.', 'mainwp' ) ) ) );
         }
 
         $aday = $year . '-12-15'; // a day in last month.
@@ -268,11 +268,9 @@ class Log_Admin {
         if ( $enable_schedule ) {
             $last_purge = get_option( 'mainwp_module_log_last_time_auto_purge_logs' );
             $next_purge = get_option( 'mainwp_module_log_next_time_auto_purge_logs' );
-            $days       = false;
+            $days       = 100;
             if ( is_array( $this->manager->settings->options ) && isset( $this->manager->settings->options['records_ttl'] ) ) {
                 $days = intval( $this->manager->settings->options['records_ttl'] );
-            } else {
-                $days = 100;
             }
 
             if ( defined( 'MAINWP_MODULE_LOG_KEEP_RECORDS_TTL' ) && is_numeric( MAINWP_MODULE_LOG_KEEP_RECORDS_TTL ) && MAINWP_MODULE_LOG_KEEP_RECORDS_TTL > 0 ) {
@@ -338,21 +336,28 @@ class Log_Admin {
      * @return array Array of users.
      */
     public function get_all_users() {
-        $list_users = array();
-        $all_users  = get_users();
-        if ( is_array( $all_users ) ) {
-            foreach ( $all_users as $user ) {
-                if ( empty( $user->ID ) ) {
-                    continue;
-                }
-                $fields             = array();
-                $fields['id']       = $user->ID;
-                $fields['login']    = $user->user_login;
-                $fields['nicename'] = $user->user_nicename;
-                $list_users[]       = $fields;
-            }
+        $all_users = get_users(
+            array(
+                'fields' => array( 'ID', 'user_login', 'user_nicename' ),
+            )
+        );
+        if ( empty( $all_users ) || ! is_array( $all_users ) ) {
+            return array();
         }
-        return $list_users;
+        $all_users = array_map(
+            function ( $user ) {
+                if ( empty( $user->ID ) ) {
+                    return false;
+                }
+                return array(
+                    'id'       => $user->ID,
+                    'login'    => $user->user_login,
+                    'nicename' => $user->user_nicename,
+                );
+            },
+            $all_users
+        );
+        return array_filter( $all_users );
     }
 
     /**

@@ -111,6 +111,18 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         add_submenu_page(
             'mainwp_tab',
             esc_html__( 'Clients', 'mainwp' ),
+            '<div class="mainwp-hidden">' . esc_html__( 'Import Clients', 'mainwp' ) . '</div>', // NOSONAR
+            'read',
+            'ClientImport',
+            array(
+                static::get_class_name(),
+                'render_import_clients',
+            )
+        );
+
+        add_submenu_page(
+            'mainwp_tab',
+            esc_html__( 'Clients', 'mainwp' ),
             '<div class="mainwp-hidden">' . esc_html__( 'Client Fields', 'mainwp' ) . '</div>',
             'read',
             'ClientAddField',
@@ -192,6 +204,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ClientAddNew' ) ) { ?>
                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=ClientAddNew' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add Client', 'mainwp' ); ?></a>
                     <?php } ?>
+                    <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ClientImport' ) ) { ?>
+                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=ClientImport' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Import Clients', 'mainwp' ); ?></a>
+                    <?php } ?>
                     <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ClientAddField' ) ) { ?>
                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=ClientAddField' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Client Properties', 'mainwp' ); ?></a>
                     <?php } ?>
@@ -253,12 +268,20 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'leftsub_order_level2' => 2,
             ),
             array(
+                'title'                => esc_html__( 'Import Clients', 'mainwp' ),
+                'parent_key'           => 'ManageClients',
+                'href'                 => 'admin.php?page=ClientImport',
+                'slug'                 => 'ClientImport',
+                'right'                => '',
+                'leftsub_order_level2' => 3,
+            ),
+            array(
                 'title'                => esc_html__( 'Client Fields', 'mainwp' ),
                 'parent_key'           => 'ManageClients',
                 'href'                 => 'admin.php?page=ClientAddField',
                 'slug'                 => 'ClientAddField',
                 'right'                => '',
-                'leftsub_order_level2' => 3,
+                'leftsub_order_level2' => 4,
             ),
         );
 
@@ -450,6 +473,14 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $renderItems[] = array(
                 'title'  => esc_html__( 'Add Client', 'mainwp' ),
                 'href'   => 'admin.php?page=ClientAddNew',
+                'active' => ( 'Add' === $shownPage ) ? true : false,
+            );
+        }
+
+        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ClientImport' ) ) {
+            $renderItems[] = array(
+                'title'  => esc_html__( 'Import Clients', 'mainwp' ),
+                'href'   => 'admin.php?page=ClientImport',
                 'active' => ( 'Add' === $shownPage ) ? true : false,
             );
         }
@@ -900,6 +931,234 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_UI::render_modal_upload_icon();
     }
 
+    /**
+     * Renders the Import Client form.
+     */
+    public static function render_import_clients() {  // phpcs:ignore -- NOSONAR - Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+        static::render_header( 'ImportClients' );
+        $title_page = esc_html__( 'Import Clients', 'mainwp' );
+        // phpcs:disable WordPress.Security.NonceVerification.Missing
+
+        $has_import_data = ! empty( $_POST['mainwp_client_import_add'] );
+        // phpcs:enable WordPress.Security.NonceVerification.Missing
+        if ( $has_import_data && check_admin_referer( 'mainwp-admin-nonce' ) ) {
+            static::render_import_client_modal();
+        }
+        ?>
+        <div class=""  id="mainwp-import-clients">
+            <div class="ui labeled icon inverted menu mainwp-sub-submenu" id="mainwp-import-client-tabular-menu">
+                <a class="item active" data-tab="mainwp-client-import-csv">
+                    <i class="file excel icon"></i>
+                    <?php esc_html_e( 'CSV Import ', 'mainwp' ); ?>
+                </a>
+            </div>
+            <div class="ui segment">
+                <div id="" class="ui tab tab-client-import-csv active" data-tab="mainwp-client-import-csv">
+                    <div class="ui info message">
+                        <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-sites-info-message"></i>
+                        <?php printf( esc_html__( 'You can download the sample CSV file to see how to format the import file properly. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                    </div>
+                    <form method="POST" action="" enctype="multipart/form-data" id="mainwp_client_import_form" class="ui form">
+                        <div class="ui bottom attached tab segment active" data-tab="mainwp-import-csv">
+                            <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
+                            <h3 class="ui dividing header">
+                                <?php echo esc_html( $title_page ); ?>
+                                <div class="sub header"><?php esc_html_e( 'Import multiple clients to your MainWP Dashboard.', 'mainwp' ); ?></div>
+                            </h3>
+                            <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                            <div class="ui grid field">
+                                <label class="three wide column middle aligned" for="mainwp_client_import_file_bulkupload"><?php esc_html_e( 'Upload CSV', 'mainwp' ); ?> (<a href="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/csv/sample_clients.csv' ); ?>" target="_blank"><?php esc_html_e( 'Download Sample', 'mainwp' ); ?></a>)</label>
+                                <div class="nine wide column">
+                                    <div class="ui file input">
+                                    <input type="file" name="mainwp_client_import_file_bulkupload" id="mainwp_client_import_file_bulkupload" accept="text/comma-separated-values"/>
+                                    </div>
+                                </div>
+                                <div class="ui toggle checkbox four wide column middle aligned">
+                                    <input type="checkbox" name="mainwp_client_import_chk_header_first" checked="checked" id="mainwp_client_import_chk_header_first" value="1"/>
+                                    <label for="mainwp_client_import_chk_header_first"><?php esc_html_e( 'CSV file contains a header', 'mainwp' ); ?></label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ui segment">
+                            <div class="ui divider"></div>
+                            <input type="submit" name="mainwp_client_import_add" id="mainwp_client_import_bulkadd" class="ui big green button" value="<?php echo esc_attr( $title_page ); ?>"/>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript">
+            jQuery('#mainwp-import-client-tabular-menu .item').tab();
+        </script>
+        <?php
+        static::render_footer( 'ImportClients' );
+    }
+    /**
+     * Method render_import_client_modal()
+     *
+     * Render HTML import client modal.
+     */
+    public static function render_import_client_modal() {
+        ?>
+        <div class="ui large modal mainwp-qsw-import-client-modal" id="mainwp-import-client-modal" >
+            <i class="close icon"></i>
+            <div class="header"><?php echo esc_html_e( 'Import Clients' ); ?></div>
+            <div class="scrolling content">
+                <?php static::render_import_client_row_modal(); ?>
+            </div>
+            <div class="actions">
+                <div class="ui two column grid">
+                    <div class="left aligned middle aligned column">
+                        <input type="button" name="mainwp_manageclients_btn_import" id="mainwp_manageclients_btn_import" class="ui basic button" value="<?php esc_attr_e( 'Pause', 'mainwp' ); ?>"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript">
+            jQuery( document ).ready( function () {
+                jQuery('#mainwp-import-client-tabular-menu .item').tab();
+                jQuery( "#mainwp-import-client-modal" ).modal( {
+                    closable: false,
+                    onHide: function() {
+                        location.reload();
+                    }
+                } ).modal( 'show' );
+            } );
+        </script>
+        <?php
+    }
+
+    /**
+     * Method render_import_client_row_modal()
+     *
+     * Render row HTML import client.
+     */
+    public static function render_import_client_row_modal() {
+        ?>
+        <div id="mainwp-importing-clients" class="ui active inverted dimmer">
+            <div class="ui medium text loader"><?php esc_html_e( 'Importing', 'mainwp' ); ?></div>
+        </div>
+        <div class="ui message" id="mainwp-import-clients-status-message">
+            <i class="notched circle loading icon"></i> <?php echo esc_html__( 'Importing...', 'mainwp' ); ?>
+        </div>
+        <?php
+        $has_file_upload = isset( $_FILES['mainwp_client_import_file_bulkupload'] ) && isset( $_FILES['mainwp_client_import_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_client_import_file_bulkupload']['error'];  // phpcs:ignore -- NOSONAR 
+
+        if ( $has_file_upload ) {
+            $import_client_data = static::handle_client_import_files();
+            if ( ! empty( $import_client_data ) && is_array( $import_client_data ) ) {
+                $row         = 0;
+                $header_line = trim( $import_client_data['header_line'] );
+                foreach ( $import_client_data['data'] as $val_client_data ) {
+                    $encoded  = wp_json_encode( $val_client_data );
+                    $original = implode(
+                        ', ',
+                        array_map(
+                            function ( $item ) {
+                                return is_array( $item ) ? implode( ';', $item ) : $item;
+                            },
+                            $val_client_data
+                        )
+                    );
+                    ?>
+                    <input type="hidden" id="mainwp_manageclients_import_csv_line_<?php echo esc_attr( $row + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( $encoded ); ?>" original="<?php echo esc_attr( $original ); ?>"/>
+                    <?php
+                    ++$row;
+                }
+                ?>
+                <input type="hidden" id="mainwp_manageclients_do_import" value="1"/>
+                <input type="hidden" id="mainwp_manageclients_total_import" value="<?php echo esc_attr( $row ); ?>"/>
+                <div class="mainwp_manageclients_import_listing" id="mainwp_manageclients_import_logging">
+                    <span class="log ui medium text"><?php echo esc_html( $header_line ) . '<br/>'; ?></span>
+                </div>
+                <div class="mainwp_manageclients_import_listing" id="mainwp_manageclients_import_fail_logging" style="display: none;"><?php echo esc_html( $header_line ); ?> </div>
+                <?php
+            }
+        }
+    }
+
+    /**
+     * Method handle_client_import_files()
+     *
+     * Handle client import files.
+     *
+     * @uses MainWP_System_Utility::get_wp_file_system()
+     * @uses MainWP_DB::instance()->get_websites_by_url()
+     *
+     * @return array Import data.
+     */
+    public static function handle_client_import_files() {  // phpcs:ignore -- NOSONAR
+        $tmp_path = isset( $_FILES['mainwp_client_import_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_client_import_file_bulkupload']['tmp_name'] ) ) : '';  // phpcs:ignore WordPress.Security.NonceVerification.Missing -- NOSONAR 
+        MainWP_System_Utility::get_wp_file_system();
+        //phpcs:enable
+        /**
+         * WordPress files system object.
+         *
+         * @global object
+         */
+        global $wp_filesystem;
+
+        $content = $wp_filesystem->get_contents( $tmp_path );
+
+        // to compatible with EOL on OSs.
+        $content        = str_replace( "\r\n", "\r", $content );
+        $content        = str_replace( "\n", "\r", $content );
+        $lines          = explode( "\r", $content );
+        $import_data    = array();
+        $default_values = array(
+            'client.name'              => '',
+            'client.email'             => '',
+            'client.contact.address.1' => '',
+            'client.contact.address.2' => '',
+            'client.city'              => '',
+            'client.state'             => '',
+            'client.zip'               => '',
+            'client.country'           => '',
+            'client.suspended'         => 0,
+            'client.url'               => '',
+        );
+        if ( is_array( $lines ) && ( ! empty( $lines ) ) ) {
+            $header_line = null;
+            foreach ( $lines as $original_line ) {
+                $line = trim( $original_line );
+                if ( MainWP_Utility::starts_with( $line, '#' ) ) {
+                    continue;
+                }
+
+                $items = str_getcsv( $line, ',' );
+
+                if ( ( null === $header_line ) && ! empty( $_POST['mainwp_client_import_chk_header_first'] ) ) {  // phpcs:ignore WordPress.Security.NonceVerification.Missing -- NOSONAR 
+                    $header_line = $line . "\r";
+                    continue;
+                }
+                if ( 3 > count( $items ) ) {
+                    continue;
+                }
+
+                $x             = 0;
+                $import_fields = array();
+                // Take data from the CSV file into the array.
+                foreach ( $default_values as $field => $val ) {
+                    $value                   = isset( $items[ $x ] ) ? $items[ $x ] : $val;
+                    $import_fields[ $field ] = $value;
+                    ++$x;
+                }
+                $import_data[] = $import_fields;
+            }
+        }
+
+        if ( ! empty( $import_data ) ) {
+            foreach ( $import_data as $k_import => $val_import ) {
+                if ( ! empty( $val_import['client.url'] ) ) {
+                    $import_data[ $k_import ]['client.url'] = explode( ';', $val_import['client.url'] );
+                }
+            }
+        }
+        return array(
+            'header_line' => $header_line,
+            'data'        => $import_data,
+        );
+    }
 
     /**
      * Renders the Add New Client Fields form.

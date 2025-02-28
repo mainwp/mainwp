@@ -47,11 +47,16 @@ class Log_Author {
      * @param array $user_meta The user meta array.
      */
     public function __construct( $user_id, $user_meta = array() ) {
+
+        if ( ! is_array( $user_meta ) ) {
+            $user_meta = array();
+        }
+
         $this->id   = absint( $user_id );
         $this->meta = $user_meta;
 
-        if ( $this->id ) {
-            $this->user = new \WP_User( $this->id );
+        if ( $this->id && ( ! isset( $user_meta['wp_user_id'] ) && ! isset( $user_meta['user_id'] ) ) ) {
+            $this->user = new \WP_User( $this->id ); // if is not child user id, load the dashboard user.
         }
     }
 
@@ -101,27 +106,35 @@ class Log_Author {
      *
      * @return string
      */
-    public function get_display_name() {
-        if ( empty( $this->id ) ) {
+    public function get_display_name() { //phpcs:ignore -- NOSONAR - complex.
+
+        // child users.
+        if ( isset( $this->meta['wp_user_id'] ) || isset( $this->meta['user_id'] ) ) { // 'user_id' to compare with old child wp.
+            if ( ! empty( $this->meta['action_user'] ) ) {
+                return esc_html( $this->meta['action_user'] );
+            } elseif ( ! empty( $this->meta['system_user_name'] ) ) {
+                return esc_html( $this->meta['system_user_name'] );
+            }
+        } elseif ( empty( $this->id ) ) { // dashboard user.
             if ( isset( $this->meta['system_user_name'] ) ) {
                 return esc_html( $this->meta['system_user_name'] );
             } elseif ( 'wp_cli' === $this->get_current_agent() ) {
                 return 'WP-CLI'; // No translation needed.
             }
-            return esc_html__( 'N/A', 'mainwp' );
-        } elseif ( $this->is_deleted() ) {
+        } elseif ( $this->is_deleted() ) {  // dashboard user.
             if ( ! empty( $this->meta['display_name'] ) ) {
                 return $this->meta['display_name'];
             } elseif ( ! empty( $this->meta['user_login'] ) ) {
                 return $this->meta['user_login'];
-            } else {
-                return esc_html__( 'N/A', 'mainwp' );
             }
-        } elseif ( ! empty( $this->user->display_name ) ) {
-            return $this->user->display_name;
-        } else {
-            return $this->user->user_login;
+        } elseif ( ! empty( $this->user ) ) {  // dashboard user.
+            if ( ! empty( $this->user->display_name ) ) {
+                return $this->user->display_name;
+            } elseif ( ! empty( $this->user_login ) ) {
+                return $this->user->user_login;
+            }
         }
+        return '';
     }
 
     /**
@@ -182,7 +195,7 @@ class Log_Author {
      * @return bool
      */
     public function is_deleted() {
-        return 0 !== $this->id && empty( $this->user->ID );
+        return 0 !== $this->id && ( empty( $this->user ) || empty( $this->user->ID ) );
     }
 
     /**

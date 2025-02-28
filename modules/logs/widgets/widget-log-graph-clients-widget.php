@@ -63,12 +63,12 @@ class Log_Graph_Clients_Widget {
     public function render_widget() {
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
+            <h2 class="ui header handle-drag">
                 <?php esc_html_e( 'Client Sites Distribution', 'mainwp' ); ?>
                 <div class="sub header">
                 <?php esc_html_e( 'Count of sites assigned to each client. Easily compare the site allocations among your client base.', 'mainwp' ); ?>
                 </div>
-            </h3>
+            </h2>
         </div>
 
         <div class="mainwp-widget-insights-card">

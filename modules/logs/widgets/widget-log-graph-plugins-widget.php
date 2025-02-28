@@ -63,12 +63,12 @@ class Log_Graph_Plugins_Widget {
     public function render_widget() {
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
+            <h2 class="ui header handle-drag">
                 <?php esc_html_e( 'Site Plugin Status Breakdown', 'mainwp' ); ?>
                 <div class="sub header">
                 <?php esc_html_e( 'Total number of plugins per site, differentiated by active (blue) and inactive (green) status for quick assessment.', 'mainwp' ); ?>
                 </div>
-            </h3>
+            </h2>
         </div>
 
         <div class="mainwp-widget-insights-card">

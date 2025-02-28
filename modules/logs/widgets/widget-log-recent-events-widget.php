@@ -27,6 +27,13 @@ class Log_Recent_Events_Widget {
     protected static $instance = null;
 
     /**
+     * Private static variable to hold the table type value.
+     *
+     * @var mixed Default null
+     */
+    private $table_id_prefix = 'widget-insight';
+
+    /**
      * Return the single instance of the class.
      *
      * @return mixed $instance The single instance of the class.
@@ -62,15 +69,15 @@ class Log_Recent_Events_Widget {
      */
     public function render_recent_events() {
         $manager    = Log_Manager::instance();
-        $list_table = new Log_Events_List_Table( $manager );
+        $list_table = new Log_Events_List_Table( $manager, $this->table_id_prefix );
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
+            <h2 class="ui header handle-drag">
                 <?php esc_html_e( 'Recent Activity Log', 'mainwp' ); ?>
                 <div class="sub header">
                 <?php esc_html_e( 'Chronological log of the latest activities performed on the system.', 'mainwp' ); ?>
                 </div>
-            </h3>
+            </h2>
         </div>
 
         <div class="mainwp-scrolly-overflow">

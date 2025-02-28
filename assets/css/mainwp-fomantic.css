@@ -45,7 +45,7 @@
   background: none !important;
 }
 
-.mainwp-ui:not(.mainwp-ui-setup) .ui.segment {
+.mainwp-ui:not(.mainwp-ui-setup) .ui.segment:not(.mainwp-widget) {
   border-radius: 0;
   border: 0;
   margin-top: 0;
@@ -79,8 +79,7 @@
 #mainwp-tools-settings .mainwp-main-content,
 #mainwp-mcrwc-settings .mainwp-main-content,
 #mainwp-add-new-site .mainwp-main-content,
-#mainwp-edit-site .mainwp-main-content,
-#mainwp-manage-extensions .mainwp-main-content {
+#mainwp-edit-site .mainwp-main-content {
   padding-top: 1em;
 }
 
@@ -122,6 +121,7 @@
 .mainwp-ui #mainwp-plugin-auto-updates .mainwp-main-content,
 .mainwp-ui #mainwp-theme-auto-updates .mainwp-main-content,
 .mainwp-ui #mainwp-manage-users .mainwp-main-content,
+.mainwp-ui #mainwp-manage-extensions .mainwp-main-content,
 .mainwp-ui #mainwp-add-clients .mainwp-main-content {
   padding-right: 0 !important;
 }
@@ -175,7 +175,7 @@
 
 .mainwp-ui [data-tooltip][data-inverted]:before,
 .mainwp-ui [data-tooltip][data-inverted]:after {
-  z-index: 99 !important;
+  z-index: 9999 !important;
 }
 
 .mainwp-ui [data-tooltip][data-inverted]:after {
@@ -264,8 +264,6 @@
 .mainwp-ui .left.action.input .mainwp-color-picker-input {
   min-height: 2.71428571em;
   padding: 5px !important;
-  border-radius: 0 10px 10px 0 !important;
-  -webkit-border-radius: 0 10px 10px 0 !important;
   max-width: 65px !important;
 }
 
@@ -280,6 +278,12 @@
 
 .mainwp-ui #widget-uptime_monitoring_response_time .ui.card {
   min-width: 100px !important;
+}
+
+.mainwp-ui .mainwp-cards .ui.card {
+  flex: 1 1 100px;
+  min-width: 240px;
+  max-width: 500px;
 }
 
 /* classic theme */

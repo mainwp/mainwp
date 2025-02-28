@@ -114,6 +114,17 @@ abstract class Log_Connector {
     }
 
     /**
+     * Log record.
+     *
+     * @param array $recordarr sprintf (and extra) arguments to use.
+     *
+     * @return bool|WP_Error True if updated, otherwise false|WP_Error
+     */
+    public function log_record( $recordarr ) { //phpcs:ignore -- NOSONAR - compatible.
+        return call_user_func_array( array( Log_Manager::instance()->log, 'log_record' ), compact( 'recordarr' ) );
+    }
+
+    /**
      * Compare two values and return changed keys if they are arrays
      *
      * @param  mixed    $old_value Value before change.

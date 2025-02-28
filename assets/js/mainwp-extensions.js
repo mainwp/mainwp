@@ -4,6 +4,30 @@ jQuery(document).on('click', '.item.extension-inactive', function () {
     return false;
 });
 
+jQuery(document).on( 'click', '#mainwp-extensions-show-all', function () {
+    jQuery(this).addClass('disabled');
+    jQuery('#mainwp-extensions-show-extensions').removeClass('disabled');
+    jQuery('#mainwp-extensions-show-integrations').removeClass('disabled');
+    jQuery('#mainwp-extensions-list').find('.card[extension-model="integration"]').fadeIn(200);
+    jQuery('#mainwp-extensions-list').find('.card[extension-model="extension"]').fadeIn(200);
+});
+
+jQuery(document).on( 'click', '#mainwp-extensions-show-extensions', function () {
+    jQuery(this).addClass('disabled');
+    jQuery('#mainwp-extensions-show-all').removeClass('disabled');
+    jQuery('#mainwp-extensions-show-integrations').removeClass('disabled');
+    jQuery('#mainwp-extensions-list').find('.card[extension-model="integration"]').fadeOut(200);
+    jQuery('#mainwp-extensions-list').find('.card[extension-model="extension"]').fadeIn(200);
+});
+
+jQuery(document).on( 'click', '#mainwp-extensions-show-integrations', function () {
+    jQuery(this).addClass('disabled');
+    jQuery('#mainwp-extensions-show-extensions').removeClass('disabled');
+    jQuery('#mainwp-extensions-show-all').removeClass('disabled');
+    jQuery('#mainwp-extensions-list').find('.card[extension-model="integration"]').fadeIn(200);
+    jQuery('#mainwp-extensions-list').find('.card[extension-model="extension"]').fadeOut(200);
+});
+
 jQuery(document).on('click', '.mainwp-extensions-add-menu', function () {
     let extensionSlug = jQuery(this).parents('.plugin-card').attr('extension_slug');
     let data = mainwp_secure_data({
@@ -66,10 +90,10 @@ jQuery(function () {
             onShow: function () {
                 jQuery('#mainwp-privacy-info-modal').find('.header').html(title + ' Privacy Info');
                 if (0 == privacy) {
-                    jQuery('#mainwp-privacy-info-modal').find('.content').html('Standalone Extension. This Extension does not use any 3rd party plugins or API\'s to integrate with your Dashboard. This extension falls under the <a href="https://mainwp.com/mainwp-plugin-privacy-policy/" target="_blank">MainWP Plugin Privacy Policy</a>.'); // NOSONAR - noopener - open safe.
+                    jQuery('#mainwp-privacy-info-modal').find('.content').html('Standalone Add-on. This Add-on does not use any 3rd party plugins or API\'s to integrate with your Dashboard. This add-on falls under the <a href="https://mainwp.com/mainwp-plugin-privacy-policy/" target="_blank">MainWP Plugin Privacy Policy</a>.'); // NOSONAR - noopener - open safe.
                 } else if (1 == privacy) {
                     if (slug == 'advanced-uptime-monitor-extension') {
-                        jQuery('#mainwp-privacy-info-modal').find('.content').html('<strong>Extension integrates with a 3rd party API.</strong>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').html('<strong>Add-on integrates with a 3rd party API.</strong>');
                         jQuery('#mainwp-privacy-info-modal').find('.content').append('<div class="ui hidden divider"></div>');
                         jQuery('#mainwp-privacy-info-modal').find('.content').append('Integrates with: <a href="' + integration_url + '" target="_blank">' + integration + '</a>');
                         jQuery('#mainwp-privacy-info-modal').find('.content').append('<br/>');
@@ -87,7 +111,7 @@ jQuery(function () {
                         jQuery('#mainwp-privacy-info-modal').find('.content').append('<br/>');
                         jQuery('#mainwp-privacy-info-modal').find('.content').append('Owned by: <a href="https://www.zoho.com/privacy.html" target="_blank">Zoho Corporation Pvt. Ltd.</a>');
                     } else if (slug == 'mainwp-vulnerability-checker-extension') {
-                        jQuery('#mainwp-privacy-info-modal').find('.content').html('<strong>Extension integrates with a 3rd party API.</strong>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').html('<strong>Add-on integrates with a 3rd party API.</strong>');
                         jQuery('#mainwp-privacy-info-modal').find('.content').append('<div class="ui hidden divider"></div>');
                         jQuery('#mainwp-privacy-info-modal').find('.content').append('Integrates with: <a href="' + integration_url + '" target="_blank">' + integration + '</a>');
                         jQuery('#mainwp-privacy-info-modal').find('.content').append('<br/>');
@@ -97,7 +121,7 @@ jQuery(function () {
                         jQuery('#mainwp-privacy-info-modal').find('.content').append('<br/>');
                         jQuery('#mainwp-privacy-info-modal').find('.content').append('Owned by: <a href="https://www.nist.gov/privacy-policy" target="_blank">National Institute of Standards and Technology</a>');
                     } else if (slug == 'mainwp-api-backups-extension') {
-                        jQuery('#mainwp-privacy-info-modal').find('.content').html('<strong>Extension integrates with a 3rd party API.</strong>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').html('<strong>Add-on integrates with a 3rd party API.</strong>');
                         jQuery('#mainwp-privacy-info-modal').find('.content').append('<div class="ui hidden divider"></div>');
                         jQuery('#mainwp-privacy-info-modal').find('.content').append('Integrates with: <a href="' + integration_url + '" target="_blank">' + integration + '</a>');
                         jQuery('#mainwp-privacy-info-modal').find('.content').append('<br/>');
@@ -119,26 +143,26 @@ jQuery(function () {
                         jQuery('#mainwp-privacy-info-modal').find('.content').append('<br/>');
                         jQuery('#mainwp-privacy-info-modal').find('.content').append('Owned by: <a href="https://www.vultr.com/legal/privacy/" target="_blank">Constant Company, LLC.</a>');
                     } else {
-                        jQuery('#mainwp-privacy-info-modal').find('.content').html('<strong>Extension integrates with a 3rd party API.</strong>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').html('<strong>Add-on integrates with a 3rd party API.</strong>');
                         jQuery('#mainwp-privacy-info-modal').find('.content').append('<div class="ui hidden divider"></div>');
                         jQuery('#mainwp-privacy-info-modal').find('.content').append('Integrates with: <a href="' + integration_url + '" target="_blank">' + integration + '</a>');
                         jQuery('#mainwp-privacy-info-modal').find('.content').append('<br/>');
                         jQuery('#mainwp-privacy-info-modal').find('.content').append('Owned by: <a href="' + integration_owner_pp + '" target="_blank">' + integration_owner + '</a>');
                     }
                 } else if (2 == privacy) {
-                    jQuery('#mainwp-privacy-info-modal').find('.content').html('<strong>Extension integrates with a 3rd party Plugin.</strong>');
+                    jQuery('#mainwp-privacy-info-modal').find('.content').html('<strong>Add-on integrates with a 3rd party Plugin.</strong>');
                     jQuery('#mainwp-privacy-info-modal').find('.content').append('<div class="ui hidden divider"></div>');
                     jQuery('#mainwp-privacy-info-modal').find('.content').append('Integrates with: <a href="' + integration_url + '" target="_blank">' + integration + '</a>');
                     jQuery('#mainwp-privacy-info-modal').find('.content').append('<br/>');
                     jQuery('#mainwp-privacy-info-modal').find('.content').append('Owned by: <a href="' + integration_owner_pp + '" target="_blank">' + integration_owner + '</a>');
                 } else if (slug == 'mainwp-page-speed-extension') {
-                    jQuery('#mainwp-privacy-info-modal').find('.content').html('<strong>Extension integrates with a 3rd party Plugin.</strong>');
+                    jQuery('#mainwp-privacy-info-modal').find('.content').html('<strong>Add-on integrates with a 3rd party Plugin.</strong>');
                     jQuery('#mainwp-privacy-info-modal').find('.content').append('<div class="ui hidden divider"></div>');
                     jQuery('#mainwp-privacy-info-modal').find('.content').append('Integrates with: <a href="https://wordpress.org/plugins/google-pagespeed-insights/" target="_blank">Insights from Google PageSpeed</a>');
                     jQuery('#mainwp-privacy-info-modal').find('.content').append('<br/>');
                     jQuery('#mainwp-privacy-info-modal').find('.content').append('Owned by: <a href="https://mattkeys.me/" target="_blank">Matt Keys</a>');
                 } else {
-                    jQuery('#mainwp-privacy-info-modal').find('.content').html('<strong>This extension is not developed by MainWP. Privacy info is not available.</strong>');
+                    jQuery('#mainwp-privacy-info-modal').find('.content').html('<strong>This add-on is not developed by MainWP. Privacy info is not available.</strong>');
                 }
             },
             onHide: function () {
@@ -181,11 +205,11 @@ jQuery(function () {
             if (response) {
                 if (response.result == 'SUCCESS') {
                     loadingEl.find('.message').addClass('green');
-                    msg = __('Extension deactivated.');
+                    msg = __('Add-on deactivated.');
                     if (whatAct == 'active') {
-                        msg = __('Extension activated.');
+                        msg = __('Add-on activated.');
                     } else if (whatAct == 'remove') {
-                        msg = __('Extension removed.');
+                        msg = __('Add-on removed.');
                     }
                     loadingEl.find('.message').html(msg);
                     success = true;
@@ -585,7 +609,7 @@ let mainwp_extension_grab_purchased = function (pObj, retring) {
         }, 3000);
     } else {
         statusEl.show();
-        statusEl.find('.text').html(__('Loading extensions info...'));
+        statusEl.find('.text').html(__('Loading add-ons info...'));
         jQuery.post(ajaxurl, data, function (response) {
             let undefError = false;
             if (response) {
@@ -734,7 +758,7 @@ let mainwp_extension_bulk_install_specific = function (pExtToInstall) {
 
     let statusEl = pExtToInstall.find('.installing-extension');
 
-    statusEl.html('<span data-tooltip="Installing extension. Please wait..." data-position="left center" data-inverted=""><i class="notched circle loading icon"></i></span>');
+    statusEl.html('<span data-tooltip="Installing add-on. Please wait..." data-position="left center" data-inverted=""><i class="notched circle loading icon"></i></span>');
 
     let data = mainwp_secure_data({
         action: 'mainwp_extension_downloadandinstall',
@@ -801,12 +825,12 @@ let mainwp_extension_bulk_activate = function () {
 
     let statusEl = jQuery('#mainwp-bulk-activating-extensions-status');
 
-    statusEl.html('<i class="notched circle loading icon"></i>' + __('Activating extensions. Please wait...')).show();
+    statusEl.html('<i class="notched circle loading icon"></i>' + __('Activating add-ons. Please wait...')).show();
     jQuery.post(ajaxurl, data, function (response) {
         statusEl.html('');
         if (response == 'SUCCESS') {
             statusEl.addClass('green');
-            statusEl.html(__('Extensions have been activated successfully!'));
+            statusEl.html(__('Add-ons have been activated successfully!'));
             statusEl.fadeOut(3000);
         }
         mainwp_extension_bulk_install_done();

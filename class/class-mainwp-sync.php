@@ -9,12 +9,36 @@
 
 namespace MainWP\Dashboard;
 
+use MainWP\Dashboard\Module\Log\Log_Manager;
+
 /**
  * Class MainWP_Sync
  *
  * @package MainWP\Dashboard
  */
 class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
+
+    /**
+     * Clone websites setting.
+     *
+     * @var mixed Clone websites.
+     */
+    public static $clone_websites = null;
+
+    /**
+     * Clone enabled setting.
+     *
+     * @var mixed Clone enabled.
+     */
+    public static $clone_enabled = null;
+
+
+    /**
+     * Disallowed Clone sites setting.
+     *
+     * @var mixed Disallowed clone.
+     */
+    public static $disallowed_clone_sites = null;
 
 
     /**
@@ -75,45 +99,51 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         try {
 
-            /**
-             * Filter: mainwp_clone_enabled
-             *
-             * Filters whether the Clone feature is enabled or disabled.
-             *
-             * @since Unknown
-             */
-            $cloneEnabled = apply_filters( 'mainwp_clone_enabled', false );
-            $cloneSites   = array();
+            if ( null === static::$clone_enabled ) {
 
-            $disallowed_current_site = false;
+                /**
+                 * Filter: mainwp_clone_enabled
+                 *
+                 * Filters whether the Clone feature is enabled or disabled.
+                 *
+                 * @since Unknown
+                 */
+                static::$clone_enabled  = apply_filters( 'mainwp_clone_enabled', false );
+                static::$clone_websites = array();
 
-            if ( $cloneEnabled ) {
-                $disallowedCloneSites = get_option( 'mainwp_clone_disallowedsites' );
-                if ( false === $disallowedCloneSites ) {
-                    $disallowedCloneSites = array();
-                }
-                $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
-                if ( $websites ) {
-                    while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-                        if ( in_array( $website->id, $disallowedCloneSites ) ) {
-                            continue;
-                        }
-                        if ( (int) $website->id === (int) $pWebsite->id ) {
-                            continue;
-                        }
+                if ( static::$clone_enabled ) {
 
-                        $cloneSites[ $website->id ] = array(
-                            'name'          => $website->name,
-                            'url'           => $website->url,
-                            'extauth'       => $website->extauth,
-                            'size'          => $website->totalsize,
-                            'connect_admin' => $website->adminname,
-                        );
+                    static::$disallowed_clone_sites = get_option( 'mainwp_clone_disallowedsites' );
+
+                    if ( ! is_array( static::$disallowed_clone_sites ) ) {
+                        static::$disallowed_clone_sites = array();
                     }
-                    MainWP_DB::free_result( $websites );
+
+                    $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+                    if ( $websites ) {
+                        while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+                            if ( in_array( $website->id, static::$disallowed_clone_sites ) ) {
+                                continue;
+                            }
+                            if ( (int) $website->id === (int) $pWebsite->id ) {
+                                continue;
+                            }
+
+                            static::$clone_websites[ $website->id ] = array(
+                                'name'          => $website->name,
+                                'url'           => $website->url,
+                                'extauth'       => $website->extauth,
+                                'size'          => $website->totalsize,
+                                'connect_admin' => $website->adminname,
+                            );
+                        }
+                        MainWP_DB::free_result( $websites );
+                    }
+                    $disallowed_current_site = in_array( $pWebsite->id, static::$disallowed_clone_sites ) ? true : false;
                 }
-                $disallowed_current_site = in_array( $pWebsite->id, $disallowedCloneSites ) ? true : false;
             }
+
+            $disallowed_current_site = static::$clone_enabled && is_array( static::$disallowed_clone_sites ) && in_array( $pWebsite->id, static::$disallowed_clone_sites ) ? true : false;
 
             $primaryBackup = MainWP_System_Utility::get_primary_backup();
 
@@ -134,13 +164,22 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
             $saved_days_number = apply_filters( 'mainwp_site_actions_saved_days_number', 30 );
 
+            $backup_method = '';
+            if ( property_exists( $pWebsite, 'primary_backup_method' ) ) {
+                if ( '' === $pWebsite->primary_backup_method || 'global' === $pWebsite->primary_backup_method ) {
+                    $backup_method = $primaryBackup;
+                } else {
+                    $backup_method = $pWebsite->primary_backup_method;
+                }
+            }
+
             $postdata = array(
                 'optimize'                        => 1 === (int) get_option( 'mainwp_optimize', 1 ) ? 1 : 0,
-                'cloneSites'                      => ( ! $cloneEnabled || $disallowed_current_site ) ? 0 : rawurlencode( wp_json_encode( $cloneSites ) ),
+                'cloneSites'                      => ( ! static::$clone_enabled || $disallowed_current_site ) ? 0 : rawurlencode( wp_json_encode( static::$clone_websites ) ),
                 'othersData'                      => wp_json_encode( $othersData ),
                 'server'                          => get_admin_url(),
                 'numberdaysOutdatePluginTheme'    => get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', 365 ),
-                'primaryBackup'                   => $primaryBackup,
+                'primaryBackup'                   => $backup_method, // if empty site backup method will not sync the backup info from child site.
                 'siteId'                          => $pWebsite->id,
                 'child_actions_saved_days_number' => intval( $saved_days_number ),
                 'pingnonce'                       => MainWP_Utility::instance()->create_site_nonce( 'pingnonce', $pWebsite->id ),
@@ -150,6 +189,9 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             if ( empty( $reg_verify ) ) {
                 $postdata['sync_regverify'] = 1;
             }
+
+            $synclist             = MainWP_Settings::get_instance()->get_data_list_to_sync();
+            $postdata['syncdata'] = wp_json_encode( $synclist );
 
             $information = MainWP_Connect::fetch_url_authed(
                 $pWebsite,
@@ -200,17 +242,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      */
     public static function sync_information_array( &$pWebsite, &$information, $sync_errors = '', $check_result = false, $error = false, $pAllowDisconnect = true ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $emptyArray        = wp_json_encode( array() );
-        $websiteValues     = array(
-            'directories'          => $emptyArray,
-            'plugin_upgrades'      => $emptyArray,
-            'theme_upgrades'       => $emptyArray,
-            'translation_upgrades' => $emptyArray,
-            'securityIssues'       => $emptyArray,
-            'themes'               => $emptyArray,
-            'plugins'              => $emptyArray,
-            'users'                => $emptyArray,
-            'categories'           => $emptyArray,
-        );
+        $websiteValues     = array();
         $websiteSyncValues = array(
             'sync_errors' => $sync_errors,
             'version'     => 0,
@@ -268,9 +300,8 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
             MainWP_DB::instance()->update_website_option( $pWebsite, 'site_info', wp_json_encode( $information['site_info'] ) );
             $done = true;
-        } else {
-            MainWP_DB::instance()->update_website_option( $pWebsite, 'site_info', $emptyArray );
         }
+
         if ( ! empty( $phpversion ) ) {
             MainWP_DB::instance()->update_website_option( $pWebsite, 'phpversion', $phpversion );
         }
@@ -294,8 +325,6 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 )
             );
             $done = true;
-        } else {
-            MainWP_DB::instance()->update_website_option( $pWebsite, 'wp_upgrades', $emptyArray );
         }
 
         if ( isset( $information['plugin_updates'] ) ) {
@@ -328,8 +357,6 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         if ( isset( $information['premium_updates'] ) ) {
             MainWP_DB::instance()->update_website_option( $pWebsite, 'premium_upgrades', wp_json_encode( $information['premium_updates'] ) );
             $done = true;
-        } else {
-            MainWP_DB::instance()->update_website_option( $pWebsite, 'premium_upgrades', $emptyArray );
         }
 
         if ( isset( $information['securityStats'] ) ) {
@@ -340,16 +367,6 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 $filterStats = apply_filters( 'mainwp_security_issues_stats', false, $securityStats, $pWebsite );
                 if ( false !== $filterStats && is_array( $filterStats ) ) {
                     $securityStats = array_merge( $securityStats, $filterStats );
-                }
-
-                $unset_scripts = apply_filters( 'mainwp_unset_security_scripts_stylesheets', true );
-                if ( $unset_scripts ) {
-                    if ( isset( $securityStats['versions'] ) ) {
-                        unset( $securityStats['versions'] );
-                    }
-                    if ( isset( $securityStats['registered_versions'] ) ) {
-                        unset( $securityStats['registered_versions'] );
-                    }
                 }
 
                 $tmp_issues           = array_filter(
@@ -375,22 +392,16 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         if ( isset( $information['recent_comments'] ) ) {
             MainWP_DB::instance()->update_website_option( $pWebsite, 'recent_comments', wp_json_encode( $information['recent_comments'] ) );
             $done = true;
-        } else {
-            MainWP_DB::instance()->update_website_option( $pWebsite, 'recent_comments', $emptyArray );
         }
 
         if ( isset( $information['recent_posts'] ) ) {
             MainWP_DB::instance()->update_website_option( $pWebsite, 'recent_posts', wp_json_encode( $information['recent_posts'] ) );
             $done = true;
-        } else {
-            MainWP_DB::instance()->update_website_option( $pWebsite, 'recent_posts', $emptyArray );
         }
 
         if ( isset( $information['recent_pages'] ) ) {
             MainWP_DB::instance()->update_website_option( $pWebsite, 'recent_pages', wp_json_encode( $information['recent_pages'] ) );
             $done = true;
-        } else {
-            MainWP_DB::instance()->update_website_option( $pWebsite, 'recent_pages', $emptyArray );
         }
 
         if ( isset( $information['themes'] ) ) {
@@ -471,8 +482,6 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 $health_status = 1; // Should be improved'.
             }
             $websiteSyncValues['health_status'] = $health_status;
-        } else {
-            MainWP_DB::instance()->update_website_option( $pWebsite, 'health_site_status', $emptyArray );
         }
 
         if ( isset( $information['mainwpdir'] ) ) {
@@ -503,15 +512,11 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         if ( isset( $information['plugins_outdate_info'] ) ) {
             MainWP_DB::instance()->update_website_option( $pWebsite, 'plugins_outdate_info', wp_json_encode( $information['plugins_outdate_info'] ) );
             $done = true;
-        } else {
-            MainWP_DB::instance()->update_website_option( $pWebsite, 'plugins_outdate_info', $emptyArray );
         }
 
         if ( isset( $information['themes_outdate_info'] ) ) {
             MainWP_DB::instance()->update_website_option( $pWebsite, 'themes_outdate_info', wp_json_encode( $information['themes_outdate_info'] ) );
             $done = true;
-        } else {
-            MainWP_DB::instance()->update_website_option( $pWebsite, 'themes_outdate_info', $emptyArray );
         }
 
         if ( isset( $information['primaryLasttimeBackup'] ) ) {
@@ -523,7 +528,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             if ( is_array( $information['child_site_actions_data'] ) && isset( $information['child_site_actions_data']['connected_admin'] ) ) {
                 unset( $information['child_site_actions_data']['connected_admin'] );
             }
-            MainWP_DB_Site_Actions::instance()->sync_site_actions( $pWebsite->id, $information['child_site_actions_data'] );
+            Log_Manager::instance()->sync_log_site_actions( $pWebsite->id, $information['child_site_actions_data'], $pWebsite );
             $done = true;
         }
 
@@ -562,7 +567,10 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $websiteSyncValues['dtsSync'] = time();
         }
         MainWP_DB::instance()->update_website_sync_values( $pWebsite->id, $websiteSyncValues );
-        MainWP_DB::instance()->update_website_values( $pWebsite->id, $websiteValues );
+
+        if ( ! empty( $websiteValues ) ) {
+            MainWP_DB::instance()->update_website_values( $pWebsite->id, $websiteValues );
+        }
 
         $error = apply_filters( 'mainwp_sync_site_after_sync_result', $error, $pWebsite, $information );
 
@@ -602,6 +610,45 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         return ! $error;
     }
+
+
+    /**
+     * Method init empty sync values.
+     *
+     * @param object $pWebsite    Object containing child site info.
+     *
+     * @return void
+     */
+    public static function sync_init_empty_values( $pWebsite ) {
+
+        $emptyArray = wp_json_encode( array() );
+
+        $opts = array(
+            'site_info',
+            'wp_upgrades',
+            'premium_upgrades',
+            'recent_comments',
+            'recent_posts',
+            'recent_pages',
+            'health_site_status',
+            'plugins_outdate_info',
+            'themes_outdate_info',
+            'directories',
+            'plugin_upgrades',
+            'theme_upgrades',
+            'translation_upgrades',
+            'securityIssues',
+            'themes',
+            'plugins',
+            'users',
+            'categories',
+        );
+
+        foreach ( $opts as $opt ) {
+            MainWP_DB::instance()->update_website_option( $pWebsite, $opt, $emptyArray );
+        }
+    }
+
 
     /**
      * Method get_wp_icon()

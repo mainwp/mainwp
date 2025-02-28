@@ -553,8 +553,8 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 $actions['pause'] = sprintf( '<a href="#" class="item" task_id="%s" onClick="return managebackups_pause(this)"><i class="pause icon"></i> ' . esc_html__( 'Pause', 'mainwp' ) . '</a>', $item->id );
         }
 
-        $out = '<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
-                        <i class="ellipsis horizontal icon"></i>
+        $out = '<div class="ui right pointing dropdown" style="z-index:999">
+                        <i class="ellipsis vertical icon"></i>
                         <div class="menu">
                         <div class="header">' . esc_html_e( 'Backup Actions', 'mainwp' ) . '</div>
                         <div class="divider"></div>';
@@ -1182,6 +1182,47 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             </label>
             <div class="ten wide column ui toggle checkbox">
                 <input type="checkbox" class="settings-field-value-change-handler" inverted-value="1" name="mainwp_options_chunkedBackupTasks"  id="mainwp_options_chunkedBackupTasks" value="1" <?php echo $chunkedBackupTasks ? 'checked="checked"' : ''; ?>/>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Method render_individual_settings()
+     *
+     * Render backup settings.
+     *
+     * @param mixed $website Website data.
+     */
+    public static function render_individual_settings( $website ) {  //phpcs:ignore -- NOSONAR - complex.
+
+        $primaryBackup        = $website && ! empty( $website->primary_backup_method ) ? $website->primary_backup_method : 'global';
+        $primary_methods      = array();
+        $primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.7.2', 'mainwp_getprimarybackup_methods' );  // @deprecated Use 'mainwp_getprimarybackup_methods' instead. NOSONAR - not IP.
+        $primaryBackupMethods = apply_filters( 'mainwp_getprimarybackup_methods', $primary_methods );
+
+        if ( ! is_array( $primaryBackupMethods ) ) {
+            $primaryBackupMethods = array();
+        }
+
+        ?>
+        <h3 class="ui dividing header">
+            <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-backups' ); ?>
+            <?php esc_html_e( 'Backup Settings', 'mainwp' ); ?>
+            <div class="sub header"><?php printf( esc_html__( 'MainWP is actively moving away from further development of the native backups feature. The best long-term solution would be one of the %1$sBackup Extensions%2$s.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
+        </h3>
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups">
+            <label class="six wide column middle aligned"><?php esc_html_e( 'Select primary backup system', 'mainwp' ); ?></label>
+            <div class="ten wide column">
+                <select class="ui dropdown" name="mainwp_primaryBackup" id="mainwp_primaryBackup">
+                    <?php
+                    echo '<option value="global" ' . ( 'global' === $primaryBackup ? 'selected' : '' ) . '>' . esc_html__( 'Use global setting', 'mainwp' ) . '</option>';
+                    foreach ( $primaryBackupMethods as $method ) {
+                        echo '<option value="' . esc_attr( $method['value'] ) . '" ' . ( ( $primaryBackup === $method['value'] ) ? 'selected' : '' ) . '>' . esc_html( $method['title'] ) . '</option>';
+                    }
+                    ?>
+
+                </select>
             </div>
         </div>
         <?php

@@ -119,6 +119,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
         $enable_automaticCoreUpdates = get_option( 'mainwp_automaticDailyUpdate' );
         $plugin_automaticDailyUpdate = get_option( 'mainwp_pluginAutomaticDailyUpdate' );
         $theme_automaticDailyUpdate  = get_option( 'mainwp_themeAutomaticDailyUpdate' );
+        $tran_automaticDailyUpdate   = get_option( 'mainwp_transAutomaticDailyUpdate' );
 
         $websites = array();
 
@@ -187,6 +188,10 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
             $trustedPlugins = array();
         }
 
+        if ( ! is_array( $trustedThemes ) ) {
+            $trustedThemes = array();
+        }
+
         if ( ! is_array( $decodedIgnoredThemes ) ) {
             $decodedIgnoredThemes = array();
         }
@@ -196,6 +201,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
         $coreToUpdateNow    = array();
         $pluginsToUpdateNow = array();
         $themesToUpdateNow  = array();
+        $transToUpdateNow   = array();
 
         $delay_autoupdate = get_option( 'mainwp_delay_autoupdate', 1 );
 
@@ -207,6 +213,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                     'core_update_check',
                     'plugins_update_check',
                     'themes_update_check',
+                    'trans_update_check',
                     'premium_upgrades',
                     'ignored_wp_upgrades',
                     'bulk_wp_upgrades',
@@ -252,11 +259,13 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
             $websiteCoreUpdateCheck    = 0;
             $websitePluginsUpdateCheck = array();
             $websiteThemesUpdateCheck  = array();
+            $websiteTransUpdateCheck   = array();
 
             if ( ! empty( $delay_autoupdate ) ) {
                 $websiteCoreUpdateCheck    = ! empty( $website->core_update_check ) ? intval( $website->core_update_check ) : 0;
                 $websitePluginsUpdateCheck = ! empty( $website->plugins_update_check ) ? json_decode( $website->plugins_update_check, true ) : array();
                 $websiteThemesUpdateCheck  = ! empty( $website->themes_update_check ) ? json_decode( $website->themes_update_check, true ) : array();
+                $websiteTransUpdateCheck   = ! empty( $website->trans_update_check ) ? json_decode( $website->trans_update_check, true ) : array();
             }
 
             if ( ! is_array( $websitePluginsUpdateCheck ) ) {
@@ -265,6 +274,10 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
 
             if ( ! is_array( $websiteThemesUpdateCheck ) ) {
                 $websiteThemesUpdateCheck = array();
+            }
+
+            if ( ! is_array( $websiteTransUpdateCheck ) ) {
+                $websiteTransUpdateCheck = array();
             }
 
             $updated_status = ! empty( $website->bulk_updates_info ) ? json_decode( $website->bulk_updates_info, true ) : array();
@@ -277,6 +290,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                     'wp'      => array(),
                     'plugins' => array(),
                     'themes'  => array(),
+                    'trans'   => array(),
                 );
             }
 
@@ -309,6 +323,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
             $websitePlugins         = ! empty( $website->plugin_upgrades ) ? json_decode( $website->plugin_upgrades, true ) : array();
             $websiteThemes          = ! empty( $website->theme_upgrades ) ? json_decode( $website->theme_upgrades, true ) : array();
             $decodedPremiumUpgrades = ! empty( $website->premium_upgrades ) ? json_decode( $website->premium_upgrades, true ) : array();
+            $websiteTrans           = ! empty( $website->translation_upgrades ) ? json_decode( $website->translation_upgrades, true ) : array();
 
             if ( ! is_array( $websitePlugins ) ) {
                 $websitePlugins = array();
@@ -316,6 +331,10 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
 
             if ( ! is_array( $websiteThemes ) ) {
                 $websiteThemes = array();
+            }
+
+            if ( ! is_array( $websiteTrans ) ) {
+                $websiteTrans = array();
             }
 
             if ( is_array( $decodedPremiumUpgrades ) ) {
@@ -420,6 +439,42 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                 }
             }
 
+            if ( 1 === (int) $tran_automaticDailyUpdate ) {
+                foreach ( $websiteTrans as $transInfo ) {
+
+                    $trans_name = isset( $transInfo['name'] ) ? $transInfo['name'] : $transInfo['slug'];
+                    $trans_slug = esc_attr( $transInfo['slug'] );
+
+                    $item = array(
+                        'id'          => $website->id,
+                        'name'        => $website->name,
+                        'url'         => $website->url,
+                        'translation' => $trans_name,
+                        'version'     => $transInfo['version'],
+                        'slug'        => $trans_slug,
+                    );
+
+                    if ( MainWP_Manage_Sites_Update_View::is_trans_trusted_update( $transInfo, $trustedPlugins, $trustedThemes ) ) {
+                        $_update_now     = false;
+                        $check_timestamp = isset( $websiteTransUpdateCheck[ $trans_slug ] ) ? $websiteTransUpdateCheck[ $trans_slug ] : 0;
+                        if ( ! empty( $delay_autoupdate ) ) {
+                            if ( ! empty( $check_timestamp ) && ( time() > $delay_autoupdate * DAY_IN_SECONDS + intval( $check_timestamp ) ) ) {
+                                $_update_now = true;
+                            }
+                            if ( empty( $check_timestamp ) ) {
+                                $websiteTransUpdateCheck[ $trans_slug ] = time();
+                            }
+                        } else {
+                            $_update_now = true;
+                        }
+                        if ( $_update_now && ( ! isset( $updated_status['auto_updates_processed']['trans'][ $trans_slug ] ) ) ) {
+                            $transToUpdateNow[ $website->id ][ $trans_slug ] = $item;
+                            ++$found_updates;
+                        }
+                    }
+                }
+            }
+
             MainWP_Logger::instance()->log_update_check( 'Automatic found updates :: [siteid=' . $website->id . '] :: [found_updates=' . $found_updates . ']' );
 
             if ( ! $found_updates ) {
@@ -442,10 +497,12 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                 MainWP_DB::instance()->update_website_option( $website, 'core_update_check', $websiteCoreUpdateCheck );
                 MainWP_DB::instance()->update_website_option( $website, 'plugins_update_check', ( ! empty( $websitePluginsUpdateCheck ) ? wp_json_encode( $websitePluginsUpdateCheck ) : '' ) );
                 MainWP_DB::instance()->update_website_option( $website, 'themes_update_check', ( ! empty( $websiteThemesUpdateCheck ) ? wp_json_encode( $websiteThemesUpdateCheck ) : '' ) );
+                MainWP_DB::instance()->update_website_option( $website, 'trans_update_check', ( ! empty( $websiteTransUpdateCheck ) ? wp_json_encode( $websiteTransUpdateCheck ) : '' ) );
             } elseif ( ! empty( $websitePluginsUpdateCheck ) || ! empty( $websiteThemesUpdateCheck ) ) {
                 MainWP_DB::instance()->update_website_option( $website, 'core_update_check', 0 );
                 MainWP_DB::instance()->update_website_option( $website, 'plugins_update_check', '' );
                 MainWP_DB::instance()->update_website_option( $website, 'themes_update_check', '' );
+                MainWP_DB::instance()->update_website_option( $website, 'trans_update_check', '' );
             }
         }
 
@@ -472,6 +529,12 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
 
             if ( 1 === (int) $enable_automaticCoreUpdates ) {
                 foreach ( $coreToUpdateNow as $websiteId => $info ) {
+                    $websitesToCheck[ $websiteId ] = true;
+                }
+            }
+
+            if ( 1 === (int) $tran_automaticDailyUpdate ) {
+                foreach ( $transToUpdateNow as $websiteId => $updates_trans ) {
                     $websitesToCheck[ $websiteId ] = true;
                 }
             }
@@ -555,6 +618,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                         'wp'      => array(),
                         'plugins' => array(),
                         'themes'  => array(),
+                        'trans'   => array(),
                     );
                 }
 
@@ -642,6 +706,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                         'wp'      => array(),
                         'plugins' => array(),
                         'themes'  => array(),
+                        'trans'   => array(),
                     );
                 }
 
@@ -705,6 +770,87 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
             }
         }
 
+        if ( 1 === (int) $tran_automaticDailyUpdate && $count_processed_now < $items_limit ) {
+
+            foreach ( $transToUpdateNow as $websiteId => $updates_trans ) {
+                if ( ( null !== $sitesCheckCompleted ) && ( false === $sitesCheckCompleted[ $websiteId ] ) ) {
+                    continue;
+                }
+
+                // reload.
+                $updated_status = MainWP_DB::instance()->get_json_website_option( $websiteId, 'bulk_updates_info' );
+                if ( ! is_array( $updated_status ) ) {
+                    $updated_status = array();
+                }
+
+                if ( ! isset( $updated_status['auto_updates_processed'] ) ) {
+                    $updated_status['auto_updates_processed'] = array(
+                        'wp'      => array(),
+                        'plugins' => array(),
+                        'themes'  => array(),
+                        'trans'   => array(),
+                    );
+                }
+
+                $slugs = array();
+                foreach ( $updates_trans as $slug => $info ) {
+                    if ( ! isset( $updated_status['auto_updates_processed']['trans'][ $slug ] ) ) {
+                        ++$count_processed_now;
+                        $slugs[] = $slug;
+                        $updated_status['auto_updates_processed']['trans'][ $slug ] = $info;
+                        if ( $count_processed_now >= $items_limit ) {
+                            break;
+                        }
+                    }
+                }
+
+                MainWP_Logger::instance()->log_update_check( 'Automatic updates translation now:: [count_slugs=' . count( $slugs ) . ']' );
+
+                if ( ! empty( $slugs ) ) {
+
+                    MainWP_DB::instance()->update_website_option( $websiteId, 'bulk_updates_info', wp_json_encode( $updated_status ) );
+
+                    MainWP_Logger::instance()->log_update_check( 'Automatic updates translation [siteid=' . $websiteId . '] :: translations :: ' . implode( ',', $slugs ) );
+
+                    $website = MainWP_DB::instance()->get_website_by_id( $websiteId );
+
+                    /**
+                    * Action: mainwp_before_plugin_theme_translation_update
+                    *
+                    * Fires before plugin/theme/translation update actions.
+                    *
+                    * @since 4.1
+                    */
+                    do_action( 'mainwp_before_plugin_theme_translation_update', 'translation', implode( ',', $slugs ), $website );
+
+                    try {
+                        $information = MainWP_Connect::fetch_url_authed(
+                            $website,
+                            'upgradetranslation',
+                            array(
+                                'type' => 'translation',
+                                'list' => urldecode( implode( ',', $slugs ) ),
+                            )
+                        );
+                        if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
+                            MainWP_Sync::sync_information_array( $website, $information['sync'] );
+                        }
+                    } catch ( \Exception $e ) {
+                        // ok.
+                    }
+
+                    /**
+                    * Action: mainwp_after_plugin_theme_translation_update
+                    *
+                    * Fires before plugin/theme/translation update actions.
+                    *
+                    * @since 4.1
+                    */
+                    do_action( 'mainwp_after_plugin_theme_translation_update', $information, 'translation', implode( ',', $slugs ), $website );
+                }
+            }
+        }
+
         if ( 1 === (int) $enable_automaticCoreUpdates && $count_processed_now < $items_limit ) {
             foreach ( $coreToUpdateNow as $websiteId => $info ) {
                 if ( ( null !== $sitesCheckCompleted ) && ( false === $sitesCheckCompleted[ $websiteId ] ) ) {
@@ -722,6 +868,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                         'wp'      => array(),
                         'plugins' => array(),
                         'themes'  => array(),
+                        'trans'   => array(),
                     );
                 }
 

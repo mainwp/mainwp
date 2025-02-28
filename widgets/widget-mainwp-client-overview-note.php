@@ -57,21 +57,21 @@ class MainWP_Client_Overview_Note { // phpcs:ignore Generic.Classes.OpeningBrace
 
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
-            <?php
-            /**
-             * Filter: mainwp_clients_overview_note_widget_title
-             *
-             * Filters the Site info widget title text.
-             *
-             * @param object $client_info Object containing the child site info.
-             *
-             * @since 4.1
-             */
-            echo esc_html( apply_filters( 'mainwp_clients_overview_note_widget_title', esc_html__( 'Notes', 'mainwp' ), $client_info ) );
-            ?>
+            <h2 class="ui header handle-drag">
+                <?php
+                /**
+                 * Filter: mainwp_clients_overview_note_widget_title
+                 *
+                 * Filters the Site info widget title text.
+                 *
+                 * @param object $client_info Object containing the child site info.
+                 *
+                 * @since 4.1
+                 */
+                echo esc_html( apply_filters( 'mainwp_clients_overview_note_widget_title', esc_html__( 'Notes', 'mainwp' ), $client_info ) );
+                ?>
                 <div class="sub header"><?php echo esc_html__( 'Client notes.', 'mainwp' ); ?></div>
-            </h3>
+            </h2>
         </div>
             <div class="mainwp-widget-client-card mainwp-scrolly-overflow">
                 <?php
@@ -112,9 +112,9 @@ class MainWP_Client_Overview_Note { // phpcs:ignore Generic.Classes.OpeningBrace
             <div class="ui two columns grid mainwp-widget-footer">
                 <div class="column">
                 <?php if ( empty( $note ) ) : ?>
-                    <a href="javascript:void(0)" class="mainwp-edit-client-note ui button mini fluid green" id="mainwp-notes-<?php echo esc_attr( $client_info['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Add notes.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php esc_attr_e( 'Add Notes', 'mainwp' ); ?></a>
+                    <a href="javascript:void(0)" class="mainwp-edit-client-note ui button mini" id="mainwp-notes-<?php echo esc_attr( $client_info['client_id'] ); ?>"><?php esc_attr_e( 'Add Notes', 'mainwp' ); ?></a>
                 <?php else : ?>
-                    <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini fluid button green" id="mainwp-notes-<?php echo esc_attr( $client_info['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Edit notes.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php esc_attr_e( 'Edit Notes', 'mainwp' ); ?></a>
+                    <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini button" id="mainwp-notes-<?php echo esc_attr( $client_info['client_id'] ); ?>"><?php esc_attr_e( 'Edit Notes', 'mainwp' ); ?></a>
                 <?php endif; ?>
                 </div>
                 <div class="column"></div>

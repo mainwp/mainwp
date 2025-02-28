@@ -39,7 +39,7 @@ class MainWP_Uptime_Monitoring_Status { // phpcs:ignore Generic.Classes.OpeningB
         <div class="mainwp-widget-header">
             <div class="ui grid">
                 <div class="twelve wide column">
-                    <h3 class="ui header handle-drag">
+                    <h2 class="ui header handle-drag">
                         <?php
                         /**
                          * Filter: mainwp_uptime_monitoring_status_widget_title
@@ -51,13 +51,13 @@ class MainWP_Uptime_Monitoring_Status { // phpcs:ignore Generic.Classes.OpeningB
                         echo esc_html( apply_filters( 'mainwp_uptime_monitoring_status_widget_title', esc_html__( 'Uptime Monitoring', 'mainwp' ) ) );
                         ?>
                         <div class="sub header"><?php esc_html_e( 'Current uptime status.', 'mainwp' ); ?></div>
-                    </h3>
+                    </h2>
                 </div>
             </div>
         </div>
         <div class="mainwp-scrolly-overflow">
-            <div class="ui two small cards">
-                <div class="ui fluid card">
+            <div class="ui mainwp-cards small cards">
+                <div class="ui card">
                     <div class="content">
                         <div class="header">
                             <span class="ui large text"><span class="ui big circular icon green looping pulsating transition label"><i class="chevron up icon"></i></span> <?php echo esc_html( MainWP_Utility::short_number_format( $up_number ) ); ?></span>
@@ -65,7 +65,7 @@ class MainWP_Uptime_Monitoring_Status { // phpcs:ignore Generic.Classes.OpeningB
                         <div class="description"><strong><?php esc_html_e( 'Monitors Up', 'mainwp' ); ?></strong></div>
                     </div>
                 </div>
-                <div class="ui fluid card">
+                <div class="ui card">
                     <div class="content">
                         <div class="header">
                             <span class="ui large text"><span class="ui big circular icon red looping pulsating transition label"><i class="chevron down icon"></i></span> <?php echo esc_html( MainWP_Utility::short_number_format( $down_number ) ); ?></span>

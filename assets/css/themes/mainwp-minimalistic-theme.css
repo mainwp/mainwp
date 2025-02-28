@@ -565,6 +565,10 @@ body.mainwp-ui.mainwp-custom-theme,
   color: var(--font-color) !important;
 }
 
+.mainwp-ui.mainwp-custom-theme .mainwp-page-title .icon {
+  color: #ffffff !important;
+}
+
 /* Invert Dimmer */
 
 .mainwp-ui.mainwp-custom-theme .ui.inverted.dimmer {

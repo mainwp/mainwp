@@ -1313,30 +1313,30 @@ msgstr "Clique em %1here%2 para ver a resposta do site filho."
 msgid ""
 "This site can not be reached! Please use the Test Connection feature and see "
 "if the positive response will be returned. For additional help, please "
-"review this <a href=\"https://kb.mainwp.com/docs/potential-issues/"
+"review this <a href=\"https://mainwp.com/kb/potential-issues/"
 "\">Knowledgebase document</a>, and if you still have issues, please let us "
-"know in the <a href=\"https://managers.mainwp.com/c/community-"
+"know in the <a href=\"https://community.mainwp.com/c/community-"
 "support/5\">MainWP Community</a>."
 msgstr ""
 "Não é possível acessar este site! Use o recurso Testar conexão e veja se a "
 "resposta positiva será retornada. Para obter ajuda adicional, consulte este "
-"<a href=\"https://kb.mainwp.com/docs/potential-issues/\">documento da Base "
+"<a href=\"https://mainwp.com/kb/potential-issues/\">documento da Base "
 "de Conhecimento</a> e, se ainda tiver problemas, informe-nos na <a "
-"href=\"https://managers.mainwp.com/c/community-support/5\">Comunidade "
+"href=\"https://community.mainwp.com/c/community-support/5\">Comunidade "
 "MainWP</a>."
 
 #: assets/js/mainwp.js:1698
 msgid ""
 "Undefined error occurred. Please try again. If the issue does not resolve, "
-"please review this <a href=\"https://kb.mainwp.com/docs/potential-issues/"
+"please review this <a href=\"https://mainwp.com/kb/potential-issues/"
 "\">Knowledgebase document</a>, and if you still have issues, please let us "
-"know in the <a href=\"https://managers.mainwp.com/c/community-"
+"know in the <a href=\"https://community.mainwp.com/c/community-"
 "support/5\">MainWP Community</a>."
 msgstr ""
 "Ocorreu um erro indefinido. Tente novamente. Se o problema não for "
-"resolvido, revise este <a href=\"https://kb.mainwp.com/docs/potential-issues/"
+"resolvido, revise este <a href=\"https://mainwp.com/kb/potential-issues/"
 "\">documento da Base de Conhecimento</a> e, se ainda tiver problemas, "
-"informe-nos na <a href=\"https://managers.mainwp.com/c/community-"
+"informe-nos na <a href=\"https://community.mainwp.com/c/community-"
 "support/5\">Comunidade MainWP</a>."
 
 #: assets/js/mainwp.js:1700
@@ -3760,8 +3760,8 @@ msgstr "Nova Versão"
 #: pages/page-mainwp-updates-per-site.php:604
 #: pages/page-mainwp-updates-per-site.php:744
 #: pages/page-mainwp-updates-per-site.php:747
-msgid "Update Now"
-msgstr "Atualizar Agora"
+msgid "Update"
+msgstr "Atualizar"
 
 #: class/class-mainwp-manage-sites-update-view.php:376
 #: class/class-mainwp-manage-sites-update-view.php:520
@@ -3774,8 +3774,8 @@ msgstr "Atualizar Agora"
 #: pages/page-mainwp-updates-per-site.php:138
 #: pages/page-mainwp-updates-per-site.php:361
 #: pages/page-mainwp-updates-per-site.php:587
-msgid "Ignore Update"
-msgstr "Ignorar Atualização"
+msgid "Ignore"
+msgstr "Ignorar"
 
 #: class/class-mainwp-manage-sites-update-view.php:380
 #: class/class-mainwp-manage-sites-update-view.php:524

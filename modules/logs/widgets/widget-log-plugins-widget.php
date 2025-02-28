@@ -78,12 +78,12 @@ class Log_Plugins_Widget {
 
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
+            <h2 class="ui header handle-drag">
                 <?php esc_html_e( 'Plugin Management Activity Overview', 'mainwp' ); ?>
                 <div class="sub header">
                 <?php esc_html_e( 'Comprehensive bar chart reflecting plugin actions culminating in a total activity count.', 'mainwp' ); ?>
                 </div>
-            </h3>
+            </h2>
         </div>
 
         <div class="mainwp-widget-insights-card">

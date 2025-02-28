@@ -113,6 +113,14 @@ class Log_Record {
     public $state;
 
     /**
+     *  Object id.
+     *
+     * @var string
+     */
+    public $object_id;
+
+
+    /**
      * Record meta data
      *
      * @var array
@@ -138,18 +146,19 @@ class Log_Record {
         $this->log_site_name = isset( $log->log_site_name ) ? $log->log_site_name : null;
         $this->url           = isset( $log->url ) ? $log->url : null;
         $this->user_id       = isset( $log->user_id ) ? $log->user_id : null;
-        $this->user_meta     = isset( $log->meta['user_meta'] ) ? $log->meta['user_meta'] : null;
         $this->item          = isset( $log->item ) ? $log->item : null;
         $this->connector     = isset( $log->connector ) ? $log->connector : null;
         $this->context       = isset( $log->context ) ? $log->context : null;
         $this->action        = isset( $log->action ) ? $log->action : null;
         $this->state         = isset( $log->state ) ? $log->state : null;
         $this->duration      = isset( $log->duration ) ? $log->duration : null;
-        $this->meta          = isset( $log->meta ) ? $log->meta : null;
+        $this->object_id     = isset( $log->object_id ) ? $log->object_id : null;
         $this->extra_meta    = isset( $log->extra_info ) ? $log->extra_info : null;
 
-        if ( isset( $this->meta['user_meta'] ) ) {
-            unset( $this->meta['user_meta'] );
+        $user_meta = ! empty( $log->user_meta_json ) ? json_decode( $log->user_meta_json, true ) : array();
+        if ( empty( $user_meta ) && ! empty( $log->usermeta ) ) {
+            $user_meta = $log->usermeta;
         }
+        $this->user_meta = $user_meta;
     }
 }

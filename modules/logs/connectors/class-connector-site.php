@@ -95,9 +95,7 @@ class Connector_Site extends Log_Connector {
                 'mainwp'
             ),
             array(
-                'item'      => esc_html__( 'Added', 'mainwp' ),
-                'site_name' => $website->name,
-                'siteurl'   => $website->url,
+                'item' => esc_html__( 'Added', 'mainwp' ),
             ),
             $website->id,
             'sites',
@@ -142,9 +140,7 @@ class Connector_Site extends Log_Connector {
         }
 
         $args = array(
-            'item'      => esc_html__( 'Sync Data', 'mainwp' ),
-            'site_name' => $website->name,
-            'siteurl'   => $website->url,
+            'item' => esc_html__( 'Sync Data', 'mainwp' ),
         );
 
         if ( ! empty( $sync_error ) ) {
@@ -185,9 +181,7 @@ class Connector_Site extends Log_Connector {
                 'mainwp'
             ),
             array(
-                'item'      => esc_html__( 'Deleted', 'mainwp' ),
-                'site_name' => $website->name,
-                'siteurl'   => $website->url,
+                'item' => esc_html__( 'Deleted', 'mainwp' ),
             ),
             $website->id,
             'sites',
@@ -216,9 +210,7 @@ class Connector_Site extends Log_Connector {
         );
 
         $args = array(
-            'item'      => esc_html__( 'Reconnect', 'mainwp' ),
-            'site_name' => $website->name,
-            'siteurl'   => $website->url,
+            'item' => esc_html__( 'Reconnect', 'mainwp' ),
         );
 
         if ( ! empty( $error ) ) {
@@ -259,9 +251,7 @@ class Connector_Site extends Log_Connector {
                 'mainwp'
             ),
             array(
-                'item'      => esc_html__( 'Updated', 'mainwp' ),
-                'site_name' => $website->name,
-                'siteurl'   => $website->url,
+                'item' => esc_html__( 'Updated', 'mainwp' ),
             ),
             $website->id,
             'sites',

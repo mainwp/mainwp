@@ -9,6 +9,7 @@
 namespace MainWP\Dashboard\Module\CostTracker;
 
 use MainWP\Dashboard\MainWP_Settings_Indicator;
+use MainWP\Dashboard\MainWP_Settings;
 
 /**
  * Class Cost_Tracker_Settings
@@ -68,17 +69,20 @@ class Cost_Tracker_Settings {
             \mainwp_do_not_have_permissions( esc_html__( 'manage cost tracker', 'mainwp' ) );
             return;
         }
-        Cost_Tracker_Admin::render_header( 'settings' );
-
+        MainWP_Settings::render_header( 'CostTrackerSettings' );
         ?>
-
         <div class="ui segment" id="mainwp-module-cost-tracker-settings-tab">
+            <h2 class="ui dividing header">
+                <?php esc_html_e( 'Cost Tracker Settings ', 'mainwp' ); ?>
+                <div class="sub header"><?php esc_html_e( 'Customize how you track and manage costs. Adjust currency, categories, and other settings to fit your workflow.', 'mainwp' ); ?></div>
+            </h2>
             <form id="mainwp-module-cost-tracker-settings-form" method="post" action="admin.php?page=CostTrackerSettings" class="ui form">
                 <?php $this->render_settings_content(); ?>
             </form>
             <div class="ui clearing hidden divider"></div>
         </div>
         <?php
+        MainWP_Settings::render_footer( 'CostTrackerSettings' );
     }
 
     /**

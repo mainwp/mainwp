@@ -215,38 +215,28 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $after_title   = empty( $total_updates ) ? '' : '<div class="ui mini circular red label" timestamp="' . time() . '" style="font-size:6px;" data-tooltip="View pending updates" data-inverted="" data-position="top center"></div>';
 
         $site_pages = array(
-            'ManageSitesDashboard'     => array(
+            'ManageSitesDashboard' => array(
                 'href'   => 'admin.php?page=managesites&dashboard=' . $site_id,
                 'title'  => esc_html__( 'Overview', 'mainwp' ),
                 'access' => \mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ),
             ),
-            'ManageSitesEdit'          => array(
+            'ManageSitesEdit'      => array(
                 'href'   => 'admin.php?page=managesites&id=' . $site_id,
                 'title'  => esc_html__( 'Settings', 'mainwp' ),
                 'access' => \mainwp_current_user_can( 'dashboard', 'edit_sites' ),
             ),
-            'ManageSitesUpdates'       => array(
+            'ManageSitesUpdates'   => array(
                 'href'        => 'admin.php?page=managesites&updateid=' . $site_id,
                 'title'       => esc_html__( 'Updates', 'mainwp' ),
                 'access'      => \mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ),
                 'after_title' => $after_title,
             ),
-            'ManageSitesMonitor'       => array(
-                'href'   => 'admin.php?page=managesites&monitor_wpid=' . $site_id,
-                'title'  => esc_html__( 'Monitor Settings', 'mainwp' ),
-                'access' => \mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ),
-            ),
-            'ManageSitesEmailSettings' => array(
-                'href'   => 'admin.php?page=managesites&emailsettingsid=' . $site_id,
-                'title'  => esc_html__( 'Email Settings', 'mainwp' ),
-                'access' => \mainwp_current_user_can( 'dashboard', 'edit_sites' ),
-            ),
-            'ManageSitesBackups'       => array(
+            'ManageSitesBackups'   => array(
                 'href'   => 'admin.php?page=managesites&backupid=' . $site_id,
                 'title'  => esc_html__( 'Backups', 'mainwp' ),
                 'access' => \mainwp_current_user_can( 'dashboard', 'execute_backups' ),
             ),
-            'SecurityScan'             => array(
+            'SecurityScan'         => array(
                 'href'   => 'admin.php?page=managesites&scanid=' . $site_id,
                 'title'  => esc_html__( 'Site Hardening', 'mainwp' ),
                 'access' => true,
@@ -279,8 +269,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
                 $wp_admin_href = MainWP_Site_Open::get_open_site_url( $site_id, false, false );
                 $dropdown      = $reconnect . '
-                <a class="item mainwp-remove-site-button" site-id="' . intval( $site_id ) . '" id="mainwp-remove-site-button" href="#"><i class="trash alternate icon"></i> Remove Site</a>
-                <a id="mainwp-go-wp-admin-button" target="_blank" href="' . $wp_admin_href . '" class="item open_newwindow_wpadmin"><i class="sign in icon"></i> Go to WP Admin</a>
+                <a class="item mainwp-remove-site-button" site-id="' . intval( $site_id ) . '" id="mainwp-remove-site-button" href="#"><i class="trash grey icon"></i> Remove Site</a>
+                <a id="mainwp-go-wp-admin-button" target="_blank" href="' . $wp_admin_href . '" class="item open_newwindow_wpadmin"><i class="sign in grey icon"></i> Go to WP Admin</a>
                 ';
                 $site_icon     = '';
                 if ( 1 === (int) get_option( 'mainwp_use_favicon', 1 ) ) {
@@ -695,11 +685,11 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
     public static function render_header_tabs( $active_tab, $active_text, $show_language_updates ) {
         ?>
         <div class="mainwp-sub-header">
-            <div class="ui grid mini form">
+            <div class="ui grid">
                 <div class="equal width row">
-                    <div class="right aligned middle aligned column">
+                    <div class="middle aligned column">
                         <div class="inline field">
-                            <div class="ui selection fluid dropdown">
+                            <div class="ui selection mini dropdown">
                                 <div class="text"><?php echo esc_html( $active_text ); ?></div>
                                 <i class="dropdown icon"></i>
                                 <div class="menu">
@@ -718,8 +708,13 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <div class="middle aligned column">
                         <?php echo apply_filters( 'mainwp_widgetupdates_actions_top', '' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
                     </div>
-                    <div class="middle aligned column"></div>
-                    <div class="middle aligned column"></div>
+                    <div class="middle aligned right aligned column">
+                        <?php if ( 'plugins' === $active_tab ) : ?>
+                            <?php echo '<a href="javascript:void(0)" data-tooltip="' . esc_html__( 'Update Selected Plugins.', 'mainwp' ) . '" onClick="updatesoverview_plugins_global_upgrade_all( false, true ); return false;" class="ui mini green basic button" data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>'; ?>
+                        <?php elseif ( 'themes' === $active_tab ) : ?>
+                            <?php echo '<a href="javascript:void(0)" onClick="updatesoverview_themes_global_upgrade_all( false, true );return false;" class="ui mini green basic button" data-tooltip="' . esc_html__( 'Update Selected Themes.', 'mainwp' ) . '" data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>'; ?>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>
@@ -741,11 +736,18 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return;
         }
         ?>
+        <div class="mainwp-sub-header">
+            <div class="ui one column grid">
+                <div class="right aligned column">
+                    <input type="button" id="securityIssues_refresh" class="ui mini green basic button" value="<?php esc_html_e( 'Scan Site', 'mainwp' ); ?>"/>
+                </div>
+            </div>
+        </div>
         <div class="ui segment">
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-security-info-message' ) ) { ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-security-info-message"></i>
-                    <?php printf( esc_html__( 'Fix detected hardening issues on the childs site. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/security-issues/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
+                    <?php esc_html_e( 'Ensure your sites are secure and up to date with automated security and update checks.', 'mainwp' ); // NOSONAR - noopener - open safe. ?>
                 </div>
             <?php } ?>
             <?php
@@ -867,7 +869,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-edit-site-info-message' ) ) { ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-edit-site-info-message"></i>
-                    <?php printf( esc_html__( 'Edit the %1$s (%2$s) child site settings.  For additional help, please check this %3$shelp documentation%4$s.', 'mainwp' ), esc_html( stripslashes( $website->name ) ), '<a href="' . esc_url( $website->url ) . '" target="_blank">' . esc_url( $website->url ) . '</a>', '<a href="https://kb.mainwp.com/docs/edit-a-child-site/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // phpcs:ignore WordPress.Security.EscapeOutput -- NOSONAR - noopener - open safe. ?>
+                    <?php printf( esc_html__( 'Edit the %1$s (%2$s) child site settings.  For additional help, please check this %3$shelp documentation%4$s.', 'mainwp' ), esc_html( stripslashes( $website->name ) ), '<a href="' . esc_url( $website->url ) . '" target="_blank">' . esc_url( $website->url ) . '</a>', '<a href="https://mainwp.com/kb/edit-a-child-site/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // phpcs:ignore WordPress.Security.EscapeOutput -- NOSONAR - noopener - open safe. ?>
                 </div>
             <?php } ?>
             <?php
@@ -990,13 +992,21 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     ?>
                     </label>
                     <input type="hidden" name="mainwp_managesites_edit_site_uploaded_icon_hidden" class="settings-field-value-change-handler" id="mainwp_managesites_edit_site_uploaded_icon_hidden" value="<?php echo esc_attr( $uploaded_site_icon ); ?>">
-                    <div class="three wide middle aligned column" data-tooltip="<?php esc_attr_e( 'Upload the product icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                        <div class="ui green button basic mainwp-managesites-edit-site-icon-customable" iconItemId="<?php echo intval( $website->id ); ?>" iconFileSlug="<?php echo esc_attr( $uploaded_site_icon ); ?>" del-icon-nonce="<?php echo esc_attr( $delnonce ); ?>" icon-src="<?php echo esc_attr( $uploaded_icon_src ); ?>"><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
-                        <?php if ( ! empty( $uploaded_site_icon ) ) { ?>
-                            <?php echo MainWP_Manage_Sites::get_instance()->get_cust_site_icon( $website->cust_site_icon_info, 'display_edit' ); //phpcs:ignore --ok. ?>
-                        <?php } else { ?>
-                            <div style="display:inline-block;" id="mainw_managesites_add_edit_site_upload_custom_icon"></div> <?php // used for icon holder. ?>
-                        <?php } ?>
+                    <div class="three wide middle aligned column" >
+                        <span class="ui circular bordered image">
+                            <?php if ( ! empty( $uploaded_site_icon ) ) { ?>
+                                <?php echo MainWP_Manage_Sites::get_instance()->get_cust_site_icon( $website->cust_site_icon_info, 'display_edit' ); //phpcs:ignore --ok. ?>
+                            <?php } else { ?>
+                                <div style="display:inline-block;" id="mainw_managesites_add_edit_site_upload_custom_icon"></div> <?php // used for icon holder. ?>
+                            <?php } ?>
+                        </span>
+                        <div class="ui basic button mainwp-managesites-edit-site-icon-customable"
+                            iconItemId="<?php echo intval( $website->id ); ?>"
+                            iconFileSlug="<?php echo esc_attr( $uploaded_site_icon ); ?>"
+                            del-icon-nonce="<?php echo esc_attr( $delnonce ); ?>"
+                            icon-src="<?php echo esc_attr( $uploaded_icon_src ); ?>">
+                            <i class="image icon"></i> <?php echo ! empty( $uploaded_site_icon ) ? esc_html__( 'Change Image', 'mainwp' ) : esc_html__( 'Upload Image', 'mainwp' ); ?>
+                        </div>
                     </div>
                 </div>
 
@@ -1362,6 +1372,12 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     </div>
                 </div>
                 <?php
+                MainWP_Manage_Backups::render_individual_settings( $website );
+
+                MainWP_Uptime_Monitoring_Edit::instance()->render_monitor_settings( $website->id, true );
+
+                MainWP_Manage_Sites::render_email_settings( $website );
+
                 do_action_deprecated( 'mainwp-manage-sites-edit', array( $website ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead. NOSONAR - not IP.
                 do_action_deprecated( 'mainwp-extension-sites-edit', array( $website ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead. NOSONAR - not IP.
 
@@ -1513,7 +1529,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         ?>
         <div class="ui segment">
         <?php MainWP_Notification_Settings::render_update_template_message( $updated_templ ); ?>
-        <form method="POST" action="admin.php?page=managesites&emailsettingsid=<?php echo intval( $siteid ); ?>" class="ui form">
+        <form method="POST" action="admin.php?page=managesites&id=<?php echo intval( $siteid ); ?>&emailsettingsid=<?php echo intval( $siteid ); ?>" class="ui form">
             <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'UpdateWebsiteEmailSettings' . $siteid ) ); ?>" />
             <input type="hidden" name="mainwp_managesites_setting_emails_type" value="<?php echo esc_html( $type ); ?>" />
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-email-tokens-info-message' ) ) { ?>
@@ -1601,11 +1617,11 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 <label class="six wide column middle aligned"></label>
                 <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Manage the email HTML template.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                     <?php if ( $overrided ) { ?>
-                        <a href="<?php echo esc_url( wp_nonce_url( 'admin.php?page=managesites&emailsettingsid=' . intval( $siteid ) . '&edit-email=' . esc_attr( $type ), 'delete-email-template' ) ); ?>" onclick="mainwp_confirm('<?php echo esc_js( 'Are you sure you want to delete this template file?', 'mainwp' ); ?>', function(){ window.location = jQuery('a#email-delete-template').attr('href');}); return false;" id="email-delete-template" class="ui button"><?php esc_html_e( 'Return to Default Template', 'mainwp' ); ?></a>
+                        <a href="<?php echo esc_url( wp_nonce_url( 'admin.php?page=managesites&id=' . intval( $siteid ) . '&emailsettingsid=' . intval( $siteid ) . '&edit-email=' . esc_attr( $type ), 'delete-email-template' ) ); ?>" onclick="mainwp_confirm('<?php echo esc_js( 'Are you sure you want to delete this template file?', 'mainwp' ); ?>', function(){ window.location = jQuery('a#email-delete-template').attr('href');}); return false;" id="email-delete-template" class="ui button"><?php esc_html_e( 'Return to Default Template', 'mainwp' ); ?></a>
                         <?php
                     } else {
                         ?>
-                    <a href="<?php echo esc_url( wp_nonce_url( 'admin.php?page=managesites&emailsettingsid=' . intval( $siteid ) . '&edit-email=' . esc_attr( $type ), 'copy-email-template' ) ); ?>" class="ui button"><?php esc_html_e( 'Copy file to uploads', 'mainwp' ); ?></a>
+                    <a href="<?php echo esc_url( wp_nonce_url( 'admin.php?page=managesites&id=' . intval( $siteid ) . '&emailsettingsid=' . intval( $siteid ) . '&edit-email=' . esc_attr( $type ), 'copy-email-template' ) ); ?>" class="ui button"><?php esc_html_e( 'Copy file to uploads', 'mainwp' ); ?></a>
                     <?php } ?>
                     <?php if ( $overrided ) { ?>
                         <a href="javascript:void(0)" class="ui button" onclick="mainwp_view_template('<?php echo esc_js( $type ); ?>'); return false;"><?php esc_html_e( 'Edit Template', 'mainwp' ); ?></a>
@@ -1617,7 +1633,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 </div>
             </div>
             <div class="ui divider"></div>
-            <a href="admin.php?page=managesites&emailsettingsid=<?php echo intval( $siteid ); ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>
+            <a href="admin.php?page=managesites&id=<?php echo (int) ( $siteid ); ?>&emailsettingsid=<?php echo intval( $siteid ); ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>
             <input type="submit" name="submit" id="submit" class="ui button green big" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
             </form>
         </div>
@@ -1655,7 +1671,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $template_file = apply_filters( 'mainwp_default_template_locate', $default_file, $template, $default_dir, $type, $siteid );
 
         if ( $siteid ) {
-            $localion = 'admin.php?page=managesites&emailsettingsid=' . $siteid . '&edit-email=' . $type;
+            $localion = 'admin.php?page=managesites&id=' . (int) $siteid . '&emailsettingsid=' . $siteid . '&edit-email=' . $type;
         } else {
             $localion = 'admin.php?page=SettingsEmail&edit-email=' . $type;
         }
@@ -1749,7 +1765,11 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $text_recipients     = esc_html__( 'Recipient(s)', 'mainwp' );
 
         ?>
-        <div class="ui segment">
+
+        <h2 class="ui dividing header">
+            <?php esc_html_e( 'Email Settings', 'mainwp' ); ?>
+        </h2>
+
         <?php if ( $updated ) { ?>
         <div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Email settings saved successfully.', 'mainwp' ); ?></div>
         <?php } ?>
@@ -1776,10 +1796,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         ?>
                         <tr>
                             <td><?php echo ( ! $options['disable'] ) ? '<span data-tooltip="Enabled." data-position="right center" data-inverted=""><i class="circular green check inverted icon"></i></span>' : '<span data-tooltip="Disabled." data-position="right center" data-inverted=""><i class="circular x icon inverted disabled"></i></span>'; ?></td>
-                            <td><a href="admin.php?page=managesites&emailsettingsid=<?php echo intval( $website->id ); ?>&edit-email=<?php echo esc_html( rawurlencode( $type ) ); ?>" data-tooltip="<?php esc_html_e( 'Click to configure the email settings.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php echo esc_html( $name ); ?></a></td>
+                            <td><a href="admin.php?page=managesites&id=<?php echo intval( $website->id ); ?>&emailsettingsid=<?php echo intval( $website->id ); ?>&edit-email=<?php echo esc_html( rawurlencode( $type ) ); ?>" data-tooltip="<?php esc_html_e( 'Click to configure the email settings.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php echo esc_html( $name ); ?></a></td>
                             <td><?php echo esc_html( $email_description ); ?></td>
                             <td><?php echo esc_html( $options['recipients'] ); ?></td>
-                            <td style="text-align:right"><a href="admin.php?page=managesites&emailsettingsid=<?php echo intval( $website->id ); ?>&edit-email=<?php echo esc_html( rawurlencode( $type ) ); ?>" data-tooltip="<?php esc_html_e( 'Click to configure the email settings.', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="ui green mini button"><?php esc_html_e( 'Manage', 'mainwp' ); ?></a></td>
+                            <td style="text-align:right"><a href="admin.php?page=managesites&id=<?php echo intval( $website->id ); ?>&emailsettingsid=<?php echo intval( $website->id ); ?>&edit-email=<?php echo esc_html( rawurlencode( $type ) ); ?>" data-tooltip="<?php esc_html_e( 'Click to configure the email settings.', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="ui green mini button"><?php esc_html_e( 'Manage', 'mainwp' ); ?></a></td>
                         </tr>
                     <?php } ?>
                 </tbody>
@@ -1821,7 +1841,6 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 } );
             } );
             </script>
-        </div>
         <?php
     }
 
@@ -2249,10 +2268,12 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                              */
                             do_action( 'mainwp_added_new_site', $id, $website );
 
+                            MainWP_Sync::sync_init_empty_values( $website );
+
                             MainWP_Sync::sync_information_array( $website, $information );
                         }
                 } else {
-                    $error = sprintf( esc_html__( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/potential-issues/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
+                    $error = sprintf( esc_html__( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' ), '<a href="https://mainwp.com/kb/potential-issues/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
                 }
             } catch ( MainWP_Exception $e ) {
                 if ( 'HTTPERROR' === $e->getMessage() ) {

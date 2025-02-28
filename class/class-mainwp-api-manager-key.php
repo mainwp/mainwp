@@ -222,7 +222,7 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         $code = wp_remote_retrieve_response_code( $request );
         if ( 200 !== $code ) {
-            $error = sprintf( esc_html__( 'Login verification could not be completed. Please contact %1$sMainWP Support%2$s so we can assist.', 'mainwp' ), '<a href="https://managers.mainwp.com/" target="_blank">', '</a>' );
+            $error = sprintf( esc_html__( 'Login verification could not be completed. Please contact %1$sMainWP Support%2$s so we can assist.', 'mainwp' ), '<a href="https://community.mainwp.com/" target="_blank">', '</a>' );
             throw new MainWP_Exception( $error ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Escaped.
         }
 

@@ -520,7 +520,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-pages-info-message' ) ) : ?>
                         <div class="ui info message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-pages-info-message"></i>
-                            <?php printf( esc_html__( 'Manage existing pages on your child sites.  Here you can edit, view and delete pages.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-pages/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                            <?php printf( esc_html__( 'Manage existing pages on your child sites.  Here you can edit, view and delete pages.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/manage-pages/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
                         </div>
                     <?php endif; ?>
                     <?php static::render_table( true ); ?>
@@ -1210,8 +1210,8 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         <input class="pageId" type="hidden" name="id" value="<?php echo intval( $page['id'] ); ?>"/>
                         <input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo 'trash' === $page['status'] ? 'restore|' : ''; ?><?php echo 'future' === $page['status'] || 'draft' === $page['status'] ? 'publish|' : ''; ?>" />
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
-                        <div class="ui right pointing dropdown icon mini basic green button" style="z-index: 999">
-                            <a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
+                        <div class="ui right pointing dropdown" style="z-index: 999">
+                            <a href="javascript:void(0)"><i class="ellipsis vertical icon"></i></a>
                             <div class="menu">
                                 <?php if ( 'future' === $page['status'] || 'draft' === $page['status'] ) : ?>
                                     <a class="item page_submitpublish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
@@ -1731,12 +1731,12 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             ?>
             <p><?php esc_html_e( 'If you need help with managing pages, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui list">
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-pages/" target="_blank">Manage Pages</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-pages/#create-a-new-page" target="_blank">Create a New Page</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-pages/#edit-a-page" target="_blank">Edit an Existing Page</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-pages/#view-existing-page" target="_blank">View an Existing Page</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-pages/#delete-a-page" target="_blank">Delete Page(s)</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-pages/#restore-a-page" target="_blank">Restore Page(s)</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-pages/" target="_blank">Manage Pages</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-pages/#create-a-new-page" target="_blank">Create a New Page</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-pages/#edit-a-page" target="_blank">Edit an Existing Page</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-pages/#view-existing-page" target="_blank">View an Existing Page</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-pages/#delete-a-page" target="_blank">Delete Page(s)</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-pages/#restore-a-page" target="_blank">Restore Page(s)</a></div>
                 <?php
                 /**
                  * Action: mainwp_pages_help_item

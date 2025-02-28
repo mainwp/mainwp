@@ -52,12 +52,12 @@ class Cost_Tracker_Category_Totals {
     public function render_widget() {
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
+            <h2 class="ui header handle-drag">
                 <?php esc_html_e( 'Annual Expense Distribution by Category', 'mainwp' ); ?>
                 <div class="sub header">
                 <?php esc_html_e( 'Visualize your yearly spending proportions across different product categories.', 'mainwp' ); ?>
                 </div>
-            </h3>
+            </h2>
         </div>
 
         <div class="mainwp-scrolly-overflow">

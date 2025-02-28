@@ -95,7 +95,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
 
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
+            <h2 class="ui header handle-drag">
                 <?php
                 /**
                  * Filter: mainwp_themes_widget_title
@@ -107,7 +107,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 echo esc_html( apply_filters( 'mainwp_themes_widget_title', esc_html__( 'Themes', 'mainwp' ), $website ) );
                 ?>
                 <div class="sub header"><?php esc_html_e( 'Inactive themes on the child site', 'mainwp' ); ?></div>
-            </h3>
+            </h2>
         </div>
         <div class="mainwp-scrolly-overflow">
             <?php
@@ -137,7 +137,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                  */
                 do_action( 'mainwp_before_inactive_themes_list', $website, $inactive_themes );
                 ?>
-                <div class="ui divided selection list">
+                <div class="ui divided list">
                     <?php
                     $_count = count( $inactive_themes );
                     for ( $i = 0; $i < $_count; $i++ ) {
@@ -149,8 +149,8 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             <input class="themeSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_themes[ $i ]['slug'] ) ); ?>"/>
                             <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
                             <div class="right floated content themesAction">
-                                <div class="ui right pointing dropdown icon mini button">
-                                    <i class="ellipsis horizontal icon"></i>
+                                <div class="ui right pointing dropdown">
+                                    <i class="ellipsis vertical icon"></i>
                                     <div class="menu">
                                         <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_themes' ) ) : ?>
                                             <a href="#" class="mainwp-theme-activate item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Activate', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>

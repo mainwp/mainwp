@@ -128,7 +128,7 @@ class Cost_Tracker_Hooks {
      * @return array $columns columns.
      */
     public function hook_manage_clients_column( $columns ) {
-        $columns['client-cost-tracker'] = '<span data-tooltip="30-Day cost forecast" data-position="left center" data-inverted=""><i class="dollar sign icon"></i></span>';
+        $columns['client-cost-tracker'] = '<span data-tooltip="30-Day cost forecast" data-position="left center" data-inverted="">' . __( 'Costs', 'mainwp' ) . '</span>';
         return $columns;
     }
 
@@ -237,7 +237,7 @@ class Cost_Tracker_Hooks {
             if ( ! empty( $selected_ids ) ) {
                 $params = '&selected_ids=' . implode( ',', $selected_ids ) . '&client_id=' . intval( $client_id );
             }
-            $item['client-cost-tracker'] = '<a href="admin.php?page=ManageCostTracker' . $params . '" >' . Cost_Tracker_Utility::cost_tracker_format_price( $total_prices, true ) . '</a>';
+            $item['client-cost-tracker'] = '<a class="ui mini basic grey button" href="admin.php?page=ManageCostTracker' . $params . '" ><i class="file invoice dollar icon"></i>' . Cost_Tracker_Utility::cost_tracker_format_price( $total_prices, true ) . '</a>';
 
         }
         return $item;
@@ -255,7 +255,7 @@ class Cost_Tracker_Hooks {
      * @return array $columns columns.
      */
     public function hook_manage_sites_column( $columns ) {
-        $columns['site-cost-tracker'] = '<span data-tooltip="30-Day cost forecast" data-position="left center" data-inverted=""><i class="dollar sign icon"></i></span>';
+        $columns['site-cost-tracker'] = '<span data-tooltip="30-Day cost forecast" data-position="left center" data-inverted="">' . __( 'Costs', 'mainwp' ) . '</span>';
         return $columns;
     }
 
@@ -344,7 +344,7 @@ class Cost_Tracker_Hooks {
             if ( ! empty( $selected_ids ) ) {
                 $params = '&selected_ids=' . implode( ',', $selected_ids ) . '&site_id=' . intval( $item_id );
             }
-            $item['site-cost-tracker'] = '<a href="admin.php?page=ManageCostTracker' . $params . '" >' . Cost_Tracker_Utility::cost_tracker_format_price( $total_prices, true ) . '</a>';
+            $item['site-cost-tracker'] = '<a class="ui mini basic grey button" href="admin.php?page=ManageCostTracker' . $params . '" ><i class="file invoice dollar icon"></i>' . Cost_Tracker_Utility::cost_tracker_format_price( $total_prices, true ) . '</a>';
         }
 
         return $item;

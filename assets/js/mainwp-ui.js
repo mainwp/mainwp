@@ -779,3 +779,13 @@ let mainwp_guidedtours_onchange = function (me) {
     });
 }
 
+let mainwp_help_modal_content_onclick = function () {
+    
+    let data = mainwp_secure_data({
+        action: 'mainwp_help_modal_content_update',
+    });
+    jQuery.post(ajaxurl, data, function () {
+        
+    });
+}
+

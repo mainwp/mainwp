@@ -61,14 +61,13 @@ class MainWP_Ui_Manage_Widgets_Layout { // phpcs:ignore Generic.Classes.OpeningB
     public static function render_edit_layout() {
         $saved_segments = static::set_get_widgets_layout();
         ?>
-        <div class="four wide middle aligned right aligned column">
-            <a class="ui mini button" id="mainwp-manage-widgets-load-saved-layout-button" selected-layout-id=""><?php esc_html_e( 'Save Layout', 'mainwp' ); ?></a>
-            <?php if ( ! empty( $saved_segments ) ) : ?>
-                <a class="ui mini button mainwp_manage_widgets_ui_choose_layout"><?php esc_html_e( 'Load a Layout', 'mainwp' ); ?></a>
-            <?php else : ?>
-                <a class="ui mini disabled button"><?php esc_html_e( 'Load a Layout', 'mainwp' ); ?></a>
-            <?php endif; ?>
-        </div>
+        
+        <a class="ui mini button" id="mainwp-manage-widgets-load-saved-layout-button" selected-layout-id=""><?php esc_html_e( 'Save Layout', 'mainwp' ); ?></a>
+        <?php if ( ! empty( $saved_segments ) ) : ?>
+            <a class="ui mini button mainwp_manage_widgets_ui_choose_layout"><?php esc_html_e( 'Load Layout', 'mainwp' ); ?></a>
+        <?php else : ?>
+            <a class="ui mini disabled button"><?php esc_html_e( 'Load Layout', 'mainwp' ); ?></a>
+        <?php endif; ?>
 
         <script type="text/javascript">
             jQuery( document ).ready( function( $ ) {
@@ -313,7 +312,7 @@ class MainWP_Ui_Manage_Widgets_Layout { // phpcs:ignore Generic.Classes.OpeningB
                 <div id="mainwp-common-edit-widgets-layout-status" class="ui message" style="display:none;"></div>
                 <div id="mainwp-common-edit-widgets-layout-edit-fields" class="ui form">
                     <div class="field">
-                        <label><?php esc_html_e( 'Enter the layout name', 'mainwp' ); ?></label>
+                        <label><?php esc_html_e( 'Layout name', 'mainwp' ); ?></label>
                     </div>
                     <div class="field">
                         <input type="text" id="mainwp-common-edit-widgets-layout-name" value=""/>
@@ -333,10 +332,9 @@ class MainWP_Ui_Manage_Widgets_Layout { // phpcs:ignore Generic.Classes.OpeningB
                     <div class="eight wide left aligned middle aligned column">
                         <input type="button" class="ui green button" id="mainwp-common-edit-widgets-layout-save-button" value="<?php esc_attr_e( 'Save', 'mainwp' ); ?>"/>
                         <input type="button" class="ui green button" id="mainwp-common-edit-widgets-select-layout-button" value="<?php esc_attr_e( 'Choose', 'mainwp' ); ?>" style="display:none;"/>
-                        <input type="button" class="ui basic button" id="mainwp-common-edit-widgets-layout-delete-button" value="<?php esc_attr_e( 'Delete', 'mainwp' ); ?>" style="display:none;"/>
                     </div>
                     <div class="eight wide column">
-
+                        <input type="button" class="ui basic button" id="mainwp-common-edit-widgets-layout-delete-button" value="<?php esc_attr_e( 'Delete', 'mainwp' ); ?>" style="display:none;"/>
                     </div>
                 </div>
             </div>

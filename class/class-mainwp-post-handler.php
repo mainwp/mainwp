@@ -72,6 +72,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $this->add_action( 'mainwp_widgets_order', array( &$this, 'ajax_widgets_order' ) );
         $this->add_action( 'mainwp_save_settings', array( &$this, 'ajax_mainwp_save_settings' ) );
         $this->add_action( 'mainwp_guided_tours_option_update', array( &$this, 'ajax_guided_tours_option_update' ) );
+        $this->add_action( 'mainwp_help_modal_content_update', array( &$this, 'ajax_mainwp_help_modal_content_update' ) );
 
         // Page: Recent Posts.
         if ( \mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
@@ -529,6 +530,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             MainWP_Utility::update_option( 'mainwp_notice_wp_mail_failed', 'hide' );
             die( 'ok' );
         }
+
+        if ( 'phpver_8_0' === $no_id ) {
+            MainWP_Utility::update_user_option( 'lasttime_hidden_phpver_8_0', time() );
+        }
+
         $time_set = isset( $_POST['time_set'] ) && 1 === intval( $_POST['time_set'] ) ? true : false;
         $this->hide_dashboard_notice_status( $no_id, $time_set );
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -713,6 +719,19 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         MainWP_Utility::update_option( 'mainwp_enable_guided_tours', $enable );
         die( 'ok ' . intval( $enable ) );
+    }
+
+    /**
+     * Method mainwp_help_modal_content_update()
+     *
+     * Update saved MainWP Settings.
+     *
+     * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
+     */
+    public function ajax_mainwp_help_modal_content_update() {
+        $this->secure_request( 'mainwp_help_modal_content_update' );
+        MainWP_Utility::update_option( 'mainwp_help_modal_content_update', 1 );
+        die( 'ok' );
     }
 
     /**
@@ -1131,9 +1150,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      * @uses \MainWP_DB_Client::instance()->update_client()
      * @uses \MainWP_DB_Client::instance()->update_selected_sites_for_client()
      */
-    public function mainwp_clients_import_client() {  // phpcs:ignore -- NOSONAR 
+    public function mainwp_clients_import_client() {  // phpcs:ignore -- NOSONAR
         $this->secure_request( 'mainwp_clients_import_client' );
-        // phpcs:disable 
+        // phpcs:disable
         // Set value from POST data.
         $default_values = array(
             'client.name'              => ! empty( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '',

@@ -93,8 +93,8 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-updates-site-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-site-message"></i>
-                    <div><?php printf( esc_html__( 'Manage available updates for the child site. From here, you can update update %1$splugins%2$s, %3$sthemes%4$s, and %5$sWordPress core%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/update-plugins/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://kb.mainwp.com/docs/update-themes/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://kb.mainwp.com/docs/update-wordpress-core/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
-                    <div><?php printf( esc_html__( 'Also, from here, you can ignore updates for %1$sWordPress core%2$s, %3$splugins%4$s, and %5$sthemes%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-wordpress-core-update/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://kb.mainwp.com/docs/ignore-theme-updates/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
+                    <div><?php printf( esc_html__( 'Manage available updates for the child site. From here, you can update update %1$splugins%2$s, %3$sthemes%4$s, and %5$sWordPress core%6$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/update-plugins/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://mainwp.com/kb/update-themes/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://mainwp.com/kb/update-wordpress-core/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
+                    <div><?php printf( esc_html__( 'Also, from here, you can ignore updates for %1$sWordPress core%2$s, %3$splugins%4$s, and %5$sthemes%6$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/ignore-wordpress-core-update/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://mainwp.com/kb/ignore-plugin-updates/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://mainwp.com/kb/ignore-theme-updates/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
                 </div>
             <?php endif; ?>
             <?php
@@ -366,27 +366,18 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                                         if ( '' !== $wpcore_update_disabled_by ) {
                                             ?>
                                             <span data-tooltip="<?php echo esc_html( $wpcore_update_disabled_by ); ?>" data-inverted="" data-position="left center"><a href="javascript:void(0)" class="ui green button mini disabled"><?php esc_html_e( 'Update', 'mainwp' ); ?></a></span>
-                                            <?php
-                                        } else {
-                                            if ( $is_demo ) {
-                                                MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green button mini disabled" disabled="disabled">' . esc_html__( 'Update', 'mainwp' ) . '</a>' );
-                                            } else {
-                                                ?>
-                                                <div class="ui mini buttons">
-                                                    <div class="ui button"><?php esc_html_e( 'Ignore', 'mainwp' ); ?></div>
-                                                    <div class="ui floating dropdown icon button">
-                                                        <i class="dropdown icon"></i>
-                                                        <div class="menu">
-                                                            <a href="javascript:void(0)" onClick="return updatesoverview_upgrade_ignore( <?php echo intval( $website->id ); ?>, this, '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )" class="item"><?php esc_html_e( 'Ignore this version', 'mainwp' ); ?></a>
-                                                            <a href="javascript:void(0)" class="item mainwp-ignore-globally-button" onClick="return updatesoverview_upgrade_ignore_this_version_globally( '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )"><?php esc_html_e( 'Ignore this version globally', 'mainwp' ); ?></a>
-                                                            <a href="javascript:void(0)" onClick="return updatesoverview_upgrade_ignore_all_version( <?php echo intval( $website->id ); ?>, this )" class="item"><?php esc_html_e( 'Ignore all versions', 'mainwp' ); ?></a>
-                                                        </div>
+                                            <?php } else { ?>
+                                            
+                                                <div class="ui bottom left pointing dropdown mini button"><?php esc_html_e( 'Ignore', 'mainwp' ); ?>
+                                                    <i class="dropdown icon"></i>
+                                                    <div class="menu">
+                                                        <a href="javascript:void(0)" onClick="return updatesoverview_upgrade_ignore( <?php echo intval( $website->id ); ?>, this, '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )" class="item"><?php esc_html_e( 'Ignore this version', 'mainwp' ); ?></a>
+                                                        <a href="javascript:void(0)" class="item mainwp-ignore-globally-button" onClick="return updatesoverview_upgrade_ignore_this_version_globally( '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )"><?php esc_html_e( 'Ignore this version globally', 'mainwp' ); ?></a>
+                                                        <a href="javascript:void(0)" onClick="return updatesoverview_upgrade_ignore_all_version( <?php echo intval( $website->id ); ?>, this )" class="item"><?php esc_html_e( 'Ignore all versions', 'mainwp' ); ?></a>
                                                     </div>
                                                 </div>
                                                 <a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update', 'mainwp' ) . ' ' . esc_attr( $website->name ); ?>" data-inverted="" data-position="left center" class="ui green button mini" onClick="return updatesoverview_upgrade(<?php echo intval( $website->id ); ?>, this )"><?php esc_html_e( 'Update', 'mainwp' ); ?></a>
-                                                <?php
-                                            }
-                                            ?>
+                                               
                                             <input type="hidden" id="wp-updated-<?php echo intval( $website->id ); ?>" value="<?php echo ! empty( $wp_upgrades ) ? '0' : '1'; ?>" />
                                             <?php
                                         }
@@ -516,27 +507,17 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                                 ?>
                             <td>
                                 <?php if ( $user_can_ignore_unignore ) : ?>
-                                    <div class="ui mini buttons">
-                                        <div class="ui button"><?php esc_html_e( 'Ignore', 'mainwp' ); ?></div>
-                                        <div class="ui floating dropdown icon button">
-                                            <i class="dropdown icon"></i>
-                                            <div class="menu">
-                                                <a href="javascript:void(0)" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_js( rawurlencode( $plugin_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this, '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )" class="item"><?php esc_html_e( 'Ignore this version', 'mainwp' ); ?></a>
-                                                <a href="javascript:void(0)" class="item mainwp-ignore-globally-button" onClick="return updatesoverview_plugins_ignore_all( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_attr( rawurlencode( $plugin_upgrade['Name'] ) ); ?>', this, '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )"><?php esc_html_e( 'Ignore this version globally', 'mainwp' ); ?></a>
-                                                <a href="javascript:void(0)" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_js( rawurlencode( $plugin_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this, 'all_versions' )" class="item"><?php esc_html_e( 'Ignore all versions', 'mainwp' ); ?></a>
-                                            </div>
-                                        </div>
+                                <div class="ui bottom left pointing dropdown mini button"><?php esc_html_e( 'Ignore', 'mainwp' ); ?>
+                                    <i class="dropdown icon"></i>
+                                    <div class="menu">
+                                        <a href="javascript:void(0)" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_js( rawurlencode( $plugin_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this, '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )" class="item"><?php esc_html_e( 'Ignore this version', 'mainwp' ); ?></a>
+                                        <a href="javascript:void(0)" class="item mainwp-ignore-globally-button" onClick="return updatesoverview_plugins_ignore_all( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_attr( rawurlencode( $plugin_upgrade['Name'] ) ); ?>', this, '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )"><?php esc_html_e( 'Ignore this version globally', 'mainwp' ); ?></a>
+                                        <a href="javascript:void(0)" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_js( rawurlencode( $plugin_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this, 'all_versions' )" class="item"><?php esc_html_e( 'Ignore all versions', 'mainwp' ); ?></a>
                                     </div>
+                                </div>
                                 <?php endif; ?>
-                                <?php
-                                if ( $user_can_update_plugins ) :
-                                    $is_demo = MainWP_Demo_Handle::is_demo_mode();
-                                    if ( $is_demo ) {
-                                        MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button"  disabled="disabled">' . esc_html__( 'Update', 'mainwp' ) . '</a>' );
-                                    } else {
-                                        ?>
+                                <?php if ( $user_can_update_plugins ) : ?>
                                     <a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_plugin( <?php echo intval( $website->id ); ?>, '<?php echo esc_js( $plugin_name ); ?>' )"><?php esc_html_e( 'Update', 'mainwp' ); ?></a>
-                                    <?php } ?>
                                 <?php endif; ?>
                             </td>
                             <?php endif; ?>
@@ -569,15 +550,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      */
     public static function hook_table_update_plugins_header_content( $column_display_name, $column_key, $top ) {
         if ( $top ) {
-            if ( 'action' === $column_key ) {
-                if ( MainWP_Demo_Handle::is_demo_mode() ) {
-                    $demo_tip     = MainWP_Demo_Handle::get_instance()->get_demo_tooltip();
-                    $selected_act = '<span data-tooltip="' . esc_html( $demo_tip ) . '" data-inverted="" data-position="top right"><a href="javascript:void(0)" class="ui mini green basic button disabled" >' . esc_html__( 'Update Selected' ) . '</a></span>';
-                } else {
-                    $selected_act = '<a href="javascript:void(0)" data-tooltip="' . esc_html__( 'Update Selected Plugins.', 'mainwp' ) . '" onClick="updatesoverview_plugins_global_upgrade_all( false, true ); return false;" class="ui mini green basic button" data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>';
-                }
-                $column_display_name .= $selected_act;
-            } elseif ( 'title' === $column_key ) {
+            if ( 'title' === $column_key ) {
                 $column_display_name = '<div class="ui master checkbox "><input type="checkbox" name=""><label>' . $column_display_name . '</label></div>';
             }
         }
@@ -595,15 +568,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      */
     public static function hook_table_update_themes_header_content( $column_display_name, $column_key, $top ) {
         if ( $top ) {
-            $is_demo = MainWP_Demo_Handle::is_demo_mode();
-            if ( 'action' === $column_key ) {
-                if ( $is_demo ) {
-                    $selected_act = MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green basic button disabled" disabled="disabled">' . esc_html__( 'Update Selected', 'mainwp' ) . '</a>', false );
-                } else {
-                    $selected_act = '<a href="javascript:void(0)" onClick="updatesoverview_themes_global_upgrade_all( false, true );return false;" class="ui mini green basic button" data-tooltip="' . esc_html__( 'Update Selected Themes.', 'mainwp' ) . '" data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>';
-                }
-                $column_display_name .= $selected_act;
-            } elseif ( 'title' === $column_key ) {
+            if ( 'title' === $column_key ) {
                 $column_display_name = '<div class="ui master checkbox "><input type="checkbox" name=""><label>' . $column_display_name . '</label></div>';
             }
         }
@@ -716,26 +681,17 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                                     ?>
                                 <td>
                                     <?php if ( $user_can_ignore_unignore ) : ?>
-                                        <div class="ui mini buttons">
-                                            <div class="ui button"><?php esc_html_e( 'Ignore', 'mainwp' ); ?></div>
-                                            <div class="ui floating dropdown icon button">
-                                                <i class="dropdown icon"></i>
-                                                <div class="menu">
-                                                    <a href="javascript:void(0)" onClick="return updatesoverview_themes_ignore_detail( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $theme_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this, '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )" class="item"><?php esc_html_e( 'Ignore this version', 'mainwp' ); ?></a>
-                                                    <a href="javascript:void(0)" class="item mainwp-ignore-globally-button" onClick="return updatesoverview_themes_ignore_all( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $theme_upgrade['Name'] ) ); ?>', this, '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )"><?php esc_html_e( 'Ignore this version globally', 'mainwp' ); ?></a>
-                                                    <a href="javascript:void(0)" onClick="return updatesoverview_themes_ignore_detail( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $theme_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this, 'all_versions' )" class="item"><?php esc_html_e( 'Ignore all versions', 'mainwp' ); ?></a>
-                                                </div>
-                                            </div>
+                                    <div class="ui bottom left pointing dropdown mini button"><?php esc_html_e( 'Ignore', 'mainwp' ); ?>
+                                        <i class="dropdown icon"></i>
+                                        <div class="menu">
+                                            <a href="javascript:void(0)" onClick="return updatesoverview_themes_ignore_detail( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $theme_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this, '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )" class="item"><?php esc_html_e( 'Ignore this version', 'mainwp' ); ?></a>
+                                            <a href="javascript:void(0)" class="item mainwp-ignore-globally-button" onClick="return updatesoverview_themes_ignore_all( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $theme_upgrade['Name'] ) ); ?>', this, '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )"><?php esc_html_e( 'Ignore this version globally', 'mainwp' ); ?></a>
+                                            <a href="javascript:void(0)" onClick="return updatesoverview_themes_ignore_detail( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $theme_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this, 'all_versions' )" class="item"><?php esc_html_e( 'Ignore all versions', 'mainwp' ); ?></a>
                                         </div>
+                                    </div>
                                     <?php endif; ?>
-                                    <?php
-                                    if ( $user_can_update_themes ) :
-                                        if ( $is_demo ) {
-                                            MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button disabled" disabled="disabled">' . esc_html__( 'Update', 'mainwp' ) . '</a>' );
-                                        } else {
-                                            ?>
+                                    <?php if ( $user_can_update_themes ) : ?>
                                         <a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_theme( <?php echo intval( $website->id ); ?>, '<?php echo esc_js( $theme_name ); ?>' )"><?php esc_html_e( 'Update', 'mainwp' ); ?></a>
-                                    <?php } ?>
                                     <?php endif; ?>
                                 </td>
                                 <?php endif; ?>

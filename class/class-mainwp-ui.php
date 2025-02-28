@@ -197,11 +197,11 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         do_action( 'mainwp_before_select_sites_filters' );
         ?>
         <div id="mainwp-select-sites-filters">
-                    <div class="ui mini fluid icon input">
-                        <input type="text" id="mainwp-select-sites-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>" <?php echo 'site' === $selectedby ? '' : 'style="display: none;"'; ?> />
-                        <i class="filter icon"></i>
-                    </div>
-                </div>
+            <div class="ui mini fluid icon input">
+                <input type="text" id="mainwp-select-sites-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>" <?php echo 'site' === $selectedby ? '' : 'style="display: none;"'; ?> />
+                <i class="filter icon"></i>
+            </div>
+        </div>
         <?php
         /**
          * Action: mainwp_after_select_sites_filters
@@ -215,16 +215,16 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         <input type="hidden" name="select_by" id="select_by" value="<?php echo esc_attr( $selectedby ); ?>"/>
         <input type="hidden" id="select_sites_tab" value="<?php echo esc_attr( $selectedby ); ?>"/>
         <div id="mainwp-select-sites-header">
-            <div class="ui pointing green secondary menu">
-                <a class="item ui tab <?php echo ( 'site' === $selectedby ) ? 'active' : ''; ?>" data-tab="mainwp-select-sites-<?php echo esc_attr( $tab_id ); ?>" select-by="site"><?php esc_html_e( 'Sites', 'mainwp' ); ?></a>
+            <div class="ui secondary pointing centered fluid menu">
+                <a class="item ui text tab <?php echo ( 'site' === $selectedby ) ? 'active' : ''; ?>" data-tab="mainwp-select-sites-<?php echo esc_attr( $tab_id ); ?>" select-by="site"><?php esc_html_e( 'Sites', 'mainwp' ); ?></a>
                 <?php if ( $show_group ) : ?>
-                <a class="item ui tab <?php echo ( 'group' === $selectedby ) ? 'active' : ''; ?>" data-tab="mainwp-select-groups-<?php echo esc_attr( $tab_id ); ?>" select-by="group"><?php esc_html_e( 'Tags', 'mainwp' ); ?></a>
+                <a class="item ui text tab <?php echo ( 'group' === $selectedby ) ? 'active' : ''; ?>" data-tab="mainwp-select-groups-<?php echo esc_attr( $tab_id ); ?>" select-by="group"><?php esc_html_e( 'Tags', 'mainwp' ); ?></a>
                 <?php endif; ?>
                 <?php if ( $show_client ) : ?>
-                <a class="item ui tab <?php echo ( 'client' === $selectedby ) ? 'active' : ''; ?>" data-tab="mainwp-select-clients-<?php echo esc_attr( $tab_id ); ?>" select-by="client"><?php esc_html_e( 'Clients', 'mainwp' ); ?></a>
+                <a class="item ui text tab <?php echo ( 'client' === $selectedby ) ? 'active' : ''; ?>" data-tab="mainwp-select-clients-<?php echo esc_attr( $tab_id ); ?>" select-by="client"><?php esc_html_e( 'Clients', 'mainwp' ); ?></a>
                 <?php endif; ?>
                 <?php if ( $staging_enabled ) : ?>
-                    <a class="item ui tab" data-tab="mainwp-select-staging-sites-<?php echo esc_attr( $tab_id ); ?>" select-by="staging"><?php esc_html_e( 'Staging', 'mainwp' ); ?></a>
+                    <a class="item ui text tab" data-tab="mainwp-select-staging-sites-<?php echo esc_attr( $tab_id ); ?>" select-by="staging"><?php esc_html_e( 'Staging', 'mainwp' ); ?></a>
                 <?php endif; ?>
             </div>
         </div>
@@ -262,7 +262,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $count_disc = 0;
         ?>
             <div id="mainwp-select-sites-body">
-                <div class="ui relaxed divided list" id="mainwp-select-sites-list">
+                <div class="ui relaxed selection list" id="mainwp-select-sites-list">
                     <?php if ( ! $websites ) : ?>
                         <div id="mainwp-select-sites-placeholder" class="ui segment">
                             <?php static::render_empty_element_placeholder( __( 'No sites connected.', 'mainwp' ) ); ?>
@@ -361,7 +361,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), 'yes' ) );
         ?>
         <div id="mainwp-select-sites-body">
-            <div class="ui relaxed divided list" id="mainwp-select-staging-sites-list">
+            <div class="ui relaxed selection list" id="mainwp-select-staging-sites-list">
             <?php if ( ! $websites ) : ?>
                     <h2 class="ui icon header">
                         <i class="folder open outline icon"></i>
@@ -428,7 +428,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         do_action( 'mainwp_before_select_groups_list', $groups );
         ?>
         <div id="mainwp-select-sites-body">
-            <div class="ui relaxed divided list" id="mainwp-select-groups-list">
+            <div class="ui relaxed selection list" id="mainwp-select-groups-list">
                 <?php
                 if ( empty( $groups ) ) {
                     ?>
@@ -762,10 +762,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 <?php printf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
             </div>
             <div class="ui hidden divider"></div>
-            <div class="ui toggle checkbox">
-                <input type="checkbox" id="mainwp-select-guided-tours-option" onchange="mainwp_guidedtours_onchange(this);"<?php echo 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ? 'checked="true"' : ''; ?> /> <label><?php esc_html_e( 'Switch to enable or disable tours.', 'mainwp' ); ?></label>
-            </div>
-            <div class="ui hidden divider"></div>
             <?php if ( 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ) : ?>
             <p><?php esc_html_e( 'MainWP guided tours are designed to provide information about all essential features on each MainWP Dashboard page.', 'mainwp' ); ?></p>
             <p><?php esc_html_e( 'Click the Start Page Tour button to start the guided tour for the current page.', 'mainwp' ); ?></p>
@@ -789,10 +785,10 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             do_action( 'mainwp_help_sidebar_content' );
             ?>
             <div class="ui hidden divider"></div>
-            <a href="https://kb.mainwp.com/" class="ui big green fluid button"><?php esc_html_e( 'Help Documentation', 'mainwp' ); // NOSONAR - noopener - open safe. ?></a>
+            <a href="https://mainwp.com/kb/" class="ui big green fluid button"><?php esc_html_e( 'Help Documentation', 'mainwp' ); // NOSONAR - noopener - open safe. ?></a>
             <div class="ui hidden divider"></div>
             <div id="mainwp-sticky-help-button" class="" style="position: absolute; bottom: 1em; left: 1em; right: 1em;">
-                <a href="https://managers.mainwp.com/" target="_blank" class="ui fluid button"><?php esc_html_e( 'Still Need Help?', 'mainwp' ); ?></a>
+                <a href="https://community.mainwp.com/" target="_blank" class="ui fluid button"><?php esc_html_e( 'Still Need Help?', 'mainwp' ); ?></a>
             </div>
         </div>
         <?php
@@ -915,7 +911,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         </a>
                     </div>
                     <div class="left aligned middle aligned column" style="width:calc( 50% - 72px )!important">
-                        <h2 class="mainwp-page-title ui small header"><?php echo $left; // phpcs:ignore WordPress.Security.EscapeOutput ?></h2>
+                        <h1 class="mainwp-page-title ui small header"><?php echo $left; // phpcs:ignore WordPress.Security.EscapeOutput ?></h1>
                     </div>
                     <div class="right aligned middle aligned column" style="width:50%!important">
                         <?php echo $right; // phpcs:ignore WordPress.Security.EscapeOutput ?>
@@ -1021,6 +1017,22 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <script type="text/javascript">
             jQuery( document ).ready( function () {
 
+                let pulse = jQuery( '#mainwp-screen-options-pulse-control' ).val();
+
+                if (pulse == 1) {
+                    jQuery('#mainwp-top-header .cog.icon').parent('.button').transition({
+                        animation: 'pulse',
+                        duration: 1000,
+                        interval: 5500,
+                        onStart: function () {
+                            jQuery(this).removeClass('basic').addClass('green');
+                        },
+                        onComplete: function () {
+                            jQuery(this).addClass('basic').removeClass('green');
+                        }
+                    });
+                }
+
                 jQuery( '#mainwp-jump-to-site-overview-dropdown' ).on( 'change', function() {
                     let site_id = jQuery( this ).val();
                     window.location.href = 'admin.php?page=managesites&dashboard=' + site_id;
@@ -1050,6 +1062,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 jQuery( '#mainwp-sites-sidebar-menu' ).accordion();
             } );
             </script>
+
+            <?php static::render_help_modal(); ?>
             <?php
             /**
              * Action: mainwp_after_header
@@ -1294,7 +1308,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 <a href="#" class="mainwp-updates-overview-reconnect-site ui green icon button" adminuser="<?php echo esc_attr( $website->adminname ); ?>" siteid="<?php echo intval( $website->id ); ?>" data-position="bottom right" aria-label="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted=""><i class="undo alternate icon"></i></a>
             <?php else : ?>
                 <a class="ui icon button green <?php echo 0 < $sites_count ? '' : 'disabled'; ?>" id="mainwp-sync-sites" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>" data-inverted="" data-position="bottom right" aria-label="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>" >
-                    <i class="sync icon"></i>
+                    <i class="sync alt icon"></i>
                 </a>
             <?php endif; ?>
         <?php else : ?>
@@ -1303,17 +1317,17 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             </a>
         <?php endif; ?>
 
-        <div class="ui icon top left pointing dropdown <?php echo empty( $sites_count ) ? 'green' : ''; ?> button" id="mainwp-add-new-buttons" aria-label="<?php esc_attr_e( 'Add new item to your MainWP Dashboard', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Add new item to your MainWP Dashboard.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+        <div class="ui icon top left pointing dropdown <?php echo empty( $sites_count ) ? 'green' : ''; ?> button" id="mainwp-add-new-buttons" aria-label="<?php esc_attr_e( 'Add new item to your MainWP Dashboard', 'mainwp' ); ?>">
             <i class="plus icon"></i>
             <div class="menu">
-                <a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Add a new Website to your MainWP Dashboard', 'mainwp' ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php esc_html_e( 'Add Website', 'mainwp' ); ?></a>
-                <a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Add a new Client to your MainWP Dashboard', 'mainwp' ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=ClientAddNew' ) ); ?>"><?php esc_html_e( 'Add Client', 'mainwp' ); ?></a>
-                <a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Add a new Cost to for tracking', 'mainwp' ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=CostTrackerAdd' ) ); ?>"><?php esc_html_e( 'Add Cost', 'mainwp' ); ?></a>
-                <a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Add a new Post to your child sites', 'mainwp' ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkAdd' ) ); ?>"><?php esc_html_e( 'Create Post', 'mainwp' ); ?></a>
-                <a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Add a new Page to your child sites', 'mainwp' ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=PageBulkAdd' ) ); ?>"><?php esc_html_e( 'Create Page', 'mainwp' ); ?></a>
-                <a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Install a new Plugin to your child sites', 'mainwp' ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=PluginsInstall' ) ); ?>"><?php esc_html_e( 'Install Plugin', 'mainwp' ); ?></a>
-                <a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Install a new Theme to your child sites', 'mainwp' ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=ThemesInstall' ) ); ?>"><?php esc_html_e( 'Install Theme', 'mainwp' ); ?></a>
-                <a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Create a new User to your child sites', 'mainwp' ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=UserBulkAdd' ) ); ?>"><?php esc_html_e( ' Create User', 'mainwp' ); ?></a>
+                <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php esc_html_e( 'Add Website', 'mainwp' ); ?></a>
+                <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=ClientAddNew' ) ); ?>"><?php esc_html_e( 'Add Client', 'mainwp' ); ?></a>
+                <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=CostTrackerAdd' ) ); ?>"><?php esc_html_e( 'Add Cost', 'mainwp' ); ?></a>
+                <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkAdd' ) ); ?>"><?php esc_html_e( 'Create Post', 'mainwp' ); ?></a>
+                <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=PageBulkAdd' ) ); ?>"><?php esc_html_e( 'Create Page', 'mainwp' ); ?></a>
+                <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=PluginsInstall' ) ); ?>"><?php esc_html_e( 'Install Plugin', 'mainwp' ); ?></a>
+                <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=ThemesInstall' ) ); ?>"><?php esc_html_e( 'Install Theme', 'mainwp' ); ?></a>
+                <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=UserBulkAdd' ) ); ?>"><?php esc_html_e( ' Create User', 'mainwp' ); ?></a>
             </div>
         </div>
 
@@ -1322,20 +1336,20 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <i class="cog icon"></i>
         </a>
         <?php endif; ?>
-                        <?php
-                        // phpcs:enable
-                        /**
-                         * Filter: mainwp_header_actions_right
-                         *
-                         * Filters the MainWP header element actions.
-                         *
-                         * @since 4.0
-                         */
-                        $actions = apply_filters( 'mainwp_header_actions_right', '' );
-                        if ( ! empty( $actions ) ) {
-                            echo $actions; // phpcs:ignore WordPress.Security.EscapeOutput
-                        }
-                        ?>
+        <?php
+        // phpcs:enable
+        /**
+         * Filter: mainwp_header_actions_right
+         *
+         * Filters the MainWP header element actions.
+         *
+         * @since 4.0
+         */
+        $actions = apply_filters( 'mainwp_header_actions_right', '' );
+        if ( ! empty( $actions ) ) {
+            echo $actions; // phpcs:ignore WordPress.Security.EscapeOutput
+        }
+        ?>
         <a class="ui button icon" id="mainwp-sites-sidebar" aria-label="<?php esc_attr_e( 'Open sites shortcuts sidebar', 'mainwp' ); ?>" data-inverted="" data-position="bottom right" href="#" data-tooltip="<?php esc_attr_e( 'Quick sites shortcuts', 'mainwp' ); ?>">
             <i class="globe icon"></i>
         </a>
@@ -1351,52 +1365,51 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
          */
         do_action( 'mainwp_header_actions_after_select_themes' );
         ?>
-        <div class="ui icon top left pointing dropdown button" id="mainwp-help-menu-icon-button">
-            <i class="ellipsis vertical icon"></i>
+        <div class="ui top right pointing dropdown mainwp-768-hide" id="mainwp-user-menu-button">
+            <?php echo get_avatar( $current_user, 38, 'wavatar', __( 'Settings', 'mainwp' ), array( 'extra_attr' => 'style="width:38px!important;height:38px!important;"', 'class' => 'ui small avatar image',  ) ); ?>
             <div class="menu">
-                <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=Settings' ) ); ?>" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Go to MainWP Settings', 'mainwp' ); ?>">
-                    <i class="cog icon"></i> <?php esc_html_e( 'Settings', 'mainwp' ); ?></span>
+                <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=Settings' ) ); ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Go to MainWP Settings', 'mainwp' ); ?>">
+                    <i class="cog grey icon"></i> <?php esc_html_e( 'MainWP Settings', 'mainwp' ); ?>
                 </a>
-                <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=ServerInformation' ) ); ?>" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Go to MainWP Info', 'mainwp' ); ?>">
-                    <i class="circle info icon"></i> <?php esc_html_e( 'Info', 'mainwp' ); ?></span>
+                <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=ServerInformation' ) ); ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Go to MainWP Info', 'mainwp' ); ?>">
+                    <i class="circle grey info icon"></i> <?php esc_html_e( 'System Info', 'mainwp' ); ?>
                 </a>
-                <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'index.php' ) ); ?>" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Go to WP Admin', 'mainwp' ); ?>">
-                    <i class="wordpress icon"></i> <?php //phpcs:ignore -- ignore wordpress icon. ?> <?php esc_html_e( 'WP Admin', 'mainwp' ); ?></span>
+                <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=PluginPrivacy' ) ); ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Read the MainWP plugin privacy policy.', 'mainwp' ); ?>">
+                    <i class="file contract grey icon"></i> <?php esc_html_e( 'Privacy Policy', 'mainwp' ); ?>
                 </a>
-                <a class="item" href="<?php echo wp_logout_url(); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Log out of your MainWP Dashboard', 'mainwp' ); ?>">
-                    <i class="sign out icon"></i> <?php esc_html_e( 'Log Out', 'mainwp' ); ?></span>
+                <a id="mainwp-help-sidebar" class="item" data-inverted="" data-position="left center" href="#" target="_blank" data-tooltip="<?php esc_attr_e( 'Need help?', 'mainwp' ); ?>">
+                    <i class="life ring grey icon"></i> <?php esc_html_e( 'Get Help', 'mainwp' ); ?>
                 </a>
-                <a id="mainwp-help-sidebar" class="item" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="<?php esc_attr_e( 'Need help?', 'mainwp' ); ?>">
-                    <i class="life ring icon"></i> <?php esc_html_e( 'Get Support', 'mainwp' ); ?>
+                <div class="ui divider"></div>
+                <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'index.php' ) ); ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Go to WP Admin', 'mainwp' ); ?>">
+                    <i class="wordpress grey icon"></i> <?php //phpcs:ignore -- ignore wordpress icon. ?> <?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?>
                 </a>
-                <a class="item" id="mainwp-community-button" data-inverted="" data-position="bottom right" href="https://managers.mainwp.com/" target="_blank" data-tooltip="<?php esc_attr_e( 'MainWP Community', 'mainwp' ); ?>">
-                    <i class="discourse icon"></i> <?php esc_html_e( 'Managers Community', 'mainwp' ); ?>
+                <?php $all_updates = wp_get_update_data(); ?>
+                <?php if ( is_array( $all_updates ) && isset( $all_updates['counts']['total'] ) && 0 < $all_updates['counts']['total'] ) : ?>
+                <a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Your MainWP Dashboard sites needs your attention. Please check the available updates', 'mainwp' ); ?>" aria-label="<?php esc_attr_e( 'Your MainWP Dashboard sites needs your attention. Please check the available updates', 'mainwp' ); ?>" href="update-core.php">
+                    <i class="exclamation triangle red icon"></i> <?php esc_html_e( 'Update Dashboard Site', 'mainwp' ); ?>
                 </a>
-                <a  class="item" id="mainwp-account-button" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Go to your MainWP Account at MainWP.com', 'mainwp' ); ?>" target="_blank" href="https://mainwp.com/my-account/"> <?php // NOSONAR - noopener - open safe. ?>
-                    <i class="user icon"></i> <?php esc_html_e( 'My MainWP Account', 'mainwp' ); ?>
+                <?php endif; ?>
+                <div class="ui divider"></div>
+                <a class="item" id="mainwp-community-button" data-inverted="" data-position="left center" href="https://community.mainwp.com/" target="_blank" data-tooltip="<?php esc_attr_e( 'MainWP Community', 'mainwp' ); ?>">
+                    <i class="discourse grey icon"></i> <?php esc_html_e( 'Managers Community', 'mainwp' ); ?>
+                </a>
+                <a  class="item" id="mainwp-account-button" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Go to your MainWP Account at MainWP.com', 'mainwp' ); ?>" target="_blank" href="https://mainwp.com/my-account/"> <?php // NOSONAR - noopener - open safe. ?>
+                    <i class="user grey icon"></i> <?php esc_html_e( 'My MainWP Account', 'mainwp' ); ?>
+                </a>
+                <div class="ui divider"></div>
+                <a class="item" href="<?php echo wp_logout_url(); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Log out of your MainWP Dashboard', 'mainwp' ); ?>">
+                    <i class="sign out grey icon"></i> <?php esc_html_e( 'Log Out', 'mainwp' ); ?>
                 </a>
             </div>
         </div>
+        <?php $pulse = apply_filters( 'mainwp_screen_options_pulse_control', 1 ); ?>
+        <input type="hidden" id="mainwp-screen-options-pulse-control" value="<?php echo esc_attr( $pulse ); ?>">
         <script>
             jQuery( document ).ready( function( $ ) {
-                $( '#mainwp-help-menu-icon-button' ).dropdown();
+                $( '#mainwp-user-menu-button' ).dropdown();
             } );
         </script>
-
-        <?php
-
-        $all_updates = wp_get_update_data();
-        if ( is_array( $all_updates ) && isset( $all_updates['counts']['total'] ) && 0 < $all_updates['counts']['total'] ) {
-            ?>
-            <a id="mainwp-available-dashboard-updates-button" class="ui red icon button" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Your MainWP Dashboard sites needs your attention. Please check the available updates', 'mainwp' ); ?>" aria-label="<?php esc_attr_e( 'Your MainWP Dashboard sites needs your attention. Please check the available updates', 'mainwp' ); ?>" href="update-core.php">
-                <i class="exclamation triangle icon"></i>
-            </a>
-            <?php
-        }
-        ?>
-        <a href="profile.php" class="ui icon button" style="padding:0;overflow:hidden;" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Edit your profile.', 'mainwp' ); ?>" aria-label="<?php esc_attr_e( 'Edit your profile.', 'mainwp' ); ?>">
-            <?php echo get_avatar( $current_user, 36, '', '', array( 'extra_attr' => 'style="margin-bottom:-2px;"' ) ); ?>
-        </a>
         <?php
         return ob_get_clean();
     }
@@ -1421,7 +1434,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $subitems = apply_filters( 'mainwp_page_navigation', $subitems, $name_caller );
         ?>
         <div id="mainwp-page-navigation-wrapper">
-            <?php if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+            <?php if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) || isset( $_GET['monitor_wpid'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
                 <?php
                 //phpcs:disable WordPress.Security.NonceVerification
                 $id = 0;
@@ -1435,6 +1448,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     $id = intval( $_GET['emailsettingsid'] );
                 } elseif ( isset( $_GET['scanid'] ) ) {
                     $id = intval( $_GET['scanid'] );
+                } elseif ( isset( $_GET['monitor_wpid'] ) ) {
+                    $id = intval( $_GET['monitor_wpid'] );
                 }
                 // phpcs:enable
                 $website = MainWP_DB::instance()->get_website_by_id( $id );
@@ -1679,7 +1694,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     $layout['h'] = 4;
                 }
 
-                $layout_attrs_escaped  = ' gs-y="' . ( isset( $layout['y'] ) && -1 != intval( $layout['y'] ) ? esc_attr( $layout['y'] ) : '' ) . '" gs-x="' . ( isset( $layout['x'] ) -1 != intval( $layout['x'] ) ? esc_attr( $layout['x'] ) : '' ) . '" ';
+                $layout_attrs_escaped  = ' gs-y="' . ( isset( $layout['y'] ) && -1 != intval( $layout['y'] ) ? esc_attr( $layout['y'] ) : '' ) . '" gs-x="' . ( isset( $layout['x'] ) - 1 != intval( $layout['x'] ) ? esc_attr( $layout['x'] ) : '' ) . '" ';
                 $layout_attrs_escaped .= ' gs-w="' . ( isset( $layout['w'] ) ? esc_attr( $layout['w'] ) : '' ) . '" gs-h="' . ( isset( $layout['h'] ) ? esc_attr( $layout['h'] ) : '' ) . '" ';
 
                 echo '<div id="widget-' . esc_html( $box['id'] ) . '" class="grid-stack-item" ' . $layout_attrs_escaped . '>' . "\n"; //phpcs:ignore -- escaped.
@@ -1692,10 +1707,10 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         }
         ?>
         </div>
-        <?php //$breakpoint = apply_filters( 'mainwp_flexible_widgets_breakpoint', 1367 ); ?>
+        <?php // $breakpoint = apply_filters( 'mainwp_flexible_widgets_breakpoint', 1367 ); ?>
         <script type="text/javascript">
             //let is_mobile = false;
-            //if( jQuery( window ).width() < <?php //echo intval( $breakpoint ); ?> ) {
+            //if( jQuery( window ).width() < <?php // echo intval( $breakpoint ); ?> ) {
             //    is_mobile = true;
             //}
             //console.log('mobile: ' + is_mobile);
@@ -1719,7 +1734,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         handleClass: 'handle-drag',
                         columnOpts: {
                             breakpointForWindow: true,  // test window vs grid size
-                            breakpoints: [{w:700, c:1}],
+                            breakpoints: [{w:768, c:1}],
                         },
                     }
 
@@ -1845,7 +1860,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
     public static function render_modal_install_plugin_theme( $what = 'plugin' ) {
         ?>
         <div id="plugintheme-installation-progress-modal" class="ui modal">
-        <i class="close icon"></i>
+            <i class="close icon"></i>
             <div class="header">
             <?php
             if ( 'plugin' === $what ) {
@@ -1893,7 +1908,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                  */
                 do_action( 'mainwp_install_plugin_theme_modal_action', $what );
                 ?>
-                <div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
+
             </div>
         </div>
         <?php
@@ -2091,7 +2106,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <div class="actions">
                 <div class="ui grid">
                     <div class="eight wide left aligned middle aligned column">
-                        <a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" class="ui basic green mini button" target="_blank"><?php esc_html_e( 'See How to Connect Sites', 'mainwp' ); // NOSONAR - noopener - open safe. ?></a>
+                        <a href="https://kb.mainwp.com/docs/get-started-with-mainwp/" class="ui basic green mini button" target="_blank"><?php esc_html_e( 'See How to Connect Sites', 'mainwp' ); // NOSONAR - noopener - open safe. ?></a>
                     </div>
                     <div class="eight wide column">
                         <input type="button" class="ui mini basic cancel button mainwp-notice-dismiss" notice-id="mainwp-no-sites-modal-notice" value="<?php esc_attr_e( 'Let Me Look Around', 'mainwp' ); ?>"/>
@@ -2109,6 +2124,219 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <?php
     endif;
     }
+
+    /**
+     * Help Modal
+     *
+     * Renders the help modal.
+     *
+     * @return void
+     */
+    public static function render_help_modal() {
+        $siteViewMode = MainWP_Utility::get_siteview_mode();
+
+        $page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
+
+        $tour_id = '';
+        if ( 'mainwp_tab' === $page ) {
+            $tour_id = '13112';
+        } elseif ( 'managesites' === $page ) {
+            if ( isset( $_GET['do'] ) && 'new' === $_GET['do'] ) {
+                $tour_id = '13210';
+            } elseif ( isset( $_GET['do'] ) && 'bulknew' === $_GET['do'] ) {
+                $tour_id = '60206';
+            } elseif ( ! isset( $_GET['dashboard'] ) && ! isset( $_GET['id'] ) && ! isset( $_GET['updateid'] ) && ! isset( $_GET['emailsettingsid'] ) && ! isset( $_GET['scanid'] ) ) {
+                if ( 'grid' === $siteViewMode ) {
+                    $tour_id = '27217';
+                } else {
+                    $tour_id = '29331';
+                }
+            }
+        } elseif ( 'MonitoringSites' === $page ) {
+            $tour_id = '29003';
+        } elseif ( 'ManageClients' === $page ) {
+            if ( isset( $_GET['client_id'] ) ) {
+                $tour_id = '28258';
+            } else {
+                $tour_id = '28240';
+            }
+        } elseif ( 'ClientAddNew' === $page ) {
+            if ( isset( $_GET['client_id'] ) ) {
+                $tour_id = '28962';
+            } else {
+                $tour_id = '28256';
+            }
+        } elseif ( 'ClientAddField' === $page ) {
+            $tour_id = '28257';
+        } elseif ( 'PluginsManage' === $page ) {
+            $tour_id = '28510';
+        } elseif ( 'ManageGroups' === $page ) {
+            $tour_id = '27275';
+        } elseif ( 'UpdatesManage' === $page ) {
+            $tab = isset( $_GET['tab'] ) ? wp_unslash( $_GET['tab'] ) : '';
+            if ( 'plugins-updates' === $tab ) {
+                $tour_id = '28259';
+            } elseif ( 'themes-updates' === $tab ) {
+                $tour_id = '28447';
+            } elseif ( 'wordpress-updates' === $tab ) {
+                $tour_id = '29005';
+            } elseif ( 'translations-updates' === $tab ) {
+                $tour_id = '29007';
+            } elseif ( 'abandoned-plugins' === $tab ) {
+                $tour_id = '29008';
+            } elseif ( 'abandoned-themes' === $tab ) {
+                $tour_id = '29009';
+            } elseif ( 'plugin-db-updates' === $tab ) {
+                $tour_id = '33161';
+            } else {
+                $tour_id = '28259';
+            }
+        } elseif ( 'PluginsInstall' === $page ) {
+            $tour_id = '29011';
+        } elseif ( 'PluginsAutoUpdate' === $page ) {
+            $tour_id = '29015';
+        } elseif ( 'PluginsIgnore' === $page ) {
+            $tour_id = '29018';
+        } elseif ( 'PluginsIgnoredAbandoned' === $page ) {
+            $tour_id = '29329';
+        } elseif ( 'ThemesManage' === $page ) {
+            $tour_id = '28511';
+        } elseif ( 'ThemesInstall' === $page ) {
+            $tour_id = '29010';
+        } elseif ( 'ThemesAutoUpdate' === $page ) {
+            $tour_id = '29016';
+        } elseif ( 'ThemesIgnore' === $page ) {
+            $tour_id = '29019';
+        } elseif ( 'ThemesIgnoredAbandoned' === $page ) {
+            $tour_id = '29330';
+        } elseif ( 'UserBulkManage' === $page ) {
+            $tour_id = '28574';
+        } elseif ( 'UserBulkAdd' === $page ) {
+            $tour_id = '28575';
+        } elseif ( 'BulkImportUsers' === $page ) {
+            $tour_id = '28736';
+        } elseif ( 'UpdateAdminPasswords' === $page ) {
+            $tour_id = '28737';
+        } elseif ( 'PostBulkManage' === $page ) {
+            $tour_id = '28796';
+        } elseif ( 'PostBulkAdd' === $page ) {
+            $tour_id = '28799';
+        } elseif ( 'PageBulkManage' === $page ) {
+            $tour_id = '29045';
+        } elseif ( 'PageBulkAdd' === $page ) {
+            $tour_id = '29048';
+        } elseif ( 'Extensions' === $page ) {
+            $tour_id = '28800';
+        } elseif ( 'Settings' === $page ) {
+            $tour_id = '28883';
+        } elseif ( 'SettingsAdvanced' === $page ) {
+            $tour_id = '28886';
+        } elseif ( 'SettingsEmail' === $page ) {
+            $tour_id = '29054';
+        } elseif ( 'MainWPTools' === $page ) {
+            $tour_id = '29272';
+        } elseif ( 'RESTAPI' === $page ) {
+            $tour_id = '29273';
+        } elseif ( 'ServerInformation' === $page ) {
+            $tour_id = '28873';
+        } elseif ( 'ServerInformationCron' === $page ) {
+            $tour_id = '28874';
+        } elseif ( 'ErrorLog' === $page ) {
+            $tour_id = '28876';
+        } elseif ( 'ActionLogs' === $page ) {
+            $tour_id = '28877';
+        } elseif ( 'Extensions-Mainwp-Jetpack-Protect-Extension' === $page ) {
+            $tour_id = '31700';
+        } elseif ( 'Extensions-Mainwp-Jetpack-Scan-Extension' === $page ) {
+            $tour_id = '31694';
+        } elseif ( 'Extensions-Termageddon-For-Mainwp' === $page ) {
+            $tour_id = '32104';
+        } elseif ( 'Extensions-Advanced-Uptime-Monitor-Extension' === $page ) {
+            $tour_id = '32149';
+        } elseif ( 'Extensions-Mainwp-Custom-Dashboard-Extension' === $page ) {
+            $tour_id = '32150';
+        } elseif ( 'Extensions-Mainwp-Updraftplus-Extension' === $page ) {
+            $tour_id = '32151';
+        } elseif ( 'Extensions-Mainwp-Sucuri-Extension' === $page ) {
+            $tour_id = '32152';
+        } elseif ( 'Extensions-Mainwp-Clean-And-Lock-Extension' === $page ) {
+            $tour_id = '32153';
+        } elseif ( 'Extensions-Mainwp-Woocommerce-Shortcuts-Extension' === $page ) {
+            $tour_id = '32851';
+        } elseif ( 'Extensions-Mainwp-Buddy-Extension' === $page ) {
+            $tour_id = '33064';
+        } elseif ( 'Extensions-Mainwp-Backwpup-Extension' === $page ) {
+            $tour_id = '32923';
+        } elseif ( 'Extensions-Mainwp-Ssl-Monitor-Extension' === $page ) {
+            $tour_id = '33164';
+        } elseif ( 'Extensions-Mainwp-Cache-Control-Extension' === $page ) {
+            $tour_id = '33167';
+        } elseif ( 'Extensions-Mainwp-Maintenance-Extension' === $page ) {
+            $tour_id = '33301';
+        } elseif ( 'Extensions-Mainwp-Domain-Monitor-Extension' === $page ) {
+            $tour_id = '33300';
+        }
+        ?>
+        <div id="mainwp-help-modal" class="ui modal">
+            <i class="close icon"></i>
+            <div class="header"><?php esc_html_e( 'Quick Help', 'mainwp' ); ?></div>
+            <?php if ( 1 !== (int) get_option( 'mainwp_help_modal_content_update' ) ) : ?>
+            <div class="content" id="mainwp-help-modal-consent-content">
+                <div class="ui message">
+                    <h3><?php esc_html_e( 'Privacy Notice', 'mainwp' ); ?></h3>
+                    <p><?php esc_html_e( 'The "Instant Help" feature, including the guided tour and support agent, utilizes third-party technology and is subject to their respective privacy policies. Please review the privacy policies of Usetiful and Chatbase before proceeding.', 'mainwp' ); ?></p>
+                    <p><?php esc_html_e( 'By clicking the button below, you acknowledge and accept these terms.', 'mainwp' ); ?></p>
+                    <button class="ui mini green button" onclick="mainwp_help_modal_content_onclick();jQuery('#mainwp-help-modal-content').fadeIn('100');jQuery('#mainwp-help-modal-consent-content').fadeOut('100');"><?php esc_html_e( 'Acknowledge & Accept Terms', 'mainwp' ); ?></button>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <div class="scrolling center aligned content" id="mainwp-help-modal-content" <?php echo ( 1 === (int) get_option( 'mainwp_help_modal_content_update' ) ) ? '' : 'style="display:none"' ?>>
+                <div class="ui two link cards" id="mainwp-help-modal-options">
+                    <a class="ui card grey text" id="mainwp-start-chat-card" onClick="jQuery('#mainwp-chatbase-chat-screen').fadeIn('100');jQuery('#mainwp-start-tour-button').fadeIn('100');jQuery('#mainwp-help-modal-options').fadeOut('50');">
+                        <div class="content">
+                            <div class="header"><?php esc_html_e( 'Support Assistant', 'mainwp' ); ?></div>
+                        </div>
+                        <div class="content">
+                            <i class="robot massive grey icon" style="opacity:0.3"></i>
+                            <div class="ui hidden divider"></div>
+                            <div><?php esc_html_e( 'Chat with our AI Support Assistant for quick guidance and troubleshooting. It\'s trained on MainWP documentation to help you find answers faster.', 'mainwp' ); ?> <span class="ui mini green label">BETA</span></div>
+                        </div>
+                    </a>
+                    <?php if ( '' !== $tour_id && 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ) : ?>
+                    <a class="ui card grey text" id="mainwp-start-tour-card" onclick="jQuery('#mainwp-help-modal').modal('hide');window.USETIFUL.tour.start( <?php echo intval( $tour_id ); ?> );" >
+                        <div class="content">
+                            <div class="header"><?php esc_html_e( 'Take a Quick Tour', 'mainwp' ); ?></div>
+                        </div>
+                        <div class="content">
+                            <i class="map marked alternate massive grey icon" style="opacity:0.3"></i>
+                            <div class="ui hidden divider"></div>
+                            <div><?php esc_html_e( 'New here? Learn how to navigate and use key features with an interactive step-by-step tour.', 'mainwp' ); ?></div>
+                        </div>
+                    </a>
+                    <?php endif; ?>
+                </div>
+                <div style="display:none" id="mainwp-chatbase-chat-screen">
+                    <iframe src="https://supportassistant.mainwp.com/chatbot-iframe/Tv5dqV-xiQxwgPeMQFCZ4" width="100%" style="height: 100%; min-height: 600px" frameborder="0"></iframe>
+                </div>
+            </div>
+            <div class="actions">
+                <div class="ui grid">
+                    <div class="eight wide left aligned middle aligned column">
+                        <a href="https://mainwp.com/kb/" class="ui basic mini button" target="_blank"><?php esc_html_e( 'MainWP Knowledgebase', 'mainwp' ); // NOSONAR - noopener - open safe. ?></a>
+                    </div>
+                    <div class="eight wide column">
+                        <?php if ( '' !== $tour_id && 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ) : ?>
+                        <a href="#" style="display:none" onclick="jQuery('#mainwp-help-modal').modal('hide');window.USETIFUL.tour.start( <?php echo intval( $tour_id ); ?> );" id="mainwp-start-tour-button" class="ui mini green basic button"><?php esc_html_e( 'Take a Quick Tour', 'mainwp' ); ?></a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+
 
     /**
      * Method render_screen_options()
@@ -2133,7 +2361,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     'clients'                         => esc_html__( 'Clients', 'mainwp' ),
                     'child_site_info'                 => esc_html__( 'Child site info (Individual Site Overview page)', 'mainwp' ),
                     'client_info'                     => esc_html__( 'Client info (Individual Site Overview page)', 'mainwp' ),
-                    'non_mainwp_changes'              => esc_html__( 'Insights Changes', 'mainwp' ),
+                    'non_mainwp_changes'              => esc_html__( 'Sites Changes', 'mainwp' ),
                     'get-started'                     => esc_html__( 'Get Started with MainWP', 'mainwp' ),
                     'uptime_monitoring_status'        => esc_html__( 'Uptime Monitoring', 'mainwp' ),
                     'uptime_monitoring_response_time' => esc_html__( 'Uptime Monitoring (Individual Site Overview page)', 'mainwp' ),
@@ -2284,7 +2512,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         <div class="header"><?php esc_html_e( 'Select MainWP Theme', 'mainwp' ); ?></div>
         <div class="content ui form">
             <div class="ui blue message">
-                <div class=""><?php printf( esc_html__( 'Did you know you can create your custom theme? %1$sSee here how to do it%2$s!', '' ), '<a href="https://kb.mainwp.com/docs/how-to-change-the-theme-for-mainwp/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
+                <div class=""><?php printf( esc_html__( 'Did you know you can create your custom theme? %1$sSee here how to do it%2$s!', '' ), '<a href="https://mainwp.com/kb/how-to-change-the-theme-for-mainwp/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
             </div>
             <form method="POST" action="" name="mainwp_select_mainwp_themes_form" id="mainwp_select_mainwp_themes_form">
             <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
@@ -2418,6 +2646,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      * Method render_modal_save_segment()
      *
      * Render modal window.
+     *
      * @param string $name Model segment name.
      *
      * @return void
@@ -2460,7 +2689,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             </div>
             <input type="hidden" id="mainwp-common-filter-segments-model-name" value="<?php echo esc_attr( $name ); ?>" />
         </div>
-    <?php
+        <?php
     }
 
     /**

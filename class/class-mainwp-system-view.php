@@ -276,7 +276,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             ?>
             <div class="ui icon message yellow" style="margin-bottom: 0; border-radius: 0;">
                 <i class="exclamation circle icon"></i>
-                <strong><?php echo esc_html__( 'Important Notice: ', 'mainwp' ); ?></strong>&nbsp;<?php printf( esc_html__( 'MainWP Version 4 is a major upgrade from MainWP Version 3. Please, read this&nbsp; %1$supdating FAQ%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/faq-on-upgrading-from-mainwp-version-3-to-mainwp-version-4/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
+                <strong><?php echo esc_html__( 'Important Notice: ', 'mainwp' ); ?></strong>&nbsp;<?php printf( esc_html__( 'MainWP Version 4 is a major upgrade from MainWP Version 3. Please, read this&nbsp; %1$supdating FAQ%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/faq-on-upgrading-from-mainwp-version-3-to-mainwp-version-4/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
                 <i class="close icon mainwp-notice-dismiss" notice-id="upgrade_4"></i>
             </div>
             <?php
@@ -432,6 +432,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         }
 
         static::render_notice_version();
+        static::render_notice_php_version8();
 
         static::render_notice_config_warning();
 
@@ -525,7 +526,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             ?>
             <div class="ui attention message">
                 <h3><?php esc_html_e( 'New Security Feature: OpenSSL Key Encryption', 'mainwp' ); ?></h3>
-                <div><?php esc_html_e( 'To enhance security, we\'ve added a feature to encrypt your private keys stored in the database. This provides an extra layer of protection in the unlikely event your database is compromised.', 'mainwp' ); ?> <a href="https://kb.mainwp.com/docs/openssl-keys-encryption/" target="_blank"><?php esc_html_e( 'Learn more here.', 'mainwp' ); ?></a></div>
+                <div><?php esc_html_e( 'To enhance security, we\'ve added a feature to encrypt your private keys stored in the database. This provides an extra layer of protection in the unlikely event your database is compromised.', 'mainwp' ); ?> <a href="https://mainwp.com/kb/openssl-keys-encryption/" target="_blank"><?php esc_html_e( 'Learn more here.', 'mainwp' ); ?></a></div>
                 <p><button class="ui green mini button" id="increase-connection-security-btn"><?php echo esc_html__( 'Encrypt Keys Now', 'mainwp' ); ?></button></p>
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp_secure_priv_key_notice"></i>
             </div>
@@ -563,6 +564,29 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 <i class="close icon mainwp-notice-dismiss" notice-id="phpver_5_5"></i>
             </div>
             <?php
+        }
+    }
+
+    /**
+     * Renders PHP 7 Version Notice.
+     *
+     * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
+     */
+    public static function render_notice_php_version8() {
+        $phpver = phpversion();
+        if ( version_compare( $phpver, '8.0', '<' ) ) {
+            $last_hidden = (int) get_user_option( 'lasttime_hidden_phpver_8_0' );
+            if ( time() > $last_hidden + 30 * DAY_IN_SECONDS || MainWP_Utility::show_mainwp_message( 'notice', 'phpver_8_0' ) ) {
+                ?>
+                <div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
+                    <i class="exclamation circle icon"></i>
+                    <?php esc_html_e( 'Important Notice: In the coming months, support for PHP versions earlier than 8 will be discontinued on your MainWP Dashboard. To ensure continued functionality and security, please update your PHP version to a currently supported release, such as PHP 8.3.', 'mainwp' ); ?>
+                    <?php printf( esc_html__( 'You can check the list of actively maintained PHP versions %shere%s.', 'mainwp' ), '<a href="https://www.php.net/supported-versions.php" target="_blank">', '</a>' ); ?>
+                    <?php esc_html_e( 'This upcoming change does not affect your child sites, only your MainWP Dashboard.', 'mainwp' ); ?>
+                    <i class="close icon mainwp-notice-dismiss" notice-id="phpver_8_0"></i>
+                </div>
+                <?php
+            }
         }
     }
 
@@ -878,11 +902,11 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             }
         }
         ?>
-        <div class="ui red message" style="margin-bottom: 0; border-radius: 0;">
+        <div class="ui blue message" style="margin-bottom: 0; border-radius: 0;">
             <h4><?php esc_html_e( 'This appears to be a production site', 'mainwp' ); ?></h4>
-                    <?php esc_html_e( 'We HIGHLY recommend a NEW WordPress install for your MainWP Dashboard.', 'mainwp' ); ?> <?php printf( esc_html__( 'Using a new WordPress install will help to cut down on plugin conflicts and other issues that can be caused by trying to run your MainWP Dashboard off an active site. Most hosting companies provide free subdomains %s and we recommend creating one if you do not have a specific dedicated domain to run your MainWP Dashboard.', 'mainwp' ), '("<strong>demo.yourdomain.com</strong>")' ); ?>
-                <br /><br />
-                <a href="#" class="ui red mini button" id="remove-mainwp-installation-warning"><?php esc_html_e( 'I have read the warning and I want to proceed', 'mainwp' ); ?></a>
+            <?php esc_html_e( 'We HIGHLY recommend a NEW WordPress install for your MainWP Dashboard.', 'mainwp' ); ?> <?php printf( esc_html__( 'Using a new WordPress install will help to cut down on plugin conflicts and other issues that can be caused by trying to run your MainWP Dashboard off an active site. Most hosting companies provide free subdomains %s and we recommend creating one if you do not have a specific dedicated domain to run your MainWP Dashboard.', 'mainwp' ), '("<strong>demo.yourdomain.com</strong>")' ); ?>
+            <br /><br />
+            <a href="#" class="ui green mini button" id="remove-mainwp-installation-warning"><?php esc_html_e( 'I have read the warning and I want to proceed', 'mainwp' ); ?></a>
         </div>
         <?php
     }
@@ -956,7 +980,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             if ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] && isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) {
                 $class_string .= ' mainwp-individual-client-overview ';
             }
-            if ( isset( $_GET['page'] ) && ( 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsMonitors' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] ) ) {
+            if ( isset( $_GET['page'] ) && ( 'CostTrackerSettings' === $_GET['page'] || 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsMonitors' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] ) ) {
                 $class_string .= ' mainwp-individual-site-view ';
             }
             if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['monitor_wpid'] ) && ! empty( $_GET['monitor_wpid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) ) {
@@ -1011,7 +1035,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 <div class="label"></div>
             </div>
             <div class="scrolling content mainwp-modal-content">
-                <div class="ui middle aligned divided selection list" id="sync-sites-status">
+                <div class="ui middle aligned divided list" id="sync-sites-status">
                     <?php
                     if ( is_array( $websites ) ) {
                         $count = count( $websites );
@@ -1241,7 +1265,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             <div class="scrolling content mainwp-modal-content">
                 <div class="ui message" id="mainwp-message-zone-install" style="display:none;"></div>
                 <div class="ui message blue"><?php printf( esc_html__( 'We have detected the following sites do not have the %s plugin installed. This plugin is required to be installed on your Child Sites for the Extension to work on those sites. Please select sites where you want to install it and click the Install Plugin button. Uncheck any site you don\'t want to add the plugin to or cancel to skip this step. After the installation process, resync your sites to see sites with the newly installed plugin.', 'mainwp' ), esc_html( $plugin_name ) ); ?></div>
-                <div class="ui middle aligned divided selection list" id="sync-sites-status">
+                <div class="ui middle aligned divided list" id="sync-sites-status">
                     <?php foreach ( $missing_installed as $siteid => $site_name ) : ?>
                         <div class="item siteBulkInstall" siteid="<?php echo intval( $siteid ); ?>" status="">
                             <div class="right floated content">

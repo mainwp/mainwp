@@ -240,28 +240,6 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         $values                 = apply_filters( 'mainwp_overview_enabled_widgets', $values, null );
         static::$enable_widgets = array_merge( static::$enable_widgets, $values );
 
-        $i = 1;
-        foreach ( $extMetaBoxs as $metaBox ) {
-            $enabled = true;
-            if ( isset( $metaBox['plugin'] ) ) {
-                $name = basename( $metaBox['plugin'], '.php' );
-                if ( isset( static::$enable_widgets[ $name ] ) && ! static::$enable_widgets[ $name ] ) {
-                    $enabled = false;
-                }
-            }
-
-            $id = isset( $metaBox['id'] ) ? $metaBox['id'] : $i++;
-            $id = 'advanced-' . $id;
-
-            if ( $enabled ) {
-                if ( 'google-widget' === $id || 'matomo' === $id ) {
-                    MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( -1, -1, 4, 30 ) );
-                } else {
-                    MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( -1, -1, 4, 30 ) );
-                }
-            }
-        }
-
         // Load the Updates Overview widget.
         if ( static::$enable_widgets['overview'] ) {
             MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), $page, array( 0, 0, 12, 19 ) );
@@ -306,6 +284,28 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         //if ( static::$enable_widgets['get-started'] ) {
         //    MainWP_UI::add_widget_box( 'get-started', array( MainWP_Get_Started::get_class_name(), 'render' ), $page, array( 0, 0, 6, 4 ) );
         //}
+
+        $i = 1;
+        foreach ( $extMetaBoxs as $metaBox ) {
+            $enabled = true;
+            if ( isset( $metaBox['plugin'] ) ) {
+                $name = basename( $metaBox['plugin'], '.php' );
+                if ( isset( static::$enable_widgets[ $name ] ) && ! static::$enable_widgets[ $name ] ) {
+                    $enabled = false;
+                }
+            }
+
+            $id = isset( $metaBox['id'] ) ? $metaBox['id'] : $i++;
+            $id = 'advanced-' . $id;
+
+            if ( $enabled ) {
+                if ( 'google-widget' === $id || 'matomo' === $id ) {
+                    MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( -1, -1, 6, 30 ) );
+                } else {
+                    MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( -1, -1, 6, 30 ) );
+                }
+            }
+        }
         
     }
 
@@ -428,12 +428,8 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      */
     public static function render_top_page() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
         ?>
-        <div class="mainwp-sub-header">
-            <div class="ui stackable grid" id="mainwp-manage-widgets-layout-row">
-                <div class="twelve wide middle aligned column">
-                </div>
-                <?php MainWP_Ui_Manage_Widgets_Layout::render_edit_layout(); ?>
-            </div>
+        <div class="mainwp-sub-header ui right aligned segment" id="mainwp-manage-widgets-layout-row">
+            <?php MainWP_Ui_Manage_Widgets_Layout::render_edit_layout(); ?>
         </div>
         <?php
         MainWP_Ui_Manage_Widgets_Layout::render_modal_save_layout();
@@ -449,12 +445,12 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             ?>
             <p><?php esc_html_e( 'If you need help with your MainWP Dashboard, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui list">
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-user-interface/" target="_blank">Understanding MainWP Dashboard UI</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-user-interface/#navigation" target="_blank">MainWP Navigation</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-user-interface/#page-settings" target="_blank">Page Settings</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-user-interface/#widgetized-page-layout" target="_blank">Widgetized Page Layout</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-user-interface/#tables" target="_blank">MainWP Tables</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-user-interface/#individual-site-mode" target="_blank">Individual Child Site Mode</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-user-interface/" target="_blank">Understanding MainWP Dashboard UI</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-user-interface/#navigation" target="_blank">MainWP Navigation</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-user-interface/#page-settings" target="_blank">Page Settings</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-user-interface/#widgetized-page-layout" target="_blank">Widgetized Page Layout</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-user-interface/#tables" target="_blank">MainWP Tables</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-user-interface/#individual-site-mode" target="_blank">Individual Child Site Mode</a></div>
                 <?php
                 /**
                  * Action: mainwp_overview_help_item

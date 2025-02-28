@@ -99,8 +99,8 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
     public function init_menu() {
         static::$page_current = add_submenu_page(
             'mainwp_tab',
-            esc_html__( 'Insights Changes', 'mainwp' ),
-            '<div class="mainwp-hidden" id="mainwp-insights-actions">' . esc_html__( 'Insights Changes', 'mainwp' ) . '</div>',
+            esc_html__( 'Sites Changes', 'mainwp' ),
+            '<div class="mainwp-hidden" id="mainwp-insights-actions">' . esc_html__( 'Sites Changes', 'mainwp' ) . '</div>',
             'read',
             'InsightsManage',
             array(
@@ -118,12 +118,12 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
     public static function init_left_menu() {
         MainWP_Menu::add_left_menu(
             array(
-                'title'                => esc_html__( 'Insights Changes', 'mainwp' ),
+                'title'                => esc_html__( 'Sites Changes', 'mainwp' ),
                 'parent_key'           => 'managesites',
                 'slug'                 => 'InsightsManage',
                 'href'                 => 'admin.php?page=InsightsManage',
                 'icon'                 => '<i class="pie chart icon"></i>',
-                'desc'                 => 'Insights Changes',
+                'desc'                 => 'Sites Changes',
                 'leftsub_order_level2' => 3.4,
             ),
             2
@@ -183,7 +183,6 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
         $insights_filters = $this->get_insights_filters( true );
         static::render_logs_overview_top( $insights_filters );
         $this->load_events_list_table(); // for events table list.
-        $this->list_events_table->prepare_items( false, $insights_filters );
         ?>
         <div class="ui segment" id="mainwp-non-mainwp-mananage-actions-overview">
         <?php
@@ -248,6 +247,10 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
         $array_clients_ids = array();
         $array_groups_ids  = array();
         $array_users_ids   = array();
+        $array_sites_ids   = array();
+
+        $array_events_list = array();
+        $array_source_list = array();
 
         $update_filter = false;
 
@@ -318,11 +321,30 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
             }
         }
 
+        $sources_conds = '';
         if ( ! empty( $filter_source ) ) {
             $array_source_list = explode( ',', $filter_source ); // convert to array.
             if ( in_array( 'allsource', $array_source_list, true ) || ( in_array( 'dashboard', $array_source_list ) && in_array( 'wp-admin', $array_source_list ) ) ) {
                 $filter_source     = '';
                 $array_source_list = false;
+            }
+
+            if ( is_array( $array_source_list ) ) {
+                $wpadmin_source   = true;
+                $dashboard_source = true;
+
+                if ( ! in_array( 'wp-admin', $array_source_list ) ) {
+                    $wpadmin_source = false;
+                }
+                if ( ! in_array( 'dashboard', $array_source_list ) ) {
+                    $dashboard_source = false;
+                }
+
+                if ( $wpadmin_source && ! $dashboard_source ) {
+                    $sources_conds = 'wp-admin-only';
+                } elseif ( ! $wpadmin_source && $dashboard_source ) {
+                    $sources_conds = 'dashboard-only';
+                }
             }
         }
 
@@ -375,9 +397,10 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
             'filter_source',
             'filter_sites',
             'filter_events',
-            'array_source_list',
+            'sources_conds',
             'array_sites_ids',
             'array_events_list',
+            'array_source_list'
         );
     }
 
@@ -755,7 +778,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
      */
     public static function render_header() {
         $params = array(
-            'title'      => esc_html__( 'Insights Changes', 'mainwp' ),
+            'title'      => esc_html__( 'Sites Changes', 'mainwp' ),
             'which'      => 'page_log_manage_insights',
             'wrap_class' => 'mainwp-log-mananage-insights-wrapper',
         );

@@ -270,7 +270,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                  */
                 do_action( 'mainwp_connection_status_before_all_sites_list' )
                 ?>
-                <div class="ui middle aligned divided selection list">
+                <div class="ui middle aligned divided list">
                     <?php echo $html_all_sites; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                 </div>
                 <?php
@@ -296,7 +296,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                  */
                 do_action( 'mainwp_connection_status_before_connected_sites_list' )
                 ?>
-                <div class="ui middle aligned divided selection list">
+                <div class="ui middle aligned divided list">
                     <?php echo $html_online_sites; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                 </div>
                 <?php
@@ -322,7 +322,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                  */
                 do_action( 'mainwp_connection_status_before_disconnected_sites_list' )
                 ?>
-                <div class="ui middle aligned divided selection list">
+                <div class="ui middle aligned divided list">
                     <?php echo $html_other_sites; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                 </div>
                 <?php

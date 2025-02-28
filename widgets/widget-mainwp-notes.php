@@ -104,15 +104,12 @@ class MainWP_Notes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         do_action( 'mainwp_notes_widget_bottom', $website );
         ?>
         </div>
-        <div class="ui two columns grid mainwp-widget-footer">
+        <div class="ui one column grid mainwp-widget-footer">
             <div class="column">
-                <a href="javascript:void(0)" class="ui button mini fluid green mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website->id ); ?>" <?php echo '' !== $website->note ? '' : 'add-new="1"' ?>><?php echo '' !== $website->note ? esc_html__( 'Edit Notes', 'mainwp' ) : esc_html__( 'Add Notes', 'mainwp' ); ?></a>
-            </div>
-            <div class="column">
-
+                <a href="javascript:void(0)" class="ui basic mini button mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website->id ); ?>" <?php echo '' !== $website->note ? '' : 'add-new="1"' ?>><?php echo '' !== $website->note ? esc_html__( 'Edit Notes', 'mainwp' ) : esc_html__( 'Add Notes', 'mainwp' ); ?></a>
+                <?php MainWP_UI::render_modal_edit_notes(); ?>
             </div>
         </div>
         <?php
-        MainWP_UI::render_modal_edit_notes();
     }
 }

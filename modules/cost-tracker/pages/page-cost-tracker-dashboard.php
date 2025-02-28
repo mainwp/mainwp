@@ -1126,8 +1126,8 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                 </div>
                 <div class="right aligned middle aligned column">
                     <div class="ui stackable grid">
-                        <div class="fifteen wide right aligned middle aligned column"><?php do_action( 'mainwp_module_cost_tracker_actions_bar_right' ); ?></div>
-                        <div class="one wide center aligned middle aligned column"><a href="#" class="ui icon mini basic button" id="mainwp-manage-costs-filter-toggle-button" aria-label="<?php esc_attr_e( 'Available filters.', 'mainwp' ); ?>"><i class="sliders horizontal icon"></i></a></div>
+                        <div class="eight wide right aligned middle aligned column"><?php do_action( 'mainwp_module_cost_tracker_actions_bar_right' ); ?></div>
+                        <div class="eight wide right aligned middle aligned column"><a href="#" class="ui mini basic button" id="mainwp-manage-costs-filter-toggle-button" aria-label="<?php esc_attr_e( 'Available filters.', 'mainwp' ); ?>"><i class="filter grey icon"></i> <?php esc_html_e( 'Filter Costs', 'mainwp' ); ?></a></div>
                     </div>
                 </div>
             </div>
@@ -1391,12 +1391,12 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                     <div class="ui compact grid">
                         <div class="eight wide column"></div>
                         <div class="eight wide column">
-                            <button class="ui mini fluid button" id="module-cost-tracker-filter-save-segment-button" selected-segment-id="" selected-segment-name=""><?php esc_html_e( 'Save Segment', 'mainwp' ); ?></button>
+                            <button class="ui mini green fluid button" id="module-cost-tracker-filter-save-segment-button" selected-segment-id="" selected-segment-name=""><?php esc_html_e( 'Save Segment', 'mainwp' ); ?></button>
                             <br/>
                             <?php if ( ! empty( $saved_segments ) ) : ?>
-                                <button class="ui mini fluid button mainwp_module_cost_tracker_filter_choose_segment"><?php esc_html_e( 'Load a Segment', 'mainwp' ); ?></button>
+                                <button class="ui mini fluid button mainwp_module_cost_tracker_filter_choose_segment"><?php esc_html_e( 'Load Segment', 'mainwp' ); ?></button>
                             <?php else : ?>
-                                <button class="ui mini fluid disabled button"><?php esc_html_e( 'Load a Segment', 'mainwp' ); ?></button>
+                                <button class="ui mini fluid disabled button"><?php esc_html_e( 'Load Segment', 'mainwp' ); ?></button>
                             <?php endif; ?>
                         </div>
                     </div>

@@ -293,6 +293,81 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
         $values                 = apply_filters( 'mainwp_module_log_overview_enabled_widgets', static::$enable_widgets, null );
         static::$enable_widgets = array_merge( static::$enable_widgets, $values );
 
+        // Load the widget.
+        if ( ! empty( static::$enable_widgets['log_sites'] ) ) {
+            MainWP_UI::add_widget_box( 'log_sites', array( Log_Sites_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+
+        // Load the widget.
+        if ( ! empty( static::$enable_widgets['log_clients'] ) ) {
+            MainWP_UI::add_widget_box( 'log_clients', array( Log_Clients_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+
+        // Load the widget.
+        if ( ! empty( static::$enable_widgets['log_pages'] ) ) {
+            MainWP_UI::add_widget_box( 'log_pages', array( Log_Pages_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+
+        // Load the widget.
+        if ( ! empty( static::$enable_widgets['log_posts'] ) ) {
+            MainWP_UI::add_widget_box( 'log_posts', array( Log_Posts_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+
+        // Load the widget.
+        if ( ! empty( static::$enable_widgets['log_themes'] ) ) {
+            MainWP_UI::add_widget_box( 'log_themes', array( Log_Themes_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+
+        // Load the widget.
+        if ( ! empty( static::$enable_widgets['log_plugins'] ) ) {
+            MainWP_UI::add_widget_box( 'log_plugins', array( Log_Plugins_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+
+        // Load the widget.
+        if ( ! empty( static::$enable_widgets['log_graph_clients'] ) ) {
+            MainWP_UI::add_widget_box( 'log_graph_clients', array( Log_Graph_Clients_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+
+        // Load the widget.
+        if ( ! empty( static::$enable_widgets['log_graph_tags'] ) ) {
+            MainWP_UI::add_widget_box( 'log_graph_tags', array( Log_Graph_Tags_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+
+        // Load the widget.
+        if ( ! empty( static::$enable_widgets['log_graph_status'] ) ) {
+            MainWP_UI::add_widget_box( 'log_graph_status', array( Log_Graph_Status_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+
+        // Load the widget.
+        if ( ! empty( static::$enable_widgets['log_graph_themes'] ) ) {
+            MainWP_UI::add_widget_box( 'log_graph_themes', array( Log_Graph_Themes_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+
+        // Load the widget.
+        if ( ! empty( static::$enable_widgets['log_graph_wp'] ) ) {
+            MainWP_UI::add_widget_box( 'log_graph_wp', array( Log_Graph_WP_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+
+        // Load the widget.
+        if ( ! empty( static::$enable_widgets['log_graph_php'] ) ) {
+            MainWP_UI::add_widget_box( 'log_graph_php', array( Log_Graph_Php_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+
+        // Load the widget.
+        if ( ! empty( static::$enable_widgets['log_graph_plugins'] ) ) {
+            MainWP_UI::add_widget_box( 'log_graph_plugins', array( Log_Graph_Plugins_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+
+        // Load the widget.
+        if ( ! empty( static::$enable_widgets['log_users'] ) ) {
+            MainWP_UI::add_widget_box( 'log_users', array( Log_Users_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+
+        // Load the widget.
+        if ( ! empty( static::$enable_widgets['recent_events'] ) ) {
+            MainWP_UI::add_widget_box( 'recent_events', array( Log_Recent_Events_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+
         $i = 1;
         foreach ( $extMetaBoxs as $metaBox ) {
             $enabled = true;
@@ -306,86 +381,11 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
             $id = isset( $metaBox['id'] ) ? $metaBox['id'] : $i++;
             $id = 'advanced-' . $id;
 
-            $layout = ! empty( $metaBox['layout'] ) && is_array( $metaBox['layout'] ) ? $metaBox['layout'] : array( 1, 1, 6, 15 );
+            $layout = ! empty( $metaBox['layout'] ) && is_array( $metaBox['layout'] ) ? $metaBox['layout'] : array( -1, -1, 6, 40 );
 
             if ( $enabled ) {
                 MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, $layout );
             }
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['recent_events'] ) ) {
-            MainWP_UI::add_widget_box( 'recent_events', array( Log_Recent_Events_Widget::instance(), 'render' ), $page, array( 1, 1, 4, 13 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_users'] ) ) {
-            MainWP_UI::add_widget_box( 'log_users', array( Log_Users_Widget::instance(), 'render' ), $page, array( 1, 1, 4, 13 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_graph_plugins'] ) ) {
-            MainWP_UI::add_widget_box( 'log_graph_plugins', array( Log_Graph_Plugins_Widget::instance(), 'render' ), $page, array( 1, 1, 4, 13 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_graph_php'] ) ) {
-            MainWP_UI::add_widget_box( 'log_graph_php', array( Log_Graph_Php_Widget::instance(), 'render' ), $page, array( 1, 1, 4, 13 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_graph_wp'] ) ) {
-            MainWP_UI::add_widget_box( 'log_graph_wp', array( Log_Graph_WP_Widget::instance(), 'render' ), $page, array( 1, 1, 4, 13 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_graph_themes'] ) ) {
-            MainWP_UI::add_widget_box( 'log_graph_themes', array( Log_Graph_Themes_Widget::instance(), 'render' ), $page, array( 1, 1, 4, 13 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_graph_status'] ) ) {
-            MainWP_UI::add_widget_box( 'log_graph_status', array( Log_Graph_Status_Widget::instance(), 'render' ), $page, array( 1, 1, 4, 13 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_graph_tags'] ) ) {
-            MainWP_UI::add_widget_box( 'log_graph_tags', array( Log_Graph_Tags_Widget::instance(), 'render' ), $page, array( 1, 1, 4, 13 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_graph_clients'] ) ) {
-            MainWP_UI::add_widget_box( 'log_graph_clients', array( Log_Graph_Clients_Widget::instance(), 'render' ), $page, array( 1, 1, 4, 13 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_plugins'] ) ) {
-            MainWP_UI::add_widget_box( 'log_plugins', array( Log_Plugins_Widget::instance(), 'render' ), $page, array( 1, 1, 6, 14 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_themes'] ) ) {
-            MainWP_UI::add_widget_box( 'log_themes', array( Log_Themes_Widget::instance(), 'render' ), $page, array( 1, 1, 6, 14 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_posts'] ) ) {
-            MainWP_UI::add_widget_box( 'log_posts', array( Log_Posts_Widget::instance(), 'render' ), $page, array( 1, 1, 6, 14 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_pages'] ) ) {
-            MainWP_UI::add_widget_box( 'log_pages', array( Log_Pages_Widget::instance(), 'render' ), $page, array( 1, 1, 6, 14 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_clients'] ) ) {
-            MainWP_UI::add_widget_box( 'log_clients', array( Log_Clients_Widget::instance(), 'render' ), $page, array( 1, 1, 12, 14 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_sites'] ) ) {
-            MainWP_UI::add_widget_box( 'log_sites', array( Log_Sites_Widget::instance(), 'render' ), $page, array( 1, 1, 12, 14 ) );
         }
     }
 
@@ -590,106 +590,108 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
         }
         ?>
     <div class="mainwp-sub-header" id="mainwp-module-log-overview-sub-header">
-        <div class="ui stackable compact grid mini form" id="mainwp-module-log-filters-row">
-            <div class="twelve wide column ui compact grid">
-                <div class="two wide middle aligned column">
-                    <div id="mainwp-module-log-filter-ranges" class="ui selection fluid dropdown seg_ranges not-auto-init">
-                        <input type="hidden" value="<?php echo esc_html( $filter_ranges ); ?>">
-                        <i class="dropdown icon"></i>
-                        <div class="default text"><?php esc_html_e( 'Select range', 'mainwp' ); ?></div>
-                        <div class="menu">
-                            <?php
-                            $date_ranges = array(
-                                'today'     => esc_html__( 'Today', 'mainwp' ),
-                                'yesterday' => esc_html__( 'Yesterday', 'mainwp' ),
-                                'thisweek'  => esc_html__( 'This week', 'mainwp' ),
-                                'thismonth' => esc_html__( 'This month', 'mainwp' ),
-                                'lastmonth' => esc_html__( 'Last month', 'mainwp' ),
-                                'thisyear'  => esc_html__( 'This year', 'mainwp' ),
-                                'lastyear'  => esc_html__( 'Last year', 'mainwp' ),
-                            );
-                            foreach ( $date_ranges as $val => $title ) {
-                                ?>
-                                <div class="item" data-value="<?php echo esc_html( $val ); ?>"><?php echo esc_html( $title ); ?></div>
+        <div class="ui stackable grid" id="mainwp-module-log-filters-row">
+            <div class="twelve wide column">
+                <div class="ui compact grid">
+                    <div class="two wide middle aligned column">
+                        <div id="mainwp-module-log-filter-ranges" class="ui selection fluid mini dropdown seg_ranges not-auto-init">
+                            <input type="hidden" value="<?php echo esc_html( $filter_ranges ); ?>">
+                            <i class="dropdown icon"></i>
+                            <div class="default text"><?php esc_html_e( 'Select range', 'mainwp' ); ?></div>
+                            <div class="menu">
                                 <?php
-                            }
-                            ?>
-                            <div class="item" data-value="custom"><?php esc_html_e( 'Custom', 'mainwp' ); ?></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="two wide middle aligned column">
-                    <div class="ui calendar mainwp_datepicker seg_dtsstart" id="mainwp-module-log-filter-dtsstart" >
-                        <div class="ui input left fluid icon">
-                            <i class="calendar icon"></i>
-                            <input type="text" <?php echo $disable_dt ? 'disabled="disabled"' : ''; ?> autocomplete="off" placeholder="<?php esc_attr_e( 'Start date', 'mainwp' ); ?>" value="<?php echo ! empty( $filter_dtsstart ) ? esc_attr( $filter_dtsstart ) : ''; ?>"/>
-                        </div>
-                    </div>
-                </div>
-                <div class="two wide middle aligned column">
-                    <div class="ui calendar mainwp_datepicker seg_dtsstop" id="mainwp-module-log-filter-dtsstop" >
-                        <div class="ui input left icon">
-                            <i class="calendar icon"></i>
-                            <input type="text" <?php echo $disable_dt ? 'disabled="disabled"' : ''; ?> autocomplete="off" placeholder="<?php esc_attr_e( 'End date', 'mainwp' ); ?>" value="<?php echo ! empty( $filter_dtsstop ) ? esc_attr( $filter_dtsstop ) : ''; ?>"/>
-                        </div>
-                    </div>
-                </div>
-                <div class="two wide middle aligned column">
-                    <div id="mainwp-module-log-filter-groups" class="ui selection multiple fluid dropdown seg_groups">
-                        <input type="hidden" value="<?php echo esc_html( $filter_groups_ids ); ?>">
-                        <i class="dropdown icon"></i>
-                        <div class="default text"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
-                        <div class="menu">
-                            <?php
-                            foreach ( $groups as $group ) {
+                                $date_ranges = array(
+                                    'today'     => esc_html__( 'Today', 'mainwp' ),
+                                    'yesterday' => esc_html__( 'Yesterday', 'mainwp' ),
+                                    'thisweek'  => esc_html__( 'This week', 'mainwp' ),
+                                    'thismonth' => esc_html__( 'This month', 'mainwp' ),
+                                    'lastmonth' => esc_html__( 'Last month', 'mainwp' ),
+                                    'thisyear'  => esc_html__( 'This year', 'mainwp' ),
+                                    'lastyear'  => esc_html__( 'Last year', 'mainwp' ),
+                                );
+                                foreach ( $date_ranges as $val => $title ) {
+                                    ?>
+                                    <div class="item" data-value="<?php echo esc_html( $val ); ?>"><?php echo esc_html( $title ); ?></div>
+                                    <?php
+                                }
                                 ?>
-                                <div class="item" data-value="<?php echo esc_attr( $group->id ); ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
-                                <?php
-                            }
-                            ?>
-                            <div class="item" data-value="alltags"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
+                                <div class="item" data-value="custom"><?php esc_html_e( 'Custom', 'mainwp' ); ?></div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="two wide middle aligned column">
-                    <div id="mainwp-module-log-filter-clients" class="ui selection multiple fluid dropdown seg_clients">
-                        <input type="hidden" value="<?php echo esc_html( $filter_client_ids ); ?>">
-                        <i class="dropdown icon"></i>
-                        <div class="default text"><?php esc_html_e( 'All clients', 'mainwp' ); ?></div>
-                        <div class="menu">
-                            <?php
-                            $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
-                            foreach ( $clients as $client ) {
+                    <div class="two wide middle aligned column">
+                        <div class="ui mini calendar mainwp_datepicker seg_dtsstart" id="mainwp-module-log-filter-dtsstart" >
+                            <div class="ui input left fluid icon">
+                                <i class="calendar icon"></i>
+                                <input type="text" <?php echo $disable_dt ? 'disabled="disabled"' : ''; ?> autocomplete="off" placeholder="<?php esc_attr_e( 'Start date', 'mainwp' ); ?>" value="<?php echo ! empty( $filter_dtsstart ) ? esc_attr( $filter_dtsstart ) : ''; ?>"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="two wide middle aligned column">
+                        <div class="ui mini calendar mainwp_datepicker seg_dtsstop" id="mainwp-module-log-filter-dtsstop" >
+                            <div class="ui input left icon">
+                                <i class="calendar icon"></i>
+                                <input type="text" <?php echo $disable_dt ? 'disabled="disabled"' : ''; ?> autocomplete="off" placeholder="<?php esc_attr_e( 'End date', 'mainwp' ); ?>" value="<?php echo ! empty( $filter_dtsstop ) ? esc_attr( $filter_dtsstop ) : ''; ?>"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="two wide middle aligned column">
+                        <div id="mainwp-module-log-filter-groups" class="ui selection multiple fluid mini dropdown seg_groups">
+                            <input type="hidden" value="<?php echo esc_html( $filter_groups_ids ); ?>">
+                            <i class="dropdown icon"></i>
+                            <div class="default text"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
+                            <div class="menu">
+                                <?php
+                                foreach ( $groups as $group ) {
+                                    ?>
+                                    <div class="item" data-value="<?php echo esc_attr( $group->id ); ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
+                                    <?php
+                                }
                                 ?>
-                                <div class="item" data-value="<?php echo intval( $client->client_id ); ?>"><?php echo esc_html( stripslashes( $client->name ) ); ?></div>
-                                <?php
-                            }
-                            ?>
-                            <div class="item" data-value="allclients"><?php esc_html_e( 'All Clients', 'mainwp' ); ?></div>
+                                <div class="item" data-value="alltags"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="two wide middle aligned column">
-                    <div id="mainwp-module-log-filter-users" class="ui selection multiple fluid dropdown seg_users">
-                        <input type="hidden" value="<?php echo esc_html( $filter_user_ids ); ?>">
-                        <i class="dropdown icon"></i>
-                        <div class="default text"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
-                        <div class="menu">
-                            <?php
-                            $users = $manager->admin->get_all_users();
-                            foreach ( $users as $user ) {
+                    <div class="two wide middle aligned column">
+                        <div id="mainwp-module-log-filter-clients" class="ui selection multiple fluid mini dropdown seg_clients">
+                            <input type="hidden" value="<?php echo esc_html( $filter_client_ids ); ?>">
+                            <i class="dropdown icon"></i>
+                            <div class="default text"><?php esc_html_e( 'All clients', 'mainwp' ); ?></div>
+                            <div class="menu">
+                                <?php
+                                $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
+                                foreach ( $clients as $client ) {
+                                    ?>
+                                    <div class="item" data-value="<?php echo intval( $client->client_id ); ?>"><?php echo esc_html( stripslashes( $client->name ) ); ?></div>
+                                    <?php
+                                }
                                 ?>
-                                <div class="item" data-value="<?php echo intval( $user['id'] ); ?>"><?php echo esc_html( $user['login'] ); ?></div>
-                                <?php
-                            }
-                            ?>
-                            <div class="item" data-value="allusers"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
+                                <div class="item" data-value="allclients"><?php esc_html_e( 'All Clients', 'mainwp' ); ?></div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="three wide middle aligned left aligned column">
-                    <button onclick="mainwp_module_log_overview_content_filter()" class="ui mini green button"><?php esc_html_e( 'Filter Data', 'mainwp' ); ?></button>
-                    <button onclick="mainwp_module_log_overview_content_reset_filters(this)" class="ui mini button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
+                    <div class="two wide middle aligned column">
+                        <div id="mainwp-module-log-filter-users" class="ui selection multiple fluid mini dropdown seg_users">
+                            <input type="hidden" value="<?php echo esc_html( $filter_user_ids ); ?>">
+                            <i class="dropdown icon"></i>
+                            <div class="default text"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
+                            <div class="menu">
+                                <?php
+                                $users = $manager->admin->get_all_users();
+                                foreach ( $users as $user ) {
+                                    ?>
+                                    <div class="item" data-value="<?php echo intval( $user['id'] ); ?>"><?php echo esc_html( $user['login'] ); ?></div>
+                                    <?php
+                                }
+                                ?>
+                                <div class="item" data-value="allusers"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="three wide middle aligned left aligned column">
+                        <button onclick="mainwp_module_log_overview_content_filter()" class="ui mini green button"><?php esc_html_e( 'Filter Data', 'mainwp' ); ?></button>
+                        <button onclick="mainwp_module_log_overview_content_reset_filters(this)" class="ui mini button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
+                    </div>
                 </div>
             </div>
             <?php Log_Events_Filter_Segment::get_instance()->render_filters_segment(); ?>
@@ -756,18 +758,6 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
         </script>
 
         <?php
-    }
-
-
-
-    /**
-     * Method verify_open_nonce()
-     */
-    public static function verify_open_nonce() {
-        if ( isset( $_REQUEST['_insights_opennonce'] ) && wp_verify_nonce( wp_unslash( $_REQUEST['_insights_opennonce'] ), 'mainwp-admin-nonce' ) ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            return true;
-        }
-        return false;
     }
 
     /**
@@ -855,15 +845,14 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
         $stats_prev_data = ! empty( $items_prev ) ? Log_Stats::get_stats_data( $items_prev ) : array();
         ?>
         <div class="mainwp-primary-content-wrap">
-        <div class="ui segment" style="padding-top:0;padding-bottom:0;">
-            <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'insights-widgets' ) ) : ?>
-                    <div class="ui info message">
-                        <i class="close icon mainwp-notice-dismiss" notice-id="insights-widgets"></i>
-                        <?php printf( esc_html__( 'To hide or show a widget, click the Cog (%1$s) icon.', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
-                    </div>
-                <?php endif; ?>
-        </div>
+            <div class="ui segment">
+                <div class="ui info message">
+                    <i class="close icon mainwp-notice-dismiss" notice-id="insights-widgets"></i>
+                    <?php printf( esc_html__( 'To hide or show a widget, click the Cog (%1$s) icon.', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
+                </div>
+            </div>
+            <?php endif; ?>
             <?php
             /**
              * Action: mainwp_before_overview_widgets

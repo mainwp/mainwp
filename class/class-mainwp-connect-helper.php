@@ -66,7 +66,7 @@ class MainWP_Connect_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             </div>
             <div class="scrolling content mainwp-modal-content">
                 <div class="ui message" id="mainwp-message-zone-modal" style="display:none;"></div>
-                <div class="ui middle aligned divided selection list" id="mainwp-renew-connections-list"></div>
+                <div class="ui middle aligned divided list" id="mainwp-renew-connections-list"></div>
                 <div class="mainwp-select-sites-wrapper">
                     <div class="mainwp-select-sites ui fluid accordion mainwp-sidebar-accordion">
                         <div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>

@@ -513,7 +513,6 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      */
     public static function render_total_update( $total_upgrades, $can_total_update, $limit_updates_all, $count_websites, $count_plugins, $count_themes ) { // phpcs:ignore -- NOSONAR - complex.
 
-        $is_demo      = MainWP_Demo_Handle::is_demo_mode();
         $current_wpid = MainWP_System_Utility::get_current_wpid();
         $globalView   = true;
         if ( $current_wpid ) {
@@ -563,11 +562,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     <div class="center aligned middle alidgned column">
                     <?php if ( ! get_option( 'mainwp_hide_update_everything', false ) ) : ?>
                         <?php if ( $can_total_update ) : ?>
-                            <?php if ( $is_demo ) : ?>
-                                <?php MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini button green fluid disabled" disabled="disabled">' . esc_html( apply_filters( 'mainwp_update_everything_button_text', esc_html__( 'Update Everything', 'mainwp' ) ) ) . '</a>' ); ?>
-                            <?php else : ?>
-                                <a href="#" <?php echo empty( $total_upgrades ) ? 'disabled' : 'onClick="updatesoverview_global_upgrade_all( \'all\' ); return false;"'; ?> class="ui mini green fluid button" id="mainwp-update-everything-button" data-tooltip="<?php $globalView ? esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on ALL your websites.', 'mainwp' ) : esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on this website.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left"><?php echo esc_html( apply_filters( 'mainwp_update_everything_button_text', esc_html__( 'Update Everything', 'mainwp' ) ) ); ?></a>
-                            <?php endif; ?>
+                            <a href="#" <?php echo empty( $total_upgrades ) ? 'disabled' : 'onClick="updatesoverview_global_upgrade_all( \'all\' ); return false;"'; ?> class="ui mini green fluid button" id="mainwp-update-everything-button"><?php echo esc_html( apply_filters( 'mainwp_update_everything_button_text', esc_html__( 'Update Everything', 'mainwp' ) ) ); ?></a>
                         <?php endif; ?>
                     <?php endif; ?>
                     </div>
@@ -604,7 +599,6 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $outdated_percentage = '0.00%';
         }
 
-        $is_demo                   = MainWP_Demo_Handle::is_demo_mode();
         $wpcore_update_disabled_by = '';
         if ( $globalView ) {
             $detail_wp_up = 'admin.php?page=UpdatesManage&tab=wordpress-updates';
@@ -635,7 +629,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         <div class="ui card">
             <div class="content">
                 <div class="header">
-                    <span class="ui large text"><i class="WordPress icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( intval( $total_wp_upgrades ) ) ); ?></span>
+                    <span class="ui large text"><i class="wordpress icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( intval( $total_wp_upgrades ) ) ); ?></span> <?php // keep `wordpress` ?>
                     <?php if ( intval( $total_wp_upgrades ) > 0 ) : ?>
                         <span class="ui small red text">(<?php echo esc_html( $outdated_percentage ); ?>)</span>
                     <?php else : ?>
@@ -651,11 +645,9 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         <?php if ( 0 < $total_wp_upgrades ) : ?>
                             <?php MainWP_Updates::set_continue_update_html_selector( 'wpcore_global_upgrade_all' ); ?>
                             <?php if ( ! empty( $wpcore_update_disabled_by ) ) : ?>
-                                <span data-tooltip="<?php echo esc_html( $wpcore_update_disabled_by ); ?>" data-inverted="" data-position="left center"><a href="javascript:void(0)"  class="ui mini button basic green disabled mainwp-update-all-button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a></span>
-                            <?php elseif ( $is_demo ) : ?>
-                                <?php MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green button disabled mainwp-update-all-button" disabled="disabled">' . esc_html__( 'Update All', 'mainwp' ) . '</a>' ); ?>
+                                <a href="javascript:void(0)"  class="ui mini button basic green disabled mainwp-update-all-button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
                             <?php else : ?>
-                                <a href="#" onClick="updatesoverview_global_upgrade_all('wp'); return false;" class="ui mini green button mainwp-update-all-button <?php MainWP_Updates::get_continue_update_selector(); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update WP Core files on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="bottom center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+                                <a href="#" onClick="updatesoverview_global_upgrade_all('wp'); return false;" class="ui mini green button mainwp-update-all-button <?php MainWP_Updates::get_continue_update_selector(); // phpcs:ignore WordPress.Security.EscapeOutput ?>"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
                             <?php endif; ?>
                         <?php else : ?>
                             <a href="#" class="ui disabled green mini button mainwp-update-all-button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
@@ -700,13 +692,10 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $outdated_percentage = '0.00%';
         }
 
-        $is_demo = MainWP_Demo_Handle::is_demo_mode();
         if ( $globalView ) {
             $detail_plugins_up  = 'admin.php?page=UpdatesManage&tab=plugins-updates';
-            $update_all_tooltip = esc_html__( 'Clicking this button will update all Plugins on All your websites.', 'mainwp' );
         } else {
             $detail_plugins_up  = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=plugins-updates';
-            $update_all_tooltip = esc_html__( 'Clicking this button will update all Plugins on the website.', 'mainwp' );
         }
 
         /**
@@ -736,11 +725,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     <?php if ( $user_can_update_plugins ) : ?>
                         <?php if ( ! empty( $total_plugin_upgrades ) ) : ?>
                             <?php MainWP_Updates::set_continue_update_html_selector( 'plugins_global_upgrade_all' ); ?>
-                            <?php if ( $is_demo ) : ?>
-                                <?php MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green button mainwp-update-all-button disabled" disabled="disabled">' . esc_html__( 'Update All', 'mainwp' ) . '</a>' ); ?>
-                            <?php else : ?>
-                                <a href="#" onClick="updatesoverview_global_upgrade_all('plugin'); return false;" class="ui mini green mainwp-update-all-button button <?php MainWP_Updates::get_continue_update_selector(); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-tooltip="<?php echo esc_attr( $update_all_tooltip ); ?>" data-inverted="" data-position="bottom left"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-                            <?php endif; ?>
+                                <a href="#" onClick="updatesoverview_global_upgrade_all('plugin'); return false;" class="ui mini green mainwp-update-all-button button <?php MainWP_Updates::get_continue_update_selector(); // phpcs:ignore WordPress.Security.EscapeOutput ?>"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
                         <?php else : ?>
                             <a href="#" class="ui disabled green mini button mainwp-update-all-button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
                         <?php endif; ?>
@@ -784,13 +769,10 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $outdated_percentage = '0.00%';
         }
 
-        $is_demo = MainWP_Demo_Handle::is_demo_mode();
         if ( $globalView ) {
             $detail_themes_up   = 'admin.php?page=UpdatesManage&tab=themes-updates';
-            $update_all_tooltip = esc_html__( 'Clicking this button will update all Themes on All your websites.', 'mainwp' );
         } else {
             $detail_themes_up   = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=themes-updates';
-            $update_all_tooltip = esc_html__( 'Clicking this button will update all Themes on the website.', 'mainwp' );
         }
 
         /**
@@ -820,11 +802,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     <?php if ( $user_can_update_themes ) : ?>
                         <?php if ( ! empty( $total_theme_upgrades ) ) : ?>
                             <?php MainWP_Updates::set_continue_update_html_selector( 'themes_global_upgrade_all' ); ?>
-                            <?php if ( $is_demo ) : ?>
-                                <?php MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green button mainwp-update-all-button disabled" disabled="disabled">' . esc_html__( 'Update All', 'mainwp' ) . '</a>' ); ?>
-                            <?php else : ?>
-                                <a href="#" onClick="updatesoverview_global_upgrade_all('theme'); return false;" class="ui mini green mainwp-update-all-button button <?php MainWP_Updates::get_continue_update_selector(); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-tooltip="<?php echo esc_attr( $update_all_tooltip ); ?>" data-inverted="" data-position="bottom left"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-                            <?php endif; ?>
+                            <a href="#" onClick="updatesoverview_global_upgrade_all('theme'); return false;" class="ui mini green mainwp-update-all-button button <?php MainWP_Updates::get_continue_update_selector(); // phpcs:ignore WordPress.Security.EscapeOutput ?>"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
                         <?php else : ?>
                             <a href="#" class="ui disabled green mini button mainwp-update-all-button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
                         <?php endif; ?>
@@ -860,13 +838,10 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Updates::get_continue_update_selector()
      */
     public static function render_language_update( $user_can_update_translation, $total_translation_upgrades, $globalView, $current_wpid ) {
-        $is_demo = MainWP_Demo_Handle::is_demo_mode();
         if ( $globalView ) {
             $detail_trans_up    = 'admin.php?page=UpdatesManage&tab=translations-updates';
-            $update_all_tooltip = esc_html__( 'Clicking this button will update all Translations on All your websites.', 'mainwp' );
         } else {
             $detail_trans_up    = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=translations-updates';
-            $update_all_tooltip = esc_html__( 'Clicking this button will update all Translations on the website.', 'mainwp' );
         }
         /**
          * Action: mainwp_updates_overview_before_translation_updates
@@ -890,11 +865,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     <?php if ( $user_can_update_translation ) : ?>
                         <?php if ( ! empty( $total_translation_upgrades ) ) : ?>
                             <?php MainWP_Updates::set_continue_update_html_selector( 'translations_global_upgrade_all' ); ?>
-                            <?php if ( $is_demo ) : ?>
-                                <?php MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green button mainwp-update-all-button disabled" disabled="disabled">' . esc_html__( 'Update All', 'mainwp' ) . '</a>' ); ?>
-                            <?php else : ?>
-                                <a href="#" onClick="updatesoverview_global_upgrade_all('translation'); return false;" class="ui mini green mainwp-update-all-button button <?php MainWP_Updates::get_continue_update_selector(); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-tooltip="<?php echo esc_attr( $update_all_tooltip ); ?>" data-inverted="" data-position="bottom left"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-                            <?php endif; ?>
+                            <a href="#" onClick="updatesoverview_global_upgrade_all('translation'); return false;" class="ui mini green mainwp-update-all-button button <?php MainWP_Updates::get_continue_update_selector(); // phpcs:ignore WordPress.Security.EscapeOutput ?>"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
                         <?php else : ?>
                             <a href="#" class="ui disabled green mini button mainwp-update-all-button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
                         <?php endif; ?>

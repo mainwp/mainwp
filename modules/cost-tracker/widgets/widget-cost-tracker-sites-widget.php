@@ -63,7 +63,7 @@ class Cost_Tracker_Sites_Widget {
         </div>
         <div class="ui two columns grid mainwp-widget-footer">
             <div class="left aligned column">
-                <a href="admin.php?page=ManageCostTracker" class="ui basic green mini fluid button"><?php esc_html_e( 'Cost Tracker Dashboard', 'mainwp' ); ?></a>
+                <a href="admin.php?page=ManageCostTracker" class="ui mini basic button"><?php esc_html_e( 'Cost Tracker Dashboard', 'mainwp' ); ?></a>
             </div>
         </div>
         <?php

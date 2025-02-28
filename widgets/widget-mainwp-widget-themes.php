@@ -137,7 +137,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                  */
                 do_action( 'mainwp_before_inactive_themes_list', $website, $inactive_themes );
                 ?>
-                <div class="ui divided selection list">
+                <div class="ui divided list">
                     <?php
                     $_count = count( $inactive_themes );
                     for ( $i = 0; $i < $_count; $i++ ) {
@@ -149,7 +149,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             <input class="themeSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_themes[ $i ]['slug'] ) ); ?>"/>
                             <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
                             <div class="right floated content themesAction">
-                                <div class="ui right pointing dropdown icon mini button">
+                                <div class="ui right pointing dropdown">
                                     <i class="ellipsis vertical icon"></i>
                                     <div class="menu">
                                         <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_themes' ) ) : ?>

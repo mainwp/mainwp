@@ -28,22 +28,19 @@
 /* Genaral Style */
 
 .mainwp-main-content {
-    width: calc(100% - 298px);
+    width: calc(100% - 300px);
     padding-right: 1em;
     padding-bottom: 1em;
-    border-right: 1px solid #dadada;
     float: left;
-    margin-right: -1px !important;
-    margin-left: -1px !important;
+    border-right: 1px solid rgba(34, 36, 38, .15);
 }
 
 .mainwp-side-content {
-    height: 100%;
-    width: 299.5px;
+    width: 301px;
     float: right;
-    border-left: 1px solid #dadada;
-    border-bottom: 1px solid #dadada;
     padding: 1em;
+    border-left: 1px solid rgba(34, 36, 38, .15);
+    margin-left: -1px;
 }
 
 .mainwp-side-content.mainwp-no-padding {
@@ -58,7 +55,6 @@
     float: left;
     border-left: none;
     border-right: 1px solid rgba(34, 36, 38, .15);
-    border-bottom: 1px solid #dadada;
 }
 
 .mainwp-sidebar-left .mainwp-main-content {
@@ -111,8 +107,7 @@
     margin-top: 58px;
 }
 
-.mainwp-ui-leftmenu .mainwp-content-wrap,
-.mainwp-ui-leftmenu #mainwp-screenshots-sites {
+.mainwp-ui-leftmenu .mainwp-content-wrap {
     margin-left: 272px;
 }
 
@@ -129,7 +124,8 @@
 .mainwp-ui.mainwp_page_ActionLogs .mainwp-content-wrap,
 .mainwp-ui.mainwp_page_PluginPrivacy .mainwp-content-wrap,
 .mainwp-ui.mainwp-hidden-second-level-navigation.mainwp-ui-leftmenu .mainwp-content-wrap,
-.mainwp-ui.mainwp-hidden-second-level-navigation.mainwp-ui-leftmen #mainwp-screenshots-sites {
+.mainwp-ui.mainwp-hidden-second-level-navigation.mainwp-ui-leftmen #mainwp-screenshots-sites,
+.mainwp-ui.mainwp_page_CostTrackerSettings .mainwp-content-wrap {
     margin-left: 72px !important;
 }
 
@@ -143,7 +139,7 @@
 /* Header */
 
 #mainwp-top-header {
-    z-index: 9999;
+    z-index: 1001;
     padding: 10px;
     height: 58px;
     background: #1c1d1b;
@@ -153,7 +149,6 @@
 }
 
 #mainwp-top-header .mainwp-page-title {
-    padding-left: 15px;
     color: #ffffff;
 }
 
@@ -200,18 +195,22 @@
     position: fixed;
     top: 58px;
     bottom: 0px;
-    width: 170px;
+    width: 200px;
+    box-shadow: 20px 0px 15px -18px rgba(0, 0, 0, 0.15) inset;
+    -webkit-box-shadow: 20px 0px 15px -18px rgba(0, 0, 0, 0.15) inset;
 }
 
 .mainwp-individual-site-view #mainwp-page-navigation-wrapper .mainwp-page-navigation {
-    width: 170px;
+    width: 199px;
     box-shadow: none !important;
     border-radius: 0px !important;
     border: none !important;
+    box-shadow: 20px 0px 15px -18px rgba(0, 0, 0, 0.15) inset !important;
+    -webkit-box-shadow: 20px 0px 15px -18px rgba(0, 0, 0, 0.15) inset !important;
 }
 
 .mainwp-individual-site-view #mainwp-page-navigation-wrapper .mainwp-page-navigation .item {
-    padding: 0.92857143em 1.14285714em !important;
+    padding: 0.9rem !important;
 }
 
 .mainwp-individual-site-view #mainwp-page-navigation-wrapper .mainwp-page-navigation .item:last-child {
@@ -221,15 +220,19 @@
 
 .mainwp-individual-site-view #mainwp-page-navigation-wrapper #mainwp-site-preview-image {
     max-width: 100%;
+    width: 100%;
+    box-shadow: 20px 0px 15px -18px rgba(0, 0, 0, 0.15) inset !important;
+    -webkit-box-shadow: 20px 0px 15px -18px rgba(0, 0, 0, 0.15) inset !important;
 }
 
-.mainwp-individual-site-view #mainwp-site-mode-wrap {
-    width: calc(100% - 170px);
+.mainwp-individual-site-view #mainwp-site-mode-wrap,
+.mainwp-individual-site-view #mainwp-module-cost-tracker-settings-tab{
+    width: calc(100% - 200px);
     float: right;
 }
 
 .mainwp-individual-site-view .mainwp-content-wrap>.ui.message {
-    width: calc(100% - 170px);
+    width: calc(100% - 200px);
     float: right;
 }
 
@@ -314,7 +317,6 @@
     margin-right: 0px;
     border-radius: 0px;
     color: #ffffff !important;
-    z-index: 9999 !important;
 }
 
 #mainwp-first-level-navigation-menu {
@@ -322,6 +324,11 @@
     flex-grow: 1;
     border-radius: 0px;
     min-height: 420px;
+}
+
+#mainwp-first-level-navigation-menu .item {
+    padding-left: 5px;
+    padding-right: 5px;
 }
 
 #mainwp-first-level-navigation-menu .item.active {
@@ -336,11 +343,6 @@
 #mainwp-first-level-wpitems-menu {
     background: none !important;
     border-radius: 0px;
-}
-
-#mainwp-first-level-navigation-menu a[title='Cost Tracker'] {
-    padding-left: 5px !important;
-    padding-right: 5px !important;
 }
 
 #mainwp-collapse-second-level-navigation {
@@ -434,7 +436,8 @@
 .mainwp-ui.mainwp_page_ErrorLog #mainwp-main-navigation-container,
 .mainwp-ui.mainwp_page_ActionLogs #mainwp-main-navigation-container,
 .mainwp-ui.mainwp_page_PluginPrivacy #mainwp-main-navigation-container,
-.mainwp-ui.mainwp-hidden-second-level-navigation #mainwp-main-navigation-container {
+.mainwp-ui.mainwp-hidden-second-level-navigation #mainwp-main-navigation-container,
+.mainwp-ui.mainwp_page_CostTrackerSettings #mainwp-main-navigation-container {
     width: 72px !important;
 }
 
@@ -451,7 +454,8 @@
 .mainwp-ui.mainwp_page_ErrorLog #mainwp-second-level-navigation,
 .mainwp-ui.mainwp_page_ActionLogs #mainwp-second-level-navigation,
 .mainwp-ui.mainwp_page_PluginPrivacy #mainwp-second-level-navigation,
-.mainwp-ui.mainwp-hidden-second-level-navigation #mainwp-second-level-navigation {
+.mainwp-ui.mainwp-hidden-second-level-navigation #mainwp-second-level-navigation,
+.mainwp-ui.mainwp_page_CostTrackerSettings #mainwp-second-level-navigation {
     display: none !important;
 }
 
@@ -466,7 +470,8 @@
 .mainwp-ui.mainwp_page_ServerInformationCron #mainwp-collapse-second-level-navigation,
 .mainwp-ui.mainwp_page_ErrorLog #mainwp-collapse-second-level-navigation,
 .mainwp-ui.mainwp_page_ActionLogs #mainwp-collapse-second-level-navigation,
-.mainwp-ui.mainwp_page_PluginPrivacy #mainwp-collapse-second-level-navigation {
+.mainwp-ui.mainwp_page_PluginPrivacy #mainwp-collapse-second-level-navigation,
+.mainwp-ui.mainwp_page_CostTrackerSettings #mainwp-collapse-second-level-navigation {
     display: none !important;
 }
 
@@ -562,13 +567,13 @@
 .mainwp-select-sites,
 .mainwp-search-options,
 .mainwp-search-submit {
-    padding: 10px;
+    padding: 1em;
 }
 
 #mainwp-select-sites-header .ui.menu {
     overflow-x: auto;
     overflow-y: hidden;
-    margin: 1rem -1rem 0;
+    margin: 1rem 0 0 0;
 }
 
 #mainwp-documentation-sidebar .ui.list .item i.icon {
@@ -584,7 +589,6 @@
 
 #mainwp-select-sites-select-all-actions {
     background: #dadada;
-    border-bottom: 1px solid #dadada;
     margin-top: 0;
 }
 
@@ -607,6 +611,10 @@
 }
 
 /* Tables */
+
+.mainwp-ui table.dataTable thead > tr > th span.dt-column-order {
+    right: 0px !important;
+}
 
 .mainwp-ui table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control::before,
 .mainwp-ui table.dataTable.dtr-inline.collapsed>tbody>tr>th.dtr-control::before {
@@ -747,14 +755,6 @@ table.mainwp-manage-wpsites-table .error a {
 
 
 /* Manage Extensions */
-
-#mainwp-manage-extensions.ui.segment {
-    padding: 0px;
-}
-
-#mainwp-manage-extensions .mainwp-main-content {
-    padding: 1em;
-}
 
 .mainwp-disabled-extension .header,
 .mainwp-disabled-extension .content:not(.extra) {
@@ -1286,12 +1286,6 @@ th .down.icon {
 
 .mainwp-get-started-widget-check-lists .item .content {
     width: auto !important;
-}
-
-#mainw_managesites_add_edit_site_upload_custom_icon,
-#mainwp_add_edit_client_upload_custom_icon,
-.mainwp_add_edit_contact_upload_custom_icon {
-    margin-left: 30px !important;
 }
 
 .qq-upload-completed .qq-upload-cancel,

@@ -780,8 +780,8 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-updates-message' ) ) { ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-message"></i>
-                    <div><?php printf( esc_html__( 'Manage available updates for all your child sites.  From here, you can update update %1$splugins%2$s, %3$sthemes%4$s, and %5$sWordPress core%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/update-plugins/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-themes/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://kb.mainwp.com/docs/update-wordpress-core/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
-                    <div><?php printf( esc_html__( 'Also, from here, you can ignore updates for %1$sWordPress core%2$s, %3$splugins%4$s, and %5$sthemes%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-wordpress-core-update/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://kb.mainwp.com/docs/ignore-theme-updates/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
+                    <div><?php printf( esc_html__( 'Manage available updates for all your child sites.  From here, you can update update %1$splugins%2$s, %3$sthemes%4$s, and %5$sWordPress core%6$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/update-plugins/" target="_blank">', '</a>', '<a href="https://mainwp.com/kb/update-themes/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://mainwp.com/kb/update-wordpress-core/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
+                    <div><?php printf( esc_html__( 'Also, from here, you can ignore updates for %1$sWordPress core%2$s, %3$splugins%4$s, and %5$sthemes%6$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/ignore-wordpress-core-update/" target="_blank">', '</a>', '<a href="https://mainwp.com/kb/ignore-plugin-updates/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://mainwp.com/kb/ignore-theme-updates/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
                 </div>
             <?php } ?>
         <?php
@@ -2462,16 +2462,16 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             ?>
             <p><?php esc_html_e( 'If you need help with managing updates, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui list">
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-updates/#update-plugins" target="_blank">Update Plugins</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-updates/#plugins-auto-updates" target="_blank">Plugins Auto Updates</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-updates/#ignore-plugin-updates" target="_blank">Ignore Plugin Updates</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-updates/#update-themes" target="_blank">Update Themes</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-updates/#themes-auto-updates" target="_blank">Themes Auto Updates</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-updates/#ignore-theme-updates" target="_blank">Ignore Theme Updates</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-updates/#update-wordpress-core" target="_blank">Update WordPress Core</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-updates/#auto-update-wordpress-core" target="_blank">Auto Update WordPress Core</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-updates/#ignore-wordpress-core-update" target="_blank">Ignore WordPress Core Update</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-updates/#safe-updates---updates-rollback" target="_blank">Safe Updates/Updates Rollback</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-updates/#update-plugins" target="_blank">Update Plugins</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-updates/#plugins-auto-updates" target="_blank">Plugins Auto Updates</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-updates/#ignore-plugin-updates" target="_blank">Ignore Plugin Updates</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-updates/#update-themes" target="_blank">Update Themes</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-updates/#themes-auto-updates" target="_blank">Themes Auto Updates</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-updates/#ignore-theme-updates" target="_blank">Ignore Theme Updates</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-updates/#update-wordpress-core" target="_blank">Update WordPress Core</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-updates/#auto-update-wordpress-core" target="_blank">Auto Update WordPress Core</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-updates/#ignore-wordpress-core-update" target="_blank">Ignore WordPress Core Update</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-updates/#safe-updates---updates-rollback" target="_blank">Safe Updates/Updates Rollback</a></div>
                 <?php
                 /**
                  * Action: mainwp_updates_help_item

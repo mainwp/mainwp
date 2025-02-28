@@ -216,6 +216,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             case 'status_code':
             case 'notes':
             case 'phpversion':
+            case 'language':
+            case 'index':
             case 'site_actions':
                 return '';
             default:
@@ -280,6 +282,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             'theme_update'   => '<i class="tint icon"></i>',
             'client_name'    => esc_html__( 'Client', 'mainwp' ),
             'security'       => esc_html__( 'Security', 'mainwp' ),
+            'language'       => esc_html__( 'Language', 'mainwp' ),
+            'index'          => esc_html__( 'Indexable', 'mainwp' ),
             'uptime'         => esc_html__( 'Uptime', 'mainwp' ),
             'last_sync'      => esc_html__( 'Last Sync', 'mainwp' ),
             'backup'         => esc_html__( 'Backups', 'mainwp' ),
@@ -449,6 +453,14 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             'className' => 'right aligned collapsing',
         );
         $defines[] = array(
+            'targets'   => array( 'manage-language-column' ),
+            'className' => 'center aligned collapsing',
+        );
+        $defines[] = array(
+            'targets'   => array( 'manage-index-column' ),
+            'className' => 'center aligned collapsing',
+        );
+        $defines[] = array(
             'targets'   => array( 'manage-site_actions-column' ),
             'className' => 'collapsing not-selectable',
         );
@@ -530,7 +542,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
 
         $default_filter = true;
         if ( ! empty( $is_not ) || ( ! empty( $selected_status ) && 'all' !== $selected_status ) || ! empty( $selected_group ) || ! empty( $selected_client ) ) {
-            $filters_row_style = 'display:block';
+            $filters_row_style = 'display:flex';
             $default_filter    = false;
         }
 
@@ -555,8 +567,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         </div>
 
         <div class="ui stackable grid" id="mainwp-sites-filters-row" style="<?php echo esc_attr( $filters_row_style ); ?>">
-            <div class="twelve wide middle aligned column">
-                <div class="ui selection mini dropdown seg_is_not" id="mainwp_is_not_site">
+            <div class="twelve wide column">
+                <div class="ui selection mini compact dropdown seg_is_not" id="mainwp_is_not_site">
                     <input type="hidden" value="<?php echo $is_not ? 'yes' : ''; ?>">
                     <i class="dropdown icon"></i>
                     <div class="default text"><?php esc_html_e( 'Is', 'mainwp' ); ?></div>
@@ -664,7 +676,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             </div>
             <a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>" class="ui big green button"><?php esc_html_e( 'Connect Your WordPress Sites', 'mainwp' ); ?></a>
             <div class="ui sub header">
-                <?php printf( esc_html__( 'If all your child sites are missing from your MainWP Dashboard, please check this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/all-child-sites-disappeared-from-my-mainwp-dashboard/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
+                <?php printf( esc_html__( 'If all your child sites are missing from your MainWP Dashboard, please check this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/all-child-sites-disappeared-from-my-mainwp-dashboard/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
             </div>
         </div>
         <?php
@@ -1072,6 +1084,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 <?php printf( esc_html__( 'To hide or show a column, click the Cog (%s) icon and select options from "Show columns"', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
             </div>
         <?php endif; ?>
+        
         <table id="mainwp-manage-sites-table" style="width:100%" class="ui selectable unstackable table mainwp-with-preview-table mainwp-manage-wpsites-table">
             <thead>
                 <tr><?php $this->print_column_headers( $optimize, true ); ?></tr>
@@ -1161,7 +1174,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
 
             <?php if ( ! $optimize ) { ?>
                         try {
-                            jQuery( '#mainwp-sites-table-loader' ).hide();
+                            //jQuery( '#mainwp-sites-table-loader' ).hide();
                             $manage_sites_table = jQuery( '#mainwp-manage-sites-table' )
                             .DataTable( {
                                 "responsive": responsive,
@@ -1211,7 +1224,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         }, 800);
             <?php } else { ?>
                     try {
-                        jQuery( '#mainwp-sites-table-loader' ).hide();
+                        //jQuery( '#mainwp-sites-table-loader' ).hide();
                         $manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).on( 'processing.dt', function ( e, settings, processing ) {
                             jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
                             if (!processing) {
@@ -1275,7 +1288,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                 if ( typeof mainwp_preview_init_event !== "undefined" ) {
                                     mainwp_preview_init_event();
                                 }
-                                jQuery( '#mainwp-sites-table-loader' ).hide();
+                                //jQuery( '#mainwp-sites-table-loader' ).hide();
                                 if ( jQuery('#mainwp-manage-sites-body-table td.dt-empty').length > 0 && jQuery('#sites-table-count-empty').length ){
                                     jQuery('#mainwp-manage-sites-body-table td.dt-empty').html(jQuery('#sites-table-count-empty').html());
                                 }
@@ -1700,6 +1713,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                     $client_image = '<i class="user circle grey big icon"></i>';
                 }
 
+                $website_info = MainWP_DB::instance()->get_website_option( $website, 'site_info' );
+                $website_info = ! empty( $website_info ) ? json_decode( $website_info, true ) : array();
+
                 foreach ( $columns as $column_name => $column_display_name ) {
 
                     $column_content = apply_filters( 'mainwp_sitestable_display_row_columns', false, $column_name, $website );
@@ -1827,6 +1843,10 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                             <span style="display: none" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
                     <?php } elseif ( 'phpversion' === $column_name ) { ?>
                         <?php echo ! empty( $website['phpversion'] ) ? '<i class="php icon"></i> ' . esc_html( substr( $website['phpversion'], 0, 6 ) ) : ''; ?>
+                    <?php } elseif ( 'language' === $column_name ) { ?>
+                        <?php echo MainWP_Utility::get_language_code_as_flag( $website_info['site_lang'] ); ?>
+                    <?php } elseif ( 'index' === $column_name ) { ?>
+                        <?php echo MainWP_Utility::get_site_index_option_icon( $website_info['site_public'] ); ?>
                     <?php } elseif ( 'added_datetime' === $column_name ) { ?>
                         <?php echo ! empty( $website['added_timestamp'] ) ? '<span data-tooltip="' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['added_timestamp'] ) ) . '" data-position="left center" data-inverted=""><i class="calendar outline icon"></i> ' . MainWP_Utility::time_elapsed_string( $website['added_timestamp'] ) . '</span>' : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                     <?php } elseif ( 'site_actions' === $column_name ) { ?>

@@ -131,6 +131,7 @@ class Api_Backups_Settings {
         ?>
         <div id="3rd-party-api-manager">
             <div class="ui segment">
+                
                 <div class="ui grid">
                     <div class="three wide column">
                         <div class="ui vertical fluid pointing menu">
@@ -163,16 +164,15 @@ class Api_Backups_Settings {
                     </div>
                     <div class="thirteen wide column">
                         <?php if ( Api_Backups_Utility::show_mainwp_message( 'mainwp-module-api-backups-manager-info-message' ) ) : ?>
-                            <div class="ui info message">
+                            <div class="ui blue message">
                                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-module-api-backups-manager-info-message"></i>
                                 <?php
                                 printf(
                                     esc_html__(
-                                        'These settings allow you to Enable 3rd-Party API functionality within your
-                                    MainWP Dashboard. Check this %1$shelp document%2$s to see all available services & the endpoints that MainWP currently supports.',
+                                        'This feature allows you to trigger and restore backups only for sites hosted on supported providers via their API. Backups cannot be created for sites hosted elsewhere or stored on these services if your site is not hosted with them. Check this %1$shelp document%2$s to see all available services & the endpoints that MainWP currently supports.',
                                         'mainwp'
                                     ),
-                                    '<a href="https://kb.mainwp.com/docs/api-backups-extension/" target="_blank">', // NOSONAR - noopener - open safe.
+                                    '<a href="https://mainwp.com/kb/api-backups-extension/" target="_blank">', // NOSONAR - noopener - open safe.
                                     '</a> <i class="external alternate icon"></i>'
                                 );
                                 ?>

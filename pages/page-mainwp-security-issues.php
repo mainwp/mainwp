@@ -50,8 +50,8 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         <table class="ui table" id="mainwp-security-issues-table">
         <thead>
                 <tr>
-                    <th scope="col" class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'Detected Issues', 'mainwp' ); ?></th>
+                    <th scope="col" class="center aligned collapsing"></th>
+                    <th scope="col"><?php esc_html_e( 'Site Hardening Checks', 'mainwp' ); ?></th>
                     <th scope="col" class="collapsing"></th>
                 </tr>
         </thead>
@@ -59,99 +59,115 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 <tr>
                     <td>
                         <span id="wp_uptodate_loading"><i class="notched circle big loading icon"></i></span>
-                        <span id="wp_uptodate_ok" style="display: none;"><i class="big check circle green icon"></i></span>
-                        <span id="wp_uptodate_nok" style="display: none;"><i class="big times circle red icon"></i></span>
+                        <span id="wp_uptodate_ok" style="display: none;"><span class="ui small green label"><?php esc_html_e( 'Good', 'mainwp' ); ?></span></span>
+                        <span id="wp_uptodate_nok" style="display: none;"><span class="ui small red label"><?php esc_html_e( 'Bad', 'mainwp' ); ?></span></span>
                     </td>
                     <td>
-                        <p id="wp_uptodate-title"><strong><?php esc_html_e( 'WordPress Version', 'mainwp' ); ?></strong></p>
-                        <strong id="wp_uptodate-status-nok" style="display: none;"><?php esc_html_e( 'WordPress is not up to date.', 'mainwp' ); ?></strong>
-                        <strong id="wp_uptodate-status-ok" style="display: none;"><?php esc_html_e( 'WordPress is up to date.', 'mainwp' ); ?></strong>
-                        <br />
-                        <em><?php esc_html_e( 'After fixing this issue', 'mainwp' ); ?></em>
+                        <div class="ui small header">
+                            <?php esc_html_e( 'WordPress Version', 'mainwp' ); ?>
+                            <div class="sub header">
+                                <div id="wp_uptodate-status-nok" style="display: none;"><?php esc_html_e( 'WordPress is not up to date.', 'mainwp' ); ?></div>
+                                <div id="wp_uptodate-status-ok" style="display: none;"><?php esc_html_e( 'WordPress is up to date.', 'mainwp' ); ?></div>
+                            </div>
+                        </div>
                     </td>
                     <td>
-                        <span id="wp_uptodate_fix" style="display: none"><a href="#"  onClick="updatesoverview_global_upgrade_all('wp'); return false;" class="ui mini green fluid button" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Click here to update', 'mainwp' ); ?>"><?php esc_html_e( 'Fix', 'mainwp' ); ?></a></span>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <span id="phpversion_matched_loading"><i class="notched circle big loading icon"></i></span>
-                        <span id="phpversion_matched_ok" style="display: none;"><i class="big check circle green icon"></i></span>
-                        <span id="phpversion_matched_nok" style="display: none;"><i class="big times circle red icon"></i></span>
-                    </td>
-                    <td>
-                        <p id="phpversion_matched-title"><strong><?php esc_html_e( 'PHP Version', 'mainwp' ); ?></strong></p>
-                        <strong id="phpversion_matched-status-nok" style="display: none;"><?php esc_html_e( 'PHP version older than 8.0 reached end of development and no longer receive security updates.', 'mainwp' ); ?></strong>
-                        <strong id="phpversion_matched-status-ok" style="display: none;"><?php esc_html_e( 'PHP version is up to date.', 'mainwp' ); ?></strong>
-                        <br />
-                        <em><?php esc_html_e( 'Checks if PHP version matches the WP requirement. You have to change this yourself.', 'mainwp' ); ?></em>
-                    </td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td>
-                        <span id="sslprotocol_loading"><i class="notched circle big loading icon"></i></span>
-                        <span id="sslprotocol_ok" style="display: none;"><i class="big check circle green icon"></i></span>
-                        <span id="sslprotocol_nok" style="display: none;"><i class="big times circle red icon"></i></span>
-                    </td>
-                    <td>
-                        <p id="sslprotocol-title"><strong><?php esc_html_e( 'SSL Protocol', 'mainwp' ); ?></strong></p>
-                        <strong id="sslprotocol-status-nok" style="display: none;"><?php esc_html_e( 'SSL Protocol is not in place.', 'mainwp' ); ?></strong>
-                        <strong id="sslprotocol-status-ok" style="display: none;"><?php esc_html_e( 'SSL Protocol is on place.', 'mainwp' ); ?></strong>
-                        <br />
-                        <em><?php esc_html_e( 'Checks if SSL protocol is in place. You have to change this yourself.', 'mainwp' ); ?></em>
-                    </td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td>
-                        <span id="php_reporting_loading"><i class="notched circle big loading icon"></i></span>
-                        <span id="php_reporting_ok" style="display: none;"><i class="big check circle green icon"></i></span>
-                        <span id="php_reporting_nok" style="display: none;"><i class="big times circle red icon"></i></span>
-                    </td>
-                    <td>
-                        <p id="php_reporting-title"><strong><?php esc_html_e( 'PHP Error Reporting', 'mainwp' ); ?></strong></p>
-                        <strong id="php_reporting-status-nok" style="display: none;"><?php esc_html_e( 'PHP Error reporting is not disabled. Error messages can reveal sensitive details.', 'mainwp' ); ?></strong>
-                        <strong id="php_reporting-status-ok" style="display: none;"><?php esc_html_e( 'PHP Error reporting is disabled.', 'mainwp' ); ?></strong>
-                        <br />
-                        <em><?php esc_html_e( 'After fixing this issue, PHP error reporting will be disabled', 'mainwp' ); ?></em>
-                    </td>
-                    <td>
-                        <span id="php_reporting_fix" style="display: none"><a href="#" class="ui mini fluid green button"> <?php esc_html_e( 'Fix', 'mainwp' ); ?></a></span>
-                        <span id="php_reporting_unfix" style="display: none"><a href="#" class="ui mini fluid button"><?php esc_html_e( 'Unfix', 'mainwp' ); ?></a></span>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <span id="db_reporting_loading"><i class="notched circle big loading icon"></i></span>
-                        <span id="db_reporting_ok" style="display: none;"><i class="big check circle green icon"></i></span>
-                        <span id="db_reporting_nok" style="display: none;"><i class="big times circle red icon"></i></span>
-                    </td>
-                    <td>
-                        <p id="db_reporting-title"><strong><?php esc_html_e( 'Database Error Reporting', 'mainwp' ); ?></strong></p>
-                        <strong id="db_reporting-status-nok" style="display: none;"><?php esc_html_e( 'Database Error reporting is not disabled. Error messages can reveal sensitive details.', 'mainwp' ); ?></strong>
-                        <strong id="db_reporting-status-ok" style="display: none;"><?php esc_html_e( 'Database Error reporting is disabled.', 'mainwp' ); ?></strong>
-                        <br />
-                        <em><?php esc_html_e( 'After fixing this issue, database error reporting will be disabled', 'mainwp' ); ?></em>
-                    </td>
-                    <td>
-                        <span id="db_reporting_fix" style="display: none"><a href="#" class="ui mini fluid green button"><?php esc_html_e( 'Fix', 'mainwp' ); ?></a></span>
-                        <span id="db_reporting_unfix" style="display: none"><a href="#" class="ui mini fluid button"><?php esc_html_e( 'Unfix', 'mainwp' ); ?></a></span>
+                        <span id="wp_uptodate_fix" style="display: none"><a href="#"  onClick="updatesoverview_global_upgrade_all('wp'); return false;" class="ui mini green fluid button" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Click here to update the WordPress core on the site.', 'mainwp' ); ?>"><?php esc_html_e( 'Update WordPress', 'mainwp' ); ?></a></span>
                     </td>
                 </tr>
 
                 <tr>
                     <td>
-                        <span id="debug_disabled_loading"><i class="notched circle big loading icon"></i></span>
-                        <span id="debug_disabled_ok" style="display: none;"><i class="big check circle green icon"></i></span>
-                        <span id="debug_disabled_nok" style="display: none;"><i class="big times circle red icon"></i></span>
+                        <span id="phpversion_matched_loading"><i class="notched circle big loading icon"></i></span>
+                        <span id="phpversion_matched_ok" style="display: none;"><span class="ui small green label"><?php esc_html_e( 'Good', 'mainwp' ); ?></span></span>
+                        <span id="phpversion_matched_nok" style="display: none;"><span class="ui small red label"><?php esc_html_e( 'Bad', 'mainwp' ); ?></span></span>
                     </td>
                     <td>
-                        <p id="wp_debugmode-title"><strong><?php esc_html_e( 'Debug Mode', 'mainwp' ); ?></strong></p>
-                        <strong id="debug_disabled-status-nok" style="display: none;"><?php esc_html_e( 'WP Debug mode is not disabled. Error messages can reveal sensitive details.', 'mainwp' ); ?></strong>
-                        <strong id="debug_disabled-status-ok" style="display: none;"><?php esc_html_e( 'WP Debug mode is disabled.', 'mainwp' ); ?></strong>
-                        <br />
-                        <em><?php esc_html_e( 'Checks if WP Config debugging is disabled. You have to change this yourself.', 'mainwp' ); ?></em>
+                        <div class="ui small header">
+                            <?php esc_html_e( 'PHP Version', 'mainwp' ); ?>
+                            <div class="sub header">
+                                <div id="phpversion_matched-status-nok" style="display: none;"><?php esc_html_e( 'PHP version older than 8.0 reached end of development and no longer receive security updates.', 'mainwp' ); ?></div>
+                                <div id="phpversion_matched-status-ok" style="display: none;"><?php esc_html_e( 'PHP version is up to date.', 'mainwp' ); ?></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td></td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span id="php_reporting_loading"><i class="notched circle big loading icon"></i></span>
+                        <span id="php_reporting_ok" style="display: none;"><span class="ui small green label"><?php esc_html_e( 'Good', 'mainwp' ); ?></span></span>
+                        <span id="php_reporting_nok" style="display: none;"><span class="ui small red label"><?php esc_html_e( 'Bad', 'mainwp' ); ?></span></span>
+                    </td>
+                    <td>
+                        <div class="ui small header">
+                            <?php esc_html_e( 'PHP Error Reporting', 'mainwp' ); ?>
+                            <div class="sub header">
+                                <div id="php_reporting-status-nok" style="display: none;"><?php esc_html_e( 'PHP Error reporting is not disabled. Error messages can reveal sensitive details.', 'mainwp' ); ?></div>
+                                <div id="php_reporting-status-ok" style="display: none;"><?php esc_html_e( 'PHP Error reporting is disabled.', 'mainwp' ); ?></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span id="php_reporting_fix" style="display: none"><a href="#" class="ui mini fluid green button"> <?php esc_html_e( 'Disable PHP Error Reporting', 'mainwp' ); ?></a></span>
+                        <span id="php_reporting_unfix" style="display: none"><a href="#" class="ui mini fluid button"><?php esc_html_e( 'Reenable PHP Error Reporting', 'mainwp' ); ?></a></span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span id="db_reporting_loading"><i class="notched circle big loading icon"></i></span>
+                        <span id="db_reporting_ok" style="display: none;"><span class="ui small green label"><?php esc_html_e( 'Good', 'mainwp' ); ?></span></span>
+                        <span id="db_reporting_nok" style="display: none;"><span class="ui small red label"><?php esc_html_e( 'Bad', 'mainwp' ); ?></span></span>
+                    </td>
+                    <td>
+                        <div class="ui small header">
+                            <?php esc_html_e( 'Database Error Reporting', 'mainwp' ); ?>
+                            <div class="sub header">
+                                <div id="db_reporting-status-nok" style="display: none;"><?php esc_html_e( 'Database Error reporting is not disabled. Error messages can reveal sensitive details.', 'mainwp' ); ?></div>
+                                <div id="db_reporting-status-ok" style="display: none;"><?php esc_html_e( 'Database Error reporting is disabled.', 'mainwp' ); ?></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span id="db_reporting_fix" style="display: none"><a href="#" class="ui mini fluid green button"><?php esc_html_e( 'Disable DB Error Reporting', 'mainwp' ); ?></a></span>
+                        <span id="db_reporting_unfix" style="display: none"><a href="#" class="ui mini fluid button"><?php esc_html_e( 'Reenable DB Error Reporting', 'mainwp' ); ?></a></span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span id="sslprotocol_loading"><i class="notched circle big loading icon"></i></span>
+                        <span id="sslprotocol_ok" style="display: none;"><span class="ui small green label"><?php esc_html_e( 'Good', 'mainwp' ); ?></span></span>
+                        <span id="sslprotocol_nok" style="display: none;"><span class="ui small red label"><?php esc_html_e( 'Bad', 'mainwp' ); ?></span></span>
+                    </td>
+                    <td>
+                        <div class="ui small header">
+                            <?php esc_html_e( 'SSL Protocol', 'mainwp' ); ?>
+                            <div class="sub header">
+                                <div id="sslprotocol-status-nok" style="display: none;"><?php esc_html_e( 'SSL Protocol is not in place.', 'mainwp' ); ?></div>
+                                <div id="sslprotocol-status-ok" style="display: none;"><?php esc_html_e( 'SSL Protocol is on place.', 'mainwp' ); ?></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td></td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span id="debug_disabled_loading"><i class="notched circle big loading icon"></i></span>
+                        <span id="debug_disabled_ok" style="display: none;"><span class="ui small green label"><?php esc_html_e( 'Good', 'mainwp' ); ?></span></span>
+                        <span id="debug_disabled_nok" style="display: none;"><span class="ui small red label"><?php esc_html_e( 'Bad', 'mainwp' ); ?></span></span>
+                    </td>
+                    <td>
+                        <div class="ui small header">
+                            <?php esc_html_e( 'Debug Mode', 'mainwp' ); ?>
+                            <div class="sub header">
+                                <div id="debug_disabled-status-nok" style="display: none;"><?php esc_html_e( 'WP Debug mode is not disabled. Error messages can reveal sensitive details.', 'mainwp' ); ?></div>
+                                <div id="debug_disabled-status-ok" style="display: none;"><?php esc_html_e( 'WP Debug mode is disabled.', 'mainwp' ); ?></div>
+                            </div>
+                        </div>
                     </td>
                     <td></td>
                 </tr>
@@ -159,83 +175,92 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 <tr>
                     <td>
                         <span id="sec_outdated_plugins_loading"><i class="notched circle big loading icon"></i></span>
-                        <span id="sec_outdated_plugins_ok" style="display: none;"><i class="big check circle green icon"></i></span>
-                        <span id="sec_outdated_plugins_nok" style="display: none;"><i class="big times circle red icon"></i></span>
+                        <span id="sec_outdated_plugins_ok" style="display: none;"><span class="ui small green label"><?php esc_html_e( 'Good', 'mainwp' ); ?></span></span>
+                        <span id="sec_outdated_plugins_nok" style="display: none;"><span class="ui small red label"><?php esc_html_e( 'Bad', 'mainwp' ); ?></span></span>
                     </td>
                     <td>
-                        <p id="sec_outdated_plugins-title"><strong><?php esc_html_e( 'Outdated Plugins', 'mainwp' ); ?></strong></p>
-                        <strong id="sec_outdated_plugins-status-nok" style="display: none;"><?php esc_html_e( 'Plugins are not up to date. Outdated plugins can contain known vulnerabilities that attackers may exploit.', 'mainwp' ); ?></strong>
-                        <strong id="sec_outdated_plugins-status-ok" style="display: none;"><?php esc_html_e( 'Plugins are up to date.', 'mainwp' ); ?></strong>
-                        <br />
-                        <em><?php esc_html_e( 'Checks if Outdated Plugins.', 'mainwp' ); ?></em>
+                        <div class="ui small header">
+                            <?php esc_html_e( 'Outdated Plugins', 'mainwp' ); ?>
+                            <div class="sub header">
+                                <div id="sec_outdated_plugins-status-nok" style="display: none;"><?php esc_html_e( 'Plugins are not up to date. Outdated plugins can contain known vulnerabilities that attackers may exploit.', 'mainwp' ); ?></div>
+                                <div id="sec_outdated_plugins-status-ok" style="display: none;"><?php esc_html_e( 'Plugins are up to date.', 'mainwp' ); ?></div>
+                            </div>
+                        </div>
                     </td>
-                    <td></td>
+                    <td>
+                        <span id="sec_outdated_plugins_fix" style="display: none"><a href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>" class="ui mini basic button"><?php esc_html_e( 'Manage Updates', 'mainwp' ); ?></a></span>
+                        <span id="sec_outdated_plugins_unfix" style="display: none"></span>
+                    </td>
                 </tr>
 
                 <tr>
                     <td>
                         <span id="sec_inactive_plugins_loading"><i class="notched circle big loading icon"></i></span>
-                        <span id="sec_inactive_plugins_ok" style="display: none;"><i class="big check circle green icon"></i></span>
-                        <span id="sec_inactive_plugins_nok" style="display: none;"><i class="big times circle red icon"></i></span>
+                        <span id="sec_inactive_plugins_ok" style="display: none;"><span class="ui small green label"><?php esc_html_e( 'Good', 'mainwp' ); ?></span></span>
+                        <span id="sec_inactive_plugins_nok" style="display: none;"><span class="ui small red label"><?php esc_html_e( 'Bad', 'mainwp' ); ?></span></span>
                     </td>
                     <td>
-                        <p id="sec_inactive_plugins-title"><strong><?php esc_html_e( 'Inactive Plugins', 'mainwp' ); ?></strong></p>
-                        <strong id="sec_inactive_plugins-status-nok" style="display: none;"><?php esc_html_e( 'Inactive plugins detected. Removing unused plugins minimizes the risk of hidden vulnerabilities that could be exploited.', 'mainwp' ); ?></strong>
-                        <strong id="sec_inactive_plugins-status-ok" style="display: none;"><?php esc_html_e( 'No inactive plugins.', 'mainwp' ); ?></strong>
-                        <br />
-                        <em><?php esc_html_e( 'Checks if Inactive Plugins.', 'mainwp' ); ?></em>
+                        <div class="ui small header">
+                            <?php esc_html_e( 'Inactive Plugins', 'mainwp' ); ?>
+                            <div class="sub header">
+                                <div id="sec_inactive_plugins-status-nok" style="display: none;"><?php esc_html_e( 'Inactive plugins detected. Removing unused plugins minimizes the risk of hidden vulnerabilities that could be exploited.', 'mainwp' ); ?></div>
+                                <div id="sec_inactive_plugins-status-ok" style="display: none;"><?php esc_html_e( 'No inactive plugins.', 'mainwp' ); ?></div>
+                            </div>
+                        </div>
                     </td>
-                    <td></td>
+                    <td>
+                        <span id="sec_inactive_plugins_fix" style="display: none"><a href="admin.php?page=PluginsManage" class="ui mini basic button"><?php esc_html_e( 'Manage Plugins', 'mainwp' ); ?></a></span>
+                        <span id="sec_inactive_plugins_unfix" style="display: none"></span>
+                    </td>
                 </tr>
 
                 <tr>
                     <td>
                         <span id="sec_outdated_themes_loading"><i class="notched circle big loading icon"></i></span>
-                        <span id="sec_outdated_themes_ok" style="display: none;"><i class="big check circle green icon"></i></span>
-                        <span id="sec_outdated_themes_nok" style="display: none;"><i class="big times circle red icon"></i></span>
+                        <span id="sec_outdated_themes_ok" style="display: none;"><span class="ui small green label"><?php esc_html_e( 'Good', 'mainwp' ); ?></span></span>
+                        <span id="sec_outdated_themes_nok" style="display: none;"><span class="ui small red label"><?php esc_html_e( 'Bad', 'mainwp' ); ?></span></span>
                     </td>
                     <td>
-                        <p id="sec_outdated_themes-title"><strong><?php esc_html_e( 'Outdated Themes', 'mainwp' ); ?></strong></p>
-                        <strong id="sec_outdated_themes-status-nok" style="display: none;"><?php esc_html_e( 'Themes are not up to date. Outdated themes can contain known vulnerabilities that attackers may exploit.', 'mainwp' ); ?></strong>
-                        <strong id="sec_outdated_themes-status-ok" style="display: none;"><?php esc_html_e( 'Themes are up to date.', 'mainwp' ); ?></strong>
-                        <br />
-                        <em><?php esc_html_e( 'Checks if Outdated Themes.', 'mainwp' ); ?></em>
+                        <div class="ui small header">
+                            <?php esc_html_e( 'Outdated Themes', 'mainwp' ); ?>
+                            <div class="sub header">
+                                <div id="sec_outdated_themes-status-nok" style="display: none;"><?php esc_html_e( 'Themes are not up to date. Outdated themes can contain known vulnerabilities that attackers may exploit.', 'mainwp' ); ?></div>
+                                <div id="sec_outdated_themes-status-ok" style="display: none;"><?php esc_html_e( 'Themes are up to date.', 'mainwp' ); ?></div>
+                            </div>
+                        </div>
                     </td>
-                    <td></td>
+                    <td>
+                        <span id="sec_outdated_themes_fix" style="display: none"><a href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>" class="ui mini basic button"><?php esc_html_e( 'Manage Updates', 'mainwp' ); ?></a></span>
+                        <span id="sec_outdated_themes_unfix" style="display: none"></span>
+                    </td>
                 </tr>
 
                 <tr>
                     <td>
                         <span id="sec_inactive_themes_loading"><i class="notched circle big loading icon"></i></span>
-                        <span id="sec_inactive_themes_ok" style="display: none;"><i class="big check circle green icon"></i></span>
-                        <span id="sec_inactive_themes_nok" style="display: none;"><i class="big times circle red icon"></i></span>
+                        <span id="sec_inactive_themes_ok" style="display: none;"><span class="ui small green label"><?php esc_html_e( 'Good', 'mainwp' ); ?></span></span>
+                        <span id="sec_inactive_themes_nok" style="display: none;"><span class="ui small red label"><?php esc_html_e( 'Bad', 'mainwp' ); ?></span></span>
                     </td>
                     <td>
-                        <p id="sec_inactive_themes-title"><strong><?php esc_html_e( 'Inactive Themes', 'mainwp' ); ?></strong></p>
-                        <strong id="sec_inactive_themes-status-nok" style="display: none;"><?php esc_html_e( 'Inactive themes detected. Removing unused themes minimizes the risk of hidden vulnerabilities that could be exploited.', 'mainwp' ); ?></strong>
-                        <strong id="sec_inactive_themes-status-ok" style="display: none;"><?php esc_html_e( 'No inactive themes.', 'mainwp' ); ?></strong>
-                        <br />
-                        <em><?php esc_html_e( 'Checks if Inactive Themes.', 'mainwp' ); ?></em>
+                        <div class="ui small header">
+                            <?php esc_html_e( 'Inactive Themes', 'mainwp' ); ?>
+                            <div class="sub header">
+                                <div id="sec_inactive_themes-status-nok" style="display: none;"><?php esc_html_e( 'Inactive themes detected. Removing unused themes minimizes the risk of hidden vulnerabilities that could be exploited.', 'mainwp' ); ?></div>
+                                <div id="sec_inactive_themes-status-ok" style="display: none;"><?php esc_html_e( 'No inactive themes.', 'mainwp' ); ?></div>
+                            </div>
+                        </div>
                     </td>
-                    <td></td>
+                    <td>
+                        <span id="sec_inactive_themes_fix" style="display: none"><a href="admin.php?page=ThemesManage" class="ui mini basic button"><?php esc_html_e( 'Manage Themes', 'mainwp' ); ?></a></span>
+                        <span id="sec_inactive_themes_unfix" style="display: none"></span>
+                    </td>
                 </tr>
 
-        </tbody>
-        <?php
-        $is_demo = MainWP_Demo_Handle::is_demo_mode();
-        ?>
-            <tfoot class="full-width">
-                <tr>
-                <th scope="col" colspan="3">
-                    <?php if ( ! $is_demo ) : ?>
-                            <input type="button" id="securityIssues_fixAll" class="ui green button right floated" value="<?php esc_html_e( 'Fix All', 'mainwp' ); ?>"/>
-                            <input type="button" id="securityIssues_refresh" class="ui green basic button" value="<?php esc_html_e( 'Refresh', 'mainwp' ); ?>"/>
-                            <input type="hidden" id="securityIssueSite" value="<?php echo intval( $website->id ); ?>"/>
-                    <?php endif; ?>
-                    </th>
-                </tr>
-            </tfoot>
+            </tbody>
         </table>
+        
+        
+        <input type="hidden" id="securityIssueSite" value="<?php echo intval( $website->id ); ?>"/>
         <div id="wp_upgrades">
             <div updated="-1" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( $website->name ); ?>" ></div>
         </div>

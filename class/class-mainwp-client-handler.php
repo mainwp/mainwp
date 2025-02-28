@@ -569,6 +569,10 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $img_cls = 'ui medium circular image';
         }
 
+        if ( 'small' === $what ) {
+            $img_cls = 'ui small circular image';
+        }
+
         $icon_wrapper_attr = ' class="' . $img_cls . '" style="height:auto;display:inline-block;" ';
         if ( 'display_edit' === $what ) {
             $icon_wrapper_attr = ' id="mainwp_add_edit_client_upload_custom_icon" style="width:28px;height:auto;display:inline-block;" class="' . esc_attr( $img_cls ) . '" ';

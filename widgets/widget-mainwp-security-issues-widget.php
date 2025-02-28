@@ -189,7 +189,7 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
         
             <div class="mainwp-scrolly-overflow">
             
-            <div class="ui middle aligned divided selection list" id="mainwp-security-issues-widget-list" style="display:none">
+            <div class="ui middle aligned divided list" id="mainwp-security-issues-widget-list" style="display:none">
                 <?php
                 $count_security_issues = '';
                 MainWP_DB::data_seek( $websites, 0 );

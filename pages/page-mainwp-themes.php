@@ -467,7 +467,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-themes-info-message"></i>
                             <div><?php echo esc_html__( 'Manage installed themes on your child sites. Here you can activate, deactivate, and delete installed themes.', 'mainwp' ); ?></div>
                             <p><?php echo esc_html__( 'To Activate or Delete a specific theme, you must search only for Inactive themes on your child sites. If you search for Active or both Active and Inactive, the Activate and Delete actions will be disabled.', 'mainwp' ); ?></p>
-                            <p><?php printf( esc_html__( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></p>
+                            <p><?php printf( esc_html__( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/managing-themes-with-mainwp/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></p>
                         </div>
                     <?php endif; ?>
                     <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -1748,11 +1748,28 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         <div class="ui alt segment" id="mainwp-install-themes">
             <div class="mainwp-main-content">
                 <div class="mainwp-actions-bar">
-                    <div class="ui stackable grid">
-                        <div class="ui two column row">
-                            <div class="column">
-                                <div class="ui fluid search focus">
-                                    <div class="ui icon fluid input hide-if-upload" id="mainwp-search-themes-input-container" skeyword="<?php echo isset( $_GET['s'] ) ? esc_html( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>"></div>
+                    <div class="ui stackable two column grid">
+                        
+                        <div class="column">
+                                    <div class="ui mini buttons">
+                                        <a href="#" class="ui basic button browse-themes" ><?php esc_html_e( 'Install from WordPress.org', 'mainwp' ); ?></a>
+                                        <a href="#" class="ui basic button upload" ><?php esc_html_e( 'Upload .zip file', 'mainwp' ); ?></a>
+                                        <?php do_action( 'mainwp_install_plugin_theme_tabs_header_top', 'theme' ); ?>
+                                    </div>
+                                <?php
+                                /**
+                                 * Install Themes actions bar (right)
+                                 *
+                                 * Fires at the right side of the actions bar on the Install Themes screen.
+                                 *
+                                 * @since 4.0
+                                 */
+                                do_action( 'mainwp_install_themes_actions_bar_right' );
+                                ?>
+                            </div>
+                            <div class="right aligned column">
+                                <div class="ui search focus">
+                                    <div class="ui icon mini input mainwp-bulk-install-showhide-content" id="mainwp-search-themes-input-container" skeyword="<?php echo isset( $_GET['s'] ) ? esc_html( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>"></div>
                                     <div class="results"></div>
                                 </div>
                                 <?php
@@ -1766,24 +1783,8 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 do_action( 'mainwp_install_themes_actions_bar_left' );
                                 ?>
                             </div>
-                            <div class="right aligned column">
-                                <div class="ui buttons">
-                                    <a href="#" class="ui button browse-themes" ><?php esc_html_e( 'Install from WordPress.org', 'mainwp' ); ?></a>
-                                    <div class="or"></div>
-                                    <a href="#" class="ui button upload" ><?php esc_html_e( 'Upload .zip file', 'mainwp' ); ?></a>
-                                </div>
-                                <?php
-                                /**
-                                 * Install Themes actions bar (right)
-                                 *
-                                 * Fires at the right side of the actions bar on the Install Themes screen.
-                                 *
-                                 * @since 4.0
-                                 */
-                                do_action( 'mainwp_install_themes_actions_bar_right' );
-                                ?>
-                            </div>
-                        </div>
+                            
+                        
                     </div>
                 </div>
                 <div class="ui segment">
@@ -1794,16 +1795,19 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         </div>
                     <?php endif; ?>
                     <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
-                    <div class="mainwp-upload-theme">
+                    <div class="mainwp-upload-theme mainwp-bulk-install-showhide-content">
                         <?php MainWP_Install_Bulk::render_upload( 'theme' ); ?>
                     </div>
                     <div id="themes-loading" class="ui large text loader"><?php esc_html_e( 'Loading Themes...', 'mainwp' ); ?></div>
-                    <form id="theme-filter" method="post">
+                    <form id="theme-filter" method="post" class="mainwp-bulk-install-showhide-content">
                         <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-                        <div class="mainwp-browse-themes content-filterable hide-if-upload"></div>
+                        <div class="mainwp-browse-themes content-filterable"></div>
                         <div class="theme-install-overlay wp-full-overlay expanded"></div>
                     </form>
-
+                    <?php
+                    // @since 5.4.
+                    do_action( 'mainwp_bulk_install_tabs_content', 'theme' );
+                    ?>
                     <?php MainWP_UI::render_modal_install_plugin_theme( 'theme' ); ?>
                 </div>
             </div>
@@ -1873,6 +1877,10 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 }
                 ?>
                 <?php do_action( 'mainwp_manage_themes_after_submit_button' ); ?>
+                <?php
+                //@since 5.4.
+                do_action( 'mainwp_bulk_install_sidebar_submit_bottom', 'theme' );
+                ?>
                 </div>
                 <?php do_action( 'mainwp_manage_themes_sidebar_bottom', 'install' ); ?>
             </div>
@@ -2440,7 +2448,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-themes-info-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-themes-info-message"></i>
-                    <?php printf( esc_html__( 'Manage themes you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-themes-updates/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                    <?php printf( esc_html__( 'Manage themes you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/ignore-themes-updates/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
                 </div>
             <?php endif; ?>
             <?php
@@ -2707,7 +2715,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-abandoned-themes-info-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-abandoned-themes-info-message"></i>
-                    <?php printf( esc_html__( 'Manage abandoned themes you have told your MainWP Dashboard to ignore on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/abandoned-themes/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                    <?php printf( esc_html__( 'Manage abandoned themes you have told your MainWP Dashboard to ignore on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/abandoned-themes/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
                 </div>
             <?php endif; ?>
             <?php
@@ -2911,11 +2919,11 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             ?>
             <p><?php esc_html_e( 'If you need help with managing themes, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui relaxed bulleted list">
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/" target="_blank">Managing Themes with MainWP</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/#install-themes" target="_blank">Install Themes</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/#activate-themes" target="_blank">Activate Themes</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/#delete-themes" target="_blank">Delete Themes</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/#update-themes" target="_blank">Update Themes</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/managing-themes-with-mainwp/" target="_blank">Managing Themes with MainWP</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/managing-themes-with-mainwp/#install-themes" target="_blank">Install Themes</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/managing-themes-with-mainwp/#activate-themes" target="_blank">Activate Themes</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/managing-themes-with-mainwp/#delete-themes" target="_blank">Delete Themes</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/managing-themes-with-mainwp/#update-themes" target="_blank">Update Themes</a></div>
                 <?php
                 /**
                  * Action: mainwp_themes_help_item

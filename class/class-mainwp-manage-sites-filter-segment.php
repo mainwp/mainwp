@@ -61,12 +61,12 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
     public function render_filters_segment() {
         $saved_segments = static::set_get_manage_sites_filter_segments();
         ?>
-        <div class="four wide middle aligned right aligned column">
+        <div class="right aligned four wide column">
             <a class="ui mini button" id="mainwp-manage-sites-filter-save-segment-button" selected-segment-id="" selected-segment-name=""><?php esc_html_e( 'Save Segment', 'mainwp' ); ?></a>
             <?php if ( ! empty( $saved_segments ) ) : ?>
-                <a class="ui mini button mainwp_manage_sites_filter_choose_segment"><?php esc_html_e( 'Load a Segment', 'mainwp' ); ?></a>
+                <a class="ui mini button mainwp_manage_sites_filter_choose_segment"><?php esc_html_e( 'Load Segment', 'mainwp' ); ?></a>
             <?php else : ?>
-                <a class="ui mini disabled button"><?php esc_html_e( 'Load a Segment', 'mainwp' ); ?></a>
+                <a class="ui mini disabled button"><?php esc_html_e( 'Load Segment', 'mainwp' ); ?></a>
             <?php endif; ?>
         </div>
 

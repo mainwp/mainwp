@@ -9,6 +9,27 @@ jQuery(function ($) {
     jQuery('.mainwp-popup-tooltip').popup()
   }
 
+  jQuery(document).on('click', '#mainwp-help-menu-item', function () {
+    jQuery('#mainwp-help-modal').modal({
+      inverted: true,
+      blurring: false,
+      closable: false,
+      onShow: function() {
+          jQuery('#mainwp-help-modal').parent('.ui.dimmer').removeClass('dimmer');
+          jQuery('#mainwp-help-modal').css({
+            'top':(jQuery(window).height() - jQuery('#mainwp-help-modal').outerHeight()) / 2 + 'px',
+            'left':(jQuery(window).width() - jQuery('#mainwp-help-modal').outerWidth()) / 2 + 'px'
+          });
+      },
+      
+    }).modal('show').draggable().resizable({
+      handles: "n, e, s, w, ne, nw, se, sw", // Allows resizing from all edges
+      minWidth: 400, // Set minimum width
+      minHeight: 600 // Set minimum height
+    });
+    return false;
+  });
+
   // review for new UI update
   jQuery(document).on('click', '#mainwp-category-add-submit', function () {
     let newCat = jQuery('#newcategory').val();
@@ -541,9 +562,9 @@ let securityIssues_fixes = [ 'core_updates', 'plugin_updates', 'theme_updates', 
 jQuery(function () {
   let securityIssueSite = jQuery('#securityIssueSite');
   if ((securityIssueSite.val() != null) && (securityIssueSite.val() != "")) {
-    jQuery(document).on('click', '#securityIssues_fixAll', function () {
-      securityIssues_fix('all');
-    });
+    //jQuery(document).on('click', '#securityIssues_fixAll', function () {
+    //  securityIssues_fix('all');
+    //});
 
     jQuery(document).on('click', '#securityIssues_refresh', function () {
       for (let ise of securityIssues_fixes) {
@@ -581,19 +602,19 @@ jQuery(function () {
   }
 });
 window.securityIssues_fix = function (feature) {
-  if (feature == 'all') {
-    for (let ise of securityIssues_fixes) {
-      if (jQuery('#' + ise + '_nok').css('display') != 'none') {
-        if (jQuery('#' + ise + '_fix')) {
-          jQuery('#' + ise + '_fix').hide();
-        }
-        jQuery('#' + ise + '_extra').hide();
-        jQuery('#' + ise + '_ok').hide();
-        jQuery('#' + ise + '_nok').hide();
-        jQuery('#' + ise + '_loading').show();
-      }
-    }
-  } else {
+  //if (feature == 'all') {
+  //  for (let ise of securityIssues_fixes) {
+  //    if (jQuery('#' + ise + '_nok').css('display') != 'none') {
+  //      if (jQuery('#' + ise + '_fix')) {
+  //        jQuery('#' + ise + '_fix').hide();
+  //     }
+  //      jQuery('#' + ise + '_extra').hide();
+  //      jQuery('#' + ise + '_ok').hide();
+  //      jQuery('#' + ise + '_nok').hide();
+  //      jQuery('#' + ise + '_loading').show();
+  //    }
+  //  }
+  //} else {
     if (jQuery('#' + feature + '_fix')) {
       jQuery('#' + feature + '_fix').hide();
     }
@@ -601,7 +622,7 @@ window.securityIssues_fix = function (feature) {
     jQuery('#' + feature + '_ok').hide();
     jQuery('#' + feature + '_nok').hide();
     jQuery('#' + feature + '_loading').show();
-  }
+  //}
 
   let data = mainwp_secure_data({
     action: 'mainwp_security_issues_fix',
@@ -754,7 +775,7 @@ let securityIssues_handle = function (response) { // NOSONAR - complex.
             if (jQuery('#' + issue + '_unfix')) {
               jQuery('#' + issue + '_unfix').show();
               if (res[issue] == 'Y_UNABLE') { // Y_UNABLE will disable unfix.
-                jQuery('#' + issue + '_unfix').hide().after('<a href="javascript:void(0);" class="ui mini fluid button" disabled="disabled">Unfix</a>');
+                jQuery('#' + issue + '_unfix').hide();
               }
             }
 
@@ -1546,7 +1567,7 @@ let mainwp_site_overview_reconnect = function (pElement) {
       if (response.substring(0, 5) == 'ERROR') {
         let error;
         if (response.length == 5) {
-          error = 'Undefined error! Please try again. If the process keeps failing, please review <a href="https://kb.mainwp.com/">MainWP Knowledgebase</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
+          error = 'Undefined error! Please try again. If the process keeps failing, please review <a href="https://mainwp.com/kb/">MainWP Knowledgebase</a>, and if you still have issues, please let us know in the <a href="https://community.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
           feedback('mainwp-message-zone', error, 'red');
         } else {
           error = response.substring(6);
@@ -1607,7 +1628,7 @@ let mainwp_reconnect_with_pw = function (siteid) {
     if (response.substring(0, 5) == 'ERROR') {
       let error;
       if (response.length == 5) {
-        error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://kb.mainwp.com/docs/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
+        error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://mainwp.com/kb/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://community.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
         mainwp_set_message_zone('#mainwp-message-zone-reconnect', error, 'red');
       } else {
         error = response.substring(6);
@@ -1643,7 +1664,7 @@ let mainwp_managesites_reconnect = function (pElement) {
       if (response.substring(0, 5) == 'ERROR') {
         let error;
         if (response.length == 5) {
-          error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://kb.mainwp.com/docs/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
+          error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://mainwp.com/kb/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://community.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
           feedback('mainwp-message-zone', error, 'red');
         } else {
           error = response.substring(6);
@@ -1680,7 +1701,7 @@ let mainwp_managesites_cards_reconnect = function (element) {
       if (response.substring(0, 5) == 'ERROR') {
         let error;
         if (response.length == 5) {
-          error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://kb.mainwp.com/docs/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
+          error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://mainwp.com/kb/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://community.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
           feedback('mainwp-message-zone', error, 'red');
         } else {
           error = response.substring(6);
@@ -2436,16 +2457,15 @@ jQuery(function () {
   jQuery('#MainWPInstallBulkNavSearch').on('click', function (event) {
     event.preventDefault();
     jQuery('#mainwp_plugin_bulk_install_btn').attr('bulk-action', 'install');
+    jQuery('.mainwp-bulk-install-showhide-content').hide();
     jQuery('.mainwp-browse-plugins').show();
-    jQuery('.mainwp-upload-plugin').hide();
     jQuery('#mainwp-search-plugins-form').show();
   });
   jQuery('#MainWPInstallBulkNavUpload').on('click', function (event) {
     event.preventDefault();
     jQuery('#mainwp_plugin_bulk_install_btn').attr('bulk-action', 'upload');
+    jQuery('.mainwp-bulk-install-showhide-content').hide();
     jQuery('.mainwp-upload-plugin').show();
-    jQuery('.mainwp-browse-plugins').hide();
-    jQuery('#mainwp-search-plugins-form').hide();
   });
 
   // not used?
@@ -2585,7 +2605,7 @@ let mainwp_install_bulk = function (type, slug, name) {
       let installQueueContent = '';
       bulkInstallDone = 0;
       installQueueContent += '<div id="bulk_install_info"></div>';
-      installQueueContent += '<div class="ui middle aligned divided selection list">';
+      installQueueContent += '<div class="ui middle aligned divided list">';
 
       for (let siteId in response.sites) {
         let site = response.sites[siteId];
@@ -2722,14 +2742,14 @@ let mainwp_install_bulk_you_know_msg = function (type, total) { // NOSONAR - com
   if (mainwpParams.installedBulkSettingsManager && mainwpParams.installedBulkSettingsManager == 1) {
     if (type == 'plugin') {
       if (total == 1)
-        msg = __('Would you like to use the Bulk Settings Manager with this plugin? Check out the %1Documentation%2.', '<a href="https://kb.mainwp.com/docs/bulk-settings-manager-extension/" target="_blank">', '</a>'); // NOSONAR - noopener - open safe.
+        msg = __('Would you like to use the Bulk Settings Manager with this plugin? Check out the %1Documentation%2.', '<a href="https://mainwp.com/kb/bulk-settings-manager-extension/" target="_blank">', '</a>'); // NOSONAR - noopener - open safe.
       else
-        msg = __('Would you like to use the Bulk Settings Manager with these plugins? Check out the %1Documentation%2.', '<a href="https://kb.mainwp.com/docs/bulk-settings-manager-extension/" target="_blank">', '</a>'); // NOSONAR - noopener - open safe.
+        msg = __('Would you like to use the Bulk Settings Manager with these plugins? Check out the %1Documentation%2.', '<a href="https://mainwp.com/kb/bulk-settings-manager-extension/" target="_blank">', '</a>'); // NOSONAR - noopener - open safe.
     } else if (type == 'theme') {
       if (total == 1)
-        msg = __('Would you like to use the Bulk Settings Manager with this theme? Check out the %1Documentation%2.', '<a href="https://kb.mainwp.com/docs/bulk-settings-manager-extension/" target="_blank">', '</a>'); // NOSONAR - noopener - open safe.
+        msg = __('Would you like to use the Bulk Settings Manager with this theme? Check out the %1Documentation%2.', '<a href="https://mainwp.com/kb/bulk-settings-manager-extension/" target="_blank">', '</a>'); // NOSONAR - noopener - open safe.
       else
-        msg = __('Would you like to use the Bulk Settings Manager with these themes? Check out the %1Documentation%2.', '<a href="https://kb.mainwp.com/docs/bulk-settings-manager-extension/" target="_blank">', '</a>'); // NOSONAR - noopener - open safe.
+        msg = __('Would you like to use the Bulk Settings Manager with these themes? Check out the %1Documentation%2.', '<a href="https://mainwp.com/kb/bulk-settings-manager-extension/" target="_blank">', '</a>'); // NOSONAR - noopener - open safe.
     }
   } else if (type == 'plugin') {
     if (total == 1)
@@ -2971,7 +2991,7 @@ let mainwp_upload_bulk_start_specific = function (type, urls, activatePlugin, ov
         let results = '';
         if (response?.results[siteid] != undefined) {
           let entries = Object.entries(response.results[siteid]);
-          results += '<div class="ui tiny middle aligned selection list">';
+          results += '<div class="ui tiny middle aligned list">';
           for (let entry of entries) {
             results += '<div class="item"><div class="right floated content">' + (entry[1] ? '<i class="check green icon"></i>' : '<i class="times red icon"></i>') + '</div><div class="content">' + entry[0] + '</div></div>';
           }
@@ -4564,7 +4584,7 @@ jQuery(function ($) {
         loadSegment: function (loadCallback) {
           jQuery('#mainwp-common-filter-segment-edit-fields').hide();
           jQuery('#mainwp-common-filter-edit-segment-save').hide();
-          jQuery('#mainwp-common-filter-segment-modal > div.header').html(__('Load a Segment'));
+          jQuery('#mainwp-common-filter-segment-modal > div.header').html(__('Load Segment'));
           jQuery('#mainwp-common-filter-segment-select-fields').show();
           jQuery('#mainwp-common-filter-select-segment-choose-button').show();
           jQuery('#mainwp-common-filter-select-segment-delete-button').show();
@@ -4767,7 +4787,7 @@ jQuery(function ($) {
       if (response?.success) {
         feedback('mainwp-message-zone', __('Monitor have been removed.'), 'green');
         setTimeout(function () {
-          window.location = 'admin.php?page=managesites&monitor_wpid=' + wpid;
+          window.location = 'admin.php?page=managesites&id=' + wpid;
         }, 2000);
 
       } else if (response?.error) {

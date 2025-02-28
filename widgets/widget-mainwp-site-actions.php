@@ -122,7 +122,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                  *
                  * @since 4.1
                  */
-                echo esc_html( apply_filters( 'mainwp_non_mainwp_changes_widget_title', esc_html__( 'Insights Changes', 'mainwp' ), $website ) );
+                echo esc_html( apply_filters( 'mainwp_non_mainwp_changes_widget_title', esc_html__( 'Sites Changes', 'mainwp' ), $website ) );
                 ?>
                 <div class="sub header"><?php esc_html_e( 'The most recent changes made to your Child Sites.', 'mainwp' ); ?></div>
             </h2>

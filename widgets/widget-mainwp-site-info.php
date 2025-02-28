@@ -140,7 +140,7 @@ class MainWP_Site_Info { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
                 $website_info['group'] = empty( $website->wpgroups ) ? 'None' : $website->wpgroups;
 
                 ?>
-            <table class="ui table">
+            <table class="ui mini very compact table">
                 <tbody>
                 <?php
                 /**
@@ -160,11 +160,14 @@ class MainWP_Site_Info { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
                     if ( isset( $website_info[ $index ] ) ) {
                         $val = $website_info[ $index ];
                         if ( 'debug_mode' === $index ) {
-                            $val = ( 1 === (int) $website_info[ $index ] ) ? 'Enabled' : 'Disabled';
+                            $val = ( 1 === (int) $website_info[ $index ] ) ? __( 'Enabled', 'mainwp' ) : __( 'Disabled', 'mainwp' );
                         } elseif ( 'site_public' === $index ) {
-                            $val = ( 1 === (int) $website_info[ $index ] ) ? 'Yes' : 'No';
+                            $val = ( 1 === (int) $website_info[ $index ] ) ? __( 'Visible', 'mainwp' ) : __( 'Blocking', 'mainwp' );
                         } elseif ( 'site_lang' === $index ) {
-                            $val = static::get_language_name( $val );
+                            if ( function_exists( 'locale_get_display_name' ) ) {
+                                $val = locale_get_display_name( $val );
+                            }
+                            $val = $val;
                         }
                     }
                     ?>
@@ -202,29 +205,5 @@ class MainWP_Site_Info { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
             ?>
         </div>
         <?php
-    }
-
-
-    /**
-     * Method get_language_name()
-     *
-     * @param  string $code language
-     * @return string language name.
-     */
-    public static function get_language_name( $code ) {
-        $languages = array(
-            'en_US' => 'English (United States)',
-            'en_GB' => 'English (United Kingdom)',
-            'fr_FR' => 'French (France)',
-            'es_ES' => 'Spanish (Spain)',
-            'de_DE' => 'German (Germany)',
-            'it_IT' => 'Italian',
-            'ja_JP' => 'Japanese',
-            'zh_CN' => 'Chinese (Simplified)',
-            'zh_TW' => 'Chinese (Traditional)',
-            'ar_SA' => 'Arabic',
-            'ru_RU' => 'Russian',
-        );
-        return $languages[ $code ] ?? $code;
     }
 }

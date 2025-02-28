@@ -10,6 +10,8 @@
 
 namespace MainWP\Dashboard;
 
+use MainWP\Dashboard\Module\CostTracker\Cost_Tracker_Settings;
+
 /**
  * Class MainWP_Settings
  *
@@ -164,6 +166,20 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             );
         }
 
+        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CostTrackerSettings' ) ) {
+            add_submenu_page(
+                'mainwp_tab',
+                esc_html__( 'Cost Tracker', 'mainwp' ),
+                '<div class="mainwp-hidden">' . esc_html__( 'Cost Tracker', 'mainwp' ) . '</div>',
+                'read',
+                'CostTrackerSettings',
+                array(
+                    Cost_Tracker_Settings::get_instance(),
+                    'render_settings_page',
+                )
+            );
+        }
+
         if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsAdvanced' ) ) {
             add_submenu_page(
                 'mainwp_tab',
@@ -230,8 +246,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsEmail' ) ) { ?>
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=SettingsEmail' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Email Settings', 'mainwp' ); ?></a>
                     <?php } ?>
-                    <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) { ?>
-                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=MainWPTools' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Tools', 'mainwp' ); ?></a>
+                    <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CostTrackerSettings' ) ) { ?>
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=CostTrackerSettings' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Cost Tracker', 'mainwp' ); ?></a>
                     <?php } ?>
                     <?php
                     if ( isset( static::$subPages ) && is_array( static::$subPages ) && ! empty( static::$subPages ) ) {
@@ -245,6 +261,9 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         }
                     }
                     ?>
+                    <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) { ?>
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=MainWPTools' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Tools', 'mainwp' ); ?></a>
+                    <?php } ?>
                 </div>
             </div>
         </div>
@@ -303,6 +322,13 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 'slug'       => 'MainWPTools',
                 'right'      => '',
             ),
+            array(
+                'title'      => esc_html__( 'Cost Tracker', 'mainwp' ),
+                'parent_key' => 'Settings',
+                'href'       => 'admin.php?page=CostTrackerSettings',
+                'slug'       => 'CostTrackerSettings',
+                'right'      => '',
+            ),
         );
 
         MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'Settings', 'Settings' );
@@ -356,11 +382,11 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             );
         }
 
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) {
+        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CostTrackerSettings' ) ) {
             $renderItems[] = array(
-                'title'  => esc_html__( 'Tools', 'mainwp' ),
-                'href'   => 'admin.php?page=MainWPTools',
-                'active' => ( 'MainWPTools' === $shownPage ) ? true : false,
+                'title'  => esc_html__( 'Cost Tracker', 'mainwp' ),
+                'href'   => 'admin.php?page=CostTrackerSettings',
+                'active' => ( 'CostTrackerSettings' === $shownPage ) ? true : false,
             );
         }
 
@@ -382,6 +408,14 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 }
                 $renderItems[] = $item;
             }
+        }
+
+        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) {
+            $renderItems[] = array(
+                'title'  => esc_html__( 'Tools', 'mainwp' ),
+                'href'   => 'admin.php?page=MainWPTools',
+                'active' => ( 'MainWPTools' === $shownPage ) ? true : false,
+            );
         }
 
         MainWP_UI::render_page_navigation( $renderItems );
@@ -583,7 +617,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-general-settings-info-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-general-settings-info-message"></i>
-                    <?php printf( esc_html__( 'Manage MainWP general settings.  For additional help, review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                    <?php printf( esc_html__( 'Manage MainWP general settings.  For additional help, review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/mainwp-dashboard-settings/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
                 </div>
             <?php endif; ?>
                 <?php if ( isset( $_GET['message'] ) && 'saved' === $_GET['message'] ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
@@ -1384,24 +1418,26 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                     <label class="six wide column middle aligned"><?php esc_html_e( 'OpenSSL.cnf location', 'mainwp' ); ?></label>
                                     <div class="ten wide column ui field">
                                         <input type="text" name="mainwp_openssl_lib_location" value="<?php echo esc_html( $openssl_loc ); ?>">
-                                        <em><?php esc_html_e( 'If your openssl.cnf file is saved to a different path from what is entered please enter your exact path.', 'mainwp' ); ?> <?php printf( esc_html__( 'If you are not sure how to find the openssl.cnf location, please %1$scheck this help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/how-to-find-the-openssl-cnf-file/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></em>
+                                        <em><?php esc_html_e( 'If your openssl.cnf file is saved to a different path from what is entered please enter your exact path.', 'mainwp' ); ?> <?php printf( esc_html__( 'If you are not sure how to find the openssl.cnf location, please %1$scheck this help document%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/how-to-find-the-openssl-cnf-file/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></em>
                                         <em><?php esc_html_e( 'If you have confirmed the placement of your openssl.cnf and are still receiving an error banner, click the "Error Fixed" button to dismiss it.', 'mainwp' ); ?></em>
                                     </div>
                                 </div>
                         <?php } ?>
 
                         <h3 class="ui dividing header">
-                        <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-cross-ip' ); ?>
-                        <?php esc_html_e( 'Cross IP Settings', 'mainwp' ); ?></h3>
+                            <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-cross-ip' ); ?>
+                            <?php esc_html_e( 'Rate Limiting & Concurrency Controls', 'mainwp' ); ?>
+                            <div class="sub header"><?php esc_html_e( 'Fine-tune how your system handles outgoing requests by managing both global and per-server concurrency limits.', 'mainwp' ); ?></div>
+                        </h3>
 
                         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cross-ip" default-indi-value="4">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_maximumRequests', (int) get_option( 'mainwp_maximumRequests', 4 ) );
-                            esc_html_e( 'Maximum simultaneous requests (Default: 4)', 'mainwp' );
+                            esc_html_e( 'Global request limit (Default: 4)', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Defines the overall maximum number of simultaneous requests that can be active. Adjust this setting to balance system throughput with resource constraints (default is 4).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                                 <div class="ui bottom aligned labeled slider" id="mainwp_maximumRequests_slider"></div>
                                 <div class="ui input">
                                     <input type="hidden" class="settings-field-value-change-handler" name="mainwp_maximumRequests" id="mainwp_maximumRequests" value="<?php echo false === get_option( 'mainwp_maximumRequests' ) ? 4 : esc_attr( get_option( 'mainwp_maximumRequests' ) ); ?>"/>
@@ -1424,18 +1460,14 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             </div>
                         </div>
 
-                        <h3 class="ui dividing header">
-                        <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-per-ip' ); ?>
-                        <?php esc_html_e( 'Per IP Settings', 'mainwp' ); ?></h3>
-
                         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-per-ip" default-indi-value="1">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_maximumIPRequests', (int) get_option( 'mainwp_maximumIPRequests', 1 ) );
-                            esc_html_e( 'Maximum simultaneous requests per IP (Default: 1)', 'mainwp' );
+                            esc_html_e( 'Per-IP request limit (Default: 1)', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'Sets the maximum number of concurrent requests allowed for any individual website\'s IP address. This setting safeguards target servers from excessive load (default is 1).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                                 <div class="ui bottom aligned labeled slider" id="mainwp_maximumIPRequests_slider"></div>
                                 <div class="ui input">
                                     <input type="hidden" class="settings-field-value-change-handler" name="mainwp_maximumIPRequests" id="mainwp_maximumIPRequests" value="<?php echo false === get_option( 'mainwp_maximumIPRequests' ) ? 1 : esc_attr( get_option( 'mainwp_maximumIPRequests' ) ); ?>"/>
@@ -1459,17 +1491,19 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         </div>
 
                         <h3 class="ui dividing header">
-                        <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-chunk-site' ); ?>
-                        <?php esc_html_e( 'Chunk site process', 'mainwp' ); ?></h3>
+                            <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-chunk-site' ); ?>
+                            <?php esc_html_e( 'Batch Processing Settings', 'mainwp' ); ?>
+                            <div class="sub header"><?php esc_html_e( 'Configure how many websites are processed at once and the delay between each batch to optimize system performance and prevent server overload.', 'mainwp' ); ?></div>
+                        </h3>
 
                         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cross-ip" default-indi-value="10">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', 10 === (int) get_option( 'mainwp_chunksitesnumber', 10 ) ? '' : 1 );
-                            esc_html_e( 'Number of site chunks (Default: 10)', 'mainwp' );
+                            esc_html_e( 'Maximum sites per batch (Default: 10)', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'The maximum number of websites processed concurrently. If too many requests are sent out, they will begin to time out.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                                 <div class="ui bottom aligned labeled slider" id="mainwp_chunksitesnumber_slider"></div>
                                 <div class="ui input">
                                     <input type="hidden" class="settings-field-value-change-handler" name="mainwp_chunksitesnumber" id="mainwp_chunksitesnumber" value="<?php echo false === get_option( 'mainwp_chunksitesnumber' ) ? 10 : (int) get_option( 'mainwp_chunksitesnumber' ); ?>"/>
@@ -1481,10 +1515,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', 5 === (int) get_option( 'mainwp_chunksleepinterval', 5 ) ? '' : 1 );
-                            esc_html_e( 'Sleep interval (Default: 5ms)', 'mainwp' );
+                            esc_html_e( 'Delay between batches (Default: 5ms)', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'The pause duration between processing each batch of websites.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                                 <div class="ui bottom aligned labeled slider" id="mainwp_chunksleepinterval_slider"></div>
                                 <div class="ui input">
                                     <input type="hidden" class="settings-field-value-change-handler" name="mainwp_chunksleepinterval" id="mainwp_chunksleepinterval" value="<?php echo false === get_option( 'mainwp_chunksleepinterval' ) ? 5 : (int) get_option( 'mainwp_chunksleepinterval' ); ?>"/>
@@ -1493,8 +1527,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         </div>
 
                         <h3 class="ui dividing header">
-                        <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-frontend-request' ); ?>
-                        <?php esc_html_e( 'Frontend Request Settings', 'mainwp' ); ?></h3>
+                            <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-frontend-request' ); ?>
+                            <?php esc_html_e( 'Frontend Request Settings', 'mainwp' ); ?>
+                            <div class="sub header"><?php esc_html_e( 'Configure limits for concurrent background tasks such as synchronization, installation/updating, and uptime monitoring, ensuring efficient resource use and system stability.', 'mainwp' ); ?></div>
+                        </h3>
 
                         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-frontend-request" default-indi-value="8">
                             <label class="six wide column middle aligned">
@@ -1830,38 +1866,36 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         $changed = count( $default_sync ) !== count( array_filter( $sync_data_settings ) );
 
         ?>
-        <h3 class="ui dividing header">
-        <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-sync-data' ); ?>
-        <?php esc_html_e( 'Sync Data', 'mainwp' ); ?></h3>
-            <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-sync-data" default-indi-value="1">
-                <label class="six wide column middle aligned">
-                <?php
-                MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $changed ? true : '');
-                ?>
-                </label>
-                <div class="ten wide column" <?php echo $setting_page ? 'data-tooltip="' . esc_attr__( 'Select data that you want to sync.', 'mainwp' ) . '"' : ''; ?> data-inverted="" data-position="top left">
-                    <ul class="mainwp_hide_wpmenu_checkboxes">
-                        <?php
-                        foreach ( $default_sync as $name => $title ) {
-                            $_selected = '';
-                            if ( ! isset( $sync_data_settings[ $name ] ) || 1 === (int) $sync_data_settings[ $name ] ) {
-                                $_selected = 'checked';
-                            }
-                            ?>
-                            <li>
-                                <div class="ui checkbox">
-                                    <input type="checkbox" class="settings-field-value-change-handler" id="mainwp_select_sync_<?php echo esc_attr( $name ); ?>" name="mainwp_settings_sync_data[]" <?php echo esc_html( $_selected ); ?> value="<?php echo esc_attr( $name ); ?>">
-                                    <label for="mainwp_select_sync_<?php echo esc_attr( $name ); ?>" ><?php echo esc_html( $title ); ?></label>
-                                </div>
-                                <input type="hidden" name="mainwp_settings_sync_name[]" value="<?php echo esc_attr( $name ); ?>">
-                            </li>
-                            <?php
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-miscellaneous">
+            <label class="six wide column top aligned">
+            <?php
+            MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-sync-data' );
+            esc_html_e( 'Select data to sync', 'mainwp' );
+            ?>
+            </label>
+            <div class="ten wide column" <?php echo $setting_page ? 'data-tooltip="' . esc_attr__( 'Select data that you want to sync.', 'mainwp' ) . '"' : ''; ?> data-inverted="" data-position="top left">
+                <ul class="mainwp_hide_wpmenu_checkboxes">
+                    <?php
+                    foreach ( $default_sync as $name => $title ) {
+                        $_selected = '';
+                        if ( ! isset( $sync_data_settings[ $name ] ) || 1 === (int) $sync_data_settings[ $name ] ) {
+                            $_selected = 'checked';
                         }
                         ?>
-                    </ul>
-                </div>
+                        <li>
+                            <div class="ui checkbox">
+                                <input type="checkbox" class="settings-field-value-change-handler" id="mainwp_select_sync_<?php echo esc_attr( $name ); ?>" name="mainwp_settings_sync_data[]" <?php echo esc_html( $_selected ); ?> value="<?php echo esc_attr( $name ); ?>">
+                                <label for="mainwp_select_sync_<?php echo esc_attr( $name ); ?>" ><?php echo esc_html( $title ); ?></label>
+                            </div>
+                            <input type="hidden" name="mainwp_settings_sync_name[]" value="<?php echo esc_attr( $name ); ?>">
+                        </li>
+                        <?php
+                    }
+                    ?>
+                </ul>
             </div>
-            <?php
+        </div>
+        <?php
     }
 
     /**
@@ -1871,26 +1905,26 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      */
     public static function get_data_sync_default() {
         return array(
-            'wp_updates'              => __( 'WP Core update', 'mainwp' ),
-            'plugin_updates'          => __( 'Plugins updates', 'mainwp' ),
-            'theme_updates'           => __( 'Themes updates', 'mainwp' ),
-            'translation_updates'     => __( 'Translations updates', 'mainwp' ),
+            'wp_updates'              => __( 'WordPress updates information', 'mainwp' ),
+            'plugin_updates'          => __( 'Plugins updates information', 'mainwp' ),
+            'theme_updates'           => __( 'Themes updates information', 'mainwp' ),
+            'translation_updates'     => __( 'Translations updates information', 'mainwp' ),
             'recent_comments'         => __( 'Recent comments', 'mainwp' ),
             'recent_posts'            => __( 'Recent posts', 'mainwp' ),
             'recent_pages'            => __( 'Recent pages', 'mainwp' ),
-            'securityStats'           => __( 'security statistics', 'mainwp' ),
-            'directories'             => __( 'Directories', 'mainwp' ),
-            'categories'              => __( 'Categories', 'mainwp' ),
-            'totalsize'               => __( 'Total size', 'mainwp' ),
-            'dbsize'                  => __( 'DB size', 'mainwp' ),
-            'plugins'                 => __( 'Plugins', 'mainwp' ),
-            'themes'                  => __( 'Themes', 'mainwp' ),
-            'users'                   => __( 'Users', 'mainwp' ),
-            'plugins_outdate_info'    => __( 'Plugins outdate information', 'mainwp' ),
-            'themes_outdate_info'     => __( 'Themes outdate information', 'mainwp' ),
-            'health_site_status'      => __( 'Health site status', 'mainwp' ),
-            'child_site_actions_data' => __( 'Site actions data', 'mainwp' ),
-            'othersData'              => __( 'Others data', 'mainwp' ),
+            'securityStats'           => __( 'Site hardening information', 'mainwp' ),
+            'directories'             => __( 'Site directory listing (needed for legacy backup feature)', 'mainwp' ),
+            'categories'              => __( 'Posts catetegories', 'mainwp' ),
+            'totalsize'               => __( 'Website size (needed for Clone and legacy backup features)', 'mainwp' ),
+            'dbsize'                  => __( 'Database size information', 'mainwp' ),
+            'plugins'                 => __( 'Installed plugins', 'mainwp' ),
+            'themes'                  => __( 'Installed Themes', 'mainwp' ),
+            'users'                   => __( 'Users information', 'mainwp' ),
+            'plugins_outdate_info'    => __( 'Abandoned plugins information', 'mainwp' ),
+            'themes_outdate_info'     => __( 'Abandoned themes information', 'mainwp' ),
+            'health_site_status'      => __( 'Site healt information', 'mainwp' ),
+            'child_site_actions_data' => __( 'Non-MainWP changes data', 'mainwp' ),
+            'othersData'              => __( 'Other data (required by some extensions)', 'mainwp' ),
         );
     }
 
@@ -1936,7 +1970,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-tools-info-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-tools-info-message"></i>
-                    <?php printf( esc_html__( 'Use MainWP tools to adjust your MainWP Dashboard to your needs and perform specific actions when needed.  For additional help, review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                    <?php printf( esc_html__( 'Use MainWP tools to adjust your MainWP Dashboard to your needs and perform specific actions when needed.  For additional help, review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/mainwp-dashboard-settings/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
                 </div>
             <?php endif; ?>
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-tools-info-custom-theme' ) ) : ?>
@@ -2060,34 +2094,18 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             <input type="submit" name="mainwp_restore_info_messages" id="mainwp_restore_info_messages" class="ui button" value="<?php esc_attr_e( 'Restore Info Messages', 'mainwp' ); ?>"/>
                         </div>
                     </div>
-                <?php
-                $enabled_demo = MainWP_Demo_Handle::is_demo_mode();
-                $is_new       = MainWP_Demo_Handle::get_instance()->is_new_instance();
-                if ( ! MainWP_Demo_Handle::is_instawp_site() ) {
+                    <?php
+                    /**
+                     * Action: mainwp_tools_form_bottom
+                     *
+                     * Fires at the bottom of mainwp tools form.
+                     *
+                     * @since 4.1
+                     */
+                    do_action( 'mainwp_tools_form_bottom' );
                     ?>
-                    <div class="ui grid field">
-                            <label class="six wide column middle aligned"><?php echo esc_html__( 'Demo mode', 'mainwp' ); ?></label>
-                            <div class="ten wide column">
-                            <?php if ( ! $enabled_demo ) { ?>
-                            <span data-tooltip="<?php esc_attr_e( 'Demo Mode can not be enabled on MainWP Dashboards that already have sites connected, clients created or extensions installed.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><button page-import="settings" class="ui green button mainwp-import-demo-data-button" <?php echo ! $is_new ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Import Demo Content', 'mainwp' ); ?></button></span>
-                                <?php } else { ?>
-                            <span data-tooltip="<?php esc_attr_e( 'Click this button to delete the Demo content from your MainWP Dashboard and disable the Demo mode.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><button class="ui green button mainwp-remove-demo-data-button"><?php esc_html_e( 'Delete Demo Content', 'mainwp' ); ?></button></span>
-                                <?php } ?>
-                            </div>
-                    </div>
-                        <?php
-                }
-                /**
-                 * Action: mainwp_tools_form_bottom
-                 *
-                 * Fires at the bottom of mainwp tools form.
-                 *
-                 * @since 4.1
-                 */
-                do_action( 'mainwp_tools_form_bottom' );
-                ?>
-                        <div class="ui divider"></div>
-                        <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                    <div class="ui divider"></div>
+                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
                     </form>
                 </div>
             </div>
@@ -2328,14 +2346,14 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             ?>
             <p><?php esc_html_e( 'If you need help with your MainWP Dashboard settings, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui list">
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">MainWP Dashboard Settings</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/#updates-settings" target="_blank">Updates Settings</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/#basic-uptime-monitoring" target="_blank">Uptime Monitoring Settings</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/#site-health-monitoring" target="_blank">Site Health Settings</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/#backup-options" target="_blank">Backup Settings</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/#advanced-settings" target="_blank">Advanced Settings</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/#email-settings" target="_blank">Email Settings</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/#mainwp-tools" target="_blank">Tools</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-dashboard-settings/" target="_blank">MainWP Dashboard Settings</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-dashboard-settings/#updates-settings" target="_blank">Updates Settings</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-dashboard-settings/#basic-uptime-monitoring" target="_blank">Uptime Monitoring Settings</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-dashboard-settings/#site-health-monitoring" target="_blank">Site Health Settings</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-dashboard-settings/#backup-options" target="_blank">Backup Settings</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-dashboard-settings/#advanced-settings" target="_blank">Advanced Settings</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-dashboard-settings/#email-settings" target="_blank">Email Settings</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-dashboard-settings/#mainwp-tools" target="_blank">Tools</a></div>
             </div>
             <?php
             /**

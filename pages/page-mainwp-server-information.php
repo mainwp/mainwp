@@ -272,7 +272,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             ),
             array(
                 'title'      => esc_html__( 'Plugin Privacy', 'mainwp' ),
-                'parent_key' => 'ServerInformation',
+                'parent_key' => 'mainwp_tab',
                 'href'       => 'admin.php?page=PluginPrivacy',
                 'slug'       => 'PluginPrivacy',
                 'right'      => '',
@@ -337,16 +337,18 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 );
             }
 
-            if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PluginPrivacy' ) ) {
-                $renderItems[] = array(
-                    'title'  => esc_html__( 'Plugin Privacy', 'mainwp' ),
-                    'href'   => 'admin.php?page=PluginPrivacy',
-                    'active' => ( 'PluginPrivacy' === $shownPage ) ? true : false,
-                );
+            //if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PluginPrivacy' ) ) {
+            //    $renderItems[] = array(
+            //        'title'  => esc_html__( 'Plugin Privacy', 'mainwp' ),
+            //        'href'   => 'admin.php?page=PluginPrivacy',
+            //       'active' => ( 'PluginPrivacy' === $shownPage ) ? true : false,
+            //    );
+            //}
+
+            if ( isset( $_GET['page'] ) && 'PluginPrivacy' !== $_GET['page'] ) {
+                MainWP_UI::render_page_navigation( $renderItems );
             }
-
-            MainWP_UI::render_page_navigation( $renderItems );
-
+            
             static::render_actions_bar();
 
             echo '<div>';
@@ -438,7 +440,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-server-info-info-message' ) ) : ?>
             <div class="ui info message">
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-server-info-info-message"></i>
-                <?php printf( esc_html__( 'Check your system configuration and make sure your MainWP Dashboard passes all system requirements.  If you need help with resolving specific errors, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/resolving-system-requirement-issues/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                <?php printf( esc_html__( 'Check your system configuration and make sure your MainWP Dashboard passes all system requirements.  If you need help with resolving specific errors, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/resolving-system-requirement-issues/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
             </div>
         <?php endif; ?>
         <?php
@@ -1058,7 +1060,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-cron-info-message' ) ) : ?>
             <div class="ui info message">
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-cron-info-message"></i>
-                <?php printf( esc_html__( 'Make sure scheduled actions are working correctly.  If scheduled actions do not run normally, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/scheduled-events-not-occurring/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                <?php printf( esc_html__( 'Make sure scheduled actions are working correctly.  If scheduled actions do not run normally, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/scheduled-events-not-occurring/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
             </div>
         <?php endif; ?>
         <table class="ui single line unstackable table" id="mainwp-cron-jobs-table">
@@ -1740,7 +1742,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     <div><?php echo esc_html__( 'Enable a specific logging system.', 'mainwp' ); ?></div>
                     <p><?php echo esc_html__( 'Each specific log type changes only the type of information logged. It does not change the log view.', 'mainwp' ); ?></p>
                     <p><?php echo esc_html__( 'After disabling the Action Log, logs will still be visible. To remove records, click the Delete Logs button.', 'mainwp' ); ?></p>
-                    <p><?php printf( esc_html__( 'For additional help, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/action-logs/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></p>
+                    <p><?php printf( esc_html__( 'For additional help, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/action-logs/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></p>
                 </div>
             <?php endif; ?>
         <?php

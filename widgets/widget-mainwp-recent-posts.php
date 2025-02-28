@@ -153,10 +153,10 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         <div class="ui stackable grid mainwp-widget-footer">
             <div class="eight wide left aligned middle aligned column">
-                <a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkAdd' ) ); ?>" class="ui button mini green"><?php esc_html_e( 'Create a New Post', 'mainwp' ); ?></a>
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkAdd' ) ); ?>" class="ui mini basic button"><?php esc_html_e( 'Create a New Post', 'mainwp' ); ?></a>
             </div>
             <div class="eight wide right aligned middle aligned column">
-                <a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkManage' ) ); ?>"><?php esc_html_e( 'Manage Posts', 'mainwp' ); ?></a>
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkManage' ) ); ?>" class="ui mini basic button"><?php esc_html_e( 'Manage Posts', 'mainwp' ); ?></a>
             </div>
         </div>
         <?php
@@ -245,7 +245,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 MainWP_UI::render_empty_element_placeholder();
             }
             ?>
-            <div class="ui middle aligned divided selection list">
+            <div class="ui middle aligned divided list">
             <?php
             $_count = count( $recent_posts_published );
             for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
@@ -339,7 +339,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 MainWP_UI::render_empty_element_placeholder();
             }
             ?>
-            <div class="ui middle aligned divided selection list">
+            <div class="ui middle aligned divided list">
             <?php
             $_count = count( $recent_posts_draft );
             for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
@@ -430,7 +430,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     MainWP_UI::render_empty_element_placeholder();
                 }
                 ?>
-            <div class="ui middle aligned divided selection list">
+            <div class="ui middle aligned divided list">
             <?php
             $_count = count( $recent_posts_pending );
             for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
@@ -521,7 +521,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             MainWP_UI::render_empty_element_placeholder();
         }
         ?>
-        <div class="ui middle aligned divided selection list">
+        <div class="ui middle aligned divided list">
         <?php
         $_count = count( $recent_posts_future );
         for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
@@ -613,7 +613,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             MainWP_UI::render_empty_element_placeholder();
         }
         ?>
-        <div class="ui middle aligned divided selection list">
+        <div class="ui middle aligned divided list">
         <?php
         $_count = count( $recent_posts_trash );
         for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {

@@ -817,7 +817,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         jQuery('input[name=mainwp_default_manage_clients_per_page]').val(25);
                         jQuery('.mainwp_hide_wpmenu_checkboxes input[id^="mainwp_show_column_"]').prop( 'checked', false );
                         //default columns.
-                        let cols = ['name','email','phone','websites'];
+                        let cols = [ 'suspended','image','client','websites','contact_name','created'];
                         jQuery.each( cols, function ( index, value ) {
                             jQuery('.mainwp_hide_wpmenu_checkboxes input[id="mainwp_show_column_' + value + '"]').prop( 'checked', true );
                         } );
@@ -860,22 +860,19 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                 <div class="mainwp-main-content">
                     <div class="ui segment">
-                    <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-client-info-message' ) ) : ?>
-                    <div class="ui info message">
-                        <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-client-info-message"></i>
-                        <?php printf( esc_html__( 'use the provided form to create a new client on your child site(). for additional help, please check this %1$shelp documentation %2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-client/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
+                        <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-client-info-message' ) ) : ?>
+                            <div class="ui info message">
+                                <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-client-info-message"></i>
+                                <?php printf( esc_html__( 'Use the provided form to create a new client on your child site. For additional help, please check this %1$shelp documentation %2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/create-a-new-client/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
+                            </div>
+                        <?php endif; ?>
+                        <div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
+                        <div id="mainwp-add-new-client-form" >
+                            <?php static::render_add_client_content( $edit_client ); ?>
+                        </div>
                     </div>
-                <?php endif; ?>
-                    <div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
-                    <div id="mainwp-add-new-client-form" >
-                        <?php
-                        static::render_add_client_content( $edit_client );
-                        ?>
-                    </div>
-                </div>
                 </div>
                 <div class="mainwp-side-content mainwp-no-padding">
-
                     <?php if ( $client_id ) : ?>
                     <div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
                         <div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Tokens Info', 'mainwp' ); ?></div>
@@ -922,8 +919,6 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 </div>
                 <div style="clear:both"></div>
             </form>
-
-
         </div>
         <?php
         static::render_footer( $show );
@@ -956,7 +951,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 <div id="" class="ui tab tab-client-import-csv active" data-tab="mainwp-client-import-csv">
                     <div class="ui info message">
                         <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-sites-info-message"></i>
-                        <?php printf( esc_html__( 'You can download the sample CSV file to see how to format the import file properly. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                        <?php printf( esc_html__( 'You can download the sample CSV file to see how to format the import file properly. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/import-sites/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
                     </div>
                     <form method="POST" action="" enctype="multipart/form-data" id="mainwp_client_import_form" class="ui form">
                         <div class="ui bottom attached tab segment active" data-tab="mainwp-import-csv">
@@ -1167,55 +1162,58 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         static::render_header( 'AddField' );
         ?>
-        <div class="ui segment" id="mainwp-add-client-fields">
-        <?php
-        $fields = MainWP_DB_Client::instance()->get_client_fields();
-        ?>
-        <div class="ui info message" <?php echo ! MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-clients-manage-fields' ) ? 'style="display: none"' : ''; ?>>
-        <?php esc_html_e( 'Create and manage custom Client fields.', 'mainwp' ); ?>
-            <i class="ui close icon mainwp-notice-dismiss" notice-id="mainwp-clients-manage-fields"></i>
+        <div class="mainwp-sub-header">
+            <div class="ui one column grid">
+                <div class="right aligned column">
+                    <a class="ui mini green button" href="javascript:void(0);" id="mainwp-clients-new-custom-field-button"><?php esc_html_e( 'New Field', 'mainwp' ); ?></a>
+                </div>
+            </div>
         </div>
-        <div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
-        <table id="mainwp-clients-custom-fields-table" class="ui selectable compact table" style="width:100%">
-            <thead>
-                <tr>
-                    <th scope="col"><?php esc_html_e( 'Field Name', 'mainwp' ); ?></th>
-                    <th scope="col"><?php esc_html_e( 'Field Description', 'mainwp' ); ?></th>
-                    <th scope="col" class="no-sort collapsing"></th>
-                </tr>
-            </thead>
-            <tbody>
-            <?php if ( is_array( $fields ) && ! empty( $fields ) ) : ?>
-                <?php foreach ( $fields as $field ) : ?>
-                    <?php
-                    if ( ! $field ) {
-                        continue;
-                    }
-                    ?>
-                        <tr class="mainwp-field none-selected-color" field-id="<?php echo intval( $field->field_id ); ?>">
-                            <td class="field-name">[<?php echo esc_html( stripslashes( $field->field_name ) ); ?>]</td>
-                            <td class="field-description"><?php echo esc_html( stripslashes( $field->field_desc ) ); ?></td>
-                            <td>
-                                <div class="ui right pointing dropdown">
-                                    <i class="ellipsis vertical icon"></i>
-                                    <div class="menu">
-                                        <a class="item" id="mainwp-clients-edit-custom-field" href="#"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
-                                        <a class="item" id="mainwp-clients-delete-general-field" href="#"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+        <div class="ui segment" id="mainwp-add-client-fields">
+            <?php $fields = MainWP_DB_Client::instance()->get_client_fields(); ?>
+            <h2 class="ui dividing header">
+                <?php esc_html_e( 'Custom Client Fields', 'mainwp' ); ?>
+                <div class="sub header"><?php esc_html_e( 'Create and manage custom fields to store additional client details, ensuring you have all the information you need in one place.', 'mainwp' ); ?></div>
+            </h2>
+            
+            <div class="ui info message" <?php echo ! MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-clients-manage-fields' ) ? 'style="display: none"' : ''; ?>>
+            <?php esc_html_e( 'Create and manage custom Client fields.', 'mainwp' ); ?>
+                <i class="ui close icon mainwp-notice-dismiss" notice-id="mainwp-clients-manage-fields"></i>
+            </div>
+            <div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
+            <table id="mainwp-clients-custom-fields-table" class="ui table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th scope="col" class="collapsing"><?php esc_html_e( 'Field Name', 'mainwp' ); ?></th>
+                        <th scope="col"><?php esc_html_e( 'Field Description', 'mainwp' ); ?></th>
+                        <th scope="col" class="no-sort collapsing"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php if ( is_array( $fields ) && ! empty( $fields ) ) : ?>
+                    <?php foreach ( $fields as $field ) : ?>
+                        <?php
+                        if ( ! $field ) {
+                            continue;
+                        }
+                        ?>
+                            <tr class="mainwp-field none-selected-color" field-id="<?php echo intval( $field->field_id ); ?>">
+                                <td class="field-name">[<?php echo esc_html( stripslashes( $field->field_name ) ); ?>]</td>
+                                <td class="field-description"><?php echo esc_html( stripslashes( $field->field_desc ) ); ?></td>
+                                <td>
+                                    <div class="ui right pointing dropdown">
+                                        <i class="ellipsis vertical icon"></i>
+                                        <div class="menu">
+                                            <a class="item" id="mainwp-clients-edit-custom-field" href="#"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+                                            <a class="item" id="mainwp-clients-delete-general-field" href="#"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+                                        </div>
                                     </div>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </tbody>
-            <tfoot>
-                <tr>
-                    <th scope="col"><a class="ui mini green button" href="javascript:void(0);" id="mainwp-clients-new-custom-field-button"><?php esc_html_e( 'New Field', 'mainwp' ); ?></a></th>
-                    <th scope="col"></th>
-                    <th scope="col"></th>
-                </tr>
-            </tfoot>
-        </table>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
 
         <script type="text/javascript">
         // Init datatables
@@ -1628,16 +1626,16 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
 
         ?>
-        <h3 class="ui dividing header">
+        <h2 class="ui dividing header">
             <?php if ( $client_id ) : ?>
                 <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-edit-client' ); ?>
                 <?php echo esc_html__( 'Edit Client', 'mainwp' ); ?>
-                <div class="sub header"><?php esc_html_e( 'Edit client information.', 'mainwp' ); ?></div>
+                <div class="sub header"><?php esc_html_e( 'Update client details, manage linked websites, and keep important information organized in one place.', 'mainwp' ); ?></div>
             <?php else : ?>
                 <?php esc_html_e( 'Add New Client', 'mainwp' ); ?>
-                <div class="sub header"><?php esc_html_e( 'Enter the client information.', 'mainwp' ); ?></div>
+                <div class="sub header"><?php esc_html_e( 'Manage your client relationships by adding a new client and linking their websites for better organization.', 'mainwp' ); ?></div>
             <?php endif; ?>
-        </h3>
+        </h2>
         <div class="ui form">
             <input type="hidden" name="nonce_client_id" id="nonce_client_id" value="<?php echo esc_attr( wp_create_nonce( 'editing-client-' . $client_id ) ); ?>">
             <?php
@@ -1698,10 +1696,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     </div>
                     <?php endif; ?>
                 </div>
-                    <?php
-
-                    if ( 'client.email' === $field_name ) {
-                        ?>
+                   
+                <?php if ( 'client.email' === $field_name ) { ?>
                         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-client">
                             <label class="six wide column middle aligned">
                                 <?php
@@ -1709,18 +1705,29 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $indi_val );
                                 $delnonce = MainWP_System_Utility::get_custom_nonce( 'client', esc_attr( $client_image ) );
                                 ?>
-                                <?php esc_html_e( 'Client photo', 'mainwp' ); ?>
+                                <?php esc_html_e( 'Client logo (photo)', 'mainwp' ); ?>
                             </label>
                             <input type="hidden" name="mainwp_add_edit_client_uploaded_icon_hidden" class="settings-field-value-change-handler" id="mainwp_add_edit_client_uploaded_icon_hidden" value="<?php echo esc_attr( $client_image ); ?>">
-                            <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Upload a client photo.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                                <div class="ui green button basic mainwp-add-edit-client-icon-customable" iconItemId="<?php echo intval( $client_id ); ?>" iconFileSlug="<?php echo esc_attr( $client_image ); ?>" del-icon-nonce="<?php echo esc_attr( $delnonce ); ?>" icon-src="<?php echo esc_attr( $uploaded_icon_src ); ?>"><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
-                                <?php if ( ! empty( $client_image ) ) { ?>
-                                    <?php echo MainWP_Client_Handler::get_client_contact_image( $icon_info_array, 'client', 'display_edit' ); //phpcs:ignore --ok. ?>
-                                <?php } else { ?>
-                                    <div style="display:inline-block;" id="mainwp_add_edit_client_upload_custom_icon"></div> <?php // used for icon holder. ?>
-                                <?php } ?>
+                            <div class="ui six wide column">
+                                <span class="ui circular bordered image">
+                                    <?php if ( ! empty( $client_image ) ) { ?>
+                                        <?php echo MainWP_Client_Handler::get_client_contact_image( $icon_info_array, 'client', 'display_edit' ); //phpcs:ignore --ok. ?>
+                                    <?php } else { ?>
+                                        <div style="display:inline-block;" id="mainwp_add_edit_client_upload_custom_icon"></div> <?php // used for icon holder. ?>
+                                    <?php } ?>
+                                </span>
+                                <div class="ui basic button mainwp-add-edit-client-icon-customable" 
+                                    iconItemId="<?php echo intval( $client_id ); ?>" 
+                                    iconFileSlug="<?php echo esc_attr( $client_image ); ?>" 
+                                    del-icon-nonce="<?php echo esc_attr( $delnonce ); ?>" 
+                                    icon-src="<?php echo esc_attr( $uploaded_icon_src ); ?>">
+                                    <i class="image icon"></i> <?php echo ! empty( $client_image ) ? esc_html__( 'Change Image', 'mainwp' ) : esc_html__( 'Upload Image', 'mainwp' ); ?>
+                                </div>
                             </div>
                         </div>
+
+
+
                         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-client" default-indi-indi-value="wordpress">
                             <label class="six wide column middle aligned">
                             <?php
@@ -1766,7 +1773,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             if ( $client_id ) {
                 $client_contacts = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'client_id', $client_id );
                 ?>
-            <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-client">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-client">
                     <label class="six wide column middle aligned">
                     <?php
                     $indi_val = $edit_client && $client_contacts ? 1 : 0;
@@ -1852,7 +1859,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <label class="six wide column middle aligned"><?php esc_html_e( 'Create a new contact for this client', 'mainwp' ); ?></label>
             <div class="ui six wide column">
                 <div class="ui left labeled input">
-                <a href="javascript:void(0);" class="ui green button mainwp-client-add-contact" add-contact-temp="<?php echo esc_attr( $temp ); ?>"><?php esc_html_e( 'Add Additional Contact', 'mainwp' ); ?></a>
+                    <a href="javascript:void(0);" class="ui basic button mainwp-client-add-contact" add-contact-temp="<?php echo esc_attr( $temp ); ?>"><i class="user icon"></i><?php esc_html_e( 'Add Contact', 'mainwp' ); ?></a>
                 </div>
             </div>
         </div>

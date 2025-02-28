@@ -1340,7 +1340,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     public static function get_siteview_mode() {
         $viewmode = get_user_option( 'mainwp_sitesviewmode' );
         if ( 'grid' !== $viewmode && 'table' !== $viewmode ) {
-            $viewmode = 'grid';
+            $viewmode = 'table';
         }
         return $viewmode;
     }
@@ -1796,4 +1796,48 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
         }
     }
+
+    /**
+     * Returns language as flag.
+     *
+     * @param  string $language Language code.
+     * @return string $flag     Corresponding flag.
+     */
+    public static function get_language_code_as_flag( $language ) {
+         // Get the last 2 characters of the language code
+        $last_two_chars = substr( $language, -2 );
+        // Convert to lowercase
+        $lowercase_last_two_chars = strtolower( $last_two_chars );
+
+        if ( function_exists( 'locale_get_display_name' ) ) {
+            $language = locale_get_display_name( $language );
+        }
+        
+        return '<span data-tooltip="' . __( 'Site Language: ', 'mainwp' ) . $language . '" data-position="left center" data-inverted=""><i class="small ' . $lowercase_last_two_chars . ' flag"></i></span>';
+    }
+
+    /**
+     * Returns icon for the site indexability status.
+     *
+     * @param  int    $status   Status, 1 or 0.
+     * @return string $flag     Corresponding icon.
+     */
+    public static function get_site_index_option_icon( $status ) {
+            //$status  = intval( $status );
+            $icon    = "";
+            $tooltip = "";
+            if ( isset( $status ) && '' !== $status ) {
+                if ( '1' == $status ) {
+                    $icon    = "green dot circle outline";
+                    $tooltip = "Search engines can index this site.";
+                } else if ( '0' == $status ) {
+                    $icon    = "red ban";
+                    $tooltip = "This site is blocking search engines.";
+                }
+            } else {
+            $icon    = "grey circle";
+            $tooltip = "Indexing status unknown. Resync the site or check manually in WordPress Settings > Reading.";
+        }
+        return '<span data-tooltip="' . $tooltip . '" data-position="left center" data-inverted=""><i class="' . $icon . ' icon"></i></span>';
+   }
 }

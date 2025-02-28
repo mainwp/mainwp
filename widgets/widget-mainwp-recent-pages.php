@@ -149,11 +149,10 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         <div class="ui stackable grid mainwp-widget-footer">
             <div class="eight wide left aligned middle aligned column">
-                <a href="<?php echo esc_url( admin_url( 'admin.php?page=PageBulkAdd' ) ); ?>" class="ui button mini green"><?php esc_html_e( 'Create a New Page', 'mainwp' ); ?></a>
-                
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=PageBulkAdd' ) ); ?>" class="ui mini basic button"><?php esc_html_e( 'Create a New Page', 'mainwp' ); ?></a>
             </div>
             <div class="eight wide right aligned middle aligned column">
-                <a href="<?php echo esc_url( admin_url( 'admin.php?page=PageBulkManage' ) ); ?>" ><?php esc_html_e( 'Manage Pages', 'mainwp' ); ?></a>
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=PageBulkManage' ) ); ?>" class="ui mini basic button"><?php esc_html_e( 'Manage Pages', 'mainwp' ); ?></a>
             </div>
         </div>
         <?php
@@ -242,7 +241,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 MainWP_UI::render_empty_element_placeholder();
             endif;
             ?>
-            <div class="ui middle aligned divided selection list">
+            <div class="ui middle aligned divided list">
             <?php
             $_count = count( $recent_pages_published );
             for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
@@ -337,7 +336,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     MainWP_UI::render_empty_element_placeholder();
                 }
                 ?>
-                <div class="ui middle aligned divided selection list">
+                <div class="ui middle aligned divided list">
                 <?php
                 $_count = count( $recent_pages_draft );
                 for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
@@ -428,7 +427,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     MainWP_UI::render_empty_element_placeholder();
                 }
                 ?>
-                <div class="ui middle aligned divided selection list">
+                <div class="ui middle aligned divided list">
                 <?php
                 $_count = count( $recent_pages_pending );
                 for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
@@ -520,7 +519,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             MainWP_UI::render_empty_element_placeholder();
         }
         ?>
-        <div class="ui middle aligned divided selection list">
+        <div class="ui middle aligned divided list">
         <?php
         $_count = count( $recent_pages_future );
         for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
@@ -613,7 +612,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             MainWP_UI::render_empty_element_placeholder();
         }
         ?>
-            <div class="ui middle aligned divided selection list">
+            <div class="ui middle aligned divided list">
         <?php
         $_count = count( $recent_pages_trash );
         for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {

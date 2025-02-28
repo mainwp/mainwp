@@ -2,8 +2,6 @@
 /**
  * Manage Logs List Table.
  *
- * Insights changes table.
- *
  * @package     MainWP/Dashboard
  * @version 4.6
  */
@@ -12,7 +10,6 @@ namespace MainWP\Dashboard\Module\Log;
 
 use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_Updates_Helper;
-use phpseclib3\Common\Functions\Strings;
 
 /**
  * Class Log_Events_List_Table
@@ -447,7 +444,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         $array_groups_ids  = array();
         $array_users_ids   = array();
 
-        $array_source_list = array();
+        $sources_conds     = '';
         $array_sites_ids   = array();
         $array_events_list = array();
 
@@ -491,18 +488,16 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'dismiss'       => 0,
             'view'          => 'events_list',
             'wpid'          => ! empty( $insights_filters['wpid'] ) ? $insights_filters['wpid'] : 0, // int or array of site ids.
-            'sources'       => $array_source_list,
+            'sources_conds' => $sources_conds,
             'sites_ids'     => $array_sites_ids,
             'events'        => $array_events_list,
         );
 
         $args['records_per_page'] = $perPage;
+        $args['dev_log_query']    = 0; // 1 for dev logs.
 
-        $this->items = $this->manager->db->get_records( $args );
-
-        if ( !empty( $_REQUEST['recent_number'] ) ) { //phpcs:ignore -- ok.
-            $this->total_items = $this->manager->db->get_found_records_count(); // get this value for recent events request only.
-        }
+        $this->items       = $this->manager->db->get_records( $args );
+        $this->total_items = $this->manager->db->get_found_records_count(); // get this value for recent events request only.
 
         $this->items_prev = array();
         if ( $with_prev_data && ! empty( $args['timestart'] ) && ! empty( $args['timestop'] ) && $args['timestart'] < $args['timestop'] ) {
@@ -607,7 +602,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                     const manage_tbl_id = '#<?php echo esc_js( $events_tbl_id ); ?>';
                     const ajax_action = '<?php echo esc_js( $ajaxaction ); ?>';
                     try {
-                        jQuery( '#mainwp-sites-table-loader' ).hide();
+                        //jQuery( '#mainwp-sites-table-loader' ).hide();
                         $module_log_table = jQuery( manage_tbl_id ).on( 'processing.dt', function ( e, settings, processing ) {
                             jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
                             if (!processing) {
@@ -637,13 +632,15 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                         dtsstop: $('#mainwp-module-log-filter-dtsstop input[type=text]').length ? $('#mainwp-module-log-filter-dtsstop input[type=text]').val() : '',
                                         current_client_id: $( '#mainwp-widget-filter-current-client-id').length ? $( '#mainwp-widget-filter-current-client-id').val() : 0,
                                         current_site_id: $( '#mainwp-widget-filter-current-site-id').length ? $( '#mainwp-widget-filter-current-site-id').val() : 0,
-                                        recent_number: $( '#mainwp-widget-filter-events-limit').length ? $( '#mainwp-widget-filter-events-limit').val() : 100,
                                     } );
 
                                     if('mainwp_module_log_manage_events_display_rows' === ajax_action ){
                                         data.source =  $( '#mainwp-module-log-filter-source').length ? $( '#mainwp-module-log-filter-source').dropdown('get value') : '';
                                         data.sites =  $( '#mainwp-module-log-filter-sites').length ? $( '#mainwp-module-log-filter-sites').dropdown('get value') : '';
                                         data.events =  $( '#mainwp-module-log-filter-events').length ? $( '#mainwp-module-log-filter-events').dropdown('get value') : '';
+                                    } else {
+                                        // set recent number for none-manage-events table.
+                                        data.recent_number =  $( '#mainwp-widget-filter-events-limit').length ? $( '#mainwp-widget-filter-events-limit').val() : 100;
                                     }
 
                                     return $.extend( {}, d, data );
@@ -683,7 +680,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                 if ( typeof mainwp_preview_init_event !== "undefined" ) {
                                     mainwp_preview_init_event();
                                 }
-                                jQuery( '#mainwp-sites-table-loader' ).hide();
+                                //jQuery( '#mainwp-sites-table-loader' ).hide();
                                 if ( jQuery('#mainwp-module-log-records-body-table td.dt-empty').length > 0 && jQuery('#sites-table-count-empty').length ){
                                     jQuery('#mainwp-module-log-records-body-table td.dt-empty').html(jQuery('#sites-table-count-empty').html());
                                 }

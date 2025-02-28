@@ -688,7 +688,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Method fetch_urls_authed()
      *
-     * Fetch authorized URLs.
+     * Fetches data from child sites if authenticated.
      *
      * @param object $websites Websites information.
      * @param string $what Action to perform.

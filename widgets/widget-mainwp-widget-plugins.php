@@ -189,7 +189,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
                         <div class="right floated pluginsAction">
                             <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-                                <div class="ui right pointing dropdown icon mini button">
+                                <div class="ui right pointing dropdown">
                                     <i class="ellipsis vertical icon"></i>
                                     <div class="menu">
                                         <div class="mainwp-plugin-deactivate item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></div>
@@ -237,7 +237,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
              */
             do_action( 'mainwp_before_inactive_plugins_list', $website, $inactive_plugins );
             ?>
-            <div class="ui middle aligned divided selection list">
+            <div class="ui middle aligned divided list">
                 <?php
                 $_count = count( $inactive_plugins );
                 for ( $i = 0; $i < $_count; $i++ ) {
@@ -248,7 +248,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         <input class="pluginSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_plugins[ $i ]['slug'] ) ); ?>"/>
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
                         <div class="right floated content pluginsAction">
-                            <div class="ui right pointing dropdown icon mini button">
+                            <div class="ui right pointing dropdown">
                                 <i class="ellipsis vertical icon"></i>
                                 <div class="menu">
                                 <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>

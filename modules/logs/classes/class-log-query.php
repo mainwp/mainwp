@@ -125,18 +125,12 @@ class Log_Query {
             $where .= $wpdb->prepare( ' AND `lg`.`created` >= %d AND `lg`.`created` <= %d', $args['timestart'], $args['timestop'] );
         }
 
-        // 'sources'       => $array_source_list,
-        // 'sites_ids'     => $array_sites_ids,
-        // 'events'        => $array_events_list,
-
-        if ( ! empty( $args['sources'] ) ) {
-            $where_source = '';
-            if ( 'dashboard' === $args['sources'] ) {
-                $where_source = ' AND `lg`.`connector` != "non-mainwp-changes" ';
-            } elseif ( 'wp-admin' === $args['sources'] ) {
-                $where_source = ' AND `lg`.`connector` = "non-mainwp-changes" ';
+        if ( ! empty( $args['sources_conds'] ) ) {
+            if ( 'wp-admin-only' === $args['sources_conds'] ) {
+                $where .= ' AND `lg`.`connector` = "non-mainwp-changes" ';
+            } elseif ( 'dashboard-only' === $args['sources_conds'] ) {
+                $where .= ' AND `lg`.`connector` != "non-mainwp-changes" ';
             }
-            $where .= $where_source;
         }
 
         if ( ! empty( $args['sites_ids'] ) ) {
@@ -284,11 +278,10 @@ class Log_Query {
         {$limits}";
 
         // Build result count query.
-        $count_query = "SELECT COUNT(*) as found
+        $count_query = "SELECT COUNT(*)
         FROM $wpdb->mainwp_tbl_logs as lg
         {$join}
-        WHERE `lg`.`connector` != 'compact' {$where}
-        {$limits}";
+        WHERE `lg`.`connector` != 'compact' {$where}";
 
         if ( $count_only ) {
             return array(
@@ -296,13 +289,14 @@ class Log_Query {
             ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         }
 
-        //phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-        //error_log( print_r( $args, true ) );//.
-        //phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-        //error_log( $query );// .
-
-        //phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-        // error_log( $count_query );//.
+        if ( ! empty( $args['dev_log_query'] ) ) {
+            //phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+            error_log( print_r( $args, true ) );
+            //phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+            error_log( $query );
+            //phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+            error_log( $count_query );// .
+        }
 
         /**
          * QUERY THE DATABASE FOR RESULTS
@@ -336,11 +330,11 @@ class Log_Query {
      */
     public function get_sub_query_view() {
         global $wpdb;
-        $view  = '(SELECT sub_tbl.log_id AS sub_log_id,';
-        $view .= 'CASE WHEN sub_tbl.connector = "non-mainwp-changes" THEN "WP Admin"';
-        $view .= 'ELSE "Dashboard" ';
-        $view .= 'END AS source ';
-        $view .= 'FROM ' . $wpdb->mainwp_tbl_logs . ' sub_tbl)';
+        $view  = ' (SELECT sub_tbl.log_id AS sub_log_id, ';
+        $view .= ' CASE WHEN sub_tbl.connector = "non-mainwp-changes" THEN "WP Admin" ';
+        $view .= ' ELSE "Dashboard" ';
+        $view .= ' END AS source ';
+        $view .= ' FROM ' . $wpdb->mainwp_tbl_logs . ' sub_tbl) ';
         return $view;
     }
 }

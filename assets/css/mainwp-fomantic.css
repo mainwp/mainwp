@@ -79,8 +79,7 @@
 #mainwp-tools-settings .mainwp-main-content,
 #mainwp-mcrwc-settings .mainwp-main-content,
 #mainwp-add-new-site .mainwp-main-content,
-#mainwp-edit-site .mainwp-main-content,
-#mainwp-manage-extensions .mainwp-main-content {
+#mainwp-edit-site .mainwp-main-content {
   padding-top: 1em;
 }
 
@@ -122,6 +121,7 @@
 .mainwp-ui #mainwp-plugin-auto-updates .mainwp-main-content,
 .mainwp-ui #mainwp-theme-auto-updates .mainwp-main-content,
 .mainwp-ui #mainwp-manage-users .mainwp-main-content,
+.mainwp-ui #mainwp-manage-extensions .mainwp-main-content,
 .mainwp-ui #mainwp-add-clients .mainwp-main-content {
   padding-right: 0 !important;
 }
@@ -175,7 +175,7 @@
 
 .mainwp-ui [data-tooltip][data-inverted]:before,
 .mainwp-ui [data-tooltip][data-inverted]:after {
-  z-index: 99 !important;
+  z-index: 9999 !important;
 }
 
 .mainwp-ui [data-tooltip][data-inverted]:after {

@@ -2091,7 +2091,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return void
      */
     public static function render_updates_actions_buttons( $current_tab ) {
-        // dev-todo: add checks if number of updates is higher than 0 to hide buttons when not needed.
+        // dev-to-do: add checks if number of updates is higher than 0 to hide buttons when not needed.
         if ( 'plugins-updates' === $current_tab ) {
             if ( static::user_can_update_plugins() ) {
                 static::set_continue_update_html_selector( 'plugins_global_upgrade_all' );

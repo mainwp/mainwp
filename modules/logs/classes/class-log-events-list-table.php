@@ -588,7 +588,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         );
 
         // Fix for widget state save overview table.
-        if( 'mainwp-module-log-records-table-widget-overview' === $events_tbl_id ){
+        if ( 'mainwp-module-log-records-table-widget-overview' === $events_tbl_id ) {
             $table_features['stateSave'] = 'false';
         }
 

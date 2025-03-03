@@ -294,11 +294,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             $id = 'advanced-' . $id;
 
             if ( $enabled ) {
-                if ( 'google-widget' === $id || 'matomo' === $id ) {
-                    MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( -1, -1, 6, 30 ) );
-                } else {
-                    MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( -1, -1, 6, 30 ) );
-                }
+                MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( -1, -1, 6, 30 ) );
             }
         }
     }

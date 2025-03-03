@@ -399,7 +399,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * Handle manage clients screen settings
      */
-    public function handle_updates_screen_settings() {
+    public function handle_updates_screen_settings() { //phpcs:ignore -- NOSONAR - complex.
         if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdatesScrOptions' ) ) {
             $val = ( ! isset( $_POST['mainwp_pluginAutomaticDailyUpdate'] ) ? 0 : intval( $_POST['mainwp_pluginAutomaticDailyUpdate'] ) );
             MainWP_Utility::update_option( 'mainwp_pluginAutomaticDailyUpdate', $val );

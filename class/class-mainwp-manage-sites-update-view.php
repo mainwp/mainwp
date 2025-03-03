@@ -319,7 +319,6 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      */
     public static function render_wpcore_updates( $website, $active_tab, $userExtension ) { // phpcs:ignore -- NOSONAR - complex.
         $user_can_update_wp = \mainwp_current_user_can( 'dashboard', 'update_wordpress' );
-        $is_demo            = MainWP_Demo_Handle::is_demo_mode();
         ?>
         <div class="ui <?php echo 'WordPress' === $active_tab ? 'active' : ''; ?> tab" data-tab="wordpress">
             <table style="width:100% !important;" class="ui tablet stackable table" id="mainwp-wordpress-updates-table mainwp-manage-updates-table">
@@ -468,7 +467,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
 
                 $updates_table_helper = new MainWP_Updates_Table_Helper( MAINWP_VIEW_PER_SITE, 'plugin', array( 'show_select' => true ) );
 
-                add_filter( 'mainwp_updates_table_header_content', array( static::class, 'hook_table_update_plugins_header_content' ), 10, 4 );
+                add_filter( 'mainwp_updates_table_header_content', array( static::class, 'hook_table_update_plugins_header_content' ), 10, 3 );
 
                 ?>
                 <table id="mainwp-updates-plugins-table" style="width:100% !important;" class="  ui tablet stackable table mainwp-updates-list mainwp-manage-updates-table">
@@ -533,7 +532,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
             <?php endif; ?>
             </div>
         <?php
-        remove_filter( 'mainwp_updates_table_header_content', array( static::class, 'hook_table_update_plugins_header_content' ), 10, 4 );
+        remove_filter( 'mainwp_updates_table_header_content', array( static::class, 'hook_table_update_plugins_header_content' ), 10, 3 );
 
         MainWP_Updates::render_updates_modal();
         MainWP_Updates::render_plugin_details_modal();
@@ -549,10 +548,8 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      * @param bool   $top Top or bottom header.
      */
     public static function hook_table_update_plugins_header_content( $column_display_name, $column_key, $top ) {
-        if ( $top ) {
-            if ( 'title' === $column_key ) {
-                $column_display_name = '<div class="ui master checkbox "><input type="checkbox" name=""><label>' . $column_display_name . '</label></div>';
-            }
+        if ( $top && 'title' === $column_key ) {
+            $column_display_name = '<div class="ui master checkbox "><input type="checkbox" name=""><label>' . $column_display_name . '</label></div>';
         }
         return $column_display_name;
     }

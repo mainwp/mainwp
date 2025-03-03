@@ -61,7 +61,7 @@ class MainWP_Ui_Manage_Widgets_Layout { // phpcs:ignore Generic.Classes.OpeningB
     public static function render_edit_layout() {
         $saved_segments = static::set_get_widgets_layout();
         ?>
-        
+
         <a class="ui mini button" id="mainwp-manage-widgets-load-saved-layout-button" selected-layout-id=""><?php esc_html_e( 'Save Layout', 'mainwp' ); ?></a>
         <?php if ( ! empty( $saved_segments ) ) : ?>
             <a class="ui mini button mainwp_manage_widgets_ui_choose_layout"><?php esc_html_e( 'Load Layout', 'mainwp' ); ?></a>
@@ -214,7 +214,7 @@ class MainWP_Ui_Manage_Widgets_Layout { // phpcs:ignore Generic.Classes.OpeningB
      *
      * Post handler for save layout.
      */
-    public function ajax_save_widgets_layout() {
+    public function ajax_save_widgets_layout() { //phpcs:ignore -- NOSONAR - complex.
         MainWP_Post_Handler::instance()->check_security( 'mainwp_ui_save_widgets_layout' );
         //phpcs:disable WordPress.Security.NonceVerification.Missing
 
@@ -226,13 +226,10 @@ class MainWP_Ui_Manage_Widgets_Layout { // phpcs:ignore Generic.Classes.OpeningB
         if ( is_array( $wgids ) && is_array( $items ) ) {
             foreach ( $wgids as $idx => $wgid ) {
                 if ( isset( $items[ $idx ] ) ) {
-
                     $pre = 'widget-'; // compatible with #compatible-widgetid.
                     if ( 0 === strpos( $wgid, $pre ) ) {
                         $wgid = substr( $wgid, strlen( $pre ) );
                     }
-                    $wgs_orders[ $wgid ] = $order[ $idx ];
-
                     $layout_items[ $wgid ] = $items[ $idx ];
                 }
             }

@@ -118,7 +118,7 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                 <div class="ui grid">
                     <div class="sixteen wide center aligned column">
                         <div class="ui image">
-                            <?php echo MainWP_Client_Handler::get_client_contact_image( $client_info, 'client', 'small' ); ; //phpcs:ignore -- ok.  ?>
+                            <?php echo MainWP_Client_Handler::get_client_contact_image( $client_info, 'client', 'small' ); //phpcs:ignore -- ok.  ?>
                         </div>
                     </div>
                     <div class="sixteen wide center aligned column">

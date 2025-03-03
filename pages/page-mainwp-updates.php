@@ -2028,7 +2028,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                              */
                             echo apply_filters( 'mainwp_widgetupdates_actions_top', '' ); // phpcs:ignore WordPress.Security.EscapeOutput
                             ?>
-                            <?php static::render_updates_actions_buttons( $current_tab, $site_view ); ?>
+                            <?php static::render_updates_actions_buttons( $current_tab ); ?>
                             <?php static::render_button_view_ignored_updates( $current_tab ); ?>
                             <?php static::render_abandoned_plugins_themes_buttons( $current_tab ); ?>
                         </div>
@@ -2091,7 +2091,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return void
      */
     public static function render_updates_actions_buttons( $current_tab ) {
-        // todo: add checks if number of updates is higher than 0 to hide buttons when not needed.
+        // dev-todo: add checks if number of updates is higher than 0 to hide buttons when not needed.
         if ( 'plugins-updates' === $current_tab ) {
             if ( static::user_can_update_plugins() ) {
                 static::set_continue_update_html_selector( 'plugins_global_upgrade_all' );
@@ -2138,7 +2138,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @return null
      */
-    public static function render_button_view_ignored_updates( $current_tab = '' ) {
+    public static function render_button_view_ignored_updates( $current_tab = '' ) { //phpcs:ignore -- NOSONAR - complex.
         if ( ! in_array( $current_tab, array( 'wordpress-updates', 'plugins-updates', 'themes-updates' ) ) ) {
             return;
         }

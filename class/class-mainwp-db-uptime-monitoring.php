@@ -251,7 +251,7 @@ KEY idx_wpid (wpid)";
      *
      * @return void
      */
-    public function dev_update_db_90050( $current_version ) {
+    public function dev_update_db_90050( $current_version ) { //phpcs:ignore -- NOSONAR - complex.
         $update_ver = '9.0.0.61'; // NOSONAR - no ip.
 
         if ( ! empty( $current_version ) && version_compare( $current_version, $update_ver, '<=' ) ) {

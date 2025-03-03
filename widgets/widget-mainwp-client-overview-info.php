@@ -95,7 +95,7 @@ class MainWP_Client_Overview_Info { // phpcs:ignore Generic.Classes.OpeningBrace
                 <div class="ui grid">
                     <div class="sixteen wide center aligned column">
                         <div class="ui image">
-                            <?php echo MainWP_Client_Handler::get_client_contact_image( $client_info, 'client', 'small' ); ; //phpcs:ignore -- ok.  ?>
+                            <?php echo MainWP_Client_Handler::get_client_contact_image( $client_info, 'client', 'small' ); //phpcs:ignore -- ok.  ?>
                         </div>
                     </div>
                     <div class="sixteen wide center aligned column">
@@ -146,7 +146,7 @@ class MainWP_Client_Overview_Info { // phpcs:ignore Generic.Classes.OpeningBrace
                 <div class="ui divider"></div>
                 <?php foreach ( $client_contacts as $contact ) : ?>
                     <h2 class="ui header">
-                        <?php echo MainWP_Client_Handler::get_client_contact_image( $contact, 'contact', 'small' ); ; //phpcs:ignore -- ok.  ?>
+                        <?php echo MainWP_Client_Handler::get_client_contact_image( $contact, 'contact', 'small' ); //phpcs:ignore -- ok.  ?>
                         <div class="content">
                             <?php echo esc_html( $contact['contact_name'] ); ?>
                             <div class="sub header"><?php echo esc_html( $contact['contact_role'] ); ?></div>

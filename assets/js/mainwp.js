@@ -562,10 +562,6 @@ let securityIssues_fixes = [ 'core_updates', 'plugin_updates', 'theme_updates', 
 jQuery(function () {
   let securityIssueSite = jQuery('#securityIssueSite');
   if ((securityIssueSite.val() != null) && (securityIssueSite.val() != "")) {
-    //jQuery(document).on('click', '#securityIssues_fixAll', function () {
-    //  securityIssues_fix('all');
-    //});
-
     jQuery(document).on('click', '#securityIssues_refresh', function () {
       for (let ise of securityIssues_fixes) {
         let securityIssueCurrentIssue = jQuery('#' + ise + '_fix');
@@ -4676,7 +4672,7 @@ let mainwp_common_ui_widgets_save_layout = function (itemClass, data, callBack) 
   }
 
   $items.forEach(function (item) {
-    var obj = {};
+    let obj = {};
     obj["x"] = item.getAttribute('gs-x');
     obj["y"] = item.getAttribute('gs-y');
     obj["w"] = item.getAttribute('gs-w');
@@ -4690,7 +4686,7 @@ let mainwp_common_ui_widgets_save_layout = function (itemClass, data, callBack) 
   data.wgids = wgIds;
 
   jQuery.post(ajaxurl, mainwp_secure_data(data), function (res) {
-    if (typeof callBack !== "undefined" && false != callBack) {
+    if (typeof callBack !== "undefined" && false !== callBack) {
       callBack(res);
     }
   }, 'json');

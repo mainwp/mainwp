@@ -238,10 +238,10 @@ class Cost_Tracker_Add_Edit {
                                 <div style="display:inline-block;" id="module_cost_tracker_upload_custom_icon_img_display"></div>
                             <?php } ?>
                         </span>
-                        <div class="ui basic button mainwp-managesites-edit-site-icon-customable" 
-                            iconItemId="<?php echo intval( $edit_id ); ?>" 
-                            iconFileSlug="<?php echo esc_attr( $cust_prod_icon_file ); ?>" 
-                            del-icon-nonce="<?php echo esc_attr( $delnonce ); ?>" 
+                        <div class="ui basic button mainwp-managesites-edit-site-icon-customable"
+                            iconItemId="<?php echo intval( $edit_id ); ?>"
+                            iconFileSlug="<?php echo esc_attr( $cust_prod_icon_file ); ?>"
+                            del-icon-nonce="<?php echo esc_attr( $delnonce ); ?>"
                             icon-src="<?php echo esc_attr( $cust_prod_src ); ?>">
                             <i class="image icon"></i> <?php echo ! empty( $edit_cost ) ? esc_html__( 'Change Image', 'mainwp' ) : esc_html__( 'Upload Image', 'mainwp' ); ?>
                         </div>

@@ -1863,8 +1863,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
         $setting_page = true;
 
-        $changed = count( $default_sync ) !== count( array_filter( $sync_data_settings ) );
-
         ?>
         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-miscellaneous">
             <label class="six wide column top aligned">

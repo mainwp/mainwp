@@ -423,7 +423,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <?php endif; ?>
             <br/><span class="ui small text"><?php esc_html_e( 'Last synced: ', 'mainwp' ); ?> <?php echo esc_html( $lastSyncTime ); ?></span>
         </div>
-        
+
         <?php
     }
 
@@ -472,7 +472,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
             </a>
             <br/><span class="ui small text"><?php esc_html_e( 'Last synced: ', 'mainwp' ); ?> <?php echo esc_html( $lastSyncTime ); ?></span>
         </div>
-        
+
         <?php
     }
 
@@ -490,7 +490,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <i class="ellipsis vertical icon"></i>
                     <div class="menu">
                         <a href="javascript:void(0)" class="mainwp-updates-overview-reconnect-site item" adminuser="<?php echo esc_attr( $website->adminname ); ?>" siteid="<?php echo intval( $website->id ); ?>"><?php esc_html_e( 'Reconnect Site', 'mainwp' ); ?></a>
-                        <a href="<?php echo esc_html( $website->url ); ?>" class="item" target="_blank"><?php esc_html_e( 'Visit Site', 'mainwp' ); ?></a> 
+                        <a href="<?php echo esc_html( $website->url ); ?>" class="item" target="_blank"><?php esc_html_e( 'Visit Site', 'mainwp' ); ?></a>
                     </div>
                 </div>
             </div>
@@ -520,7 +520,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <span class="ui mini red label"><?php esc_html_e( 'Disconnected', 'mainwp' ); ?></span>
             <br/><span class="ui small text"><?php esc_html_e( 'Last synced: ', 'mainwp' ); ?> <?php echo esc_html( $lastSyncTime ); ?></span>
         </div>
-        
+
         <?php
     }
 }

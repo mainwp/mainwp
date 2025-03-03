@@ -153,10 +153,10 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         <div class="ui stackable grid mainwp-widget-footer">
             <div class="eight wide left aligned middle aligned column">
-                <a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkAdd' ) ); ?>" class="ui button mini green"><?php esc_html_e( 'Create a New Post', 'mainwp' ); ?></a>
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkAdd' ) ); ?>" class="ui mini basic button"><?php esc_html_e( 'Create a New Post', 'mainwp' ); ?></a>
             </div>
             <div class="eight wide right aligned middle aligned column">
-                <a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkManage' ) ); ?>"><?php esc_html_e( 'Manage Posts', 'mainwp' ); ?></a>
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkManage' ) ); ?>" class="ui mini basic button"><?php esc_html_e( 'Manage Posts', 'mainwp' ); ?></a>
             </div>
         </div>
         <?php
@@ -177,7 +177,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         ?>
         <div class="ui grid mainwp-widget-header">
             <div class="twelve wide column">
-                <h3 class="ui header handle-drag">
+                <h2 class="ui header handle-drag">
                     <?php
                     /**
                      * Filter: mainwp_recent_posts_widget_title
@@ -193,7 +193,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <?php else : ?>
                     <div class="sub header"><?php esc_html_e( 'The most recent posts from your websites', 'mainwp' ); ?></div>
                     <?php endif; ?>
-                </h3>
+                </h2>
             </div>
             <div class="four wide column right aligned">
                 <div class="ui dropdown right tiny pointing mainwp-dropdown-tab">
@@ -245,7 +245,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 MainWP_UI::render_empty_element_placeholder();
             }
             ?>
-            <div class="ui middle aligned divided selection list">
+            <div class="ui middle aligned divided list">
             <?php
             $_count = count( $recent_posts_published );
             for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
@@ -273,8 +273,8 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <span class="ui small text"><?php echo esc_html( $recent_posts_published[ $i ]['dts'] ); ?></span>
                         </div>
                         <div class="two wide column right aligned">
-                            <div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
-                                <i class="ellipsis horizontal icon"></i>
+                            <div class="ui right pointing dropdown" style="z-index:999">
+                                <i class="ellipsis vertical icon"></i>
                                 <div class="menu">
                                     <a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-unpublish" href="#"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></a>
                                     <a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $recent_posts_published[ $i ]['website']->id ); ?>&location=<?php echo esc_attr( base64_encode( 'post.php?action=editpost&post=' . $recent_posts_published[ $i ]['id'] . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
@@ -339,7 +339,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 MainWP_UI::render_empty_element_placeholder();
             }
             ?>
-            <div class="ui middle aligned divided selection list">
+            <div class="ui middle aligned divided list">
             <?php
             $_count = count( $recent_posts_draft );
             for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
@@ -365,8 +365,8 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <span class="ui small text"><?php echo esc_html( $recent_posts_draft[ $i ]['dts'] ); ?></span>
                         </div>
                         <div class="two wide column right aligned">
-                            <div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
-                                <i class="ellipsis horizontal icon"></i>
+                            <div class="ui right pointing dropdown" style="z-index:999">
+                                <i class="ellipsis vertical icon"></i>
                                     <div class="menu">
                                         <a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
                                         <a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_draft[ $i ]['website']->id ); ?>&location=<?php echo esc_attr( base64_encode( 'post.php?action=editpost&post=' . $recent_posts_draft[ $i ]['id'] . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
@@ -430,7 +430,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     MainWP_UI::render_empty_element_placeholder();
                 }
                 ?>
-            <div class="ui middle aligned divided selection list">
+            <div class="ui middle aligned divided list">
             <?php
             $_count = count( $recent_posts_pending );
             for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
@@ -456,8 +456,8 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <span class="ui small text"><?php echo esc_html( $recent_posts_pending[ $i ]['dts'] ); ?></span>
                         </div>
                         <div class="two wide column right aligned">
-                            <div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
-                                <i class="ellipsis horizontal icon"></i>
+                            <div class="ui right pointing dropdown" style="z-index:999">
+                                <i class="ellipsis vertical icon"></i>
                                     <div class="menu">
                                         <a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
                                         <a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_pending[ $i ]['website']->id ); ?>&location=<?php echo esc_attr( base64_encode( 'post.php?action=editpost&post=' . $recent_posts_pending[ $i ]['id'] . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
@@ -521,7 +521,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             MainWP_UI::render_empty_element_placeholder();
         }
         ?>
-        <div class="ui middle aligned divided selection list">
+        <div class="ui middle aligned divided list">
         <?php
         $_count = count( $recent_posts_future );
         for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
@@ -547,8 +547,8 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <span class="ui small text"><?php echo esc_html( $recent_posts_future[ $i ]['dts'] ); ?></span>
                         </div>
                         <div class="two wide column right aligned">
-                            <div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
-                                <i class="ellipsis horizontal icon"></i>
+                            <div class="ui right pointing dropdown" style="z-index:999">
+                                <i class="ellipsis vertical icon"></i>
                                     <div class="menu">
                                         <a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
                                         <a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_future[ $i ]['website']->id ); ?>&location=<?php echo esc_attr( base64_encode( 'post.php?action=editpost&post=' . $recent_posts_future[ $i ]['id'] . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
@@ -613,7 +613,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             MainWP_UI::render_empty_element_placeholder();
         }
         ?>
-        <div class="ui middle aligned divided selection list">
+        <div class="ui middle aligned divided list">
         <?php
         $_count = count( $recent_posts_trash );
         for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
@@ -639,8 +639,8 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <span class="ui small text"><?php echo esc_html( $recent_posts_trash[ $i ]['dts'] ); ?></span>
                     </div>
                     <div class="two wide column right aligned">
-                        <div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
-                            <i class="ellipsis horizontal icon"></i>
+                        <div class="ui right pointing dropdown" style="z-index:999">
+                            <i class="ellipsis vertical icon"></i>
                                 <div class="menu">
                                     <a href="#" class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-restore" ><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
                                     <a href="#" class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-delete"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></a>

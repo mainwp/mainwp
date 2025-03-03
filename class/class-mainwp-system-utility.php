@@ -122,10 +122,11 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public static function get_primary_backup() {
         $enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
+        $global_method        = false;
         if ( ! $enable_legacy_backup ) {
-            return get_option( 'mainwp_primaryBackup', false );
+            $global_method = get_option( 'mainwp_primaryBackup', false );
         }
-        return false;
+        return $global_method;
     }
 
     /**

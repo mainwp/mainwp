@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.7.1
 Requires PHP: 7.4
-Stable tag: 5.3.5.1
+Stable tag: 5.4.0001
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -79,9 +79,9 @@ You can even install your MainWP Dashboard on a WordPress site located on your l
 
 3. Once installed then Activate the plugin through the Plugins menu in WordPress.
 
-4. Add your first Child Site to the MainWP Dashboard - [Documentation](https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/add-site-to-your-dashboard/)
+4. Add your first Child Site to the MainWP Dashboard - [Documentation](https://mainwp.com/kb/set-up-the-mainwp-plugin/add-site-to-your-dashboard/)
 
-5. Set your MainWP Settings - [Documentation](https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/mainwp-dashboard-settings/)
+5. Set your MainWP Settings - [Documentation](https://mainwp.com/kb/set-up-the-mainwp-plugin/mainwp-dashboard-settings/)
 
 == Frequently Asked Questions ==
 

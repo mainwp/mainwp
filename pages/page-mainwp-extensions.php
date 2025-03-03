@@ -267,18 +267,18 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
         if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
             MainWP_Menu::add_left_menu(
                 array(
-                    'title'      => esc_html__( 'Extensions', 'mainwp' ),
+                    'title'      => esc_html__( 'Add-ons', 'mainwp' ),
                     'parent_key' => 'mainwp_tab',
                     'slug'       => 'Extensions',
                     'href'       => 'admin.php?page=Extensions',
-                    'icon'       => '<i class="puzzle piece icon"></i>',
+                    'icon'       => '<i class="box icon"></i>',
                 ),
                 0
             );
 
             $init_sub_subleftmenu = array(
                 array(
-                    'title'      => esc_html__( 'Manage Extensions', 'mainwp' ),
+                    'title'      => esc_html__( 'Manage Add-ons', 'mainwp' ),
                     'parent_key' => 'Extensions',
                     'href'       => 'admin.php?page=Extensions',
                     'slug'       => 'Extensions',
@@ -461,15 +461,13 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             $ext_source_label = '';
             $type             = '';
             $notice           = '';
-            $integration_type = '';
-            $pri              = (int) $ext['privacy'];
+            $add_on_model     = '';
+            $model            = $ext['model'];
 
-            if ( 0 === $pri ) {
-                $integration_type = 'standalone-extension';
-            } elseif ( 1 === $pri ) {
-                $integration_type = 'api-extension';
-            } elseif ( 2 === $pri ) {
-                $integration_type = 'plugin-extension';
+            if ( 'extension' === $model ) {
+                $add_on_model = 'addon-extension';
+            } elseif ( 'integration' === $model ) {
+                $add_on_model = 'addon-integration';
             }
 
             $item_slug = MainWP_Utility::get_dir_slug( $ext['slug'] );
@@ -523,7 +521,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                         $package_url = apply_filters( 'mainwp_api_manager_upgrade_package_url', $product_info['package'], $product_info );
 
                         $item_html = '
-                                    <div class="item extension extension-to-install ' . esc_attr( $integration_type ) . '" download-link="' . esc_url( $package_url ) . '" plugin-slug="" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
+                                    <div class="item extension extension-to-install ' . esc_attr( $add_on_model ) . '" download-link="' . esc_url( $package_url ) . '" plugin-slug="" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
                                         <div class="ui stackable grid">
                                             <div class="two column row">
                                                 <div class="column"><span class="ui checkbox"><input type="checkbox" status="queue"><label>' . $ext_source_label . '<strong><a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</strong></label></span></div>
@@ -540,7 +538,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
 
                     if ( ! empty( $error ) ) {
                         $item_html = '
-                                    <div class="item extension ' . esc_attr( $integration_type ) . '" product-id="' . esc_attr( $product_id ) . '">
+                                    <div class="item extension ' . esc_attr( $add_on_model ) . '" product-id="' . esc_attr( $product_id ) . '">
                                         <div class="ui stackable grid">
                                             <div class="two column row">
                                                 <div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</label></span></div>
@@ -551,7 +549,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                     }
                 } elseif ( 'org' === $type ) {
                     $item_html = '
-                                <div class="item extension extension-to-install ' . esc_attr( $integration_type ) . '" download-link="" plugin-slug="' . esc_attr( $ext['slug'] ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
+                                <div class="item extension extension-to-install ' . esc_attr( $add_on_model ) . '" download-link="" plugin-slug="' . esc_attr( $ext['slug'] ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
                                     <div class="ui stackable grid">
                                         <div class="two column row">
                                             <div class="column"><span class="ui checkbox"><input type="checkbox" status="queue"><label>' . $ext_source_label . '<strong><a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</strong></label></span></div>
@@ -563,28 +561,28 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             } elseif ( isset( $not_purchased_exts[ $product_id ] ) ) {
                 if ( 'free' === $type || 'pro' === $type ) {
                     $item_html = '
-                        <div class="item extension ' . esc_attr( $integration_type ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
+                        <div class="item extension ' . esc_attr( $add_on_model ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
                             <div class="ui stackable grid">
                                 <div class="two column row">
                                     <div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</label></span></div>
-                                    <div class="right aligned column"><a href="' . $ext['link'] . '" target="_blank" data-tooltip="' . esc_html__( 'Extension not purchased. Click to find out more.', 'mainwp' ) . '" data-position="left center" data-inverted=""><i class="info blue icon"></i></a></div>
+                                    <div class="right aligned column"><a href="' . $ext['link'] . '" target="_blank" data-tooltip="' . esc_html__( 'Add-on not purchased. Click to find out more.', 'mainwp' ) . '" data-position="left center" data-inverted=""><i class="info blue icon"></i></a></div>
                                 </div>
                             </div>
                         </div>';
                 } elseif ( 'org' === $type ) {
                     $item_html = '
-                            <div class="item extension ' . esc_attr( $integration_type ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
+                            <div class="item extension ' . esc_attr( $add_on_model ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
                                 <div class="ui stackable grid">
                                     <div class="two column row">
                                         <div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</label></span></div>
-                                        <div class="right aligned column"><a href="' . $ext['url'] . '" target="_blank" data-tooltip="' . esc_html__( 'Extension not installed. Click to find out more.', 'mainwp' ) . '" data-position="left center" data-inverted=""><i class="info blue icon"></i></a></div>
+                                        <div class="right aligned column"><a href="' . $ext['url'] . '" target="_blank" data-tooltip="' . esc_html__( 'Add-on not installed. Click to find out more.', 'mainwp' ) . '" data-position="left center" data-inverted=""><i class="info blue icon"></i></a></div>
                                     </div>
                                 </div>
                             </div>';
                 }
             } elseif ( isset( $installed_softwares[ $product_id ] ) ) {
                 $item_html = '
-                    <div class="item extension ' . esc_attr( $integration_type ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
+                    <div class="item extension ' . esc_attr( $add_on_model ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
                         <div class="ui stackable grid">
                             <div class="two column row">
                                 <div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a> ' . $notice . '</label></span>' . $privacy . ' ' . $new . '</div>
@@ -610,20 +608,18 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
         $html = '<div class="mainwp-installing-extensions">';
 
         if ( empty( $installing_exts ) && count( $purchased_data ) === count( $all_free_pro_exts ) ) {
-            $html .= '<div class="ui message yellow">' . esc_html__( 'All purchased extensions already installed.', 'mainwp' ) . '</div>';
+            $html .= '<div class="ui message yellow">' . esc_html__( 'All purchased add-ons already installed.', 'mainwp' ) . '</div>';
         } else {
             if ( isset( $not_purchased_exts ) && ! empty( $not_purchased_exts ) ) {
-                $html .= '<div class="ui message info">' . esc_html__( 'You have access to all our Free and third-party Extensions on WP.org and any that you have registered for, but you DO NOT need to install them. ', 'mainwp' );
-                $html .= '<br /><br />';
-                $html .= esc_html__( 'To avoid information overload, we highly recommend adding Extensions one at a time and as you need them. Skip any Extension you do not want to install at this time.', 'mainwp' );
-                $html .= '<br /><br />';
-                $html .= sprintf( esc_html__( 'After installing all your selected Extensions, close the modal by clicking the Close button and %1$sactivate Extensions API license%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/activate-extensions-api/" target="_blank">', '</a> <i class="external alternate icon"></i>' ) . '</div>'; // NOSONAR - noopener - open safe.
+                $html .= '<div class="ui message info">' . esc_html__( 'You have access to all our Free and third-party Add-ons on WP.org and any that you have registered for, but you DO NOT need to install them. ', 'mainwp' );
+                $html .= '<br />';
+                $html .= esc_html__( 'To avoid information overload, we highly recommend adding Add-ons one at a time and as you need them. Skip any add-on you do not want to install at this time. ', 'mainwp' );
+                $html .= sprintf( esc_html__( 'After installing all your selected Add-ons, close the modal by clicking the Close button and %1$sactivate Add-ons API license%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/activate-extensions-api/" target="_blank">', '</a> <i class="external alternate icon"></i>' ) . '</div>'; // NOSONAR - noopener - open safe.
             } else {
-                $html .= '<div class="ui message info">' . esc_html__( 'You have access to the MainWP Pro plan, which gives you access to all MainWP-created Extensions, but you DO NOT need to install all of them.', 'mainwp' );
-                $html .= '<br /><br />';
-                $html .= esc_html__( 'To avoid information overload, we highly recommend adding Extensions one at a time and as you need them. Skip any Extension you do not want to install at this time.', 'mainwp' );
-                $html .= '<br /><br />';
-                $html .= sprintf( esc_html__( 'After installing all your selected Extensions, close the modal by clicking the Close button and %1$sactivate Extensions API license%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/activate-extensions-api/" target="_blank">', '</a> <i class="external alternate icon"></i>' ) . '</div>'; // NOSONAR - noopener - open safe.
+                $html .= '<div class="ui message info">' . esc_html__( 'You have access to the MainWP Pro plan, which gives you access to all MainWP-created add-on, but you DO NOT need to install all of them.', 'mainwp' );
+                $html .= '<br />';
+                $html .= esc_html__( 'To avoid information overload, we highly recommend adding Add-ons one at a time and as you need them. Skip any add-on you do not want to install at this time. ', 'mainwp' );
+                $html .= sprintf( esc_html__( 'After installing all your selected Add-ons, close the modal by clicking the Close button and %1$sactivate Add-ons API license%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/activate-extensions-api/" target="_blank">', '</a> <i class="external alternate icon"></i>' ) . '</div>'; // NOSONAR - noopener - open safe.
             }
 
             $html .= '<div id="mainwp-bulk-activating-extensions-status" class="ui message" style="display:none;"></div>';
@@ -643,13 +639,15 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
 
             $html .= '</div>';
 
+            $html .= '<div class="ui checkbox"><input type="checkbox" checked="" id="mainwp-standalone-extensions-filer" name="mainwp-standalone-extensions-filer"><label><strong>' . esc_html__( 'Show Extensions', 'mainwp' ) . '</strong> - ' . esc_html__( 'Purpose-built add-ons that expand your Dashboard\'s functionality without relying on third-party tools.', 'mainwp' ) . '</label></div><br/>';
+            $html .= '<div class="ui checkbox"><input type="checkbox" checked="" id="mainwp-api-extensions-filer" name="mainwp-api-extensions-filer"><label><strong>' . esc_html__( 'Show Integrations', 'mainwp' ) . '</strong> -' . esc_html__( 'Add-ons that connect to 3rd party tools you already use, bringing their power directly into your Dashboard.', 'mainwp' ) . '</label></div><br/>';
+            $html .= '<div class="ui divider"></div>';
+
             foreach ( $all_groups as $gr_id => $gr_name ) {
                 if ( isset( $grouped_exts[ $gr_id ] ) && 'all' !== $gr_id ) {
                     $html .= '<div class="ui tab" data-tab="' . $gr_id . '">';
-                    $html .= '<div class="ui hidden divider"></div>';
                     $html .= '<h3>' . $gr_name . '</h3>';
-                    $html .= '<div class="ui hidden divider"></div>';
-                    $html .= '<div class="ui relaxed divided list">';
+                    $html .= '<div class="ui selection list">';
                     $html .= $grouped_exts[ $gr_id ];
                     $html .= '</div>';
                     $html .= '</div>';
@@ -659,41 +657,35 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             if ( isset( $grouped_exts['others'] ) && ! empty( $grouped_exts['others'] ) ) {
                 $html .= '<div class="ui tab" data-tab="other">';
                 $html .= '<h3>Other</h3>';
-                $html .= '<div class="ui relaxed divided list">';
+                $html .= '<div class="ui selection list">';
                 $html .= $grouped_exts['others'];
                 $html .= '</div>';
                 $html .= '</div>';
             }
 
             $html .= '<div class="ui tab" data-tab="search">';
-            $html .= '<h3>Search Extensions</h3>';
+            $html .= '<h3>Search Add-ons</h3>';
             $html .= '<div id="mainwp-search-extensions-install" class="ui fluid search">
                         <div class="ui icon fluid input">
-                            <input class="prompt" id="mainwp-search-extensions-install-input" type="text" placeholder="Find extension...">
+                            <input class="prompt" id="mainwp-search-extensions-install-input" type="text" placeholder="Find add-on...">
                             <i class="search icon"></i>
                         </div>
                     </div>';
-            $html .= '<div class="ui relaxed divided list" id="mainwp-extensions-to-install-list">';
+            $html .= '<div class="ui selection list" id="mainwp-extensions-to-install-list">';
             $html .= $grouped_exts['all'];
             $html .= '</div>';
             $html .= '</div>';
 
         }
-        $html .= '<div class="ui hidden divider"></div>';
-        $html .= '<div class="ui secondary segment">';
-        $html .= '<div class="ui checkbox"><input type="checkbox" checked="" id="mainwp-standalone-extensions-filer" name="mainwp-standalone-extensions-filer"><label>' . esc_html__( 'Show standalone extensions', 'mainwp' ) . '</label></div><br/>';
-        $html .= '<div class="ui checkbox"><input type="checkbox" checked="" id="mainwp-api-extensions-filer" name="mainwp-api-extensions-filer"><label>' . esc_html__( 'Show extensions that integrate with 3rd party API', 'mainwp' ) . '</label></div><br/>';
-        $html .= '<div class="ui checkbox"><input type="checkbox" checked="" id="mainwp-plugin-extensions-filer" name="mainwp-plugin-extensions-filer"><label>' . esc_html__( 'Show extensions that integrate with 3rd party plugin', 'mainwp' ) . '</label></div>';
-        $html .= '</div>';
-        $html .= '<div class="ui hidden divider"></div>';
-        $html .= '<div class="ui secondary segment">';
-        $html .= '<span class="ui mini green label">FREE</span> - ' . esc_html__( 'Free extension developed by MainWP', 'mainwp' ) . '<br/>';
-        $html .= '<span class="ui mini blue label">PRO</span> - ' . esc_html__( 'Premium extension developed by MainWP', 'mainwp' ) . '<br/>';
-        $html .= '<span class="ui mini grey label">.ORG</span> - ' . esc_html__( 'Free extension developed by 3rd party author, available on WordPress.org', 'mainwp' );
+
+        $html .= '<div class="ui divider"></div>';
+
+        $html .= '<span class="ui mini green label">FREE</span> - ' . esc_html__( 'Free add-on developed by MainWP', 'mainwp' ) . '<br/>';
+        $html .= '<span class="ui mini blue label">PRO</span> - ' . esc_html__( 'Premium add-on developed by MainWP', 'mainwp' ) . '<br/>';
+        $html .= '<span class="ui mini grey label">.ORG</span> - ' . esc_html__( 'Free add-on developed by 3rd party author, available on WordPress.org', 'mainwp' );
         $html .= '<div class="ui hidden fitted divider"></div>';
-        $html .= '<i class="info circle icon"></i> ' . esc_html__( 'Extension requires the corresponding plugin on your MainWP Dashboard site too.', 'mainwp' ) . '<br/>';
-        $html .= '<i class="shield alternate icon"></i> ' . esc_html__( 'Shows the extension privacy info.', 'mainwp' ) . '<br/>';
-        $html .= '</div>';
+        $html .= '<i class="info circle icon"></i> ' . esc_html__( 'Add-on requires the corresponding plugin on your MainWP Dashboard site too.', 'mainwp' ) . '<br/>';
+        $html .= '<i class="shield alternate icon"></i> ' . esc_html__( 'Shows the add-on privacy info.', 'mainwp' ) . '<br/>';
 
         $html .= '<script>jQuery( "#mainwp-install-extensions-menu .item" ).tab();</script>';
         $html .= '<script type="text/javascript">
@@ -712,13 +704,10 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                 }
             } );
             jQuery( "#mainwp-standalone-extensions-filer" ).on( "change", function () {
-                jQuery( "#mainwp-get-purchased-extensions-modal .ui.relaxed.divided.list .item.extension.standalone-extension" ).toggle( 200 );
+                jQuery( "#mainwp-get-purchased-extensions-modal .ui.list .item.extension.addon-extension" ).toggle( 200 );
             } );
             jQuery( "#mainwp-api-extensions-filer" ).on( "change", function () {
-                jQuery( "#mainwp-get-purchased-extensions-modal .ui.relaxed.divided.list .item.extension.api-extension" ).toggle( 200 );
-            } );
-            jQuery( "#mainwp-plugin-extensions-filer" ).on( "change", function () {
-                jQuery( "#mainwp-get-purchased-extensions-modal .ui.relaxed.divided.list .item.extension.plugin-extension" ).toggle( 200 );
+                jQuery( "#mainwp-get-purchased-extensions-modal .ui.list .item.extension.addon-integration" ).toggle( 200 );
             } );
         } );
         </script>';
@@ -781,7 +770,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
     public static function render() {
 
         $params = array(
-            'title' => esc_html__( 'Extensions', 'mainwp' ),
+            'title' => esc_html__( 'Add-ons', 'mainwp' ),
         );
         MainWP_UI::render_top_header( $params );
 
@@ -797,14 +786,14 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
     public static function mainwp_help_content() {
         if ( isset( $_GET['page'] ) && 'Extensions' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             ?>
-            <p><?php esc_html_e( 'If you need help with your MainWP Extensions, please review following help documents', 'mainwp' ); ?></p>
+            <p><?php esc_html_e( 'If you need help with your MainWP Add-ons, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui list">
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-extensions/" target="_blank"><i class="fa fa-book"></i> What are the MainWP Extensions</a></div> <?php // NOSONAR - noopener - open safe. ?>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-extensions/#order-extensions" target="_blank"><i class="fa fa-book"></i> Order Extension(s)</a></div> <?php // NOSONAR - noopener - open safe. ?>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-extensions/#install-extensions" target="_blank"><i class="fa fa-book"></i> Install Extension(s)</a></div> <?php // NOSONAR - noopener - open safe. ?>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-extensions/#activate-extensions" target="_blank"><i class="fa fa-book"></i> Activate Extension(s) API</a></div> <?php // NOSONAR - noopener - open safe. ?>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-extensions/#update-extensions" target="_blank"><i class="fa fa-book"></i> Updating Extension(s)</a></div> <?php // NOSONAR - noopener - open safe. ?>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-extensions/#remove-unneeded-extensions" target="_blank"><i class="fa fa-book"></i> Remove Extension(s)</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-extensions/" target="_blank"><i class="fa fa-book"></i> What are the MainWP Add-ons</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-extensions/#order-extensions" target="_blank"><i class="fa fa-book"></i> Order Add-on(s)</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-extensions/#install-extensions" target="_blank"><i class="fa fa-book"></i> Install Add-on(s)</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-extensions/#activate-extensions" target="_blank"><i class="fa fa-book"></i> Activate Add-on(s) API</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-extensions/#update-extensions" target="_blank"><i class="fa fa-book"></i> Updating Add-on(s)</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-extensions/#remove-unneeded-extensions" target="_blank"><i class="fa fa-book"></i> Remove Add-on(s)</a></div> <?php // NOSONAR - noopener - open safe. ?>
             </div>
             <?php
             /**

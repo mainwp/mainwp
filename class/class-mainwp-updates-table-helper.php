@@ -173,12 +173,7 @@ class MainWP_Updates_Table_Helper { // phpcs:ignore Generic.Classes.OpeningBrace
      * @param mixed $value Value of column.
      */
     public function column_trusted( $value ) {
-        if ( $value ) {
-            $label = '<span class="ui tiny basic green label mainwp-768-fluid">Trusted</span>';
-        } else {
-            $label = '<span class="ui tiny basic grey label mainwp-768-fluid">Not Trusted</span>';
-        }
-        return '<td class="mainwp-768-half-width-cell">' . $label . '</td>';
+        return MainWP_Manage_Sites_Update_View::get_column_trusted( $value );
     }
 
     /**

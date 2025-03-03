@@ -178,7 +178,7 @@ class MainWP_Uptime_Monitoring_Site_Widget {
         ?>
         <div class="ui grid mainwp-widget-header">
             <div class="twelve wide column">
-                <h3 class="ui header handle-drag">
+                <h2 class="ui header handle-drag">
                     <?php
                     /**
                      * Filter: mainwp_uptime_monitoring_response_time_widget_title
@@ -190,8 +190,7 @@ class MainWP_Uptime_Monitoring_Site_Widget {
                     echo esc_html( apply_filters( 'mainwp_uptime_monitoring_response_time_widget_title', esc_html__( 'Uptime Monitoring', 'mainwp' ) ) );
                     ?>
                     <div class="sub header"><?php esc_html_e( 'Monitor site uptime status and response time history.', 'mainwp' ); ?></div>
-                </h3>
-
+                </h2>
             </div>
 
             <div class="four wide column right aligned">

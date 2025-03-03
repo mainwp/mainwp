@@ -9,6 +9,8 @@
 
 namespace MainWP\Dashboard;
 
+use MainWP\Dashboard\Module\Log\Log_Query;
+
 /**
  * Class MainWP_DB_Site_Actions
  *
@@ -49,7 +51,6 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
      */
     public function __construct() {
         parent::__construct();
-        add_filter( 'mainwp_db_install_tables', array( $this, 'hook_db_install_tables' ), 10, 3 );
         add_action( 'mainwp_delete_site', array( $this, 'hook_delete_site' ), 10, 3 );
     }
 
@@ -218,7 +219,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
      *
      * Create or update action.
      *
-     * @param array $action_id action id.
+     * @param int   $action_id action id.
      * @param array $data action data.
      *
      * @return bool
@@ -235,7 +236,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
      *
      * Create or update action.
      *
-     * @param array $action_id action id.
+     * @param int $action_id action id.
      *
      * @return bool
      */
@@ -247,6 +248,19 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
     }
 
 
+    /**
+     * Method get_non_mainwp_action_by_id.
+     *
+     * @param int $log_id action id.
+     *
+     * @return bool
+     */
+    public function get_non_mainwp_action_by_id( $log_id ) {
+        if ( empty( $log_id ) ) {
+            return false;
+        }
+        return $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_logs' ) . ' WHERE log_id = %d ', $log_id ) ); //phpcs:ignore -- ok.
+    }
 
     /**
      * Method delete_action_by.
@@ -291,10 +305,15 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
      *
      * @param bool  $params params.
      * @param mixed $obj Format data.
+     * @param bool  $legacy legacy data.
      *
      * @return mixed $result result.
      */
-    public function get_wp_actions( $params = array(), $obj = OBJECT ) { //phpcs:ignore -- NOSONAR - complex.
+    public function get_wp_actions( $params = array(), $obj = OBJECT, $legacy = false ) { //phpcs:ignore -- NOSONAR - complex.
+
+        if ( ! $legacy ) {
+            return $this->get_none_mainwp_actions_log( $params, $obj );
+        }
 
         $action_id     = isset( $params['action_id'] ) ? intval( $params['action_id'] ) : 0;
         $site_id       = isset( $params['wpid'] ) ? $params['wpid'] : 0;
@@ -389,5 +408,73 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
         }
 
         return $result;
+    }
+
+
+    /**
+     * Method get_none_mainwp_actions_log.
+     *
+     * Get wp actions.
+     *
+     * @param bool  $legacy_params params.
+     * @param mixed $obj Format data.
+     *
+     * @return mixed $result result.
+     */
+    public function get_none_mainwp_actions_log( $legacy_params = array(), $obj = OBJECT ) { //phpcs:ignore -- NOSONAR - complex.
+
+        $action_id    = isset( $legacy_params['action_id'] ) ? intval( $legacy_params['action_id'] ) : 0;
+        $site_id      = isset( $legacy_params['wpid'] ) ? $legacy_params['wpid'] : 0;
+        $object_id    = isset( $legacy_params['object_id'] ) ? $this->escape( $legacy_params['object_id'] ) : '';
+        $where_extra  = isset( $legacy_params['where_extra'] ) ? $legacy_params['where_extra'] : ''; // compatible.
+        $dism         = ! empty( $legacy_params['dismiss'] ) ? 1 : 0;
+        $check_access = isset( $legacy_params['check_access'] ) ? $legacy_params['check_access'] : true;
+        $search_str   = isset( $legacy_params['search'] ) ? $this->escape( trim( $legacy_params['search'] ) ) : null;
+
+        $order_by    = isset( $legacy_params['order_by'] ) && ! empty( $legacy_params['order_by'] ) ? $legacy_params['order_by'] : 'created ';
+        $offset      = isset( $legacy_params['offset'] ) ? intval( $legacy_params['offset'] ) : 0;
+        $rowcount    = isset( $legacy_params['rowcount'] ) ? intval( $legacy_params['rowcount'] ) : false;
+        $total_count = isset( $legacy_params['total_count'] ) && $legacy_params['total_count'] ? true : false;
+
+        $limit = isset( $legacy_params['limit'] ) ? intval( $legacy_params['limit'] ) : false;
+
+        $order = 'DESC';
+        if ( isset( $legacy_params['order'] ) && 'ASC' === strtoupper( $legacy_params['order'] ) ) {
+            $order = 'ASC';
+        }
+
+        $per_page = false !== $rowcount ? absint( $rowcount ) : 9999999999;
+
+        $compatible_args = array(
+            'search'           => $search_str,
+            'start'            => $offset,
+            'records_per_page' => $per_page,
+            'order'            => $order,
+            'orderby'          => $order_by,
+            'count_only'       => $total_count ? true : false,
+            'recent_number'    => $limit,
+
+            'where_extra'      => $where_extra,
+            'log_id'           => $action_id,
+            'site_id'          => $site_id,
+            'object_id'        => $object_id,
+            'dismiss'          => $dism,
+            'check_access'     => $check_access,
+            'nonemainwp'       => true,
+        );
+
+        $query_log = new Log_Query();
+
+        $results = $query_log->query( $compatible_args );
+        if ( is_array( $results ) && isset( $results['items'] ) ) {
+            return $results['items'];
+        } elseif ( $total_count ) {
+            if ( isset( $results['count'] ) ) {
+                return $results['count'];
+            } else {
+                return 0;
+            }
+        }
+        return array();
     }
 }

@@ -218,7 +218,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table { // phpcs:ignore
      */
     public function display() {
         ?>
-        <div id="mainwp-install-plugins-container" class="ui four cards">
+        <div id="mainwp-install-plugins-container" class="ui three mainwp-cards cards">
                 <?php $this->display_rows_or_placeholder(); ?>
             </div>
             <div class="ui hidden divider"></div>

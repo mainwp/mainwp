@@ -289,18 +289,6 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             )
         );
 
-        add_submenu_page(
-            'mainwp_tab',
-            esc_html__( 'Settings', 'mainwp' ),
-            '<div class="mainwp-hidden">' . esc_html__( 'Settings', 'mainwp' ) . '</div>',
-            'read',
-            'CostTrackerSettings',
-            array(
-                Cost_Tracker_Settings::get_instance(),
-                'render_settings_page',
-            )
-        );
-
         /**
          * This hook allows you to add extra sub pages to the client page via the 'mainwp_getsubpages_cost_tracker' filter.
          */
@@ -375,13 +363,6 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
                 'slug'       => 'CostTrackerAdd',
                 'right'      => '',
             ),
-            array(
-                'title'      => esc_html__( 'Settings', 'mainwp' ),
-                'parent_key' => 'CostSummary',
-                'href'       => 'admin.php?page=CostTrackerSettings',
-                'slug'       => 'CostTrackerSettings',
-                'right'      => '',
-            ),
         );
 
         MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'ManageCostTracker', 'ManageCostTracker' );
@@ -439,13 +420,6 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             );
         }
 
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CostTrackerSettings' ) ) {
-            $renderItems[] = array(
-                'title'  => esc_html__( 'Settings', 'mainwp' ),
-                'href'   => 'admin.php?page=CostTrackerSettings',
-                'active' => ( 'settings' === $shownPage ) ? true : false,
-            );
-        }
         if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
             foreach ( static::$subPages as $subPage ) {
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageCostTracker' . $subPage['slug'] ) ) {
@@ -889,13 +863,13 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             ?>
             <p><?php esc_html_e( 'If you need help with the Cost Tracker module, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui list">
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-cost-tracker/" target="_blank">Cost Tracker</a></div> <?php // NOSONAR -- compatible with help. ?>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-cost-tracker/#manage-costs-page" target="_blank">Manage Costs</a></div> <?php // NOSONAR -- compatible with help. ?>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-cost-tracker/#adding-a-new-cost-to-track" target="_blank">Adding a New Cost to track</a></div> <?php // NOSONAR -- compatible with help. ?>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-cost-tracker/#edit-an-item" target="_blank">Edit Costs</a></div> <?php // NOSONAR -- compatible with help. ?>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-cost-tracker/#delete-an-item" target="_blank">Delete Costs</a></div> <?php // NOSONAR -- compatible with help. ?>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-cost-tracker/#settings-page" target="_blank">Cost Tracker Settings</a></div> <?php // NOSONAR -- compatible with help. ?>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-cost-tracker/#cost-tracker-pro-extension" target="_blank">Cost Tracker Pro Extension</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-cost-tracker/" target="_blank">Cost Tracker</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-cost-tracker/#manage-costs-page" target="_blank">Manage Costs</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-cost-tracker/#adding-a-new-cost-to-track" target="_blank">Adding a New Cost to track</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-cost-tracker/#edit-an-item" target="_blank">Edit Costs</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-cost-tracker/#delete-an-item" target="_blank">Delete Costs</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-cost-tracker/#settings-page" target="_blank">Cost Tracker Settings</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-cost-tracker/#cost-tracker-pro-extension" target="_blank">Cost Tracker Pro Extension</a></div> <?php // NOSONAR -- compatible with help. ?>
                 <?php
                 /**
                  * Action: mainwp_module_cost_tracker_help_item
@@ -1050,7 +1024,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             $upload_icon = $prod_icon;
         }
 
-        $style = 'width:32px;height:auto;display:inline-block;';
+        $style = 'width:28px;height:auto;display:inline-block;';
 
         if ( empty( $prod_color ) ) {
             $prod_color = '#34424D';
@@ -1077,7 +1051,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             } else {
                 $scr = '';
             }
-            $icon_wrapper_attr = ! empty( $img_id_attr ) ? 'id="' . esc_attr( $img_id_attr ) . '" class="ui mini circular image" ' : 'class="' . esc_attr( $default_cls ) . ' ui mini circular image "';
+            $icon_wrapper_attr = ! empty( $img_id_attr ) ? 'id="' . esc_attr( $img_id_attr ) . '" class="ui circular image" ' : 'class="' . esc_attr( $default_cls ) . ' ui circular image "';
             $icon              = '<div style="display:inline-block;" ' . $icon_wrapper_attr . '><img style="' . $style . '" alt="' . esc_attr__( 'Product icon', 'mainwp' ) . '" src="' . esc_attr( $scr ) . '"/></div>';
         }
         return $icon;

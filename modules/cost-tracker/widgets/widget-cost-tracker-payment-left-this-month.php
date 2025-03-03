@@ -52,12 +52,12 @@ class Cost_Tracker_Payment_Left_This_Month {
     public function render_widget() {
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
+            <h2 class="ui header handle-drag">
                 <?php esc_html_e( 'Payments Left For the Month', 'mainwp' ); ?>
                 <div class="sub header">
                 <?php esc_html_e( 'See upcoming costs left for this month.', 'mainwp' ); ?>
                 </div>
-            </h3>
+            </h2>
         </div>
 
         <div class="mainwp-widget-insights-card">

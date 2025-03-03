@@ -103,21 +103,21 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
 
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
-            <?php
-            /**
-             * Filter: mainwp_clients_overview_websites_widget_title
-             *
-             * Filters the Site info widget title text.
-             *
-             * @param object $client_info Object containing the child site info.
-             *
-             * @since 4.1
-             */
-            echo esc_html( apply_filters( 'mainwp_clients_overview_websites_widget_title', esc_html__( 'Sites', 'mainwp' ), $client_info ) );
-            ?>
-            <div class="sub header"><?php echo esc_html__( 'Websites that belong to the client.', 'mainwp' ); ?></div>
-            </h3>
+            <h2 class="ui header handle-drag">
+                <?php
+                /**
+                 * Filter: mainwp_clients_overview_websites_widget_title
+                 *
+                 * Filters the Site info widget title text.
+                 *
+                 * @param object $client_info Object containing the child site info.
+                 *
+                 * @since 4.1
+                 */
+                echo esc_html( apply_filters( 'mainwp_clients_overview_websites_widget_title', esc_html__( 'Sites', 'mainwp' ), $client_info ) );
+                ?>
+                <div class="sub header"><?php echo esc_html__( 'Websites that belong to the client.', 'mainwp' ); ?></div>
+            </h2>
         </div>
             <div class="mainwp-widget-client-card mainwp-scrolly-overflow">
                 <?php
@@ -143,9 +143,6 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                             <tbody id="mainwp-manage-sites-body-table">
                                 <?php $this->display_rows_or_placeholder(); ?>
                             </tbody>
-                            <tfoot>
-                                <tr><?php $this->print_column_headers( false ); ?></tr>
-                            </tfoot>
                         </table>
                 <?php } ?>
                 <?php
@@ -160,6 +157,11 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                  */
                 do_action( 'mainwp_clients_overview_websites_widget_bottom', $client_info );
                 ?>
+            </div>
+            <div class="ui grid mainwp-widget-footer">
+                <div class="column">
+                    <a href="admin.php?page=managesites&client=<?php echo intval( $client_id ); ?>" title="" class="ui mini basic button"><?php echo esc_html__( 'Manage Client Sites', 'mainwp' ); ?></a>
+                </div>
             </div>
 
             <?php
@@ -224,17 +226,7 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                             "stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
                             "order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
                             "lengthMenu" : [ [<?php echo esc_js( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All" ] ],
-                            "columnDefs": [
-                                {
-                                    "targets": 'no-sort',
-                                    "orderable": false
-                                },
-                                {
-                                    "targets": 'manage-site-column',
-                                    "type": 'natural-nohtml'
-                                },
-                                <?php do_action( 'mainwp_manage_sites_table_columns_defs' ); ?>
-                            ],
+                            "columnDefs": <?php echo wp_json_encode( $this->get_columns_defines() ); ?>,
                             "pageLength": <?php echo intval( $sites_per_page ); ?>,
                             "initComplete": function( settings, json ) {
                             },
@@ -399,7 +391,6 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
         return array(
             'status' => '',
             'site'   => esc_html__( 'Site', 'mainwp' ),
-            'login'  => '<i class="sign in alternate icon"></i>',
             'update' => esc_html__( 'Updates', 'mainwp' ),
         );
     }
@@ -453,20 +444,20 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
             'orderable' => false,
         );
         $defines[] = array(
+            'targets'   => array( 'manage-status-column' ),
+            'className' => 'collapsing center aligned',
+        );
+        $defines[] = array(
             'targets'   => 'manage-site-column',
             'className' => 'column-site-bulk mainwp-site-cell',
         );
         $defines[] = array(
-            'targets'   => 'manage-url-column',
-            'className' => 'mainwp-url-cell',
+            'targets'   => array( 'manage-update-column' ),
+            'className' => 'collapsing center aligned',
         );
         $defines[] = array(
-            'targets'   => array( 'manage-login-column', 'manage-status_code-column', 'manage-site_actions-column', 'manage-client_name-column' ),
-            'className' => 'collapsing',
-        );
-        $defines[] = array(
-            'targets'   => array( 'manage-status-column' ),
-            'className' => 'collapsing',
+            'targets'   => array( 'manage-site_actions-column' ),
+            'className' => 'collapsing right aligned',
         );
         return $defines;
     }
@@ -593,14 +584,16 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
         list( $columns ) = $this->get_column_info();
 
         foreach ( $columns as $column_name => $column_display_name ) {
-
             ?>
+
             <?php if ( 'status' === $column_name ) { ?>
                 <td class="center aligned collapsing">
                     <?php if ( $hasSyncErrors ) : ?>
-                        <a class="mainwp_site_reconnect" href="#"><i class="circular inverted red unlink icon"></i></a>
+                        <a class="mainwp_site_reconnect" href="#"><i class="red large times icon"></i></a>
                     <?php else : ?>
-                        <a class="managesites_syncdata" href="#"><?php echo '1' === $website['suspended'] ? '<i class="pause circular yellow inverted circle icon"></i>' : '<i class="circular inverted green check icon"></i>'; ?></a>
+                        <a class="managesites_syncdata" href="#">
+                            <?php echo '1' === $website['suspended'] ? '<i class="yellow pause large icon"></i>' : '<i class="green large check icon"></i>'; ?>
+                        </a>
                     <?php endif; ?>
                 </td>
                 <?php
@@ -610,26 +603,36 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                     $cls_site = 'site-sync-error';
                 }
                 ?>
-                <td class="column-site-bulk mainwp-site-cell all <?php echo esc_html( $cls_site ); ?>"><a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $website['id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Open the site overview', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><?php echo esc_html( stripslashes( $website['name'] ) ); ?></a><i class="ui active inline loader tiny" style="display:none"></i><span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span></td>
-            <?php } elseif ( 'login' === $column_name ) { ?>
-                <td class="collapsing">
-                <?php if ( ! \mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
-                    <i class="sign in icon"></i>
-                <?php else : ?>
-                    <a href="<?php MainWP_Site_Open::get_open_site_url( $website['id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>" data-position="right center" data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
-                <?php endif; ?>
+                <td class="column-site-bulk mainwp-site-cell all <?php echo esc_html( $cls_site ); ?>">
+                    <?php if ( ! \mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
+                        <i class="sign in icon"></i>
+                    <?php else : ?>
+                        <a href="<?php MainWP_Site_Open::get_open_site_url( $website['id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>" data-position="right center" data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
+                    <?php endif; ?>
+                    <a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $website['id'] ); ?>" >
+                        <?php echo esc_html( stripslashes( $website['name'] ) ); ?>
+                    </a>
+                    <div>
+                        <span class="ui small text">
+                            <a href="<?php echo esc_url( $website['url'] ); ?>" class="mainwp-may-hide-referrer open_site_url ui grey text" target="_blank">
+                                <?php echo esc_html( MainWP_Utility::get_nice_url( $website['url'] ) ); ?>
+                            </a>
+                        </span>
+                    </div>
                 </td>
-                <?php
-            } elseif ( 'update' === $column_name ) {
-                ?>
-                <td class="collapsing center aligned"><span data-tooltip="<?php esc_attr_e( 'Number of available updates. Click to see details.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><a class="ui mini compact button <?php echo esc_attr( $a_color ); ?>" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>"><?php echo intval( $total_updates ); ?></a></span></td>
+            <?php } elseif ( 'update' === $column_name ) { ?>
+            <td>
+                <a class="ui mini basic grey button" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>">
+                    <i class="sync alternate icon"></i> <?php echo intval( $total_updates ); ?>
+                </a>
+            </td>
                 <?php
             } elseif ( 'site_actions' === $column_name ) {
                 // @NO_SONAR_START@ - duplicated issue.
                 ?>
                     <td class="collapsing not-selectable">
-                        <div class="ui right pointing dropdown icon mini basic green button" style="z-index: 99;">
-                            <i class="ellipsis horizontal icon"></i>
+                        <div class="ui right pointing dropdown" style="z-index: 99;">
+                            <i class="ellipsis vertical icon"></i>
                             <div class="menu" siteid="<?php echo intval( $website['id'] ); ?>">
                     <?php if ( '' !== $website['sync_errors'] ) : ?>
                             <a class="mainwp_site_reconnect item" href="#"><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>

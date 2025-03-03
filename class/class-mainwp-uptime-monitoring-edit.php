@@ -116,13 +116,18 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
 
             if ( $individual ) {
 
-                $site_id = intval( $_REQUEST['monitor_wpid'] );
+                $site_id = isset( $_REQUEST['monitor_wpid'] ) ? intval( $_REQUEST['monitor_wpid'] ) : 0;
+                if ( empty( $site_id ) && isset( $_REQUEST['id'] ) ) {
+                    $site_id = (int) $_REQUEST['id'];
+                }
 
                 $update['wpid'] = $site_id;
                 $current        = false;
+                $sub_editing    = false;
 
                 // create or update sub monitor.
                 if ( ! empty( $_POST['update_submonitor'] ) ) {
+                    $sub_editing = true;
 
                     if ( ! empty( $_POST['edit_sub_monitor_id'] ) ) {
                         // edit sub monitor.
@@ -134,7 +139,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                     $update['suburl'] = isset( $_POST['mainwp_edit_monitor_sub_url'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_edit_monitor_sub_url'] ) ) : '';
 
                     if ( empty( $update['suburl'] ) ) {
-                        wp_safe_redirect( 'admin.php?page=managesites&monitor_wpid=' . $site_id . $redirect_sub_monitor . '&message=5' );
+                        wp_safe_redirect( 'admin.php?page=managesites&id=' . $site_id . '&monitor_wpid=' . $site_id . $redirect_sub_monitor . '&message=5' );
                         exit();
                     }
 
@@ -145,7 +150,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                         $current = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site_id, 'suburl', $update['suburl'], array(), ARRAY_A );
                         // existed suburl in use.
                         if ( $current && ( (int) $current['monitor_id'] !== $update['monitor_id'] ) ) {
-                            wp_safe_redirect( 'admin.php?page=managesites&monitor_wpid=' . $site_id . $redirect_sub_monitor . '&message=3' );
+                            wp_safe_redirect( 'admin.php?page=managesites&id=' . $site_id . '&monitor_wpid=' . $site_id . $redirect_sub_monitor . '&message=3' );
                             exit();
                         }
                     } else {
@@ -155,7 +160,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                         $current = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site_id, 'suburl', $update['suburl'], $params, ARRAY_A );
                         // suburl in use.
                         if ( $current ) {
-                            wp_safe_redirect( 'admin.php?page=managesites&monitor_wpid=' . $site_id . $redirect_sub_monitor . '&message=4' );
+                            wp_safe_redirect( 'admin.php?page=managesites&id=' . $site_id . '&monitor_wpid=' . $site_id . $redirect_sub_monitor . '&message=4' );
                             exit();
                         }
                     }
@@ -167,7 +172,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                     }
 
                     if ( empty( $update['suburl'] ) || empty( $update['issub'] ) ) {
-                        wp_safe_redirect( 'admin.php?page=managesites&monitor_wpid=' . $site_id . $redirect_sub_monitor . '&message=2' );
+                        wp_safe_redirect( 'admin.php?page=managesites&id=' . $site_id . '&monitor_wpid=' . $site_id . $redirect_sub_monitor . '&message=2' );
                         exit();
                     }
                 } elseif ( ! empty( $_POST['mainwp_edit_monitor_id'] ) ) {
@@ -190,8 +195,10 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor( $update );
 
                 MainWP_Uptime_Monitoring_Schedule::instance()->check_to_disable_schedule_individual_uptime_monitoring(); // required a check to sync the settings.
-                wp_safe_redirect( 'admin.php?page=managesites&monitor_wpid=' . $site_id . '&message=1' );
-                exit();
+                if ( $sub_editing ) {
+                    wp_safe_redirect( 'admin.php?page=managesites&id=' . $site_id . '&monitor_wpid=' . $site_id . '&message=1' );
+                    exit();
+                }
             } else {
                 MainWP_Uptime_Monitoring_Handle::update_uptime_global_settings( $update );
             }
@@ -222,7 +229,8 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
      */
     public function render_monitor_settings( $site_id = false, $individual = false ) {  //phpcs:ignore -- NOSONAR - complexity.
 
-        $title = __( 'Update Monitor', 'mainwp' );
+        $title      = __( 'Site Monitoring Settings', 'mainwp' );
+        $sub_header = __( 'Adjust monitoring preferences for this site to override global settings if needed.', 'mainwp' );
 
         $is_editing_monitor_or_sub_monitor = true;
 
@@ -245,8 +253,8 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 return;
             }
 
-            if ( ! empty( $_GET['monitor_id'] ) ) {  //phpcs:ignore -- NOSONAR -ok.
-                $mo_settings = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site_id, 'monitor_id', $_GET['monitor_id'], array(), ARRAY_A ); //phpcs:ignore -- NOSONAR -ok.
+            if ( ! empty( $_GET['sub_monitor_id'] ) ) {  //phpcs:ignore -- NOSONAR -ok.
+                $mo_settings = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site_id, 'monitor_id', $_GET['sub_monitor_id'], array(), ARRAY_A ); //phpcs:ignore -- NOSONAR -ok.
                 if ( empty( $mo_settings ) ) {
                     ?>
                     <div class="ui message error"><i class="close icon"></i> <?php esc_html_e( 'Monitor not found or invalid. Please try again.', 'mainwp' ); ?></div>
@@ -313,10 +321,10 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 $show_in_modal = true;
             }
             ?>
-        <div class="ui segment">
-            <h3 class="ui dividing header">
+            <h2 class="ui dividing header">
                 <?php echo esc_html( $title ); ?>
-            </h3>
+                <div class="sub header"><?php echo esc_html( $sub_header ); ?></div>
+            </h2>
             <?php
         }
         if ( $show_in_modal ) {
@@ -329,11 +337,11 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
         ?>
         <?php
 
-        if ( $individual ) {
-
+        if ( $show_in_modal ) {
             ?>
-        <form method="POST" action="" id="mainwp-edit-monitor-site-form" enctype="multipart/form-data" class="ui form">
-            <?php } ?>
+            <form method="POST" action="" id="mainwp-edit-monitor-site-form" enctype="multipart/form-data" class="ui form">
+        <?php } ?>
+
             <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
             <input type="hidden" name="wp_nonce_uptime_settings" value="<?php echo esc_attr( wp_create_nonce( 'UpdateMonitorSettings' ) ); ?>" />
             <input type="hidden" id="mainwp_edit_monitor_site_id" name="mainwp_edit_monitor_site_id" value="<?php echo intval( $site_id ); ?>" />
@@ -351,7 +359,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                     <?php esc_html_e( 'Site URL', 'mainwp' ); ?>
                     </label>
                     <div class="ten wide column ui labeled input" data-tooltip="<?php esc_attr_e( 'Click to edit the main site monitor.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <a class="" href="admin.php?page=managesites&monitor_wpid=<?php echo intval( $site_id ); ?>"><?php echo esc_html( $mo_settings['url'] ); ?></a>
+                        <a class="" href="admin.php?page=managesites&id=<?php echo intval( $site_id ); ?>&monitor_wpid=<?php echo intval( $site_id ); ?>"><?php echo esc_html( $mo_settings['url'] ); ?></a>
                     </div>
                 </div>
 
@@ -561,7 +569,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                             <?php
                             if ( ! $edit_sub_monitor ) {
                                 ?>
-                                <a class="ui mini green basic button" href="admin.php?page=managesites&monitor_wpid=<?php echo intval( $site_id ); ?>&action=add_submonitor"><?php esc_html_e( 'Create Sub-Monitor', 'mainwp' ); ?></a>
+                                <a class="ui mini green basic button" href="admin.php?page=managesites&id=<?php echo intval( $site_id ); ?>&monitor_wpid=<?php echo intval( $site_id ); ?>&action=add_submonitor"><?php esc_html_e( 'Create Sub-Monitor', 'mainwp' ); ?></a>
                                 <?php
                             }
                             ?>
@@ -570,16 +578,10 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                     <?php
                 }
 
-                if ( ! $show_in_modal ) {
+                if ( ! $show_in_modal && $is_editing_monitor_or_sub_monitor ) {
                     ?>
-                    <div class="ui divider"></div>
-                    <input type="submit" name="submit" id="submit" class="ui button green big" value="<?php esc_html_e( 'Save', 'mainwp' ); ?>">
+                    <input type="button" name="delete_uptime_monitor_btn" id="delete_uptime_monitor_btn" class="ui button basic big" value="<?php esc_html_e( 'Disable Monitor', 'mainwp' ); ?>">
                     <?php
-                    if ( $is_editing_monitor_or_sub_monitor ) {
-                        ?>
-                        <input type="button" name="delete_uptime_monitor_btn" id="delete_uptime_monitor_btn" class="ui button basic big" value="<?php esc_html_e( 'Delete', 'mainwp' ); ?>">
-                        <?php
-                    }
                 }
                 ?>
             <?php } ?>
@@ -656,11 +658,10 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 <?php
                 if ( $show_in_modal ) {
                     $this->render_add_edit_sub_page_monitor_end_form_in_modal( $site_id, $is_editing_monitor_or_sub_monitor );
+                    ?>
+                    </form>
+                    <?php
                 }
-                ?>
-        </form>
-        </div>
-                <?php
             }
     }
 
@@ -693,7 +694,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
             foreach ( $sub_urls_monitors as $sub ) {
                 ?>
                 <li>
-                <a class="" href="admin.php?page=managesites&monitor_wpid=<?php echo intval( $site_id ); ?>&monitor_id=<?php echo intval( $sub['monitor_id'] ); ?>"><?php echo ( ! empty( $sub['suburl'] ) ) ? esc_html( $mo_settings['url'] . $sub['suburl'] ) : esc_html__( 'Invalid sub URL: field is empty.', 'mainwp' ); ?></a>
+                <a class="" href="admin.php?page=managesites&id=<?php echo intval( $site_id ); ?>&monitor_wpid=<?php echo intval( $site_id ); ?>&sub_monitor_id=<?php echo intval( $sub['monitor_id'] ); ?>"><?php echo ( ! empty( $sub['suburl'] ) ) ? esc_html( $mo_settings['url'] . $sub['suburl'] ) : esc_html__( 'Invalid sub URL: field is empty.', 'mainwp' ); ?></a>
             </li>
                 <?php
             }
@@ -855,7 +856,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 jQuery('#mainwp-uptime-monitoring-add-edit-modal').modal({
                     allowMultiple: true,
                     onHide: function () {
-                        location.href = 'admin.php?page=managesites&monitor_wpid=<?php echo intval( $site_id ); ?>';
+                        location.href = 'admin.php?page=managesites&id=<?php echo intval( $site_id ); ?>&monitor_wpid=<?php echo intval( $site_id ); ?>';
                     }
                 }).modal('show');
             </script>

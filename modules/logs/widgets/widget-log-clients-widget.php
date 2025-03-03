@@ -78,12 +78,12 @@ class Log_Clients_Widget {
 
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
+            <h2 class="ui header handle-drag">
                 <?php esc_html_e( 'Client Management Activity Summary', 'mainwp' ); ?>
                 <div class="sub header">
                 <?php esc_html_e( 'Quantitative snapshot of client management actions and the total count of all events.', 'mainwp' ); ?>
                 </div>
-            </h3>
+            </h2>
         </div>
 
         <div class="mainwp-widget-insights-card">

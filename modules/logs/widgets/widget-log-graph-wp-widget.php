@@ -63,12 +63,12 @@ class Log_Graph_WP_Widget {
     public function render_widget() {
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
+            <h2 class="ui header handle-drag">
                 <?php esc_html_e( 'WordPress Version Distribution', 'mainwp' ); ?>
                 <div class="sub header">
                 <?php esc_html_e( 'Count of sites running each WordPress version, helping you monitor version diversity and update needs within your network.', 'mainwp' ); ?>
                 </div>
-            </h3>
+            </h2>
         </div>
 
         <div class="mainwp-widget-insights-card">

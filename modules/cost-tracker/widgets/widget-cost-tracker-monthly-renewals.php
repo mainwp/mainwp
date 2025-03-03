@@ -47,7 +47,7 @@ class Cost_Tracker_Monthly_Renewals { // phpcs:ignore -- NOSONAR - multi methods
         ?>
         <div class="ui grid mainwp-widget-header">
             <div class="twelve wide column">
-                <h3 class="ui header handle-drag">
+                <h2 class="ui header handle-drag">
                 <?php
                 /**
                  * Filter: mainwp_module_cost_tracker_monthly_renewals_widget_title
@@ -59,7 +59,7 @@ class Cost_Tracker_Monthly_Renewals { // phpcs:ignore -- NOSONAR - multi methods
                 echo esc_html( apply_filters( 'mainwp_module_cost_tracker_monthly_renewals_widget_title', esc_html__( 'Upcoming Monthly Renewals', 'mainwp' ) ) );
                 ?>
                 <div class="sub header"><?php esc_html_e( 'Monitor your expenses - this widget highlights your upcoming monthly renewals.', 'mainwp' ); ?></div>
-                </h3>
+                </h2>
             </div>
 
             <div class="four wide column right aligned">

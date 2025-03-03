@@ -513,61 +513,6 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
     }
 
     /**
-     * Get uptime websites monitors offline to notice.
-     *
-     * @return mixed
-     */
-    public function get_uptime_websites_monitors_offline_to_notice() {
-
-        $glo_settings = static::get_global_monitoring_settings();
-
-        $glo_active = 1;
-
-        if ( isset( $glo_settings['active'] ) ) {
-            $glo_active = 1 === (int) $glo_settings['active'] ? 1 : 0;
-        }
-
-        $where = ' wp.offline_check_result = -1 AND wp.http_code_noticed = 0 '; // offline check - 1, http_code_noticed = 0: not noticed yet.
-
-        $where .= ' AND ( mo.active = 1 OR ( mo.active = -1 AND 1 = ' . (int) $glo_active . ') ) ';
-
-        $params = array(
-            'view'        => 'monitor_view',
-            'extra_view'  => array( 'monitoring_notification_emails', 'settings_notification_emails' ),
-            'extra_where' => $where,
-        );
-        return MainWP_DB::instance()->get_results_result( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
-    }
-
-    /**
-     * Get uptime websites monitors offline to notice.
-     *
-     * @return mixed
-     */
-    public function get_uptime_monitors_with_down_status_to_notice() {
-
-        $glo_settings = static::get_global_monitoring_settings();
-
-        $glo_active = 1;
-
-        if ( isset( $glo_settings['active'] ) ) {
-            $glo_active = 1 === (int) $glo_settings['active'] ? 1 : 0;
-        }
-
-        $where = ' mo.status = 0 AND mo.importance = 1 '; // offline check - 1, http_code_noticed = 0: not noticed yet.
-
-        $where .= ' AND ( mo.active = 1 OR ( mo.active = -1 AND 1 = ' . (int) $glo_active . ') ) ';
-
-        $params = array(
-            'view'        => 'monitor_view',
-            'extra_view'  => array( 'monitoring_notification_emails', 'settings_notification_emails' ),
-            'extra_where' => $where,
-        );
-        return MainWP_DB::instance()->get_results_result( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
-    }
-
-
-    /**
      * Method clear_outdated_hourly_uptime_stats
      *
      * @return void

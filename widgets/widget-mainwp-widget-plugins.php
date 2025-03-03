@@ -123,7 +123,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         ?>
         <div class="ui grid mainwp-widget-header">
             <div class="twelve wide column">
-                <h3 class="ui header handle-drag">
+                <h2 class="ui header handle-drag">
                     <?php
                     /**
                      * Filter: mainwp_plugins_widget_title
@@ -137,7 +137,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     echo esc_html( apply_filters( 'mainwp_plugins_widget_title', esc_html__( 'Plugins', 'mainwp' ), $website ) );
                     ?>
                     <div class="sub header"><?php esc_html_e( 'Installed plugins on the child site', 'mainwp' ); ?></div>
-                </h3>
+                </h2>
             </div>
             <div class="four wide column right aligned">
                 <div class="ui dropdown right pointing mainwp-dropdown-tab">
@@ -189,8 +189,8 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
                         <div class="right floated pluginsAction">
                             <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-                                <div class="ui right pointing dropdown icon mini button">
-                                    <i class="ellipsis horizontal icon"></i>
+                                <div class="ui right pointing dropdown">
+                                    <i class="ellipsis vertical icon"></i>
                                     <div class="menu">
                                         <div class="mainwp-plugin-deactivate item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></div>
                                     </div>
@@ -237,7 +237,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
              */
             do_action( 'mainwp_before_inactive_plugins_list', $website, $inactive_plugins );
             ?>
-            <div class="ui middle aligned divided selection list">
+            <div class="ui middle aligned divided list">
                 <?php
                 $_count = count( $inactive_plugins );
                 for ( $i = 0; $i < $_count; $i++ ) {
@@ -248,8 +248,8 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         <input class="pluginSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_plugins[ $i ]['slug'] ) ); ?>"/>
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
                         <div class="right floated content pluginsAction">
-                            <div class="ui right pointing dropdown icon mini button">
-                                <i class="ellipsis horizontal icon"></i>
+                            <div class="ui right pointing dropdown">
+                                <i class="ellipsis vertical icon"></i>
                                 <div class="menu">
                                 <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
                                     <a href="#" class="mainwp-plugin-activate item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Activate', 'mainwp' );// phpcs:ignore WordPress.Security.EscapeOutput ?></a>

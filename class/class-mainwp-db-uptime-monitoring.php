@@ -245,6 +245,47 @@ KEY idx_wpid (wpid)";
     }
 
     /**
+     * Method dev_update_db_90050 action.
+     *
+     * @param string $current_version current version.
+     *
+     * @return void
+     */
+    public function dev_update_db_90050( $current_version ) { //phpcs:ignore -- NOSONAR - complex.
+        $update_ver = '9.0.0.61'; // NOSONAR - no ip.
+
+        if ( ! empty( $current_version ) && version_compare( $current_version, $update_ver, '<=' ) ) {
+            $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites() );
+            while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
+                $sql = 'SELECT mo.*
+                FROM ' . $this->table_name( 'monitors' ) . ' mo
+                WHERE mo.wpid = ' . $website->id . ' AND mo.issub = 0
+                ORDER BY mo.monitor_id ASC ';
+
+                $site_mos = $this->wpdb->get_results( $sql );
+
+                if ( $site_mos ) {
+                    $first_mo_id = false;
+                    foreach ( $site_mos as $mo ) {
+                        if ( ! $first_mo_id ) {
+                            $first_mo_id = $mo->monitor_id;
+                        } elseif ( $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'monitors' ) . ' WHERE monitor_id=%d', $mo->monitor_id ) ) ) {
+                                $this->wpdb->update(
+                                    $this->table_name( 'monitor_heartbeat' ),
+                                    array( 'monitor_id' => $first_mo_id ),
+                                    array( 'monitor_id' => $mo->monitor_id )
+                                );
+                                $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'monitor_stat_hourly' ) . ' WHERE monitor_id=%d', $mo->monitor_id ) );
+                        }
+                    }
+                }
+            }
+            MainWP_DB::free_result( $websites );
+        }
+    }
+
+
+    /**
      * Method update_db_legacy_first_enable_monitoring_create_monitors
      *
      * @param  mixed $disabled_monitors disabled monitors.
@@ -520,8 +561,8 @@ KEY idx_wpid (wpid)";
 
         $sql = $this->wpdb->prepare(
             'SELECT he.* FROM ' . $this->table_name( 'monitor_heartbeat' ) . ' he ' .
-            ' WHERE he.monitor_id = %d AND he.status = 0 AND he.time >= "' . $this->escape( $hb_time ) . '" ' .
-            ' AND he.importance = 1 ',
+            ' WHERE he.monitor_id = %d AND ( he.status = 0 OR he.status = 1 ) AND he.time >= "' . $this->escape( $hb_time ) . '" ' .
+            ' AND he.importance = 1 ORDER BY he.heartbeat_id ASC ',
             $mo_id
         );
         return $this->wpdb->get_results( $sql );

@@ -857,7 +857,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             )
         );
 
-        if ( empty( $status ) && $importance ) {
+        if ( $importance ) {
             MainWP_Uptime_Monitoring_Handle::instance()->update_process_monitor_notification( $monitor->monitor_id, $uptime_init_time );
         }
 

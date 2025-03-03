@@ -144,7 +144,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
         <div class="mainwp-widget-header">
             <div class="ui grid">
                 <div class="twelve wide column">
-                    <h3 class="ui header handle-drag">
+                    <h2 class="ui header handle-drag">
                         <?php
                         /**
                          * Filter: mainwp_connection_status_widget_title
@@ -156,7 +156,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         echo esc_html( apply_filters( 'mainwp_connection_status_widget_title', esc_html__( 'Connection Status', 'mainwp' ) ) );
                         ?>
                         <div class="sub header"><?php esc_html_e( 'Child sites connection status', 'mainwp' ); ?></div>
-                    </h3>
+                    </h2>
                 </div>
 
                 <div class="four wide column right aligned">
@@ -191,7 +191,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 </script>
 
             </div>
-            <div class="mainwp-scrolly-overflow">
+            <div>
                 <?php static::render_multi_status( $count_connected, $count_disconnected ); ?>
             </div>
         </div>
@@ -215,8 +215,8 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
     public static function render_multi_status( $count_connected, $count_disconnected ) {
         $count_total = $count_connected + $count_disconnected;
         ?>
-        <div class="ui two small cards">
-            <div class="ui fluid card">
+        <div class="ui mainwp-cards small cards">
+            <div class="ui card">
                 <div class="content">
                     <div class="header">
                         <span class="ui large text"><i class="ui een check icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( $count_connected ) ); ?></span>
@@ -229,7 +229,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <div class="description"><strong><?php esc_html_e( 'Connected Sites', 'mainwp' ); ?></strong></div>
                 </div>
             </div>
-            <div class="ui fluid card">
+            <div class="ui card">
                 <div class="content">
                     <div class="header">
                         <span class="ui large text"><i class="ui unlink icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( $count_disconnected ) ); ?></span>
@@ -270,7 +270,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                  */
                 do_action( 'mainwp_connection_status_before_all_sites_list' )
                 ?>
-                <div class="ui middle aligned divided selection list">
+                <div class="ui middle aligned divided list">
                     <?php echo $html_all_sites; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                 </div>
                 <?php
@@ -296,7 +296,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                  */
                 do_action( 'mainwp_connection_status_before_connected_sites_list' )
                 ?>
-                <div class="ui middle aligned divided selection list">
+                <div class="ui middle aligned divided list">
                     <?php echo $html_online_sites; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                 </div>
                 <?php
@@ -322,7 +322,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                  */
                 do_action( 'mainwp_connection_status_before_disconnected_sites_list' )
                 ?>
-                <div class="ui middle aligned divided selection list">
+                <div class="ui middle aligned divided list">
                     <?php echo $html_other_sites; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                 </div>
                 <?php
@@ -376,64 +376,54 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param mixed $hasSyncErrors Collected errors.
      */
     public static function render_all_item( $website, $lastSyncTime, $hasSyncErrors ) {
-        $is_demo = MainWP_Demo_Handle::is_demo_mode();
         ?>
         <div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( $website->name ) ); ?>">
-            <div class="right floated content">
-                <div class="ui right pointing dropdown icon mini button">
-                    <i class="ellipsis horizontal icon"></i>
+            <div class="right floated">
+                <div class="ui right pointing dropdown">
+                    <i class="ellipsis vertical icon"></i>
                     <div class="menu">
-                    <?php if ( $is_demo ) : ?>
-                        <a href="<?php echo esc_html( $website->url ) . 'wp-admin.html'; ?>" target="_blank" class="item"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
-                    <?php else : ?>
-                        <a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" class="item"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
-                    <?php endif; ?>
-                    <a href="<?php echo esc_html( $website->url ); ?>" class="item" target="_blank"><?php esc_html_e( 'Visit Site', 'mainwp' ); ?></a>
-                    <?php if ( $hasSyncErrors ) : ?>
+                        <?php if ( $hasSyncErrors ) : ?>
                         <a href="javascript:void(0)" class="mainwp-updates-overview-reconnect-site item" adminuser="<?php echo esc_attr( $website->adminname ); ?>" siteid="<?php echo intval( $website->id ); ?>"><?php esc_html_e( 'Reconnect Site', 'mainwp' ); ?></a>
-                    <?php else : ?>
+                        <?php else : ?>
                         <a href="javascript:void(0)" class="item" siteid="<?php echo intval( $website->id ); ?>" onClick="updatesoverview_wp_sync( '<?php echo intval( $website->id ); ?>' )"><?php esc_html_e( 'Sync Site', 'mainwp' ); ?></a>
-                    <?php endif; ?>
+                        <a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" class="item"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
+                        <?php endif; ?>
+                        <a href="<?php echo esc_html( $website->url ); ?>" class="item" target="_blank"><?php esc_html_e( 'Visit Site', 'mainwp' ); ?></a>
                     </div>
                 </div>
             </div>
-            <div class="content">
-                <div class="header">
-                    <?php if ( $is_demo ) : ?>
-                        <a href="<?php echo esc_html( $website->url ) . 'wp-admin.html'; ?>" target="_blank"><i class="sign in alternate icon"></i></a>
-                    <?php else : ?>
-                        <a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><i class="sign in alternate icon"></i></a>
-                    <?php endif; ?>
-                    <a href="
-                        <?php
-                        /**
-                         * Filter: mainwp_connection_status_list_item_title_url
-                         *
-                         * Filters the Connection Status widget list item title URL.
-                         *
-                         * @since 4.1
-                         */
-                        echo esc_url( apply_filters( 'mainwp_connection_status_list_item_title_url', 'admin.php?page=managesites&dashboard=' . $website->id, $website ) );
-                        ?>
-                        ">
-                        <?php
-                        /**
-                         * Filter: mainwp_connection_status_list_item_title
-                         *
-                         * Filters the Connection Status widget list item title text.
-                         *
-                         * @since 4.1
-                         */
-                        echo esc_html( stripslashes( apply_filters( 'mainwp_connection_status_list_item_title', $website->name, $website ) ) );
-                        ?>
-                    </a>
-                    <?php if ( $hasSyncErrors ) : ?>
-                        <span class="ui mini red label"><?php esc_html_e( 'Disconnected', 'mainwp' ); ?></span>
-                    <?php endif; ?>
-                </div>
-                <span class="ui small text"><?php esc_html_e( 'Last synced: ', 'mainwp' ); ?> <?php echo esc_html( $lastSyncTime ); ?></span>
-            </div>
+            <?php if ( ! $hasSyncErrors ) : ?>
+            <a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><i class="sign in alternate icon"></i></a>
+            <?php endif; ?>
+            <a href="
+                <?php
+                /**
+                 * Filter: mainwp_connection_status_list_item_title_url
+                 *
+                 * Filters the Connection Status widget list item title URL.
+                 *
+                 * @since 4.1
+                 */
+                echo esc_url( apply_filters( 'mainwp_connection_status_list_item_title_url', 'admin.php?page=managesites&dashboard=' . $website->id, $website ) );
+                ?>
+                ">
+                <?php
+                /**
+                 * Filter: mainwp_connection_status_list_item_title
+                 *
+                 * Filters the Connection Status widget list item title text.
+                 *
+                 * @since 4.1
+                 */
+                echo esc_html( stripslashes( apply_filters( 'mainwp_connection_status_list_item_title', $website->name, $website ) ) );
+                ?>
+            </a>
+            <?php if ( $hasSyncErrors ) : ?>
+            <span class="ui mini red label"><?php esc_html_e( 'Disconnected', 'mainwp' ); ?></span>
+            <?php endif; ?>
+            <br/><span class="ui small text"><?php esc_html_e( 'Last synced: ', 'mainwp' ); ?> <?php echo esc_html( $lastSyncTime ); ?></span>
         </div>
+
         <?php
     }
 
@@ -444,57 +434,45 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param string $lastSyncTime  Last time the Child Site was synced to.
      */
     public static function render_up_item( $website, $lastSyncTime ) {
-        $is_demo = MainWP_Demo_Handle::is_demo_mode();
         ?>
         <div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( $website->name ) ); ?>">
-            <div class="right floated content">
-                <div class="ui right pointing dropdown icon mini button">
-                    <i class="ellipsis horizontal icon"></i>
+            <div class="right floated">
+                <div class="ui right pointing dropdown">
+                    <i class="ellipsis vertical icon"></i>
                     <div class="menu">
-                    <?php if ( $is_demo ) : ?>
-                        <a href="<?php echo esc_html( $website->url ) . 'wp-admin.html'; ?>" target="_blank" class="item"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
-                    <?php else : ?>
+                        <a href="javascript:void(0)" class="item" siteid="<?php echo intval( $website->id ); ?>" onClick="updatesoverview_wp_sync( '<?php echo intval( $website->id ); ?>' )"><?php esc_html_e( 'Sync Site', 'mainwp' ); ?></a>
                         <a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" class="item"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
-                    <?php endif; ?>
-                    <a href="<?php echo esc_html( $website->url ); ?>" class="item" target="_blank"><?php esc_html_e( 'Visit Site', 'mainwp' ); ?></a>
-                    <a href="javascript:void(0)" class="item" siteid="<?php echo intval( $website->id ); ?>" onClick="updatesoverview_wp_sync( '<?php echo intval( $website->id ); ?>' )"><?php esc_html_e( 'Sync Site', 'mainwp' ); ?></a>
+                        <a href="<?php echo esc_html( $website->url ); ?>" class="item" target="_blank"><?php esc_html_e( 'Visit Site', 'mainwp' ); ?></a>
                     </div>
                 </div>
             </div>
-            <div class="content">
-                <div class="header">
-                    <?php if ( $is_demo ) : ?>
-                        <a href="<?php echo esc_html( $website->url ) . 'wp-admin.html'; ?>" target="_blank"><i class="sign in alternate icon"></i></a>
-                    <?php else : ?>
-                        <a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><i class="sign in alternate icon"></i></a>
-                    <?php endif; ?>
-                    <a href="
-                        <?php
-                        /**
-                         * Filter: mainwp_connection_status_list_item_title_url
-                         *
-                         * Filters the Connection Status widget list item title URL.
-                         *
-                         * @since 4.1
-                         */
-                        echo esc_url( apply_filters( 'mainwp_connection_status_list_item_title_url', 'admin.php?page=managesites&dashboard=' . $website->id, $website ) );
-                        ?>
-                        ">
-                        <?php
-                        /**
-                         * Filter: mainwp_connection_status_list_item_title
-                         *
-                         * Filters the Connection Status widget list item title text.
-                         *
-                         * @since 4.1
-                         */
-                        echo esc_html( stripslashes( apply_filters( 'mainwp_connection_status_list_item_title', $website->name, $website ) ) );
-                        ?>
-                    </a>
-                </div>
-                <span class="ui small text"><?php esc_html_e( 'Last synced: ', 'mainwp' ); ?> <?php echo esc_html( $lastSyncTime ); ?></span>
-            </div>
+            <a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><i class="sign in alternate icon"></i></a>
+            <a href="
+                <?php
+                /**
+                 * Filter: mainwp_connection_status_list_item_title_url
+                 *
+                 * Filters the Connection Status widget list item title URL.
+                 *
+                 * @since 4.1
+                 */
+                echo esc_url( apply_filters( 'mainwp_connection_status_list_item_title_url', 'admin.php?page=managesites&dashboard=' . $website->id, $website ) );
+                ?>
+                ">
+                <?php
+                /**
+                 * Filter: mainwp_connection_status_list_item_title
+                 *
+                 * Filters the Connection Status widget list item title text.
+                 *
+                 * @since 4.1
+                 */
+                echo esc_html( stripslashes( apply_filters( 'mainwp_connection_status_list_item_title', $website->name, $website ) ) );
+                ?>
+            </a>
+            <br/><span class="ui small text"><?php esc_html_e( 'Last synced: ', 'mainwp' ); ?> <?php echo esc_html( $lastSyncTime ); ?></span>
         </div>
+
         <?php
     }
 
@@ -505,58 +483,44 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param string $lastSyncTime  Last time the Child Site was synced to.
      */
     public static function render_down_item( $website, $lastSyncTime ) {
-        $is_demo = MainWP_Demo_Handle::is_demo_mode();
         ?>
         <div class="red item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( $website->name ) ); ?>">
-            <div class="right floated content">
-                <div class="ui right pointing dropdown icon mini button">
-                    <i class="ellipsis horizontal icon"></i>
+            <div class="right floated">
+                <div class="ui right pointing dropdown">
+                    <i class="ellipsis vertical icon"></i>
                     <div class="menu">
-                    <?php if ( $is_demo ) : ?>
-                        <a href="<?php echo esc_html( $website->url ) . 'wp-admin.html'; ?>" target="_blank" class="item"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
-                    <?php else : ?>
-                        <a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" class="item"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
-                    <?php endif; ?>
-                    <a href="<?php echo esc_html( $website->url ); ?>" class="item" target="_blank"><?php esc_html_e( 'Visit Site', 'mainwp' ); ?></a>
-                    <a href="javascript:void(0)" class="mainwp-updates-overview-reconnect-site item" adminuser="<?php echo esc_attr( $website->adminname ); ?>" siteid="<?php echo intval( $website->id ); ?>"><?php esc_html_e( 'Reconnect Site', 'mainwp' ); ?></a>
+                        <a href="javascript:void(0)" class="mainwp-updates-overview-reconnect-site item" adminuser="<?php echo esc_attr( $website->adminname ); ?>" siteid="<?php echo intval( $website->id ); ?>"><?php esc_html_e( 'Reconnect Site', 'mainwp' ); ?></a>
+                        <a href="<?php echo esc_html( $website->url ); ?>" class="item" target="_blank"><?php esc_html_e( 'Visit Site', 'mainwp' ); ?></a>
                     </div>
                 </div>
             </div>
-            <div class="content">
-                <div class="header">
-                    <?php if ( $is_demo ) : ?>
-                        <a href="<?php echo esc_html( $website->url ) . 'wp-admin.html'; ?>" target="_blank"><i class="sign in alternate icon"></i></a>
-                    <?php else : ?>
-                        <a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><i class="sign in alternate icon"></i></a>
-                    <?php endif; ?>
-                    <a href="
-                        <?php
-                        /**
-                         * Filter: mainwp_connection_status_list_item_title_url
-                         *
-                         * Filters the Connection Status widget list item title URL.
-                         *
-                         * @since 4.1
-                         */
-                        echo esc_url( apply_filters( 'mainwp_connection_status_list_item_title_url', 'admin.php?page=managesites&dashboard=' . $website->id, $website ) );
-                        ?>
-                        ">
-                        <?php
-                        /**
-                         * Filter: mainwp_connection_status_list_item_title
-                         *
-                         * Filters the Connection Status widget list item title text.
-                         *
-                         * @since 4.1
-                         */
-                        echo esc_html( stripslashes( apply_filters( 'mainwp_connection_status_list_item_title', $website->name, $website ) ) );
-                        ?>
-                    </a>
-                    <span class="ui mini red label"><?php esc_html_e( 'Disconnected', 'mainwp' ); ?></span>
-                </div>
-                <span class="ui small text"><?php esc_html_e( 'Last synced: ', 'mainwp' ); ?> <?php echo esc_html( $lastSyncTime ); ?></span>
-            </div>
+            <a href="
+                <?php
+                /**
+                 * Filter: mainwp_connection_status_list_item_title_url
+                 *
+                 * Filters the Connection Status widget list item title URL.
+                 *
+                 * @since 4.1
+                 */
+                echo esc_url( apply_filters( 'mainwp_connection_status_list_item_title_url', 'admin.php?page=managesites&dashboard=' . $website->id, $website ) );
+                ?>
+                ">
+                <?php
+                /**
+                 * Filter: mainwp_connection_status_list_item_title
+                 *
+                 * Filters the Connection Status widget list item title text.
+                 *
+                 * @since 4.1
+                 */
+                echo esc_html( stripslashes( apply_filters( 'mainwp_connection_status_list_item_title', $website->name, $website ) ) );
+                ?>
+            </a>
+            <span class="ui mini red label"><?php esc_html_e( 'Disconnected', 'mainwp' ); ?></span>
+            <br/><span class="ui small text"><?php esc_html_e( 'Last synced: ', 'mainwp' ); ?> <?php echo esc_html( $lastSyncTime ); ?></span>
         </div>
+
         <?php
     }
 }

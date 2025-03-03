@@ -564,16 +564,20 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return $full_url; // return path to uploaded icon.
         }
 
-        $img_cls = 'ui mini circular image';
+        $img_cls = 'ui avatar image';
         if ( 'card' === $what ) {
             $img_cls = 'ui medium circular image';
         }
 
+        if ( 'small' === $what ) {
+            $img_cls = 'ui small circular image';
+        }
+
         $icon_wrapper_attr = ' class="' . $img_cls . '" style="height:auto;display:inline-block;" ';
         if ( 'display_edit' === $what ) {
-            $icon_wrapper_attr = ' id="mainwp_add_edit_client_upload_custom_icon" style="width:32px;height:auto;display:inline-block;" class="' . esc_attr( $img_cls ) . '" ';
+            $icon_wrapper_attr = ' id="mainwp_add_edit_client_upload_custom_icon" style="width:28px;height:auto;display:inline-block;" class="' . esc_attr( $img_cls ) . '" ';
             if ( 'contact' === $type ) {
-                $icon_wrapper_attr = ' style="width:32px;height:auto;display:inline-block;" class="mainwp_add_edit_contact_upload_custom_icon ' . esc_attr( $img_cls ) . '" ';
+                $icon_wrapper_attr = ' style="width:28px;height:auto;display:inline-block;" class="mainwp_add_edit_contact_upload_custom_icon ' . esc_attr( $img_cls ) . '" ';
             }
         }
 
@@ -585,6 +589,42 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $img        = '<img ' . $icon_wrapper_attr . ' src="' . esc_attr( $full_url ) . '" alt="' . esc_attr( $image_name ) . '">';
         } elseif ( ! empty( $icon_info ) ) {
             $img = MainWP_Client::get_cust_client_icon( $icon_info, 'display', $what );
+        }
+        return $img;
+    }
+
+    /**
+     * Method get_client_avatar()
+     *
+     * Returns client avatar image.
+     *
+     * @param array  $item client|contact array data.
+     * @param string $type type of image.
+     */
+    public static function get_client_avatar( $item, $type = 'client' ) { // phpcs:ignore -- NOSONAR - complex
+
+        if ( empty( $item ) ) {
+            return '';
+        }
+
+        $dirs = MainWP_System_Utility::get_mainwp_dir( 'client-images', true );
+
+        if ( 'client' === $type ) {
+            $image_path = $item['image'];
+            $icon_info  = $item['selected_icon_info'];
+        } else {
+            $image_path = $item['contact_image'];
+            $icon_info  = $item['contact_icon_info'];
+        }
+
+        $img = '';
+
+        if ( ! empty( $image_path ) && file_exists( $dirs[0] . $image_path ) ) {
+            $full_url   = $dirs[1] . $image_path;
+            $image_name = ! empty( $item['contact_name'] ) ? $item['contact_name'] : '';
+            $img        = '<img class="ui avatar image" src="' . esc_attr( $full_url ) . '" alt="' . esc_attr( $image_name ) . '">';
+        } elseif ( ! empty( $icon_info ) ) {
+            $img = MainWP_Client::get_cust_client_icon( $icon_info, 'display' );
         }
         return $img;
     }

@@ -1093,16 +1093,8 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         \WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Security Issues', 'mainwp' ) . '%n' ) );
         \WP_CLI::line( '' );
 
-        \WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Directories listing prevented:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['listing'] ? 'NO' : 'YES' ) );
-        \WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'WordPress version hidden:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['wp_version'] ? 'NO' : 'YES' ) );
-        \WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Really Simple Discovery meta tag removed:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['rsd'] ? 'NO' : 'YES' ) );
-        \WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Windows Live Writer meta tag removed:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['wlw'] ? 'NO' : 'YES' ) );
         \WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Database error reporting disabled:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['db_reporting'] ? 'NO' : 'YES' ) );
         \WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'PHP error reporting disabled:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['php_reporting'] ? 'NO' : 'YES' ) );
-        \WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Version information removed from URLs:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['versions'] ? 'NO' : 'YES' ) );
-        \WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Registered version information removed from URLs:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['registered_versions'] ? 'NO' : 'YES' ) );
-        \WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'readme.html removed from WordPress root:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['readme'] ? 'NO' : 'YES' ) );
-        \WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Administrator username is not "admin":', 'mainwp' ) . '%n ' ) . ( 'N' === $data['admin'] ? 'NO' : 'YES' ) );
         \WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'WordPress is not up to date:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['wp_uptodate'] ? 'NO' : 'YES' ) );
         \WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'PHP version does not match the WordPress requirement:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['phpversion_matched'] ? 'NO' : 'YES' ) );
         \WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'SSL protocol is not in place:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['sslprotocol'] ? 'NO' : 'YES' ) );

@@ -111,6 +111,7 @@ class Log_DB extends MainWP_DB {
         $record_defaults = array(
             'site_id'   => null,
             'user_id'   => null,
+            'object_id' => null,
             'created'   => null,
             'item'      => null,
             'connector' => null,
@@ -201,8 +202,6 @@ class Log_DB extends MainWP_DB {
     }
 
 
-
-
     /**
      * Create compact logs and erase records from the database.
      *
@@ -291,6 +290,27 @@ class Log_DB extends MainWP_DB {
             LEFT JOIN {$wpdb->mainwp_tbl_logs_meta} AS `meta`
             ON `meta`.`meta_log_id` = `logs`.`log_id`
             WHERE `logs`.`connector` != 'compact' " . $where // phpcs:ignore -- escaped.
+        );
+    }
+
+    /**
+     * Metho check if site action log existed.
+     *
+     * @param int    $site_id Site Id.
+     * @param string $object_id Object Id.
+     *
+     * @return mixed Results.
+     */
+    public function is_site_action_log_existed( $site_id, $object_id ) {
+        global $wpdb;
+        return $wpdb->query( //phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+            $wpdb->prepare(
+                "SELECT `log_id`
+                FROM {$wpdb->mainwp_tbl_logs}
+                WHERE `site_id` = %d AND `object_id` = %s LIMIT 1 ",
+                $site_id,
+                $object_id
+            )
         );
     }
 }

@@ -154,12 +154,13 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @param mixed $recurrence Cron job hook.
      */
     public function init_mainwp_cron( $useWPCron, $cron_hook, $recurrence ) {
-        $sched = wp_next_scheduled( $cron_hook );
+        $sched       = wp_next_scheduled( $cron_hook );
+        $enabled_job = apply_filters( 'mainwp_is_enable_schedule_job', $useWPCron, $cron_hook, $recurrence );
         if ( false === $sched ) {
-            if ( $useWPCron ) {
+            if ( $useWPCron && $enabled_job ) {
                 wp_schedule_event( time(), $recurrence, $cron_hook );
             }
-        } elseif ( ! $useWPCron ) {
+        } elseif ( ! $useWPCron || ! $enabled_job ) {
             wp_unschedule_event( $sched, $cron_hook );
         }
     }
@@ -717,6 +718,11 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $notTrustedThemesToUpdate  = array();
             $notTrustedThemesNewUpdate = array();
 
+            $transToUpdate            = array();
+            $transNewUpdate           = array();
+            $notTrustedTransToUpdate  = array();
+            $notTrustedTransNewUpdate = array();
+
             $individualDailyDigestWebsites = array();
 
             $updatescheckSitesIcon = get_option( 'mainwp_updatescheck_sites_icon' );
@@ -760,15 +766,18 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 $websiteCoreUpdateCheck    = 0;
                 $websitePluginsUpdateCheck = array();
                 $websiteThemesUpdateCheck  = array();
+                $websiteTransUpdateCheck   = array();
 
                 if ( ! empty( $delay_autoupdate ) ) {
                     $websiteCoreUpdateCheck    = MainWP_DB::instance()->get_website_option( $website, 'core_update_check' );
                     $websitePluginsUpdateCheck = MainWP_DB::instance()->get_website_option( $website, 'plugins_update_check' );
                     $websiteThemesUpdateCheck  = MainWP_DB::instance()->get_website_option( $website, 'themes_update_check' );
+                    $websiteTransUpdateCheck   = MainWP_DB::instance()->get_website_option( $website, 'trans_update_check' );
 
                     $websiteCoreUpdateCheck    = intval( $websiteCoreUpdateCheck );
                     $websitePluginsUpdateCheck = ! empty( $websitePluginsUpdateCheck ) ? json_decode( $websitePluginsUpdateCheck, true ) : array();
                     $websiteThemesUpdateCheck  = ! empty( $websiteThemesUpdateCheck ) ? json_decode( $websiteThemesUpdateCheck, true ) : array();
+                    $websiteTransUpdateCheck   = ! empty( $websiteTransUpdateCheck ) ? json_decode( $websiteTransUpdateCheck, true ) : array();
 
                     if ( ! is_array( $websitePluginsUpdateCheck ) ) {
                         $websitePluginsUpdateCheck = array();
@@ -776,6 +785,10 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
                     if ( ! is_array( $websiteThemesUpdateCheck ) ) {
                         $websiteThemesUpdateCheck = array();
+                    }
+
+                    if ( ! is_array( $websiteTransUpdateCheck ) ) {
+                        $websiteTransUpdateCheck = array();
                     }
                 }
 
@@ -828,6 +841,12 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 $websiteLastThemes = ! empty( $websiteLastThemes ) ? json_decode( $websiteLastThemes, true ) : array();
 
                 $websiteThemes = json_decode( $website->theme_upgrades, true );
+
+                /** Check translations * */
+                $websiteLastTrans = MainWP_DB::instance()->get_website_option( $website, 'last_trans_upgrades' );
+                $websiteLastTrans = ! empty( $websiteLastTrans ) ? json_decode( $websiteLastTrans, true ) : array();
+
+                $websiteTrans = json_decode( $website->translation_upgrades, true );
 
                 $decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
                 $decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
@@ -966,6 +985,52 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     }
                 }
 
+                foreach ( $websiteTrans as $transSlug => $transInfo ) {
+
+                    $check_individual_digest = true;
+
+                    $newUpdate = ! isset( $websiteLastTrans[ $transSlug ] );
+
+                    $item = array(
+                        'id'          => $website->id,
+                        'name'        => $website->name,
+                        'url'         => $website->url,
+                        'translation' => $transInfo['name'],
+                        'version'     => $transInfo['version'],
+                        'slug'        => $transInfo['slug'],
+                    );
+
+                    if ( MainWP_Manage_Sites_Update_View::is_trans_trusted_update( $transInfo, $trustedPlugins, $trustedThemes ) ) {
+                        $item['trusted'] = 1;
+                        if ( $newUpdate ) {
+                            $item['new']      = 1;
+                            $transNewUpdate[] = $item;
+                            if ( ! empty( $delay_autoupdate ) ) {
+                                $websiteTransUpdateCheck[ $transSlug ] = time();
+                            }
+                        } else {
+                            $item['new']     = 0;
+                            $check_timestamp = isset( $websiteTransUpdateCheck[ $transSlug ] ) ? $websiteTransUpdateCheck[ $transSlug ] : 0;
+                            if ( empty( $check_timestamp ) && ! empty( $delay_autoupdate ) ) {
+                                $websiteTransUpdateCheck[ $transSlug ] = time();
+                            }
+                            $transToUpdate[] = $item;
+                        }
+                    } else {
+                        $item['trusted'] = 0;
+                        if ( $newUpdate ) {
+                            $item['new']                = 1;
+                            $notTrustedTransNewUpdate[] = $item;
+                        } else {
+                            $item['new']               = 0;
+                            $notTrustedTransToUpdate[] = $item;
+                        }
+                        if ( isset( $websiteTransUpdateCheck[ $transSlug ] ) ) {
+                            unset( $websiteTransUpdateCheck[ $transSlug ] );
+                        }
+                    }
+                }
+
                 /**
                  * Action: mainwp_daily_digest_action
                  *
@@ -981,6 +1046,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 MainWP_DB::instance()->update_website_option( $website, 'last_wp_upgrades', wp_json_encode( $websiteCoreUpgrades ) );
                 MainWP_DB::instance()->update_website_option( $website, 'last_plugin_upgrades', $website->plugin_upgrades );
                 MainWP_DB::instance()->update_website_option( $website, 'last_theme_upgrades', $website->theme_upgrades );
+                MainWP_DB::instance()->update_website_option( $website, 'last_trans_upgrades', $website->translation_upgrades );
 
                 if ( ! empty( $delay_autoupdate ) ) {
                     foreach ( $websitePluginsUpdateCheck as $slug => $check_time ) {
@@ -994,13 +1060,23 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                             unset( $websiteThemesUpdateCheck[ $slug ] );
                         }
                     }
+
+                    foreach ( $websiteTransUpdateCheck as $slug => $check_time ) {
+                        if ( ( time() > $check_time + 30 * DAY_IN_SECONDS ) && is_array( $websiteTrans ) && ! empty( $websiteTrans ) && ! isset( $websiteTrans[ $slug ] ) ) {
+                            unset( $websiteTransUpdateCheck[ $slug ] );
+                        }
+                    }
+
                     MainWP_DB::instance()->update_website_option( $website, 'core_update_check', $websiteCoreUpdateCheck );
                     MainWP_DB::instance()->update_website_option( $website, 'plugins_update_check', ( ! empty( $websitePluginsUpdateCheck ) ? wp_json_encode( $websitePluginsUpdateCheck ) : '' ) );
                     MainWP_DB::instance()->update_website_option( $website, 'themes_update_check', ( ! empty( $websiteThemesUpdateCheck ) ? wp_json_encode( $websiteThemesUpdateCheck ) : '' ) );
+                    MainWP_DB::instance()->update_website_option( $website, 'trans_update_check', ( ! empty( $websiteTransUpdateCheck ) ? wp_json_encode( $websiteTransUpdateCheck ) : '' ) );
+
                 } elseif ( ! empty( $websitePluginsUpdateCheck ) || ! empty( $websiteThemesUpdateCheck ) ) {
                     MainWP_DB::instance()->update_website_option( $website, 'core_update_check', 0 );
                     MainWP_DB::instance()->update_website_option( $website, 'plugins_update_check', '' );
                     MainWP_DB::instance()->update_website_option( $website, 'themes_update_check', '' );
+                    MainWP_DB::instance()->update_website_option( $website, 'trans_update_check', '' );
                 }
 
                 if ( ! in_array( $website->id, $updatescheckSitesIcon ) ) {
@@ -1715,7 +1791,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Method is_process_callable().
      *
-     * @param  array $process process.
+     * @param  array $process The process.
      * @return mixed false|string|array callable.
      */
     public function is_process_callable( $process ) { //phpcs:ignore -- NOSONAR - complex.

@@ -135,8 +135,6 @@ class Connector_Posts extends Log_Connector {
             'post_id'           => '',
         );
         $other              = MainWP_Utility::right_array_merge( $default_other, $data );
-        $args['siteurl']    = $website->url;
-        $args['site_name']  = $website->name;
         $args['extra_info'] = wp_json_encode( $other );
         $state              = 1;
         $this->log(
@@ -199,9 +197,7 @@ class Connector_Posts extends Log_Connector {
 
         $args = MainWP_Utility::right_array_merge( $default, $data );
 
-        $args['siteurl']   = $website->url;
-        $args['site_name'] = $website->name;
-        $state             = 1;
+        $state = 1;
         $this->log(
             $message,
             $args,

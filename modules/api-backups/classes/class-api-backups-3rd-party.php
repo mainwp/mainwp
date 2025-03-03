@@ -414,8 +414,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                         <td class="last-backup-date" ><?php echo ( $last_backup ) ? esc_html( $last_backup ) : esc_html__( 'Awaiting first backup', 'mainwp' ); ?></td>
                         <td class="collapsing not-selectable">
                             <i class="ui notched circle loading icon" style="display:none;"></i>
-                            <div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999">
-                                <a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
+                            <div class="ui right pointing dropdown" style="z-index: 999">
+                                <a href="javascript:void(0)"><i class="ellipsis vertical icon"></i></a>
                                 <div class="menu">
                                     <?php if ( 'cPanel' === $api_provider ) : ?>
                                         <a class="mainwp_3rd_party_api_<?php esc_attr_e( $api_provider_options ); ?>_action_full_backup item"

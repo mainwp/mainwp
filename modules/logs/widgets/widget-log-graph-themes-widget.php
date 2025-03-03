@@ -63,12 +63,12 @@ class Log_Graph_Themes_Widget {
     public function render_widget() {
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
+            <h2 class="ui header handle-drag">
                 <?php esc_html_e( 'Active Themes Overview', 'mainwp' ); ?>
                 <div class="sub header">
                 <?php esc_html_e( 'Number of sites using each theme. The bar height indicates the prevalence of a theme across your network.', 'mainwp' ); ?>
                 </div>
-            </h3>
+            </h2>
         </div>
 
         <div class="mainwp-widget-insights-card">

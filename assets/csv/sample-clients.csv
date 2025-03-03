@@ -1,0 +1,12 @@
+# It's important if you remove the headerline that the order of the columns remains the same and all colums should be added,,,,,,,,,,,,,
+# The header fields may not be renamed,,,,,,,,,,,,,
+#,,,,,,,,,,,,,
+# Client Name is the only required column,,,,,,,,,,,,,
+#,,,,,,,,,,,,,
+"# Possible values for Status: 0,1,2,3",,,,,,,,,,,,,
+Client Name,Email,Phone,Facebook,Client X,Instagram,LinkedIn,Address 1,Address 2,State,Zip,Country,Notes,Status
+Client 1,example1@mail.com,12345678,facebook,clientx,instagram,linkedIn,address 1,address 2,state,zip,country,notes,0
+Client 2,example2@mail.com,12345678,facebook,clientx,instagram,linkedIn,address 1,address 2,state,zip,country,notes,0
+Client 3,example3@mail.com,12345678,facebook,clientx,instagram,linkedIn,address 1,address 2,state,zip,country,notes,0
+Client 4,example4@mail.com,12345678,facebook,clientx,instagram,linkedIn,address 1,address 2,state,zip,country,notes,0
+Client 5,example5@mail.com,12345678,facebook,clientx,instagram,linkedIn,address 1,address 2,state,zip,country,notes,0

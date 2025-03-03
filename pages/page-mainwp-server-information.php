@@ -337,18 +337,10 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 );
             }
 
-            //if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PluginPrivacy' ) ) {
-            //    $renderItems[] = array(
-            //        'title'  => esc_html__( 'Plugin Privacy', 'mainwp' ),
-            //        'href'   => 'admin.php?page=PluginPrivacy',
-            //       'active' => ( 'PluginPrivacy' === $shownPage ) ? true : false,
-            //    );
-            //}
-
-            if ( isset( $_GET['page'] ) && 'PluginPrivacy' !== $_GET['page'] ) {
+            if ( isset( $_GET['page'] ) && 'PluginPrivacy' !== $_GET['page'] ) { //phpcs:ignore -- monce safe.
                 MainWP_UI::render_page_navigation( $renderItems );
             }
-            
+
             static::render_actions_bar();
 
             echo '<div>';

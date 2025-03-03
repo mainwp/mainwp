@@ -646,9 +646,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             foreach ( $all_groups as $gr_id => $gr_name ) {
                 if ( isset( $grouped_exts[ $gr_id ] ) && 'all' !== $gr_id ) {
                     $html .= '<div class="ui tab" data-tab="' . $gr_id . '">';
-                    //$html .= '<div class="ui hidden divider"></div>';
                     $html .= '<h3>' . $gr_name . '</h3>';
-                    //$html .= '<div class="ui hidden divider"></div>';
                     $html .= '<div class="ui selection list">';
                     $html .= $grouped_exts[ $gr_id ];
                     $html .= '</div>';

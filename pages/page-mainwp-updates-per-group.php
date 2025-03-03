@@ -840,6 +840,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * Render abandoned plugins
      *
      * @param object $websites                the websites.
+     * @param array  $allPluginsOutdate       All Plugins Outdate.
      * @param array  $all_groups_sites        all groups of sites.
      * @param array  $all_groups              all groups.
      * @param int    $site_offset_for_groups  offset value.
@@ -855,7 +856,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
      */
     public static function render_abandoned_plugins( $websites, $allPluginsOutdate, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedPlugins ) { // phpcs:ignore -- NOSONAR - complex.
-        $str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
+        $str_format      = esc_html__( 'Updated %s days ago', 'mainwp' );
         $count_abandoned = count( $allPluginsOutdate );
         ?>
         <?php if ( 0 < $count_abandoned ) : ?>
@@ -997,6 +998,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * Render abandoned themes
      *
      * @param object $websites               the websites.
+     * @param array  $allThemesOutdate       All Themes Outdate.
      * @param array  $all_groups_sites       all groups of sites.
      * @param array  $all_groups             all groups.
      * @param int    $site_offset_for_groups offset value.
@@ -1012,7 +1014,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
      */
     public static function render_abandoned_themes( $websites, $allThemesOutdate, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedThemes ) { // phpcs:ignore -- NOSONAR - complex.
-        $str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
+        $str_format      = esc_html__( 'Updated %s days ago', 'mainwp' );
         $count_abandoned = count( $allThemesOutdate );
         ?>
         <?php if ( 0 < $count_abandoned ) : ?>

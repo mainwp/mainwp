@@ -1791,7 +1791,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Method is_process_callable().
      *
-     * @param  array $process
+     * @param  array $process The process.
      * @return mixed false|string|array callable.
      */
     public function is_process_callable( $process ) {

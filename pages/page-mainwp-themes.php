@@ -1749,7 +1749,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <div class="mainwp-main-content">
                 <div class="mainwp-actions-bar">
                     <div class="ui stackable two column grid">
-                        
+
                         <div class="column">
                                     <div class="ui mini buttons">
                                         <a href="#" class="ui basic button browse-themes" ><?php esc_html_e( 'Install from WordPress.org', 'mainwp' ); ?></a>
@@ -1783,8 +1783,8 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 do_action( 'mainwp_install_themes_actions_bar_left' );
                                 ?>
                             </div>
-                            
-                        
+
+
                     </div>
                 </div>
                 <div class="ui segment">
@@ -1878,7 +1878,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 ?>
                 <?php do_action( 'mainwp_manage_themes_after_submit_button' ); ?>
                 <?php
-                //@since 5.4.
+                // @since 5.4.
                 do_action( 'mainwp_bulk_install_sidebar_submit_bottom', 'theme' );
                 ?>
                 </div>

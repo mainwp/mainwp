@@ -788,7 +788,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 </a>
                 </div>
                 <?php
-                    $all_updates = wp_get_update_data();
+                    $all_updates         = wp_get_update_data();
                     $go_back_wpadmin_url = admin_url( 'index.php' );
 
                     $link = array(

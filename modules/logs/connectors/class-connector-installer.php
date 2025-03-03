@@ -260,9 +260,9 @@ class Connector_Installer extends Log_Connector {
             $item = $this->sanitize_data( $item );
             if ( ! empty( $item ) && isset( $item['name'] ) ) {
                 $logs_args[] = array(
-                    'name'      => $item['name'],
-                    'version'   => $item['version'],
-                    'slug'      => $item['slug'],
+                    'name'    => $item['name'],
+                    'version' => $item['version'],
+                    'slug'    => $item['slug'],
                 );
             }
         }
@@ -326,9 +326,9 @@ class Connector_Installer extends Log_Connector {
             $item = $this->sanitize_data( $item );
             if ( ! empty( $item ) && isset( $item['name'] ) ) {
                 $logs_args[] = array(
-                    'name'      => $item['name'],
-                    'version'   => $item['version'],
-                    'slug'      => $item['slug'],
+                    'name'    => $item['name'],
+                    'version' => $item['version'],
+                    'slug'    => $item['slug'],
                 );
             }
         }

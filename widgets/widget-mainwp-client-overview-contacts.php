@@ -94,13 +94,13 @@ class MainWP_Client_Overview_Contacts { // phpcs:ignore Generic.Classes.OpeningB
                 <div class="ui grid">
                     <div class="sixteen wide center aligned column">
                         <div class="ui image">
-                            <?php echo MainWP_Client_Handler::get_client_contact_image( $contact_info, 'contact', 'small' ); ?>
+                            <?php echo MainWP_Client_Handler::get_client_contact_image( $contact_info, 'contact', 'small' ); //phpcs:ignore -- ok. ?>
                         </div>
                     </div>
                     <div class="sixteen wide center aligned column">
                         <h2 class="ui center aligned header">
                             <div class="content">
-                                <?php echo esc_html( $contact_info['contact_name'] ); ?> 
+                                <?php echo esc_html( $contact_info['contact_name'] ); ?>
                                 <?php if ( isset( $contact_info['contact_role'] ) && ! empty( $contact_info['contact_role'] ) ) : ?>
                                 <div class="sub header">
                                     <?php echo esc_html( $contact_info['contact_role'] ); ?>
@@ -109,7 +109,7 @@ class MainWP_Client_Overview_Contacts { // phpcs:ignore Generic.Classes.OpeningB
                             </div>
                         </h2>
                     </div>
-                    
+
                     <div class="sixteen wide center aligned column">
                         <?php if ( isset( $contact_info['contact_email'] ) && '' !== $contact_info['contact_email'] ) : ?>
                             <a href="mailto:<?php echo esc_url( $contact_info['contact_email'] ); ?>" class="ui basic icon button" target="_blank" data-tooltip="<?php echo esc_attr( $contact_info['contact_email'] ); ?>" data-inverted="" data-position="top center">
@@ -121,8 +121,8 @@ class MainWP_Client_Overview_Contacts { // phpcs:ignore Generic.Classes.OpeningB
                                 <i class="phone grey icon"></i>
                             </a>
                         <?php endif; ?>
-                        
-                    
+
+
                         <?php if ( isset( $contact_info['facebook'] ) && '' !== $contact_info['facebook'] ) : ?>
                             <a href="<?php echo esc_url( $contact_info['facebook'] ); ?>" class="ui basic icon button" target="_blank"><i class="facebook grey icon"></i></a>
                         <?php endif; ?>

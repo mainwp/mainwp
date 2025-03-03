@@ -389,9 +389,9 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
      */
     public function get_default_columns() {
         return array(
-            'status'       => '',
-            'site'         => esc_html__( 'Site', 'mainwp' ),
-            'update'       => esc_html__( 'Updates', 'mainwp' ),
+            'status' => '',
+            'site'   => esc_html__( 'Site', 'mainwp' ),
+            'update' => esc_html__( 'Updates', 'mainwp' ),
         );
     }
 
@@ -596,7 +596,8 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                         </a>
                     <?php endif; ?>
                 </td>
-            <?php } elseif ( 'site' === $column_name ) {
+                <?php
+            } elseif ( 'site' === $column_name ) {
                 $cls_site = '';
                 if ( ! empty( $website['sync_errors'] ) ) {
                     $cls_site = 'site-sync-error';
@@ -625,7 +626,8 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                     <i class="sync alternate icon"></i> <?php echo intval( $total_updates ); ?>
                 </a>
             </td>
-            <?php } elseif ( 'site_actions' === $column_name ) {
+                <?php
+            } elseif ( 'site_actions' === $column_name ) {
                 // @NO_SONAR_START@ - duplicated issue.
                 ?>
                     <td class="collapsing not-selectable">

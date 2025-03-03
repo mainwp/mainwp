@@ -553,7 +553,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * Render abandoned plugins
      *
      * @param object $websites                the websites.
-     * @param array  $allPluginsOutdate       all abandoned plugins.
+     * @param array  $allPluginsOutdate       All abandoned plugins.
      * @param array  $decodedDismissedPlugins all dismissed abandoned plugins.
      *
      * @throws \MainWP_Exception Error message.
@@ -567,7 +567,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      */
     public static function render_abandoned_plugins( $websites, $allPluginsOutdate, $decodedDismissedPlugins ) { // phpcs:ignore -- NOSONAR - complex.
-        $str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
+        $str_format      = esc_html__( 'Updated %s days ago', 'mainwp' );
         $count_abandoned = count( $allPluginsOutdate );
         ?>
         <?php if ( 0 < $count_abandoned ) : ?>
@@ -693,7 +693,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      */
     public static function render_abandoned_themes( $websites, $allThemesOutdate, $decodedDismissedThemes ) { // phpcs:ignore -- NOSONAR - complex.
-        $str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
+        $str_format      = esc_html__( 'Updated %s days ago', 'mainwp' );
         $count_abandoned = count( $allThemesOutdate );
         ?>
         <?php if ( 0 < $count_abandoned ) : ?>

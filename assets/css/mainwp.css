@@ -1,26 +1,28 @@
 /* 22px - 24px */
 .mainwp-ui h1 {
     font-size: clamp(1.96rem, 0.47vi + 1.86rem, 2.29rem);
-  }
-  /* 20px - 22px */
-  .mainwp-ui h2 {
-    font-size: clamp(1.09rem, 0.4vi + 1.01rem, 1.33rem);
-  }
+}
 
-  /* 14px - 16px */
-  .mainwp-ui .header:not(.ui),
-  .mainwp-ui .ui.header,
-  .mainwp-ui h3 {
+/* 20px - 22px */
+.mainwp-ui h2 {
     font-size: clamp(1.09rem, 0.4vi + 1.01rem, 1.33rem);
-  }
+}
 
-  .mainwp-ui h1.ui.header .sub.header,
-  .mainwp-ui h2.ui.header .sub.header,
-  .mainwp-ui h3.ui.header .sub.header {
+/* 14px - 16px */
+.mainwp-ui .header:not(.ui),
+.mainwp-ui .ui.header,
+.mainwp-ui h3 {
+    font-size: clamp(1.09rem, 0.4vi + 1.01rem, 1.33rem);
+}
+
+.mainwp-ui h1.ui.header .sub.header,
+.mainwp-ui h2.ui.header .sub.header,
+.mainwp-ui h3.ui.header .sub.header {
     font-size: 1rem !important;
-  }
+}
 
-.mainwp-show-all-updates-button, table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
+.mainwp-show-all-updates-button,
+table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     display: none !important;
 }
 
@@ -202,7 +204,6 @@
 
 .mainwp-individual-site-view #mainwp-page-navigation-wrapper .mainwp-page-navigation {
     width: 199px;
-    box-shadow: none !important;
     border-radius: 0px !important;
     border: none !important;
     box-shadow: 20px 0px 15px -18px rgba(0, 0, 0, 0.15) inset !important;
@@ -226,7 +227,7 @@
 }
 
 .mainwp-individual-site-view #mainwp-site-mode-wrap,
-.mainwp-individual-site-view #mainwp-module-cost-tracker-settings-tab{
+.mainwp-individual-site-view #mainwp-module-cost-tracker-settings-tab {
     width: calc(100% - 200px);
     float: right;
 }
@@ -573,7 +574,7 @@
 #mainwp-select-sites-header .ui.menu {
     overflow-x: auto;
     overflow-y: hidden;
-    margin: 1rem 0 0 0;
+    margin: 1rem 0 0;
 }
 
 #mainwp-documentation-sidebar .ui.list .item i.icon {
@@ -612,7 +613,7 @@
 
 /* Tables */
 
-.mainwp-ui table.dataTable thead > tr > th span.dt-column-order {
+.mainwp-ui table.dataTable thead>tr>th span.dt-column-order {
     right: 0px !important;
 }
 
@@ -1424,18 +1425,24 @@ th .down.icon {
 
 .mainwp-ui .grid-stack .ui-resizable-se {
     background-size: contain;
-    width: 18px;  /* Adjust as needed */
-    height: 18px; /* Adjust as needed */
-    opacity: 0.7; /* Make sure it's visible */
+    width: 18px;
+    /* Adjust as needed */
+    height: 18px;
+    /* Adjust as needed */
+    opacity: 0.7;
+    /* Make sure it's visible */
     bottom: 1.25rem !important;
     right: 1.25rem !important;
 }
 
 .mainwp-ui .grid-stack .ui-resizable-sw {
     background-size: contain;
-    width: 18px;  /* Adjust as needed */
-    height: 18px; /* Adjust as needed */
-    opacity: 0.7; /* Make sure it's visible */
+    width: 18px;
+    /* Adjust as needed */
+    height: 18px;
+    /* Adjust as needed */
+    opacity: 0.7;
+    /* Make sure it's visible */
     bottom: 1.25rem !important;
     left: 1.25rem !important;
 }

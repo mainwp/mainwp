@@ -1130,9 +1130,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      */
     public function mainwp_clients_check_client() {
         $this->secure_request( 'mainwp_clients_check_client' );
-        // phpcs:disable WordPress.Security.NonceVerification.Missing
+        // phpcs:disable WordPress.Security.NonceVerification
         $client_email = isset( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : '';
-        // phpcs:enable WordPress.Security.NonceVerification.Missing
+        // phpcs:enable WordPress.Security.NonceVerification
         $client_existed = MainWP_DB_Client::instance()->get_wp_client_by( 'client_email', $client_email, ARRAY_A );
         if ( is_array( $client_existed ) && isset( $client_existed['client_id'] ) ) {
             return wp_send_json_error( array( 'error' => esc_html__( 'Client email exists. Please try again.', 'mainwp' ) ) );

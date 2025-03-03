@@ -1508,11 +1508,6 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), static::$page, array( -1, -1, 4, 30 ) );
         }
 
-        // Load the Securtiy Issues widget.
-        // if ( \mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) && static::$enable_widgets['security_issues'] ) {
-        // MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), static::$page, array( -1, -1, 6, 30 ) );
-        // }
-
         $i = 0;
         foreach ( $extMetaBoxs as $metaBox ) {
             $enabled = true;
@@ -1822,7 +1817,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( ( isset( $_GET['action'] ) && 'add_submonitor' === $_GET['action'] ) || ! empty( $_GET['sub_monitor_id'] ) ) {
             $websiteid = intval( $_GET['monitor_wpid'] );
             $website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
-            //show modal.
+            // Show modal.
             static::render_monitor_site( $website );
             return;
         }

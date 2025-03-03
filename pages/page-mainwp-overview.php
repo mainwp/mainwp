@@ -280,11 +280,6 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, array( -1, -1, 4, 30 ) );
         }
 
-        // Load the Get started widget.
-        //if ( static::$enable_widgets['get-started'] ) {
-        //    MainWP_UI::add_widget_box( 'get-started', array( MainWP_Get_Started::get_class_name(), 'render' ), $page, array( 0, 0, 6, 4 ) );
-        //}
-
         $i = 1;
         foreach ( $extMetaBoxs as $metaBox ) {
             $enabled = true;
@@ -306,7 +301,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 }
             }
         }
-        
+
     }
 
     /**

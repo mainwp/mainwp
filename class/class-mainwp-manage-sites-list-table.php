@@ -1004,8 +1004,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             MainWP_DB::free_result( $total_websites );
         }
 
-        $params['extra_view'] = $extra_view;
-        $params['view']       = 'manage_site';
+        $params['extra_view']    = $extra_view;
+        $params['view']          = 'manage_site';
+        $params['dev_log_query'] = 0;
 
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
 
@@ -1084,7 +1085,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 <?php printf( esc_html__( 'To hide or show a column, click the Cog (%s) icon and select options from "Show columns"', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
             </div>
         <?php endif; ?>
-        
+
         <table id="mainwp-manage-sites-table" style="width:100%" class="ui selectable unstackable table mainwp-with-preview-table mainwp-manage-wpsites-table">
             <thead>
                 <tr><?php $this->print_column_headers( $optimize, true ); ?></tr>
@@ -1769,7 +1770,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                     <?php } elseif ( 'tags' === $column_name ) { ?>
                         <?php echo MainWP_System_Utility::get_site_tags_belong( $website ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
                     <?php } elseif ( 'update' === $column_name ) { ?>
-                        <a data-tooltip="<?php echo ! empty( $website['dtsSync'] ) ? esc_attr__( 'Last sync: ', 'mainwp' ) . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['dtsSync'] ) ) : ''; ?> " data-position="left center" data-inverted="" class="ui mini grey button" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>">
+                        <a data-tooltip="<?php echo ! empty( $website['dtsSync'] ) ? esc_attr__( 'Last sync: ', 'mainwp' ) . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['dtsSync'] ) ) : ''; //phpcs:ignore -- ok. ?> " data-position="left center" data-inverted="" class="ui mini grey button" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>">
                             <i class="sync alternate icon"></i> <?php echo intval( $total_updates ); ?>
                         </a>
                     <?php } elseif ( 'wpcore_update' === $column_name ) { ?>
@@ -1793,7 +1794,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                             <?php echo $client_image; //phpcs:ignore -- NOSONAR - ok.?> <span><?php echo esc_html( 'Unassigned' ); ?></span>
                         <?php endif; ?>
                     <?php } elseif ( 'security' === $column_name ) { ?>
-                        <?php if ( ! empty( $website['securityIssues'] ) && '[]' != $website['securityIssues'] ) : ?>
+                        <?php if ( ! empty( $website['securityIssues'] ) && '[]' !== $website['securityIssues'] ) : ?>
                             <?php if ( 0 < $website['securityIssues'] ) : ?>
                                 <a href="admin.php?page=managesites&scanid=<?php echo intval( $website['id'] ); ?>" class="ui mini button" data-tooltip="<?php esc_attr_e( 'Click to review site hardening options.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="shield red icon"></i> <?php echo intval( $website['securityIssues'] ); ?></a>
                             <?php else : ?>
@@ -1844,9 +1845,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                     <?php } elseif ( 'phpversion' === $column_name ) { ?>
                         <?php echo ! empty( $website['phpversion'] ) ? '<i class="php icon"></i> ' . esc_html( substr( $website['phpversion'], 0, 6 ) ) : ''; ?>
                     <?php } elseif ( 'language' === $column_name ) { ?>
-                        <?php echo MainWP_Utility::get_language_code_as_flag( $website_info['site_lang'] ); ?>
+                        <?php MainWP_Utility::get_language_code_as_flag( ! empty( $website_info['site_lang'] ) ? $website_info['site_lang'] : '' ); ?>
                     <?php } elseif ( 'index' === $column_name ) { ?>
-                        <?php echo MainWP_Utility::get_site_index_option_icon( $website_info['site_public'] ); ?>
+                        <?php MainWP_Utility::get_site_index_option_icon( ! empty( $website_info['site_public'] ) ? $website_info['site_public'] : '' ); ?>
                     <?php } elseif ( 'added_datetime' === $column_name ) { ?>
                         <?php echo ! empty( $website['added_timestamp'] ) ? '<span data-tooltip="' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['added_timestamp'] ) ) . '" data-position="left center" data-inverted=""><i class="calendar outline icon"></i> ' . MainWP_Utility::time_elapsed_string( $website['added_timestamp'] ) . '</span>' : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                     <?php } elseif ( 'site_actions' === $column_name ) { ?>

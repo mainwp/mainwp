@@ -48,7 +48,7 @@ class Log_DB_Helper extends MainWP_DB {
         if ( empty( $log_id ) ) {
             return false;
         }
-        return $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_logs' ) . ' WHERE log_id = %d ', $log_id ) );
+        return $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_logs' ) . ' WHERE log_id = %d ', $log_id ) ); //phpcs:ignore -- ok.
     }
 
     /**
@@ -75,6 +75,6 @@ class Log_DB_Helper extends MainWP_DB {
      * @return mixed Count events.
      */
     public function count_events() {
-        return $this->wpdb->get_var( 'SELECT count(*) FROM ' . $this->table_name( 'wp_logs' ) . ' WHERE dismiss = 0 ' );
+        return $this->wpdb->get_var( 'SELECT count(*) FROM ' . $this->table_name( 'wp_logs' ) . ' WHERE dismiss = 0 ' ); //phpcs:ignore -- ok.
     }
 }

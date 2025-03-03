@@ -448,9 +448,6 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         $array_sites_ids   = array();
         $array_events_list = array();
 
-        //phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-        // error_log( print_r( $insights_filters, true ) );
-
         extract( $insights_filters ); //phpcs:ignore -- ok.
 
         if ( ! empty( $filter_dtsstart ) && ! empty( $filter_dtsstop ) && ! is_numeric( $filter_dtsstart ) && ! is_numeric( $filter_dtsstop ) ) { // after extract.
@@ -458,8 +455,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             $filter_dtsstart = gmdate( 'Y-m-d', strtotime( $filter_dtsstart ) );
             $filter_dtsstop  = gmdate( 'Y-m-d', strtotime( $filter_dtsstop ) );
         }
-
-        // phpcs:enable
+        // phpcs:enable WordPress.Security.NonceVerification
 
          // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $perPage = isset( $_REQUEST['length'] ) ? intval( $_REQUEST['length'] ) : false;
@@ -472,7 +468,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
         $recent_number = isset( $_REQUEST['recent_number'] ) ? intval( $_REQUEST['recent_number'] ) : 0;
 
-        // phpcs:enable
+        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         $args = array(
             'order'         => ( 'asc' === $req_order ) ? 'asc' : 'desc',

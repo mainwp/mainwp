@@ -240,7 +240,7 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-grid-view-mode-info-message' ) ) : ?>
             <div class="ui info message">
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-grid-view-mode-info-message"></i>
-                <div><?php echo sprintf( esc_html__( 'In the Grid mode, sites options are limited in comparison to the %sTable mode%s.', 'mainwp' ), '<a href="admin.php?page=managesites&viewmode=table&modenonce=' . esc_html( $nonce ) . '">', '</a>' ); ?></div>
+                <div><?php printf( esc_html__( 'In the Grid mode, sites options are limited in comparison to the %sTable mode%s.', 'mainwp' ), '<a href="admin.php?page=managesites&viewmode=table&modenonce=' . esc_html( $nonce ) . '">', '</a>' ); ?></div>
             </div>
             <?php endif; ?>
         <?php
@@ -387,7 +387,7 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                             <div class="content">
                                 <h2 class="ui small header">
                                     <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to WP Admin', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo intval( $website->id ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a>
-                                    <br/><?php echo MainWP_Utility::get_site_index_option_icon( $website_info['site_public'] ); ?> <span class="ui small text"><a href="<?php echo esc_url( $website->url ); ?>" class="ui grey text" target="_blank"><?php echo esc_url( $website->url ); ?></a></span>
+                                    <br/><?php MainWP_Utility::get_site_index_option_icon( $website_info['site_public'] ); ?> <span class="ui small text"><a href="<?php echo esc_url( $website->url ); ?>" class="ui grey text" target="_blank"><?php echo esc_url( $website->url ); ?></a></span>
                                 </h2>
                                 <?php if ( isset( $website->wpgroups ) && '' !== $website->wpgroups ) : ?>
                                 <div><?php echo MainWP_System_Utility::get_site_tags( (array) $website ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
@@ -398,7 +398,7 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                                     <?php echo $client_image; //phpcs:ignore -- NOSONAR - ok.?> <?php echo esc_html( $website->client_name ); ?>
                                 </a>
                             </div>
-                            
+
                             <div class="extra content">
                                 <?php if ( $hasSyncErrors ) : ?>
                                     <a class="ui mini green basic icon button mainwp_site_card_reconnect" site-id="<?php echo intval( $website->id ); ?>" href="#"><i class="sync alternate icon"></i></a>
@@ -406,10 +406,10 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                                     <a href="javascript:void(0)" class="ui mini green icon button mainwp-sync-this-site" site-id="<?php echo intval( $website->id ); ?>"><i class="sync alternate icon"></i></a>
                                 <?php endif; ?>
                                 <a href="admin.php?page=managesites&id=<?php echo intval( $website->id ); ?>"class="ui mini grey icon button"><i class="cog icon"></i></a>
-                                <a data-tooltip="<?php echo ! empty( $website->dtsSync ) ? esc_attr__( 'Last sync: ', 'mainwp' ) . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website->dtsSync ) ) : ''; ?> " data-position="left center" data-inverted="" class="ui mini grey button" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>">
+                                <a data-tooltip="<?php echo ! empty( $website->dtsSync ) ? esc_attr__( 'Last sync: ', 'mainwp' ) . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website->dtsSync ) ) : ''; ?> " data-position="left center" data-inverted="" class="ui mini grey button" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); //phpcs:ignore -- NOSONAR -ok. ?>">
                                     <i class="sync alternate icon"></i> <?php echo intval( $total_updates ); ?>
                                 </a>
-                                <span class="right floated"><?php echo MainWP_Utility::get_language_code_as_flag( $website_info['site_lang'] ); ?></span>
+                                <span class="right floated"><?php MainWP_Utility::get_language_code_as_flag( $website_info['site_lang'] ); ?></span>
                             </div>
                         </div>
                         <?php

@@ -130,11 +130,11 @@ class Log_Install extends MainWP_Install {
             error_reporting(0); // phpcs:ignore -- try to disabled the error_log somewhere in WP.
         }
 
-        //$suppress = $wpdb->suppress_errors();
+        $suppress = $wpdb->suppress_errors();
         foreach ( $sql as $query ) {
             dbDelta( $query );
         }
-        //$wpdb->suppress_errors( $suppress );
+        $wpdb->suppress_errors( $suppress );
 
         MainWP_Utility::update_option( $this->log_db_option_key, $this->log_db_version );
 
@@ -148,7 +148,7 @@ class Log_Install extends MainWP_Install {
      */
     public function update_log_db( $currentVersion ) {
         if ( version_compare( $currentVersion, '1.0.1.7', '<' ) ) {
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' ADD INDEX index_site_object_id (site_id, object_id)' );
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' ADD INDEX index_site_object_id (site_id, object_id)' ); //phpcs:ignore -- ok.
         }
     }
 }

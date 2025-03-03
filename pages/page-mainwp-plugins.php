@@ -1826,7 +1826,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         <div class="mainwp-main-content">
             <div class="mainwp-actions-bar">
                 <div class="ui stackable two column grid">
-                    
+
                     <div class="middle aligned column">
                         <div class="ui mini stackable buttons">
                             <a href="#" id="MainWPInstallBulkNavSearch" class="ui basic button mainwp-bulk-install-tabs-header-btn" ><?php esc_html_e( 'Install from WordPress.org', 'mainwp' ); ?></a>
@@ -1881,8 +1881,8 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
                 </div>
             </div>
-        
-        
+
+
                 <div class="ui segment">
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-install-plugins-info-message' ) ) : ?>
                 <div class="ui info message">
@@ -1983,7 +1983,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         ?>
             <?php do_action( 'mainwp_manage_plugins_before_submit_button' ); ?>
             <?php
-            //@since 5.4.
+            // @since 5.4.
             do_action( 'mainwp_bulk_install_sidebar_submit_bottom', 'plugin' );
             ?>
         </div>

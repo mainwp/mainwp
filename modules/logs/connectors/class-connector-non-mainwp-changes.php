@@ -79,9 +79,9 @@ class Connector_Non_Mainwp_Changes extends Log_Connector {
      *
      * @action mainwp_sync_site_log_install_actions.
      *
-     * @param object  $website  website.
+     * @param object $website  website.
      * @param array  $record meta data.
-     * @param string $index Object Id.
+     * @param string $object_id Object Id.
      */
     public function callback_mainwp_sync_site_log_install_actions( $website, $record, $object_id ) { //phpcs:ignore -- NOSONAR - complex method.
 

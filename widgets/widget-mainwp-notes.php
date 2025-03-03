@@ -106,7 +106,7 @@ class MainWP_Notes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         </div>
         <div class="ui one column grid mainwp-widget-footer">
             <div class="column">
-                <a href="javascript:void(0)" class="ui basic mini button mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website->id ); ?>" <?php echo '' !== $website->note ? '' : 'add-new="1"' ?>><?php echo '' !== $website->note ? esc_html__( 'Edit Notes', 'mainwp' ) : esc_html__( 'Add Notes', 'mainwp' ); ?></a>
+                <a href="javascript:void(0)" class="ui basic mini button mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website->id ); ?>" <?php echo '' !== $website->note ? '' : 'add-new="1"'; ?>><?php echo '' !== $website->note ? esc_html__( 'Edit Notes', 'mainwp' ) : esc_html__( 'Add Notes', 'mainwp' ); ?></a>
                 <?php MainWP_UI::render_modal_edit_notes(); ?>
             </div>
         </div>

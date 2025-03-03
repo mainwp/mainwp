@@ -111,7 +111,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         add_submenu_page(
             'mainwp_tab',
             esc_html__( 'Clients', 'mainwp' ),
-            '<div class="mainwp-hidden">' . esc_html__( 'Import Clients', 'mainwp' ) . '</div>', // NOSONAR
+            '<div class="mainwp-hidden">' . esc_html__( 'Import Clients', 'mainwp' ) . '</div>',
             'read',
             'ClientImport',
             array(
@@ -1037,7 +1037,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <i class="notched circle loading icon"></i> <?php echo esc_html__( 'Importing...', 'mainwp' ); ?>
         </div>
         <?php
-        $has_file_upload = isset( $_FILES['mainwp_client_import_file_bulkupload'] ) && isset( $_FILES['mainwp_client_import_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_client_import_file_bulkupload']['error'];  // phpcs:ignore -- NOSONAR 
+        $has_file_upload = isset( $_FILES['mainwp_client_import_file_bulkupload'] ) && isset( $_FILES['mainwp_client_import_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_client_import_file_bulkupload']['error'];  // phpcs:ignore -- NOSONAR
 
         if ( $has_file_upload ) {
             $import_client_data = static::handle_client_import_files();
@@ -1083,7 +1083,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @return array Import data.
      */
     public static function handle_client_import_files() {  // phpcs:ignore -- NOSONAR
-        $tmp_path = isset( $_FILES['mainwp_client_import_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_client_import_file_bulkupload']['tmp_name'] ) ) : '';  // phpcs:ignore WordPress.Security.NonceVerification.Missing -- NOSONAR 
+        $tmp_path = isset( $_FILES['mainwp_client_import_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_client_import_file_bulkupload']['tmp_name'] ) ) : '';  // phpcs:ignore WordPress.Security.NonceVerification.Missing -- NOSONAR
         MainWP_System_Utility::get_wp_file_system();
         //phpcs:enable
         /**
@@ -1122,7 +1122,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
                 $items = str_getcsv( $line, ',' );
 
-                if ( ( null === $header_line ) && ! empty( $_POST['mainwp_client_import_chk_header_first'] ) ) {  // phpcs:ignore WordPress.Security.NonceVerification.Missing -- NOSONAR 
+                if ( ( null === $header_line ) && ! empty( $_POST['mainwp_client_import_chk_header_first'] ) ) {  // phpcs:ignore WordPress.Security.NonceVerification.Missing -- NOSONAR
                     $header_line = $line . "\r";
                     continue;
                 }
@@ -1175,7 +1175,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 <?php esc_html_e( 'Custom Client Fields', 'mainwp' ); ?>
                 <div class="sub header"><?php esc_html_e( 'Create and manage custom fields to store additional client details, ensuring you have all the information you need in one place.', 'mainwp' ); ?></div>
             </h2>
-            
+
             <div class="ui info message" <?php echo ! MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-clients-manage-fields' ) ? 'style="display: none"' : ''; ?>>
             <?php esc_html_e( 'Create and manage custom Client fields.', 'mainwp' ); ?>
                 <i class="ui close icon mainwp-notice-dismiss" notice-id="mainwp-clients-manage-fields"></i>
@@ -1696,7 +1696,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     </div>
                     <?php endif; ?>
                 </div>
-                   
+
                 <?php if ( 'client.email' === $field_name ) { ?>
                         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-client">
                             <label class="six wide column middle aligned">
@@ -1716,10 +1716,10 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                         <div style="display:inline-block;" id="mainwp_add_edit_client_upload_custom_icon"></div> <?php // used for icon holder. ?>
                                     <?php } ?>
                                 </span>
-                                <div class="ui basic button mainwp-add-edit-client-icon-customable" 
-                                    iconItemId="<?php echo intval( $client_id ); ?>" 
-                                    iconFileSlug="<?php echo esc_attr( $client_image ); ?>" 
-                                    del-icon-nonce="<?php echo esc_attr( $delnonce ); ?>" 
+                                <div class="ui basic button mainwp-add-edit-client-icon-customable"
+                                    iconItemId="<?php echo intval( $client_id ); ?>"
+                                    iconFileSlug="<?php echo esc_attr( $client_image ); ?>"
+                                    del-icon-nonce="<?php echo esc_attr( $delnonce ); ?>"
                                     icon-src="<?php echo esc_attr( $uploaded_icon_src ); ?>">
                                     <i class="image icon"></i> <?php echo ! empty( $client_image ) ? esc_html__( 'Change Image', 'mainwp' ) : esc_html__( 'Upload Image', 'mainwp' ); ?>
                                 </div>
@@ -1766,7 +1766,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                             <div class="one wide column"></div>
                     </div>
                         <?php
-                    }
+                }
             }
 
             $client_contacts = array();

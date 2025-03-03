@@ -133,7 +133,6 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         $extensions       = MainWP_Extensions_Handler::get_extensions();
         $extension_update = get_site_transient( 'update_plugins' );
-        
 
         $extensions_count          = 0;
         $extensions_disabled_count = 0;
@@ -236,17 +235,17 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             <?php } ?>
 
                             <?php $extensions_count = $extensions_count + $extensions_disabled_count; ?>
-                            <?php if ( 1 == $extensions_count % 4 ) : ?>
+                            <?php if ( 1 === $extensions_count % 4 ) : ?>
                                 <div class="ui card" style="visibility:hidden"></div>
                                 <div class="ui card" style="visibility:hidden"></div>
                                 <div class="ui card" style="visibility:hidden"></div>
-                            <?php elseif ( 2 == $extensions_count % 4 ) : ?>
+                            <?php elseif ( 2 === $extensions_count % 4 ) : ?>
                                 <div class="ui card" style="visibility:hidden"></div>
                                 <div class="ui card" style="visibility:hidden"></div>
-                            <?php elseif ( 3 == $extensions_count % 4 ) : ?>
+                            <?php elseif ( 3 === $extensions_count % 4 ) : ?>
                                 <div class="ui card" style="visibility:hidden"></div>
                             <?php endif; ?>
-                            
+
                         </div>
                     </div>
                 <?php } ?>
@@ -255,7 +254,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             </div>
 
             <div class="mainwp-side-content mainwp-no-padding">
-                
+
                 <?php static::render_side_box( $mainwp_api_key ); ?>
             </div>
             <div id="mainwp-extensions-privacy-info">
@@ -436,7 +435,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         ?>
-        
+
         <div class="ui fluid card extension <?php echo $disabled ? 'grey mainwp-disabled-extension' : 'green mainwp-enabled-extension'; ?> extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-model="<?php echo esc_attr( $extensions_data['model'] ); ?>" extension-title="<?php echo esc_attr( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?>" base-slug="<?php echo esc_attr( $item_slug ); ?>" extension-slug="<?php echo esc_attr( $extension['slug'] ); ?>" status="<?php echo esc_attr( $queue_status ); ?>" license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
         <?php
         /**
@@ -478,9 +477,9 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 <?php echo esc_html( preg_replace( '/\<cite\>.*\<\/cite\>/', '', $extension['description'] ) ); ?>
             </div>
         </div>
-            
+
         <?php echo $new; // phpcs:ignore WordPress.Security.EscapeOutput ?>
-        
+
         <?php if ( ! $simple ) { ?>
         <div class="extra content">
             <div class="">
@@ -587,7 +586,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * Render Purchase Notice.
      */
     public static function render_purchase_notice() {
-        $is_pro  = MainWP_Hooks::is_pro_member();
+        $is_pro = MainWP_Hooks::is_pro_member();
         ?>
         <div id="mainwp-get-purchased-extensions-modal" class="ui first coupled modal">
         <i class="close icon"></i>
@@ -631,7 +630,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     <div class="field">
                         <label for="mainwp_com_api_key"></label>
                         <div class="ui left icon fluid input">
-                            <input type="password" id="mainwp_com_api_key" autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="<?php echo esc_attr( 'Enter your MainWP Main API Key', 'mainwp' ); ?>" value="<?php echo esc_attr( $mainwp_api_key ); ?>"/>
+                            <input type="password" id="mainwp_com_api_key" autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="<?php esc_attr_e( 'Enter your MainWP Main API Key', 'mainwp' ); ?>" value="<?php echo esc_attr( $mainwp_api_key ); ?>"/>
                             <i class="key icon"></i>
                         </div>
                     </div>
@@ -653,8 +652,8 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             <br/>
             <input type="button" class="ui basic green fluid button" id="mainwp-extensions-grabkeys" value="<?php esc_attr_e( 'Activate Add-ons', 'mainwp' ); ?>">
         </div>
-        
-        
+
+
         <?php
         $install_ext_slug = '';
         if ( isset( $_GET['message'] ) && 0 === strpos( wp_unslash( $_GET['message'] ), 'install-ext-' ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -1311,7 +1310,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'integration_owner'    => '',
                 'integration_owner_pp' => '',
             ),
-            'mainwp-regression-testing-extension'      =>
+            'mainwp-regression-testing-extension'     =>
             array(
                 'type'                 => 'pro',
                 'model'                => 'extension',

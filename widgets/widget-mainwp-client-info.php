@@ -96,14 +96,14 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                 <?php
                 if ( 0 === intval( $client_info['suspended'] ) ) {
                     $client_status = '<span class="ui green basic button">' . esc_html__( 'Active', 'mainwp' ) . '</span>';
-                } else if ( 1 === intval( $client_info['suspended'] ) ) {
+                } elseif ( 1 === intval( $client_info['suspended'] ) ) {
                     $client_status = '<span class="ui yellow button">' . esc_html__( 'Suspended', 'mainwp' ) . '</span>';
-                } else if ( 2 === intval( $client_info['suspended'] ) ) {
+                } elseif ( 2 === intval( $client_info['suspended'] ) ) {
                     $client_status = '<span class="ui blue button">' . esc_html__( 'Lead', 'mainwp' ) . '</span>';
-                } else if ( 3 === intval( $client_info['suspended'] ) ) {
+                } elseif ( 3 === intval( $client_info['suspended'] ) ) {
                     $client_status = '<span class="ui red button">' . esc_html__( 'Lost', 'mainwp' ) . '</span>';
                 }
-                
+
                 /**
                  * Action: mainwp_clients_info_table_top
                  *
@@ -118,25 +118,25 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                 <div class="ui grid">
                     <div class="sixteen wide center aligned column">
                         <div class="ui image">
-                            <?php echo MainWP_Client_Handler::get_client_contact_image( $client_info, 'client', 'small' ); ?>
+                            <?php echo MainWP_Client_Handler::get_client_contact_image( $client_info, 'client', 'small' ); ; //phpcs:ignore -- ok.  ?>
                         </div>
                     </div>
                     <div class="sixteen wide center aligned column">
                         <h2 class="ui center aligned header">
                             <div class="content">
-                                <?php echo esc_html( $client_info['name'] ); ?> 
+                                <?php echo esc_html( $client_info['name'] ); ?>
                                 <?php if ( isset( $client_info['created'] ) && ! empty( $client_info['created'] ) ) : ?>
                                 <div class="sub header">
-                                    <i class="calendar grey icon"></i> <?php esc_html_e( 'Added ', 'mainwp' ); ?><span data-tooltip="<?php esc_attr_e( MainWP_Utility::format_date( $client_info['created'] ) ); ?>" data-inverted="" data-position="top center"><?php echo MainWP_Utility::time_elapsed_string( $client_info['created'] ); ?></span>.
+                                    <i class="calendar grey icon"></i> <?php esc_html_e( 'Added ', 'mainwp' ); ?><span data-tooltip="<?php echo esc_attr( MainWP_Utility::format_date( $client_info['created'] ) ); ?>" data-inverted="" data-position="top center"><?php echo MainWP_Utility::time_elapsed_string( $client_info['created'] ); //phpcs:ignore -- ok. ?></span>.
                                 </div>
                                 <?php endif; ?>
                             </div>
                         </h2>
                     </div>
                     <div class="sixteen wide center aligned column">
-                        <?php echo $client_status; ?>
+                        <?php echo $client_status; //phpcs:ignore -- ok. ?>
                     </div>
-                    
+
                     <div class="sixteen wide center aligned column">
                         <?php if ( isset( $client_info['client_email'] ) && '' !== $client_info['client_email'] ) : ?>
                             <a href="mailto:<?php echo esc_url( $client_info['client_email'] ); ?>" class="ui basic icon button" target="_blank" data-tooltip="<?php echo esc_attr( $client_info['client_email'] ); ?>" data-inverted="" data-position="top center">
@@ -148,8 +148,8 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                                 <i class="phone grey icon"></i>
                             </a>
                         <?php endif; ?>
-                        
-                    
+
+
                         <?php if ( isset( $client_info['client_facebook'] ) && '' !== $client_info['client_facebook'] ) : ?>
                             <a href="<?php echo esc_url( $client_info['client_facebook'] ); ?>" class="ui basic icon button" target="_blank"><i class="facebook grey icon"></i></a>
                         <?php endif; ?>

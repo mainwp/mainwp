@@ -444,14 +444,19 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         echo '</div>';
     }
 
-    public static function render_api_keys_v1_table() {
+    /**
+     * Method render_api_keys_v1_table.
+     *
+     * @return void
+     */
+    public static function render_api_keys_v1_table() { //phpcs:ignore -- NOSONAR - complex.
         $all_keys = static::check_rest_api_updates();
         if ( ! is_array( $all_keys ) ) {
             $all_keys = array();
         }
 
         if ( ! empty( $all_keys ) ) {
-        ?>
+            ?>
         <h2 class="ui dividing header">
             <?php esc_html_e( 'MainWP REST API v1 API Keys (Legacy)', 'mainwp' ); ?>
             <div class="sub header"><?php esc_html_e( 'Legacy API keys for older integrations. We recommend switching to v2 for better security and performance.', 'mainwp' ); ?></div>
@@ -554,7 +559,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 }
             });
             </script>
-        <?php
+            <?php
         }
     }
 
@@ -679,7 +684,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 <div class="sub header"><?php esc_html_e( 'The latest and most secure version of the MainWP REST API. Use these keys for new integrations.', 'mainwp' ); ?></div>
             </h2>
             <?php static::render_api_keys_v2_table(); ?>
-            
+
             <?php static::render_api_keys_v1_table(); ?>
         </div>
         <?php
@@ -823,7 +828,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 <strong><?php esc_html_e( 'API credentials have been successfully generated.', 'mainwp' ); ?></strong><br/>
                 <?php esc_html_e( 'Please copy the consumer key and secret now as after you leave this page the credentials will no longer be accessible. Use the Description field for easier Key management when needed.', 'mainwp' ); ?>
             </div>
-            
+
             <?php static::show_messages(); ?>
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-rest-api-info-message' ) ) : ?>
                 <div class="ui info message">
@@ -831,7 +836,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     <?php printf( esc_html__( 'Enable the MainWP REST API functionality and generate API credentials. Check this %1$shelp document%2$s to see all available endpoints.', 'mainwp' ), '<a href="https://mainwp.dev/rest-api/" target="_blank">', '</a>' ); ?>
                 </div>
             <?php endif; ?>
-                
+
             <div class="ui info message">
                 <?php esc_html_e( 'The API Key (Bearer) authentication is only compatible with the MainWP REST API v2', 'mainwp' ); ?>
                 <?php esc_html_e( 'If you are working with the MainWP REST API v1 (Legacy), click on the "Show Legacy API Credentials" button to obtain your Consumer Key and Consumer Secret.', 'mainwp' ); ?>

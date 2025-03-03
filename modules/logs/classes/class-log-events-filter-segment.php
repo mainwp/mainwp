@@ -264,8 +264,8 @@ class Log_Events_Filter_Segment {
      */
     public function ajax_log_filter_save_segment() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_filter_save_segment' );
-        //phpcs:disable WordPress.Security.NonceVerification.Missing
 
+        //phpcs:disable WordPress.Security.NonceVerification.Missing
         $opt_name = isset( $_POST['filter_opt_name'] ) ? sanitize_text_field( wp_unslash( $_POST['filter_opt_name'] ) ) : 'module_log';
 
         $not_filters = array(
@@ -323,6 +323,7 @@ class Log_Events_Filter_Segment {
     public function ajax_log_filter_load_segments() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_filter_load_segments' );
 
+        //phpcs:disable WordPress.Security.NonceVerification.Missing
         $opt_name = isset( $_POST['filter_opt_name'] ) ? sanitize_text_field( wp_unslash( $_POST['filter_opt_name'] ) ) : 'module_log';
 
         $saved_segments = MainWP_Manage_Sites_Filter_Segment::set_get_manage_sites_filter_segments( false, array(), $opt_name );
@@ -349,9 +350,11 @@ class Log_Events_Filter_Segment {
     public function ajax_log_filter_delete_segment() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_filter_delete_segment' );
 
+        //phpcs:disable WordPress.Security.NonceVerification.Missing
         $opt_name = isset( $_POST['filter_opt_name'] ) ? sanitize_text_field( wp_unslash( $_POST['filter_opt_name'] ) ) : 'module_log';
 
         $seg_id = ! empty( $_POST['seg_id'] ) ? sanitize_text_field( wp_unslash( $_POST['seg_id'] ) ) : 0; //phpcs:ignore -- ok.
+        //phpcs:enable WordPress.Security.NonceVerification.Missing
 
         $saved_segments = MainWP_Manage_Sites_Filter_Segment::set_get_manage_sites_filter_segments( false, array(), $opt_name );
         if ( ! empty( $seg_id ) && is_array( $saved_segments ) && isset( $saved_segments[ $seg_id ] ) ) {

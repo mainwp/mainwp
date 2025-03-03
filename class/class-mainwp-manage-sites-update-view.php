@@ -380,7 +380,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
 
                                             <input type="hidden" id="wp-updated-<?php echo intval( $website->id ); ?>" value="<?php echo ! empty( $wp_upgrades ) ? '0' : '1'; ?>" />
                                             <?php
-                                        }
+                                            }
                                         endif;
                                     ?>
                                 <?php endif; ?>
@@ -809,6 +809,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      *
      * @param string $tran_info Translation slug.
      * @param array  $trusted_plugins Trusted update plugins.
+     * @param array  $trusted_themes Trusted update themes.
      */
     public static function is_trans_trusted_update( $tran_info, $trusted_plugins, $trusted_themes ) {
         if ( is_array( $tran_info ) && isset( $tran_info['type'] ) && isset( $tran_info['slug'] ) ) {

@@ -289,7 +289,6 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             )
         );
 
-
         /**
          * This hook allows you to add extra sub pages to the client page via the 'mainwp_getsubpages_cost_tracker' filter.
          */

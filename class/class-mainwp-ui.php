@@ -1366,7 +1366,18 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         do_action( 'mainwp_header_actions_after_select_themes' );
         ?>
         <div class="ui top right pointing dropdown mainwp-768-hide" id="mainwp-user-menu-button">
-            <?php echo get_avatar( $current_user, 38, 'wavatar', __( 'Settings', 'mainwp' ), array( 'extra_attr' => 'style="width:38px!important;height:38px!important;"', 'class' => 'ui small avatar image',  ) ); ?>
+            <?php
+            echo get_avatar(
+                $current_user,
+                38,
+                'wavatar',
+                esc_html__( 'Settings', 'mainwp' ),
+                array(
+                    'extra_attr' => 'style="width:38px!important;height:38px!important;"',
+                    'class'      => 'ui small avatar image',
+                )
+            );
+            ?>
             <div class="menu">
                 <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=Settings' ) ); ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Go to MainWP Settings', 'mainwp' ); ?>">
                     <i class="cog grey icon"></i> <?php esc_html_e( 'MainWP Settings', 'mainwp' ); ?>
@@ -1694,7 +1705,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     $layout['h'] = 4;
                 }
 
-                $layout_attrs_escaped  = ' gs-y="' . ( isset( $layout['y'] ) && -1 != intval( $layout['y'] ) ? esc_attr( $layout['y'] ) : '' ) . '" gs-x="' . ( isset( $layout['x'] ) - 1 != intval( $layout['x'] ) ? esc_attr( $layout['x'] ) : '' ) . '" ';
+                $layout_attrs_escaped  = ' gs-y="' . ( isset( $layout['y'] ) && -1 !== (int) ( $layout['y'] ) ? esc_attr( $layout['y'] ) : '' ) . '" gs-x="' . ( isset( $layout['x'] ) && - 1 !== (int) $layout['x'] ? esc_attr( $layout['x'] ) : '' ) . '" ';
                 $layout_attrs_escaped .= ' gs-w="' . ( isset( $layout['w'] ) ? esc_attr( $layout['w'] ) : '' ) . '" gs-h="' . ( isset( $layout['h'] ) ? esc_attr( $layout['h'] ) : '' ) . '" ';
 
                 echo '<div id="widget-' . esc_html( $box['id'] ) . '" class="grid-stack-item" ' . $layout_attrs_escaped . '>' . "\n"; //phpcs:ignore -- escaped.
@@ -1707,15 +1718,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         }
         ?>
         </div>
-        <?php // $breakpoint = apply_filters( 'mainwp_flexible_widgets_breakpoint', 1367 ); ?>
         <script type="text/javascript">
-            //let is_mobile = false;
-            //if( jQuery( window ).width() < <?php // echo intval( $breakpoint ); ?> ) {
-            //    is_mobile = true;
-            //}
-            //console.log('mobile: ' + is_mobile);
-
-            // if ( ! is_mobile ) {
                 let page_sortablewidgets = '<?php echo esc_js( $page ); ?>';
                 jQuery( document ).ready( function( $ ) {
                     let wgIds = [];
@@ -1761,6 +1764,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         });
 
                         console.log(orders);
+                        console.log(wgIds);
 
                         let postVars = {
                             action:'mainwp_widgets_order',
@@ -1773,10 +1777,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         } );
                     }
                 });
-
-            //}
         </script>
-                <?php
+        <?php
     }
 
     /**
@@ -2132,9 +2134,10 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      *
      * @return void
      */
-    public static function render_help_modal() {
+    public static function render_help_modal() { //phpcs:ignore -- NOSONAR - complex.
         $siteViewMode = MainWP_Utility::get_siteview_mode();
 
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized.Recommended
         $page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
 
         $tour_id = '';
@@ -2291,7 +2294,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             </div>
             <?php endif; ?>
 
-            <div class="scrolling center aligned content" id="mainwp-help-modal-content" <?php echo ( 1 === (int) get_option( 'mainwp_help_modal_content_update' ) ) ? '' : 'style="display:none"' ?>>
+            <div class="scrolling center aligned content" id="mainwp-help-modal-content" <?php echo ( 1 === (int) get_option( 'mainwp_help_modal_content_update' ) ) ? '' : 'style="display:none"'; ?>>
                 <div class="ui two link cards" id="mainwp-help-modal-options">
                     <a class="ui card grey text" id="mainwp-start-chat-card" onClick="jQuery('#mainwp-chatbase-chat-screen').fadeIn('100');jQuery('#mainwp-start-tour-button').fadeIn('100');jQuery('#mainwp-help-modal-options').fadeOut('50');">
                         <div class="content">
@@ -2485,6 +2488,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         </div>
             <?php
         endif;
+        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized.Recommended
         ?>
         <input type="hidden" name="reset_overview_which_settings" value="<?php echo esc_html( $which_settings ); ?>" />
         <?php

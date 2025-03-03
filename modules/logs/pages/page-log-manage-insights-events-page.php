@@ -421,7 +421,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
      *
      * @param array $insights_filters Insights filters.
      */
-    public static function render_logs_overview_top( $insights_filters ) {
+    public static function render_logs_overview_top( $insights_filters ) { //phpcs:ignore -- NOSONAR - complex.
         $manager = Log_Manager::instance();
 
         $filter_ranges     = '';

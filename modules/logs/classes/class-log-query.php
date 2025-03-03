@@ -285,16 +285,16 @@ class Log_Query {
 
         if ( $count_only ) {
             return array(
-                'count' => absint( $wpdb->get_var( $count_query ) ),
-            ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+                'count' => absint( $wpdb->get_var( $count_query ) ),  // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+            );
         }
 
         if ( ! empty( $args['dev_log_query'] ) ) {
-            //phpcs:disable Squiz.PHP.CommentedOutCode.Found
+            //phpcs:disable Squiz.PHP.CommentedOutCode.Found,WordPress.PHP.DevelopmentFunctions
             error_log( print_r( $args, true ) );
             error_log( $query );
             error_log( $count_query );
-            //phpcs:enable Squiz.PHP.CommentedOutCode.Found
+            //phpcs:enable Squiz.PHP.CommentedOutCode.Found,WordPress.PHP.DevelopmentFunctions
         }
 
         /**

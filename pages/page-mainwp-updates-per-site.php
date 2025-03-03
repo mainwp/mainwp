@@ -108,7 +108,8 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         <?php if ( MainWP_Updates::user_can_update_wp() ) : ?>
                             <?php
                             if ( ! empty( $wp_upgrades ) ) :
-                                if ( ! empty( $wpcore_update_disabled_by ) ) { ?>
+                                if ( ! empty( $wpcore_update_disabled_by ) ) {
+                                    ?>
                                     <span data-tooltip="<?php echo esc_html( $wpcore_update_disabled_by ); ?>" data-inverted="" data-position="left center"><a href="javascript:void(0)" class="ui green button mini disabled"><?php esc_html_e( 'Update', 'mainwp' ); ?></a></span>
                                 <?php } else { ?>
                                 <div class="ui bottom left pointing dropdown mini button">
@@ -643,6 +644,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * Render abandoned plugins
      *
      * @param object $websites                the websites.
+     * @param array  $allPluginsOutdate       All Plugins Outdate.
      * @param array  $decodedDismissedPlugins all dismissed plugins.
      *
      * @throws \MainWP_Exception Error message.
@@ -655,7 +657,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
      */
     public static function render_abandoned_plugins( $websites, $allPluginsOutdate, $decodedDismissedPlugins ) {  //phpcs:ignore -- NOSONAR - complex.
-        $str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
+        $str_format      = esc_html__( 'Updated %s days ago', 'mainwp' );
         $count_abandoned = count( $allPluginsOutdate );
         ?>
         <?php if ( 0 < $count_abandoned ) : ?>
@@ -762,6 +764,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * Renders abandoned themes table content.
      *
      * @param object $websites the websites.
+     * @param array  $allThemesOutdate       All Themes Outdate.
      * @param array  $decodedDismissedThemes all dismissed themes.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
@@ -772,7 +775,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
      */
     public static function render_abandoned_themes( $websites, $allThemesOutdate, $decodedDismissedThemes ) { //phpcs:ignore -- NOSONAR - complex.
-        $str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
+        $str_format      = esc_html__( 'Updated %s days ago', 'mainwp' );
         $count_abandoned = count( $allThemesOutdate );
         ?>
         <?php if ( 0 < $count_abandoned ) : ?>

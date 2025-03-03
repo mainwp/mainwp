@@ -67,7 +67,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
          * @since 4.1
          */
         $item = apply_filters( 'mainwp_clients_sitestable_item', $item, $item );
-        
+
         if ( isset( $item[ $column_name ] ) && ! empty( $item[ $column_name ] ) ) {
             switch ( $column_name ) {
                 case 'client_phone':
@@ -93,20 +93,20 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
      */
     public function get_sortable_columns() {
         return array(
-            'client'           => array( 'client', false ),
-            'name'             => array( 'name', false ),
-            'client_email'     => array( 'client_email', false ),
-            'suspended'        => array( 'suspended', false ),
-            'tags'             => array( 'tags', false ),
-            'websites'         => array( 'websites', false ),
-            'contact_name'     => array( 'contact_name', false ),
-            'address_1'        => array( 'address_1', false ),
-            'address_2'        => array( 'address_2', false ),
-            'city'             => array( 'city', false ),
-            'zip'              => array( 'zip', false ),
-            'state'            => array( 'state', false ),
-            'created'          => array( 'created', false ),
-            'country'          => array( 'country', false ),
+            'client'       => array( 'client', false ),
+            'name'         => array( 'name', false ),
+            'client_email' => array( 'client_email', false ),
+            'suspended'    => array( 'suspended', false ),
+            'tags'         => array( 'tags', false ),
+            'websites'     => array( 'websites', false ),
+            'contact_name' => array( 'contact_name', false ),
+            'address_1'    => array( 'address_1', false ),
+            'address_2'    => array( 'address_2', false ),
+            'city'         => array( 'city', false ),
+            'zip'          => array( 'zip', false ),
+            'state'        => array( 'state', false ),
+            'created'      => array( 'created', false ),
+            'country'      => array( 'country', false ),
         );
     }
 
@@ -524,7 +524,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
      * @param bool $optimize true|false Whether or not to optimize.
      * @param bool $top true|false.
      */
-    public function print_column_headers( $optimize, $top = true ) {
+    public function print_column_headers( $optimize, $top = true ) {  // phpcs:ignore -- NOSONAR - complex.
         // for compatible.
         $optimize = $optimize ? true : false;
 
@@ -710,7 +710,8 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                         <input type="checkbox" value="<?php echo intval( $item['client_id'] ); ?>" name="" aria-label="<?php esc_attr_e( 'Select the site.', 'mainwp' ); ?>"/>
                     </div>
                 </td>
-            <?php } elseif ( 'suspended' === $column_name ) {
+                <?php
+            } elseif ( 'suspended' === $column_name ) {
                 $client_status = '';
                 if ( 0 === intval( $item['suspended'] ) ) {
                     $client_status = '<span class="ui green mini fluid center aligned label">' . esc_html__( 'Active', 'mainwp' ) . '</span>';
@@ -740,7 +741,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                     </div>
                 <?php echo '</td>'; ?>
             <?php } elseif ( 'created' === $column_name ) { ?>
-                <td sort-value="<?php echo intval( $item['created'] ); ?>"><?php echo ( 0 !== intval( $item['created'] ) ? '<span data-tooltip="' . MainWP_Utility::format_date( $item['created'] ) . '" data-inverted="" data-position="left center">' . MainWP_Utility::time_elapsed_string( $item['created'] ) . '</span>' : 'N/A' ); ?></td>
+                <td sort-value="<?php echo intval( $item['created'] ); ?>"><?php echo ( 0 !== (int)( $item['created'] ) ? '<span data-tooltip="' . MainWP_Utility::format_date( $item['created'] ) . '" data-inverted="" data-position="left center">' . MainWP_Utility::time_elapsed_string( $item['created'] ) . '</span>' : 'N/A' ); //phpcs:ignore -- output ok. ?></td>
             <?php } elseif ( 'name' === $column_name ) { ?>
                 <?php echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                     <a href="admin.php?page=ManageClients&client_id=<?php echo intval( $item['client_id'] ); ?>"><?php echo esc_html( $item['name'] ); ?></a>
@@ -751,20 +752,24 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                 <?php echo '</td>'; ?>
             <?php } elseif ( 'tags' === $column_name ) { ?>
                 <td class="collapsing"><?php echo MainWP_System_Utility::get_site_tags( $item, true ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
-            <?php } elseif ( 'websites' === $column_name ) {
+                <?php
+            } elseif ( 'websites' === $column_name ) {
                 $selected_sites = isset( $item['selected_sites'] ) ? trim( $item['selected_sites'] ) : '';
                 $selected_ids   = ( '' !== $selected_sites ) ? explode( ',', $selected_sites ) : array();
 
-                $count = count( $selected_ids ); ?>
+                $count = count( $selected_ids );
+                ?>
                 <?php echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                     <a class="ui mini grey button" href="admin.php?page=managesites&client=<?php echo intval( $item['client_id'] ); ?>"><i class="wordpress icon"></i><?php echo intval( $count ); ?></a>
                 <?php echo '</td>'; ?>
-            <?php  } elseif ( 'notes' === $column_name ) {
+                <?php
+            } elseif ( 'notes' === $column_name ) {
                 $note       = html_entity_decode( $item['note'] );
                 $esc_note   = MainWP_Utility::esc_content( $note );
                 $strip_note = wp_strip_all_tags( $esc_note );
                 echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
-                    if ( empty( $item['note'] ) ) : ?>
+                if ( empty( $item['note'] ) ) :
+                    ?>
                         <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini icon button" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Edit client notes.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
                     <?php else : ?>
                         <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini icon button" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
@@ -786,7 +791,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                         </div>
                     </div>
                 </td>
-            <?php 
+                <?php
             } elseif ( method_exists( $this, 'column_' . $column_name ) ) {
                 echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
                 echo call_user_func( array( $this, 'column_' . $column_name ), $item ); // phpcs:ignore WordPress.Security.EscapeOutput
@@ -796,7 +801,6 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                 echo $this->column_default( $item, $column_name ); // phpcs:ignore WordPress.Security.EscapeOutput
                 echo '</td>';
             }
-                        
         }
 
         if ( ! $compatible ) {

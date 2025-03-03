@@ -629,7 +629,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         <div class="ui card">
             <div class="content">
                 <div class="header">
-                    <span class="ui large text"><i class="wordpress icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( intval( $total_wp_upgrades ) ) ); ?></span> <?php // keep `wordpress` ?>
+                    <span class="ui large text"><i class="wordpress icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( intval( $total_wp_upgrades ) ) ); ?></span> <?php // keep `wordpress`. ?>
                     <?php if ( intval( $total_wp_upgrades ) > 0 ) : ?>
                         <span class="ui small red text">(<?php echo esc_html( $outdated_percentage ); ?>)</span>
                     <?php else : ?>
@@ -693,9 +693,9 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         }
 
         if ( $globalView ) {
-            $detail_plugins_up  = 'admin.php?page=UpdatesManage&tab=plugins-updates';
+            $detail_plugins_up = 'admin.php?page=UpdatesManage&tab=plugins-updates';
         } else {
-            $detail_plugins_up  = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=plugins-updates';
+            $detail_plugins_up = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=plugins-updates';
         }
 
         /**
@@ -770,9 +770,9 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         }
 
         if ( $globalView ) {
-            $detail_themes_up   = 'admin.php?page=UpdatesManage&tab=themes-updates';
+            $detail_themes_up = 'admin.php?page=UpdatesManage&tab=themes-updates';
         } else {
-            $detail_themes_up   = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=themes-updates';
+            $detail_themes_up = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=themes-updates';
         }
 
         /**
@@ -839,9 +839,9 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      */
     public static function render_language_update( $user_can_update_translation, $total_translation_upgrades, $globalView, $current_wpid ) {
         if ( $globalView ) {
-            $detail_trans_up    = 'admin.php?page=UpdatesManage&tab=translations-updates';
+            $detail_trans_up = 'admin.php?page=UpdatesManage&tab=translations-updates';
         } else {
-            $detail_trans_up    = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=translations-updates';
+            $detail_trans_up = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=translations-updates';
         }
         /**
          * Action: mainwp_updates_overview_before_translation_updates

@@ -197,7 +197,7 @@ class Connector_Posts extends Log_Connector {
 
         $args = MainWP_Utility::right_array_merge( $default, $data );
 
-        $state             = 1;
+        $state = 1;
         $this->log(
             $message,
             $args,

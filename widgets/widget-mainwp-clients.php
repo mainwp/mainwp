@@ -102,7 +102,7 @@ class MainWP_Clients { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                     $contact = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'contact_id', $client['primary_contact_id'] );
                                     if ( $contact ) {
                                         ?>
-                                    <?php echo esc_html( $contact->contact_name ); ?> <?php echo ( isset( $contact->contact_role ) && '' !== $contact->contact_role ) ? ' - ' . esc_html( $contact->contact_role ) : ''; ?><br/>
+                                        <?php echo esc_html( $contact->contact_name ); ?> <?php echo ( isset( $contact->contact_role ) && '' !== $contact->contact_role ) ? ' - ' . esc_html( $contact->contact_role ) : ''; ?><br/>
                                         <?php if ( isset( $contact->contact_email ) && '' !== $contact->contact_email ) : ?>
                                             <span class="ui small text"><a href="mailto:<?php echo esc_attr( $contact->contact_email ); ?>" class="ui grey text"><i class="envelope grey icon"></i> <?php echo esc_html( $contact->contact_email ); ?></a></span><br/>
                                         <?php endif; ?>
@@ -130,7 +130,7 @@ class MainWP_Clients { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     <?php endforeach; ?>
                     </tbody>
                 </table>
-                
+
                 <script type="text/javascript">
                 jQuery( document ).ready( function() {
                     jQuery.fn.DataTable.ext.pager.numbers_length = 4;
@@ -169,10 +169,10 @@ class MainWP_Clients { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             </div>
             <div class="ui two columns stackable grid mainwp-widget-footer">
                 <div class="left aligned middle aligned column">
-                    
+
                 </div>
                 <div class="right aligned middle aligned column">
-                    
+
                 </div>
             </div>
         <?php

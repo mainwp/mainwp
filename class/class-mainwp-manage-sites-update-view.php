@@ -549,7 +549,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      */
     public static function hook_table_update_plugins_header_content( $column_display_name, $column_key, $top ) {
         if ( $top && 'title' === $column_key ) {
-            $column_display_name = '<div class="ui master checkbox "><input type="checkbox" name=""><label>' . $column_display_name . '</label></div>';
+            $column_display_name = '<div class="ui master checkbox plugins-checkbox"><input type="checkbox" name=""><label>' . $column_display_name . '</label></div>';
         }
         return $column_display_name;
     }
@@ -565,7 +565,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      */
     public static function hook_table_update_themes_header_content( $column_display_name, $column_key, $top ) {
         if ( $top && 'title' === $column_key ) {
-            $column_display_name = '<div class="ui master checkbox "><input type="checkbox" name=""><label>' . $column_display_name . '</label></div>';
+            $column_display_name = '<div class="ui master checkbox themes-checkbox"><input type="checkbox" name=""><label>' . $column_display_name . '</label></div>';
         }
         return $column_display_name;
     }

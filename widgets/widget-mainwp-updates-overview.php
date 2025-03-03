@@ -404,14 +404,6 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         $can_total_update = ( $user_can_update_wordpress && $user_can_update_plugins && $user_can_update_themes && $user_can_update_translation ) ? true : false;
 
-        $cards = 'six';
-        if ( 1 === (int) $mainwp_show_language_updates ) {
-            $cards = 'six';
-        }
-        if ( ! $globalView ) {
-            $cards = '';
-        }
-
         static::render_updates_overview_widget_header( $lastSyncMsg );
         ?>
         <div class="mainwp-scrolly-overflow">
@@ -512,12 +504,6 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @param int  $count_themes count themes.
      */
     public static function render_total_update( $total_upgrades, $can_total_update, $limit_updates_all, $count_websites, $count_plugins, $count_themes ) { // phpcs:ignore -- NOSONAR - complex.
-
-        $current_wpid = MainWP_System_Utility::get_current_wpid();
-        $globalView   = true;
-        if ( $current_wpid ) {
-            $globalView = false;
-        }
 
         if ( 0 < $count_plugins ) {
             $outdated_percentage = round( ( ( intval( $total_upgrades ) / intval( $count_themes + $count_plugins + $count_websites ) ) * 100 ), 2 ) . '%';

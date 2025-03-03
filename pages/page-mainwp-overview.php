@@ -301,7 +301,6 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 }
             }
         }
-
     }
 
     /**
@@ -419,7 +418,6 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
     /**
      * Render Overview Top.
-     *
      */
     public static function render_top_page() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
         ?>

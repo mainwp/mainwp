@@ -834,7 +834,7 @@ table.mainwp-manage-wpsites-table .error a {
     bottom: 0;
     right: 5px;
     content: "\f337";
-    font-family: "icons";
+    font-family: "icons", sans-serif;
     color: #fff;
     rotate: 45deg;
 }
@@ -845,7 +845,7 @@ table.mainwp-manage-wpsites-table .error a {
     bottom: 0;
     left: 5px;
     content: "\f337";
-    font-family: "icons";
+    font-family: "icons", sans-serif;
     color: #fff;
     rotate: 135deg;
 }

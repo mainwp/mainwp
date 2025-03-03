@@ -167,7 +167,6 @@ class MainWP_Site_Info { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
                             if ( function_exists( 'locale_get_display_name' ) ) {
                                 $val = locale_get_display_name( $val );
                             }
-                            $val = $val;
                         }
                     }
                     ?>

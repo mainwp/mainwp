@@ -1718,7 +1718,6 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         static::render_header( '' );
 
-        $hide_loading = apply_filters( 'mainwp_manage_sites_hide_loading', false );
         ?>
         <div id="mainwp-manage-sites-content" class="ui segment">
             <div id="mainwp-message-zone" class="ui message" style="display: none;"></div>

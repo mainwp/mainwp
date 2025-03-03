@@ -62,6 +62,8 @@ class Log_Events_Filter_Segment {
     // @NO_SONAR_START@ - duplicated issue.
     /**
      * Method render_filters_segment().
+     *
+     * @param string $filter_name Filter name.
      */
     public function render_filters_segment( $filter_name = 'module_log' ) {
         $saved_segments = MainWP_Manage_Sites_Filter_Segment::set_get_manage_sites_filter_segments( false, array(), $filter_name );

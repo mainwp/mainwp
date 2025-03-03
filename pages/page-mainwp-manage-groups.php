@@ -382,7 +382,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                                 jQuery( '#mainwp-manage-groups-sites-table .ui.checkbox' ).checkbox();
                                 mainwp_datatable_fix_menu_overflow('#mainwp-manage-groups-sites-table' );
                             }, 1000);
-                        } );;
+                        } );
                     mainwp_datatable_fix_to_update_rows_state('#mainwp-manage-groups-sites-table'); // to fix saved rows state.
             } );
                 </script>

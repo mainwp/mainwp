@@ -2320,7 +2320,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     <?php endif; ?>
                 </div>
                 <div style="display:none" id="mainwp-chatbase-chat-screen">
-                    <iframe src="https://supportassistant.mainwp.com/chatbot-iframe/Tv5dqV-xiQxwgPeMQFCZ4" width="100%" style="height: 100%; min-height: 600px" frameborder="0"></iframe>
+                    <iframe src="https://supportassistant.mainwp.com/chatbot-iframe/Tv5dqV-xiQxwgPeMQFCZ4" width="100%" style="height: 100%; min-height: 600px;border: none;" title="MainWP Support Assistant"></iframe>
                 </div>
             </div>
             <div class="actions">

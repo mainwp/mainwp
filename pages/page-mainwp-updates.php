@@ -2050,7 +2050,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Method render_updates_view_options().
      *
-     * @param  mixed $site_view
+     * @param  mixed $site_view Site view.
      * @return void
      */
     public static function render_updates_view_options( $site_view = '' ) {
@@ -2071,7 +2071,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Method render_abandoned_plugins_themes_buttons().
      *
-     * @param  mixed $current_tab
+     * @param  mixed $current_tab Current tab.
      * @return void
      */
     public static function render_abandoned_plugins_themes_buttons( $current_tab = '' ) {
@@ -2087,7 +2087,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Method render_updates_actions_buttons().
      *
-     * @param  mixed $current_tab
+     * @param  mixed $current_tab Current tab.
      * @return void
      */
     public static function render_updates_actions_buttons( $current_tab ) {

@@ -842,7 +842,7 @@ body.mainwp-ui.mainwp-custom-theme,
 
 .mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-plugin-item,
 .mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-theme-item {
-  background: var(--mainwp-bg-base);;
+  background: var(--mainwp-bg-base);
   padding: var(--mainwp-area-padding);
 }
 
@@ -850,7 +850,7 @@ body.mainwp-ui.mainwp-custom-theme,
 .mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-plugin-item .content.active,
 .mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-theme-item .title.active,
 .mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-theme-item .content.active {
-  background-color: var(--mainwp-bg-base-alt);;
+  background-color: var(--mainwp-bg-base-alt);
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-plugin-item .content.active .ui.grid,
@@ -967,7 +967,7 @@ body.mainwp-ui.mainwp-custom-theme,
   bottom: 50%;
   content: "\f106";
   content: "\f106"/"";
-  font-family: "icons";
+  font-family: "icons", sans-serif;
 }
 .mainwp-ui.mainwp-custom-theme table.dataTable thead > tr > th.dt-orderable-desc span.dt-column-order:after,
 .mainwp-ui.mainwp-custom-theme table.dataTable thead > tr > th.dt-ordering-desc span.dt-column-order:after,
@@ -978,5 +978,5 @@ body.mainwp-ui.mainwp-custom-theme,
   top: 50%;
   content: "\f107";
   content: "\f107"/"";
-  font-family: "icons";
+  font-family: "icons", sans-serif;
 }

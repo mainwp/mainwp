@@ -1801,7 +1801,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * Returns language as flag.
      *
      * @param  string $language Language code.
-     * @return string $flag     Corresponding flag.
+     * @return void
      */
     public static function get_language_code_as_flag( $language ) {
         // Get the last 2 characters of the language code.
@@ -1820,7 +1820,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * Returns icon for the site indexability status.
      *
      * @param  int $status   Status, 1 or 0.
-     * @return string $flag     Corresponding icon.
+     * @return void.
      */
     public static function get_site_index_option_icon( $status ) {
         $icon    = '';
@@ -1837,6 +1837,6 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $icon    = 'grey circle';
             $tooltip = 'Indexing status unknown. Resync the site or check manually in WordPress Settings > Reading.';
         }
-        echo '<span data-tooltip="' . $tooltip . '" data-position="left center" data-inverted=""><i class="' . $icon . ' icon"></i></span>';  // phcs:ignore -- ok.
+        echo '<span data-tooltip="' . $tooltip . '" data-position="left center" data-inverted=""><i class="' . $icon . ' icon"></i></span>';  //phpcs:ignore -- ok.
     }
 }

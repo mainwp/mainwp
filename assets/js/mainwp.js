@@ -21,7 +21,7 @@ jQuery(function ($) {
             'left':(jQuery(window).width() - jQuery('#mainwp-help-modal').outerWidth()) / 2 + 'px'
           });
       },
-      
+
     }).modal('show').draggable().resizable({
       handles: "n, e, s, w, ne, nw, se, sw", // Allows resizing from all edges
       minWidth: 400, // Set minimum width
@@ -602,27 +602,13 @@ jQuery(function () {
   }
 });
 window.securityIssues_fix = function (feature) {
-  //if (feature == 'all') {
-  //  for (let ise of securityIssues_fixes) {
-  //    if (jQuery('#' + ise + '_nok').css('display') != 'none') {
-  //      if (jQuery('#' + ise + '_fix')) {
-  //        jQuery('#' + ise + '_fix').hide();
-  //     }
-  //      jQuery('#' + ise + '_extra').hide();
-  //      jQuery('#' + ise + '_ok').hide();
-  //      jQuery('#' + ise + '_nok').hide();
-  //      jQuery('#' + ise + '_loading').show();
-  //    }
-  //  }
-  //} else {
     if (jQuery('#' + feature + '_fix')) {
-      jQuery('#' + feature + '_fix').hide();
+        jQuery('#' + feature + '_fix').hide();
     }
     jQuery('#' + feature + '_extra').hide();
     jQuery('#' + feature + '_ok').hide();
     jQuery('#' + feature + '_nok').hide();
     jQuery('#' + feature + '_loading').show();
-  //}
 
   let data = mainwp_secure_data({
     action: 'mainwp_security_issues_fix',

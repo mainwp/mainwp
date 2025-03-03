@@ -226,7 +226,6 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), $page, array( -1, -1, 6, 30 ) );
         }
 
-
         // Load the Recent Posts widget.
         if ( static::$enable_widgets['recent_posts'] ) {
             MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, array( -1, -1, 6, 30 ) );
@@ -236,8 +235,6 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         if ( static::$enable_widgets['recent_pages'] ) {
             MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, array( -1, -1, 6, 30 ) );
         }
-
-        
 
         if ( is_array( $client_contacts ) ) {
             foreach ( $client_contacts as $contact ) {

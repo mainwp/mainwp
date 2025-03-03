@@ -299,7 +299,7 @@ class Log_DB extends MainWP_DB {
      * @param int    $site_id Site Id.
      * @param string $object_id Object Id.
      *
-     * @return void
+     * @return mixed Results.
      */
     public function is_site_action_log_existed( $site_id, $object_id ) {
         global $wpdb;

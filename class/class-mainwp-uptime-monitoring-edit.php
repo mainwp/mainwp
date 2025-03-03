@@ -660,7 +660,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                     $this->render_add_edit_sub_page_monitor_end_form_in_modal( $site_id, $is_editing_monitor_or_sub_monitor );
                     ?>
                     </form>
-                <?php
+                    <?php
                 }
             }
     }

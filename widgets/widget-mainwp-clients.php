@@ -151,7 +151,7 @@ class MainWP_Clients { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     } );
                     setTimeout(() => {
                         mainwp_datatable_fix_menu_overflow('#mainwp-clients-widget-table', -70, -10 );
-                    }, 800);
+                    }, 2000);
                 } );
                 </script>
                 <?php else : ?>

@@ -1717,7 +1717,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'integration_owner'    => 'Newfold Capital Inc.',
                 'integration_owner_pp' => 'https://yoast.com/privacy-policy/',
             ),
-            'wp-security-audit-log'                     => array(
+            'wp-security-audit-log'                   => array(
                 'type'                 => 'org',
                 'model'                => 'integration',
                 'product_id'           => 'wp-security-audit-log',

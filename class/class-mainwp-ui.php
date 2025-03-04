@@ -1610,7 +1610,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             return;
         }
 
-        $wgsorted = false;
+        $wgsorted               = false;
+        $selected_widget_layout = '';
 
         if ( ! empty( $_GET['page'] ) && ! empty( $_GET['select_layout'] ) && ! empty( $_GET['_opennonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_opennonce'] ), 'mainwp-admin-nonce' ) && ! empty( $_GET['updated'] ) && ! empty( $_GET['screen_slug'] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
             $layid       = sanitize_text_field( wp_unslash( $_GET['updated'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
@@ -1621,10 +1622,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             if ( is_array( $selected_layout ) && isset( $selected_layout['layout'] ) ) {
                 $wgsorted = $selected_layout['layout'];
                 if ( isset( $selected_layout['name'] ) ) {
-                    // to support saving selected layout.
-                    ?>
-                    <input type="hidden" id="mainwp-widgets-selected-layout" layout-name="<?php echo esc_attr( $selected_layout['name'] ); ?>" layout-idx="<?php echo esc_attr( $layid ); ?>" >
-                    <?php
+                    $selected_widget_layout = $selected_layout['name'];
                 }
             }
         }
@@ -1663,6 +1661,18 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
 
         if ( ! is_array( $show_widgets ) ) {
             $show_widgets = array();
+        }
+
+        if ( $selected_widget_layout ) {
+            // to support saving selected layout.
+            ?>
+            <input type="hidden" id="mainwp-widgets-selected-layout" layout-name="<?php echo esc_attr( $selected_layout['name'] ); ?>" layout-idx="<?php echo esc_attr( $layid ); ?>" >
+            <script type="text/javascript">
+                jQuery( document ).ready( function( $ ) {
+                    mainwp_overview_gridstack_save_layout(<?php echo (int) $client_id; ?>);
+                } );
+            </script>
+            <?php
         }
         ?>
         <div id="mainwp-grid-stack-wrapper" class="grid-stack">
@@ -1747,37 +1757,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     grid.on('change', function() {
                         mainwp_overview_gridstack_save_layout();
                     });
-
-                    mainwp_overview_gridstack_save_layout = function(){
-
-                        let orders = [];
-                        let wgIds = [];
-
-                        const $items = document.querySelectorAll('.grid-stack-item');
-
-                        $items.forEach(function(item) {
-                            var obj = {};
-                            obj["x"] = item.getAttribute('gs-x');
-                            obj["y"] = item.getAttribute('gs-y');
-                            obj["w"] = item.getAttribute('gs-w');
-                            obj["h"] = item.getAttribute('gs-h');
-                            orders.push(obj);
-                            wgIds.push(item.id);
-                        });
-
-                        console.log(orders);
-                        console.log(wgIds);
-
-                        let postVars = {
-                            action:'mainwp_widgets_order',
-                            page: page_sortablewidgets,
-                            order:JSON.stringify(orders),
-                            wgids: JSON.stringify(wgIds),
-                            item_id: <?php echo intval( $client_id ); ?>
-                        };
-                        jQuery.post( ajaxurl, mainwp_secure_data( postVars ), function ( res ) {
-                        } );
-                    }
                 });
         </script>
         <?php

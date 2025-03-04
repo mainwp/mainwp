@@ -4705,6 +4705,37 @@ let mainwp_common_ui_widgets_save_layout = function (itemClass, data, callBack) 
   }, 'json');
 }
 
+let mainwp_overview_gridstack_save_layout = function( item_id ){
+
+    let orders = [];
+    let wgIds = [];
+
+    const $items = document.querySelectorAll('.grid-stack-item');
+
+    $items.forEach(function(item) {
+        var obj = {};
+        obj["x"] = item.getAttribute('gs-x');
+        obj["y"] = item.getAttribute('gs-y');
+        obj["w"] = item.getAttribute('gs-w');
+        obj["h"] = item.getAttribute('gs-h');
+        orders.push(obj);
+        wgIds.push(item.id);
+    });
+
+    console.log(orders);
+    console.log(wgIds);
+
+    let postVars = {
+        action:'mainwp_widgets_order',
+        page: page_sortablewidgets,
+        order:JSON.stringify(orders),
+        wgids: JSON.stringify(wgIds),
+        item_id: item_id
+    };
+    jQuery.post( ajaxurl, mainwp_secure_data( postVars ), function ( res ) {
+    } );
+}
+
 window.mainwp_init_ui_calendar = ($selectors) => {
   jQuery($selectors).calendar({
     type: 'date',

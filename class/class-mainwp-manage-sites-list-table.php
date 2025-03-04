@@ -1786,7 +1786,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                             <i class="sync alternate icon"></i> <?php echo intval( $total_theme_upgrades ); ?>
                         </a>
                     <?php } elseif ( 'client_name' === $column_name ) { ?>
-                        <?php if ( $website['client_name'] > 0 ) : ?>
+                        <?php if ( ! empty( $website['client_name'] ) ) : ?>
                             <a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website['client_id'] ); ?>">
                                 <?php echo $client_image; //phpcs:ignore -- NOSONAR - ok.?> <?php echo esc_html( $website['client_name'] ); ?>
                             </a>

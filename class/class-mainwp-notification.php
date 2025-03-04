@@ -272,7 +272,7 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
 
         if ( ! empty( $emails ) && ! empty( $mail_content ) ) {
-            MainWP_Logger::instance()->debug( 'Uptime monitoring status :: send mail ::' );
+            MainWP_Logger::instance()->log_uptime_notice( 'Uptime monitoring status :: send mail :: ' . $subject );
             static::send_wp_mail(
                 $emails,
                 $subject,

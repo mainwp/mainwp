@@ -135,8 +135,6 @@ class Connector_Installer extends Log_Connector {
                         'name'       => $item['name'],
                         'version'    => $item['version'],
                         'upload'     => $upload ? 1 : 0,
-                        'siteurl'    => $website->url,
-                        'site_name'  => $website->name,
                         'extra_info' => $item,
                     );
                     $logs_args[] = $args;
@@ -172,9 +170,6 @@ class Connector_Installer extends Log_Connector {
                     if ( isset( $item['version'] ) ) {
                         $args['version'] = $item['version'];
                     }
-                    $args['siteurl']   = $website->url;
-                    $args['site_name'] = $website->name;
-
                     $save_info = $item;
                     if ( ! empty( $item['rollback'] ) ) {
                         $save_info['rollback_info'] = $item;
@@ -204,8 +199,6 @@ class Connector_Installer extends Log_Connector {
                 'version'     => isset( $data['version'] ) ? $data['version'] : '',
                 'old_version' => isset( $data['old_version'] ) ? $data['old_version'] : '',
                 'error'       => isset( $data['error'] ) ? $data['error'] : '',
-                'siteurl'     => $website->url,
-                'site_name'   => $website->name,
             );
             $logs_args[] = $args;
 
@@ -267,11 +260,9 @@ class Connector_Installer extends Log_Connector {
             $item = $this->sanitize_data( $item );
             if ( ! empty( $item ) && isset( $item['name'] ) ) {
                 $logs_args[] = array(
-                    'name'      => $item['name'],
-                    'version'   => $item['version'],
-                    'slug'      => $item['slug'],
-                    'siteurl'   => $website->url,
-                    'site_name' => $website->name,
+                    'name'    => $item['name'],
+                    'version' => $item['version'],
+                    'slug'    => $item['slug'],
                 );
             }
         }
@@ -335,11 +326,9 @@ class Connector_Installer extends Log_Connector {
             $item = $this->sanitize_data( $item );
             if ( ! empty( $item ) && isset( $item['name'] ) ) {
                 $logs_args[] = array(
-                    'name'      => $item['name'],
-                    'version'   => $item['version'],
-                    'slug'      => $item['slug'],
-                    'siteurl'   => $website->url,
-                    'site_name' => $website->name,
+                    'name'    => $item['name'],
+                    'version' => $item['version'],
+                    'slug'    => $item['slug'],
                 );
             }
         }

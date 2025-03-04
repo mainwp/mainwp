@@ -688,7 +688,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Method fetch_urls_authed()
      *
-     * Fetch authorized URLs.
+     * Fetches data from child sites if authenticated.
      *
      * @param object $websites Websites information.
      * @param string $what Action to perform.
@@ -713,14 +713,17 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $params = array();
         }
 
-        $chunkSize = apply_filters( 'mainwp_fetch_urls_chunk_size', 10 );
+        $sleep_int = (int) get_option( 'mainwp_chunksleepinterval', 5 );
+        $chunkSize = (int) get_option( 'mainwp_chunksitesnumber', 10 );
+
+        $chunkSize = apply_filters( 'mainwp_fetch_urls_chunk_size', $chunkSize );
         if ( count( $websites ) > $chunkSize ) {
             $total = count( $websites );
             $loops = ceil( $total / $chunkSize );
             for ( $i = 0; $i < $loops; $i++ ) {
                 $newSites = array_slice( $websites, $i * $chunkSize, $chunkSize, true );
                 static::fetch_urls_authed( $newSites, $what, $params, $handler, $output, $whatPage, $others );
-                sleep( 5 );
+                sleep( $sleep_int );
             }
 
             return false;

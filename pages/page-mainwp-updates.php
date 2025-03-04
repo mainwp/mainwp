@@ -375,6 +375,8 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Renders updates page.
      *
+     * @param string $abandoned_tab Render abandoned plugins|themes tab, abandoned_plugins|abandoned_themes.
+     *
      * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
      * @uses \MainWP\Dashboard\MainWP_DB_Common::get_groups_for_current_user()
      * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_group_id()
@@ -383,7 +385,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
      * @uses \MainWP\Dashboard\MainWP_Utility::array_sort()
      */
-    public static function render() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- NOSONAR - current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render( $abandoned_tab = '' ) { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- NOSONAR - current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         static::handle_limit_sites();
 
@@ -430,8 +432,8 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
         }
 
-        $decodedDismissedPlugins = json_decode( $userExtension->dismissed_plugins, true );
-        $decodedDismissedThemes  = json_decode( $userExtension->dismissed_themes, true );
+        $decodedDismissedPlugins = ! empty( $userExtension->dismissed_plugins ) ? json_decode( $userExtension->dismissed_plugins, true ) : array();
+        $decodedDismissedThemes  = ! empty( $userExtension->dismissed_themes ) ? json_decode( $userExtension->dismissed_themes, true ) : array();
         $decodedDismissedCores   = ! empty( $userExtension->ignored_wp_upgrades ) ? json_decode( $userExtension->ignored_wp_upgrades, true ) : array();
 
         $total_wp_upgrades          = 0;
@@ -755,12 +757,19 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         if ( isset( $_GET['tab'] ) ) {
             $current_tab = sanitize_text_field( wp_unslash( $_GET['tab'] ) );
-            if ( ! in_array( $current_tab, array( 'wordpress-updates', 'updates-ignore', 'plugins-updates', 'themes-updates', 'translations-updates', 'abandoned-plugins', 'abandoned-themes', true ) ) ) {
+            if ( ! in_array( $current_tab, array( 'wordpress-updates', 'updates-ignore', 'plugins-updates', 'themes-updates', 'translations-updates', true ) ) ) {
                 $current_tab = 'plugins-updates';
             }
-        } else {
+        } elseif ( 'abandoned_plugins' === $abandoned_tab ) {
+            $current_tab = 'abandoned-plugins';
+        } elseif ( 'abandoned_themes' === $abandoned_tab ) {
+            $current_tab = 'abandoned-themes';
+        }
+
+        if ( empty( $current_tab ) ) {
             $current_tab = 'plugins-updates';
         }
+
         // phpcs:enable
         static::render_header( 'UpdatesManage' );
 
@@ -771,8 +780,8 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-updates-message' ) ) { ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-message"></i>
-                    <div><?php printf( esc_html__( 'Manage available updates for all your child sites.  From here, you can update update %1$splugins%2$s, %3$sthemes%4$s, and %5$sWordPress core%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/update-plugins/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-themes/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://kb.mainwp.com/docs/update-wordpress-core/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
-                    <div><?php printf( esc_html__( 'Also, from here, you can ignore updates for %1$sWordPress core%2$s, %3$splugins%4$s, and %5$sthemes%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-wordpress-core-update/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://kb.mainwp.com/docs/ignore-theme-updates/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
+                    <div><?php printf( esc_html__( 'Manage available updates for all your child sites.  From here, you can update update %1$splugins%2$s, %3$sthemes%4$s, and %5$sWordPress core%6$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/update-plugins/" target="_blank">', '</a>', '<a href="https://mainwp.com/kb/update-themes/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://mainwp.com/kb/update-wordpress-core/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
+                    <div><?php printf( esc_html__( 'Also, from here, you can ignore updates for %1$sWordPress core%2$s, %3$splugins%4$s, and %5$sthemes%6$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/ignore-wordpress-core-update/" target="_blank">', '</a>', '<a href="https://mainwp.com/kb/ignore-plugin-updates/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://mainwp.com/kb/ignore-theme-updates/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
                 </div>
             <?php } ?>
         <?php
@@ -1349,7 +1358,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                  * @since 4.1
                  */
                 do_action( 'mainwp_updates_persite_before_translation_updates', $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups );
-                MainWP_Updates_Per_Site::render_trans_update( $websites, $total_translation_upgrades );
+                MainWP_Updates_Per_Site::render_trans_update( $websites, $total_translation_upgrades, $userExtension );
                 /**
                  * Action: mainwp_updates_persite_after_translation_updates
                  *
@@ -1385,7 +1394,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                  * @since 4.1
                  */
                 do_action( 'mainwp_updates_pergroup_before_translation_updates', $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups );
-                MainWP_Updates_Per_Group::render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups );
+                MainWP_Updates_Per_Group::render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups, $userExtension );
                 /**
                  * Action: mainwp_updates_pergroup_after_translation_updates
                  *
@@ -1513,7 +1522,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
              * @since 4.1
              */
             do_action( 'mainwp_updates_persite_before_abandoned_plugins', $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset_for_groups );
-            MainWP_Updates_Per_Site::render_abandoned_plugins( $websites, $decodedDismissedPlugins );
+            MainWP_Updates_Per_Site::render_abandoned_plugins( $websites, $allPluginsOutdate, $decodedDismissedPlugins );
             /**
              * Action: mainwp_updates_persite_after_abandoned_plugins
              *
@@ -1545,7 +1554,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
              * @since 4.1
              */
             do_action( 'mainwp_updates_pergroup_before_abandoned_plugins', $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset_for_groups );
-            MainWP_Updates_Per_Group::render_abandoned_plugins( $websites, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedPlugins );
+            MainWP_Updates_Per_Group::render_abandoned_plugins( $websites, $allPluginsOutdate, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedPlugins );
             /**
              * Action: mainwp_updates_pergroup_after_abandoned_plugins
              *
@@ -1664,7 +1673,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
              * @since 4.1
              */
             do_action( 'mainwp_updates_persite_before_abandoned_themes', $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset_for_groups );
-            MainWP_Updates_Per_Site::render_abandoned_themes( $websites, $decodedDismissedThemes );
+            MainWP_Updates_Per_Site::render_abandoned_themes( $websites, $allThemesOutdate, $decodedDismissedThemes );
             /**
              * Action: mainwp_updates_persite_after_abandoned_themes
              *
@@ -1696,7 +1705,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
              * @since 4.1
              */
             do_action( 'mainwp_updates_pergroup_before_abandoned_themes', $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset_for_groups );
-            MainWP_Updates_Per_Group::render_abandoned_themes( $websites, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedThemes );
+            MainWP_Updates_Per_Group::render_abandoned_themes( $websites, $allThemesOutdate, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedThemes );
             /**
              * Action: mainwp_updates_pergroup_after_abandoned_themes
              *
@@ -1891,7 +1900,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( ! empty( $limit_sites ) ) {
                 $params['limit_sites'] = $limit_sites;
             }
-            $sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ), $is_staging, $params );
+            $sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'premium_upgrades', 'rollback_updates_data', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ), $is_staging, $params );
         }
         return MainWP_DB::instance()->query( $sql );
     }
@@ -1998,61 +2007,36 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          * @since 4.1
          */
         do_action( 'mainwp_updates_before_actions_bar' );
+        ?>
 
-        if ( ! $hide_show_updates_per ) {
-            $is_demo = MainWP_Demo_Handle::is_demo_mode();
-            ?>
-        <div class="mainwp-sub-header">
-            <div class="ui grid">
-                <div class="equal width row">
-                <div class="middle aligned column">
-                        <form method="post" action="" class="ui mini form">
-                            <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-                            <div class="inline field">
-                                <select class="ui dropdown" onchange="mainwp_siteview_onchange(this)" id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">
-                                    <option value="1" class="item" <?php echo MAINWP_VIEW_PER_SITE === $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Show updates per Site', 'mainwp' ); ?></option>
-                                    <option value="0" class="item" <?php echo MAINWP_VIEW_PER_PLUGIN_THEME === $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Show updates per Item', 'mainwp' ); ?></option>
-                                    <option value="2" class="item" <?php echo MAINWP_VIEW_PER_GROUP === $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Show updates per Tag', 'mainwp' ); ?></option>
-                                </select>
-                            </div>
-                        </form>
+        <?php if ( ! $hide_show_updates_per ) : ?>
+            <?php if ( ( 'plugins-updates' === $current_tab && 0 < $total_plugin_upgrades ) || ( 'themes-updates' === $current_tab && 0 < $total_theme_upgrades ) || ( 'wordpress-updates' === $current_tab && 0 < $total_wp_upgrades ) || ( 'translations-updates' === $current_tab && 0 < $total_translation_upgrades ) || ( 'abandoned-plugins' === $current_tab && 0 < $total_plugins_outdate ) || ( 'abandoned-themes' === $current_tab && 0 < $total_themes_outdate ) ) : ?>
+                <div class="mainwp-sub-header">
+                    <div class="ui three column grid">
+                        <div class="left aligned middle aligned column">
+                            <?php static::render_updates_view_options( $site_view ); ?>
+                        </div>
+                        <div class="center aligned middle aligned column"></div>
+                        <div class="right aligned middle aligned column">
+                            <?php
+                            /**
+                             * Filter: mainwp_widgetupdates_actions_top
+                             *
+                             * Filters the udpates actions top content.
+                             *
+                             * @since Unknown
+                             */
+                            echo apply_filters( 'mainwp_widgetupdates_actions_top', '' ); // phpcs:ignore WordPress.Security.EscapeOutput
+                            ?>
+                            <?php static::render_updates_actions_buttons( $current_tab ); ?>
+                            <?php static::render_button_view_ignored_updates( $current_tab ); ?>
+                            <?php static::render_abandoned_plugins_themes_buttons( $current_tab ); ?>
+                        </div>
                     </div>
-                    <div class="middle aligned right aligned column">
-                        <?php
-                        /**
-                         * Filter: mainwp_widgetupdates_actions_top
-                         *
-                         * Filters the udpates actions top content.
-                         *
-                         * @since Unknown
-                         */
-                        echo apply_filters( 'mainwp_widgetupdates_actions_top', '' ); // phpcs:ignore WordPress.Security.EscapeOutput
-                        if ( 'abandoned-plugins' === $current_tab ) {
-                            if ( $is_demo ) {
-                                MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini basic button disabled" disabled="disabled">' . esc_html__( 'Check for Abandoned Plugins', 'mainwp' ) . '</a>' );
-                            } else {
-                                ?>
-                            <a href="#" onClick="updatesoverview_bulk_check_abandoned('plugin'); return false;" class="ui green mini basic button" data-tooltip="<?php esc_html_e( 'Check for Abandoned Plugins.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Check for Abandoned Plugins', 'mainwp' ); ?></a>
-                                <?php
-                            }
-                        } elseif ( 'abandoned-themes' === $current_tab ) {
-                            if ( $is_demo ) {
-                                MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini basic button disabled" disabled="disabled">' . esc_html__( 'Check for Abandoned Themes', 'mainwp' ) . '</a>' );
-                            } else {
-                                ?>
-                            <a href="#" onClick="updatesoverview_bulk_check_abandoned('theme'); return false;" class="ui green mini basic button" data-tooltip="<?php esc_html_e( 'Check for Abandoned Themes.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Check for Abandoned Themes', 'mainwp' ); ?></a>
-                                <?php
-                            }
-                        }
-                        ?>
-                    </div>
-            </div>
-            </div>
-        </div>
-            <?php
-            static::render_button_view_ignored_updates( $current_tab );
-        }
-
+                </div>
+            <?php endif; ?>
+        <?php endif; ?>
+        <?php
         /**
          * Action: mainwp_updates_after_actions_bar
          *
@@ -2063,44 +2047,133 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         do_action( 'mainwp_updates_after_actions_bar' );
     }
 
+    /**
+     * Method render_updates_view_options().
+     *
+     * @param  mixed $site_view Site view.
+     * @return void
+     */
+    public static function render_updates_view_options( $site_view = '' ) {
+        ?>
+        <form method="post" action="" class="ui mini form">
+            <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+            <div class="inline field">
+                <select class="ui dropdown" onchange="mainwp_siteview_onchange(this)" id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">
+                    <option value="1" class="item" <?php echo MAINWP_VIEW_PER_SITE === $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Show updates per Site', 'mainwp' ); ?></option>
+                    <option value="0" class="item" <?php echo MAINWP_VIEW_PER_PLUGIN_THEME === $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Show updates per Item', 'mainwp' ); ?></option>
+                    <option value="2" class="item" <?php echo MAINWP_VIEW_PER_GROUP === $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Show updates per Tag', 'mainwp' ); ?></option>
+                </select>
+            </div>
+        </form>
+        <?php
+    }
+
+    /**
+     * Method render_abandoned_plugins_themes_buttons().
+     *
+     * @param  mixed $current_tab Current tab.
+     * @return void
+     */
+    public static function render_abandoned_plugins_themes_buttons( $current_tab = '' ) {
+        if ( 'abandoned-plugins' === $current_tab ) {
+            ?>
+            <a href="#" onClick="updatesoverview_bulk_check_abandoned('plugin'); return false;" class="ui green mini basic button"><?php esc_html_e( 'Check for Abandoned Plugins', 'mainwp' ); ?></a>
+        <?php } elseif ( 'abandoned-themes' === $current_tab ) { ?>
+            <a href="#" onClick="updatesoverview_bulk_check_abandoned('theme'); return false;" class="ui green mini basic button"><?php esc_html_e( 'Check for Abandoned Themes', 'mainwp' ); ?></a>
+            <?php
+        }
+    }
+
+    /**
+     * Method render_updates_actions_buttons().
+     *
+     * @param  mixed $current_tab Current tab.
+     * @return void
+     */
+    public static function render_updates_actions_buttons( $current_tab ) {
+        // dev-to-do: add checks if number of updates is higher than 0 to hide buttons when not needed.
+        if ( 'plugins-updates' === $current_tab ) {
+            if ( static::user_can_update_plugins() ) {
+                static::set_continue_update_html_selector( 'plugins_global_upgrade_all' );
+                ?>
+                <a href="javascript:void(0)" onClick="updatesoverview_plugins_global_upgrade_all( false, true ); return false;" class="mainwp-update-selected-button ui mini green basic button"><?php esc_html_e( 'Update Selected Plugins', 'mainwp' ); ?></a>
+                <a href="javascript:void(0)" onClick="updatesoverview_plugins_global_upgrade_all(); return false;" class="mainwp-update-all-button ui mini green button"><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
+                <?php
+            }
+        } elseif ( 'themes-updates' === $current_tab ) {
+            if ( static::user_can_update_themes() ) {
+                static::set_continue_update_html_selector( 'themes_global_upgrade_all' );
+                ?>
+                <a href="javascript:void(0)" onClick="updatesoverview_themes_global_upgrade_all( false, true ); return false;" class="mainwp-update-selected-button ui mini green basic button"><?php esc_html_e( 'Update Selected Themes', 'mainwp' ); ?></a>
+                <a href="javascript:void(0)" onClick="updatesoverview_themes_global_upgrade_all(); return false;" class="mainwp-update-all-button ui mini green button"><?php esc_html_e( 'Update All Themes', 'mainwp' ); ?></a>
+                <?php
+            }
+        } elseif ( 'wordpress-updates' === $current_tab ) {
+            if ( static::user_can_update_wp() ) {
+                static::set_continue_update_html_selector( 'wpcore_global_upgrade_all' );
+                ?>
+                <a href="javascript:void(0)" class="mainwp-update-selected-button ui green mini basic button" onclick="event.stopPropagation(); updatesoverview_wordpress_global_upgrade_all( false, true ); return false;"><?php esc_html_e( 'Update Selected WP Cores', 'mainwp' ); ?></a>
+                <a href="javascript:void(0)" class="mainwp-update-all-button ui green mini button" onclick="updatesoverview_wordpress_global_upgrade_all(); return false;"><?php esc_html_e( 'Update All WP Cores', 'mainwp' ); ?></a>
+                <?php
+            }
+        } elseif ( 'translations-updates' === $current_tab ) {
+            if ( static::user_can_update_trans() ) {
+                ?>
+                <a href="javascript:void(0)" onClick="updatesoverview_translations_global_upgrade_all( false, true ); return false;" class="mainwp-update-selected-button ui button mini basic green"><?php esc_html_e( 'Update Selected Translations', 'mainwp' ); ?></a>
+                <a href="javascript:void(0)" onClick="updatesoverview_translations_global_upgrade_all(); return false;" class="mainwp-update-all-button ui button mini green"><?php esc_html_e( 'Update All Translations', 'mainwp' ); ?></a>
+                <?php
+            }
+        }
+    }
+
 
     /**
      * Method render_button_view_ignored_updates().
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      *
      * @param string $current_tab current tab.
      *
      * @return null
      */
-    public static function render_button_view_ignored_updates( $current_tab = '' ) {
+    public static function render_button_view_ignored_updates( $current_tab = '' ) { //phpcs:ignore -- NOSONAR - complex.
         if ( ! in_array( $current_tab, array( 'wordpress-updates', 'plugins-updates', 'themes-updates' ) ) ) {
             return;
         }
+        $websites              = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+        $userExtension         = MainWP_DB_Common::instance()->get_user_extension();
+        $decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
+        $decodedIgnoredThemes  = json_decode( $userExtension->ignored_themes, true );
+        $decodedIgnoredCores   = ! empty( $userExtension->ignored_wp_upgrades ) ? json_decode( $userExtension->ignored_wp_upgrades, true ) : array();
+
+        $cntp = 0;
+        $cntt = 0;
+
+        while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+
+            $tmpDecodedIgnoredPlugins = json_decode( $website->ignored_plugins, true );
+            $tmpDecodedIgnoredThemes  = json_decode( $website->ignored_themes, true );
+            if ( ! empty( $tmpDecodedIgnoredPlugins ) && is_array( $tmpDecodedIgnoredPlugins ) ) {
+                ++$cntp;
+            }
+            if ( ! empty( $tmpDecodedIgnoredThemes ) && is_array( $tmpDecodedIgnoredThemes ) ) {
+                ++$cntt;
+            }
+        }
+
+        $count_ignored_plugins = is_array( $decodedIgnoredPlugins ) ? count( $decodedIgnoredPlugins ) + $cntp : $cntp;
+        $count_ignored_themes  = is_array( $decodedIgnoredThemes ) ? count( $decodedIgnoredThemes ) + $cntt : $cntt;
+        $count_ignored_cores   = is_array( $decodedIgnoredCores ) ? count( $decodedIgnoredCores ) : 0;
         ?>
-        <div class="mainwp-sub-header">
-            <div class="ui grid">
-                <div class="equal width row">
-                    <div class="middle aligned column">
-                        </div>
-                    <div class="middle aligned right aligned column">
-                        <?php
-                        if ( 'wordpress-updates' === $current_tab ) {
-                            ?>
-                            <a class="ui mini basic button" href="admin.php?page=UpdatesManage&tab=updates-ignore" data-position="top right" data-tooltip="<?php esc_attr_e( 'Click here to see the list of ignored WordPress core updates.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'View Ignored Core Updates', 'mainwp' ); ?></a>
-                            <?php
-                        } elseif ( 'plugins-updates' === $current_tab ) {
-                            ?>
-                            <a class="ui mini basic button" href="admin.php?page=PluginsIgnore" data-position="top right" data-tooltip="<?php esc_attr_e( 'Click here to see the list of ignored plugin updates.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'View Ignored Plugin Updates', 'mainwp' ); ?></a>
-                            <?php
-                        } elseif ( 'themes-updates' === $current_tab ) {
-                            ?>
-                            <a class="ui mini basic button" href="admin.php?page=ThemesIgnore" data-position="top right" data-tooltip="<?php esc_attr_e( 'Click here to see the list of ignored theme updates.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'View Ignored Theme Updates', 'mainwp' ); ?></a>
-                            <?php
-                        }
-                        ?>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <?php if ( 'wordpress-updates' === $current_tab && 0 < $count_ignored_cores ) : ?>
+            <a class="ui mini basic button" href="admin.php?page=UpdatesManage&tab=updates-ignore" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Click here to see the list of ignored WordPress core updates.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'View Ignored Updates', 'mainwp' ); ?></a>
+        <?php elseif ( 'plugins-updates' === $current_tab && 0 < $count_ignored_plugins ) : ?>
+            <a class="ui mini basic button" href="admin.php?page=PluginsIgnore" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Click here to see the list of ignored plugin updates.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'View Ignored Updates', 'mainwp' ); ?></a>
+        <?php elseif ( 'themes-updates' === $current_tab && 0 < $count_ignored_themes ) : ?>
+            <a class="ui mini basic button" href="admin.php?page=ThemesIgnore" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Click here to see the list of ignored theme updates.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'View Ignored Updates', 'mainwp' ); ?></a>
+        <?php endif; ?>
         <?php
     }
 
@@ -2298,6 +2371,8 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $snAutomaticDailyUpdate       = (int) get_option( 'mainwp_automaticDailyUpdate' );
         $snPluginAutomaticDailyUpdate = (int) get_option( 'mainwp_pluginAutomaticDailyUpdate' );
         $snThemeAutomaticDailyUpdate  = (int) get_option( 'mainwp_themeAutomaticDailyUpdate' );
+        $snTransAutomaticUpdate       = (int) get_option( 'mainwp_transAutomaticDailyUpdate' );
+
         $mainwp_show_language_updates = (int) get_option( 'mainwp_show_language_updates', 1 );
         $disableUpdateConfirmations   = (int) get_option( 'mainwp_disable_update_confirmations', 0 );
         $delay_autoupdate             = (int) get_option( 'mainwp_delay_autoupdate', 1 );
@@ -2324,6 +2399,15 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             <select name="mainwp_themeAutomaticDailyUpdate" id="mainwp_themeAutomaticDailyUpdate" class="ui dropdown">
                                 <option value="1" <?php echo 1 === $snThemeAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
                                 <option value="0" <?php echo ( false !== $snThemeAutomaticDailyUpdate && 0 === $snThemeAutomaticDailyUpdate ) || 2 === $snThemeAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Theme advanced automatic updates', 'mainwp' ); ?></label>
+                        <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic theme updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <select name="mainwp_transAutomaticDailyUpdate" id="mainwp_transAutomaticDailyUpdate" class="ui dropdown">
+                                <option value="1" <?php echo 1 === $snTransAutomaticUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
+                                <option value="0" <?php echo ( false !== $snTransAutomaticUpdate && 0 === $snTransAutomaticUpdate ) || 2 === $snTransAutomaticUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
                             </select>
                         </div>
                     </div>
@@ -2396,16 +2480,16 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             ?>
             <p><?php esc_html_e( 'If you need help with managing updates, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui list">
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-updates/#update-plugins" target="_blank">Update Plugins</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-updates/#plugins-auto-updates" target="_blank">Plugins Auto Updates</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-updates/#ignore-plugin-updates" target="_blank">Ignore Plugin Updates</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-updates/#update-themes" target="_blank">Update Themes</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-updates/#themes-auto-updates" target="_blank">Themes Auto Updates</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-updates/#ignore-theme-updates" target="_blank">Ignore Theme Updates</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-updates/#update-wordpress-core" target="_blank">Update WordPress Core</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-updates/#auto-update-wordpress-core" target="_blank">Auto Update WordPress Core</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-updates/#ignore-wordpress-core-update" target="_blank">Ignore WordPress Core Update</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-updates/#safe-updates---updates-rollback" target="_blank">Safe Updates/Updates Rollback</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-updates/#update-plugins" target="_blank">Update Plugins</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-updates/#plugins-auto-updates" target="_blank">Plugins Auto Updates</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-updates/#ignore-plugin-updates" target="_blank">Ignore Plugin Updates</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-updates/#update-themes" target="_blank">Update Themes</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-updates/#themes-auto-updates" target="_blank">Themes Auto Updates</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-updates/#ignore-theme-updates" target="_blank">Ignore Theme Updates</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-updates/#update-wordpress-core" target="_blank">Update WordPress Core</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-updates/#auto-update-wordpress-core" target="_blank">Auto Update WordPress Core</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-updates/#ignore-wordpress-core-update" target="_blank">Ignore WordPress Core Update</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-updates/#safe-updates---updates-rollback" target="_blank">Safe Updates/Updates Rollback</a></div>
                 <?php
                 /**
                  * Action: mainwp_updates_help_item

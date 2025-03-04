@@ -629,7 +629,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-posts-info-message' ) ) : ?>
                         <div class="ui info message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-posts-info-message"></i>
-                            <?php printf( esc_html__( 'Manage existing posts on your child sites.  Here you can edit, view and delete pages.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-posts/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                            <?php printf( esc_html__( 'Manage existing posts on your child sites.  Here you can edit, view and delete pages.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/manage-posts/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
                         </div>
                     <?php endif; ?>
                     <?php static::render_table( true ); ?>
@@ -1425,8 +1425,8 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         <input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $post['id'] ); ?>"/>
                         <input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo 'publish' === $post['status'] ? 'unpublish|' : ''; ?><?php echo ( 'pending' === $post['status'] ) ? 'approve|' : ''; ?><?php echo ( 'trash' === $post['status'] ) ? 'restore|' : ''; ?><?php echo ( 'future' === $post['status'] || 'draft' === $post['status'] ) ? 'publish|' : ''; ?>" />
                         <input class="websiteId" type="hidden" name="id" value="<?php echo intval( $website->id ); ?>"/>
-                        <div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999">
-                            <a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
+                        <div class="ui right pointing dropdown" style="z-index: 999">
+                            <a href="javascript:void(0)"><i class="ellipsis vertical icon"></i></a>
                             <div class="menu">
                                 <?php if ( 'future' === $post['status'] || 'draft' === $post['status'] ) : ?>
                                     <a class="item post_submitpublish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
@@ -2131,9 +2131,9 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         <div class="ui message info">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-create-new-bulkpost-info-message"></i>
                             <?php if ( 'bulkpost' === $post_type ) : ?>
-                                <?php printf( esc_html__( 'Create a new bulk post. Scheduling posts on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-post/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                                <?php printf( esc_html__( 'Create a new bulk post. Scheduling posts on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/create-a-new-post/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
                             <?php else : ?>
-                                <?php printf( esc_html__( 'Create a new bulk page. Scheduling pages on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-page/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                                <?php printf( esc_html__( 'Create a new bulk page. Scheduling pages on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/create-a-new-page/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
                             <?php endif; ?>
                         </div>
                         <?php endif; ?>
@@ -2733,12 +2733,12 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             ?>
             <p><?php esc_html_e( 'If you need help with managing posts, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui list">
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-posts/" target="_blank">Manage Posts</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-posts/#create-a-new-post" target="_blank">Create a New Post</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-posts/#edit-an-existing-post" target="_blank">Edit an Existing Post</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-posts/#change-status-of-an-existing-post" target="_blank">Change Status of an Existing Post</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-posts/#view-an-existing-post" target="_blank">View an Existing Post</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-posts/#delete-post" target="_blank">Delete Post(s)</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-posts/" target="_blank">Manage Posts</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-posts/#create-a-new-post" target="_blank">Create a New Post</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-posts/#edit-an-existing-post" target="_blank">Edit an Existing Post</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-posts/#change-status-of-an-existing-post" target="_blank">Change Status of an Existing Post</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-posts/#view-an-existing-post" target="_blank">View an Existing Post</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-posts/#delete-post" target="_blank">Delete Post(s)</a></div>
                 <?php
                 /**
                  * Action: mainwp_posts_help_item

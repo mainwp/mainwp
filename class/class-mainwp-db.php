@@ -96,7 +96,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         $included_opts = array();
 
-        if ( empty( $fields ) || 'default' === $view_query ) {
+        if ( empty( $fields ) || 'default' === $view_query || 'manage_site' === $view_query ) {
             $view                 .= ',(SELECT recent_comments.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_comments WHERE  recent_comments.wpid = intwp.id AND recent_comments.name = "recent_comments" LIMIT 1) AS recent_comments,
                     (SELECT recent_posts.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_posts WHERE  recent_posts.wpid = intwp.id AND recent_posts.name = "recent_posts" LIMIT 1) AS recent_posts,
                     (SELECT recent_pages.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_pages WHERE  recent_pages.wpid = intwp.id AND recent_pages.name = "recent_pages" LIMIT 1) AS recent_pages,
@@ -1793,6 +1793,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $select_fields   = $light_fields;
             $select_fields[] = 'mo.*';
             $join_monitors   = ' LEFT JOIN ' . $this->table_name( 'monitors' ) . ' mo ON wp.id = mo.wpid AND mo.issub = 0  ';
+        } elseif ( 'manage_site' === $view ) {
+            $select_fields[] = 'mo.monitor_id';
+            $join_monitors   = ' LEFT JOIN ' . $this->table_name( 'monitors' ) . ' mo ON wp.id = mo.wpid AND mo.issub = 0  ';
         }
 
         $select = implode( ',', $select_fields );
@@ -2554,7 +2557,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @param int    $sslVersion SSL Version.
      * @param bool   $disableHealthChecking Disable Site health threshold.
      * @param int    $healthThreshold Site health threshold.
-     * @param int    $wpe Is it WP Engine hosted site.
+     * @param string $backup_method Primary backup method.
      *
      * @return boolean ture on success or false on failure.
      *
@@ -2581,14 +2584,16 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $sslVersion = 0,
         $disableHealthChecking = 1,
         $healthThreshold = 80,
-        $wpe = 0
+        $backup_method = 'global'
     ) {
+
+        $wpe = 0; // going to update when sync.
 
         if ( MainWP_Utility::ctype_digit( $websiteid ) && MainWP_Utility::ctype_digit( $userid ) ) {
             $website = $this->get_website_by_id( $websiteid );
             if ( MainWP_System_Utility::can_edit_website( $website ) ) {
                 // update admin.
-                $this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET url="' . $this->escape( $url ) . '", name="' . $this->escape( wp_strip_all_tags( $name ) ) . '", adminname="' . $this->escape( $siteadmin ) . '",pluginDir="' . $this->escape( $pluginDir ) . '", verify_certificate="' . intval( $verifyCertificate ) . '", ssl_version="' . intval( $sslVersion ) . '", wpe="' . intval( $wpe ) . '", uniqueId="' . $this->escape( $uniqueId ) . '", http_user="' . $this->escape( $http_user ) . '", http_pass="' . $this->escape( $http_pass ) . '", disable_health_check="' . $this->escape( $disableHealthChecking ) . '", health_threshold="' . $this->escape( $healthThreshold ) . '" WHERE id=%d', $websiteid ) );
+                $this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET url="' . $this->escape( $url ) . '", name="' . $this->escape( wp_strip_all_tags( $name ) ) . '", adminname="' . $this->escape( $siteadmin ) . '",pluginDir="' . $this->escape( $pluginDir ) . '", verify_certificate="' . intval( $verifyCertificate ) . '", ssl_version="' . intval( $sslVersion ) . '", wpe="' . intval( $wpe ) . '", uniqueId="' . $this->escape( $uniqueId ) . '", http_user="' . $this->escape( $http_user ) . '", http_pass="' . $this->escape( $http_pass ) . '", disable_health_check="' . $this->escape( $disableHealthChecking ) . '", health_threshold="' . $this->escape( $healthThreshold ) . '", primary_backup_method="' . $this->escape( $backup_method ) . '" WHERE id=%d', $websiteid ) );
                 $this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp_settings_backup' ) . ' SET archiveFormat = "' . $this->escape( $archiveFormat ) . '" WHERE wpid=%d', $websiteid ) );
 
                 if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {

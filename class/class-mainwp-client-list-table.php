@@ -67,7 +67,23 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
          * @since 4.1
          */
         $item = apply_filters( 'mainwp_clients_sitestable_item', $item, $item );
-        return isset( $item[ $column_name ] ) && ! empty( $item[ $column_name ] ) ? $item[ $column_name ] : 'N/A';
+
+        if ( isset( $item[ $column_name ] ) && ! empty( $item[ $column_name ] ) ) {
+            switch ( $column_name ) {
+                case 'client_phone':
+                    return '<a href="tel:' . esc_attr( $item[ $column_name ] ) . '" class="ui mini icon button" data-tooltip="' . esc_attr( $item[ $column_name ] ) . '" data-inverted="" data-position="left center"><i class="phone grey icon"></i></a>';
+                case 'client_facebook':
+                    return '<a href="' . esc_attr( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="facebook grey icon"></i></a>';
+                case 'client_twitter':
+                    return '<a href="' . esc_attr( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="twitter grey icon"></i></a>';
+                case 'client_instagram':
+                    return '<a href="' . esc_attr( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="instagram grey icon"></i></a>';
+                case 'client_linkedin':
+                    return '<a href="' . esc_attr( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="linkedin grey icon"></i></a>';
+                default:
+                    return $item[ $column_name ];
+            }
+        }
     }
 
     /**
@@ -77,24 +93,20 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
      */
     public function get_sortable_columns() {
         return array(
-            'name'             => array( 'name', false ),
-            'client_email'     => array( 'client_email', false ),
-            'client_phone'     => array( 'client_phone', false ),
-            'client_facebook'  => array( 'client_facebook', false ),
-            'client_twitter'   => array( 'client_twitter', false ),
-            'client_instagram' => array( 'client_instagram', false ),
-            'client_linkedin'  => array( 'client_linkedin', false ),
-            'suspended'        => array( 'suspended', false ),
-            'tags'             => array( 'tags', false ),
-            'websites'         => array( 'websites', false ),
-            'contact_name'     => array( 'contact_name', false ),
-            'address_1'        => array( 'address_1', false ),
-            'address_2'        => array( 'address_2', false ),
-            'city'             => array( 'city', false ),
-            'zip'              => array( 'zip', false ),
-            'state'            => array( 'state', false ),
-            'created'          => array( 'created', false ),
-            'country'          => array( 'country', false ),
+            'client'       => array( 'client', false ),
+            'name'         => array( 'name', false ),
+            'client_email' => array( 'client_email', false ),
+            'suspended'    => array( 'suspended', false ),
+            'tags'         => array( 'tags', false ),
+            'websites'     => array( 'websites', false ),
+            'contact_name' => array( 'contact_name', false ),
+            'address_1'    => array( 'address_1', false ),
+            'address_2'    => array( 'address_2', false ),
+            'city'         => array( 'city', false ),
+            'zip'          => array( 'zip', false ),
+            'state'        => array( 'state', false ),
+            'created'      => array( 'created', false ),
+            'country'      => array( 'country', false ),
         );
     }
 
@@ -106,17 +118,18 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
     public function get_default_columns() {
         return array(
             'cb'               => '<input type="checkbox" />',
-            'name'             => esc_html__( 'Client', 'mainwp' ),
             'image'            => esc_html__( 'Image', 'mainwp' ),
-            'tags'             => esc_html__( 'Tags', 'mainwp' ),
-            'contact_name'     => esc_html__( 'Contact Name', 'mainwp' ),
-            'client_email'     => esc_html__( 'Client Email', 'mainwp' ),
+            'client'           => esc_html__( 'Client', 'mainwp' ),
             'suspended'        => esc_html__( 'Status', 'mainwp' ),
-            'client_phone'     => esc_html__( 'Phone', 'mainwp' ),
-            'client_facebook'  => esc_html__( 'Facebook', 'mainwp' ),
-            'client_twitter'   => esc_html__( 'X', 'mainwp' ),
-            'client_instagram' => esc_html__( 'Instagram', 'mainwp' ),
-            'client_linkedin'  => esc_html__( 'LinkedIn', 'mainwp' ),
+            'name'             => esc_html__( 'Name', 'mainwp' ),
+            'tags'             => esc_html__( 'Tags', 'mainwp' ),
+            'contact_name'     => esc_html__( 'Primary Contact', 'mainwp' ),
+            'client_email'     => esc_html__( 'Client Email', 'mainwp' ),
+            'client_phone'     => '<i class="phone grey icon"></i>',
+            'client_facebook'  => '<i class="facebook grey icon"></i>',
+            'client_twitter'   => '<i class="twitter grey icon"></i>',
+            'client_instagram' => '<i class="instagram grey icon"></i>',
+            'client_linkedin'  => '<i class="linkedin grey icon"></i>',
             'websites'         => esc_html__( 'Websites', 'mainwp' ),
             'address_1'        => esc_html__( 'Address 1', 'mainwp' ),
             'address_2'        => esc_html__( 'Address 2', 'mainwp' ),
@@ -213,7 +226,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
         ?>
         <div class="ui grid">
             <div class="equal width row ui mini form">
-            <div class="middle aligned column">
+                <div class="middle aligned column">
                     <div id="mainwp-clients-bulk-actions-menu" class="ui selection dropdown">
                         <div class="default text"><?php esc_html_e( 'Bulk actions', 'mainwp' ); ?></div>
                         <i class="dropdown icon"></i>
@@ -236,7 +249,6 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                     <button class="ui tiny basic button" id="mainwp-do-clients-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
                 </div>
                 <div class="right aligned middle aligned column">
-                <?php esc_html_e( 'Filter clients: ', 'mainwp' ); ?>
                     <div id="mainwp-filter-clients-group" class="ui selection multiple dropdown" style="vertical-align:bottom">
                         <input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
                         <i class="dropdown icon"></i>
@@ -254,10 +266,10 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                             <div class="item" data-value="nogroups"><?php esc_html_e( 'No Tags', 'mainwp' ); ?></div>
                         </div>
                     </div>
-                    <button onclick="mainwp_manage_clients_filter()" class="ui mini green button"><?php esc_html_e( 'Filter Clients', 'mainwp' ); ?></button>
+                    <button onclick="mainwp_manage_clients_filter()" class="ui mini basic button"><i class="filter icon"></i><?php esc_html_e( 'Filter Clients', 'mainwp' ); ?></button>
                     <a href="admin.php?page=ManageClients" class="ui mini button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></a>
                 </div>
-        </div>
+            </div>
         </div>
         <script type="text/javascript">
             jQuery( document ).ready( function () {
@@ -274,7 +286,6 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
         </script>
         <?php
     }
-
 
     /**
      * Prepair the items to be listed.
@@ -358,7 +369,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-client-info-message' ) ) : ?>
             <div class="ui info message">
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-client-info-message"></i>
-                <?php printf( esc_html__( 'Manage your clients. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-clients/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
+                <?php printf( esc_html__( 'Manage your clients. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/manage-clients/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
             </div>
         <?php endif; ?>
         <?php
@@ -373,17 +384,12 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
             <tbody id="mainwp-manage-sites-body-table">
                 <?php $this->display_rows_or_placeholder(); ?>
             </tbody>
-            <tfoot>
-                <tr>
-                    <?php $this->print_column_headers( $optimize, false ); ?>
-                </tr>
-            </tfoot>
-    </table>
-    <div id="mainwp-loading-sites" style="display: none;">
-    <div class="ui active inverted dimmer">
-    <div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading ...', 'mainwp' ); ?></div>
-    </div>
-    </div>
+        </table>
+        <div id="mainwp-loading-sites" style="display: none;">
+            <div class="ui active inverted dimmer">
+                <div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading ...', 'mainwp' ); ?></div>
+            </div>
+        </div>
         <?php MainWP_UI::render_modal_edit_notes( 'client' ); ?>
         <?php
 
@@ -468,7 +474,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                         select: {
                             items: 'row',
                             style: 'multi+shift',
-                            selector: 'tr>td:not(.not-selectable)'
+                            selector: 'tr>td.check-column'
                         }
                     } ).on( 'columns-reordered', function () {
                         console.log('columns-reorderede');
@@ -517,7 +523,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
      * @param bool $optimize true|false Whether or not to optimize.
      * @param bool $top true|false.
      */
-    public function print_column_headers( $optimize, $top = true ) {
+    public function print_column_headers( $optimize, $top = true ) {  // phpcs:ignore -- NOSONAR - complex.
         // for compatible.
         $optimize = $optimize ? true : false;
 
@@ -541,6 +547,62 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
 
             if ( 'cb' === $column_client_key ) {
                 $class[] = 'check-column';
+                $class[] = 'collapsing';
+            }
+
+            if ( 'suspended' === $column_client_key ) {
+                $class[] = 'collapsing center aligned';
+            }
+
+            if ( 'image' === $column_client_key ) {
+                $class[] = 'collapsing center aligned';
+            }
+
+            if ( 'name' === $column_client_key ) {
+                $class[] = 'collapsing';
+            }
+
+            if ( 'websites' === $column_client_key ) {
+                $class[] = 'collapsing';
+            }
+
+            if ( 'created' === $column_client_key ) {
+                $class[] = 'collapsing center aligned';
+            }
+
+            if ( 'notes' === $column_client_key ) {
+                $class[] = 'collapsing center aligned';
+            }
+
+            if ( 'tags' === $column_client_key ) {
+                $class[] = 'collapsing';
+            }
+
+            if ( 'client_facebook' === $column_client_key ) {
+                $class[] = 'collapsing center aligned';
+            }
+
+            if ( 'client_instagram' === $column_client_key ) {
+                $class[] = 'collapsing center aligned';
+            }
+
+            if ( 'client_twitter' === $column_client_key ) {
+                $class[] = 'collapsing center aligned';
+            }
+
+            if ( 'client_linkedin' === $column_client_key ) {
+                $class[] = 'collapsing center aligned';
+            }
+
+            if ( 'client_phone' === $column_client_key ) {
+                $class[] = 'collapsing center aligned';
+            }
+
+            if ( 'client_actions' === $column_client_key ) {
+                $class[] = 'collapsing';
+            }
+
+            if ( 'contact_name' === $column_client_key ) {
                 $class[] = 'collapsing';
             }
 
@@ -637,11 +699,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
 
         foreach ( $columns as $column_name => $column_display_name ) {
 
-            $classes = "collapsing $column_name column-$column_name";
-
-            if ( 'client_actions' === $column_name ) {
-                $classes .= ' center aligned ';
-            }
+            $classes = "$column_name column-$column_name";
 
             $attributes = "class='$classes'";
             ?>
@@ -651,46 +709,6 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                         <input type="checkbox" value="<?php echo intval( $item['client_id'] ); ?>" name="" aria-label="<?php esc_attr_e( 'Select the site.', 'mainwp' ); ?>"/>
                     </div>
                 </td>
-                <?php
-            } elseif ( 'client_actions' === $column_name ) {
-                $selected_sites = isset( $item['selected_sites'] ) ? trim( $item['selected_sites'] ) : '';
-                ?>
-                    <td class="collapsing manage-clients-actions not-selectable">
-                        <div class="ui right pointing dropdown icon mini basic green button" style="z-index:999;">
-                            <i class="ellipsis horizontal icon"></i>
-                            <div class="menu" clientid=<?php echo intval( $item['client_id'] ); ?>>
-                                <a class="item client_getedit" href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $item['client_id'] ); ?>"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
-                                <a class="item" href="admin.php?page=managesites&client=<?php echo intval( $item['client_id'] ); ?>"><?php esc_html_e( 'View Sites', 'mainwp' ); ?></a>
-                                <?php if ( is_plugin_active( 'mainwp-pro-reports-extension/mainwp-pro-reports-extension.php' ) ) { ?>
-                                    <a class="item" href="admin.php?page=Extensions-Mainwp-Pro-Reports-Extension&tab=report&action=newreport&selected_sites=<?php echo esc_html( $selected_sites ); ?>"><?php esc_html_e( 'Create Report', 'mainwp' ); ?></a>
-                                <?php } ?>
-                                <a class="item client_deleteitem" href="#"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
-                            </div>
-                        </div>
-                    </td>
-                <?php
-            } elseif ( 'image' === $column_name ) {
-                echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
-                ?>
-                <?php $client_display_image = MainWP_Client_Handler::get_client_contact_image( $item ); ?>
-                <a class="item" href="admin.php?page=ManageClients&client_id=<?php echo intval( $item['client_id'] ); ?>"><?php echo $client_display_image; //phpcs:ignore -- NOSONAR - ok.?></a>
-                <?php
-                echo '</td>';
-            } elseif ( 'name' === $column_name ) {
-                echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
-                ?>
-                <a class="item" href="admin.php?page=ManageClients&client_id=<?php echo intval( $item['client_id'] ); ?>"><?php echo esc_html( $item['name'] ); ?></a>
-                <?php
-                echo '</td>';
-            } elseif ( 'client_email' === $column_name ) {
-                echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
-                ?>
-                <a class="item" href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $item['client_id'] ); ?>"><?php echo esc_html( $item['client_email'] ); ?></a>
-                <?php
-                echo '</td>';
-            } elseif ( 'tags' === $column_name ) {
-                ?>
-                <td class="collapsing"><?php echo MainWP_System_Utility::get_site_tags( $item, true ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
                 <?php
             } elseif ( 'suspended' === $column_name ) {
                 $client_status = '';
@@ -704,36 +722,74 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                     $client_status = '<span class="ui red mini fluid center aligned label">' . esc_html__( 'Lost', 'mainwp' ) . '</span>';
                 }
                 ?>
-                <td class="collapsing"><?php echo $client_status; //phpcs:ignore -- ok. ?></td>
+                <td><?php echo $client_status; //phpcs:ignore -- ok. ?></td>
+            <?php } elseif ( 'image' === $column_name ) { ?>
+                <?php echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                    <?php $client_display_image = MainWP_Client_Handler::get_client_contact_image( $item ); ?>
+                    <a class="item" href="admin.php?page=ManageClients&client_id=<?php echo intval( $item['client_id'] ); ?>"><?php echo $client_display_image; //phpcs:ignore -- NOSONAR - ok.?></a>
+                <?php echo '</td>'; ?>
+            <?php } elseif ( 'client' === $column_name ) { ?>
+                <?php echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                    <a href="admin.php?page=ManageClients&client_id=<?php echo intval( $item['client_id'] ); ?>"><?php echo esc_html( $item['name'] ); ?></a>
+                    <div>
+                        <span class="ui small text">
+                            <a class="ui grey text" href="admin.php?page=ManageClients&client_id=<?php echo intval( $item['client_id'] ); ?>">
+                                <?php echo esc_html( $item['client_email'] ); ?>
+                            </a>
+                        </span>
+                    </div>
+                <?php echo '</td>'; ?>
+            <?php } elseif ( 'created' === $column_name ) { ?>
+                <td sort-value="<?php echo intval( $item['created'] ); ?>"><?php echo 0 !== (int)( $item['created'] ) ? '<span data-tooltip="' . MainWP_Utility::format_date( $item['created'] ) . '" data-inverted="" data-position="left center">' . MainWP_Utility::time_elapsed_string( $item['created'] ) . '</span>' : 'N/A'; //phpcs:ignore -- output ok. ?></td>
+            <?php } elseif ( 'name' === $column_name ) { ?>
+                <?php echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                    <a href="admin.php?page=ManageClients&client_id=<?php echo intval( $item['client_id'] ); ?>"><?php echo esc_html( $item['name'] ); ?></a>
+                <?php echo '</td>'; ?>
+            <?php } elseif ( 'client_email' === $column_name ) { ?>
+                <?php echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                    <a href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $item['client_id'] ); ?>"><?php echo esc_html( $item['client_email'] ); ?></a>
+                <?php echo '</td>'; ?>
+            <?php } elseif ( 'tags' === $column_name ) { ?>
+                <td class="collapsing"><?php echo MainWP_System_Utility::get_site_tags( $item, true ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
                 <?php
             } elseif ( 'websites' === $column_name ) {
                 $selected_sites = isset( $item['selected_sites'] ) ? trim( $item['selected_sites'] ) : '';
                 $selected_ids   = ( '' !== $selected_sites ) ? explode( ',', $selected_sites ) : array();
 
                 $count = count( $selected_ids );
-                echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
                 ?>
-                <a class="item" href="admin.php?page=managesites&client=<?php echo intval( $item['client_id'] ); ?>"><?php echo intval( $count ); ?></a>
+                <?php echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                    <a class="ui mini grey button" href="admin.php?page=managesites&client=<?php echo intval( $item['client_id'] ); ?>"><i class="wordpress icon"></i><?php echo intval( $count ); ?></a>
+                <?php echo '</td>'; ?>
                 <?php
-                echo '</td>';
             } elseif ( 'notes' === $column_name ) {
-
                 $note       = html_entity_decode( $item['note'] );
                 $esc_note   = MainWP_Utility::esc_content( $note );
                 $strip_note = wp_strip_all_tags( $esc_note );
                 echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
                 if ( empty( $item['note'] ) ) :
                     ?>
-                    <a href="javascript:void(0)" class="mainwp-edit-client-note" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Edit client notes.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
-                <?php else : ?>
-                    <a href="javascript:void(0)" class="mainwp-edit-client-note" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
-                <?php endif; ?>
-                <span style="display: none" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
-                <?php
-                echo '</td>';
-            } elseif ( 'created' === $column_name ) {
-                ?>
-                <td class="collapsing" sort-value="<?php echo intval( $item['created'] ); ?>"><?php echo esc_html( 0 !== intval( $item['created'] ) ? MainWP_Utility::format_date( $item['created'] ) : 'N/A' ); ?></td>
+                        <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini icon button" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Edit client notes.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
+                    <?php else : ?>
+                        <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini icon button" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+                    <?php endif; ?>
+                    <span style="display: none" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+                <?php echo '</td>'; ?>
+            <?php } elseif ( 'client_actions' === $column_name ) { ?>
+                <?php $selected_sites = isset( $item['selected_sites'] ) ? trim( $item['selected_sites'] ) : ''; ?>
+                <td class="collapsing manage-clients-actions not-selectable">
+                    <div class="ui right pointing dropdown" style="z-index:999;">
+                        <i class="ellipsis vertical icon"></i>
+                        <div class="menu" clientid=<?php echo intval( $item['client_id'] ); ?>>
+                            <a class="item client_getedit" href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $item['client_id'] ); ?>"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+                            <a class="item" href="admin.php?page=managesites&client=<?php echo intval( $item['client_id'] ); ?>"><?php esc_html_e( 'View Sites', 'mainwp' ); ?></a>
+                            <?php if ( is_plugin_active( 'mainwp-pro-reports-extension/mainwp-pro-reports-extension.php' ) ) { ?>
+                                <a class="item" href="admin.php?page=Extensions-Mainwp-Pro-Reports-Extension&tab=report&action=newreport&selected_sites=<?php echo esc_html( $selected_sites ); ?>"><?php esc_html_e( 'Create Report', 'mainwp' ); ?></a>
+                            <?php } ?>
+                            <a class="item client_deleteitem" href="#"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+                        </div>
+                    </div>
+                </td>
                 <?php
             } elseif ( method_exists( $this, 'column_' . $column_name ) ) {
                 echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput

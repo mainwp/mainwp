@@ -257,7 +257,7 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-admin-pass-info-message' ) ) : ?>
                         <div class="ui info message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-admin-pass-info-message"></i>
-                            <?php printf( esc_html__( 'See the list of Admininstrator users used to establish secure connection between your MainWP Dashboard and child sites.  If needed, use the provided form to set a new password for these accounts.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/bulk-update-administrator-passwords/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
+                            <?php printf( esc_html__( 'See the list of Admininstrator users used to establish secure connection between your MainWP Dashboard and child sites.  If needed, use the provided form to set a new password for these accounts.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/bulk-update-administrator-passwords/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
                         </div>
                     <?php endif; ?>
                         <?php

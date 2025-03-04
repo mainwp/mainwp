@@ -201,6 +201,51 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $values                 = apply_filters( 'mainwp_clients_overview_enabled_widgets', $values, null );
         static::$enable_widgets = array_merge( static::$enable_widgets, $values );
 
+        // Load the Overview widget.
+        if ( static::$enable_widgets['overview'] ) {
+            MainWP_UI::add_widget_box( 'overview', array( MainWP_Client_Overview_Info::get_class_name(), 'render' ), $page, array( -1, -1, 3, 40 ) );
+        }
+
+        // Load the Notes widget.
+        if ( static::$enable_widgets['note'] ) {
+            MainWP_UI::add_widget_box( 'note', array( MainWP_Client_Overview_Note::get_class_name(), 'render' ), $page, array( -1, -1, 3, 40 ) );
+        }
+
+        // Load the Websites widget.
+        if ( static::$enable_widgets['websites'] ) {
+            MainWP_UI::add_widget_box( 'websites', array( MainWP_Client_Overview_Sites::get_class_name(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+
+        // Load the Info widget.
+        if ( static::$enable_widgets['fields_info'] ) {
+            MainWP_UI::add_widget_box( 'fields_info', array( MainWP_Client_Overview_Custom_Info::get_class_name(), 'render' ), $page, array( -1, -1, 6, 30 ) );
+        }
+
+        // Load the Non-MainWP Changes widget.
+        if ( static::$enable_widgets['non_mainwp_changes'] ) {
+            MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), $page, array( -1, -1, 6, 30 ) );
+        }
+
+        // Load the Recent Posts widget.
+        if ( static::$enable_widgets['recent_posts'] ) {
+            MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, array( -1, -1, 6, 30 ) );
+        }
+
+        // Load the Recent Pages widget.
+        if ( static::$enable_widgets['recent_pages'] ) {
+            MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, array( -1, -1, 6, 30 ) );
+        }
+
+        if ( is_array( $client_contacts ) ) {
+            foreach ( $client_contacts as $contact ) {
+                if ( isset( static::$enable_widgets[ 'contact_' . $contact['contact_id'] ] ) && static::$enable_widgets[ 'contact_' . $contact['contact_id'] ] ) {
+                    $contact_widget          = new MainWP_Client_Overview_Contacts();
+                    $contact_widget->contact = $contact;
+                    MainWP_UI::add_widget_box( 'contact_' . $contact['contact_id'], array( $contact_widget, 'render' ), $page, array( -1, -1, 3, 30 ) );
+                }
+            }
+        }
+
         $i = 1;
         foreach ( $extMetaBoxs as $metaBox ) {
             $enabled = true;
@@ -214,56 +259,11 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $id = isset( $metaBox['id'] ) ? $metaBox['id'] : $i++;
             $id = 'advanced-' . $id;
 
-            $layout = ! empty( $metaBox['layout'] ) && is_array( $metaBox['layout'] ) ? $metaBox['layout'] : array( 1, 1, 4, 11 );
+            $layout = ! empty( $metaBox['layout'] ) && is_array( $metaBox['layout'] ) ? $metaBox['layout'] : array( -1, -1, 6, 30 );
 
             if ( $enabled ) {
                 MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, $layout );
             }
-        }
-
-        // Load the Non-MainWP Changes widget.
-        if ( static::$enable_widgets['non_mainwp_changes'] ) {
-            MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
-        }
-
-        // Load the Recent Pages widget.
-        if ( static::$enable_widgets['recent_pages'] ) {
-            MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
-        }
-
-        // Load the Recent Posts widget.
-        if ( static::$enable_widgets['recent_posts'] ) {
-            MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
-        }
-
-        // Load the Notes widget.
-        if ( static::$enable_widgets['note'] ) {
-            MainWP_UI::add_widget_box( 'note', array( MainWP_Client_Overview_Note::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
-        }
-
-        if ( is_array( $client_contacts ) ) {
-            foreach ( $client_contacts as $contact ) {
-                if ( isset( static::$enable_widgets[ 'contact_' . $contact['contact_id'] ] ) && static::$enable_widgets[ 'contact_' . $contact['contact_id'] ] ) {
-                    $contact_widget          = new MainWP_Client_Overview_Contacts();
-                    $contact_widget->contact = $contact;
-                    MainWP_UI::add_widget_box( 'contact_' . $contact['contact_id'], array( $contact_widget, 'render' ), $page, array( 1, 1, 4, 9 ) );
-                }
-            }
-        }
-
-        // Load the Websites widget.
-        if ( static::$enable_widgets['websites'] ) {
-            MainWP_UI::add_widget_box( 'websites', array( MainWP_Client_Overview_Sites::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
-        }
-
-        // Load the Info widget.
-        if ( static::$enable_widgets['fields_info'] ) {
-            MainWP_UI::add_widget_box( 'fields_info', array( MainWP_Client_Overview_Custom_Info::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
-        }
-
-        // Load the Overview widget.
-        if ( static::$enable_widgets['overview'] ) {
-            MainWP_UI::add_widget_box( 'overview', array( MainWP_Client_Overview_Info::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
         }
     }
 
@@ -299,6 +299,9 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * Render the Dashboard Body content.
      */
     public static function render_dashboard_body() {
+
+        MainWP_Overview::render_layout_selection();
+
         $screen = get_current_screen();
         ?>
         <div class="mainwp-primary-content-wrap">
@@ -418,7 +421,7 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'websites'           => esc_html__( 'Websites', 'mainwp' ),
             'recent_posts'       => esc_html__( 'Recent Posts', 'mainwp' ),
             'recent_pages'       => esc_html__( 'Recent Pages', 'mainwp' ),
-            'non_mainwp_changes' => esc_html__( 'Non-MainWP Changes', 'mainwp' ),
+            'non_mainwp_changes' => esc_html__( 'Sites Changes', 'mainwp' ),
         );
 
         if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -507,13 +510,13 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             ?>
             <p><?php esc_html_e( 'If you need help with your MainWP Dashboard, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui list">
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-clients/" target="_blank">Manage Clients</a></div> <?php // NOSONAR - noopener - open safe. ?>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-clients/#create-a-new-client" target="_blank">Create a new Client</a></div> <?php // NOSONAR - noopener - open safe. ?>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-clients/#update-a-client" target="_blank">Update a Client</a></div> <?php // NOSONAR - noopener - open safe. ?>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-clients/#delete-a-client" target="_blank">Delete a Client</a></div> <?php // NOSONAR - noopener - open safe. ?>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-clients/#customize-the-manage-clients-table" target="_blank">Customize the Manage Clients table</a></div> <?php // NOSONAR - noopener - open safe. ?>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-clients/#client-card" target="_blank">Client Card (View Client)</a></div> <?php // NOSONAR - noopener - open safe. ?>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-clients/#client-fields" target="_blank">Client Fields</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-clients/" target="_blank">Manage Clients</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-clients/#create-a-new-client" target="_blank">Create a new Client</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-clients/#update-a-client" target="_blank">Update a Client</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-clients/#delete-a-client" target="_blank">Delete a Client</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-clients/#customize-the-manage-clients-table" target="_blank">Customize the Manage Clients table</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-clients/#client-card" target="_blank">Client Card (View Client)</a></div> <?php // NOSONAR - noopener - open safe. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-clients/#client-fields" target="_blank">Client Fields</a></div> <?php // NOSONAR - noopener - open safe. ?>
                 <?php
                 /**
                  * Action: mainwp_clients_overview_help_item

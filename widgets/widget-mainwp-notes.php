@@ -48,21 +48,21 @@ class MainWP_Notes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         $esc_note = MainWP_Utility::esc_content( $note );
         ?>
         <div class="mainwp-widget-header">
-        <h3 class="ui header handle-drag">
-            <?php
-            /**
-             * Filter: mainwp_notes_widget_title
-             *
-             * Filters the Notes widget title text.
-             *
-             * @param object $website Object containing the child site info.
-             *
-             * @since 4.1
-             */
-            echo esc_html( apply_filters( 'mainwp_notes_widget_title', esc_html__( 'Notes', 'mainwp' ), $website ) );
-            ?>
-            <div class="sub header"><?php esc_html_e( 'Child site notes', 'mainwp' ); ?></div>
-        </h3>
+            <h2 class="ui header handle-drag">
+                <?php
+                /**
+                 * Filter: mainwp_notes_widget_title
+                 *
+                 * Filters the Notes widget title text.
+                 *
+                 * @param object $website Object containing the child site info.
+                 *
+                 * @since 4.1
+                 */
+                echo esc_html( apply_filters( 'mainwp_notes_widget_title', esc_html__( 'Notes', 'mainwp' ), $website ) );
+                ?>
+                <div class="sub header"><?php esc_html_e( 'Child site notes', 'mainwp' ); ?></div>
+            </h2>
         </div>
 
         <div class="mainwp-scrolly-overflow">
@@ -103,18 +103,13 @@ class MainWP_Notes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
          */
         do_action( 'mainwp_notes_widget_bottom', $website );
         ?>
+        </div>
+        <div class="ui one column grid mainwp-widget-footer">
+            <div class="column">
+                <a href="javascript:void(0)" class="ui basic mini button mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website->id ); ?>" <?php echo '' !== $website->note ? '' : 'add-new="1"'; ?>><?php echo '' !== $website->note ? esc_html__( 'Edit Notes', 'mainwp' ) : esc_html__( 'Add Notes', 'mainwp' ); ?></a>
+                <?php MainWP_UI::render_modal_edit_notes(); ?>
             </div>
-            <?php if ( '' !== $website->note ) : ?>
-            <div class="ui two columns grid mainwp-widget-footer">
-                <div class="column">
-                    <a href="javascript:void(0)" class="ui button mini fluid green mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website->id ); ?>"><?php esc_html_e( 'Edit Notes', 'mainwp' ); ?></a>
-                </div>
-                <div class="column">
-
-                </div>
-            </div>
-            <?php endif; ?>
-            <?php
-            MainWP_UI::render_modal_edit_notes();
+        </div>
+        <?php
     }
 }

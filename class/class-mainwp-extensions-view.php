@@ -36,8 +36,8 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     public static function init_menu() {
         return add_submenu_page(
             'mainwp_tab',
-            __( 'Extensions', 'mainwp' ),
-            ' <span id="mainwp-Extensions">' . esc_html__( 'Extensions', 'mainwp' ) . '</span>',
+            __( 'Add-ons', 'mainwp' ),
+            ' <span id="mainwp-Extensions">' . esc_html__( 'Add-ons', 'mainwp' ) . '</span>',
             'read',
             'Extensions',
             array(
@@ -78,7 +78,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         $renderItems   = array();
         $renderItems[] = array(
-            'title'  => esc_html__( 'Manage Extensions', 'mainwp' ),
+            'title'  => esc_html__( 'Manage Add-ons', 'mainwp' ),
             'href'   => 'admin.php?page=Extensions',
             'active' => ( '' === $shownPage ) ? true : false,
         );
@@ -133,7 +133,10 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         $extensions       = MainWP_Extensions_Handler::get_extensions();
         $extension_update = get_site_transient( 'update_plugins' );
-        $is_demo          = MainWP_Demo_Handle::is_demo_mode();
+
+        $extensions_count          = 0;
+        $extensions_disabled_count = 0;
+
         ?>
         <div id="mainwp-manage-extensions">
             <div class="mainwp-extensions-api-loading" style="display:none">
@@ -142,34 +145,43 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 </div>
             </div>
             <div class="mainwp-main-content">
-                <?php
-                static::render_incompatible_notice();
-                if ( $is_demo ) {
-                    ?>
-                    <div class="ui yellow message">
-                        <?php esc_html_e( 'Extensions are disabled in the Demo Mode.', 'mainwp' ); ?>
-                        <i class="close icon"></i>
-                    </div>
-                    <?php
-                }
-                ?>
                 <?php if ( empty( $extensions ) && empty( $extensions_disabled ) ) { ?>
                     <?php static::render_intro_notice(); ?>
-                    <?php
-                } else {
-                    ?>
+                <?php } else { ?>
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-extensions-info-message' ) ) { ?>
                         <div class="ui info message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-extensions-info-message"></i>
-                            <?php printf( esc_html__( 'Quickly access, install, and activate your MainWP extensions.  If you need additional help with managing your MainWP Extensions, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/category/getting-started/first-steps-with-extensions/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
+                            <?php printf( esc_html__( 'Quickly access, install, and activate your MainWP add-ons.  If you need additional help with managing your MainWP Add-ons, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/category/getting-started/first-steps-with-extensions/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
                         </div>
-                        <?php } ?>
-                        <div class="ui segment" id="mainwp-extensions-search-no-results" style="display:none">
-                            <div class="ui info message"><?php esc_html_e( 'Your search returned no results. The extension may need to be installed or does not exist.' ); ?></div>
+                    <?php } ?>
+
+                    <div class="mainwp-sub-header">
+                        <div class="ui stackable grid">
+                            <div class="eight wide column" data-tooltip="<?php esc_attr_e( 'Extensions are purpose-built add-ons that expand your Dashboard\'s functionality without relying on external services. Integrations are add-ons that connect MainWP with third-party tools, bringing their power directly into your Dashboard.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                                <div class="ui mini stackable buttons">
+                                    <button class="ui basic disabled button" id="mainwp-extensions-show-all"><i class="box icon"></i><?php esc_html_e( 'Show All Add-ons', 'mainwp' ); ?></button>
+                                    <button class="ui basic button" id="mainwp-extensions-show-extensions"><i class="puzzle piece icon"></i><?php esc_html_e( 'Show Extensions', 'mainwp' ); ?></button>
+                                    <button class="ui basic button" id="mainwp-extensions-show-integrations"><i class="plug icon"></i><?php esc_html_e( 'Show Integrations', 'mainwp' ); ?></button>
+                                </div>
+                            </div>
+                            <div class="eight wide right aligned column">
+                                <div id="mainwp-search-extensions" class="ui mini search">
+                                    <div class="ui icon input">
+                                        <input class="prompt" id="mainwp-search-extensions-input" autocomplete="one-time-code" type="text" placeholder="<?php esc_attr_e( 'Find add-on...', 'mainwp' ); ?>">
+                                        <i class="search icon"></i>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    <div class="ui four stackable cards" id="mainwp-extensions-list">
-                    <?php if ( isset( $extensions ) && is_array( $extensions ) ) { ?>
-                            <?php foreach ( $extensions as $extension ) { ?>
+                    </div>
+
+                    <div class="ui segment" id="mainwp-extensions-search-no-results" style="display:none">
+                        <div class="ui info message"><?php esc_html_e( 'Your search returned no results. The add-on may need to be installed or does not exist.' ); ?></div>
+                    </div>
+                    <div class="ui segment">
+                        <div class="ui four cards" id="mainwp-extensions-list">
+                            <?php if ( isset( $extensions ) && is_array( $extensions ) ) { ?>
+                                <?php foreach ( $extensions as $extension ) { ?>
                                     <?php
                                     if ( ! \mainwp_current_user_can( 'extension', dirname( $extension['slug'] ) ) ) {
                                         continue;
@@ -190,45 +202,60 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                                     static::render_extension_card( $extension, $extension_update, $img_url );
                                     ?>
 
-                            <?php } ?>
-                        <?php } ?>
-
-                                <?php if ( is_array( $extensions_disabled ) ) { ?>
-                                    <?php foreach ( $extensions_disabled as $extension ) { ?>
-                                        <?php
-                                        $slug = dirname( $extension['slug'] );
-
-                                        if ( ! isset( $all_available_extensions[ $slug ] ) ) {
-                                            continue;
-                                        }
-
-                                        $extensions_data = $all_available_extensions[ $slug ];
-
-                                        if ( isset( $extensions_data['img'] ) && ! empty( $extensions_data['img'] ) ) {
-                                            $img_url = $extensions_data['img'];  // icon from the available extensions in dashboard.
-                                        } elseif ( isset( $extension['icon'] ) && ! empty( $extension['icon'] ) ) {
-                                            $img_url = $extension['icon']; // icon from the get_this_extension().
-                                        } elseif ( isset( $extension['iconURI'] ) && '' !== $extension['iconURI'] ) {
-                                            $img_url = MainWP_Utility::remove_http_prefix( $extension['iconURI'] );  // icon from the extension header.
-                                        } else {
-                                            $img_url = MAINWP_PLUGIN_URL . 'assets/images/extensions/placeholder.png';
-                                        }
-
-                                        static::render_extension_card( $extension, $extension_update, $img_url, true );
-                                        ?>
-
+                                <?php } ?>
+                                <?php $extensions_count = count( $extensions ); ?>
                             <?php } ?>
 
-                        <?php } ?>
-            </div>
-                    <?php } ?>
+                            <?php if ( is_array( $extensions_disabled ) ) { ?>
+                                <?php foreach ( $extensions_disabled as $extension ) { ?>
+                                    <?php
+                                    $slug = dirname( $extension['slug'] );
+
+                                    if ( ! isset( $all_available_extensions[ $slug ] ) ) {
+                                        continue;
+                                    }
+
+                                    $extensions_data = $all_available_extensions[ $slug ];
+
+                                    if ( isset( $extensions_data['img'] ) && ! empty( $extensions_data['img'] ) ) {
+                                        $img_url = $extensions_data['img'];  // icon from the available extensions in dashboard.
+                                    } elseif ( isset( $extension['icon'] ) && ! empty( $extension['icon'] ) ) {
+                                        $img_url = $extension['icon']; // icon from the get_this_extension().
+                                    } elseif ( isset( $extension['iconURI'] ) && '' !== $extension['iconURI'] ) {
+                                        $img_url = MainWP_Utility::remove_http_prefix( $extension['iconURI'] );  // icon from the extension header.
+                                    } else {
+                                        $img_url = MAINWP_PLUGIN_URL . 'assets/images/extensions/placeholder.png';
+                                    }
+
+                                    static::render_extension_card( $extension, $extension_update, $img_url, true );
+                                    ?>
+
+                                <?php } ?>
+                                <?php $extensions_disabled_count = count( $extensions_disabled ); ?>
+                            <?php } ?>
+
+                            <?php $extensions_count = $extensions_count + $extensions_disabled_count; ?>
+                            <?php if ( 1 === $extensions_count % 4 ) : ?>
+                                <div class="ui card" style="visibility:hidden"></div>
+                                <div class="ui card" style="visibility:hidden"></div>
+                                <div class="ui card" style="visibility:hidden"></div>
+                            <?php elseif ( 2 === $extensions_count % 4 ) : ?>
+                                <div class="ui card" style="visibility:hidden"></div>
+                                <div class="ui card" style="visibility:hidden"></div>
+                            <?php elseif ( 3 === $extensions_count % 4 ) : ?>
+                                <div class="ui card" style="visibility:hidden"></div>
+                            <?php endif; ?>
+
+                        </div>
+                    </div>
+                <?php } ?>
+
                 <?php static::render_purchase_notice(); ?>
             </div>
+
             <div class="mainwp-side-content mainwp-no-padding">
-                    <?php if ( ! empty( $extensions ) || ! empty( $extensions_disabled ) ) { ?>
-                        <?php static::render_search_box(); ?>
-                <?php } ?>
-                    <?php static::render_side_box( $mainwp_api_key ); ?>
+
+                <?php static::render_side_box( $mainwp_api_key ); ?>
             </div>
             <div id="mainwp-extensions-privacy-info">
                 <?php $priv_extensions = static::get_available_extensions( 'all' ); ?>
@@ -247,7 +274,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         integration_url="<?php esc_attr_e( $priv_extension['integration_url'] ); ?>"
                         integration_owner="<?php esc_attr_e( $priv_extension['integration_owner'] ); ?>"
                         integration_owner_pp="<?php esc_attr_e( $priv_extension['integration_owner_pp'] ); ?>"
-                        extension_title="<?php esc_attr_e( $priv_extension['title'] ); ?>"
+                        extension_title="<?php esc_attr_e( MainWP_Extensions_Handler::polish_string_name( $priv_extension['title'] ) ); ?>"
                         value="<?php esc_attr_e( $priv_extension['title'] ); ?>"
                     />
                         <?php
@@ -259,7 +286,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         name="<?php esc_attr_e( $priv_extension['slug'] ); ?>"
                         base-slug="<?php esc_attr_e( $item_slug ); ?>"
                         privacy="<?php esc_attr_e( $priv_extension['privacy'] ); ?>"
-                        extension_title="<?php esc_attr_e( $priv_extension['title'] ); ?>"
+                        extension_title="<?php esc_attr_e( MainWP_Extensions_Handler::polish_string_name( $priv_extension['title'] ) ); ?>"
                         value="<?php esc_attr_e( $priv_extension['title'] ); ?>"
                     />
                                         <?php
@@ -270,7 +297,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             id="<?php esc_attr_e( $priv_extension['slug'] ); ?>"
                             name="<?php esc_attr_e( $priv_extension['slug'] ); ?>"
                             base-slug="<?php esc_attr_e( $item_slug ); ?>"
-                            extension_title="<?php esc_attr_e( $priv_extension['title'] ); ?>"
+                            extension_title="<?php esc_attr_e( MainWP_Extensions_Handler::polish_string_name( $priv_extension['title'] ) ); ?>"
                             value="<?php esc_attr_e( $priv_extension['title'] ); ?>"
                         />
                     <?php } ?>
@@ -283,32 +310,34 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             <div class="header"></div>
             <div class="content"></div>
         </div>
-        <?php
-    }
 
-    /**
-     * Method render_incompatible_notice()
-     *
-     * Render Incompatability Notice.
-     */
-    public static function render_incompatible_notice() {
-        $deactivated_exts = get_transient( 'mainwp_transient_deactivated_incomtible_exts' );
-        if ( $deactivated_exts && is_array( $deactivated_exts ) && ! empty( $deactivated_exts ) ) {
-            ?>
-            <?php delete_transient( 'mainwp_transient_deactivated_incomtible_exts' ); ?>
-            <div class="ui yellow message">
-                <div class="header"><?php esc_html_e( 'Important Note', 'mainwp' ); ?></div>
-                <p><?php esc_html_e( 'MainWP Dashboard 4.0 or newer requires Extensions 4.0 or newer. MainWP will automatically deactivate older versions of MainWP Extensions in order to prevent compatibility problems.', 'mainwp' ); ?></p>
-                <div class="header"><?php esc_html_e( 'Steps to Update Extensions', 'mainwp' ); ?></div>
-                <div class="ui list">
-                    <div class="item">1. <?php esc_html_e( 'Go to the WP Admin > Plugins > Installed Plugins page', 'mainwp' ); ?></div>
-                    <div class="item">2. <?php esc_html_e( 'Delete Version 3 Extensions (extensions older than version 4) from your MainWP Dashboard', 'mainwp' ); ?></div>
-                    <div class="item">3. <?php esc_html_e( 'Go back to the MainWP > Extensions page and use the Install Extensions button', 'mainwp' ); ?></div>
-                </div>
-                <p><?php esc_html_e( 'This process does not affect your extensions settings.', 'mainwp' ); ?></p>
-            </div>
-            <?php
-        }
+        <script type="text/javascript">
+        jQuery( document ).ready( function () {
+            jQuery( '#mainwp-search-extensions-input' ).on( 'keyup', function () {
+                var searchQuery = jQuery( this ).val().toLowerCase();
+                var extensions = jQuery( '#mainwp-extensions-list' ).find( '.ui.extension.card' );
+                for ( var i = 0; i < extensions.length; i++ ) {
+                    var currentExtension = jQuery( extensions[i] );
+                    var extensionTitle = jQuery( currentExtension ).attr( 'extension-title' ).toLowerCase();
+                    if ( extensionTitle.indexOf( searchQuery ) > -1 ) {
+                        currentExtension.show();
+                        currentExtension.addClass( 'mainwp-found' );
+                    } else {
+                        currentExtension.removeClass( 'mainwp-found' );
+                        currentExtension.hide();
+                    }
+                    var foundExtensions = jQuery( '#mainwp-extensions-list' ).find( '.ui.extension.card.mainwp-found' );
+                    if ( foundExtensions.length < 1 ) {
+                        jQuery( '#mainwp-extensions-search-no-results' ).show();
+                    } else {
+                        jQuery( '#mainwp-extensions-search-no-results' ).hide();
+                }
+            }
+        } );
+        } );
+        </script>
+
+        <?php
     }
 
     /**
@@ -319,72 +348,22 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     public static function render_intro_notice() {
         ?>
         <div class="ui secondary segment">
-            <h2 class="header"><?php esc_html_e( 'What are Extensions?', 'mainwp' ); ?></h2>
-            <p><?php esc_html_e( 'Extensions are specific features or tools created to expand the basic functionality of MainWP. The core of MainWP is designed to provide the functions most needed for you and minimize code bloat.', 'mainwp' ); ?></p>
-            <p><?php esc_html_e( 'Extensions offer custom functions and features so that each user can tailor the MainWP Dashboard to their specific needs.', 'mainwp' ); ?></p>
-            <p><?php esc_html_e( 'MainWP Pro offers 40+ Free & Premium Extensions in multiple categories, such as Security, Backup, Performance, Administrative, etc. You can get all of them at a single price.', 'mainwp' ); ?></p>
+            <h2 class="header"><?php esc_html_e( 'What are Add-ons?', 'mainwp' ); ?></h2>
+            <p><?php esc_html_e( 'Add-ons are specific features or tools created to expand the basic functionality of MainWP. The core of MainWP is designed to provide the functions most needed for you and minimize code bloat.', 'mainwp' ); ?></p>
+            <p><?php esc_html_e( 'Add-ons offer custom functions and features so that each user can tailor the MainWP Dashboard to their specific needs.', 'mainwp' ); ?></p>
+            <p><?php esc_html_e( 'MainWP Pro offers 40+ Free & Premium Add-ons in multiple categories, such as Security, Backup, Performance, Administrative, etc. You can get all of them at a single price.', 'mainwp' ); ?></p>
             <h4><?php esc_html_e( 'MainWP Pro includes:', 'mainwp' ); ?></h4>
             <div class="ui bulleted list">
-                <div class="item"><?php esc_html_e( 'All current MainWP Extensions (free & premium)', 'mainwp' ); ?></div>
-                <div class="item"><?php esc_html_e( 'All future MainWP Extensions (free & premium)', 'mainwp' ); ?></div>
-                <div class="item"><?php esc_html_e( 'Critical Security & Performance updates for MainWP Extensions', 'mainwp' ); ?></div>
+                <div class="item"><?php esc_html_e( 'All current MainWP Add-ons (free & premium)', 'mainwp' ); ?></div>
+                <div class="item"><?php esc_html_e( 'All future MainWP Add-ons (free & premium)', 'mainwp' ); ?></div>
+                <div class="item"><?php esc_html_e( 'Critical Security & Performance updates for MainWP Add-ons', 'mainwp' ); ?></div>
                 <div class="item"><?php esc_html_e( 'Priority support via Helpdesk & Community for MainWP products', 'mainwp' ); ?></div>
             </div>
-            <a class="ui basic green button" href="https://mainwp.com/mainwp-extensions/" target="_blank"><?php esc_html_e( 'Browse All Extensions', 'mainwp' ); ?></a> <a class="ui green button" href="https://mainwp.com/free-vs-pro/" target="_blank"><?php esc_html_e( 'Free Vs. Pro', 'mainwp' ); ?></a> <a class="ui green button" href="https://mainwp.com/signup/" target="_blank"><?php esc_html_e( 'Get Pro', 'mainwp' ); ?></a> <?php // NOSONAR - noopener - open safe. ?>
-            <h2 class="header"><?php esc_html_e( 'How to install your MainWP Extensions?', 'mainwp' ); ?></h2>
-            <p><?php printf( esc_html__( 'Once you have ordered MainWP Extensions, you can either use the %1$sautomatic extension installation%2$s option or %3$smanual installation%4$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-extensions/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://kb.mainwp.com/docs/my-downloads-and-api-keys/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></p> <?php // NOSONAR - noopener - open safe. ?>
+            <a class="ui basic green button" href="https://mainwp.com/mainwp-extensions/" target="_blank"><?php esc_html_e( 'Browse All Add-ons', 'mainwp' ); ?></a> <a class="ui green button" href="https://mainwp.com/free-vs-pro/" target="_blank"><?php esc_html_e( 'Free Vs. Pro', 'mainwp' ); ?></a> <a class="ui green button" href="https://mainwp.com/signup/" target="_blank"><?php esc_html_e( 'Get Pro', 'mainwp' ); ?></a> <?php // NOSONAR - noopener - open safe. ?>
+            <h2 class="header"><?php esc_html_e( 'How to install your MainWP Add-ons?', 'mainwp' ); ?></h2>
+            <p><?php printf( esc_html__( 'Once you have ordered MainWP Add-ons, you can either use the %1$sautomatic add-on installation%2$s option or %3$smanual installation%4$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/install-extensions/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://mainwp.com/kb/my-downloads-and-api-keys/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></p> <?php // NOSONAR - noopener - open safe. ?>
         </div>
         <?php
-    }
-
-    /**
-     * Method render_search_box()
-     *
-     * Render Search Box.
-     */
-    public static function render_search_box() {
-        ?>
-        <div class="mainwp-search-options ui fluid accordion mainwp-sidebar-accordion">
-            <div class="title">
-                <i class="dropdown icon"></i>
-            <?php esc_html_e( 'Search Installed Extensions', 'mainwp' ); ?>
-            </div>
-            <div class="content">
-                <div id="mainwp-search-extensions" class="ui fluid search">
-                    <div class="ui icon fluid input">
-                        <input class="prompt" id="mainwp-search-extensions-input" autocomplete="one-time-code" type="text" placeholder="<?php esc_attr_e( 'Find extension...', 'mainwp' ); ?>">
-                        <i class="search icon"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="ui fitted divider"></div>
-                <script type="text/javascript">
-                jQuery( document ).ready( function () {
-                    jQuery( '#mainwp-search-extensions-input' ).on( 'keyup', function () {
-                        var searchQuery = jQuery( this ).val().toLowerCase();
-                        var extensions = jQuery( '#mainwp-extensions-list' ).find( '.ui.extension.card' );
-                        for ( var i = 0; i < extensions.length; i++ ) {
-                            var currentExtension = jQuery( extensions[i] );
-                            var extensionTitle = jQuery( currentExtension ).attr( 'extension-title' ).toLowerCase();
-                            if ( extensionTitle.indexOf( searchQuery ) > -1 ) {
-                                currentExtension.show();
-                                currentExtension.addClass( 'mainwp-found' );
-                            } else {
-                                currentExtension.removeClass( 'mainwp-found' );
-                                currentExtension.hide();
-                            }
-                            var foundExtensions = jQuery( '#mainwp-extensions-list' ).find( '.ui.extension.card.mainwp-found' );
-                            if ( foundExtensions.length < 1 ) {
-                                jQuery( '#mainwp-extensions-search-no-results' ).show();
-                            } else {
-                                jQuery( '#mainwp-extensions-search-no-results' ).hide();
-                        }
-                    }
-                } );
-                } );
-                </script>
-            <?php
     }
 
     /**
@@ -435,16 +414,16 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         if ( isset( $extensions_data['privacy'] ) ) {
             if ( empty( $extensions_data['privacy'] ) ) {
-                $privacy_class = '<i class="green check icon"></i>';
+                $privacy_class = '<i class="fingerprint green icon"></i>';
             } elseif ( 1 === (int) $extensions_data['privacy'] || 2 === (int) $extensions_data['privacy'] ) {
-                $privacy_class = '<i class="yellow info icon"></i>';
+                $privacy_class = '<i class="fingerprint yellow icon"></i>';
             }
         }
 
         if ( $active ) {
-            $license_class = '<i class="green cog icon"></i>';
+            $license_class = '<i class="green key icon"></i>';
         } else {
-            $license_class = '<i class="red cog icon"></i>';
+            $license_class = '<i class="red key icon"></i>';
         }
 
         $item_slug = MainWP_Utility::get_dir_slug( $extension['slug'] );
@@ -456,7 +435,9 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         ?>
-            <div class="ui card extension <?php echo $disabled ? 'grey mainwp-disabled-extension' : 'green mainwp-enabled-extension'; ?> extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-title="<?php echo esc_attr( $extension['name'] ); ?>" base-slug="<?php echo esc_attr( $item_slug ); ?>" extension-slug="<?php echo esc_attr( $extension['slug'] ); ?>" status="<?php echo esc_attr( $queue_status ); ?>" license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
+
+        <!-- Fixed the issue extension missing model type. -->
+        <div class="ui fluid card extension <?php echo $disabled ? 'grey mainwp-disabled-extension' : 'green mainwp-enabled-extension'; ?> extension-card-<?php echo esc_attr( $extension['name'] ?? '' ); ?>" extension-model="<?php echo esc_attr( $extensions_data['model'] ?? '' ); ?>" extension-title="<?php echo esc_attr( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?>" base-slug="<?php echo esc_attr( $item_slug ); ?>" extension-slug="<?php echo esc_attr( $extension['slug'] ?? '' ); ?>" status="<?php echo esc_attr( $queue_status ); ?>" license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
         <?php
         /**
          * Action: mainwp_extension_card_top
@@ -469,82 +450,82 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
          */
         do_action( 'mainwp_extension_card_top', $extension );
         ?>
-                <div class="content">
-                    <img class="right floated mini ui image" alt="<?php echo esc_attr( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?>" src="<?php echo esc_html( $img_url ); ?>">
-                    <div class="header">
+        <div class="content">
+            <img class="right floated mini ui image" alt="<?php echo esc_attr( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?>" src="<?php echo esc_html( $img_url ); ?>">
+            <div class="header">
+                <?php if ( ! $disabled ) { ?>
+                    <a href="<?php echo esc_url( $extension_page_url ); ?>"><?php echo esc_html( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?></a>
+                <?php } else { ?>
+                    <?php echo esc_html( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?>
+                <?php } ?>
+            </div>
 
-                        <?php if ( ! $disabled ) { ?>
-                        <a href="<?php echo esc_url( $extension_page_url ); ?>"><?php echo esc_html( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?></a>
-                            <?php
-                        } else {
-                            ?>
-                            <?php echo esc_html( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?>
-                        <?php } ?>
-                    </div>
-
-                    <div class="meta">
+            <div class="meta">
                 <?php echo '<i class="code branch icon"></i>' . esc_html( $extension['version'] ); ?> <?php echo isset( $extension['DocumentationURI'] ) && ! empty( $extension['DocumentationURI'] ) ? ' - <a href="' . esc_url( str_replace( array( 'http:', 'https:' ), '', $extension['DocumentationURI'] ) ) . '" target="_blank">' . esc_html__( 'Documentation', 'mainwp' ) . '</a> <i class="external alternate icon"></i>' : ''; ?>
-                </div>
-
-                <?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) { ?>
-                    <?php if ( ! $active && ! $disabled ) { ?>
-                        <span class="ui red ribbon label"><?php esc_html_e( 'License not activated', 'mainwp' ); ?></span>
-                    <?php } ?>
-                <?php } ?>
-                <?php if ( isset( $extension_update->response[ $extension['slug'] ] ) ) { ?>
-                    <a href="<?php echo esc_url( admin_url( 'plugins.php' ) ); ?>" class="ui yellow ribbon label"><?php esc_html_e( 'Update available', 'mainwp' ); ?></a>
-                <?php } ?>
-
-                <div class="description">
-                    <?php echo esc_html( preg_replace( '/\<cite\>.*\<\/cite\>/', '', $extension['description'] ) ); ?>
-                </div>
-            </div>
-            <?php echo $new; // phpcs:ignore WordPress.Security.EscapeOutput ?>
-            <?php if ( ! $simple ) { ?>
-            <div class="extra content">
-                <div class="ui mini fluid stackable buttons">
-                    <a class="ui basic button extension-the-plugin-action" plugin-action="<?php echo $disabled ? 'active' : 'disable'; ?>"><?php echo $disabled ? '<i class="toggle on icon"></i> ' . esc_html__( 'Enable', 'mainwp' ) : '<i class="toggle off icon"></i> ' . esc_html__( 'Disable', 'mainwp' ); ?></a>
-                    <a class="ui extension-privacy-info-link icon basic button" base-slug="<?php echo esc_attr( $item_slug ); ?>" data-tooltip="<?php echo esc_html__( 'Click to see more about extension privacy.', 'mainwp' ); ?>" data-position="top left" data-inverted=""><?php echo $privacy_class; ?> <?php echo esc_html__( 'Privacy', 'mainwp' ); ?></a> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
-                    <?php if ( $disabled ) { ?>
-                    <a class="ui basic button extension-the-plugin-action" plugin-action="remove"><i class="trash icon"></i> <?php echo esc_html__( 'Delete', 'mainwp' ); ?></a>
-                    <?php } ?>
-                    <?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) { ?>
-                    <a class="ui activate-api-status mainwp-manage-extension-license icon basic button" data-tooltip="<?php echo $active ? esc_html__( 'Extension API license is activated properly. Click here to Deactivate it if needed.', 'mainwp' ) : esc_html__( 'Extension API license is not activated. Click here to activate it.', 'mainwp' ); ?>" api-actived="<?php echo $active ? '1' : '0'; ?>" data-position="top left" data-inverted=""><?php echo $license_class; ?> <?php echo esc_html__( 'License', 'mainwp' ); ?></a> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
-                    <?php } ?>
-                </div>
-            </div>
-            <?php } ?>
-            <div class="extra content action-feedback" style="display:none;">
-                <div class="ui mini message"></div>
             </div>
 
             <?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) { ?>
-                <?php if ( $active ) { ?>
-                    <div class="extra content" id="mainwp-extensions-api-form" style="display: none;">
-                        <div class="ui form">
-                            <div class="field">
-                                <div class="ui input fluid">
-                                    <input type="text" class="extension-api-key" placeholder="<?php esc_attr_e( 'API license key', 'mainwp' ); ?>" value="<?php echo esc_attr( $extension['api_key'] ); ?>"/>
-                                </div>
-                            </div>
-                            <div class="field">
-                                <div class="ui checkbox">
-                                    <input type="checkbox" id="extension-deactivate-cb" class="mainwp-extensions-deactivate-chkbox" <?php echo 'on' === $extension['deactivate_checkbox'] ? 'checked' : ''; ?>>
-                                    <label for="extension-deactivate-cb"><?php esc_html_e( 'Deactivate License Key', 'mainwp' ); ?></label>
-                                </div>
-                            </div>
-                            <input type="button" class="ui basic red fluid button mainwp-extensions-deactivate" value="<?php esc_html_e( 'Deactivate License', 'mainwp' ); ?>">
-
-                        </div>
-                    </div>
-                <?php } ?>
-
-                <?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) { ?>
-                <div class="extra content api-feedback" style="display:none;">
-                    <div class="ui mini message"></div>
-                </div>
+                <?php if ( ! $active && ! $disabled ) { ?>
+                    <span class="ui red ribbon label"><?php esc_html_e( 'License not activated', 'mainwp' ); ?></span>
                 <?php } ?>
             <?php } ?>
+
+            <?php if ( isset( $extension_update->response[ $extension['slug'] ] ) ) { ?>
+                <a href="<?php echo esc_url( admin_url( 'plugins.php' ) ); ?>" class="ui yellow ribbon label"><?php esc_html_e( 'Update available', 'mainwp' ); ?></a>
+            <?php } ?>
+
+            <div class="description">
+                <?php echo esc_html( preg_replace( '/\<cite\>.*\<\/cite\>/', '', $extension['description'] ) ); ?>
+            </div>
+        </div>
+
+        <?php echo $new; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+
+        <?php if ( ! $simple ) { ?>
+        <div class="extra content">
+            <div class="">
+                <a class="ui mini basic icon button extension-the-plugin-action" data-tooltip="<?php echo esc_html__( 'Disable/Enable Add-on', 'mainwp' ); ?>" data-position="top left" data-inverted="" plugin-action="<?php echo $disabled ? 'active' : 'disable'; ?>"><?php echo $disabled ? '<i class="toggle on icon"></i> ' : '<i class="toggle off icon"></i> '; ?></a>
+                <a class="ui mini extension-privacy-info-link icon basic button" base-slug="<?php echo esc_attr( $item_slug ); ?>" data-tooltip="<?php echo esc_html__( 'Privacy info.', 'mainwp' ); ?>" data-position="top left" data-inverted=""><?php echo $privacy_class; ?></a> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                <?php if ( $disabled ) { ?>
+                <a class="ui mini basic icon right floated button extension-the-plugin-action" plugin-action="remove" data-tooltip="<?php echo esc_html__( 'Delete Add-on', 'mainwp' ); ?>" data-position="top right" data-inverted=""><i class="trash icon"></i></a>
+                <?php } ?>
+                <?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) { ?>
+                <a class="ui mini activate-api-status mainwp-manage-extension-license icon basic right floated button" data-tooltip="<?php echo $active ? esc_html__( 'License activated.', 'mainwp' ) : esc_html__( 'License not activated. Click activate.', 'mainwp' ); ?>" api-actived="<?php echo $active ? '1' : '0'; ?>" data-position="top right" data-inverted=""><?php echo $license_class; ?></a> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                <?php } ?>
+            </div>
+        </div>
+        <?php } ?>
+
+        <div class="extra content action-feedback" style="display:none;">
+            <div class="ui mini message"></div>
+        </div>
+
+        <?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) { ?>
+            <?php if ( $active ) { ?>
+                <div class="extra content" id="mainwp-extensions-api-form" style="display: none;">
+                    <div class="ui form">
+                        <div class="field">
+                            <div class="ui input fluid">
+                                <input type="text" class="extension-api-key" placeholder="<?php esc_attr_e( 'API license key', 'mainwp' ); ?>" value="<?php echo esc_attr( $extension['api_key'] ); ?>"/>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="ui checkbox">
+                                <input type="checkbox" id="extension-deactivate-cb" class="mainwp-extensions-deactivate-chkbox" <?php echo 'on' === $extension['deactivate_checkbox'] ? 'checked' : ''; ?>>
+                                <label for="extension-deactivate-cb"><?php esc_html_e( 'Deactivate License Key', 'mainwp' ); ?></label>
+                            </div>
+                        </div>
+                        <input type="button" class="ui basic red fluid button mainwp-extensions-deactivate" value="<?php esc_html_e( 'Deactivate License', 'mainwp' ); ?>">
+                    </div>
+                </div>
+            <?php } ?>
+
+            <?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) { ?>
+            <div class="extra content api-feedback" style="display:none;">
+                <div class="ui mini message"></div>
+            </div>
+            <?php } ?>
+        <?php } ?>
         <?php
         /**
          * Action: mainwp_extension_card_bottom
@@ -580,7 +561,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $extension['version'] = '';
         }
         ?>
-        <div class="ui card extension grey mainwp-disabled-extension extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-title="<?php echo esc_attr( $extension['name'] ); ?>" base-slug="<?php echo esc_attr( $extension['slug'] ); ?>">
+        <div class="ui card extension grey mainwp-disabled-extension extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-title="<?php echo esc_attr( MainWP_Extensions_Handler::polish_ext_name( $extension, false ) ); ?>" base-slug="<?php echo esc_attr( $extension['slug'] ); ?>">
             <div class="content">
                 <img class="right floated mini ui image" alt="<?php echo esc_attr( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?>" src="<?php echo esc_html( $img_url ); ?>">
                 <div class="header">
@@ -588,9 +569,9 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 </div>
 
                 <?php if ( $installed ) : ?>
-                    <a href="admin.php?page=Extensions" class="ui black ribbon label"><?php echo esc_html__( 'Activate extension', 'mainwp' ); ?></a>
+                    <a href="admin.php?page=Extensions" class="ui black ribbon label"><?php echo esc_html__( 'Activate Add-on', 'mainwp' ); ?></a>
                 <?php else : ?>
-                    <a href="admin.php?page=Extensions&message=install-ext-<?php echo esc_attr( $extension['slug'] ); ?>" class="ui grey ribbon label"><?php echo esc_html__( 'Install extension', 'mainwp' ); ?></a>
+                    <a href="admin.php?page=Extensions&message=install-ext-<?php echo esc_attr( $extension['slug'] ); ?>" class="ui grey ribbon label"><?php echo esc_html__( 'Install Add-on', 'mainwp' ); ?></a>
                 <?php endif; ?>
                 <div class="description">
                     <?php echo esc_html( preg_replace( '/\<cite\>.*\<\/cite\>/', '', $extension['description'] ) ); ?>
@@ -606,23 +587,16 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * Render Purchase Notice.
      */
     public static function render_purchase_notice() {
-        $is_demo = MainWP_Demo_Handle::is_demo_mode();
-        $is_pro  = MainWP_Hooks::is_pro_member();
+        $is_pro = MainWP_Hooks::is_pro_member();
         ?>
-        <div id="mainwp-get-purchased-extensions-modal" class="ui first coupled large modal">
+        <div id="mainwp-get-purchased-extensions-modal" class="ui first coupled modal">
         <i class="close icon"></i>
-            <div class="header"><?php esc_html_e( 'Install Extensions', 'mainwp' ); ?></div>
+            <div class="header"><?php esc_html_e( 'Install Add-ons', 'mainwp' ); ?></div>
             <div class="scrolling content"></div>
             <div class="actions">
                 <div class="ui two columns stackable grid">
                     <div class="left aligned column">
-                    <?php
-                    if ( $is_demo ) {
-                        MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" id="mainwp-extensions-installnow-disabled" class="ui green button disabled" disabled="disabled" value="' . esc_attr__( 'Install Selected Extensions', 'mainwp' ) . '">' );
-                    } else {
-                        ?>
-                        <input type="button" class="ui green button" id="mainwp-extensions-installnow" value="<?php esc_attr_e( 'Install Selected Extensions', 'mainwp' ); ?>">
-                    <?php } ?>
+                        <input type="button" class="ui green button" id="mainwp-extensions-installnow" value="<?php esc_attr_e( 'Install Selected Add-ons', 'mainwp' ); ?>">
                     </div>
                     <div class="right aligned column">
                         <?php if ( ! $is_pro ) : ?>
@@ -641,44 +615,46 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @param string $mainwp_api_key MainWP.com api key.
      */
     public static function render_side_box( $mainwp_api_key ) {
-        $is_demo = MainWP_Demo_Handle::is_demo_mode();
         ?>
         <div class="mainwp-search-options ui fluid accordion mainwp-sidebar-accordion">
             <div class="title active">
                 <i class="dropdown icon"></i>
-        <?php esc_html_e( 'Install and Activate Extensions', 'mainwp' ); ?>
-        </div>
+                <?php esc_html_e( 'MainWP License Settings', 'mainwp' ); ?>
+            </div>
             <div class="content active">
-        <?php if ( empty( $mainwp_api_key ) ) { ?>
-        <div class="ui message info">
-            <?php printf( esc_html__( 'Not sure how to find your MainWP Main API Key? %1$sClick here to get it.%2$s', 'mainwp' ), '<a href="https://mainwp.com/my-account/my-api-keys/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
-        </div>
-        <?php } ?>
-        <div class="ui form" id="mainwp-extensions-api-fields">
-            <div class="field">
-                <label for="mainwp_com_api_key"><?php esc_html_e( 'Enter your MainWP Main API Key.', 'mainwp' ); ?></label>
-                <div class="ui input fluid">
-                    <input type="password" id="mainwp_com_api_key" autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="<?php echo esc_attr( '' ); ?>" value="<?php echo esc_attr( $mainwp_api_key ); ?>"/>
+                <?php if ( empty( $mainwp_api_key ) ) { ?>
+                    <div class="ui message info">
+                        <?php printf( esc_html__( 'Not sure how to find your MainWP Main API Key? %1$sClick here to get it.%2$s', 'mainwp' ), '<a href="https://mainwp.com/my-account/my-api-keys/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
+                    </div>
+                <?php } ?>
+                <div class="ui form" id="mainwp-extensions-api-fields">
+                    <div class="field">
+                        <label for="mainwp_com_api_key"></label>
+                        <div class="ui left icon fluid input">
+                            <input type="password" id="mainwp_com_api_key" autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="<?php esc_attr_e( 'Enter your MainWP Main API Key', 'mainwp' ); ?>" value="<?php echo esc_attr( $mainwp_api_key ); ?>"/>
+                            <i class="key icon"></i>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="ui checkbox">
+                            <input type="checkbox" <?php echo '' !== $mainwp_api_key ? 'checked="checked"' : ''; ?> name="extensions_api_savemylogin_chk" id="extensions_api_savemylogin_chk">
+                            <label for="extensions_api_savemylogin_chk"><small><?php esc_html_e( 'Remember MainWP Main API Key', 'mainwp' ); ?></small></label>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="field">
-                <div class="ui checkbox">
-                    <input type="checkbox" <?php echo '' !== $mainwp_api_key ? 'checked="checked"' : ''; ?> name="extensions_api_savemylogin_chk" id="extensions_api_savemylogin_chk">
-                    <label for="extensions_api_savemylogin_chk"><small><?php esc_html_e( 'Remember MainWP Main API Key', 'mainwp' ); ?></small></label>
-                </div>
-            </div>
-        </div>
-        <div class="ui compact hidden divider"></div>
+                <div class="ui hidden divider"></div>
 
-        <input type="button" class="ui fluid button" id="mainwp-extensions-savelogin" value="<?php esc_attr_e( 'Validate my MainWP Main API Key', 'mainwp' ); ?>">
-        <?php if ( ! $is_demo ) { ?>
-        <div class="ui divider"></div>
-        <input type="button" class="ui fluid basic green button" id="mainwp-extensions-bulkinstall" value="<?php esc_attr_e( 'Install Extensions', 'mainwp' ); ?>">
-        <br/>
-        <input type="button" class="ui fluid green button" id="mainwp-extensions-grabkeys" value="<?php esc_attr_e( 'Activate Extensions', 'mainwp' ); ?>">
-        <?php } ?>
-    </div>
-    </div>
+                <input type="button" class="ui fluid basic button" id="mainwp-extensions-savelogin" value="<?php esc_attr_e( 'Validate License', 'mainwp' ); ?>">
+            </div>
+        </div>
+        <div class="ui fitted divider"></div>
+        <div class="mainwp-search-options">
+            <input type="button" class="ui green fluid button" id="mainwp-extensions-bulkinstall" value="<?php esc_attr_e( 'Install Add-ons', 'mainwp' ); ?>">
+            <br/>
+            <input type="button" class="ui basic green fluid button" id="mainwp-extensions-grabkeys" value="<?php esc_attr_e( 'Activate Add-ons', 'mainwp' ); ?>">
+        </div>
+
+
         <?php
         $install_ext_slug = '';
         if ( isset( $_GET['message'] ) && 0 === strpos( wp_unslash( $_GET['message'] ), 'install-ext-' ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -742,6 +718,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'advanced-uptime-monitor-extension'       =>
             array(
                 'type'                   => 'free',
+                'model'                  => 'integration',
                 'slug'                   => 'advanced-uptime-monitor-extension',
                 'title'                  => 'MainWP Advanced Uptime Monitor',
                 'desc'                   => 'MainWP Extension for real-time up time monitoring.',
@@ -773,6 +750,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-article-uploader-extension'       =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-article-uploader-extension',
                 'title'                => 'MainWP Article Uploader Extension',
                 'desc'                 => 'MainWP Article Uploader Extension allows you to bulk upload articles to your dashboard and publish to child sites.',
@@ -792,6 +770,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-atarim-extension'                 =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'integration',
                 'slug'                 => 'mainwp-atarim-extension',
                 'title'                => 'MainWP Atarim Extension',
                 'desc'                 => 'MainWP Atarim Extension allows you get your Atarim info about managed sites to your MainWP Dashboard.',
@@ -811,6 +790,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-backwpup-extension'               =>
             array(
                 'type'                 => 'free',
+                'model'                => 'integration',
                 'slug'                 => 'mainwp-backwpup-extension',
                 'title'                => 'MainWP BackWPup Extension',
                 'desc'                 => 'MainWP BackWPup Extension combines the power of your MainWP Dashboard with the popular WordPress BackWPup Plugin. It allows you to schedule backups on your child sites.',
@@ -830,6 +810,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'boilerplate-extension'                   =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'extension',
                 'slug'                 => 'boilerplate-extension',
                 'title'                => 'MainWP Boilerplate Extension',
                 'desc'                 => 'MainWP Boilerplate extension allows you to create, edit and share repetitive pages across your network of child sites. The available placeholders allow these pages to be customized for each site without needing to be rewritten. The Boilerplate extension is the perfect solution for commonly repeated pages such as your "Privacy Policy", "About Us", "Terms of Use", "Support Policy", or any other page with standard text that needs to be distributed across your network.',
@@ -849,6 +830,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-buddy-extension'                  =>
             array(
                 'type'                 => 'free',
+                'model'                => 'integration',
                 'slug'                 => 'mainwp-buddy-extension',
                 'title'                => 'MainWP Buddy Extension',
                 'desc'                 => 'With the MainWP Buddy Extension, you can control the BackupBuddy Plugin settings for all your child sites directly from your MainWP Dashboard. This includes giving you the ability to create your child site backups and even set Backup schedules directly from your MainWP Dashboard.',
@@ -868,6 +850,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-bulk-settings-manager'            =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-bulk-settings-manager',
                 'title'                => 'MainWP Bulk Settings Manager',
                 'desc'                 => 'The Bulk Settings Manager Extension unlocks the world of WordPress directly from your MainWP Dashboard.  With Bulk Settings Manager you can adjust your Child site settings for the WordPress Core and almost any WordPress Plugin or Theme.',
@@ -887,6 +870,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-cache-control-extension'          =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-cache-control-extension',
                 'title'                => 'MainWP Cache Control Extension',
                 'desc'                 => 'MainWP Cache Control allows you to automatically purge the Cache on your child sites after performing an update of WP Core, Theme, or a Plugin through the MainWP Dashboard.',
@@ -907,6 +891,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-clone-extension'                  =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-clone-extension',
                 'title'                => 'MainWP Clone Extension',
                 'desc'                 => 'MainWP Clone Extension is an extension for the MainWP plugin that enables you to clone your child sites with no technical knowledge required.',
@@ -926,6 +911,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-code-snippets-extension'          =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-code-snippets-extension',
                 'title'                => 'MainWP Code Snippets Extension',
                 'desc'                 => 'The MainWP Code Snippets Extension is a powerful PHP platform that enables you to execute php code and scripts on your child sites and view the output on your Dashboard. Requires the MainWP Dashboard plugin.',
@@ -945,6 +931,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-comments-extension'               =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-comments-extension',
                 'title'                => 'MainWP Comments Extension',
                 'desc'                 => 'MainWP Comments Extension is an extension for the MainWP plugin that enables you to manage comments on your child sites.',
@@ -964,6 +951,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-custom-dashboard-extension'       =>
             array(
                 'type'                 => 'free',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-custom-dashboard-extension',
                 'title'                => 'MainWP Custom Dashboard Extension',
                 'desc'                 => 'The purpose of this plugin is to contain your customisation snippets for your MainWP Dashboard.',
@@ -983,6 +971,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-custom-post-types'                =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-custom-post-types',
                 'title'                => 'MainWP Custom Post Type',
                 'desc'                 => 'Custom Post Types Extension is an extension for the MainWP Plugin that allows you to manage almost any custom post type on your child sites and that includes Publishing, Editing, and Deleting custom post type content.',
@@ -1002,6 +991,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-clean-and-lock-extension'         =>
             array(
                 'type'                 => 'free',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-clean-and-lock-extension',
                 'title'                => 'MainWP Dashboard Lock Extension',
                 'desc'                 => 'MainWP Dashboard Lock Extension allows you to limit access to your wp-admin and even redirect non-wp-admin pages to a different site making your MainWP Dashboard virtually invisible.',
@@ -1021,6 +1011,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-database-updater-extension'       =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-database-updater-extension',
                 'title'                => 'MainWP Database Updater Extension',
                 'desc'                 => 'MainWP Database Updater Extension detects available Database updates for the WooCommerce and Elementor plugins, and allows you to process them.',
@@ -1041,6 +1032,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-domain-monitor-extension'         =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'integration',
                 'slug'                 => 'mainwp-domain-monitor-extension',
                 'title'                => 'MainWP Domain Monitor Extension',
                 'desc'                 => 'MainWP Domain Monitor Extension lets you keep a watchful eye on your domains. It alerts you via email when monitored domains are nearing expiration.',
@@ -1060,6 +1052,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-favorites-extension'              =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-favorites-extension',
                 'title'                => 'MainWP Favorites Extension',
                 'desc'                 => 'MainWP Favorites is an extension for the MainWP plugin that allows you to store your favorite plugins and themes, and install them directly to child sites from the dashboard repository.',
@@ -1079,6 +1072,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-fathom-extension'                 =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'integration',
                 'slug'                 => 'mainwp-fathom-extension',
                 'title'                => 'MainWP Fathom Extension',
                 'desc'                 => 'MainWP Fathom Extension is an extension for the MainWP plugin that enables you to monitor detailed statistics about your child sites traffic. It integrates seamlessly with your Fathom account.',
@@ -1098,6 +1092,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-file-uploader-extension'          =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-file-uploader-extension',
                 'title'                => 'MainWP File Uploader Extension',
                 'desc'                 => 'MainWP File Uploader Extension gives you an simple way to upload files to your child sites! Requires the MainWP Dashboard plugin.',
@@ -1117,6 +1112,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-google-analytics-extension'       =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'integration',
                 'slug'                 => 'mainwp-google-analytics-extension',
                 'title'                => 'MainWP Google Analytics Extension',
                 'desc'                 => 'MainWP Google Analytics Extension is an extension for the MainWP plugin that enables you to monitor detailed statistics about your child sites traffic. It integrates seamlessly with your Google Analytics account.',
@@ -1136,6 +1132,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-jetpack-protect-extension'        =>
             array(
                 'type'                 => 'free',
+                'model'                => 'integration',
                 'slug'                 => 'mainwp-jetpack-protect-extension',
                 'title'                => 'MainWP Jetpack Protect Extension',
                 'desc'                 => 'MainWP Jetpack Protect Extension uses the Jetpack Protect plugin to bring you information about vulnerable plugins and themes on your Child Sites so you can act accordingly.',
@@ -1156,6 +1153,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-jetpack-scan-extension'           =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'integration',
                 'slug'                 => 'mainwp-jetpack-scan-extension',
                 'title'                => 'MainWP Jetpack Scan Extension',
                 'desc'                 => 'MainWP Jetpack Scan Extension uses the Jetpack Scan API to bring you information about vulnerable plugins and themes on your Child Sites so you can act accordingly.',
@@ -1176,6 +1174,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-lighthouse-extension'             =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'integration',
                 'slug'                 => 'mainwp-lighthouse-extension',
                 'title'                => 'MainWP Lighthouse Extension',
                 'desc'                 => 'MainWP Lighthouse Extension is used for measuring the quality of your websites. It uses the Google PageSpeed Insights API to audit performance, accessibility and search engine optimization of your WordPress sites.',
@@ -1195,6 +1194,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-maintenance-extension'            =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-maintenance-extension',
                 'title'                => 'MainWP Maintenance Extension',
                 'desc'                 => 'MainWP Maintenance Extension is MainWP Dashboard extension that clears unwanted entries from child sites in your network. You can delete post revisions, delete auto draft pots, delete trash posts, delete spam, pending and trash comments, delete unused tags and categories and optimize database tables on selected child sites.',
@@ -1214,6 +1214,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-piwik-extension'                  =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'integration',
                 'slug'                 => 'mainwp-piwik-extension',
                 'title'                => 'MainWP Piwik Extension',
                 'desc'                 => 'MainWP Matomo Extension is an extension for the MainWP plugin that enables you to monitor detailed statistics about your child sites traffic. It integrates seamlessly with your Piwik account.',
@@ -1233,6 +1234,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-post-dripper-extension'           =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-post-dripper-extension',
                 'title'                => 'MainWP Post Dripper Extension',
                 'desc'                 => 'MainWP Post Dripper Extension allows you to deliver posts or pages to your network of sites over a pre-scheduled period of time. Requires MainWP Dashboard plugin.',
@@ -1252,6 +1254,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-post-plus-extension'              =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-post-plus-extension',
                 'title'                => 'MainWP Post Plus Extension',
                 'desc'                 => 'Enhance your MainWP publishing experience. The MainWP Post Plus Extension allows you to save work in progress as Post and Page drafts. That is not all, it allows you to use random authors, dates and categories for your posts and pages. Requires the MainWP Dashboard plugin.',
@@ -1271,6 +1274,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-pressable-extension'              =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'integration',
                 'slug'                 => 'mainwp-pressable-extension',
                 'title'                => 'MainWP Pressable Extension',
                 'desc'                 => 'MainWP Pressable Extension simplifies your Pressable hosting management experience, such as creating, disabling, and deleting websites, enabling/disabling CDN, managing backups, and more without the need to log in to your Pressable account.',
@@ -1290,6 +1294,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-pro-reports-extension'            =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-pro-reports-extension',
                 'title'                => 'MainWP Pro Reports Extension',
                 'desc'                 => 'The MainWP Pro Reports extension is a fully customizable reporting engine that allows you to create the type of report you are proud to send to your clients.',
@@ -1306,9 +1311,30 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'integration_owner'    => '',
                 'integration_owner_pp' => '',
             ),
+            'mainwp-regression-testing-extension'     =>
+            array(
+                'type'                 => 'pro',
+                'model'                => 'extension',
+                'slug'                 => 'mainwp-regression-testing-extension',
+                'title'                => 'MainWP Regression Testing Extension',
+                'desc'                 => 'Easily spot changes in your child site\'s source code to ensure updates don\'t introduce unexpected changes.',
+                'link'                 => 'https://mainwp.com/extension/regression-testing/',
+                'changelog_url'        => 'https://mainwp.com/changelog/mainwp-regression-testing-extension/',
+                'img'                  => $folder_url . 'regression-testing.png',
+                'product_id'           => 'MainWP Regression Testing Extension',
+                'product_item_id'      => 0,
+                'catalog_id'           => '1305199',
+                'group'                => array( 'updates' ),
+                'privacy'              => 0,
+                'integration'          => '',
+                'integration_url'      => '',
+                'integration_owner'    => '',
+                'integration_owner_pp' => '',
+            ),
             'mainwp-rocket-extension'                 =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'integration',
                 'slug'                 => 'mainwp-rocket-extension',
                 'title'                => 'MainWP Rocket Extension',
                 'desc'                 => 'MainWP Rocket Extension combines the power of your MainWP Dashboard with the popular WP Rocket Plugin. It allows you to mange WP Rocket settings and quickly Clear and Preload cache on your child sites.',
@@ -1328,6 +1354,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-sucuri-extension'                 =>
             array(
                 'type'                 => 'free',
+                'model'                => 'integration',
                 'slug'                 => 'mainwp-sucuri-extension',
                 'title'                => 'MainWP Sucuri Extension',
                 'desc'                 => 'MainWP Sucuri Extension enables you to scan your child sites for various types of malware, spam injections, website errors, and much more. Requires the MainWP Dashboard.',
@@ -1347,6 +1374,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-ithemes-security-extension'       =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'integration',
                 'slug'                 => 'mainwp-ithemes-security-extension',
                 'title'                => 'MainWP iThemes Security Extension',
                 'desc'                 => 'The iThemes Security Extension combines the power of your MainWP Dashboard with the popular iThemes Security Plugin. It allows you to manage iThemes Security plugin settings directly from your dashboard. Requires MainWP Dashboard plugin.',
@@ -1366,6 +1394,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-ssl-monitor-extension'            =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-ssl-monitor-extension',
                 'title'                => 'MainWP SSL Monitor Extension',
                 'desc'                 => 'MainWP SSL Monitor Extension lets you keep a watchful eye on your SSL Certificates. It alerts you via email when monitored certificates are nearing expiration.',
@@ -1386,6 +1415,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-staging-extension'                =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'integration',
                 'slug'                 => 'mainwp-staging-extension',
                 'title'                => 'MainWP Staging Extension',
                 'desc'                 => 'MainWP Staging Extension along with the WP Staging plugin, allows you to create and manage staging sites for your child sites.',
@@ -1405,6 +1435,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-team-control'                     =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-team-control',
                 'title'                => 'MainWP Team Control',
                 'desc'                 => 'MainWP Team Control extension allows you to create a custom roles for your dashboard site users and limiting their access to MainWP features. Requires MainWP Dashboard plugin.',
@@ -1424,6 +1455,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'termageddon-for-mainwp'                  =>
             array(
                 'type'                 => 'free',
+                'model'                => 'integration',
                 'slug'                 => 'termageddon-for-mainwp',
                 'title'                => 'Termageddon for MainWP',
                 'desc'                 => 'This extension is used for creating Privacy Policy, ToS, Disclaimer and Cookie Policy & Consent Tool pages automatically on your websites.',
@@ -1444,6 +1476,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-timecapsule-extension'            =>
             array(
                 'type'                 => 'free',
+                'model'                => 'integration',
                 'slug'                 => 'mainwp-timecapsule-extension',
                 'title'                => 'MainWP Time Capsule Extension',
                 'desc'                 => 'With the MainWP Time Capsule Extension, you can control the WP Time Capsule Plugin on all your child sites directly from your MainWP Dashboard. This includes the ability to create your child site backups and even restore your child sites to a point back in time directly from your dashboard.',
@@ -1463,6 +1496,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-time-tracker-extension'           =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-time-tracker-extension',
                 'title'                => 'MainWP Time Tracker Extension',
                 'desc'                 => 'Simplify client billing with precise project hour logging and detailed reporting. This tool integrates directly into your Dashboard for streamlined billing, ensuring accuracy and transparency in client charges.',
@@ -1482,6 +1516,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-cost-tracker-assistant-extension' =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-cost-tracker-assistant-extension',
                 'title'                => 'MainWP Cost Tracker Assistant Extension',
                 'desc'                 => 'Enhance your MainWP Dashboard by adding timely notifications for upcoming subscription renewals and automates cost tracking for newly installed plugins and themes through zip uploads, streamlining cost management tasks.',
@@ -1501,6 +1536,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-updraftplus-extension'            =>
             array(
                 'type'                 => 'free',
+                'model'                => 'integration',
                 'slug'                 => 'mainwp-updraftplus-extension',
                 'title'                => 'MainWP UpdraftPlus Extension',
                 'desc'                 => 'MainWP UpdraftPlus Extension combines the power of your MainWP Dashboard with the popular WordPress UpdraftPlus Plugin. It allows you to quickly back up your child sites.',
@@ -1520,6 +1556,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-url-extractor-extension'          =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-url-extractor-extension',
                 'title'                => 'MainWP URL Extractor Extension',
                 'desc'                 => 'MainWP URL Extractor allows you to search your child sites post and pages and export URLs in customized format. Requires MainWP Dashboard plugin.',
@@ -1539,6 +1576,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-virusdie-extension'               =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'integration',
                 'slug'                 => 'mainwp-virusdie-extension',
                 'title'                => 'MainWP Virusdie Extension',
                 'desc'                 => 'MainWP Virusdie Extension enables you to scan your child sites for various types of malware, spam injections, website errors, and much more. Requires the MainWP Dashboard.',
@@ -1558,6 +1596,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-vulnerability-checker-extension'  =>
             array(
                 'type'                   => 'pro',
+                'model'                  => 'integration',
                 'slug'                   => 'mainwp-vulnerability-checker-extension',
                 'title'                  => 'MainWP Vulnerability Checker Extension',
                 'desc'                   => 'MainWP Vulnerability Checker extension uses WPScan Vulnerability Database API to bring you information about vulnerable plugins on your Child Sites so you can act accordingly.',
@@ -1581,6 +1620,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-branding-extension'               =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'extension',
                 'slug'                 => 'mainwp-branding-extension',
                 'title'                => 'MainWP White Label Extension',
                 'desc'                 => 'The MainWP White Label extension allows you to alter the details of the MianWP Child Plugin to reflect your companies brand or completely hide the plugin from the installed plugins list.',
@@ -1600,6 +1640,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-woocommerce-shortcuts-extension'  =>
             array(
                 'type'                 => 'free',
+                'model'                => 'integration',
                 'slug'                 => 'mainwp-woocommerce-shortcuts-extension',
                 'title'                => 'MainWP WooCommerce Shortcuts Extension',
                 'desc'                 => 'MainWP WooCommerce Shortcuts provides you a quick access WooCommerce pages in your network. Requires MainWP Dashboard plugin.',
@@ -1619,6 +1660,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-woocommerce-status-extension'     =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'integration',
                 'slug'                 => 'mainwp-woocommerce-status-extension',
                 'title'                => 'MainWP WooCommerce Status Extension',
                 'desc'                 => 'MainWP WooCommerce Status provides you a quick overview of your WooCommerce stores in your network. Requires MainWP Dashboard plugin.',
@@ -1638,6 +1680,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'mainwp-wordfence-extension'              =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'integration',
                 'slug'                 => 'mainwp-wordfence-extension',
                 'title'                => 'MainWP WordFence Extension',
                 'desc'                 => 'The WordFence Extension combines the power of your MainWP Dashboard with the popular WordPress Wordfence Plugin. It allows you to manage WordFence settings, Monitor Live Traffic and Scan your child sites directly from your dashboard. Requires MainWP Dashboard plugin.',
@@ -1657,9 +1700,10 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'wordpress-seo-extension'                 =>
             array(
                 'type'                 => 'pro',
+                'model'                => 'integration',
                 'slug'                 => 'wordpress-seo-extension',
-                'title'                => 'MainWP WordPress SEO Extension',
-                'desc'                 => 'MainWP WordPress SEO extension by MainWP enables you to manage all your WordPress SEO by Yoast plugins across your network. Create and quickly set settings templates from one central dashboard. Requires MainWP Dashboard plugin.',
+                'title'                => 'MainWP Yoast SEO Extension',
+                'desc'                 => 'MainWP Yoast SEO extension by MainWP enables you to manage all your WordPress SEO by Yoast plugins across your network. Create and quickly set settings templates from one central dashboard. Requires MainWP Dashboard plugin.',
                 'link'                 => 'https://mainwp.com/extension/wordpress-seo/',
                 'changelog_url'        => 'https://mainwp.com/changelog/mainwp-wordpress-seo-extension/',
                 'img'                  => $folder_url . 'wordpress-seo.png',
@@ -1673,14 +1717,15 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'integration_owner'    => 'Newfold Capital Inc.',
                 'integration_owner_pp' => 'https://yoast.com/privacy-policy/',
             ),
-            'activity-log-mainwp'                     => array(
+            'wp-security-audit-log'                   => array(
                 'type'                 => 'org',
-                'product_id'           => 'activity-log-mainwp',
-                'slug'                 => 'activity-log-mainwp/activity-log-mainwp.php',
+                'model'                => 'integration',
+                'product_id'           => 'wp-security-audit-log',
+                'slug'                 => 'wp-security-audit-log/wp-security-audit-log.php',
                 'title'                => 'Activity Log For MainWP',
-                'link'                 => 'https://wordpress.org/plugins/activity-log-mainwp/',
-                'changelog_url'        => 'https://wordpress.org/plugins/activity-log-mainwp/#developers',
-                'url'                  => 'https://wordpress.org/plugins/activity-log-mainwp/',
+                'link'                 => 'https://wordpress.org/plugins/wp-security-audit-log/',
+                'changelog_url'        => 'https://wordpress.org/plugins/wp-security-audit-log/#developers',
+                'url'                  => 'https://wordpress.org/plugins/wp-security-audit-log/',
                 'group'                => array( 'security' ),
                 'privacy'              => 2,
                 'integration'          => 'WP Activity Log',
@@ -1689,8 +1734,26 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'integration_owner_pp' => 'https://www.wpwhitesecurity.com/privacy-policy/',
                 'desc'                 => 'Add the Activity Logs for MainWP extension to also keep a log of all the user activity and other changes that happen both on the MainWP dashboard, collate child site activity logs',
             ),
+            'aam-extension-mainwp'                    => array(
+                'type'                 => 'org',
+                'model'                => 'integration',
+                'product_id'           => 'aam-extension-mainwp',
+                'slug'                 => 'aam-extension-mainwp/aam-extension-mainwp.php',
+                'title'                => 'AAM Extension for MainWP',
+                'link'                 => 'https://wordpress.org/plugins/aam-extension-mainwp/',
+                'changelog_url'        => 'https://wordpress.org/plugins/aam-extension-mainwp/#developers',
+                'url'                  => 'https://wordpress.org/plugins/aam-extension-mainwp/',
+                'group'                => array( 'security' ),
+                'privacy'              => 2,
+                'integration'          => 'Advanced Access Manager',
+                'integration_url'      => 'https://aamportal.com/',
+                'integration_owner'    => 'AAM Plugin',
+                'integration_owner_pp' => 'https://wordpress.org/plugins/advanced-access-manager/',
+                'desc'                 => 'This extension integrates Advanced Access Manager (AAM) with MainWP, enabling seamless synchronization of AAM security scan results with your MainWP dashboard.',
+            ),
             'security-ninja-for-mainwp'               => array(
                 'type'                 => 'org',
+                'model'                => 'integration',
                 'product_id'           => 'security-ninja-for-mainwp',
                 'slug'                 => 'security-ninja-for-mainwp/security-ninja-mainwp.php',
                 'title'                => 'Security Ninja For MainWP',
@@ -1707,6 +1770,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             ),
             'wp-compress-mainwp'                      => array(
                 'type'                 => 'org',
+                'model'                => 'integration',
                 'product_id'           => 'wp-compress-mainwp',
                 'slug'                 => 'wp-compress-mainwp/wp-compress-main-wp.php',
                 'title'                => 'WP Compress for MainWP',
@@ -1722,6 +1786,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             ),
             'seopress-for-mainwp'                     => array(
                 'type'                 => 'org',
+                'model'                => 'integration',
                 'product_id'           => 'seopress-for-mainwp',
                 'slug'                 => 'seopress-for-mainwp/seopress-for-mainwp.php',
                 'title'                => 'SEOPress for MainWP',
@@ -1737,6 +1802,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             ),
             'wpvivid-backup-mainwp'                   => array(
                 'type'                 => 'org',
+                'model'                => 'integration',
                 'product_id'           => 'wpvivid-backup-mainwp',
                 'slug'                 => 'wpvivid-backup-mainwp/wpvivid-backup-mainwp.php',
                 'title'                => 'WPvivid Backup for MainWP',

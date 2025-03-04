@@ -444,7 +444,124 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         echo '</div>';
     }
 
+    /**
+     * Method render_api_keys_v1_table.
+     *
+     * @return void
+     */
+    public static function render_api_keys_v1_table() { //phpcs:ignore -- NOSONAR - complex.
+        $all_keys = static::check_rest_api_updates();
+        if ( ! is_array( $all_keys ) ) {
+            $all_keys = array();
+        }
 
+        if ( ! empty( $all_keys ) ) {
+            ?>
+        <h2 class="ui dividing header">
+            <?php esc_html_e( 'MainWP REST API v1 API Keys (Legacy)', 'mainwp' ); ?>
+            <div class="sub header"><?php esc_html_e( 'Legacy API keys for older integrations. We recommend switching to v2 for better security and performance.', 'mainwp' ); ?></div>
+        </h2>
+        <table id="mainwp-rest-api-keys-table" class="ui unstackable table">
+            <thead>
+                <tr>
+                    <th scope="col" class="no-sort collapsing check-column"><span class="ui checkbox"><input aria-label="<?php esc_attr_e( 'Select all REST API keys', 'mainwp' ); ?>" id="cb-select-all-top" type="checkbox" /></span></th>
+                    <th scope="col" class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'API Key', 'mainwp' ); ?></th>
+                    <th scope="col"><?php esc_html_e( 'Permissions', 'mainwp' ); ?></th>
+                    <th scope="col" class="no-sort collapsing"><?php esc_html_e( 'Consumer key ending in', 'mainwp' ); ?></th>
+                    <th scope="col" class="no-sort collapsing"></th>
+                </tr>
+            </thead>
+            <tbody id="mainwp-rest-api-body-table" class="mainwp-rest-api-body-table-manage">
+                <?php
+                foreach ( $all_keys as $ck => $item ) {
+                    if ( ! is_array( $item ) ) {
+                        continue;
+                    }
+                    $ending      = substr( $ck, -8 );
+                    $desc        = isset( $item['desc'] ) && ! empty( $item['desc'] ) ? $item['desc'] : 'N/A';
+                    $enabled     = isset( $item['enabled'] ) && ! empty( $item['enabled'] ) ? true : false;
+                    $endcoded_ck = rawurlencode( $ck );
+
+                    $pers_codes = '';
+                    if ( ! isset( $item['perms'] ) ) {
+                        $pers_codes = 'r,w,d'; // to compatible.
+                    } elseif ( ! empty( $item['perms'] ) ) {
+                        $pers_codes = $item['perms'];
+                    }
+
+                    $pers_names = array();
+                    if ( ! empty( $pers_codes ) && is_string( $pers_codes ) ) {
+                        $pers_codes = explode( ',', $pers_codes );
+                        if ( is_array( $pers_codes ) ) {
+                            if ( in_array( 'r', $pers_codes ) ) {
+                                $pers_names[] = esc_html__( 'Read', 'mainwp' );
+                            }
+                            if ( in_array( 'w', $pers_codes ) ) {
+                                $pers_names[] = esc_html__( 'Write', 'mainwp' );
+                            }
+                            if ( in_array( 'd', $pers_codes ) ) {
+                                $pers_names[] = esc_html__( 'Delete', 'mainwp' );
+                            }
+                        }
+                    }
+
+                    ?>
+                    <tr key-ck-id="<?php echo esc_html( $endcoded_ck ); ?>">
+                        <td class="check-column">
+                            <div class="ui checkbox">
+                                <input type="checkbox" aria-label="<?php echo esc_attr__( 'Select API key described as: ', 'mainwp' ) . esc_html( $desc ); ?>" value="<?php echo esc_html( $endcoded_ck ); ?>" name=""/>
+                            </div>
+                        </td>
+                        <td><?php echo $enabled ? '<span class="ui green fluid label">' . esc_html__( 'Enabled', 'mainwp' ) . '</span>' : '<span class="ui gray fluid label">' . esc_html__( 'Disabled', 'mainwp' ) . '</span>'; ?></td>
+                        <td><a href="admin.php?page=AddApiKeys&editkey=<?php echo esc_html( $endcoded_ck ); ?>"><?php echo esc_html( $desc ); ?></a></td>
+                        <td><?php echo ! empty( $pers_names ) ? implode( ', ', $pers_names ) : 'N/A'; // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+                        <td><code><?php echo esc_html( '...' . $ending ); // phpcs:ignore WordPress.Security.EscapeOutput ?></code></td>
+                        <td class="right aligned">
+                            <div class="ui right pointing dropdown" style="z-index:999">
+                            <i class="ellipsis vertical icon"></i>
+                                <div class="menu">
+                                <a class="item" href="admin.php?page=AddApiKeys&editkey=<?php echo esc_html( $endcoded_ck ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><i class="pen icon"></i><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+                                <a class="item" href="javascript:void(0)" onclick="mainwp_restapi_remove_key_confirm(jQuery(this).closest('tr').find('.check-column INPUT:checkbox'));" ><i class="trash icon"></i><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php } ?>
+                </tbody>
+            </table>
+            <script type="text/javascript">
+            var responsive = true;
+            if( jQuery( window ).width() > 1140 ) {
+                responsive = false;
+            }
+            jQuery( document ).ready( function( $ ) {
+                try {
+                    jQuery( '#mainwp-rest-api-keys-table' ).DataTable( {
+                        "lengthMenu": [ [5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"] ],
+                        "stateSave" : true,
+                        "order"     : [ [1, 'asc'] ],
+                        "columnDefs": [ {
+                            "targets": 'no-sort',
+                            "orderable": false
+                        } ],
+                        "responsive": responsive,
+                        "preDrawCallback": function() {
+                            jQuery( '#mainwp-rest-api-keys-table .ui.dropdown' ).dropdown();
+                            jQuery('#mainwp-rest-api-keys-table .ui.checkbox').checkbox();
+                            mainwp_datatable_fix_menu_overflow('#mainwp-rest-api-keys-table', -70, 0);
+                            mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
+                        }
+                    } );
+                    mainwp_datatable_fix_menu_overflow('#mainwp-rest-api-keys-table', -70, 0);
+                } catch(err) {
+                    // to fix js error.
+                }
+            });
+            </script>
+            <?php
+        }
+    }
 
     /** Render REST API SubPage */
     public static function render_api_keys_v2_table() { // phpcs:ignore -- NOSONAR - complex.
@@ -454,15 +571,15 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             <thead>
                 <tr>
                     <th scope="col" class="no-sort collapsing check-column"><span class="ui checkbox"><input aria-label="<?php esc_attr_e( 'Select all REST API keys', 'mainwp' ); ?>" id="cb-select-all-top" type="checkbox" /></span></th>
-                    <th scope="col" ><?php esc_html_e( 'API Key (v2)', 'mainwp' ); ?></th>
                     <th scope="col" class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'API Key (v2)', 'mainwp' ); ?></th>
                     <th scope="col" class="collapsing"><?php esc_html_e( 'Permissions', 'mainwp' ); ?></th>
                     <th scope="col" class="no-sort collapsing"><?php esc_html_e( 'API key ending in', 'mainwp' ); ?></th>
                     <th scope="col"><?php esc_html_e( 'Last access', 'mainwp' ); ?></th>
                     <th scope="col" class="no-sort collapsing"></th>
                 </tr>
                 </thead>
-                    <tbody id="mainwp-rest-api-v2-body-table" class="mainwp-rest-api-body-table-manage">
+                <tbody id="mainwp-rest-api-v2-body-table" class="mainwp-rest-api-body-table-manage">
                     <?php
                     if ( is_array( $all_keys_v2 ) ) {
                         foreach ( $all_keys_v2 as $item ) {
@@ -490,14 +607,19 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                                         <input type="checkbox" aria-label="<?php echo esc_attr__( 'Select API key described as: ', 'mainwp' ) . esc_html( $desc ); ?>" value="<?php echo intval( $key_id ); ?>" name=""/>
                                     </div>
                                 </td>
-                                <td><a href="admin.php?page=AddApiKeys&editkey=<?php echo intval( $key_id ); ?>&rest_ver=2&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><?php echo esc_html( $desc ); ?></a></td>
                                 <td><?php echo $enabled ? '<span class="ui green fluid label">' . esc_html__( 'Enabled', 'mainwp' ) . '</span>' : '<span class="ui gray fluid label">' . esc_html__( 'Disabled', 'mainwp' ) . '</span>'; ?></td>
+                                <td><a href="admin.php?page=AddApiKeys&editkey=<?php echo intval( $key_id ); ?>&rest_ver=2&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><?php echo esc_html( $desc ); ?></a></td>
                                 <td><?php echo ! empty( $pers_title ) ? implode( ', ', $pers_title ) : 'N/A'; // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
                                 <td><code><?php echo esc_html( '...' . $ending ); // phpcs:ignore WordPress.Security.EscapeOutput ?></code></td>
-                                <td sort-value="<?php echo ! empty( $item->last_access ) ? strtotime( $item->last_access ) : 0; ?>"><?php echo ! empty( $item->last_access ) ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( strtotime( $item->last_access ) ) ) : 'N/A'; // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
-                                <td class="collapsing">
-                                    <a class="ui green basic mini button" href="admin.php?page=AddApiKeys&editkey=<?php echo intval( $key_id ); ?>&rest_ver=2&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
-                                    <a class="ui mini button" href="javascript:void(0)" onclick="mainwp_restapi_remove_key_confirm(jQuery(this).closest('tr').find('.check-column INPUT:checkbox'));" ><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+                                <td sort-value="<?php echo ! empty( $item->last_access ) ? strtotime( $item->last_access ) : 0; ?>"><?php echo ! empty( $item->last_access ) ? '<span data-tooltip="' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( strtotime( $item->last_access ) ) ) . '" data-position="left center" data-inverted="">' . MainWP_Utility::time_elapsed_string( strtotime( $item->last_access ) ) . '</span>' : 'N/A'; // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+                                <td class="right aligned">
+                                    <div class="ui right pointing dropdown" style="z-index:999">
+                                    <i class="ellipsis vertical icon"></i>
+                                        <div class="menu">
+                                            <a class="item" href="admin.php?page=AddApiKeys&editkey=<?php echo intval( $key_id ); ?>&rest_ver=2&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+                                            <a class="item" href="javascript:void(0)" onclick="mainwp_restapi_remove_key_confirm(jQuery(this).closest('tr').find('.check-column INPUT:checkbox'));" ><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                             <?php
@@ -525,11 +647,11 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                         "preDrawCallback": function() {
                             jQuery( '#mainwp-rest-api-keys-v2-table .ui.dropdown' ).dropdown();
                             jQuery('#mainwp-rest-api-keys-v2-table .ui.checkbox').checkbox();
-                            mainwp_datatable_fix_menu_overflow();
+                            mainwp_datatable_fix_menu_overflow('#mainwp-rest-api-keys-v2-table', -70, 0);
                             mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
                         }
                     } );
-                    mainwp_datatable_fix_menu_overflow();
+                    mainwp_datatable_fix_menu_overflow('#mainwp-rest-api-keys-v2-table', -70, 0);
                 } catch(err) {
                     // to fix js error.
                 }
@@ -550,122 +672,23 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         static::render_table_top();
         if ( ! static::check_rest_api_enabled() ) {
             ?>
-            <div class="ui message yellow"><?php printf( esc_html__( 'It seems the WordPress REST API is currently disabled on your site. MainWP REST API requires the WordPress REST API to function properly. Please enable it to ensure smooth operation. Need help? %sClick here for a guide%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/wordpress-rest-api-does-not-respond/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
+            <div class="ui message yellow"><?php printf( esc_html__( 'It seems the WordPress REST API is currently disabled on your site. MainWP REST API requires the WordPress REST API to function properly. Please enable it to ensure smooth operation. Need help? %sClick here for a guide%s.', 'mainwp' ), '<a href="https://mainwp.com/kb/wordpress-rest-api-does-not-respond/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
             <?php
         }
         ?>
         <div id="mainwp-rest-api-keys" class="ui segment">
             <div class="ui message" id="mainwp-message-zone-apikeys" style="display:none;"></div>
             <?php static::show_messages(); ?>
-            <?php
-            static::render_api_keys_v2_table();
+            <h2 class="ui dividing header">
+                <?php esc_html_e( 'MainWP REST API v2 API Keys', 'mainwp' ); ?>
+                <div class="sub header"><?php esc_html_e( 'The latest and most secure version of the MainWP REST API. Use these keys for new integrations.', 'mainwp' ); ?></div>
+            </h2>
+            <?php static::render_api_keys_v2_table(); ?>
 
-            $all_keys = static::check_rest_api_updates();
-            if ( ! is_array( $all_keys ) ) {
-                $all_keys = array();
-            }
-
-            if ( ! empty( $all_keys ) ) {
-                ?>
-            <table id="mainwp-rest-api-keys-table" class="ui unstackable table">
-                <thead>
-                    <tr>
-                        <th scope="col" class="no-sort collapsing check-column"><span class="ui checkbox"><input aria-label="<?php esc_attr_e( 'Select all REST API keys', 'mainwp' ); ?>" id="cb-select-all-top" type="checkbox" /></span></th>
-                        <th scope="col" ><?php esc_html_e( 'API Key (v1)', 'mainwp' ); ?></th>
-                        <th scope="col" class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                        <th scope="col" class="collapsing"><?php esc_html_e( 'Permissions', 'mainwp' ); ?></th>
-                        <th scope="col" class="no-sort collapsing"><?php esc_html_e( 'Consumer key ending in', 'mainwp' ); ?></th>
-                        <th scope="col" class="no-sort collapsing"></th>
-                    </tr>
-                </thead>
-                    <tbody id="mainwp-rest-api-body-table" class="mainwp-rest-api-body-table-manage">
-                    <?php
-                    foreach ( $all_keys as $ck => $item ) {
-                        if ( ! is_array( $item ) ) {
-                            continue;
-                        }
-                        $ending      = substr( $ck, -8 );
-                        $desc        = isset( $item['desc'] ) && ! empty( $item['desc'] ) ? $item['desc'] : 'N/A';
-                        $enabled     = isset( $item['enabled'] ) && ! empty( $item['enabled'] ) ? true : false;
-                        $endcoded_ck = rawurlencode( $ck );
-
-                        $pers_codes = '';
-                        if ( ! isset( $item['perms'] ) ) {
-                            $pers_codes = 'r,w,d'; // to compatible.
-                        } elseif ( ! empty( $item['perms'] ) ) {
-                            $pers_codes = $item['perms'];
-                        }
-
-                        $pers_names = array();
-                        if ( ! empty( $pers_codes ) && is_string( $pers_codes ) ) {
-                            $pers_codes = explode( ',', $pers_codes );
-                            if ( is_array( $pers_codes ) ) {
-                                if ( in_array( 'r', $pers_codes ) ) {
-                                    $pers_names[] = esc_html__( 'Read', 'mainwp' );
-                                }
-                                if ( in_array( 'w', $pers_codes ) ) {
-                                    $pers_names[] = esc_html__( 'Write', 'mainwp' );
-                                }
-                                if ( in_array( 'd', $pers_codes ) ) {
-                                    $pers_names[] = esc_html__( 'Delete', 'mainwp' );
-                                }
-                            }
-                        }
-
-                        ?>
-                        <tr key-ck-id="<?php echo esc_html( $endcoded_ck ); ?>">
-                            <td class="check-column">
-                                <div class="ui checkbox">
-                                    <input type="checkbox" aria-label="<?php echo esc_attr__( 'Select API key described as: ', 'mainwp' ) . esc_html( $desc ); ?>" value="<?php echo esc_html( $endcoded_ck ); ?>" name=""/>
-                                </div>
-                            </td>
-                            <td><a href="admin.php?page=AddApiKeys&editkey=<?php echo esc_html( $endcoded_ck ); ?>"><?php echo esc_html( $desc ); ?></a></td>
-                            <td><?php echo $enabled ? '<span class="ui green fluid label">' . esc_html__( 'Enabled', 'mainwp' ) . '</span>' : '<span class="ui gray fluid label">' . esc_html__( 'Disabled', 'mainwp' ) . '</span>'; ?></td>
-                            <td><?php echo ! empty( $pers_names ) ? implode( ', ', $pers_names ) : 'N/A'; // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
-                            <td><code><?php echo esc_html( '...' . $ending ); // phpcs:ignore WordPress.Security.EscapeOutput ?></code></td>
-                            <td class="collapsing">
-                                <a class="ui green basic mini button" href="admin.php?page=AddApiKeys&editkey=<?php echo esc_html( $endcoded_ck ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
-                                <a class="ui mini button" href="javascript:void(0)" onclick="mainwp_restapi_remove_key_confirm(jQuery(this).closest('tr').find('.check-column INPUT:checkbox'));" ><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
-                            </td>
-                        </tr>
-                        <?php
-                    }
-                    ?>
-                </tbody>
-            </table>
+            <?php static::render_api_keys_v1_table(); ?>
         </div>
-        <script type="text/javascript">
-            var responsive = true;
-            if( jQuery( window ).width() > 1140 ) {
-                responsive = false;
-            }
-            jQuery( document ).ready( function( $ ) {
-                try {
-                    jQuery( '#mainwp-rest-api-keys-table' ).DataTable( {
-                        "lengthMenu": [ [5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"] ],
-                        "stateSave" : true,
-                        "order"     : [ [1, 'asc'] ],
-                        "columnDefs": [ {
-                            "targets": 'no-sort',
-                            "orderable": false
-                        } ],
-                        "responsive": responsive,
-                        "preDrawCallback": function() {
-                            jQuery( '#mainwp-rest-api-keys-table .ui.dropdown' ).dropdown();
-                            jQuery('#mainwp-rest-api-keys-table .ui.checkbox').checkbox();
-                            mainwp_datatable_fix_menu_overflow();
-                            mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
-                        }
-                    } );
-                    mainwp_datatable_fix_menu_overflow();
-                } catch(err) {
-                    // to fix js error.
-                }
-            });
-        </script>
-                <?php
-            } // end if.
-            static::render_footer();
+        <?php
+        static::render_footer();
     }
 
 
@@ -797,138 +820,134 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
 
         ?>
         <div id="rest-api-settings" class="ui segment">
-            <h3 class="ui dividing header">
+            <h2 class="ui dividing header">
                 <?php esc_html_e( 'MainWP REST API Credentials', 'mainwp' ); ?>
-                <div class="sub header"><?php esc_html_e( 'These API Keys are used for authorization and authentication for the MainWP REST API.', 'mainwp' ); ?></div>
-            </h3>
+                <div class="sub header"><?php esc_html_e( 'Generate, manage, and revoke API keys to securely connect with the MainWP REST API. Ensure you\'re using the correct version for your integrations.', 'mainwp' ); ?></div>
+            </h2>
+            <div id="api-credentials-created" class="ui green message">
+                <strong><?php esc_html_e( 'API credentials have been successfully generated.', 'mainwp' ); ?></strong><br/>
+                <?php esc_html_e( 'Please copy the consumer key and secret now as after you leave this page the credentials will no longer be accessible. Use the Description field for easier Key management when needed.', 'mainwp' ); ?>
+            </div>
+
+            <?php static::show_messages(); ?>
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-rest-api-info-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-rest-api-info-message"></i>
                     <?php printf( esc_html__( 'Enable the MainWP REST API functionality and generate API credentials. Check this %1$shelp document%2$s to see all available endpoints.', 'mainwp' ), '<a href="https://mainwp.dev/rest-api/" target="_blank">', '</a>' ); ?>
                 </div>
             <?php endif; ?>
-                <?php static::show_messages(); ?>
-                <div id="api-credentials-created" class="ui green message">
-                    <strong><?php esc_html_e( 'API credentials have been successfully generated.', 'mainwp' ); ?></strong><br/>
-                    <?php esc_html_e( 'Please copy the consumer key and secret now as after you leave this page the credentials will no longer be accessible. Use the Description field for easier Key management when needed.', 'mainwp' ); ?>
-                </div>
-                <div class="ui info message">
-                    <?php esc_html_e( 'The API Key (Bearer) authentication is only compatible with the MainWP REST API v2', 'mainwp' ); ?>
-                    <?php esc_html_e( 'If you are working with the MainWP REST API v1 (Legacy), click on the "Show Legacy API Credentials" button to obtain your Consumer Key and Consumer Secret.', 'mainwp' ); ?>
-                </div>
-                <div class="ui form">
-                    <form method="POST" action="">
-                        <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-                        <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'RESTAPI' ) ); ?>" />
-                        <?php
-                        /**
-                         * Action: rest_api_form_top
-                         *
-                         * Fires at the top of REST API form.
-                         *
-                         * @since 4.1
-                         */
-                        do_action( 'rest_api_form_top' );
-                        ?>
-                        <div class="ui grid field">
-                            <label class="six wide column middle aligned"><?php esc_html_e( 'Enable API key', 'mainwp' ); ?></label>
-                            <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the REST API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <input type="checkbox" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" checked="true" aria-label="<?php esc_attr_e( 'Enable REST API key', 'mainwp' ); ?>"/>
-                            </div>
+
+            <div class="ui info message">
+                <?php esc_html_e( 'The API Key (Bearer) authentication is only compatible with the MainWP REST API v2', 'mainwp' ); ?>
+                <?php esc_html_e( 'If you are working with the MainWP REST API v1 (Legacy), click on the "Show Legacy API Credentials" button to obtain your Consumer Key and Consumer Secret.', 'mainwp' ); ?>
+            </div>
+
+            <div class="ui form">
+                <form method="POST" action="">
+                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                    <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'RESTAPI' ) ); ?>" />
+                    <?php
+                    /**
+                     * Action: rest_api_form_top
+                     *
+                     * Fires at the top of REST API form.
+                     *
+                     * @since 4.1
+                     */
+                    do_action( 'rest_api_form_top' );
+                    ?>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Enable API key', 'mainwp' ); ?></label>
+                        <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the REST API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                            <input type="checkbox" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" checked="true" aria-label="<?php esc_attr_e( 'Enable REST API key', 'mainwp' ); ?>"/>
                         </div>
-                        <div class="ui grid field">
-                            <label class="six wide column middle aligned"><?php esc_html_e( 'API key name', 'mainwp' ); ?></label>
-                            <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Name your API Key.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <input type="text" name="mainwp_rest_add_api_key_desc" id="mainwp_rest_add_api_key_desc" value="" aria-label="<?php esc_attr_e( 'API key name.', 'mainwp' ); ?>"/>
-                            </div>
+                    </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'API key name', 'mainwp' ); ?></label>
+                        <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Name your API Key.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                            <input type="text" name="mainwp_rest_add_api_key_desc" id="mainwp_rest_add_api_key_desc" value="" aria-label="<?php esc_attr_e( 'API key name.', 'mainwp' ); ?>"/>
                         </div>
+                    </div>
 
-                        <?php
-                        $token = $_consumer_secret . '==' . $_consumer_key;
-                        ?>
-                        <div class="ui grid field">
-                            <label class="six wide column middle aligned"><?php esc_html_e( 'API key (Bearer token)', 'mainwp' ); ?></label>
-                            <div class="five wide column">
-                                <input type="text" name="mainwp_rest_token" id="mainwp_rest_token" value="<?php echo esc_html( $token ); ?>" readonly aria-label="<?php esc_attr_e( 'API Token', 'mainwp' ); ?>"/>
-                            </div>
-                            <div class="five wide column">
-                                <input id="mainwp_rest_token_clipboard_button" style="display:nonce;" type="button" name="" class="ui green basic button copy-to-clipboard" value="<?php esc_attr_e( 'Copy to Clipboard', 'mainwp' ); ?>">
-                            </div>
+                    <?php
+                    $token = $_consumer_secret . '==' . $_consumer_key;
+                    ?>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'API key (Bearer token)', 'mainwp' ); ?></label>
+                        <div class="five wide column">
+                            <input type="text" name="mainwp_rest_token" id="mainwp_rest_token" value="<?php echo esc_html( $token ); ?>" readonly aria-label="<?php esc_attr_e( 'API Token', 'mainwp' ); ?>"/>
                         </div>
-
-                        <?php $init_pers = 'r,w,d'; ?>
-                        <div class="ui grid field">
-                            <label class="six wide column middle aligned"><?php esc_html_e( 'Permissions', 'mainwp' ); ?></label>
-                            <div class="five wide column">
-                                <div class="ui multiple selection dropdown" init-value="<?php echo esc_attr( $init_pers ); ?>">
-                                    <input name="mainwp_rest_api_key_edit_pers" value="" type="hidden">
-                                    <i class="dropdown icon"></i>
-                                    <div class="default text"><?php echo ( '' === $init_pers ) ? esc_html__( 'No Permissions selected.', 'mainwp' ) : ''; ?></div>
-                                    <div class="menu">
-                                        <div class="item" data-value="r"><?php esc_html_e( 'Read', 'mainwp' ); ?></div>
-                                        <div class="item" data-value="w"><?php esc_html_e( 'Write', 'mainwp' ); ?></div>
-                                        <div class="item" data-value="d"><?php esc_html_e( 'Delete', 'mainwp' ); ?></div>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="five wide column">
+                            <input id="mainwp_rest_token_clipboard_button" style="display:nonce;" type="button" name="" class="ui green basic button copy-to-clipboard" value="<?php esc_attr_e( 'Copy to Clipboard', 'mainwp' ); ?>">
                         </div>
+                    </div>
 
-                        <div class="ui grid field">
-                            <label class="six wide column middle aligned"></label>
-                            <div class="five wide column">
-                                <a href="#" id="mainwp-show-legacy-api-credentials" class="ui mini basic button"><?php esc_html_e( 'Show Legacy API Credentials', 'mainwp' ); ?></a>
-                            </div>
-                        </div>
-
-                        <div id="mainwp-legacy-api-credentials" class="ui segment" style="display:none">
-                            <h3 class="ui dividing header">
-                                <?php esc_html_e( 'Legacy API Credentials', 'mainwp' ); ?>
-                                <div class="sub header"><?php esc_html_e( 'Authentication compatible only with the MainWP REST API version 1!', 'mainwp' ); ?></div>
-                            </h3>
-
-                            <div class="ui grid field">
-                                <label class="six wide column middle aligned"><?php esc_html_e( 'Consumer key', 'mainwp' ); ?></label>
-                                <div class="five wide column">
-                                    <input type="text" name="mainwp_consumer_key" id="mainwp_consumer_key" value="<?php echo esc_html( $consumer_key ); ?>" readonly aria-label="<?php esc_attr_e( 'Consumer key', 'mainwp' ); ?>"/>
+                    <?php $init_pers = 'r,w,d'; ?>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Permissions', 'mainwp' ); ?></label>
+                        <div class="five wide column">
+                            <div class="ui multiple selection dropdown" init-value="<?php echo esc_attr( $init_pers ); ?>">
+                                <input name="mainwp_rest_api_key_edit_pers" value="" type="hidden">
+                                <i class="dropdown icon"></i>
+                                <div class="default text"><?php echo ( '' === $init_pers ) ? esc_html__( 'No Permissions selected.', 'mainwp' ) : ''; ?></div>
+                                <div class="menu">
+                                    <div class="item" data-value="r"><?php esc_html_e( 'Read', 'mainwp' ); ?></div>
+                                    <div class="item" data-value="w"><?php esc_html_e( 'Write', 'mainwp' ); ?></div>
+                                    <div class="item" data-value="d"><?php esc_html_e( 'Delete', 'mainwp' ); ?></div>
                                 </div>
-                                <div class="five wide column">
-                                    <input id="mainwp_consumer_key_clipboard_button" style="display:nonce;" type="button" name="" class="ui green basic button copy-to-clipboard" value="<?php esc_attr_e( 'Copy to Clipboard', 'mainwp' ); ?>">
-                                </div>
-                            </div>
-
-                            <div class="ui grid field">
-                                <label class="six wide column middle aligned"><?php esc_html_e( 'Consumer secret', 'mainwp' ); ?></label>
-                                <div class="five wide column">
-                                    <input type="text" name="mainwp_consumer_secret" id="mainwp_consumer_secret" value="<?php echo esc_html( $consumer_secret ); ?>" readonly aria-label="<?php esc_attr_e( 'Consumer secret', 'mainwp' ); ?>"/>
-                                </div>
-                                <div class="five wide column">
-                                    <input id="mainwp_consumer_secret_clipboard_button" style="display:nonce;" type="button" name="" class="ui green basic button copy-to-clipboard" value="<?php esc_attr_e( 'Copy to Clipboard', 'mainwp' ); ?>">
-                                </div>
-                            </div>
-
-                            <div class="ui grid field">
-                            <label class="six wide column middle aligned"><?php esc_html_e( 'Enable MainWP REST API v1 Compatibility', 'mainwp' ); ?></label>
-                            <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the credentials will be compatible with REST API v1.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <input type="checkbox" name="mainwp_rest_api_keys_compatible_v1" id="mainwp_rest_api_keys_compatible_v1" aria-label="<?php esc_attr_e( 'If enabled, the credentials will be compatible with REST API v1.', 'mainwp' ); ?>"/>
                             </div>
                         </div>
                     </div>
-                        <?php
-                        /**
-                         * Action: rest_api_form_bottom
-                         *
-                         * Fires at the bottom of REST API form.
-                         *
-                         * @since 4.1
-                         */
-                        do_action( 'rest_api_form_bottom' );
-                        ?>
-                        <div class="ui divider"></div>
-                        <input type="submit" name="submit" id="submit-save-settings-button" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
-                        <div style="clear:both"></div>
-                    </form>
-                </div>
-            </div>
+
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Enable MainWP REST API v1 Compatibility', 'mainwp' ); ?></label>
+                        <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the credentials will be compatible with REST API v1.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                            <input type="checkbox" name="mainwp_rest_api_keys_compatible_v1" id="mainwp_rest_api_keys_compatible_v1" aria-label="<?php esc_attr_e( 'If enabled, the credentials will be compatible with REST API v1.', 'mainwp' ); ?>"/>
+                        </div>
+                    </div>
+
+                    <div id="mainwp-legacy-api-credentials" class="ui segment" style="display:none">
+                        <h3 class="ui dividing header">
+                            <?php esc_html_e( 'Legacy API Credentials', 'mainwp' ); ?>
+                            <div class="sub header"><?php esc_html_e( 'Authentication compatible only with the MainWP REST API version 1!', 'mainwp' ); ?></div>
+                        </h3>
+
+                        <div class="ui grid field">
+                            <label class="six wide column middle aligned"><?php esc_html_e( 'Consumer key', 'mainwp' ); ?></label>
+                            <div class="five wide column">
+                                <input type="text" name="mainwp_consumer_key" id="mainwp_consumer_key" value="<?php echo esc_html( $consumer_key ); ?>" readonly aria-label="<?php esc_attr_e( 'Consumer key', 'mainwp' ); ?>"/>
+                            </div>
+                            <div class="five wide column">
+                                <input id="mainwp_consumer_key_clipboard_button" style="display:nonce;" type="button" name="" class="ui green basic button copy-to-clipboard" value="<?php esc_attr_e( 'Copy to Clipboard', 'mainwp' ); ?>">
+                            </div>
+                        </div>
+
+                        <div class="ui grid field">
+                            <label class="six wide column middle aligned"><?php esc_html_e( 'Consumer secret', 'mainwp' ); ?></label>
+                            <div class="five wide column">
+                                <input type="text" name="mainwp_consumer_secret" id="mainwp_consumer_secret" value="<?php echo esc_html( $consumer_secret ); ?>" readonly aria-label="<?php esc_attr_e( 'Consumer secret', 'mainwp' ); ?>"/>
+                            </div>
+                            <div class="five wide column">
+                                <input id="mainwp_consumer_secret_clipboard_button" style="display:nonce;" type="button" name="" class="ui green basic button copy-to-clipboard" value="<?php esc_attr_e( 'Copy to Clipboard', 'mainwp' ); ?>">
+                            </div>
+                        </div>
+                    </div>
+                <?php
+                /**
+                 * Action: rest_api_form_bottom
+                 *
+                 * Fires at the bottom of REST API form.
+                 *
+                 * @since 4.1
+                 */
+                do_action( 'rest_api_form_bottom' );
+                ?>
+                <div class="ui divider"></div>
+                <input type="submit" name="submit" id="submit-save-settings-button" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                <div style="clear:both"></div>
+            </form>
+        </div>
+    </div>
             <script type="text/javascript">
                 jQuery(function($) {
                     //we are going to inject the values into the copy buttons to make things easier for people
@@ -940,7 +959,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     //show copy to clipboard buttons
                     $('.copy-to-clipboard').show();
 
-                    $('#mainwp-show-legacy-api-credentials').on('click', function() {
+                    $('#mainwp_rest_api_keys_compatible_v1').on('change', function() {
                         $('#mainwp-legacy-api-credentials').toggle();
                     });
                 });
@@ -1232,11 +1251,11 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             ?>
             <p><?php esc_html_e( 'If you need help with the MainWP REST API, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui list">
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-rest-api/" target="_blank">REST API</a></div> <?php // NOSONAR -- compatible with help. ?>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-rest-api/#how-to-enable-rest-api" target="_blank">Enable REST API</a></div> <?php // NOSONAR -- compatible with help. ?>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-rest-api/#rest-api-permissions" target="_blank">REST API Permissions</a></div> <?php // NOSONAR -- compatible with help. ?>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-rest-api/#how-to-disable-rest-api" target="_blank">Disable REST API</a></div> <?php // NOSONAR -- compatible with help. ?>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-rest-api/#how-to-delete-rest-api-keys" target="_blank">Delete REST API Key</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-rest-api/" target="_blank">REST API</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-rest-api/#how-to-enable-rest-api" target="_blank">Enable REST API</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-rest-api/#rest-api-permissions" target="_blank">REST API Permissions</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-rest-api/#how-to-disable-rest-api" target="_blank">Disable REST API</a></div> <?php // NOSONAR -- compatible with help. ?>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-rest-api/#how-to-delete-rest-api-keys" target="_blank">Delete REST API Key</a></div> <?php // NOSONAR -- compatible with help. ?>
                 <?php
                 /**
                  * Action: mainwp_rest_api_help_item

@@ -160,7 +160,7 @@ class Cost_Tracker_Add_Edit {
 
         ?>
         <div class="mainwp-main-content">
-            <div class="ui segment">
+            <div>
                 <?php
                 if ( isset( $_GET['message'] ) && ! empty( $_GET['message'] ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Recommended
                     $msg     = (int) $_GET['message']; //phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -189,10 +189,15 @@ class Cost_Tracker_Add_Edit {
                     <i class="ui close icon"></i>
                 </div>
                 <?php if ( $edit_cost ) : ?>
-                    <h3 class="ui dividing header">
-                    <?php echo esc_html__( 'Edit ', 'mainwp' ) . esc_html__( $edit_cost->name ); ?></h3>
+                    <h2 class="ui dividing header">
+                        <?php echo esc_html__( 'Edit ', 'mainwp' ) . esc_html__( $edit_cost->name ); ?>
+                        <div class="sub header"><?php esc_html_e( 'Update your expense details to keep your cost tracking accurate and up to date.', 'mainwp' ); ?></div>
+                    </h2>
                 <?php else : ?>
-                    <h3 class="ui dividing header"><?php esc_html_e( 'Add New Cost', 'mainwp' ); ?></h3>
+                    <h2 class="ui dividing header">
+                        <?php esc_html_e( 'Add New Cost', 'mainwp' ); ?>
+                        <div class="sub header"><?php esc_html_e( 'Track your expenses with ease. Add hosting fees, plugin licenses, or any other costs to keep your agency finances organized.', 'mainwp' ); ?></div>
+                    </h2>
                 <?php endif; ?>
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit">
                     <label class="six wide column middle aligned">
@@ -224,17 +229,23 @@ class Cost_Tracker_Add_Edit {
                     $delnonce = MainWP_System_Utility::get_custom_nonce( 'product', esc_attr( $cust_prod_icon_file ) );
                     ?>
                     </label>
-                    <div class="two wide middle aligned column" data-tooltip="<?php esc_attr_e( 'Upload the product icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                        <div class="ui green button basic module-cost-tracker-product-icon-customable" iconItemId="<?php echo intval( $edit_id ); ?>" iconFileSlug="<?php echo esc_attr( $cust_prod_icon_file ); ?>" del-icon-nonce="<?php echo esc_attr( $delnonce ); ?>" icon-src="<?php echo esc_attr( $cust_prod_src ); ?>"><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
-                    </div>
-                    <div class="one wide middle aligned center aligned column">
-                        <?php if ( $edit_cost ) { ?>
-                            <?php echo Cost_Tracker_Admin::get_instance()->get_product_icon_display( $edit_cost, 'module_cost_tracker_upload_custom_icon_img_display' ); //phpcs:ignore --ok. ?>
-                        <?php } else { ?>
-                            <div style="display:inline-block;" id="module_cost_tracker_upload_custom_icon_img_display"></div> <?php // used for icon holder. ?>
-                        <?php } ?>
-                    </div>
                     <input type="hidden" name="mainwp_module_cost_tracker_edit_icon_hidden" class="settings-field-value-change-handler" id="mainwp_module_cost_tracker_edit_icon_hidden" value="<?php echo esc_attr( $selected_prod_icon ); ?>">
+                    <div class="three wide middle aligned column" >
+                        <span class="ui circular bordered image">
+                            <?php if ( ! empty( $edit_cost ) ) { ?>
+                                <?php echo Cost_Tracker_Admin::get_instance()->get_product_icon_display( $edit_cost, 'module_cost_tracker_upload_custom_icon_img_display' ); //phpcs:ignore --ok. ?>
+                            <?php } else { ?>
+                                <div style="display:inline-block;" id="module_cost_tracker_upload_custom_icon_img_display"></div>
+                            <?php } ?>
+                        </span>
+                        <div class="ui basic button module-cost-tracker-product-icon-customable"
+                            iconItemId="<?php echo intval( $edit_id ); ?>"
+                            iconFileSlug="<?php echo esc_attr( $cust_prod_icon_file ); ?>"
+                            del-icon-nonce="<?php echo esc_attr( $delnonce ); ?>"
+                            icon-src="<?php echo esc_attr( $cust_prod_src ); ?>">
+                            <i class="image icon"></i> <?php echo ! empty( $edit_cost ) ? esc_html__( 'Change Image', 'mainwp' ) : esc_html__( 'Upload Image', 'mainwp' ); ?>
+                        </div>
+                    </div>
                 </div>
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit">
                     <label class="six wide column middle aligned">
@@ -642,7 +653,7 @@ class Cost_Tracker_Add_Edit {
                         'result'    => 'success',
                         'iconfile'  => esc_html( $uploaded_icon ),
                         'iconsrc'   => esc_html( $cust_icon ),
-                        'iconimg'   => '<img class="ui mini circular image" src="' . esc_attr( $cust_icon ) . '" style="width:32px;height:auto;display:inline-block;" alt="Cost custom icon">',
+                        'iconimg'   => '<img class="ui circular image" src="' . esc_attr( $cust_icon ) . '" style="width:32px;height:auto;display:inline-block;" alt="Cost custom icon">',
                         'iconnonce' => MainWP_System_Utility::get_custom_nonce( 'product', esc_html( $uploaded_icon ) ),
                     )
                 )

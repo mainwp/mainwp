@@ -504,6 +504,10 @@ jQuery(function () {
             let rowElement = jQuery(this).closest('.mainwp-manage-theme-item-website');
             let websiteId = jQuery(rowElement).attr('site-id');
             let theme = jQuery(rowElement).attr('theme-slug');
+            if (action == 'activate' && jQuery(rowElement).attr('is-actived') == 1) {
+                jQuery(rowElement).find('.mainwp-selected-theme-site').attr('checked', false);
+                return;
+            }
             selectedSiteThemes.push({ 'siteid': websiteId, 'theme': theme });
             if (selectedSites.indexOf(websiteId) < 0) {
                 selectedSites.push(websiteId);
@@ -561,7 +565,7 @@ jQuery(function () {
             } else if (action == 'delete') {
                 let themesToDelete = [];
                 for (let ss of selectedThemes) {
-                    if (jQuery(ss).attr('not-delete') == 1) {
+                    if (jQuery(ss).attr('not-delete') == 1 || jQuery(ss).attr('is-actived') == 1) {
                         jQuery(ss).find('.mainwp-selected-theme-site').attr('checked', false);
                         continue;
                     }

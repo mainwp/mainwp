@@ -308,7 +308,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp_groups_info"></i>
                     <div><?php esc_html_e( 'In case you are managing a large number of WordPress sites, it could be useful for you to mark them with different tags . Later, you will be able to make Site Selection by a tag that will speed up your work and makes it much easier.', 'mainwp' ); ?></div>
                     <div><?php esc_html_e( 'One child site can be assigned to multiple Tags at the same time.', 'mainwp' ); ?></div>
-                    <div><?php printf( esc_html__( 'for more information check the %1$sKnowledge Base %2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
+                    <div><?php printf( esc_html__( 'for more information check the %1$sKnowledge Base %2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/manage-child-site-groups/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
             </div>
             <?php } ?>
             <?php
@@ -382,7 +382,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                                 jQuery( '#mainwp-manage-groups-sites-table .ui.checkbox' ).checkbox();
                                 mainwp_datatable_fix_menu_overflow('#mainwp-manage-groups-sites-table' );
                             }, 1000);
-                        } );;
+                        } );
                     mainwp_datatable_fix_to_update_rows_state('#mainwp-manage-groups-sites-table'); // to fix saved rows state.
             } );
                 </script>
@@ -788,7 +788,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             ?>
             <p><?php esc_html_e( 'If you need help with managing tags, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui list">
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-child-sites/#manage-child-site-tags" target="_blank">Manage Tags</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-child-sites/#manage-child-site-tags" target="_blank">Manage Tags</a></div>
             <?php
             /**
              * Action: mainwp_tags_help_item

@@ -63,12 +63,12 @@ class Log_Graph_Php_Widget {
     public function render_widget() {
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
+            <h2 class="ui header handle-drag">
                 <?php esc_html_e( 'PHP Version Distribution', 'mainwp' ); ?>
                 <div class="sub header">
                 <?php esc_html_e( 'Distribution of PHP versions across the sites. Track which PHP versions are most prevalent in your network.', 'mainwp' ); ?>
                 </div>
-            </h3>
+            </h2>
         </div>
 
         <div class="mainwp-widget-insights-card">

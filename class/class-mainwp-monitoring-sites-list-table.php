@@ -43,6 +43,13 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
     private $global_settings = null;
 
     /**
+     * Public variable.
+     *
+     * @var bool
+     */
+    public $site_health_disabled = false;
+
+    /**
      * Create instance.
      *
      * @return mixed $instance.
@@ -66,6 +73,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
         if ( null === $this->global_settings ) {
             $this->global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
         }
+        $this->site_health_disabled = get_option( 'mainwp_disableSitesHealthMonitoring', 1 ) ? true : false;  // disabled by default.
     }
 
     /**
@@ -141,7 +149,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      * @return array Array of default column names.
      */
     public function get_default_columns() {
-        return array(
+        $columns = array(
             'cb'            => '<input type="checkbox" />',
             'status'        => esc_html__( 'Status', 'mainwp' ),
             'site'          => esc_html__( 'Monitor', 'mainwp' ),
@@ -152,6 +160,12 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             'last24_status' => esc_html__( 'Last 24h Status', 'mainwp' ),
             'last_check'    => esc_html__( 'Last Check', 'mainwp' ),
         );
+
+        if ( $this->site_health_disabled ) {
+            unset( $columns['site_health'] );
+        }
+
+        return $columns;
     }
 
     /**
@@ -662,7 +676,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-monitoring-info-message"></i>
                 <div><?php esc_html_e( 'The Uptime Monitoring feature runs directly on your server, which means it utilizes your server\'s resources to perform checks. A high frequency checks could place additional load on your server, especially for resource-intensive environments.', 'mainwp' ); ?></div><br/>
                 <div><?php esc_html_e( 'We recommend setting a check interval that balances your uptime monitoring needs with your server\'s performance. For most sites, a 5-minute or 10-minute interval provides reliable monitoring without unnecessary strain.', 'mainwp' ); ?></div><br/>
-                <div><?php printf( esc_html__( 'If you need further guidance, feel free to visit our %1$sKnowledge Base%2$s or reach out to support.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
+                <div><?php printf( esc_html__( 'If you need further guidance, feel free to visit our %1$sKnowledge Base%2$s or reach out to support.', 'mainwp' ), '<a href="https://mainwp.com/kb/sites-monitoring/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
             </div>
         <?php endif; ?>
         <table id="mainwp-manage-sites-table" style="width:100%" class="ui single line selectable unstackable table mainwp-with-preview-table mainwp-manage-wpsites-table">
@@ -1267,8 +1281,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             } elseif ( 'site_actions' === $column_name ) {
                 ?>
                     <td class="collapsing">
-                        <div class="ui left pointing dropdown icon mini basic green button" style="z-index:999;">
-                            <i class="ellipsis horizontal icon"></i>
+                        <div class="ui right pointing dropdown" style="z-index:999;">
+                            <i class="ellipsis vertical icon"></i>
                             <div class="menu" siteid="<?php echo intval( $monitor_subpage['id'] ); ?>" itemid="<?php echo intval( $monitor_subpage['monitor_id'] ); ?>">
                                 <a class="managemonitors_uptime_checknow item" href="#"><?php esc_html_e( 'Check Now', 'mainwp' ); ?></a>
                             </div>
@@ -1403,8 +1417,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                         endif;
                     elseif ( 'site_actions' === $column_name ) :
                         ?>
-                        <div class="ui left pointing dropdown icon mini basic green button"  style="z-index:999;">
-                            <i class="ellipsis horizontal icon"></i>
+                        <div class="ui right pointing dropdown"  style="z-index:999;">
+                            <i class="ellipsis vertical icon"></i>
                             <div class="menu" siteid="<?php echo intval( $website['id'] ); ?>">
                                 <a class="managesites_checknow item" href="#"><?php esc_html_e( 'Check Now', 'mainwp' ); ?></a>
                                 <?php if ( empty( $website['sync_errors'] ) ) : ?>

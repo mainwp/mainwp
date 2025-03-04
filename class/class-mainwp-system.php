@@ -7,6 +7,8 @@
 
 namespace MainWP\Dashboard;
 
+use MainWP\Dashboard\Module\Log\Log_Manage_Insights_Events_Page;
+
 // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
 const MAINWP_VIEW_PER_SITE         = 1;
@@ -27,7 +29,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '5.3.5.1'; // NOSONAR.
+    public static $version = '5.4'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -218,6 +220,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         add_action( 'after_setup_theme', array( &$this, 'after_setup_theme' ) );
 
         add_action( 'init', array( &$this, 'parse_init' ) );
+        add_action( 'init', array( &$this, 'init_jobs' ) );
         add_action( 'init', array( &$this, 'init' ), 9999 );
         add_action( 'admin_init', array( $this, 'admin_redirects' ) );
         add_action( 'current_screen', array( &$this, 'current_screen_redirects' ), 15 );
@@ -265,7 +268,11 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_Updates_Overview::init();
         MainWP_Client::init();
         MainWP_Rest_Api_Page::init();
-        MainWP_Non_MainWP_Actions::instance();
+
+        if ( class_exists( '\MainWP\Dashboard\Module\Log\Log_Manage_Insights_Events_Page' ) ) {
+            Log_Manage_Insights_Events_Page::instance();
+        }
+
         MainWP_Uptime_Monitoring_Schedule::instance();
 
         if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -697,6 +704,16 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     }
 
     /**
+     * Method init_jobs()
+     *
+     * Initiate mainwp schedule jobs.
+     */
+    public function init_jobs() {
+        MainWP_System_Cron_Jobs::instance()->init_cron_jobs();
+    }
+
+
+    /**
      * Method after_setup_theme()
      *
      * After setup theme hook, to support post thumbnails.
@@ -799,6 +816,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_Post_Extension_Handler::instance()->init();
         MainWP_Post_Backup_Handler::instance()->init();
         MainWP_Manage_Sites_Filter_Segment::get_instance()->admin_init();
+        MainWP_Ui_Manage_Widgets_Layout::get_instance()->admin_init();
 
         /**
          * Filter: mainwp_ui_use_wp_calendar
@@ -853,18 +871,19 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         wp_enqueue_script( 'user-profile' );
         wp_enqueue_style( 'thickbox' );
 
-        $load_gridster = false;
+        $load_gridstack = false;
 
         // phpcs:disable WordPress.Security.NonceVerification
         if ( ( isset( $_GET['page'] ) && ( 'mainwp_tab' === $_GET['page'] || ( 'managesites' === $_GET['page'] && isset( $_GET['dashboard'] ) ) ) ) || ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] && isset( $_GET['client_id'] ) ) || ( isset( $_GET['page'] ) && 0 === strpos( wp_unslash( $_GET['page'] ), 'ManageSites' ) ) ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- individual page.
-            $load_gridster = true;
+            $load_gridstack = true;
         }
 
-        $load_gridster = apply_filters( 'mainwp_enqueue_script_gridster', $load_gridster );
+        // compatible filter.
+        $load_gridstack = apply_filters( 'mainwp_enqueue_script_gridster', $load_gridstack );
 
-        if ( $load_gridster ) {
-            wp_enqueue_script( 'gridster', MAINWP_PLUGIN_URL . 'assets/js/gridster/jquery.dsmorse-gridster.js', array(), $this->current_version, true );
-            wp_enqueue_style( 'gridster', MAINWP_PLUGIN_URL . 'assets/js/gridster/jquery.gridster.min.css', array(), $this->current_version );
+        if ( $load_gridstack ) {
+            wp_enqueue_script( 'mainwp_gridstack', MAINWP_PLUGIN_URL . 'assets/js/gridstack/gridstack-all.js', array(), $this->current_version, true );
+            wp_enqueue_style( 'mainwp_gridstack', MAINWP_PLUGIN_URL . 'assets/js/gridstack/gridstack.min.css', array(), $this->current_version );
         }
 
         if ( isset( $_GET['page'] ) && ( 'managesites' === $_GET['page'] || 'MonitoringSites' === $_GET['page'] || 'ManageGroups' === $_GET['page'] ) ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -1168,6 +1187,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     wp_enqueue_style( 'mainwp-custom-dashboard-extension-wp-admin-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-wpadmin-theme.css', array(), $this->current_version );
                 } elseif ( 'minimalistic' === $selected_theme ) {
                     wp_enqueue_style( 'mainwp-custom-dashboard-extension-minimalistic-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-minimalistic-theme.css', array(), $this->current_version );
+                } elseif ( 'default-2024' === $selected_theme ) {
+                    wp_enqueue_style( 'mainwp-custom-dashboard-extension-default-2024-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-default-2024-theme.css', array(), $this->current_version );
                 } elseif ( 'default' === $selected_theme ) {
                     wp_enqueue_style( 'mainwp-custom-dashboard-extension-default-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-default-theme.css', array(), $this->current_version );
                 } else {

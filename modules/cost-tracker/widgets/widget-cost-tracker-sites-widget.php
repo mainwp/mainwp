@@ -52,10 +52,10 @@ class Cost_Tracker_Sites_Widget {
         ?>
         <div class="ui grid mainwp-widget-header">
             <div class="twelve wide column">
-                <h3 class="ui header handle-drag">
+                <h2 class="ui header handle-drag">
                     <?php esc_html_e( 'Cost Tracker', 'mainwp' ); ?>
                     <div class="sub header"><?php esc_html_e( 'Manage and monitor your expenses', 'mainwp' ); ?></div>
-                </h3>
+                </h2>
             </div>
         </div>
         <div class="mainwp-scrolly-overflow">
@@ -63,7 +63,7 @@ class Cost_Tracker_Sites_Widget {
         </div>
         <div class="ui two columns grid mainwp-widget-footer">
             <div class="left aligned column">
-                <a href="admin.php?page=ManageCostTracker" class="ui basic green mini fluid button"><?php esc_html_e( 'Cost Tracker Dashboard', 'mainwp' ); ?></a>
+                <a href="admin.php?page=ManageCostTracker" class="ui mini basic button"><?php esc_html_e( 'Cost Tracker Dashboard', 'mainwp' ); ?></a>
             </div>
         </div>
         <?php
@@ -186,8 +186,8 @@ class Cost_Tracker_Sites_Widget {
             case 'actions':
                 ob_start();
                 ?>
-                    <div class="ui right pointing dropdown icon mini basic green button" style="z-index: 99;">
-                            <i class="ellipsis horizontal icon"></i>
+                    <div class="ui right pointing dropdown" style="z-index: 99;">
+                            <i class="ellipsis vertical icon"></i>
                             <div class="menu">
                                 <a class="item widget-row-cost-tracker-edit-cost" href="admin.php?page=CostTrackerAdd&id=<?php echo intval( $item->id ); ?>"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
                             </div>

@@ -240,6 +240,46 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         $values                 = apply_filters( 'mainwp_overview_enabled_widgets', $values, null );
         static::$enable_widgets = array_merge( static::$enable_widgets, $values );
 
+        // Load the Updates Overview widget.
+        if ( static::$enable_widgets['overview'] ) {
+            MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), $page, array( 0, 0, 12, 19 ) );
+        }
+
+        // Load the Clients widget.
+        if ( static::$enable_widgets['clients'] ) {
+            MainWP_UI::add_widget_box( 'clients', array( MainWP_Clients::get_class_name(), 'render' ), $page, array( -1, -1, 4, 30 ) );
+        }
+
+        // Load the Non-MainWP Changes widget.
+        if ( static::$enable_widgets['non_mainwp_changes'] ) {
+            MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), $page, array( -1, -1, 4, 30 ) );
+        }
+
+        // Load the Connection Status widget.
+        if ( ! MainWP_System_Utility::get_current_wpid() && static::$enable_widgets['connection_status'] ) {
+            MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), $page, array( -1, -1, 4, 30 ) );
+        }
+
+        // Load the Connection Status widget.
+        if ( MainWP_Uptime_Monitoring_Edit::is_enable_global_monitoring() && ! MainWP_System_Utility::get_current_wpid() && static::$enable_widgets['uptime_monitoring_status'] ) {
+            MainWP_UI::add_widget_box( 'uptime_monitoring_status', array( MainWP_Uptime_Monitoring_Status::get_class_name(), 'render_status' ), $page, array( -1, -1, 4, 30 ) );
+        }
+
+        // Load the Security Issues widget.
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) && static::$enable_widgets['security_issues'] ) {
+            MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), $page, array( -1, -1, 4, 30 ) );
+        }
+
+        // Load the Recent Pages widget.
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_pages' ) && static::$enable_widgets['recent_pages'] ) {
+            MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, array( -1, -1, 4, 30 ) );
+        }
+
+        // Load the Recent Posts widget.
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_posts' ) && static::$enable_widgets['recent_posts'] ) {
+            MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, array( -1, -1, 4, 30 ) );
+        }
+
         $i = 1;
         foreach ( $extMetaBoxs as $metaBox ) {
             $enabled = true;
@@ -254,57 +294,8 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             $id = 'advanced-' . $id;
 
             if ( $enabled ) {
-                if ( 'google-widget' === $id || 'matomo' === $id ) {
-                    MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( 1, 1, 4, 18 ) );
-                } else {
-                    MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( 1, 1, 4, 11 ) );
-                }
+                MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( -1, -1, 6, 30 ) );
             }
-        }
-
-        // Load the Get started widget.
-        if ( static::$enable_widgets['get-started'] ) {
-            MainWP_UI::add_widget_box( 'get-started', array( MainWP_Get_Started::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
-        }
-
-        // Load the Recent Posts widget.
-        if ( \mainwp_current_user_can( 'dashboard', 'manage_posts' ) && static::$enable_widgets['recent_posts'] ) {
-            MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, array( 1, 1, 6, 10 ) );
-        }
-
-        // Load the Recent Pages widget.
-        if ( \mainwp_current_user_can( 'dashboard', 'manage_pages' ) && static::$enable_widgets['recent_pages'] ) {
-            MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, array( 1, 1, 6, 10 ) );
-        }
-
-        // Load the Security Issues widget.
-        if ( \mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) && static::$enable_widgets['security_issues'] ) {
-            MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), $page, array( 1, 1, 2, 9 ) );
-        }
-
-        // Load the Connection Status widget.
-        if ( MainWP_Uptime_Monitoring_Edit::is_enable_global_monitoring() && ! MainWP_System_Utility::get_current_wpid() && static::$enable_widgets['uptime_monitoring_status'] ) {
-            MainWP_UI::add_widget_box( 'uptime_monitoring_status', array( MainWP_Uptime_Monitoring_Status::get_class_name(), 'render_status' ), $page, array( 1, 1, 2, 9 ) );
-        }
-
-        // Load the Connection Status widget.
-        if ( ! MainWP_System_Utility::get_current_wpid() && static::$enable_widgets['connection_status'] ) {
-            MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
-        }
-
-        // Load the Non-MainWP Changes widget.
-        if ( static::$enable_widgets['non_mainwp_changes'] ) {
-            MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), $page, array( 1, 1, 4, 10 ) );
-        }
-
-        // Load the Clients widget.
-        if ( static::$enable_widgets['clients'] ) {
-            MainWP_UI::add_widget_box( 'clients', array( MainWP_Clients::get_class_name(), 'render' ), $page, array( 1, 1, 4, 10 ) );
-        }
-
-        // Load the Updates Overview widget.
-        if ( static::$enable_widgets['overview'] ) {
-            MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), $page, array( 1, 1, 4, 19 ) );
         }
     }
 
@@ -365,6 +356,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         $screen = get_current_screen();
 
         MainWP_Demo_Handle::get_instance()->init_data_demo();
+        static::render_layout_selection();
         ?>
         <div class="mainwp-primary-content-wrap">
             <div class="ui segment" style="padding-top:0px;padding-bottom:0px;margin-bottom:0px;">
@@ -378,7 +370,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 <?php
             }
             ?>
-    <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
+            <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'widgets' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="widgets"></i>
@@ -421,6 +413,19 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
     }
 
     /**
+     * Render layout selection.
+     */
+    public static function render_layout_selection() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
+        $screen = get_current_screen();
+        ?>
+        <div class="mainwp-sub-header ui right aligned segment" id="mainwp-manage-widgets-layout-row">
+            <?php MainWP_Ui_Manage_Widgets_Layout::render_edit_layout( $screen->id ); ?>
+        </div>
+        <?php
+        MainWP_Ui_Manage_Widgets_Layout::render_modal_save_layout();
+    }
+
+    /**
      * Method mainwp_help_content()
      *
      * Creates the MainWP Help Documentation List for the help component in the sidebar.
@@ -430,12 +435,12 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             ?>
             <p><?php esc_html_e( 'If you need help with your MainWP Dashboard, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui list">
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-user-interface/" target="_blank">Understanding MainWP Dashboard UI</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-user-interface/#navigation" target="_blank">MainWP Navigation</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-user-interface/#page-settings" target="_blank">Page Settings</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-user-interface/#widgetized-page-layout" target="_blank">Widgetized Page Layout</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-user-interface/#tables" target="_blank">MainWP Tables</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/mainwp-user-interface/#individual-site-mode" target="_blank">Individual Child Site Mode</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-user-interface/" target="_blank">Understanding MainWP Dashboard UI</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-user-interface/#navigation" target="_blank">MainWP Navigation</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-user-interface/#page-settings" target="_blank">Page Settings</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-user-interface/#widgetized-page-layout" target="_blank">Widgetized Page Layout</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-user-interface/#tables" target="_blank">MainWP Tables</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/mainwp-user-interface/#individual-site-mode" target="_blank">Individual Child Site Mode</a></div>
                 <?php
                 /**
                  * Action: mainwp_overview_help_item

@@ -25,7 +25,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.0.50'; // NOSONAR - no IP.
+    protected $mainwp_db_version = '9.0.0.62'; // NOSONAR - no IP.
 
     /**
      * Protected variable to hold the database option name.
@@ -146,6 +146,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   maximumFileDescriptorsOverride tinyint(1) NOT NULL DEFAULT 0,
   maximumFileDescriptorsAuto tinyint(1) NOT NULL DEFAULT 1,
   maximumFileDescriptors int(11) NOT NULL DEFAULT 150,
+  primary_backup_method varchar(64) NOT NULL DEFAULT '',
   http_user text NOT NULL DEFAULT '',
   http_pass text NOT NULL DEFAULT '',
   wpe tinyint(1) NOT NULL,

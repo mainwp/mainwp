@@ -1321,31 +1321,31 @@ msgstr "Haga clic en %1here%2 para ver la respuesta del sitio hijo."
 msgid ""
 "This site can not be reached! Please use the Test Connection feature and see "
 "if the positive response will be returned. For additional help, please "
-"review this <a href=\"https://kb.mainwp.com/docs/potential-issues/"
+"review this <a href=\"https://mainwp.com/kb/potential-issues/"
 "\">Knowledgebase document</a>, and if you still have issues, please let us "
-"know in the <a href=\"https://managers.mainwp.com/c/community-"
+"know in the <a href=\"https://community.mainwp.com/c/community-"
 "support/5\">MainWP Community</a>."
 msgstr ""
 "No se puede acceder a este sitio Por favor, utilice la función Probar "
 "conexión y compruebe si la respuesta es positiva. Para obtener ayuda "
-"adicional, por favor revise este <a href=\"https://kb.mainwp.com/docs/"
+"adicional, por favor revise este <a href=\"https://mainwp.com/kb/"
 "potential-issues/\">documento de la base de conocimientos</a>, y si usted "
 "todavía tiene problemas, por favor háganoslo saber en la <a href=\"https://"
-"managers.mainwp.com/c/community-support/5\">Comunidad MainWP</a>."
+"community.mainwp.com/c/community-support/5\">Comunidad MainWP</a>."
 
 #: assets/js/mainwp.js:1698
 msgid ""
 "Undefined error occurred. Please try again. If the issue does not resolve, "
-"please review this <a href=\"https://kb.mainwp.com/docs/potential-issues/"
+"please review this <a href=\"https://mainwp.com/kb/potential-issues/"
 "\">Knowledgebase document</a>, and if you still have issues, please let us "
-"know in the <a href=\"https://managers.mainwp.com/c/community-"
+"know in the <a href=\"https://community.mainwp.com/c/community-"
 "support/5\">MainWP Community</a>."
 msgstr ""
 "Se ha producido un error indefinido. Inténtelo de nuevo. Si el problema no "
-"se resuelve, por favor revise este <a href=\"https://kb.mainwp.com/docs/"
+"se resuelve, por favor revise este <a href=\"https://mainwp.com/kb/"
 "potential-issues/\">documento de la base de conocimientos</a>, y si usted "
 "todavía tiene problemas, por favor háganoslo saber en la <a href=\"https://"
-"managers.mainwp.com/c/community-support/5\">Comunidad MainWP</a>."
+"community.mainwp.com/c/community-support/5\">Comunidad MainWP</a>."
 
 #: assets/js/mainwp.js:1700
 msgid "Error detected: "
@@ -3789,8 +3789,8 @@ msgstr "Nueva versión"
 #: pages/page-mainwp-updates-per-site.php:604
 #: pages/page-mainwp-updates-per-site.php:744
 #: pages/page-mainwp-updates-per-site.php:747
-msgid "Update Now"
-msgstr "Actualizar ahora"
+msgid "Update"
+msgstr "Actualizar"
 
 #: class/class-mainwp-manage-sites-update-view.php:376
 #: class/class-mainwp-manage-sites-update-view.php:520
@@ -3803,8 +3803,8 @@ msgstr "Actualizar ahora"
 #: pages/page-mainwp-updates-per-site.php:138
 #: pages/page-mainwp-updates-per-site.php:361
 #: pages/page-mainwp-updates-per-site.php:587
-msgid "Ignore Update"
-msgstr "Ignorar la actualización"
+msgid "Ignore"
+msgstr "Ignorar"
 
 #: class/class-mainwp-manage-sites-update-view.php:380
 #: class/class-mainwp-manage-sites-update-view.php:524

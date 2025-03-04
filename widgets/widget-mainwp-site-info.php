@@ -74,9 +74,10 @@ class MainWP_Site_Info { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
             'child_curl_version'    => esc_html__( 'cURL version', 'mainwp' ),
             'child_openssl_version' => esc_html__( 'OpenSSL version', 'mainwp' ),
             'ip'                    => esc_html__( 'Server IP', 'mainwp' ),
+            'site_lang'             => esc_html__( 'Site Language', 'mainwp' ),
+            'site_public'           => esc_html__( 'Search engine visibility', 'mainwp' ),
             'group'                 => esc_html__( 'Tags', 'mainwp' ),
             'last_status'           => esc_html__( 'Last Check Status', 'mainwp' ),
-
         );
 
         /**
@@ -101,21 +102,21 @@ class MainWP_Site_Info { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
     public static function render_info( $website, $website_info, $child_site_info ) { // phpcs:ignore -- NOSONAR - complex.
         ?>
         <div class="mainwp-widget-header">
-        <h3 class="ui header handle-drag">
-            <?php
-            /**
-             * Filter: mainwp_site_info_widget_title
-             *
-             * Filters the Site info widget title text.
-             *
-             * @param object $website Object containing the child site info.
-             *
-             * @since 4.1
-             */
-            echo esc_html( apply_filters( 'mainwp_site_info_widget_title', esc_html__( 'Site Info', 'mainwp' ), $website ) );
-            ?>
-            <div class="sub header"><?php esc_html_e( 'Basic child site system information', 'mainwp' ); ?></div>
-        </h3>
+            <h2 class="ui header handle-drag">
+                <?php
+                /**
+                 * Filter: mainwp_site_info_widget_title
+                 *
+                 * Filters the Site info widget title text.
+                 *
+                 * @param object $website Object containing the child site info.
+                 *
+                 * @since 4.1
+                 */
+                echo esc_html( apply_filters( 'mainwp_site_info_widget_title', esc_html__( 'Site Info', 'mainwp' ), $website ) );
+                ?>
+                <div class="sub header"><?php esc_html_e( 'Basic child site system information', 'mainwp' ); ?></div>
+            </h2>
         </div>
 
         <div class="mainwp-widget-site-info mainwp-scrolly-overflow">
@@ -139,7 +140,7 @@ class MainWP_Site_Info { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
                 $website_info['group'] = empty( $website->wpgroups ) ? 'None' : $website->wpgroups;
 
                 ?>
-            <table class="ui table">
+            <table class="ui mini very compact table">
                 <tbody>
                 <?php
                 /**
@@ -157,10 +158,15 @@ class MainWP_Site_Info { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
                 foreach ( $child_site_info as $index => $title ) {
                     $val = '';
                     if ( isset( $website_info[ $index ] ) ) {
+                        $val = $website_info[ $index ];
                         if ( 'debug_mode' === $index ) {
-                            $val = ( 1 === (int) $website_info[ $index ] ) ? 'Enabled' : 'Disabled';
-                        } else {
-                            $val = $website_info[ $index ];
+                            $val = ( 1 === (int) $website_info[ $index ] ) ? __( 'Enabled', 'mainwp' ) : __( 'Disabled', 'mainwp' );
+                        } elseif ( 'site_public' === $index ) {
+                            $val = ( 1 === (int) $website_info[ $index ] ) ? __( 'Visible', 'mainwp' ) : __( 'Blocking', 'mainwp' );
+                        } elseif ( 'site_lang' === $index ) {
+                            if ( function_exists( 'locale_get_display_name' ) ) {
+                                $val = locale_get_display_name( $val );
+                            }
                         }
                     }
                     ?>

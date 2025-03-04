@@ -459,7 +459,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-users-info-message' ) ) : ?>
                         <div class="ui info message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-users-info-message"></i>
-                            <?php printf( esc_html__( 'Manage existing users on your child sites.  Here you can Delete, Edit or Change Role for existing users.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-users/" target="_blank">', '</a>' ); ?>
+                            <?php printf( esc_html__( 'Manage existing users on your child sites.  Here you can Delete, Edit or Change Role for existing users.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/manage-users/" target="_blank">', '</a>' ); ?>
                         </div>
                     <?php endif; ?>
                     <div class="ui message" id="mainwp-message-zone" style="display:none"></div>
@@ -1239,8 +1239,8 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     <input class="userId" type="hidden" name="id" value="<?php echo esc_attr( $user['id'] ); ?>" />
                     <input class="userName" type="hidden" name="name" value="<?php echo esc_attr( $user['login'] ); ?>" />
                     <input class="websiteId" type="hidden" name="id" value="<?php echo intval( $website->id ); ?>" />
-                    <div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999">
-                        <a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
+                    <div class="ui right pointing dropdown" style="z-index: 999">
+                        <a href="javascript:void(0)"><i class="ellipsis vertical icon"></i></a>
                         <div class="menu">
                             <a class="item user_getedit" href="#"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
                             <?php if ( ( 1 !== (int) $user['id'] ) && ( $user['login'] !== $website->adminname ) ) { ?>
@@ -1512,7 +1512,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-user-info-message' ) ) : ?>
                     <div class="ui info message">
                         <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-user-info-message"></i>
-                        <?php printf( esc_html__( 'Use the provided form to create a new user on your child site.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-user/" target="_blank">', '</a>' ); ?>
+                        <?php printf( esc_html__( 'Use the provided form to create a new user on your child site.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/create-a-new-user/" target="_blank">', '</a>' ); ?>
                     </div>
                 <?php endif; ?>
                     <div class="ui message" id="mainwp-message-zone" style="display:none;"></div>
@@ -1764,7 +1764,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-users-info-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-users-info-message"></i>
-                    <?php printf( esc_html__( 'Use the form to bulk import users.  You can download the sample CSV file to see how to fomat the import file properly.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-users/" target="_blank">', '</a>' ); ?>
+                    <?php printf( esc_html__( 'Use the form to bulk import users.  You can download the sample CSV file to see how to fomat the import file properly.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/import-users/" target="_blank">', '</a>' ); ?>
                 </div>
             <?php endif; ?>
 
@@ -2007,7 +2007,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             <i class="close icon"></i>
                 <div class="header"><?php esc_html_e( 'New User', 'mainwp' ); ?></div>
                 <div class="content">
-                    <div class="ui middle aligned divided selection list">
+                    <div class="ui middle aligned divided list">
                         <?php foreach ( $dbwebsites as $website ) : ?>
                         <div class="item ui grid">
                             <span class="content"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></span>
@@ -2350,11 +2350,11 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             ?>
             <p><?php esc_html_e( 'If you need help with managing users, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui list">
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-users/" target="_blank">Manage Users</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-users/#create-a-new-user" target="_blank">Create a New User</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-users/#edit-existing-users" target="_blank">Edit an Existing User</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-users/#bulk-update-admin-passwords" target="_blank">Bulk Update Administrator Passwords</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/manage-users/#delete-users" target="_blank">Delete User(s)</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-users/" target="_blank">Manage Users</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-users/#create-a-new-user" target="_blank">Create a New User</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-users/#edit-existing-users" target="_blank">Edit an Existing User</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-users/#bulk-update-admin-passwords" target="_blank">Bulk Update Administrator Passwords</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/manage-users/#delete-users" target="_blank">Delete User(s)</a></div>
                 <?php
                 /**
                  * Action: mainwp_users_help_item

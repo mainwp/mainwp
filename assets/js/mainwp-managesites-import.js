@@ -336,9 +336,9 @@ jQuery(document).ready(function ($) {
 
             if (parsed_url !== "" && parsed_url !== undefined) {
                 // Update input value with domain name only
-                input.val(`${parsed_url.protocol}//${parsed_url.host}`);
+				input.val(`${parsed_url.origin}${parsed_url.pathname}`);
                 // Set value site name
-                input_site_name.val(`${parsed_url.host}`);
+				input_site_name.val(`${parsed_url.origin}`);
             } else {
                 const user_confirmed = confirm(
                     __(
@@ -373,9 +373,9 @@ jQuery(document).ready(function ($) {
             );
             if (parsed_url !== "" && parsed_url !== undefined) {
                 // Update input value with domain name only
-                input.val(`${parsed_url.protocol}//${parsed_url.host}`);
+				input.val(`${parsed_url.origin}${parsed_url.pathname}`);
                 // Set value site name
-                input_site_name.val(`${parsed_url.host}`);
+                input_site_name.val(`${parsed_url.origin}`);
             } else {
                 // Show confirm, asking the user if they want to edit or not
                 const user_confirmed = confirm(

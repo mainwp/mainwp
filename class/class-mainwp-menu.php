@@ -781,8 +781,14 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     }
                 }
                 ?>
+
+                <a id="mainwp-help-menu-item" title="<?php esc_attr_e( 'Help', 'mainwp' ); ?>" class="item" href="#" style="opacity:0.3;">
+                    <i class="question circle outline icon"></i>
+                    <span class="ui small text"><?php esc_html_e( 'Quick Help', 'mainwp' ); ?></span>
+                </a>
                 </div>
                 <?php
+                    $all_updates         = wp_get_update_data();
                     $go_back_wpadmin_url = admin_url( 'index.php' );
 
                     $link = array(
@@ -817,7 +823,12 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     </a>
                 </div>
                 <div id="mainwp-first-level-navigation-version-label">
-                    <span id="mainwp-version-label" class="ui mini green fluid centered label"><?php echo esc_html( $version ); ?></span>
+                    <?php if ( is_array( $all_updates ) && isset( $all_updates['counts']['total'] ) && 0 < $all_updates['counts']['total'] ) : ?>
+                    <a class="ui tiny red fluid centered pulse looping transition label" id="mainwp-dashboard-update-available" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Your MainWP Dashboard sites needs your attention. Please check the available updates', 'mainwp' ); ?>" aria-label="<?php esc_attr_e( 'Your MainWP Dashboard sites needs your attention. Please check the available updates', 'mainwp' ); ?>" href="update-core.php">
+                        <i class="exclamation triangle icon" style="color:#fff"></i> <?php esc_html_e( 'Update Dashboard Site', 'mainwp' ); ?>
+                    </a>
+                    <?php endif; ?>
+                    <div id="mainwp-version-label" class="ui tiny green fluid centered label"><?php echo esc_html( $version ); ?></div>
                 </div>
             </div>
             <div id="mainwp-second-level-navigation">
@@ -947,7 +958,12 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 do_action( 'after_mainwp_menu' );
                 ?>
             <script type="text/javascript">
+
                 jQuery( document ).ready( function () {
+
+                    setTimeout(() => {
+                        jQuery('#mainwp-dashboard-update-available').removeClass('looping');
+                    }, 1500);
 
                     let mainwp_left_bar_showhide_init = function(){
                         if(jQuery('body').hasClass('mainwp-hidden-second-level-navigation')){
@@ -964,7 +980,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         if ( show ) {
                             jQuery( '#mainwp-second-level-navigation' ).show();
                             jQuery( '.mainwp-content-wrap' ).css( "margin-left", "272px" );
-                            jQuery( '#mainwp-screenshots-sites' ).css( "margin-left", "272px" );
+                            //jQuery( '#mainwp-screenshots-sites' ).css( "margin-left", "272px" );
                             jQuery( '#mainwp-main-navigation-container' ).css( "width", "272px" );
                             jQuery( lbar ).find( '.icon' ).removeClass( 'right' );
                             jQuery( lbar ).find( '.icon' ).addClass( 'left' );
@@ -976,7 +992,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         } else {
                             jQuery( '#mainwp-second-level-navigation' ).hide();
                             jQuery( '.mainwp-content-wrap' ).css( "margin-left", "72px" );
-                            jQuery( '#mainwp-screenshots-sites' ).css( "margin-left", "72px" );
+                            //jQuery( '#mainwp-screenshots-sites' ).css( "margin-left", "72px" );
                             jQuery( '#mainwp-main-navigation-container' ).css( "width", "72px" );
                             jQuery( lbar ).find( '.icon' ).removeClass( 'left' );
                             jQuery( lbar ).find( '.icon' ).addClass( 'right' );
@@ -1099,8 +1115,8 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                     <?php if ( $mainwp_show_language_updates ) : ?>
                                         <a class="item" href="admin.php?page=UpdatesManage&tab=translations-updates"><?php esc_html_e( 'Translation Plugins', 'mainwp' ); ?></a>
                                     <?php endif; ?>
-                                        <a class="item" href="admin.php?page=UpdatesManage&tab=abandoned-plugins"><?php esc_html_e( 'Abandoned Plugins', 'mainwp' ); ?></a>
-                                        <a class="item" href="admin.php?page=UpdatesManage&tab=abandoned-themes"><?php esc_html_e( 'Abandoned Themes', 'mainwp' ); ?></a>
+                                        <a class="item" href="admin.php?page=PluginsAbandoned"><?php esc_html_e( 'Abandoned Plugins', 'mainwp' ); ?></a>
+                                        <a class="item" href="admin.php?page=ThemesAbandoned"><?php esc_html_e( 'Abandoned Themes', 'mainwp' ); ?></a>
                                     </div>
                                 </div>
                                 <div class="item accordion">
@@ -1210,6 +1226,9 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             <a class="item" href="admin.php?page=ActionLogs"><?php esc_html_e( 'Custom Event Monitor', 'mainwp' ); ?></a>
                             <a class="item" href="admin.php?page=PluginPrivacy"><?php esc_html_e( 'Plugin Privacy', 'mainwp' ); ?></a>
                         </div>
+                    </div>
+                    <div class="item">
+                        <a id="mainwp-help-menu-item" title="<?php esc_attr_e( 'Help', 'mainwp' ); ?>" class="item" href="#" style="opacity:0.3;"><?php esc_html_e( 'Quick Help', 'mainwp' ); ?></a>
                     </div>
                     <?php
                     $go_back_wpadmin_url = admin_url( 'index.php' );
@@ -1341,7 +1360,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         $level2_active = true;
                     }
 
-                    if ( ! $level2_active && ! isset( $_GET['do'] ) && 'NonMainWPChanges' !== $page_name && 'admin.php?page=managesites' === $href ) {
+                    if ( ! $level2_active && ! isset( $_GET['do'] ) && 'InsightsManage' !== $page_name && 'admin.php?page=managesites' === $href ) {
                         $level2_active = true;
                     }
                 }

@@ -11,6 +11,7 @@
 	<exclude-pattern>*/tests/*</exclude-pattern>
 	<exclude-pattern>libs/</exclude-pattern>
 	<exclude-pattern>assets/js/apexcharts/*</exclude-pattern>
+    <exclude-pattern>assets/js/gridstack/*</exclude-pattern>
 	<exclude-pattern>cron/</exclude-pattern>
 
     <arg value="sp" />
@@ -46,6 +47,10 @@
 		<exclude name="Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition" />
 		<exclude name="Generic.CodeAnalysis.EmptyStatement.DetectedCatch" />
 	</rule>
+
+    <rule ref="WordPress.WP.CapitalPDangit">
+        <severity>0</severity>
+    </rule>
 
 	<rule ref="WordPress">
 		<exclude name="Generic.WhiteSpace.DisallowSpaceIndent" />

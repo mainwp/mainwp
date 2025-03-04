@@ -176,7 +176,7 @@ class MainWP_Notification_Template { // phpcs:ignore Generic.Classes.OpeningBrac
          */
         do_action( 'mainwp_before_template_part', $template_name, $located, $args );
 
-        include_once $located; // NOSONAR - WP compatible.
+        include $located; // NOSONAR - WP compatible. // `include` to fix loop load the template content.
 
         /**
          * Action: mainwp_after_template_part

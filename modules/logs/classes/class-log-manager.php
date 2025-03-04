@@ -10,6 +10,8 @@
 namespace MainWP\Dashboard\Module\Log;
 
 use MainWP\Dashboard\MainWP_Execution_Helper;
+use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Utility;
 
 /**
  * Class Log_Manager
@@ -80,6 +82,13 @@ class Log_Manager {
      * @var array URLs and Paths used by the plugin.
      */
     public $locations = array();
+
+    /**
+     * Last log created.
+     *
+     * @var int last time.
+     * */
+    public static $last_non_mainwp_action_last_object_id = null;
 
     /**
      * Protected static variable to hold the single instance of the class.
@@ -224,5 +233,102 @@ class Log_Manager {
             $driver   = new $driver_class();
             $this->db = new Log_DB( $driver );
         }
+    }
+
+
+    /**
+     * Method sync_log_site_actions().
+     *
+     * Sync site actions data.
+     *
+     * @param int    $site_id site id.
+     * @param array  $sync_actions action data.
+     * @param object $website website data.
+     *
+     * @return bool
+     */
+    public function sync_log_site_actions( $site_id, $sync_actions, $website ) { // phpcs:ignore -- NOSONAR - complex.
+
+        if ( empty( $sync_actions ) || ! is_array( $sync_actions ) ) {
+            return false;
+        }
+
+        MainWP_Utility::array_sort_existed_keys( $sync_actions, 'created', SORT_NUMERIC );
+
+        foreach ( $sync_actions as $index => $data ) {
+            $object_id = sanitize_text_field( $index );
+
+            if ( ! is_array( $data ) || empty( $data['action_user'] ) || empty( $data['created'] ) || empty( $object_id ) ) {
+                continue;
+            }
+
+            if ( null === static::$last_non_mainwp_action_last_object_id ) {
+                static::$last_non_mainwp_action_last_object_id = (int) MainWP_DB::instance()->get_website_option( $website, 'non_mainwp_action_last_object_id', 0 );
+            }
+
+            if ( (int) $data['created'] <= static::$last_non_mainwp_action_last_object_id ) {
+                continue;
+            }
+
+            if ( $this->db->is_site_action_log_existed( $website->id, $object_id ) ) {
+                continue;
+            }
+
+            $user_meta = array();
+            $meta_data = array();
+
+            if ( isset( $data['meta_data'] ) && is_array( $data['meta_data'] ) ) {
+                $meta_data = $data['meta_data'];
+                if ( isset( $meta_data['user_meta'] ) && is_array( $meta_data['user_meta'] ) ) {
+                    $user_meta = $meta_data['user_meta'];
+                    unset( $meta_data['user_meta'] );
+                } elseif ( isset( $meta_data['meta_data'] ) && ! empty( $meta_data['meta_data'] ) && is_array( $meta_data['meta_data'] ) ) {
+                    $user_meta = $meta_data['meta_data'];
+                    unset( $meta_data['meta_data'] );
+                }
+                $meta_data['user_meta_json'] = wp_json_encode( $user_meta );
+            }
+
+            $sum  = ! empty( $meta_data['name'] ) ? esc_html( $meta_data['name'] ) : 'WP Core';
+            $sum .= ' ';
+            $sum .= 'wordpress' !== $data['context'] ? esc_html( ucfirst( rtrim( $data['context'], 's' ) ) ) : 'WordPress'; //phpcs:ignore -- wordpress text.
+
+            if ( isset( $user_meta['wp_user_id'] ) ) {
+                $user_id = ! empty( $user_meta['wp_user_id'] ) ? sanitize_text_field( $user_meta['wp_user_id'] ) : 0;
+            } elseif ( ! empty( $user_meta['user_id'] ) ) { // to compatible with old child actions data.
+                $user_id = sanitize_text_field( $user_meta['user_id'] );
+            }
+
+            $actions_mapping = array(
+                'installed'   => 'install',
+                'deleted'     => 'delete',
+                'activated'   => 'activate',
+                'deactivated' => 'deactivate',
+            );
+
+            $contexts_mapping = array(
+                'wordpress' => 'core',
+            );
+
+            $action  = isset( $actions_mapping[ $data['action'] ] ) ? $actions_mapping[ $data['action'] ] : $data['action'];
+            $context = isset( $contexts_mapping[ $data['context'] ] ) ? $contexts_mapping[ $data['context'] ] : $data['context'];
+
+            $record_mapping = array(
+                'site_id'   => $site_id,
+                'object_id' => $object_id,
+                'user_id'   => $user_id,
+                'created'   => $data['created'],
+                'item'      => $sum,
+                'context'   => $context,
+                'action'    => $action,
+                'state'     => 1,
+                'duration'  => isset( $data['duration'] ) ? sanitize_text_field( $data['duration'] ) : 0, // sanitize_text_field for seconds.
+                'meta'      => $meta_data,
+            );
+
+            do_action( 'mainwp_sync_site_log_install_actions', $website, $record_mapping, $object_id );
+        }
+
+        return true;
     }
 }

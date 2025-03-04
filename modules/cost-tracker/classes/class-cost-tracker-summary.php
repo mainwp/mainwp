@@ -10,6 +10,7 @@ namespace MainWP\Dashboard\Module\CostTracker;
 
 use MainWP\Dashboard\MainWP_UI;
 use MainWP\Dashboard\MainWP_Utility;
+use MainWP\Dashboard\MainWP_Overview;
 
 /**
  * Class class Cost_Tracker_Summary {
@@ -240,6 +241,31 @@ class Cost_Tracker_Summary {
         $values                 = apply_filters( 'mainwp_module_cost_tracker_summary_enabled_widgets', static::$enable_widgets, null );
         static::$enable_widgets = array_merge( static::$enable_widgets, $values );
 
+        // Load the widget.
+        if ( ! empty( static::$enable_widgets['cost_monthly_totals'] ) ) {
+            MainWP_UI::add_widget_box( 'cost_monthly_totals', array( Cost_Tracker_Monthly_Totals::instance(), 'render' ), $page, array( 1, 1, 12, 40 ) );
+        }
+        // Load the widget.
+        if ( ! empty( static::$enable_widgets['cost_payments_left_this_month'] ) ) {
+            MainWP_UI::add_widget_box( 'cost_payments_left_this_month', array( Cost_Tracker_Payment_Left_This_Month::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+        // Load the widget.
+        if ( ! empty( static::$enable_widgets['cost_category_totals'] ) ) {
+            MainWP_UI::add_widget_box( 'cost_category_totals', array( Cost_Tracker_Category_Totals::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+        // Load the widget.
+        if ( ! empty( static::$enable_widgets['cost_upcomming_renewals'] ) ) {
+            MainWP_UI::add_widget_box( 'cost_upcomming_renewals', array( Cost_Tracker_Upcoming_Renewals::instance(), 'render' ), $page, array( -1, -1, 4, 30 ) );
+        }
+        // Load the widget.
+        if ( ! empty( static::$enable_widgets['cost_yearly_renewals'] ) ) {
+            MainWP_UI::add_widget_box( 'cost_yearly_renewals', array( Cost_Tracker_Yearly_Renewals::instance(), 'render' ), $page, array( -1, -1, 4, 30 ) );
+        }
+        // Load the widget.
+        if ( ! empty( static::$enable_widgets['cost_monthly_renewals'] ) ) {
+            MainWP_UI::add_widget_box( 'cost_monthly_renewals', array( Cost_Tracker_Monthly_Renewals::instance(), 'render' ), $page, array( -1, -1, 4, 30 ) );
+        }
+
         $i = 1;
         foreach ( $extMetaBoxs as $metaBox ) {
             $enabled = true;
@@ -253,41 +279,11 @@ class Cost_Tracker_Summary {
             $id = isset( $metaBox['id'] ) ? $metaBox['id'] : $i++;
             $id = 'advanced-' . $id;
 
-            $layout = ! empty( $metaBox['layout'] ) && is_array( $metaBox['layout'] ) ? $metaBox['layout'] : array( 1, 1, 6, 13 );
+            $layout = ! empty( $metaBox['layout'] ) && is_array( $metaBox['layout'] ) ? $metaBox['layout'] : array( -1, -1, 6, 30 );
 
             if ( $enabled ) {
                 MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, $layout );
             }
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['cost_yearly_renewals'] ) ) {
-            MainWP_UI::add_widget_box( 'cost_yearly_renewals', array( Cost_Tracker_Yearly_Renewals::instance(), 'render' ), $page, array( 1, 1, 6, 13 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['cost_monthly_renewals'] ) ) {
-            MainWP_UI::add_widget_box( 'cost_monthly_renewals', array( Cost_Tracker_Monthly_Renewals::instance(), 'render' ), $page, array( 1, 1, 6, 13 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['cost_upcomming_renewals'] ) ) {
-            MainWP_UI::add_widget_box( 'cost_upcomming_renewals', array( Cost_Tracker_Upcoming_Renewals::instance(), 'render' ), $page, array( 1, 1, 6, 13 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['cost_category_totals'] ) ) {
-            MainWP_UI::add_widget_box( 'cost_category_totals', array( Cost_Tracker_Category_Totals::instance(), 'render' ), $page, array( 1, 1, 6, 13 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['cost_monthly_totals'] ) ) {
-            MainWP_UI::add_widget_box( 'cost_monthly_totals', array( Cost_Tracker_Monthly_Totals::instance(), 'render' ), $page, array( 1, 1, 6, 13 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['cost_payments_left_this_month'] ) ) {
-            MainWP_UI::add_widget_box( 'cost_payments_left_this_month', array( Cost_Tracker_Payment_Left_This_Month::instance(), 'render' ), $page, array( 1, 1, 6, 13 ) );
         }
     }
 
@@ -332,7 +328,7 @@ class Cost_Tracker_Summary {
      * When the page loads render the body content.
      */
     public function on_show_page() {
-        static::render_header( 'cost_summary' );
+        static::render_header();
         static::render_summary_body();
     }
 
@@ -362,6 +358,9 @@ class Cost_Tracker_Summary {
         ?>
         <div class="mainwp-primary-content-wrap">
         <div class="ui segment" style="padding-top:0;padding-bottom:0;">
+
+        <?php MainWP_Overview::render_layout_selection(); ?>
+
         <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'cost-summany-widgets' ) ) : ?>
                 <div class="ui info message">

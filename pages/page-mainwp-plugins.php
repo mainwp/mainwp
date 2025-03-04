@@ -127,6 +127,17 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         add_submenu_page(
             'mainwp_tab',
             __( 'Plugins', 'mainwp' ),
+            '<div class="mainwp-hidden">' . esc_html__( 'Abandoned Plugins', 'mainwp' ) . '</div>',
+            'read',
+            'PluginsAbandoned',
+            array(
+                static::get_class_name(),
+                'render_abandoned_plugins',
+            )
+        );
+        add_submenu_page(
+            'mainwp_tab',
+            __( 'Plugins', 'mainwp' ),
             '<div class="mainwp-hidden">' . esc_html__( 'Ignored Abandoned', 'mainwp' ) . '</div>',
             'read',
             'PluginsIgnoredAbandoned',
@@ -279,8 +290,8 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             array(
                 'title'                => esc_html__( 'Abandoned Plugins', 'mainwp' ),
                 'parent_key'           => 'PluginsManage',
-                'href'                 => 'admin.php?page=UpdatesManage&tab=abandoned-plugins',
-                'slug'                 => 'PluginsManage&tab=abandoned-plugins',
+                'href'                 => 'admin.php?page=PluginsAbandoned',
+                'slug'                 => 'PluginsAbandoned',
                 'right'                => '',
                 'leftsub_order_level2' => 4.1,
             ),
@@ -467,7 +478,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             <div><?php echo esc_html__( 'Manage installed plugins on your child sites. Here you can activate, deactivate, and delete installed plugins.', 'mainwp' ); ?></div>
                             <p><?php echo esc_html__( 'To Activate or Delete a specific plugin, you must search only for Inactive plugin on your child sites. If you search for Active or both Active and Inactive, the Activate and Delete actions will be disabled.', 'mainwp' ); ?></p>
                             <p><?php echo esc_html__( 'To Deactivate a specific plugin, you must search only for Active plugins on your child sites. If you search for Inactive or both Active and Inactive, the Deactivate action will be disabled.', 'mainwp' ); ?></p>
-                            <p><?php printf( esc_html__( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></p>
+                            <p><?php printf( esc_html__( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/managing-plugins-with-mainwp/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></p>
                         </div>
                     <?php endif; ?>
                     <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -1395,7 +1406,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 </div>
                                 <div class="two wide right aligned middle aligned column update-column" updated="0">
                                 <?php if ( ! empty( $upgradeInfo ) && MainWP_Updates::user_can_update_plugins() ) : ?>
-                                    <span data-position="top right" data-tooltip="<?php echo esc_attr__( 'Update ', 'mainwp' ) . esc_html( $plugin_title ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><a href="javascript:void(0)" class="ui mini green basic button <?php echo $is_demo ? 'disabled' : ''; ?>" onClick="return manage_plugins_upgrade( '<?php echo esc_js( rawurlencode( $plugin_slug ) ); ?>', <?php echo esc_attr( $site_id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a></span>
+                                    <span data-position="top right" data-tooltip="<?php echo esc_attr__( 'Update ', 'mainwp' ) . esc_html( $plugin_title ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><a href="javascript:void(0)" class="ui mini green basic button <?php echo $is_demo ? 'disabled' : ''; ?>" onClick="return manage_plugins_upgrade( '<?php echo esc_js( rawurlencode( $plugin_slug ) ); ?>', <?php echo esc_attr( $site_id ); ?> )"><?php esc_html_e( 'Update', 'mainwp' ); ?></a></span>
                                 <?php endif; ?>
                                 </div>
                             <div class="two wide center aligned middle aligned column column-actions">
@@ -1694,7 +1705,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                     </div>
                                     <div class="two wide right aligned middle aligned column update-column" updated="0">
                                     <?php if ( ! empty( $upgradeInfo ) && MainWP_Updates::user_can_update_plugins() ) : ?>
-                                        <span data-position="top right" data-tooltip="<?php echo esc_attr__( 'Update ', 'mainwp' ) . esc_html( $plugin_title ) . ' ' . esc_attr__( 'lugin on this child site.', 'mainwp' ); ?>" data-inverted="" ><a href="javascript:void(0)" class="ui mini green basic button <?php echo $is_demo ? 'disabled' : ''; ?>" onClick="return manage_plugins_upgrade( '<?php echo esc_js( rawurlencode( $plugin_slug ) ); ?>', <?php echo esc_attr( $site_id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a></span>
+                                        <span data-position="top right" data-tooltip="<?php echo esc_attr__( 'Update ', 'mainwp' ) . esc_html( $plugin_title ) . ' ' . esc_attr__( 'lugin on this child site.', 'mainwp' ); ?>" data-inverted="" ><a href="javascript:void(0)" class="ui mini green basic button <?php echo $is_demo ? 'disabled' : ''; ?>" onClick="return manage_plugins_upgrade( '<?php echo esc_js( rawurlencode( $plugin_slug ) ); ?>', <?php echo esc_attr( $site_id ); ?> )"><?php esc_html_e( 'Update', 'mainwp' ); ?></a></span>
                                     <?php endif; ?>
                                     </div>
                                 <div class="two wide center aligned middle aligned column column-actions">
@@ -1814,79 +1825,85 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     <div class="ui alt segment" id="mainwp-install-plugins">
         <div class="mainwp-main-content">
             <div class="mainwp-actions-bar">
-                <div class="ui stackable grid">
-                    <div class="ui two column row">
-                        <div class="column">
-                            <div id="mainwp-search-plugins-form" class="ui fluid search focus">
-                                <div class="ui icon fluid input">
-                                    <input id="mainwp-search-plugins-form-field" class="fluid prompt" type="text" placeholder="<?php esc_attr_e( 'Search plugins...', 'mainwp' ); ?>" value="<?php echo isset( $_GET['s'] ) ? esc_html( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>">
-                                    <i class="search icon"></i>
-                                </div>
-                                <div class="results"></div>
-                            </div>
-                            <script type="text/javascript">
-                                jQuery( document ).ready(function () {
-                                    jQuery( '#mainwp-search-plugins-form-field' ).on( 'keypress', function(e) {
-                                        let search = jQuery( '#mainwp-search-plugins-form-field' ).val();
-                                        let sel_ids = jQuery( '#plugin_install_selected_sites' ).val();
-                                        if ( '' != sel_ids )
-                                            sel_ids = '&selected_sites=' + sel_ids;
-                                        let origin   = '<?php echo esc_url( get_admin_url() ); ?>';
-                                        if ( 13 === e.which ) {
-                                            location.href = origin + 'admin.php?page=PluginsInstall&tab=search&s=' + encodeURIComponent(search) + sel_ids;
-                                        }
-                                    } );
-                                } );
-                            </script>
-                            <?php
-                            /**
-                             * Install Plugins actions bar (left)
-                             *
-                             * Fires at the left side of the actions bar on the Install Plugins screen, after the Search bar.
-                             *
-                             * @since 4.0
-                             */
-                            do_action( 'mainwp_install_plugins_actions_bar_left' );
-                            ?>
+                <div class="ui stackable two column grid">
+
+                    <div class="middle aligned column">
+                        <div class="ui mini stackable buttons">
+                            <a href="#" id="MainWPInstallBulkNavSearch" class="ui basic button mainwp-bulk-install-tabs-header-btn" ><?php esc_html_e( 'Install from WordPress.org', 'mainwp' ); ?></a>
+                            <a href="#" id="MainWPInstallBulkNavUpload" class="ui basic button mainwp-bulk-install-tabs-header-btn" ><?php esc_html_e( 'Upload .zip file', 'mainwp' ); ?></a>
+                            <?php do_action( 'mainwp_install_plugin_theme_tabs_header_top', 'plugin' ); ?>
                         </div>
-                    <div class="right aligned column">
-                        <div class="ui buttons">
-                            <a href="#" id="MainWPInstallBulkNavSearch" class="ui button" ><?php esc_html_e( 'Install from WordPress.org', 'mainwp' ); ?></a>
-                            <div class="or"></div>
-                            <a href="#" id="MainWPInstallBulkNavUpload" class="ui button" ><?php esc_html_e( 'Upload .zip file', 'mainwp' ); ?></a>
-                        </div>
-                    <?php
-                    /**
-                     * Install Plugins actions bar (right)
-                     *
-                     * Fires at the left side of the actions bar on the Install Plugins screen, after the Nav buttons.
-                     *
-                     * @since 4.0
-                     */
-                    do_action( 'mainwp_install_plugins_actions_bar_right' );
-                    ?>
+                        <?php
+                        /**
+                         * Install Plugins actions bar (right)
+                         *
+                         * Fires at the left side of the actions bar on the Install Plugins screen, after the Nav buttons.
+                         *
+                         * @since 4.0
+                         */
+                        do_action( 'mainwp_install_plugins_actions_bar_right' );
+                        ?>
                     </div>
+
+                    <div class="right aligned column">
+                        <div id="mainwp-search-plugins-form" class="ui search focus mainwp-bulk-install-showhide-content">
+                            <div class="ui icon mini input">
+                                <input id="mainwp-search-plugins-form-field" class="fluid prompt" type="text" placeholder="<?php esc_attr_e( 'Search plugins...', 'mainwp' ); ?>" value="<?php echo isset( $_GET['s'] ) ? esc_html( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>">
+                                <i class="search icon"></i>
+                            </div>
+                            <div class="results"></div>
+                        </div>
+                        <script type="text/javascript">
+                            jQuery( document ).ready(function () {
+                                jQuery( '#mainwp-search-plugins-form-field' ).on( 'keypress', function(e) {
+                                    let search = jQuery( '#mainwp-search-plugins-form-field' ).val();
+                                    let sel_ids = jQuery( '#plugin_install_selected_sites' ).val();
+                                    if ( '' != sel_ids )
+                                        sel_ids = '&selected_sites=' + sel_ids;
+                                    let origin   = '<?php echo esc_url( get_admin_url() ); ?>';
+                                    if ( 13 === e.which ) {
+                                        location.href = origin + 'admin.php?page=PluginsInstall&tab=search&s=' + encodeURIComponent(search) + sel_ids;
+                                    }
+                                } );
+                            } );
+                        </script>
+                        <?php
+                        /**
+                         * Install Plugins actions bar (left)
+                         *
+                         * Fires at the left side of the actions bar on the Install Plugins screen, after the Search bar.
+                         *
+                         * @since 4.0
+                         */
+                        do_action( 'mainwp_install_plugins_actions_bar_left' );
+                        ?>
+                    </div>
+
                 </div>
             </div>
-        </div>
-        <div class="ui segment">
+
+
+                <div class="ui segment">
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-install-plugins-info-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-install-plugins-info-message"></i>
-                    <?php printf( esc_html__( 'Install plugins on your child sites.  You can install plugins from the WordPress.org repository or by uploading a ZIP file.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-plugins/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                    <?php printf( esc_html__( 'Install plugins on your child sites.  You can install plugins from the WordPress.org repository or by uploading a ZIP file.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/install-plugins/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
                 </div>
             <?php endif; ?>
             <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
-            <div class="mainwp-upload-plugin" style="display:none;">
+            <div class="mainwp-upload-plugin mainwp-bulk-install-showhide-content" style="display:none;">
                 <?php MainWP_Install_Bulk::render_upload( 'plugin' ); ?>
             </div>
-            <div class="mainwp-browse-plugins">
+            <div class="mainwp-browse-plugins mainwp-bulk-install-showhide-content">
                 <form id="plugin-filter" method="post">
                     <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                     <?php static::$pluginsTable->display(); ?>
                 </form>
             </div>
             <?php
+            // @since 5.4.
+            do_action( 'mainwp_bulk_install_tabs_content', 'plugin' );
+
             MainWP_UI::render_modal_install_plugin_theme();
             MainWP_Updates::render_plugin_details_modal();
             ?>
@@ -1965,6 +1982,10 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
         ?>
             <?php do_action( 'mainwp_manage_plugins_before_submit_button' ); ?>
+            <?php
+            // @since 5.4.
+            do_action( 'mainwp_bulk_install_sidebar_submit_bottom', 'plugin' );
+            ?>
         </div>
         <?php do_action( 'mainwp_manage_plugins_sidebar_bottom', 'install' ); ?>
     </div>
@@ -2466,7 +2487,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-plugins-info-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-plugins-info-message"></i>
-                    <?php printf( esc_html__( 'Manage plugins you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                    <?php printf( esc_html__( 'Manage plugins you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/ignore-plugin-updates/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
                 </div>
             <?php endif; ?>
             <?php
@@ -2507,11 +2528,20 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
+     * Method render_abandoned_plugins()
+     *
+     * Render abandoned plugins list.
+     */
+    public static function render_abandoned_plugins() {
+        MainWP_Updates::render( 'abandoned_plugins' );
+    }
+
+    /**
      * Method render_global_ignored()
      *
      * Render Global Ignored plugins list.
      *
-     * @param array $ignoredPlugins Ignored plugins array.
+     * @param bool  $ignoredPlugins Ignored plugins array.
      * @param array $decodedIgnoredPlugins Decoded ignored plugins array.
      */
     public static function render_global_ignored( $ignoredPlugins, $decodedIgnoredPlugins ) { //phpcs:ignore -- NOSONAR - complex.
@@ -2743,7 +2773,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-abandoned-plugins-info-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-abandoned-plugins-info-message"></i>
-                    <?php printf( esc_html__( 'Manage abandoned plugins you have told your MainWP Dashboard to ignore on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/abandoned-plugins/" target="_blank">', '</a> <i class="external alternate icon"></i> ' ); ?>
+                    <?php printf( esc_html__( 'Manage abandoned plugins you have told your MainWP Dashboard to ignore on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/abandoned-plugins/" target="_blank">', '</a> <i class="external alternate icon"></i> ' ); ?>
                 </div>
             <?php endif; ?>
             <?php
@@ -2978,12 +3008,12 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             ?>
             <p><?php esc_html_e( 'If you need help with managing plugins, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui list">
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/" target="_blank">Managing Plugins with MainWP</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/#install-plugins" target="_blank">Install Plugins</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/#activate-plugins" target="_blank">Activate Plugins</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/#delete-plugins" target="_blank">Delete Plugins</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/#update-plugins" target="_blank">Update Plugins</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/#plugins-auto-updates" target="_blank">Plugins Auto Updates</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/managing-plugins-with-mainwp/" target="_blank">Managing Plugins with MainWP</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/managing-plugins-with-mainwp/#install-plugins" target="_blank">Install Plugins</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/managing-plugins-with-mainwp/#activate-plugins" target="_blank">Activate Plugins</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/managing-plugins-with-mainwp/#delete-plugins" target="_blank">Delete Plugins</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/managing-plugins-with-mainwp/#update-plugins" target="_blank">Update Plugins</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/kb/managing-plugins-with-mainwp/#plugins-auto-updates" target="_blank">Plugins Auto Updates</a></div>
                 <?php
                 /**
                  * Action: mainwp_plugins_help_item

@@ -59,23 +59,15 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
      * Method render_filters_segment().
      */
     public function render_filters_segment() {
-        $saved_segments = $this->set_get_manage_sites_filter_segments();
+        $saved_segments = static::set_get_manage_sites_filter_segments();
         ?>
-        <div class="three wide middle aligned right aligned column">
-                <div class="ui middle aligned compact grid">
-                    <div class="eight wide column">
-                    <button class="ui mini fluid button" id="mainwp-manage-sites-filter-save-segment-button" selected-segment-id="" selected-segment-name=""><?php esc_html_e( 'Save Segment', 'mainwp' ); ?></button>
-                    </div>
-                    <div class="eight wide column">
-                        <?php if ( ! empty( $saved_segments ) ) : ?>
-                            <button class="ui mini fluid button mainwp_manage_sites_filter_choose_segment"><?php esc_html_e( 'Load a Segment', 'mainwp' ); ?></button>
-                        <?php else : ?>
-                            <button class="ui mini fluid disabled button"><?php esc_html_e( 'Load a Segment', 'mainwp' ); ?></button>
-                        <?php endif; ?>
-                    </div>
-                </div>
-
-            </div>
+        <div class="right aligned four wide column">
+            <a class="ui mini button" id="mainwp-manage-sites-filter-save-segment-button" selected-segment-id="" selected-segment-name=""><?php esc_html_e( 'Save Segment', 'mainwp' ); ?></a>
+            <?php if ( ! empty( $saved_segments ) ) : ?>
+                <a class="ui mini button mainwp_manage_sites_filter_choose_segment"><?php esc_html_e( 'Load Segment', 'mainwp' ); ?></a>
+            <?php else : ?>
+                <a class="ui mini disabled button"><?php esc_html_e( 'Load Segment', 'mainwp' ); ?></a>
+            <?php endif; ?>
         </div>
 
         <script type="text/javascript">
@@ -242,18 +234,22 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
     /**
      * Method set_get_manage_sites_filter_segments()
      *
-     * @param bool  $set_val Get or set value.
-     * @param array $saved_segments segments data.
+     * @param bool   $set_val Get or set value.
+     * @param array  $saved_segments segments data.
+     * @param string $save_field segments data.
      *
      * @return array values
      */
-    public function set_get_manage_sites_filter_segments( $set_val = false, $saved_segments = array() ) {
+    public static function set_get_manage_sites_filter_segments( $set_val = false, $saved_segments = array(), $save_field = 'manage_sites' ) {
         global $current_user;
+
+        $field = 'mainwp_' . sanitize_text_field( $save_field ) . '_filter_saved_segments';
+
         if ( $current_user && ! empty( $current_user->ID ) ) {
             if ( $set_val ) {
-                update_user_option( $current_user->ID, 'mainwp_manage_sites_filter_saved_segments', $saved_segments );
+                update_user_option( $current_user->ID, $field, $saved_segments );
             } else {
-                $values = get_user_option( 'mainwp_manage_sites_filter_saved_segments', array() );
+                $values = get_user_option( $field, array() );
                 if ( ! is_array( $values ) ) {
                     $values = array();
                 }
@@ -302,12 +298,12 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
         $seg_id = ! empty( $_POST['seg_id'] ) ? sanitize_text_field( wp_unslash( $_POST['seg_id'] ) ) : time();
         //phpcs:enable WordPress.Security.NonceVerification.Missing
 
-        $saved_segments = $this->set_get_manage_sites_filter_segments();
+        $saved_segments = static::set_get_manage_sites_filter_segments();
         if ( ! is_array( $saved_segments ) ) {
             $saved_segments = array();
         }
         $saved_segments[ $seg_id ] = $save_fields;
-        $this->set_get_manage_sites_filter_segments( true, $saved_segments );
+        static::set_get_manage_sites_filter_segments( true, $saved_segments );
         die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
     }
 
@@ -319,10 +315,10 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
      */
     public function ajax_sites_filter_load_segments() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_manage_sites_filter_load_segments' );
-        $saved_segments = $this->set_get_manage_sites_filter_segments();
+        $saved_segments = static::set_get_manage_sites_filter_segments();
         $list_segs      = '';
         if ( is_array( $saved_segments ) && ! empty( $saved_segments ) ) {
-            $list_segs .= '<select id="mainwp_manage_sites_edit_payment_type" class="ui fluid dropdown">';
+            $list_segs .= '<select id="mainwp-edit-segment-filters" class="ui fluid dropdown">';
             $list_segs .= '<option segment-filters="" value="">' . esc_html__( 'Select a segment', 'mainwp' ) . '</option>';
             foreach ( $saved_segments as $sid => $values ) {
                 if ( empty( $values['name'] ) ) {
@@ -344,10 +340,10 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
         MainWP_Post_Handler::instance()->check_security( 'mainwp_manage_sites_filter_delete_segment' );
         $seg_id = ! empty( $_POST['seg_id'] ) ? sanitize_text_field( wp_unslash( $_POST['seg_id'] ) ) : 0; //phpcs:ignore -- ok.
 
-        $saved_segments = $this->set_get_manage_sites_filter_segments();
+        $saved_segments = static::set_get_manage_sites_filter_segments();
         if ( ! empty( $seg_id ) && is_array( $saved_segments ) && isset( $saved_segments[ $seg_id ] ) ) {
             unset( $saved_segments[ $seg_id ] );
-            $this->set_get_manage_sites_filter_segments( true, $saved_segments );
+            static::set_get_manage_sites_filter_segments( true, $saved_segments );
             die( wp_json_encode( array( 'result' =>'SUCCESS' ) ) ); //phpcs:ignore -- ok.
         }
         die( wp_json_encode( array( 'error' => esc_html__( 'Segment not found. Please try again.', 'mainwp' ) ) ) ); //phpcs:ignore -- ok.

@@ -72,7 +72,7 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
         // phpcs:enable
 
         if ( ! empty( $selected_status ) || ! empty( $selected_group ) || ! empty( $selected_client ) ) {
-            $filters_row_style = 'display:block';
+            $filters_row_style = 'display:flex';
         }
 
         ?>
@@ -232,14 +232,16 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $decodedIgnoredCores = array();
         }
 
+        $nonce = wp_create_nonce( 'viewmode' );
+
         ?>
 
         <div id="mainwp-screenshots-sites" class="ui segment">
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-grid-view-mode-info-message' ) ) : ?>
             <div class="ui info message">
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-grid-view-mode-info-message"></i>
-                <div><?php echo esc_html__( 'In the Grid mode, sites options are limited in comparison to the Table mode.', 'mainwp' ); ?></div>
-        </div>
+                <div><?php printf( esc_html__( 'In the Grid mode, sites options are limited in comparison to the %sTable mode%s.', 'mainwp' ), '<a href="admin.php?page=managesites&viewmode=table&modenonce=' . esc_html( $nonce ) . '">', '</a>' ); ?></div>
+            </div>
             <?php endif; ?>
         <?php
         /**
@@ -253,7 +255,7 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
         ?>
         <div id="mainwp-sites-previews">
             <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
-                <div class="ui <?php echo esc_attr( $cards_per_row ); ?> cards" >
+                <div class="ui <?php echo esc_attr( $cards_per_row ); ?> mainwp-cards cards" >
                     <?php
                     while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
                         $hasSyncErrors = ( '' !== $website->sync_errors );
@@ -362,81 +364,54 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
                         $total_updates = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades;
 
-                        if ( 5 < $total_updates ) {
-                            $a_color = 'red';
-                        } elseif ( 0 < $total_updates && 5 >= $total_updates ) {
-                            $a_color = 'yellow';
+                        $client_image = '';
+                        if ( $website->client_id > 0 ) {
+                            $client       = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $website->client_id, true );
+                            $client_image = MainWP_Client_Handler::get_client_avatar( $client );
                         } else {
-                            $a_color = 'green';
+                            $client_image = '<i class="user circle grey big icon"></i>';
                         }
 
-                        if ( 5 < $total_wp_upgrades ) {
-                            $w_color = 'red';
-                        } elseif ( 0 < $total_wp_upgrades && 5 >= $total_wp_upgrades ) {
-                            $w_color = 'yellow';
-                        } else {
-                            $w_color = 'green';
-                        }
-
-                        if ( 5 < $total_plugin_upgrades ) {
-                            $p_color = 'red';
-                        } elseif ( 0 < $total_plugin_upgrades && 5 >= $total_plugin_upgrades ) {
-                            $p_color = 'yellow';
-                        } else {
-                            $p_color = 'green';
-                        }
-
-                        if ( 5 < $total_theme_upgrades ) {
-                            $t_color = 'red';
-                        } elseif ( 0 < $total_theme_upgrades && 5 >= $total_theme_upgrades ) {
-                            $t_color = 'yellow';
-                        } else {
-                            $t_color = 'green';
-                        }
+                        $website_info = MainWP_DB::instance()->get_website_option( $website, 'site_info' );
+                        $website_info = ! empty( $website_info ) ? json_decode( $website_info, true ) : array();
 
                         ?>
 
-                    <div class="card" site-url="<?php echo esc_url( $website->url ); ?>">
+                        <div class="card" site-url="<?php echo esc_url( $website->url ); ?>">
                             <div class="image" data-tooltip="<?php echo esc_attr( $status_tooltip ); ?>" data-position="top center" data-inverted="">
-                            <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" data-src="//s0.wordpress.com/mshots/v1/<?php echo esc_html( rawurlencode( $website->url ) ); ?>?w=900">
-                        </div>
+                                <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" data-src="//s0.wordpress.com/mshots/v1/<?php echo esc_html( rawurlencode( $website->url ) ); ?>?w=900">
+                            </div>
                             <div class="ui <?php echo esc_attr( $status_color ); ?> corner label">
                                 <i class="<?php echo esc_attr( $status_icon ); ?> icon"></i>
                             </div>
-                        <div class="content">
-                                <h5 class="ui small header">
+                            <div class="content">
+                                <h2 class="ui small header">
                                     <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to WP Admin', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo intval( $website->id ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a>
-                                    <div class="sub header" style="font-size:11px"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_url( $website->url ); ?></a></div>
-                                </h5>
+                                    <br/><?php MainWP_Utility::get_site_index_option_icon( $website_info['site_public'] ); ?> <span class="ui small text"><a href="<?php echo esc_url( $website->url ); ?>" class="ui grey text" target="_blank"><?php echo esc_url( $website->url ); ?></a></span>
+                                </h2>
                                 <?php if ( isset( $website->wpgroups ) && '' !== $website->wpgroups ) : ?>
-                                <small data-tooltip="<?php esc_attr_e( 'Site tags', 'mainwp' ); ?>" data-position="top left" data-inverted="">
-                                    <?php echo MainWP_System_Utility::get_site_tags( (array) $website ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
-                                </small>
+                                <div><?php echo MainWP_System_Utility::get_site_tags( (array) $website ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
                                 <?php endif; ?>
-                        </div>
-                            <?php if ( isset( $website->client_id ) && ! empty( $website->client_id ) ) : ?>
-                            <div class="extra content">
-                                <small data-tooltip="<?php esc_attr_e( 'See client details', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="user icon"></i> <a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" class="ui small"><?php echo esc_html( stripslashes( $website->client_name ) ); ?></a></small>
                             </div>
-                            <?php endif; ?>
                             <div class="extra content">
-                                <div class="ui mini fluid buttons">
-                                    <a  data-tooltip="<?php esc_attr_e( 'Available updates.', 'mainwp' ); ?>" data-position="top left" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>" class="ui icon button"><i class="redo <?php esc_attr_e( $a_color ); ?> alternate icon"></i> <?php echo intval( $total_updates ); ?></a>
-                                    <a  data-tooltip="<?php esc_attr_e( 'Available plugin updates.', 'mainwp' ); ?>" data-position="top center" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=plugins-updates" class="ui icon button"><i class="plug <?php echo esc_attr( $p_color ); ?> icon"></i> <?php echo intval( $total_plugin_upgrades ); ?></a>
-                                    <a  data-tooltip="<?php esc_attr_e( 'Available theme updates.', 'mainwp' ); ?>" data-position="top center" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=themes-updates" class="ui icon button"><i class="brush <?php echo esc_attr( $t_color ); ?> icon"></i> <?php echo intval( $total_theme_upgrades ); ?></a>
-                                    <a  data-tooltip="<?php esc_attr_e( 'WordPress core updates.', 'mainwp' ); ?>" data-position="top right" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=wordpress-updates" class="ui icon button"><i class="wordpress <?php echo esc_attr( $w_color ); ?> icon"></i> <?php echo intval( $total_wp_upgrades ); //phpcs:ignore -- wordpress. ?></a>
-                        </div>
-                        </div>
-                        <div class="extra content">
-                            <?php if ( $hasSyncErrors ) : ?>
-                                <a class="ui mini green basic icon button fluid mainwp_site_card_reconnect" site-id="<?php echo intval( $website->id ); ?>" href="#"><i class="sync alternate icon"></i> <?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
-                            <?php else : ?>
-                            <div data-tooltip="<?php esc_html_e( 'Last Sync: ', 'mainwp' ); ?> <?php echo 0 !== $website->dtsSync ? esc_html( MainWP_Utility::format_timestamp( MainWP_Utility::format_timestamp( $website->dtsSync ) ) ) : ''; ?>" data-inverted="" data-position="bottom center">
-                                <a href="javascript:void(0)" class="ui mini green icon button fluid mainwp-sync-this-site" site-id="<?php echo intval( $website->id ); ?>"><i class="sync alternate icon"></i> <?php esc_html_e( 'Sync Site ', 'mainwp' ); ?></a>
+                                <a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" class="ui grey text">
+                                    <?php echo $client_image; //phpcs:ignore -- NOSONAR - ok.?> <?php echo esc_html( $website->client_name ); ?>
+                                </a>
                             </div>
-                            <?php endif; ?>
+
+                            <div class="extra content">
+                                <?php if ( $hasSyncErrors ) : ?>
+                                    <a class="ui mini green basic icon button mainwp_site_card_reconnect" site-id="<?php echo intval( $website->id ); ?>" href="#"><i class="sync alternate icon"></i></a>
+                                <?php else : ?>
+                                    <a href="javascript:void(0)" class="ui mini green icon button mainwp-sync-this-site" site-id="<?php echo intval( $website->id ); ?>"><i class="sync alternate icon"></i></a>
+                                <?php endif; ?>
+                                <a href="admin.php?page=managesites&id=<?php echo intval( $website->id ); ?>"class="ui mini grey icon button"><i class="cog icon"></i></a>
+                                <a data-tooltip="<?php echo ! empty( $website->dtsSync ) ? esc_attr__( 'Last sync: ', 'mainwp' ) . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website->dtsSync ) ) : ''; ?> " data-position="left center" data-inverted="" class="ui mini grey button" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); //phpcs:ignore -- NOSONAR -ok. ?>">
+                                    <i class="sync alternate icon"></i> <?php echo intval( $total_updates ); ?>
+                                </a>
+                                <span class="right floated"><?php MainWP_Utility::get_language_code_as_flag( $website_info['site_lang'] ); ?></span>
+                            </div>
                         </div>
-                    </div>
                         <?php
                     }
                     ?>

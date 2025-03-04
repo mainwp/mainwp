@@ -52,12 +52,12 @@ class Cost_Tracker_Monthly_Totals {
     public function render_widget() {
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
+            <h2 class="ui header handle-drag">
                 <?php esc_html_e( 'Monthly Totals', 'mainwp' ); ?>
                 <div class="sub header">
                 <?php esc_html_e( 'Track and forecast your monthly expenses by category for a year.', 'mainwp' ); ?>
                 </div>
-            </h3>
+            </h2>
         </div>
 
         <div class="mainwp-scrolly-overflow">

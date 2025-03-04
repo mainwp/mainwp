@@ -1346,14 +1346,14 @@ msgstr ""
 msgid ""
 "This site can not be reached! Please use the Test Connection feature and see "
 "if the positive response will be returned. For additional help, please "
-"review this <a href=\"https://kb.mainwp.com/docs/potential-issues/"
+"review this <a href=\"https://mainwp.com/kb/potential-issues/"
 "\">Knowledgebase document</a>, and if you still have issues, please let us "
-"know in the <a href=\"https://managers.mainwp.com/c/community-"
+"know in the <a href=\"https://community.mainwp.com/c/community-"
 "support/5\">MainWP Community</a>."
 msgstr ""
 "Diese Seite kann nicht erreicht werden! Bitte verwenden Sie die Funktion "
 "Verbindung testen, um zu sehen, ob eine positive Antwort zurückgegeben wird. "
-"Für weitere Hilfe lesen Sie bitte dieses <a href=\"https://kb.mainwp.com/"
+"Für weitere Hilfe lesen Sie bitte dieses <a href=\"https://mainwp.com/kb/"
 "docs/potential-issues/\">Knowledgebase-Dokument</a> und wenn Sie immer noch "
 "Probleme haben, lassen Sie es uns in der <a href=\"https://managers.mainwp."
 "com/c/community-support/5\">MainWP-Community</a> wissen."
@@ -1361,16 +1361,16 @@ msgstr ""
 #: assets/js/mainwp.js:1698
 msgid ""
 "Undefined error occurred. Please try again. If the issue does not resolve, "
-"please review this <a href=\"https://kb.mainwp.com/docs/potential-issues/"
+"please review this <a href=\"https://mainwp.com/kb/potential-issues/"
 "\">Knowledgebase document</a>, and if you still have issues, please let us "
-"know in the <a href=\"https://managers.mainwp.com/c/community-"
+"know in the <a href=\"https://community.mainwp.com/c/community-"
 "support/5\">MainWP Community</a>."
 msgstr ""
 "Ein nicht definierter Fehler ist aufgetreten. Bitte versuchen Sie es erneut. "
 "Wenn das Problem nicht behoben wird, lesen Sie bitte dieses <a "
-"href=\"https://kb.mainwp.com/docs/potential-issues/\">Knowledgebase-"
+"href=\"https://mainwp.com/kb/potential-issues/\">Knowledgebase-"
 "Dokument</a>. Wenn Sie immer noch Probleme haben, informieren Sie uns bitte "
-"in der <a href=\"https://managers.mainwp.com/c/community-support/5\">MainWP-"
+"in der <a href=\"https://community.mainwp.com/c/community-support/5\">MainWP-"
 "Community</a>."
 
 #: assets/js/mainwp.js:1700
@@ -3826,8 +3826,8 @@ msgstr "Neue Version"
 #: pages/page-mainwp-updates-per-site.php:604
 #: pages/page-mainwp-updates-per-site.php:744
 #: pages/page-mainwp-updates-per-site.php:747
-msgid "Update Now"
-msgstr "Jetzt aktualisieren"
+msgid "Update"
+msgstr "Aktualisieren"
 
 #: class/class-mainwp-manage-sites-update-view.php:376
 #: class/class-mainwp-manage-sites-update-view.php:520
@@ -3840,8 +3840,8 @@ msgstr "Jetzt aktualisieren"
 #: pages/page-mainwp-updates-per-site.php:138
 #: pages/page-mainwp-updates-per-site.php:361
 #: pages/page-mainwp-updates-per-site.php:587
-msgid "Ignore Update"
-msgstr "Aktualisierung ignorieren"
+msgid "Ignore"
+msgstr "Ignorieren"
 
 #: class/class-mainwp-manage-sites-update-view.php:380
 #: class/class-mainwp-manage-sites-update-view.php:524

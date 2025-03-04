@@ -63,12 +63,12 @@ class Log_Graph_Status_Widget {
     public function render_widget() {
         ?>
         <div class="mainwp-widget-header">
-            <h3 class="ui header handle-drag">
+            <h2 class="ui header handle-drag">
                 <?php esc_html_e( 'Site Connectivity Status', 'mainwp' ); ?>
                 <div class="sub header">
                 <?php esc_html_e( 'Number of total, connected, disconnected, and suspended sites across the network for easy status monitoring.', 'mainwp' ); ?>
                 </div>
-            </h3>
+            </h2>
         </div>
 
         <div class="mainwp-widget-insights-card">

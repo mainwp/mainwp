@@ -9,6 +9,27 @@ jQuery(function ($) {
     jQuery('.mainwp-popup-tooltip').popup()
   }
 
+  jQuery(document).on('click', '#mainwp-help-menu-item', function () {
+    jQuery('#mainwp-help-modal').modal({
+      inverted: true,
+      blurring: false,
+      closable: false,
+      onShow: function() {
+          jQuery('#mainwp-help-modal').parent('.ui.dimmer').removeClass('dimmer');
+          jQuery('#mainwp-help-modal').css({
+            'top':(jQuery(window).height() - jQuery('#mainwp-help-modal').outerHeight()) / 2 + 'px',
+            'left':(jQuery(window).width() - jQuery('#mainwp-help-modal').outerWidth()) / 2 + 'px'
+          });
+      },
+
+    }).modal('show').draggable().resizable({
+      handles: "n, e, s, w, ne, nw, se, sw", // Allows resizing from all edges
+      minWidth: 300, // Set minimum width
+      minHeight: 640, // Set minimum height
+    });
+    return false;
+  });
+
   // review for new UI update
   jQuery(document).on('click', '#mainwp-category-add-submit', function () {
     let newCat = jQuery('#newcategory').val();
@@ -537,14 +558,10 @@ jQuery(function () {
  * Security Issues
  */
 
-let securityIssues_fixes = ['listing', 'wp_version', 'rsd', 'wlw', 'core_updates', 'plugin_updates', 'theme_updates', 'db_reporting', 'php_reporting', 'versions', 'registered_versions', 'admin', 'readme', 'wp_uptodate', 'phpversion_matched', 'sslprotocol', 'debug_disabled'];
+let securityIssues_fixes = [ 'core_updates', 'plugin_updates', 'theme_updates', 'db_reporting', 'php_reporting', 'wp_uptodate', 'phpversion_matched', 'sslprotocol', 'debug_disabled', 'sec_outdated_plugins', 'sec_inactive_plugins', 'sec_outdated_themes', 'sec_inactive_themes' ];
 jQuery(function () {
   let securityIssueSite = jQuery('#securityIssueSite');
   if ((securityIssueSite.val() != null) && (securityIssueSite.val() != "")) {
-    jQuery(document).on('click', '#securityIssues_fixAll', function () {
-      securityIssues_fix('all');
-    });
-
     jQuery(document).on('click', '#securityIssues_refresh', function () {
       for (let ise of securityIssues_fixes) {
         let securityIssueCurrentIssue = jQuery('#' + ise + '_fix');
@@ -560,6 +577,9 @@ jQuery(function () {
     });
 
     for (let ise of securityIssues_fixes) {
+        if(ise === 'wp_uptodate'){
+            continue;
+        }
       jQuery('#' + ise + '_fix').on('click', function (what) {
         return function () {
           securityIssues_fix(what);
@@ -578,27 +598,13 @@ jQuery(function () {
   }
 });
 window.securityIssues_fix = function (feature) {
-  if (feature == 'all') {
-    for (let ise of securityIssues_fixes) {
-      if (jQuery('#' + ise + '_nok').css('display') != 'none') {
-        if (jQuery('#' + ise + '_fix')) {
-          jQuery('#' + ise + '_fix').hide();
-        }
-        jQuery('#' + ise + '_extra').hide();
-        jQuery('#' + ise + '_ok').hide();
-        jQuery('#' + ise + '_nok').hide();
-        jQuery('#' + ise + '_loading').show();
-      }
-    }
-  } else {
     if (jQuery('#' + feature + '_fix')) {
-      jQuery('#' + feature + '_fix').hide();
+        jQuery('#' + feature + '_fix').hide();
     }
     jQuery('#' + feature + '_extra').hide();
     jQuery('#' + feature + '_ok').hide();
     jQuery('#' + feature + '_nok').hide();
     jQuery('#' + feature + '_loading').show();
-  }
 
   let data = mainwp_secure_data({
     action: 'mainwp_security_issues_fix',
@@ -751,16 +757,13 @@ let securityIssues_handle = function (response) { // NOSONAR - complex.
             if (jQuery('#' + issue + '_unfix')) {
               jQuery('#' + issue + '_unfix').show();
               if (res[issue] == 'Y_UNABLE') { // Y_UNABLE will disable unfix.
-                jQuery('#' + issue + '_unfix').hide().after('<a href="javascript:void(0);" class="ui mini fluid button" disabled="disabled">Unfix</a>');
+                jQuery('#' + issue + '_unfix').hide();
               }
             }
 
             jQuery('#' + issue + '_ok').show();
             jQuery('#' + issue + '-status-ok').show();
             jQuery('#' + issue + '-status-nok').hide();
-            if (issue == 'readme') {
-              jQuery('#readme-wpe-nok').hide();
-            }
           } else if (res[issue] == 'N' || res[issue] == 'N_UNABLE') {
             jQuery('#' + issue + '_extra').hide();
             jQuery('#' + issue + '_ok').hide();
@@ -780,25 +783,17 @@ let securityIssues_handle = function (response) { // NOSONAR - complex.
               jQuery('#' + issue + '_extra').html(res[issue]);
               jQuery('#' + issue + '_extra').show();
             }
-          }
-        }
-      }
 
-      let unSetFeatures = jQuery('#mainwp-security-issues-table').attr('un-set');
-      if (unSetFeatures != '') {
-        unSetFeatures = unSetFeatures.split(',');
-        if (unSetFeatures.length > 0) {
-          let issue;
-          for (let ival in unSetFeatures) {
-            issue = unSetFeatures[ival];
-            console.log(res[issue]);
-            if (res[issue] == 'Y') {
-              securityIssues_unfix(issue);
+            if('wp_uptodate' === issue){
+                jQuery('#wp_upgrades').find('div[updated="-1"]').each(function(){
+                    jQuery(this).attr('updated', 0);
+                });
             }
+            jQuery('#' + issue + '-status-ok').hide();
+            jQuery('#' + issue + '-status-nok').show();
           }
         }
       }
-
     } catch (err) {
       result = '<i class="exclamation circle icon"></i> ' + __('Undefined error!');
     }
@@ -1103,7 +1098,12 @@ let dashboard_update_next = function (pAction) {
   mainwpVars.currentThreads++;
   mainwpVars.websitesLeft--;
   let websiteId = mainwpVars.websitesToUpdate[mainwpVars.currentWebsite++];
-  dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Syncing...', 'mainwp') + '"><i class="sync alternate loading icon"></i></span>');
+  if ('checknow' == pAction) {
+    dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Checking uptime status...', 'mainwp') + '"><i class="sync alternate loading icon"></i></span>');
+  } else {
+    dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Syncing data...', 'mainwp') + '"><i class="sync alternate loading icon"></i></span>');
+  }
+
   let data = mainwp_secure_data({
     action: ('checknow' == pAction ? 'mainwp_checksites' : 'mainwp_syncsites'),
     wp_id: websiteId,
@@ -1549,7 +1549,7 @@ let mainwp_site_overview_reconnect = function (pElement) {
       if (response.substring(0, 5) == 'ERROR') {
         let error;
         if (response.length == 5) {
-          error = 'Undefined error! Please try again. If the process keeps failing, please review <a href="https://kb.mainwp.com/">MainWP Knowledgebase</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
+          error = 'Undefined error! Please try again. If the process keeps failing, please review <a href="https://mainwp.com/kb/">MainWP Knowledgebase</a>, and if you still have issues, please let us know in the <a href="https://community.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
           feedback('mainwp-message-zone', error, 'red');
         } else {
           error = response.substring(6);
@@ -1610,7 +1610,7 @@ let mainwp_reconnect_with_pw = function (siteid) {
     if (response.substring(0, 5) == 'ERROR') {
       let error;
       if (response.length == 5) {
-        error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://kb.mainwp.com/docs/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
+        error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://mainwp.com/kb/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://community.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
         mainwp_set_message_zone('#mainwp-message-zone-reconnect', error, 'red');
       } else {
         error = response.substring(6);
@@ -1646,7 +1646,7 @@ let mainwp_managesites_reconnect = function (pElement) {
       if (response.substring(0, 5) == 'ERROR') {
         let error;
         if (response.length == 5) {
-          error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://kb.mainwp.com/docs/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
+          error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://mainwp.com/kb/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://community.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
           feedback('mainwp-message-zone', error, 'red');
         } else {
           error = response.substring(6);
@@ -1683,7 +1683,7 @@ let mainwp_managesites_cards_reconnect = function (element) {
       if (response.substring(0, 5) == 'ERROR') {
         let error;
         if (response.length == 5) {
-          error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://kb.mainwp.com/docs/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
+          error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://mainwp.com/kb/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://community.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
           feedback('mainwp-message-zone', error, 'red');
         } else {
           error = response.substring(6);
@@ -2439,16 +2439,15 @@ jQuery(function () {
   jQuery('#MainWPInstallBulkNavSearch').on('click', function (event) {
     event.preventDefault();
     jQuery('#mainwp_plugin_bulk_install_btn').attr('bulk-action', 'install');
+    jQuery('.mainwp-bulk-install-showhide-content').hide();
     jQuery('.mainwp-browse-plugins').show();
-    jQuery('.mainwp-upload-plugin').hide();
     jQuery('#mainwp-search-plugins-form').show();
   });
   jQuery('#MainWPInstallBulkNavUpload').on('click', function (event) {
     event.preventDefault();
     jQuery('#mainwp_plugin_bulk_install_btn').attr('bulk-action', 'upload');
+    jQuery('.mainwp-bulk-install-showhide-content').hide();
     jQuery('.mainwp-upload-plugin').show();
-    jQuery('.mainwp-browse-plugins').hide();
-    jQuery('#mainwp-search-plugins-form').hide();
   });
 
   // not used?
@@ -2588,7 +2587,7 @@ let mainwp_install_bulk = function (type, slug, name) {
       let installQueueContent = '';
       bulkInstallDone = 0;
       installQueueContent += '<div id="bulk_install_info"></div>';
-      installQueueContent += '<div class="ui middle aligned divided selection list">';
+      installQueueContent += '<div class="ui middle aligned divided list">';
 
       for (let siteId in response.sites) {
         let site = response.sites[siteId];
@@ -2725,14 +2724,14 @@ let mainwp_install_bulk_you_know_msg = function (type, total) { // NOSONAR - com
   if (mainwpParams.installedBulkSettingsManager && mainwpParams.installedBulkSettingsManager == 1) {
     if (type == 'plugin') {
       if (total == 1)
-        msg = __('Would you like to use the Bulk Settings Manager with this plugin? Check out the %1Documentation%2.', '<a href="https://kb.mainwp.com/docs/bulk-settings-manager-extension/" target="_blank">', '</a>'); // NOSONAR - noopener - open safe.
+        msg = __('Would you like to use the Bulk Settings Manager with this plugin? Check out the %1Documentation%2.', '<a href="https://mainwp.com/kb/bulk-settings-manager-extension/" target="_blank">', '</a>'); // NOSONAR - noopener - open safe.
       else
-        msg = __('Would you like to use the Bulk Settings Manager with these plugins? Check out the %1Documentation%2.', '<a href="https://kb.mainwp.com/docs/bulk-settings-manager-extension/" target="_blank">', '</a>'); // NOSONAR - noopener - open safe.
+        msg = __('Would you like to use the Bulk Settings Manager with these plugins? Check out the %1Documentation%2.', '<a href="https://mainwp.com/kb/bulk-settings-manager-extension/" target="_blank">', '</a>'); // NOSONAR - noopener - open safe.
     } else if (type == 'theme') {
       if (total == 1)
-        msg = __('Would you like to use the Bulk Settings Manager with this theme? Check out the %1Documentation%2.', '<a href="https://kb.mainwp.com/docs/bulk-settings-manager-extension/" target="_blank">', '</a>'); // NOSONAR - noopener - open safe.
+        msg = __('Would you like to use the Bulk Settings Manager with this theme? Check out the %1Documentation%2.', '<a href="https://mainwp.com/kb/bulk-settings-manager-extension/" target="_blank">', '</a>'); // NOSONAR - noopener - open safe.
       else
-        msg = __('Would you like to use the Bulk Settings Manager with these themes? Check out the %1Documentation%2.', '<a href="https://kb.mainwp.com/docs/bulk-settings-manager-extension/" target="_blank">', '</a>'); // NOSONAR - noopener - open safe.
+        msg = __('Would you like to use the Bulk Settings Manager with these themes? Check out the %1Documentation%2.', '<a href="https://mainwp.com/kb/bulk-settings-manager-extension/" target="_blank">', '</a>'); // NOSONAR - noopener - open safe.
     }
   } else if (type == 'plugin') {
     if (total == 1)
@@ -2974,7 +2973,7 @@ let mainwp_upload_bulk_start_specific = function (type, urls, activatePlugin, ov
         let results = '';
         if (response?.results[siteid] != undefined) {
           let entries = Object.entries(response.results[siteid]);
-          results += '<div class="ui tiny middle aligned selection list">';
+          results += '<div class="ui tiny middle aligned list">';
           for (let entry of entries) {
             results += '<div class="item"><div class="right floated content">' + (entry[1] ? '<i class="check green icon"></i>' : '<i class="times red icon"></i>') + '</div><div class="content">' + entry[0] + '</div></div>';
           }
@@ -3112,6 +3111,19 @@ function isUrl(url) {
   }
 }
 
+function removeUrlParams(url,params) {
+    try {
+        const urlObj = new URL(url);
+        jQuery(params).each(function(idx, param){
+            urlObj.searchParams.delete(param);
+        });
+        return urlObj.toString();
+    } catch (e) {
+        console.log(e);
+    }
+    return '';
+}
+
 function setVisible(what, vis) {
   if (vis) {
     jQuery(what).show();
@@ -3168,6 +3180,9 @@ jQuery(function () {
     jQuery('#mainwp-notes-websiteid').val(id);
     jQuery('#mainwp-which-note').val('site'); // to fix conflict.
     mainwp_notes_show();
+    if(jQuery(this).attr('add-new')){
+        jQuery( '#mainwp-notes-edit' ).trigger( "click" );
+    }
     return false;
   });
 
@@ -3619,32 +3634,6 @@ jQuery(document).on('click', '.mainwp-install-check-dismiss', function () {
   return false;
 });
 
-jQuery(document).on('click', '.mainwp-action-dismiss', function () {
-  let action_id = jQuery(this).attr('action-id');
-  jQuery(this).closest('tr').fadeOut("slow");
-  let data = {
-    action: 'mainwp_site_actions_dismiss'
-  };
-  data['action_id'] = action_id;
-  jQuery.post(ajaxurl, mainwp_secure_data(data), function () {
-
-  });
-  return false;
-});
-
-jQuery(document).on('click', '.mainwp-event-action-dismiss', function () {
-  let action_id = jQuery(this).attr('action-id');
-  jQuery(this).closest('.event').fadeOut("slow");
-  let data = {
-    action: 'mainwp_site_actions_dismiss'
-  };
-  data['action_id'] = action_id;
-  jQuery.post(ajaxurl, mainwp_secure_data(data), function () {
-
-  });
-  return false;
-});
-
 jQuery(document).on('click', '#mainwp-delete-all-nonmainwp-actions-button', function () {
   mainwp_confirm('Are you sure you want to delete all Non-MainWP changes? This action can not be undone!', function () {
     mainwp_delete_nonmainwp_data_start();
@@ -3763,14 +3752,13 @@ jQuery(function ($) {
     mainwp_confirm(confirmMsg, function () { mainwp_non_mainwp_actions_table_bulk_action(bulk_act); });
   });
 
-
-  $(document).on('click', '.non-mainwp-action-row-dismiss', function () {
-    mainwp_non_mainwp_row_actions_dismiss(this);
+  $(document).on('click', '.insights-actions-row-dismiss', function () {
+    return mainwp_insights_row_actions_dismiss(this);
   });
 })
 
 
-let mainwp_non_mainwp_row_actions_dismiss = function (obj) {
+let mainwp_insights_row_actions_dismiss = function (obj) {
 
   let row = jQuery(obj).closest('tr');
   let confirmMsg = __("You are about to dismiss the selected changes?");
@@ -3778,23 +3766,23 @@ let mainwp_non_mainwp_row_actions_dismiss = function (obj) {
   let _callback = () => {
     row.html('<td></td><td colspan="999"><i class="notched circle loading icon"></i> Please wait...</td>');
     let data = mainwp_secure_data({
-      action: 'mainwp_non_mainwp_changes_dismiss_actions',
-      act_id: jQuery(row).attr('action-id')
+      action: 'mainwp_insight_events_dismiss_actions',
+      log_id: jQuery(row).attr('log-id')
     });
     jQuery.post(ajaxurl, data, function (response) {
       if (response) {
         if (response['error']) {
           row.html('<td></td><td colspan="999"><i class="times red icon"></i> ' + response['error'] + '</td>');
         } else if (response['success'] == 'yes') {
-          row.html('<td></td><td colspan="999"><i class="green check icon"></i> Non-MainWP Change has been dismissed.</td>');
+          row.html('<td></td><td colspan="999"><i class="green check icon"></i> Insight Change has been dismissed.</td>');
           setTimeout(function () {
             jQuery(row).fadeOut("slow");
           }, 2000);
         } else {
-          row.html('<td></td><td colspan="999"><i class="times red icon"></i> Non-MainWP Change could not be dismissed.</td>');
+          row.html('<td></td><td colspan="999"><i class="times red icon"></i> Insight Change could not be dismissed.</td>');
         }
       } else {
-        row.html('<td></td><td colspan="999"><i class="times red icon"></i> Non-MainWP Change could not be dismissed.</td>');
+        row.html('<td></td><td colspan="999"><i class="times red icon"></i> Insight Change could not be dismissed.</td>');
       }
     }, 'json');
   };
@@ -3931,17 +3919,17 @@ window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRig
   console.log('mainwp_datatable_fix_menu_overflow :: ' + tblSelect);
 
   // Fix the overflow prbolem for the actions menu element (right pointing menu).
-  jQuery(tblSelect + ' tr td .ui.right.pointing.dropdown.button').on('click', function () {
+  jQuery(tblSelect + ' tr td .ui.right.pointing.dropdown').on('click', function () {
     jQuery(this).closest(dtScrollBdCls).css('position', '');
     jQuery(this).closest(dtScrollCls).css('position', 'relative');
     jQuery(this).css('position', 'static');
     let fix_overflow = jQuery('.mainwp-content-wrap').attr('menu-overflow');
     let position = jQuery(this).position();
     let top = position.top;
-    let right = 48;
+    let right = 50;
     if (fix_overflow > 1) {
       position = jQuery(this).closest('td').position();
-      top = position.top + 85;
+      top = position.top + 85; //85
     }
     if (pTop !== undefined) {
       top = top + pTop;
@@ -3957,7 +3945,7 @@ window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRig
   });
 
   // Fix the overflow prbolem for the actions menu element (left pointing menu).
-  jQuery(tblSelect + ' tr td .ui.left.pointing.dropdown.button').on('click', function () {
+  jQuery(tblSelect + ' tr td .ui.left.pointing.dropdown').on('click', function () {
     jQuery(this).closest(dtScrollBdCls).css('position', '');
     jQuery(this).closest(dtScrollCls).css('position', 'relative');
     jQuery(this).css('position', 'static');
@@ -3993,7 +3981,7 @@ let mainwp_datatable_fix_child_menu_overflow = function (chilRow, fix_overflow) 
   let dtScrollBdCls = '.dt-scroll-body';
   let dtScrollCls = '.dt-scroll';
   // Fix the overflow prbolem for the actions child menu element (pointing menu).
-  jQuery(chilRow).find('.ui.pointing.dropdown.button').on('click', function () {
+  jQuery(chilRow).find('.ui.pointing.dropdown').on('click', function () {
 
     let position = jQuery(this).position();
     let left = position.left + 30;
@@ -4591,7 +4579,7 @@ jQuery(function ($) {
         loadSegment: function (loadCallback) {
           jQuery('#mainwp-common-filter-segment-edit-fields').hide();
           jQuery('#mainwp-common-filter-edit-segment-save').hide();
-          jQuery('#mainwp-common-filter-segment-modal > div.header').html(__('Load a Segment'));
+          jQuery('#mainwp-common-filter-segment-modal > div.header').html(__('Load Segment'));
           jQuery('#mainwp-common-filter-segment-select-fields').show();
           jQuery('#mainwp-common-filter-select-segment-choose-button').show();
           jQuery('#mainwp-common-filter-select-segment-delete-button').show();
@@ -4608,7 +4596,145 @@ jQuery(function ($) {
       return _instance;
     })();
   }
+
+  if (!window.mainwpUIHandleWidgetsLayout) {
+    window.mainwpUIHandleWidgetsLayout = (function () {
+      const statusElemId = '#mainwp-common-edit-widgets-layout-status';
+      let _instance = {
+        loadingStatus: function () {
+          $(statusElemId).html('<i class="notched circle loading icon"></i> ' + __('Loading layouts. Please wait...')).show();
+        },
+        savingStatus: function () {
+          $(statusElemId).html('<i class="notched circle loading icon"></i> ' + __('Saving layout. Please wait...')).show();
+        },
+        deletingStatus: function () {
+          $(statusElemId).html('<i class="notched circle loading icon"></i> ' + __('Deleting layout. Please wait...')).show();
+
+        },
+        showWorkingStatus: function (status, addClass) {
+          if (addClass) {
+            $(statusElemId).removeClass('red green yellow');
+            $(statusElemId).addClass(addClass);
+          }
+          $(statusElemId).html(status).show();
+        },
+        hideWorkingStatus: function () {
+          $(statusElemId).removeClass('red green').hide();
+        },
+        showLayout: function (showBtn) {
+          jQuery('#mainwp-common-edit-widgets-layout-modal > div.header').html(__('Save Layout'));
+          jQuery('#mainwp-common-edit-widgets-layout-edit-fields').show();
+          jQuery('#mainwp-common-edit-widgets-layout-save-button').show();
+          jQuery('#mainwp-common-layout-widgets-select-fields').hide();
+          jQuery('#mainwp-common-edit-widgets-select-layout-button').hide();
+          jQuery('#mainwp-common-edit-widgets-layout-delete-button').hide();
+
+          if (jQuery('#mainwp-widgets-selected-layout').length > 0) {
+            let name = jQuery('#mainwp-widgets-selected-layout').attr('layout-name');
+            let lay_idx = jQuery('#mainwp-widgets-selected-layout').attr('layout-idx');
+            jQuery('#mainwp-common-edit-widgets-layout-name').val(name);
+            jQuery(showBtn).attr('selected-layout-id', lay_idx);
+          }
+          this.hideWorkingStatus();
+          mainwp_common_show_edit_widgets_layout_modal();
+        },
+        loadSegment: function (loadCallback) {
+          jQuery('#mainwp-common-edit-widgets-layout-edit-fields').hide();
+          jQuery('#mainwp-common-edit-widgets-layout-save-button').hide();
+          jQuery('#mainwp-common-edit-widgets-layout-modal > div.header').html(__('Load a Layout'));
+          jQuery('#mainwp-common-layout-widgets-select-fields').show();
+          jQuery('#mainwp-common-edit-widgets-select-layout-button').show();
+          jQuery('#mainwp-common-edit-widgets-layout-delete-button').show();
+          this.hideWorkingStatus();
+          mainwp_common_show_edit_widgets_layout_modal(loadCallback);
+        },
+        showResults: function (result) {
+          jQuery(statusElemId).hide();
+          jQuery('#mainwp-common-edit-widgets-layout-lists-wrapper').html(result);
+          jQuery('#mainwp-common-edit-widgets-layout-lists-wrapper .ui.dropdown').dropdown();
+          jQuery('#mainwp-common-layout-widgets-select-fields').show();
+        }
+      }
+      return _instance;
+    })();
+  }
+
 });
+
+
+let mainwp_common_show_edit_widgets_layout_modal = function (loadCallback) {
+  jQuery('#mainwp-common-edit-widgets-layout-modal').modal({
+    allowMultiple: false,
+    onShow: function () {
+      if (typeof loadCallback == 'function') {
+        loadCallback();
+      }
+    }
+  }).modal('show');
+};
+
+let mainwp_common_ui_widgets_save_layout = function (itemClass, data, callBack) {
+
+  let orders = [];
+  let wgIds = [];
+
+  const $items = document.querySelectorAll(itemClass);
+
+  if ($items.length == 0) {
+    return;
+  }
+
+  $items.forEach(function (item) {
+    let obj = {};
+    obj["x"] = item.getAttribute('gs-x');
+    obj["y"] = item.getAttribute('gs-y');
+    obj["w"] = item.getAttribute('gs-w');
+    obj["h"] = item.getAttribute('gs-h');
+    orders.push(obj);
+    wgIds.push(item.id);
+  });
+
+  data.action = 'mainwp_ui_save_widgets_layout';
+  data.order = orders;
+  data.wgids = wgIds;
+
+  jQuery.post(ajaxurl, mainwp_secure_data(data), function (res) {
+    if (typeof callBack !== "undefined" && false !== callBack) {
+      callBack(res);
+    }
+  }, 'json');
+}
+
+let mainwp_overview_gridstack_save_layout = function( item_id ){
+
+    let orders = [];
+    let wgIds = [];
+
+    const $items = document.querySelectorAll('.grid-stack-item');
+
+    $items.forEach(function(item) {
+        let obj = {};
+        obj["x"] = item.getAttribute('gs-x');
+        obj["y"] = item.getAttribute('gs-y');
+        obj["w"] = item.getAttribute('gs-w');
+        obj["h"] = item.getAttribute('gs-h');
+        orders.push(obj);
+        wgIds.push(item.id);
+    });
+
+    console.log(orders);
+    console.log(wgIds);
+
+    let postVars = {
+        action:'mainwp_widgets_order',
+        page: page_sortablewidgets,
+        order:JSON.stringify(orders),
+        wgids: JSON.stringify(wgIds),
+        item_id: item_id
+    };
+    jQuery.post( ajaxurl, mainwp_secure_data( postVars ), function () {
+    } );
+}
 
 window.mainwp_init_ui_calendar = ($selectors) => {
   jQuery($selectors).calendar({
@@ -4687,7 +4813,7 @@ jQuery(function ($) {
       if (response?.success) {
         feedback('mainwp-message-zone', __('Monitor have been removed.'), 'green');
         setTimeout(function () {
-          window.location = 'admin.php?page=managesites&monitor_wpid=' + wpid;
+          window.location = 'admin.php?page=managesites&id=' + wpid;
         }, 2000);
 
       } else if (response?.error) {

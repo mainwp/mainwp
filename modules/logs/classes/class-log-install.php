@@ -147,7 +147,7 @@ class Log_Install extends MainWP_Install {
      * @param string $currentVersion Current db version.
      */
     public function update_log_db( $currentVersion ) {
-        if ( version_compare( $currentVersion, '1.0.1.7', '<' ) ) {
+        if ( version_compare( $currentVersion, '1.0.1.7', '<' ) ) { // NOSONAR - non-ip.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' ADD INDEX index_site_object_id (site_id, object_id)' ); //phpcs:ignore -- ok.
         }
     }

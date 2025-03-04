@@ -3111,6 +3111,19 @@ function isUrl(url) {
   }
 }
 
+function removeUrlParams(url,params) {
+    try {
+        const urlObj = new URL(url);
+        jQuery(params).each(function(idx, param){
+            urlObj.searchParams.delete(param);
+        });
+        return urlObj.toString();
+    } catch (e) {
+        console.log(e);
+    }
+    return false;
+}
+
 function setVisible(what, vis) {
   if (vis) {
     jQuery(what).show();

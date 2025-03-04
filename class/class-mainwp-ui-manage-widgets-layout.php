@@ -57,12 +57,15 @@ class MainWP_Ui_Manage_Widgets_Layout { // phpcs:ignore Generic.Classes.OpeningB
 
     /**
      * Method render_edit_layout().
+     *
+     * @param string $screen_id Current screen id.
      */
-    public static function render_edit_layout() {
-        $saved_segments = static::set_get_widgets_layout();
+    public static function render_edit_layout( $screen_id ) {
+        $screen_slug    = strtolower( $screen_id );
+        $saved_segments = static::set_get_widgets_layout( false, array(), $screen_slug );
         ?>
 
-        <a class="ui mini button" id="mainwp-manage-widgets-load-saved-layout-button" selected-layout-id=""><?php esc_html_e( 'Save Layout', 'mainwp' ); ?></a>
+        <a class="ui mini button" id="mainwp-manage-widgets-load-saved-layout-button" selected-layout-id="" settings-slug="<?php echo esc_attr( $screen_slug ); ?>"><?php esc_html_e( 'Save Layout', 'mainwp' ); ?></a>
         <?php if ( ! empty( $saved_segments ) ) : ?>
             <a class="ui mini button mainwp_manage_widgets_ui_choose_layout"><?php esc_html_e( 'Load Layout', 'mainwp' ); ?></a>
         <?php else : ?>
@@ -75,6 +78,7 @@ class MainWP_Ui_Manage_Widgets_Layout { // phpcs:ignore Generic.Classes.OpeningB
                     jQuery('#mainwp-common-layout-widgets-select-fields').hide();
                     let data = mainwp_secure_data({
                         action: 'mainwp_ui_load_widgets_layout',
+                        settings_slug: jQuery('#mainwp-manage-widgets-load-saved-layout-button').attr('settings-slug')
                     });
                     mainwpUIHandleWidgetsLayout.showWorkingStatus('<i class="notched circle loading icon"></i> ' + __('Loading layouts. Please wait...'), 'green');
                     jQuery.post(ajaxurl, data, function (response) {
@@ -92,6 +96,7 @@ class MainWP_Ui_Manage_Widgets_Layout { // phpcs:ignore Generic.Classes.OpeningB
                     mainwpUIHandleWidgetsLayout.showLayout(this);
                 } );
                 jQuery('.mainwp_manage_widgets_ui_choose_layout').on( 'click', function () {
+                    let field_name = '';
                     mainwpUIHandleWidgetsLayout.loadSegment(mainwp_load_manage_widgets_layout);
                 } );
 
@@ -109,6 +114,7 @@ class MainWP_Ui_Manage_Widgets_Layout { // phpcs:ignore Generic.Classes.OpeningB
                     let data = {
                         name: seg_name,
                         seg_id:$('#mainwp-manage-widgets-load-saved-layout-button').attr('selected-layout-id'),
+                        settings_slug: $('#mainwp-manage-widgets-load-saved-layout-button').attr('settings-slug')
                     };
 
                     mainwpUIHandleWidgetsLayout.showWorkingStatus( '<i class="notched circle loading icon"></i> ' + __('Saving layout. Please wait...'), 'green' );
@@ -121,7 +127,7 @@ class MainWP_Ui_Manage_Widgets_Layout { // phpcs:ignore Generic.Classes.OpeningB
                             setTimeout(function () {
                                 jQuery('#mainwp-common-edit-widgets-layout-status').fadeOut(300);
                                 jQuery( '#mainwp-common-edit-widgets-layout-modal' ).modal('hide');
-                                window.location.href = 'admin.php?page=mainwp_tab';
+                                window.location.href = location.href;
                             }, 2000);
                         } else {
                             mainwpUIHandleWidgetsLayout.showWorkingStatus(__('Undefined error occured while saving your layout!'), 'red');
@@ -133,7 +139,12 @@ class MainWP_Ui_Manage_Widgets_Layout { // phpcs:ignore Generic.Classes.OpeningB
                 jQuery('#mainwp-common-edit-widgets-select-layout-button').on( 'click', function () {
                     mainwpUIHandleWidgetsLayout.hideWorkingStatus();
                     let seg_id = jQuery( '#mainwp-common-layout-widgets-select-fields .ui.dropdown').dropdown('get value');
-                    window.location.href = 'admin.php?page=mainwp_tab&select_layout=1&updated=' + seg_id + '&_opennonce=<?php echo esc_js( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>';
+                    let screen_slug = $('#mainwp-manage-widgets-load-saved-layout-button').attr('settings-slug');
+                    let loc_url = removeUrlParams(location.href, [ 'screen_slug', 'updated', '_opennonce'] );
+                    if('' == loc_url){
+                        loc_url = location.href;
+                    }
+                    window.location.href = loc_url + '&select_layout=1&screen_slug=' + encodeURIComponent( screen_slug ) + '&updated=' + encodeURIComponent( seg_id ) + '&_opennonce=<?php echo esc_js( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>';
                 });
 
 
@@ -153,6 +164,7 @@ class MainWP_Ui_Manage_Widgets_Layout { // phpcs:ignore Generic.Classes.OpeningB
                     let data = mainwp_secure_data({
                         action: 'mainwp_ui_delete_widgets_layout',
                         seg_id: seg_id,
+                        settings_slug: $('#mainwp-manage-widgets-load-saved-layout-button').attr('settings-slug')
                     });
                     mainwpUIHandleWidgetsLayout.showWorkingStatus('<i class="notched circle loading icon"></i> ' + __('Deleting layout. Please wait...'), 'green' );
                     jQuery.post(ajaxurl, data, function (response) {
@@ -222,6 +234,12 @@ class MainWP_Ui_Manage_Widgets_Layout { // phpcs:ignore Generic.Classes.OpeningB
         $wgids  = is_array( $_POST['wgids'] ) ? $_POST['wgids'] : array(); // phpcs:ignore -- NOSONAR - ok.
         $items  = is_array( $_POST['order'] ) ? $_POST['order'] : array(); // phpcs:ignore -- NOSONAR - ok.
 
+        $slug  = isset( $_POST['settings_slug'] ) ? sanitize_text_field( wp_unslash($_POST['settings_slug'] ))  : 'overview'; // phpcs:ignore -- NOSONAR - ok.
+
+        if ( empty( $slug ) ) {
+            $slug = 'overview';
+        }
+
         $layout_items = array();
         if ( is_array( $wgids ) && is_array( $items ) ) {
             foreach ( $wgids as $idx => $wgid ) {
@@ -242,12 +260,12 @@ class MainWP_Ui_Manage_Widgets_Layout { // phpcs:ignore Generic.Classes.OpeningB
 
         //phpcs:enable WordPress.Security.NonceVerification.Missing
 
-        $saved_segments = static::set_get_widgets_layout();
+        $saved_segments = static::set_get_widgets_layout( false, array(), $slug );
         if ( ! is_array( $saved_segments ) ) {
             $saved_segments = array();
         }
         $saved_segments[ $seg_id ] = $save_layout;
-        static::set_get_widgets_layout( true, $saved_segments );
+        static::set_get_widgets_layout( true, $saved_segments, $slug );
         die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
     }
 
@@ -259,7 +277,11 @@ class MainWP_Ui_Manage_Widgets_Layout { // phpcs:ignore Generic.Classes.OpeningB
      */
     public function ajax_load_widgets_layout() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_ui_load_widgets_layout' );
-        $saved_segments = static::set_get_widgets_layout();
+        $slug  = isset( $_POST['settings_slug'] ) ? sanitize_text_field( wp_unslash($_POST['settings_slug'] ))  : 'overview'; // phpcs:ignore -- NOSONAR - ok.
+        if ( empty( $slug ) ) {
+            $slug = 'overview';
+        }
+        $saved_segments = static::set_get_widgets_layout( false, array(), $slug );
         $list_segs      = '';
         if ( is_array( $saved_segments ) && ! empty( $saved_segments ) ) {
             $list_segs .= '<select id="mainwp-edit-layout-filters" class="ui fluid dropdown">';
@@ -283,11 +305,12 @@ class MainWP_Ui_Manage_Widgets_Layout { // phpcs:ignore Generic.Classes.OpeningB
     public function ajax_delete_widgets_layout() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_ui_delete_widgets_layout' );
         $seg_id = ! empty( $_POST['seg_id'] ) ? sanitize_text_field( wp_unslash( $_POST['seg_id'] ) ) : 0; //phpcs:ignore -- ok.
+        $slug = ! empty( $_POST['settings_slug'] ) ? sanitize_text_field( wp_unslash( $_POST['settings_slug'] ) ) : 'overview'; //phpcs:ignore -- ok.
 
-        $saved_segments = static::set_get_widgets_layout();
+        $saved_segments = static::set_get_widgets_layout( false, array(), $slug );
         if ( ! empty( $seg_id ) && is_array( $saved_segments ) && isset( $saved_segments[ $seg_id ] ) ) {
             unset( $saved_segments[ $seg_id ] );
-            static::set_get_widgets_layout( true, $saved_segments );
+            static::set_get_widgets_layout( true, $saved_segments, $slug );
             die( wp_json_encode( array( 'result' =>'SUCCESS' ) ) ); //phpcs:ignore -- ok.
         }
         die( wp_json_encode( array( 'error' => esc_html__( 'Layout not found. Please try again.', 'mainwp' ) ) ) ); //phpcs:ignore -- ok.

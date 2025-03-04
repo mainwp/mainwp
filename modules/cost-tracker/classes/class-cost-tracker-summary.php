@@ -10,6 +10,7 @@ namespace MainWP\Dashboard\Module\CostTracker;
 
 use MainWP\Dashboard\MainWP_UI;
 use MainWP\Dashboard\MainWP_Utility;
+use MainWP\Dashboard\MainWP_Overview;
 
 /**
  * Class class Cost_Tracker_Summary {
@@ -357,6 +358,9 @@ class Cost_Tracker_Summary {
         ?>
         <div class="mainwp-primary-content-wrap">
         <div class="ui segment" style="padding-top:0;padding-bottom:0;">
+
+        <?php MainWP_Overview::render_layout_selection(); ?>
+
         <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'cost-summany-widgets' ) ) : ?>
                 <div class="ui info message">

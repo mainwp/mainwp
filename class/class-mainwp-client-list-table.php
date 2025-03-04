@@ -287,7 +287,6 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
         <?php
     }
 
-
     /**
      * Prepair the items to be listed.
      *

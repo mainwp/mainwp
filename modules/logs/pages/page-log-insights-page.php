@@ -15,6 +15,7 @@ use MainWP\Dashboard\MainWP_DB_Client;
 use MainWP\Dashboard\MainWP_DB_Common;
 use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_Logger;
+use MainWP\Dashboard\MainWP_Ui_Manage_Widgets_Layout;
 
 /**
  * Class Log_Insights_Page
@@ -588,6 +589,9 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
         if ( ! is_array( $groups ) ) {
             $groups = array();
         }
+
+        static::render_layout_selection();
+
         ?>
     <div class="mainwp-sub-header" id="mainwp-module-log-overview-sub-header">
         <div class="ui stackable grid" id="mainwp-module-log-filters-row">
@@ -760,6 +764,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
         <?php
     }
 
+
     /**
      * Method render_header()
      *
@@ -772,6 +777,19 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
             'wrap_class' => 'mainwp-module-logs-content-wrap',
         );
         MainWP_UI::render_top_header( $params );
+    }
+
+    /**
+     * Render layout selection.
+     */
+    public static function render_layout_selection() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
+        $screen = get_current_screen();
+        ?>
+        <div class="mainwp-sub-header ui right aligned segment" id="module-logs-widgets-layout-row">
+            <?php MainWP_Ui_Manage_Widgets_Layout::render_edit_layout( $screen->id ); ?>
+        </div>
+        <?php
+        MainWP_Ui_Manage_Widgets_Layout::render_modal_save_layout();
     }
 
     /**

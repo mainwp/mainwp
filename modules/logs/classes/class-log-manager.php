@@ -11,6 +11,7 @@ namespace MainWP\Dashboard\Module\Log;
 
 use MainWP\Dashboard\MainWP_Execution_Helper;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Utility;
 
 /**
  * Class Log_Manager
@@ -251,6 +252,8 @@ class Log_Manager {
         if ( empty( $sync_actions ) || ! is_array( $sync_actions ) ) {
             return false;
         }
+
+        MainWP_Utility::array_sort_existed_keys( $sync_actions, 'created', SORT_NUMERIC );
 
         foreach ( $sync_actions as $index => $data ) {
             $object_id = sanitize_text_field( $index );

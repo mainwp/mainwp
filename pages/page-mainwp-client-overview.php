@@ -299,6 +299,9 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * Render the Dashboard Body content.
      */
     public static function render_dashboard_body() {
+
+        MainWP_Overview::render_layout_selection();
+
         $screen = get_current_screen();
         ?>
         <div class="mainwp-primary-content-wrap">

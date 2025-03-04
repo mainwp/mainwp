@@ -1612,9 +1612,11 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
 
         $wgsorted = false;
 
-        if ( ! empty( $_GET['page'] ) && 'mainwp_tab' === $_GET['page'] && ! empty( $_GET['select_layout'] ) && ! empty( $_GET['_opennonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_opennonce'] ), 'mainwp-admin-nonce' ) && ! empty( $_GET['updated'] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
-            $layid           = sanitize_text_field( wp_unslash( $_GET['updated'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
-            $saved_layouts   = MainWP_Ui_Manage_Widgets_Layout::set_get_widgets_layout();
+        if ( ! empty( $_GET['page'] ) && ! empty( $_GET['select_layout'] ) && ! empty( $_GET['_opennonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_opennonce'] ), 'mainwp-admin-nonce' ) && ! empty( $_GET['updated'] ) && ! empty( $_GET['screen_slug'] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
+            $layid       = sanitize_text_field( wp_unslash( $_GET['updated'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
+            $screen_slug = sanitize_text_field( wp_unslash( $_GET['screen_slug'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
+
+            $saved_layouts   = MainWP_Ui_Manage_Widgets_Layout::set_get_widgets_layout( false, array(), $screen_slug );
             $selected_layout = is_array( $saved_layouts ) && isset( $saved_layouts[ $layid ] ) ? $saved_layouts[ $layid ] : array();
             if ( is_array( $selected_layout ) && isset( $selected_layout['layout'] ) ) {
                 $wgsorted = $selected_layout['layout'];

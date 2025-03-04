@@ -356,7 +356,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         $screen = get_current_screen();
 
         MainWP_Demo_Handle::get_instance()->init_data_demo();
-        static::render_top_page();
+        static::render_layout_selection();
         ?>
         <div class="mainwp-primary-content-wrap">
             <div class="ui segment" style="padding-top:0px;padding-bottom:0px;margin-bottom:0px;">
@@ -413,12 +413,13 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
     }
 
     /**
-     * Render Overview Top.
+     * Render layout selection.
      */
-    public static function render_top_page() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
+    public static function render_layout_selection() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
+        $screen = get_current_screen();
         ?>
         <div class="mainwp-sub-header ui right aligned segment" id="mainwp-manage-widgets-layout-row">
-            <?php MainWP_Ui_Manage_Widgets_Layout::render_edit_layout(); ?>
+            <?php MainWP_Ui_Manage_Widgets_Layout::render_edit_layout( $screen->id ); ?>
         </div>
         <?php
         MainWP_Ui_Manage_Widgets_Layout::render_modal_save_layout();

@@ -238,7 +238,7 @@ class Cost_Tracker_Add_Edit {
                                 <div style="display:inline-block;" id="module_cost_tracker_upload_custom_icon_img_display"></div>
                             <?php } ?>
                         </span>
-                        <div class="ui basic button mainwp-managesites-edit-site-icon-customable"
+                        <div class="ui basic button module-cost-tracker-product-icon-customable"
                             iconItemId="<?php echo intval( $edit_id ); ?>"
                             iconFileSlug="<?php echo esc_attr( $cust_prod_icon_file ); ?>"
                             del-icon-nonce="<?php echo esc_attr( $delnonce ); ?>"

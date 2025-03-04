@@ -436,7 +436,8 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         ?>
 
-        <div class="ui fluid card extension <?php echo $disabled ? 'grey mainwp-disabled-extension' : 'green mainwp-enabled-extension'; ?> extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-model="<?php echo esc_attr( $extensions_data['model'] ); ?>" extension-title="<?php echo esc_attr( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?>" base-slug="<?php echo esc_attr( $item_slug ); ?>" extension-slug="<?php echo esc_attr( $extension['slug'] ); ?>" status="<?php echo esc_attr( $queue_status ); ?>" license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
+        <!-- Fixed the issue extension missing model type. -->
+        <div class="ui fluid card extension <?php echo $disabled ? 'grey mainwp-disabled-extension' : 'green mainwp-enabled-extension'; ?> extension-card-<?php echo esc_attr( $extension['name'] ?? '' ); ?>" extension-model="<?php echo esc_attr( $extensions_data['model'] ?? '' ); ?>" extension-title="<?php echo esc_attr( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?>" base-slug="<?php echo esc_attr( $item_slug ); ?>" extension-slug="<?php echo esc_attr( $extension['slug'] ?? '' ); ?>" status="<?php echo esc_attr( $queue_status ); ?>" license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
         <?php
         /**
          * Action: mainwp_extension_card_top

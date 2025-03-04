@@ -3121,7 +3121,7 @@ function removeUrlParams(url,params) {
     } catch (e) {
         console.log(e);
     }
-    return false;
+    return '';
 }
 
 function setVisible(what, vis) {

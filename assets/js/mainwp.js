@@ -4713,7 +4713,7 @@ let mainwp_overview_gridstack_save_layout = function( item_id ){
     const $items = document.querySelectorAll('.grid-stack-item');
 
     $items.forEach(function(item) {
-        var obj = {};
+        let obj = {};
         obj["x"] = item.getAttribute('gs-x');
         obj["y"] = item.getAttribute('gs-y');
         obj["w"] = item.getAttribute('gs-w');

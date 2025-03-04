@@ -1227,6 +1227,9 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             <a class="item" href="admin.php?page=PluginPrivacy"><?php esc_html_e( 'Plugin Privacy', 'mainwp' ); ?></a>
                         </div>
                     </div>
+                    <div class="item">
+                        <a id="mainwp-help-menu-item" title="<?php esc_attr_e( 'Help', 'mainwp' ); ?>" class="item" href="#" style="opacity:0.3;"><?php esc_html_e( 'Quick Help', 'mainwp' ); ?></a>
+                    </div>
                     <?php
                     $go_back_wpadmin_url = admin_url( 'index.php' );
 

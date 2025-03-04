@@ -143,97 +143,74 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
-= 5.3.5.1 - 2-6-2025 =
+= 5.4 - 3-4-2025 =
 
-* Fixed: Resolved a syntax error caused by the incorrect use of a named argument, ensuring compatibility with PHP 7.x and earlier versions.
+* Fixed: Uptime monitor issue where per-site uptime codes were not being respected.
+* Fixed: An issue where the URL value was being stripped in the "Connect Multiple Sites" feature.
+* Fixed: Minor performance issues on certain setups.
+* Fixed: Minor inaccuracies in uptime monitoring statistics.
+* Fixed: Sorting issue in the Manage Sites table when sorting by the "Last Sync" column.
+* Fixed: Issue with displaying the "Install to Selected Sites" button in Active Themes view.
+* Fixed: Browser console warnings caused by multiple elements with the same ID.
+* Fixed: Dropdown icon visibility in Minimalistic and WP Admin themes.
+* Fixed: Sorting issues in Manage Sites table related to Last Backup data.
+* Fixed: Placement of the Abandoned Plugins and Themes menu items.
+* Fixed: An undefined variable PHP warning on the Ignored WP Core Updates page.
+* Fixed: Issue where the Site Health column was not being removed from Manage Sites and Uptime Monitoring tables when disabled.
+* Fixed: Regression issues with the Monitoring page conditions.
+* Added: Added a Quick Help feature, including new primary menu items and easy access to the AI support agent or Guided Tours.
+* Added: Users can now save multiple widget layouts on all widgetized pages and switch between them easily.
+* Added: Introduced an Import Clients feature for adding multiple clients at once.
+* Added: New column combining Site Name, URL, and "Go to WP Admin" action.
+* Added: New column displaying the child site language as a matching flag.
+* Added: New column warning if a child site is not indexable by search engines.
+* Added: Introduced a security column in the Manage Sites table.
+* Added: Added email notifications when sites come back online.
+* Added: Added status code information to the Uptime Monitoring widget.
+* Added: Ability to set a primary backup system per site.
+* Added: Option to select which data to include in the sync process.
+* Added: Batch processing settings to control how many sites are processed at once.
+* Added: Option to hide details from the Site Hardening widget.
+* Added: Updated Site Hardening checks, removing outdated ones and introducing new ones.
+* Added: Improved WP Debug Mode status check logic.
+* Added: Support for the new Regression Testing extension
+* Added: Support for the Advanced Access Manager for MainWP integration.
+* Added: support for automatic translation updates.
+* Added: Warning about future discontinuation of PHP < 8.0 support.
+* Updated: Moved the Dashboard Site update indicator to the bottom of the primary menu bar.
+* Updated: Redesigned the header actions layout, moving specific items to the User button menu.
+* Updated: Relocated the Privacy Policy link from the Info page to the User button menu.
+* Updated: Updated Extensions page layout for a cleaner look and moved the search feature to the action bar.
+* Updated: Improved Install Add-ons modal with better filtering between Extensions and Integrations.
+* Updated: Updated tables element style and column sorting indicators.
+* Updated: Improved the "Select Sites" element layout and style for clarity.
+* Updated: Updated the Manage Sites grid view page layout and the Site card design for better usability.
+* Updated: Improved the "Add New Site" page layout and field order for better organization.
+* Updated: Updated the Site Overview page layout for better readability.
+* Updated: Improved the Updates Overview widget layout to better fit elements.
+* Updated: Updated the Updates page layout by moving action buttons to the action bar and removing excessive buttons.
+* Updated: Redesigned the Clients table default state and data presentation.
+* Updated: Revamped Client Info widget.
+* Updated: Revamped Client Notes widget.
+* Updated: Revamped Client Sites widget.
+* Updated: Revamped Additional Client Info widget.
+* Updated: Revamped Client Contacts widget.
+* Updated: Updated the Client column in Manage Sites to include client avatars.
+* Updated: Updated button and input elements to have rounded corners.
+* Updated: Improved verbiage in tooltips, option labels, and button labels for better clarity.
+* Updated: Updated REST API page layout for a cleaner look.
+* Updated: Simplified "Create New API Key" form for enabling API v1 support.
+* Updated: Added an info message to the API Backups settings page to address potential confusion.
+* Updated: Standardized terminology - "Extensions" now refer to stand-alone add-ons.
+* Updated: Standardized terminology - "Integrations" refer to add-ons integrating with third-party plugins or services.
+* Updated: Introduced an Add-ons filter for quick filtering between types.
+* Updated: Replaced Gridster.js with Gridstack.js for a more flexible widget solution.
+* Updated: Moved Cost Tracker settings to the main Settings area.
+* Updated: Updated Uptime Monitoring settings to hide options not applicable to Ping and Keyword monitoring types.
+* Updated: Improved page loading logic on the Updates page for better performance.
+* Updated: Removed View Ignored Plugins and Themes buttons when no ignored items exist.
+* Updated: Updated Activity Log for MainWP add-on information.
 
-= 5.3.5 - 2-6-2025 =
-
-* Security Enhancement: Implemented nonce verification in the icon deletion process.
-* Security Enhancement: Sanitized child site responses in the Test Connection and Add Site processes.
-* Fixed: Issue where the modal screen did not properly indicate that updates were completed.
-* Fixed: Several PHP warnings.
-* Added: Option to hide or show all items in the Site Hardening widget.
-* Added: HTTP status code display in the Uptime Monitoring widget.
-* Updated: Adjusted the position of the "Go to WP Admin" icon in the Update modal.
-* Updated:  Irrelevant options in Uptime Monitoring settings are now hidden when the monitor type is set to Ping or Keyword.
-
-= 5.3.4 - 12-27-2024 =
-
-* Fixed: Database error when saving data in the Custom Event Monitor during automated update checks.
-
-= 5.3.3 - 12-26-2024 =
-
-* Added: Informational message indicating that MainWP does not store administrator passwords in the Quick Setup Wizard, sample CSV, or export CSV files.
-* Fixed: Issue with processing automatic updates for certain configurations.
-* Fixed: Text visibility issue in selected table rows when using the Dark theme.
-* Fixed: Problem with adding sites via REST API when the site name parameter was omitted.
-* Fixed: Error in the bulk update process when "Backup Before Update" was required.
-* Fixed: Incorrect placeholder image for themes on the Manage Themes and Updates pages.
-* Fixed: Incorrect changelog link for the MainWP SSL Monitor Extension.
-* Fixed: Broken "Import Demo Content" process.
-* Fixed: Miscalculation of the number of monitoring incidents.
-* Fixed: Incorrect uptime ratio displayed in the Uptime Monitoring widget.
-* Updated: Background color for dropdown menu items in the Dark theme for better visibility.
-* Updated: Informational message on the Uptime Monitoring page.
-* Updated: Redesigned Welcome page in the Quick Setup Wizard for a more user-friendly experience.
-* Updated: Content and layout of the "Request Review" informational message.
-
-= 5.3.2 - 12-12-2024 =
-
-* Fixed: Issue where the Uptime Monitor widget and Manage Sites table column were not removed after disabling the Uptime Monitoring feature.
-* Fixed: Incorrect encoding of plugin and theme names in confirmation modals when ignoring item updates.
-* Fixed: Misaligned labels for the "Select All/None" action in the site selection element when the translation string exceeds the original string's length.
-* Fixed: Uptime monitoring issue with detecting status code 500 in specific cases.
-* Fixed: Overflow issue in the Connection Status widget.
-* Fixed: Typo in the Updates Overview widget ([#718](https://github.com/mainwp/mainwp/pull/718)) - thanks to [david-prv](https://github.com/david-prv)
-* Added: New "Forced Reconnect" feature for cases requiring re-authentication.
-* Updated: Default Uptime Monitor method set to HEAD.
-
-= 5.3.1 - 11-27-2024 =
-
-* Fixed: Issue with saving the state of the last configuration in the Site Hardening widget.
-* Fixed: Issue with the "Fix All Issues" button overflow in the Site Hardening widget.
-* Added: Missing option to unset the Uptime Monitoring widget in the Overview page settings.
-* Added: Link to the Monitoring page in the Uptime Monitoring widget footer.
-* Added: "Jump to WP Admin" link in the Connection Status widget list items.
-* Added: "Jump to WP Admin" link in the Site Hardening widget list items.
-* Updated: Icon in the Available Translations card element in the Updates Overview widget.
-* Updated: Mini-label text in the Total Available Updates card element in the Updates Overview widget.
-* Updated: Font weight of feed elements in the Non-MainWP Changes widget for better readability.
-* Updated: Scrollbar colors in the Dark theme
-* Updated: Error message returned in case Child Site already contains connection data and needs reset
-
-= 5.3 - 11-26-2024 =
-
-* Security Enhancement: Enhanced the pre-connection process with additional security features to address recommendations from a security company. [Read more](https://mainwp.com/addressing-misguided-security-reports-why-mainwp-is-updating-its-connection-process/)
-* Fixed: Issue with the Manage Sites filter for available updates.
-* Fixed: Incorrect labeling of the "Install Trusted Updates" option on the Site Settings page.
-* Fixed: DataTables error on the empty error log page.
-* Fixed: Excessive sort indicator icons on the Translation Updates page.
-* Fixed: Issue with updating trusted plugins.
-* Fixed: Issue with sending Daily Digest emails on certain setups.
-* Fixed: Incorrect WordPress REST API base URL check ([#713](https://github.com/mainwp/mainwp/pull/713)) – thanks to [**Franz Armas**](https://github.com/franzarmas).
-* Fixed Missing folder creation during file uploads ([#712](https://github.com/mainwp/mainwp/pull/712)) – thanks to [**Sixela**](https://github.com/sixela).
-* Added: Basic Uptime Monitoring has been greatly upgraded and turned into a full-fledged Uptime Monitoring feature
-* Added: Password authentication to the connect site process for added security.
-* Added: "Connect Multiple Sites" feature for faster site management.
-* Added: Translations for French (fr_FR), Spanish (es_ES), German (de_DE), and Portuguese (pt_BR).
-* Added: Site thumbnails in the page navigation within individual site areas.
-* Added: "Remove Site" button on the Site Settings page.
-* Added: Various informational messages throughout the platform.
-* Added: Tabular menu on the "Add Site" page.
-* Updated: Quick Setup Wizard with bulk "Add Sites" and "Add Clients" forms.
-* Updated: Verbiage on the Plugin Updates and Theme Updates pages for clarity.
-* Updated: Button colors and tooltips for "View Ignored Plugin Updates," "View Ignored Theme Updates," and "View Ignored WP Core Updates" buttons.
-* Updated: Input types on the Advanced Options page replaced with slider elements.
-* Updated: Sub-item padding in the Manage Plugins and Themes tables for improved readability.
-* Updated: Label of "Site Edit" page updated to "Site Settings" for consistency.
-* Updated: Message element styling on the Manage Pages page.
-* Updated: Widget scrollbar positioning for better separation from content.
-* Updated: Layout of the "Add Site" form.
-* Updated: Border radius for the www/non-www dropdown in the Site Settings form.
-
-[See Video Changelog](https://youtu.be/DF0vC1RiCVI)
+[See Video Changelog](https://www.youtube.com/watch?v=36KRNYo6BMY)
 
 [See changelog for all versions.](https://mainwp.com/changelog.txt)

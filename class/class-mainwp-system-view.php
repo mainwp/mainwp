@@ -559,8 +559,8 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         $phpver = phpversion();
         if ( version_compare( $phpver, '7.0', '<' ) && MainWP_Utility::show_mainwp_message( 'notice', 'phpver_5_5' ) ) {
             ?>
-            <div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
-                <i class="exclamation circle icon"></i>
+            <div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;display:block;">
+                <i class="exclamation circle icon" style="float:left;"></i>
                 <?php printf( esc_html__( 'Your server is currently running PHP version %1$s. In the next few months your MainWP Dashboard will require PHP 7.4 as a minimum. Please upgrade your server to at least 7.4 but we recommend PHP 8 or newer. You can find a template email to send your host %2$shere%3$s.', 'mainwp' ), esc_html( $phpver ), '<a href="https://wordpress.org/about/requirements/" target="_blank">', '</a>' ); ?>
                 <i class="close icon mainwp-notice-dismiss" notice-id="phpver_5_5"></i>
             </div>
@@ -579,8 +579,8 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             $last_hidden = (int) get_user_option( 'lasttime_hidden_phpver_8_0' );
             if ( time() > $last_hidden + 30 * DAY_IN_SECONDS || MainWP_Utility::show_mainwp_message( 'notice', 'phpver_8_0' ) ) {
                 ?>
-                <div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
-                    <i class="exclamation circle icon"></i>
+                <div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;display:block;">
+                    <i class="exclamation circle icon" style="float:left;"></i>
                     <?php esc_html_e( 'Important Notice: In the coming months, support for PHP versions earlier than 8 will be discontinued on your MainWP Dashboard. To ensure continued functionality and security, please update your PHP version to a currently supported release, such as PHP 8.3.', 'mainwp' ); ?>
                     <?php printf( esc_html__( 'You can check the list of actively maintained PHP versions %shere%s.', 'mainwp' ), '<a href="https://www.php.net/supported-versions.php" target="_blank">', '</a>' ); ?>
                     <?php esc_html_e( 'This upcoming change does not affect your child sites, only your MainWP Dashboard.', 'mainwp' ); ?>

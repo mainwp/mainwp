@@ -4732,7 +4732,7 @@ let mainwp_overview_gridstack_save_layout = function( item_id ){
         wgids: JSON.stringify(wgIds),
         item_id: item_id
     };
-    jQuery.post( ajaxurl, mainwp_secure_data( postVars ), function ( res ) {
+    jQuery.post( ajaxurl, mainwp_secure_data( postVars ), function () {
     } );
 }
 

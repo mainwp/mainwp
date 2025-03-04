@@ -24,8 +24,8 @@ jQuery(function ($) {
 
     }).modal('show').draggable().resizable({
       handles: "n, e, s, w, ne, nw, se, sw", // Allows resizing from all edges
-      minWidth: 400, // Set minimum width
-      minHeight: 600 // Set minimum height
+      minWidth: 300, // Set minimum width
+      minHeight: 640, // Set minimum height
     });
     return false;
   });
@@ -3926,10 +3926,10 @@ window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRig
     let fix_overflow = jQuery('.mainwp-content-wrap').attr('menu-overflow');
     let position = jQuery(this).position();
     let top = position.top;
-    let right = 48;
+    let right = 50;
     if (fix_overflow > 1) {
       position = jQuery(this).closest('td').position();
-      top = position.top + 85;
+      top = position.top + 85; //85
     }
     if (pTop !== undefined) {
       top = top + pTop;

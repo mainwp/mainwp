@@ -2325,18 +2325,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     <iframe src="https://supportassistant.mainwp.com/chatbot-iframe/Tv5dqV-xiQxwgPeMQFCZ4" width="100%" style="height: 100%; min-height: 600px;border: none;" title="MainWP Support Assistant"></iframe>
                 </div>
             </div>
-            <div class="actions">
-                <div class="ui grid">
-                    <div class="eight wide left aligned middle aligned column">
-                        <a href="https://mainwp.com/kb/" class="ui basic mini button" target="_blank"><?php esc_html_e( 'MainWP Knowledgebase', 'mainwp' ); // NOSONAR - noopener - open safe. ?></a>
-                    </div>
-                    <div class="eight wide column">
-                        <?php if ( '' !== $tour_id && 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ) : ?>
-                        <a href="#" style="display:none" onclick="jQuery('#mainwp-help-modal').modal('hide');window.USETIFUL.tour.start( <?php echo intval( $tour_id ); ?> );" id="mainwp-start-tour-button" class="ui mini green basic button"><?php esc_html_e( 'Take a Quick Tour', 'mainwp' ); ?></a>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
         </div>
         <?php
     }

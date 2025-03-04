@@ -1826,10 +1826,10 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $icon    = '';
         $tooltip = '';
         if ( isset( $status ) && '' !== $status ) {
-            if ( '1' === $status ) {
+            if ( 1 === intval( $status ) ) {
                 $icon    = 'green dot circle outline';
                 $tooltip = 'Search engines can index this site.';
-            } elseif ( '0' === $status ) {
+            } elseif ( 0 === intval( $status ) ) {
                 $icon    = 'red ban';
                 $tooltip = 'This site is blocking search engines.';
             }

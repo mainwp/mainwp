@@ -549,11 +549,11 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                         "preDrawCallback": function() {
                             jQuery( '#mainwp-rest-api-keys-table .ui.dropdown' ).dropdown();
                             jQuery('#mainwp-rest-api-keys-table .ui.checkbox').checkbox();
-                            mainwp_datatable_fix_menu_overflow();
+                            mainwp_datatable_fix_menu_overflow('#mainwp-rest-api-keys-table', -70, 0);
                             mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
                         }
                     } );
-                    mainwp_datatable_fix_menu_overflow();
+                    mainwp_datatable_fix_menu_overflow('#mainwp-rest-api-keys-table', -70, 0);
                 } catch(err) {
                     // to fix js error.
                 }
@@ -647,11 +647,11 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                         "preDrawCallback": function() {
                             jQuery( '#mainwp-rest-api-keys-v2-table .ui.dropdown' ).dropdown();
                             jQuery('#mainwp-rest-api-keys-v2-table .ui.checkbox').checkbox();
-                            mainwp_datatable_fix_menu_overflow();
+                            mainwp_datatable_fix_menu_overflow('#mainwp-rest-api-keys-v2-table', -70, 0);
                             mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
                         }
                     } );
-                    mainwp_datatable_fix_menu_overflow();
+                    mainwp_datatable_fix_menu_overflow('#mainwp-rest-api-keys-v2-table', -70, 0);
                 } catch(err) {
                     // to fix js error.
                 }
@@ -882,7 +882,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                         </div>
                     </div>
 
-                    <?php $init_pers = 'r,w'; ?>
+                    <?php $init_pers = 'r,w,d'; ?>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Permissions', 'mainwp' ); ?></label>
                         <div class="five wide column">

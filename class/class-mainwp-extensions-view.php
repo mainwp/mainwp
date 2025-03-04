@@ -1707,7 +1707,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'link'                 => 'https://mainwp.com/extension/wordpress-seo/',
                 'changelog_url'        => 'https://mainwp.com/changelog/mainwp-wordpress-seo-extension/',
                 'img'                  => $folder_url . 'wordpress-seo.png',
-                'product_id'           => 'MainWP Yoast SEO Extension',
+                'product_id'           => 'MainWP WordPress SEO Extension',
                 'product_item_id'      => 0,
                 'catalog_id'           => '12080',
                 'group'                => array( 'content' ),
@@ -1717,10 +1717,10 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'integration_owner'    => 'Newfold Capital Inc.',
                 'integration_owner_pp' => 'https://yoast.com/privacy-policy/',
             ),
-            'activity-log-mainwp'                     => array(
+            'wp-security-audit-log'                     => array(
                 'type'                 => 'org',
                 'model'                => 'integration',
-                'product_id'           => 'activity-log-mainwp',
+                'product_id'           => 'wp-security-audit-log',
                 'slug'                 => 'wp-security-audit-log/wp-security-audit-log.php',
                 'title'                => 'Activity Log For MainWP',
                 'link'                 => 'https://wordpress.org/plugins/wp-security-audit-log/',

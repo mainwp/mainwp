@@ -190,7 +190,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                                 ?>
                                                 <td class="right aligned">
                                                     <?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
-                                                        <div class="ui bottom left pointing dropdown mini button">
+                                                        <div class="ui top left pointing dropdown mini button">
                                                             <?php esc_html_e( 'Ignore', 'mainwp' ); ?><i class="dropdown icon"></i>
                                                             <div class="menu">
                                                                 <a href="javascript:void(0)" class="mainwp-ignore-update-button item" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_js( rawurlencode( $plugin_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this, '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )"><?php esc_html_e( 'Ignore this version', 'mainwp' ); ?></a>
@@ -380,7 +380,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                                 ?>
                                                 <td class="right aligned">
                                                     <?php if ( MainWP_Updates::user_can_ignore_updates() ) { ?>
-                                                    <div class="ui bottom left pointing dropdown mini button">
+                                                    <div class="ui top left pointing dropdown mini button">
                                                         <?php esc_html_e( 'Ignore', 'mainwp' ); ?><i class="dropdown icon"></i>
                                                         <div class="menu">
                                                             <a href="javascript:void(0)" class="mainwp-ignore-update-button item" onClick="return updatesoverview_themes_ignore_detail( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $theme_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this, '<?php echo esc_js( rawurlencode( $last_version ) ); ?>' )"><?php esc_html_e( 'Ignore this version', 'mainwp' ); ?></a>

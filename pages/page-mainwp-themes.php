@@ -1260,25 +1260,25 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                     <?php endif; ?>
                                 </div>
                                 <div class="two wide right aligned middle aligned column update-column">
-                                <?php if ( ! empty( $upgradeInfo ) && MainWP_Updates::user_can_update_themes() ) : ?>
-                                    <a href="javascript:void(0)" class="ui mini green basic <?php echo $is_demo ? 'disabled' : ''; ?> button" onClick="return manage_themes_upgrade_theme( '<?php echo esc_js( rawurlencode( $theme_slug ) ); ?>', <?php echo esc_attr( $site_id ); ?> )"><?php esc_html_e( 'Update', 'mainwp' ); ?></a>
-                                <?php endif; ?>
+                                    <?php if ( ! empty( $upgradeInfo ) && MainWP_Updates::user_can_update_themes() ) : ?>
+                                        <a href="javascript:void(0)" class="ui mini green basic <?php echo $is_demo ? 'disabled' : ''; ?> button" onClick="return manage_themes_upgrade_theme( '<?php echo esc_js( rawurlencode( $theme_slug ) ); ?>', <?php echo esc_attr( $site_id ); ?> )"><?php esc_html_e( 'Update', 'mainwp' ); ?></a>
+                                    <?php endif; ?>
                                 </div>
                                 <div class="two wide center aligned middle aligned column column-actions">
-                                <?php if ( $actived ) : ?>
-                                    <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
-                                        <a href="javascript:void(0)" disabled class="ui mini fluid <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
-                                    <?php } ?>
-                                <?php else : ?>
-                                    <div class="ui mini fluid buttons">
+                                    <?php if ( $actived ) : ?>
                                         <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
-                                        <a href="javascript:void(0)" class="mainwp-manages-theme-activate ui green <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
+                                            <a href="javascript:void(0)" disabled class="ui mini fluid <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
                                         <?php } ?>
-                                        <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_themes' ) && ! $not_delete ) { ?>
-                                        <a href="javascript:void(0)" class="mainwp-manages-theme-delete ui <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
-                                        <?php } ?>
-                                    </div>
-                                <?php endif; ?>
+                                    <?php else : ?>
+                                        <div class="ui mini fluid buttons">
+                                            <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
+                                            <a href="javascript:void(0)" class="mainwp-manages-theme-activate ui green <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
+                                            <?php } ?>
+                                            <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_themes' ) && ! $not_delete ) { ?>
+                                            <a href="javascript:void(0)" class="mainwp-manages-theme-delete ui <?php echo $is_demo ? 'disabled' : ''; ?> button"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+                                            <?php } ?>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                             <?php
@@ -1520,21 +1520,19 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
                                 ?>
                             <div class="ui very compact stackable grid mainwp-manage-theme-item-website <?php echo esc_html( $active_status_class ); ?>"  updated="0" site-id="<?php echo intval( $site_id ); ?>" theme-slug="<?php echo esc_attr( $theme_slug ); ?>" theme-name="<?php echo esc_html( wp_strip_all_tags( $themesName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>"  id="<?php echo esc_html( $item_id ); ?>" not-delete="<?php echo $not_delete ? 1 : 0; ?>" is-actived="<?php echo $actived ? 1 : 0; ?>" >
-                            <div class="one wide center aligned middle aligned column"></div>
+                                <div class="one wide center aligned middle aligned column"></div>
                                 <div class="one wide left aligned middle aligned column">
-
-                                <?php if ( '' !== $parent_str ) : ?>
-                                    <?php echo $parent_str; //phpcs:ignore -- escaped. ?>
-                                <?php else : ?>
-                                    <?php if ( $actived ) { ?>
-                                    <span data-tooltip="<?php echo esc_html__( 'Active theme on the site can not be deleted.', 'mainwp' ); ?>" data-position="right center" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>
-                                    <?php } ?>
-                                    <div class="ui checkbox">
-                                        <input type="checkbox"  class="mainwp-selected-theme-site" />
-                                        <label></label>
-                                    </div>
+                                    <?php if ( '' !== $parent_str ) : ?>
+                                        <?php echo $parent_str; //phpcs:ignore -- escaped. ?>
+                                    <?php else : ?>
+                                        <?php if ( $actived ) { ?>
+                                        <span data-tooltip="<?php echo esc_html__( 'Active theme on the site can not be deleted.', 'mainwp' ); ?>" data-position="right center" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>
+                                        <?php } ?>
+                                        <div class="ui checkbox">
+                                            <input type="checkbox"  class="mainwp-selected-theme-site" />
+                                            <label></label>
+                                        </div>
                                     <?php endif; ?>
-                                </div>
                                 </div>
                                 <div class="three wide middle aligned column"><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $site_id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo intval( $site_id ); ?>"><?php echo esc_html( $site_name ); ?></a></div>
                                 <div class="one wide middle aligned column"></div>

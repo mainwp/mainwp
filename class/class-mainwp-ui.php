@@ -677,7 +677,11 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         } elseif ( 'Extensions-Mainwp-Maintenance-Extension' === $page ) {
             $tour_id = '33301';
         } elseif ( 'Extensions-Mainwp-Domain-Monitor-Extension' === $page ) {
-            $tour_id = '33300';
+            $tour_id = '66031';
+        } elseif ( 'Extensions-Mainwp-Favorites-Extension' === $page ) {
+            $tour_id = '66035';
+        } elseif ( 'Extensions-Mainwp-Regression-Testing-Extension' === $page ) {
+            $tour_id = '66037';
         }
         // phpcs:enable
         ?>
@@ -2258,7 +2262,11 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         } elseif ( 'Extensions-Mainwp-Maintenance-Extension' === $page ) {
             $tour_id = '33301';
         } elseif ( 'Extensions-Mainwp-Domain-Monitor-Extension' === $page ) {
-            $tour_id = '33300';
+            $tour_id = '66031';
+        } elseif ( 'Extensions-Mainwp-Favorites-Extension' === $page ) {
+            $tour_id = '66035';
+        } elseif ( 'Extensions-Mainwp-Regression-Testing-Extension' === $page ) {
+            $tour_id = '66037';
         }
         ?>
         <div id="mainwp-help-modal" class="ui modal">

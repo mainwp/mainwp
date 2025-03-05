@@ -3541,13 +3541,12 @@ const render_html_regression_sync_score_icon = function (score, change_score, we
 
 // Render Icon
 const render_html_regression_icon = function (result) {
-    let _icon = '';
-    if (result && result.html_regression_max_scope !== undefined) {
+	let _icon = '';
+	if (result && result.html_regression_max_scope && typeof result.html_regression_max_scope === 'object' && !Array.isArray(result.html_regression_max_scope) && Object.keys(result.html_regression_max_scope).length > 0) {
 		is_regression_disable_reload = true;
-        const regression_scope = result.html_regression_max_scope;
+		const regression_scope = result.html_regression_max_scope;
 		_icon = render_html_regression_sync_score_icon(parseInt(regression_scope.change_score_current), parseInt(regression_scope.change_score), regression_scope.website_id);
-		
-    }
+	}
 
-    return _icon;
+	return _icon;
 }

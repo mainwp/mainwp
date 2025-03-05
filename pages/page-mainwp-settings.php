@@ -1920,7 +1920,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             'users'                   => __( 'Users information', 'mainwp' ),
             'plugins_outdate_info'    => __( 'Abandoned plugins information', 'mainwp' ),
             'themes_outdate_info'     => __( 'Abandoned themes information', 'mainwp' ),
-            'health_site_status'      => __( 'Site healt information', 'mainwp' ),
+            'health_site_status'      => __( 'Site health information', 'mainwp' ),
             'child_site_actions_data' => __( 'Non-MainWP changes data', 'mainwp' ),
             'othersData'              => __( 'Other data (required by some extensions)', 'mainwp' ),
         );

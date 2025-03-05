@@ -3902,8 +3902,27 @@ window.mainwp_datatable_fix_reorder_selected_rows_status = function () {
   jQuery('.table.dataTable tbody').filter(':visible').children('tr.selected').find(':checkbox').prop('checked', true);
 };
 
+let applyFixMenuOverflow = function(applyPosFix){
+    if(typeof applyPosFix !== "undefined") {
+        if( ! applyPosFix ){
+            return false;
+        }
+    }
+    if(isChromeAgent()){
+        console.log('Is Chrome.');
+        return false;
+    }
+    console.log('Apply fixing.');
+    return true; //default.
+}
+
+let isChromeAgent = function() {
+    return /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+}
+
+
 // fix menu overflow with scroll tables.
-window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRight) {
+window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRight, applyPosFix ) {
   let dtScrollBdCls = '.dt-scroll-body';
   let dtScrollCls = '.dt-scroll';
   let fix_overflow = jQuery('.mainwp-content-wrap').attr('menu-overflow');
@@ -3918,77 +3937,69 @@ window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRig
 
   console.log('mainwp_datatable_fix_menu_overflow :: ' + tblSelect);
 
-  // Fix the overflow prbolem for the actions menu element (right pointing menu).
-  jQuery(tblSelect + ' tr td .ui.right.pointing.dropdown').on('click', function () {
-    if(isChromeAgent()){
-        return;
-    }
-    jQuery(this).closest(dtScrollBdCls).css('position', '');
-    jQuery(this).closest(dtScrollCls).css('position', 'relative');
-    jQuery(this).css('position', 'static');
-    let fix_overflow = jQuery('.mainwp-content-wrap').attr('menu-overflow');
-    let position = jQuery(this).position();
-    let top = position.top;
-    let right = 50;
-    if (fix_overflow > 1) {
-      position = jQuery(this).closest('td').position();
-      top = position.top + 85; //85
-    }
-    if (pTop !== undefined) {
-      top = top + pTop;
-    }
-    if (pRight !== undefined) {
-      right = right + pRight;
-    }
-    console.log('right');
-    console.log('top: ' + top + ' right: ' + right);
-    jQuery(this).find('.menu').css('min-width', '170px');
-    jQuery(this).find('.menu').css('top', top);
-    jQuery(this).find('.menu')[0].style.setProperty('right', right + 'px', 'important');
-  });
+  if( applyFixMenuOverflow(applyPosFix) ){
+    // Fix the overflow prbolem for the actions menu element (right pointing menu).
+    jQuery(tblSelect + ' tr td .ui.right.pointing.dropdown').on('click', function () {
+        jQuery(this).closest(dtScrollBdCls).css('position', '');
+        jQuery(this).closest(dtScrollCls).css('position', 'relative');
+        jQuery(this).css('position', 'static');
+        let fix_overflow = jQuery('.mainwp-content-wrap').attr('menu-overflow');
+        let position = jQuery(this).position();
+        let top = position.top;
+        let right = 50;
+        if (fix_overflow > 1) {
+            position = jQuery(this).closest('td').position();
+            top = position.top + 85; //85
+        }
 
-  // Fix the overflow prbolem for the actions menu element (left pointing menu).
-  jQuery(tblSelect + ' tr td .ui.left.pointing.dropdown').on('click', function () {
-    if(isChromeAgent()){
-        return;
-    }
-    jQuery(this).closest(dtScrollBdCls).css('position', '');
-    jQuery(this).closest(dtScrollCls).css('position', 'relative');
-    jQuery(this).css('position', 'static');
-    let position = jQuery(this).position();
+        if (pTop !== undefined) {
+            top = top + pTop;
+        }
+        if (pRight !== undefined) {
+            right = right + pRight;
+        }
 
-    let top = position.top;
-    let left = position.left - 159;
+        console.log('right');
+        console.log('top: ' + top + ' right: ' + right);
+        jQuery(this).find('.menu').css('min-width', '170px');
+        jQuery(this).find('.menu').css('top', top);
+        jQuery(this).find('.menu')[0].style.setProperty('right', right + 'px', 'important');
+    });
 
-    if (fix_overflow > 1) {
-      position = jQuery(this).closest('td').position();
-      let scroll_left = jQuery(this).closest(dtScrollBdCls).scrollLeft();
-      top = position.top + 85;
-      left = position.left - scroll_left - 145;
-    }
+    // Fix the overflow prbolem for the actions menu element (left pointing menu).
+    jQuery(tblSelect + ' tr td .ui.left.pointing.dropdown').on('click', function () {
+        jQuery(this).closest(dtScrollBdCls).css('position', '');
+        jQuery(this).closest(dtScrollCls).css('position', 'relative');
+        jQuery(this).css('position', 'static');
+        let position = jQuery(this).position();
 
-    if (pTop !== undefined) {
-      top = top + pTop;
-    }
+        let top = position.top;
+        let left = position.left - 159;
 
-    console.log('left');
-    console.log('top: ' + top + ' left: ' + left);
+        if (fix_overflow > 1) {
+        position = jQuery(this).closest('td').position();
+        let scroll_left = jQuery(this).closest(dtScrollBdCls).scrollLeft();
+        top = position.top + 85;
+        left = position.left - scroll_left - 145;
+        }
 
-    jQuery(this).find('.menu').css('min-width', '150px');
-    jQuery(this).removeClass('left');
-    jQuery(this).addClass('right');
-    jQuery(this).find('.menu').css('top', top);
-    jQuery(this).find('.menu')[0].style.setProperty('left', left + 'px', 'important');
-  });
+        if (pTop !== undefined) {
+        top = top + pTop;
+        }
+
+        console.log('left');
+        console.log('top: ' + top + ' left: ' + left);
+
+        jQuery(this).find('.menu').css('min-width', '150px');
+        jQuery(this).removeClass('left');
+        jQuery(this).addClass('right');
+        jQuery(this).find('.menu').css('top', top);
+        jQuery(this).find('.menu')[0].style.setProperty('left', left + 'px', 'important');
+    });
+  }
   mainwp_datatable_fix_reorder_selected_rows_status();
 }
-let isChromeAgent = function(){
-    let isCh = /Chrome/.test(navigator.userAgent);
-    if(isCh){
-        console.log('Is chrome');
-    }
-    return isCh;
-}
+
 
 let mainwp_datatable_fix_child_menu_overflow = function (chilRow, fix_overflow) {
   let dtScrollBdCls = '.dt-scroll-body';

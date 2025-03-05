@@ -3920,6 +3920,9 @@ window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRig
 
   // Fix the overflow prbolem for the actions menu element (right pointing menu).
   jQuery(tblSelect + ' tr td .ui.right.pointing.dropdown').on('click', function () {
+    if(isChromeAgent()){
+        return;
+    }
     jQuery(this).closest(dtScrollBdCls).css('position', '');
     jQuery(this).closest(dtScrollCls).css('position', 'relative');
     jQuery(this).css('position', 'static');
@@ -3946,6 +3949,9 @@ window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRig
 
   // Fix the overflow prbolem for the actions menu element (left pointing menu).
   jQuery(tblSelect + ' tr td .ui.left.pointing.dropdown').on('click', function () {
+    if(isChromeAgent()){
+        return;
+    }
     jQuery(this).closest(dtScrollBdCls).css('position', '');
     jQuery(this).closest(dtScrollCls).css('position', 'relative');
     jQuery(this).css('position', 'static');
@@ -3975,6 +3981,13 @@ window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRig
     jQuery(this).find('.menu')[0].style.setProperty('left', left + 'px', 'important');
   });
   mainwp_datatable_fix_reorder_selected_rows_status();
+}
+let isChromeAgent = function(){
+    let isCh = /Chrome/.test(navigator.userAgent);
+    if(isCh){
+        console.log('Is chrome');
+    }
+    return isCh;
 }
 
 let mainwp_datatable_fix_child_menu_overflow = function (chilRow, fix_overflow) {

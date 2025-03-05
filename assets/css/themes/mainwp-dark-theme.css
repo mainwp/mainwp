@@ -180,7 +180,7 @@ body.mainwp-ui.mainwp-custom-theme,
 
 .mainwp-ui.mainwp-custom-theme .mainwp-actions-bar,
 .mainwp-ui.mainwp-custom-theme .mainwp-sub-header {
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color) !important;
   background: var(--background-color-2);
 }
 

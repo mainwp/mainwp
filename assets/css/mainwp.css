@@ -176,7 +176,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
 
 .mainwp-sub-header,
 .mainwp-actions-bar {
-
+    padding: 1rem;
     background: #f9fafb;
     border-bottom: 1px solid #dadada;
 }

@@ -2276,7 +2276,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <?php endif; ?>
 
             <div class="scrolling center aligned content" id="mainwp-help-modal-content" <?php echo ( 1 === (int) get_option( 'mainwp_help_modal_content_update' ) ) ? '' : 'style="display:none"'; ?>>
-                <div class="ui two link cards" id="mainwp-help-modal-options">
+                <div class="ui two cards" id="mainwp-help-modal-options">
                     <a class="ui card grey text" id="mainwp-start-chat-card" onClick="jQuery('#mainwp-chatbase-chat-screen').fadeIn('100');jQuery('#mainwp-start-tour-button').fadeIn('100');jQuery('#mainwp-help-modal-options').fadeOut('50');">
                         <div class="content">
                             <div class="header"><?php esc_html_e( 'Support Assistant', 'mainwp' ); ?></div>

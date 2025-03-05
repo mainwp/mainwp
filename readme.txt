@@ -143,7 +143,7 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
-= 5.4 - 3-4-2025 =
+= 5.4 - 3-5-2025 =
 
 * Fixed: Uptime monitor issue where per-site uptime codes were not being respected.
 * Fixed: An issue where the URL value was being stripped in the "Connect Multiple Sites" feature.

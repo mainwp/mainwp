@@ -56,7 +56,7 @@ class MainWP_Demo_Handle { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 static::$demo_website_ids = $added_demo['sites_ids'];
             }
 
-            if ( empty( static::$demo_website_ids ) || ! array( static::$demo_website_ids ) ) {
+            if ( empty( static::$demo_website_ids ) || ! is_array( static::$demo_website_ids ) ) {
                 static::$demo_website_ids = array( -1 ); // for single assign.
             }
         }

@@ -947,7 +947,7 @@ let updatesoverview_check_to_continue_updates = function () {
         return true;
     }
     setTimeout(function () {
-        if (!mainwpVars?.errorCount && (!mainwpVars?.regressionScoreLimit && jQuery('.updates-regression-score-red-flag').length === 0)) {
+        if (!mainwpVars?.errorCount && ( ! mainwpVars?.regressionScoreLimit || jQuery('.updates-regression-score-red-flag').length === 0 ) ) {
             mainwpPopup('#mainwp-sync-sites-modal').close(true);
         }
     }, 3000);

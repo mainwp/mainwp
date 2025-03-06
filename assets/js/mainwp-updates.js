@@ -125,7 +125,6 @@ let updatesoverviewContinueAfterBackup;
 let limitUpdateAll = 0;
 let continueUpdatesAll = '', continueUpdatesSlug = '';
 let continueUpdating = false;
-let is_regression_disable_reload = false;
 let updatesoverview_update_popup_init = function (data) {
     data = data || {};
     data.allowMultiple = true;
@@ -942,10 +941,6 @@ let updatesoverview_plugins_upgrade_all_upgrade_next = function () {
 
 let updatesoverview_check_to_continue_updates = function () {
     mainwpVars.bulkTaskRunning = false;
-    // Disable auto reload page.
-    if (is_regression_disable_reload) {
-        return true;
-    }
     setTimeout(function () {
         if (!mainwpVars?.errorCount && ( ! mainwpVars?.regressionScoreLimit || jQuery('.updates-regression-score-red-flag').length === 0 ) ) {
             mainwpPopup('#mainwp-sync-sites-modal').close(true);
@@ -3551,7 +3546,6 @@ const render_html_regression_sync_score_icon = function (score, change_score, we
 const render_html_regression_icon = function (result) {
     let _icon = '';
     if (result && result.html_regression_max_scope && typeof result.html_regression_max_scope === 'object' && !Array.isArray(result.html_regression_max_scope) && Object.keys(result.html_regression_max_scope).length > 0) { // NOSONAR
-        is_regression_disable_reload = true;
         const regression_scope = result.html_regression_max_scope;
         _icon = render_html_regression_sync_score_icon(parseInt(regression_scope.change_score_current), parseInt(regression_scope.change_score), regression_scope.website_id);
     }

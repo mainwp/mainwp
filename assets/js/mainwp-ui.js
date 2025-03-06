@@ -779,13 +779,16 @@ let mainwp_guidedtours_onchange = function (me) {
     });
 }
 
-let mainwp_help_modal_content_onclick = function () {
-    
+let mainwp_help_modal_content_onclick = function (hide,isToolsPage) {
+
     let data = mainwp_secure_data({
         action: 'mainwp_help_modal_content_update',
+        hide_noti: hide,
     });
     jQuery.post(ajaxurl, data, function () {
-        
+        if(typeof isToolsPage !== "undefined" && isToolsPage){
+            location.href = 'admin.php?page=MainWPTools';
+        }
     });
 }
 

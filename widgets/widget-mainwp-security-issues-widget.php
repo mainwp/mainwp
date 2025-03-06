@@ -142,7 +142,6 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
                             _showhide_issues(value);
                         }
                     } ).dropdown("set selected", curTab);
-                    $issuesSelect.dropdown( 'set selected', curTab );
                 } );
 
                 const _showhide_issues = function(value){
@@ -185,10 +184,10 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
          */
         do_action( 'mainwp_security_issues_widget_top' );
         ?>
-        
-        
+
+
             <div class="mainwp-scrolly-overflow">
-            
+
             <div class="ui middle aligned divided list" id="mainwp-security-issues-widget-list" style="display:none">
                 <?php
                 $count_security_issues = '';
@@ -206,11 +205,6 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
                                 <i class="ellipsis vertical icon"></i>
                                 <div class="menu">
                                     <a href="admin.php?page=managesites&scanid=<?php echo esc_attr( $website->id ); ?>" class="item"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
-                                    <?php if ( empty( $count_security_issues ) ) { ?>
-                                    <a href="javascript:void(0)" class="<?php echo $is_demo ? 'disabled' : ''; ?> unfix-all-site-security-issues item"><?php esc_html_e( 'Unfix Issues', 'mainwp' ); ?></a>
-                                    <?php } else { ?>
-                                    <a href="javascript:void(0)" class="<?php echo $is_demo ? 'disabled' : ''; ?> fix-all-site-security-issues item"><?php esc_html_e( 'Fix Issues', 'mainwp' ); ?></a>
-                                    <?php } ?>
                                 </div>
                             </div>
                         </div>

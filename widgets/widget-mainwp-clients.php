@@ -117,7 +117,7 @@ class MainWP_Clients { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 }
                                 ?>
                             </td>
-                            <td class="right aligned">
+                            <td class="right aligned collapsing">
                                 <div class="ui right pointing dropdown mainwp-768-hide" style="z-index:999">
                                 <i class="ellipsis vertical icon"></i>
                                     <div class="menu">

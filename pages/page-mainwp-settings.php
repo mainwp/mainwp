@@ -2092,6 +2092,20 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             <input type="submit" name="mainwp_restore_info_messages" id="mainwp_restore_info_messages" class="ui button" value="<?php esc_attr_e( 'Restore Info Messages', 'mainwp' ); ?>"/>
                         </div>
                     </div>
+
+                    <h3 class="ui dividing header">
+                        <?php esc_html_e( 'Third-Party Permissions', 'mainwp' ); ?>
+                    </h3>
+                    <?php
+                    $hide_priv_notice = 1 === (int) get_option( 'mainwp_help_modal_content_update' ) ? true : false;
+                    ?>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Remove Quick Help feature thrid-party permissions', 'mainwp' ); ?></label>
+                        <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click this button to remove permissions.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <input type="button" <?php echo $hide_priv_notice ? 'onclick="mainwp_help_modal_content_onclick(0,true);return false;"' : ''; ?> class="ui button green basic <?php echo $hide_priv_notice ? '' : 'disabled'; ?>" value="<?php esc_attr_e( 'Remove Permissions', 'mainwp' ); ?>"/>
+                        </div>
+                    </div>
+
                     <?php
                     /**
                      * Action: mainwp_tools_form_bottom

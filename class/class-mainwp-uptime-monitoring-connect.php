@@ -753,8 +753,12 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $up_codes = ! empty( $up_codes ) ? explode( ',', $up_codes ) : array();
 
         // check up status codes.
-        if ( ! empty( $http_code ) && is_array( $up_codes ) && in_array( $http_code, $up_codes ) ) {
-            $status = static::UP;
+        if ( ! empty( $http_code ) && is_array( $up_codes ) ) {
+            if ( in_array( $http_code, $up_codes ) ) {
+                $status = static::UP;
+            } elseif ( static::UP === $status ) {
+                $status = static::DOWN;
+            }
         }
 
         $mo_url = static::get_apply_monitor_url( $monitor );

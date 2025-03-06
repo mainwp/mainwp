@@ -61,6 +61,7 @@
 			<property name="indent" value="4"/>
 			<property name="tabIndent" value="false"/>
 		</properties>
+        <exclude-pattern>assets/js/mainwp.js</exclude-pattern>
 	</rule>
 
 	<rule ref="Generic.WhiteSpace.DisallowTabIndent" />

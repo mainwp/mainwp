@@ -51,7 +51,7 @@ class Log_Query {
             if ( ! empty( $search_str ) ) {
                 $search_str   = trim( $search_str );
                 $where_search = ' AND ( lg.action LIKE  "%' . $search_str . '%" OR lg.log_id LIKE  "%' . $search_str . '%" OR lg.user_id LIKE "%' . $search_str . '%" ';
-
+                $tmp_search   = '';
                 // prepare search value for searching.
                 if ( 'plugin' === substr( strtolower( $search_str ), -6 ) ) {
                     $tmp_search = substr( $search_str, 0, -6 );

@@ -651,7 +651,7 @@ let mainwp_notes_client_save = function () {
 };
 
 // Handle import client for csv.
-const mainwp_manageclient_import_client = function () { //phpcs:ignore -- NOSONAR -complex.
+const mainwp_manageclient_import_client = function () { // NOSONAR
   if (import_client_stop_by_user)
     return;
 

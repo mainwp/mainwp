@@ -273,7 +273,7 @@ class Log_Query {
             {$join}
             WHERE `lg`.`connector` != 'compact' ORDER BY lg.created DESC {$recent_limits}";
 
-            $recent_created = $wpdb->get_var( $recent_query );
+            $recent_created = $wpdb->get_var( $recent_query ); //phpcs:ignore -- NOSONAR - ok.
 
             $recent_where = ' AND lg.created <= ' . (int) $recent_created;
         }

@@ -218,7 +218,7 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
                             managesites_add_wpurl: url,
                             managesites_add_wpadmin: import_wpadmin,
                         });
-                        jQuery.post(ajaxurl, data_temp_managesites, function (res) { });
+                        jQuery.post(ajaxurl, data_temp_managesites, function () { });
                     }
 
                     // Create Client
@@ -260,7 +260,7 @@ const mainwp_managesites_import_client = function (index, siteid) {
             site_id: siteid
         });
 
-        jQuery.post(ajaxurl, data, function (res) { });
+        jQuery.post(ajaxurl, data, function () { });
     }
 
     return true;
@@ -280,7 +280,7 @@ const mainwp_managesites_import_client_no_website = function () {
             client: client_data,
         });
 
-        jQuery.post(ajaxurl, data, function (res) { });
+        jQuery.post(ajaxurl, data, function () { });
     }
     return true;
 }
@@ -321,7 +321,7 @@ jQuery(document).ready(function ($) {
     $("#mainwp-managesites-row-import-sites").on(
         "blur",
         ".mainwp-managesites-import-site-url",
-        function (event) {
+        function () {
             const input = $(this);
             if (input.val() === initial_value) {
                 return;
@@ -359,7 +359,7 @@ jQuery(document).ready(function ($) {
     $(document).on(
         "paste",
         ".mainwp-managesites-import-site-url",
-        function (event) {
+        function () {
             const input = $(this);
             if (input.val() === initial_value) {
                 return;
@@ -469,7 +469,7 @@ const mainwp_managesites_save_row_temp_data = function (row_index) {
         });
 
         // Send row save data to server.
-        jQuery.post(ajaxurl, data, function (response) { });
+        jQuery.post(ajaxurl, data, function () { });
     }
 };
 // Function to get the domain part from the entered URL

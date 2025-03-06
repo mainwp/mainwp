@@ -501,7 +501,7 @@ qq.FileUploader = function (o) {
             '<div class="left aligned middle aligned column"><span class="qq-upload-file"></span></div>' +
             '<div class="middle aligned column"><span class="qq-upload-size"></span></div>' +
             '<div class="middle aligned column"><span class="qq-upload-spinner"><i class="notched circle loading icon"></i> Uploading...</span><span class="qq-upload-msg-success qq-upload-msg-fail"></span></div>' +
-            '<div class="right aligned middle aligned column"><a class="ui mini button basic red qq-upload-cancel" href="#">Cancel Upload</a> <span class="qq-upload-add-to-favorites"><a class="ui mini button basic" href="#">Add to Favorites</a></span> <a class="ui mini button basic red qq-upload-cancel-install" href="#">Remove Item</a></div>' +
+            '<div class="right aligned middle aligned column"><a class="ui mini button basic red qq-upload-cancel" href="#">Cancel Upload</a> <a class="ui mini button basic red qq-upload-cancel-install" href="#">Remove Item</a></div>' +
             '</div>' +
             '</div>',
 

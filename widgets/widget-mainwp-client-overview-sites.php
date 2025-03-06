@@ -250,7 +250,7 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                         // to fix js error.
                         console.log(err);
                     }
-                    mainwp_datatable_fix_menu_overflow();
+                    mainwp_datatable_fix_menu_overflow( '#mainwp-manage-sites-monitor-table' );
                 });
             </script>
             <?php

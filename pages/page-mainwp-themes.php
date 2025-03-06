@@ -1741,7 +1741,6 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             \mainwp_do_not_have_permissions( esc_html__( 'install themes', 'mainwp' ) );
             return;
         }
-        $favorites_enabled = is_plugin_active( 'mainwp-favorites-extension/mainwp-favorites-extension.php' );
         ?>
         <div class="ui alt segment" id="mainwp-install-themes">
             <div class="mainwp-main-content">
@@ -1924,12 +1923,6 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         <label for="install-theme-{{data.slug}}"><?php esc_html_e( 'Install Theme', 'mainwp' ); ?></label>
                     </div>
                 </div>
-                <?php if ( $favorites_enabled ) { ?>
-                <div class="extra content">
-                    <span><?php esc_html_e( 'Add to Favorites', 'mainwp-favorites-extension' ); ?></span>
-                    <a class="ui huge star rating right floated <# if ( data.added_fav ) { #> favorite <# } #>" data-max-rating="1" id="add-favorite-theme-{{data.slug}}"></a>
-                </div>
-                <?php } ?>
                 <?php do_action( 'mainwp_install_theme_card_template_bottom' ); ?>
         </script>
 

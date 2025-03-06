@@ -72,10 +72,8 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @param string $type Plugin|Theme Type of upload.
      */
     public static function render_upload( $type ) {
-        $title             = ( 'plugin' === $type ) ? 'Plugins' : 'Themes';
-        $favorites_enabled = is_plugin_active( 'mainwp-favorites-extension/mainwp-favorites-extension.php' );
-        $cls               = $favorites_enabled ? 'favorites-extension-enabled ' : '';
-        $cls              .= ( 'plugin' === $type ) ? 'qq-upload-plugins' : '';
+        $title = ( 'plugin' === $type ) ? 'Plugins' : 'Themes';
+        $cls   = ( 'plugin' === $type ) ? 'qq-upload-plugins' : '';
 
         $disabled_upload    = false;
         $disabled_functions = ini_get( 'disable_functions' );
@@ -164,7 +162,6 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                     </div>
                                     <div class="right aligned middle aligned column">
                                         <a class="ui mini button basic red qq-upload-cancel" href="#">Cancel Upload</a>
-                                    <?php echo $favorites_enabled ? '<span class="qq-upload-add-to-favorites" style="display:none;"><a class="ui mini button basic" href="#">Add to Favorites</a></span>' : ''; ?>
                                         <a class="ui mini button basic red qq-upload-cancel-install" style="display:none;" href="#">Remove Item</a>
                                     </div>
                                 </div>

@@ -577,7 +577,7 @@ jQuery(function () {
     });
 
     for (let ise of securityIssues_fixes) {
-        if(ise === 'wp_uptodate'){
+        if(ise === 'wp_uptodate' || ise === 'sec_inactive_themes' || ise === 'sec_inactive_plugins' || ise === 'sec_outdated_plugins' || ise === 'sec_outdated_themes' ){
             continue;
         }
       jQuery('#' + ise + '_fix').on('click', function (what) {
@@ -3909,6 +3909,11 @@ let isChromeAgent = function() {
 
 // fix menu overflow with scroll tables.
 window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRight ) {
+
+    if( typeof pTableSelector === "undefined" ){
+        console.warn('mainwp_datatable_fix_menu_overflow: requires params - $pTableSelector');
+    }
+
   let dtScrollBdCls = '.dt-scroll-body';
   let dtScrollCls = '.dt-scroll';
   let fix_overflow = jQuery('.mainwp-content-wrap').attr('menu-overflow');
@@ -3921,14 +3926,35 @@ window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRig
   });
   let tblSelect = pTableSelector ?? 'table';
 
+// to prevent double events.
+jQuery(tblSelect + ' tr td .ui.right.pointing.dropdown').each(function () {
+    let parentTB = jQuery(this).closest('table');
+    if(parentTB.attr('fixed-menu-overflow') === undefined){
+        parentTB.attr('fixed-menu-overflow', 'no'); // to init click menu events.
+    }
+});
+
+jQuery(tblSelect + ' tr td .ui.left.pointing.dropdown').each(function () {
+    let parentTB = jQuery(this).closest('table');
+    if(parentTB.attr('fixed-menu-overflow') === undefined){
+        parentTB.attr('fixed-menu-overflow', 'no'); // to init click menu events.
+    }
+});
+
+// if table selector specific.
+if(typeof pTableSelector !== "undefined" ){
+    if(jQuery(pTableSelector + '[fixed-menu-overflow="yes"]' ).length){
+        jQuery(pTableSelector + '[fixed-menu-overflow="yes"]').attr('fixed-menu-overflow', 'no'); // to init menus events click.
+    }
+}
+
   console.log('mainwp_datatable_fix_menu_overflow :: ' + tblSelect);
 
     // Fix the overflow prbolem for the actions menu element (right pointing menu).
-    jQuery(tblSelect + ' tr td .ui.right.pointing.dropdown').on('click', function () {
+    jQuery(tblSelect + '[fixed-menu-overflow="no"] tr td .ui.right.pointing.dropdown').on('click', function () {
         let parentTB = jQuery(this).closest('table');
         if(jQuery(parentTB).attr('id') === 'mainwp-clients-widget-table' && isChromeAgent()){
             console.log('Is Chrome & Clients widget table.');
-            return false;
         }
         jQuery(this).closest(dtScrollBdCls).css('position', '');
         jQuery(this).closest(dtScrollCls).css('position', 'relative');
@@ -3950,6 +3976,7 @@ window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRig
         }
 
         console.log('right');
+        console.log('tweaks: ' + pTop + ' right: ' + pRight);
         console.log('top: ' + top + ' right: ' + right);
         jQuery(this).find('.menu').css('min-width', '170px');
         jQuery(this).find('.menu').css('top', top);
@@ -3957,7 +3984,7 @@ window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRig
     });
 
     // Fix the overflow prbolem for the actions menu element (left pointing menu).
-    jQuery(tblSelect + ' tr td .ui.left.pointing.dropdown').on('click', function () {
+    jQuery(tblSelect + '[fixed-menu-overflow="no"] tr td .ui.left.pointing.dropdown').on('click', function () {
         let parentTB = jQuery(this).closest('table');
         if(jQuery(parentTB).attr('id') === 'mainwp-clients-widget-table' && isChromeAgent()){
             console.log('Is Chrome & Clients widget table.');
@@ -3990,8 +4017,13 @@ window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRig
         jQuery(this).addClass('right');
         jQuery(this).find('.menu').css('top', top);
         jQuery(this).find('.menu')[0].style.setProperty('left', left + 'px', 'important');
-});
-  mainwp_datatable_fix_reorder_selected_rows_status();
+    });
+
+    jQuery(tblSelect + '[fixed-menu-overflow="no"]').each(function () {
+        jQuery(this).attr('fixed-menu-overflow', 'yes');
+    });
+
+    mainwp_datatable_fix_reorder_selected_rows_status();
 }
 
 
@@ -4864,4 +4896,3 @@ jQuery(function ($) {
   });
 
 });
-

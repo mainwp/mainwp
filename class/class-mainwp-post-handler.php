@@ -730,7 +730,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      */
     public function ajax_mainwp_help_modal_content_update() {
         $this->secure_request( 'mainwp_help_modal_content_update' );
-        MainWP_Utility::update_option( 'mainwp_help_modal_content_update', 1 );
+        MainWP_Utility::update_option( 'mainwp_help_modal_content_update', ! empty( $_POST['hide_noti'] ) ? 1 : 0 ); //phpcs:ignore -- NOSONAR verify.
+        MainWP_Utility::update_option( 'mainwp_enable_guided_tours', 1 );
         die( 'ok' );
     }
 

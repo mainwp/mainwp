@@ -111,23 +111,36 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         ?>
 
         <div class="mainwp-widget-header">
-            <h2 class="ui header handle-drag">
-                <?php
-                /**
-                 * Filter: mainwp_non_mainwp_changes_widget_title
-                 *
-                 * Filters the Site info widget title text.
-                 *
-                 * @param object $website Object containing the child site info.
-                 *
-                 * @since 4.1
-                 */
-                echo esc_html( apply_filters( 'mainwp_non_mainwp_changes_widget_title', esc_html__( 'Sites Changes', 'mainwp' ), $website ) );
-                ?>
-                <div class="sub header"><?php esc_html_e( 'The most recent changes made to your Child Sites.', 'mainwp' ); ?></div>
-            </h2>
+            <div class="ui grid">
+                <div class="fourteen wide column">
+                    <h2 class="ui header handle-drag">
+                        <?php
+                        /**
+                         * Filter: mainwp_non_mainwp_changes_widget_title
+                         *
+                         * Filters the Site info widget title text.
+                         *
+                         * @param object $website Object containing the child site info.
+                         *
+                         * @since 4.1
+                         */
+                        echo esc_html( apply_filters( 'mainwp_non_mainwp_changes_widget_title', esc_html__( 'Sites Changes', 'mainwp' ), $website ) );
+                        ?>
+                        <div class="sub header"><?php esc_html_e( 'The most recent changes made to your Child Sites.', 'mainwp' ); ?></div>
+                    </h2>
+                </div>
+                <div class="two wide column right aligned">
+                    <div id="widget-sites-changes-dropdown-selector" class="ui dropdown top right tiny pointing not-auto-init mainwp-dropdown-tab">
+                        <i class="vertical ellipsis icon"></i>
+                        <div class="menu">
+                            <a href="javascript:void(0)" class="item" data-value="wp-admin"><?php esc_html_e( 'Non-MainWP Changes', 'mainwp' ); ?></a>
+                            <a href="javascript:void(0)" class="item" data-value="dashboard"><?php esc_html_e( 'Dashboard Changes', 'mainwp' ); ?></a>
+                            <a href="javascript:void(0)" class="item" data-value=""><?php esc_html_e( 'Show All', 'mainwp' ); ?></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-
         <input type="hidden" id="mainwp-widget-filter-current-site-id" value="<?php echo isset( $params['wpid'] ) ? intval( $params['wpid'] ) : 0; ?>" />
         <input type="hidden" id="mainwp-widget-filter-current-client-id" value="<?php echo isset( $params['client_id'] ) ? intval( $params['client_id'] ) : 0; ?>" />
         <input type="hidden" id="mainwp-widget-filter-events-limit" value="<?php echo isset( $params['limit'] ) ? intval( $params['limit'] ) : 50; ?>" />
@@ -177,18 +190,14 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     ?>
                 </div>
         </div>
-        <?php
-        $totalRecords = Log_DB_Helper::instance()->count_events();
-        ?>
+        
         <div class="mainwp-widget-footer">
             <div class="ui two columns stackable grid">
                 <div class="left aligned middle aligned column">
 
                 </div>
                 <div class="right aligned middle aligned column">
-                    <?php if ( $totalRecords ) : ?>
-                        <a href="admin.php?page=InsightsManage"><?php printf( esc_html__( 'See all %d', 'mainwp' ), intval( $totalRecords ) ); ?></a>
-                    <?php endif; ?>
+                    <a href="admin.php?page=InsightsManage" class="ui mini basic button"><?php esc_html_e( 'See All Changes', 'mainwp' ); ?></a>
                 </div>
             </div>
         </div>

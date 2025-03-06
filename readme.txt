@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.7.1
 Requires PHP: 7.4
-Stable tag: 5.4
+Stable tag: 5.4.0.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -49,17 +49,21 @@ The MainWP plugins come with their own [privacy policies](https://mainwp.com/mai
 
 **How Is MainWP Free? What’s the Catch? How Will You Continue to Pay Development Costs?**
 
-This is not a trial. The core MainWP Dashboard plugin is [100% FREE](https://mainwp.com/mainwp-free-features/) and always will be. It doesn’t matter if you have 5 sites or 5,000 WordPress sites; it’s always free.
+MainWP Dashboard is [100% FREE](https://mainwp.com/mainwp-free-features/) and always will be. Whether you manage 5 sites or 5,000, the core dashboard remains free.
 
-We make money by offering MainWP Pro which includes a wide range of [Premium Extensions](https://mainwp.com/mainwp-extensions/) to grow with you.
+We make money by offering [MainWP Pro](https://mainwp.com/signup/), which provides access to a wide range of premium add-ons. These premium add-ons are organized into two clear categories:
 
-👉 [Free vs. Pro: Know the Difference](https://mainwp.com/free-vs-pro/)
+- **Integrations:**  
+  Add-ons in this category enable seamless connections with popular third-party services and plugins, allowing you to integrate the tools you already use directly into your MainWP Dashboard.
 
-Extensions enhance your MainWP Dashboard with additional features for backups, marketing, SEO, maintenance, security, monitoring, and other tools to help you better organize and manage websites.
+- **Extensions:**  
+  These are custom-built, standalone add-ons developed exclusively for the MainWP Dashboard, designed to add unique and specialized functionality to enhance your WordPress management experience.
+
+For more details, visit our [Premium Add-ons](https://mainwp.com/mainwp-add-ons/) page and see how our free and pro features compare at [Free vs. Pro: Know the Difference](https://mainwp.com/free-vs-pro/).
 
 **Experience the MainWP Difference**
 
-Ready to streamline your WordPress management workflow and take control of your sites? Install MainWP today and discover how easy it is to keep your sites updated, secure, and running smoothly. Join the growing community of over 700K WordPress sites trusting MainWP for their management needs. Get started now and experience the MainWP difference firsthand!
+Are you ready to take the hassle out of managing your WordPress sites? MainWP makes it easy to keep everything updated, secure, and running just the way you need it. With over 20k site owners trusting MainWP with over 700k WordPress sites, every day, you'll quickly see how much simpler website management can be. Try it today and feel the difference for yourself!
 
 == Installation ==
 
@@ -142,6 +146,19 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.4.0.1 - 3-6-2025 =
+* Fixed: Issue with double success icons appearing in the Updates process
+* Fixed: Detection of inactive themes in the Site Hardening process
+* Fixed: Site Changes widget displaying data
+* Fixed: Multiple PHP warnings
+* Fixed: Updates modal not auto-closing after all updates were successfully processed
+* Fixed: Gridstack resize handle overlapping the scrollbar in widgets
+* Added: Third-party permissions removal notice in the Quick Help modal
+* Added: Third-party permissions removal button in the Tools page
+* Updated: User menu button now displays a generic icon if avatar usage is disabled in WP settings
+* Updated: Site Changes widget now shows non-MainWP changes by default
+* Updated: Removed the retired "Add to Favorites" link
 
 = 5.4 - 3-5-2025 =
 

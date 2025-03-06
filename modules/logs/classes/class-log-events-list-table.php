@@ -603,6 +603,14 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             jQuery( document ).ready( function( $ ) {
                     const manage_tbl_id = '#<?php echo esc_js( $events_tbl_id ); ?>';
                     const ajax_action = '<?php echo esc_js( $ajaxaction ); ?>';
+
+                    let widgetViewSource = '';
+
+                    if( jQuery('#widget-sites-changes-dropdown-selector').length ){
+                        widgetViewSource = mainwp_ui_state_load('sites-changes-widget');
+                        widgetViewSource = ['wp-admin', 'dashboard', '' ].includes(widgetViewSource) ? widgetViewSource : 'wp-admin';
+                    }
+
                     try {
                         //jQuery( '#mainwp-sites-table-loader' ).hide();
                         $module_log_table = jQuery( manage_tbl_id ).on( 'processing.dt', function ( e, settings, processing ) {
@@ -643,8 +651,10 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                     } else {
                                         // set recent number for none-manage-events table.
                                         data.recent_number =  $( '#mainwp-widget-filter-events-limit').length ? $( '#mainwp-widget-filter-events-limit').val() : 100;
+                                        if( 'mainwp_module_log_widget_events_overview_display_rows' === ajax_action ){
+                                            data.source = widgetViewSource;
+                                        }
                                     }
-
                                     return $.extend( {}, d, data );
                                 },
                                 "dataSrc": function ( json ) {
@@ -678,7 +688,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                             },
                             "drawCallback": function( settings ) {
                                 this.api().tables().body().to$().attr( 'id', 'mainwp-module-log-records-body-table' );
-                                mainwp_datatable_fix_menu_overflow();
+                                mainwp_datatable_fix_menu_overflow(manage_tbl_id);
                                 if ( typeof mainwp_preview_init_event !== "undefined" ) {
                                     mainwp_preview_init_event();
                                 }
@@ -702,14 +712,16 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                         console.log(err);
                     }
 
-                    mainwp_module_log_events_filter = function() {
-                        try {
-                            $module_log_table.ajax.reload();
-                        } catch(err) {
-                            // to fix js error.
-                            console.log(err);
+                    let $sitesChangesSelect = jQuery( '#widget-sites-changes-dropdown-selector' ).dropdown( {
+                        onChange: function( value ) {
+                            mainwp_ui_state_save('sites-changes-widget', value);
+                            if(widgetViewSource !== value ){
+                                widgetViewSource = value;
+                                $module_log_table.ajax.reload();
+                            }
                         }
-                    };
+                    } ).dropdown("set selected", widgetViewSource);
+
                     mainwp_module_log_overview_content_filter = function() {
                         if(jQuery( '#mainwp-common-filter-segments-model-name').length && 'manage-events' === jQuery( '#mainwp-common-filter-segments-model-name').val() ){
                             mainwp_module_log_manage_events_filter();
@@ -749,7 +761,6 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                     };
                     _init_manage_events_screen();
             } );
-
 
             _init_manage_events_screen = function() {
                 jQuery( '#mainwp-manage-events-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {

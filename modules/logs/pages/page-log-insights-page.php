@@ -822,14 +822,14 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
      *
      * Display table rows, optimize for shared hosting or big networks.
      */
-    public function ajax_events_overview_display_rows() {
+    public function ajax_events_overview_display_rows() { //phpcs:ignore -- NOSONAR -complex.
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_widget_events_overview_display_rows' );
         $this->load_events_list_table();
 
         $insights_filters = array();
         //phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! empty( $_POST['current_site_id'] ) ) {
-            $insights_filters['site_id'] = intval( $_POST['current_site_id'] );
+            $insights_filters['wpid'] = intval( $_POST['current_site_id'] );
         } elseif ( ! empty( $_POST['current_client_id'] ) ) {
             $client_id = intval( $_POST['current_site_id'] );
             $websites  = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id );
@@ -837,10 +837,38 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
             foreach ( $websites as $website ) {
                 $site_ids[] = $website->id;
             }
-            $insights_filters['site_id'] = $site_ids;
+            $insights_filters['wpid'] = $site_ids;
         }
+        $filter_source = isset( $_REQUEST['source'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['source'] ) ) : '';
         //phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
+        $sources_conds = '';
+        if ( ! empty( $filter_source ) ) {
+            $array_source_list = explode( ',', $filter_source ); // convert to array.
+            if ( in_array( 'allsource', $array_source_list, true ) || ( in_array( 'dashboard', $array_source_list ) && in_array( 'wp-admin', $array_source_list ) ) ) {
+                $filter_source     = '';
+                $array_source_list = false;
+            }
+
+            if ( is_array( $array_source_list ) ) {
+                $wpadmin_source   = true;
+                $dashboard_source = true;
+
+                if ( ! in_array( 'wp-admin', $array_source_list ) ) {
+                    $wpadmin_source = false;
+                }
+                if ( ! in_array( 'dashboard', $array_source_list ) ) {
+                    $dashboard_source = false;
+                }
+
+                if ( $wpadmin_source && ! $dashboard_source ) {
+                    $sources_conds = 'wp-admin-only';
+                } elseif ( ! $wpadmin_source && $dashboard_source ) {
+                    $sources_conds = 'dashboard-only';
+                }
+            }
+        }
+        $insights_filters['sources_conds'] = $sources_conds;
         $this->list_events_table->prepare_items( false, $insights_filters );
         $output = $this->list_events_table->ajax_get_datatable_rows();
         MainWP_Logger::instance()->log_execution_time( 'ajax_events_display_rows()' );

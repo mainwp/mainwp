@@ -283,7 +283,7 @@ jQuery(document).on('keyup change', '.mainwp-qsw-add-client-client-name, .mainwp
     });
 
     if (all_empty) {
-      jQuery('#bulk_add_multi_create_client').hide(); // Hide Add Multi Client button. 
+      jQuery('#bulk_add_multi_create_client').hide(); // Hide Add Multi Client button.
       jQuery('#mainwp_qsw_add_client_continue_button').show(); // Display Continue button.
     }
   }
@@ -294,7 +294,7 @@ jQuery(document).on('click', '#bulk_add_multi_create_client', function (e) {
   let all_rows_valid = true;
   let errors = []; // Array declaration containing error messages.
   let form_data = []; // Initialize array containing form data
-  jQuery('.mainwp-qsw-add-client-rows').each(function () { // NOSONAR -- complex
+  jQuery('.mainwp-qsw-add-client-rows').each(function () { //phpcs:ignore -- NOSONAR -- complex
     let website_id = null;
     const row_index = jQuery(this).attr('id').replace('mainwp-qsw-add-client-row-', '');
 
@@ -651,7 +651,7 @@ let mainwp_notes_client_save = function () {
 };
 
 // Handle import client for csv.
-const mainwp_manageclient_import_client = function () { // NOSONAR.
+const mainwp_manageclient_import_client = function () { // NOSONAR
   if (import_client_stop_by_user)
     return;
 

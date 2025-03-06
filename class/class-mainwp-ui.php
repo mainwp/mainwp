@@ -1368,19 +1368,26 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
          * @since 4.5.2
          */
         do_action( 'mainwp_header_actions_after_select_themes' );
+        $show_avar = get_option( 'show_avatars' );
         ?>
-        <div class="ui top right pointing dropdown mainwp-768-hide" id="mainwp-user-menu-button">
+        <div class="ui top right pointing dropdown <?php echo $show_avar ? '' : 'icon button'; ?> mainwp-768-hide" id="mainwp-user-menu-button">
             <?php
-            echo get_avatar(
-                $current_user,
-                38,
-                'wavatar',
-                esc_html__( 'Settings', 'mainwp' ),
-                array(
-                    'extra_attr' => 'style="width:38px!important;height:38px!important;"',
-                    'class'      => 'ui small avatar image',
-                )
-            );
+            if ( $show_avar ) {
+                echo get_avatar(
+                    $current_user,
+                    38,
+                    'wavatar',
+                    esc_html__( 'Settings', 'mainwp' ),
+                    array(
+                        'extra_attr' => 'style="width:38px!important;height:38px!important;"',
+                        'class'      => 'ui small avatar image',
+                    )
+                );
+            } else {
+                ?>
+                <i class="user icon"></i>
+                <?php
+            }
             ?>
             <div class="menu">
                 <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=Settings' ) ); ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Go to MainWP Settings', 'mainwp' ); ?>">
@@ -2268,22 +2275,21 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         } elseif ( 'Extensions-Mainwp-Regression-Testing-Extension' === $page ) {
             $tour_id = '66037';
         }
+        $hide_priv_notice = 1 === (int) get_option( 'mainwp_help_modal_content_update' ) ? true : false;
+        $hide_tour_notice = '' !== $tour_id && 1 === (int) get_option( 'mainwp_help_modal_content_update' ) ? true : false;
         ?>
         <div id="mainwp-help-modal" class="ui modal">
             <i class="close icon"></i>
             <div class="header"><?php esc_html_e( 'Quick Help', 'mainwp' ); ?></div>
-            <?php if ( 1 !== (int) get_option( 'mainwp_help_modal_content_update' ) ) : ?>
-            <div class="content" id="mainwp-help-modal-consent-content">
+            <div class="content" id="mainwp-help-modal-consent-content" <?php echo $hide_priv_notice ? 'style="display:none"' : ''; ?>>
                 <div class="ui message">
                     <h3><?php esc_html_e( 'Privacy Notice', 'mainwp' ); ?></h3>
-                    <p><?php esc_html_e( 'The "Instant Help" feature, including the guided tour and support agent, utilizes third-party technology and is subject to their respective privacy policies. Please review the privacy policies of Usetiful and Chatbase before proceeding.', 'mainwp' ); ?></p>
+                    <p><?php printf( esc_html__( 'The "Quick Help" feature, including the guided tour and support agent, utilizes third-party technology and is subject to their respective privacy policies. Please review the privacy policies of %sUsetiful%s and %sChatbase%s before proceeding.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>', '<a href="https://www.chatbase.co/legal/privacy" target="_blank">', '</a>' ); ?></p>
                     <p><?php esc_html_e( 'By clicking the button below, you acknowledge and accept these terms.', 'mainwp' ); ?></p>
-                    <button class="ui mini green button" onclick="mainwp_help_modal_content_onclick();jQuery('#mainwp-help-modal-content').fadeIn('100');jQuery('#mainwp-help-modal-consent-content').fadeOut('100');"><?php esc_html_e( 'Acknowledge & Accept Terms', 'mainwp' ); ?></button>
+                    <button class="ui mini green button" onclick="mainwp_help_modal_content_onclick(1);jQuery('#revoke-third-party-perms').fadeIn('100');jQuery('#mainwp-help-modal-content').fadeIn('100');jQuery('#mainwp-start-tour-card').fadeIn('100');jQuery('#mainwp-help-modal-consent-content').fadeOut('100');"><?php esc_html_e( 'Acknowledge & Accept Terms', 'mainwp' ); ?></button>
                 </div>
             </div>
-            <?php endif; ?>
-
-            <div class="scrolling center aligned content" id="mainwp-help-modal-content" <?php echo ( 1 === (int) get_option( 'mainwp_help_modal_content_update' ) ) ? '' : 'style="display:none"'; ?>>
+            <div class="scrolling center aligned content" id="mainwp-help-modal-content" <?php echo $hide_priv_notice ? '' : 'style="display:none"'; ?>>
                 <div class="ui two cards" id="mainwp-help-modal-options">
                     <a class="ui card grey text" id="mainwp-start-chat-card" onClick="jQuery('#mainwp-chatbase-chat-screen').fadeIn('100');jQuery('#mainwp-start-tour-button').fadeIn('100');jQuery('#mainwp-help-modal-options').fadeOut('50');">
                         <div class="content">
@@ -2295,8 +2301,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             <div><?php esc_html_e( 'Chat with our AI Support Assistant for quick guidance and troubleshooting. It\'s trained on MainWP documentation to help you find answers faster.', 'mainwp' ); ?> <span class="ui mini green label">BETA</span></div>
                         </div>
                     </a>
-                    <?php if ( '' !== $tour_id && 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ) : ?>
-                    <a class="ui card grey text" id="mainwp-start-tour-card" onclick="jQuery('#mainwp-help-modal').modal('hide');window.USETIFUL.tour.start( <?php echo intval( $tour_id ); ?> );" >
+                    <a class="ui card grey text" id="mainwp-start-tour-card" <?php echo $hide_tour_notice ? '' : 'style="display:none"'; ?> onclick="jQuery('#mainwp-help-modal').modal('hide');window.USETIFUL.tour.start( <?php echo intval( $tour_id ); ?> );" >
                         <div class="content">
                             <div class="header"><?php esc_html_e( 'Take a Quick Tour', 'mainwp' ); ?></div>
                         </div>
@@ -2306,13 +2311,14 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             <div><?php esc_html_e( 'New here? Learn how to navigate and use key features with an interactive step-by-step tour.', 'mainwp' ); ?></div>
                         </div>
                     </a>
-                    <?php endif; ?>
                 </div>
                 <div style="display:none" id="mainwp-chatbase-chat-screen">
                     <iframe src="https://supportassistant.mainwp.com/chatbot-iframe/Tv5dqV-xiQxwgPeMQFCZ4" width="100%" style="height: 100%; min-height: 600px;border: none;" title="MainWP Support Assistant"></iframe>
                 </div>
             </div>
+            <span id="revoke-third-party-perms" <?php echo $hide_priv_notice ? '' : 'style="display:none"'; ?> class="ui compact segment"><?php esc_html_e( '* Revoke third-party permissions in the Tools page.', 'mainwp' ); ?></span>
         </div>
+
         <?php
     }
 

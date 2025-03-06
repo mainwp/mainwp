@@ -172,6 +172,10 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     display: none;
 }
 
+.mainwp-ui #mainwp-user-menu-button {
+    float: none !important;
+}
+
 /* Sub-Header */
 
 .mainwp-sub-header,
@@ -1426,6 +1430,10 @@ th .down.icon {
 }
 
 /* Gridstack Customization */
+
+.mainwp-ui .grid-stack .ui-resizable-e {
+    right: 0.2rem !important;
+}
 
 .mainwp-ui .grid-stack .ui-resizable-se {
     background-size: contain;

@@ -2006,22 +2006,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         static::get_instance()->render_select_custom_themes();
 
         ?>
-                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools">
-                            <label class="six wide column middle aligned">
-        <?php
-        MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_enable_guided_tours', (int) get_option( 'mainwp_enable_guided_tours', 0 ) );
-        esc_html_e( 'Enable MainWP guided tours', 'mainwp' );
-        ?>
-                            <span class="ui blue mini label"><?php esc_html_e( 'BETA', 'mainwp' ); ?></span></label>
-                            <div class="ten wide column " data-tooltip="<?php esc_attr_e( 'Check this option to enable, or uncheck to disable MainWP guided tours.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <div class="ui info message" style="display:block!important;">
-        <?php printf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
-                                </div>
-                                <div class="ui toggle checkbox">
-                                    <input type="checkbox" class="settings-field-value-change-handler" name="mainwp-guided-tours-option" id="mainwp-guided-tours-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ? 'checked="true"' : ''; ?> />
-                                </div>
-                            </div>
-                        </div>
         <?php if ( get_option( 'mainwp_not_start_encrypt_keys' ) ) { ?>
                         <div class="ui grid field">
                             <label class="six wide column middle aligned"><?php esc_html_e( 'OpenSSL Key Encryption', 'mainwp' ); ?></label>
@@ -2096,6 +2080,23 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     <h3 class="ui dividing header">
                         <?php esc_html_e( 'Third-Party Permissions', 'mainwp' ); ?>
                     </h3>
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools">
+                        <label class="six wide column middle aligned">
+                            <?php
+                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_enable_guided_tours', (int) get_option( 'mainwp_enable_guided_tours', 0 ) );
+                            esc_html_e( 'Enable MainWP guided tours', 'mainwp' );
+                            ?>
+                            <span class="ui blue mini label"><?php esc_html_e( 'BETA', 'mainwp' ); ?></span>
+                        </label>
+                        <div class="ten wide column " data-tooltip="<?php esc_attr_e( 'Check this option to enable, or uncheck to disable MainWP guided tours.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                            <div class="ui info message" style="display:block!important;">
+                                <?php printf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
+                            </div>
+                            <div class="ui toggle checkbox">
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp-guided-tours-option" id="mainwp-guided-tours-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ? 'checked="true"' : ''; ?> />
+                            </div>
+                        </div>
+                    </div>
                     <?php
                     $hide_priv_notice = 1 === (int) get_option( 'mainwp_help_modal_content_update' ) ? true : false;
                     ?>

@@ -623,7 +623,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                     </div>
                 </div>
 
-                <div class="three wide middle aligned left aligned column">
+                <div class="four wide middle aligned left aligned column">
                     <button onclick="mainwp_module_log_manage_events_filter()" class="ui mini green button"><?php esc_html_e( 'Filter Data', 'mainwp' ); ?></button>
                     <button onclick="mainwp_module_log_manage_events_reset_filters(this)" class="ui mini button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
                 </div>

@@ -190,18 +190,14 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     ?>
                 </div>
         </div>
-        <?php
-        $totalRecords = Log_DB_Helper::instance()->count_events();
-        ?>
+        
         <div class="mainwp-widget-footer">
             <div class="ui two columns stackable grid">
                 <div class="left aligned middle aligned column">
 
                 </div>
                 <div class="right aligned middle aligned column">
-                    <?php if ( $totalRecords ) : ?>
-                        <a href="admin.php?page=InsightsManage"><?php printf( esc_html__( 'See all %d', 'mainwp' ), intval( $totalRecords ) ); ?></a>
-                    <?php endif; ?>
+                    <a href="admin.php?page=InsightsManage" class="ui mini basic button"><?php esc_html_e( 'See All Changes', 'mainwp' ); ?></a>
                 </div>
             </div>
         </div>

@@ -577,7 +577,7 @@ jQuery(function () {
     });
 
     for (let ise of securityIssues_fixes) {
-        if(ise === 'wp_uptodate'){
+        if(ise === 'wp_uptodate' || ise === 'sec_inactive_themes' || ise === 'sec_inactive_plugins' || ise === 'sec_outdated_plugins' || ise === 'sec_outdated_themes' ){
             continue;
         }
       jQuery('#' + ise + '_fix').on('click', function (what) {

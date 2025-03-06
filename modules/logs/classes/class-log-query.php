@@ -164,11 +164,6 @@ class Log_Query {
             $limits = "LIMIT {$start}, {$per_page}";
         }
 
-        // list recent events.
-        if ( ! empty( $args['recent_number'] ) ) {
-            $limits = ' LIMIT ' . intval( $args['recent_number'] );
-        }
-
         // Show the recent records first by default.
         $order = 'DESC';
         if ( 'ASC' === strtoupper( $args['order'] ) ) {
@@ -267,13 +262,29 @@ class Log_Query {
             $join .= ' LEFT JOIN ' . $this->get_sub_query_view() . ' sub_lg ON lg.log_id = sub_lg.sub_log_id ';
         }
 
+        $recent_where = '';
+        $recent_query = '';
+        // list recent events.
+        if ( ! empty( $args['recent_number'] ) ) {
+            $recent_limits = ' LIMIT ' . intval( $args['recent_number'] );
+
+            $recent_query = "SELECT MAX( lg.created )
+            FROM $wpdb->mainwp_tbl_logs as lg
+            {$join}
+            WHERE `lg`.`connector` != 'compact' ORDER BY lg.created DESC {$recent_limits}";
+
+            $recent_created = $wpdb->get_var( $recent_query );
+
+            $recent_where = ' AND lg.created <= ' . (int) $recent_created;
+        }
+
         /**
          * BUILD THE FINAL QUERY
          */
         $query = "SELECT {$select}
         FROM $wpdb->mainwp_tbl_logs as lg
         {$join}
-        WHERE `lg`.`connector` != 'compact' {$where}
+        WHERE `lg`.`connector` != 'compact' {$where} {$recent_where}
         {$orderby}
         {$limits}";
 
@@ -281,7 +292,7 @@ class Log_Query {
         $count_query = "SELECT COUNT(*)
         FROM $wpdb->mainwp_tbl_logs as lg
         {$join}
-        WHERE `lg`.`connector` != 'compact' {$where}";
+        WHERE `lg`.`connector` != 'compact' {$where} {$recent_where}";
 
         if ( $count_only ) {
             return array(
@@ -292,6 +303,7 @@ class Log_Query {
         if ( ! empty( $args['dev_log_query'] ) ) {
             //phpcs:disable Squiz.PHP.CommentedOutCode.Found,WordPress.PHP.DevelopmentFunctions
             error_log( print_r( $args, true ) );
+            error_log( $recent_query );
             error_log( $query );
             error_log( $count_query );
             //phpcs:enable Squiz.PHP.CommentedOutCode.Found,WordPress.PHP.DevelopmentFunctions

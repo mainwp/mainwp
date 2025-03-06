@@ -4,7 +4,7 @@
 window.mainwpVars = window.mainwpVars || {};
 
 mainwpVars.errorCount = 0;
-mainwpVars.regressionScoreLimit  = false;
+mainwpVars.regressionScoreLimit = false;
 
 mainwpVars.actionsErrors = {};
 
@@ -37,11 +37,11 @@ window.mainwp_updates_get_rollback_msg = function (error) {
 
 window.mainwp_init_html_popup = function (popupSelector, content) {
     jQuery(popupSelector).popup({
-        html: function(){
-            if(typeof content === 'undefined' ){
-                if(typeof popupSelector !== 'string'){
+        html: function () {
+            if (typeof content === 'undefined') {
+                if (typeof popupSelector !== 'string') {
                     // popup selector is object.
-                    content = jQuery(popupSelector).attr('html-popup-content')??''
+                    content = jQuery(popupSelector).attr('html-popup-content') ?? ''
                 }
             }
             return '<div class="mainwp-html-popup-body">' + content + '</div>';
@@ -99,7 +99,7 @@ let updatesoverview_upgrade = function (id, obj) {
                     }
                     jQuery('.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + err_msg + '"><i class="red times icon"></i></span>' + ' ' + mainwp_links_visit_site_and_admin('', pId));
                 } else {
-                    jQuery('.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + response.result +'</span>' + ' ' + mainwp_links_visit_site_and_admin('', pId));
+                    jQuery('.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + response.result + '</span>' + ' ' + mainwp_links_visit_site_and_admin('', pId));
                 }
 
 
@@ -310,7 +310,7 @@ let updatesoverview_wordpress_upgrade_int = function (websiteId, bulkMode) {
                 if (pBulkMode)
                     updatesoverview_wordpress_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + err_msg + '"><i class="red times icon"></i></span>');
             } else if (pBulkMode) {
-                updatesoverview_wordpress_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + response.result +'</span>');
+                updatesoverview_wordpress_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + response.result + '</span>');
             }
             updatesoverview_wordpress_upgrade_all_update_done();
         }
@@ -912,7 +912,7 @@ let updatesoverview_plugins_upgrade_all_int = function (slug, websiteIds, sitesP
     mainwpVars.currentWebsite = 0;
     mainwpVars.websitesDone = 0;
     mainwpVars.errorCount = 0;
-    mainwpVars.regressionScoreLimit  = false;
+    mainwpVars.regressionScoreLimit = false;
     mainwpVars.websitesTotal = mainwpVars.websitesLeft = mainwpVars.websitesToUpdatePlugins.length;
 
     mainwpVars.bulkTaskRunning = true;
@@ -942,12 +942,12 @@ let updatesoverview_plugins_upgrade_all_upgrade_next = function () {
 
 let updatesoverview_check_to_continue_updates = function () {
     mainwpVars.bulkTaskRunning = false;
-	// Disable auto reload page.
-	if (is_regression_disable_reload ){
-		return true;
-	}
+    // Disable auto reload page.
+    if (is_regression_disable_reload) {
+        return true;
+    }
     setTimeout(function () {
-        if (!mainwpVars?.errorCount && !mainwpVars?.regressionScoreLimit) {
+        if (!mainwpVars?.errorCount && (!mainwpVars?.regressionScoreLimit && jQuery('.updates-regression-score-red-flag').length === 0)) {
             mainwpPopup('#mainwp-sync-sites-modal').close(true);
         }
     }, 3000);
@@ -1013,14 +1013,14 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
                         } else {
                             let res = response.result;
                             let res_error = response.result_error;
-							let _success_icon = `<i class="green check icon"></i>`;
-							let regression_icon = render_html_regression_icon(res);
+                            let _success_icon = `<i class="green check icon"></i>`;
+                            let regression_icon = render_html_regression_icon(res);
                             mainwpVars.regressionScoreLimit = '' !== regression_icon ? true : false;
                             if (res[sid]) {
                                 if (!done && pBulkMode)
-									updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + _success_icon + '</span>' + regression_icon);
+                                    updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + _success_icon + '</span>' + regression_icon);
                                 websiteHolder.attr('updated', 1);
-								websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + _success_icon + '</span>' + regression_icon + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
+                                websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + _success_icon + '</span>' + regression_icon + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
                             } else if (res_error[sid]) {
                                 let _error = res_error[sid];
                                 let roll_error = mainwp_updates_get_rollback_msg(_error);
@@ -1433,14 +1433,14 @@ let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode) {
                     } else {
                         let res = response.result;
                         let res_error = response.result_error;
-						let regression_icon = render_html_regression_icon(res);
+                        let regression_icon = render_html_regression_icon(res);
                         mainwpVars.regressionScoreLimit = '' !== regression_icon ? true : false;
-						if (res[sid]) {
-							let _success_icon = `<i class="green check icon"></i>`;
+                        if (res[sid]) {
+                            let _success_icon = `<i class="green check icon"></i>`;
                             if (!done && pBulkMode)
-								updatesoverview_themes_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + _success_icon + '</span>' + regression_icon + ' ' + mainwp_links_visit_site_and_admin('', websiteId));
+                                updatesoverview_themes_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + _success_icon + '</span>' + regression_icon + ' ' + mainwp_links_visit_site_and_admin('', websiteId));
                             websiteHolder.attr('updated', 1);
-							websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + _success_icon + '</span>' + regression_icon + ' ' + mainwp_links_visit_site_and_admin('', websiteId));
+                            websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + _success_icon + '</span>' + regression_icon + ' ' + mainwp_links_visit_site_and_admin('', websiteId));
                         } else {
                             let _error = '';
                             let _icon = '';
@@ -1756,7 +1756,7 @@ let updatesoverview_upgrade_all_int = function (pSitesToUpdate, pSitesToUpgrade,
     mainwpVars.currentWebsite = 0;
     mainwpVars.websitesDone = 0;
     mainwpVars.errorCount = 0;
-    mainwpVars.regressionScoreLimit  = false;
+    mainwpVars.regressionScoreLimit = false;
     mainwpVars.websitesTotal = mainwpVars.websitesLeft = mainwpVars.websitesToUpdate.length;
 
     mainwpVars.bulkTaskRunning = true;
@@ -3268,7 +3268,7 @@ let updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck
                     else {
                         let res = response.result;
                         let res_error = response.result_error;
-						let regression_icon = render_html_regression_icon(res);
+                        let regression_icon = render_html_regression_icon(res);
                         mainwpVars.regressionScoreLimit = '' !== regression_icon ? true : false;
                         _icon_success = `<i class="green check icon"></i>`;
                         for (let item of newList) {
@@ -3378,9 +3378,9 @@ let updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteN
             mainwpVars.regressionScoreLimit = '' !== regression_icon ? true : false;
             _icon = `<i class="green check icon"></i> ${regression_icon}`;
             updatesoverview_plugins_upgrade_all_update_site_status(pId, _icon);
-			if (response?.result?.html_regression_max_scope !== undefined ){
-				return;
-			}
+            if (response?.result?.html_regression_max_scope !== undefined) {
+                return;
+            }
             setTimeout(function () {
                 mainwpPopup('#mainwp-sync-sites-modal').close();
                 window.location.href = location.href;
@@ -3527,24 +3527,24 @@ window.mainwp_table_check_columns_init = function () {
 
 // Sync score icon.
 const render_html_regression_sync_score_icon = function (score, change_score, website_id) {
-	score = Number(score) || 0;
-	change_score = Number(change_score) || 0;
-	let icon_html = "";
-	if (score <= change_score) {
-		icon_html = '<i class="check green icon"></i>'; // Minimal change.
-	} else {
-		icon_html = '<i class="fire alternate red icon"></i>'; // Major differences.
-	}
+    score = Number(score) || 0;
+    change_score = Number(change_score) || 0;
+    let icon_html = "";
+    if (score <= change_score) {
+        icon_html = '<i class="check green icon"></i>'; // Minimal change.
+    } else {
+        icon_html = '<i class="fire alternate red icon updates-regression-score-red-flag"></i>'; // Major differences.
+    }
 
-	if (icon_html !== "" && Number.isInteger(website_id)) {
-		let msg = 'Change score changed. Click to review changes.';
-		if (typeof mainwpTranslations) {
-			msg = mainwpTranslations?.Change_score_changed_Click_to_review_changes || msg;
-		}
-		icon_html = `<a href="admin.php?page=ManageSitesHTMLRegression&id=${website_id}" target="_blank" data-tooltip="${msg}" data-inverted="" data-position="left center">${icon_html}</a>`;
-	}
+    if (icon_html !== "" && Number.isInteger(website_id)) {
+        let msg = 'Change score changed. Click to review changes.';
+        if (typeof mainwpTranslations) {
+            msg = mainwpTranslations?.Change_score_changed_Click_to_review_changes || msg;
+        }
+        icon_html = `<a href="admin.php?page=ManageSitesHTMLRegression&id=${website_id}" target="_blank" data-tooltip="${msg}" data-inverted="" data-position="left center">${icon_html}</a>`;
+    }
 
-	return icon_html;
+    return icon_html;
 };
 
 // Render Icon

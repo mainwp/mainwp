@@ -3955,7 +3955,6 @@ if(typeof pTableSelector !== "undefined" ){
         let parentTB = jQuery(this).closest('table');
         if(jQuery(parentTB).attr('id') === 'mainwp-clients-widget-table' && isChromeAgent()){
             console.log('Is Chrome & Clients widget table.');
-            //return false;
         }
         jQuery(this).closest(dtScrollBdCls).css('position', '');
         jQuery(this).closest(dtScrollCls).css('position', 'relative');

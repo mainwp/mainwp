@@ -607,7 +607,7 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
                         } else {
                             let res = response.result;
                             let regression_icon = render_html_regression_icon(res);
-                            mainwpVars.regressionScoreLimit = '' !== regression_icon ? true : false;
+                            mainwpVars.regressionScoreLimit = '' !== regression_icon;
                             if (res[sid]) {
                                 let _success_icon = `<i class="green check icon"></i> ${regression_icon}`;
                                 if (!done && pBulkMode)
@@ -1015,7 +1015,7 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
                             let res_error = response.result_error;
                             let _success_icon = `<i class="green check icon"></i>`;
                             let regression_icon = render_html_regression_icon(res);
-                            mainwpVars.regressionScoreLimit = '' !== regression_icon ? true : false;
+                            mainwpVars.regressionScoreLimit = '' !== regression_icon;
                             if (res[sid]) {
                                 if (!done && pBulkMode)
                                     updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + _success_icon + '</span>' + regression_icon);
@@ -1434,7 +1434,7 @@ let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode) {
                         let res = response.result;
                         let res_error = response.result_error;
                         let regression_icon = render_html_regression_icon(res);
-                        mainwpVars.regressionScoreLimit = '' !== regression_icon ? true : false;
+                        mainwpVars.regressionScoreLimit = '' !== regression_icon;
                         if (res[sid]) {
                             let _success_icon = `<i class="green check icon"></i>`;
                             if (!done && pBulkMode)
@@ -3269,7 +3269,7 @@ let updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck
                         let res = response.result;
                         let res_error = response.result_error;
                         let regression_icon = render_html_regression_icon(res);
-                        mainwpVars.regressionScoreLimit = '' !== regression_icon ? true : false;
+                        mainwpVars.regressionScoreLimit = '' !== regression_icon;
                         _icon_success = `<i class="green check icon"></i>`;
                         for (let item of newList) {
                             let elem = document.getElementById('wp_upgraded_' + pWhat + '_' + pId + strGroup + '_' + item);
@@ -3342,7 +3342,7 @@ let updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteN
 
     updatesoverview_plugins_upgrade_all_update_site_status(pId, '<i class="notched circle loading icon"></i>');
 
-    jQuery.post(ajaxurl, data, function (response) {
+    jQuery.post(ajaxurl, data, function (response) { // NOSONAR - complex.
         let res_error = response.result_error;
         let bulk_errors = [];
         let _icon = '<i class="red times icon"></i>';
@@ -3375,7 +3375,7 @@ let updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteN
         mainwpPopup('#mainwp-sync-sites-modal').setProgressSite(1);
         if (!hasError) {
             let regression_icon = render_html_regression_icon(response.result);
-            mainwpVars.regressionScoreLimit = '' !== regression_icon ? true : false;
+            mainwpVars.regressionScoreLimit = '' !== regression_icon;
             _icon = `<i class="green check icon"></i> ${regression_icon}`;
             updatesoverview_plugins_upgrade_all_update_site_status(pId, _icon);
             if (response?.result?.html_regression_max_scope !== undefined) {

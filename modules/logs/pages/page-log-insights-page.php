@@ -822,7 +822,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
      *
      * Display table rows, optimize for shared hosting or big networks.
      */
-    public function ajax_events_overview_display_rows() {
+    public function ajax_events_overview_display_rows() { //phpcs:ignore -- NOSONAR -complex.
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_widget_events_overview_display_rows' );
         $this->load_events_list_table();
 

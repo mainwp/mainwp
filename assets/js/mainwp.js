@@ -3902,18 +3902,11 @@ window.mainwp_datatable_fix_reorder_selected_rows_status = function () {
   jQuery('.table.dataTable tbody').filter(':visible').children('tr.selected').find(':checkbox').prop('checked', true);
 };
 
-
-let isChromeAgent = function() {
-    return /Chrome/.test(navigator.userAgent);
-}
-
 // fix menu overflow with scroll tables.
 window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRight ) {
-
     if( typeof pTableSelector === "undefined" ){
         console.warn('mainwp_datatable_fix_menu_overflow: requires params - $pTableSelector');
     }
-
   let dtScrollBdCls = '.dt-scroll-body';
   let dtScrollCls = '.dt-scroll';
   let fix_overflow = jQuery('.mainwp-content-wrap').attr('menu-overflow');
@@ -3952,10 +3945,6 @@ if(typeof pTableSelector !== "undefined" ){
 
     // Fix the overflow prbolem for the actions menu element (right pointing menu).
     jQuery(tblSelect + '[fixed-menu-overflow="no"] tr td .ui.right.pointing.dropdown').on('click', function () {
-        let parentTB = jQuery(this).closest('table');
-        if(jQuery(parentTB).attr('id') === 'mainwp-clients-widget-table' && isChromeAgent()){
-            console.log('Is Chrome & Clients widget table.');
-        }
         jQuery(this).closest(dtScrollBdCls).css('position', '');
         jQuery(this).closest(dtScrollCls).css('position', 'relative');
         jQuery(this).css('position', 'static');
@@ -3985,11 +3974,6 @@ if(typeof pTableSelector !== "undefined" ){
 
     // Fix the overflow prbolem for the actions menu element (left pointing menu).
     jQuery(tblSelect + '[fixed-menu-overflow="no"] tr td .ui.left.pointing.dropdown').on('click', function () {
-        let parentTB = jQuery(this).closest('table');
-        if(jQuery(parentTB).attr('id') === 'mainwp-clients-widget-table' && isChromeAgent()){
-            console.log('Is Chrome & Clients widget table.');
-            return false;
-        }
         jQuery(this).closest(dtScrollBdCls).css('position', '');
         jQuery(this).closest(dtScrollCls).css('position', 'relative');
         jQuery(this).css('position', 'static');

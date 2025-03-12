@@ -43,3 +43,6 @@ Support requests in issues on this repository will be closed on sight.
 
 ## Contributing to MainWP
 If you have a patch or have stumbled upon an issue with the MainWP Plugin you can contribute this back to the code. Please read our [contributor guidelines](https://github.com/mainwp/mainwp/blob/master/.github/CONTRIBUTING.md) for more informationon how you can do this.
+
+## Sponsored By
+ <a href="https://www.browserstack.com/"><img src="https://mainwp.com/wp-content/uploads/2025/03/bstack-logo-global.png" alt="BrowserStack"></a> 

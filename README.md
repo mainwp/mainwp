@@ -11,7 +11,7 @@
 
 Welcome to the [MainWP](https://mainwp.com) repository on GitHub. Here you can browse the source, look at open issues and keep track of development.
 
-# Not a Developer
+# Not a Developer 
 
 If you are not a developer, please use the [MainWP Community](https://meta.mainwp.com) for questions or issues.
 

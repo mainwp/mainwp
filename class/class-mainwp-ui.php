@@ -2132,10 +2132,10 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized.Recommended
         $page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
 
-        $tour_id = '';
+        $tour_id  = '';
         $video_id = '';
         if ( 'mainwp_tab' === $page ) {
-            $tour_id = '13112';
+            $tour_id  = '13112';
             $video_id = 'VZeUhuihddw';
         } elseif ( 'managesites' === $page ) {
             if ( isset( $_GET['do'] ) && 'new' === $_GET['do'] ) {
@@ -2261,7 +2261,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         } elseif ( 'Extensions-Mainwp-Jetpack-Scan-Extension' === $page ) {
             $tour_id = '31694';
         } elseif ( 'Extensions-Termageddon-For-Mainwp' === $page ) {
-            $tour_id = '32104';
+            $tour_id  = '32104';
             $video_id = 'HAHySipH22I';
         } elseif ( 'Extensions-Advanced-Uptime-Monitor-Extension' === $page ) {
             $tour_id  = '32149';
@@ -2272,7 +2272,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         } elseif ( 'Extensions-Mainwp-Updraftplus-Extension' === $page ) {
             $tour_id = '32151';
         } elseif ( 'Extensions-Mainwp-Sucuri-Extension' === $page ) {
-            $tour_id = '32152';
+            $tour_id  = '32152';
             $video_id = 'bykz9YabuA8';
         } elseif ( 'Extensions-Mainwp-Clean-And-Lock-Extension' === $page ) {
             $tour_id  = '32153';
@@ -2284,7 +2284,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         } elseif ( 'Extensions-Mainwp-Backwpup-Extension' === $page ) {
             $tour_id = '32923';
         } elseif ( 'Extensions-Mainwp-Ssl-Monitor-Extension' === $page ) {
-            $tour_id = '33164';
+            $tour_id  = '33164';
             $video_id = 'HYb9xZ7Lxe0';
         } elseif ( 'Extensions-Mainwp-Cache-Control-Extension' === $page ) {
             $tour_id = '33167';

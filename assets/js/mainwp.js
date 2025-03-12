@@ -1157,7 +1157,7 @@ let mainwp_delete_nonmainwp_data_start = function () {
 
 let mainwp_delete_nonmainwp_data_start_next = function () {
     while ((checkedBox = jQuery('#mainwp-module-log-records-body-table .check-column INPUT:checkbox:checked:first')) && (checkedBox.length > 0) && (bulkManageClientsCurrentThreads < bulkManageClientsMaxThreads)) { // NOSONAR -- modified out side the function.
-        mainwp_delete_nonmainwp_data_next(checkedBox);
+        mainwp_delete_nonmainwp_data_next();
     }
 }
 

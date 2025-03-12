@@ -158,6 +158,7 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 * Fixed: Typo in the SSL Protocol check in the Site Hardening feature.
 * Fixed: Missing "Save Selection" button in the Manage Tags screen.
 * Fixed: Incorrect icon representing that a Child Site is not indexable.
+* Fixed: Typo in the Site Health feature label ([PR735](https://github.com/mainwp/mainwp/pull/735) - thanks [Isaac Russell](https://github.com/sisaacrussell)
 * Added: Action to go back to the start screen in the Quick Help modal.
 * Added: MainWP 101 YouTube video embeds to the Quick Help.
 * Updated: Uptime ratio calculation and Uptime Incident counting logic for better accuracy.

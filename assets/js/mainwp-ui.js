@@ -476,7 +476,7 @@ jQuery(function () {
     mainwp_sidebar_accordion_init();
 });
 
-window.mainwp_sidebar_accordion_init = function(){
+window.mainwp_sidebar_accordion_init = function () {
     if (jQuery('.mainwp-sidebar-accordion').length > 0) {
         console.log('sidebar accordion init');
         jQuery('.mainwp-sidebar-accordion').accordion({
@@ -532,10 +532,10 @@ window.mainwp_ui_state_load = function (ident) {
     return '1'; // show if Storage undefined.
 };
 
-window.mainwp_ui_state_init = function (ident, callback ) {
+window.mainwp_ui_state_init = function (ident, callback) {
     if (typeof (Storage) !== 'undefined') {
         let state = mainwp_ui_state_load(ident);
-        if(typeof callback === 'function'){
+        if (typeof callback === 'function') {
             callback(state);
         }
     }
@@ -575,9 +575,9 @@ jQuery(document).on('keyup', '#mainwp-screenshots-sites-filter', function () {
     mainwp_sites_filter_select(this);
 });
 
-jQuery(function(){
-    if(jQuery(document).find('#mainwp-select-sites-header .ui.menu .item').length){
-        jQuery(document).find('#mainwp-select-sites-header .ui.menu .item').tab( {'onVisible': function() { mainwp_sites_selection_onvisible_callback( this ); } } );
+jQuery(function () {
+    if (jQuery(document).find('#mainwp-select-sites-header .ui.menu .item').length) {
+        jQuery(document).find('#mainwp-select-sites-header .ui.menu .item').tab({ 'onVisible': function () { mainwp_sites_selection_onvisible_callback(this); } });
     }
 });
 
@@ -779,16 +779,56 @@ let mainwp_guidedtours_onchange = function (me) {
     });
 }
 
-let mainwp_help_modal_content_onclick = function (hide,isToolsPage) {
+let mainwp_help_modal_content_onclick = function (hide, isToolsPage) {
+
+    // to fix confict ids when current page is tool page.
+    let enab_tour = jQuery('#mainwp-guided-tours-check').checkbox('is checked') ? 1 : 0;
+    let enab_video = jQuery('#mainwp-guided-video-check').checkbox('is checked') ? 1 : 0;
+    let enab_chatbase = jQuery('#mainwp-guided-chatbase-check').checkbox('is checked') ? 1 : 0;
 
     let data = mainwp_secure_data({
         action: 'mainwp_help_modal_content_update',
-        hide_noti: hide,
+        enable_tour: enab_tour,
+        enable_video: enab_video,
+        enable_chatbase: enab_chatbase,
     });
+
     jQuery.post(ajaxurl, data, function () {
-        if(typeof isToolsPage !== "undefined" && isToolsPage){
+        if (typeof isToolsPage !== "undefined" && isToolsPage) {
             location.href = 'admin.php?page=MainWPTools';
+        } else {
+            jQuery('#revoke-third-party-perms').fadeIn('100');
+            jQuery('#mainwp-help-modal-content').fadeIn('100');
+            jQuery('#mainwp-help-modal-consent-content').fadeOut('100');
+
+            if (enab_tour) {
+                jQuery('#mainwp-start-tour-card').fadeIn('100');
+            }
+            if (enab_chatbase) {
+                jQuery('#mainwp-start-chat-card').fadeIn('100');
+            }
+            if (enab_video) {
+                jQuery('#mainwp-start-video-card').fadeIn('100');
+            }
         }
     });
 }
 
+let mainwp_help_modal_start_content_onclick = function (tour_id, video_id, show_chat) {
+    jQuery('#mainwp-chatbase-chat-screen').fadeOut('100');
+    jQuery('#mainwp-chatbase-video-screen').fadeOut('100');
+    jQuery('#mainwp-help-modal-options').fadeOut('50');
+
+    if (tour_id) {
+        window.USETIFUL.tour.start(tour_id);
+    }
+
+    if (video_id) {
+        jQuery('#mainwp-chatbase-video-screen').fadeIn('100').find('iframe').attr('src', 'https://www.youtube.com/embed/' + video_id);
+    }
+
+    if (show_chat) {
+        jQuery('#mainwp-chatbase-chat-screen').fadeIn('100').find('iframe').attr('src', 'https://supportassistant.mainwp.com/chatbot-iframe/Tv5dqV-xiQxwgPeMQFCZ4');
+        jQuery('#mainwp-start-tour-button').fadeIn('100');
+    }
+}

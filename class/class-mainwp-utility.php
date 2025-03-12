@@ -1813,6 +1813,10 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $language = locale_get_display_name( $language );
         }
 
+        if ( 'et' === $lowercase_last_two_chars ) {
+            $lowercase_last_two_chars = 'ee';
+        }
+
         echo '<span data-tooltip="' . esc_html__( 'Site Language: ', 'mainwp' ) . esc_attr( $language ) . '" data-position="left center" data-inverted=""><i class="small ' . esc_attr( $lowercase_last_two_chars ) . ' flag"></i></span>';
     }
 

@@ -147,7 +147,7 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             <?php esc_html_e( 'SSL Protocol', 'mainwp' ); ?>
                             <div class="sub header">
                                 <div id="sslprotocol-status-nok" style="display: none;"><?php esc_html_e( 'SSL Protocol is not in place.', 'mainwp' ); ?></div>
-                                <div id="sslprotocol-status-ok" style="display: none;"><?php esc_html_e( 'SSL Protocol is on place.', 'mainwp' ); ?></div>
+                                <div id="sslprotocol-status-ok" style="display: none;"><?php esc_html_e( 'SSL Protocol is in place.', 'mainwp' ); ?></div>
                             </div>
                         </div>
                     </td>

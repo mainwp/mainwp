@@ -408,15 +408,19 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         $batch_updates_running = MainWP_Cron_Jobs_Batch::instance()->check_to_run_batch_updates();
         if ( $batch_updates_running ) {
+            MainWP_Logger::instance()->log_events( 'debug-updates-crons', 'Start run - batch updates' );
             MainWP_Cron_Jobs_Batch::instance()->handle_cron_batch_updates();
             return;
         } else {
             $auto_updates_running = MainWP_Cron_Jobs_Auto_Updates::instance()->check_to_run_auto_updates();
             if ( $auto_updates_running ) {
+                MainWP_Logger::instance()->log_events( 'debug-updates-crons', 'Start run - auto updates' );
                 MainWP_Cron_Jobs_Auto_Updates::instance()->handle_cron_auto_updates();
                 return;
             }
         }
+
+        MainWP_Logger::instance()->log_events( 'debug-updates-crons', 'Start run - updates check' );
 
         $updatecheck_running = ( 'Y' === get_option( 'mainwp_updatescheck_is_running' ) ? true : false );
 
@@ -1752,7 +1756,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         }
 
         if ( $updated_list ) {
-            MainWP_Logger::instance()->log_custom_events( 'regular-schedule', 'Update scheduled processes.' );
+            MainWP_Logger::instance()->log_events( 'regular-schedule', 'Update scheduled processes.' );
             MainWP_Utility::array_sort( $list_processes, 'priority' );
             MainWP_Utility::update_option( 'mainwp_regular_sequence_process_saved', wp_json_encode( $valid_list ) );
         }
@@ -1769,7 +1773,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         $process = isset( $managed_processes[ $current_pid ] ) ? $managed_processes[ $current_pid ] : array();
 
-        MainWP_Logger::instance()->log_custom_events( 'regular-schedule', '[current_pid=' . $current_pid . ' :: [total=' . $count . '] :: [process=' . ( is_array($process) ? print_r($process, true ): '' ) . ']' ); //phpcs:ignore -- ok.
+        MainWP_Logger::instance()->log_events( 'regular-schedule', '[current_pid=' . $current_pid . ' :: [total=' . $count . '] :: [process=' . ( is_array($process) ? print_r($process, true ): '' ) . ']' ); //phpcs:ignore -- ok.
 
         $performed = false;
         while ( $current_pid <= $count ) {
@@ -1777,7 +1781,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             if ( ! empty( $callable ) && is_callable( $callable ) ) {
                 call_user_func( $callable );
                 $performed = true;
-                MainWP_Logger::instance()->log_custom_events( 'regular-schedule', 'Run process: [process=' . ( is_array($process) ? print_r($process, true ): '' ) . ']' ); //phpcs:ignore -- ok.
+                MainWP_Logger::instance()->log_events( 'regular-schedule', 'Run process: [process=' . ( is_array($process) ? print_r($process, true ): '' ) . ']' ); //phpcs:ignore -- ok.
             }
             if ( $performed ) {
                 break;

@@ -172,6 +172,8 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'mainwp_module_log_enabled'                  => 1,
             'mainwp_selected_theme'                      => 'default',
             'mainwp_enable_guided_tours'                 => 0,
+            'mainwp_enable_guided_video'                 => 0,
+            'mainwp_enable_guided_chatbase'              => 0,
             'mainwp_site_backup_before_upgrade'          => 2,
             'mainwp_site_suspended_site'                 => 0,
             'mainwp_site_automatic_update'               => 0,

@@ -1148,68 +1148,18 @@ let dashboard_update_next_int = function (websiteId, data, errors, action) {
 
 
 /**
- * Delete nonmainwp actions.
+ * Delete site changes actions.
  */
-let mainwp_delete_nonmainwp_data_start = function (syncSiteIds) {
-  let allWebsiteIds = jQuery('.dashboard_wp_id[error-status=0]').map(function (indx, el) {
-    return jQuery(el).val();
-  });
-  let selectedIds = [], excludeIds = [];
-  if (syncSiteIds instanceof Array) {
-    jQuery.grep(allWebsiteIds, function (el) {
-      if (jQuery.inArray(el, syncSiteIds) !== -1) {
-        selectedIds.push(el);
-      } else {
-        excludeIds.push(el);
-      }
-    });
-    for (let id of excludeIds) {
-      dashboard_update_site_hide(id);
+
+let mainwp_delete_nonmainwp_data_start = function () {
+    mainwp_delete_nonmainwp_data_start_next();
+}
+
+let mainwp_delete_nonmainwp_data_start_next = function () {
+    while ((checkedBox = jQuery('#mainwp-module-log-records-body-table .check-column INPUT:checkbox:checked:first')) && (checkedBox.length > 0) && (bulkManageClientsCurrentThreads < bulkManageClientsMaxThreads)) { // NOSONAR -- modified out side the function.
+        mainwp_delete_nonmainwp_data_next();
     }
-    allWebsiteIds = selectedIds;
-  }
-
-  for (let id of allWebsiteIds) {
-    dashboard_update_site_status(id, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Pending', 'mainwp') + '"><i class="clock outline icon"></i></span>');
-  }
-
-  let nrOfWebsites = allWebsiteIds.length;
-
-  mainwpPopup('#mainwp-sync-sites-modal').init({
-    title: __('Delete Non-MainWP Changes'),
-    progressMax: nrOfWebsites,
-    statusText: 'deleted',
-    callback: function () {
-      mainwpVars.bulkTaskRunning = false;
-      history.pushState("", document.title, window.location.pathname + window.location.search); // to fix issue for url with hash
-      window.location.href = location.href;
-    }
-  });
-  mainwp_delete_nonmainwp_data_start_next(allWebsiteIds);
-};
-
-
-let mainwp_delete_nonmainwp_data_start_next = function (websiteIds) {
-  mainwpVars.websitesToUpdate = websiteIds;
-  mainwpVars.currentWebsite = 0;
-  mainwpVars.websitesDone = 0;
-  mainwpVars.websitesTotal = mainwpVars.websitesLeft = mainwpVars.websitesToUpdate.length;
-
-  mainwpVars.bulkTaskRunning = true;
-
-  if (mainwpVars.websitesTotal == 0) {
-    mainwp_delete_nonmainwp_data_done();
-  } else {
-    mainwp_delete_nonmainwp_data_loop_next();
-  }
-};
-
-
-let mainwp_delete_nonmainwp_data_loop_next = function () {
-  while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxThreads) && (mainwpVars.websitesLeft > 0)) {
-    mainwp_delete_nonmainwp_data_next();
-  }
-};
+}
 
 let mainwp_delete_nonmainwp_data_next = function () {
   mainwpVars.currentThreads++;
@@ -3634,8 +3584,8 @@ jQuery(document).on('click', '.mainwp-install-check-dismiss', function () {
   return false;
 });
 
-jQuery(document).on('click', '#mainwp-delete-all-nonmainwp-actions-button', function () {
-  mainwp_confirm('Are you sure you want to delete all Non-MainWP changes? This action can not be undone!', function () {
+jQuery(document).on('click', '#mainwp-dismiss-sites-changes-actions-button', function () {
+  mainwp_confirm('You are about to dismiss the selected changes?', function () {
     mainwp_delete_nonmainwp_data_start();
   });
   return false;
@@ -3757,13 +3707,8 @@ jQuery(function ($) {
   });
 })
 
-
 let mainwp_insights_row_actions_dismiss = function (obj) {
-
-  let row = jQuery(obj).closest('tr');
-  let confirmMsg = __("You are about to dismiss the selected changes?");
-
-  let _callback = () => {
+    let row = jQuery(obj).closest('tr');
     row.html('<td></td><td colspan="999"><i class="notched circle loading icon"></i> Please wait...</td>');
     let data = mainwp_secure_data({
       action: 'mainwp_insight_events_dismiss_actions',
@@ -3774,19 +3719,17 @@ let mainwp_insights_row_actions_dismiss = function (obj) {
         if (response['error']) {
           row.html('<td></td><td colspan="999"><i class="times red icon"></i> ' + response['error'] + '</td>');
         } else if (response['success'] == 'yes') {
-          row.html('<td></td><td colspan="999"><i class="green check icon"></i> Insight Change has been dismissed.</td>');
+          row.html('<td></td><td colspan="999"><i class="green check icon"></i> The change has been dismissed.</td>');
           setTimeout(function () {
             jQuery(row).fadeOut("slow");
           }, 2000);
         } else {
-          row.html('<td></td><td colspan="999"><i class="times red icon"></i> Insight Change could not be dismissed.</td>');
+          row.html('<td></td><td colspan="999"><i class="times red icon"></i> The change could not be dismissed.</td>');
         }
       } else {
-        row.html('<td></td><td colspan="999"><i class="times red icon"></i> Insight Change could not be dismissed.</td>');
+        row.html('<td></td><td colspan="999"><i class="times red icon"></i> The change could not be dismissed.</td>');
       }
     }, 'json');
-  };
-  mainwp_confirm(confirmMsg, _callback);
   return false;
 }
 
@@ -3902,18 +3845,11 @@ window.mainwp_datatable_fix_reorder_selected_rows_status = function () {
   jQuery('.table.dataTable tbody').filter(':visible').children('tr.selected').find(':checkbox').prop('checked', true);
 };
 
-
-let isChromeAgent = function() {
-    return /Chrome/.test(navigator.userAgent);
-}
-
 // fix menu overflow with scroll tables.
 window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRight ) {
-
     if( typeof pTableSelector === "undefined" ){
         console.warn('mainwp_datatable_fix_menu_overflow: requires params - $pTableSelector');
     }
-
   let dtScrollBdCls = '.dt-scroll-body';
   let dtScrollCls = '.dt-scroll';
   let fix_overflow = jQuery('.mainwp-content-wrap').attr('menu-overflow');
@@ -3952,10 +3888,6 @@ if(typeof pTableSelector !== "undefined" ){
 
     // Fix the overflow prbolem for the actions menu element (right pointing menu).
     jQuery(tblSelect + '[fixed-menu-overflow="no"] tr td .ui.right.pointing.dropdown').on('click', function () {
-        let parentTB = jQuery(this).closest('table');
-        if(jQuery(parentTB).attr('id') === 'mainwp-clients-widget-table' && isChromeAgent()){
-            console.log('Is Chrome & Clients widget table.');
-        }
         jQuery(this).closest(dtScrollBdCls).css('position', '');
         jQuery(this).closest(dtScrollCls).css('position', 'relative');
         jQuery(this).css('position', 'static');
@@ -3985,11 +3917,6 @@ if(typeof pTableSelector !== "undefined" ){
 
     // Fix the overflow prbolem for the actions menu element (left pointing menu).
     jQuery(tblSelect + '[fixed-menu-overflow="no"] tr td .ui.left.pointing.dropdown').on('click', function () {
-        let parentTB = jQuery(this).closest('table');
-        if(jQuery(parentTB).attr('id') === 'mainwp-clients-widget-table' && isChromeAgent()){
-            console.log('Is Chrome & Clients widget table.');
-            return false;
-        }
         jQuery(this).closest(dtScrollBdCls).css('position', '');
         jQuery(this).closest(dtScrollCls).css('position', 'relative');
         jQuery(this).css('position', 'static');
@@ -4691,7 +4618,7 @@ jQuery(function ($) {
         loadSegment: function (loadCallback) {
           jQuery('#mainwp-common-edit-widgets-layout-edit-fields').hide();
           jQuery('#mainwp-common-edit-widgets-layout-save-button').hide();
-          jQuery('#mainwp-common-edit-widgets-layout-modal > div.header').html(__('Load a Layout'));
+          jQuery('#mainwp-common-edit-widgets-layout-modal > div.header').html(__('Load Layout'));
           jQuery('#mainwp-common-layout-widgets-select-fields').show();
           jQuery('#mainwp-common-edit-widgets-select-layout-button').show();
           jQuery('#mainwp-common-edit-widgets-layout-delete-button').show();

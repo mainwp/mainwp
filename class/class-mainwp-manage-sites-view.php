@@ -693,7 +693,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                 <div class="text"><?php echo esc_html( $active_text ); ?></div>
                                 <i class="dropdown icon"></i>
                                 <div class="menu">
-                                    <div class="<?php echo 'WordPress' === $active_tab ? 'active' : ''; ?> item" data-tab="wordpress" data-value="wordpress"><?php esc_html_e( 'WordPress Updates', 'mainwp' ); ?></div>
+                                    <div class="<?php echo 'wordpress' === $active_tab ? 'active' : ''; ?> item" data-tab="wordpress" data-value="wordpress"><?php esc_html_e( 'WordPress Updates', 'mainwp' ); ?></div>
                                     <div class="<?php echo 'plugins' === $active_tab ? 'active' : ''; ?> item" data-tab="plugins" data-value="plugins"><?php esc_html_e( 'Plugin Updates', 'mainwp' ); ?></div>
                                     <div class="<?php echo 'themes' === $active_tab ? 'active' : ''; ?> item" data-tab="themes" data-value="themes"><?php esc_html_e( 'Theme Updates', 'mainwp' ); ?></div>
                                     <?php if ( $show_language_updates ) { ?>
@@ -706,7 +706,16 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         </div>
                     </div>
                     <div class="middle aligned column">
-                        <?php echo apply_filters( 'mainwp_widgetupdates_actions_top', '' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                    <?php
+                    /**
+                     * Action: mainwp_widget_updates_actions_top
+                     *
+                     * Updates actions top content.
+                     *
+                     * @since 5.4.1
+                     */
+                    do_action( 'mainwp_widget_updates_actions_top', $active_tab );
+                    ?>
                     </div>
                     <div class="middle aligned right aligned column">
                         <?php if ( 'plugins' === $active_tab ) : ?>

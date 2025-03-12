@@ -29,7 +29,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '5.4.0.1'; // NOSONAR.
+    public static $version = '5.4.0.2'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -1300,7 +1300,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 } elseif ( 'UpdatesManage' === $_GET['page'] || 'mainwp_tab' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                     $staging_enabled = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php' ) ? true : false;
                     if ( $staging_enabled ) {
-                        $staging_view = MainWP_System_Utility::get_staging_options_sites_view_for_current_users();
+                        $staging_view = MainWP_System_Utility::get_select_staging_view_sites();
                         if ( 'staging' === $staging_view ) {
                             $is_staging = 'yes';
                         }

@@ -120,7 +120,6 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
         if ( 'manage-events' !== $this->table_id_prefix ) {
             unset( $columns['source'] );
-            unset( $columns['col_action'] );
         }
 
         return $columns;
@@ -163,6 +162,10 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'orderable' => false,
         );
         $defines[] = array(
+            'targets'   => 'manage-cb-column',
+            'className' => 'check-column',
+        );
+        $defines[] = array(
             'targets'   => 'manage-created-column',
             'className' => 'mainwp-created-cell',
         );
@@ -189,13 +192,19 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * @param string $column_name  Column name.
      * @return string $out Output.
      */
-    public function column_default( $item, $column_name ) {
+    public function column_default( $item, $column_name ) { //phpcs:ignore -- NOSONAR -complex.
         $out = '';
 
         $record = new Log_Record( $item );
 
         $escaped = false;
         switch ( $column_name ) {
+            case 'cb':
+                $out     = '<div class="ui checkbox">
+                <input type="checkbox" value="' . (int) $record->log_id . '" name="" aria-label="' . esc_attr__( 'Select the change.', 'mainwp' ) . '"/>
+                </div>';
+                $escaped = true;
+                break;
             case 'event':
                 $act_label = $this->get_action_title( $record->action, 'action', true );
                 $out       = $act_label;
@@ -479,8 +488,8 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'groups_ids'    => $array_groups_ids,
             'client_ids'    => $array_clients_ids,
             'user_ids'      => $array_users_ids,
-            'timestart'     => strtotime( $filter_dtsstart . ' 00:00:00' ),
-            'timestop'      => strtotime( $filter_dtsstop . ' 23:59:59' ),
+            'timestart'     => ! empty( $filter_dtsstart ) ? strtotime( $filter_dtsstart . ' 00:00:00' ) : '',
+            'timestop'      => ! empty( $filter_dtsstop ) ? strtotime( $filter_dtsstop . ' 23:59:59' ) : '',
             'dismiss'       => 0,
             'view'          => 'events_list',
             'wpid'          => ! empty( $insights_filters['wpid'] ) ? $insights_filters['wpid'] : 0, // int or array of site ids.
@@ -547,9 +556,13 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         if ( ! empty( $this->table_id_prefix ) ) {
             $events_tbl_id .= '-' . esc_attr( $this->table_id_prefix );
         }
-
+        if ( 'manage-events' === $this->table_id_prefix ) {
+            ?>
+        <div class="ui segment">
+            <?php
+        }
         ?>
-        <table id="<?php echo esc_attr( $events_tbl_id ); ?>" style="width:100%" class="ui single line selectable unstackable table mainwp-with-preview-table">
+        <table id="<?php echo esc_attr( $events_tbl_id ); ?>" style="width:100%" class="ui single line <?php echo 'manage-events2' === $this->table_id_prefix ? 'selectable' : ''; ?> unstackable table mainwp-with-preview-table">
             <thead>
                 <tr><?php $this->print_column_headers( true ); ?></tr>
             </thead>
@@ -558,6 +571,13 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             </tfoot>
         </table>
         <?php
+
+        if ( 'manage-events' === $this->table_id_prefix ) {
+            ?>
+            </div>
+            <?php
+        }
+
         $count = $this->get_total_found_rows();
         if ( empty( $count ) ) {
             ?>
@@ -588,7 +608,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         );
 
         // Fix for widget state save overview table.
-        if ( 'mainwp-module-log-records-table-widget-overview' === $events_tbl_id ) {
+        if ( 'widget-overview' === $this->table_id_prefix ) {
             $table_features['stateSave'] = 'false';
         }
 
@@ -649,10 +669,11 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                         data.sites =  $( '#mainwp-module-log-filter-sites').length ? $( '#mainwp-module-log-filter-sites').dropdown('get value') : '';
                                         data.events =  $( '#mainwp-module-log-filter-events').length ? $( '#mainwp-module-log-filter-events').dropdown('get value') : '';
                                     } else {
-                                        // set recent number for none-manage-events table.
-                                        data.recent_number =  $( '#mainwp-widget-filter-events-limit').length ? $( '#mainwp-widget-filter-events-limit').val() : 100;
                                         if( 'mainwp_module_log_widget_events_overview_display_rows' === ajax_action ){
                                             data.source = widgetViewSource;
+                                        } else if( 'mainwp_module_log_widget_insights_display_rows' === ajax_action ) {
+                                            // set recent number for none-manage-events table.
+                                            data.recent_number =  $( '#mainwp-widget-filter-events-limit').length ? $( '#mainwp-widget-filter-events-limit').val() : 100;
                                         }
                                     }
                                     return $.extend( {}, d, data );
@@ -696,6 +717,13 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                 if ( jQuery('#mainwp-module-log-records-body-table td.dt-empty').length > 0 && jQuery('#sites-table-count-empty').length ){
                                     jQuery('#mainwp-module-log-records-body-table td.dt-empty').html(jQuery('#sites-table-count-empty').html());
                                 }
+                                if( 'manage-events2' === '<?php echo esc_js( $this->table_id_prefix ); ?>' ){
+                                    setTimeout(() => {
+                                        jQuery(manage_tbl_id + ' .ui.checkbox').checkbox();
+                                        mainwp_datatable_fix_menu_overflow(manage_tbl_id);
+                                        mainwp_table_check_columns_init(manage_tbl_id);
+                                    }, 1000);
+                                }
                             },
                             "initComplete": function( settings, json ) {
                             },
@@ -706,7 +734,32 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                 jQuery( row ).find('.mainwp-date-cell').attr('data-sort', data.created_sort );
                                 jQuery( row ).find('.mainwp-state-cell').attr('data-sort', data.state_sort );
                             }
-                        });
+                            <?php
+                            if ( 'manage-events2' === $this->table_id_prefix ) {
+                                echo ",select: {
+                                    items: 'row',
+                                    style: 'multi+shift',
+                                    selector: 'tr>td.check-column'
+                                }"; // phpcs:ignore -- NOSONAR -- ok.
+                            }
+                            ?>
+                        })
+
+                        if( 'manage-events2' === '<?php echo esc_js( $this->table_id_prefix ); ?>' ){
+                            $module_log_table.on('select', function (e, dt, type, indexes) {
+                                if( 'row' == type ){
+                                    dt.rows(indexes)
+                                    .nodes()
+                                    .to$().find('td.check-column .ui.checkbox' ).checkbox('set checked');
+                                }
+                            }).on('deselect', function (e, dt, type, indexes) {
+                                if( 'row' == type ){
+                                    dt.rows(indexes)
+                                    .nodes()
+                                    .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
+                                }
+                            });
+                        }
                     } catch(err) {
                         // to fix js error.
                         console.log(err);
@@ -807,12 +860,19 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
     /**
      * Echo the column headers.
+     *
+     * @param  bool $top Top header.
+     * @return void
      */
-    public function print_column_headers() {
+    public function print_column_headers( $top ) {
         list( $columns, $sortable ) = $this->get_column_info();
 
         $def_columns                 = $this->get_default_columns();
         $def_columns['site_actions'] = '';
+
+        if ( ! empty( $columns['cb'] ) ) {
+            $columns['cb'] = '<div class="ui checkbox"><input id="' . ( $top ? 'cb-select-all-top' : 'cb-select-all-bottom' ) . '" type="checkbox" aria-label="Select all clients." /></div>';
+        }
 
         foreach ( $columns as $column_event_key => $column_display_name ) {
 
@@ -825,6 +885,11 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
             if ( ! isset( $sortable[ $column_event_key ] ) ) {
                 $class[] = 'no-sort';
+            }
+
+            if ( 'cb' === $column_event_key ) {
+                $class[] = 'check-column';
+                $class[] = 'collapsing';
             }
 
             $tag = 'th';

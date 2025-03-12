@@ -252,7 +252,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 <td>
                     <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin . ', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
                 </td>
-                <td><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_html( $website->url ); ?></a></td>
+                <td><a href="<?php echo esc_url( $website->url ); ?>" class="ui grey text" target="_blank"><?php echo esc_html( $website->url ); ?></a></td>
                 <td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
                 <td class="not-selectable">
                     <span class="mainwp-preview-item" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'Click to see the site homepage screenshot . ', 'mainwp' ); ?>" preview-site-url="<?php echo esc_url( $website->url ); ?>" ><i class="camera icon"></i></span>
@@ -348,7 +348,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                         'colReorder' : true,
                         'stateSave':  true,
                         'paging': false,
-                        'info': true,
+                        'info': false,
                         'order': [ [ 1, "asc" ] ],
                         'scrollX' : false,
                         'columnDefs': [ {
@@ -498,11 +498,11 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             <div class="item">
                 <div class="ui two columns stackable grid">
                     <div class="left aligned column">
-                        <a href="javascript:void(0);" class="ui tiny green button" id="mainwp-new-sites-group-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Click here to create a new tag.', 'mainwp' ); ?>"><?php esc_html_e( 'New Tag', 'mainwp' ); ?></a>
+                        <a href="javascript:void(0);" class="ui mini green button" id="mainwp-new-sites-group-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Click here to create a new tag.', 'mainwp' ); ?>"><?php esc_html_e( 'New Tag', 'mainwp' ); ?></a>
                     </div>
                     <div class="right aligned column">
-                        <a href="javascript:void(0);" class="ui tiny icon green basic button disabled" id="mainwp-rename-group-button" data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Edit selected tag.', 'mainwp' ); ?>"><i class="edit icon"></i></a>
-                        <a href="javascript:void(0);" class="ui tiny icon button disabled" id="mainwp-delete-group-button" data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Delete selected tag.', 'mainwp' ); ?>"><i class="trash icon"></i></a>
+                        <a href="javascript:void(0);" class="ui mini icon green basic button disabled" id="mainwp-rename-group-button" data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Edit selected tag.', 'mainwp' ); ?>"><i class="pen icon"></i></a>
+                        <a href="javascript:void(0);" class="ui mini icon basic button disabled" id="mainwp-delete-group-button" data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Delete selected tag.', 'mainwp' ); ?>"><i class="trash icon"></i></a>
                     </div>
                 </div>
             </div>
@@ -517,7 +517,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      */
     public static function render_groups_sites_table_element() {
         ?>
-        <table class="ui very compact table mainwp-with-preview-table" id="mainwp-manage-groups-sites-table">
+        <table class="ui compact table mainwp-with-preview-table" id="mainwp-manage-groups-sites-table">
             <thead>
                 <tr>
                     <th scope="col" class="no-sort collapsing check-column"><div class="ui checkbox" data-tooltip="<?php esc_attr_e( 'Click to select all sites.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><input type="checkbox" id="cb-select-all-top" name="example"></div></th>
@@ -532,14 +532,10 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             <tbody>
             <?php static::get_website_list_content(); ?>
             </tbody>
-            <tfoot>
-                <tr>
-                    <th scope="col"  colspan="7">
-                        <a href="#" class="ui tiny green button" id="mainwp-save-sites-groups-selection-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Save the selected tag sites selection.', 'mainwp' ); ?>"><?php esc_html_e( 'Save Selection', 'mainwp' ); ?></a>
-                    </th>
-                </tr>
-            </tfoot>
         </table>
+        <div class="ui hidden fitted divider"></div>
+        <a href="#" class="ui green button" id="mainwp-save-sites-groups-selection-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Save the selected tag sites selection.', 'mainwp' ); ?>"><?php esc_html_e( 'Save Selection', 'mainwp' ); ?></a>
+        <div class="ui hidden divider"></div>
         <div class="ui inverted dimmer">
             <div class="ui loader"></div>
         </div>

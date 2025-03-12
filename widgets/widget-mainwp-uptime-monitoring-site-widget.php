@@ -408,12 +408,23 @@ class MainWP_Uptime_Monitoring_Site_Widget {
                                 curr_code = ' - ' + curr_code;
                             }
 
+                            let inc_num = resp_stats?.incidents_count && ! isNaN( resp_stats.incidents_count ) ? parseFloat(resp_stats.incidents_count) : 0;
+
                             jQuery('#mainwp-widget-uptime-current-status').html( curr_status );
                             jQuery('#mainwp-widget-uptime-http-code').html( curr_code );
                             jQuery('#mainwp-widget-uptime-incidents-count').html( resp_stats?.incidents_count ?? 'N/A');
-                            jQuery('#mainwp-widget-uptime-ratios-number').html( resp_stats?.ratios_number && '' !== resp_stats?.ratios_number ? Number(resp_stats.ratios_number * 100).toFixed(2) + '%'  : 'N/A');
 
+                            if(resp_stats?.ratios_number && '' !== resp_stats?.ratios_number){
+                                let rat_num = Number(resp_stats.ratios_number * 100).toFixed(2);
+                                if(rat_num >= 100 && inc_num > 0){
+                                    rat_num = '~100';
+                                }
+                                jQuery('#mainwp-widget-uptime-ratios-number').html( rat_num + '%');
+                            } else {
+                                jQuery('#mainwp-widget-uptime-ratios-number').html( 'N/A');
+                            }
 
+                            // jQuery('#mainwp-widget-uptime-ratios-number').html( resp_stats?.ratios_number && '' !== resp_stats?.ratios_number ? Number(resp_stats.ratios_number * 100).toFixed(2) + '%'  : 'N/A');
                             jQuery('#mainwp-widget-uptime-resp-time-avg').html( resp_stats?.avg_resp_time ? resp_stats.avg_resp_time + '<span class="ui tiny text">(seconds)</span>' : 'N/A');
                             jQuery('#mainwp-widget-uptime-resp-time-min').html( resp_stats?.min_resp_time ? resp_stats.min_resp_time + '<span class="ui tiny text">(seconds)</span>' : 'N/A');
                             jQuery('#mainwp-widget-uptime-resp-time-max').html( resp_stats?.max_resp_time ? resp_stats.max_resp_time + '<span class="ui tiny text">(seconds)</span>' : 'N/A');

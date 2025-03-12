@@ -130,7 +130,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             // To support staging extension.
             $is_staging = 'no';
             if ( $staging_enabled ) {
-                $staging_updates_view = MainWP_System_Utility::get_staging_options_sites_view_for_current_users();
+                $staging_updates_view = MainWP_System_Utility::get_select_staging_view_sites();
                 if ( 'staging' === $staging_updates_view ) {
                     $is_staging = 'yes';
                 }

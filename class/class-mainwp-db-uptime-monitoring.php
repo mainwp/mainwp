@@ -1054,8 +1054,8 @@ KEY idx_wpid (wpid)";
 
         $sql = $this->wpdb->prepare(
             'SELECT ' .
-            ' ( SELECT SUM(he.duration) FROM ' . $this->table_name( 'monitor_heartbeat' ) . ' he WHERE he.time > %s AND he.monitor_id = he.monitor_id AND he.status = 1 ) AS up_value,' .
-            ' ( SELECT SUM(he.duration) FROM ' . $this->table_name( 'monitor_heartbeat' ) . ' he WHERE he.time > %s AND he.monitor_id = he.monitor_id AND ( he.status = 0 OR he.status = 1 )  ) AS total_value ' .
+            ' ( SELECT SUM(he.duration) FROM ' . $this->table_name( 'monitor_heartbeat' ) . ' he WHERE he.time > %s AND he.monitor_id = mo.monitor_id AND he.status = 1 ) AS up_value,' .
+            ' ( SELECT SUM(he.duration) FROM ' . $this->table_name( 'monitor_heartbeat' ) . ' he WHERE he.time > %s AND he.monitor_id = mo.monitor_id AND ( he.status = 0 OR he.status = 1 )  ) AS total_value ' .
             ' FROM ' . $this->table_name( 'monitors' ) . ' mo ' .
             ' LEFT JOIN ' . $this->table_name( 'monitor_heartbeat' ) . ' he ' .
             ' ON mo.monitor_id = he.monitor_id ' .

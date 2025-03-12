@@ -1336,6 +1336,10 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $cls_expired    = ' cached-icon-expired ';
         $cls_uploadable = ' cached-icon-customable ';
 
+        if ( empty( $slug ) ) {
+            $cls_uploadable = '';
+        }
+
         $icon = '';
 
         if ( isset( $cached_icons[ $slug ] ) ) {
@@ -1377,7 +1381,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 $icon = '<i style="font-size: 17px" class="' . esc_attr( $icon_placeholder_cls ) . ' icon ' . ( $set_expired ? $cls_expired : '' ) . $cls_uploadable . '" ' . $attr_slug . ' cached-path-icon="true"></i>';
             }
         } elseif ( empty( $icon ) ) {
-            $icon = '<i style="font-size: 17px" class="' . esc_attr( $icon_placeholder_cls ) . ' icon ' . $cls_expired . '" ' . $attr_slug . ' not-cached-path="true"></i>'; // not upload when not existed in the cached.
+            $icon = '<i style="font-size: 17px" class="' . esc_attr( $icon_placeholder_cls ) . ' icon ' . $cls_expired . $cls_uploadable . '" ' . $attr_slug . ' not-cached-path="true"></i>'; // not upload when not existed in the cached.
         }
         return $icon;
     }
@@ -1648,18 +1652,21 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     }
 
     /**
-     * Method get_staging_options_sites_view_for_current_users()
+     * Method get_select_staging_view_sites()
      *
      * Get staging options sites view for current users.
      *
      * @return string Site views.
      */
-    public static function get_staging_options_sites_view_for_current_users() {
-        $view = apply_filters( 'mainwp_staging_current_user_sites_view', 'undefined' );
-        if ( 'undefined' === $view ) { // to compatible.
-            $view = get_user_option( 'mainwp_staging_options_updates_view' );
+    public static function get_select_staging_view_sites() {
+
+        $view = get_user_option( 'mainwp_staging_options_updates_view' );
+
+        if ( empty( $view ) ) {
+            $view = 'livesites';
         }
-        return $view;
+
+        return apply_filters( 'mainwp_staging_current_user_sites_view', $view );
     }
 
     /**

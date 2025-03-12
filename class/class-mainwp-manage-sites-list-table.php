@@ -1847,7 +1847,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                     <?php } elseif ( 'language' === $column_name ) { ?>
                         <?php MainWP_Utility::get_language_code_as_flag( ! empty( $website_info['site_lang'] ) ? $website_info['site_lang'] : '' ); ?>
                     <?php } elseif ( 'index' === $column_name ) { ?>
-                        <?php MainWP_Utility::get_site_index_option_icon( ! empty( $website_info['site_public'] ) ? $website_info['site_public'] : '' ); ?>
+                        <?php MainWP_Utility::get_site_index_option_icon( isset( $website_info['site_public'] ) ? $website_info['site_public'] : '' ); ?>
                     <?php } elseif ( 'added_datetime' === $column_name ) { ?>
                         <?php echo ! empty( $website['added_timestamp'] ) ? '<span data-tooltip="' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['added_timestamp'] ) ) . '" data-position="left center" data-inverted=""><i class="calendar outline icon"></i> ' . MainWP_Utility::time_elapsed_string( $website['added_timestamp'] ) . '</span>' : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                     <?php } elseif ( 'site_actions' === $column_name ) { ?>

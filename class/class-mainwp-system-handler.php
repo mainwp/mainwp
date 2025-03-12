@@ -440,6 +440,12 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $enabled_tours = ! isset( $_POST['mainwp-guided-tours-option'] ) ? 0 : 1;
             MainWP_Utility::update_option( 'mainwp_enable_guided_tours', $enabled_tours );
 
+            $enabled1 = ! isset( $_POST['mainwp-guided-chatbase-option'] ) ? 0 : 1;
+            MainWP_Utility::update_option( 'mainwp_enable_guided_chatbase', $enabled1 );
+
+            $enabled2 = ! isset( $_POST['mainwp-guided-video-option'] ) ? 0 : 1;
+            MainWP_Utility::update_option( 'mainwp_enable_guided_video', $enabled2 );
+
             if ( isset( $_POST['mainwp_settings_custom_theme'] ) ) {
                 $update_selected_mainwp_themes = true;
             }

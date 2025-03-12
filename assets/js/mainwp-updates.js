@@ -4,7 +4,6 @@
 window.mainwpVars = window.mainwpVars || {};
 
 mainwpVars.errorCount = 0;
-mainwpVars.regressionScoreLimit = false;
 
 mainwpVars.actionsErrors = {};
 
@@ -606,7 +605,6 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
                         } else {
                             let res = response.result;
                             let regression_icon = render_html_regression_icon(res);
-                            mainwpVars.regressionScoreLimit = '' !== regression_icon;
                             if (res[sid]) {
                                 let _success_icon = `<i class="green check icon"></i> ${regression_icon}`;
                                 if (!done && pBulkMode)
@@ -911,7 +909,6 @@ let updatesoverview_plugins_upgrade_all_int = function (slug, websiteIds, sitesP
     mainwpVars.currentWebsite = 0;
     mainwpVars.websitesDone = 0;
     mainwpVars.errorCount = 0;
-    mainwpVars.regressionScoreLimit = false;
     mainwpVars.websitesTotal = mainwpVars.websitesLeft = mainwpVars.websitesToUpdatePlugins.length;
 
     mainwpVars.bulkTaskRunning = true;
@@ -942,7 +939,7 @@ let updatesoverview_plugins_upgrade_all_upgrade_next = function () {
 let updatesoverview_check_to_continue_updates = function () {
     mainwpVars.bulkTaskRunning = false;
     setTimeout(function () {
-        if (!mainwpVars?.errorCount && (!mainwpVars?.regressionScoreLimit || jQuery('.updates-regression-score-red-flag').length === 0)) {
+        if (!mainwpVars?.errorCount && jQuery('.updates-regression-score-red-flag').length === 0) {
             mainwpPopup('#mainwp-sync-sites-modal').close(true);
         }
     }, 3000);
@@ -1010,7 +1007,6 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
                             let res_error = response.result_error;
                             let _success_icon = `<i class="green check icon"></i>`;
                             let regression_icon = render_html_regression_icon(res);
-                            mainwpVars.regressionScoreLimit = '' !== regression_icon;
                             if (res[sid]) {
                                 if (!done && pBulkMode)
                                     updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + _success_icon + '</span>' + regression_icon);
@@ -1429,7 +1425,6 @@ let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode) {
                         let res = response.result;
                         let res_error = response.result_error;
                         let regression_icon = render_html_regression_icon(res);
-                        mainwpVars.regressionScoreLimit = '' !== regression_icon;
                         if (res[sid]) {
                             let _success_icon = `<i class="green check icon"></i>`;
                             if (!done && pBulkMode)
@@ -1751,7 +1746,6 @@ let updatesoverview_upgrade_all_int = function (pSitesToUpdate, pSitesToUpgrade,
     mainwpVars.currentWebsite = 0;
     mainwpVars.websitesDone = 0;
     mainwpVars.errorCount = 0;
-    mainwpVars.regressionScoreLimit = false;
     mainwpVars.websitesTotal = mainwpVars.websitesLeft = mainwpVars.websitesToUpdate.length;
 
     mainwpVars.bulkTaskRunning = true;
@@ -3264,7 +3258,6 @@ let updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck
                         let res = response.result;
                         let res_error = response.result_error;
                         let regression_icon = render_html_regression_icon(res);
-                        mainwpVars.regressionScoreLimit = '' !== regression_icon;
                         _icon_success = `<i class="green check icon"></i>`;
                         for (let item of newList) {
                             let elem = document.getElementById('wp_upgraded_' + pWhat + '_' + pId + strGroup + '_' + item);
@@ -3370,12 +3363,11 @@ let updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteN
         mainwpPopup('#mainwp-sync-sites-modal').setProgressSite(1);
         if (!hasError) {
             let regression_icon = render_html_regression_icon(response.result);
-            mainwpVars.regressionScoreLimit = '' !== regression_icon;
             _icon = `<i class="green check icon"></i> ${regression_icon}`;
 
             updatesoverview_plugins_upgrade_all_update_site_status(pId, _icon);
 
-            if (!mainwpVars.regressionScoreLimit || jQuery('.updates-regression-score-red-flag').length === 0) {
+            if (jQuery('.updates-regression-score-red-flag').length === 0) {
                 setTimeout(function () {
                     mainwpPopup('#mainwp-sync-sites-modal').close();
                     window.location.href = location.href;
@@ -3458,8 +3450,9 @@ let mainwp_master_checkbox_init = function ($) {
 
 }
 // This function need to update when datatable changed it's style.
-window.mainwp_table_check_columns_init = function () {
-    jQuery(document).find('table th.check-column .checkbox').checkbox({ // table headers.
+window.mainwp_table_check_columns_init = function (pTableSelector) {
+    let tblSelect = pTableSelector ?? 'table';
+    jQuery(document).find(tblSelect + ' th.check-column .checkbox').checkbox({ // table headers.
         // check all children
         onChecked: function () {
             console.log('parent checked.');

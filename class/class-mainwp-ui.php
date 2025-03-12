@@ -2025,6 +2025,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
     public static function render_modal_edit_notes( $what = 'site' ) {
         ?>
         <div id="mainwp-notes-modal" class="ui modal">
+            <i class="close icon" id="mainwp-notes-cancel"></i>
             <div class="header"><?php esc_html_e( 'Notes', 'mainwp' ); ?></div>
             <div class="content" id="mainwp-notes-content">
                 <div id="mainwp-notes-status" class="ui message hidden"></div>
@@ -2064,7 +2065,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         <input type="button" class="ui green button" id="mainwp-notes-edit" value="<?php esc_attr_e( 'Edit Note', 'mainwp' ); ?>"/>
                     </div>
                     <div class="eight wide column">
-                        <input type="button" class="ui button" id="mainwp-notes-cancel" value="<?php esc_attr_e( 'Close', 'mainwp' ); ?>"/>
                         <input type="hidden" id="mainwp-notes-websiteid" value=""/>
                         <input type="hidden" id="mainwp-notes-slug" value=""/>
                         <input type="hidden" id="mainwp-which-note" value="<?php echo esc_html( $what ); ?>"/>
@@ -2132,12 +2132,15 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized.Recommended
         $page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
 
-        $tour_id = '';
+        $tour_id  = '';
+        $video_id = '';
         if ( 'mainwp_tab' === $page ) {
-            $tour_id = '13112';
+            $tour_id  = '13112';
+            $video_id = 'VZeUhuihddw';
         } elseif ( 'managesites' === $page ) {
             if ( isset( $_GET['do'] ) && 'new' === $_GET['do'] ) {
-                $tour_id = '13210';
+                $tour_id  = '13210';
+                $video_id = 'k1-4x6h0LfE';
             } elseif ( isset( $_GET['do'] ) && 'bulknew' === $_GET['do'] ) {
                 $tour_id = '60206';
             } elseif ( ! isset( $_GET['dashboard'] ) && ! isset( $_GET['id'] ) && ! isset( $_GET['updateid'] ) && ! isset( $_GET['emailsettingsid'] ) && ! isset( $_GET['scanid'] ) ) {
@@ -2161,14 +2164,17 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             } else {
                 $tour_id = '28256';
             }
+            $video_id = '8Th7bSZAHjw';
         } elseif ( 'ClientAddField' === $page ) {
             $tour_id = '28257';
         } elseif ( 'PluginsManage' === $page ) {
-            $tour_id = '28510';
+            $tour_id  = '28510';
+            $video_id = 'p0pB7mXoIYw';
         } elseif ( 'ManageGroups' === $page ) {
             $tour_id = '27275';
         } elseif ( 'UpdatesManage' === $page ) {
-            $tab = isset( $_GET['tab'] ) ? wp_unslash( $_GET['tab'] ) : '';
+            $video_id = 'igOn8wOBcAQ';
+            $tab      = isset( $_GET['tab'] ) ? wp_unslash( $_GET['tab'] ) : '';
             if ( 'plugins-updates' === $tab ) {
                 $tour_id = '28259';
             } elseif ( 'themes-updates' === $tab ) {
@@ -2195,7 +2201,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         } elseif ( 'PluginsIgnoredAbandoned' === $page ) {
             $tour_id = '29329';
         } elseif ( 'ThemesManage' === $page ) {
-            $tour_id = '28511';
+            $tour_id  = '28511';
+            $video_id = 'fWYBTWNL9gw';
         } elseif ( 'ThemesInstall' === $page ) {
             $tour_id = '29010';
         } elseif ( 'ThemesAutoUpdate' === $page ) {
@@ -2205,7 +2212,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         } elseif ( 'ThemesIgnoredAbandoned' === $page ) {
             $tour_id = '29330';
         } elseif ( 'UserBulkManage' === $page ) {
-            $tour_id = '28574';
+            $tour_id  = '28574';
+            $video_id = 'lvzpE04nsTs';
         } elseif ( 'UserBulkAdd' === $page ) {
             $tour_id = '28575';
         } elseif ( 'BulkImportUsers' === $page ) {
@@ -2213,15 +2221,18 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         } elseif ( 'UpdateAdminPasswords' === $page ) {
             $tour_id = '28737';
         } elseif ( 'PostBulkManage' === $page ) {
-            $tour_id = '28796';
+            $tour_id  = '28796';
+            $video_id = 'Z81gzO16K8o';
         } elseif ( 'PostBulkAdd' === $page ) {
             $tour_id = '28799';
         } elseif ( 'PageBulkManage' === $page ) {
-            $tour_id = '29045';
+            $tour_id  = '29045';
+            $video_id = 'O4jG-GRHE2Q';
         } elseif ( 'PageBulkAdd' === $page ) {
             $tour_id = '29048';
         } elseif ( 'Extensions' === $page ) {
-            $tour_id = '28800';
+            $tour_id  = '28800';
+            $video_id = 'FMkXqpRu6-E';
         } elseif ( 'Settings' === $page ) {
             $tour_id = '28883';
         } elseif ( 'SettingsAdvanced' === $page ) {
@@ -2231,7 +2242,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         } elseif ( 'MainWPTools' === $page ) {
             $tour_id = '29272';
         } elseif ( 'RESTAPI' === $page ) {
-            $tour_id = '29273';
+            $tour_id  = '29273';
+            $video_id = 'BO-u1FlptY0';
         } elseif ( 'ServerInformation' === $page ) {
             $tour_id = '28873';
         } elseif ( 'ServerInformationCron' === $page ) {
@@ -2240,22 +2252,31 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             $tour_id = '28876';
         } elseif ( 'ActionLogs' === $page ) {
             $tour_id = '28877';
+        } elseif ( 'ManageCostTracker' === $page ) {
+            $video_id = 'Q1aVVGpkJAQ';
+        } elseif ( 'CostTrackerAdd' === $page ) {
+            $video_id = 'Q1aVVGpkJAQ';
         } elseif ( 'Extensions-Mainwp-Jetpack-Protect-Extension' === $page ) {
             $tour_id = '31700';
         } elseif ( 'Extensions-Mainwp-Jetpack-Scan-Extension' === $page ) {
             $tour_id = '31694';
         } elseif ( 'Extensions-Termageddon-For-Mainwp' === $page ) {
-            $tour_id = '32104';
+            $tour_id  = '32104';
+            $video_id = 'HAHySipH22I';
         } elseif ( 'Extensions-Advanced-Uptime-Monitor-Extension' === $page ) {
-            $tour_id = '32149';
+            $tour_id  = '32149';
+            $video_id = '3PIsyNM3OM0';
         } elseif ( 'Extensions-Mainwp-Custom-Dashboard-Extension' === $page ) {
-            $tour_id = '32150';
+            $tour_id  = '32150';
+            $video_id = 'T6jzvD3ogfw';
         } elseif ( 'Extensions-Mainwp-Updraftplus-Extension' === $page ) {
             $tour_id = '32151';
         } elseif ( 'Extensions-Mainwp-Sucuri-Extension' === $page ) {
-            $tour_id = '32152';
+            $tour_id  = '32152';
+            $video_id = 'bykz9YabuA8';
         } elseif ( 'Extensions-Mainwp-Clean-And-Lock-Extension' === $page ) {
-            $tour_id = '32153';
+            $tour_id  = '32153';
+            $video_id = 'uCCDiPbqXUc';
         } elseif ( 'Extensions-Mainwp-Woocommerce-Shortcuts-Extension' === $page ) {
             $tour_id = '32851';
         } elseif ( 'Extensions-Mainwp-Buddy-Extension' === $page ) {
@@ -2263,35 +2284,89 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         } elseif ( 'Extensions-Mainwp-Backwpup-Extension' === $page ) {
             $tour_id = '32923';
         } elseif ( 'Extensions-Mainwp-Ssl-Monitor-Extension' === $page ) {
-            $tour_id = '33164';
+            $tour_id  = '33164';
+            $video_id = 'HYb9xZ7Lxe0';
         } elseif ( 'Extensions-Mainwp-Cache-Control-Extension' === $page ) {
             $tour_id = '33167';
         } elseif ( 'Extensions-Mainwp-Maintenance-Extension' === $page ) {
             $tour_id = '33301';
         } elseif ( 'Extensions-Mainwp-Domain-Monitor-Extension' === $page ) {
-            $tour_id = '66031';
+            $tour_id  = '66031';
+            $video_id = 'QMziJ1BxEcE';
         } elseif ( 'Extensions-Mainwp-Favorites-Extension' === $page ) {
-            $tour_id = '66035';
+            $tour_id  = '66035';
+            $video_id = 'JRn7SLC4028';
         } elseif ( 'Extensions-Mainwp-Regression-Testing-Extension' === $page ) {
-            $tour_id = '66037';
+            $tour_id  = '66037';
+            $video_id = 'rrynCqVxKSw';
+        } elseif ( 'Extension-Mainwp-Google-Analytics-Extension' === $page ) {
+            $video_id = 'BV0xTftH7as';
+        } elseif ( 'Extensions-Mainwp-Code-Snippets-Extension' === $page ) {
+            $video_id = 'Bl7rJzGmNU0';
+        } elseif ( 'Extensions-Mainwp-Article-Uploader-Extension' === $page ) {
+            $video_id = 'e8WoikPFyB0';
+        } elseif ( 'Extensions-Mainwp-Branding-Extension' === $page ) {
+            $video_id = 'kWvEVIpPEss';
+        } elseif ( 'Extensions-Mainwp-Time-Tracker-Extension' === $page ) {
+            $video_id = 'nvsKRp_rtiA';
+        } elseif ( 'Extensions-Mainwp-Comments-Extension' === $page ) {
+            $video_id = 'tCSX3z1KOOg';
+        } elseif ( 'Extensions-Mainwp-Lighthouse-Extension' === $page ) {
+            $video_id = 'GNYKJsoJso8';
+        } elseif ( 'Extensions-Mainwp-Rocket-Extension' === $page ) {
+            $video_id = 'qahq6cR7Svo';
         }
-        $hide_priv_notice = 1 === (int) get_option( 'mainwp_help_modal_content_update' ) ? true : false;
-        $hide_tour_notice = '' !== $tour_id && 1 === (int) get_option( 'mainwp_help_modal_content_update' ) ? true : false;
+
+        $enable_guided_tours    = get_option( 'mainwp_enable_guided_tours', 0 );
+        $enable_guided_chatbase = get_option( 'mainwp_enable_guided_chatbase', 0 );
+        $enable_guided_video    = get_option( 'mainwp_enable_guided_video', 0 );
+
+        $enabled_at_least_one = $enable_guided_tours || $enable_guided_chatbase || $enable_guided_video;
+
         ?>
         <div id="mainwp-help-modal" class="ui modal">
             <i class="close icon"></i>
             <div class="header"><?php esc_html_e( 'Quick Help', 'mainwp' ); ?></div>
-            <div class="content" id="mainwp-help-modal-consent-content" <?php echo $hide_priv_notice ? 'style="display:none"' : ''; ?>>
+            <div class="content" id="mainwp-help-modal-consent-content" <?php echo $enabled_at_least_one ? 'style="display:none"' : ''; ?>>
                 <div class="ui message">
                     <h3><?php esc_html_e( 'Privacy Notice', 'mainwp' ); ?></h3>
-                    <p><?php printf( esc_html__( 'The "Quick Help" feature, including the guided tour and support agent, utilizes third-party technology and is subject to their respective privacy policies. Please review the privacy policies of %sUsetiful%s and %sChatbase%s before proceeding.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>', '<a href="https://www.chatbase.co/legal/privacy" target="_blank">', '</a>' ); ?></p>
-                    <p><?php esc_html_e( 'By clicking the button below, you acknowledge and accept these terms.', 'mainwp' ); ?></p>
-                    <button class="ui mini green button" onclick="mainwp_help_modal_content_onclick(1);jQuery('#revoke-third-party-perms').fadeIn('100');jQuery('#mainwp-help-modal-content').fadeIn('100');jQuery('#mainwp-start-tour-card').fadeIn('100');jQuery('#mainwp-help-modal-consent-content').fadeOut('100');"><?php esc_html_e( 'Acknowledge & Accept Terms', 'mainwp' ); ?></button>
+                    <p><?php printf( esc_html__( 'The "Quick Help" feature, including the guided tour and support agent, utilizes third-party technology and is subject to their respective privacy policies. Please review the privacy policies of %sUsetiful%s and %sChatbase%s and %sYoutube%s before proceeding.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>', '<a href="https://www.chatbase.co/legal/privacy" target="_blank">', '</a>', '<a href="https://www.youtube.com/" target="_blank">', '</a>' ); ?></p>
+                    <p><?php esc_html_e( 'You can choose which features to enable below.', 'mainwp' ); ?></p>
+                    <p><div class="ui toggle checkbox" id="mainwp-guided-tours-check">
+                        <input type="checkbox" class="settings-field-value-change-handler" name="mainwp-guided-tours-option" id="mainwp-guided-tours-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ? 'checked="true"' : ''; ?> />
+                        <label>
+                        <?php
+                            esc_html_e( 'Usetiful (Guides & Tips)', 'mainwp' );
+                            printf( esc_html__( ' - Provides walkthroughs and tooltips to help you navigate MainWP. %sRead Privacy Police%s.', 'mainwp' ), '<a href="https://mainwp.com/mainwp-plugin-privacy-policy/" target="_blank">', '</a>' );
+                        ?>
+                        </label>
+                    </div></p>
+                    <p><div class="ui toggle checkbox" id="mainwp-guided-chatbase-check">
+                        <input type="checkbox" class="settings-field-value-change-handler" name="mainwp-guided-chatbase-option" id="mainwp-guided-chatbase-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_chatbase', 0 ) ? 'checked="true"' : ''; ?> />
+                        <label>
+                        <?php
+                        esc_html_e( 'Chatbase (AI-Powered Chat Support)', 'mainwp' );
+                        printf( esc_html__( ' - Allows AI-powered assistance for faster support. %sRead Privacy Police%s.', 'mainwp' ), '<a href="https://chatbotapp.ai/privacy/" target="_blank">', '</a>' );
+                        ?>
+                        </label>
+                    </div></p>
+                    <p><div class="ui toggle checkbox" id="mainwp-guided-video-check">
+                        <input type="checkbox" class="settings-field-value-change-handler" name="mainwp-guided-video-option" id="mainwp-guided-video-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_video', 0 ) ? 'checked="true"' : ''; ?> />
+                        <label>
+                        <?php
+                        esc_html_e( 'Youtube Embeds (Video Tutorials)', 'mainwp' );
+                        printf( esc_html__( ' - Enable embedded Youtube video for step-by-step tutorials. %sRead Privacy Police%s.', 'mainwp' ), '<a href="https://youtube.com/privacy/" target="_blank">', '</a>' );
+                        ?>
+                        </label>
+                    </div></p>
+                    <p><?php esc_html_e( 'By enabling an options, you consent to the respective service\'s privacy polices.', 'mainwp' ); ?></p>
+                    <p><?php esc_html_e( 'Don\'t worry, you can always change this or revoke access in Tools (MainWP -> Settings -> Tools)', 'mainwp' ); ?></p>
+                    <button class="ui mini green button" onclick="mainwp_help_modal_content_onclick();return false;"><?php esc_html_e( 'Acknowledge & Accept Terms', 'mainwp' ); ?></button>
                 </div>
             </div>
-            <div class="scrolling center aligned content" id="mainwp-help-modal-content" <?php echo $hide_priv_notice ? '' : 'style="display:none"'; ?>>
-                <div class="ui two cards" id="mainwp-help-modal-options">
-                    <a class="ui card grey text" id="mainwp-start-chat-card" onClick="jQuery('#mainwp-chatbase-chat-screen').fadeIn('100');jQuery('#mainwp-start-tour-button').fadeIn('100');jQuery('#mainwp-help-modal-options').fadeOut('50');">
+            <div class="scrolling center aligned content" id="mainwp-help-modal-content" <?php echo $enabled_at_least_one ? '' : 'style="display:none"'; ?>>
+                <div class="ui three cards" id="mainwp-help-modal-options">
+                    <a class="ui card grey text" id="mainwp-start-chat-card" <?php echo $enable_guided_chatbase ? '' : 'style="display:none"'; ?> onclick="jQuery('#mainwp-help-back-button').fadeIn(200);mainwp_help_modal_start_content_onclick( false, false, true );return false;">
                         <div class="content">
                             <div class="header"><?php esc_html_e( 'Support Assistant', 'mainwp' ); ?></div>
                         </div>
@@ -2301,7 +2376,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             <div><?php esc_html_e( 'Chat with our AI Support Assistant for quick guidance and troubleshooting. It\'s trained on MainWP documentation to help you find answers faster.', 'mainwp' ); ?> <span class="ui mini green label">BETA</span></div>
                         </div>
                     </a>
-                    <a class="ui card grey text" id="mainwp-start-tour-card" <?php echo $hide_tour_notice ? '' : 'style="display:none"'; ?> onclick="jQuery('#mainwp-help-modal').modal('hide');window.USETIFUL.tour.start( <?php echo intval( $tour_id ); ?> );" >
+                    <a class="ui card grey text" id="mainwp-start-tour-card" <?php echo $enable_guided_tours ? '' : 'style="display:none"'; ?> onclick="jQuery('#mainwp-help-modal').modal('hide');mainwp_help_modal_start_content_onclick( <?php echo (int) $tour_id; ?> );" >
                         <div class="content">
                             <div class="header"><?php esc_html_e( 'Take a Quick Tour', 'mainwp' ); ?></div>
                         </div>
@@ -2311,12 +2386,31 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             <div><?php esc_html_e( 'New here? Learn how to navigate and use key features with an interactive step-by-step tour.', 'mainwp' ); ?></div>
                         </div>
                     </a>
+                    <a class="ui card grey text" id="mainwp-start-video-card" <?php echo $enable_guided_video && '' !== $video_id ? '' : 'style="display:none"'; ?> onclick="jQuery('#mainwp-help-back-button').fadeIn(200);mainwp_help_modal_start_content_onclick( false, '<?php echo esc_js( $video_id ); ?>', false );return false;" >
+                        <div class="content">
+                            <div class="header"><?php esc_html_e( 'MainWP 101 Video Tour', 'mainwp' ); ?></div>
+                        </div>
+                        <div class="content">
+                            <i class="youtube massive grey icon" style="opacity:0.3"></i>
+                            <div class="ui hidden divider"></div>
+                            <div><?php esc_html_e( 'Discover the essential features of this page in our quick, step-by-step video guide.', 'mainwp' ); ?></div>
+                        </div>
+                    </a>
                 </div>
                 <div style="display:none" id="mainwp-chatbase-chat-screen">
-                    <iframe src="https://supportassistant.mainwp.com/chatbot-iframe/Tv5dqV-xiQxwgPeMQFCZ4" width="100%" style="height: 100%; min-height: 600px;border: none;" title="MainWP Support Assistant"></iframe>
+                    <iframe src="" width="100%" style="height: 100%; min-height: 600px;border: none;" title="MainWP Support Assistant"></iframe>
+                </div>
+                <div style="display:none;position:relative;padding-bottom:56.25%;height:0;" id="mainwp-chatbase-video-screen">
+                    <iframe width="420" height="315" src="" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" title="MainWP Video Tutorials"></iframe>
                 </div>
             </div>
-            <span id="revoke-third-party-perms" <?php echo $hide_priv_notice ? '' : 'style="display:none"'; ?> class="ui compact segment"><?php esc_html_e( '* Revoke third-party permissions in the Tools page.', 'mainwp' ); ?></span>
+            <div class="ui segment">
+                <div class="ui grid">
+                    <div class="eight wide middle aligned column"><a href="#" style="display:none" id="mainwp-help-back-button" class="ui mini basic button" onclick="jQuery('#mainwp-help-modal-options').fadeIn(200);jQuery('#mainwp-chatbase-video-screen').fadeOut(200);jQuery('#mainwp-chatbase-chat-screen').fadeOut(200);jQuery('#mainwp-help-back-button').fadeOut(200);return false;"><?php esc_html_e( 'Back to Quick Help options', 'mainwp' ); ?></a></div>
+                    <div class="eight wide right aligned middle aligned column"><span id="revoke-third-party-perms" <?php echo $enabled_at_least_one ? '' : 'style="display:none"'; ?>><?php esc_html_e( '* Revoke third-party permissions in the Tools page.', 'mainwp' ); ?></span></div>
+                </div>
+            </div>
+            
         </div>
 
         <?php

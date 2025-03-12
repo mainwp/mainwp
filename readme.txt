@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.7.1
 Requires PHP: 7.4
-Stable tag: 5.4.0.1
+Stable tag: 5.4.0.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -53,10 +53,10 @@ MainWP Dashboard is [100% FREE](https://mainwp.com/mainwp-free-features/) and al
 
 We make money by offering [MainWP Pro](https://mainwp.com/signup/), which provides access to a wide range of premium add-ons. These premium add-ons are organized into two clear categories:
 
-- **Integrations:**  
+- **Integrations:**
   Add-ons in this category enable seamless connections with popular third-party services and plugins, allowing you to integrate the tools you already use directly into your MainWP Dashboard.
 
-- **Extensions:**  
+- **Extensions:**
   These are custom-built, standalone add-ons developed exclusively for the MainWP Dashboard, designed to add unique and specialized functionality to enhance your WordPress management experience.
 
 For more details, visit our [Premium Add-ons](https://mainwp.com/mainwp-add-ons/) page and see how our free and pro features compare at [Free vs. Pro: Know the Difference](https://mainwp.com/free-vs-pro/).
@@ -147,7 +147,33 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
+= 5.4.0.2 - 3-12-2025 =
+
+* Fixed: Inaccurate display of data in the Sites Changes widget on the Client Overview page.
+* Fixed: Inaccurate data output for the non-mainwp-changes REST API endpoint.
+* Fixed: Missing dropdown menu for selecting Production or Staging sites on the Updates page.
+* Fixed: Sites Changes table widget showing only current-day logs.
+* Fixed: Incorrect flag displayed for the Estonian language.
+* Fixed: Incorrect sorting by Date Added in the Clients table.
+* Fixed: Typo in the SSL Protocol check in the Site Hardening feature.
+* Fixed: Missing "Save Selection" button in the Manage Tags screen.
+* Fixed: Incorrect icon representing that a Child Site is not indexable.
+* Fixed: Typo in the Site Health feature label ([PR735](https://github.com/mainwp/mainwp/pull/735) - thanks [Isaac Russell](https://github.com/sisaacrussell)
+* Added: Action to go back to the start screen in the Quick Help modal.
+* Added: MainWP 101 YouTube video embeds to the Quick Help.
+* Updated: Uptime ratio calculation and Uptime Incident counting logic for better accuracy.
+* Updated: Site Hardening Inactive themes check now allows one default WordPress theme before raising an alert.
+* Updated: Removed the selection feature from the Sites Changes table.
+* Updated: Restored the "Dismiss item" action to the Sites Changes widget.
+* Updated: Quick Help feature updated for better control over allowed third-party services.
+* Updated: Verbiage improvements in the dismiss site changes items process.
+* Updated: Replaced the "Close" button with a close icon in the Client Notes modal.
+* Updated: Verbiage refinements in the Select Layout and Load Layout modals.
+* Updated: Centered the icon in the Dashboard Update Available label.
+* Updated: Improved the Site Changes search system.
+
 = 5.4.0.1 - 3-6-2025 =
+
 * Fixed: Issue with double success icons appearing in the Updates process
 * Fixed: Detection of inactive themes in the Site Hardening process
 * Fixed: Site Changes widget displaying data

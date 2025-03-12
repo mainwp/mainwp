@@ -1039,6 +1039,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $cron_jobs['Continue backups (Legacy)'] = array( 'mainwp_cron_last_backups_continue', 'mainwp_cronbackups_continue_action', esc_html__( 'Once every five minutes', 'mainwp' ), '5minutely' );
         }
 
+        $cron_jobs = apply_filters( 'mainwp_info_schedules_cron_listing', $cron_jobs );
+
         /**
          * Action: mainwp_before_cron_jobs_table
          *
@@ -1071,48 +1073,63 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
                 foreach ( $cron_jobs as $cron_job => $hook ) {
 
-                    $is_auto_update_job = false;
-                    $lasttime_run       = 0;
-                    if ( 'mainwp_updatescheck_start_last_timestamp' === $hook[0] ) {
-                        $update_time        = MainWP_Settings::get_websites_automatic_update_time();
-                        $last_run           = $update_time['last'];
-                        $next_run           = $update_time['next'];
-                        $is_auto_update_job = true;
-                    } elseif ( false === get_option( $hook[0] ) ) {
-                        $last_run = esc_html__( 'Never', 'mainwp' );
+                    if ( is_array( $hook ) && isset( $hook['title'] ) && isset( $hook['action'] ) ) {
+                        $job_title    = $hook['title'];
+                        $job_action   = $hook['action'];
+                        $job_freq     = isset( $hook['frequency'] ) ? $hook['frequency'] : '';
+                        $job_last_run = isset( $hook['last_run'] ) ? $hook['last_run'] : '';
+                        $job_next_run = isset( $hook['next_run'] ) ? $hook['next_run'] : '';
                     } else {
-                        $lasttime_run = get_option( $hook[0] );
-                        if ( $lasttime_run ) {
-                            $last_run = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $lasttime_run ) );
-                        } else {
+
+                        $is_auto_update_job = false;
+                        $lasttime_run       = 0;
+                        if ( 'mainwp_updatescheck_start_last_timestamp' === $hook[0] ) {
+                            $update_time        = MainWP_Settings::get_websites_automatic_update_time();
+                            $last_run           = $update_time['last'];
+                            $next_run           = $update_time['next'];
+                            $is_auto_update_job = true;
+                        } elseif ( false === get_option( $hook[0] ) ) {
                             $last_run = esc_html__( 'Never', 'mainwp' );
-                        }
-                    }
-
-                    if ( $useWPCron && 'mainwp_updatescheck_start_last_timestamp' !== $hook[0] ) {
-                        $next_run = wp_next_scheduled( $hook[1] );
-                        if ( ! empty( $next_run ) ) {
-                            $next_run = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $next_run ) );
-                        }
-                    }
-
-                    if ( empty( $next_run ) || ( ! $useWPCron && ! $is_auto_update_job && isset( $hook[3] ) ) ) {
-                        $nexttime_run = static::get_schedule_next_time_to_show( $hook[3], $lasttime_run, $local_timestamp );
-                        if ( $nexttime_run < $local_timestamp + 3 * MINUTE_IN_SECONDS ) {
-                            $next_run = esc_html__( 'Any minute', 'mainwp' );
                         } else {
-                            $next_run = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $nexttime_run ) );
+                            $lasttime_run = get_option( $hook[0] );
+                            if ( $lasttime_run ) {
+                                $last_run = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $lasttime_run ) );
+                            } else {
+                                $last_run = esc_html__( 'Never', 'mainwp' );
+                            }
                         }
+
+                        if ( $useWPCron && 'mainwp_updatescheck_start_last_timestamp' !== $hook[0] ) {
+                            $next_run = wp_next_scheduled( $hook[1] );
+                            if ( ! empty( $next_run ) ) {
+                                $next_run = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $next_run ) );
+                            }
+                        }
+
+                        if ( empty( $next_run ) || ( ! $useWPCron && ! $is_auto_update_job && isset( $hook[3] ) ) ) {
+                            $nexttime_run = static::get_schedule_next_time_to_show( $hook[3], $lasttime_run, $local_timestamp );
+                            if ( $nexttime_run < $local_timestamp + 3 * MINUTE_IN_SECONDS ) {
+                                $next_run = esc_html__( 'Any minute', 'mainwp' );
+                            } else {
+                                $next_run = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $nexttime_run ) );
+                            }
+                        }
+
+                        $job_title    = $cron_job;
+                        $job_action   = $hook[1];
+                        $job_freq     = $hook[2];
+                        $job_last_run = $last_run;
+                        $job_next_run = $next_run;
                     }
 
                     // phpcs:disable WordPress.Security.EscapeOutput
                     ?>
                     <tr>
-                        <td><?php echo $cron_job; ?></td>
-                        <td><?php echo $hook[1]; ?></td>
-                        <td><?php echo $hook[2]; ?></td>
-                        <td><?php echo esc_html( $last_run ); ?></td>
-                        <td><?php echo ! empty( $next_run ) ? esc_html( $next_run ) : ''; ?></td>
+                        <td><?php echo esc_html( $job_title ); ?></td>
+                        <td><?php echo esc_html( $job_action ); ?></td>
+                        <td><?php echo esc_html( $job_freq ); ?></td>
+                        <td><?php echo esc_html( $job_last_run ); ?></td>
+                        <td><?php echo ! empty( $job_next_run ) ? esc_html( $job_next_run ) : ''; ?></td>
                     </tr>
                     <?php
                     // phpcs:enable
@@ -1678,6 +1695,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             MainWP_Logger::UPTIME_CHECK_LOG_PRIORITY    => esc_html__( 'Uptime monitoring', 'mainwp' ),
             MainWP_Logger::UPTIME_NOTICE_LOG_PRIORITY   => esc_html__( 'Uptime notification', 'mainwp' ),
             MainWP_Logger::LOGS_REGULAR_SCHEDULE        => esc_html__( 'Regular Schedule', 'mainwp' ),
+            MainWP_Logger::DEBUG_UPDATES_SCHEDULE       => esc_html__( 'Debug updates crons', 'mainwp' ),
             MainWP_Logger::EXECUTION_TIME_LOG_PRIORITY  => esc_html__( 'Execution time', 'mainwp' ),
             MainWP_Logger::LOGS_AUTO_PURGE_LOG_PRIORITY => esc_html__( 'Logs Auto Purge', 'mainwp' ),
             MainWP_Logger::CONNECT_LOG_PRIORITY         => esc_html__( 'Dashboard Connect', 'mainwp' ),

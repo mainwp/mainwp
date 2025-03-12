@@ -554,7 +554,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
             MainWP_DB::instance()->update_regular_process( $prc_update );
         } else {
             // insert process.
-            MainWP_DB::instance()->update_regular_process(
+            MainWP_DB::instance()->update_regular_process( // insert.
                 array(
                     'item_id'               => $monitor_id,
                     'type'                  => 'monitor',

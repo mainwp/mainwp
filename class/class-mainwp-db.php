@@ -1498,7 +1498,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         }
 
         $dbwebsites = array();
-        $websites   = $this->query( $this->get_sql_websites_for_current_user( $selectgroups, $search_site, $orderBy, $offset, $rowcount, $extraWhere, $for_manager, $extra_view, $is_staging, $args ) );
+
+        $sql      = $this->get_sql_websites_for_current_user( $selectgroups, $search_site, $orderBy, $offset, $rowcount, $extraWhere, $for_manager, $extra_view, $is_staging, $args );
+        $websites = $this->query( $sql );
+
         while ( $websites && ( $website = static::fetch_object( $websites ) ) ) {
 
             $obj_data = MainWP_Utility::map_site( $website, $data );

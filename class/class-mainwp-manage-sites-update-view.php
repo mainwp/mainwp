@@ -22,7 +22,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      *
      * @param mixed $website Child Site Info.
      *
-     * @return self render_individual_updates()
+     * @return mixed
      */
     public static function render_updates( $website ) {
         if ( empty( $website ) ) {
@@ -70,7 +70,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_GET['tab'] ) ) {
             if ( 'wordpress-updates' === $_GET['tab'] ) {
-                $active_tab  = 'WordPress';
+                $active_tab  = 'wordpress';
                 $active_text = esc_html__( 'WordPress Updates', 'mainwp' );
             } elseif ( 'themes-updates' === $_GET['tab'] ) {
                 $active_tab  = 'themes';

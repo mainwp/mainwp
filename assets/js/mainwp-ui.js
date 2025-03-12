@@ -1,6 +1,12 @@
 
 /* eslint complexity: ["error", 100] */
 
+window.wp = window.wp || {};
+window.mainwpVars = window.mainwpVars || {};
+
+let executingUpdateCategories = false;
+let queueUpdateCategories = 0;
+
 function reload_init() {
     read_current_url();
     if (typeof wpOnload == 'function')
@@ -16,13 +22,13 @@ function reload_init() {
 }
 
 /** AJAX page load **/
-var mainwp_current_url = '';
+let mainwp_current_url = '';
 function read_current_url() {
     mainwp_current_url = document.location.href.replace(/^.*?\/([^/]*?)\/?$/i, '$1');
     return mainwp_current_url;
 }
-function load_url(href, obj, e) {
-    var page = href.match(/page=/i) ? href.replace(/^.*?page=([^&]+).*?$/i, '$1') : '';
+function load_url(href, obj, e) { // NOSONAR - complex.
+    let page = href.match(/page=/i) ? href.replace(/^.*\?page=([^&]+).*?$/i, '$1') : ''; // NOSONAR - safe with run time error.
     if (page || href == 'index.php') {
         if (!jQuery('body').hasClass('mainwp-ui-page')) {
             return;
@@ -31,7 +37,7 @@ function load_url(href, obj, e) {
             e.preventDefault();
         jQuery('#wpbody-content').html('<div class="mainwp-loading"><img src="images/loading.gif" /> ' + __('Please wait...') + '</div>');
         if (jQuery(obj).hasClass('menu-top')) {
-            var top = jQuery(obj).closest('li.menu-top');
+            let top = jQuery(obj).closest('li.menu-top');
             jQuery('#adminmenu .current').removeClass('current').addClass('wp-not-current-submenu');
             jQuery('.wp-has-current-submenu').removeClass('wp-has-current-submenu').addClass('wp-not-current-submenu');
             if (top.hasClass('wp-has-submenu')) {
@@ -45,7 +51,7 @@ function load_url(href, obj, e) {
         } else {
             jQuery('#adminmenu .current').removeClass('current');
             jQuery(obj).closest('li').addClass('current');
-            var top = jQuery(obj).closest('li.menu-top');
+            let top = jQuery(obj).closest('li.menu-top');
             if (top.hasClass('wp-not-current-submenu')) {
                 jQuery('.wp-has-current-submenu').removeClass('wp-has-current-submenu').addClass('wp-not-current-submenu');
                 top.removeClass('wp-not-current-submenu').addClass('wp-has-current-submenu');
@@ -65,7 +71,7 @@ function load_url(href, obj, e) {
                 page: page,
                 nonce: mainwp_ajax_nonce
             }, function (data) {
-                pagenow = page;
+                pagenow = page; // NOSONAR - wp variable.
                 data += '<div class="clear"></div>';
                 jQuery('#wpbody-content').html(data);
                 reload_init();
@@ -103,10 +109,10 @@ window.onpopstate = function (e) {
 
 
 function scroll_element() {
-    var top = jQuery(this).scrollTop();
-    var start = 20;
+    let top = jQuery(this).scrollTop();
+    let start = 20;
     jQuery('.stick-to-window').each(function () {
-        var init = jQuery(this).data('init-position');
+        let init = jQuery(this).data('init-position');
         if (top > init.top)
             jQuery(this).stop().animate({ top: (top - init.top) + init.top + start }, 1000);
         else
@@ -115,7 +121,7 @@ function scroll_element() {
 }
 function stick_element_init() {
     jQuery('.stick-to-window').each(function () {
-        var pos = jQuery(this).position();
+        let pos = jQuery(this).position();
         jQuery(this).css({
             position: 'absolute',
             top: pos.top,
@@ -135,20 +141,21 @@ function stick_element_reset() {
     stick_element_init();
     scroll_element();
 }
-jQuery(document).ready(function () {
+jQuery(function () {
     jQuery(window).trigger('scroll', scroll_element).trigger('resize', stick_element_reset);
     stick_element_init();
 });
 
-mainwp_confirm = function (msg, confirmed_callback, cancelled_callback, updateType, multiple, extra) {    // updateType: 1 single update, 2 multi update
+window.mainwp_confirm = function (msg, confirmed_callback, cancelled_callback, updateType, multiple, extra) {    // updateType: 1 single update, 2 multi update
+    let confVal;
     if (jQuery('#mainwp-disable-update-confirmations').length > 0) {
-        var confVal = jQuery('#mainwp-disable-update-confirmations').val();
-        if (typeof updateType !== 'undefined' && updateType !== false && (confVal == 2 || (confVal == 1 && updateType == 1))) {
-            if (confirmed_callback && typeof confirmed_callback == 'function')
-                confirmed_callback();
-            return false;
-        }
+        confVal = jQuery('#mainwp-disable-update-confirmations').val();
     }
+    if (jQuery('#mainwp-disable-update-confirmations').length > 0 && typeof updateType !== 'undefined' && updateType !== false && (confVal == 2 || (confVal == 1 && updateType == 1)) && confirmed_callback && typeof confirmed_callback == 'function') {
+        confirmed_callback();
+        return;
+    }
+
 
     jQuery('#mainwp-modal-confirm .content-massage').html(msg);
 
@@ -157,21 +164,20 @@ mainwp_confirm = function (msg, confirmed_callback, cancelled_callback, updateTy
         jQuery('#mainwp-confirm-form').find('label').html('Type ' + extra + ' to confirm');
     }
 
-    var opts = {
+    let opts = {
         onApprove: function () {
             if (typeof extra !== 'undefined' && extra !== false) {
-                var extraValue = jQuery('#mainwp-confirm-input').val();
+                let extraValue = jQuery('#mainwp-confirm-input').val();
                 if (confirmed_callback && typeof confirmed_callback == 'function') {
                     if (extraValue === extra) {
                         confirmed_callback();
                     } else {
                         jQuery('#mainwp-confirm-input').val('').trigger('focus').transition('shake');
-                        return false;
+                        return;
                     }
                 }
-            } else {
-                if (confirmed_callback && typeof confirmed_callback == 'function')
-                    confirmed_callback();
+            } else if (confirmed_callback && typeof confirmed_callback == 'function') {
+                confirmed_callback();
             }
         },
         onDeny() {
@@ -190,22 +196,38 @@ mainwp_confirm = function (msg, confirmed_callback, cancelled_callback, updateTy
     if (typeof updateType !== 'undefined' && updateType !== false && (updateType == 1 || updateType == 2)) {
         jQuery('#mainwp-modal-confirm .update-confirm-notice ').show();
     }
-
-    return false;
 }
 
 
 /**
  * Select sites
  */
-jQuery(document).ready(function () {
-    jQuery('.mainwp_selected_sites_item input:checkbox').on('change', function () {
-        if (jQuery(this).is(':checked'))
-            jQuery(this).parent().addClass('selected_sites_item_checked');
-        else
-            jQuery(this).parent().removeClass('selected_sites_item_checked');
-        mainwp_site_select();
-    });
+jQuery(document).on('change', '.mainwp_selected_sites_item input:checkbox', function () {
+    if (jQuery(this).is(':checked'))
+        jQuery(this).parent().addClass('selected_sites_item_checked');
+    else
+        jQuery(this).parent().removeClass('selected_sites_item_checked');
+    mainwp_site_select();
+});
+
+jQuery(document).on('change', '.mainwp_selected_groups_item input:checkbox', function () {
+    if (jQuery(this).is(':checked'))
+        jQuery(this).parent().addClass('selected_groups_item_checked');
+    else
+        jQuery(this).parent().removeClass('selected_groups_item_checked');
+    mainwp_group_select();
+});
+
+jQuery(document).on('change', '.mainwp_selected_clients_item input:checkbox', function () {
+    if (jQuery(this).is(':checked'))
+        jQuery(this).parent().addClass('selected_clients_item_checked');
+    else
+        jQuery(this).parent().removeClass('selected_clients_item_checked');
+    mainwp_client_select();
+});
+
+
+jQuery(function () {
     // seems not used.
     jQuery('.mainwp_selected_sites_item input:radio').on('change', function () {
         if (jQuery(this).is(':checked')) {
@@ -215,15 +237,6 @@ jQuery(document).ready(function () {
             jQuery(this).parent().removeClass('selected_sites_item_checked');
         mainwp_site_select();
     });
-
-    jQuery('.mainwp_selected_groups_item input:checkbox').on('change', function () {
-        if (jQuery(this).is(':checked'))
-            jQuery(this).parent().addClass('selected_groups_item_checked');
-        else
-            jQuery(this).parent().removeClass('selected_groups_item_checked');
-        mainwp_group_select();
-    });
-
     // seems not used.
     jQuery('.mainwp_selected_groups_item input:radio').on('change', function () {
         if (jQuery(this).is(':checked')) {
@@ -232,31 +245,21 @@ jQuery(document).ready(function () {
         } else
             jQuery(this).parent().removeClass('selected_groups_item_checked');
     });
-
-
-    jQuery('.mainwp_selected_clients_item input:checkbox').on('change', function () {
-        if (jQuery(this).is(':checked'))
-            jQuery(this).parent().addClass('selected_clients_item_checked');
-        else
-            jQuery(this).parent().removeClass('selected_clients_item_checked');
-        mainwp_client_select();
-    });
-
 });
 
-mainwp_site_select = function () {
+let mainwp_site_select = function () {
     mainwp_newpost_updateCategories();
 };
-mainwp_group_select = function () {
+let mainwp_group_select = function () {
     mainwp_newpost_updateCategories();
 };
-mainwp_client_select = function () {
+let mainwp_client_select = function () {
     mainwp_newpost_updateCategories();
 };
 
-mainwp_ss_select = function (me, val) {
-    var parent = jQuery(me).closest('.mainwp_select_sites_wrapper');
-    var tab = parent.find('#select_sites_tab').val();
+let mainwp_ss_select = function (me, val) {
+    let parent = jQuery(me).closest('.mainwp_select_sites_wrapper');
+    let tab = parent.find('#select_sites_tab').val();
     if (tab == 'site') {
         parent.find('#mainwp-select-sites-list .item:not(.no-select) INPUT:enabled:checkbox').each(function () {
             jQuery(this).attr('checked', val).trigger("change");
@@ -299,7 +302,7 @@ mainwp_ss_select = function (me, val) {
             }
         });
     }
-    if (val == true) {
+    if (val) {
         jQuery('.mainwp-ss-select').hide();
         jQuery('.mainwp-ss-deselect').show();
     } else {
@@ -311,9 +314,9 @@ mainwp_ss_select = function (me, val) {
 };
 
 
-mainwp_ss_select_disconnected = function (me, val) {
-    var parent = jQuery(me).closest('.mainwp_select_sites_wrapper');
-    var tab = parent.find('#select_sites_tab').val();
+let mainwp_ss_select_disconnected = function (me, val) {
+    let parent = jQuery(me).closest('.mainwp_select_sites_wrapper');
+    let tab = parent.find('#select_sites_tab').val();
     if (tab == 'site') {
         parent.find('#mainwp-select-sites-list .warning.item:not(.no-select) INPUT:enabled:checkbox').each(function () {
             jQuery(this).attr('checked', val).trigger("change");
@@ -325,7 +328,7 @@ mainwp_ss_select_disconnected = function (me, val) {
             }
         });
     }
-    if (val == true) {
+    if (val) {
         jQuery('.mainwp-ss-select-disconnected').hide();
         jQuery('.mainwp-ss-deselect-disconnected').show();
     } else {
@@ -336,10 +339,10 @@ mainwp_ss_select_disconnected = function (me, val) {
     return false;
 };
 
-mainwp_sites_selection_onvisible_callback = function (me) {
-    var selected_tab = jQuery(me).attr('select-by');
-    var select_by = 'site';
-    var parent = jQuery(me).closest('.mainwp_select_sites_wrapper');
+window.mainwp_sites_selection_onvisible_callback = function (me) {
+    let selected_tab = jQuery(me).attr('select-by');
+    let select_by = 'site';
+    let parent = jQuery(me).closest('.mainwp_select_sites_wrapper');
     if (selected_tab == 'staging') {
         // uncheck live sites
         parent.find('#mainwp-select-sites-list INPUT:checkbox').prop('checked', false);
@@ -374,21 +377,19 @@ mainwp_sites_selection_onvisible_callback = function (me) {
 }
 
 
-var executingUpdateCategories = false;
-var queueUpdateCategories = 0;
-mainwp_newpost_updateCategories = function () {
+let mainwp_newpost_updateCategories = function () {
     if (executingUpdateCategories) {
         queueUpdateCategories++;
         return;
     }
     executingUpdateCategories = true;
     console.log('mainwp_newpost_updateCategories');
-    var catsSelection = jQuery('#categorychecklist');
+    let catsSelection = jQuery('#categorychecklist');
     if (catsSelection.length > 0) {
-        var tab = jQuery('#select_sites_tab').val();
-        var sites = [];
-        var groups = [];
-        var clients = [];
+        let tab = jQuery('#select_sites_tab').val();
+        let sites = [];
+        let groups = [];
+        let clients = [];
         if (tab == 'site') {
             sites = jQuery.map(jQuery('#mainwp-select-sites-list INPUT:checkbox:checked'), function (el) {
                 return jQuery(el).val();
@@ -407,32 +408,39 @@ mainwp_newpost_updateCategories = function () {
             });
         }
 
-        var selected_categories = catsSelection.dropdown('get value');
+        let selected_categories = catsSelection.dropdown('get value');
 
-        var data = mainwp_secure_data({
+        console.log('selected cats:');
+        console.log(selected_categories);
+
+        let data = mainwp_secure_data({
             action: 'mainwp_get_categories',
             sites: encodeURIComponent(sites.join(',')),
             groups: encodeURIComponent(groups.join(',')),
             clients: encodeURIComponent(clients.join(',')),
-            selected_categories: selected_categories ? encodeURIComponent(selected_categories.join(',')) : '',
-            post_id: jQuery('#post_ID').val()
+            selected_categories: selected_categories ? encodeURIComponent(selected_categories) : '',
+            post_id: jQuery('#post_ID').val(),
+            custom_post_type: jQuery('#mainwp_custom_post_type_edit_post').length ? jQuery('#mainwp_custom_post_type_edit_post').val() : '' // support CPT ext.
         });
 
         jQuery.post(ajaxurl, data, function (pSelectedCategories) {
             return function (response) {
-                response = response.trim();
-                catsSelection.dropdown('remove selected');
-                catsSelection.find('.sitecategory').remove();
-                catsSelection.append(response);
-                catsSelection.dropdown('set selected', pSelectedCategories);
-                updateCategoriesPostFunc();
+                if (response?.content) {
+                    catsSelection.dropdown('remove selected');
+                    catsSelection.find('.menu').html(response.content);
+                    catsSelection.dropdown('refresh');
+                    let arrVal = pSelectedCategories.split(",");
+                    catsSelection.dropdown('set selected', arrVal);
+                    console.log('re-selected: ' + pSelectedCategories);
+                    updateCategoriesPostFunc();
+                }
             };
-        }(selected_categories));
+        }(selected_categories), 'json');
     } else {
         updateCategoriesPostFunc();
     }
 };
-updateCategoriesPostFunc = function () {
+let updateCategoriesPostFunc = function () {
     if (queueUpdateCategories > 0) {
         queueUpdateCategories--;
         executingUpdateCategories = false;
@@ -447,40 +455,14 @@ jQuery(document).on('keydown', 'form[name="post"]', function (event) {
         event.preventDefault();
     }
 });
-jQuery(document).on('keyup', '#mainwp-select-sites-filter', function () {
-    var filter = jQuery(this).val().toLowerCase();
-    var parent = jQuery(this).closest('.mainwp_select_sites_wrapper');
-    var tab = jQuery('#select_sites_tab').val();
-    var siteItems = [];
-
-    if (tab == 'group') {
-        siteItems = parent.find('.mainwp_selected_groups_item');
-    } else if (tab == 'site' || tab == 'staging') {
-        siteItems = parent.find('.mainwp_selected_sites_item');
-    }
-
-    for (var i = 0; i < siteItems.length; i++) {
-        var currentElement = jQuery(siteItems[i]);
-        var value = currentElement.find('label').text().toLowerCase();
-        if (value.indexOf(filter) > -1) {
-            currentElement.removeClass('no-select').show();
-        } else {
-            currentElement.addClass('no-select').hide();
-        }
-    }
-    if (tab == 'site' || tab == 'staging') {
-        mainwp_newpost_updateCategories();
-    }
-});
-
 jQuery(document).on('keyup', '#mainwp-sites-menu-filter', function () {
-    var filter = jQuery(this).val().toLowerCase();
-    var parent = jQuery('#mainwp-sites-sidebar-menu');
-    var siteItems = parent.find('.mainwp-site-menu-item');
+    let filter = jQuery(this).val().toLowerCase();
+    let parent = jQuery('#mainwp-sites-sidebar-menu');
+    let siteItems = parent.find('.mainwp-site-menu-item');
 
-    for (var i = 0; i < siteItems.length; i++) {
-        var currentElement = jQuery(siteItems[i]);
-        var value = currentElement.find('label').text().toLowerCase();
+    for (let ss of siteItems) {
+        let currentElement = jQuery(ss);
+        let value = currentElement.find('label').text().toLowerCase();
         if (value.indexOf(filter) > -1) {
             currentElement.show();
         } else {
@@ -490,39 +472,45 @@ jQuery(document).on('keyup', '#mainwp-sites-menu-filter', function () {
 });
 
 // Accordion initialization on pre-existing markup
-jQuery(document).ready(function () {
+jQuery(function () {
+    mainwp_sidebar_accordion_init();
+});
+
+window.mainwp_sidebar_accordion_init = function () {
     if (jQuery('.mainwp-sidebar-accordion').length > 0) {
+        console.log('sidebar accordion init');
         jQuery('.mainwp-sidebar-accordion').accordion({
             "onOpening": function () {
-                var parent = jQuery(this).closest('.mainwp-sidebar-accordion');
-                var ident = jQuery('.mainwp-sidebar-accordion').index(parent);
+                let parent = jQuery(this).closest('.mainwp-sidebar-accordion');
+                let ident = jQuery('.mainwp-sidebar-accordion').index(parent);
                 mainwp_accordion_on_collapse(ident, 1);
             },
             "onClosing": function () {
-                var parent = jQuery(this).closest('.mainwp-sidebar-accordion');
-                var ident = jQuery('.mainwp-sidebar-accordion').index(parent);
+                let parent = jQuery(this).closest('.mainwp-sidebar-accordion');
+                let ident = jQuery('.mainwp-sidebar-accordion').index(parent);
                 mainwp_accordion_on_collapse(ident, 0);
             }
         });
         mainwp_accordion_init_collapse();
     }
-});
+}
 
-mainwp_accordion_on_collapse = function (ident, val) {
+
+let mainwp_accordion_on_collapse = function (ident, val) {
     if (typeof (Storage) !== 'undefined') {
         if (typeof (pagenow) !== 'undefined') {
             localStorage.setItem('mainwp-accordion[' + pagenow + '][' + ident + ']', val);
         }
     }
 };
-mainwp_accordion_init_collapse = function () {
+let mainwp_accordion_init_collapse = function () {
     jQuery('.mainwp-sidebar-accordion .title').addClass('active');
     jQuery('.mainwp-sidebar-accordion .content').addClass('active');
 
     jQuery('.mainwp-sidebar-accordion').each(function () {
-        var ident = jQuery('.mainwp-sidebar-accordion').index(this);
+        let ident = jQuery('.mainwp-sidebar-accordion').index(this);
         if (typeof (pagenow) !== 'undefined') {
-            val = localStorage.getItem('mainwp-accordion[' + pagenow + '][' + ident + ']');
+            let val = localStorage.getItem('mainwp-accordion[' + pagenow + '][' + ident + ']');
             if (val === '0') {
                 jQuery(this).find('.title').removeClass('active');
                 jQuery(this).find('.content').removeClass('active');
@@ -531,24 +519,33 @@ mainwp_accordion_init_collapse = function () {
     });
 };
 
-mainwp_ui_state_save = function (ident, val) {
+window.mainwp_ui_state_save = function (ident, val) {
     if (typeof (Storage) !== 'undefined') {
         localStorage.setItem('mainwp-dashboard[' + ident + ']', val);
     }
 };
 
-mainwp_ui_state_load = function (ident) {
+window.mainwp_ui_state_load = function (ident) {
     if (typeof (Storage) !== 'undefined') {
         return localStorage.getItem('mainwp-dashboard[' + ident + ']');
     }
-    return 1; // show if Storage undefined.
+    return '1'; // show if Storage undefined.
 };
 
-jQuery(document).on('keyup', '#mainwp-screenshots-sites-filter', function () {
-    var filter = jQuery(this).val().toLowerCase();
-    var parent = jQuery(this).closest('.mainwp_select_sites_wrapper');
-    var tab = jQuery('#select_sites_tab').val();
-    var siteItems = [];
+window.mainwp_ui_state_init = function (ident, callback) {
+    if (typeof (Storage) !== 'undefined') {
+        let state = mainwp_ui_state_load(ident);
+        if (typeof callback === 'function') {
+            callback(state);
+        }
+    }
+};
+
+window.mainwp_sites_filter_select = function (objInput) {
+    let filter = jQuery(objInput).val().toLowerCase();
+    let parent = jQuery(objInput).closest('.mainwp_select_sites_wrapper');
+    let tab = jQuery('#select_sites_tab').val();
+    let siteItems = [];
 
     if (tab == 'group') {
         siteItems = parent.find('.mainwp_selected_groups_item');
@@ -556,9 +553,9 @@ jQuery(document).on('keyup', '#mainwp-screenshots-sites-filter', function () {
         siteItems = parent.find('.mainwp_selected_sites_item');
     }
 
-    for (var i = 0; i < siteItems.length; i++) {
-        var currentElement = jQuery(siteItems[i]);
-        var value = currentElement.find('label').text().toLowerCase();
+    for (let id of siteItems) {
+        let currentElement = jQuery(id);
+        let value = currentElement.find('label').text().toLowerCase();
         if (value.indexOf(filter) > -1) {
             currentElement.removeClass('no-select').show();
         } else {
@@ -568,20 +565,34 @@ jQuery(document).on('keyup', '#mainwp-screenshots-sites-filter', function () {
     if (tab == 'site' || tab == 'staging') {
         mainwp_newpost_updateCategories();
     }
+}
+
+jQuery(document).on('keyup', '#mainwp-select-sites-filter', function () {
+    mainwp_sites_filter_select(this);
 });
 
-mainwp_get_icon_start = function () {
+jQuery(document).on('keyup', '#mainwp-screenshots-sites-filter', function () {
+    mainwp_sites_filter_select(this);
+});
+
+jQuery(function () {
+    if (jQuery(document).find('#mainwp-select-sites-header .ui.menu .item').length) {
+        jQuery(document).find('#mainwp-select-sites-header .ui.menu .item').tab({ 'onVisible': function () { mainwp_sites_selection_onvisible_callback(this); } });
+    }
+});
+
+window.mainwp_get_icon_start = function () {
     jQuery('.cached-icon-expired').attr('queue', 1);
-    bulkInstallTotal = jQuery('.cached-icon-expired[queue="1"]').length;
-    console.log(bulkInstallTotal + ': expired cached icons');
-    if (0 === bulkInstallTotal) {
+    mainwpVars.bulkInstallTotal = jQuery('.cached-icon-expired[queue="1"]').length;
+    console.log(mainwpVars.bulkInstallTotal + ': expired cached icons');
+    if (0 === mainwpVars.bulkInstallTotal) {
         return;
     }
     mainwp_get_icon_start_next();
 }
 
-mainwp_get_icon_start_next = function () {
-    itemIconProcess = jQuery('.cached-icon-expired[queue="1"]:first');
+let mainwp_get_icon_start_next = function () {
+    let itemIconProcess = jQuery('.cached-icon-expired[queue="1"]:first');
     if (itemIconProcess.length > 0) {
         mainwp_get_icon_start_specific(itemIconProcess);
     } else {
@@ -589,11 +600,12 @@ mainwp_get_icon_start_next = function () {
     }
 };
 
-mainwp_get_icon_start_specific = function (itemIconProcess) {
+let mainwp_get_icon_start_specific = function (itemIconProcess) {
     itemIconProcess.attr('queue', '0');
-    var type = itemIconProcess.attr('icon-type');
+    let slug;
+    let type = itemIconProcess.attr('icon-type');
     if (type == 'plugin' || type == 'theme') {
-        var slug = jQuery(itemIconProcess).attr('item-slug');
+        slug = jQuery(itemIconProcess).attr('item-slug');
     } else {
         return;
     }
@@ -602,7 +614,7 @@ mainwp_get_icon_start_specific = function (itemIconProcess) {
         mainwp_get_icon_start_next();
     }
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_refresh_icon',
         slug: slug,
         type: type
@@ -613,9 +625,9 @@ mainwp_get_icon_start_specific = function (itemIconProcess) {
     });
 }
 
-jQuery(document).ready(function () {
+jQuery(function () {
     jQuery(document).on('click', '.cached-icon-customable', function () {
-        var iconObj = jQuery(this);
+        let iconObj = jQuery(this);
         jQuery('#mainwp_delete_image_field').hide();
         jQuery('#mainwp-upload-custom-icon-modal').modal('setting', 'closable', false).modal('show');
         if (iconObj[0].hasAttribute('src') && iconObj.attr('src') != '') {
@@ -624,6 +636,7 @@ jQuery(document).ready(function () {
         }
         jQuery(document).on('click', '#update_custom_icon_btn', function () {
             mainwp_upload_custom_icon(iconObj);
+            return false;
         });
         return false;
     });
@@ -644,32 +657,30 @@ jQuery(document).ready(function () {
 });
 
 
-mainwp_upload_custom_icon = function (iconObj) {
+let mainwp_upload_custom_icon = function (iconObj) {
 
-    var type = iconObj.attr('icon-type');
+    let type = iconObj.attr('icon-type');
 
     if (type !== 'plugin' && type !== 'theme') {
         return false;
     }
 
-    var slug = jQuery(iconObj).attr('item-slug');
+    let slug = jQuery(iconObj).attr('item-slug');
 
-    var deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false;
+    let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked');
 
-    jQuery('#mainwp-message-zone-upload').removeClass('red green yellow');
-    var msg = __('Updating the icon. Please wait...');
-
-    jQuery('#mainwp-message-zone-upload').html('<i class="notched circle loading icon"></i> ' + msg);
-    jQuery('#mainwp-message-zone-upload').show();
+    let msg = __('Updating the icon. Please wait...');
+    mainwp_set_message_zone('#mainwp-message-zone-upload', '<i class="notched circle loading icon"></i> ' + msg, '');
     jQuery('#update_custom_icon_btn').attr('disabled', 'disabled');
 
     //Add via ajax!!
-    var formdata = new FormData(jQuery('#uploadicon_form')[0]);
+    let formdata = new FormData(jQuery('#uploadicon_form')[0]);
     formdata.append("action", 'mainwp_upload_custom_icon');
     formdata.append("type", type);
     formdata.append("slug", slug);
     formdata.append("delete", deleteIcon ? 1 : 0);
     formdata.append("security", security_nonces['mainwp_upload_custom_icon']);
+    formdata.append("delnonce", jQuery(iconObj).attr('del-icon-nonce'));
 
     jQuery.ajax({
         type: 'POST',
@@ -677,23 +688,21 @@ mainwp_upload_custom_icon = function (iconObj) {
         data: formdata,
         success: function (response) {
             if (response && response.result == 'success') {
-                var msg = '';
+                let msg = '';
 
                 if (type === 'plugin') {
                     if (jQuery('#mainwp-show-plugins').length > 0) {
                         msg = __('Loading...');
                         mainwp_fetch_plugins();
                     }
-                } else {
-                    if (jQuery('#mainwp_show_themes').length > 0) {
-                        msg = __('Loading...');
-                        mainwp_fetch_themes();
-                    }
+                } else if (jQuery('#mainwp_show_themes').length > 0) {
+                    msg = __('Loading...');
+                    mainwp_fetch_themes();
                 }
                 if (msg !== '') {
-                    jQuery('#mainwp-message-zone-upload').html('<i class="notched circle loading icon"></i> ' + __('Loading...'));
+                    mainwp_set_message_zone('#mainwp-message-zone-upload', '<i class="notched circle loading icon"></i> ' + __('Loading...'), '');
                 } else {
-                    jQuery('#mainwp-message-zone-upload').hide();
+                    mainwp_set_message_zone('#mainwp-message-zone-upload');
                 }
                 setTimeout(function () {
                     window.location.href = location.href;
@@ -713,12 +722,113 @@ mainwp_upload_custom_icon = function (iconObj) {
 
 };
 
-mainwp_guidedtours_onchange = function (me) {
-    var data = mainwp_secure_data({
+let mainwp_upload_custom_types_icon = function (iconObj, uploadAct, iconItemId, iconFileSlug, deleteIcon, callback_uploaded) {
+    let msg = __('Updating the icon. Please wait...');
+    mainwp_set_message_zone('#mainwp-message-zone-upload', '<i class="notched circle loading icon"></i> ' + msg, '');
+    jQuery('#update_custom_icon_btn').attr('disabled', 'disabled');
+
+    let upload_act = typeof uploadAct !== "undefined" && '' != uploadAct ? uploadAct : 'mainwp_upload_custom_types_icon';
+    let elemid = undefined !== jQuery(iconObj).attr('data-element-id') ? jQuery(iconObj).attr('data-element-id') : '';
+    let delNonce = undefined !== jQuery(iconObj).attr('del-icon-nonce') ? jQuery(iconObj).attr('del-icon-nonce') : '';
+
+    //Add via ajax!!
+    let formdata = new FormData(jQuery('#uploadicon_form')[0]);
+    formdata.append("action", upload_act);
+    formdata.append("iconFileSlug", iconFileSlug);
+    formdata.append("iconItemId", iconItemId);
+    formdata.append("delete", deleteIcon ? 1 : 0);
+    formdata.append("security", security_nonces[upload_act]);
+    formdata.append("elementid", elemid);
+    formdata.append("delnonce", delNonce);
+
+    jQuery.ajax({
+        type: 'POST',
+        url: ajaxurl,
+        data: formdata,
+        success: function (response) {
+            jQuery('#update_custom_icon_btn').removeAttr('disabled');
+            if (response && response.result == 'success') {
+                mainwp_set_message_zone('#mainwp-message-zone-upload');
+                if (typeof callback_uploaded == 'function') {
+                    callback_uploaded(response);
+                }
+            } else {
+                feedback('mainwp-message-zone-upload', __('Undefined error. Please try again.'), 'red');
+            }
+        },
+        error: function () {
+        },
+        contentType: false,
+        cache: false,
+        processData: false,
+        enctype: 'multipart/form-data',
+        dataType: 'json'
+    });
+
+};
+
+let mainwp_guidedtours_onchange = function (me) {
+    let data = mainwp_secure_data({
         action: 'mainwp_guided_tours_option_update',
         enable: jQuery(me).is(":checked") ? 1 : 0,
     });
     jQuery.post(ajaxurl, data, function () {
-        window.location.href = location.href;
+        setTimeout(() => {
+            window.location.href = location.href;
+        }, 1000);
     });
+}
+
+let mainwp_help_modal_content_onclick = function (hide, isToolsPage) {
+
+    // to fix confict ids when current page is tool page.
+    let enab_tour = jQuery('#mainwp-guided-tours-check').checkbox('is checked') ? 1 : 0;
+    let enab_video = jQuery('#mainwp-guided-video-check').checkbox('is checked') ? 1 : 0;
+    let enab_chatbase = jQuery('#mainwp-guided-chatbase-check').checkbox('is checked') ? 1 : 0;
+
+    let data = mainwp_secure_data({
+        action: 'mainwp_help_modal_content_update',
+        enable_tour: enab_tour,
+        enable_video: enab_video,
+        enable_chatbase: enab_chatbase,
+    });
+
+    jQuery.post(ajaxurl, data, function () {
+        if (typeof isToolsPage !== "undefined" && isToolsPage) {
+            location.href = 'admin.php?page=MainWPTools';
+        } else {
+            jQuery('#revoke-third-party-perms').fadeIn('100');
+            jQuery('#mainwp-help-modal-content').fadeIn('100');
+            jQuery('#mainwp-help-modal-consent-content').fadeOut('100');
+
+            if (enab_tour) {
+                jQuery('#mainwp-start-tour-card').fadeIn('100');
+            }
+            if (enab_chatbase) {
+                jQuery('#mainwp-start-chat-card').fadeIn('100');
+            }
+            if (enab_video) {
+                jQuery('#mainwp-start-video-card').fadeIn('100');
+            }
+        }
+    });
+}
+
+let mainwp_help_modal_start_content_onclick = function (tour_id, video_id, show_chat) {
+    jQuery('#mainwp-chatbase-chat-screen').fadeOut('100');
+    jQuery('#mainwp-chatbase-video-screen').fadeOut('100');
+    jQuery('#mainwp-help-modal-options').fadeOut('50');
+
+    if (tour_id) {
+        window.USETIFUL.tour.start(tour_id);
+    }
+
+    if (video_id) {
+        jQuery('#mainwp-chatbase-video-screen').fadeIn('100').find('iframe').attr('src', 'https://www.youtube.com/embed/' + video_id);
+    }
+
+    if (show_chat) {
+        jQuery('#mainwp-chatbase-chat-screen').fadeIn('100').find('iframe').attr('src', 'https://supportassistant.mainwp.com/chatbot-iframe/Tv5dqV-xiQxwgPeMQFCZ4');
+        jQuery('#mainwp-start-tour-button').fadeIn('100');
+    }
 }

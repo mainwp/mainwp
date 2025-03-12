@@ -12,7 +12,7 @@
   --background-color-2: #f0f0f1;
 
   /* Sets background color for table headers, widgets, cards, modal headers and navigatoin wrapper elements. */
-  --background-color-3: rgba(255,255,255,.65);
+  --background-color-3: rgba(255, 255, 255, .65);
 
   /* Sets background color for form field elements. */
   --background-color-4: #ffffff;
@@ -50,10 +50,12 @@
 .mainwp-ui.mainwp-custom-theme i.green.icon:not(.inverted) {
   color: var(--green-color) !important;
 }
+
 .mainwp-ui.mainwp-custom-theme .ui.green.label:not(.basic) {
   color: var(--font-button-color) !important;
   background-color: var(--green-color) !important;
 }
+
 .mainwp-ui.mainwp-custom-theme .ui.green.label.basic {
   color: var(--green-color) !important;
   border-color: var(--green-color) !important;
@@ -62,6 +64,7 @@
 .mainwp-ui.mainwp-custom-theme i.red.icon:not(.inverted) {
   color: var(--red-color) !important;
 }
+
 .mainwp-ui.mainwp-custom-theme .ui.red.label:not(.basic) {
   color: var(--font-button-color) !important;
   background-color: var(--red-color) !important;
@@ -70,6 +73,7 @@
 .mainwp-ui.mainwp-custom-theme i.yellow.icon:not(.inverted) {
   color: var(--yellow-color) !important;
 }
+
 .mainwp-ui.mainwp-custom-theme .ui.yellow.label:not(.basic) {
   color: var(--font-button-color) !important;
   background-color: var(--yellow-color) !important;
@@ -78,6 +82,7 @@
 .mainwp-ui.mainwp-custom-theme i.blue.icon:not(.inverted) {
   color: var(--blue-color) !important;
 }
+
 .mainwp-ui.mainwp-custom-theme .ui.blue.label:not(.basic) {
   color: var(--font-button-color) !important;
   background-color: var(--blue-color) !important;
@@ -87,21 +92,25 @@
   color: var(--font-button-color) !important;
   background-color: var(--green-color) !important;
 }
+
 .mainwp-ui.mainwp-custom-theme i.red.icon.inverted {
   color: var(--font-button-color) !important;
   background-color: var(--red-color) !important;
 }
+
 .mainwp-ui.mainwp-custom-theme i.yellow.icon.inverted {
   color: var(--font-button-color) !important;
   background-color: var(--yellow-color) !important;
 }
+
 .mainwp-ui.mainwp-custom-theme i.blue.icon.inverted {
   color: var(--font-button-color) !important;
   background-color: var(--blue-color) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.indeterminate.green.progress .bar::before,
-.mainwp-ui.mainwp-custom-theme .ui.green.progress .bar, .ui.progress .green.bar {
+.mainwp-ui.mainwp-custom-theme .ui.green.progress .bar,
+.ui.progress .green.bar {
   background-color: var(--green-color) !important;
 }
 
@@ -116,11 +125,18 @@ body.mainwp-ui.mainwp-custom-theme,
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-top-header {
-  background: var(--background-color-2);
-  color: var(--font-color);
-  border-bottom: 1px solid var(--border-color);
+  background: #1c1d1b !important;
+  color: #ffffff !important;
 }
-
+.mainwp-ui.mainwp-custom-theme #mainwp-top-header .ui.icon.button:not(.red, .green) {
+  background: #1c1d1b !important;
+  -webkit-box-shadow: inset 2px 0px 0px 1px #ffffff !important;
+  -moz-box-shadow: inset 0px 0px 0px 1px #ffffff !important;
+  box-shadow: inset 0px 0px 0px 1px #ffffff !important;
+}
+.mainwp-ui.mainwp-custom-theme #mainwp-top-header .ui.icon.button .icon {
+  color: #ffffff !important;
+}
 .mainwp-ui.mainwp-custom-theme #mainwp-page-navigation-wrapper {
   background-color: var(--background-color-3);
   color: var(--font-color);
@@ -155,9 +171,11 @@ body.mainwp-ui.mainwp-custom-theme,
 .mainwp-ui.mainwp-custom-theme h2.header {
   color: var(--font-color);
 }
+
 .mainwp-ui.mainwp-custom-theme h3.header {
   color: var(--font-color);
 }
+
 .mainwp-ui.mainwp-custom-theme h4.header {
   color: var(--font-color);
 }
@@ -242,10 +260,13 @@ body.mainwp-ui.mainwp-custom-theme,
   border-color: var(--border-color);
 }
 
-.mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item {
-  background-color: var(--background-color-3);
-  border-color: var(--border-color);
-  color: var(--font-color);
+.mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item:hover,
+.mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item.active {
+  background: var(--accent-color);
+}
+.mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item:hover .page-link,
+.mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item.active .page-link {
+  color: #ffffff !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.selection.table tr.hoverli,
@@ -264,7 +285,7 @@ body.mainwp-ui.mainwp-custom-theme,
 }
 
 .mainwp-ui.mainwp-custom-theme .alternate,
-.mainwp-ui.mainwp-custom-theme .striped > tbody > :nth-child(2n+1) {
+.mainwp-ui.mainwp-custom-theme .striped>tbody> :nth-child(2n+1) {
   background-color: var(--background-color-3);
 }
 
@@ -285,7 +306,7 @@ body.mainwp-ui.mainwp-custom-theme,
 
 .mainwp-ui.mainwp-custom-theme #mainwp-manage-themes-table tbody tr td.warning,
 .mainwp-ui.mainwp-custom-theme #mainwp-manage-plugins-table tbody tr td.warning {
-  background-color: rgba( 181, 129, 5, .1 );
+  background-color: rgba(181, 129, 5, .1);
 }
 
 /* Invert Form Fields */
@@ -295,7 +316,7 @@ body.mainwp-ui.mainwp-custom-theme,
   border-color: var(--border-color);
 }
 
-.mainwp-ui.mainwp-custom-theme .ui.input > input {
+.mainwp-ui.mainwp-custom-theme .ui.input>input {
   background-color: var(--background-color-4);
   border-color: var(--border-color);
 }
@@ -340,49 +361,53 @@ body.mainwp-ui.mainwp-custom-theme,
   background: var(--background-color-4);
 }
 
-.mainwp-ui.mainwp-custom-theme .ui.checkbox input ~ label,
-.mainwp-ui.mainwp-custom-theme .ui.radio.checkbox input ~ label {
+.mainwp-ui.mainwp-custom-theme .ui.checkbox input~label,
+.mainwp-ui.mainwp-custom-theme .ui.radio.checkbox input~label {
   color: var(--font-color) !important;
 }
 
-.mainwp-ui.mainwp-custom-theme .ui.checkbox.checked input ~ label,
-.mainwp-ui.mainwp-custom-theme .ui.radio.checkbox.checked input ~ label {
+.mainwp-ui.mainwp-custom-theme .ui.checkbox.checked input~label,
+.mainwp-ui.mainwp-custom-theme .ui.radio.checkbox.checked input~label {
   color: var(--font-color) !important;
 }
 
-.mainwp-ui.mainwp-custom-theme .ui.checkbox input ~ label::before,
-.mainwp-ui.mainwp-custom-theme .ui.radio.checkbox input ~ label::before {
+.mainwp-ui.mainwp-custom-theme .ui.checkbox input~label::before,
+.mainwp-ui.mainwp-custom-theme .ui.radio.checkbox input~label::before {
   background: var(--background-color-4) !important;
   color: var(--font-color) !important;
   border-color: var(--border-color);
 }
 
-.mainwp-ui.mainwp-custom-theme .ui.checkbox.checked input ~ label::before,
-.mainwp-ui.mainwp-custom-theme .ui.radio.checkbox.checked input ~ label::before,
-.mainwp-ui.mainwp-custom-theme .ui.form .ui.checkbox.checked input ~ label::before,
-.mainwp-ui.mainwp-custom-theme .ui.form .ui.radio.checkbox.checked input ~ label::before {
+.mainwp-ui.mainwp-custom-theme .ui.checkbox.checked input~label::before,
+.mainwp-ui.mainwp-custom-theme .ui.radio.checkbox.checked input~label::before,
+.mainwp-ui.mainwp-custom-theme .ui.form .ui.checkbox.checked input~label::before,
+.mainwp-ui.mainwp-custom-theme .ui.form .ui.radio.checkbox.checked input~label::before {
   background-color: var(--green-color) !important;
 }
 
-.mainwp-ui.mainwp-custom-theme .ui.checkbox input ~ label::after,
-.mainwp-ui.mainwp-custom-theme .ui.radio.checkbox input ~ label::after {
+.mainwp-ui.mainwp-custom-theme .ui.checkbox input~label::after,
+.mainwp-ui.mainwp-custom-theme .ui.radio.checkbox input~label::after {
   color: var(--font-color) !important;
 }
 
-.mainwp-ui.mainwp-custom-theme .ui.checkbox.checked input ~ label::after,
-.mainwp-ui.mainwp-custom-theme .ui.radio.checkbox.checked input ~ label::after {
+.mainwp-ui.mainwp-custom-theme .ui.checkbox.checked input~label::after,
+.mainwp-ui.mainwp-custom-theme .ui.radio.checkbox.checked input~label::after {
   color: var(--background-color-2) !important;
 }
 
-.mainwp-ui.mainwp-custom-theme .ui.radio.checkbox input ~ label::after {
+.mainwp-ui.mainwp-custom-theme .ui.radio.checkbox input~label::after {
   background-color: var(--font-color) !important;
 }
 
-.mainwp-ui.mainwp-custom-theme .ui.radio.checkbox.checked input ~ label::after {
+.mainwp-ui.mainwp-custom-theme .ui.radio.checkbox.checked input~label::after {
   background-color: var(--background-color-2) !important;
 }
 
 /* Invert Messages */
+
+.mainwp-ui.mainwp-custom-theme .ui.message .header {
+  color: var(--font-color);
+}
 
 .mainwp-ui.mainwp-custom-theme .ui.info.message {
   color: var(--font-color) !important;
@@ -444,22 +469,22 @@ body.mainwp-ui.mainwp-custom-theme,
 /* Invert Modal */
 
 .mainwp-ui.mainwp-custom-theme .ui.modal i.icon.close {
-  top:  0.8em;
+  top: 0.8em;
   right: 0.8em;
-  color: #ffffff;
+  color: var(--font-color);
   opacity: 1 !important;
   text-shadow: none !important;
 }
 
-.mainwp-ui.mainwp-custom-theme .ui.modal > .header,
-.mainwp-ui.mainwp-custom-theme .ui.modal > .actions {
+.mainwp-ui.mainwp-custom-theme .ui.modal>.header,
+.mainwp-ui.mainwp-custom-theme .ui.modal>.actions {
   background: var(--background-color-3);
   border-color: var(--border-color);
   color: var(--font-color);
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.modal,
-.mainwp-ui.mainwp-custom-theme .ui.modal > .content {
+.mainwp-ui.mainwp-custom-theme .ui.modal>.content {
   background: var(--background-color-2);
   border-color: var(--border-color);
   color: var(--font-color);
@@ -481,7 +506,7 @@ body.mainwp-ui.mainwp-custom-theme,
 
 /* Invert Buttons, Labels and Icons */
 
-.mainwp-ui.mainwp-custom-theme a:not( .button, .uf-fmuci-button-main ) {
+.mainwp-ui.mainwp-custom-theme a:not(.button, .uf-fmuci-button-main) {
   color: var(--accent-color);
 }
 
@@ -489,7 +514,8 @@ body.mainwp-ui.mainwp-custom-theme,
   color: var(--font-color);
 }
 
-.mainwp-ui.mainwp-custom-theme a:not( .button ) .icon:not( .green, .red ) {
+.mainwp-ui.mainwp-custom-theme a:not(.button) .icon:not(.green, .red),
+.mainwp-ui.mainwp-custom-theme .mainwp-api-icon {
   color: var(--accent-color);
 }
 
@@ -498,7 +524,7 @@ body.mainwp-ui.mainwp-custom-theme,
 .mainwp-ui.mainwp-custom-theme .ui.button:not(.disabled),
 .mainwp-ui.mainwp-custom-theme .ui.button:not(.red) {
   background-color: #f6f7f7;
-  color: var( --font-color );
+  color: var(--font-color);
   -webkit-box-shadow: inset 0px 0px 0px 1px var(--border-color);
   -moz-box-shadow: inset 0px 0px 0px 1px var(--border-color);
   box-shadow: inset 0px 0px 0px 1px var(--border-color);
@@ -507,7 +533,7 @@ body.mainwp-ui.mainwp-custom-theme,
 .mainwp-ui.mainwp-custom-theme .ui.button.disabled {
   background-color: var(--table-background-color) !important;
   border: none !important;
-  color: rgba( 255,255,255,.3 );
+  color: rgba(255, 255, 255, .3);
   box-shadow: none !important;
   -webkit-box-shadow: none !important;
 }
@@ -523,7 +549,7 @@ body.mainwp-ui.mainwp-custom-theme,
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.button.green.basic {
-  background-color: rgba( 255,255,255,0 ) !important;
+  background-color: rgba(255, 255, 255, 0) !important;
   color: var(--accent-color) !important;
   -webkit-box-shadow: inset 0px 0px 0px 1px var(--accent-color);
   -moz-box-shadow: inset 0px 0px 0px 1px var(--accent-color);
@@ -535,22 +561,25 @@ body.mainwp-ui.mainwp-custom-theme,
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.mini.compact.button {
-  background-color: rgba( 255,255,255,0 ) !important;
+  background-color: rgba(255, 255, 255, 0) !important;
   color: var(--font-color) !important;
   border-color: var(--font-color) !important;
 }
+
 .mainwp-ui.mainwp-custom-theme .ui.mini.compact.button.green {
-  background-color: rgba( 255,255,255,0 ) !important;
+  background-color: rgba(255, 255, 255, 0) !important;
   color: var(--green-color) !important;
   border-color: var(--green-color) !important;
 }
+
 .mainwp-ui.mainwp-custom-theme .ui.mini.compact.button.red {
-  background-color: rgba( 255,255,255,0 ) !important;
+  background-color: rgba(255, 255, 255, 0) !important;
   color: var(--red-color) !important;
   border-color: var(--red-color) !important;
 }
+
 .mainwp-ui.mainwp-custom-theme .ui.mini.compact.button.yellow {
-  background-color: rgba( 255,255,255,0 ) !important;
+  background-color: rgba(255, 255, 255, 0) !important;
   color: var(--yellow-color) !important;
   border-color: var(--yellow-color) !important;
 }
@@ -568,6 +597,7 @@ body.mainwp-ui.mainwp-custom-theme,
 .mainwp-ui.mainwp-custom-theme .ui.inverted.dimmer {
   background: var(--background-color-2);
 }
+
 .mainwp-ui.mainwp-custom-theme .ui.inverted.dimmer .text {
   color: var(--font-light-color);
 }

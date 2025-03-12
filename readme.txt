@@ -1,277 +1,259 @@
-=== MainWP Dashboard  – WordPress Manager for Multiple Websites Maintenance ===
+=== MainWP Dashboard: WordPress Management without the SaaS  ===
 Contributors: mainwp
-Tags: Manage Multiple Sites, Dashboard, Update, Maintenance, Security
+Tags: manage multiple WordPress sites, WordPress maintenance, update, backups, security
 Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 6.2
-Tested up to: 6.4.3
+Tested up to: 6.7.1
 Requires PHP: 7.4
-Stable tag: 5.0.1
+Stable tag: 5.4.0.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Perform WordPress maintenance tasks like Updates, Backups, Uptime Monitoring, Security, Staging, Analytics, etc., from a single self-hosted dashboard.
+Streamline your WordPress management with a powerful, self-hosted dashboard for updates, backups, security, cost tracking, and client management.
 
 == Description ==
 
-The [MainWP WordPress Manager](https://mainwp.com) Dashboard plugin is Designed to simplify the complexities of managing multiple WordPress sites. MainWP provides an all-in-one solution that mirrors the functionality and insights of top-tier SaaS dashboards but focuses on WordPress and the privacy fitting of a self-hosted solution.
+Managing multiple WordPress sites can be a time-consuming and frustrating task. The [MainWP Dashboard](https://mainwp.com/) empowers you to take back your time by allowing you to efficiently manage and secure all your WordPress sites from your own centralized Dashboard.
 
-🎉 Trusted by over 700K WordPress sites and powered by 20k active dashboards, MainWP stands as the only WordPress management plugin with over 2000 ⭐⭐⭐⭐⭐ reviews on wp.org. Discover the MainWP difference [here](https://mainwp.com/love/).
+Designed for agencies, freelancers, and web professionals, MainWP offers comprehensive control with a privacy-first approach. Harness the power of MainWP for updates, backups, and more, ensuring your sites are always running smoothly and securely.
 
-MainWP Version 5 brings unparalleled improvements to the core plugin:
+**Features for Advanced WordPress Management:**
 
-* Cost Tracker Module: Effortlessly manage and track your website's financial investments directly from your dashboard.
-* Dashboard Insights Module: Gain visual insights and metrics for a comprehensive overview of your WordPress management activities.
-* API Backups: Now a core component, offering expanded backup support for a wide range of hosting solutions.
+* Centralized Updates: Keep all your WordPress sites up-to-date with single-click updates.
+* Secure Backups: Implement scheduled or on-demand backups for complete site security.
+* Manage both your sites and your clients with the Client Management module
+* The built-in Cost Tracker allows you to easily keep track of client costs
+* Private and Self-hosted: Your data stays yours, with full privacy and control.
 
-MainWP is ideal for Agencies, Freelancers, Developers, Designers, Consultants, Marketers, and anyone managing multiple sites, prioritizing complete privacy for you and your clients.
+**Stop the Software as a Service (SaaS) Treadmill:**
 
+Built on WordPress's core principles, the MainWP Dashboard plugin is uniquely positioned as the go-to solution for WordPress management. It combines ease of use with robust features and unmatched privacy.
 
-== Why WordPress Managers Love MainWP! ==
+The MainWP plugins are open-source and privacy-focused and come with their own privacy policies to ensure that the plugins do not collect any personally identifiable information (PII).
 
-💰 Free Forever
-🏅 White Label
-♾️ Connect Unlimited Websites
-▶️ Demo Mode with sample data to try MainWP firsthand
-🌐 Track Updates via Browser with MainWP Browser Extension
-🧑‍💻 Manage all Sites, Users, Plugins, Themes, Updates
-👥 Full Client Management
-🏷️ Organize Sites & Clients via Colorful Tags
-🕒 Uptime & Site Health Monitoring
-🚩 1-Click Lighthouse Stats for all Sites
-🔄 Effortless Bulk Updates
-🚧 Staging, Cloning
-📝 Professional Reports for Clients
-💬 Bulk Manage Comments
-🛡️ Bulk Manage Security
-🚀 Purge Child Cache from the Dashboard
-✏️ Fully Customizable
-🔍 Domain & SSL Certificate Monitoring
-🔑 Passwordless 1-click Login to all Connected Sites
-🔒 Full Privacy, Self-hosted, Lock Your Dashboard
-😌 Bulk Content Management (Draft, Publish, Edit, Trash)
-➕ Perform Pressable hosting-specific tasks
-And [a lot more](https://mainwp.com/free-vs-pro/)…
+The MainWP Dashboard is extendable, allowing third-party developers to hook into it. It also provides support for CLI and has its own REST API, so anything you need or want to run your business your way can be developed for your MainWP Dashboard.
 
+All of this makes MainWP the best non-SaaS alternative to ManageWP, InfiniteWP, WPRemote, and WP Umbrella.
 
-== Your Guarantee of Privacy ==
+**Getting Started with MainWP:**
+
+MainWP is designed to be user-friendly and intuitive, even for those new to WordPress management plugins. With a straightforward setup process and a clean, organized dashboard, you'll be able to start managing your WordPress sites efficiently in no time.
+
+* Setting up MainWP is straightforward—install the dashboard on a private WordPress site, add the MainWP Child plugin to your other WordPress sites, and take control.
+
+**Your Guarantee of Privacy**
 
 The MainWP plugins come with their own [privacy policies](https://mainwp.com/mainwp-plugin-privacy-policy/) to ensure that the plugins do not collect any personally identifiable information (PII).
 
+**How Is MainWP Free? What’s the Catch? How Will You Continue to Pay Development Costs?**
 
-== How Is MainWP Free? What’s the Catch? How Will You Continue to Pay Development Costs? ==
+MainWP Dashboard is [100% FREE](https://mainwp.com/mainwp-free-features/) and always will be. Whether you manage 5 sites or 5,000, the core dashboard remains free.
 
-The MainWP WordPress manager plugin is [100% FREE!](https://mainwp.com/mainwp-free-features/) However, MainWP Pro offers a wide range of [32+ Premium Extensions](https://mainwp.com/mainwp-extensions/) at a single price.
+We make money by offering [MainWP Pro](https://mainwp.com/signup/), which provides access to a wide range of premium add-ons. These premium add-ons are organized into two clear categories:
 
-👉 [Free vs. Pro: Know the Difference](https://mainwp.com/free-vs-pro/)
+- **Integrations:**
+  Add-ons in this category enable seamless connections with popular third-party services and plugins, allowing you to integrate the tools you already use directly into your MainWP Dashboard.
 
-Extensions enhance your MainWP Dashboard with additional features for backups, marketing, SEO, maintenance, security, monitoring, and other tools to help you better organize and manage websites.
+- **Extensions:**
+  These are custom-built, standalone add-ons developed exclusively for the MainWP Dashboard, designed to add unique and specialized functionality to enhance your WordPress management experience.
 
+For more details, visit our [Premium Add-ons](https://mainwp.com/mainwp-add-ons/) page and see how our free and pro features compare at [Free vs. Pro: Know the Difference](https://mainwp.com/free-vs-pro/).
 
-== Some Powerful MainWP Features: ==
+**Experience the MainWP Difference**
 
-MainWP is a feature-rich WP management plugin to manage multiple sites from a single self-hosted dashboard. Here are some of the highlighted features.
-
-= – Easy WordPress Management =
-
-MainWP, the WP Management plugin, eliminates the hassle of managing multiple sites by highlighting what needs to be done on each Child Site.
-
-With the Easy [Plugin Manager feature](https://mainwp.com/easy-plugin-manager/), you can update specific plugins on selected Child Sites with just a click. Additionally, all themes and WordPress updates can be done the same way.
-
-
-= – Full Client Management =
-
-With the MainWP Client Management feature, you can create new profiles for your clients, add their contact person details, map websites to specific clients, add tags, suspend clients, and much more!
-
-Take a look at how you can [easily manage your clients](https://kb.mainwp.com/docs/manage-clients/).
-
-
-= – One-Click Login to wp-admin =
-
-With the click of a button, you’re instantly and securely logged in to the wp-admin of a Child Site and ready to work! No need to remember usernames and passwords anymore!
-
-
-= – Effortless Upgrades =
-
-With the click of a button from your MainWP WordPress Manager Dashboard, all your WordPress sites will be upgraded to the latest stable version.
-
-
-= – Automated Updates =
-
-The Trusted Plugin and Theme option in your MainWP Dashboard will [automatically update](https://kb.mainwp.com/docs/manage-updates/) the Trusted Plugins and Themes without further interaction.
-
-You will get an alert via email with available updates, and your Dashboard will auto-update them the next day.
-
-
-= – Ignore Updates =
-
-Is there a plugin or theme you want to avoid updating for compatibility or other issues? Just tell your MainWP Dashboard to ignore it, and it will no longer alert you of the update.
-
-
-= – Abandoned Plugin and Theme Alerts =
-
-When a plugin or theme hasn’t been updated in a long time, we tend to forget about it, which could lead to security or compatibility issues.
-
-Your MainWP Dashboard will alert you of possibly abandoned plugins or themes so that you can look for a more updated plugin or theme.
-
-
-= – Multiple Reliable Backup Options =
-
-The MainWP Dashboard offers multiple backup options. Version 5 includes API Backups of popular hosting providers, and we have integrated some of the most popular backup plugins and released them as [Free Backup Extensions.](https://mainwp.com/mainwp-extensions/extension-category/backup/)
-
-This allows you to use the backup plugins you know and trust directly from your MainWP Dashboard.
-
-
-
-= – Self-Hosted =
-
-Your MainWP Dashboard is hosted on your WordPress website, not our private servers. We do not keep records of your actions, sites, passwords, or anything else. [Read Why that’s important!](https://mainwp.com/protect-your-data/)
-
-
-= – Private =
-
-We have 100% respect for your and your client’s privacy. The developers do not have access to your WordPress sites or information. [Read Why that’s important!](https://mainwp.com/wordpress-manager-gdpr/)
-
-
-= – Open Source Code =
-
-The MainWP WordPress Manager Dashboard and Child plugins are fully open source and GPL compliant with no obfuscated code, so you always know what is running on your server.
-
-Both plugins are also maintained on [GitHub](https://mainwp.com/github/) for easy code access.
-
-
-= – Customize MainWP =
-
-The MainWP [Custom Dashboard](https://mainwp.com/extension/mainwp-custom-dashboard-extension/) Extension offers custom functions and features so that users can tailor their WP management experience to their needs.
-
-
-= – Developer? Code Your Own Extensions =
-
-Built on WordPress’s core principles, the MainWP plugin allows third-party developers to “hook” into it, so anything you want can be developed for your MainWP Dashboard.
-
-MainWP supports CLI and REST API and provides Hooks for different use cases. You can find more information on the [Develop MainWP Extensions](https://mainwp.com/develop-mainwp/) page.
-
-Build around a proven WordPress Management System!
-
-
-== – Partners ==
-
-We are [partnered with industry-leading](https://mainwp.com/mainwp-extensions/) plugins and solutions to provide more flexibility.
-
-You may get a massive boost if you want to build an Extension or integration for MainWP. We may list it on our [Extensions page](https://mainwp.com/mainwp-extensions/) and market it, and with 1000 Extension installs, you could get 60k new active installations for your plugin.
-
-Find more details on the [Develop MainWP Extensions](https://mainwp.com/develop-mainwp/) page.
-
-= More Information =
-- [MainWP Documentation](https://kb.mainwp.com/)
-- [MainWP Community](https://managers.mainwp.com/)
-- [MainWP Support](https://mainwp.com/support/)
-- [MainWP Videos](https://www.youtube.com/user/MyMainWP)
-- [MainWP Extensions](https://mainwp.com/mainwp-extensions/)
-- [Develop MainWP Extensions](https://mainwp.com/develop-mainwp/)
-- [MainWP on Github](https://mainwp.com/github/)
-
+Are you ready to take the hassle out of managing your WordPress sites? MainWP makes it easy to keep everything updated, secure, and running just the way you need it. With over 20k site owners trusting MainWP with over 700k WordPress sites, every day, you'll quickly see how much simpler website management can be. Try it today and feel the difference for yourself!
 
 == Installation ==
 
 = Note: MainWP is not tested on or designed for multisite installs. =
 
-However, we have reports that most functions work correctly, but support will be limited. We DO NOT recommend installing the MainWP Dashboard plugin on a multisite install.
+However, we have user reports that most functions work correctly, but support will be limited. We DO NOT recommend installing the MainWP Dashboard plugin on a multisite install.
 
 1. We HIGHLY recommend a NEW WordPress install for your MainWP Dashboard.
 
-Using a new WordPress install will help cut down on Plugin Conflicts and other issues caused by trying to run your MainWP Main Dashboard from an active site. Most hosting companies provide free subdomains ("demo.yourdomain.com"), and we recommend creating one if you do not have a specific dedicated domain to run your MainWP Dashboard.
-If you are not sure how to set up a subdomain, contact your hosting company's support.
+Using a new WordPress install will help reduce Plugin Conflicts and other issues caused by trying to run your MainWP Dashboard from an active site.
+
+Most hosting companies provide free subdomains ("demo.yourdomain.com"), and we recommend creating one if you do not have a specific dedicated domain to run your MainWP Dashboard. If you are not sure how to set up a subdomain, contact your hosting company's support.
 
 You can even install your MainWP Dashboard on a WordPress site located on your local computer using WAMP or any other setup that allows you to run [WordPress locally](https://make.wordpress.org/core/handbook/tutorials/installing-a-local-server/).
 
-2. Once you have set up the separate WordPress website, install the MainWP Dashboard plugin following your normal installation procedure, either the Automatic process by searching MainWP or by uploading the MainWP plugin to the '/wp-content/plugins/' directory.
+2. Once you have set up the separate WordPress website, install the MainWP Dashboard plugin following your normal installation procedure, either the automatic process by searching MainWP or by uploading the MainWP plugin to the '/wp-content/plugins/' directory.
 
 3. Once installed then Activate the plugin through the Plugins menu in WordPress.
 
-4. Add your first Child Site to the MainWP Dashboard - [Documentation](https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/add-site-to-your-dashboard/)
+4. Add your first Child Site to the MainWP Dashboard - [Documentation](https://mainwp.com/kb/set-up-the-mainwp-plugin/add-site-to-your-dashboard/)
 
-5. Set your MainWP Settings - [Documentation](https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/mainwp-dashboard-settings/)
+5. Set your MainWP Settings - [Documentation](https://mainwp.com/kb/set-up-the-mainwp-plugin/mainwp-dashboard-settings/)
 
 == Frequently Asked Questions ==
-= Do I need any other plugins for MainWP? =
-Yes, you need to install the [MainWP Child Plugin](https://wordpress.org/plugins/mainwp-child/) on the sites you want to control with the Dashboard plugin.
 
-= Do you have any documentation? =
-Yes, please review the [documentation site](https://kb.mainwp.com).
+= What sets MainWP apart from other WordPress management platforms like ManageWP or InfiniteWP? =
+MainWP is a self-hosted, open-source WordPress management plugin that prioritizes user privacy and customization.
 
-= I just want to start using MainWP, do you have a Quick Start Guide? =
-Yes, please read the [Quick Start – Setting up your MainWP](https://mainwp.com/install-mainwp/).
+Unlike SaaS (Software as a Service) platforms like ManageWP, WPUmbrella, or WPRemote, MainWP gives you complete control over your data and allows for extensive customization through its open-source architecture.
 
-= Where do I go for support or to ask for help? =
-Please post in the [MainWP Community](https://managers.mainwp.com), or feel free to [contact us](https://mainwp.com/support/).
+= Can MainWP handle bulk updates for WordPress core, plugins, and themes? =
+Yes, MainWP makes it easy to perform bulk updates for WordPress core, plugins, and themes across all your managed sites. With just a few clicks, you can ensure all your sites are running the latest versions, saving you valuable time and effort.
 
-= What is the difference between ManageWP and MainWP? =
-Essentially MainWP and ManageWP provide the same type of service but with different philosophies on WordPress management.
+= How does MainWP help with client management for WordPress agencies and freelancers? =
+MainWP offers a robust client management system that allows you to organize sites by client, assign tags, and generate customizable client reports. This streamlines your workflow and helps you provide better service to your clients by keeping all their site information organized and easily accessible.
 
-ManageWP is a Service as a Solution (SaaS) property owned by GoDaddy. The SaaS system makes ManageWP a type of "Walled Garden" with limited customization options.
+= Does MainWP offer any features for tracking costs associated with managing WordPress sites? =
+Yes, MainWP has a built-in Cost Tracker. This feature allows you to:
+* Record and categorize expenses for each site
+* Set up recurring costs
+* Generate detailed cost reports
+* Gain insights into your expenditure distribution
+* Track payments received and upcoming renewals
 
-MainWP follows the tradition of WordPress and is [open source](https://github.com/mainwp/mainwp), [private](https://mainwp.com/protect-your-data/), and [fully extendable](https://mainwp.dev). The fact that MainWP is open source and extendable means you have almost unlimited customization options, allowing you to run your WordPress management business as you see fit.
+= What security features does MainWP offer to protect my WordPress sites? =
+MainWP prioritizes security by providing features like real-time security monitoring, malware scanning, and vulnerability detection. The plugin also integrates with popular security plugins.
 
-👉 [ManageWP vs. MainWP: Know the Difference](https://mainwp.com/managewp-vs-mainwp/)
+= Can I use MainWP to manage WordPress sites hosted on different servers or hosting providers? =
+Yes, MainWP is designed to work with WordPress sites hosted on any server or hosting provider.
 
-= How do I know my sites are secure using MainWP? =
-We take security very seriously at MainWP. We welcome any peer review of our [100% open source code](https://github.com/mainwp/mainwp) to ensure nobody's MainWP management system is ever compromised or hacked.
+= How does MainWP handle WordPress site backups? =
+MainWP offers multiple backup options, including built-in backup solutions for popular hosting providers and integrations with some of the most installed backup plugins.
 
-We participate in the [HackerOne](https://www.hackerone.com) bug bounty program; this allows ethical hackers to review MainWP code and directly share any vulnerability information with us in return for a monetary reward.
+= How do you pronounce MainWP? =
+MainWP is a unique name that we created for our company, so it's understandable if you're unsure about how to pronounce it. Here's the easiest way to remember:
 
-We are also a part of the [Patchstack Vulnerability Disclosure Program](https://patchstack.com/database/vdp/mainwp/), which assists in enhancing the security of MainWP plugins.
+**Main + WP = MainWP**
 
-= Where do I report security bugs found in MainWP? =
-You can report any security bugs found in the source code of MainWP plugins through the [Patchstack Vulnerability Disclosure Program](https://patchstack.com/database/vdp/mainwp/). The Patchstack team will assist you with verification, CVE assignment and take care of notifying us.
+Think of it as the word "Main" followed by the letters "WP" (pronounced as "double-u pee"). In phonetic notation, it would look like this: /ˈmeɪn ˈdʌbəl juː ˈpiː/.
 
-= How do I customize MainWP for my needs? =
-If you want to make some basic changes to the look of your Dashboard, you can use our prebuilt [Custom Dashbboard](https://mainwp.com/extension/mainwp-custom-dashboard-extension/) Extension, or if you want to dig in and build Extensions, you can learn all about developing Extension at [MainWP.dev](https://mainwp.dev)
+*But don't worry if you pronounce it differently – we answer to almost anything, including WP Main and WPMain!*
 
 = I have an idea for MainWP; how do I let you know? =
 Please follow the steps outlined in the [MainWP Feature Requests](https://feedback.mainwp.com/) so you can add your idea to the MainWP Community to be voted on.
 
-= I have more questions, do you have any other information? =
-Yes, we have a quick FAQ with a lot more questions and answers [here](https://mainwp.com/preinstall-faq/).
+= I have more questions. Do you have any other information? =
+Yes, we have a quick FAQ with many more questions and answers [here](https://mainwp.com/preinstall-faq/).
 
 == Screenshots ==
 
-1. Quick Setup Wizard
-2. Add New Site Screen
-3. Manage Sites Screen
-4. Install Plugins Screen
-5. Install Themes Screen
-6. Add New User Screen
-7. Manage Posts Screen
-8. MainWP Settings Screen
-9. Global Dashboard Screen
-10. Manage Clients Screen
+1. Sites - Overview
+2. Sites - Manage Sites
+3. Sites - Add a New Site
+4. Sites - Manage Plugins
+5. Sites - Manage Posts
+6. Sites - Manage Updates
+7. Clients - Manage Clients
+8. Cost Tracker - Cost Summary
+9. Cost Tracker - Manage Costs
+10. Dashboard Insights
 
 == Changelog ==
 
-= 5.0.1 - 2-29-2024 =
+= 5.4.0.2 - 3-12-2025 =
 
-* Fixed: Display of incorrect currency symbols in the add and edit cost forms.
-* Fixed: Incorrect link for the WooCommerce Status extension in the menu.
-* Fixed: "Invalid request" error during post and page publication.
-* Fixed: Inaccurate background color in the API Backups action bar.
-* Fixed: Displaying unformatted dates in the Client Info widget.
-* Fixed: Misalignment of icon button menus in the Recent Posts and Recent Pages widgets.
-* Fixed: Issue with the Solid Security menu item.
-* Fixed: Problems loading widget placeholder images.
-* Fixed: Purchase Date field on the New/Edit Cost page saving incorrect dates with some WordPress languages.
-* Fixed: Display of lifetime purchases as a weekly cost in Site and Client widgets and the Manage Sites table.
-* Fixed: Costs assigned to a Tag being incorrectly shown for sites not in that Tag.
-* Fixed: "Renews at" date appearing one day early.
-* Fixed: Editing and saving entries with a defined Slug, including a duplication check.
-* Fixed: Cost price field tooltip for clearer instructions.
-* Added: A page reload method after deleting Plesk backups to ensure the UI is immediately updated.
-* Updated: Changed the cost status label from "Activate" to "Active" for clarity.
-* Updated: Close icon in modals for dark theme for better visibility.
-* Updated: Z-index value of modal dimmers to ensure proper layering.
-* Updated: Notice style for the API Backups feature for enhanced readability.
-* Updated: Style of icon buttons for Plesk backup actions for consistency.
-* Updated: Prevention of auto-filling in the MainWP Main API Key field for usability.
+* Fixed: Inaccurate display of data in the Sites Changes widget on the Client Overview page.
+* Fixed: Inaccurate data output for the non-mainwp-changes REST API endpoint.
+* Fixed: Missing dropdown menu for selecting Production or Staging sites on the Updates page.
+* Fixed: Sites Changes table widget showing only current-day logs.
+* Fixed: Incorrect flag displayed for the Estonian language.
+* Fixed: Incorrect sorting by Date Added in the Clients table.
+* Fixed: Typo in the SSL Protocol check in the Site Hardening feature.
+* Fixed: Missing "Save Selection" button in the Manage Tags screen.
+* Fixed: Incorrect icon representing that a Child Site is not indexable.
+* Fixed: Typo in the Site Health feature label ([PR735](https://github.com/mainwp/mainwp/pull/735) - thanks [Isaac Russell](https://github.com/sisaacrussell)
+* Added: Action to go back to the start screen in the Quick Help modal.
+* Added: MainWP 101 YouTube video embeds to the Quick Help.
+* Updated: Uptime ratio calculation and Uptime Incident counting logic for better accuracy.
+* Updated: Site Hardening Inactive themes check now allows one default WordPress theme before raising an alert.
+* Updated: Removed the selection feature from the Sites Changes table.
+* Updated: Restored the "Dismiss item" action to the Sites Changes widget.
+* Updated: Quick Help feature updated for better control over allowed third-party services.
+* Updated: Verbiage improvements in the dismiss site changes items process.
+* Updated: Replaced the "Close" button with a close icon in the Client Notes modal.
+* Updated: Verbiage refinements in the Select Layout and Load Layout modals.
+* Updated: Centered the icon in the Dashboard Update Available label.
+* Updated: Improved the Site Changes search system.
 
-[See changelog for all versions.](https://mainwp.com/changelog.txt).
+= 5.4.0.1 - 3-6-2025 =
+
+* Fixed: Issue with double success icons appearing in the Updates process
+* Fixed: Detection of inactive themes in the Site Hardening process
+* Fixed: Site Changes widget displaying data
+* Fixed: Multiple PHP warnings
+* Fixed: Updates modal not auto-closing after all updates were successfully processed
+* Fixed: Gridstack resize handle overlapping the scrollbar in widgets
+* Added: Third-party permissions removal notice in the Quick Help modal
+* Added: Third-party permissions removal button in the Tools page
+* Updated: User menu button now displays a generic icon if avatar usage is disabled in WP settings
+* Updated: Site Changes widget now shows non-MainWP changes by default
+* Updated: Removed the retired "Add to Favorites" link
+
+= 5.4 - 3-5-2025 =
+
+* Fixed: Uptime monitor issue where per-site uptime codes were not being respected.
+* Fixed: An issue where the URL value was being stripped in the "Connect Multiple Sites" feature.
+* Fixed: Minor performance issues on certain setups.
+* Fixed: Minor inaccuracies in uptime monitoring statistics.
+* Fixed: Sorting issue in the Manage Sites table when sorting by the "Last Sync" column.
+* Fixed: Issue with displaying the "Install to Selected Sites" button in Active Themes view.
+* Fixed: Browser console warnings caused by multiple elements with the same ID.
+* Fixed: Dropdown icon visibility in Minimalistic and WP Admin themes.
+* Fixed: Sorting issues in Manage Sites table related to Last Backup data.
+* Fixed: Placement of the Abandoned Plugins and Themes menu items.
+* Fixed: An undefined variable PHP warning on the Ignored WP Core Updates page.
+* Fixed: Issue where the Site Health column was not being removed from Manage Sites and Uptime Monitoring tables when disabled.
+* Fixed: Regression issues with the Monitoring page conditions.
+* Added: Added a Quick Help feature, including new primary menu items and easy access to the AI support agent or Guided Tours.
+* Added: Users can now save multiple widget layouts on all widgetized pages and switch between them easily.
+* Added: Introduced an Import Clients feature for adding multiple clients at once.
+* Added: New column combining Site Name, URL, and "Go to WP Admin" action.
+* Added: New column displaying the child site language as a matching flag.
+* Added: New column warning if a child site is not indexable by search engines.
+* Added: Introduced a security column in the Manage Sites table.
+* Added: Added email notifications when sites come back online.
+* Added: Added status code information to the Uptime Monitoring widget.
+* Added: Ability to set a primary backup system per site.
+* Added: Option to select which data to include in the sync process.
+* Added: Batch processing settings to control how many sites are processed at once.
+* Added: Option to hide details from the Site Hardening widget.
+* Added: Updated Site Hardening checks, removing outdated ones and introducing new ones.
+* Added: Improved WP Debug Mode status check logic.
+* Added: Support for the new Regression Testing extension
+* Added: Support for the Advanced Access Manager for MainWP integration.
+* Added: support for automatic translation updates.
+* Added: Warning about future discontinuation of PHP < 8.0 support.
+* Updated: Moved the Dashboard Site update indicator to the bottom of the primary menu bar.
+* Updated: Redesigned the header actions layout, moving specific items to the User button menu.
+* Updated: Relocated the Privacy Policy link from the Info page to the User button menu.
+* Updated: Updated Extensions page layout for a cleaner look and moved the search feature to the action bar.
+* Updated: Improved Install Add-ons modal with better filtering between Extensions and Integrations.
+* Updated: Updated tables element style and column sorting indicators.
+* Updated: Improved the "Select Sites" element layout and style for clarity.
+* Updated: Updated the Manage Sites grid view page layout and the Site card design for better usability.
+* Updated: Improved the "Add New Site" page layout and field order for better organization.
+* Updated: Updated the Site Overview page layout for better readability.
+* Updated: Improved the Updates Overview widget layout to better fit elements.
+* Updated: Updated the Updates page layout by moving action buttons to the action bar and removing excessive buttons.
+* Updated: Redesigned the Clients table default state and data presentation.
+* Updated: Revamped Client Info widget.
+* Updated: Revamped Client Notes widget.
+* Updated: Revamped Client Sites widget.
+* Updated: Revamped Additional Client Info widget.
+* Updated: Revamped Client Contacts widget.
+* Updated: Updated the Client column in Manage Sites to include client avatars.
+* Updated: Updated button and input elements to have rounded corners.
+* Updated: Improved verbiage in tooltips, option labels, and button labels for better clarity.
+* Updated: Updated REST API page layout for a cleaner look.
+* Updated: Simplified "Create New API Key" form for enabling API v1 support.
+* Updated: Added an info message to the API Backups settings page to address potential confusion.
+* Updated: Standardized terminology - "Extensions" now refer to stand-alone add-ons.
+* Updated: Standardized terminology - "Integrations" refer to add-ons integrating with third-party plugins or services.
+* Updated: Introduced an Add-ons filter for quick filtering between types.
+* Updated: Replaced Gridster.js with Gridstack.js for a more flexible widget solution.
+* Updated: Moved Cost Tracker settings to the main Settings area.
+* Updated: Updated Uptime Monitoring settings to hide options not applicable to Ping and Keyword monitoring types.
+* Updated: Improved page loading logic on the Updates page for better performance.
+* Updated: Removed View Ignored Plugins and Themes buttons when no ignored items exist.
+* Updated: Updated Activity Log for MainWP add-on information.
+
+[See Video Changelog](https://www.youtube.com/watch?v=36KRNYo6BMY)
+
+[See changelog for all versions.](https://mainwp.com/changelog.txt)

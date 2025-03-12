@@ -14,216 +14,185 @@ namespace MainWP\Dashboard;
  *
  * Displays the Client info.
  */
-class MainWP_Client_Info {
+class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace  -- NOSONAR - complexity.
 
-		/**
-		 * Method get_class_name()
-		 *
-		 * @return string __CLASS__ Class name.
-		 */
-	public static function get_class_name() {
-		return __CLASS__;
-	}
+    /**
+     * Method get_class_name()
+     *
+     * @return string __CLASS__ Class name.
+     */
+    public static function get_class_name() {
+        return __CLASS__;
+    }
 
-		/**
-		 * Method render()
-		 *
-		 * @return mixed render_site_info()
-		 */
-	public static function render() {
-		self::render_site_info();
-	}
+    /**
+     * Method render()
+     *
+     * @return mixed render_site_info()
+     */
+    public static function render() {
+        static::render_site_info();
+    }
 
-		/**
-		 * Method render_site_info()
-		 *
-		 * Grab Child Site Info and render.
-		 *
-		 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-		 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
-		 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
-		 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
-		 */
-	public static function render_site_info() {
-		$current_wpid = MainWP_System_Utility::get_current_wpid();
-		if ( empty( $current_wpid ) ) {
-			return;
-		}
+    /**
+     * Method render_site_info()
+     *
+     * Grab Child Site Info and render.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     */
+    public static function render_site_info() {
+        $current_wpid = MainWP_System_Utility::get_current_wpid();
+        if ( empty( $current_wpid ) ) {
+            return;
+        }
 
-		$website = MainWP_DB::instance()->get_website_by_id( $current_wpid, true );
+        $website = MainWP_DB::instance()->get_website_by_id( $current_wpid, true );
 
-		self::render_info( $website );
-	}
+        static::render_info( $website );
+    }
 
-		/**
-		 * Render Sites Info.
-		 *
-		 * @param object $website Object containing the child site info.
-		 */
-	public static function render_info( $website ) {
+    /**
+     * Render Sites Info.
+     *
+     * @param object $website Object containing the child site info.
+     */
+    public static function render_info( $website ) { //phpcs:ignore -- NOSONAR - complex.
+        $client_info = $website->client_id ? MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $website->client_id, ARRAY_A ) : false;
 
-		$client_info = $website->client_id ? MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $website->client_id, ARRAY_A ) : false;
+        ?>
+        <h2 class="ui header handle-drag mainwp-widget-header">
+            <?php
+            /**
+             * Filter: mainwp_clients_info_widget_title
+             *
+             * Filters the Site info widget title text.
+             *
+             * @param object $website Object containing the child site info.
+             *
+             * @since 4.1
+             */
+            echo esc_html( apply_filters( 'mainwp_clients_info_widget_title', esc_html__( 'Client Info', 'mainwp' ), $website ) );
+            ?>
+            <div class="sub header"><?php esc_html_e( 'Client Information', 'mainwp' ); ?></div>
+        </h2>
+        <div class="mainwp-widget-site-info mainwp-scrolly-overflow">
+            <?php
+            /**
+             * Actoin: mainwp_clients_info_widget_top
+             *
+             * Fires at the top of the Site Info widget on the Individual site overview page.
+             *
+             * @param object $website Object containing the child site info.
+             *
+             * @since 4.0
+             */
+            do_action( 'mainwp_clients_info_widget_top', $website );
+            ?>
+            <?php if ( $client_info ) : ?>
+                <?php
+                if ( 0 === intval( $client_info['suspended'] ) ) {
+                    $client_status = '<span class="ui green basic button">' . esc_html__( 'Active', 'mainwp' ) . '</span>';
+                } elseif ( 1 === intval( $client_info['suspended'] ) ) {
+                    $client_status = '<span class="ui yellow button">' . esc_html__( 'Suspended', 'mainwp' ) . '</span>';
+                } elseif ( 2 === intval( $client_info['suspended'] ) ) {
+                    $client_status = '<span class="ui blue button">' . esc_html__( 'Lead', 'mainwp' ) . '</span>';
+                } elseif ( 3 === intval( $client_info['suspended'] ) ) {
+                    $client_status = '<span class="ui red button">' . esc_html__( 'Lost', 'mainwp' ) . '</span>';
+                }
 
-		?>
-			<h3 class="ui header handle-drag">
-			<?php
-			/**
-			 * Filter: mainwp_clients_info_widget_title
-			 *
-			 * Filters the Site info widget title text.
-			 *
-			 * @param object $website Object containing the child site info.
-			 *
-			 * @since 4.1
-			 */
-			echo esc_html( apply_filters( 'mainwp_clients_info_widget_title', esc_html__( 'Client Info', 'mainwp' ), $website ) );
-			?>
-				<div class="sub header"><?php esc_html_e( 'Client Information', 'mainwp' ); ?></div>
-			</h3>
-			<div class="mainwp-widget-site-info mainwp-scrolly-overflow">
-				<?php
-				/**
-				 * Actoin: mainwp_clients_info_widget_top
-				 *
-				 * Fires at the top of the Site Info widget on the Individual site overview page.
-				 *
-				 * @param object $website Object containing the child site info.
-				 *
-				 * @since 4.0
-				 */
-				do_action( 'mainwp_clients_info_widget_top', $website );
-				?>
-				<?php
-				if ( $client_info ) {
-					$default_client_fields = MainWP_Client_Handler::get_default_client_fields();
-					$custom_fields         = MainWP_DB_Client::instance()->get_client_fields( true, $website->client_id );
+                /**
+                 * Action: mainwp_clients_info_table_top
+                 *
+                 * Fires at the top of the Site Info table in Site Info widget on the Individual site overview page.
+                 *
+                 * @param object $website Object containing the child site info.
+                 *
+                 * @since 4.0
+                 */
+                do_action( 'mainwp_clients_info_table_top', $website );
+                ?>
+                <div class="ui grid">
+                    <div class="sixteen wide center aligned column">
+                        <div class="ui image">
+                            <?php echo MainWP_Client_Handler::get_client_contact_image( $client_info, 'client', 'small' ); //phpcs:ignore -- ok.  ?>
+                        </div>
+                    </div>
+                    <div class="sixteen wide center aligned column">
+                        <h2 class="ui center aligned header">
+                            <div class="content">
+                                <?php echo esc_html( $client_info['name'] ); ?>
+                                <?php if ( isset( $client_info['created'] ) && ! empty( $client_info['created'] ) ) : ?>
+                                <div class="sub header">
+                                    <i class="calendar grey icon"></i> <?php esc_html_e( 'Added ', 'mainwp' ); ?><span data-tooltip="<?php echo esc_attr( MainWP_Utility::format_date( $client_info['created'] ) ); ?>" data-inverted="" data-position="top center"><?php echo MainWP_Utility::time_elapsed_string( $client_info['created'] ); //phpcs:ignore -- ok. ?></span>.
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </h2>
+                    </div>
+                    <div class="sixteen wide center aligned column">
+                        <?php echo $client_status; //phpcs:ignore -- ok. ?>
+                    </div>
 
-					?>
-				<table class="ui celled striped table">
-					<tbody>
-					<?php
-					/**
-					 * Action: mainwp_clients_info_table_top
-					 *
-					 * Fires at the top of the Site Info table in Site Info widget on the Individual site overview page.
-					 *
-					 * @param object $website Object containing the child site info.
-					 *
-					 * @since 4.0
-					 */
-					do_action( 'mainwp_clients_info_table_top', $website );
-					?>
-					<?php
+                    <div class="sixteen wide center aligned column">
+                        <?php if ( isset( $client_info['client_email'] ) && '' !== $client_info['client_email'] ) : ?>
+                            <a href="mailto:<?php echo esc_url( $client_info['client_email'] ); ?>" class="ui basic icon button" target="_blank" data-tooltip="<?php echo esc_attr( $client_info['client_email'] ); ?>" data-inverted="" data-position="top center">
+                                <i class="envelope grey icon"></i>
+                            </a>
+                        <?php endif; ?>
+                        <?php if ( isset( $client_info['client_phone'] ) && '' !== $client_info['client_phone'] ) : ?>
+                            <a href="tel:<?php echo esc_url( $client_info['client_phone'] ); ?>" class="ui basic icon button" target="_blank" data-tooltip="<?php echo esc_attr( $client_info['client_phone'] ); ?>" data-inverted="" data-position="top center">
+                                <i class="phone grey icon"></i>
+                            </a>
+                        <?php endif; ?>
 
-					foreach ( $default_client_fields as $field_name => $field ) {
 
-						$db_field = isset( $field['db_field'] ) ? $field['db_field'] : '';
-						$val      = ( ! empty( $db_field ) && isset( $client_info[ $db_field ] ) ) ? $client_info[ $db_field ] : '';
-
-						if ( empty( $val ) ) {
-							continue;
-						}
-
-						?>
-							<tr>
-								<td><?php echo esc_html( $field['title'] ); ?></td>
-								<td>
-								<?php
-								if ( 'name' === $db_field ) {
-									?>
-									<a class="item" href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $client_info['client_id'] ); ?>"><?php echo esc_html( $client_info['name'] ); ?></a>
-									<?php
-								} elseif ( 'email' === $db_field ) {
-									?>
-									<a class="item" href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $client_info['client_id'] ); ?>"><?php echo esc_html( $client_info['email'] ); ?></a>
-									<?php
-
-								} elseif ( 'created' === $db_field ) {
-									?>
-									<?php echo MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( esc_html( $client_info['created'] ) ) ); //phpcs:ignore ?>
-									<?php
-
-								} elseif ( 'note' === $db_field ) {
-									$note       = html_entity_decode( $client_info['note'] );
-									$esc_note   = MainWP_Utility::esc_content( $note );
-									$strip_note = wp_strip_all_tags( $esc_note );
-
-									if ( empty( $client_info['note'] ) ) :
-										?>
-										<a href="javascript:void(0)" class="mainwp-edit-client-note" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Edit client notes.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
-									<?php else : ?>
-										<a href="javascript:void(0)" class="mainwp-edit-client-note" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
-									<?php endif; ?>
-									<span style="display: none" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
-									<?php
-								} else {
-									echo esc_html( $val );
-								}
-
-								?>
-								</td>
-							</tr>
-					<?php } ?>
-
-					<?php
-
-					if ( is_array( $custom_fields ) && count( $custom_fields ) > 0 ) {
-						foreach ( $custom_fields as $field ) {
-							if ( empty( $field->field_value ) ) {
-								continue;
-							}
-							?>
-							<tr>
-							<td><?php echo esc_html( $field->field_desc ); ?></td>
-							<td><?php echo esc_html( $field->field_value ); ?></td>
-							</tr>
-							<?php
-						}
-					}
-
-					?>
-					<?php
-					/**
-					 * Action: mainwp_clients_info_table_bottom
-					 *
-					 * Fires at the bottom of the Site Info table in Site Info widget on the Individual site overview page.
-					 *
-					 * @param object $website Object containing the child site info.
-					 *
-					 * @since 4.0
-					 */
-					do_action( 'mainwp_clients_info_table_bottom', $website );
-					?>
-					</tbody>
-				</table>
-					<?php
-				} else {
-					MainWP_UI::render_empty_element_placeholder();
-				}
-				?>
-				<?php
-				/**
-				 * Action: mainwp_clients_info_widget_bottom
-				 *
-				 * Fires at the bottom of the Site Info widget on the Individual site overview page.
-				 *
-				 * @param object $website Object containing the child site info.
-				 *
-				 * @since 4.0
-				 */
-				do_action( 'mainwp_clients_info_widget_bottom', $website );
-				?>
-			</div>
-			<div class="ui stackable two columns grid mainwp-widget-footer">
-				<div class="middle aligned column">
-					<?php if ( $client_info ) { ?>
-					<a href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $client_info['client_id'] ); ?>" title="" class="ui mini fluid button green basic"><?php echo esc_html__( 'Edit Client', 'mainwp' ); ?></a>
-					<?php } ?>
-				</div>
-				<div class="middle aligned column">
-					<a href="admin.php?page=ClientAddNew" title="" class="ui mini fluid button green"><?php echo esc_html__( 'Add New Client', 'mainwp' ); ?></a>
-				</div>
-			</div>
-			<?php
-	}
+                        <?php if ( isset( $client_info['client_facebook'] ) && '' !== $client_info['client_facebook'] ) : ?>
+                            <a href="<?php echo esc_url( $client_info['client_facebook'] ); ?>" class="ui basic icon button" target="_blank"><i class="facebook grey icon"></i></a>
+                        <?php endif; ?>
+                        <?php if ( isset( $client_info['client_twitter'] ) && '' !== $client_info['client_twitter'] ) : ?>
+                            <a href="<?php echo esc_url( $client_info['client_twitter'] ); ?>" class="ui basic icon button" target="_blank"><i class="twitter grey icon"></i></a>
+                        <?php endif; ?>
+                        <?php if ( isset( $client_info['client_instagram'] ) && '' !== $client_info['client_instagram'] ) : ?>
+                            <a href="<?php echo esc_url( $client_info['client_instagram'] ); ?>" class="ui basic icon button" target="_blank"><i class="instagram grey icon"></i></a>
+                        <?php endif; ?>
+                        <?php if ( isset( $client_info['client_linkedin'] ) && '' !== $client_info['client_linkedin'] ) : ?>
+                            <a href="<?php echo esc_url( $client_info['client_linkedin'] ); ?>" class="ui basic icon button" target="_blank"><i class="linkedin grey icon"></i></a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php
+                /**
+                 * Action: mainwp_clients_info_table_bottom
+                 *
+                 * Fires at the bottom of the Site Info table in Site Info widget on the Individual site overview page.
+                 *
+                 * @param object $website Object containing the child site info.
+                 *
+                 * @since 4.0
+                 */
+                do_action( 'mainwp_clients_info_table_bottom', $website );
+                ?>
+            <?php else : ?>
+                <?php MainWP_UI::render_empty_element_placeholder(); ?>
+            <?php endif; ?>
+            <?php
+            /**
+             * Action: mainwp_clients_info_widget_bottom
+             *
+             * Fires at the bottom of the Site Info widget on the Individual site overview page.
+             *
+             * @param object $website Object containing the child site info.
+             *
+             * @since 4.0
+             */
+            do_action( 'mainwp_clients_info_widget_bottom', $website );
+            ?>
+        </div>
+        <div class="mainwp-widget-footer"></div>
+        <?php
+    }
 }

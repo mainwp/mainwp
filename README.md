@@ -3,10 +3,10 @@
 
 <p align="center">
  <a href="https://packagist.org/packages/mainwp/mainwp"><img src="https://poser.pugx.org/mainwp/mainwp/license" alt="license"></a> 
- <a href="https://packagist.org/packages/mainwp/mainwp"><img src="https://poser.pugx.org/mainwp/mainwp/v/stable" alt="Latest Stable Version"></a>
  <img alt="WordPress Plugin Active Installs" src="https://img.shields.io/wordpress/plugin/installs/mainwp?label=MainWP%20Dashboard%20Active%20Installs">
  <img alt="WordPress Plugin Rating" src="https://img.shields.io/wordpress/plugin/stars/mainwp">
  <a href="https://www.codefactor.io/repository/github/mainwp/mainwp"><img src="https://www.codefactor.io/repository/github/mainwp/mainwp/badge" alt="CodeFactor" /></a>
+ <img src="https://sonarcloud.io/api/project_badges/measure?project=mainwp_mainwp&metric=alert_status" alt="SonarCloud" />
 </p>
 
 Welcome to the [MainWP](https://mainwp.com) repository on GitHub. Here you can browse the source, look at open issues and keep track of development.
@@ -43,3 +43,6 @@ Support requests in issues on this repository will be closed on sight.
 
 ## Contributing to MainWP
 If you have a patch or have stumbled upon an issue with the MainWP Plugin you can contribute this back to the code. Please read our [contributor guidelines](https://github.com/mainwp/mainwp/blob/master/.github/CONTRIBUTING.md) for more informationon how you can do this.
+
+## Sponsored By
+ <a href="https://www.browserstack.com/"><img src="https://mainwp.com/wp-content/uploads/2025/03/bstack-logo-global.png" alt="BrowserStack"></a> 

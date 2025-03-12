@@ -49,26 +49,17 @@ class Log_Query {
             $search_str = MainWP_DB::instance()->escape( $args['search'] );
             // for searching.
             if ( ! empty( $search_str ) ) {
-                $search_str   = trim( $search_str );
-                $where_search = ' AND ( lg.action LIKE  "%' . $search_str . '%" OR lg.log_id LIKE  "%' . $search_str . '%" OR lg.user_id LIKE "%' . $search_str . '%" ';
-                $tmp_search   = '';
+                $search_str = trim( $search_str );
                 // prepare search value for searching.
-                if ( 'plugin' === substr( strtolower( $search_str ), -6 ) ) {
-                    $tmp_search = substr( $search_str, 0, -6 );
-                } elseif ( 'theme' === substr( strtolower( $search_str ), -5 ) ) {
-                    $tmp_search = substr( $search_str, 0, -5 );
+                if ( ! empty( $search_str ) ) {
+                    $where_search  = ' AND (  wp.name LIKE  "%' . $search_str . '%" OR lg.action LIKE  "%' . $search_str . '%" OR sub_lg.action_display LIKE  "%' . $search_str . '%" OR lg.log_id LIKE  "%' . $search_str . '%" OR lg.user_id LIKE "%' . $search_str . '%" ';
+                    $where_search .= ' OR lg.item LIKE  "%' . $search_str . '%" ';
+                    if ( 'events_list' === $view ) {
+                        $where_search .= ' OR sub_lg.source LIKE  "%' . $search_str . '%" ';
+                    }
+                    $where_search .= ') ';
+                    $where        .= $where_search;
                 }
-                $tmp_search = trim( $tmp_search );
-                if ( ! empty( $tmp_search ) ) {
-                    $where_search .= ' OR lg.item LIKE  "%' . $tmp_search . '%" ';
-                }
-
-                if ( 'events_list' === $view ) {
-                    $where_search .= ' OR sub_lg.source LIKE  "%' . $search_str . '%" ';
-                }
-
-                $where_search .= ') ';
-                $where        .= $where_search;
             }
         }
 
@@ -249,10 +240,6 @@ class Log_Query {
         $selects[] = 'wp.name as log_site_name';
         $selects[] = 'meta_view.*';
 
-        if ( 'events_list' === $view ) {
-            $selects[] = 'sub_lg.*';
-        }
-
         $select = implode( ', ', $selects );
 
         $join  = ' LEFT JOIN ' . $wpdb->mainwp_tbl_wp . ' wp ON lg.site_id = wp.id ';
@@ -344,7 +331,18 @@ class Log_Query {
         $view  = ' (SELECT sub_tbl.log_id AS sub_log_id, ';
         $view .= ' CASE WHEN sub_tbl.connector = "non-mainwp-changes" THEN "WP Admin" ';
         $view .= ' ELSE "Dashboard" ';
-        $view .= ' END AS source ';
+        $view .= ' END AS source, ';
+        // to support searching on events column.
+        $view .= " CASE
+            WHEN sub_tbl.action = 'sync' THEN '" . MainWP_DB::instance()->escape( esc_html__( 'Sync Data', 'mainwp' ) ) . "'
+            WHEN sub_tbl.action = 'activate' THEN '" . MainWP_DB::instance()->escape( esc_html__( 'Activated', 'mainwp' ) ) . "'
+            WHEN sub_tbl.action = 'deactivate' THEN '" . MainWP_DB::instance()->escape( esc_html__( 'Deactivated', 'mainwp' ) ) . "'
+            WHEN sub_tbl.action = 'install' THEN '" . MainWP_DB::instance()->escape( esc_html__( 'Installed', 'mainwp' ) ) . "'
+            WHEN sub_tbl.action = 'updated' THEN '" . MainWP_DB::instance()->escape( esc_html__( 'Updated', 'mainwp' ) ) . "'
+            WHEN sub_tbl.action = 'delete' THEN '" . MainWP_DB::instance()->escape( esc_html__( 'Deleted', 'mainwp' ) ) . "'
+            WHEN sub_tbl.action = 'suspend' THEN '" . MainWP_DB::instance()->escape( esc_html__( 'Suspended', 'mainwp' ) ) . "'
+            ELSE sub_tbl.action
+        END AS action_display ";
         $view .= ' FROM ' . $wpdb->mainwp_tbl_logs . ' sub_tbl) ';
         return $view;
     }

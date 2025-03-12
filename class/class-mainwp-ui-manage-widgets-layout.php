@@ -285,7 +285,7 @@ class MainWP_Ui_Manage_Widgets_Layout { // phpcs:ignore Generic.Classes.OpeningB
         $list_segs      = '';
         if ( is_array( $saved_segments ) && ! empty( $saved_segments ) ) {
             $list_segs .= '<select id="mainwp-edit-layout-filters" class="ui fluid dropdown">';
-            $list_segs .= '<option value="">' . esc_html__( 'Select a layout', 'mainwp' ) . '</option>';
+            $list_segs .= '<option value="">' . esc_html__( 'Select layout', 'mainwp' ) . '</option>';
             foreach ( $saved_segments as $sid => $values ) {
                 if ( empty( $values['name'] ) ) {
                     continue;
@@ -339,9 +339,6 @@ class MainWP_Ui_Manage_Widgets_Layout { // phpcs:ignore Generic.Classes.OpeningB
                     </div>
                 </div>
                 <div id="mainwp-common-layout-widgets-select-fields" style="display:none;">
-                    <div class="field">
-                        <label><?php esc_html_e( 'Select a layout', 'mainwp' ); ?></label>
-                    </div>
                     <div class="field">
                         <div id="mainwp-common-edit-widgets-layout-lists-wrapper"></div>
                     </div>

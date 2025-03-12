@@ -183,9 +183,6 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
         $insights_filters = $this->get_insights_filters( true );
         static::render_logs_overview_top( $insights_filters );
         $this->load_events_list_table(); // for events table list.
-        ?>
-        <div class="ui segment" id="mainwp-non-mainwp-mananage-actions-overview">
-        <?php
         /**
          * Action: mainwp_logs_manage_table_top
          *
@@ -629,6 +626,14 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                 </div>
             </div>
             <?php Log_Events_Filter_Segment::get_instance()->render_filters_segment( 'module_log_manage' ); ?>
+        </div>
+
+        <div class="ui two columns grid" style="display: none;">
+            <div class="column ui mini form">
+            </div>
+            <div class="right aligned middle aligned column">
+                <a href="javascript:void(0)" id="" class="ui button mini green"><?php esc_html_e( 'Dismiss Changes', 'mainwp' ); ?></a>
+            </div>
         </div>
     </div>
         <?php

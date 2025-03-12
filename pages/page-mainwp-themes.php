@@ -89,7 +89,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         add_submenu_page(
             'mainwp_tab',
             __( 'Themes', 'mainwp' ),
-            '<div class="mainwp-hidden">' . esc_html__( 'Install', 'mainwp' ) . '</div>',
+            '<div class="mainwp-hidden">' . esc_html__( 'Install Themes', 'mainwp' ) . '</div>',
             'read',
             'ThemesInstall',
             array(
@@ -246,7 +246,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'leftsub_order_level2' => 1,
             ),
             array(
-                'title'                => esc_html__( 'Install', 'mainwp' ),
+                'title'                => esc_html__( 'Install Themes', 'mainwp' ),
                 'parent_key'           => 'ThemesManage',
                 'href'                 => 'admin.php?page=ThemesInstall',
                 'slug'                 => 'ThemesInstall',

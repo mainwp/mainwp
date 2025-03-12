@@ -350,6 +350,14 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     border-radius: 0px;
 }
 
+#mainwp-dashboard-update-available {
+    border-radius: 0px !important;
+}
+#mainwp-dashboard-update-available .icon {
+    display: block !important;
+    margin: 0px !important;
+}
+
 #mainwp-collapse-second-level-navigation {
     position: fixed;
     left: 272px;

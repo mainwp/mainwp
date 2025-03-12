@@ -2078,35 +2078,56 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     </div>
 
                     <h3 class="ui dividing header">
-                        <?php esc_html_e( 'Third-Party Permissions', 'mainwp' ); ?>
+                        <?php esc_html_e( 'Privacy & Third-Party Services Permissions', 'mainwp' ); ?>
+                        <div class="sub header"><?php esc_html_e( 'There tools are implemented using Javascript and are subject to their respective privacy policies. You can choose which services to enable below, and update preferences at anytime.', 'mainwp' ); ?></div>
                     </h3>
+
                     <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools">
                         <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_enable_guided_tours', (int) get_option( 'mainwp_enable_guided_tours', 0 ) );
-                            esc_html_e( 'Enable MainWP guided tours', 'mainwp' );
+                            esc_html_e( 'Usetiful (Interactiive Guides & Tips)', 'mainwp' );
                             ?>
                             <span class="ui blue mini label"><?php esc_html_e( 'BETA', 'mainwp' ); ?></span>
                         </label>
                         <div class="ten wide column " data-tooltip="<?php esc_attr_e( 'Check this option to enable, or uncheck to disable MainWP guided tours.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                            <div class="ui info message" style="display:block!important;">
-                                <?php printf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
-                            </div>
                             <div class="ui toggle checkbox">
                                 <input type="checkbox" class="settings-field-value-change-handler" name="mainwp-guided-tours-option" id="mainwp-guided-tours-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ? 'checked="true"' : ''; ?> />
+                                <label><?php esc_html_e( 'Enable guided tours, tooltips, and onboarding assistance to help you navigate MainWP more efficiently.', 'mainwp' ); ?></label>
                             </div>
-                        </div>
-                    </div>
-                    <?php
-                    $hide_priv_notice = 1 === (int) get_option( 'mainwp_help_modal_content_update' ) ? true : false;
-                    ?>
-                    <div class="ui grid field">
-                        <label class="six wide column middle aligned"><?php esc_html_e( 'Remove Quick Help feature thrid-party permissions', 'mainwp' ); ?></label>
-                        <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click this button to remove permissions.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                            <input type="button" <?php echo $hide_priv_notice ? 'onclick="mainwp_help_modal_content_onclick(0,true);return false;"' : ''; ?> class="ui button green basic <?php echo $hide_priv_notice ? '' : 'disabled'; ?>" value="<?php esc_attr_e( 'Remove Permissions', 'mainwp' ); ?>"/>
                         </div>
                     </div>
 
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools">
+                        <label class="six wide column middle aligned">
+                            <?php
+                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_enable_guided_chatbase', (int) get_option( 'mainwp_enable_guided_chatbase', 0 ) );
+                            esc_html_e( 'Chatbase (AI-Powered Chat Support)', 'mainwp' );
+                            ?>
+                            <span class="ui blue mini label"><?php esc_html_e( 'BETA', 'mainwp' ); ?></span>
+                        </label>
+                        <div class="ten wide column " data-tooltip="<?php esc_attr_e( 'Check this option to enable, or uncheck to disable MainWP AI drive support.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                            <div class="ui toggle checkbox">
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp-guided-chatbase-option" id="mainwp-guided-chatbase-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_chatbase', 0 ) ? 'checked="true"' : ''; ?> />
+                                <label><?php esc_html_e( 'Receive AI drive support within the MainWP Dashboard for quick answers to common questions.', 'mainwp' ); ?></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools">
+                        <label class="six wide column middle aligned">
+                            <?php
+                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_enable_guided_video', (int) get_option( 'mainwp_enable_guided_video', 0 ) );
+                            esc_html_e( 'Youtube Embeds (Video Tutorials)', 'mainwp' );
+                            ?>
+                        </label>
+                        <div class="ten wide column " data-tooltip="<?php esc_attr_e( 'Check this option to enable, or uncheck to disable MainWP video tutorials.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                            <div class="ui toggle checkbox">
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp-guided-video-option" id="mainwp-guided-video-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_video', 0 ) ? 'checked="true"' : ''; ?> />
+                                <label><?php esc_html_e( 'Enable embedded Youtube video tutorials within MainWP for step step-by-step guidance.', 'mainwp' ); ?></label>
+                            </div>
+                        </div>
+                    </div>
                     <?php
                     /**
                      * Action: mainwp_tools_form_bottom

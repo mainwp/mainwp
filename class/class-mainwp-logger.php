@@ -22,6 +22,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     const EXECUTION_TIME_LOG_PRIORITY  = 15;
     const LOGS_AUTO_PURGE_LOG_PRIORITY = 16;
     const LOGS_REGULAR_SCHEDULE        = 18;
+    const DEBUG_UPDATES_SCHEDULE       = 19;
     const COST_TRACKER_LOG_PRIORITY    = 20230112;
     const API_BACKUPS_LOG_PRIORITY     = 20240130;
     const CONNECT_LOG_PRIORITY         = 20241001;
@@ -305,18 +306,21 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
 
     /**
-     * Method log_update_check().
+     * Method log_events().
      *
      * @param string $event_name Event name.
      * @param string $text Log update check.
      */
-    public function log_custom_events( $event_name, $text = '' ) {
+    public function log_events( $event_name, $text = '' ) {
         switch ( $event_name ) {
             case 'update-check':
                 $this->log_action( '[Update Checks] :: ' . $text, static::UPDATE_CHECK_LOG_PRIORITY );
                 break;
             case 'regular-schedule':
                 $this->log_action( '[Regular Schedule] :: ' . $text, static::LOGS_REGULAR_SCHEDULE );
+                break;
+            case 'debug-updates-crons':
+                $this->log_action( '[Debug updates crons] :: ' . $text, static::DEBUG_UPDATES_SCHEDULE );
                 break;
             default:
                 break;

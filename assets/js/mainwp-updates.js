@@ -3450,8 +3450,9 @@ let mainwp_master_checkbox_init = function ($) {
 
 }
 // This function need to update when datatable changed it's style.
-window.mainwp_table_check_columns_init = function () {
-    jQuery(document).find('table th.check-column .checkbox').checkbox({ // table headers.
+window.mainwp_table_check_columns_init = function (pTableSelector) {
+    let tblSelect = pTableSelector ?? 'table';
+    jQuery(document).find(tblSelect + ' th.check-column .checkbox').checkbox({ // table headers.
         // check all children
         onChecked: function () {
             console.log('parent checked.');

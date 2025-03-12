@@ -831,12 +831,19 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
         if ( ! empty( $_POST['current_site_id'] ) ) {
             $insights_filters['wpid'] = intval( $_POST['current_site_id'] );
         } elseif ( ! empty( $_POST['current_client_id'] ) ) {
-            $client_id = intval( $_POST['current_site_id'] );
+            $client_id = intval( $_POST['current_client_id'] );
             $websites  = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id );
             $site_ids  = array();
-            foreach ( $websites as $website ) {
-                $site_ids[] = $website->id;
+            if ( $websites ) {
+                foreach ( $websites as $website ) {
+                    $site_ids[] = $website->id;
+                }
             }
+
+            if ( empty( $site_ids ) ) {
+                $site_ids = -1; // not found websites.
+            }
+
             $insights_filters['wpid'] = $site_ids;
         }
         $filter_source = isset( $_REQUEST['source'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['source'] ) ) : '';

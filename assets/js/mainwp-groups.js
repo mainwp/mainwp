@@ -164,10 +164,7 @@ jQuery(function () {
     jQuery(this).addClass('disabled');
 
     jQuery.post(ajaxurl, data, function () {
-      jQuery(this).removeClass('disabled');
-      jQuery('#mainwp-message-zone').stop(true, true);
-      jQuery('#mainwp-message-zone').show();
-      jQuery('#mainwp-message-zone').fadeOut(3000);
+      jQuery('#mainwp-save-sites-groups-selection-button').removeClass('disabled');
     }, 'json');
   });
 

@@ -740,7 +740,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                     </div>
                 <?php echo '</td>'; ?>
             <?php } elseif ( 'created' === $column_name ) { ?>
-                <td sort-value="<?php echo intval( $item['created'] ); ?>"><?php echo 0 !== (int)( $item['created'] ) ? '<span data-tooltip="' . MainWP_Utility::format_date( $item['created'] ) . '" data-inverted="" data-position="left center">' . MainWP_Utility::time_elapsed_string( $item['created'] ) . '</span>' : 'N/A'; //phpcs:ignore -- output ok. ?></td>
+                <td data-order="<?php echo intval( $item['created'] ); ?>"><?php echo 0 !== (int)( $item['created'] ) ? '<span data-tooltip="' . MainWP_Utility::format_date( $item['created'] ) . '" data-inverted="" data-position="left center">' . MainWP_Utility::time_elapsed_string( $item['created'] ) . '</span>' : 'N/A'; //phpcs:ignore -- output ok. ?></td>
             <?php } elseif ( 'name' === $column_name ) { ?>
                 <?php echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                     <a href="admin.php?page=ManageClients&client_id=<?php echo intval( $item['client_id'] ); ?>"><?php echo esc_html( $item['name'] ); ?></a>

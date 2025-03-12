@@ -192,7 +192,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * @param string $column_name  Column name.
      * @return string $out Output.
      */
-    public function column_default( $item, $column_name ) {
+    public function column_default( $item, $column_name ) { //phpcs:ignore -- NOSONAR -complex.
         $out = '';
 
         $record = new Log_Record( $item );

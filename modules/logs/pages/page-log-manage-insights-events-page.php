@@ -628,11 +628,11 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
             <?php Log_Events_Filter_Segment::get_instance()->render_filters_segment( 'module_log_manage' ); ?>
         </div>
 
-        <div class="ui two columns grid" style="display: none;">
+        <div class="ui two columns grid">
             <div class="column ui mini form">
             </div>
             <div class="right aligned middle aligned column">
-                <a href="javascript:void(0)" id="" class="ui button mini green"><?php esc_html_e( 'Dismiss Changes', 'mainwp' ); ?></a>
+                <a href="javascript:void(0)" id="mainwp_site_changes_actions_bulk_btn" class="ui button mini green"><?php esc_html_e( 'Dismiss Changes', 'mainwp' ); ?></a>
             </div>
         </div>
     </div>

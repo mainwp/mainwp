@@ -109,6 +109,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      */
     public function get_default_columns() {
         $columns = array(
+            'cb'            => '<input type="checkbox" />',
             'event'         => esc_html__( 'Event', 'mainwp' ),
             'log_object'    => esc_html__( 'Object', 'mainwp' ),
             'created'       => esc_html__( 'Date', 'mainwp' ),
@@ -562,7 +563,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             <?php
         }
         ?>
-        <table id="<?php echo esc_attr( $events_tbl_id ); ?>" style="width:100%" class="ui single line <?php echo 'manage-events2' === $this->table_id_prefix ? 'selectable' : ''; ?> unstackable table mainwp-with-preview-table">
+        <table id="<?php echo esc_attr( $events_tbl_id ); ?>" style="width:100%" class="ui single line <?php echo 'manage-events' === $this->table_id_prefix ? 'selectable' : ''; ?> unstackable table mainwp-with-preview-table">
             <thead>
                 <tr><?php $this->print_column_headers( true ); ?></tr>
             </thead>
@@ -717,7 +718,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                 if ( jQuery('#mainwp-module-log-records-body-table td.dt-empty').length > 0 && jQuery('#sites-table-count-empty').length ){
                                     jQuery('#mainwp-module-log-records-body-table td.dt-empty').html(jQuery('#sites-table-count-empty').html());
                                 }
-                                if( 'manage-events2' === '<?php echo esc_js( $this->table_id_prefix ); ?>' ){
+                                if( 'manage-events' === '<?php echo esc_js( $this->table_id_prefix ); ?>' ){
                                     setTimeout(() => {
                                         jQuery(manage_tbl_id + ' .ui.checkbox').checkbox();
                                         mainwp_datatable_fix_menu_overflow(manage_tbl_id);
@@ -735,7 +736,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                 jQuery( row ).find('.mainwp-state-cell').attr('data-sort', data.state_sort );
                             }
                             <?php
-                            if ( 'manage-events2' === $this->table_id_prefix ) {
+                            if ( 'manage-events' === $this->table_id_prefix ) {
                                 echo ",select: {
                                     items: 'row',
                                     style: 'multi+shift',
@@ -745,7 +746,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                             ?>
                         })
 
-                        if( 'manage-events2' === '<?php echo esc_js( $this->table_id_prefix ); ?>' ){
+                        if( 'manage-events' === '<?php echo esc_js( $this->table_id_prefix ); ?>' ){
                             $module_log_table.on('select', function (e, dt, type, indexes) {
                                 if( 'row' == type ){
                                     dt.rows(indexes)

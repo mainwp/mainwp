@@ -3688,18 +3688,13 @@ jQuery(document).on('change', '.cb-select-all-parent-top, .cb-select-all-parent-
 
 jQuery(function ($) {
   // Trigger the bulk actions
-  $('#mainwp_non_mainwp_actions_action_btn').on('click', function () {
-    let bulk_act = jQuery('#non_mainwp_actions_bulk_action').dropdown("get value");
-    let confirmMsg = '';
-    if ('delete' === bulk_act) {
-      confirmMsg = __("You are about to delete the selected changes?");
-    } else if ('dismiss' === bulk_act) {
-      confirmMsg = __("You are about to dismiss the selected changes?");
+  $('#mainwp_site_changes_actions_bulk_btn').on('click', function () {
+    if( jQuery('#mainwp-module-log-records-body-table tr').find('input[type="checkbox"]:checked').length == 0 ){
+        return;
     }
-    if (confirmMsg == '') {
-      return;
-    }
-    mainwp_confirm(confirmMsg, function () { mainwp_non_mainwp_actions_table_bulk_action(bulk_act); });
+    let bulk_act = 'dismiss';
+    let confirmMsg = __("You are about to dismiss the selected changes?");
+    mainwp_confirm(confirmMsg, function () { mainwp_sites_changes_actions_bulk_action(bulk_act); });
   });
 
   $(document).on('click', '.insights-actions-row-dismiss', function () {
@@ -3708,70 +3703,70 @@ jQuery(function ($) {
 })
 
 let mainwp_insights_row_actions_dismiss = function (obj) {
-    let row = jQuery(obj).closest('tr');
-    row.html('<td></td><td colspan="999"><i class="notched circle loading icon"></i> Please wait...</td>');
-    let data = mainwp_secure_data({
-      action: 'mainwp_insight_events_dismiss_actions',
-      log_id: jQuery(row).attr('log-id')
-    });
-    jQuery.post(ajaxurl, data, function (response) {
-      if (response) {
-        if (response['error']) {
-          row.html('<td></td><td colspan="999"><i class="times red icon"></i> ' + response['error'] + '</td>');
-        } else if (response['success'] == 'yes') {
-          row.html('<td></td><td colspan="999"><i class="green check icon"></i> The change has been dismissed.</td>');
-          setTimeout(function () {
-            jQuery(row).fadeOut("slow");
-          }, 2000);
-        } else {
-          row.html('<td></td><td colspan="999"><i class="times red icon"></i> The change could not be dismissed.</td>');
-        }
-      } else {
-        row.html('<td></td><td colspan="999"><i class="times red icon"></i> The change could not be dismissed.</td>');
-      }
-    }, 'json');
-  return false;
-}
+  let row = jQuery(obj).closest('tr');
+  let confirmMsg = __("You are about to dismiss the selected change?");
 
+  let _callback = () => {
+        row.html('<td></td><td colspan="999"><i class="notched circle loading icon"></i> Please wait...</td>');
+        let data = mainwp_secure_data({
+            action: 'mainwp_insight_events_dismiss_actions',
+            log_id: jQuery(row).attr('log-id')
+        });
+        jQuery.post(ajaxurl, data, function (response) {
+        if (response) {
+            if (response['error']) {
+                row.html('<td></td><td colspan="999"><i class="times red icon"></i> ' + response['error'] + '</td>');
+            } else if (response['success'] == 'yes') {
+                row.html('<td></td><td colspan="999"><i class="green check icon"></i> The change has been dismissed.</td>');
+                setTimeout(function () {
+                    jQuery(row).fadeOut("slow");
+                }, 2000);
+            } else {
+                row.html('<td></td><td colspan="999"><i class="times red icon"></i> The change could not be dismissed.</td>');
+            }
+        } else {
+            row.html('<td></td><td colspan="999"><i class="times red icon"></i> The change could not be dismissed.</td>');
+        }
+        }, 'json');
+    };
+    mainwp_confirm(confirmMsg, _callback);
+    return false;
+}
 
 
 // Manage Bulk Actions
-let mainwp_non_mainwp_actions_table_bulk_action = function (act) {
+let mainwp_sites_changes_actions_bulk_action = function (act) {
   mainwpVars.bulkInstallTotal = 0;
   bulkInstallCurrentThreads = 0;
   bulkInstallDone = 0;
-  let selector = '';
   if (act === 'dismiss') {
-    selector += '#mainwp-manage-non-mainwp-actions-table tbody tr';
+    jQuery('#mainwp_site_changes_actions_bulk_btn').addClass('disabled');
+    let selector = '#mainwp-module-log-records-body-table tr';
+    mainwpVars.bulkInstallTotal = jQuery(selector).find('input[type="checkbox"]:checked').length;
     jQuery(selector).addClass('queue');
-    mainwp_non_mainwp_actions_dismiss_start_next(selector);
+    mainwp_sites_changes_actions_dismiss_start_next(selector);
   }
 }
 
-let mainwp_non_mainwp_actions_dismiss_start_next = function (selector) {
-  if (mainwpVars.bulkInstallTotal == 0) {
-    mainwpVars.bulkInstallTotal = jQuery('#mainwp-manage-non-mainwp-actions-table tbody').find('input[type="checkbox"]:checked').length;
-  }
+let mainwp_sites_changes_actions_dismiss_start_next = function (selector) {
   while ((objProcess = jQuery(selector + '.queue:first')) && (objProcess.length > 0) && (bulkInstallCurrentThreads < bulkInstallMaxThreads)) { // NOSONAR - modified outside the function.
     objProcess.removeClass('queue');
     if (objProcess.closest('tr').find('input[type="checkbox"]:checked').length == 0) {
       continue;
     }
-    mainwp_non_mainwp_actions_dismiss_specific(objProcess, selector, true);
+    mainwp_sites_changes_actions_dismiss_specific(objProcess, selector);
   }
 }
 
-let mainwp_non_mainwp_actions_dismiss_specific = function (pObj, selector, bulk) {
+let mainwp_sites_changes_actions_dismiss_specific = function (pObj, selector) {
   let row = pObj.closest('tr');
-  let act_id = jQuery(row).attr('action-id');
+  let act_id = jQuery(row).attr('log-id');
 
-  if (bulk) {
     bulkInstallCurrentThreads++;
-  }
 
   let data = mainwp_secure_data({
-    action: 'mainwp_non_mainwp_changes_dismiss_actions',
-    act_id: act_id,
+    action: 'mainwp_insight_events_dismiss_actions',
+    log_id: act_id
   });
 
   row.html('<td></td><td colspan="999"><i class="notched circle loading icon"></i> Please wait...</td>');
@@ -3782,7 +3777,7 @@ let mainwp_non_mainwp_actions_dismiss_specific = function (pObj, selector, bulk)
       if (response['error']) {
         row.html('<td></td><td colspan="999"><i class="times red icon"></i> ' + response['error'] + '</td>');
       } else if (response['success'] == 'yes') {
-        row.html('<td></td><td colspan="999"><i class="green check icon"></i> Non-MainWP Change has been dismissed.</td>');
+        row.html('<td></td><td colspan="999"><i class="green check icon"></i> The change has been dismissed.</td>');
         setTimeout(function () {
           jQuery(row).fadeOut("slow");
         }, 2000);
@@ -3793,15 +3788,11 @@ let mainwp_non_mainwp_actions_dismiss_specific = function (pObj, selector, bulk)
       row.html('<td></td><td colspan="999"><i class="times red icon"></i> Failed. Please try again.</td>');
     }
 
-    if (bulk) {
-      bulkInstallCurrentThreads--;
-      bulkInstallDone++;
-      mainwp_non_mainwp_actions_dismiss_start_next(selector);
-      if (mainwpVars.bulkInstallTotal == bulkInstallDone) {
-        setTimeout(function () {
-          window.location.reload(true);
-        }, 3000);
-      }
+    bulkInstallCurrentThreads--;
+    bulkInstallDone++;
+    mainwp_sites_changes_actions_dismiss_start_next(selector);
+    if (mainwpVars.bulkInstallTotal == bulkInstallDone) {
+        jQuery('#mainwp_site_changes_actions_bulk_btn').removeClass('disabled');
     }
 
   }, 'json');

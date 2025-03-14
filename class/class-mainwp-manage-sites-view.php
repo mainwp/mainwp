@@ -689,7 +689,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 <div class="equal width row">
                     <div class="middle aligned column">
                         <div class="inline field">
-                            <div class="ui selection mini dropdown">
+                            <div class="ui selection mini dropdown select-individual-updates">
                                 <div class="text"><?php echo esc_html( $active_text ); ?></div>
                                 <i class="dropdown icon"></i>
                                 <div class="menu">
@@ -717,12 +717,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     do_action( 'mainwp_widget_updates_actions_top', $active_tab );
                     ?>
                     </div>
-                    <div class="middle aligned right aligned column">
-                        <?php if ( 'plugins' === $active_tab ) : ?>
-                            <?php echo '<a href="javascript:void(0)" data-tooltip="' . esc_html__( 'Update Selected Plugins.', 'mainwp' ) . '" onClick="updatesoverview_plugins_global_upgrade_all( false, true ); return false;" class="ui mini green basic button" data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>'; ?>
-                        <?php elseif ( 'themes' === $active_tab ) : ?>
-                            <?php echo '<a href="javascript:void(0)" onClick="updatesoverview_themes_global_upgrade_all( false, true );return false;" class="ui mini green basic button" data-tooltip="' . esc_html__( 'Update Selected Themes.', 'mainwp' ) . '" data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>'; ?>
-                        <?php endif; ?>
+                    <div class="middle aligned right aligned column select-buttons-individual-updates">
+                            <?php echo '<a href="javascript:void(0)" data-tooltip="' . esc_html__( 'Update Selected Plugins.', 'mainwp' ) . '" onClick="updatesoverview_plugins_global_upgrade_all( false, true ); return false;" class="ui mini green basic button plugins ' . ( 'plugins' === $active_tab ? '' : 'hidden' ) . '  "data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>'; ?>
+                            <?php echo '<a href="javascript:void(0)" onClick="updatesoverview_themes_global_upgrade_all( false, true );return false;" class="ui mini green basic button themes ' . ( 'themes' === $active_tab ? '' : 'hidden' ) . '" data-tooltip="' . esc_html__( 'Update Selected Themes.', 'mainwp' ) . '" data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>'; ?>
                     </div>
                 </div>
             </div>
@@ -1230,19 +1227,20 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 </div>
                 <?php
                 $healthThreshold = $website->health_threshold;
+                $indi_val        = 0 !== (int) $healthThreshold ? 1 : 0;
                 ?>
-                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-health" default-indi-value="80" <?php echo 1 === (int) $website->disable_health_check ? $hide_style : ''; //phpcs:ignore -- ok.?> hide-element="health-monitoring">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-health" default-indi-value="0" <?php echo 1 === (int) $website->disable_health_check ? $hide_style : ''; //phpcs:ignore -- ok.?> hide-element="health-monitoring">
                     <label class="six wide column middle aligned">
                     <?php
-                    MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_sitehealthThreshold', (int) $healthThreshold );
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', (int) $indi_val );
                     esc_html_e( 'Site health threshold (optional)', 'mainwp' );
                     ?>
                     </label>
                     <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Site health threshold.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <select name="mainwp_managesites_edit_healthThreshold" id="mainwp_managesites_edit_healthThreshold" class="ui dropdown settings-field-value-change-handler">
-                            <option value="80" <?php echo 80 === $healthThreshold ? 'selected' : ''; ?>><?php esc_html_e( 'Should be improved', 'mainwp' ); ?></option>
-                            <option value="100" <?php echo 100 === $healthThreshold ? 'selected' : ''; ?>><?php esc_html_e( 'Good', 'mainwp' ); ?></option>
-                            <option value="0" <?php echo 0 === $healthThreshold ? 'selected' : ''; ?>><?php echo $text_use_global; //phpcs:ignore --ok. ?></option>
+                            <option value="80" <?php echo 80 === (int) $healthThreshold ? 'selected' : ''; ?>><?php esc_html_e( 'Should be improved', 'mainwp' ); ?></option>
+                            <option value="100" <?php echo 100 === (int) $healthThreshold ? 'selected' : ''; ?>><?php esc_html_e( 'Good', 'mainwp' ); ?></option>
+                            <option value="0" <?php echo 0 === (int) $healthThreshold ? 'selected' : ''; ?>><?php echo $text_use_global; //phpcs:ignore --ok. ?></option>
                         </select>
                     </div>
                 </div>
@@ -2203,7 +2201,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         $others = array(
                             'groupids'          => $groupids,
                             'groupnames'        => $groupnames,
-                            'verifyCertificate' => $verifyCertificate,
+                            'verifyCertificate' => $verifyCertificate || false === $verifyCertificate ? 2 : 0, // 2 use global.
                             'addUniqueId'       => $addUniqueId,
                             'http_user'         => $http_user,
                             'http_pass'         => $http_pass,

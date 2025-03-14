@@ -711,7 +711,11 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         if ( false === $show_cols ) { // to backwards.
             $show_cols = array();
             foreach ( $columns as $name => $title ) {
-                $show_cols[ $name ] = 1;
+                if ( in_array( $name, array( 'image', 'client', 'suspended', 'contact_name', 'websites', 'created' ) ) ) {
+                    $show_cols[ $name ] = 1;
+                } else {
+                    $show_cols[ $name ] = 0;
+                }
             }
             $user = wp_get_current_user();
             if ( $user ) {

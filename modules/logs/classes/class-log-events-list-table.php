@@ -543,6 +543,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             unset( $pages_length[-1] );
         }
 
+        // @since 5.4.1.
+        $pages_length = apply_filters( 'mainwp_site_changes_table_pages_length', $pages_length );
+
         $pagelength_val   = implode( ',', array_keys( $pages_length ) );
         $pagelength_title = implode( ',', array_values( $pages_length ) );
 
@@ -700,7 +703,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                             "stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
                             "order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
                             "fixedColumns" : <?php echo ! empty( $table_features['fixedColumns'] ) ? esc_js( $table_features['fixedColumns'] ) : '""'; ?>,
-                            "lengthMenu" : [ [<?php echo esc_js( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All"] ],
+                            "lengthMenu" : [ [<?php echo esc_js( $pagelength_val ); ?>], [<?php echo esc_js( $pagelength_title ); ?>] ],
                             "serverSide": true,
                             "pageLength": <?php echo intval( $sites_per_page ); ?>,
                             "columnDefs": <?php echo wp_json_encode( $this->get_columns_defines() ); ?>,

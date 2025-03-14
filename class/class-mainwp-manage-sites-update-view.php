@@ -112,7 +112,14 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
         </div>
         <script type="text/javascript">
             jQuery(function ($) {
-                jQuery( '.ui.dropdown .item' ).tab();
+                $( '.ui.dropdown:not(.select-individual-updates) .item' ).tab();
+                $( '.ui.dropdown.select-individual-updates .item' ).tab({
+                    'onVisible': function (tab) {
+                        console.log(tab);
+                        $('.select-buttons-individual-updates .button.ui').addClass('hidden');
+                        $('.select-buttons-individual-updates .button.ui.' + tab).removeClass('hidden');
+                    }
+                });
                 jQuery( 'table.ui.table' ).DataTable( {
                     "searching": true,
                     "paging" : false,

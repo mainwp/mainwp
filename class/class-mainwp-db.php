@@ -2369,7 +2369,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         $groupids          = isset( $params['groupids'] ) ? $params['groupids'] : array();
         $groupnames        = isset( $params['groupnames'] ) ? $params['groupnames'] : array();
-        $verifyCertificate = isset( $params['verifyCertificate'] ) ? (int) $params['verifyCertificate'] : 1;
+        $verifyCertificate = isset( $params['verifyCertificate'] ) ? (int) $params['verifyCertificate'] : 2;
         $uniqueId          = isset( $params['uniqueId'] ) ? $params['uniqueId'] : '';
         $http_user         = isset( $params['http_user'] ) ? $params['http_user'] : null;
         $http_pass         = isset( $params['http_pass'] ) ? $params['http_pass'] : null;
@@ -2586,7 +2586,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $http_pass = null,
         $sslVersion = 0,
         $disableHealthChecking = 1,
-        $healthThreshold = 80,
+        $healthThreshold = 0,
         $backup_method = 'global'
     ) {
 

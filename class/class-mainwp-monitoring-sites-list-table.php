@@ -1597,8 +1597,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                 $color    = 'gray';
                 $text     = __( 'Pending', 'mainwp' );
             }
-            $total_up   += $up_stats['up'];
-            $total_down += $up_stats['down'];
+            $total_up   += (int) $up_stats['up'];
+            $total_down += (int) $up_stats['down'];
 
             $local_time = MainWP_Utility::get_timestamp( $hourly_key );
             $time_from  = MainWP_Utility::format_timestamp( $local_time ) . ' ' . MainWP_Utility::format_time( $local_time + HOUR_IN_SECONDS );
@@ -1611,7 +1611,14 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
         }
         ?>
         <?php
-        echo '<br/><span class="ui small text">' . ( $total_up ? esc_html__( 'Up', 'mainwp' ) . ' ' . (int) ( $total_up * 100 / ( $total_up + $total_down ) ) . ' %' : esc_html__( 'Down', 'mainwp' ) ) . '</span>';
+
+        $is_pending = 0 === ( $total_up + $total_down );
+
+        if ( $is_pending ) {
+            echo '<br/><span class="ui small text">' . esc_html__( 'Pending', 'mainwp' ) . '</span>';
+        } else {
+            echo '<br/><span class="ui small text">' . ( $total_up ? esc_html__( 'Up', 'mainwp' ) . ' ' . (int) ( $total_up * 100 / ( $total_up + $total_down ) ) . ' %' : esc_html__( 'Down', 'mainwp' ) ) . '</span>';
+        }
     }
 
 

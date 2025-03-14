@@ -1116,8 +1116,10 @@ let updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelect
     let siteNames = {};
     let sitesPluginSlugs = {};
     let foundChildren = updatesoverview_themes_get_global_upgrade_all(groupId, updatesSelected);
-    if (foundChildren.length == 0)
-        return;
+    if (foundChildren.length == 0){
+        updates_please_select_items_notice();
+        return false;
+    }
     let sitesCount = 0;
 
     mainwpPopup('#mainwp-sync-sites-modal').clearList();
@@ -1224,10 +1226,6 @@ let updatesoverview_themes_get_global_upgrade_all = function (groupId, updatesSe
                     }
                 }
             );
-        }
-        if (foundChildren.length == 0) {
-            updates_please_select_items_notice();
-            return false;
         }
     } else if (typeof groupId !== 'undefined' && false !== groupId) {
         foundChildren = jQuery('#update_wrapper_theme_upgrades_group_' + groupId).find('tr.mainwp-theme-update[updated="0"]');

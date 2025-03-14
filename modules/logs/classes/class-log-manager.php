@@ -280,10 +280,10 @@ class Log_Manager {
             if ( isset( $data['meta_data'] ) && is_array( $data['meta_data'] ) ) {
                 $meta_data = $data['meta_data'];
                 if ( isset( $meta_data['user_meta'] ) && is_array( $meta_data['user_meta'] ) ) {
-                    $user_meta = $meta_data['user_meta'];
+                    $user_meta = $meta_data['user_meta']; // to compatible old user_meta site changes actions data.
                     unset( $meta_data['user_meta'] );
                 } elseif ( isset( $meta_data['meta_data'] ) && ! empty( $meta_data['meta_data'] ) && is_array( $meta_data['meta_data'] ) ) {
-                    $user_meta = $meta_data['meta_data'];
+                    $user_meta = $meta_data['meta_data']; // new meta_data site changes actions.
                     unset( $meta_data['meta_data'] );
                 }
                 $meta_data['user_meta_json'] = wp_json_encode( $user_meta );

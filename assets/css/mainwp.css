@@ -675,6 +675,15 @@ table.mainwp-manage-wpsites-table .error a {
     padding-top: 1em;
 }
 
+/* Sites Changes Table */
+
+#mainwp-module-log-records-table-widget-overview tbody tr td.mainwp-sites-changes-object-cell {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 185px;
+}
+
 /* Manage Cliens Table */
 
 #mainwp-manage-clients-table .custom-icon {

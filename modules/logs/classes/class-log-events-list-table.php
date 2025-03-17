@@ -181,6 +181,11 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'targets'   => array( 'manage-col_action-column' ),
             'className' => 'collapsing',
         );
+        $defines[] = array(
+            'targets'   => array( 'manage-log_object-column' ),
+            'className' => 'mainwp-sites-changes-object-cell',
+        );
+
         return $defines;
     }
     // @NO_SONAR_END@  .

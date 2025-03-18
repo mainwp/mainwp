@@ -3688,13 +3688,20 @@ jQuery(document).on('change', '.cb-select-all-parent-top, .cb-select-all-parent-
 
 jQuery(function ($) {
   // Trigger the bulk actions
-  $('#mainwp_site_changes_actions_bulk_btn').on('click', function () {
-    if( jQuery('#mainwp-module-log-records-body-table tr').find('input[type="checkbox"]:checked').length == 0 ){
+  $('#mainwp_sites_changes_bulk_dismiss_selected_btn').on('click', function () {
+    if ( jQuery('#mainwp-module-log-records-body-table tr').find('input[type="checkbox"]:checked').length == 0 ){
         return;
     }
-    let bulk_act = 'dismiss';
     let confirmMsg = __("You are about to dismiss the selected changes?");
-    mainwp_confirm(confirmMsg, function () { mainwp_sites_changes_actions_bulk_action(bulk_act); });
+    mainwp_confirm(confirmMsg, function () { mainwp_sites_changes_actions_bulk_action('dismiss-selected'); });
+  });
+
+  $('#mainwp_sites_changes_bulk_dismiss_all_btn').on('click', function () {
+    if ( jQuery('#mainwp-module-log-records-body-table tr').find('input[type="checkbox"]').length == 0 ){
+        return;
+    }
+    let confirmMsg = __("You are about to dismiss all changes?");
+    mainwp_confirm(confirmMsg, function () { mainwp_sites_changes_actions_bulk_action('dismiss-all'); });
   });
 
   $(document).on('click', '.insights-actions-row-dismiss', function () {
@@ -3739,12 +3746,15 @@ let mainwp_sites_changes_actions_bulk_action = function (act) {
   mainwpVars.bulkInstallTotal = 0;
   bulkInstallCurrentThreads = 0;
   bulkInstallDone = 0;
-  if (act === 'dismiss') {
-    jQuery('#mainwp_site_changes_actions_bulk_btn').addClass('disabled');
+  if ( act === 'dismiss-selected' ) {
+    jQuery('#mainwp_sites_changes_bulk_dismiss_selected_btn').addClass('disabled');
     let selector = '#mainwp-module-log-records-body-table tr';
     mainwpVars.bulkInstallTotal = jQuery(selector).find('input[type="checkbox"]:checked').length;
     jQuery(selector).addClass('queue');
     mainwp_sites_changes_actions_dismiss_start_next(selector);
+  } else if( act === 'dismiss-all' ) {
+    jQuery('#mainwp_sites_changes_bulk_dismiss_all_btn').addClass('disabled');
+    mainwp_sites_changes_actions_dismiss_all();
   }
 }
 
@@ -3792,12 +3802,37 @@ let mainwp_sites_changes_actions_dismiss_specific = function (pObj, selector) {
     bulkInstallDone++;
     mainwp_sites_changes_actions_dismiss_start_next(selector);
     if (mainwpVars.bulkInstallTotal == bulkInstallDone) {
-        jQuery('#mainwp_site_changes_actions_bulk_btn').removeClass('disabled');
+        jQuery('#mainwp_sites_changes_bulk_dismiss_selected_btn').removeClass('disabled');
     }
-
   }, 'json');
   return false;
 }
+
+let mainwp_sites_changes_actions_dismiss_all = function(){
+  let data = mainwp_secure_data({
+    action: 'mainwp_insight_events_dismiss_all',
+  });
+  mainwp_showhide_message('mainwp-message-zone-top', '<i class="notched circle loading icon"></i> Please wait...', 'green' );
+  jQuery.post(ajaxurl, data, function (response) {
+    if (response) {
+      if (response['error']) {
+        mainwp_showhide_message('mainwp-message-zone-top', '<i class="times red icon"></i> ' + response['error'], 'red' );
+      } else if (response['success'] == 'yes') {
+        mainwp_showhide_message('mainwp-message-zone-top', '<i class="green check icon"></i> All changes has been dismissed.', 'green' );
+        setTimeout(function () {
+            window.location.href = location.href
+        }, 2000);
+      } else {
+        mainwp_showhide_message('mainwp-message-zone-top', '<i class="times red icon"></i> Failed. Please try again.', 'green' );
+      }
+    } else {
+        mainwp_showhide_message('mainwp-message-zone-top', '<i class="times red icon"></i> Failed. Please try again.', 'green' );
+    }
+  }, 'json');
+  return false;
+
+}
+
 
 window.mainwp_datatable_fix_to_update_selected_rows_status = function (dtApi, setStatus) {
   if (dtApi) {
@@ -4813,4 +4848,10 @@ jQuery(function ($) {
     return false;
   });
 
+});
+
+
+jQuery(document).on('click', '#mainwp-sites-changes-filter-toggle-button', function () {
+    jQuery('#mainwp-module-log-filters-row').toggle(300);
+    return false;
 });

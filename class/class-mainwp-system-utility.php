@@ -1648,6 +1648,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             'sync_errors',
             'signature_algo',
             'verify_method',
+            'suspended',
         );
     }
 

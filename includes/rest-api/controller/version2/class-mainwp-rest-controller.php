@@ -351,6 +351,10 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
             $args['offset'] = $request['offset'];
         }
 
+        if ( ! empty( $request['limit'] ) ) {
+            $args['limit'] = $request['limit'];
+        }
+
         if ( ! empty( $request['order'] ) ) {
             $args['order'] = $request['order'];
         }

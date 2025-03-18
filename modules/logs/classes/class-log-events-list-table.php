@@ -680,6 +680,24 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                             data.recent_number =  $( '#mainwp-widget-filter-events-limit').length ? $( '#mainwp-widget-filter-events-limit').val() : 100;
                                         }
                                     }
+
+                                    if('mainwp_module_log_manage_events_display_rows' === ajax_action ){
+                                        if( ( data.source == '' || data.source == 'allsource' ) &&
+                                            ( data.events == '' || data.events == 'allevents' ) &&
+                                            ( data.sites == '' || data.sites == 'allsites' ) &&
+                                            ( data.group == '' || data.group == 'alltags' ) &&
+                                            ( data.client == '' || data.client == 'allclients' ) &&
+                                            ( data.user == '' || data.user == 'allusers' ) &&
+                                            data.range == 'today' &&
+                                            data.current_client_id == '' &&
+                                            data.current_site_id == ''
+                                        ){
+                                            jQuery('#mainwp-module-log-filters-row').fadeOut(300);
+                                        } else{
+                                            jQuery('#mainwp-module-log-filters-row').fadeIn(300);
+                                        }
+                                    }
+
                                     return $.extend( {}, d, data );
                                 },
                                 "dataSrc": function ( json ) {

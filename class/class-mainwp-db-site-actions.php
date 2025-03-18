@@ -243,9 +243,9 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
         if ( is_array( $results ) && isset( $results['items'] ) ) {
             $items = array();
             foreach ( $results['items'] as $item ) {
-                $item->site_name = $site->name;
-                $item->url       = $site->url;
-                $items[]         = $item;
+                $item->log_site_name = $site->name;
+                $item->url           = $site->url;
+                $items[]             = $item;
             }
             return $items;
         } elseif ( $total_count ) {

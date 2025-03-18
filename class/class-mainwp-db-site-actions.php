@@ -163,25 +163,25 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
      * Get wp actions.
      *
      * @param bool  $params params.
-     * @param mixed $obj Format data.
+     * @param mixed $site Site data.
      *
      * @return mixed $result result.
      */
-    public function get_wp_actions( $params = array(), $obj = OBJECT) { //phpcs:ignore -- NOSONAR - complex.
-        return $this->get_none_mainwp_actions_log( $params, $obj );
+    public function get_wp_actions( $params = array(), $site = false ) { //phpcs:ignore -- NOSONAR - complex.
+        return $this->get_none_mainwp_actions_log_for_rest_api( $params, $site );
     }
 
     /**
-     * Method get_none_mainwp_actions_log.
+     * Method get_none_mainwp_actions_log_for_rest_api.
      *
      * Get wp actions.
      *
      * @param bool  $legacy_params params.
-     * @param mixed $obj Format data.
+     * @param mixed $site Site data.
      *
      * @return mixed $result result.
      */
-    public function get_none_mainwp_actions_log( $legacy_params = array(), $obj = OBJECT ) { //phpcs:ignore -- NOSONAR - complex.
+    public function get_none_mainwp_actions_log_for_rest_api( $legacy_params = array(), $site = false ) { //phpcs:ignore -- NOSONAR - complex.
 
         $action_id    = isset( $legacy_params['action_id'] ) ? intval( $legacy_params['action_id'] ) : 0;
         $site_id      = isset( $legacy_params['wpid'] ) ? $legacy_params['wpid'] : 0;
@@ -234,11 +234,20 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
             $compatible_args['sources_conds'] = 'wp-admin-only';
         }
 
+        $compatible_args['view'] = 'api-view';
+
         $query_log = new Log_Query();
 
         $results = $query_log->query( $compatible_args );
+
         if ( is_array( $results ) && isset( $results['items'] ) ) {
-            return $results['items'];
+            $items = array();
+            foreach ( $results['items'] as $item ) {
+                $item->site_name = $site->name;
+                $item->url       = $site->url;
+                $items[]         = $item;
+            }
+            return $items;
         } elseif ( $total_count ) {
             if ( isset( $results['count'] ) ) {
                 return $results['count'];

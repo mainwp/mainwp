@@ -219,7 +219,7 @@ class Log_Query {
             }
         }
 
-        if ( $check_access ) {
+        if ( $check_access && 'api-view' !== $view ) {
             $where_actions .= MainWP_DB::instance()->get_sql_where_allow_access_sites( 'wp' );
         }
 
@@ -233,14 +233,20 @@ class Log_Query {
         $selects   = array();
         $selects[] = 'lg.*';
 
-        $selects[] = 'wp.url as url';
-        $selects[] = 'wp.name as log_site_name';
+        if ( 'api-view' !== $view ) {
+            $selects[] = 'wp.url as url';
+            $selects[] = 'wp.name as log_site_name';
+        }
 
         $selects[] = 'meta_view.*';
 
         $select = implode( ', ', $selects );
-        $join   = ' LEFT JOIN ' . $wpdb->mainwp_tbl_wp . ' wp ON lg.site_id = wp.id ';
-        $join  .= ' LEFT JOIN ' . $this->get_log_meta_view() . ' meta_view ON lg.log_id = meta_view.view_log_id ';
+
+        if ( 'api-view' !== $view ) {
+            $join = ' LEFT JOIN ' . $wpdb->mainwp_tbl_wp . ' wp ON lg.site_id = wp.id ';
+        }
+
+        $join .= ' LEFT JOIN ' . $this->get_log_meta_view() . ' meta_view ON lg.log_id = meta_view.view_log_id ';
 
         if ( 'events_list' === $view ) {
             $join .= ' LEFT JOIN ' . $this->get_sub_query_view() . ' sub_lg ON lg.log_id = sub_lg.sub_log_id ';
@@ -284,7 +290,7 @@ class Log_Query {
             );
         }
 
-        if ( true || ! empty( $args['dev_log_query'] ) ) {
+        if ( ! empty( $args['dev_log_query'] ) ) {
             //phpcs:disable Squiz.PHP.CommentedOutCode.Found,WordPress.PHP.DevelopmentFunctions
             error_log( print_r( $args, true ) );
             error_log( $recent_query );

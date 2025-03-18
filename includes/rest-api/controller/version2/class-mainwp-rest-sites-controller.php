@@ -1286,13 +1286,13 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $params['rowcount'] = intval( $args['items_per_page'] );
             $params['offset']   = ( (int) ( $args['paged'] ) - 1 ) * $params['rowcount'];
         } else {
-             // support compatible api param.
-            $limit = ! empty( $args['limit'] ) ? (int)( $args['limit'] ) : 200;
+            // support compatible api param.
+            $limit              = ! empty( $args['limit'] ) ? (int) ( $args['limit'] ) : 200;
             $params['rowcount'] = $limit;
             $params['offset']   = 0;
         }
 
-        $data = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params );
+        $data = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params, $website );
 
         $resp_data = array(
             'success' => 1,

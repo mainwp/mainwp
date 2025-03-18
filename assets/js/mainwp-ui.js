@@ -754,6 +754,8 @@ let mainwp_upload_custom_types_icon = function (iconObj, uploadAct, iconItemId, 
                 if (typeof callback_uploaded == 'function') {
                     callback_uploaded(response);
                 }
+            } else if (response.error) {
+                feedback('mainwp-message-zone-upload', response.error, 'red');
             } else {
                 feedback('mainwp-message-zone-upload', __('Undefined error. Please try again.'), 'red');
             }

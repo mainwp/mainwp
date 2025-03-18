@@ -707,6 +707,8 @@ let mainwp_upload_custom_icon = function (iconObj) {
                 setTimeout(function () {
                     window.location.href = location.href;
                 }, 3000);
+            } else if (response.error) {
+                feedback('mainwp-message-zone-upload', response.error, 'red');
             } else {
                 feedback('mainwp-message-zone-upload', __('Undefined error. Please try again.'), 'red');
             }

@@ -1603,11 +1603,13 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 $total_plugin_upgrades = 0;
                 $total_theme_upgrades  = 0;
 
+                $total_ignored_updates = 0;
+
                 $site_options          = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'ignored_wp_upgrades', 'premium_upgrades', 'primary_lasttime_backup' ) );
                 $wp_upgrades           = isset( $site_options['wp_upgrades'] ) ? json_decode( $site_options['wp_upgrades'], true ) : array();
                 $ignored_core_upgrades = isset( $site_options['ignored_wp_upgrades'] ) ? json_decode( $site_options['ignored_wp_upgrades'], true ) : array();
 
-                if ( $website['is_ignoreCoreUpdates'] || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $ignored_core_upgrades, 'core' ) || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $decodedIgnoredCores, 'core' ) ) {
+                if ( $website['is_ignoreCoreUpdates'] || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $ignored_core_upgrades, 'core', $total_ignored_updates ) || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $decodedIgnoredCores, 'core', $total_ignored_updates ) ) {
                     $wp_upgrades = array();
                 }
 
@@ -1653,12 +1655,12 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 if ( is_array( $plugin_upgrades ) ) {
                     $ignored_plugins = json_decode( $website['ignored_plugins'], true );
                     if ( is_array( $ignored_plugins ) ) {
-                        $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
+                        $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins, $total_ignored_updates );
                     }
 
                     $ignored_plugins = json_decode( $this->userExtension->ignored_plugins, true );
                     if ( is_array( $ignored_plugins ) ) {
-                        $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
+                        $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins, $total_ignored_updates );
                     }
                     $total_plugin_upgrades += count( $plugin_upgrades );
                 }
@@ -1666,11 +1668,11 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 if ( is_array( $theme_upgrades ) ) {
                     $ignored_themes = json_decode( $website['ignored_themes'], true );
                     if ( is_array( $ignored_themes ) ) {
-                        $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
+                        $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes, $total_ignored_updates );
                     }
                     $ignored_themes = json_decode( $this->userExtension->ignored_themes, true );
                     if ( is_array( $ignored_themes ) ) {
-                        $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
+                        $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes, $total_ignored_updates );
                     }
                     $total_theme_upgrades += count( $theme_upgrades );
                 }
@@ -1769,8 +1771,11 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         <a href="<?php echo esc_url( $website['url'] ); ?>" class="mainwp-may-hide-referrer open_site_url" target="_blank"><?php echo esc_html( MainWP_Utility::get_nice_url( $website['url'] ) ); ?></a>
                     <?php } elseif ( 'tags' === $column_name ) { ?>
                         <?php echo MainWP_System_Utility::get_site_tags_belong( $website ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
-                    <?php } elseif ( 'update' === $column_name ) { ?>
-                        <a data-tooltip="<?php echo ! empty( $website['dtsSync'] ) ? esc_attr__( 'Last sync: ', 'mainwp' ) . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['dtsSync'] ) ) : ''; //phpcs:ignore -- ok. ?> " data-position="left center" data-inverted="" class="ui mini grey button" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>">
+                        <?php
+                    } elseif ( 'update' === $column_name ) {
+                        $ignored_info = ! empty( $total_ignored_updates ) ? ' (' . (int) $total_ignored_updates . ' updates ignored)' : '';
+                        ?>
+                        <a data-tooltip="<?php echo ! empty( $website['dtsSync'] ) ? esc_attr__( 'Last sync: ', 'mainwp' ) . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['dtsSync'] ) ) : ''; echo $ignored_info; //phpcs:ignore -- ok. ?> " data-position="left center" data-inverted="" class="ui mini grey button" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>">
                             <i class="sync alternate icon"></i> <?php echo intval( $total_updates ); ?>
                         </a>
                     <?php } elseif ( 'wpcore_update' === $column_name ) { ?>
@@ -1988,6 +1993,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         $total_plugin_upgrades = 0;
         $total_theme_upgrades  = 0;
 
+        $total_ignored_updates = 0;
+
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();
 
         $decodedIgnoredCores = ! empty( $userExtension->ignored_wp_upgrades ) ? json_decode( $userExtension->ignored_wp_upgrades, true ) : array();
@@ -1999,7 +2006,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         $wp_upgrades           = isset( $site_options['wp_upgrades'] ) ? json_decode( $site_options['wp_upgrades'], true ) : array();
         $ignored_core_upgrades = isset( $site_options['ignored_wp_upgrades'] ) ? json_decode( $site_options['ignored_wp_upgrades'], true ) : array();
 
-        if ( $website['is_ignoreCoreUpdates'] || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $ignored_core_upgrades, 'core' ) || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $decodedIgnoredCores, 'core' ) ) {
+        if ( $website['is_ignoreCoreUpdates'] || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $ignored_core_upgrades, 'core', $total_ignored_updates ) || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $decodedIgnoredCores, 'core', $total_ignored_updates ) ) {
             $wp_upgrades = array();
         }
 
@@ -2046,13 +2053,13 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
 
             $ignored_plugins = json_decode( $website['ignored_plugins'], true );
             if ( is_array( $ignored_plugins ) ) {
-                $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
+                $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins, $total_ignored_updates );
 
             }
 
             $ignored_plugins = json_decode( $this->userExtension->ignored_plugins, true );
             if ( is_array( $ignored_plugins ) ) {
-                $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
+                $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins, $total_ignored_updates );
             }
 
             $total_plugin_upgrades += count( $plugin_upgrades );
@@ -2062,12 +2069,12 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
 
             $ignored_themes = json_decode( $website['ignored_themes'], true );
             if ( is_array( $ignored_themes ) ) {
-                $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
+                $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes, $total_ignored_updates );
             }
 
             $ignored_themes = json_decode( $this->userExtension->ignored_themes, true );
             if ( is_array( $ignored_themes ) ) {
-                $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
+                $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes, $total_ignored_updates );
             }
 
             $total_theme_upgrades += count( $theme_upgrades );

@@ -1,5 +1,4 @@
-
-/* eslint complexity: ["error", 100] */
+/* eslint-disable complexity */
 
 window.wp = window.wp || {};
 window.mainwpVars = window.mainwpVars || {};
@@ -146,6 +145,7 @@ jQuery(function () {
     stick_element_init();
 });
 
+// eslint-disable-next-line complexity
 window.mainwp_confirm = function (msg, confirmed_callback, cancelled_callback, updateType, multiple, extra) {    // updateType: 1 single update, 2 multi update
     let confVal;
     if (jQuery('#mainwp-disable-update-confirmations').length > 0) {

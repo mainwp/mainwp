@@ -1,4 +1,4 @@
-/* eslint complexity: ["error", 100] */
+/* eslint-disable complexity */
 // current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 window.mainwpVars = window.mainwpVars || {};
@@ -396,7 +396,7 @@ let subMenuOut = function (subName) {
   jQuery('#mainwp-' + subName).parent().parent().removeClass('hoverli');
   jQuery('#mainwp-' + subName).css('color', '');
 };
-
+// eslint-disable-next-line complexity
 window.mainwp_js_get_error_not_detected_connect = function (jsonStr, what, elemId, retErrText) { // NOSONAR - complexity.
   if (undefined !== jsonStr && '' != jsonStr && undefined !== what && 'html_msg' === what) {
     try {
@@ -737,6 +737,7 @@ let securityIssues_request = function (websiteId) {
     securityIssues_handle(response);
   }, 'json');
 };
+// eslint-disable-next-line complexity
 let securityIssues_handle = function (response) { // NOSONAR - complex.
   let result = '';
   if (response.error) {

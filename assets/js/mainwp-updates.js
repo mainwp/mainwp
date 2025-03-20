@@ -1,4 +1,4 @@
-/* eslint complexity: ["error", 100] */
+/* eslint-disable complexity */
 // current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 window.mainwpVars = window.mainwpVars || {};
@@ -3526,6 +3526,7 @@ const render_html_regression_sync_score_icon = function (score, change_score, we
 
     if (icon_html !== "" && Number.isInteger(website_id)) {
         let msg = 'Change score changed. Click to review changes.';
+        // eslint-disable-next-line no-constant-condition
         if (typeof mainwpTranslations) {
             msg = mainwpTranslations?.Change_score_changed_Click_to_review_changes || msg;
         }

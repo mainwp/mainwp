@@ -580,11 +580,11 @@ jQuery(document).on('click', '#mainwp-extensions-bulkinstall', function () {
     if (api_key == '') {
         mainwp_extension_grab_org_extensions();
     } else {
-        mainwp_extension_grab_purchased(this, false);
+        mainwp_extension_grab_purchased(false);
     }
 })
 
-let mainwp_extension_grab_purchased = function (pObj, retring) {
+let mainwp_extension_grab_purchased = function (retring) {
 
     let grabingEl = jQuery("#mainwp-extensions-api-fields");
     let api_key = grabingEl.find('#mainwp_com_api_key').val().trim();
@@ -631,7 +631,7 @@ let mainwp_extension_grab_purchased = function (pObj, retring) {
                 } else if (response.retry_action && response.retry_action == 1) {
                     jQuery("#mainwp_api_sslVerifyCertificate").val(0);
                     statusEl.fadeOut();
-                    mainwp_extension_grab_purchased(pObj, true);
+                    mainwp_extension_grab_purchased(true);
                     return false;
                 } else {
                     undefError = true;

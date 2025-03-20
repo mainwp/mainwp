@@ -1695,25 +1695,9 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @return void
      */
     public function perform_sequence_process() { //phpcs:ignore -- NOSONAR - complexity.
-
         $register_process = apply_filters( 'mainwp_register_regular_sequence_process', array() );
-
-        $list_processes = get_option( 'mainwp_regular_sequence_process_saved', array() );
-
-        if ( ! empty( $list_processes ) ) {
-            $list_processes = json_decode( $list_processes, true );
-            // fix incorrect data.
-            $fix_keys = array_keys( $list_processes );
-            if ( isset( $fix_keys[0] ) && 0 === (int) $fix_keys[0] && isset( $fix_keys[1] ) && 1 === (int) $fix_keys[1] ) {
-                $list_processes = array();
-                MainWP_Utility::update_option( 'mainwp_regular_sequence_process_saved', wp_json_encode( $list_processes ) );
-            }
-        }
-
         $register_process = is_array( $register_process ) ? $register_process : array();
-        $list_processes   = is_array( $list_processes ) ? $list_processes : array();
-
-        $reg_update = false;
+        $valid_processes  = array();
 
         foreach ( $register_process as $name => $reg_process ) {
 
@@ -1721,47 +1705,14 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 continue;
             }
 
-            $valid_process = false;
-
-            if ( ! isset( $list_processes[ $name ] ) ) {
-                $valid_process = $reg_process;
-            } elseif ( is_array( $list_processes[ $name ] ) ) {
-                if ( $reg_process !== $list_processes[ $name ] ) {
-                    $valid_process = $reg_process;
-                }
-            }
-
-            if ( empty( $valid_process ) || empty( $this->is_process_callable( $valid_process ) ) ) {
-                continue;
-            }
-
-            if ( is_callable( $valid_process ) ) {
-                if ( ! isset( $valid_process['priority'] ) ) {
-                    $valid_process['priority'] = max( array_column( $valid_process, 'priority' ) ) + 1;
-                }
-                $list_processes[ $name ] = $valid_process;
-                $reg_update              = true;
+            if ( $this->is_process_callable( $reg_process ) ) {
+                $valid_processes[ $name ] = $reg_process;
             }
         }
 
-        $updated_list = false;
-        $valid_list   = array();
-        if ( $reg_update && ! empty( $list_processes ) ) {
-            foreach ( $list_processes as $name => $pro ) {
-                if ( ! empty( $this->is_process_callable( $pro ) ) ) {
-                    $valid_list[ $name ] = $pro;
-                    $updated_list        = true;
-                }
-            }
-        }
+        MainWP_Utility::array_sort( $valid_processes, 'priority', SORT_NUMERIC );
 
-        if ( $updated_list ) {
-            MainWP_Logger::instance()->log_events( 'regular-schedule', 'Update scheduled processes.' );
-            MainWP_Utility::array_sort( $list_processes, 'priority' );
-            MainWP_Utility::update_option( 'mainwp_regular_sequence_process_saved', wp_json_encode( $valid_list ) );
-        }
-
-        $managed_processes = array_values( $list_processes );
+        $managed_processes = array_values( $valid_processes );
 
         $count = count( $managed_processes );
 
@@ -1778,18 +1729,36 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $performed = false;
         while ( $current_pid <= $count ) {
             $callable = $this->is_process_callable( $process );
+
             if ( ! empty( $callable ) && is_callable( $callable ) ) {
+                $this->set_process_counter( ++$current_pid );
                 call_user_func( $callable );
                 $performed = true;
                 MainWP_Logger::instance()->log_events( 'regular-schedule', 'Run process: [process=' . ( is_array($process) ? print_r($process, true ): '' ) . ']' ); //phpcs:ignore -- ok.
-            }
-            if ( $performed ) {
-                break;
             } else {
-                ++$current_pid;
+                $this->set_process_counter( ++$current_pid );
+            }
+
+            if ( $performed ) {
+                break; // to run next schedule.
+            } else {
                 $process = isset( $managed_processes[ $current_pid ] ) ? $managed_processes[ $current_pid ] : false;
+                if ( empty( $process ) ) {
+                    break; // to run next schedule.
+                }
             }
         }
+    }
+
+
+    /**
+     * Method set_process_counter().
+     *
+     * @param  int $counter_index Counter.
+     * @return void
+     */
+    public function set_process_counter( $counter_index ) {
+        update_option( 'mainwp_regular_sequence_current_process_pid', $counter_index );
     }
 
     /**

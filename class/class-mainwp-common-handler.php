@@ -120,7 +120,7 @@ class MainWP_Common_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
                             $premiumUpgrade = array_filter( $premiumUpgrade );
                             if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
-                                $plugin_upgrades[ $crrSlug ] = array();
+                                continue;
                             }
 
                             $plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );

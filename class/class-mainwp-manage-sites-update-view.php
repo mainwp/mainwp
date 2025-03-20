@@ -201,7 +201,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                     $premiumUpgrade = array_filter( $premiumUpgrade );
 
                     if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
-                        $plugin_upgrades[ $crrSlug ] = array();
+                        continue;
                     }
                     $plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
                 }
@@ -456,7 +456,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                         if ( 'plugin' === $premiumUpgrade['type'] ) {
                             $premiumUpgrade = array_filter( $premiumUpgrade );
                             if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
-                                $plugin_upgrades[ $crrSlug ] = array();
+                                continue;
                             }
                             $plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
                         }

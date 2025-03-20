@@ -445,7 +445,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
         $default_filter = false;
         // extracted values.
         if ( ( empty( $filter_ranges ) || 'thismonth' === $filter_ranges ) && empty( $filter_groups_ids ) && empty( $filter_client_ids ) && empty( $filter_user_ids ) && empty( $filter_user_ids ) && empty( $filter_dtsstart ) && empty( $filter_dtsstop ) && empty( $array_clients_ids ) && empty( $array_groups_ids ) && empty( $array_users_ids ) && empty( $array_source_list ) && empty( $array_sites_ids ) && empty( $array_events_list ) ) {
-            $default_filter    = true;
+            $default_filter = true;
         }
 
         $disable_dt = ( '' === $filter_ranges || 'custom' === $filter_ranges ) ? false : true;

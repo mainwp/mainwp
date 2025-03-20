@@ -548,7 +548,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             unset( $pages_length[-1] );
         }
 
-        // @since 5.4.1.
+        // @since version 5.4.1.
         $pages_length = apply_filters( 'mainwp_site_changes_table_pages_length', $pages_length, $this->table_id_prefix );
 
         $pagelength_val   = implode( ',', array_keys( $pages_length ) );

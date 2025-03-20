@@ -1476,7 +1476,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
     /**
      * Method ajax_upload_custom_icon()
      */
-    public function ajax_upload_custom_icon() {
+    public function ajax_upload_custom_icon() { //phpcs:ignore -- NOSONAR -complex.
         $this->secure_request( 'mainwp_upload_custom_icon' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $slug   = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
@@ -1521,7 +1521,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             if ( ! empty( $error ) ) {
                 $result['error'] = esc_html( $error );
             }
-            wp_die( wp_json_encode(  $result ) );
+            wp_die( wp_json_encode( $result ) );
         }
     }
 

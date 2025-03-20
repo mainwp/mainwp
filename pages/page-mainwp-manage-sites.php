@@ -1235,7 +1235,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             if ( ! empty( $error ) ) {
                 $result['error'] = esc_html( $error );
             }
-            wp_die( wp_json_encode(  $result ) );
+            wp_die( wp_json_encode( $result ) );
         }
     }
 

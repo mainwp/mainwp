@@ -287,6 +287,9 @@ class Log_Manager {
                     unset( $meta_data['meta_data'] );
                 }
                 $meta_data['user_meta_json'] = wp_json_encode( $user_meta );
+                if ( isset( $meta_data['extra_info'] ) && is_array( $meta_data['extra_info'] ) ) {
+                    $meta_data['extra_info'] = wp_json_encode( $meta_data['extra_info'] );
+                }
             }
 
             $sum  = ! empty( $meta_data['name'] ) ? esc_html( $meta_data['name'] ) : 'WP Core';

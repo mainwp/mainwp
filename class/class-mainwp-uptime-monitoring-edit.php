@@ -94,9 +94,6 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
 
         if ( isset( $_POST['wp_nonce_uptime_settings'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_uptime_settings'] ), 'UpdateMonitorSettings' ) && \mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
             $up_status_codes = isset( $_POST['mainwp_edit_monitor_up_status_codes'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_edit_monitor_up_status_codes'] ) ) : '';
-            if ( false !== strpos( $up_status_codes, 'useglobal' ) ) {
-                $up_status_codes = 'useglobal'; // save "useglobal" only.
-            }
 
             $monitoring_emails = isset( $_POST['mainwp_edit_monitor_monitoring_emails'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_edit_monitor_monitoring_emails'] ) ) : '';
             $monitoring_emails = MainWP_Utility::valid_input_emails( $monitoring_emails );

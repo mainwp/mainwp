@@ -693,7 +693,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                             ( data.group == '' || data.group == 'alltags' ) &&
                                             ( data.client == '' || data.client == 'allclients' ) &&
                                             ( data.user == '' || data.user == 'allusers' ) &&
-                                            data.range == 'today' &&
+                                            data.range == 'thismonth' &&
                                             data.current_client_id == '' &&
                                             data.current_site_id == ''
                                         ){

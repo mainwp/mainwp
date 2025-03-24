@@ -1083,6 +1083,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
                         $is_auto_update_job = false;
                         $lasttime_run       = 0;
+                        $next_run           = 0;
+
                         if ( 'mainwp_updatescheck_start_last_timestamp' === $hook[0] ) {
                             $update_time        = MainWP_Settings::get_websites_automatic_update_time();
                             $last_run           = $update_time['last'];
@@ -1093,7 +1095,11 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                         } else {
                             $lasttime_run = get_option( $hook[0] );
                             if ( $lasttime_run ) {
-                                $last_run = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $lasttime_run ) );
+                                if ( 'mainwp_uptimecheck_auto_main_counter_lasttime_started' === $hook[0] ) {
+                                    $last_run = MainWP_Utility::format_timestamp( $lasttime_run );
+                                } else {
+                                    $last_run = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $lasttime_run ) );
+                                }
                             } else {
                                 $last_run = esc_html__( 'Never', 'mainwp' );
                             }

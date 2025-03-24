@@ -112,7 +112,14 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
         </div>
         <script type="text/javascript">
             jQuery(function ($) {
-                jQuery( '.ui.dropdown .item' ).tab();
+                $( '.ui.dropdown:not(.select-individual-updates) .item' ).tab();
+                $( '.ui.dropdown.select-individual-updates .item' ).tab({
+                    'onVisible': function (tab) {
+                        console.log(tab);
+                        $('.select-buttons-individual-updates .button.ui').addClass('hidden');
+                        $('.select-buttons-individual-updates .button.ui.' + tab).removeClass('hidden');
+                    }
+                });
                 jQuery( 'table.ui.table' ).DataTable( {
                     "searching": true,
                     "paging" : false,
@@ -194,7 +201,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                     $premiumUpgrade = array_filter( $premiumUpgrade );
 
                     if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
-                        $plugin_upgrades[ $crrSlug ] = array();
+                        continue;
                     }
                     $plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
                 }
@@ -449,7 +456,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                         if ( 'plugin' === $premiumUpgrade['type'] ) {
                             $premiumUpgrade = array_filter( $premiumUpgrade );
                             if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
-                                $plugin_upgrades[ $crrSlug ] = array();
+                                continue;
                             }
                             $plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
                         }

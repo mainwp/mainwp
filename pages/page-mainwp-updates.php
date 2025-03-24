@@ -503,7 +503,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         if ( ! $website->is_ignorePluginUpdates ) {
                             $premiumUpgrade = array_filter( $premiumUpgrade );
                             if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
-                                $plugin_upgrades[ $crrSlug ] = array();
+                                continue; // to fix missing update name.
                             }
                             $plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
                         }

@@ -632,9 +632,6 @@ qq.extend(qq.FileUploader.prototype, {
             this._find(item, 'file').setAttribute('filename', fileName);
             this._find(item, 'cancel_install').style.display = 'inline';
             this._find(item, 'success_msg').innerHTML = 'Upload completed.';
-            if (qq.hasClass(this._element, 'favorites-extension-enabled')) {
-                this._find(item, 'add_to_favor').style.display = 'inline';
-            }
             //MAINWP custom code
         } else {
             qq.addClass(item, this._classes.fail);
@@ -649,8 +646,6 @@ qq.extend(qq.FileUploader.prototype, {
         qq.setText(fileElement, this._formatFileName(fileName));
         this._find(item, 'size').style.display = 'none';
         this._find(item, 'cancel_install').style.display = 'none';
-        this._find(item, 'add_to_favor').style.display = 'none';
-
         this._listElement.appendChild(item);
     },
     _getItemByFileId: function (id) {

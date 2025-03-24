@@ -1,9 +1,9 @@
-/* eslint complexity: ["error", 100] */
+/* eslint-disable complexity */
 // current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 window.mainwpVars = window.mainwpVars || {};
 
-mainwpVars.maxRunThreads = mainwpParams?.maximumUptimeMonitoringRequests && mainwpParams.maximumUptimeMonitoringRequests ? mainwpParams.maximumUptimeMonitoringRequests : 10;
+mainwpVars.maxRunThreads = mainwpParams?.maximumUptimeMonitoringRequests ? mainwpParams.maximumUptimeMonitoringRequests : 10;
 
 // Trigger Manage Sites Bulk Actions
 jQuery(document).on('click', '#mainwp-do-monitors-bulk-actions', function () {

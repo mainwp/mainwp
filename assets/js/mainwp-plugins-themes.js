@@ -1,4 +1,4 @@
-/* eslint complexity: ["error", 100] */
+/* eslint-disable complexity */
 
 window.mainwpVars = window.mainwpVars || {};
 

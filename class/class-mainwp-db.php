@@ -2369,7 +2369,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         $groupids          = isset( $params['groupids'] ) ? $params['groupids'] : array();
         $groupnames        = isset( $params['groupnames'] ) ? $params['groupnames'] : array();
-        $verifyCertificate = isset( $params['verifyCertificate'] ) ? (int) $params['verifyCertificate'] : 1;
+        $verifyCertificate = isset( $params['verifyCertificate'] ) ? (int) $params['verifyCertificate'] : 2;
         $uniqueId          = isset( $params['uniqueId'] ) ? $params['uniqueId'] : '';
         $http_user         = isset( $params['http_user'] ) ? $params['http_user'] : null;
         $http_pass         = isset( $params['http_pass'] ) ? $params['http_pass'] : null;
@@ -2586,7 +2586,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $http_pass = null,
         $sslVersion = 0,
         $disableHealthChecking = 1,
-        $healthThreshold = 80,
+        $healthThreshold = 0,
         $backup_method = 'global'
     ) {
 
@@ -3213,7 +3213,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @return mixed
      */
     public function update_regular_process( $data ) {
-        if ( is_array( $data ) ) {
+        if ( is_array( $data ) && isset( $data['type'] ) && isset( $data['process_slug'] ) ) {
             if ( isset( $data['process_id'] ) ) {
                 $process_id = $data['process_id'];
                 unset( $data['process_id'] );
@@ -3225,6 +3225,45 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         return false;
     }
 
+    /**
+     * Delete regular process.
+     *
+     * @param  int    $process_id Process id.
+     * @param  int    $item_id Item id.
+     * @param  string $pro_type Process type.
+     * @param  string $pro_slug Process slug.
+     *
+     * @return mixed
+     */
+    public function delete_regular_process( $process_id = false, $item_id = false, $pro_type = false, $pro_slug = false ) {
+
+        if ( is_numeric( $process_id ) && ! empty( $process_id ) ) {
+            return $this->wpdb->delete(
+                $this->table_name( 'schedule_processes' ),
+                array(
+                    'process_id' => $process_id,
+                )
+            );
+        } elseif ( ! empty( $pro_type ) || ! empty( $pro_slug ) ) {
+
+            $data = array();
+
+            if ( ! empty( $pro_type ) ) {
+                $data['type'] = $pro_type;
+            }
+
+            if ( ! empty( $pro_slug ) ) {
+                $data['process_slug'] = $pro_slug;
+            }
+
+            if ( ! empty( $item_id ) ) {
+                $data['item_id'] = $item_id;
+            }
+            // Bulk delete.
+            return $this->wpdb->delete( $this->table_name( 'schedule_processes' ), $data );
+        }
+        return false;
+    }
 
     /**
      * Method get_regular_process_by_item_id_type_slug

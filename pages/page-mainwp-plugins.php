@@ -1246,7 +1246,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             $premiumUpgrade = array_filter( $premiumUpgrade );
 
                             if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
-                                $plugin_upgrades[ $crrSlug ] = array();
+                                continue;
                             }
                             $plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
                         }
@@ -1531,7 +1531,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             $premiumUpgrade = array_filter( $premiumUpgrade );
 
                             if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
-                                $plugin_upgrades[ $crrSlug ] = array();
+                                continue;
                             }
                             $plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
                         }

@@ -1323,7 +1323,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $icon_placeholder_cls = 'plug circular inverted';
         } elseif ( 'theme' === $type ) {
             $option_name          = 'themes_icons';
-            $icon_placeholder_cls = 'tint';
+            $icon_placeholder_cls = 'tint circular inverted';
         } else {
             return '<i style="font-size: 17px"   class="plug circular inverted icon" not-cached-path="true"></i>';
         }
@@ -1648,6 +1648,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             'sync_errors',
             'signature_algo',
             'verify_method',
+            'suspended',
         );
     }
 

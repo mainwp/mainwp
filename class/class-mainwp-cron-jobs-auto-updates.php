@@ -145,18 +145,17 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
             }
             return;
         } else {
-
+            // @since 5.4.0.2 +.
+            $sync_before = apply_filters( 'mainwp_auto_updates_sync_data_before_run', true );
             foreach ( $autoupdates_websites as $website ) {
-                if ( ! MainWP_DB_Backup::instance()->backup_full_task_running( $website->id ) ) {
-                    if ( ! empty( $website->sync_errors ) && ! MainWP_Sync::sync_site( $website, false, true ) ) {
+                if ( ! empty( $website->sync_errors ) ) {
+                    if ( ! $sync_before || ! MainWP_Sync::sync_site( $website, false, true ) ) {
                         $this->finished_site_auto_updates( $website );  // to skip.
-                    } elseif ( ! MainWP_Sync::sync_site( $website, false, true ) ) {
-                        $this->finished_site_auto_updates( $website );  // to skip.
-                    } else {
-                        $websites[] = $website;
                     }
-                } else {
+                } elseif ( $sync_before && ! MainWP_Sync::sync_site( $website, false, true ) ) {
                     $this->finished_site_auto_updates( $website );  // to skip.
+                } else {
+                    $websites[] = $website;
                 }
             }
 

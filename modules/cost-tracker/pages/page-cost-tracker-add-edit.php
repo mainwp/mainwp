@@ -659,7 +659,14 @@ class Cost_Tracker_Add_Edit {
                 )
             );
         } else {
-            wp_die( wp_json_encode( array( 'result' => 'failed' ) ) );
+            $result = array(
+                'result' => 'failed',
+            );
+            $error  = MainWP_Post_Handler::get_upload_icon_error( $output );
+            if ( ! empty( $error ) ) {
+                $result['error'] = esc_html( $error );
+            }
+            wp_die( wp_json_encode( $result ) );
         }
     }
 

@@ -336,7 +336,7 @@ let managesites_bulk_init = function (isMonitorsBulk) {
     bulkManageSitesFinished = 0;
 
     if (isMonitorsBulk) {
-      bulkManageSitesMaxThreads = mainwpParams?.maximumUptimeMonitoringRequests && mainwpParams.maximumUptimeMonitoringRequests ? mainwpParams.maximumUptimeMonitoringRequests : 10;
+      bulkManageSitesMaxThreads = mainwpParams?.maximumUptimeMonitoringRequests ? mainwpParams.maximumUptimeMonitoringRequests : 10;
       jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox:not(.sub-pages-checkbox)').each(function () {
         jQuery(this).attr('status', 'queue')
       });

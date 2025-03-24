@@ -1272,13 +1272,27 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             return $website;
         }
 
+        $args = $this->prepare_objects_query( $request );
+
         $params = array(
             'wpid'        => $website->id,
             'where_extra' => ' AND dismiss = 0 ',
-            'limit'       => isset( $request['limit'] ) ? intval( $request['limit'] ) : 200,
+            'order'       => ! empty( $args['order'] ) ? sanitize_text_field( wp_unslash( $args['order'] ) ) : '',
+            'order_by'    => ! empty( $args['orderby'] ) ? sanitize_text_field( wp_unslash( $args['orderby'] ) ) : '',
+            'source'      => ! empty( $request['source'] ) ? sanitize_text_field( wp_unslash( $request['source'] ) ) : 'wpadmin',
         );
 
-        $data = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params );
+        if ( ! empty( $args['paged'] ) && ! empty( $args['items_per_page'] ) ) {
+            $params['rowcount'] = intval( $args['items_per_page'] );
+            $params['offset']   = ( (int) ( $args['paged'] ) - 1 ) * $params['rowcount'];
+        } else {
+            // support compatible api param.
+            $limit              = ! empty( $args['limit'] ) ? (int) ( $args['limit'] ) : 200;
+            $params['rowcount'] = $limit;
+            $params['offset']   = 0;
+        }
+
+        $data = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params, $website );
 
         $resp_data = array(
             'success' => 1,

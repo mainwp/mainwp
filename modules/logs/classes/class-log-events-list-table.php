@@ -109,6 +109,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      */
     public function get_default_columns() {
         $columns = array(
+            'cb'            => '<input type="checkbox" />',
             'event'         => esc_html__( 'Event', 'mainwp' ),
             'log_object'    => esc_html__( 'Object', 'mainwp' ),
             'created'       => esc_html__( 'Date', 'mainwp' ),
@@ -181,6 +182,11 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'targets'   => array( 'manage-col_action-column' ),
             'className' => 'collapsing',
         );
+        $defines[] = array(
+            'targets'   => array( 'manage-log_object-column' ),
+            'className' => 'mainwp-sites-changes-object-cell',
+        );
+
         return $defines;
     }
     // @NO_SONAR_END@  .
@@ -542,6 +548,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             unset( $pages_length[-1] );
         }
 
+        // @since version 5.4.1.
+        $pages_length = apply_filters( 'mainwp_site_changes_table_pages_length', $pages_length, $this->table_id_prefix );
+
         $pagelength_val   = implode( ',', array_keys( $pages_length ) );
         $pagelength_title = implode( ',', array_values( $pages_length ) );
 
@@ -562,7 +571,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             <?php
         }
         ?>
-        <table id="<?php echo esc_attr( $events_tbl_id ); ?>" style="width:100%" class="ui single line <?php echo 'manage-events2' === $this->table_id_prefix ? 'selectable' : ''; ?> unstackable table mainwp-with-preview-table">
+        <table id="<?php echo esc_attr( $events_tbl_id ); ?>" style="width:100%" class="ui single line <?php echo 'manage-events' === $this->table_id_prefix ? 'selectable' : ''; ?> unstackable table mainwp-with-preview-table">
             <thead>
                 <tr><?php $this->print_column_headers( true ); ?></tr>
             </thead>
@@ -676,6 +685,24 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                             data.recent_number =  $( '#mainwp-widget-filter-events-limit').length ? $( '#mainwp-widget-filter-events-limit').val() : 100;
                                         }
                                     }
+
+                                    if('mainwp_module_log_manage_events_display_rows' === ajax_action ){
+                                        if( ( data.source == '' || data.source == 'allsource' ) &&
+                                            ( data.events == '' || data.events == 'allevents' ) &&
+                                            ( data.sites == '' || data.sites == 'allsites' ) &&
+                                            ( data.group == '' || data.group == 'alltags' ) &&
+                                            ( data.client == '' || data.client == 'allclients' ) &&
+                                            ( data.user == '' || data.user == 'allusers' ) &&
+                                            data.range == 'thismonth' &&
+                                            data.current_client_id == '' &&
+                                            data.current_site_id == ''
+                                        ){
+                                            jQuery('#mainwp-module-log-filters-row').fadeOut(300);
+                                        } else{
+                                            jQuery('#mainwp-module-log-filters-row').fadeIn(300);
+                                        }
+                                    }
+
                                     return $.extend( {}, d, data );
                                 },
                                 "dataSrc": function ( json ) {
@@ -699,7 +726,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                             "stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
                             "order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
                             "fixedColumns" : <?php echo ! empty( $table_features['fixedColumns'] ) ? esc_js( $table_features['fixedColumns'] ) : '""'; ?>,
-                            "lengthMenu" : [ [<?php echo esc_js( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All"] ],
+                            "lengthMenu" : [ [<?php echo esc_js( $pagelength_val ); ?>], [<?php echo esc_js( $pagelength_title ); ?>] ],
                             "serverSide": true,
                             "pageLength": <?php echo intval( $sites_per_page ); ?>,
                             "columnDefs": <?php echo wp_json_encode( $this->get_columns_defines() ); ?>,
@@ -717,7 +744,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                 if ( jQuery('#mainwp-module-log-records-body-table td.dt-empty').length > 0 && jQuery('#sites-table-count-empty').length ){
                                     jQuery('#mainwp-module-log-records-body-table td.dt-empty').html(jQuery('#sites-table-count-empty').html());
                                 }
-                                if( 'manage-events2' === '<?php echo esc_js( $this->table_id_prefix ); ?>' ){
+                                if( 'manage-events' === '<?php echo esc_js( $this->table_id_prefix ); ?>' ){
                                     setTimeout(() => {
                                         jQuery(manage_tbl_id + ' .ui.checkbox').checkbox();
                                         mainwp_datatable_fix_menu_overflow(manage_tbl_id);
@@ -735,7 +762,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                 jQuery( row ).find('.mainwp-state-cell').attr('data-sort', data.state_sort );
                             }
                             <?php
-                            if ( 'manage-events2' === $this->table_id_prefix ) {
+                            if ( 'manage-events' === $this->table_id_prefix ) {
                                 echo ",select: {
                                     items: 'row',
                                     style: 'multi+shift',
@@ -745,7 +772,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                             ?>
                         })
 
-                        if( 'manage-events2' === '<?php echo esc_js( $this->table_id_prefix ); ?>' ){
+                        if( 'manage-events' === '<?php echo esc_js( $this->table_id_prefix ); ?>' ){
                             $module_log_table.on('select', function (e, dt, type, indexes) {
                                 if( 'row' == type ){
                                     dt.rows(indexes)

@@ -205,6 +205,10 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         add_filter( 'mainwp_delete_lookup_items', array( &$this, 'hook_delete_lookup_items' ), 10, 3 );
         add_filter( 'mainwp_get_indicator', array( &$this, 'hook_get_indicator' ), 10, 4 );
         add_filter( 'mainwp_get_time_elapsed_string', array( &$this, 'hook_get_time_elapsed_string' ), 10, 2 );
+
+        add_action( 'mainwp_general_process_update', array( MainWP_DB::instance(), 'update_regular_process' ), 10, 1 );
+        add_action( 'mainwp_general_process_delete', array( MainWP_DB::instance(), 'delete_regular_process' ), 10, 4 );
+        add_filter( 'mainwp_general_process_get_process_by', array( &$this, 'hook_get_regular_process_by' ), 10, 4 );
     }
 
     /**
@@ -1991,5 +1995,20 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      */
     public function hook_get_time_elapsed_string( $ptime = 0 ) {
         return MainWP_Utility::time_elapsed_string( $ptime );
+    }
+
+    /**
+     * Method hook_get_regular_process_by().
+     *
+     * @param  mixed $input_value Input value.
+     * @param  int   $item_id Item id.
+     * @param  int   $pro_type Process type.
+     * @param  int   $pro_slug Process slug.
+     *
+     * @return mixed
+     */
+    public function hook_get_regular_process_by( $input_value, $item_id, $pro_type, $pro_slug ) {
+        unset( $input_value );
+        return MainWP_DB::instance()->get_regular_process_by_item_id_type_slug( $item_id, $pro_type, $pro_slug );
     }
 }

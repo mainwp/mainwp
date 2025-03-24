@@ -274,22 +274,32 @@ class Log_Manager {
                 continue;
             }
 
-            $user_meta = array();
-            $meta_data = array();
+            $user_meta  = array();
+            $meta_data  = array();
+            $extra_info = false;
 
             if ( isset( $data['meta_data'] ) && is_array( $data['meta_data'] ) ) {
                 $meta_data = $data['meta_data'];
                 if ( isset( $meta_data['user_meta'] ) && is_array( $meta_data['user_meta'] ) ) {
-                    $user_meta = $meta_data['user_meta'];
+                    $user_meta = $meta_data['user_meta']; // to compatible old user_meta site changes actions data.
                     unset( $meta_data['user_meta'] );
                 } elseif ( isset( $meta_data['meta_data'] ) && ! empty( $meta_data['meta_data'] ) && is_array( $meta_data['meta_data'] ) ) {
-                    $user_meta = $meta_data['meta_data'];
+                    $user_meta = $meta_data['meta_data']; // new meta_data site changes actions.
                     unset( $meta_data['meta_data'] );
                 }
                 $meta_data['user_meta_json'] = wp_json_encode( $user_meta );
+                if ( isset( $meta_data['extra_info'] ) && is_array( $meta_data['extra_info'] ) ) {
+                    $extra_info = $meta_data['extra_info'];
+                }
             }
 
-            $sum  = ! empty( $meta_data['name'] ) ? esc_html( $meta_data['name'] ) : 'WP Core';
+            $sum = '';
+            if ( false !== $extra_info ) {
+                $meta_data['extra_info'] = wp_json_encode( $extra_info );
+                $sum                    .= ! empty( $extra_info['name'] ) ? esc_html( $extra_info['name'] ) : 'WP Core';
+            } else {
+                $sum .= ! empty( $meta_data['name'] ) ? esc_html( $meta_data['name'] ) : 'WP Core';
+            }
             $sum .= ' ';
             $sum .= 'wordpress' !== $data['context'] ? esc_html( ucfirst( rtrim( $data['context'], 's' ) ) ) : 'WordPress'; //phpcs:ignore -- wordpress text.
 

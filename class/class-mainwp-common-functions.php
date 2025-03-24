@@ -192,10 +192,11 @@ class MainWP_Common_Functions { // phpcs:ignore Generic.Classes.OpeningBraceSame
      *
      * @param array $updates Update info.
      * @param array $ignored Ignored update info.
+     * @param int   $count_ignored Count ignored updates.
      *
      * @return array $updates Not ignored updates info.
      */
-    public function get_not_ignored_updates_themesplugins( $updates, $ignored ) { //phpcs:ignore -- NOSONAR - complexity.
+    public function get_not_ignored_updates_themesplugins( $updates, $ignored, &$count_ignored = 0 ) { //phpcs:ignore -- NOSONAR - complexity.
         if ( ! is_array( $updates ) || ! is_array( $ignored ) ) {
             return $updates;
         }
@@ -203,12 +204,14 @@ class MainWP_Common_Functions { // phpcs:ignore Generic.Classes.OpeningBraceSame
         foreach ( $updates as $slug => $info ) {
             if ( isset( $ignored[ $slug ] ) ) {
                 if ( is_string( $ignored[ $slug ] ) ) {
+                    ++$count_ignored;
                     // old ignored info.
                     continue; // ignored update.
                 } elseif ( is_array( $ignored[ $slug ] ) && ! empty( $ignored[ $slug ]['ignored_versions'] ) ) {
                     $ignored_vers = is_array( $ignored[ $slug ]['ignored_versions'] ) ? $ignored[ $slug ]['ignored_versions'] : array();
                     $new_version  = is_array( $info ) && isset( $info['update']['new_version'] ) ? $info['update']['new_version'] : '';
                     if ( in_array( 'all_versions', $ignored_vers ) || in_array( $new_version, $ignored_vers ) ) {
+                        ++$count_ignored;
                         continue; // ignored update.
                     }
                 }
@@ -229,10 +232,11 @@ class MainWP_Common_Functions { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @param array  $item Update info of theme or plugin.
      * @param array  $ignored Ignored update info.
      * @param string $type theme/plugin/core.
+     * @param int    $count_ignored Count ignored.
 
      * @return bool Ignored updates.
      */
-    public function is_ignored_updates( $item, $ignored, $type = 'plugin' ) { //phpcs:ignore -- NOSONAR complex function.
+    public function is_ignored_updates( $item, $ignored, $type = 'plugin', &$count_ignored = 0 ) { //phpcs:ignore -- NOSONAR complex function.
 
         if ( ! is_array( $item ) || ! is_array( $ignored ) ) {
             return false;
@@ -251,10 +255,12 @@ class MainWP_Common_Functions { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
             if ( isset( $ignored[ $item_slug ] ) ) {
                 if ( is_string( $ignored[ $item_slug ] ) ) { // old ignore info.
+                    ++$count_ignored;
                     return true; // ignored update.
                 } elseif ( is_array( $ignored[ $item_slug ] ) && ! empty( $ignored[ $item_slug ]['ignored_versions'] ) ) {
                     $ignored_vers = is_array( $ignored[ $item_slug ]['ignored_versions'] ) ? $ignored[ $item_slug ]['ignored_versions'] : array();
                     if ( in_array( 'all_versions', $ignored_vers ) || in_array( $new_version, $ignored_vers ) ) {
+                        ++$count_ignored;
                         return true; // ignored update.
                     }
                 }
@@ -267,6 +273,7 @@ class MainWP_Common_Functions { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 $new_version = isset( $item['new_version'] ) ? $item['new_version'] : ''; // to support some info.
             }
             if ( ! empty( $new_version ) && ( in_array( 'all_versions', $ignored_vers ) || in_array( $new_version, $ignored_vers ) ) ) {
+                ++$count_ignored;
                 return true; // ignored update.
             }
         }

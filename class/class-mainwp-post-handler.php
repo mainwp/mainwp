@@ -1476,7 +1476,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
     /**
      * Method ajax_upload_custom_icon()
      */
-    public function ajax_upload_custom_icon() {
+    public function ajax_upload_custom_icon() { //phpcs:ignore -- NOSONAR -complex.
         $this->secure_request( 'mainwp_upload_custom_icon' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $slug   = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
@@ -1514,8 +1514,50 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             MainWP_System_Utility::update_cached_icons( $uploaded_icon, $slug, $type, true );
             wp_die( wp_json_encode( array( 'result' => 'success' ) ) );
         } else {
-            wp_die( wp_json_encode( array( 'result' => 'failed' ) ) );
+            $result = array(
+                'result' => 'failed',
+            );
+            $error  = static::get_upload_icon_error( $output );
+            if ( ! empty( $error ) ) {
+                $result['error'] = esc_html( $error );
+            }
+            wp_die( wp_json_encode( $result ) );
         }
+    }
+
+    /**
+     * Method get_upload_icon_error().
+     *
+     * @param mixed $results Upload results.
+     *
+     * @return string
+     */
+    public static function get_upload_icon_error( $results ) {
+        $error = '';
+        if ( is_array( $results ) && ! empty( $results['error'] ) && is_array( $results['error'] ) ) {
+            $error_code = $results['error'][0];
+            switch ( $error_code ) {
+                case 3:
+                    $error = __( 'File size is too big. Please try a smaller file.', 'mainwp' );
+                    break;
+                case 4:
+                    $error = __( 'File type is not allowed. Please use a different file type.', 'mainwp' );
+                    break;
+                case 5:
+                    $error = __( 'File extension is not allowed. Please use a different file type.', 'mainwp' );
+                    break;
+                case 6:
+                    $error = __( 'Cannot copy file. Please try again.', 'mainwp' );
+                    break;
+                case 9:
+                    $error = __( 'Failed to crop file. Please try again.', 'mainwp' );
+                    break;
+                default:
+                    $error = __( 'Undefined error. Please try again.', 'mainwp' );
+                    break;
+            }
+        }
+        return $error;
     }
 
     /**

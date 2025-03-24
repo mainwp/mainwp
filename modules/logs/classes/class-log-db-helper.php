@@ -70,6 +70,17 @@ class Log_DB_Helper extends MainWP_DB {
     }
 
     /**
+     * Method dismiss_all_changes().
+     *
+     * Handle dismiss all sites changes.
+     *
+     * @return mixed
+     */
+    public function dismiss_all_changes() {
+        return $this->wpdb->update( $this->table_name( 'wp_logs' ), array( 'dismiss' => 1 ), array( 'dismiss' => 0 ) );
+    }
+
+    /**
      * Method count_events().
      *
      * @return mixed Count events.

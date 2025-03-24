@@ -54,9 +54,9 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
      * @param  array $list_values process list.
      */
     public function hook_regular_sequence_process( $list_values ) {
-        if ( is_array( $list_values ) ) {
+        if ( is_array( $list_values ) && apply_filters( 'mainwp_favorites_enable_schedule_items_update', true ) ) {
             $list_values['uptime_notification'] = array(
-                'priority' => 2,
+                'priority' => 0,
                 'callback' => array( __CLASS__, 'run_schedule_uptime_notification' ), // must be array( class_name, method).
             );
         }

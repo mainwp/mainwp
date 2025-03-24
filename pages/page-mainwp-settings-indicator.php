@@ -182,7 +182,7 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'mainwp_site_is_ignoreThemeUpdates'          => 0,
             'mainwp_site_monitoring_notification_emails' => '',
             'mainwp_site_disable_health_check'           => 0,
-            'mainwp_site_verify_certificate'             => 1,
+            'mainwp_site_verify_certificate'             => 2,
             'mainwp_site_ssl_version'                    => 0,
             'mainwp_site_verify_method'                  => 3,
             'mainwp_site_signature_algo'                 => 9999, // Use global setting.

@@ -1,4 +1,4 @@
-/* eslint complexity: ["error", 100] */
+/* eslint-disable complexity */
 // current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 window.mainwpVars = window.mainwpVars || {};
@@ -1116,8 +1116,10 @@ let updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelect
     let siteNames = {};
     let sitesPluginSlugs = {};
     let foundChildren = updatesoverview_themes_get_global_upgrade_all(groupId, updatesSelected);
-    if (foundChildren.length == 0)
-        return;
+    if (foundChildren.length == 0){
+        updates_please_select_items_notice();
+        return false;
+    }
     let sitesCount = 0;
 
     mainwpPopup('#mainwp-sync-sites-modal').clearList();
@@ -1224,10 +1226,6 @@ let updatesoverview_themes_get_global_upgrade_all = function (groupId, updatesSe
                     }
                 }
             );
-        }
-        if (foundChildren.length == 0) {
-            updates_please_select_items_notice();
-            return false;
         }
     } else if (typeof groupId !== 'undefined' && false !== groupId) {
         foundChildren = jQuery('#update_wrapper_theme_upgrades_group_' + groupId).find('tr.mainwp-theme-update[updated="0"]');
@@ -3528,6 +3526,7 @@ const render_html_regression_sync_score_icon = function (score, change_score, we
 
     if (icon_html !== "" && Number.isInteger(website_id)) {
         let msg = 'Change score changed. Click to review changes.';
+        // eslint-disable-next-line no-constant-condition
         if (typeof mainwpTranslations) {
             msg = mainwpTranslations?.Change_score_changed_Click_to_review_changes || msg;
         }

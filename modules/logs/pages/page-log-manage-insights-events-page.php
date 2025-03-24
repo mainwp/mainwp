@@ -79,7 +79,8 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
      */
     public function __construct() {
         add_action( 'mainwp_admin_menu', array( $this, 'init_menu' ), 10, 2 );
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_insight_events_dismiss_actions', array( &$this, 'ajax_insight_events_dismiss_actions' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_insight_events_dismiss_actions', array( &$this, 'ajax_sites_changes_dismiss_selected' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_insight_events_dismiss_all', array( &$this, 'ajax_sites_changes_dismiss_all' ) );
     }
 
     /**
@@ -453,187 +454,197 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
         if ( ! is_array( $groups ) ) {
             $groups = array();
         }
+
         ?>
     <div class="mainwp-sub-header" id="mainwp-module-log-overview-sub-header">
-        <div class="ui stackable compact grid mini form" id="mainwp-module-log-filters-row">
-            <div class="twelve wide column ui compact grid">
-                <div class="two wide middle aligned column">
-                    <div id="mainwp-module-log-filter-ranges" class="ui selection fluid dropdown seg_ranges not-auto-init">
-                        <input type="hidden" value="<?php echo esc_html( $filter_ranges ); ?>">
-                        <i class="dropdown icon"></i>
-                        <div class="default text"><?php esc_html_e( 'Select range', 'mainwp' ); ?></div>
-                        <div class="menu">
-                            <?php
-                            $date_ranges = array(
-                                'today'     => esc_html__( 'Today', 'mainwp' ),
-                                'yesterday' => esc_html__( 'Yesterday', 'mainwp' ),
-                                'thisweek'  => esc_html__( 'This week', 'mainwp' ),
-                                'thismonth' => esc_html__( 'This month', 'mainwp' ),
-                                'lastmonth' => esc_html__( 'Last month', 'mainwp' ),
-                                'thisyear'  => esc_html__( 'This year', 'mainwp' ),
-                                'lastyear'  => esc_html__( 'Last year', 'mainwp' ),
-                            );
-                            foreach ( $date_ranges as $val => $title ) {
-                                ?>
-                                <div class="item" data-value="<?php echo esc_html( $val ); ?>"><?php echo esc_html( $title ); ?></div>
-                                <?php
-                            }
-                            ?>
-                            <div class="item" data-value="custom"><?php esc_html_e( 'Custom', 'mainwp' ); ?></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="two wide middle aligned column">
-                    <div class="ui calendar mainwp_datepicker seg_dtsstart" id="mainwp-module-log-filter-dtsstart" >
-                        <div class="ui input left fluid icon">
-                            <i class="calendar icon"></i>
-                            <input type="text" <?php echo $disable_dt ? 'disabled="disabled"' : ''; ?> autocomplete="off" placeholder="<?php esc_attr_e( 'Start date', 'mainwp' ); ?>" value="<?php echo ! empty( $filter_dtsstart ) ? esc_attr( $filter_dtsstart ) : ''; ?>"/>
-                        </div>
-                    </div>
-                </div>
-                <div class="two wide middle aligned column">
-                    <div class="ui calendar mainwp_datepicker seg_dtsstop" id="mainwp-module-log-filter-dtsstop" >
-                        <div class="ui input left icon">
-                            <i class="calendar icon"></i>
-                            <input type="text" <?php echo $disable_dt ? 'disabled="disabled"' : ''; ?> autocomplete="off" placeholder="<?php esc_attr_e( 'End date', 'mainwp' ); ?>" value="<?php echo ! empty( $filter_dtsstop ) ? esc_attr( $filter_dtsstop ) : ''; ?>"/>
-                        </div>
-                    </div>
-                </div>
-                <div class="two wide middle aligned column">
-                    <div id="mainwp-module-log-filter-groups" class="ui selection multiple fluid dropdown seg_groups">
-                        <input type="hidden" value="<?php echo esc_html( $filter_groups_ids ); ?>">
-                        <i class="dropdown icon"></i>
-                        <div class="default text"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
-                        <div class="menu">
-                            <?php
-                            foreach ( $groups as $group ) {
-                                ?>
-                                <div class="item" data-value="<?php echo esc_attr( $group->id ); ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
-                                <?php
-                            }
-                            ?>
-                            <div class="item" data-value="alltags"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="two wide middle aligned column">
-                    <div id="mainwp-module-log-filter-clients" class="ui selection multiple fluid dropdown seg_clients">
-                        <input type="hidden" value="<?php echo esc_html( $filter_client_ids ); ?>">
-                        <i class="dropdown icon"></i>
-                        <div class="default text"><?php esc_html_e( 'All clients', 'mainwp' ); ?></div>
-                        <div class="menu">
-                            <?php
-                            $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
-                            foreach ( $clients as $client ) {
-                                ?>
-                                <div class="item" data-value="<?php echo intval( $client->client_id ); ?>"><?php echo esc_html( stripslashes( $client->name ) ); ?></div>
-                                <?php
-                            }
-                            ?>
-                            <div class="item" data-value="allclients"><?php esc_html_e( 'All Clients', 'mainwp' ); ?></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="two wide middle aligned column">
-                    <div id="mainwp-module-log-filter-users" class="ui selection multiple fluid dropdown seg_users">
-                        <input type="hidden" value="<?php echo esc_html( $filter_user_ids ); ?>">
-                        <i class="dropdown icon"></i>
-                        <div class="default text"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
-                        <div class="menu">
-                            <?php
-                            $users = $manager->admin->get_all_users();
-                            foreach ( $users as $user ) {
-                                ?>
-                                <div class="item" data-value="<?php echo intval( $user['id'] ); ?>"><?php echo esc_html( $user['login'] ); ?></div>
-                                <?php
-                            }
-                            ?>
-                            <div class="item" data-value="allusers"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
-                        </div>
-                    </div>
-                </div>
-                <?php
-                // add filters: filter_events, filter_source and filter_sites.
-                ?>
-                <div class="two wide middle aligned column">
-                    <div id="mainwp-module-log-filter-events" class="ui selection multiple fluid dropdown seg_events">
-                            <input type="hidden" value="<?php echo esc_attr( $filter_events ); ?>">
-                            <i class="dropdown icon"></i>
-                            <div class="default text"><?php esc_html_e( 'All Events', 'mainwp' ); ?></div>
-                            <div class="menu">
-                                <?php
-                                $manager = Log_Manager::instance();
-                                $events  = $manager->connectors->term_labels['logs_action'];
-                                if ( ! is_array( $events ) ) {
-                                    $events = array();
-                                }
+        <div class="ui message" style="display: none;" id="mainwp-message-zone-top"></div>
+        <div class="ui stackable grid">
+            <div class="eight wide middle aligned column">
+                <a href="javascript:void(0)" id="mainwp_sites_changes_bulk_dismiss_selected_btn" class="ui button mini basic"><?php esc_html_e( 'Dismiss Selected Changes', 'mainwp' ); ?></a>
+                <a href="javascript:void(0)" id="mainwp_sites_changes_bulk_dismiss_all_btn" class="ui mini green button"><?php esc_html_e( 'Dismiss All Changes', 'mainwp' ); ?></a>
+            </div>
+            <div class="eight wide right aligned middle aligned column">
+                <span data-tooltip="<?php esc_html_e( 'Click to filter sites.', 'mainwp' ); ?>" data-position="bottom right" data-inverted="">
+                    <a href="#" class="ui mini icon basic button" id="mainwp-sites-changes-filter-toggle-button">
+                        <i class="filter icon"></i> <?php esc_html_e( 'Filter Sites Changes', 'mainwp' ); ?>
+                    </a>
+                </span>
+            </div>
+        </div>
 
-                                foreach ( $events as $eve_name => $eve_title ) {
-                                    ?>
-                                    <div class="item" data-value="<?php echo esc_attr( $eve_name ); ?>"><?php echo esc_html( stripslashes( $eve_title ) ); ?></div>
-                                    <?php
-                                }
-                                ?>
-                                <div class="item" data-value="allevents"><?php esc_html_e( 'All Events', 'mainwp' ); ?></div>
-                            </div>
-                    </div>
-                </div>
-                <div class="two wide middle aligned column">
-                    <div id="mainwp-module-log-filter-source" class="ui selection multiple fluid dropdown seg_source">
-                            <input type="hidden" value="<?php echo esc_attr( $filter_source ); ?>">
+        <div class="ui stackable grid" id="mainwp-module-log-filters-row" style="display:none">
+            <div class="twelve wide column ui">
+                <div class="ui stackable compact grid mini form">
+                    <div class="two wide middle aligned column">
+                        <div id="mainwp-module-log-filter-ranges" class="ui selection fluid dropdown seg_ranges not-auto-init">
+                            <input type="hidden" value="<?php echo esc_html( $filter_ranges ); ?>">
                             <i class="dropdown icon"></i>
-                            <div class="default text"><?php esc_html_e( 'All Source', 'mainwp' ); ?></div>
+                            <div class="default text"><?php esc_html_e( 'Select range', 'mainwp' ); ?></div>
                             <div class="menu">
                                 <?php
-                                $seg_source = array(
-                                    'dashboard' => esc_html__( 'Dashboard', 'maiwp' ),
-                                    'wp-admin'  => esc_html__( 'WP Admin', 'maiwp' ),
+                                $date_ranges = array(
+                                    'today'     => esc_html__( 'Today', 'mainwp' ),
+                                    'yesterday' => esc_html__( 'Yesterday', 'mainwp' ),
+                                    'thisweek'  => esc_html__( 'This week', 'mainwp' ),
+                                    'thismonth' => esc_html__( 'This month', 'mainwp' ),
+                                    'lastmonth' => esc_html__( 'Last month', 'mainwp' ),
+                                    'thisyear'  => esc_html__( 'This year', 'mainwp' ),
+                                    'lastyear'  => esc_html__( 'Last year', 'mainwp' ),
                                 );
-                                foreach ( $seg_source as $sou_name => $sou_title ) {
+                                foreach ( $date_ranges as $val => $title ) {
                                     ?>
-                                    <div class="item" data-value="<?php echo esc_attr( $sou_name ); ?>"><?php echo esc_html( stripslashes( $sou_title ) ); ?></div>
+                                    <div class="item" data-value="<?php echo esc_html( $val ); ?>"><?php echo esc_html( $title ); ?></div>
                                     <?php
                                 }
                                 ?>
-                                <div class="item" data-value="allsourcea"><?php esc_html_e( 'All Source', 'mainwp' ); ?></div>
+                                <div class="item" data-value="custom"><?php esc_html_e( 'Custom', 'mainwp' ); ?></div>
                             </div>
-                    </div>
-                </div>
-
-                <div class="two wide middle aligned column">
-                    <div id="mainwp-module-log-filter-sites" class="ui selection multiple fluid dropdown seg_sites">
-                            <input type="hidden" value="<?php echo esc_attr( $filter_sites ); ?>">
-                            <i class="dropdown icon"></i>
-                            <div class="default text"><?php esc_html_e( 'All Websites', 'mainwp' ); ?></div>
-                            <div class="menu">
-                                <?php
-                                $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params() );
-                                while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-                                    ?>
-                                    <div class="item" data-value="<?php echo esc_attr( $website->id ); ?>"><?php echo esc_html( MainWP_Utility::get_nice_url( stripslashes( $website->name ) ) ); ?></div>
-                                    <?php
-                                }
-
-                                ?>
-                                <div class="item" data-value="allsites"><?php esc_html_e( 'All Websites', 'mainwp' ); ?></div>
                         </div>
                     </div>
-                </div>
+                    <div class="two wide middle aligned column">
+                        <div class="ui calendar mainwp_datepicker seg_dtsstart" id="mainwp-module-log-filter-dtsstart" >
+                            <div class="ui input left fluid icon">
+                                <i class="calendar icon"></i>
+                                <input type="text" <?php echo $disable_dt ? 'disabled="disabled"' : ''; ?> autocomplete="off" placeholder="<?php esc_attr_e( 'Start date', 'mainwp' ); ?>" value="<?php echo ! empty( $filter_dtsstart ) ? esc_attr( $filter_dtsstart ) : ''; ?>"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="two wide middle aligned column">
+                        <div class="ui calendar mainwp_datepicker seg_dtsstop" id="mainwp-module-log-filter-dtsstop" >
+                            <div class="ui input left icon">
+                                <i class="calendar icon"></i>
+                                <input type="text" <?php echo $disable_dt ? 'disabled="disabled"' : ''; ?> autocomplete="off" placeholder="<?php esc_attr_e( 'End date', 'mainwp' ); ?>" value="<?php echo ! empty( $filter_dtsstop ) ? esc_attr( $filter_dtsstop ) : ''; ?>"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="two wide middle aligned column">
+                        <div id="mainwp-module-log-filter-groups" class="ui selection multiple fluid dropdown seg_groups">
+                            <input type="hidden" value="<?php echo esc_html( $filter_groups_ids ); ?>">
+                            <i class="dropdown icon"></i>
+                            <div class="default text"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
+                            <div class="menu">
+                                <?php
+                                foreach ( $groups as $group ) {
+                                    ?>
+                                    <div class="item" data-value="<?php echo esc_attr( $group->id ); ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
+                                    <?php
+                                }
+                                ?>
+                                <div class="item" data-value="alltags"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="two wide middle aligned column">
+                        <div id="mainwp-module-log-filter-clients" class="ui selection multiple fluid dropdown seg_clients">
+                            <input type="hidden" value="<?php echo esc_html( $filter_client_ids ); ?>">
+                            <i class="dropdown icon"></i>
+                            <div class="default text"><?php esc_html_e( 'All clients', 'mainwp' ); ?></div>
+                            <div class="menu">
+                                <?php
+                                $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
+                                foreach ( $clients as $client ) {
+                                    ?>
+                                    <div class="item" data-value="<?php echo intval( $client->client_id ); ?>"><?php echo esc_html( stripslashes( $client->name ) ); ?></div>
+                                    <?php
+                                }
+                                ?>
+                                <div class="item" data-value="allclients"><?php esc_html_e( 'All Clients', 'mainwp' ); ?></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="two wide middle aligned column">
+                        <div id="mainwp-module-log-filter-users" class="ui selection multiple fluid dropdown seg_users">
+                            <input type="hidden" value="<?php echo esc_html( $filter_user_ids ); ?>">
+                            <i class="dropdown icon"></i>
+                            <div class="default text"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
+                            <div class="menu">
+                                <?php
+                                $users = $manager->admin->get_all_users();
+                                foreach ( $users as $user ) {
+                                    ?>
+                                    <div class="item" data-value="<?php echo intval( $user['id'] ); ?>"><?php echo esc_html( $user['login'] ); ?></div>
+                                    <?php
+                                }
+                                ?>
+                                <div class="item" data-value="allusers"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php
+                    // add filters: filter_events, filter_source and filter_sites.
+                    ?>
+                    <div class="two wide middle aligned column">
+                        <div id="mainwp-module-log-filter-events" class="ui selection multiple fluid dropdown seg_events">
+                                <input type="hidden" value="<?php echo esc_attr( $filter_events ); ?>">
+                                <i class="dropdown icon"></i>
+                                <div class="default text"><?php esc_html_e( 'All Events', 'mainwp' ); ?></div>
+                                <div class="menu">
+                                    <?php
+                                    $manager = Log_Manager::instance();
+                                    $events  = $manager->connectors->term_labels['logs_action'];
+                                    if ( ! is_array( $events ) ) {
+                                        $events = array();
+                                    }
 
-                <div class="four wide middle aligned left aligned column">
-                    <button onclick="mainwp_module_log_manage_events_filter()" class="ui mini green button"><?php esc_html_e( 'Filter Data', 'mainwp' ); ?></button>
-                    <button onclick="mainwp_module_log_manage_events_reset_filters(this)" class="ui mini button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
+                                    foreach ( $events as $eve_name => $eve_title ) {
+                                        ?>
+                                        <div class="item" data-value="<?php echo esc_attr( $eve_name ); ?>"><?php echo esc_html( stripslashes( $eve_title ) ); ?></div>
+                                        <?php
+                                    }
+                                    ?>
+                                    <div class="item" data-value="allevents"><?php esc_html_e( 'All Events', 'mainwp' ); ?></div>
+                                </div>
+                        </div>
+                    </div>
+                    <div class="two wide middle aligned column">
+                        <div id="mainwp-module-log-filter-source" class="ui selection multiple fluid dropdown seg_source">
+                                <input type="hidden" value="<?php echo esc_attr( $filter_source ); ?>">
+                                <i class="dropdown icon"></i>
+                                <div class="default text"><?php esc_html_e( 'All Source', 'mainwp' ); ?></div>
+                                <div class="menu">
+                                    <?php
+                                    $seg_source = array(
+                                        'dashboard' => esc_html__( 'Dashboard', 'maiwp' ),
+                                        'wp-admin'  => esc_html__( 'WP Admin', 'maiwp' ),
+                                    );
+                                    foreach ( $seg_source as $sou_name => $sou_title ) {
+                                        ?>
+                                        <div class="item" data-value="<?php echo esc_attr( $sou_name ); ?>"><?php echo esc_html( stripslashes( $sou_title ) ); ?></div>
+                                        <?php
+                                    }
+                                    ?>
+                                    <div class="item" data-value="allsource"><?php esc_html_e( 'All Source', 'mainwp' ); ?></div>
+                                </div>
+                        </div>
+                    </div>
+
+                    <div class="two wide middle aligned column">
+                        <div id="mainwp-module-log-filter-sites" class="ui selection multiple fluid dropdown seg_sites">
+                                <input type="hidden" value="<?php echo esc_attr( $filter_sites ); ?>">
+                                <i class="dropdown icon"></i>
+                                <div class="default text"><?php esc_html_e( 'All Websites', 'mainwp' ); ?></div>
+                                <div class="menu">
+                                    <?php
+                                    $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params() );
+                                    while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+                                        ?>
+                                        <div class="item" data-value="<?php echo esc_attr( $website->id ); ?>"><?php echo esc_html( MainWP_Utility::get_nice_url( stripslashes( $website->name ) ) ); ?></div>
+                                        <?php
+                                    }
+
+                                    ?>
+                                    <div class="item" data-value="allsites"><?php esc_html_e( 'All Websites', 'mainwp' ); ?></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="four wide middle aligned left aligned column">
+                        <button onclick="mainwp_module_log_manage_events_filter()" class="ui mini green button"><?php esc_html_e( 'Filter Data', 'mainwp' ); ?></button>
+                        <button onclick="mainwp_module_log_manage_events_reset_filters(this)" class="ui mini button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
+                    </div>
                 </div>
             </div>
             <?php Log_Events_Filter_Segment::get_instance()->render_filters_segment( 'module_log_manage' ); ?>
-        </div>
-
-        <div class="ui two columns grid" style="display: none;">
-            <div class="column ui mini form">
-            </div>
-            <div class="right aligned middle aligned column">
-                <a href="javascript:void(0)" id="" class="ui button mini green"><?php esc_html_e( 'Dismiss Changes', 'mainwp' ); ?></a>
-            </div>
         </div>
     </div>
         <?php
@@ -791,9 +802,9 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
     }
 
     /**
-     * Method ajax_insight_events_dismiss_actions()
+     * Method ajax_sites_changes_dismiss_selected()
      */
-    public function ajax_insight_events_dismiss_actions() {
+    public function ajax_sites_changes_dismiss_selected() {
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_insight_events_dismiss_actions' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $log_id = isset( $_POST['log_id'] ) ? intval( $_POST['log_id'] ) : 0;
@@ -809,6 +820,15 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
             'dismiss' => 1,
         );
         Log_DB_Helper::instance()->update_log( $update );
+        wp_die( wp_json_encode( array( 'success' => 'yes' ) ) );
+    }
+
+    /**
+     * Method ajax_sites_changes_dismiss_all()
+     */
+    public function ajax_sites_changes_dismiss_all() {
+        MainWP_Post_Handler::instance()->secure_request( 'mainwp_insight_events_dismiss_all' );
+        Log_DB_Helper::instance()->dismiss_all_changes();
         wp_die( wp_json_encode( array( 'success' => 'yes' ) ) );
     }
 

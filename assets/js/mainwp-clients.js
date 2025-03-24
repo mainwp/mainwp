@@ -1,7 +1,7 @@
 /**
  * MainWP Clients.page
  */
-
+/* eslint-disable complexity */
 let import_client_current = 0;
 let import_client_total = 0;
 let import_client_count_success = 0;
@@ -294,6 +294,7 @@ jQuery(document).on('click', '#bulk_add_multi_create_client', function (e) {
   let all_rows_valid = true;
   let errors = []; // Array declaration containing error messages.
   let form_data = []; // Initialize array containing form data
+  // eslint-disable-next-line complexity
   jQuery('.mainwp-qsw-add-client-rows').each(function () { //phpcs:ignore -- NOSONAR -- complex
     let website_id = null;
     const row_index = jQuery(this).attr('id').replace('mainwp-qsw-add-client-row-', '');
@@ -651,6 +652,7 @@ let mainwp_notes_client_save = function () {
 };
 
 // Handle import client for csv.
+// eslint-disable-next-line complexity
 const mainwp_manageclient_import_client = function () { // NOSONAR
   if (import_client_stop_by_user)
     return;

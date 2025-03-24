@@ -1089,6 +1089,14 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         }
         $glo_value = is_array( $glo_settings ) && isset( $glo_settings[ $name ] ) ? $glo_settings[ $name ] : $default_value;
 
+        // to support allow use global in individual up_status_codes settings.
+        if ( 'up_status_codes' === $name && false !== strpos( $indi_value, 'useglobal' ) ) {
+            if ( $indi_value === $apply_global_value ) {
+                return $glo_value;
+            } else {
+                return str_replace( 'useglobal', $glo_value, $indi_value );
+            }
+        }
         // NOTE: need to match type of values.
         return ( $indi_value === $apply_global_value ) ? $glo_value : $indi_value; //phpcs:ignore -- NOSONAR - compatible.
     }

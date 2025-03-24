@@ -151,7 +151,7 @@ class Log_Query {
         $start    = absint( $args['start'] );
         $per_page = absint( $args['records_per_page'] );
 
-        if ( $per_page >= 0 ) {
+        if ( $per_page > 0 ) {
             $limits = "LIMIT {$start}, {$per_page}";
         }
 
@@ -219,7 +219,7 @@ class Log_Query {
             }
         }
 
-        if ( $check_access ) {
+        if ( $check_access && 'api-view' !== $view ) {
             $where_actions .= MainWP_DB::instance()->get_sql_where_allow_access_sites( 'wp' );
         }
 
@@ -227,22 +227,25 @@ class Log_Query {
 
         $where .= $where_actions . $where_extra . $where_dismiss;
 
-        if ( ! empty( $args['nonemainwp'] ) ) {
-            $where .= ' AND lg.connector = "non-mainwp-changes" ';
-        }
-
         /**
          * PARSE FIELDS PARAMETER
          */
         $selects   = array();
         $selects[] = 'lg.*';
-        $selects[] = 'wp.url as url';
-        $selects[] = 'wp.name as log_site_name';
+
+        if ( 'api-view' !== $view ) {
+            $selects[] = 'wp.url as url';
+            $selects[] = 'wp.name as log_site_name';
+        }
+
         $selects[] = 'meta_view.*';
 
         $select = implode( ', ', $selects );
 
-        $join  = ' LEFT JOIN ' . $wpdb->mainwp_tbl_wp . ' wp ON lg.site_id = wp.id ';
+        if ( 'api-view' !== $view ) {
+            $join = ' LEFT JOIN ' . $wpdb->mainwp_tbl_wp . ' wp ON lg.site_id = wp.id ';
+        }
+
         $join .= ' LEFT JOIN ' . $this->get_log_meta_view() . ' meta_view ON lg.log_id = meta_view.view_log_id ';
 
         if ( 'events_list' === $view ) {
@@ -258,7 +261,7 @@ class Log_Query {
             $recent_query = "SELECT MAX( lg.created )
             FROM $wpdb->mainwp_tbl_logs as lg
             {$join}
-            WHERE `lg`.`connector` != 'compact' ORDER BY lg.created DESC {$recent_limits}";
+            WHERE `lg`.`connector` != 'compact' AND lg.dismiss = 0 ORDER BY lg.created DESC {$recent_limits}";
 
             $recent_created = $wpdb->get_var( $recent_query ); //phpcs:ignore -- NOSONAR - ok.
 
@@ -315,7 +318,7 @@ class Log_Query {
         $view  = '(SELECT intlog.log_id AS view_log_id, ';
         $view .= '(SELECT meta_name.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' meta_name WHERE  meta_name.meta_log_id = intlog.log_id AND meta_name.meta_key = "name" LIMIT 1) AS meta_name, ';
         $view .= '(SELECT user_meta_json.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' user_meta_json WHERE  user_meta_json.meta_log_id = intlog.log_id AND user_meta_json.meta_key = "user_meta_json" LIMIT 1) AS user_meta_json, ';
-        $view .= '(SELECT usermeta.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' usermeta WHERE  usermeta.meta_log_id = intlog.log_id AND usermeta.meta_key = "user_meta" LIMIT 1) AS usermeta, '; // compatible.
+        $view .= '(SELECT usermeta.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' usermeta WHERE  usermeta.meta_log_id = intlog.log_id AND usermeta.meta_key = "user_meta" LIMIT 1) AS usermeta, '; // compatible user_meta data.
         $view .= '(SELECT extra_info.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' extra_info WHERE  extra_info.meta_log_id = intlog.log_id AND extra_info.meta_key = "extra_info" LIMIT 1) AS extra_info ';
         $view .= ' FROM ' . $wpdb->mainwp_tbl_logs . ' intlog)';
         return $view;

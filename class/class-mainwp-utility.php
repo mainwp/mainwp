@@ -1011,7 +1011,11 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $ret    = array();
         reset( $arr );
         foreach ( $arr as $ii => $val ) {
-            $sorter[ $ii ] = $val[ $key ];
+            if ( isset( $val[ $key ] ) ) {
+                $sorter[ $ii ] = $val[ $key ];
+            } elseif ( SORT_NUMERIC === $sort_flag ) {
+                $sorter[ $ii ] = count( $sorter );
+            }
         }
         asort( $sorter, $sort_flag );
         foreach ( $sorter as $ii => $val ) {
@@ -1815,6 +1819,12 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         if ( 'et' === $lowercase_last_two_chars ) {
             $lowercase_last_two_chars = 'ee';
+        }
+        if ( 'sq' === $lowercase_last_two_chars ) {
+            $lowercase_last_two_chars = 'al';
+        }
+        if ( 'ab' === $lowercase_last_two_chars ) {
+            $lowercase_last_two_chars = 'dz';
         }
 
         echo '<span data-tooltip="' . esc_html__( 'Site Language: ', 'mainwp' ) . esc_attr( $language ) . '" data-position="left center" data-inverted=""><i class="small ' . esc_attr( $lowercase_last_two_chars ) . ' flag"></i></span>';

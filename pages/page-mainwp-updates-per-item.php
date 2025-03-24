@@ -145,7 +145,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                                 $premiumUpgrade['premium'] = true;
                                                 if ( 'plugin' === $premiumUpgrade['type'] ) {
                                                     if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
-                                                        $plugin_upgrades[ $crrSlug ] = array();
+                                                        continue;
                                                     }
                                                     $premiumUpgrade              = array_filter( $premiumUpgrade );
                                                     $plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );

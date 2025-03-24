@@ -350,7 +350,14 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 )
             );
         } else {
-            wp_die( wp_json_encode( array( 'result' => 'failed' ) ) );
+            $result = array(
+                'result' => 'failed',
+            );
+            $error  = MainWP_Post_Handler::get_upload_icon_error( $output );
+            if ( ! empty( $error ) ) {
+                $result['error'] = esc_html( $error );
+            }
+            wp_die( wp_json_encode( $result ) );
         }
     }
 
@@ -409,7 +416,14 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 )
             );
         } else {
-            wp_die( wp_json_encode( array( 'result' => 'failed' ) ) );
+            $result = array(
+                'result' => 'failed',
+            );
+            $error  = MainWP_Post_Handler::get_upload_icon_error( $output );
+            if ( ! empty( $error ) ) {
+                $result['error'] = esc_html( $error );
+            }
+            wp_die( wp_json_encode( $result ) );
         }
     }
 
@@ -711,7 +725,11 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         if ( false === $show_cols ) { // to backwards.
             $show_cols = array();
             foreach ( $columns as $name => $title ) {
-                $show_cols[ $name ] = 1;
+                if ( in_array( $name, array( 'image', 'client', 'suspended', 'contact_name', 'websites', 'created' ) ) ) {
+                    $show_cols[ $name ] = 1;
+                } else {
+                    $show_cols[ $name ] = 0;
+                }
             }
             $user = wp_get_current_user();
             if ( $user ) {

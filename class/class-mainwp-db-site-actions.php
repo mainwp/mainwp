@@ -122,37 +122,6 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
     }
 
     /**
-     * Method update_action.
-     *
-     * Create or update action.
-     *
-     * @param int $action_id action id.
-     *
-     * @return bool
-     */
-    public function get_wp_action_by_id( $action_id ) {
-        if ( empty( $action_id ) ) {
-            return false;
-        }
-        return $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_actions' ) . ' WHERE action_id = %d ', $action_id ) );
-    }
-
-
-    /**
-     * Method get_non_mainwp_action_by_id.
-     *
-     * @param int $log_id action id.
-     *
-     * @return bool
-     */
-    public function get_non_mainwp_action_by_id( $log_id ) {
-        if ( empty( $log_id ) ) {
-            return false;
-        }
-        return $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_logs' ) . ' WHERE log_id = %d ', $log_id ) ); //phpcs:ignore -- ok.
-    }
-
-    /**
      * Method delete_action_by.
      *
      * Delete action by.
@@ -194,25 +163,25 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
      * Get wp actions.
      *
      * @param bool  $params params.
-     * @param mixed $obj Format data.
+     * @param mixed $site Site data.
      *
      * @return mixed $result result.
      */
-    public function get_wp_actions( $params = array(), $obj = OBJECT) { //phpcs:ignore -- NOSONAR - complex.
-        return $this->get_none_mainwp_actions_log( $params, $obj );
+    public function get_wp_actions( $params = array(), $site = false ) { //phpcs:ignore -- NOSONAR - complex.
+        return $this->get_none_mainwp_actions_log_for_rest_api( $params, $site );
     }
 
     /**
-     * Method get_none_mainwp_actions_log.
+     * Method get_none_mainwp_actions_log_for_rest_api.
      *
      * Get wp actions.
      *
      * @param bool  $legacy_params params.
-     * @param mixed $obj Format data.
+     * @param mixed $site Site data.
      *
      * @return mixed $result result.
      */
-    public function get_none_mainwp_actions_log( $legacy_params = array(), $obj = OBJECT ) { //phpcs:ignore -- NOSONAR - complex.
+    public function get_none_mainwp_actions_log_for_rest_api( $legacy_params = array(), $site = false ) { //phpcs:ignore -- NOSONAR - complex.
 
         $action_id    = isset( $legacy_params['action_id'] ) ? intval( $legacy_params['action_id'] ) : 0;
         $site_id      = isset( $legacy_params['wpid'] ) ? $legacy_params['wpid'] : 0;
@@ -220,44 +189,65 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
         $where_extra  = isset( $legacy_params['where_extra'] ) ? $legacy_params['where_extra'] : ''; // compatible.
         $dism         = ! empty( $legacy_params['dismiss'] ) ? 1 : 0;
         $check_access = isset( $legacy_params['check_access'] ) ? $legacy_params['check_access'] : true;
-        $search_str   = isset( $legacy_params['search'] ) ? $this->escape( trim( $legacy_params['search'] ) ) : null;
 
         $order_by    = isset( $legacy_params['order_by'] ) && ! empty( $legacy_params['order_by'] ) ? $legacy_params['order_by'] : 'created ';
-        $offset      = isset( $legacy_params['offset'] ) ? intval( $legacy_params['offset'] ) : 0;
-        $rowcount    = isset( $legacy_params['rowcount'] ) ? intval( $legacy_params['rowcount'] ) : false;
+        $offset      = ! empty( $legacy_params['offset'] ) ? (int) ( $legacy_params['offset'] ) : 0;
+        $per_page    = ! empty( $legacy_params['rowcount'] ) ? (int) ( $legacy_params['rowcount'] ) : 0;
         $total_count = isset( $legacy_params['total_count'] ) && $legacy_params['total_count'] ? true : false;
 
-        $limit = isset( $legacy_params['limit'] ) ? intval( $legacy_params['limit'] ) : false;
+        $limit = ! empty( $legacy_params['limit'] ) ? intval( $legacy_params['limit'] ) : false;
 
         $order = 'DESC';
         if ( isset( $legacy_params['order'] ) && 'ASC' === strtoupper( $legacy_params['order'] ) ) {
             $order = 'ASC';
         }
 
-        $per_page = false !== $rowcount ? absint( $rowcount ) : 9999999999;
-
         $compatible_args = array(
-            'search'           => $search_str,
             'start'            => $offset,
             'records_per_page' => $per_page,
             'order'            => $order,
             'orderby'          => $order_by,
             'count_only'       => $total_count ? true : false,
-            'recent_number'    => $limit,
+            'limit'            => $limit,
             'where_extra'      => $where_extra,
             'log_id'           => $action_id,
             'wpid'             => $site_id,
             'object_id'        => $object_id,
             'dismiss'          => $dism,
             'check_access'     => $check_access,
-            'nonemainwp'       => true,
         );
+
+        if ( ! empty( $legacy_params['source'] ) ) {
+            $sources_conds = '';
+            if ( 'wpadmin' === $legacy_params['source'] ) {
+                $sources_conds = 'wp-admin-only';
+            } elseif ( 'dashboard' === $legacy_params['source'] ) {
+                $sources_conds = 'dashboard-only';
+            } elseif ( 'all' === $legacy_params['source'] ) {
+                $sources_conds = '';
+            } else {
+                $compatible_args['wpid'] = -1; // will return empty.
+            }
+
+            $compatible_args['sources_conds'] = $sources_conds;
+        } else {
+            $compatible_args['sources_conds'] = 'wp-admin-only';
+        }
+
+        $compatible_args['view'] = 'api-view';
 
         $query_log = new Log_Query();
 
         $results = $query_log->query( $compatible_args );
+
         if ( is_array( $results ) && isset( $results['items'] ) ) {
-            return $results['items'];
+            $items = array();
+            foreach ( $results['items'] as $item ) {
+                $item->log_site_name = $site->name;
+                $item->url           = $site->url;
+                $items[]             = $item;
+            }
+            return $items;
         } elseif ( $total_count ) {
             if ( isset( $results['count'] ) ) {
                 return $results['count'];

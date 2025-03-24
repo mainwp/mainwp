@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.7.1
 Requires PHP: 7.4
-Stable tag: 5.4.0.2
+Stable tag: 5.4.0.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -146,6 +146,27 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.4.0.3 - 3-24-2025 =
+
+* Fixed: An issue with the Up HTTP Codes option saving when the "Use Global Settings" is used with specific codes
+* Fixed: Mismatch in site Uptime Check frequency and Last and Next check timestamps
+* Fixed: An issue with missing the Gravity Forms plugin name in the list of available updates
+* Fixed: An issue where a previously updated Gravity Forms plugin remains in the list of available updates
+* Fixed: Missing flag icon for sites set to the Albanian language
+* Fixed: Issue with displaying the correct Site Health Threshold and Verify Certificate option values in site settings
+* Fixed: Usability issue where the Favorites extension installed plugins on suspended sites when selected by tag or client
+* Fixed: Incorrect monitor status shown in the Sites Table column for new monitors before the first check
+* Fixed: Theme update problems caused by a bug in the selection system on the site updates page
+* Fixed: Conflict with the Git Updater plugin
+* Added: Ability to dismiss Site Changes in bulk
+* Added: Confirmation requirement when dismissing Site Changes
+* Added: Info about ignored updates in the available updates label tooltip in the Manage Sites table
+* Updated: Improved error handling for failed file uploads when uploading site, client, or cost icons
+* Updated: Removed the "All" option from the page length menu in the Site Changes table
+* Updated: Default column selection for the Manage Clients table on new installs
+* Updated: Set a maximum column width for the Object column in the Site Changes table
+* Updated: Optimized data loading for the "Non-MainWP Changes" REST API endpoint
 
 = 5.4.0.2 - 3-12-2025 =
 

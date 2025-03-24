@@ -427,6 +427,11 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
         include_once ABSPATH . '/wp-admin/includes/class-wp-upgrader.php'; // NOSONAR - WP compatible.
         include_once ABSPATH . '/wp-admin/includes/plugin.php'; // NOSONAR - WP compatible.
 
+        // To fix conflict.
+        if ( is_plugin_active( 'git-updater/git-updater.php' ) ) {
+            remove_all_filters( 'upgrader_source_selection' );
+        }
+
         $installer          = new \WP_Upgrader();
         $ssl_verifyhost     = get_option( 'mainwp_sslVerifyCertificate' );
         $ssl_api_verifyhost = ( ( false === get_option( 'mainwp_api_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_api_sslVerifyCertificate' ) ) ) ? 1 : 0;

@@ -112,7 +112,6 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
         </div>
         <script type="text/javascript">
             jQuery(function ($) {
-                $( '.ui.dropdown:not(.select-individual-updates) .item' ).tab();
                 $( '.ui.dropdown.select-individual-updates .item' ).tab({
                     'onVisible': function (tab) {
                         console.log(tab);

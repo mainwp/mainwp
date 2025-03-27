@@ -3213,14 +3213,12 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @return mixed
      */
     public function update_regular_process( $data ) {
-        if ( is_array( $data ) && isset( $data['type'] ) && isset( $data['process_slug'] ) ) {
-            if ( isset( $data['process_id'] ) ) {
-                $process_id = $data['process_id'];
-                unset( $data['process_id'] );
-                return $this->wpdb->update( $this->table_name( 'schedule_processes' ), $data, array( 'process_id' => $process_id ) );
-            } else {
-                return $this->wpdb->insert( $this->table_name( 'schedule_processes' ), $data );
-            }
+        if ( isset( $data['process_id'] ) ) {
+            $process_id = $data['process_id'];
+            unset( $data['process_id'] );
+            return $this->wpdb->update( $this->table_name( 'schedule_processes' ), $data, array( 'process_id' => $process_id ) );
+        } elseif ( is_array( $data ) && isset( $data['type'] ) && isset( $data['process_slug'] ) ) {
+            return $this->wpdb->insert( $this->table_name( 'schedule_processes' ), $data );
         }
         return false;
     }

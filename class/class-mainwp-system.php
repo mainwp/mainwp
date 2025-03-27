@@ -355,7 +355,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_individual_uptime_monitoring_schedule_enabled',
                 'mainwp_disableSitesHealthMonitoring',
                 'mainwp_sitehealthThreshold',
-                'mainwp_settings_notification_emails',
                 'mainwp_check_http_response',
                 'mainwp_extmenu',
                 'mainwp_opensslLibLocation',

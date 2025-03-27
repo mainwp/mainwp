@@ -973,7 +973,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 'client.site.mysql'   => 'mysql_version', // Displays the MySQL version of the child site.
             );
             foreach ( $map_site_tokens as $tok => $val ) {
-                $tokens_value[ '[' . $tok . ']' ] = ( is_array( $site_info ) && isset( $site_info[ $val ] ) ) ? $site_info[ $val ] : '';
+                $tokens_values[ '[' . $tok . ']' ] = ( is_array( $site_info ) && isset( $site_info[ $val ] ) ) ? $site_info[ $val ] : '';
             }
         }
 

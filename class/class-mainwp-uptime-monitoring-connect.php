@@ -149,15 +149,19 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         }
 
         if ( 'post' === $mo_apply_method ) {
-            $body = http_build_query( array( 'time' => time() ) );
+            $postdata = array( 'time' => time() );
+            $body     = http_build_query( $postdata );
             curl_setopt( $ch, CURLOPT_POSTFIELDS, $body );
-            curl_setopt(
-                $ch,
-                CURLOPT_HTTPHEADER,
-                array(
-                    'Content-Length: ' . strlen( $body ),
-                )
-            );
+
+            $headers = array( 'Content-Length' => strlen( $body ) );
+            $headers = apply_filters( 'mainwp_connect_http_request_headers', $headers, false, $monitor );
+
+            if ( class_exists( '\WpOrg\Requests\Requests' ) ) {
+                $headers = \WpOrg\Requests\Requests::flatten( $headers );
+            } else {
+                $headers = \Requests::flatten( $headers );
+            }
+            curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
         }
 
         if ( 'ping' === $mo_apply_type || 'head' === $mo_apply_method ) {
@@ -432,15 +436,19 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             }
 
             if ( 'post' === $mo_apply_method ) {
-                $body = http_build_query( array( 'time' => time() ) );
+                $postdata = array( 'time' => time() );
+                $body     = http_build_query( $postdata );
                 curl_setopt( $ch, CURLOPT_POSTFIELDS, $body );
-                curl_setopt(
-                    $ch,
-                    CURLOPT_HTTPHEADER,
-                    array(
-                        'Content-Length: ' . strlen( $body ),
-                    )
-                );
+
+                $headers = array( 'Content-Length' => strlen( $body ) );
+                $headers = apply_filters( 'mainwp_connect_http_request_headers', $headers, false, $monitor );
+
+                if ( class_exists( '\WpOrg\Requests\Requests' ) ) {
+                    $headers = \WpOrg\Requests\Requests::flatten( $headers );
+                } else {
+                    $headers = \Requests::flatten( $headers );
+                }
+                curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
             }
 
             if ( 'ping' === $mo_apply_type || 'head' === $mo_apply_method ) {

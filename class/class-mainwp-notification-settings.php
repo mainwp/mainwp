@@ -515,7 +515,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
     public static function prepare_general_email_settings_for_site( &$options, $website ) {
         if ( is_array( $options ) && isset( $options['subject'] ) && isset( $options['heading'] ) && isset( $options['recipients'] ) ) {
             if ( preg_match( '/\[[^\]]+\]/is', $options['subject'] . $options['heading'], $matches ) ) {
-                $tokens_values      = MainWP_System_Utility::get_tokens_site_values( $website );
+                $tokens_values      = MainWP_System_Utility::get_tokens_site_values( $website, true );
                 $options['subject'] = MainWP_System_Utility::replace_tokens_values( $options['subject'], $tokens_values );
                 $options['heading'] = MainWP_System_Utility::replace_tokens_values( $options['heading'], $tokens_values );
             }
@@ -586,7 +586,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
         $options = array_merge( $default, $options );
 
         if ( preg_match( '/\[[^\]]+\]/is', $options['subject'] . $options['heading'], $matches ) ) {
-            $tokens_values      = MainWP_System_Utility::get_tokens_site_values( $website );
+            $tokens_values      = MainWP_System_Utility::get_tokens_site_values( $website, true );
             $options['subject'] = MainWP_System_Utility::replace_tokens_values( $options['subject'], $tokens_values );
             $options['heading'] = MainWP_System_Utility::replace_tokens_values( $options['heading'], $tokens_values );
         }
@@ -763,7 +763,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
      */
     public static function replace_tokens_for_content( $content, $website ) {
 
-        $tokens_values = MainWP_System_Utility::get_tokens_site_values( $website );
+        $tokens_values = MainWP_System_Utility::get_tokens_site_values( $website, true );
 
         $content = MainWP_System_Utility::replace_tokens_values( $content, $tokens_values );
 

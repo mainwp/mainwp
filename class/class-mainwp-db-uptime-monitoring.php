@@ -925,7 +925,7 @@ KEY idx_wpid (wpid)";
         }
 
         $sql = $this->wpdb->prepare(
-            'SELECT he.* FROM ' . $this->table_name( 'monitors' ) . ' mo ' .
+            'SELECT he.*,mo. FROM ' . $this->table_name( 'monitors' ) . ' mo ' .
             ' LEFT JOIN ' . $this->table_name( 'monitor_heartbeat' ) . ' he ' .
             ' ON mo.monitor_id = he.monitor_id ' .
             ' WHERE mo.wpid = %d ' . $where . ' ORDER BY he.time DESC LIMIT 1',

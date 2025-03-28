@@ -225,7 +225,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $date_string = sprintf(
                     '<time datetime="%s" class="relative-time record-created">%s</time>',
                     mainwp_module_log_get_iso_8601_extended_date( $record->created ),
-                    MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $record->created ) )
+                    MainWP_Utility::format_timezone( $record->created )
                 );
                 $out         = $date_string;
                 $escaped     = true;

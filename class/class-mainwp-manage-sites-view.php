@@ -699,6 +699,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                     <?php if ( $show_language_updates ) { ?>
                                     <div class="<?php echo 'trans' === $active_tab ? 'active' : ''; ?> item" data-tab="translations" data-value="translations"><?php esc_html_e( 'Translation Updates', 'mainwp' ); ?></div>
                                     <?php } ?>
+                                    <?php if ( is_plugin_active( 'mainwp-database-updater-extension/mainwp-database-updater-extension.php' ) ) { ?>
+                                        <div class="item" data-tab="dbupdates" data-value="dbupdates"><?php esc_html_e( 'Database Updates', 'mainwp' ); ?></div>
+                                    <?php } ?>
                                     <div class="<?php echo 'abandoned-plugins' === $active_tab ? 'active' : ''; ?> item" data-tab="abandoned-plugins" data-value="abandoned-plugins"><?php esc_html_e( 'Abandoned Plugins', 'mainwp' ); ?></div>
                                     <div class="<?php echo 'abandoned-themes' === $active_tab ? 'active' : ''; ?> item" data-tab="abandoned-themes" data-value="abandoned-themes"><?php esc_html_e( 'Abandoned Themes', 'mainwp' ); ?></div>
                                 </div>

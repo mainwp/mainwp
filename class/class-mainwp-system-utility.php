@@ -956,7 +956,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
      */
-    public static function get_tokens_site_values( $site, $monitor = false ) {
+    public static function get_tokens_site_values( $site, $monitor = false ) { //phpcs:ignore -- NOSONAR -complex.
 
         $tokens_values = array(
             '[site.name]' => $site->name,

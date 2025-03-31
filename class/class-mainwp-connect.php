@@ -111,7 +111,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $headers           = array( 'X-Requested-With' => 'XMLHttpRequest' );
         $headers['Expect'] = static::get_expect_header( $postdata );
-        $headers = apply_filters( 'mainwp_connect_http_request_headers', $headers, false );
+        $headers           = apply_filters( 'mainwp_connect_http_request_headers', $headers, false );
 
         if ( class_exists( '\WpOrg\Requests\Requests' ) ) {
             $headers = \WpOrg\Requests\Requests::flatten( $headers );

@@ -979,7 +979,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         if ( $monitor ) {
-            $active_monitor = 0;
+            $active_monitor  = 0;
             $primary_monitor = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site->id, 'issub', 0 );
             if ( $primary_monitor ) {
                 $global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();

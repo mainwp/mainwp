@@ -88,6 +88,13 @@ if ( empty( $heading ) ) {
                             </tr>
                                 <?php
                             } elseif ( ! empty( $sites ) ) {
+                                ?>
+                                <tr>
+                                    <td style="vertical-align:top;text-align:left;padding:30px 30px 0 30px;">
+                                        <strong><?php esc_html_e( 'Hi there', 'mainwp' ); ?>,</strong>
+                                    </td>
+                                </tr>
+                                <?php
                                 foreach ( $sites as $site ) {
                                     $site_name   = $site->name;
                                     $site_url    = $site->url;
@@ -100,7 +107,6 @@ if ( empty( $heading ) ) {
                                     ?>
                                         <tr>
                                             <td style="vertical-align:top;text-align:left;padding:30px 30px 0 30px;">
-                                                <strong><?php esc_html_e( 'Hi there', 'mainwp' ); ?>,</strong>
                                                 <?php if ( empty( $site->status ) ) { ?>
                                                 <p><?php esc_html_e( 'Based on the HTTP response from your monitor, it appears that your child site is DOWN.', 'mainwp' ); ?></p>
                                                 <?php } else { ?>

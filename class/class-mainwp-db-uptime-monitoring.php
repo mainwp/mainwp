@@ -879,6 +879,8 @@ KEY idx_wpid (wpid)";
             return false;
         }
 
+        MainWP_Logger::instance()->log_uptime_check( 'Update heartbeat :: ' . print_r( $data, true ) );
+
         if ( isset( $data['heartbeat_id'] ) ) {
             $id = $data['heartbeat_id'];
             unset( $data['heartbeat_id'] );
@@ -925,7 +927,7 @@ KEY idx_wpid (wpid)";
         }
 
         $sql = $this->wpdb->prepare(
-            'SELECT he.*,mo. FROM ' . $this->table_name( 'monitors' ) . ' mo ' .
+            'SELECT he.*,mo.active FROM ' . $this->table_name( 'monitors' ) . ' mo ' .
             ' LEFT JOIN ' . $this->table_name( 'monitor_heartbeat' ) . ' he ' .
             ' ON mo.monitor_id = he.monitor_id ' .
             ' WHERE mo.wpid = %d ' . $where . ' ORDER BY he.time DESC LIMIT 1',
@@ -971,7 +973,7 @@ KEY idx_wpid (wpid)";
             ' FROM ' . $this->table_name( 'monitors' ) . ' mo ' .
             ' LEFT JOIN ' . $this->table_name( 'monitor_heartbeat' ) . ' he ' .
             ' ON mo.monitor_id = he.monitor_id ' .
-            ' WHERE mo.wpid = %d LIMIT 1',
+            ' WHERE mo.wpid = %d AND mo.issub = 0 LIMIT 1',
             $start_date,
             $siteid
         );
@@ -1059,7 +1061,7 @@ KEY idx_wpid (wpid)";
             ' FROM ' . $this->table_name( 'monitors' ) . ' mo ' .
             ' LEFT JOIN ' . $this->table_name( 'monitor_heartbeat' ) . ' he ' .
             ' ON mo.monitor_id = he.monitor_id ' .
-            ' WHERE mo.wpid = %d LIMIT 1',
+            ' WHERE mo.wpid = %d AND mo.issub = 0 LIMIT 1',
             $start_date,
             $start_date,
             $siteid

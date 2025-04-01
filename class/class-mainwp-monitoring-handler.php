@@ -161,7 +161,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_Notification::send_websites_uptime_monitoring()
      * @uses \MainWP\Dashboard\MainWP_Notification_Template::get_template_html()
      */
-    public static function notice_sites_uptime_monitoring( $websites_notices, $admin_email, $email_settings, $plain_text, $to_admin = false ) {
+    public static function notice_sites_uptime_monitoring( $websites, $admin_email, $email_settings, $plain_text, $to_admin = false ) {
 
         $heading = $email_settings['heading'];
         $subject = $email_settings['subject'];
@@ -170,7 +170,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $mail_content = MainWP_Notification_Template::instance()->get_template_html(
                 'emails/mainwp-uptime-monitoring-email.php',
                 array(
-                    'sites'   => $websites_notices,
+                    'sites'   => $websites,
                     'heading' => $heading,
                 )
             );
@@ -179,23 +179,14 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 MainWP_Notification::send_websites_uptime_monitoring( $admin_email, $subject, $mail_content, $plain_text );
                 usleep( 100000 );
             }
-            do_action( 'mainwp_after_notice_sites_uptime_monitoring_admin', $websites_notices );
+            do_action( 'mainwp_after_notice_sites_uptime_monitoring_admin', $websites );
             return;
         }
 
-        $heartbeats_notices = array();
-        foreach ( $websites_notices as $site ) {
-            if ( ! isset( $heartbeats_notices[ $site->id ] ) ) {
-                $heartbeats_notices[ $site->id ] = array();
-            }
-            $heartbeats_notices[ $site->id ][] = $site;
-        }
-
         // Send individual notifications by iterating through each site.
-        foreach ( $heartbeats_notices as $sites ) {
-            $current_site    = $sites[0];
+        foreach ( $websites as $site ) {
             $email           = '';
-            $addition_emails = $current_site->monitoring_notification_emails;
+            $addition_emails = $site->monitoring_notification_emails;
             if ( ! empty( $addition_emails ) ) {
                 $email .= ',' . $addition_emails; // send to addition emails too.
             }
@@ -203,8 +194,8 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $mail_content = MainWP_Notification_Template::instance()->get_template_html(
                 'emails/mainwp-uptime-monitoring-email.php',
                 array(
-                    'sites'   => $sites, // support tokens process.
-                    'heading' => $heading,
+                    'current_email_site' => $site, // support tokens process.
+                    'heading'            => $heading,
                 )
             );
 
@@ -219,16 +210,14 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 MainWP_Notification::send_websites_uptime_monitoring( $email, $subject, $mail_content, $plain_text );
                 // update noticed value.
                 MainWP_DB::instance()->update_website_values(
-                    $current_site->id,
+                    $site->id,
                     array(
                         'http_code_noticed' => 1, // noticed.
                     )
                 );
                 usleep( 100000 );
             }
-            foreach ( $sites as $site ) {
-                do_action( 'mainwp_after_notice_sites_uptime_monitoring_individual', $site, $sites ); // compatible hook.
-            }
+            do_action( 'mainwp_after_notice_sites_uptime_monitoring_individual', $site );
         }
     }
 

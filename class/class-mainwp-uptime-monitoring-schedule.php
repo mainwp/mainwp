@@ -213,7 +213,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
         }
 
         if ( 'running' === $process_run_status ) {
-            $limit_send      = apply_filters( 'mainwp_uptime_monitoring_send_notification_limit', 20 ); // multi uptime status in one email.
+            $limit_send      = apply_filters( 'mainwp_uptime_monitoring_send_notification_limit', 3 );
             $process_notices = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_notification_to_continue_send( array( 'limit' => $limit_send ) );
             if ( is_array( $process_notices ) && ! empty( $process_notices ) ) {
                 MainWP_Logger::instance()->log_uptime_notice( 'Uptime notice continue :: [count=' . ( $process_notices ? count( $process_notices ) : 0 ) . '].' );

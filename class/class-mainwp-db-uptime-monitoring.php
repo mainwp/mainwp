@@ -879,7 +879,7 @@ KEY idx_wpid (wpid)";
             return false;
         }
 
-        MainWP_Logger::instance()->log_uptime_check( 'Update heartbeat :: ' . print_r( $data, true ) );
+        MainWP_Logger::instance()->log_uptime_check( 'Update heartbeat :: ' . print_r( $data, true ) ); //phpcs:ignore --NOSONAR -for dev logs.
 
         if ( isset( $data['heartbeat_id'] ) ) {
             $id = $data['heartbeat_id'];

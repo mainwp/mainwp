@@ -1828,6 +1828,7 @@ let updatesoverview_upgrade_all_update_done = function () {
     updatesoverview_upgrade_all_loop_next();
 };
 
+/* eslint-disable complexity */
 let updatesoverview_upgrade_int_flow = function (params) {
     let pWebsiteId = params['pWebsiteId'];
     let pThemeSlugToUpgrade = params['pThemeSlugToUpgrade'];
@@ -2291,6 +2292,7 @@ let updatesoverview_upgrade_int_flow = function (params) {
         return false;
     }
 };
+/* eslint-enable complexity */
 
 let updatesoverview_plugins_dismiss_outdate_detail = function (slug, name, id, obj) {
     return updatesoverview_dismiss_outdate_plugintheme_by_site('plugin', slug, name, id, obj);

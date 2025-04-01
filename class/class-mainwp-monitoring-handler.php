@@ -151,7 +151,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
     /**
      * Basic site uptime monitoring.
      *
-     * @param array  $websites       Array containing the websites.
+     * @param array  $websites_notices       Array containing the websites.
      * @param string $admin_email    Notification email.
      * @param string $email_settings Email settings.
      * @param bool   $plain_text     Determines if the plain text format should be used.

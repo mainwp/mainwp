@@ -732,6 +732,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $request_info = ! empty( $output->requests_info ) && is_array( $output->requests_info ) ? $output->requests_info : array();
         $resp_info    = ! empty( $request_info[ $monitor->monitor_id ] ) && is_array( $request_info[ $monitor->monitor_id ] ) ? $request_info[ $monitor->monitor_id ] : array();
 
+        $resp_info = apply_filters( 'mainwp_uptime_monitor_check_result', $resp_info, $data, $monitor, $output, $params );
+
         $global_settings = $output->global_settings;
 
         $http_code  = isset( $resp_info['http_code'] ) ? $resp_info['http_code'] : 0;

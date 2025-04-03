@@ -657,6 +657,16 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
         if ( ! static::hook_verify( $pluginFile, $key ) ) {
             return false;
         }
+
+        $website = MainWP_DB::instance()->get_website_by_id( $websiteId );
+
+        if ( $website && $website->suspended && ( ! defined( 'DOING_CRON' ) || true !== DOING_CRON ) && ( ! defined( 'WP_CLI' ) || true !== WP_CLI ) ) {
+            return array(
+                'error'     => esc_html__( 'Suspended site.', 'mainwp' ),
+                'errorCode' => 'SUSPENDED_SITE',
+            );
+        }
+
         return static::fetch_url_authed( $websiteId, $what, $params, $rawResponse );
     }
 

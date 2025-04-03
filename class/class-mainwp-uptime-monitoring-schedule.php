@@ -187,6 +187,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
             $process_init = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_notification_to_start_send( 50 );
 
             if ( is_array( $process_init ) && ! empty( $process_init ) ) {
+                MainWP_Logger::instance()->log_events( 'regular-schedule', 'Uptime notification :: start :: [found=' . count( $process_init ) . ']' );
 
                 if ( 'init' !== $process_run_status ) {
                     $this->update_uptime_notification_status( 'init' );
@@ -206,6 +207,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
                 }
             } elseif ( 'init' === $process_run_status ) {
                 $this->update_uptime_notification_status( 'running' );
+                MainWP_Logger::instance()->log_events( 'regular-schedule', 'Uptime notification :: [running]' );
             }
             return;
         }
@@ -249,7 +251,11 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
         $admin_email = MainWP_Notification_Settings::get_general_email();
 
         // general uptime notification, to administrator.
-        $email_settings = MainWP_Notification_Settings::get_general_email_settings( 'uptime' );
+        $gene_email_settings = MainWP_Notification_Settings::get_general_email_settings( 'uptime' );
+
+        if ( ! empty( $process_notices ) ) {
+            MainWP_Notification_Settings::prepare_general_email_settings_for_site( $gene_email_settings, $process_notices[0] );
+        }
 
         $debug_settings = array(
             'admin_email'            => $admin_email,
@@ -257,9 +263,9 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
             'site_email_settings'    => array(),
         );
 
-        if ( ! $email_settings['disable'] ) {
+        if ( ! $gene_email_settings['disable'] ) {
             MainWP_Logger::instance()->log_uptime_notice( 'General uptime notifications are now being sent to the admin.' );
-            static::send_uptime_notification_heartbeats_importance_status( $process_notices, $admin_email, $email_settings, $plain_text );
+            static::send_uptime_notification_heartbeats_importance_status( $process_notices, $admin_email, $gene_email_settings, $plain_text );
         }
 
         $individual_admin_uptimeSites = array();
@@ -291,6 +297,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
             $admin_email_settings               = MainWP_Notification_Settings::get_default_emails_fields( 'uptime', '', true ); // get default subject and heading only.
             $admin_email_settings['disable']    = 0;
             $admin_email_settings['recipients'] = ''; // sent to admin only.
+            MainWP_Notification_Settings::prepare_general_email_settings_for_site( $admin_email_settings, $uptime_notice );
             // send to admin, all individual sites in one email.
             MainWP_Logger::instance()->log_uptime_notice( 'Send all individual uptime notifications to the admin in a single email. [count=' . count( $individual_admin_uptimeSites ) . ']' );
             static::send_uptime_notification_heartbeats_importance_status( $individual_admin_uptimeSites, $admin_email, $admin_email_settings, $plain_text, true );

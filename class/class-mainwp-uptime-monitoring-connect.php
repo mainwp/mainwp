@@ -149,15 +149,19 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         }
 
         if ( 'post' === $mo_apply_method ) {
-            $body = http_build_query( array( 'time' => time() ) );
+            $postdata = array( 'time' => time() );
+            $body     = http_build_query( $postdata );
             curl_setopt( $ch, CURLOPT_POSTFIELDS, $body );
-            curl_setopt(
-                $ch,
-                CURLOPT_HTTPHEADER,
-                array(
-                    'Content-Length: ' . strlen( $body ),
-                )
-            );
+
+            $headers = array( 'Content-Length' => strlen( $body ) );
+            $headers = apply_filters( 'mainwp_connect_http_request_headers', $headers, false, $monitor );
+
+            if ( class_exists( '\WpOrg\Requests\Requests' ) ) {
+                $headers = \WpOrg\Requests\Requests::flatten( $headers );
+            } else {
+                $headers = \Requests::flatten( $headers );
+            }
+            curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
         }
 
         if ( 'ping' === $mo_apply_type || 'head' === $mo_apply_method ) {
@@ -432,15 +436,19 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             }
 
             if ( 'post' === $mo_apply_method ) {
-                $body = http_build_query( array( 'time' => time() ) );
+                $postdata = array( 'time' => time() );
+                $body     = http_build_query( $postdata );
                 curl_setopt( $ch, CURLOPT_POSTFIELDS, $body );
-                curl_setopt(
-                    $ch,
-                    CURLOPT_HTTPHEADER,
-                    array(
-                        'Content-Length: ' . strlen( $body ),
-                    )
-                );
+
+                $headers = array( 'Content-Length' => strlen( $body ) );
+                $headers = apply_filters( 'mainwp_connect_http_request_headers', $headers, false, $monitor );
+
+                if ( class_exists( '\WpOrg\Requests\Requests' ) ) {
+                    $headers = \WpOrg\Requests\Requests::flatten( $headers );
+                } else {
+                    $headers = \Requests::flatten( $headers );
+                }
+                curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
             }
 
             if ( 'ping' === $mo_apply_type || 'head' === $mo_apply_method ) {
@@ -723,6 +731,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         $request_info = ! empty( $output->requests_info ) && is_array( $output->requests_info ) ? $output->requests_info : array();
         $resp_info    = ! empty( $request_info[ $monitor->monitor_id ] ) && is_array( $request_info[ $monitor->monitor_id ] ) ? $request_info[ $monitor->monitor_id ] : array();
+
+        $resp_info = apply_filters( 'mainwp_uptime_monitor_check_result', $resp_info, $data, $monitor, $output, $params );
 
         $global_settings = $output->global_settings;
 

@@ -100,11 +100,6 @@
   transition: filter 0.1s ease-in-out;
 }
 
-.mainwp-ui.mainwp-custom-theme .ui.button:hover {
-  box-shadow: none !important;
-  filter: brightness(110%);
-}
-
 .mainwp-ui.mainwp-custom-theme #mainwp-top-header .ui.dropdown.button {
   margin-right: 0px;
 }

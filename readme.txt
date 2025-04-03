@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.7.1
 Requires PHP: 7.4
-Stable tag: 5.4.0.3
+Stable tag: 5.4.0.4
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -146,6 +146,19 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.4.0.4 - Maintenance Release - 4-3-2025 =
+
+* Added: Validation to check if posix_getpwuid() and posix_getuid() PHP functions are callable before invoking them.
+* Added: mainwp_connect_http_request_headers hook to support custom request headers for specific hosts.
+* Added: Support for the [uptime.status] token in Uptime Monitoring emails.
+* Fixed: Incorrect default tab selection on the Site > Updates page [(#744)](https://github.com/mainwp/mainwp/issues/744).
+* Fixed: Inaccurate values returned by Uptime Monitoring tokens.
+* Fixed: Issue with the Bulk Reconnect Sites action [(#745)](https://github.com/mainwp/mainwp/issues/745).
+* Fixed: Problem with sending Uptime Monitoring notifications affecting certain setups [(#748)](https://github.com/mainwp/mainwp/issues/748).
+* Fixed: Overlapping issue between dropdown menus and button elements on the Updates page.
+* Updated: Timestamp formatting in the Sites Changes table to display local time.
+* Updated: Removed unnecessary tooltip element for a cleaner UI.
 
 = 5.4.0.3 - 3-24-2025 =
 

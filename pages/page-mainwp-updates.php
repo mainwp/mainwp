@@ -2240,9 +2240,9 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <?php if ( 'wordpress-updates' === $current_tab && 0 < $count_ignored_cores ) : ?>
             <a class="ui mini basic button" href="admin.php?page=UpdatesManage&tab=updates-ignore" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Click here to see the list of ignored WordPress core updates.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'View Ignored Updates', 'mainwp' ); ?></a>
         <?php elseif ( 'plugins-updates' === $current_tab && 0 < $count_ignored_plugins ) : ?>
-            <a class="ui mini basic button" href="admin.php?page=PluginsIgnore" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Click here to see the list of ignored plugin updates.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'View Ignored Updates', 'mainwp' ); ?></a>
+            <a class="ui mini basic button" href="admin.php?page=PluginsIgnore"><?php esc_html_e( 'View Ignored Updates', 'mainwp' ); ?></a>
         <?php elseif ( 'themes-updates' === $current_tab && 0 < $count_ignored_themes ) : ?>
-            <a class="ui mini basic button" href="admin.php?page=ThemesIgnore" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Click here to see the list of ignored theme updates.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'View Ignored Updates', 'mainwp' ); ?></a>
+            <a class="ui mini basic button" href="admin.php?page=ThemesIgnore" ><?php esc_html_e( 'View Ignored Updates', 'mainwp' ); ?></a>
         <?php endif; ?>
             <?php
     }

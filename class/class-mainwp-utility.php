@@ -389,6 +389,29 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
+     * Method format_timezone()
+     *
+     * Format the given timestamp.
+     *
+     * @param mixed $timestamp Timestamp to format.
+     *
+     * @return string Formatted timestamp.
+     */
+    public static function format_timezone( $timestamp ) {
+
+        $wp_timezone = get_option( 'timezone_string' );
+        if ( ! $wp_timezone ) {
+            return static::format_timestamp( static::get_timestamp( $timestamp ) );
+        }
+
+        $datetime = new \DateTime( '@' . $timestamp );
+        $datetime->setTimezone( new \DateTimeZone( $wp_timezone ) );
+
+        $format = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
+        return $datetime->format( $format );
+    }
+
+    /**
      * Method format_timestamp()
      *
      * Format the given timestamp.

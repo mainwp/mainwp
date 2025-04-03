@@ -216,7 +216,7 @@ let mainwp_managesites_bulk_reconnect_specific = function (pCheckedBox) {
   let siteId = rowObj.attr('siteid');
 
   // skip reconnect sites without sync error
-  if (rowObj.find('td.site-sync-error').length == 0) {
+  if ( ! ( rowObj.hasClass('child-site') && rowObj.hasClass('error') ) ) {
     bulkManageSitesFinished++;
     mainwp_managesites_bulk_reconnect_next();
     return;

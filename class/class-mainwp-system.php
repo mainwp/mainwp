@@ -29,7 +29,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '5.4.0.3'; // NOSONAR.
+    public static $version = '5.4.0.4'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -355,7 +355,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_individual_uptime_monitoring_schedule_enabled',
                 'mainwp_disableSitesHealthMonitoring',
                 'mainwp_sitehealthThreshold',
-                'mainwp_settings_notification_emails',
                 'mainwp_check_http_response',
                 'mainwp_extmenu',
                 'mainwp_opensslLibLocation',

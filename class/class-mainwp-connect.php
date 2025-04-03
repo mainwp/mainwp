@@ -111,6 +111,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $headers           = array( 'X-Requested-With' => 'XMLHttpRequest' );
         $headers['Expect'] = static::get_expect_header( $postdata );
+        $headers           = apply_filters( 'mainwp_connect_http_request_headers', $headers, false );
 
         if ( class_exists( '\WpOrg\Requests\Requests' ) ) {
             $headers = \WpOrg\Requests\Requests::flatten( $headers );
@@ -118,7 +119,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $headers = \Requests::flatten( $headers );
         }
 
-        curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'X-Requested-With: XMLHttpRequest' ) );
+        curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
         curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
 
         $force_use_ipv4 = false;
@@ -413,7 +414,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         $sign_error .= $msg;
                     }
                 }
-                MainWP_Logger::instance()->warning_for_website( $website, 'CONNECT SIGN', 'FAILED :: [what=' . ( is_string( $what ) ? $what : '' ) . '] :: [seclib=' . intval( $use_seclib ) . '] :: [algorithm=' . $alg . '] :: [openssl_sign error =' . $sign_error . ']', false );
+                $pk_info = ! empty( $website->privkey ) ? substr( $website->privkey, 0, 10 ) : '';
+                MainWP_Logger::instance()->warning_for_website( $website, 'CONNECT SIGN', 'FAILED :: [what=' . ( is_string( $what ) ? $what : '' ) . '] :: [seclib=' . intval( $use_seclib ) . '] :: [algorithm=' . $alg . '] :: [openssl_sign error =' . $sign_error . '] :: [pkey start =' . $pk_info . '...]', false );
             }
 
             $data['mainwpsignature'] = ! empty( $signature ) ? base64_encode( $signature ) : ''; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
@@ -645,6 +647,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function connect_sign( $data, &$signature, $privkey, $algorithm, $site_id ) {
         $de_privkey = MainWP_Encrypt_Data_Lib::instance()->decrypt_privkey( $privkey, $site_id );
+
+        if ( empty( $de_privkey ) ) {
+            MainWP_Logger::instance()->debug( 'Error: Failed to decrypt the priv key.' );
+        }
 
         if ( empty( $de_privkey ) ) {
             $de_privkey = $privkey; // compatible.
@@ -981,7 +987,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param string|array $data Data to send either as the POST body, or as parameters in the URL for a GET/HEAD.
      * @return string The "Expect" header.
      */
-    protected static function get_expect_header( $data ) {
+    public static function get_expect_header( $data ) {
         if ( ! is_array( $data ) ) {
             return strlen( (string) $data ) >= 1048576 ? '100-Continue' : '';
         }
@@ -1501,6 +1507,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $headers           = array( 'X-Requested-With' => 'XMLHttpRequest' );
         $headers['Expect'] = static::get_expect_header( $postdata );
+
+        $headers = apply_filters( 'mainwp_connect_http_request_headers', $headers, $website );
 
         if ( class_exists( '\WpOrg\Requests\Requests' ) ) {
             $headers = \WpOrg\Requests\Requests::flatten( $headers );

@@ -950,12 +950,13 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * Get tokens of site.
      *
      * @param object $site The website.
+     * @param bool   $monitor Get tokens for minotor.
      *
      * @return array Array of tokens.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
      */
-    public static function get_tokens_site_values( $site ) {
+    public static function get_tokens_site_values( $site, $monitor = false ) { //phpcs:ignore -- NOSONAR -complex.
 
         $tokens_values = array(
             '[site.name]' => $site->name,
@@ -973,10 +974,28 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 'client.site.mysql'   => 'mysql_version', // Displays the MySQL version of the child site.
             );
             foreach ( $map_site_tokens as $tok => $val ) {
-                $tokens_value[ '[' . $tok . ']' ] = ( is_array( $site_info ) && isset( $site_info[ $val ] ) ) ? $site_info[ $val ] : '';
+                $tokens_values[ '[' . $tok . ']' ] = ( is_array( $site_info ) && isset( $site_info[ $val ] ) ) ? $site_info[ $val ] : '';
             }
         }
 
+        if ( $monitor ) {
+            $active_monitor  = 0;
+            $primary_monitor = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site->id, 'issub', 0 );
+            if ( $primary_monitor ) {
+                $global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+                $active_monitor  = MainWP_Uptime_Monitoring_Connect::get_apply_setting( 'active', (int) $primary_monitor->active, $global_settings, -1, 60 );
+            }
+            if ( $active_monitor ) {
+                $status = 'PENDING';
+                $last   = MainWP_DB_Uptime_Monitoring::instance()->get_last_site_heartbeat( $site->id, false );
+                if ( $last ) {
+                    $status = $last && $last->status ? 'UP' : 'DOWN';
+                }
+            } else {
+                $status = 'DISABLED';
+            }
+            $tokens_values['[uptime.status]'] = $status;
+        }
         return $tokens_values;
     }
 

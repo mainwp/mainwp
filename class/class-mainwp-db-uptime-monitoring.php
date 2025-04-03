@@ -510,7 +510,7 @@ KEY idx_wpid (wpid)";
     public function get_uptime_notification_to_start_send( $limit = 50 ) {
 
         $sql = $this->wpdb->prepare(
-            ' SELECT pro.process_id, mo.* FROM ' . $this->table_name( 'monitors' ) . ' mo ' .
+            ' SELECT pro.process_id,pro.status,pro.dts_process_start,pro.dts_process_stop,mo.* FROM ' . $this->table_name( 'monitors' ) . ' mo ' .
             ' LEFT JOIN ' . $this->table_name( 'schedule_processes' ) . ' pro ON mo.monitor_id = pro.item_id ' .
             " WHERE ( pro.type = 'monitor' AND pro.process_slug = 'uptime_notification' " .
             " AND ( pro.dts_process_stop > pro.dts_process_start OR pro.dts_process_start = 0 ) AND pro.status = 'active' ) " . // get active process and stop > start - it is finished status of previous process.
@@ -879,6 +879,8 @@ KEY idx_wpid (wpid)";
             return false;
         }
 
+        MainWP_Logger::instance()->log_uptime_check( 'Update heartbeat :: ' . print_r( $data, true ) ); //phpcs:ignore --NOSONAR -for dev logs.
+
         if ( isset( $data['heartbeat_id'] ) ) {
             $id = $data['heartbeat_id'];
             unset( $data['heartbeat_id'] );
@@ -925,7 +927,7 @@ KEY idx_wpid (wpid)";
         }
 
         $sql = $this->wpdb->prepare(
-            'SELECT he.* FROM ' . $this->table_name( 'monitors' ) . ' mo ' .
+            'SELECT he.*,mo.active FROM ' . $this->table_name( 'monitors' ) . ' mo ' .
             ' LEFT JOIN ' . $this->table_name( 'monitor_heartbeat' ) . ' he ' .
             ' ON mo.monitor_id = he.monitor_id ' .
             ' WHERE mo.wpid = %d ' . $where . ' ORDER BY he.time DESC LIMIT 1',
@@ -971,7 +973,7 @@ KEY idx_wpid (wpid)";
             ' FROM ' . $this->table_name( 'monitors' ) . ' mo ' .
             ' LEFT JOIN ' . $this->table_name( 'monitor_heartbeat' ) . ' he ' .
             ' ON mo.monitor_id = he.monitor_id ' .
-            ' WHERE mo.wpid = %d LIMIT 1',
+            ' WHERE mo.wpid = %d AND mo.issub = 0 LIMIT 1',
             $start_date,
             $siteid
         );
@@ -1059,7 +1061,7 @@ KEY idx_wpid (wpid)";
             ' FROM ' . $this->table_name( 'monitors' ) . ' mo ' .
             ' LEFT JOIN ' . $this->table_name( 'monitor_heartbeat' ) . ' he ' .
             ' ON mo.monitor_id = he.monitor_id ' .
-            ' WHERE mo.wpid = %d LIMIT 1',
+            ' WHERE mo.wpid = %d AND mo.issub = 0 LIMIT 1',
             $start_date,
             $start_date,
             $siteid
@@ -1111,22 +1113,28 @@ KEY idx_wpid (wpid)";
         // 'uptimeratios30'  => 30.
         // 'uptimeratios45'  => 45.
         // 'uptimeratios60'  => 60.
+        // 'uptimeratios'  => from start->end date.
 
         $period_days = isset( $params['period_days'] ) ? $params['period_days'] : array();
         if ( empty( $period_days ) || empty( $params['start'] ) || empty( $params['end'] ) ) {
             return array();
         }
 
-        $start_time = strtotime( $params['start'] . ' 00:00:00' );
-
-        $period_date = array();
-
+        $end_time_period = strtotime( $params['end'] . ' 23:59:59' );
+        $period_date     = array();
         foreach ( $period_days as $period => $days ) {
-            $period_date[ $period ] = array(
-                'start' => gmdate( 'Y-m-d 00:00:00', $start_time - $days * DAY_IN_SECONDS ),
-                'end'   => $params['end'] . ' 23:59:59',
-            );
+            if ( 'uptimeratios' !== $period ) {
+                $period_date[ $period ] = array(
+                    'start' => gmdate( 'Y-m-d 00:00:00', $end_time_period - $days * DAY_IN_SECONDS ),
+                    'end'   => $params['end'] . ' 23:59:59',
+                );
+            }
         }
+
+        $period_date['uptimeratios'] = array(
+            'start' => $params['start'] . ' 00:00:01',
+            'end'   => $params['end'] . ' 23:59:59',
+        );
 
         $sql_sub = '';
 
@@ -1164,7 +1172,7 @@ KEY idx_wpid (wpid)";
             $as_total        = 'total' . $period;
             $data[ $period ] = isset( $result[ $as_total ] ) && ! empty( $result[ $as_total ] ) ? number_format( $result[ $as_up ] * 100 / $result[ $as_total ], 6 ) : 'N/A'; // prevent divided by zero.
         }
-
+        MainWP_Logger::instance()->log_uptime_check( 'Get reports data :: [params=' . print_r( $params, true ) . '] :: [ratios data='. print_r( $data, true ) . ']' ); //phpcs:ignore -- NOSONAR -for debug.
         return $data;
     }
 

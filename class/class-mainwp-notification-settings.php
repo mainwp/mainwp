@@ -24,6 +24,34 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
      */
     private static $instance = null;
 
+    /**
+     * Private static variable to hold the single instance.
+     *
+     * @static
+     *
+     * @var mixed Default null.
+     */
+    private static $boilerplate_tokens_loaded = null;
+
+
+    /**
+     * Private static variable to hold the single instance.
+     *
+     * @static
+     *
+     * @var mixed Default null.
+     */
+    private static $report_tokens_loaded = null;
+
+    /**
+     * Private static variable to hold the single instance.
+     *
+     * @static
+     *
+     * @var mixed Default null.
+     */
+    private static $client_report_tokens_loaded = null;
+
 
     /**
      * Get class name.
@@ -477,6 +505,30 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
     }
 
     /**
+     * Prepare general email notifications settings.
+     *
+     * @param array  $options Email settings.
+     * @param object $website Site data.
+     *
+     * @return void.
+     */
+    public static function prepare_general_email_settings_for_site( &$options, $website ) {
+        if ( is_array( $options ) && isset( $options['subject'] ) && isset( $options['heading'] ) && isset( $options['recipients'] ) ) {
+            if ( preg_match( '/\[[^\]]+\]/is', $options['subject'] . $options['heading'], $matches ) ) {
+                $tokens_values      = MainWP_System_Utility::get_tokens_site_values( $website, true );
+                $options['subject'] = MainWP_System_Utility::replace_tokens_values( $options['subject'], $tokens_values );
+                $options['heading'] = MainWP_System_Utility::replace_tokens_values( $options['heading'], $tokens_values );
+            }
+
+            if ( preg_match( '/\[[^\]]+\]/is', $options['recipients'] . $options['subject'] . $options['heading'], $matches ) ) {
+                // support boilerplate and reports tokens.
+                $fields  = array( 'recipients', 'subject', 'heading' );
+                $options = static::replace_tokens_for_settings( $options, $fields, $website );
+            }
+        }
+    }
+
+    /**
      * Get general notification email.
      *
      * @return string|empty recipients.
@@ -534,7 +586,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
         $options = array_merge( $default, $options );
 
         if ( preg_match( '/\[[^\]]+\]/is', $options['subject'] . $options['heading'], $matches ) ) {
-            $tokens_values      = MainWP_System_Utility::get_tokens_site_values( $website );
+            $tokens_values      = MainWP_System_Utility::get_tokens_site_values( $website, true );
             $options['subject'] = MainWP_System_Utility::replace_tokens_values( $options['subject'], $tokens_values );
             $options['heading'] = MainWP_System_Utility::replace_tokens_values( $options['heading'], $tokens_values );
         }
@@ -626,16 +678,20 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
      */
     public static function replace_tokens_for_settings( $options, $fields, $website ) { // phpcs:ignore -- NOSONAR - complex.
 
-        /**
-         * Filter: mainwp_boilerplate_get_tokens
-         *
-         * Enables and filters the Boilerplate extension tokens.
-         *
-         * @param object $website Object containing the child site data.
-         *
-         * @since 4.1
-         */
-        $boilerplate_tokens = apply_filters( 'mainwp_boilerplate_get_tokens', false, $website );
+        if ( null === static::$boilerplate_tokens_loaded ) {
+            /**
+             * Filter: mainwp_boilerplate_get_tokens
+             *
+             * Enables and filters the Boilerplate extension tokens.
+             *
+             * @param object $website Object containing the child site data.
+             *
+             * @since 4.1
+             */
+            static::$boilerplate_tokens_loaded = apply_filters( 'mainwp_boilerplate_get_tokens', false, $website );
+        }
+
+        $boilerplate_tokens = static::$boilerplate_tokens_loaded;
 
         if ( is_array( $boilerplate_tokens ) ) {
             foreach ( $fields as $field ) {
@@ -645,16 +701,20 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
             }
         }
 
-        /**
-         * Filter: mainwp_pro_reports_get_site_tokens
-         *
-         * Enables and filters the Pro Reports extension tokens.
-         *
-         * @param object $website Object containing the child site data.
-         *
-         * @since 4.1
-         */
-        $report_tokens = apply_filters( 'mainwp_pro_reports_get_site_tokens', false, $website->id );
+        if ( null === static::$report_tokens_loaded ) {
+            /**
+             * Filter: mainwp_pro_reports_get_site_tokens
+             *
+             * Enables and filters the Pro Reports extension tokens.
+             *
+             * @param object $website Object containing the child site data.
+             *
+             * @since 4.1
+             */
+            static::$report_tokens_loaded = apply_filters( 'mainwp_pro_reports_get_site_tokens', false, $website->id );
+        }
+
+        $report_tokens = static::$report_tokens_loaded;
 
         if ( is_array( $report_tokens ) ) {
             foreach ( $fields as $field ) {
@@ -664,16 +724,21 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
             }
         }
 
-        /**
-         * Filter: mainwp_client_report_get_site_tokens
-         *
-         * Enables and filters the Client Reports extension tokens.
-         *
-         * @param object $website Object containing the child site data.
-         *
-         * @since 4.1
-         */
-        $client_report_tokens = apply_filters( 'mainwp_client_report_get_site_tokens', false, $website->id );
+        if ( null === static::$client_report_tokens_loaded ) {
+            /**
+             * Filter: mainwp_client_report_get_site_tokens
+             *
+             * Enables and filters the Client Reports extension tokens.
+             *
+             * @param object $website Object containing the child site data.
+             *
+             * @since 4.1
+             */
+            static::$client_report_tokens_loaded = apply_filters( 'mainwp_client_report_get_site_tokens', false, $website->id );
+        }
+
+        $client_report_tokens = static::$client_report_tokens_loaded;
+
         if ( is_array( $client_report_tokens ) ) {
             foreach ( $fields as $field ) {
                 if ( isset( $options[ $field ] ) ) {
@@ -698,7 +763,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
      */
     public static function replace_tokens_for_content( $content, $website ) {
 
-        $tokens_values = MainWP_System_Utility::get_tokens_site_values( $website );
+        $tokens_values = MainWP_System_Utility::get_tokens_site_values( $website, true );
 
         $content = MainWP_System_Utility::replace_tokens_values( $content, $tokens_values );
 

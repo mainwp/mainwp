@@ -1772,9 +1772,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $class_name  = ! empty( $process['callback'][0] ) ? $process['callback'][0] : '';
             $method_name = ! empty( $process['callback'][1] ) ? $process['callback'][1] : '';
             if ( ! empty( $class_name ) && ! empty( $method_name ) ) {
-                if ( is_callable( $class_name . '::' . $method_name ) ) {
-                    return $class_name . '::' . $method_name;
-                } elseif ( class_exists( $class_name ) ) {
+                if ( class_exists( $class_name ) ) {
                     $call_inst = new $class_name();
                     $callback  = array( $call_inst, $method_name );
                     if ( is_callable( $callback ) ) {

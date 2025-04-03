@@ -1116,7 +1116,7 @@ let updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelect
     let siteNames = {};
     let sitesPluginSlugs = {};
     let foundChildren = updatesoverview_themes_get_global_upgrade_all(groupId, updatesSelected);
-    if (foundChildren.length == 0){
+    if (foundChildren.length == 0) {
         updates_please_select_items_notice();
         return false;
     }
@@ -1759,8 +1759,13 @@ let updatesoverview_upgrade_all_loop_next = function () {
 let updatesoverview_upgrade_all_update_site_status = function (siteId, newStatus) {
     jQuery('.updatesoverview-upgrade-status-wp[siteid="' + siteId + '"]').html(newStatus);
 };
-let updatesoverview_upgrade_all_update_site_bold = function (siteId, sub) {
-    jQuery('.updatesoverview-upgrade-status-wp[siteid="' + siteId + '"]').parent().parent().find('.' + sub).css('font-weight', 'bold');
+let updatesoverview_upgrade_all_update_site_bold = function (siteId, sub, msg) {
+    if (msg) {
+        jQuery('.updatesoverview-upgrade-status-wp[siteid="' + siteId + '"]').html(msg);
+    }
+    if (false !== sub) {
+        jQuery('.updatesoverview-upgrade-status-wp[siteid="' + siteId + '"]').parent().parent().find('.' + sub).css('font-weight', 'bold');
+    }
 };
 let updatesoverview_upgrade_all_upgrade_next = function () {
     mainwpVars.currentThreads++;
@@ -1823,6 +1828,7 @@ let updatesoverview_upgrade_all_update_done = function () {
     updatesoverview_upgrade_all_loop_next();
 };
 
+/* eslint-disable complexity */
 let updatesoverview_upgrade_int_flow = function (params) {
     let pWebsiteId = params['pWebsiteId'];
     let pThemeSlugToUpgrade = params['pThemeSlugToUpgrade'];
@@ -1849,63 +1855,68 @@ let updatesoverview_upgrade_int_flow = function (params) {
             success: function (pWebsiteId, pSlug, pPluginSlugToUpgrade, pWordpressUpgrade, pPluginDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone) { // NOSONAR - compatible.
                 return function (response) { // NOSONAR - complex ok.
                     let slugParts = pSlug.split(',');
-                    for (let sid of slugParts) {
-                        let result;
-                        let websiteHolder = jQuery('div[theme_slug="' + sid + '"] div[site_id="' + pWebsiteId + '"]');
-                        if (!websiteHolder.exists()) {
-                            websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[theme_slug="' + sid + '"]');
-                        }
+                    if (response?.error?.errorCode == 'SUSPENDED_SITE') {
+                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause circular yellow inverted icon"></i></span>';
+                        updatesoverview_upgrade_all_update_site_bold(pWebsiteId, false, msgUI);
+                    } else {
+                        for (let sid of slugParts) {
+                            let result;
+                            let websiteHolder = jQuery('div[theme_slug="' + sid + '"] div[site_id="' + pWebsiteId + '"]');
+                            if (!websiteHolder.exists()) {
+                                websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[theme_slug="' + sid + '"]');
+                            }
 
 
-                        let isError = true;
-                        if (response.error) {
-                            result = getErrorMessage(response.error);
-                            pErrorMessage = result;
-                        } else {
-                            let res = response.result;
-
-                            if (res[sid]) {
-                                websiteHolder.attr('updated', 1);
-                                isError = false;
-                            } else {
-                                result = __('Update failed!');
+                            let isError = true;
+                            if (response.error) {
+                                result = getErrorMessage(response.error);
                                 pErrorMessage = result;
+                            } else {
+                                let res = response.result;
+
+                                if (res[sid]) {
+                                    websiteHolder.attr('updated', 1);
+                                    isError = false;
+                                } else {
+                                    result = __('Update failed!');
+                                    pErrorMessage = result;
+                                }
                             }
-                        }
 
-                        if (isError) {
-                            let res_error = response?.result_error ? response.result_error : '';
-                            if (res_error ? res_error[encodeURIComponent(sid)] : false) {
-                                let _msg = res_error[encodeURIComponent(sid)];
-                                let roll_error = mainwp_updates_get_rollback_msg(_msg);
-                                mainwp_put_actions_errors_msg('updateall', pWebsiteId, (roll_error ? 'roll' : 'default'), roll_error || _msg);// save errors to show later.
+                            if (isError) {
+                                let res_error = response?.result_error ? response.result_error : '';
+                                if (res_error ? res_error[encodeURIComponent(sid)] : false) {
+                                    let _msg = res_error[encodeURIComponent(sid)];
+                                    let roll_error = mainwp_updates_get_rollback_msg(_msg);
+                                    mainwp_put_actions_errors_msg('updateall', pWebsiteId, (roll_error ? 'roll' : 'default'), roll_error || _msg);// save errors to show later.
+                                }
                             }
+
                         }
+                        updatesoverview_upgrade_all_update_site_bold(pWebsiteId, 'theme');
 
-                    }
-                    updatesoverview_upgrade_all_update_site_bold(pWebsiteId, 'theme');
-
-                    //If all done: continue, else delay 400ms to not stress the server
-                    let fnc = function () {
-                        let params = {
-                            'pWebsiteId': pWebsiteId,
-                            'pThemeSlugToUpgrade': pSlug,
-                            'pPluginSlugToUpgrade': pPluginSlugToUpgrade,
-                            'pWordpressUpgrade': pWordpressUpgrade,
-                            'pThemeDone': true,
-                            'pPluginDone': pPluginDone,
-                            'pUpgradeDone': pUpgradeDone,
-                            'pErrorMessage': pErrorMessage,
-                            'pTransSlugToUpgrade': pTransSlugToUpgrade,
-                            'pTransDone': pTransDone
+                        //If all done: continue, else delay 400ms to not stress the server
+                        let fnc = function () {
+                            let params = {
+                                'pWebsiteId': pWebsiteId,
+                                'pThemeSlugToUpgrade': pSlug,
+                                'pPluginSlugToUpgrade': pPluginSlugToUpgrade,
+                                'pWordpressUpgrade': pWordpressUpgrade,
+                                'pThemeDone': true,
+                                'pPluginDone': pPluginDone,
+                                'pUpgradeDone': pUpgradeDone,
+                                'pErrorMessage': pErrorMessage,
+                                'pTransSlugToUpgrade': pTransSlugToUpgrade,
+                                'pTransDone': pTransDone
+                            };
+                            updatesoverview_upgrade_int_loop_flow(params);
                         };
-                        updatesoverview_upgrade_int_loop_flow(params);
-                    };
 
-                    if (pPluginDone && pUpgradeDone && pTransDone)
-                        fnc();
-                    else
-                        setTimeout(fnc, 400);
+                        if (pPluginDone && pUpgradeDone && pTransDone)
+                            fnc();
+                        else
+                            setTimeout(fnc, 400);
+                    }
                 }
             }(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pPluginDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone),
             tryCount: 0,
@@ -1962,55 +1973,60 @@ let updatesoverview_upgrade_int_flow = function (params) {
             data: data,
             success: function (pWebsiteId, pThemeSlugToUpgrade, pSlug, pWordpressUpgrade, pThemeDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone) { // NOSONAR - compatible.
                 return function (response) { // NOSONAR - complex ok.
-                    let slugParts = pSlug.split(',');
-                    for (let sid of slugParts) {
-                        let result;
-                        let websiteHolder = jQuery('div[plugin_slug="' + sid + '"] div[site_id="' + pWebsiteId + '"]');
-                        if (!websiteHolder.exists()) {
-                            websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[plugin_slug="' + sid + '"]');
-                        }
-                        if (response.error) {
-                            result = getErrorMessage(response.error);
-                            pErrorMessage = result;
-                        }
-                        else {
-                            let res = response.result;   // result is an object
-                            let res_error = response.result_error;
-                            if (res[encodeURIComponent(sid)]) {
-                                websiteHolder.attr('updated', 1);
-                            } else if (res_error[encodeURIComponent(sid)]) {
-                                pErrorMessage = res_error[encodeURIComponent(sid)];
-                                let roll_error = mainwp_updates_get_rollback_msg(pErrorMessage);
-                                mainwp_put_actions_errors_msg('updateall', pWebsiteId, roll_error ? 'roll' : 'default', roll_error || pErrorMessage);// save errors to show later.
-                            } else {
-                                result = __('Update failed!');
+                    if (response?.error?.errorCode == 'SUSPENDED_SITE') {
+                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause circular yellow inverted icon"></i></span>';
+                        updatesoverview_upgrade_all_update_site_bold(pWebsiteId, false, msgUI);
+                    } else {
+                        let slugParts = pSlug.split(',');
+                        for (let sid of slugParts) {
+                            let result;
+                            let websiteHolder = jQuery('div[plugin_slug="' + sid + '"] div[site_id="' + pWebsiteId + '"]');
+                            if (!websiteHolder.exists()) {
+                                websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[plugin_slug="' + sid + '"]');
+                            }
+                            if (response.error) {
+                                result = getErrorMessage(response.error);
                                 pErrorMessage = result;
                             }
+                            else {
+                                let res = response.result;   // result is an object
+                                let res_error = response.result_error;
+                                if (res[encodeURIComponent(sid)]) {
+                                    websiteHolder.attr('updated', 1);
+                                } else if (res_error[encodeURIComponent(sid)]) {
+                                    pErrorMessage = res_error[encodeURIComponent(sid)];
+                                    let roll_error = mainwp_updates_get_rollback_msg(pErrorMessage);
+                                    mainwp_put_actions_errors_msg('updateall', pWebsiteId, roll_error ? 'roll' : 'default', roll_error || pErrorMessage);// save errors to show later.
+                                } else {
+                                    result = __('Update failed!');
+                                    pErrorMessage = result;
+                                }
+                            }
                         }
-                    }
-                    updatesoverview_upgrade_all_update_site_bold(pWebsiteId, 'plugin');
+                        updatesoverview_upgrade_all_update_site_bold(pWebsiteId, 'plugin');
 
-                    //If all done: continue, else delay 400ms to not stress the server
-                    let fnc = function () {
-                        let params = {
-                            'pWebsiteId': pWebsiteId,
-                            'pThemeSlugToUpgrade': pThemeSlugToUpgrade,
-                            'pPluginSlugToUpgrade': pSlug,
-                            'pWordpressUpgrade': pWordpressUpgrade,
-                            'pThemeDone': pThemeDone,
-                            'pPluginDone': true,
-                            'pUpgradeDone': pUpgradeDone,
-                            'pErrorMessage': pErrorMessage,
-                            'pTransSlugToUpgrade': pTransSlugToUpgrade,
-                            'pTransDone': pTransDone
+                        //If all done: continue, else delay 400ms to not stress the server
+                        let fnc = function () {
+                            let params = {
+                                'pWebsiteId': pWebsiteId,
+                                'pThemeSlugToUpgrade': pThemeSlugToUpgrade,
+                                'pPluginSlugToUpgrade': pSlug,
+                                'pWordpressUpgrade': pWordpressUpgrade,
+                                'pThemeDone': pThemeDone,
+                                'pPluginDone': true,
+                                'pUpgradeDone': pUpgradeDone,
+                                'pErrorMessage': pErrorMessage,
+                                'pTransSlugToUpgrade': pTransSlugToUpgrade,
+                                'pTransDone': pTransDone
+                            };
+                            updatesoverview_upgrade_int_loop_flow(params);
                         };
-                        updatesoverview_upgrade_int_loop_flow(params);
-                    };
 
-                    if (pThemeDone && pUpgradeDone && pTransDone)
-                        fnc();
-                    else
-                        setTimeout(fnc, 400);
+                        if (pThemeDone && pUpgradeDone && pTransDone)
+                            fnc();
+                        else
+                            setTimeout(fnc, 400);
+                    }
                 }
             }(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone),
             tryCount: 0,
@@ -2065,37 +2081,42 @@ let updatesoverview_upgrade_int_flow = function (params) {
             data: data,
             success: function (WebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pErrorMessage, pTransSlugToUpgrade, pTransDone) { // NOSONAR - compatible.
                 return function (response) {
-                    let result;
-                    let websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"]');
-                    if (response.error) {
-                        result = getErrorMessage(response.error);
-                        pErrorMessage = result;
+                    if (response?.error?.errorCode == 'SUSPENDED_SITE') {
+                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause circular yellow inverted icon"></i></span>';
+                        updatesoverview_upgrade_all_update_site_bold(pWebsiteId, false, msgUI);
                     } else {
-                        websiteHolder.attr('updated', 1);
-                    }
-                    updatesoverview_upgrade_all_update_site_bold(pWebsiteId, 'wordpress');
+                        let result;
+                        let websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"]');
+                        if (response.error) {
+                            result = getErrorMessage(response.error);
+                            pErrorMessage = result;
+                        } else {
+                            websiteHolder.attr('updated', 1);
+                        }
+                        updatesoverview_upgrade_all_update_site_bold(pWebsiteId, 'wordpress');
 
-                    //If all done: continue, else delay 400ms to not stress the server
-                    let fnc = function () {
-                        let params = {
-                            'pWebsiteId': pWebsiteId,
-                            'pThemeSlugToUpgrade': pThemeSlugToUpgrade,
-                            'pPluginSlugToUpgrade': pPluginSlugToUpgrade,
-                            'pWordpressUpgrade': pWordpressUpgrade,
-                            'pThemeDone': pThemeDone,
-                            'pPluginDone': pPluginDone,
-                            'pUpgradeDone': true,
-                            'pErrorMessage': pErrorMessage,
-                            'pTransSlugToUpgrade': pTransSlugToUpgrade,
-                            'pTransDone': pTransDone
+                        //If all done: continue, else delay 400ms to not stress the server
+                        let fnc = function () {
+                            let params = {
+                                'pWebsiteId': pWebsiteId,
+                                'pThemeSlugToUpgrade': pThemeSlugToUpgrade,
+                                'pPluginSlugToUpgrade': pPluginSlugToUpgrade,
+                                'pWordpressUpgrade': pWordpressUpgrade,
+                                'pThemeDone': pThemeDone,
+                                'pPluginDone': pPluginDone,
+                                'pUpgradeDone': true,
+                                'pErrorMessage': pErrorMessage,
+                                'pTransSlugToUpgrade': pTransSlugToUpgrade,
+                                'pTransDone': pTransDone
+                            };
+                            updatesoverview_upgrade_int_loop_flow(params);
                         };
-                        updatesoverview_upgrade_int_loop_flow(params);
-                    };
 
-                    if (pThemeDone && pPluginDone && pTransDone)
-                        fnc();
-                    else
-                        setTimeout(fnc, 400);
+                        if (pThemeDone && pPluginDone && pTransDone)
+                            fnc();
+                        else
+                            setTimeout(fnc, 400);
+                    }
                 }
             }(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pErrorMessage, pTransSlugToUpgrade, pTransDone),
             tryCount: 0,
@@ -2152,52 +2173,57 @@ let updatesoverview_upgrade_int_flow = function (params) {
             url: ajaxurl,
             data: data,
             success: function (pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pUpgradeDone, pErrorMessage, pSlug) { // NOSONAR - compatible.
-                return function (response) {
-                    let slugParts = pSlug.split(',');
-                    for (let sid of slugParts) {
-                        let result;
-                        let websiteHolder = jQuery('div[translation_slug="' + sid + '"] div[site_id="' + pWebsiteId + '"]');
-                        if (!websiteHolder.exists()) {
-                            websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[translation_slug="' + sid + '"]');
-                        }
-                        if (response.error) {
-                            result = getErrorMessage(response.error);
-                            pErrorMessage = result;
-                        } else {
-                            let res = response.result;
-                            if (res[sid]) {
-                                websiteHolder.attr('updated', 1);
-                            } else {
-                                result = __('Update failed!');
-                                pErrorMessage = result;
+                return function (response) { // NOSONAR -complex.
+                    if (response?.error?.errorCode == 'SUSPENDED_SITE') {
+                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause circular yellow inverted icon"></i></span>';
+                        updatesoverview_upgrade_all_update_site_bold(pWebsiteId, false, msgUI);
+                    } else {
+                        let slugParts = pSlug.split(',');
+                        for (let sid of slugParts) {
+                            let result;
+                            let websiteHolder = jQuery('div[translation_slug="' + sid + '"] div[site_id="' + pWebsiteId + '"]');
+                            if (!websiteHolder.exists()) {
+                                websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[translation_slug="' + sid + '"]');
                             }
+                            if (response.error) {
+                                result = getErrorMessage(response.error);
+                                pErrorMessage = result;
+                            } else {
+                                let res = response.result;
+                                if (res[sid]) {
+                                    websiteHolder.attr('updated', 1);
+                                } else {
+                                    result = __('Update failed!');
+                                    pErrorMessage = result;
+                                }
 
+                            }
                         }
-                    }
 
-                    updatesoverview_upgrade_all_update_site_bold(pWebsiteId, 'translation');
+                        updatesoverview_upgrade_all_update_site_bold(pWebsiteId, 'translation');
 
-                    //If all done: continue, else delay 400ms to not stress the server
-                    let fnc = function () {
-                        let params = {
-                            'pWebsiteId': pWebsiteId,
-                            'pThemeSlugToUpgrade': pSlug,
-                            'pPluginSlugToUpgrade': pPluginSlugToUpgrade,
-                            'pWordpressUpgrade': pWordpressUpgrade,
-                            'pThemeDone': pThemeDone,
-                            'pPluginDone': pPluginDone,
-                            'pUpgradeDone': pUpgradeDone,
-                            'pErrorMessage': pErrorMessage,
-                            'pTransSlugToUpgrade': pSlug,
-                            'pTransDone': true
+                        //If all done: continue, else delay 400ms to not stress the server
+                        let fnc = function () {
+                            let params = {
+                                'pWebsiteId': pWebsiteId,
+                                'pThemeSlugToUpgrade': pSlug,
+                                'pPluginSlugToUpgrade': pPluginSlugToUpgrade,
+                                'pWordpressUpgrade': pWordpressUpgrade,
+                                'pThemeDone': pThemeDone,
+                                'pPluginDone': pPluginDone,
+                                'pUpgradeDone': pUpgradeDone,
+                                'pErrorMessage': pErrorMessage,
+                                'pTransSlugToUpgrade': pSlug,
+                                'pTransDone': true
+                            };
+                            updatesoverview_upgrade_int_loop_flow(params);
                         };
-                        updatesoverview_upgrade_int_loop_flow(params);
-                    };
 
-                    if (pThemeDone && pUpgradeDone && pPluginDone)
-                        fnc();
-                    else
-                        setTimeout(fnc, 400);
+                        if (pThemeDone && pUpgradeDone && pPluginDone)
+                            fnc();
+                        else
+                            setTimeout(fnc, 400);
+                    }
                 }
             }(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade),
             tryCount: 0,
@@ -2266,6 +2292,7 @@ let updatesoverview_upgrade_int_flow = function (params) {
         return false;
     }
 };
+/* eslint-enable complexity */
 
 let updatesoverview_plugins_dismiss_outdate_detail = function (slug, name, id, obj) {
     return updatesoverview_dismiss_outdate_plugintheme_by_site('plugin', slug, name, id, obj);

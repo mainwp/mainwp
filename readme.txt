@@ -147,7 +147,7 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
-= 5.4.0.4 - 3-31-2025 =
+= 5.4.0.4 - Maintenance Release - 4-3-2025 =
 
 * Added: Validation to check if posix_getpwuid() and posix_getuid() PHP functions are callable before invoking them.
 * Added: mainwp_connect_http_request_headers hook to support custom request headers for specific hosts.
@@ -155,7 +155,7 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 * Fixed: Incorrect default tab selection on the Site > Updates page [(#744)](https://github.com/mainwp/mainwp/issues/744).
 * Fixed: Inaccurate values returned by Uptime Monitoring tokens.
 * Fixed: Issue with the Bulk Reconnect Sites action [(#745)](https://github.com/mainwp/mainwp/issues/745).
-* Fixed: Problem with sending Uptime Monitoring notifications affecting certain setups.
+* Fixed: Problem with sending Uptime Monitoring notifications affecting certain setups [(#748)](https://github.com/mainwp/mainwp/issues/748).
 * Fixed: Overlapping issue between dropdown menus and button elements on the Updates page.
 * Updated: Timestamp formatting in the Sites Changes table to display local time.
 * Updated: Removed unnecessary tooltip element for a cleaner UI.

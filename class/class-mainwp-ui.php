@@ -1639,7 +1639,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         }
 
         if ( empty( $wgsorted ) ) {
-            $wgsorted = get_user_option( 'mainwp_widgets_sorted_' . strtolower( $page ) );
+            $wgsorted = get_user_option( 'mainwp_widgets_sorted_' . $page );
         }
 
         if ( ! empty( $wgsorted ) && is_string( $wgsorted ) ) {
@@ -1766,7 +1766,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
 
                     let grid = GridStack.init(gsOpts);
                     grid.on('change', function() {
-                        mainwp_overview_gridstack_save_layout();
+                        mainwp_overview_gridstack_save_layout(<?php echo (int) $client_id; ?>);
                     });
                 });
         </script>
@@ -2410,7 +2410,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     <div class="eight wide right aligned middle aligned column"><span id="revoke-third-party-perms" <?php echo $enabled_at_least_one ? '' : 'style="display:none"'; ?>><?php esc_html_e( '* Revoke third-party permissions in the Tools page.', 'mainwp' ); ?></span></div>
                 </div>
             </div>
-            
+
         </div>
 
         <?php

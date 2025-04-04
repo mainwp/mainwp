@@ -229,7 +229,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $hidden_data = '[hidden response data]';
 
-        if ( false === $ip || $ip === $host || ! static::validate_ip( $ip ) ) { // Failed to resolve hostname.
+        if ( ( false === $ip || $ip === $host || ! static::validate_ip( $ip ) ) && apply_filters( 'mainwp_hide_raw_connection_response_data', true ) ) { // Failed to resolve hostname.
             $data = $hidden_data;
         }
 
@@ -1588,6 +1588,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $raw_response = isset( $others['raw_response'] ) && 'yes' === $others['raw_response'] ? true : false;
 
         $hidden_data = '[hidden response data]';
+
+        if ( ! apply_filters( 'mainwp_hide_raw_connection_response_data', true ) ) {
+            $hidden_data = $data;
+        }
 
         $output['fetch_data'] = $hidden_data;
 

@@ -217,6 +217,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
             'object_id'        => $object_id,
             'dismiss'          => $dism,
             'check_access'     => $check_access,
+            'not_count'        => true,
         );
 
         // available source values: wpadmin|dashboard|all, default value `wpadmin`.

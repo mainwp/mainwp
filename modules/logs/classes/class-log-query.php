@@ -44,6 +44,7 @@ class Log_Query {
         $where = '';
 
         $count_only = ! empty( $args['count_only'] ) ? true : false;
+        $not_count  = ! empty( $args['not_count'] ) ? true : false;
 
         if ( ! empty( $args['search'] ) ) {
             $search_str = MainWP_DB::instance()->escape( $args['search'] );
@@ -317,10 +318,13 @@ class Log_Query {
         /**
          * QUERY THE DATABASE FOR RESULTS
          */
-        return array(
+        $results = array(
             'items' => $wpdb->get_results( $query ), // phpcs:ignore -- ok.
-            'count' => absint( $wpdb->get_var( $count_query ) ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         );
+        if ( ! $not_count ) {
+            $results['count'] = absint( $wpdb->get_var( $count_query ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        }
+        return $results;
     }
 
     /**

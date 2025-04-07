@@ -1810,10 +1810,10 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $last_two_chars = ! empty( $flag_language ) ? substr( $flag_language, -2 ) : '';
         // Convert to lowercase.
         $lowercase_last_two_chars = strtolower( $last_two_chars );
-    
+
         // Get display name using the original language string.
         $display_language = function_exists( 'locale_get_display_name' ) ? locale_get_display_name( $language ) : $language;
-    
+
         // Adjust special country codes.
         if ( 'et' === $lowercase_last_two_chars ) {
             $lowercase_last_two_chars = 'ee';
@@ -1824,7 +1824,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( 'ab' === $lowercase_last_two_chars ) {
             $lowercase_last_two_chars = 'dz';
         }
-    
+
         echo '<span data-tooltip="' . esc_html__( 'Site Language: ', 'mainwp' ) . esc_attr( $display_language ) . '" data-position="left center" data-inverted=""><i class="small ' . esc_attr( $lowercase_last_two_chars ) . ' flag"></i></span>';
     }
 

@@ -116,11 +116,26 @@ class Log_Query {
             $where .= $wpdb->prepare( ' AND `lg`.`created` >= %d AND `lg`.`created` <= %d', $args['timestart'], $args['timestop'] );
         }
 
+        // available sources conds values: wp-admin-only|dashboard-only|empty.
         if ( ! empty( $args['sources_conds'] ) ) {
             if ( 'wp-admin-only' === $args['sources_conds'] ) {
                 $where .= ' AND `lg`.`connector` = "non-mainwp-changes" ';
             } elseif ( 'dashboard-only' === $args['sources_conds'] ) {
                 $where .= ' AND `lg`.`connector` != "non-mainwp-changes" ';
+            }
+        }
+
+        if ( ! empty( $args['contexts'] ) ) {
+            $contexts_list = explode( ',', $args['contexts'] );
+            $contexts_list = array_map(
+                function ( $value ) {
+                    return MainWP_DB::instance()->escape( $value );
+                },
+                (array) $contexts_list
+            );
+            $contexts_list = array_filter( $contexts_list );
+            if ( ! empty( $contexts_list ) ) {
+                $where .= ' AND lg.context IN ( "' . implode( '","', $contexts_list ) . '" ) ';
             }
         }
 

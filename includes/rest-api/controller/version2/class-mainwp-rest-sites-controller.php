@@ -1292,6 +1292,9 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $params['offset']   = 0;
         }
 
+        $params['actions']  = ! empty( $request['actions'] ) ? sanitize_text_field( wp_unslash( $request['actions'] ) ) : '';
+        $params['contexts'] = ! empty( $request['contexts'] ) ? sanitize_text_field( wp_unslash( $request['contexts'] ) ) : '';
+
         $data = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params, $website );
 
         $resp_data = array(

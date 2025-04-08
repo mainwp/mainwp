@@ -95,12 +95,12 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         // Default Cron Jobs.
         $jobs = array(
-            'mainwp_cronreconnect_action'             => 'hourly',
-            'mainwp_cronpingchilds_action'            => 'daily',
-            'mainwp_cronupdatescheck_action'          => 'minutely',
+            'mainwp_cronreconnect_action'                => 'hourly',
+            'mainwp_cronpingchilds_action'               => 'daily',
+            'mainwp_cronupdatescheck_action'             => 'minutely',
             'mainwp_crondeactivatedlicensesalert_action' => 'daily',
-            'mainwp_cronuptimemonitoringcheck_action' => 'minutely',
-            'mainwp_cron_perform_general_process'     => 'minutely',
+            'mainwp_cronuptimemonitoringcheck_action'    => 'minutely',
+            'mainwp_cron_perform_general_process'        => 'minutely',
         );
 
         if ( ! $useWPCron && ! get_option( 'mainwp_individual_uptime_monitoring_schedule_enabled' ) ) {
@@ -117,7 +117,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $jobs = array_merge(
                 $jobs,
                 array(
-                    'mainwp_cronbackups_action' => 'hourly',
+                    'mainwp_cronbackups_action'          => 'hourly',
                     'mainwp_cronbackups_continue_action' => '5minutely',
                 )
             );

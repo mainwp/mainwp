@@ -922,6 +922,24 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     </div>
                 </div>
             </div>
+
+            <script type="text/javascript">
+                jQuery( document ).ready( function($) {
+                    console.log($('#mainwp-top-header'));
+                    $('#mainwp-top-header').prevAll().each(function () {
+                        let strId=$(this).attr('id');
+                        if(strId?.includes('mainwp')){
+                            return;
+                        }
+                        let strCls=$(this).attr('class');
+                        if(strCls?.includes('mainwp')){
+                            return;
+                        }
+                        $(this).hide(); // hide all non-mainwp elements.
+                    });
+                });
+            </script>
+
             <?php
             if ( $show_menu ) {
                 MainWP_Menu::render_left_menu();

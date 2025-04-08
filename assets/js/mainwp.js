@@ -2121,8 +2121,10 @@ let mainwp_managesites_edit_test = function () {
 
   let clean_url = jQuery('#mainwp_managesites_edit_siteurl').val();
   let protocol = jQuery('#mainwp_managesites_edit_siteurl_protocol').val();
+  let with_www = jQuery('input[name=mainwp_managesites_edit_wpurl_with_www]').val();
+  with_www = with_www === 'www' ? with_www + '.' : '';
 
-  let url = protocol + '://' + clean_url;
+  let url = protocol + '://' + with_www + clean_url;
 
   if (!url.endsWith('/')) {
     url += '/';

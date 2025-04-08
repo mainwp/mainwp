@@ -84,23 +84,23 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
     }
 
     /**
-     * Method init_cron()
+     * Method get_cron_jobs()
      *
-     * Build Cron Jobs Array & initiate via init_mainwp_cron()
+     * @return array Cron jobs list.
      */
-    public function init_cron() { //phpcs:ignore -- NOSONAR - complex.
+    public function get_cron_jobs() {
 
         // Check wether or not to use MainWP Cron false|1.
         $useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( (int) get_option( 'mainwp_wp_cron' ) === 1 );
 
         // Default Cron Jobs.
         $jobs = array(
-            'mainwp_cronreconnect_action'                => 'hourly',
-            'mainwp_cronpingchilds_action'               => 'daily',
-            'mainwp_cronupdatescheck_action'             => 'minutely',
+            'mainwp_cronreconnect_action'             => 'hourly',
+            'mainwp_cronpingchilds_action'            => 'daily',
+            'mainwp_cronupdatescheck_action'          => 'minutely',
             'mainwp_crondeactivatedlicensesalert_action' => 'daily',
-            'mainwp_cronuptimemonitoringcheck_action'    => 'minutely',
-            'mainwp_cron_perform_general_process'        => 'minutely',
+            'mainwp_cronuptimemonitoringcheck_action' => 'minutely',
+            'mainwp_cron_perform_general_process'     => 'minutely',
         );
 
         if ( ! $useWPCron && ! get_option( 'mainwp_individual_uptime_monitoring_schedule_enabled' ) ) {
@@ -110,7 +110,34 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $disableHealthChecking = get_option( 'mainwp_disableSitesHealthMonitoring', 1 ); // disabled by default.
         if ( ! $disableHealthChecking ) {
             $jobs['mainwp_cronsitehealthcheck_action'] = 'hourly';
-        } else {
+        }
+
+        // Legacy Backup Cron jobs.
+        if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+            $jobs = array_merge(
+                $jobs,
+                array(
+                    'mainwp_cronbackups_action' => 'hourly',
+                    'mainwp_cronbackups_continue_action' => '5minutely',
+                )
+            );
+        }
+
+        return $jobs;
+    }
+
+    /**
+     * Method init_cron()
+     *
+     * Build Cron Jobs Array & initiate via init_mainwp_cron()
+     */
+    public function init_cron() { //phpcs:ignore -- NOSONAR - complex.
+
+        // Check wether or not to use MainWP Cron false|1.
+        $useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( (int) get_option( 'mainwp_wp_cron' ) === 1 );
+
+        $disableHealthChecking = get_option( 'mainwp_disableSitesHealthMonitoring', 1 ); // disabled by default.
+        if ( $disableHealthChecking ) {
             // disable check sites health cron.
             $sched = wp_next_scheduled( 'mainwp_cronsitehealthcheck_action' );
             if ( false !== $sched ) {
@@ -119,15 +146,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         }
 
         // Legacy Backup Cron jobs.
-        if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
-            $jobs = array_merge(
-                $jobs,
-                array(
-                    'mainwp_cronbackups_action'          => 'hourly',
-                    'mainwp_cronbackups_continue_action' => '5minutely',
-                )
-            );
-        } else {
+        if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
             // Unset Cron Schedules.
             $sched = wp_next_scheduled( 'mainwp_cronbackups_action' );
             if ( $sched ) {
@@ -138,6 +157,8 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 wp_unschedule_event( $sched, 'mainwp_cronbackups_continue_action' );
             }
         }
+
+        $jobs = $this->get_cron_jobs();
 
         foreach ( $jobs as $hook => $recur ) {
             $this->init_mainwp_cron( $useWPCron, $hook, $recur );

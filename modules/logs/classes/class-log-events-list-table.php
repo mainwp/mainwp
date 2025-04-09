@@ -453,11 +453,11 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             $req_order    = $order_values['order'];
         }
 
-        $filter_dtsstart   = '';
-        $filter_dtsstop    = '';
-        $array_clients_ids = array();
-        $array_groups_ids  = array();
-        $array_users_ids   = array();
+        $filter_dtsstart             = '';
+        $filter_dtsstop              = '';
+        $array_clients_ids           = array();
+        $array_groups_ids            = array();
+        $array_usersfilter_sites_ids = array();
 
         $sources_conds     = '';
         $array_sites_ids   = array();
@@ -486,22 +486,22 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         $args = array(
-            'order'         => ( 'asc' === $req_order ) ? 'asc' : 'desc',
-            'orderby'       => $req_orderby,
-            'start'         => $start,
-            'recent_number' => $recent_number,
-            'search'        => $search,
-            'groups_ids'    => $array_groups_ids,
-            'client_ids'    => $array_clients_ids,
-            'user_ids'      => $array_users_ids,
-            'timestart'     => ! empty( $filter_dtsstart ) ? strtotime( $filter_dtsstart . ' 00:00:00' ) : '',
-            'timestop'      => ! empty( $filter_dtsstop ) ? strtotime( $filter_dtsstop . ' 23:59:59' ) : '',
-            'dismiss'       => 0,
-            'view'          => 'events_list',
-            'wpid'          => ! empty( $insights_filters['wpid'] ) ? $insights_filters['wpid'] : 0, // int or array of site ids.
-            'sources_conds' => $sources_conds,
-            'sites_ids'     => $array_sites_ids,
-            'events'        => $array_events_list,
+            'order'                 => ( 'asc' === $req_order ) ? 'asc' : 'desc',
+            'orderby'               => $req_orderby,
+            'start'                 => $start,
+            'recent_number'         => $recent_number,
+            'search'                => $search,
+            'groups_ids'            => $array_groups_ids,
+            'client_ids'            => $array_clients_ids,
+            'usersfilter_sites_ids' => $array_usersfilter_sites_ids, // format: userid-siteid, siteid = 0 => dashboard user.
+            'timestart'             => ! empty( $filter_dtsstart ) ? strtotime( $filter_dtsstart . ' 00:00:00' ) : '',
+            'timestop'              => ! empty( $filter_dtsstop ) ? strtotime( $filter_dtsstop . ' 23:59:59' ) : '',
+            'dismiss'               => 0,
+            'view'                  => 'events_list',
+            'wpid'                  => ! empty( $insights_filters['wpid'] ) ? $insights_filters['wpid'] : 0, // int or array of site ids.
+            'sources_conds'         => $sources_conds,
+            'sites_ids'             => $array_sites_ids,
+            'events'                => $array_events_list,
         );
 
         $args['records_per_page'] = $perPage;

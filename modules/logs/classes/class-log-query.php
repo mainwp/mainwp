@@ -106,7 +106,27 @@ class Log_Query {
             }
         }
 
-        if ( ! empty( $args['user_ids'] ) && is_array( $args['user_ids'] ) ) {
+        $where_users_filter = '';
+        if ( ! empty( $args['usersfilter_sites_ids'] ) && is_array( $args['usersfilter_sites_ids'] ) ) {
+            $usersfilter_sites_ids = $args['usersfilter_sites_ids'];
+            $cond_users            = array();
+            foreach ( $usersfilter_sites_ids as $user_filter ) {
+                if ( false !== strpos( $user_filter, '-' ) ) { // new users filter.
+                    list( $uid, $sid ) = explode( '-', $user_filter );
+
+                    if ( ! empty( $uid ) && ! empty( $sid ) ) { // child site user.
+                        $cond_users[] = ' lg.user_id = ' . (int) $uid . ' AND lg.site_id = ' . (int) $sid;
+                    } elseif ( empty( $uid ) && ! empty( $sid ) ) { // agency.
+                        $cond_users[] = ' lg.user_id = 0 AND lg.site_id = ' . (int) $sid;
+                    } elseif ( ! empty( $uid ) && empty( $sid ) ) { // dashboard user.
+                        $cond_users[] = ' lg.user_id = ' . (int) $uid . ' AND lg.connector != "non-mainwp-changes"';
+                    }
+                }
+            }
+            if ( ! empty( $cond_users ) ) {
+                $where_users_filter = ' AND ( ' . implode( ') OR (', $cond_users ) . ') ';
+            }
+        } elseif ( ! empty( $args['user_ids'] ) && is_array( $args['user_ids'] ) ) { // compatible.
             $array_users_ids = MainWP_Utility::array_numeric_filter( $args['user_ids'] );
             if ( ! empty( $array_users_ids ) ) {
                 $where .= " AND lg.user_id IN ('" . implode("','",$array_users_ids) . "') "; // phpcs:ignore -- ok.
@@ -290,7 +310,7 @@ class Log_Query {
         $query = "SELECT {$select}
         FROM $wpdb->mainwp_tbl_logs as lg
         {$join}
-        WHERE `lg`.`connector` != 'compact' {$where} {$recent_where}
+        WHERE `lg`.`connector` != 'compact' {$where} {$recent_where} {$where_users_filter}
         {$orderby}
         {$limits}";
 
@@ -298,7 +318,7 @@ class Log_Query {
         $count_query = "SELECT COUNT(*)
         FROM $wpdb->mainwp_tbl_logs as lg
         {$join}
-        WHERE `lg`.`connector` != 'compact' {$where} {$recent_where}";
+        WHERE `lg`.`connector` != 'compact' {$where} {$recent_where} {$where_users_filter}";
 
         if ( $count_only ) {
             return array(

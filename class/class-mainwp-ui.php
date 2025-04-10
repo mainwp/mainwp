@@ -935,7 +935,10 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         if(strCls?.includes('mainwp')){
                             return;
                         }
-                        $(this).hide(); // hide all non-mainwp elements.
+                        if($(this).is(':visible')){
+                            $(this).prependTo('.mainwp-content-wrap'); // to fix display.
+                            $(this).css( 'margin-left', '0px' );
+                        }
                     });
                 });
             </script>

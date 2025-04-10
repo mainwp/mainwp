@@ -1831,15 +1831,17 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return void
      */
     public static function get_language_code_as_flag( $language ) {
-        // Get the last 2 characters of the language code.
-        $last_two_chars = ! empty( $language ) ? substr( $language, -2 ) : '';
+        // For flag extraction, remove trailing _formal or _informal if present.
+        $flag_language = preg_replace( '/_(formal|informal)$/', '', $language );
+        // Get the last 2 characters of the flag language code.
+        $last_two_chars = ! empty( $flag_language ) ? substr( $flag_language, -2 ) : '';
         // Convert to lowercase.
         $lowercase_last_two_chars = strtolower( $last_two_chars );
 
-        if ( function_exists( 'locale_get_display_name' ) ) {
-            $language = locale_get_display_name( $language );
-        }
+        // Get display name using the original language string.
+        $display_language = function_exists( 'locale_get_display_name' ) ? locale_get_display_name( $language ) : $language;
 
+        // Adjust special country codes.
         if ( 'et' === $lowercase_last_two_chars ) {
             $lowercase_last_two_chars = 'ee';
         }
@@ -1850,7 +1852,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $lowercase_last_two_chars = 'dz';
         }
 
-        echo '<span data-tooltip="' . esc_html__( 'Site Language: ', 'mainwp' ) . esc_attr( $language ) . '" data-position="left center" data-inverted=""><i class="small ' . esc_attr( $lowercase_last_two_chars ) . ' flag"></i></span>';
+        echo '<span data-tooltip="' . esc_html__( 'Site Language: ', 'mainwp' ) . esc_attr( $display_language ) . '" data-position="left center" data-inverted=""><i class="small ' . esc_attr( $lowercase_last_two_chars ) . ' flag"></i></span>';
     }
 
     /**

@@ -313,6 +313,16 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
             if ( in_array( 'allusers', $array_usersfilter_sites_ids, true ) ) {
                 $array_usersfilter_sites_ids = false;
                 $filter_user_ids             = '';
+            } else {
+                // to valid and fix filters.
+                $users_filters = array();
+                foreach ( $array_usersfilter_sites_ids as $users_filter ) {
+                    if ( 2 === substr_count( $users_filter, '-' ) ) {
+                        $users_filters[] = $users_filter;
+                    }
+                }
+                $array_usersfilter_sites_ids = $users_filters;
+                $filter_user_ids             = implode( ',', $users_filters );
             }
         }
 
@@ -441,7 +451,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
 
         $default_filter = false;
         // extracted values.
-        if ( ( empty( $filter_ranges ) || 'thismonth' === $filter_ranges ) && empty( $filter_groups_ids ) && empty( $filter_client_ids ) && empty( $filter_user_ids ) && empty( $filter_user_ids ) && empty( $filter_dtsstart ) && empty( $filter_dtsstop ) && empty( $array_clients_ids ) && empty( $array_groups_ids ) && empty( $array_usersfilter_sites_ids ) && empty( $array_source_list ) && empty( $array_sites_ids ) && empty( $array_events_list ) ) {
+        if ( ( empty( $filter_ranges ) || 'thismonth' === $filter_ranges ) && empty( $filter_groups_ids ) && empty( $filter_client_ids ) && empty( $filter_user_ids ) && empty( $filter_dtsstart ) && empty( $filter_dtsstop ) && empty( $array_clients_ids ) && empty( $array_groups_ids ) && empty( $array_usersfilter_sites_ids ) && empty( $array_source_list ) && empty( $array_sites_ids ) && empty( $array_events_list ) ) {
             $default_filter = true;
         }
 
@@ -559,7 +569,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                                 $users = $manager->admin->get_all_users();
                                 foreach ( $users as $item ) {
                                     ?>
-                                    <div class="item" data-value="<?php echo intval( $item['id'] ) . '-' . (int) $item['site_id']; ?>"><?php echo ( ! empty( $item['login'] ) ? esc_html( $item['login'] ) : esc_html( $item['nicename'] ) ) . ' (' . esc_html( $item['source'] ) . ')'; ?></div>
+                                    <div class="item" data-value="<?php echo intval( $item['id'] ) . '-' . (int) $item['site_id'] . '-' . ( empty( $item['wp_user_id'] ) ? 1 : 0 ); ?>"><?php echo ( ! empty( $item['login'] ) ? esc_html( $item['login'] ) : esc_html( $item['nicename'] ) ) . ' (' . esc_html( $item['source'] ) . ')'; ?></div>
                                     <?php
                                 }
                                 ?>

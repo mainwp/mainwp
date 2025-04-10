@@ -112,14 +112,11 @@ class Log_Query {
             $cond_users            = array();
             foreach ( $usersfilter_sites_ids as $user_filter ) {
                 if ( false !== strpos( $user_filter, '-' ) ) { // new users filter.
-                    list( $uid, $sid ) = explode( '-', $user_filter );
-
-                    if ( ! empty( $uid ) && ! empty( $sid ) ) { // child site user.
-                        $cond_users[] = ' lg.user_id = ' . (int) $uid . ' AND lg.site_id = ' . (int) $sid;
-                    } elseif ( empty( $uid ) && ! empty( $sid ) ) { // agency.
-                        $cond_users[] = ' lg.user_id = 0 AND lg.site_id = ' . (int) $sid;
-                    } elseif ( ! empty( $uid ) && empty( $sid ) ) { // dashboard user.
-                        $cond_users[] = ' lg.user_id = ' . (int) $uid . ' AND lg.connector != "non-mainwp-changes"';
+                    list( $uid, $sid, $is_dash_user ) = explode( '-', $user_filter );
+                    if ( $is_dash_user ) {
+                        $cond_users[] = ' lg.user_id = ' . (int) $uid . ' AND lg.connector != "non-mainwp-changes" '; // dashboard user does not need to check site ids.
+                    } else {
+                        $cond_users[] = ' lg.user_id = ' . (int) $uid . ' AND lg.site_id = ' . (int) $sid . ' AND lg.connector = "non-mainwp-changes" '; // child site user need to check site ids.
                     }
                 }
             }

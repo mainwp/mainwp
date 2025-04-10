@@ -267,37 +267,8 @@ class Log_Admin {
      * @return array Array of users.
      */
     public function get_all_users() {
-        $all_users  = get_users(
-            array(
-                'fields' => array( 'ID', 'user_login', 'user_nicename' ),
-            )
-        );
-        $users_list = array();
-        if ( ! empty( $all_users ) ) {
-            $users_list = array_map(
-                function ( $user ) {
-                    if ( empty( $user->ID ) ) {
-                        return false;
-                    }
-                    return array(
-                        'id'       => $user->ID,
-                        'login'    => $user->user_login,
-                        'nicename' => $user->user_nicename,
-                        'source'   => 'dashboard',
-                        'site_id'  => 0,
-                    );
-                },
-                $all_users
-            );
-            $users_list = array_filter( $users_list );
-        }
-
         $users_sites = Log_DB_Helper::instance()->get_logs_users();
-        if ( ! empty( $users_sites ) ) {
-            $users_list = array_merge( $users_list, $users_sites );
-        }
-
-        return $users_list;
+        return ! empty( $users_sites ) ? $users_sites : array();
     }
 
     /**

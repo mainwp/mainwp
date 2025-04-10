@@ -2002,7 +2002,7 @@ let mainwp_extension_apply_plugin_settings = function (pPluginToInstall, pSiteId
         syc_msg = __('Successful');
         _success = true
       } else if (response.error != undefined) {
-        statusEl.html(__('Applying settings failed!') + ': ' + response.error);
+        statusEl.html(response.error);
         statusEl.css('color', 'red');
         syc_msg = __('failed');
       } else {

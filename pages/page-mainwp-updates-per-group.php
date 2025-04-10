@@ -306,6 +306,11 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                                     if ( ! is_array( $plugin_upgrades ) ) {
                                                         $plugin_upgrades = array();
                                                     }
+
+                                                    if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
+                                                        continue;
+                                                    }
+
                                                     $premiumUpgrade = array_filter( $premiumUpgrade );
                                                     if ( isset( $plugin_upgrades[ $crrSlug ] ) && is_array( $plugin_upgrades[ $crrSlug ] ) ) {
                                                         $plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );

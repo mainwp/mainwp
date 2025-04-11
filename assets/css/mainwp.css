@@ -204,6 +204,8 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     width: 200px;
     box-shadow: 20px 0px 15px -18px rgba(0, 0, 0, 0.15) inset;
     -webkit-box-shadow: 20px 0px 15px -18px rgba(0, 0, 0, 0.15) inset;
+	overflow-y: auto;
+	overflow-x: hidden;
 }
 
 .mainwp-individual-site-view #mainwp-page-navigation-wrapper .mainwp-page-navigation {

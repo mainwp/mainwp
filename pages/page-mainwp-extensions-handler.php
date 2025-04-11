@@ -713,16 +713,17 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
      */
-    public static function hook_get_db_sites( $pluginFile, $key, $sites, $groups = '', $options = false ) {
+    public static function hook_get_db_sites( $pluginFile, $key, $sites, $groups = '', $options = false, $clients = '' ) {
         if ( ! static::hook_verify( $pluginFile, $key ) ) {
             return false;
         }
 
         MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
         $params = array(
-            'fields' => $options,
-            'sites'  => $sites,
-            'groups' => $groups,
+            'fields'  => $options,
+            'sites'   => $sites,
+            'groups'  => $groups,
+            'clients' => $clients,
         );
         return MainWP_DB::instance()->get_db_sites( $params );
     }

@@ -699,28 +699,27 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
         }
     }
 
-     /**
-      * Retrieves database sites based on provided parameters.
-      *
-      * This method verifies the hook using the plugin file and key, then retrieves
-      * sites from the database according to the specified criteria.
-      *
-      *
-      * @param string       $pluginFile The path to the plugin file for verification.
-      * @param string       $key        The key used for hook verification.
-      * @param array|string $sites      Site IDs to retrieve. Can be an array of IDs or a comma-separated string.
-      * @param array|string $groups     Optional. Group IDs to filter sites by. Can be an array or comma-separated string.
-      *                                 Default is empty string.
-      * @param array|bool   $options    Optional. Fields to return or additional query options.
-      *                                 Set to false to return all fields. Default is false.
-      * @param array|string $clients    Optional. Client IDs to filter sites by. Can be an array or comma-separated string.
-      *                                 Default is empty string.
-      *
-      * @return array|bool  Array of site objects on success, or false if hook verification fails.
-      *
-      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
-      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
-      */
+    /**
+     * Retrieves database sites based on provided parameters.
+     *
+     * This method verifies the hook using the plugin file and key, then retrieves
+     * sites from the database according to the specified criteria.
+     *
+     * @param string       $pluginFile The path to the plugin file for verification.
+     * @param string       $key        The key used for hook verification.
+     * @param array|string $sites      Site IDs to retrieve. Can be an array of IDs or a comma-separated string.
+     * @param array|string $groups     Optional. Group IDs to filter sites by. Can be an array or comma-separated string.
+     *                                 Default is empty string.
+     * @param array|bool   $options    Optional. Fields to return or additional query options.
+     *                                 Set to false to return all fields. Default is false.
+     * @param array|string $clients    Optional. Client IDs to filter sites by. Can be an array or comma-separated string.
+     *                                 Default is empty string.
+     *
+     * @return array|bool  Array of site objects on success, or false if hook verification fails.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
+     */
     public static function hook_get_db_sites( $pluginFile, $key, $sites, $groups = '', $options = false, $clients = '' ) {
         if ( ! static::hook_verify( $pluginFile, $key ) ) {
             return false;

@@ -198,7 +198,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         ?>
         <div id="mainwp-select-sites-filters">
             <div class="ui mini fluid icon input">
-                <input type="text" id="mainwp-select-sites-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>" <?php echo 'site' === $selectedby ? '' : 'style="display: none;"'; ?> />
+                <input type="text" id="mainwp-select-sites-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>" />
                 <i class="filter icon"></i>
             </div>
         </div>

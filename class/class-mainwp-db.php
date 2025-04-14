@@ -1777,7 +1777,6 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $legacy_status_fields = array(
             'wp.offline_check_result', // 1 - online, -1 offline.
             'wp.http_response_code',
-            'wp.http_code_noticed',
             'wp.offline_checks_last',
         );
 

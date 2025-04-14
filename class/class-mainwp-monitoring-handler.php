@@ -67,18 +67,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $is_online = MainWP_Connect::check_ignored_http_code( $new_code ); // legacy check http code.
         }
 
-        $importance = isset( $result_comp['importance'] ) ? $result_comp['importance'] : 0;
-
         $time = isset( $result_comp['check_offline_time'] ) ? $result_comp['check_offline_time'] : time();
-
-        $noticed_value = $website->http_code_noticed;
-
-        // it is noticed.
-        if ( ! empty( $noticed_value ) ) {
-            $new_noticed = empty( $is_online ) && $importance ? 0 : 1; // 0 => need to send notification.
-        } else {
-            $new_noticed = $noticed_value; // no change.
-        }
 
         // Save last status.
         MainWP_DB::instance()->update_website_values(
@@ -87,7 +76,6 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 'offline_check_result' => $is_online ? 1 : -1, // 1 - online, -1 offline.
                 'offline_checks_last'  => $time,
                 'http_response_code'   => $new_code,
-                'http_code_noticed'    => $new_noticed, // http_code_noticed = 0, not noticed yet, ready to notice.
             )
         );
 
@@ -209,13 +197,6 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             if ( ! empty( $mail_content ) ) {
                 MainWP_Logger::instance()->log_uptime_notice( 'Uptime notification is being sent for individual site.' );
                 MainWP_Notification::send_websites_uptime_monitoring( $email, $subject, $mail_content, $plain_text );
-                // update noticed value.
-                MainWP_DB::instance()->update_website_values(
-                    $site->id,
-                    array(
-                        'http_code_noticed' => 1, // noticed.
-                    )
-                );
                 usleep( 100000 );
             }
             do_action( 'mainwp_after_notice_sites_uptime_monitoring_individual', $site );

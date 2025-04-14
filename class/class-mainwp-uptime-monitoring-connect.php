@@ -350,9 +350,9 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         }
         $compatible_data['error'] = '' === $http_error && false === $found ? 'Invalid host.' : $http_error;
 
-        $status = MainWP_Monitoring_Handler::get_http_noticed_status_value( $monitor, $http_code );
-
-        $compatible_data['new_uptime_status'] = is_array( $handle_data ) && isset( $handle_data['new_uptime_status'] ) ? $handle_data['new_uptime_status'] : $status;
+        if ( is_array( $handle_data ) && isset( $handle_data['new_uptime_status'] ) ) {
+            $compatible_data['new_uptime_status'] = $handle_data['new_uptime_status'];
+        }
 
         return $compatible_data;
     }

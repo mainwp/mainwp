@@ -330,7 +330,7 @@ class Log_Query {
             );
         }
 
-        if ( true || ! empty( $args['dev_log_query'] ) ) {
+        if ( ! empty( $args['dev_log_query'] ) ) {
             //phpcs:disable Squiz.PHP.CommentedOutCode.Found,WordPress.PHP.DevelopmentFunctions
             error_log( print_r( $args, true ) );
             error_log( $recent_query );

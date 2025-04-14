@@ -147,6 +147,23 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
+= 5.4.0.5 - Maintenance Release - 4-15-2025 =
+
+* Fixed: When the MainWP Dashboard plugin is deactivated, the scheduled events do not get removed from WP Cron [(#750)](https://github.com/mainwp/mainwp/issues/750).
+* Fixed: When a "Test Connection" is performed for a Child Site that's already added to the Dashboard, it will always test the non-www URL, even if the site is set to use www [(#751)](https://github.com/mainwp/mainwp/issues/751).
+* Fixed: Child Site's Jetpack Protect's page always resets the widget's size and position upon reload [(#747)](https://github.com/mainwp/mainwp/issues/747).
+* Fixed: Incorrect version number displayed for Gravity Forms plugin after update in the per Tag view on the "Updates" page.
+* Fixed: In the "Manage Sites" table, incorrect flag was displayed for languages that have suffix "forma" or "informal" [(#752)](https://github.com/mainwp/mainwp/issues/752).
+* Fixed: Site Changes filter "Users" filter showing only some users.
+* Fixed: Problem with sending Uptime Monitoring notifications affecting certain setups.
+* Added: Vertical scroll functionality to the Site mode page navigation element.
+* Added: Method selection for the "Check HTTP status after updates" feature to avoid potential blocking by server-side security layers causing status code 0.
+* Updated: "Add to Cost Tracker" button label to include item name.
+* Updated: Moved the 3rd party plugin notices to correct location in MainWP UI for better visibility [(#749)](https://github.com/mainwp/mainwp/issues/749).
+* Updated: Performance improvements throughout the plugin.
+* Dev: Added the `$clients` as the 6th parameter to the `mainwp_getdbsites` filter so extensions can get sites info by clients selection.
+* Dev: Excluded the Site Changes count information from REST API endpoints by default, while leaving it as option to optimize the query performance.
+
 = 5.4.0.4 - Maintenance Release - 4-3-2025 =
 
 * Added: Validation to check if posix_getpwuid() and posix_getuid() PHP functions are callable before invoking them.

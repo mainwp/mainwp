@@ -310,18 +310,19 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * Check if the Website returns and http errors.
      *
      * @param object $website Child Site information.
+     * @param bool   $chk_http_site Check site http response.
      *
      * @return mixed False|try visit result.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::is_domain_valid()
      */
-    public static function check_website_status( $website ) { //phpcs:ignore -- NOSONAR - complexity.
+    public static function check_website_status( $website, $chk_http_site = false ) { //phpcs:ignore -- NOSONAR - complexity.
 
         if ( is_object( $website ) && isset( $website->id ) ) {
             $primary_monitor = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $website->id, 'issub', 0 );
             if ( $primary_monitor ) {
                 // return compatible uptime status here.
-                return MainWP_Uptime_Monitoring_Handle::check_website_uptime_monitoring_status( $primary_monitor, array( 'ignore_compatible_save' => 1 ) ); // to ignore save compatible uptime status.
+                return MainWP_Uptime_Monitoring_Handle::check_website_uptime_monitoring_status( $primary_monitor, array( 'ignore_compatible_save' => 1, 'check_http_site' => $chk_http_site ) ); // to ignore save compatible uptime status.
             }
         }
 
@@ -1241,7 +1242,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
              */
             do_action( 'mainwp_website_updated', $website, $type, $list, $information );
             if ( 1 === (int) get_option( 'mainwp_check_http_response', 0 ) ) {
-                MainWP_Monitoring_Handler::handle_check_website( $website );
+                MainWP_Monitoring_Handler::handle_check_website( $website, true );
             }
         }
 

@@ -43,6 +43,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * Check a website HTTP header status.
      *
      * @param object $website Object containing the website info.
+     * @param bool   $chk_http_site Check site http response.
      *
      * @return mixed Check result.
      *
@@ -50,9 +51,9 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_Connect::check_ignored_http_code()
      * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
      */
-    public static function handle_check_website( $website ) {
+    public static function handle_check_website( $website, $chk_http_site = false ) {
 
-        $result_comp = MainWP_Connect::check_website_status( $website );
+        $result_comp = MainWP_Connect::check_website_status( $website, $chk_http_site );
 
         if ( ! is_array( $result_comp ) ) {
             return false;

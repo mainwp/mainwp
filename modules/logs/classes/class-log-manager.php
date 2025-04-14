@@ -295,6 +295,9 @@ class Log_Manager {
                 }
             }
 
+            // To support searching user on meta.
+            $meta_data['user_login'] = sanitize_text_field( wp_unslash( $data['action_user'] ) );
+
             $sum = '';
             if ( false !== $extra_info ) {
                 $meta_data['extra_info'] = wp_json_encode( $extra_info );

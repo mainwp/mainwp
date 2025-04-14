@@ -45,7 +45,7 @@ class Log_Query {
 
         $count_only = ! empty( $args['count_only'] ) ? true : false;
         $not_count  = ! empty( $args['not_count'] ) ? true : false;
-
+        $mt_search  = false;
         if ( ! empty( $args['search'] ) ) {
             $search_str = MainWP_DB::instance()->escape( $args['search'] );
             // for searching.
@@ -57,9 +57,12 @@ class Log_Query {
                     $where_search .= ' OR lg.item LIKE  "%' . $search_str . '%" ';
                     if ( 'events_list' === $view ) {
                         $where_search .= ' OR sub_lg.source LIKE  "%' . $search_str . '%" ';
+                        $where_search .= ' OR meta_view.user_login LIKE  "%' . $search_str . '%" ';
+                        $mt_search     = true;
                     }
                     $where_search .= ') ';
                     $where        .= $where_search;
+
                 }
             }
         }
@@ -279,7 +282,11 @@ class Log_Query {
             $join = ' LEFT JOIN ' . $wpdb->mainwp_tbl_wp . ' wp ON lg.site_id = wp.id ';
         }
 
-        $join .= ' LEFT JOIN ' . $this->get_log_meta_view() . ' meta_view ON lg.log_id = meta_view.view_log_id ';
+        $mt_params = array();
+        if ( $mt_search ) {
+            $mt_params['user_login'] = true;
+        }
+        $join .= ' LEFT JOIN ' . $this->get_log_meta_view( $mt_params ) . ' meta_view ON lg.log_id = meta_view.view_log_id ';
 
         if ( 'events_list' === $view ) {
             $join .= ' LEFT JOIN ' . $this->get_sub_query_view() . ' sub_lg ON lg.log_id = sub_lg.sub_log_id ';
@@ -323,7 +330,7 @@ class Log_Query {
             );
         }
 
-        if ( ! empty( $args['dev_log_query'] ) ) {
+        if ( true || ! empty( $args['dev_log_query'] ) ) {
             //phpcs:disable Squiz.PHP.CommentedOutCode.Found,WordPress.PHP.DevelopmentFunctions
             error_log( print_r( $args, true ) );
             error_log( $recent_query );
@@ -347,14 +354,18 @@ class Log_Query {
     /**
      * Get logs meta database table view.
      *
+     * @param array $params Params.
      * @return string logs meta view.
      */
-    public function get_log_meta_view() {
+    public function get_log_meta_view( $params = array() ) {
         global $wpdb;
         $view  = '(SELECT intlog.log_id AS view_log_id, ';
         $view .= '(SELECT meta_name.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' meta_name WHERE  meta_name.meta_log_id = intlog.log_id AND meta_name.meta_key = "name" LIMIT 1) AS meta_name, ';
         $view .= '(SELECT user_meta_json.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' user_meta_json WHERE  user_meta_json.meta_log_id = intlog.log_id AND user_meta_json.meta_key = "user_meta_json" LIMIT 1) AS user_meta_json, ';
         $view .= '(SELECT usermeta.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' usermeta WHERE  usermeta.meta_log_id = intlog.log_id AND usermeta.meta_key = "user_meta" LIMIT 1) AS usermeta, '; // compatible user_meta data.
+        if ( ! empty( $params['user_login'] ) ) {
+            $view .= '(SELECT user_login.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' user_login WHERE  user_login.meta_log_id = intlog.log_id AND user_login.meta_key = "user_login" LIMIT 1) AS user_login, ';
+        }
         $view .= '(SELECT extra_info.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' extra_info WHERE  extra_info.meta_log_id = intlog.log_id AND extra_info.meta_key = "extra_info" LIMIT 1) AS extra_info ';
         $view .= ' FROM ' . $wpdb->mainwp_tbl_logs . ' intlog)';
         return $view;

@@ -591,9 +591,14 @@ let managesites_wordpress_upgrade_all_loop_next = function () {
 let managesites_wordpress_upgrade_all_upgrade_next = function () {
     mainwpVars.currentThreads++;
     mainwpVars.websitesLeft--;
+	const regression_waiting_icon = render_html_regression_waiting_icon();
+	let waiting_icon = '<i class="sync alternate loading icon"></i>';
+	if (regression_waiting_icon && "" !== regression_waiting_icon) {
+		waiting_icon += regression_waiting_icon;
+	} 
 
     let websiteId = mainwpVars.websitesToUpgrade[mainwpVars.currentWebsite++];
-    dashboard_update_site_status(websiteId, '<i class="sync alternate loading icon"></i>');
+	dashboard_update_site_status(websiteId, waiting_icon);
 
     managesites_wordpress_upgrade_int(websiteId);
 };
@@ -626,6 +631,7 @@ let managesites_wordpress_upgrade_all_update_done = function () {
 
     managesites_wordpress_upgrade_all_loop_next();
 };
+
 let managesites_wordpress_upgrade_int = function (websiteId) {
     let data = mainwp_secure_data({
         action: 'mainwp_upgradewp',

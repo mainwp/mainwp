@@ -57,7 +57,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     // Get Icon for the largest change scope of ext regression testing.
                     $html_regression_icon = apply_filters( 'mainwp_html_regression_largest_change_scope', $website->id, true ) ?: '';  // phpcs:ignore -- NOSONAR 
 
-                    return '<i class="green check icon"></i>' . $html_regression_icon;
+                    return '<span data-inverted="" data-position="left center" data-tooltip="' . esc_html__( 'Update successful', 'mainwp' ) . '"><i class="green check icon"></i></span>' . $html_regression_icon;
                 } elseif ( isset( $information['upgrade'] ) ) {
                     $errorMsg = '';
                     if ( 'LOCALIZATION' === $information['upgrade'] ) {

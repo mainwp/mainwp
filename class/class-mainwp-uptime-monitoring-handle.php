@@ -393,9 +393,9 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
             return false;
         }
 
-        $new_code   = isset( $params['httpCode'] ) ? (int) $params['httpCode'] : 0;
-        $status     = isset( $params['new_uptime_status'] ) ? (int) $params['new_uptime_status'] : 0;
-        $time       = isset( $params['check_offline_time'] ) ? $params['check_offline_time'] : time();
+        $new_code = isset( $params['httpCode'] ) ? (int) $params['httpCode'] : 0;
+        $status   = isset( $params['new_uptime_status'] ) ? (int) $params['new_uptime_status'] : 0;
+        $time     = isset( $params['check_offline_time'] ) ? $params['check_offline_time'] : time();
 
         // Save last status.
         MainWP_DB::instance()->update_website_values(

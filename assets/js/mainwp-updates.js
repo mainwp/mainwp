@@ -547,9 +547,15 @@ let updatesoverview_translations_upgrade_all_update_site_status = function (site
 let updatesoverview_translations_upgrade_all_upgrade_next = function () {
     mainwpVars.currentThreads++;
     mainwpVars.websitesLeft--;
+	// Show icon waiting 
+	const regression_waiting_icon = render_html_regression_waiting_icon();
+	let waiting_icon = '<i class="notched circle loading icon"></i>';
+	if (regression_waiting_icon && "" !== regression_waiting_icon) {
+		waiting_icon += regression_waiting_icon;
+	}
 
     let websiteId = mainwpVars.websitesToUpdateTranslations[mainwpVars.currentWebsite++];
-    updatesoverview_translations_upgrade_all_update_site_status(websiteId, '<i class="notched circle loading icon"></i>');
+	updatesoverview_translations_upgrade_all_update_site_status(websiteId, waiting_icon);
 
     let slugToUpgrade = currentTranslationSlugToUpgrade;
     if (slugToUpgrade == undefined)
@@ -955,9 +961,15 @@ let updatesoverview_plugins_upgrade_all_upgrade_next = function () {
     mainwpVars.currentThreads++;
     mainwpVars.websitesLeft--;
 
+	// Show icon waiting 
+	const regression_waiting_icon = render_html_regression_waiting_icon();
+	let waiting_icon = '<i class="notched circle loading icon"></i>';
+	if (regression_waiting_icon && "" !== regression_waiting_icon) {
+		waiting_icon += regression_waiting_icon;
+	}
     let websiteId = mainwpVars.websitesToUpdatePlugins[mainwpVars.currentWebsite++];
 
-    updatesoverview_plugins_upgrade_all_update_site_status(websiteId, '<i class="notched circle loading icon"></i>');
+	updatesoverview_plugins_upgrade_all_update_site_status(websiteId, waiting_icon);
 
     let slugToUpgrade = currentPluginSlugToUpgrade;
     if (slugToUpgrade == undefined)
@@ -995,7 +1007,7 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
     return function () {
         let slugParts = pSlug.split(',');
 		const regression_waiting_icon = render_html_regression_waiting_icon();
-		let waiting_icon = '';
+		let waiting_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Updating...', 'mainwp') + '"><i class="notched circle loading icon"></i></span> ';
 		if (regression_waiting_icon && "" !== regression_waiting_icon){
 			waiting_icon += regression_waiting_icon;
 		} 
@@ -1005,7 +1017,7 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
             if (!websiteHolder.exists()) {
                 websiteHolder = jQuery('.plugins-bulk-updates[site_id="' + pWebsiteId + '"] tr[plugin_slug="' + sid + '"]');
             }
-			websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Updating...', 'mainwp') + '"><i class="notched circle loading icon"></i></span> ' + waiting_icon);
+			websiteHolder.find('td:last-child').html(waiting_icon);
         }
 
         let data = mainwp_secure_data({
@@ -1407,9 +1419,13 @@ let updatesoverview_themes_upgrade_all_update_site_status = function (siteId, ne
 let updatesoverview_themes_upgrade_all_upgrade_next = function () {
     mainwpVars.currentThreads++;
     mainwpVars.websitesLeft--;
-
+	const regression_waiting_icon = render_html_regression_waiting_icon();
+	let waiting_icon = '<i class="notched circle loading icon"></i>';
+	if (regression_waiting_icon && "" !== regression_waiting_icon) {
+		waiting_icon += regression_waiting_icon;
+	} 
     let websiteId = mainwpVars.websitesToUpdate[mainwpVars.currentWebsite++];
-    updatesoverview_themes_upgrade_all_update_site_status(websiteId, '<i class="notched circle loading icon"></i>');
+	updatesoverview_themes_upgrade_all_update_site_status(websiteId, waiting_icon);
 
     let slugToUpgrade = currentThemeSlugToUpgrade;
     if (slugToUpgrade == undefined)
@@ -1844,9 +1860,15 @@ let updatesoverview_upgrade_all_update_site_bold = function (siteId, sub, msg) {
 let updatesoverview_upgrade_all_upgrade_next = function () {
     mainwpVars.currentThreads++;
     mainwpVars.websitesLeft--;
+	// Show icon waiting 
+	const regression_waiting_icon = render_html_regression_waiting_icon();
+	let waiting_icon = '<i class="notched circle loading icon"></i>';
+	if (regression_waiting_icon && "" !== regression_waiting_icon) {
+		waiting_icon += regression_waiting_icon;
+	} 
 
     let websiteId = mainwpVars.websitesToUpdate[mainwpVars.currentWebsite++];
-    updatesoverview_upgrade_all_update_site_status(websiteId, '<i class="notched circle loading icon"></i>');
+	updatesoverview_upgrade_all_update_site_status(websiteId, waiting_icon);
 
     let params = {
         'websiteId': websiteId,

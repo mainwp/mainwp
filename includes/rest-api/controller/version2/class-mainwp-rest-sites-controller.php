@@ -1292,11 +1292,22 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $params['offset']   = 0;
         }
 
+        $params['actions']     = ! empty( $request['actions'] ) ? sanitize_text_field( wp_unslash( $request['actions'] ) ) : '';
+        $params['contexts']    = ! empty( $request['contexts'] ) ? sanitize_text_field( wp_unslash( $request['contexts'] ) ) : '';
+        $params['total_count'] = ! empty( $request['total_count'] ) ? mainwp_string_to_bool( $request['total_count'] ) : false;
+
         $data = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params, $website );
+
+        if ( $params['total_count'] ) {
+            $total = $data;
+            $data  = array( 'total' => $total );
+        } else {
+            $total = is_array( $data ) ? count( $data ) : 0;
+        }
 
         $resp_data = array(
             'success' => 1,
-            'total'   => is_array( $data ) ? count( $data ) : 0,
+            'total'   => $total,
             'data'    => $data,
             'site'    => $this->filter_response_data_by_allowed_fields( $website, 'simple_view' ),
         );

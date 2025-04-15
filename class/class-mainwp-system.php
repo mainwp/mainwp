@@ -29,7 +29,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '5.4.0.4'; // NOSONAR.
+    public static $version = '5.4.0.5'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -1361,6 +1361,15 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public function deactivation() {
         update_option( 'mainwp_extensions_all_activation_cached', '' );
+        $useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( (int) get_option( 'mainwp_wp_cron' ) === 1 );
+        if ( $useWPCron ) {
+            $jobs = MainWP_System_Cron_Jobs::instance()->get_cron_jobs();
+            if ( $jobs ) {
+                foreach ( $jobs as $job => $recu ) {
+                    wp_clear_scheduled_hook( $job );
+                }
+            }
+        }
     }
 
     /**

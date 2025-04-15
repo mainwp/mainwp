@@ -198,7 +198,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         ?>
         <div id="mainwp-select-sites-filters">
             <div class="ui mini fluid icon input">
-                <input type="text" id="mainwp-select-sites-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>" <?php echo 'site' === $selectedby ? '' : 'style="display: none;"'; ?> />
+                <input type="text" id="mainwp-select-sites-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>" />
                 <i class="filter icon"></i>
             </div>
         </div>
@@ -922,6 +922,27 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     </div>
                 </div>
             </div>
+
+            <script type="text/javascript">
+                jQuery( document ).ready( function($) {
+                    console.log($('#mainwp-top-header'));
+                    $('#mainwp-top-header').prevAll().each(function () {
+                        let strId=$(this).attr('id');
+                        if(strId?.includes('mainwp')){
+                            return;
+                        }
+                        let strCls=$(this).attr('class');
+                        if(strCls?.includes('mainwp')){
+                            return;
+                        }
+                        if($(this).is(':visible')){
+                            $(this).prependTo('.mainwp-content-wrap'); // to fix display.
+                            $(this).css( 'margin-left', '0px' );
+                        }
+                    });
+                });
+            </script>
+
             <?php
             if ( $show_menu ) {
                 MainWP_Menu::render_left_menu();
@@ -1639,7 +1660,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         }
 
         if ( empty( $wgsorted ) ) {
-            $wgsorted = get_user_option( 'mainwp_widgets_sorted_' . strtolower( $page ) );
+            $wgsorted = get_user_option( 'mainwp_widgets_sorted_' . $page );
         }
 
         if ( ! empty( $wgsorted ) && is_string( $wgsorted ) ) {
@@ -1766,7 +1787,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
 
                     let grid = GridStack.init(gsOpts);
                     grid.on('change', function() {
-                        mainwp_overview_gridstack_save_layout();
+                        mainwp_overview_gridstack_save_layout(<?php echo (int) $client_id; ?>);
                     });
                 });
         </script>
@@ -2410,7 +2431,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     <div class="eight wide right aligned middle aligned column"><span id="revoke-third-party-perms" <?php echo $enabled_at_least_one ? '' : 'style="display:none"'; ?>><?php esc_html_e( '* Revoke third-party permissions in the Tools page.', 'mainwp' ); ?></span></div>
                 </div>
             </div>
-            
+
         </div>
 
         <?php

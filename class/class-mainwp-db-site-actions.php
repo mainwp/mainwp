@@ -183,12 +183,14 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
      */
     public function get_none_mainwp_actions_log_for_rest_api( $legacy_params = array(), $site = false ) { //phpcs:ignore -- NOSONAR - complex.
 
-        $action_id    = isset( $legacy_params['action_id'] ) ? intval( $legacy_params['action_id'] ) : 0;
-        $site_id      = isset( $legacy_params['wpid'] ) ? $legacy_params['wpid'] : 0;
-        $object_id    = isset( $legacy_params['object_id'] ) ? $this->escape( $legacy_params['object_id'] ) : '';
-        $where_extra  = isset( $legacy_params['where_extra'] ) ? $legacy_params['where_extra'] : ''; // compatible.
-        $dism         = ! empty( $legacy_params['dismiss'] ) ? 1 : 0;
-        $check_access = isset( $legacy_params['check_access'] ) ? $legacy_params['check_access'] : true;
+        $action_id       = isset( $legacy_params['action_id'] ) ? intval( $legacy_params['action_id'] ) : 0;
+        $site_id         = isset( $legacy_params['wpid'] ) ? $legacy_params['wpid'] : 0;
+        $object_id       = isset( $legacy_params['object_id'] ) ? $this->escape( $legacy_params['object_id'] ) : '';
+        $where_extra     = isset( $legacy_params['where_extra'] ) ? $legacy_params['where_extra'] : ''; // compatible.
+        $dism            = ! empty( $legacy_params['dismiss'] ) ? 1 : 0;
+        $check_access    = isset( $legacy_params['check_access'] ) ? $legacy_params['check_access'] : true;
+        $filter_events   = isset( $legacy_params['actions'] ) ? sanitize_text_field( wp_unslash( $legacy_params['actions'] ) ) : '';
+        $filter_contexts = isset( $legacy_params['contexts'] ) ? sanitize_text_field( wp_unslash( $legacy_params['contexts'] ) ) : '';
 
         $order_by    = isset( $legacy_params['order_by'] ) && ! empty( $legacy_params['order_by'] ) ? $legacy_params['order_by'] : 'created ';
         $offset      = ! empty( $legacy_params['offset'] ) ? (int) ( $legacy_params['offset'] ) : 0;
@@ -215,8 +217,10 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
             'object_id'        => $object_id,
             'dismiss'          => $dism,
             'check_access'     => $check_access,
+            'not_count'        => true,
         );
 
+        // available source values: wpadmin|dashboard|all, default value `wpadmin`.
         if ( ! empty( $legacy_params['source'] ) ) {
             $sources_conds = '';
             if ( 'wpadmin' === $legacy_params['source'] ) {
@@ -232,6 +236,21 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
             $compatible_args['sources_conds'] = $sources_conds;
         } else {
             $compatible_args['sources_conds'] = 'wp-admin-only';
+        }
+
+        if ( ! empty( $filter_events ) ) {
+            $array_events_list = explode( ',', $filter_events ); // convert to array.
+            if ( in_array( 'allevents', $array_events_list, true ) ) {
+                $filter_events     = '';
+                $array_events_list = false;
+            }
+            if ( ! empty( $array_events_list ) ) {
+                $compatible_args['events'] = $array_events_list;
+            }
+        }
+
+        if ( ! empty( $filter_contexts ) ) {
+            $compatible_args['contexts'] = $filter_contexts;
         }
 
         $compatible_args['view'] = 'api-view';

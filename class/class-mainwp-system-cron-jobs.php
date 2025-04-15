@@ -84,11 +84,11 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
     }
 
     /**
-     * Method init_cron()
+     * Method get_cron_jobs()
      *
-     * Build Cron Jobs Array & initiate via init_mainwp_cron()
+     * @return array Cron jobs list.
      */
-    public function init_cron() { //phpcs:ignore -- NOSONAR - complex.
+    public function get_cron_jobs() {
 
         // Check wether or not to use MainWP Cron false|1.
         $useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( (int) get_option( 'mainwp_wp_cron' ) === 1 );
@@ -110,12 +110,6 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $disableHealthChecking = get_option( 'mainwp_disableSitesHealthMonitoring', 1 ); // disabled by default.
         if ( ! $disableHealthChecking ) {
             $jobs['mainwp_cronsitehealthcheck_action'] = 'hourly';
-        } else {
-            // disable check sites health cron.
-            $sched = wp_next_scheduled( 'mainwp_cronsitehealthcheck_action' );
-            if ( false !== $sched ) {
-                wp_unschedule_event( $sched, 'mainwp_cronsitehealthcheck_action' );
-            }
         }
 
         // Legacy Backup Cron jobs.
@@ -127,7 +121,32 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     'mainwp_cronbackups_continue_action' => '5minutely',
                 )
             );
-        } else {
+        }
+
+        return $jobs;
+    }
+
+    /**
+     * Method init_cron()
+     *
+     * Build Cron Jobs Array & initiate via init_mainwp_cron()
+     */
+    public function init_cron() { //phpcs:ignore -- NOSONAR - complex.
+
+        // Check wether or not to use MainWP Cron false|1.
+        $useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( (int) get_option( 'mainwp_wp_cron' ) === 1 );
+
+        $disableHealthChecking = get_option( 'mainwp_disableSitesHealthMonitoring', 1 ); // disabled by default.
+        if ( $disableHealthChecking ) {
+            // disable check sites health cron.
+            $sched = wp_next_scheduled( 'mainwp_cronsitehealthcheck_action' );
+            if ( false !== $sched ) {
+                wp_unschedule_event( $sched, 'mainwp_cronsitehealthcheck_action' );
+            }
+        }
+
+        // Legacy Backup Cron jobs.
+        if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
             // Unset Cron Schedules.
             $sched = wp_next_scheduled( 'mainwp_cronbackups_action' );
             if ( $sched ) {
@@ -138,6 +157,8 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 wp_unschedule_event( $sched, 'mainwp_cronbackups_continue_action' );
             }
         }
+
+        $jobs = $this->get_cron_jobs();
 
         foreach ( $jobs as $hook => $recur ) {
             $this->init_mainwp_cron( $useWPCron, $hook, $recur );
@@ -1289,7 +1310,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $sites_offline = MainWP_DB::instance()->get_websites_http_check_status();
         if ( is_array( $sites_offline ) && ! empty( $sites_offline ) ) {
             foreach ( $sites_offline as $site ) {
-                if ( 200 === (int) $site->http_response_code ) { // to fix: ignored 200 http code.
+                if ( 200 === (int) $site->http_response_code || empty( $site->http_response_code ) ) { // to fix: ignored 200 http code.
                     continue;
                 }
                 $email_settings_sites[ $site->id ] = $site->settings_notification_emails; // ok.

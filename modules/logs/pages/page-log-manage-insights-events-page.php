@@ -242,10 +242,10 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
         $filter_sites  = '';
         $filter_events = '';
 
-        $array_clients_ids = array();
-        $array_groups_ids  = array();
-        $array_users_ids   = array();
-        $array_sites_ids   = array();
+        $array_clients_ids           = array();
+        $array_groups_ids            = array();
+        $array_usersfilter_sites_ids = array();
+        $array_sites_ids             = array();
 
         $array_events_list = array();
         $array_source_list = array();
@@ -309,13 +309,20 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
         }
 
         if ( ! empty( $filter_user_ids ) ) {
-            $array_users_ids = explode( ',', $filter_user_ids ); // convert to array.
-            if ( in_array( 'allusers', $array_users_ids, true ) ) {
-                $array_users_ids = false;
-                $filter_user_ids = '';
+            $array_usersfilter_sites_ids = explode( ',', $filter_user_ids ); // convert to array.
+            if ( in_array( 'allusers', $array_usersfilter_sites_ids, true ) ) {
+                $array_usersfilter_sites_ids = false;
+                $filter_user_ids             = '';
             } else {
-                $array_users_ids = MainWP_Utility::array_numeric_filter( $array_users_ids );
-                $filter_user_ids = implode( ',', $array_users_ids );
+                // to valid and fix filters.
+                $users_filters = array();
+                foreach ( $array_usersfilter_sites_ids as $users_filter ) {
+                    if ( 2 === substr_count( $users_filter, '-' ) ) {
+                        $users_filters[] = $users_filter;
+                    }
+                }
+                $array_usersfilter_sites_ids = $users_filters;
+                $filter_user_ids             = implode( ',', $users_filters );
             }
         }
 
@@ -391,14 +398,14 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
             'filter_dtsstop',
             'array_clients_ids',
             'array_groups_ids',
-            'array_users_ids',
+            'array_usersfilter_sites_ids',
             'filter_source',
             'filter_sites',
             'filter_events',
             'sources_conds',
             'array_sites_ids',
             'array_events_list',
-            'array_source_list'
+            'array_source_list',
         );
     }
 
@@ -422,15 +429,15 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
     public static function render_logs_overview_top( $insights_filters ) { //phpcs:ignore -- NOSONAR - complex.
         $manager = Log_Manager::instance();
 
-        $filter_ranges     = '';
-        $filter_groups_ids = '';
-        $filter_client_ids = '';
-        $filter_user_ids   = '';
-        $filter_dtsstart   = '';
-        $filter_dtsstop    = '';
-        $array_clients_ids = array();
-        $array_groups_ids  = array();
-        $array_users_ids   = array();
+        $filter_ranges               = '';
+        $filter_groups_ids           = '';
+        $filter_client_ids           = '';
+        $filter_user_ids             = '';
+        $filter_dtsstart             = '';
+        $filter_dtsstop              = '';
+        $array_clients_ids           = array();
+        $array_groups_ids            = array();
+        $array_usersfilter_sites_ids = array();
 
         $filter_source = '';
         $filter_sites  = '';
@@ -444,7 +451,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
 
         $default_filter = false;
         // extracted values.
-        if ( ( empty( $filter_ranges ) || 'thismonth' === $filter_ranges ) && empty( $filter_groups_ids ) && empty( $filter_client_ids ) && empty( $filter_user_ids ) && empty( $filter_user_ids ) && empty( $filter_dtsstart ) && empty( $filter_dtsstop ) && empty( $array_clients_ids ) && empty( $array_groups_ids ) && empty( $array_users_ids ) && empty( $array_source_list ) && empty( $array_sites_ids ) && empty( $array_events_list ) ) {
+        if ( ( empty( $filter_ranges ) || 'thismonth' === $filter_ranges ) && empty( $filter_groups_ids ) && empty( $filter_client_ids ) && empty( $filter_user_ids ) && empty( $filter_dtsstart ) && empty( $filter_dtsstop ) && empty( $array_clients_ids ) && empty( $array_groups_ids ) && empty( $array_usersfilter_sites_ids ) && empty( $array_source_list ) && empty( $array_sites_ids ) && empty( $array_events_list ) ) {
             $default_filter = true;
         }
 
@@ -560,9 +567,9 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                             <div class="menu">
                                 <?php
                                 $users = $manager->admin->get_all_users();
-                                foreach ( $users as $user ) {
+                                foreach ( $users as $item ) {
                                     ?>
-                                    <div class="item" data-value="<?php echo intval( $user['id'] ); ?>"><?php echo esc_html( $user['login'] ); ?></div>
+                                    <div class="item" data-value="<?php echo intval( $item['id'] ) . '-' . (int) $item['site_id'] . '-' . ( empty( $item['wp_user_id'] ) ? 1 : 0 ); ?>"><?php echo ( ! empty( $item['login'] ) ? esc_html( $item['login'] ) : esc_html( $item['nicename'] ) ) . ' (' . esc_html( $item['source'] ) . ')'; ?></div>
                                     <?php
                                 }
                                 ?>

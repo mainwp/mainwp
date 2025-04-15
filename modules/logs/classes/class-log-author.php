@@ -122,16 +122,16 @@ class Log_Author {
                 return 'WP-CLI'; // No translation needed.
             }
         } elseif ( $this->is_deleted() ) {  // dashboard user.
-            if ( ! empty( $this->meta['display_name'] ) ) {
-                return $this->meta['display_name'];
-            } elseif ( ! empty( $this->meta['user_login'] ) ) {
+            if ( ! empty( $this->meta['user_login'] ) ) {
                 return $this->meta['user_login'];
+            } elseif ( ! empty( $this->meta['display_name'] ) ) {
+                return $this->meta['display_name'];
             }
         } elseif ( ! empty( $this->user ) ) {  // dashboard user.
-            if ( ! empty( $this->user->display_name ) ) {
-                return $this->user->display_name;
-            } elseif ( ! empty( $this->user_login ) ) {
+            if ( ! empty( $this->user_login ) ) {
                 return $this->user->user_login;
+            } elseif ( ! empty( $this->user->display_name ) ) {
+                return $this->user->display_name;
             }
         }
         return '';

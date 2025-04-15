@@ -144,6 +144,12 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $mo_apply_method = static::get_apply_setting( 'method', $monitor->method, $global_settings, 'useglobal', 'get' );
         $mo_apply_method = strtolower( $mo_apply_method );
 
+        if ( ! empty( $params['check_http_site'] ) ) {
+            $chk_http_method = get_option( 'mainwp_check_http_response_method', 'head' );
+            $chk_http_method = in_array( $chk_http_method, array( 'get', 'head' ) ) ? $chk_http_method : 'head';
+            $mo_apply_method = $chk_http_method;
+        }
+
         if ( 'head' !== $mo_apply_method ) {
             curl_setopt( $ch, CURLOPT_POST, 'post' === $mo_apply_method ? true : false );
         }
@@ -344,9 +350,9 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         }
         $compatible_data['error'] = '' === $http_error && false === $found ? 'Invalid host.' : $http_error;
 
-        $status = MainWP_Monitoring_Handler::get_http_noticed_status_value( $monitor, $http_code );
-
-        $compatible_data['new_uptime_status'] = is_array( $handle_data ) && isset( $handle_data['new_uptime_status'] ) ? $handle_data['new_uptime_status'] : $status;
+        if ( is_array( $handle_data ) && isset( $handle_data['new_uptime_status'] ) ) {
+            $compatible_data['new_uptime_status'] = $handle_data['new_uptime_status'];
+        }
 
         return $compatible_data;
     }
@@ -769,6 +775,10 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             } elseif ( static::UP === $status ) {
                 $status = static::DOWN;
             }
+        }
+
+        if ( empty( $http_code ) ) {
+            $status = static::PENDING;
         }
 
         $mo_url = static::get_apply_monitor_url( $monitor );

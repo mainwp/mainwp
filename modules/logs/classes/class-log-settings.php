@@ -189,7 +189,7 @@ class Log_Settings {
                                 <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_module_log_enabled" id="mainwp_module_log_enabled" <?php echo $enabled ? 'checked="true"' : ''; ?> /><label><?php esc_html_e( 'Default: Enabled', 'mainwp' ); ?></label>
                             </div>
                         </div>
-                        <?php $hide_field_class = 'log-settings-hidden-field'; ?>
+                        <?php $hide_field_class = apply_filters( 'mainwp_log_module_hidden_class_development_settings_features', 'log-settings-hidden-field' ); ?>
                         <div class="ui grid field <?php echo esc_attr( $hide_field_class ); ?>">
                             <label class="six wide column middle aligned"><?php esc_html_e( 'Enable auto purge', 'mainwp' ); ?></label>
                             <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements"  hide-parent="auto-purge" data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will auto purge logs.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">

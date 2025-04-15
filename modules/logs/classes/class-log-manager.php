@@ -143,6 +143,8 @@ class Log_Manager {
         // Change DB driver after plugin loaded if any add-ons want to replace.
         add_action( 'plugins_loaded', array( $this, 'plugins_loaded' ), 20 );
 
+        add_action( 'mainwp_delete_site', array( $this, 'hook_delete_site' ), 10, 3 );
+
         // Load admin area classes.
         if ( is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
             $this->admin = new Log_Admin( $this );
@@ -293,6 +295,9 @@ class Log_Manager {
                 }
             }
 
+            // To support searching user on meta.
+            $meta_data['user_login'] = sanitize_text_field( wp_unslash( $data['action_user'] ) );
+
             $sum = '';
             if ( false !== $extra_info ) {
                 $meta_data['extra_info'] = wp_json_encode( $extra_info );
@@ -340,5 +345,19 @@ class Log_Manager {
         }
 
         return true;
+    }
+
+    /**
+     * Method hook_delete_site()
+     *
+     * @param mixed $site site object.
+     *
+     * @return bool result.
+     */
+    public function hook_delete_site( $site ) {
+        if ( empty( $site ) ) {
+            return false;
+        }
+        return Log_DB_Helper::instance()->remove_logs_by( $site->id );
     }
 }

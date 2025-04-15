@@ -204,6 +204,7 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'mainwp_edit_monitor_maxretries'             => -1, // use global.
             'mainwp_edit_monitor_maxretries_global'      => 1,
             'mainwp_edit_monitor_monitoring_emails'      => '',
+            'mainwp_check_http_response_method'          => 'head',
         );
 
         if ( 'all' === $field ) {

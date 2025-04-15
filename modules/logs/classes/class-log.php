@@ -75,12 +75,24 @@ class Log {
             'agent'      => (string) $agent,
         );
 
-        if ( 'wp_cli' === $agent && is_callable( 'posix_getuid' ) && is_callable( 'posix_getpwuid' ) ) {
-            $uid       = posix_getuid();
-            $user_info = posix_getpwuid( $uid );
+        $system_user = '';
+        if ( 'wp_cli' === $agent ) {
+            $system_user = 'wp_cli';
+            if ( is_callable( 'posix_getuid' ) && is_callable( 'posix_getpwuid' ) ) {
+                $uid       = posix_getuid();
+                $user_info = posix_getpwuid( $uid );
 
-            $user_meta['system_user_id']   = (int) $uid;
-            $user_meta['system_user_name'] = (string) $user_info['name'];
+                $user_meta['system_user_id']   = (int) $uid;
+                $user_meta['system_user_name'] = (string) $user_info['name'];
+
+                if ( ! empty( $user_meta['system_user_name'] ) ) {
+                    $system_user = $user_meta['system_user_name'];
+                }
+            }
+        } elseif ( 'wp_cron' === $agent ) {
+            $system_user = 'wp_cron';
+        } elseif ( 'wp_rest_api' === $agent ) {
+            $system_user = 'wp_rest_api';
         }
 
         $dura = isset( $args['duration'] ) ? floatval( $args['duration'] ) : $this->manager->executor->get_exec_time();
@@ -108,6 +120,15 @@ class Log {
                 return ! is_null( $e );
             }
         );
+
+        // To support searching user on meta.
+        if ( empty( $logs_meta['user_login'] ) ) {
+            if ( ! empty( $user_meta['user_login'] ) ) {
+                $logs_meta['user_login'] = $user_meta['user_login'];
+            } elseif ( ! empty( $system_user ) ) {
+                $logs_meta['user_login'] = $system_user;
+            }
+        }
 
         // Add user meta to Log meta.
         $logs_meta['user_meta_json'] = wp_json_encode( $user_meta );

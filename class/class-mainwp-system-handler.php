@@ -67,10 +67,10 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
          * @see \MainWP_Extensions::hook_get_sites
          */
         add_filter( 'mainwp-getsites', array( MainWP_Extensions_Handler::get_class_name(), 'hook_get_sites' ), 10, 5 );     // @deprecated Use 'mainwp_getsites' instead.
-        add_filter( 'mainwp-getdbsites', array( MainWP_Extensions_Handler::get_class_name(), 'hook_get_db_sites' ), 10, 5 ); // @deprecated Use 'mainwp_getdbsites' instead.
+        add_filter( 'mainwp-getdbsites', array( MainWP_Extensions_Handler::get_class_name(), 'hook_get_db_sites' ), 10, 6 ); // @deprecated Use 'mainwp_getdbsites' instead.
 
         add_filter( 'mainwp_getsites', array( MainWP_Extensions_Handler::get_class_name(), 'hook_get_sites' ), 10, 5 );
-        add_filter( 'mainwp_getdbsites', array( MainWP_Extensions_Handler::get_class_name(), 'hook_get_db_sites' ), 10, 5 );
+        add_filter( 'mainwp_getdbsites', array( MainWP_Extensions_Handler::get_class_name(), 'hook_get_db_sites' ), 10, 6 );
         add_filter( 'mainwp_get_db_websites', array( MainWP_Extensions_Handler::get_class_name(), 'hook_get_db_websites' ), 10, 5 );
 
         /**

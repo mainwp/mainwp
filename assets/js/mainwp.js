@@ -2002,9 +2002,9 @@ let mainwp_extension_apply_plugin_settings = function (pPluginToInstall, pSiteId
         syc_msg = __('Successful');
         _success = true
       } else if (response.error != undefined) {
-        statusEl.html(__('Applying settings failed!') + ': ' + response.error);
+        statusEl.html(response.error);
         statusEl.css('color', 'red');
-        syc_msg = __('failed');
+        syc_msg = response.error;
       } else {
         statusEl.html(__('Applying settings failed!'));
         statusEl.css('color', 'red');
@@ -2121,8 +2121,10 @@ let mainwp_managesites_edit_test = function () {
 
   let clean_url = jQuery('#mainwp_managesites_edit_siteurl').val();
   let protocol = jQuery('#mainwp_managesites_edit_siteurl_protocol').val();
+  let with_www = jQuery('input[name=mainwp_managesites_edit_wpurl_with_www]').val();
+  with_www = with_www === 'www' ? with_www + '.' : '';
 
-  let url = protocol + '://' + clean_url;
+  let url = protocol + '://' + with_www + clean_url;
 
   if (!url.endsWith('/')) {
     url += '/';
@@ -2873,7 +2875,7 @@ let mainwp_upload_bulk_start_next = function (type, urls, activatePlugin, overwr
         jQuery('.mainwp-cost-tracker-assistant-add-buttons-wrapper').html('');
         let multiAddTo = cost_tracker_items.length > 1 ? 1 : 0;
         cost_tracker_items.forEach(item => {
-          jQuery('.mainwp-cost-tracker-assistant-add-buttons-wrapper').append('<a href="javascript:void(0)" item-type="' + item.type + '" item-slug="' + item.slug + '" cost-id="' + item.cost_id + '" item-name="' + item.name + '" installed-sites="' + item.sites_ids.join(',') + '" multi-add-to="' + multiAddTo + '" class="ui mini button mainwp-cost-tracker-assistant-add-to-cost-tracker-button">' + ((item.cost_id != undefined && item.cost_id > 0) ? __('Edit Cost Tracker') : __('Add to Cost Tracker')) + '</a>');
+          jQuery('.mainwp-cost-tracker-assistant-add-buttons-wrapper').append('<a href="javascript:void(0)" item-type="' + item.type + '" item-slug="' + item.slug + '" cost-id="' + item.cost_id + '" item-name="' + item.name + '" installed-sites="' + item.sites_ids.join(',') + '" multi-add-to="' + multiAddTo + '" class="ui mini button mainwp-cost-tracker-assistant-add-to-cost-tracker-button">' + ((item.cost_id != undefined && item.cost_id > 0) ? __('Edit Cost Tracker') + ' (' + item.name +')' : __('Add to Cost Tracker') + ' (' + item.name + ')' ) + '</a>');
         });
       }
     }

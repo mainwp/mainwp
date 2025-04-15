@@ -2004,7 +2004,7 @@ let mainwp_extension_apply_plugin_settings = function (pPluginToInstall, pSiteId
       } else if (response.error != undefined) {
         statusEl.html(response.error);
         statusEl.css('color', 'red');
-        syc_msg = __('failed');
+        syc_msg = response.error;
       } else {
         statusEl.html(__('Applying settings failed!'));
         statusEl.css('color', 'red');

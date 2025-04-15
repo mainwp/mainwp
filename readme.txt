@@ -5,7 +5,7 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 6.2
-Tested up to: 6.7.1
+Tested up to: 6.8
 Requires PHP: 7.4
 Stable tag: 5.4.0.4
 License: GPLv3 or later

@@ -750,6 +750,15 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                         mainwp_datatable_fix_menu_overflow(manage_tbl_id);
                                         mainwp_table_check_columns_init(manage_tbl_id);
                                     }, 1000);
+                                } else if('widget-overview' === '<?php echo esc_js( $this->table_id_prefix ); ?>'){
+                                    jQuery('#mainwp-module-log-records-table-widget-overview #mainwp-module-log-records-body-table td.check-column input[type="checkbox"]').on('change', function(){
+                                        console.log('onchange sites changes.');
+                                        if( jQuery('#mainwp-module-log-records-body-table input[type="checkbox"]:checked').length == 0 ){
+                                            jQuery('#mainwp_widget_sites_changes_bulk_dismiss_selected_btn').addClass('disabled');
+                                        } else {
+                                            jQuery('#mainwp_widget_sites_changes_bulk_dismiss_selected_btn').removeClass('disabled');
+                                        }
+                                    });
                                 }
                             },
                             "initComplete": function( settings, json ) {

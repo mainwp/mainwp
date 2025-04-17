@@ -3716,7 +3716,6 @@ jQuery(function ($) {
     mainwp_confirm(confirmMsg, function () { mainwp_sites_changes_actions_bulk_action('dismiss-selected', 'widget'); });
   });
 
-
   $(document).on('click', '.insights-actions-row-dismiss', function () {
     return mainwp_insights_row_actions_dismiss(this);
   });

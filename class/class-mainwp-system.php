@@ -268,6 +268,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_Updates_Overview::init();
         MainWP_Client::init();
         MainWP_Rest_Api_Page::init();
+        MainWP_Logger::instance();
 
         if ( class_exists( '\MainWP\Dashboard\Module\Log\Log_Manage_Insights_Events_Page' ) ) {
             Log_Manage_Insights_Events_Page::instance();

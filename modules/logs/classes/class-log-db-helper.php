@@ -175,4 +175,23 @@ class Log_DB_Helper extends MainWP_DB {
 
         return array();
     }
+
+    /**
+     * Method get_logs_db_stats().
+     *
+     * @return array DB stats.
+     */
+    public function get_logs_db_stats() {
+        $sql_meta = 'SELECT meta_key, COUNT(*) AS total
+            FROM ' . $this->table_name( 'wp_logs_meta' ) . '
+            GROUP BY meta_key
+            ORDER BY total DESC';
+        $sql_total = 'SELECT COUNT(*) AS total FROM ' . $this->table_name( 'wp_logs' );
+        $sql_meta_total = 'SELECT COUNT(*) AS total FROM ' . $this->table_name( 'wp_logs_meta' );
+        return array(
+            'logs_count'   => $this->wpdb->get_var( $sql_total ), //phpcs:ignore --NOSONAR -ok.
+            'logs_meta_count'   => $this->wpdb->get_var( $sql_meta_total ), //phpcs:ignore --NOSONAR -ok.
+            'logs_meta_db_info' => $this->wpdb->get_results( $sql_meta ), //phpcs:ignore --NOSONAR -ok.
+        );
+    }
 }

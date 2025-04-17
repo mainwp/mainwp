@@ -7,6 +7,8 @@
 
 namespace MainWP\Dashboard;
 
+use MainWP\Dashboard\Module\Log\Log_DB_Helper;
+
 // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 /**
  * Class MainWP_Server_Information
@@ -1705,6 +1707,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             MainWP_Logger::EXECUTION_TIME_LOG_PRIORITY  => esc_html__( 'Execution time', 'mainwp' ),
             MainWP_Logger::LOGS_AUTO_PURGE_LOG_PRIORITY => esc_html__( 'Logs Auto Purge', 'mainwp' ),
             MainWP_Logger::CONNECT_LOG_PRIORITY         => esc_html__( 'Dashboard Connect', 'mainwp' ),
+            MainWP_Logger::SITES_CHANGES_LOG_PRIORITY   => esc_html__( 'Sites Changes', 'mainwp' ),
         );
         $specific_logs    = apply_filters( 'mainwp_specific_action_logs', $specific_default ); // deprecated since 4.3.1, use 'mainwp_log_specific_actions' instead.
         $specific_logs    = apply_filters( 'mainwp_log_specific_actions', $specific_logs );
@@ -1762,6 +1765,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 </div>
             <?php endif; ?>
         <?php
+        static::pre_load_logs_page();
+
         $log_to_db = apply_filters( 'mainwp_logger_to_db', true );
         if ( $log_to_db ) {
             return MainWP_Logger::instance()->show_log_db();
@@ -1772,6 +1777,18 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         </div>
         <?php
         static::render_footer( 'ActionLogs' );
+    }
+
+    /**
+     * Method pre_load_logs_page().
+     *
+     * @return void
+     */
+    public static function pre_load_logs_page() {
+        if ( MainWP_Logger::instance()->enabled_log_priority( MainWP_Logger::SITES_CHANGES_LOG_PRIORITY ) ) {
+            $stats = Log_DB_Helper::instance()->get_logs_db_stats();
+            MainWP_Logger::instance()->log_events( 'sites-changes', 'DB Info :: ' . print_r( $stats, true ) );
+        }
     }
 
     /**

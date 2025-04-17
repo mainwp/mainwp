@@ -146,6 +146,13 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <input type="hidden" id="mainwp-widget-filter-events-limit" value="<?php echo isset( $params['limit'] ) ? intval( $params['limit'] ) : 50; ?>" />
 
         <div id="mainwp-widget-site-actions" class="mainwp-scrolly-overflow">
+            <div class="ui stackable grid">
+                <div class="eight wide middle aligned column">
+                    <a href="javascript:void(0)" id="mainwp_widget_sites_changes_bulk_dismiss_selected_btn" class="ui button mini basic"><?php esc_html_e( 'Dismiss Selected Changes', 'mainwp' ); ?></a>
+                </div>
+                <div class="eight wide right aligned middle aligned column">
+                </div>
+            </div>
             <?php
             /**
              * Actoin: mainwp_non_mainwp_changes_widget_top
@@ -190,7 +197,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     ?>
                 </div>
         </div>
-        
+
         <div class="mainwp-widget-footer">
             <div class="ui two columns stackable grid">
                 <div class="left aligned middle aligned column">

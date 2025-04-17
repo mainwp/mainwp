@@ -3754,10 +3754,14 @@ let mainwp_insights_row_actions_dismiss = function (obj) {
 
 
 // Manage Bulk Actions
-let mainwp_sites_changes_actions_bulk_action = function (act) {
+let mainwp_sites_changes_actions_bulk_action = function (act, which_act) {
   mainwpVars.bulkInstallTotal = 0;
   bulkInstallCurrentThreads = 0;
   bulkInstallDone = 0;
+  mainwpVars.bulkActionIndent = '';
+  if(which_act === 'widget'){
+    mainwpVars.bulkActionIndent = 'widget';
+  }
   if ( act === 'dismiss-selected' ) {
     jQuery('#mainwp_sites_changes_bulk_dismiss_selected_btn').addClass('disabled');
     let selector = '#mainwp-module-log-records-body-table tr';
@@ -3778,6 +3782,14 @@ let mainwp_sites_changes_actions_dismiss_start_next = function (selector) {
     }
     mainwp_sites_changes_actions_dismiss_specific(objProcess, selector);
   }
+
+    if (mainwpVars.bulkInstallTotal == bulkInstallDone) {
+        if(mainwpVars.bulkActionIndent === 'widget'){
+            jQuery('#mainwp_widget_sites_changes_bulk_dismiss_selected_btn').removeClass('disabled');
+        } else {
+            jQuery('#mainwp_sites_changes_bulk_dismiss_selected_btn').removeClass('disabled');
+        }
+    }
 }
 
 let mainwp_sites_changes_actions_dismiss_specific = function (pObj, selector) {
@@ -3813,9 +3825,6 @@ let mainwp_sites_changes_actions_dismiss_specific = function (pObj, selector) {
     bulkInstallCurrentThreads--;
     bulkInstallDone++;
     mainwp_sites_changes_actions_dismiss_start_next(selector);
-    if (mainwpVars.bulkInstallTotal == bulkInstallDone) {
-        jQuery('#mainwp_sites_changes_bulk_dismiss_selected_btn').removeClass('disabled');
-    }
   }, 'json');
   return false;
 }

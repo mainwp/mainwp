@@ -3707,6 +3707,15 @@ jQuery(function ($) {
     mainwp_confirm(confirmMsg, function () { mainwp_sites_changes_actions_bulk_action('dismiss-all'); });
   });
 
+  // Trigger the bulk actions
+  $('#mainwp_widget_sites_changes_bulk_dismiss_selected_btn').on('click', function () {
+    if ( jQuery('#mainwp-module-log-records-body-table tr').find('input[type="checkbox"]:checked').length == 0 ){
+        return;
+    }
+    let confirmMsg = __("You are about to dismiss the selected changes?");
+    mainwp_confirm(confirmMsg, function () { mainwp_sites_changes_actions_bulk_action('dismiss-selected', 'widget'); });
+  });
+
   $(document).on('click', '.insights-actions-row-dismiss', function () {
     return mainwp_insights_row_actions_dismiss(this);
   });

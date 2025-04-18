@@ -1,4 +1,4 @@
-<td?php
+<?php
 /**
  * Email template for the Uptime Monitoring Notification.
  *

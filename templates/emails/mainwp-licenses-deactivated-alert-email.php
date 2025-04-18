@@ -91,7 +91,7 @@ if ( empty( $heading ) ) {
                 </tr>
             </table>
             <div style="text-align:center;font-size:11px;margin-bottom:30px;">
-                <?php esc_html_e( 'Powered by ', 'mainwp' ); ?> <a href="https://mainwp.com/" style="color:#7fb100;"><?php esc_html_e( 'MainWP', 'mainwp' ); ?></a>.
+                <?php esc_html_e( 'Developed by ', 'mainwp' ); ?> <a href="https://mainwp.com/" style="color:#7fb100;"><?php esc_html_e( 'MainWP', 'mainwp' ); ?></a>. <?php esc_html_e( 'Sent from your Dashboard.', 'mainwp' ); // NOSONAR - noopener - open safe. ?>
             </div>
             <?php
             /**

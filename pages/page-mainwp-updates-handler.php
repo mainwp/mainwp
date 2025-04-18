@@ -55,8 +55,10 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     MainWP_DB::instance()->update_website_option( $website, 'wp_upgrades', wp_json_encode( array() ) );
                     do_action( 'mainwp_after_upgrade_wp_success', $website, $information );
                     // Get Icon for the largest change scope of ext regression testing.
-                    $html_regression_icon = apply_filters( 'mainwp_html_regression_largest_change_scope', $website->id, true ) ?: '';  // phpcs:ignore -- NOSONAR 
-
+                    $html_regression_icon = apply_filters( 'mainwp_html_regression_largest_change_scope', $website->id, true ) ?: '';  // phpcs:ignore -- NOSONAR
+                    if ( $website->id === $html_regression_icon ) {
+                        $html_regression_icon = '';
+                    }
                     return '<i class="green check icon"></i>' . $html_regression_icon;
                 } elseif ( isset( $information['upgrade'] ) ) {
                     $errorMsg = '';

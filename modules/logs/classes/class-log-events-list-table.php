@@ -380,8 +380,6 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             $title = esc_html__( 'Theme', 'mainwp' );
         } elseif ( 'translation' === $context ) {
             $title = esc_html__( 'Translation', 'mainwp' );
-        } elseif ( 'core' === $context ) {
-            $title = esc_html__( 'WP Core WordPress', 'mainwp' );
         } elseif ( 'posts' === $connector ) {
             if ( 'post' === $context ) {
                 $title = esc_html__( 'Post', 'mainwp' );

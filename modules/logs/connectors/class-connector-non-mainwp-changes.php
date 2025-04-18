@@ -89,7 +89,6 @@ class Connector_Non_Mainwp_Changes extends Log_Connector {
             return;
         }
 
-        $record['context']   = 'installer';
         $record['connector'] = $this->name;
 
         $success = $this->log_record( $record );

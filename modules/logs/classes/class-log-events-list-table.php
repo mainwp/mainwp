@@ -751,6 +751,10 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                 }
                             },
                             "initComplete": function( settings, json ) {
+                                if ( 'widget-overview' === '<?php echo esc_js( $this->table_id_prefix ); ?>' ){
+                                    const searchInput = $('#mainwp-module-log-records-table-widget-overview_wrapper input[type="search"]');
+                                    searchInput.val('');
+                                }
                             },
                             rowCallback: function (row, data) {
                                 jQuery( row ).addClass(data.rowClass);

@@ -148,6 +148,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             static::CONNECT_LOG_PRIORITY,
         );
         add_action( 'mainwp_module_log_record_inserted', array( $this, 'hook_module_log_record_inserted' ), 10, 2 );
+        add_filter( 'mainwp_custom_log_enabled_log_priority', array( $this, 'hook_is_enabled_log_priority' ), 10, 1 );
     }
 
     /**
@@ -505,9 +506,18 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     }
 
     /**
-     * Method enabled_log_priority()
+     * Method hook_is_enabled_log_priority().
      *
-     * Create Log File.
+     * @param int $priority Log priority.
+     *
+     * @return bool true|false True if enabled log for priority.
+     */
+    public function hook_is_enabled_log_priority( $priority ) {
+        return $this->enabled_log_priority( $priority );
+    }
+
+    /**
+     * Method enabled_log_priority()
      *
      * @param int $priority Set priority.
      *
@@ -519,7 +529,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             return false;
         }
 
-        $priority = (int) apply_filters( 'mainwp_log_to_db_priority', $priority, $website );
+        $priority = (int) apply_filters( 'mainwp_log_to_db_priority', $priority );
         $do_log   = false;
         if ( 1 === $this->logSpecific ) { // 1 - specific log, 0 - not specific log.
             if ( $this->logPriority === $priority ) { // specific priority number saved setting.

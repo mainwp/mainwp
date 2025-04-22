@@ -362,10 +362,10 @@ jQuery(document).on('click', '.mainwp-extensions-deactivate', function () {
 
 // Verify mainwp.com login credentials
 jQuery(document).on('click', '#mainwp-extensions-savelogin', function () {
-    mainwp_extensions_savelogin(this, false);
+    mainwp_extensions_savelogin(false);
 });
 
-function mainwp_extensions_savelogin(pObj, retring) {
+function mainwp_extensions_savelogin(retring) {
     let grabingEl = jQuery("#mainwp-extensions-api-fields");
     let api_key = grabingEl.find('#mainwp_com_api_key').val();
     let statusEl = jQuery(".mainwp-extensions-api-loading");
@@ -396,7 +396,7 @@ function mainwp_extensions_savelogin(pObj, retring) {
             } else if (response.retry_action && response.retry_action == 1) {
                 jQuery("#mainwp_api_sslVerifyCertificate").val(0);
                 statusEl.fadeOut();
-                mainwp_extensions_savelogin(pObj, true);
+                mainwp_extensions_savelogin(true);
                 return false;
             } else {
                 undefError = true;

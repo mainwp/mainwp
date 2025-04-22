@@ -313,6 +313,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $done                         = true;
         }
 
+        $wp_updates_empty = true;
         if ( isset( $information['wp_updates'] ) && ! empty( $information['wp_updates'] ) ) {
             MainWP_DB::instance()->update_website_option(
                 $pWebsite,
@@ -324,7 +325,8 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     )
                 )
             );
-            $done = true;
+            $done             = true;
+            $wp_updates_empty = false;
         }
 
         if ( isset( $information['plugin_updates'] ) ) {
@@ -565,6 +567,13 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         if ( $done ) {
             $act_success                  = true;
             $websiteSyncValues['dtsSync'] = time();
+            if ( $wp_updates_empty ) {
+                MainWP_DB::instance()->update_website_option(
+                    $pWebsite,
+                    'wp_upgrades',
+                    $emptyArray
+                );
+            }
         }
         MainWP_DB::instance()->update_website_sync_values( $pWebsite->id, $websiteSyncValues );
 

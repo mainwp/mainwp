@@ -1477,3 +1477,9 @@ th .down.icon {
     bottom: 1.25rem !important;
     left: 1.25rem !important;
 }
+.master-checkbox.title .dropdown.dropdown-trigger.icon{
+    transform: rotate(-90deg);
+}
+.master-checkbox.active.title .dropdown.dropdown-trigger.icon{
+    transform: rotate(0deg);
+}

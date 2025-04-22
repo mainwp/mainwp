@@ -108,6 +108,9 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
 
             static::render_abandoned_plugins( $website, $active_tab, $userExtension );
             static::render_abandoned_themes( $website, $active_tab, $userExtension );
+
+            // @since 5.4.1.
+            do_action( 'mainwp_individual_updates_tabs', $website, $userExtension );
             ?>
         </div>
         <script type="text/javascript">
@@ -119,7 +122,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                         $('.select-buttons-individual-updates .button.ui.' + tab).removeClass('hidden');
                     }
                 });
-                jQuery( 'table.ui.table' ).DataTable( {
+                jQuery( 'table.ui.table:not(.not-default-init)' ).DataTable( {
                     "searching": true,
                     "paging" : false,
                     "info" : true,

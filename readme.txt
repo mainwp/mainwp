@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 5.4.0.5
+Stable tag: 5.4.0.6
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -146,6 +146,19 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.4.0.6 - Maintenance Release - 4-22-2025 =
+
+* Fixed: Resolved issue with malformed object value displayed in the Sites Changes table after running WordPress Core updates.
+* Fixed: Eliminated unintended site ID value output in the feedback message after performing WordPress Core updates. (#765)[https://github.com/mainwp/mainwp/issues/765]
+* Fixed: Addressed problem with displaying WordPress Core update information after running the update. (#764)[https://github.com/mainwp/mainwp/issues/764]
+* Fixed: Corrected dropdown icon behavior to properly adjust state after expanding or collapsing rows in "Manage Plugins" and "Manage Themes" pages.
+* Fixed: Rectified incorrect event timestamp displayed in the Sites Changes table caused by timezone differences.
+* Added: Action to dismiss multiple events in bulk within the "Sites Changes" widget for improved workflow efficiency. (#753)[https://github.com/mainwp/mainwp/issues/753]
+* Added: Extension information for new third-party extension (Independent Analytics for MainWP)[https://wordpress.org/plugins/independent-analytics-for-mainwp/].
+* Added: "Database Updates" option to the dropdown menu on individual site Updates page for more comprehensive site maintenance.
+* Updated: Improved default email subject line for messages sent by MainWP Dashboard.
+* Updated: Prevented autofill functionality in the Search field within the "Sites Changes" widget for better user experience.
 
 = 5.4.0.5 - Maintenance Release - 4-15-2025 =
 

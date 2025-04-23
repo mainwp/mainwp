@@ -96,7 +96,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'event'         => array( 'event', false ),
             'log_object'    => array( 'log_object', false ),
             'created'       => array( 'created', false ),
-            'log_site_name' => array( 'name', false ),
+            'name' => array( 'name', false ),
             'user_id'       => array( 'user_id', false ),
             'source'        => array( 'source', false ),
         );
@@ -113,7 +113,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'event'         => esc_html__( 'Event', 'mainwp' ),
             'log_object'    => esc_html__( 'Object', 'mainwp' ),
             'created'       => esc_html__( 'Date', 'mainwp' ),
-            'log_site_name' => esc_html__( 'Website', 'mainwp' ),
+            'name' => esc_html__( 'Website', 'mainwp' ),
             'user_id'       => esc_html__( 'User', 'mainwp' ),
             'source'        => esc_html__( 'Source', 'mainwp' ),
             'col_action'    => '',
@@ -230,7 +230,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $out         = $date_string;
                 $escaped     = true;
                 break;
-            case 'log_site_name':
+            case 'name':
                 $out     = ! empty( $record->log_site_name ) ? '<a href="admin.php?page=managesites&dashboard=' . intval( $record->site_id ) . '">' . esc_html( $record->log_site_name ) . '</a>' : 'N/A';
                 $escaped = true;
                 break;

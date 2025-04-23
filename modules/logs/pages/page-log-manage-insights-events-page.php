@@ -224,10 +224,13 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
         $filters = array( 'client', 'range', 'group', 'user', 'dtsstart', 'dtsstop', 'source', 'sites', 'events' );
 
         $get_saved = true;
-        foreach ( $filters as $filter ) {
-            if ( isset( $_REQUEST[ $filter ] ) ) { //phpcs:ignore -- safe.
-                $get_saved = false;
-                break;
+
+        if ( isset( $_GET['_insights_opennonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_insights_opennonce'] ), 'mainwp-admin-nonce' ) ) { //phpcs:ignore -- NOSONAR -ok.
+            foreach ( $filters as $filter ) {
+                if ( isset( $_REQUEST[ $filter ] ) ) { //phpcs:ignore -- safe.
+                    $get_saved = false;
+                    break;
+                }
             }
         }
 

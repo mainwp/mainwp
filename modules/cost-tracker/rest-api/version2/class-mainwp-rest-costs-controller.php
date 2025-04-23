@@ -658,17 +658,17 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
         $params['context']['default'] = 'view';
 
         $params['after']            = array(
-            'description' => __( 'Limit response to resources published after a given ISO8601 compliant date.', 'woocommerce' ),
+            'description' => __( 'Limit response to resources published after a given ISO8601 compliant date.', 'mainwp' ),
             'type'        => 'string',
             'format'      => 'date-time',
         );
         $params['before']           = array(
-            'description' => __( 'Limit response to reviews published before a given ISO8601 compliant date.', 'woocommerce' ),
+            'description' => __( 'Limit response to reviews published before a given ISO8601 compliant date.', 'mainwp' ),
             'type'        => 'string',
             'format'      => 'date-time',
         );
         $params['exclude']          = array(
-            'description' => __( 'Ensure result set excludes specific IDs.', 'woocommerce' ),
+            'description' => __( 'Ensure result set excludes specific IDs.', 'mainwp' ),
             'type'        => 'array',
             'items'       => array(
                 'type' => 'integer',
@@ -676,7 +676,7 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
             'default'     => array(),
         );
         $params['include']          = array(
-            'description' => __( 'Limit result set to specific IDs.', 'woocommerce' ),
+            'description' => __( 'Limit result set to specific IDs.', 'mainwp' ),
             'type'        => 'array',
             'items'       => array(
                 'type' => 'integer',
@@ -684,11 +684,11 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
             'default'     => array(),
         );
         $params['offset']           = array(
-            'description' => __( 'Offset the result set by a specific number of items.', 'woocommerce' ),
+            'description' => __( 'Offset the result set by a specific number of items.', 'mainwp' ),
             'type'        => 'integer',
         );
         $params['order']            = array(
-            'description' => __( 'Order sort attribute ascending or descending.', 'woocommerce' ),
+            'description' => __( 'Order sort attribute ascending or descending.', 'mainwp' ),
             'type'        => 'string',
             'default'     => 'desc',
             'enum'        => array(
@@ -697,7 +697,7 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
             ),
         );
         $params['orderby']          = array(
-            'description' => __( 'Sort collection by object attribute.', 'woocommerce' ),
+            'description' => __( 'Sort collection by object attribute.', 'mainwp' ),
             'type'        => 'string',
             'default'     => 'date_gmt',
             'enum'        => array(
@@ -709,14 +709,14 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
             ),
         );
         $params['reviewer']         = array(
-            'description' => __( 'Limit result set to reviews assigned to specific user IDs.', 'woocommerce' ),
+            'description' => __( 'Limit result set to reviews assigned to specific user IDs.', 'mainwp' ),
             'type'        => 'array',
             'items'       => array(
                 'type' => 'integer',
             ),
         );
         $params['reviewer_exclude'] = array(
-            'description' => __( 'Ensure result set excludes reviews assigned to specific user IDs.', 'woocommerce' ),
+            'description' => __( 'Ensure result set excludes reviews assigned to specific user IDs.', 'mainwp' ),
             'type'        => 'array',
             'items'       => array(
                 'type' => 'integer',
@@ -724,13 +724,13 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
         );
         $params['reviewer_email']   = array(
             'default'     => null,
-            'description' => __( 'Limit result set to that from a specific author email.', 'woocommerce' ),
+            'description' => __( 'Limit result set to that from a specific author email.', 'mainwp' ),
             'format'      => 'email',
             'type'        => 'string',
         );
         $params['product']          = array(
             'default'     => array(),
-            'description' => __( 'Limit result set to reviews assigned to specific product IDs.', 'woocommerce' ),
+            'description' => __( 'Limit result set to reviews assigned to specific product IDs.', 'mainwp' ),
             'type'        => 'array',
             'items'       => array(
                 'type' => 'integer',
@@ -738,7 +738,7 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
         );
         $params['status']           = array(
             'default'           => 'approved',
-            'description'       => __( 'Limit result set to reviews assigned a specific status.', 'woocommerce' ),
+            'description'       => __( 'Limit result set to reviews assigned a specific status.', 'mainwp' ),
             'sanitize_callback' => 'sanitize_key',
             'type'              => 'string',
             'enum'              => array(

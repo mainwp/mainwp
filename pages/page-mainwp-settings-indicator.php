@@ -229,21 +229,21 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'daily_digest'              => array(
                 'disable'    => $disable,
                 'recipients' => $recipients,
-                'subject'    => $general ? 'Daily Digest' : '[site.name] Daily Digest',
+                'subject'    => $general ? 'Daily Digest from Your MainWP Dashboard' : '[site.name] Daily Digest from Your MainWP Dashboard',
                 'heading'    => $general ? 'Daily Digest' : '[site.name] Daily Digest',
                 'overrided'  => 0,
             ),
             'uptime'                    => array(
                 'disable'    => $disable,
                 'recipients' => $recipients,
-                'subject'    => $general ? 'Uptime Monitoring' : '[site.name] Uptime Monitoring',
+                'subject'    => $general ? 'Uptime Monitoring Alert from your MainWP Dashboard' : '[site.name] Uptime Monitoring Alert from your MainWP Dashboard',
                 'heading'    => $general ? 'Uptime Monitoring' : '[site.name] Uptime Monitoring',
                 'overrided'  => 0,
             ),
             'site_health'               => array(
                 'disable'    => $disable,
                 'recipients' => $recipients,
-                'subject'    => $general ? 'Site Health Monitoring' : '[site.name] Site Health Monitoring',
+                'subject'    => $general ? 'Site Health Monitoring Alert from Your MainWP Dashboard' : '[site.name] Site Health Monitoring Alert from Your MainWP Dashboard',
                 'heading'    => $general ? 'Site Health Monitoring' : '[site.name] Site Health Monitoring',
                 'overrided'  => 0,
             ),
@@ -257,7 +257,7 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'deactivated_license_alert' => array(
                 'disable'    => $disable,
                 'recipients' => $recipients,
-                'subject'    => 'Extension License Deactivation Notification',
+                'subject'    => 'Extension License Deactivation Notification from Your MainWP Dashboard',
                 'heading'    => 'Extension License Deactivation Notification',
                 'overrided'  => 0,
             ),

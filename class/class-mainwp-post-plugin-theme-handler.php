@@ -636,7 +636,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
 
             // Get max the scope of the largest change.
             $max_scope = apply_filters( 'mainwp_html_regression_largest_change_scope', $websiteId, false );
-            if ( ! empty( $max_scope ) ) {
+            if ( ! empty( $max_scope ) && $max_scope !== $websiteId ) {
                 $info['result']['html_regression_max_scope'] = $max_scope;
             }
 

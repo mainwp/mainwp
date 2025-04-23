@@ -1817,6 +1817,23 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'integration_owner_pp' => 'https://wpvivid.com/privacy-policy',
                 'desc'                 => 'WPvivid Backup for MainWP enables you to create and download backups of a specific child site, set backup schedules, set WPvivid Backup Plugin settings for all of your child sites directly from your MainWP Dashboard.',
             ),
+            'independent-analytics-for-mainwp'        => array(
+                'type'                 => 'org',
+                'model'                => 'integration',
+                'product_id'           => 'independent-analytics-for-mainwp',
+                'slug'                 => 'independent-analytics-for-mainwp/independent-analytics-for-mainwp.php',
+                'title'                => 'Independent Analytics for MainWP',
+                'link'                 => 'https://wordpress.org/plugins/independent-analytics-for-mainwp/',
+                'changelog_url'        => 'https://wordpress.org/plugins/independent-analytics-for-mainwp/#developers',
+                'url'                  => 'https://wordpress.org/plugins/independent-analytics-for-mainwp/',
+                'group'                => array( 'visitor' ),
+                'privacy'              => 2,
+                'integration'          => 'Independent Analytics',
+                'integration_url'      => 'https://independentwp.com/',
+                'integration_owner'    => 'Independent Insights',
+                'integration_owner_pp' => 'https://independentwp.com/privacy-policy/',
+                'desc'                 => 'This is a free extension for MainWP that lets you view stats from all of your sites using Independent Analytics in the main Overview menu.',
+            ),
         );
 
         $list = array();

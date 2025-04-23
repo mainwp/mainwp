@@ -77,6 +77,7 @@ class Log_DB_Helper extends MainWP_DB {
      * @return void.
      */
     public function remove_logs_by( $site_id ) { //phpcs:ignore -- NOSONAR -complex.
+        //phpcs:disable
         $this->wpdb->query(
             $this->wpdb->prepare(
                 'DELETE lo, me
@@ -86,6 +87,7 @@ class Log_DB_Helper extends MainWP_DB {
                 $site_id
             )
         );
+        //phpcs:enable
     }
 
     /**

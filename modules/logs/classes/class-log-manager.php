@@ -308,6 +308,10 @@ class Log_Manager {
             $sum .= ' ';
             $sum .= 'wordpress' !== $data['context'] ? esc_html( ucfirst( rtrim( $data['context'], 's' ) ) ) : 'WordPress'; //phpcs:ignore -- wordpress text.
 
+            if ( 'wordpress' === $data['context'] ) {
+                $sum = 'WordPress';
+            }
+
             if ( isset( $user_meta['wp_user_id'] ) ) {
                 $user_id = ! empty( $user_meta['wp_user_id'] ) ? sanitize_text_field( $user_meta['wp_user_id'] ) : 0;
             } elseif ( ! empty( $user_meta['user_id'] ) ) { // to compatible with old child actions data.
@@ -322,6 +326,8 @@ class Log_Manager {
             );
 
             $contexts_mapping = array(
+                'plugins'   => 'plugin',
+                'themes'    => 'theme',
                 'wordpress' => 'core',
             );
 

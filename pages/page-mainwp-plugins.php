@@ -1422,7 +1422,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 </div>
                             <div class="two wide center aligned middle aligned column column-actions">
                                 <?php if ( ! $child_plugin ) : ?>
-                                    <div class="ui mini fluid buttons"></div>
+                                    <div class="ui mini fluid buttons">
                                     <?php if ( $actived ) { ?>
                                         <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
                                             <a href="#" class="mainwp-manage-plugin-deactivate ui button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Deactivate ', 'mainwp' ) . esc_html( $plugin_title ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
@@ -1721,7 +1721,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                     </div>
                                 <div class="two wide center aligned middle aligned column column-actions">
                                     <?php if ( ! $child_plugin ) : ?>
-                                        <div class="ui mini fluid buttons"></div>
+                                        <div class="ui mini fluid buttons">
                                         <?php if ( $actived ) { ?>
                                             <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
                                                 <a href="#" class="mainwp-manage-plugin-deactivate ui button <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>

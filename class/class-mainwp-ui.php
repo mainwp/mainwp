@@ -925,7 +925,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
 
             <script type="text/javascript">
                 jQuery( document ).ready( function($) {
-                    console.log($('#mainwp-top-header'));
                     $('#mainwp-top-header').prevAll().each(function () {
                         let strId=$(this).attr('id');
                         if(strId?.includes('mainwp')){

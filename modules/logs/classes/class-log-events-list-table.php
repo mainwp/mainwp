@@ -93,12 +93,12 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      */
     public function get_sortable_columns() {
         return array(
-            'event'         => array( 'event', false ),
-            'log_object'    => array( 'log_object', false ),
-            'created'       => array( 'created', false ),
-            'name' => array( 'name', false ),
-            'user_id'       => array( 'user_id', false ),
-            'source'        => array( 'source', false ),
+            'event'      => array( 'event', false ),
+            'log_object' => array( 'log_object', false ),
+            'created'    => array( 'created', false ),
+            'name'       => array( 'name', false ),
+            'user_id'    => array( 'user_id', false ),
+            'source'     => array( 'source', false ),
         );
     }
 
@@ -109,14 +109,14 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      */
     public function get_default_columns() {
         $columns = array(
-            'cb'            => '<input type="checkbox" />',
-            'event'         => esc_html__( 'Event', 'mainwp' ),
-            'log_object'    => esc_html__( 'Object', 'mainwp' ),
-            'created'       => esc_html__( 'Date', 'mainwp' ),
-            'name' => esc_html__( 'Website', 'mainwp' ),
-            'user_id'       => esc_html__( 'User', 'mainwp' ),
-            'source'        => esc_html__( 'Source', 'mainwp' ),
-            'col_action'    => '',
+            'cb'         => '<input type="checkbox" />',
+            'event'      => esc_html__( 'Event', 'mainwp' ),
+            'log_object' => esc_html__( 'Object', 'mainwp' ),
+            'created'    => esc_html__( 'Date', 'mainwp' ),
+            'name'       => esc_html__( 'Website', 'mainwp' ),
+            'user_id'    => esc_html__( 'User', 'mainwp' ),
+            'source'     => esc_html__( 'Source', 'mainwp' ),
+            'col_action' => '',
         );
 
         if ( 'manage-events' !== $this->table_id_prefix ) {

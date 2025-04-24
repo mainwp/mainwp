@@ -226,9 +226,11 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         $sites        = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : '';
         $clients      = isset( $_POST['clients'] ) && is_array( $_POST['clients'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['clients'] ) ) : '';
         $not_criteria = isset( $_POST['not_criteria'] ) && 'true' === $_POST['not_criteria'] ? true : false;
+        $not_fetchdata = isset( $_POST['not_fetchdata'] ) && !empty( $_POST['not_fetchdata'] ) ? true : false;
+
         // phpcs:enable
         MainWP_Cache::init_session();
-        $result = MainWP_Plugins::render_table( $keyword, $status, $groups, $sites, $not_criteria, $clients );
+        $result = MainWP_Plugins::render_table( $keyword, $status, $groups, $sites, $not_criteria, $clients, $not_fetchdata );
         wp_send_json( $result );
     }
 

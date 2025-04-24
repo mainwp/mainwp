@@ -183,8 +183,9 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 for ( $i = 0; $i < $_count; $i++ ) {
                     $slug             = wp_strip_all_tags( $actived_plugins[ $i ]['slug'] );
                     $plugin_directory = dirname( $slug );
+                    $plugin_title     = $actived_plugins[ $i ]['name'] . ' ' . $actived_plugins[ $i ]['version'];
                     ?>
-                    <div class="item <?php echo esc_html( dirname( $slug ) ); ?> row-manage-item">
+                    <div class="item <?php echo esc_html( dirname( $slug ) ); ?> row-manage-item" plugin-title="<?php echo esc_attr( $plugin_title ); ?>">
                         <input class="pluginSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $actived_plugins[ $i ]['slug'] ) ); ?>"/>
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
                         <div class="right floated pluginsAction">
@@ -204,7 +205,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         <div class="middle aligned content">
                             <?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?>&nbsp;&nbsp;&nbsp;&nbsp;
                             <a href="<?php echo esc_url( admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . esc_html( dirname( wp_strip_all_tags( $actived_plugins[ $i ]['slug'] ) ) ) ); ?>" target="_blank" class="open-plugin-details-modal" title="More information about <?php echo wp_strip_all_tags( $actived_plugins[ $i ]['name'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?>">
-                                <?php echo esc_html( $actived_plugins[ $i ]['name'] . ' ' . $actived_plugins[ $i ]['version'] ); ?>
+                                <?php echo esc_html( $plugin_title ); ?>
                             </a>
                             </div>
                         <div class="mainwp-row-actions-working">
@@ -247,8 +248,9 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 for ( $i = 0; $i < $_count; $i++ ) {
                     $slug             = $inactive_plugins[ $i ]['slug'];
                     $plugin_directory = dirname( $slug );
+                    $plugin_title     = $inactive_plugins[ $i ]['name'] . ' ' . $inactive_plugins[ $i ]['version'];
                     ?>
-                    <div class="item <?php echo esc_html( sanitize_text_field( dirname( $slug ) ) ); ?> row-manage-item">
+                    <div class="item <?php echo esc_html( sanitize_text_field( dirname( $slug ) ) ); ?> row-manage-item" plugin-title="<?php echo esc_attr( $plugin_title ); ?>">
                         <input class="pluginSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_plugins[ $i ]['slug'] ) ); ?>"/>
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
                         <div class="right floated content pluginsAction">
@@ -267,7 +269,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         <div class="middle aligned content">
                             <?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?>&nbsp;&nbsp;&nbsp;&nbsp;
                             <a href="<?php echo esc_url( admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . esc_html( dirname( $inactive_plugins[ $i ]['slug'] ) ) ); ?>" target="_blank" class="open-plugin-details-modal" title="More information about <?php echo wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?>">
-                                <?php echo esc_html( $inactive_plugins[ $i ]['name'] . ' ' . $inactive_plugins[ $i ]['version'] ); ?>
+                                <?php echo esc_html( $plugin_title ); ?>
                             </a>
                         </div>
                         <div class="mainwp-row-actions-working">

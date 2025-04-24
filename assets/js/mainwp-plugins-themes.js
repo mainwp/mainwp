@@ -733,7 +733,12 @@ jQuery(function () {
         return false;
     });
     jQuery(document).on('click', '.mainwp-manage-plugin-delete', function () {
-        manage_plugin_Action(jQuery(this), 'delete');
+        let item = this;
+        let name = jQuery(item).closest('.mainwp-manage-plugin-item-website').attr('plugin-name');
+        let confirmMsg = __('You are about to delete the %1?', name );
+        mainwp_confirm(confirmMsg, function () {
+            manage_plugin_Action(jQuery(item), 'delete');
+        });
         return false;
     });
 });

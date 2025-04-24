@@ -277,7 +277,12 @@ jQuery(function () {
     return false;
   });
   jQuery(document).on('click', '.mainwp-plugin-delete', function () {
-    pluginAction(jQuery(this), 'delete');
+    let item = this;
+    let name = jQuery(item).closest('.row-manage-item').attr('plugin-title');
+    let confirmMsg = __('You are about to delete the %1?', name );
+    mainwp_confirm(confirmMsg, function () {
+        pluginAction(jQuery(item), 'delete');
+    });
     return false;
   });
 });

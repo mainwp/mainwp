@@ -162,7 +162,7 @@ let pluginCountReceived;
 let pluginResetAllowed = true;
 let pluginCurrentProccesingQueueIndex = 0;
 let pluginCountCurrentProcces = 0;
-let pluginMaxProcces = 1; //mainwpVars.maxThreads;
+let pluginMaxProcces = mainwpVars.maxThreads;
 
 jQuery(function () {
     jQuery(document).on('click', '#mainwp-show-plugins', function () {

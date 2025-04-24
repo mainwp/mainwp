@@ -220,13 +220,13 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
     public function mainwp_plugins_search() {
         $this->secure_request( 'mainwp_plugins_search' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        $keyword      = isset( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : '';
-        $status       = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '';
-        $groups       = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : '';
-        $sites        = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : '';
-        $clients      = isset( $_POST['clients'] ) && is_array( $_POST['clients'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['clients'] ) ) : '';
-        $not_criteria = isset( $_POST['not_criteria'] ) && 'true' === $_POST['not_criteria'] ? true : false;
-        $not_fetchdata = isset( $_POST['not_fetchdata'] ) && !empty( $_POST['not_fetchdata'] ) ? true : false;
+        $keyword       = isset( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : '';
+        $status        = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '';
+        $groups        = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : '';
+        $sites         = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : '';
+        $clients       = isset( $_POST['clients'] ) && is_array( $_POST['clients'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['clients'] ) ) : '';
+        $not_criteria  = isset( $_POST['not_criteria'] ) && 'true' === $_POST['not_criteria'] ? true : false;
+        $not_fetchdata = isset( $_POST['not_fetchdata'] ) && ! empty( $_POST['not_fetchdata'] ) ? true : false;
 
         // phpcs:enable
         MainWP_Cache::init_session();

@@ -1125,7 +1125,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     <option value="activate" disabled data-value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></option>
                 <?php endif; ?>
                 <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) : ?>
-                    <option value="delete" disabled data-value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
+                    <option value="delete" data-value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
         <?php endif; ?>
         <?php endif; ?>
         <?php
@@ -1412,9 +1412,14 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             <div class="two wide center aligned middle aligned column column-actions">
                                 <?php if ( ! $child_plugin ) : ?>
                                     <?php if ( $actived ) { ?>
+                                        <div class="ui mini fluid buttons">
                                         <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-                                            <a href="#" class="mainwp-manage-plugin-deactivate ui mini fluid button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Deactivate ', 'mainwp' ) . esc_html( $plugin_title ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
+                                            <a href="#" class="mainwp-manage-plugin-deactivate ui button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Deactivate ', 'mainwp' ) . esc_html( $plugin_title ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
                                         <?php } ?>
+                                        <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
+                                                <a href="#" class="mainwp-manage-plugin-delete ui button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Delete ', 'mainwp' ) . ' ' . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr__( 'plugin from this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+                                            <?php } ?>
+                                        </div>
                                     <?php } else { ?>
                                         <div class="ui mini fluid buttons">
                                             <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
@@ -1711,9 +1716,14 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 <div class="two wide center aligned middle aligned column column-actions">
                                     <?php if ( ! $child_plugin ) : ?>
                                         <?php if ( $actived ) { ?>
+                                            <div class="ui mini fluid buttons">
                                             <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-                                                <a href="#" class="mainwp-manage-plugin-deactivate ui mini fluid button <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
+                                                <a href="#" class="mainwp-manage-plugin-deactivate ui button <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
                                         <?php } ?>
+                                            <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
+                                                <a href="#" class="mainwp-manage-plugin-delete ui button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Delete ', 'mainwp' ) . ' ' . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr__( 'plugin from this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+                                            <?php } ?>
+                                            </div>
                                     <?php } else { ?>
                                             <div class="ui mini fluid buttons">
                                             <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>

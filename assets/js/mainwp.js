@@ -311,7 +311,12 @@ jQuery(function () {
     return false;
   });
   jQuery(document).on('click', '.mainwp-theme-delete', function () {
-    themeAction(jQuery(this), 'delete');
+    let item = this;
+    let name = jQuery(item).closest('.row-manage-item').children('.themeSlug').val();
+    let confirmMsg = __('You are about to delete the %1?', name );
+    mainwp_confirm(confirmMsg, function () {
+        themeAction(jQuery(item), 'delete');
+    });
     return false;
   });
 });

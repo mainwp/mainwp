@@ -615,6 +615,13 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             </div>
             <div style="clear:both"></div>
         </div>
+        <script type="text/javascript">
+            jQuery( document ).ready( function ($) {
+                if($('#mainwp-themes-content .mainwp-manage-themes-reload-data').length){
+                    mainwp_fetch_themes();
+                }
+            } );
+        </script>
         <?php
         static::render_footer( 'Manage' );
     }
@@ -692,6 +699,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param array  $sites Selected child sites.
      * @param mixed  $not_criteria Show not criteria result.
      * @param mixed  $clients Selected Clients.
+     * @param bool   $not_fetchdata True|False fetch data or not.
      *
      * @return mixed $result Errors|HTML.
      *
@@ -709,7 +717,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      * @uses \MainWP\Dashboard\MainWP_Utility::get_nice_url()
      */
-    public static function render_table( $keyword, $status, $groups, $sites, $not_criteria, $clients = '' ) { // phpcs:ignore -- NOSONAR - complex function.
+    public static function render_table( $keyword, $status, $groups, $sites, $not_criteria, $clients = '', $not_fetchdata = false ) { // phpcs:ignore -- NOSONAR - complex function.
         MainWP_Cache::init_cache( 'Themes' );
 
         $output                   = new \stdClass();
@@ -724,71 +732,24 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $data_fields[] = 'themes';
         $data_fields[] = 'rollback_updates_data';
 
-        if ( 1 === (int) get_option( 'mainwp_optimize', 1 ) || MainWP_Demo_Handle::is_demo_mode() ) {
+        if ( ! $not_fetchdata ) {
+            if ( 1 === (int) get_option( 'mainwp_optimize', 1 ) || MainWP_Demo_Handle::is_demo_mode() ) {
 
-            $keyword   = trim( $keyword );
-            $multi_kws = explode( ',', $keyword );
-            $multi_kws = array_filter( array_map( 'trim', $multi_kws ) );
+                $keyword   = trim( $keyword );
+                $multi_kws = explode( ',', $keyword );
+                $multi_kws = array_filter( array_map( 'trim', $multi_kws ) );
 
-            if ( '' !== $sites ) {
-                foreach ( $sites as $v ) {
-                    if ( MainWP_Utility::ctype_digit( $v ) ) {
-                        $website          = MainWP_DB::instance()->get_website_by_id( $v, false, array( 'rollback_updates_data' ) );
-                        $allThemes        = json_decode( $website->themes, true );
-                        $_count           = count( $allThemes );
-                        $_count_installed = 0;
-                        for ( $i = 0; $i < $_count; $i++ ) {
-                            $theme           = $allThemes[ $i ];
-                            $active_inactive = 'active' === $status || 'inactive' === $status;
-                            if ( $active_inactive && ( ( 1 === (int) $theme['active'] && 'active' !== $status ) || ( 1 !== $theme['active'] && 'inactive' !== $status ) ) ) {
-                                continue;
-                            }
-
-                            if ( ! empty( $keyword ) ) {
-                                if ( $not_criteria ) {
-                                    if ( MainWP_Utility::multi_find_keywords( $theme['title'], $multi_kws ) ) {
-                                        continue;
-                                    }
-                                } elseif ( ! MainWP_Utility::multi_find_keywords( $theme['title'], $multi_kws ) ) {
-                                    continue;
-                                }
-                            }
-
-                            $theme['websiteid']   = $website->id;
-                            $theme['websiteurl']  = $website->url;
-                            $theme['websitename'] = $website->name;
-                            $output->themes[]     = $theme;
-                            ++$_count_installed;
-                        }
-                        if ( 0 === $_count_installed && 'not_installed' === $status ) {
-                            for ( $i = 0; $i < $_count; $i++ ) {
-                                $theme                      = $allThemes[ $i ];
-                                $theme['websiteid']         = $website->id;
-                                $theme['websiteurl']        = $website->url;
-                                $theme['websitename']       = $website->name;
-                                $output->themes_installed[] = $theme;
-                            }
-                        }
-                        $output->roll_items[ $website->id ] = MainWP_Updates_Helper::get_roll_update_plugintheme_items( 'theme', $website->rollback_updates_data );
-                    }
-                }
-            }
-
-            if ( '' !== $groups ) {
-                foreach ( $groups as $v ) {
-                    if ( MainWP_Utility::ctype_digit( $v ) ) {
-                        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v, false, 'wp.url', false, false, null, null, array( 'extra_view' => array( 'site_info', 'rollback_updates_data' ) ) ) );
-                        while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-                            if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
-                                continue;
-                            }
+                if ( '' !== $sites ) {
+                    foreach ( $sites as $v ) {
+                        if ( MainWP_Utility::ctype_digit( $v ) ) {
+                            $website          = MainWP_DB::instance()->get_website_by_id( $v, false, array( 'rollback_updates_data' ) );
                             $allThemes        = json_decode( $website->themes, true );
                             $_count           = count( $allThemes );
                             $_count_installed = 0;
                             for ( $i = 0; $i < $_count; $i++ ) {
-                                $theme     = $allThemes[ $i ];
-                                $act_inact = 'active' === $status || 'inactive' === $status;
-                                if ( $act_inact && ( ( 1 === (int) $theme['active'] && 'active' !== $status ) || ( 1 !== $theme['active'] && 'inactive' !== $status ) ) ) {
+                                $theme           = $allThemes[ $i ];
+                                $active_inactive = 'active' === $status || 'inactive' === $status;
+                                if ( $active_inactive && ( ( 1 === (int) $theme['active'] && 'active' !== $status ) || ( 1 !== $theme['active'] && 'inactive' !== $status ) ) ) {
                                     continue;
                                 }
 
@@ -819,85 +780,117 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                             }
                             $output->roll_items[ $website->id ] = MainWP_Updates_Helper::get_roll_update_plugintheme_items( 'theme', $website->rollback_updates_data );
                         }
-                        MainWP_DB::free_result( $websites );
                     }
                 }
-            }
 
-            if ( '' !== $clients && is_array( $clients ) ) {
-                $websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
-                    $clients,
-                    array(
-                        'select_data' => $data_fields,
-                        'extra_view'  => array( 'rollback_updates_data' ),
-                    )
-                );
-                if ( $websites ) {
-                    foreach ( $websites as $website ) {
-                        if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
-                            continue;
-                        }
-                        $allThemes        = json_decode( $website->themes, true );
-                        $_count           = count( $allThemes );
-                        $_count_installed = 0;
-                        for ( $i = 0; $i < $_count; $i++ ) {
-                            $theme     = $allThemes[ $i ];
-                            $act_inacy = 'active' === $status || 'inactive' === $status;
-                            if ( $act_inacy && ( ( 1 === (int) $theme['active'] && 'active' !== $status ) || ( 1 !== $theme['active'] && 'inactive' !== $status ) ) ) {
-                                continue;
-                            }
-                            if ( ! empty( $keyword ) ) {
-                                if ( $not_criteria ) {
-                                    if ( MainWP_Utility::multi_find_keywords( $theme['title'], $multi_kws ) ) {
-                                        continue;
-                                    }
-                                } elseif ( ! MainWP_Utility::multi_find_keywords( $theme['title'], $multi_kws ) ) {
+                if ( '' !== $groups ) {
+                    foreach ( $groups as $v ) {
+                        if ( MainWP_Utility::ctype_digit( $v ) ) {
+                            $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v, false, 'wp.url', false, false, null, null, array( 'extra_view' => array( 'site_info', 'rollback_updates_data' ) ) ) );
+                            while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+                                if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
                                     continue;
                                 }
-                            }
+                                $allThemes        = json_decode( $website->themes, true );
+                                $_count           = count( $allThemes );
+                                $_count_installed = 0;
+                                for ( $i = 0; $i < $_count; $i++ ) {
+                                    $theme     = $allThemes[ $i ];
+                                    $act_inact = 'active' === $status || 'inactive' === $status;
+                                    if ( $act_inact && ( ( 1 === (int) $theme['active'] && 'active' !== $status ) || ( 1 !== $theme['active'] && 'inactive' !== $status ) ) ) {
+                                        continue;
+                                    }
 
-                            $theme['websiteid']   = $website->id;
-                            $theme['websiteurl']  = $website->url;
-                            $theme['websitename'] = $website->name;
-                            $output->themes[]     = $theme;
-                            ++$_count_installed;
+                                    if ( ! empty( $keyword ) ) {
+                                        if ( $not_criteria ) {
+                                            if ( MainWP_Utility::multi_find_keywords( $theme['title'], $multi_kws ) ) {
+                                                continue;
+                                            }
+                                        } elseif ( ! MainWP_Utility::multi_find_keywords( $theme['title'], $multi_kws ) ) {
+                                            continue;
+                                        }
+                                    }
+
+                                    $theme['websiteid']   = $website->id;
+                                    $theme['websiteurl']  = $website->url;
+                                    $theme['websitename'] = $website->name;
+                                    $output->themes[]     = $theme;
+                                    ++$_count_installed;
+                                }
+                                if ( 0 === $_count_installed && 'not_installed' === $status ) {
+                                    for ( $i = 0; $i < $_count; $i++ ) {
+                                        $theme                      = $allThemes[ $i ];
+                                        $theme['websiteid']         = $website->id;
+                                        $theme['websiteurl']        = $website->url;
+                                        $theme['websitename']       = $website->name;
+                                        $output->themes_installed[] = $theme;
+                                    }
+                                }
+                                $output->roll_items[ $website->id ] = MainWP_Updates_Helper::get_roll_update_plugintheme_items( 'theme', $website->rollback_updates_data );
+                            }
+                            MainWP_DB::free_result( $websites );
                         }
-                        if ( 0 === $_count_installed && 'not_installed' === $status ) {
+                    }
+                }
+
+                if ( '' !== $clients && is_array( $clients ) ) {
+                    $websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+                        $clients,
+                        array(
+                            'select_data' => $data_fields,
+                            'extra_view'  => array( 'rollback_updates_data' ),
+                        )
+                    );
+                    if ( $websites ) {
+                        foreach ( $websites as $website ) {
+                            if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+                                continue;
+                            }
+                            $allThemes        = json_decode( $website->themes, true );
+                            $_count           = count( $allThemes );
+                            $_count_installed = 0;
                             for ( $i = 0; $i < $_count; $i++ ) {
-                                $theme                      = $allThemes[ $i ];
-                                $theme['websiteid']         = $website->id;
-                                $theme['websiteurl']        = $website->url;
-                                $theme['websitename']       = $website->name;
-                                $output->themes_installed[] = $theme;
+                                $theme     = $allThemes[ $i ];
+                                $act_inacy = 'active' === $status || 'inactive' === $status;
+                                if ( $act_inacy && ( ( 1 === (int) $theme['active'] && 'active' !== $status ) || ( 1 !== $theme['active'] && 'inactive' !== $status ) ) ) {
+                                    continue;
+                                }
+                                if ( ! empty( $keyword ) ) {
+                                    if ( $not_criteria ) {
+                                        if ( MainWP_Utility::multi_find_keywords( $theme['title'], $multi_kws ) ) {
+                                            continue;
+                                        }
+                                    } elseif ( ! MainWP_Utility::multi_find_keywords( $theme['title'], $multi_kws ) ) {
+                                        continue;
+                                    }
+                                }
+
+                                $theme['websiteid']   = $website->id;
+                                $theme['websiteurl']  = $website->url;
+                                $theme['websitename'] = $website->name;
+                                $output->themes[]     = $theme;
+                                ++$_count_installed;
                             }
+                            if ( 0 === $_count_installed && 'not_installed' === $status ) {
+                                for ( $i = 0; $i < $_count; $i++ ) {
+                                    $theme                      = $allThemes[ $i ];
+                                    $theme['websiteid']         = $website->id;
+                                    $theme['websiteurl']        = $website->url;
+                                    $theme['websitename']       = $website->name;
+                                    $output->themes_installed[] = $theme;
+                                }
+                            }
+                            $output->roll_items[ $website->id ] = MainWP_Updates_Helper::get_roll_update_plugintheme_items( 'theme', $website->rollback_updates_data );
                         }
-                        $output->roll_items[ $website->id ] = MainWP_Updates_Helper::get_roll_update_plugintheme_items( 'theme', $website->rollback_updates_data );
                     }
                 }
-            }
-        } else {
-            $dbwebsites = array();
+            } else {
+                $dbwebsites = array();
 
-            if ( '' !== $sites ) {
-                foreach ( $sites as $v ) {
-                    if ( MainWP_Utility::ctype_digit( $v ) ) {
-                        $website = MainWP_DB::instance()->get_website_by_id( $v, false, array( 'rollback_updates_data' ) );
-                        if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
-                            continue;
-                        }
-                        $dbwebsites[ $website->id ] = MainWP_Utility::map_site(
-                            $website,
-                            $data_fields
-                        );
-                    }
-                }
-            }
-
-            if ( '' !== $groups ) {
-                foreach ( $groups as $v ) {
-                    if ( MainWP_Utility::ctype_digit( $v ) ) {
-                        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v, false, 'wp.url', false, false, null, null, array( 'extra_view' => array( 'site_info', 'rollback_updates_data' ) ) ) );
-                        while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+                if ( '' !== $sites ) {
+                    foreach ( $sites as $v ) {
+                        if ( MainWP_Utility::ctype_digit( $v ) ) {
+                            $website = MainWP_DB::instance()->get_website_by_id( $v, false, array( 'rollback_updates_data' ) );
                             if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
                                 continue;
                             }
@@ -906,54 +899,71 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 $data_fields
                             );
                         }
-                        MainWP_DB::free_result( $websites );
                     }
                 }
-            }
 
-            if ( '' !== $clients && is_array( $clients ) ) {
-                $websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
-                    $clients,
-                    array(
-                        'select_data' => $data_fields,
-                        'extra_view'  => array( 'rollback_updates_data' ),
-                    )
-                );
-                if ( $websites ) {
-                    foreach ( $websites as $website ) {
-                        if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
-                            continue;
+                if ( '' !== $groups ) {
+                    foreach ( $groups as $v ) {
+                        if ( MainWP_Utility::ctype_digit( $v ) ) {
+                            $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v, false, 'wp.url', false, false, null, null, array( 'extra_view' => array( 'site_info', 'rollback_updates_data' ) ) ) );
+                            while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+                                if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+                                    continue;
+                                }
+                                $dbwebsites[ $website->id ] = MainWP_Utility::map_site(
+                                    $website,
+                                    $data_fields
+                                );
+                            }
+                            MainWP_DB::free_result( $websites );
                         }
-                        $dbwebsites[ $website->id ] = MainWP_Utility::map_site(
-                            $website,
-                            $data_fields
-                        );
                     }
                 }
-            }
 
-            $post_data = array(
-                'keyword' => $keyword,
-            );
+                if ( '' !== $clients && is_array( $clients ) ) {
+                    $websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+                        $clients,
+                        array(
+                            'select_data' => $data_fields,
+                            'extra_view'  => array( 'rollback_updates_data' ),
+                        )
+                    );
+                    if ( $websites ) {
+                        foreach ( $websites as $website ) {
+                            if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+                                continue;
+                            }
+                            $dbwebsites[ $website->id ] = MainWP_Utility::map_site(
+                                $website,
+                                $data_fields
+                            );
+                        }
+                    }
+                }
 
-            if ( 'active' === $status || 'inactive' === $status ) {
-                $post_data['status'] = $status;
-                $post_data['filter'] = true;
-            } else {
-                $post_data['status'] = '';
-                $post_data['filter'] = false;
-            }
+                $post_data = array(
+                    'keyword' => $keyword,
+                );
 
-            if ( 'not_installed' === $status ) {
-                $post_data['not_installed'] = true;
-            }
+                if ( 'active' === $status || 'inactive' === $status ) {
+                    $post_data['status'] = $status;
+                    $post_data['filter'] = true;
+                } else {
+                    $post_data['status'] = '';
+                    $post_data['filter'] = false;
+                }
 
-            $post_data['not_criteria'] = $not_criteria ? true : false;
-            MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_themes', $post_data, array( MainWP_Themes_Handler::get_class_name(), 'themes_search_handler' ), $output );
+                if ( 'not_installed' === $status ) {
+                    $post_data['not_installed'] = true;
+                }
 
-            if ( ! empty( $output->errors ) ) {
-                foreach ( $output->errors as $siteid => $error ) {
-                    $error_results .= MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . '<br/>'; // phpcs:ignore WordPress.Security.EscapeOutput
+                $post_data['not_criteria'] = $not_criteria ? true : false;
+                MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_themes', $post_data, array( MainWP_Themes_Handler::get_class_name(), 'themes_search_handler' ), $output );
+
+                if ( ! empty( $output->errors ) ) {
+                    foreach ( $output->errors as $siteid => $error ) {
+                        $error_results .= MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . '<br/>'; // phpcs:ignore WordPress.Security.EscapeOutput
+                    }
                 }
             }
         }
@@ -986,7 +996,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         if ( 'not_installed' === $status ) {
             if ( empty( $output->themes_installed ) ) {
                 ?>
-                <div class="ui message yellow"><?php esc_html_e( 'No websites found.', 'mainwp' ); ?></div>
+                <div class="ui message yellow <?php echo $not_fetchdata ? 'mainwp-manage-themes-reload-data' : ''; ?>"><?php esc_html_e( 'No websites found.', 'mainwp' ); ?></div>
                 <?php
             } else {
                 $themes_list     = $output->themes_installed;
@@ -995,7 +1005,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             }
         } elseif ( empty( $output->themes ) ) {
             ?>
-            <div class="ui message yellow"><?php esc_html_e( 'No themes found.', 'mainwp' ); ?></div>
+            <div class="ui message yellow <?php echo $not_fetchdata ? 'mainwp-manage-themes-reload-data' : ''; ?>"><?php esc_html_e( 'No themes found.', 'mainwp' ); ?></div>
             <?php
         } else {
             $themes_list     = $output->themes;

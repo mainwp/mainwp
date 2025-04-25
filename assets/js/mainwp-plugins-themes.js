@@ -444,14 +444,14 @@ let mainwp_manage_plugins_bulk_actions_perform = function (action, selectedSites
                 if (jQuery(itselector).length > 0) {
                     if (response?.error) {
                         jQuery(itselector).html('<span data-tooltip="' + response.error + '" data-inverted="" data-position="left center"><i class="times red icon"></i></span>');
-                    } else if(response?.result) {
+                    } else if (response?.result) {
                         jQuery(itselector).html('<span><i class="green check icon"></i></span>');
                     } else {
                         jQuery(itselector).html('<span data-tooltip="Invalid response from the server, please try again." data-inverted="" data-position="left center"><i class="times red icon"></i></span>');
                     }
                 }
             }
-            if(response?.result){
+            if (response?.result) {
                 for (let ss of selectedPlugins) {
                     let pslug = jQuery(ss).attr('plugin-slug');
                     let itselector = '.mainwp-manage-plugin-item-website[site-id="' + websiteId + '"][plugin-slug="' + pslug + '"]';
@@ -689,7 +689,7 @@ jQuery(function () {
 
 
 // Manage Themes -- Fetch themes from child sites
-window.mainwp_fetch_themes = function () {
+window.mainwp_fetch_themes = function (notFetchContent) {
     let errors = [];
     let selected_sites = [];
     let selected_groups = [];
@@ -740,15 +740,23 @@ window.mainwp_fetch_themes = function () {
         'clients[]': selected_clients
     });
 
-    jQuery('#mainwp-loading-themes-row').show();
+    if (notFetchContent) {
+        data.not_fetchdata = 1;
+    }
+
+    if (!notFetchContent) {
+        jQuery('#mainwp-loading-themes-row').show();
+    }
 
     jQuery.post(ajaxurl, data, function (response) {
-        jQuery('#mainwp-loading-themes-row').hide();
-        jQuery('#mainwp-themes-main-content').show();
-        if (response?.result) {
-            jQuery('#mainwp-themes-content').html(response.result);
-            jQuery('#mainwp-themes-bulk-actions-wapper').html(response.bulk_actions);
-            jQuery('#mainwp-themes-bulk-actions-wapper .ui.dropdown').dropdown();
+        if (!notFetchContent) {
+            jQuery('#mainwp-loading-themes-row').hide();
+            jQuery('#mainwp-themes-main-content').show();
+            if (response?.result) {
+                jQuery('#mainwp-themes-content').html(response.result);
+                jQuery('#mainwp-themes-bulk-actions-wapper').html(response.bulk_actions);
+                jQuery('#mainwp-themes-bulk-actions-wapper .ui.dropdown').dropdown();
+            }
         }
     }, 'json');
 };
@@ -920,7 +928,12 @@ jQuery(function () {
         return false;
     });
     jQuery(document).on('click', '.mainwp-manages-theme-delete', function () {
-        manages_themeAction(jQuery(this), 'delete');
+        let item = this;
+        let name = jQuery(item).closest('.mainwp-manage-theme-item-website').attr('theme-name');
+        let confirmMsg = __('You are about to delete the %1?', name);
+        mainwp_confirm(confirmMsg, function () {
+            manages_themeAction(jQuery(item), 'delete');
+        });
         return false;
     });
 });
@@ -954,8 +967,8 @@ let manages_themeAction = function (elem, what) {
                 jQuery(rowElement).html(start_row + '<i class="green check icon"></i> ' + response.result + end_row);
             }
             setTimeout(function () {
-                mainwp_fetch_themes();
-            }, 3000);
+                mainwp_fetch_themes(true);
+            }, 100);
         } else {
             jQuery(rowElement).html(start_row + '<span data-tooltip="Undefined error occured. Please try again." data-inverted="" data-position="left center"><i class="times red icon"></i></span>' + end_row);
         }

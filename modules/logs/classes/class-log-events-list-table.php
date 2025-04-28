@@ -63,6 +63,14 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      */
     protected $column_headers;
 
+
+    /**
+     * Private static variable to hold the optimize value.
+     *
+     * @var mixed Default null
+     */
+    private $optimize_table = false;
+
     /**
      * Class constructor.
      *
@@ -71,9 +79,10 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * @param Log_Manager $manager Instance of manager object.
      * @param Strings     $type Events table type: manage_events|widget_overview|widget_insight.
      */
-    public function __construct( $manager, $type = '' ) {
+    public function __construct( $manager, $type = '', $optimize = false ) {
         $this->manager         = $manager;
         $this->table_id_prefix = $type;
+        $this->optimize_table  = $optimize;
     }
 
     /**
@@ -121,6 +130,10 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
         if ( 'manage-events' !== $this->table_id_prefix ) {
             unset( $columns['source'] );
+        }
+
+        if ( $this->optimize_table ) {
+            unset( $columns['user_id'] );
         }
 
         return $columns;
@@ -502,6 +515,10 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'events'                => $array_events_list,
         );
 
+        if ( isset( $_REQUEST['optimize_table'] ) && 1 === intval( $_REQUEST['optimize_table'] ) ) {
+            $args['optimize'] = 1;
+        }
+
         $args['records_per_page'] = $perPage;
         $args['dev_log_query']    = 0; // 1 for dev logs.
 
@@ -670,6 +687,10 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                         current_client_id: $( '#mainwp-widget-filter-current-client-id').length ? $( '#mainwp-widget-filter-current-client-id').val() : 0,
                                         current_site_id: $( '#mainwp-widget-filter-current-site-id').length ? $( '#mainwp-widget-filter-current-site-id').val() : 0,
                                     } );
+
+                                    <?php if ( $this->optimize_table ) { ?>
+                                        data.optimize_table = 1;
+                                    <?php } ?>
 
                                     if('mainwp_module_log_manage_events_display_rows' === ajax_action ){
                                         data.source =  $( '#mainwp-module-log-filter-source').length ? $( '#mainwp-module-log-filter-source').dropdown('get value') : '';

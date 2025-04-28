@@ -33,12 +33,13 @@ class Log_Query {
         global $wpdb;
 
         // To support none mainwp actions.
-        $log_id       = isset( $args['log_id'] ) ? intval( $args['log_id'] ) : 0;
-        $site_id      = isset( $args['wpid'] ) ? $args['wpid'] : 0; // int or array of int site ids.
-        $object_id    = isset( $args['object_id'] ) ? sanitize_text_field( $args['object_id'] ) : '';
-        $where_extra  = ''; // compatible.
-        $check_access = isset( $args['check_access'] ) ? $args['check_access'] : true;
-        $view         = isset( $args['view'] ) ? sanitize_text_field( $args['view'] ) : '';
+        $log_id        = isset( $args['log_id'] ) ? intval( $args['log_id'] ) : 0;
+        $site_id       = isset( $args['wpid'] ) ? $args['wpid'] : 0; // int or array of int site ids.
+        $object_id     = isset( $args['object_id'] ) ? sanitize_text_field( $args['object_id'] ) : '';
+        $where_extra   = ''; // compatible.
+        $check_access  = isset( $args['check_access'] ) ? $args['check_access'] : true;
+        $view          = isset( $args['view'] ) ? sanitize_text_field( $args['view'] ) : '';
+        $beta_optimize = isset( $args['optimize'] ) && ! empty( $args['optimize'] ) ? true : false;
 
         $join      = '';
         $join_meta = '';
@@ -61,8 +62,10 @@ class Log_Query {
                     $where_search .= ' OR lg.item LIKE  "%' . $search_str . '%" ';
                     if ( 'events_list' === $view ) {
                         $where_search .= ' OR sub_lg.source LIKE  "%' . $search_str . '%" ';
-                        $where_search .= ' OR meta_view.user_login LIKE  "%' . $search_str . '%" ';
-                        $mt_search     = true;
+                        if ( ! $beta_optimize ) {
+                            $where_search .= ' OR meta_view.user_login LIKE  "%' . $search_str . '%" ';
+                        }
+                        $mt_search = true;
                     }
                     $where_search .= ') ';
                     $where        .= $where_search;
@@ -284,7 +287,10 @@ class Log_Query {
         if ( $mt_search ) {
             $mt_params['user_login'] = true;
         }
-        $join_meta .= ' LEFT JOIN ' . $this->get_log_meta_view( $mt_params ) . ' meta_view ON lg.log_id = meta_view.view_log_id ';
+
+        if ( ! $beta_optimize ) {
+            $join_meta .= ' LEFT JOIN ' . $this->get_log_meta_view( $mt_params ) . ' meta_view ON lg.log_id = meta_view.view_log_id ';
+        }
 
         if ( 'events_list' === $view ) {
             $join_sub .= ' LEFT JOIN ' . $this->get_sub_query_view() . ' sub_lg ON lg.log_id = sub_lg.sub_log_id ';
@@ -341,9 +347,17 @@ class Log_Query {
         }
         $count_query .= " WHERE `lg`.`connector` != 'compact' {$where} {$where_users_filter} {$recent_where} ";
 
-        MainWP_DB::instance()->log_system_query( $args, $recent_query, $this );
-        MainWP_DB::instance()->log_system_query( $args, $query, $this );
-        MainWP_DB::instance()->log_system_query( $args, $count_query, $this );
+        if ( ! empty( $recent_query ) ) {
+            MainWP_DB::instance()->log_system_query( $args, $recent_query, $this );
+        }
+
+        if ( ! $count_only ) {
+            MainWP_DB::instance()->log_system_query( $args, $query, $this );
+        }
+
+        if ( $count_only || ! $not_count ) {
+            MainWP_DB::instance()->log_system_query( $args, $count_query, $this );
+        }
 
         if ( $count_only ) {
             return array(

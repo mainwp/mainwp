@@ -51,7 +51,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
     private $table_id_prefix = 'manage-events';
 
     /**
-     * Private static variable to hold the current page.
+     * Public static variable to hold the current page.
      *
      * @var mixed Default null
      */
@@ -179,11 +179,13 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
      */
     public function on_show_page() {
 
+        $optimize_tbl = apply_filters( 'mainwp_manage_events_sites_changes_optimize_view', false );
+
         static::render_header( 'overview' );
 
         $insights_filters = $this->get_insights_filters( true );
-        static::render_logs_overview_top( $insights_filters );
-        $this->load_events_list_table(); // for events table list.
+        static::render_logs_overview_top( $insights_filters, $optimize_tbl );
+        $this->load_events_list_table( $optimize_tbl ); // for events table list.
         /**
          * Action: mainwp_logs_manage_table_top
          *
@@ -428,8 +430,9 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
      * Render Manage Tasks Table Top.
      *
      * @param array $insights_filters Insights filters.
+     * @param bool  $optimize Optimize table view or not.
      */
-    public static function render_logs_overview_top( $insights_filters ) { //phpcs:ignore -- NOSONAR - complex.
+    public static function render_logs_overview_top( $insights_filters, $optimize = false ) { //phpcs:ignore -- NOSONAR - complex.
         $manager = Log_Manager::instance();
 
         $filter_ranges               = '';
@@ -562,6 +565,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                             </div>
                         </div>
                     </div>
+                    <?php if ( ! $optimize ) { ?>
                     <div class="two wide middle aligned column">
                         <div id="mainwp-module-log-filter-users" class="ui selection multiple fluid dropdown seg_users">
                             <input type="hidden" value="<?php echo esc_html( $filter_user_ids ); ?>">
@@ -580,6 +584,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                             </div>
                         </div>
                     </div>
+                    <?php } ?>
                     <?php
                     // add filters: filter_events, filter_source and filter_sites.
                     ?>
@@ -775,10 +780,12 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
      * Method load_sites_table()
      *
      * Load sites table.
+     *
+     * @param bool $optimize Optimize table view or not.
      */
-    public function load_events_list_table() {
+    public function load_events_list_table( $optimize = false ) {
         $manager                 = Log_Manager::instance();
-        $this->list_events_table = new Log_Events_List_Table( $manager, $this->table_id_prefix );
+        $this->list_events_table = new Log_Events_List_Table( $manager, $this->table_id_prefix, $optimize );
     }
 
     /**

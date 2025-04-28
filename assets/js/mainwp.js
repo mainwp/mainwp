@@ -312,7 +312,7 @@ jQuery(function () {
   });
   jQuery(document).on('click', '.mainwp-theme-delete', function () {
     let item = this;
-    let name = jQuery(item).closest('.row-manage-item').children('.themeSlug').val();
+    let name = jQuery(item).closest('.row-manage-item').children('.themeName').val();
     let confirmMsg = __('You are about to delete the %1?', name );
     mainwp_confirm(confirmMsg, function () {
         themeAction(jQuery(item), 'delete');

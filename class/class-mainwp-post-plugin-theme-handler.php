@@ -134,7 +134,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
 
         // phpcs:enable
         MainWP_Cache::init_session();
-        $result = MainWP_Themes::render_table( $keyword, $status, $groups, $sites, $not_criteria, $clients. $not_fetchdata );
+        $result = MainWP_Themes::render_table( $keyword, $status, $groups, $sites, $not_criteria, $clients, $not_fetchdata );
         wp_send_json( $result );
     }
 

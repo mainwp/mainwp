@@ -1026,7 +1026,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( 'not_installed' === $status ) {
             if ( empty( $output->plugins_installed ) ) {
                 ?>
-                <div class="ui message yellow"><?php esc_html_e( 'No websites found.', 'mainwp' ); ?></div>
+                <div class="ui message yellow <?php echo $not_fetchdata ? 'mainwp-manage-plugins-reload-data' : ''; ?>"><?php esc_html_e( 'No websites found.', 'mainwp' ); ?></div>
                 <?php
             } else {
                 $plugins_list    = $output->plugins_installed;

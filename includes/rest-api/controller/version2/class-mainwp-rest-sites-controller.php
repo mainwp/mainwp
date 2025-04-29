@@ -1265,7 +1265,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      *
      * @return WP_Error|WP_REST_Response
      */
-    public function get_non_mainwp_changes_of_site( $request ) {
+    public function get_non_mainwp_changes_of_site( $request ) { //phpcs:ignore -- NOSONAR -complex.
 
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {

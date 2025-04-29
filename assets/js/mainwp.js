@@ -422,7 +422,8 @@ window.mainwp_js_get_error_not_detected_connect = function (jsonStr, what, elemI
         return false; // it is not or invalid json.
       }
     } catch (e) {
-      return false; // it is not or invalid json.
+        console.log(e);
+        return false; // it is not or invalid json.
     }
   }
   return __('MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the MainWP Community for help.');
@@ -3060,8 +3061,9 @@ function isUrl(url) {
     new URL(url);
     return true;
   } catch (e) {
-    return false;
+    console.log(e);
   }
+  return false;
 }
 
 function removeUrlParams(url,params) {

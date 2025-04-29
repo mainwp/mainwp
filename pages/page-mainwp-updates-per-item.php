@@ -795,7 +795,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
             </tbody>
         </table>
         <?php else : ?>
-            <?php MainWP_UI::render_empty_page_placeholder( __( 'You\'re All Set!', 'mainwp' ), __( 'No abandoned plugins detected.', 'mainwp' ) ); ?>
+            <?php MainWP_UI::render_empty_page_placeholder( __( 'You\'re All Set!', 'mainwp' ), __( 'No abandoned themes detected.', 'mainwp' ) ); ?>
         <?php endif; ?>
         <?php
     }

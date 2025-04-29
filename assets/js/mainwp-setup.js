@@ -265,8 +265,9 @@ function isUrl(url) {
     new URL(url);
     return true;
   } catch (e) {
-    return false;
+    console.log(e);
   }
+  return false;
 }
 
 let mainwp_setup_secure_data = function (data) {

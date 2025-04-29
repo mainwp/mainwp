@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 5.4.0.6
+Stable tag: 5.4.0.7
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -146,6 +146,11 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.4.0.7 - Maintenance Release - 4-29-2025 =
+
+* Fixed: Corrected the display of abandoned plugins and themes to ensure counts and details appear consistently across all views, including per site and per tag views. (#768)[https://github.com/mainwp/mainwp/issues/768]
+* Fixed: Improved bulk dismiss button handling to properly differentiate between widget and non-widget contexts, resulting in more consistent user interaction.
 
 = 5.4.0.6 - Maintenance Release - 4-22-2025 =
 

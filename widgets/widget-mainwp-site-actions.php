@@ -190,7 +190,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     ?>
                 </div>
         </div>
-        
+
         <div class="mainwp-widget-footer">
             <div class="ui two columns stackable grid">
                 <div class="left aligned middle aligned column">

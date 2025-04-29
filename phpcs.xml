@@ -12,6 +12,7 @@
 	<exclude-pattern>libs/</exclude-pattern>
 	<exclude-pattern>assets/js/apexcharts/*</exclude-pattern>
     <exclude-pattern>assets/js/gridstack/*</exclude-pattern>
+    <exclude-pattern>assets/js/dropzone/*</exclude-pattern>
 	<exclude-pattern>cron/</exclude-pattern>
 
     <arg value="sp" />

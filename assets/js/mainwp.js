@@ -1351,6 +1351,13 @@ let mainwp_tool_clear_activation_data = function (pObj) {
   });
 };
 
+let mainwp_tool_clear_archived_sites_changes = function (pObj) {
+    let loc = jQuery(pObj).attr('href');
+    mainwp_confirm('Are you sure?', function () {
+        window.location = loc;
+    });
+};
+
 /**
  * Manage sites page
  */
@@ -3712,9 +3719,6 @@ jQuery(function ($) {
   });
 
   $('#mainwp_sites_changes_bulk_dismiss_all_btn').on('click', function () {
-    if ( jQuery('#mainwp-module-log-records-body-table tr').find('input[type="checkbox"]').length == 0 ){
-        return;
-    }
     let confirmMsg = __("You are about to dismiss all changes?");
     mainwp_confirm(confirmMsg, function () { mainwp_sites_changes_actions_bulk_action('dismiss-all'); });
   });

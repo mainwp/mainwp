@@ -456,6 +456,8 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         static::render_secure_priv_key_connection();
 
         static::mainwp_tmpfile_check();
+
+        do_action( 'mainwp_module_log_render_db_size_notice' );
     }
 
     /**

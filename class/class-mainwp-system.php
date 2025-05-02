@@ -232,8 +232,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         MainWP_Install_Bulk::init();
 
-        MainWP_System_Cron_Jobs::instance()->init_cron_jobs();
-
         add_action( 'mainwp_after_header', array( MainWP_System_View::get_class_name(), 'admin_notices' ) );
         add_action( 'admin_notices', array( MainWP_System_View::get_class_name(), 'wp_admin_notices' ) );
         add_action( 'wp_mail_failed', array( &$this, 'wp_mail_failed' ) );
@@ -375,6 +373,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_maximum_uptime_monitoring_requests',
                 'mainwp_actionlogs',
                 'mainwp_process_uptime_notification_run_status',
+                'mainwp_module_log_settings_logs_selection_data',
             );
 
             $options = apply_filters( 'mainwp_init_load_all_options', $options );

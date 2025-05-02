@@ -2174,6 +2174,7 @@ let updatesoverview_upgrade_int_flow = function (params) {
             data: data,
             success: function (pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pUpgradeDone, pErrorMessage, pSlug) { // NOSONAR - compatible.
                 return function (response) { // NOSONAR -complex.
+                    console.log(response);
                     if (response?.error?.errorCode == 'SUSPENDED_SITE') {
                         let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause circular yellow inverted icon"></i></span>';
                         updatesoverview_upgrade_all_update_site_bold(pWebsiteId, false, msgUI);
@@ -2281,6 +2282,13 @@ let updatesoverview_upgrade_int_flow = function (params) {
             } else {
                 _error = otherErrors
             }
+
+            if(_error == ''){
+                _error = __('Update failed. Please try again.');
+            }
+
+            console.log('Update error.');
+            console.log(pErrorMessage);
 
             updatesoverview_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-html-popup" data-position="left center" data-html="">' + _icon + '</span>');
             mainwp_init_html_popup('.updatesoverview-upgrade-status-wp[siteid="' + pWebsiteId + '"] .mainwp-html-popup', _error);

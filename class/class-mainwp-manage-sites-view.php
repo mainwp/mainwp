@@ -1077,8 +1077,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     </div>
                 </div>
                 <?php
-                $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
-                ?>
+                if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+                    $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
+                    ?>
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general">
                     <label class="six wide column middle aligned">
                     <?php
@@ -1107,6 +1108,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         <a href="javascript:void(0)" class="ui basic green button edit-site-new-client-button"><?php esc_html_e( 'Create New Client', 'mainwp' ); ?></a>
                     </div>
                 </div>
+                <?php } ?>
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general" default-indi-value="2">
                     <label class="six wide column middle aligned">
                     <?php

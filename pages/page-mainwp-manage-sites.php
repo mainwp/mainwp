@@ -1497,7 +1497,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
 
         // Load the Client widget.
-        if ( static::$enable_widgets['client_info'] ) {
+        if ( static::$enable_widgets['client_info'] && \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
             MainWP_UI::add_widget_box( 'client_info', array( MainWP_Client_Info::get_class_name(), 'render' ), static::$page, array( -1, -1, 3, 30 ) );
         }
 
@@ -1997,14 +1997,14 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
             MainWP_DB::instance()->update_website( $website->id, $url, $current_user->ID, $site_name, $site_admin, $groupids, $groupnames, $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifycertificate, $archiveFormat, $uniqueId, $http_user, $http_pass, $ssl_version, $disableHealthChecking, $healthThreshold, $backup_method );
 
-            $new_client_id = isset( $_POST['mainwp_managesites_edit_client_id'] ) ? intval( $_POST['mainwp_managesites_edit_client_id'] ) : 0;
-
-            if ( $website->client_id !== $new_client_id ) {
-
-                $update = array(
-                    'client_id' => $new_client_id,
-                );
-                MainWP_DB::instance()->update_website_values( $website->id, $update );
+            if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+                $new_client_id = isset( $_POST['mainwp_managesites_edit_client_id'] ) ? intval( $_POST['mainwp_managesites_edit_client_id'] ) : 0;
+                if ( $website->client_id !== $new_client_id ) {
+                    $update = array(
+                        'client_id' => $new_client_id,
+                    );
+                    MainWP_DB::instance()->update_website_values( $website->id, $update );
+                }
             }
 
             /**

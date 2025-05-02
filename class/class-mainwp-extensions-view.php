@@ -1595,7 +1595,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             ),
             'mainwp-vulnerability-checker-extension'  =>
             array(
-                'type'                   => 'pro',
+                'type'                   => 'free',
                 'model'                  => 'integration',
                 'slug'                   => 'mainwp-vulnerability-checker-extension',
                 'title'                  => 'MainWP Vulnerability Checker Extension',

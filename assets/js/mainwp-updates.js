@@ -593,12 +593,15 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
                     let slugParts = pSlug.split(',');
                     let done = false;
                     for (let sid of slugParts) {
+                        let _error = '';
                         let websiteHolder = jQuery('.translations-bulk-updates[translation_slug="' + sid + '"] tr[site_id="' + pWebsiteId + '"]');
                         if (!websiteHolder.exists()) {
                             websiteHolder = jQuery('.translations-bulk-updates[site_id="' + pWebsiteId + '"] tr[translation_slug="' + sid + '"]');
                         }
 
                         if (response.error) {
+                            mainwpVars.errorCount++;
+                            _error = response.error;
                             if (!done && pBulkMode)
                                 updatesoverview_translations_upgrade_all_update_site_status(pWebsiteId, '<i class="red times icon"></i>');
                             websiteHolder.find('td:last-child').html('<i class="red times icon"></i>');
@@ -612,6 +615,8 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
                                 websiteHolder.attr('updated', 1);
                                 websiteHolder.find('td:last-child').html(_success_icon);
                             } else {
+                                mainwpVars.errorCount++;
+                                _error = __('Update failed. Please try again.');
                                 if (!done && pBulkMode)
                                     updatesoverview_translations_upgrade_all_update_site_status(pWebsiteId, '<i class="red times icon"></i>');
                                 websiteHolder.find('td:last-child').html('<i class="red times icon"></i>');
@@ -620,6 +625,10 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
                         if (!done && pBulkMode) {
                             updatesoverview_translations_upgrade_all_update_done();
                             done = true;
+                        }
+                        if(_error != ''){
+                            updatesoverview_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-html-popup" data-position="left center" data-html=""><i class="red times icon"></i></span>');
+                            mainwp_init_html_popup('.updatesoverview-upgrade-status-wp[siteid="' + pWebsiteId + '"] .mainwp-html-popup', _error);
                         }
                     }
                 }

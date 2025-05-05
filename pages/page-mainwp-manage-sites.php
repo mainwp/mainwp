@@ -978,23 +978,25 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 </div>
             </div>
             <?php
-            $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
-            ?>
-            <div class="ui grid field">
-                <label class="six wide column middle aligned"><?php esc_html_e( 'Client (optional)', 'mainwp' ); ?></label>
-                <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add a client to the website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                    <div class="ui search selection dropdown" init-value="" id="mainwp_managesites_add_client_id">
-                        <i class="dropdown icon"></i>
-                        <div class="default text"></div>
-                        <div class="menu">
-                            <div class="item" data-value="0"><?php esc_attr_e( 'Select client', 'mainwp' ); ?></div>
-                            <?php foreach ( $clients as $client ) { ?>
-                                <div class="item" data-value="<?php echo intval( $client->client_id ); ?>"><?php echo esc_html( $client->name ); ?></div>
-                            <?php } ?>
+            if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+                $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
+                ?>
+                <div class="ui grid field">
+                    <label class="six wide column middle aligned"><?php esc_html_e( 'Client (optional)', 'mainwp' ); ?></label>
+                    <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add a client to the website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                        <div class="ui search selection dropdown" init-value="" id="mainwp_managesites_add_client_id">
+                            <i class="dropdown icon"></i>
+                            <div class="default text"></div>
+                            <div class="menu">
+                                <div class="item" data-value="0"><?php esc_attr_e( 'Select client', 'mainwp' ); ?></div>
+                                <?php foreach ( $clients as $client ) { ?>
+                                    <div class="item" data-value="<?php echo intval( $client->client_id ); ?>"><?php echo esc_html( $client->name ); ?></div>
+                                <?php } ?>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            <?php } ?>
 
             <!-- fake fields are a workaround for chrome autofill getting the wrong fields. -->
             <input style="display:none" type="text" name="fakeusernameremembered"/>

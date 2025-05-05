@@ -1838,7 +1838,7 @@ let updatesoverview_upgrade_all_update_done = function () {
 };
 
 /* eslint-disable complexity */
-let updatesoverview_upgrade_int_flow = function (params) {
+let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
     let pWebsiteId = params['pWebsiteId'];
     let pThemeSlugToUpgrade = params['pThemeSlugToUpgrade'];
     let pPluginSlugToUpgrade = params['pPluginSlugToUpgrade'];

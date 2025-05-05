@@ -154,6 +154,7 @@ class Log_Manager {
 
         add_filter( 'mainwp_module_log_enable_insert_log_type', array( $this, 'hook_enable_insert_log_type' ), 10, 2 );
         add_filter( 'mainwp_get_cron_jobs_init', array( $this, 'hook_get_cron_jobs_init' ), 10, 2 ); // on/off by change status of use wp cron option.
+        add_action( 'mainwp_module_log_single_cron_job_archive', array( $this, 'cron_single_cron_job_archive' ) );
 
         if ( $this->is_enabled_auto_archive_logs() && ! empty( $this->settings->options['records_logs_ttl'] ) ) {
             add_action( 'mainwp_module_log_cron_job_auto_archive', array( $this, 'cron_module_log_auto_archive' ) );
@@ -161,6 +162,7 @@ class Log_Manager {
         if ( ! empty( $this->settings->options['enabled'] ) ) {
             add_action( 'mainwp_module_log_render_db_size_notice', array( $this->admin, 'render_logs_db_notice' ), 10, 1 );
         }
+        add_action( 'mainwp_module_log_render_db_update_notice', array( $this->admin, 'render_update_db_notice' ), 10, 1 );
     }
 
 
@@ -421,8 +423,6 @@ class Log_Manager {
 
     /**
      * Method cron_module_log_auto_archive()
-     *
-     * @return array Init Jobs.
      */
     public function cron_module_log_auto_archive() {
         if ( $this->is_enabled_auto_archive_logs() ) {
@@ -439,5 +439,34 @@ class Log_Manager {
                 update_option( 'mainwp_module_log_next_time_auto_archive_logs', $time + $ttl );
             }
         }
+    }
+
+    /**
+     * Method handle_single_cron_job_archive()
+     */
+    public function handle_single_cron_job_archive() {
+        return $this->cron_single_cron_job_archive();
+    }
+
+    /**
+     * Method cron_single_cron_job_archive()
+     */
+    public function cron_single_cron_job_archive() {
+        $count       = Log_DB_Helper::instance()->count_legacy_dismissed();
+        $user_cancel = get_option( 'mainwp_module_logs_updates_dismissed_db_cancelled' );
+        $status      = 'finished';
+
+        if ( $count && empty( $user_cancel ) ) {
+            $status = 'running';
+            Log_DB_Helper::instance()->archive_sites_changes( 0, 200 );
+            $count = Log_DB_Helper::instance()->count_legacy_dismissed();
+            if ( $count ) {
+                wp_schedule_single_event( MINUTE_IN_SECONDS, 'mainwp_module_log_single_cron_job_archive' );
+            } else {
+                $status = 'finished';
+            }
+        }
+        update_option( 'mainwp_module_logs_updates_dismissed_db_process_status', $status );
+        return $status;
     }
 }

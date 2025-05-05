@@ -93,6 +93,9 @@ class Log_Admin {
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_manage_events_display_rows', array( Log_Manage_Insights_Events_Page::instance(), 'ajax_manage_events_display_rows' ) );
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_widget_insights_display_rows', array( Log_Insights_Page::instance(), 'ajax_events_display_rows' ) );
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_widget_events_overview_display_rows', array( Log_Insights_Page::instance(), 'ajax_events_overview_display_rows' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_update_dismissed_db', array( Log_Insights_Page::instance(), 'ajax_update_dismissed_db' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_cancel_update_dismissed_db', array( Log_Insights_Page::instance(), 'ajax_cancel_update_dismissed_db' ) );
+
         add_filter( 'mainwp_info_schedules_cron_listing', array( $this, 'hook_schedules_cron_listing' ) );
         Log_Events_Filter_Segment::get_instance()->admin_init();
         $this->handle_post_archive_data();
@@ -119,7 +122,7 @@ class Log_Admin {
      * @return void
      */
     public function admin_enqueue_scripts( $hook ) {
-        $script_screens = array( 'mainwp_page_InsightsOverview', 'mainwp_page_SettingsDashboardInsights', 'mainwp_page_SettingsInsights' );
+        $script_screens = array( 'mainwp_page_InsightsOverview', 'mainwp_page_SettingsDashboardInsights', 'mainwp_page_SettingsInsights', 'mainwp_page_InsightsManage' );
         wp_enqueue_style( 'mainwp-module-log-admin', $this->manager->locations['url'] . 'ui/css/admin.css', array(), $this->manager->get_version() );
 
         if ( in_array( $hook, $script_screens, true ) ) {
@@ -266,7 +269,7 @@ class Log_Admin {
 
 
     /**
-     * Render logs db notice.
+     * Render logs db large size notice.
      *
      * @param int $limit DB size limit in MByte, default 300 MB.
      */
@@ -284,6 +287,41 @@ class Log_Admin {
                 </div>
                 <?php
             }
+        }
+    }
+
+    /**
+     * Render logs db update notice.
+     */
+    public function render_update_db_notice() {
+        $status = '';
+        $db_ver = Log_Install::instance()->get_current_logs_db_ver();
+        if ( version_compare( $db_ver, '1.0.1.12', '<' ) ) {
+            $count = Log_DB_Helper::instance()->count_legacy_dismissed();
+            if ( $count ) {
+                $status  = 'require_update';
+                $running = get_option( 'mainwp_module_logs_updates_dismissed_db_process_status', '' );
+                if ( 'running' === $running ) {
+                    $status = 'running';
+                }
+            }
+        }
+
+        if ( 'require_update' === $status && MainWP_Utility::show_mainwp_message( 'notice', 'logs-db-update-required' ) ) {
+            ?>
+            <div class="ui yellow message">
+                <i class="close icon mainwp-notice-dismiss" notice-id="logs-db-update-required"></i>
+                <?php printf( esc_html__( 'Your \'Sites Changes\' database needs to be updated. Click %shere%s to start the update.', 'mainwp' ), '<a href="javascript:void(0);" id="module-update-logs-db-requirement">', '</a>' ); ?>
+            </div>
+            <?php
+        } elseif ( 'running' === $status ) {
+            ?>
+            <div class="ui green message">
+                <i class="close icon"></i>
+                <i class="ui active inline loader tiny"></i>&nbsp;
+                <?php printf( esc_html__( 'Updating the \'Sites Changes\' database. Click %shere%s to cancel.', 'mainwp' ), '<a href="javascript:void(0);" id="module-update-logs-db-cancel">', '</a>' ); ?>
+            </div>
+            <?php
         }
     }
 

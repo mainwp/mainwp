@@ -306,6 +306,10 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         ?>
         <div class="mainwp-primary-content-wrap">
         <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
+        <?php
+            do_action( 'mainwp_module_log_render_db_update_notice' );
+            do_action( 'mainwp_module_log_render_db_size_notice' );
+        ?>
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'client-widgets' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="client-widgets"></i>

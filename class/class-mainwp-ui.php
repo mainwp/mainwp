@@ -922,7 +922,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     </div>
                 </div>
             </div>
-
             <script type="text/javascript">
                 jQuery( document ).ready( function($) {
                     $('#mainwp-top-header').prevAll().each(function () {

@@ -4892,6 +4892,27 @@ jQuery(function ($) {
     return false;
   });
 
+
+    jQuery('#module-update-logs-db-requirement').on('click', function () {
+        let msg = __('Are you sure?');
+        let btn = this;
+        mainwp_confirm(msg, function () {
+            jQuery(btn).closest('.ui.message').fadeOut();
+            mainwp_module_logs_start_update_dismissed_db()
+        });
+        return false;
+    });
+
+    jQuery('#module-update-logs-db-cancel').on('click', function () {
+        let data = mainwp_secure_data({
+            action: 'mainwp_module_log_cancel_update_dismissed_db',
+        });
+        jQuery(this).closest('.ui.message').fadeOut();
+        jQuery.post(ajaxurl, data, function (response) {
+            //ok.
+        }, 'json');
+        return false;
+    });
 });
 
 
@@ -4899,3 +4920,28 @@ jQuery(document).on('click', '#mainwp-sites-changes-filter-toggle-button', funct
     jQuery('#mainwp-module-log-filters-row').toggle(300);
     return false;
 });
+
+let mainwp_module_logs_start_update_dismissed_db = function () {
+    let data = mainwp_secure_data({
+        action: 'mainwp_module_log_update_dismissed_db',
+    });
+    mainwp_set_message_zone('#mainwp-message-zone', '<i class="ui active inline loader tiny"></i> ' + __('Running ...'), 'green');
+    jQuery.post(ajaxurl, data, function (response) {
+        mainwp_set_message_zone('#mainwp-message-zone');
+        let status = response?.status ? response.status : '';
+        if (response.error) {
+            mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + response.error, 'red');
+        } else if (status === 'finished') {
+            mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + __('Logs records has been updated successfully.'), 'green');
+        } else if (status === 'running') {
+            mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + __('Running ...'), 'green');
+            setTimeout(function () {
+                mainwp_module_logs_start_update_dismissed_db();
+            }, 500);
+        } else if (status === 'cancelled') {
+            mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + __("User cancelled the 'Sites Changes' database update process."), 'green');
+        } else {
+            mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + __('Undefined error. Please try again.'), 'red');
+        }
+    }, 'json');
+}

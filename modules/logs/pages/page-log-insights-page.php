@@ -884,6 +884,24 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
 
 
     /**
+     * Method ajax_update_dismissed_db()
+     */
+    public static function ajax_update_dismissed_db() {
+        MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_update_dismissed_db' );
+        $status = Log_Manager::instance()->handle_single_cron_job_archive();
+        die( wp_json_encode( array( 'status' => esc_html( $status ) ) ) );
+    }
+
+    /**
+     * Method ajax_cancel_update_dismissed_db()
+     */
+    public static function ajax_cancel_update_dismissed_db() {
+        MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_cancel_update_dismissed_db' );
+        update_option( 'mainwp_module_logs_updates_dismissed_db_cancelled', 1 );
+        die( wp_json_encode( array( 'ok' => 1 ) ) );
+    }
+
+    /**
      * Method render_dashboard_body()
      *
      * Render the logs Dashboard Body content.
@@ -898,6 +916,12 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
         $stats_prev_data = ! empty( $items_prev ) ? Log_Stats::get_stats_data( $items_prev ) : array();
         ?>
         <div class="mainwp-primary-content-wrap">
+            <div class="ui segment">
+            <?php
+            do_action( 'mainwp_module_log_render_db_update_notice' );
+            do_action( 'mainwp_module_log_render_db_size_notice' );
+            ?>
+            </div>
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'insights-widgets' ) ) : ?>
             <div class="ui segment">
                 <div class="ui info message">

@@ -23,7 +23,7 @@ class Log_Install extends MainWP_Install {
      *
      * @var string DB version info.
      */
-    protected $log_db_version = '1.0.1.11'; // NOSONAR - no IP.
+    public $log_db_version = '1.0.1.12'; // NOSONAR - no IP.
 
     /**
      * Protected variable to hold the database option name.
@@ -64,7 +64,7 @@ class Log_Install extends MainWP_Install {
         global $wpdb;
 
         // get_site_option is multisite aware!
-        $currentVersion = get_site_option( $this->log_db_option_key );
+        $currentVersion = get_option( $this->log_db_option_key );
 
         $rslt = $this->query( "SHOW TABLES LIKE '" . $this->table_name( 'wp_logs' ) . "'" );
         if ( empty( static::num_rows( $rslt ) ) ) {
@@ -173,9 +173,14 @@ class Log_Install extends MainWP_Install {
     }
 
     /**
+     * Method get_current_logs_db_ver().
+     */
+    public function get_current_logs_db_ver() {
+        return get_option( $this->log_db_option_key );
+    }
+
+    /**
      * Create archive_ logs tables.
-     *
-     * @param string $currentVersion Current db version.
      */
     public function create_archive_tables() {
         $this->wpdb->query( 'CREATE TABLE IF NOT EXISTS ' . $this->table_name( 'wp_logs_archive' ) . ' LIKE ' . $this->table_name( 'wp_logs' ) ); //phpcs:ignore -- ok.

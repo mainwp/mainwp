@@ -106,13 +106,21 @@ class Log_DB_Helper extends MainWP_DB {
     /**
      * Method archive_sites_changes().
      *
-     * @params int $before_timestamp Archive sites changes created before time.
+     * @param int $before_timestamp Archive sites changes created before time.
      *
      * @return mixed
      */
-    public function archive_sites_changes( $before_timestamp = 0 ) {
-        $where = ! empty( $before_timestamp ) ? ' AND created < ' . (int) $before_timestamp : '';
-        $logs = $this->wpdb->get_results(  'SELECT * FROM ' . $this->table_name('wp_logs') . ' WHERE 1 ' . $where , ARRAY_A ); //phpcs:ignore -- NOSONAR -ok.
+    public function archive_sites_changes( $before_timestamp = 0, $by_limit = 0 ) {
+
+        $where = '';
+        $order = '';
+        if ( ! empty( $before_timestamp ) ) {
+            $where = ' AND created < ' . (int) $before_timestamp;
+        } elseif ( ! empty( $by_limit ) ) {
+            $order = ' ORDER BY created ASC limit = ' . (int) $by_limit;
+        }
+
+        $logs = $this->wpdb->get_results(  'SELECT * FROM ' . $this->table_name('wp_logs') . ' WHERE 1 ' . $where . $order , ARRAY_A ); //phpcs:ignore -- NOSONAR -ok.
         if ( $logs ) {
             foreach ( $logs as $log ) {
                 $this->archive_log( $log );
@@ -261,6 +269,14 @@ class Log_DB_Helper extends MainWP_DB {
         return false;
     }
 
+    /**
+     * Get db size.
+     *
+     * @return string Return current db size.
+     */
+    public function count_legacy_dismissed() {
+        return $this->wpdb->get_var( 'SELECT count(*) FROM ' . $this->table_name( 'wp_logs' ) . ' WHERE dismiss = 1 ' );
+    }
 
     /**
      * Get db size.

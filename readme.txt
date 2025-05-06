@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 6.2
-Tested up to: 6.8
+Tested up to: 6.8.1
 Requires PHP: 7.4
-Stable tag: 5.4.0.7
+Stable tag: 5.4.0.8
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -146,6 +146,16 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.4.0.8 - Maintenance Release - 5-6-2025 =
+
+* Fixed: Incorrect type property for the Vulnerability Checker which made it appear as a Pro add-on.
+* Fixed: Missing error message tooltip from X icon that shows when translation update fails. (#773)[https://github.com/mainwp/mainwp/issues/773]
+* Fixed: Issue with incorrect menu item being selected when on the Clone add-on page.
+* Fixed: Specific UI elements did not respect Team control permissions, causing client information to be exposed to users with permission to Manage clients. (#776)[https://github.com/mainwp/mainwp/issues/776]
+* Updated: Modal behavior to prevent auto-closing when at least one translation update fails. (#773)[https://github.com/mainwp/mainwp/issues/773]
+* Updated: Error message that displays when calls fail due to invalid authentication parameters.
+* Updated: Database Updater table background in Dark theme for improved visibility. (#779)[https://github.com/mainwp/mainwp/issues/779]
 
 = 5.4.0.7 - Maintenance Release - 4-29-2025 =
 

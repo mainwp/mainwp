@@ -59,7 +59,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     </th>
                     <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Version', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
                     <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Latest', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-                    <?php if( $user_can_see_client ) { ?>
+                    <?php if ( $user_can_see_client ) { ?>
                     <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting"><?php echo esc_html__( 'Client', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
                     <?php } ?>
                     <th scope="col" class="no-sort right aligned"></th>
@@ -105,7 +105,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     <td>
                         <?php echo esc_html( $last_version ); ?>
                     </td>
-                    <?php if( $user_can_see_client ) { ?>
+                    <?php if ( $user_can_see_client ) { ?>
                     <td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
                     <?php } ?>
                     <td class="right aligned">
@@ -591,7 +591,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         <td sort-value="<?php echo count( $translation_upgrades ); ?>">
                             <?php echo count( $translation_upgrades ); ?><?php echo esc_html( _n( 'Update', 'Updates', count( $translation_upgrades ), 'mainwp' ) ); ?>
                         </td>
-                        <?php if( $user_can_see_client ) { ?>
+                        <?php if ( $user_can_see_client ) { ?>
                         <td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
                         <?php } ?>
                         <td class="right aligned">

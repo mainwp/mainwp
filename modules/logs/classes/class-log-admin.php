@@ -167,6 +167,11 @@ class Log_Admin {
      * @return array Cron info.
      */
     public function hook_schedules_cron_listing( $cron_list = array() ) {
+
+        if ( ! $this->manager->is_enabled_auto_archive_logs() ) {
+            return $cron_list;
+        }
+
         if ( ! is_array( $cron_list ) ) {
             $cron_list = array();
         }

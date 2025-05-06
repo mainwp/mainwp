@@ -418,7 +418,9 @@ class Log_Manager {
      * @return array Init Jobs.
      */
     public function hook_get_cron_jobs_init( $init_jobs ) {
-        $init_jobs['mainwp_module_log_cron_job_auto_archive'] = 'daily';
+        if ( $this->is_enabled_auto_archive_logs() ) {
+            $init_jobs['mainwp_module_log_cron_job_auto_archive'] = 'daily';
+        }
         return $init_jobs;
     }
 
@@ -426,19 +428,17 @@ class Log_Manager {
      * Method cron_module_log_auto_archive()
      */
     public function cron_module_log_auto_archive() {
-        if ( $this->is_enabled_auto_archive_logs() ) {
-            $ttl = 3 * YEAR_IN_SECONDS;
-            if ( is_array( $this->settings->options ) && isset( $this->settings->options['records_logs_ttl'] ) ) {
-                $ttl = intval( $this->settings->options['records_logs_ttl'] );
-            }
-            if ( $ttl ) {
-                do_action( 'mainwp_log_action', 'Module Log :: Archive logs schedule start.', MainWP_Logger::LOGS_AUTO_PURGE_LOG_PRIORITY );
-                $time   = time();
-                $before = $time - $ttl;
-                Log_DB_Helper::instance()->archive_sites_changes( $before );
-                update_option( 'mainwp_module_log_last_time_auto_archive_logs', $time );
-                update_option( 'mainwp_module_log_next_time_auto_archive_logs', $time + $ttl );
-            }
+        $ttl = 3 * YEAR_IN_SECONDS;
+        if ( is_array( $this->settings->options ) && isset( $this->settings->options['records_logs_ttl'] ) ) {
+            $ttl = intval( $this->settings->options['records_logs_ttl'] );
+        }
+        if ( $ttl ) {
+            do_action( 'mainwp_log_action', 'Module Log :: Archive logs schedule start.', MainWP_Logger::LOGS_AUTO_PURGE_LOG_PRIORITY );
+            $time   = time();
+            $before = $time - $ttl;
+            Log_DB_Helper::instance()->archive_sites_changes( $before );
+            update_option( 'mainwp_module_log_last_time_auto_archive_logs', $time );
+            update_option( 'mainwp_module_log_next_time_auto_archive_logs', $time + $ttl );
         }
     }
 

@@ -12,6 +12,7 @@ namespace MainWP\Dashboard\Module\Log;
 use MainWP\Dashboard\MainWP_Execution_Helper;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Utility;
+use MainWP\Dashboard\MainWP_Logger;
 
 /**
  * Class Log_Manager

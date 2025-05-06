@@ -70,10 +70,22 @@ class Log_Settings {
     public function admin_init() {
         //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_POST['mainwp_module_log_settings_nonce'] ) && wp_verify_nonce( wp_unslash( $_POST['mainwp_module_log_settings_nonce'] ), 'logs_settings_nonce' ) ) {
+            $old_enable = is_array( $this->options ) && ! empty( $this->options['enabled'] ) && ! empty( $this->options['auto_archive'] ) ? true : false;
+
             $this->options['enabled']          = isset( $_POST['mainwp_module_log_enabled'] ) && ! empty( $_POST['mainwp_module_log_enabled'] ) ? 1 : 0;
             $this->options['records_logs_ttl'] = isset( $_POST['mainwp_module_log_records_ttl'] ) ? intval( $_POST['mainwp_module_log_records_ttl'] ) : 3 * YEAR_IN_SECONDS;
             $this->options['auto_archive']     = isset( $_POST['mainwp_module_log_enable_auto_archive'] ) && ! empty( $_POST['mainwp_module_log_enable_auto_archive'] ) ? 1 : 0;
             MainWP_Utility::update_option( 'mainwp_module_log_settings', $this->options );
+
+            $new_enable = is_array( $this->options ) && ! empty( $this->options['enabled'] ) && ! empty( $this->options['auto_archive'] ) ? true : false;
+
+            if ( $old_enable !== $new_enable ) {
+                // To reset.
+                $sched = wp_next_scheduled( 'mainwp_module_log_cron_job_auto_archive' );
+                if ( false !== $sched ) {
+                    wp_unschedule_event( $sched, 'mainwp_module_log_cron_job_auto_archive' );
+                }
+            }
 
             $logs_data = array(
                 'dashboard'        => array(),

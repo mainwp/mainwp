@@ -46,7 +46,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      */
     public static function render_wpcore_updates( $websites, $userExtension, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups ) { // phpcs:ignore -- NOSONAR - complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-
+        $user_can_see_client = \mainwp_current_user_can( 'dashboard', 'manage_clients' );
         $decodedIgnoredCores = ! empty( $userExtension->ignored_wp_upgrades ) ? json_decode( $userExtension->ignored_wp_upgrades, true ) : array();
         if ( ! is_array( $decodedIgnoredCores ) ) {
             $decodedIgnoredCores = array();
@@ -100,7 +100,9 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                             <th scope="col" ><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
                                             <th scope="col" ><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
                                             <th scope="col" class="no-sort"><?php esc_html_e( 'Latest', 'mainwp' ); ?></th>
+                                            <?php if ( $user_can_see_client ) { ?>
                                             <th scope="col" ><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
+                                            <?php } ?>
                                             <th scope="col" class="no-sort"></th>
                                         </tr>
                                     </thead>
@@ -151,7 +153,9 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                                         <strong class="mainwp-768-show"><?php esc_html_e( 'Latest:', 'mainwp' ); ?></strong> <?php echo esc_html( $wp_upgrades['new'] ); ?>
                                                     <?php endif; ?>
                                                 </td>
+                                                <?php if ( $user_can_see_client ) { ?>
                                                 <td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
+                                                <?php } ?>
                                                 <td>
                                                     <?php if ( MainWP_Updates::user_can_update_wp() ) : ?>
                                                         <?php if ( ! empty( $wp_upgrades ) ) : ?>
@@ -214,6 +218,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      */
     public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedPlugins ) { // phpcs:ignore -- NOSONAR - complex.
         $updates_table_helper = new MainWP_Updates_Table_Helper( $userExtension->site_view );
+        $user_can_see_client  = \mainwp_current_user_can( 'dashboard', 'manage_clients' );
         ?>
         <?php if ( 0 < $total_plugin_upgrades ) : ?>
         <table class="ui tablet stackable table mainwp-manage-updates-table main-master-checkbox" id="mainwp-plugins-updates-groups-table">
@@ -265,7 +270,9 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                         <th scope="col" class="collapsing no-sort"></th>
                                         <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
                                         <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+                                        <?php if ( $user_can_see_client ) { ?>
                                         <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting"><?php echo esc_html__( 'Client', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+                                        <?php } ?>
                                         <th scope="col" class="collapsing no-sort"></th>
                                     </tr>
                                 </thead>
@@ -345,7 +352,9 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                                 </div>
                                             </td>
                                             <td sort-value="<?php echo count( $plugin_upgrades ); ?>"><strong class="mainwp-768-show"><?php echo esc_html__( 'Updates: ', 'mainwp' ); ?></strong> <?php echo count( $plugin_upgrades ) . ' ' . esc_html( _n( 'Update', 'Updates', count( $plugin_upgrades ), 'mainwp' ) ); ?></td>
+                                            <?php if ( $user_can_see_client ) { ?>
                                             <td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
+                                            <?php } ?>
                                             <td>
                                                 <?php if ( MainWP_Updates::user_can_update_plugins() ) : ?>
                                                     <?php if ( ! empty( $plugin_upgrades ) ) : ?>
@@ -457,6 +466,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      */
     public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedThemes ) { // phpcs:ignore -- NOSONAR - complex.
         $updates_table_helper = new MainWP_Updates_Table_Helper( $userExtension->site_view, 'theme' );
+        $user_can_see_client  = \mainwp_current_user_can( 'dashboard', 'manage_clients' );
         ?>
         <?php if ( 0 < $total_theme_upgrades ) : ?>
         <table class="ui tablet stackable table mainwp-manage-updates-table main-master-checkbox" id="mainwp-themes-updates-groups-table">
@@ -506,7 +516,9 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                         <th scope="col" class="collapsing no-sort"></th>
                                         <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
                                         <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+                                        <?php if ( $user_can_see_client ) { ?>
                                         <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting"><?php echo esc_html__( 'Client', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+                                        <?php } ?>
                                         <th scope="col" class="collapsing no-sort"></th>
                                     </tr>
                                 </thead>
@@ -581,7 +593,9 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                                 </div>
                                             </td>
                                             <td sort-value="<?php echo count( $theme_upgrades ); ?>"><strong class="mainwp-768-show"><?php esc_html_e( 'Updates:', 'mainwp' ); ?></strong> <?php echo count( $theme_upgrades ) . ' ' . esc_html( _n( 'Update', 'Updates', count( $theme_upgrades ), 'mainwp' ) ); ?></td>
+                                            <?php if ( $user_can_see_client ) { ?>
                                             <td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
+                                            <?php } ?>
                                             <td class="right aligned">
                                                 <?php if ( MainWP_Updates::user_can_update_themes() ) : ?>
                                                     <?php if ( ! empty( $theme_upgrades ) ) : ?>
@@ -682,6 +696,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      */
     public static function render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups, $userExtension ) { //phpcs:ignore -- NOSONAR - complex method.
+        $user_can_see_client = \mainwp_current_user_can( 'dashboard', 'manage_clients' );
 
         $trustedPlugins = ! empty( $userExtension->trusted_plugins ) ? json_decode( $userExtension->trusted_plugins, true ) : array();
         if ( ! is_array( $trustedPlugins ) ) {
@@ -740,7 +755,9 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                         <th scope="col" class="collapsing no-sort"></th>
                                         <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
                                         <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+                                        <?php if ( $user_can_see_client ) { ?>
                                         <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting"><?php echo esc_html__( 'Client', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+                                        <?php } ?>
                                         <th scope="col" ></th>
                                     </tr>
                                 </thead>
@@ -770,7 +787,9 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                         <td sort-value="<?php echo count( $translation_upgrades ); ?>">
                                             <strong class="mainwp-768-show"><?php esc_html_e( 'Updates:', 'mainwp' ); ?></strong> <?php echo esc_html( _n( 'Update', 'Updates', count( $translation_upgrades ), 'mainwp' ) ); ?>
                                         </td>
+                                        <?php if ( $user_can_see_client ) { ?>
                                         <td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
+                                        <?php } ?>
                                         <td>
                                         <?php if ( MainWP_Updates::user_can_update_trans() ) : ?>
                                             <?php if ( ! empty( $translation_upgrades ) ) : ?>

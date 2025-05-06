@@ -246,7 +246,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         }
 
         // Load the Clients widget.
-        if ( static::$enable_widgets['clients'] ) {
+        if ( static::$enable_widgets['clients'] && \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
             MainWP_UI::add_widget_box( 'clients', array( MainWP_Clients::get_class_name(), 'render' ), $page, array( -1, -1, 4, 30 ) );
         }
 

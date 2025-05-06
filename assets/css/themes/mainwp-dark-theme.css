@@ -391,12 +391,15 @@ body.mainwp-ui.mainwp-custom-theme,
   background: var(--background-color-3) !important;
 }
 
+.mainwp-ui.mainwp-custom-theme #mainwp-db-plugins-updates-table tr.active table tfoot tr th,
+.mainwp-ui.mainwp-custom-theme #mainwp-db-plugins-updates-table tr.active table thead tr th,
 .mainwp-ui.mainwp-custom-theme #mainwp-manage-updates table tr.content.active table tfoot tr th,
 .mainwp-ui.mainwp-custom-theme #mainwp-manage-updates table tr.content.active table thead tr th {
   background: var(--background-color-2) !important;
   color: var(--font-color) !important;
 }
 
+.mainwp-ui.mainwp-custom-theme #mainwp-db-plugins-updates-table tr.active table tbody tr td,
 .mainwp-ui.mainwp-custom-theme #mainwp-manage-updates table tr.content.active table tbody tr td {
   background: var(--background-color-2) !important;
   color: var(--font-color) !important;

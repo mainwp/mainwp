@@ -601,10 +601,11 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
 
                         if (response.error) {
                             mainwpVars.errorCount++;
-                            _error = response.error;
+                            _error = getErrorMessageInfo(response.error);
+                            let extErr = getErrorMessageInfo(response.error, 'ui');
                             if (!done && pBulkMode)
-                                updatesoverview_translations_upgrade_all_update_site_status(pWebsiteId, '<i class="red times icon"></i>');
-                            websiteHolder.find('td:last-child').html('<i class="red times icon"></i>');
+                                updatesoverview_translations_upgrade_all_update_site_status(pWebsiteId, extErr);
+                            websiteHolder.find('td:last-child').html(extErr);
                         } else {
                             let res = response.result;
                             let regression_icon = render_html_regression_icon(res);
@@ -617,18 +618,16 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
                             } else {
                                 mainwpVars.errorCount++;
                                 _error = __('Update failed. Please try again.');
-                                if (!done && pBulkMode)
-                                    updatesoverview_translations_upgrade_all_update_site_status(pWebsiteId, '<i class="red times icon"></i>');
+                                if (!done && pBulkMode) {
+                                    updatesoverview_translations_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-html-popup" data-position="left center" data-html=""><i class="red times icon"></i></span>');
+                                    mainwp_init_html_popup('.updatesoverview-upgrade-status-wp[siteid="' + pWebsiteId + '"] .mainwp-html-popup', _error);
+                                }
                                 websiteHolder.find('td:last-child').html('<i class="red times icon"></i>');
                             }
                         }
                         if (!done && pBulkMode) {
                             updatesoverview_translations_upgrade_all_update_done();
                             done = true;
-                        }
-                        if(_error != ''){
-                            updatesoverview_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-html-popup" data-position="left center" data-html=""><i class="red times icon"></i></span>');
-                            mainwp_init_html_popup('.updatesoverview-upgrade-status-wp[siteid="' + pWebsiteId + '"] .mainwp-html-popup', _error);
                         }
                     }
                 }
@@ -2292,7 +2291,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                 _error = otherErrors
             }
 
-            if(_error == ''){
+            if (_error == '') {
                 _error = __('Update failed. Please try again.');
             }
 

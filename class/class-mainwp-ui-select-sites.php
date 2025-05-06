@@ -168,6 +168,10 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $selected_clients       = isset( $params['selected_clients'] ) ? $params['selected_clients'] : array();
         $add_edit_client_id     = isset( $params['add_edit_client_id'] ) ? $params['add_edit_client_id'] : false;
 
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+            $show_client = false;
+        }
+
         if ( 'all' !== $selected_sites && ! is_array( $selected_sites ) ) {
             $selected_sites = array();
         }

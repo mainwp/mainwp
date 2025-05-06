@@ -301,6 +301,10 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             unset( $columns['uptime'] );
         }
 
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+            unset( $columns['client_name'] );
+        }
+
         if ( $this->site_health_disabled ) {
             unset( $columns['site_health'] );
         }
@@ -516,7 +520,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      *
      * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_groups_for_manage_sites()
      */
-    public function render_manage_sites_table_top() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
+    public function render_manage_sites_table_top() { // phpcs:ignore -- NOSONAR - complexity.
         $items_bulk        = $this->get_bulk_actions();
         $filters_row_style = 'display:none';
 
@@ -608,6 +612,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         <div class="item" data-value="suspended"><?php esc_html_e( 'Suspended', 'mainwp' ); ?></div>
                     </div>
                 </div>
+                <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) { ?>
                 <div id="mainwp-filter-clients" class="ui selection mini multiple dropdown seg_site_clients">
                     <input type="hidden" value="<?php echo esc_html( $selected_client ); ?>">
                     <i class="dropdown icon"></i>
@@ -624,6 +629,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         <div class="item" data-value="noclients"><?php esc_html_e( 'No Client', 'mainwp' ); ?></div>
                     </div>
                 </div>
+                <?php } ?>
                 <button onclick="mainwp_manage_sites_filter()" class="ui mini green button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
                 <button onclick="mainwp_manage_sites_reset_filters(this)" id="mainwp_manage_sites_reset_filters" class="ui mini button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
             </div>
@@ -1249,7 +1255,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                             action: 'mainwp_manage_sites_display_rows',
                                             status: jQuery("#mainwp-filter-sites-status").dropdown("get value"),
                                             g: jQuery("#mainwp-filter-sites-group").dropdown("get value"),
-                                            client: jQuery("#mainwp-filter-clients").dropdown("get value"),
+                                            client: jQuery("#mainwp-filter-clients").length ? jQuery("#mainwp-filter-clients").dropdown("get value") : '',
                                             isnot: jQuery("#mainwp_is_not_site").dropdown("get value"),
                                         } )
                                     );

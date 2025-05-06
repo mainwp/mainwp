@@ -593,15 +593,19 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
                     let slugParts = pSlug.split(',');
                     let done = false;
                     for (let sid of slugParts) {
+                        let _error = '';
                         let websiteHolder = jQuery('.translations-bulk-updates[translation_slug="' + sid + '"] tr[site_id="' + pWebsiteId + '"]');
                         if (!websiteHolder.exists()) {
                             websiteHolder = jQuery('.translations-bulk-updates[site_id="' + pWebsiteId + '"] tr[translation_slug="' + sid + '"]');
                         }
 
                         if (response.error) {
+                            mainwpVars.errorCount++;
+                            _error = getErrorMessageInfo(response.error);
+                            let extErr = getErrorMessageInfo(response.error, 'ui');
                             if (!done && pBulkMode)
-                                updatesoverview_translations_upgrade_all_update_site_status(pWebsiteId, '<i class="red times icon"></i>');
-                            websiteHolder.find('td:last-child').html('<i class="red times icon"></i>');
+                                updatesoverview_translations_upgrade_all_update_site_status(pWebsiteId, extErr);
+                            websiteHolder.find('td:last-child').html(extErr);
                         } else {
                             let res = response.result;
                             let regression_icon = render_html_regression_icon(res);
@@ -612,8 +616,12 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
                                 websiteHolder.attr('updated', 1);
                                 websiteHolder.find('td:last-child').html(_success_icon);
                             } else {
-                                if (!done && pBulkMode)
-                                    updatesoverview_translations_upgrade_all_update_site_status(pWebsiteId, '<i class="red times icon"></i>');
+                                mainwpVars.errorCount++;
+                                _error = __('Update failed. Please try again.');
+                                if (!done && pBulkMode) {
+                                    updatesoverview_translations_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-html-popup" data-position="left center" data-html=""><i class="red times icon"></i></span>');
+                                    mainwp_init_html_popup('.updatesoverview-upgrade-status-wp[siteid="' + pWebsiteId + '"] .mainwp-html-popup', _error);
+                                }
                                 websiteHolder.find('td:last-child').html('<i class="red times icon"></i>');
                             }
                         }
@@ -1829,7 +1837,7 @@ let updatesoverview_upgrade_all_update_done = function () {
 };
 
 /* eslint-disable complexity */
-let updatesoverview_upgrade_int_flow = function (params) {
+let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
     let pWebsiteId = params['pWebsiteId'];
     let pThemeSlugToUpgrade = params['pThemeSlugToUpgrade'];
     let pPluginSlugToUpgrade = params['pPluginSlugToUpgrade'];
@@ -2174,6 +2182,7 @@ let updatesoverview_upgrade_int_flow = function (params) {
             data: data,
             success: function (pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pUpgradeDone, pErrorMessage, pSlug) { // NOSONAR - compatible.
                 return function (response) { // NOSONAR -complex.
+                    console.log(response);
                     if (response?.error?.errorCode == 'SUSPENDED_SITE') {
                         let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause circular yellow inverted icon"></i></span>';
                         updatesoverview_upgrade_all_update_site_bold(pWebsiteId, false, msgUI);
@@ -2281,6 +2290,13 @@ let updatesoverview_upgrade_int_flow = function (params) {
             } else {
                 _error = otherErrors
             }
+
+            if (_error == '') {
+                _error = __('Update failed. Please try again.');
+            }
+
+            console.log('Update error.');
+            console.log(pErrorMessage);
 
             updatesoverview_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-html-popup" data-position="left center" data-html="">' + _icon + '</span>');
             mainwp_init_html_popup('.updatesoverview-upgrade-status-wp[siteid="' + pWebsiteId + '"] .mainwp-html-popup', _error);

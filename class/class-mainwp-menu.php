@@ -1299,7 +1299,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
          *
          * @global object $mainwp_sub_leftmenu
          */
-        global $mainwp_sub_leftmenu, $_mainwp_menu_active_slugs;
+        global $mainwp_sub_leftmenu;
 
         $submenu_items = $mainwp_sub_leftmenu[ $parent_key ];
 
@@ -1360,7 +1360,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         $level2_active = true;
                     }
 
-                    if ( ! $level2_active && ! isset( $_GET['do'] ) && 'InsightsManage' !== $page_name && 'admin.php?page=managesites' === $href ) {
+                    if ( ! $level2_active && ! isset( $_GET['do'] ) && 'InsightsManage' !== $page_name && 'Extensions-Mainwp-Clone-Extension' !== $page_name && 'admin.php?page=managesites' === $href ) {
                         $level2_active = true;
                     }
                 }

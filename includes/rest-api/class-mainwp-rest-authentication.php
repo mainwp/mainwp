@@ -382,12 +382,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         // If we have at least one supplied piece of data, and we have an error,
         // then it's a failed authentication.
         if ( ! empty( $errors ) ) {
-            $message = sprintf(
-                /* translators: %s: amount of errors */
-                _n( 'Missing OAuth parameter %s', 'Missing OAuth parameters %s', count( $errors ), 'mainwp' ),
-                implode( ', ', $errors )
-            );
-
+            $message = __( 'Invalid OAuth parameter.', 'mainwp' );
             $this->set_error( new WP_Error( 'mainwp_rest_authentication_missing_parameter', $message, array( 'status' => 401 ) ) );
 
             return array();
@@ -544,14 +539,8 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         // If we have at least one supplied piece of data, and we have an error,
         // then it's a failed authentication.
         if ( ! empty( $errors ) ) {
-            $message = sprintf(
-                /* translators: %s: amount of errors */
-                _n( 'Missing OAuth parameter %s', 'Missing OAuth parameters %s', count( $errors ), 'mainwp' ),
-                implode( ', ', $errors )
-            );
-
+            $message = __( 'Invalid OAuth parameter.', 'mainwp' );
             $this->set_error( new WP_Error( 'mainwp_rest_authentication_missing_parameter', $message, array( 'status' => 401 ) ) );
-
             return array();
         }
 

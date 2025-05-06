@@ -432,8 +432,8 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      */
     public static function render_trans_update( $websites, $total_translation_upgrades, $userExtension, $allTranslations, $translationsInfo ) { // phpcs:ignore -- NOSONAR - complex.
-
-        $trustedPlugins = ! empty( $userExtension->trusted_plugins ) ? json_decode( $userExtension->trusted_plugins, true ) : array();
+        $user_can_see_client = \mainwp_current_user_can( 'dashboard', 'manage_clients' );
+        $trustedPlugins      = ! empty( $userExtension->trusted_plugins ) ? json_decode( $userExtension->trusted_plugins, true ) : array();
         if ( ! is_array( $trustedPlugins ) ) {
             $trustedPlugins = array();
         }
@@ -491,7 +491,9 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                         <th scope="col"><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
                                         <th scope="col"><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
                                         <th scope="col" ><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
+                                        <?php if ( $user_can_see_client ) { ?>
                                         <th scope="col"><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
+                                        <?php } ?>
                                         <th scope="col" class="collapsing no-sort"></th>
                                     </tr>
                                 </thead>
@@ -524,7 +526,9 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                             $is_trust = MainWP_Manage_Sites_Update_View::is_trans_trusted_update( $translation_upgrade, $trustedPlugins, $trustedThemes );
                                             echo MainWP_Manage_Sites_Update_View::get_column_trusted($is_trust ); //phpcs:ignore -- NOSONAR - escaped.
                                             ?>
+                                            <?php if ( $user_can_see_client ) { ?>
                                             <td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
+                                            <?php } ?>
                                             <td class="right aligned">
                                                 <?php if ( MainWP_Updates::user_can_update_trans() ) : ?>
                                                     <a href="javascript:void(0)" class="mainwp-update-now-button ui green mini button" onClick="return updatesoverview_upgrade_translation( <?php echo esc_attr( $website->id ); ?>, '<?php echo esc_js( $slug ); ?>' )"><?php esc_html_e( 'Update', 'mainwp' ); ?></a>

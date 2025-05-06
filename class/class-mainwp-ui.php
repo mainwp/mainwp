@@ -1346,7 +1346,9 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <i class="plus icon"></i>
             <div class="menu">
                 <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php esc_html_e( 'Add Website', 'mainwp' ); ?></a>
+                <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) { ?>
                 <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=ClientAddNew' ) ); ?>"><?php esc_html_e( 'Add Client', 'mainwp' ); ?></a>
+                <?php } ?>
                 <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=CostTrackerAdd' ) ); ?>"><?php esc_html_e( 'Add Cost', 'mainwp' ); ?></a>
                 <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkAdd' ) ); ?>"><?php esc_html_e( 'Create Post', 'mainwp' ); ?></a>
                 <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=PageBulkAdd' ) ); ?>"><?php esc_html_e( 'Create Page', 'mainwp' ); ?></a>

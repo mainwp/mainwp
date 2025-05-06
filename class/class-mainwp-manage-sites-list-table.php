@@ -520,7 +520,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      *
      * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_groups_for_manage_sites()
      */
-    public function render_manage_sites_table_top() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
+    public function render_manage_sites_table_top() { // phpcs:ignore -- NOSONAR - complexity.
         $items_bulk        = $this->get_bulk_actions();
         $filters_row_style = 'display:none';
 

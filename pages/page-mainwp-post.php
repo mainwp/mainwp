@@ -925,8 +925,8 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         <div id="mainwp-message-zone"></div>
 
         <div id="mainwp-loading-posts-row" style="display: none;">
-            <div class="ui active inverted dimmer">
-                <div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading Posts...', 'mainwp' ); ?></div>
+            <div class="ui active dimmer">
+                <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
             </div>
         </div>
 
@@ -1609,7 +1609,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             <div class="column">
                 <label for="<?php echo esc_attr( $meta_key_input_id ); ?>"><?php esc_html_e( 'Name', 'mainwp' ); ?></label>
                 <?php if ( $keys ) { ?>
-                    <select id="metakeyselect" name="metakeyselect">
+                    <select id="metakeyselect" name="metakeyselect" class="ui select dropdown">
                         <option value="#NONE#"><?php esc_html_e( '&mdash; Select &mdash;', 'mainwp' ); ?></option>
                         <?php
                         foreach ( $keys as $key ) {
@@ -2356,8 +2356,8 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 } );
             } );
             </script>
-            <div class="ui active inverted dimmer" id="mainwp-publish-dimmer" style="display:none">
-                <div class="ui text loader"><?php esc_html_e( 'Publishing...', 'mainwp' ); ?></div>
+            <div class="ui active page dimmer" id="mainwp-publish-dimmer" style="display:none">
+                <div class="ui double text loader"><?php esc_html_e( 'Publishing...', 'mainwp' ); ?></div>
             </div>
             <div class="ui clearing hidden divider"></div>
         </div>

@@ -12,6 +12,7 @@
   --green-color: #7fb100;
   --red-color: #AD0000;
   --yellow-color: #FFD500;
+  --orange-color: #c47335;
   --grey-light: #F1F6FA;
   --grey-light-alt: #E7EEF6;
   --grey-dark: #2D3B44;
@@ -152,6 +153,14 @@
   background-color: var(--grey-light) !important;
   border: 1px solid var(--grey-light-alt) !important;
   color: var(--font-color) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.button.yellow {
+  background-color: var(--yellow-color) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.button.orange {
+  background-color: var(--orange-color) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.button.red {
@@ -383,12 +392,15 @@
   text-shadow: none !important;
 }
 
-.mainwp-ui.mainwp-custom-theme .ui.modals.dimmer {
-  -webkit-backdrop-filter: blur(5px) grayscale(.7);
-  backdrop-filter: blur(5px) grayscale(.7);
-  background: rgba(231, 238, 246, 0.80)
+/* Dimmer & Loader */
+.mainwp-ui.mainwp-custom-theme .ui.dimmer .text,
+.mainwp-ui.mainwp-custom-theme .ui.inverted.dimmer .text {
+  color: var(--font-color) !important;
 }
 
+.mainwp-ui.mainwp-custom-theme .ui.loader:after {
+  color: var(--accent) !important;
+}
 
 /* Invert Form Fields */
 
@@ -652,15 +664,15 @@
   color: var(--grey-light-alt) !important;
 }
 
-.mainwp-ui.mainwp-custom-theme .mainwp-main-mobile-navigation-container {
+.mainwp-ui.mainwp-custom-theme #mainwp-main-mobile-navigation-container {
   background-color: var(--grey-dark-alt) !important;
 }
 
-.mainwp-ui.mainwp-custom-theme .mainwp-main-mobile-navigation-container .item {
+.mainwp-ui.mainwp-custom-theme #mainwp-main-mobile-navigation-container .item {
   background-color: var(--grey-dark-alt) !important;
 }
 
-.mainwp-ui.mainwp-custom-theme .mainwp-main-mobile-navigation-container .item a {
+.mainwp-ui.mainwp-custom-theme #mainwp-main-mobile-navigation-container .item a {
   color: #fff !important;
 }
 

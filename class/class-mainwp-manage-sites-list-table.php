@@ -1091,17 +1091,18 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 <?php printf( esc_html__( 'To hide or show a column, click the Cog (%s) icon and select options from "Show columns"', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
             </div>
         <?php endif; ?>
-
-        <table id="mainwp-manage-sites-table" style="width:100%" class="ui selectable unstackable table mainwp-with-preview-table mainwp-manage-wpsites-table">
-            <thead>
-                <tr><?php $this->print_column_headers( $optimize, true ); ?></tr>
-            </thead>
-            <?php if ( ! $optimize ) : ?>
-                <tbody id="mainwp-manage-sites-body-table">
-                    <?php $this->display_rows_or_placeholder(); ?>
-                </tbody>
-            <?php endif; ?>
-        </table>
+        <div id="mainwp-loading-sites">
+            <div class="ui active page dimmer">
+                <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
+            </div>
+        </div>
+        <div id="mainwp-manage-sites-table-container" style="opacity:0;">
+            <table id="mainwp-manage-sites-table" style="width:100%;" class="ui selectable unstackable table mainwp-with-preview-table mainwp-manage-wpsites-table">
+                <thead>
+                    <tr><?php $this->print_column_headers( $optimize, true ); ?></tr>
+                </thead>
+            </table>
+        </div>
         <?php $count = MainWP_DB::instance()->get_websites_count( null, true ); ?>
         <?php if ( empty( $count ) ) : ?>
             <div id="sites-table-count-empty" style="display: none;">
@@ -1118,11 +1119,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
          */
         do_action( 'mainwp_after_manage_sites_table' );
         ?>
-        <div id="mainwp-loading-sites" style="display: none;">
-            <div class="ui active inverted dimmer">
-                <div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading ...', 'mainwp' ); ?></div>
-            </div>
-        </div>
+        
 
         <?php
         $table_features = array(
@@ -1296,6 +1293,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                     mainwp_preview_init_event();
                                 }
                                 //jQuery( '#mainwp-sites-table-loader' ).hide();
+                                jQuery( '#mainwp-manage-sites-table-container' ).css( 'opacity', '1' );
                                 if ( jQuery('#mainwp-manage-sites-body-table td.dt-empty').length > 0 && jQuery('#sites-table-count-empty').length ){
                                     jQuery('#mainwp-manage-sites-body-table td.dt-empty').html(jQuery('#sites-table-count-empty').html());
                                 }
@@ -1781,19 +1779,19 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                     } elseif ( 'update' === $column_name ) {
                         $ignored_info = ! empty( $total_ignored_updates ) ? ' (' . (int) $total_ignored_updates . ' updates ignored)' : '';
                         ?>
-                        <a data-tooltip="<?php echo ! empty( $website['dtsSync'] ) ? esc_attr__( 'Last sync: ', 'mainwp' ) . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['dtsSync'] ) ) : ''; echo $ignored_info; //phpcs:ignore -- ok. ?> " data-position="left center" data-inverted="" class="ui mini grey button" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>">
+                        <a data-tooltip="<?php echo ! empty( $website['dtsSync'] ) ? esc_attr__( 'Last sync: ', 'mainwp' ) . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['dtsSync'] ) ) : ''; echo $ignored_info; //phpcs:ignore -- ok. ?> " data-position="left center" data-inverted="" class="ui mini <?php echo esc_attr( MainWP_Utility::mainwp_get_update_count_class( $total_updates ) ); ?> button" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>">
                             <i class="sync alternate icon"></i> <?php echo intval( $total_updates ); ?>
                         </a>
                     <?php } elseif ( 'wpcore_update' === $column_name ) { ?>
-                        <a class="ui mini basic grey button" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>&tab=wordpress-updates">
+                        <a class="ui mini <?php echo esc_attr( MainWP_Utility::mainwp_get_update_count_class( $total_wp_upgrades ) ); ?> button" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>&tab=wordpress-updates">
                             <i class="sync alternate icon"></i> <?php echo intval( $total_wp_upgrades ); ?>
                         </a>
                     <?php } elseif ( 'plugin_update' === $column_name ) { ?>
-                        <a class="ui mini basic grey button" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>">
+                        <a class="ui mini <?php echo esc_attr( MainWP_Utility::mainwp_get_update_count_class( $total_plugin_upgrades ) ); ?> button" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>">
                             <i class="sync alternate icon"></i> <?php echo intval( $total_plugin_upgrades ); ?>
                         </a>
                     <?php } elseif ( 'theme_update' === $column_name ) { ?>
-                        <a class="ui mini basic grey button" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>&tab=themes-updates">
+                        <a class="ui mini <?php echo esc_attr( MainWP_Utility::mainwp_get_update_count_class( $total_theme_upgrades ) ); ?> button" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>&tab=themes-updates">
                             <i class="sync alternate icon"></i> <?php echo intval( $total_theme_upgrades ); ?>
                         </a>
                     <?php } elseif ( 'client_name' === $column_name ) { ?>

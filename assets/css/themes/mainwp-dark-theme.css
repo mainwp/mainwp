@@ -26,6 +26,9 @@
   /* Sets color for yellow elements. */
   --yellow-color: #B58105;
 
+  /* Sets color for orange elements. */
+  --orange-color: #c47335;
+
   /* Sets color for red elements. */
   --red-color: #a00000;
 
@@ -129,7 +132,7 @@ body.mainwp-ui.mainwp-custom-theme.pushable>.pusher,
 body.mainwp-ui.mainwp-custom-theme,
 .mainwp-ui.mainwp-custom-theme #wpbody-content,
 .mainwp-ui.mainwp-custom-theme .mainwp-content-wrap,
-.mainwp-ui.mainwp-custom-theme .ui.segment {
+.mainwp-ui.mainwp-custom-theme .ui.segment  {
   background-color: var(--background-color-2) !important;
   color: var(--font-color);
 }
@@ -191,6 +194,16 @@ body.mainwp-ui.mainwp-custom-theme,
 
 .mainwp-ui.mainwp-custom-theme #mainwp-sites-menu-sidebar .mainwp-site-menu-item .title {
   color: var(--font-color) !important;
+}
+
+/* Flyout */
+.mainwp-ui.mainwp-custom-theme .ui.flyout {
+  background-color: var(--background-color-3) !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.flyout .content,
+.mainwp-ui.mainwp-custom-theme .ui.flyout .actions,
+.mainwp-ui.mainwp-custom-theme .ui.flyout .header {
+  background-color: var(--background-color-3) !important;
 }
 
 /* Headers */
@@ -742,6 +755,14 @@ body.mainwp-ui.mainwp-custom-theme,
   background-color: var(--red-color);
 }
 
+.mainwp-ui.mainwp-custom-theme .ui.button.yellow {
+  background-color: var(--yellow-color);
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.button.orange {
+  background-color: var(--orange-color);
+}
+
 .mainwp-ui.mainwp-custom-theme .ui.button.green.basic .icon {
   color: var(--accent-color);
 }
@@ -756,15 +777,21 @@ body.mainwp-ui.mainwp-custom-theme,
   color: var(--font-button-color);
 }
 
-/* Invert Dimmer */
+/* Dimmer & Loader */
 
+.mainwp-ui.mainwp-custom-theme .ui.dimmer,
 .mainwp-ui.mainwp-custom-theme .ui.inverted.dimmer {
   background: var(--background-color-2);
   opacity: .9;
 }
 
+.mainwp-ui.mainwp-custom-theme .ui.dimmer .text,
 .mainwp-ui.mainwp-custom-theme .ui.inverted.dimmer .text {
   color: var(--font-light-color);
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.loader:after {
+  color: var(--mainwp-green) !important;
 }
 
 /* Invert Menus */
@@ -795,6 +822,21 @@ body.mainwp-ui.mainwp-custom-theme,
 .mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation,
 .mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu {
   background-color: var(--background-color-3);
+}
+
+.mainwp-ui.mainwp-custom-theme #mainwp-main-menu .item {
+  padding: 1em !important;
+  background-color: var(--background-color-3) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme #mainwp-main-menu .item .menu .item {
+  padding: 1em 1.5em !important;
+}
+
+.mainwp-ui.mainwp-custom-theme #mainwp-main-menu .item .item .menu.active .item, 
+.mainwp-ui.mainwp-custom-theme #mainwp-main-menu .item .item .menu.active .item.title,
+.mainwp-ui.mainwp-custom-theme #mainwp-main-menu .item .item .menu.active .item.content {
+  background-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-sites-sidebar-menu.ui.vertical.menu {

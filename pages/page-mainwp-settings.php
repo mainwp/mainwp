@@ -2217,29 +2217,30 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         ?>
         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools" default-indi-value="default">
             <label class="six wide column middle aligned">
-        <?php
-        MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_selected_theme', $custom_theme );
-        esc_html_e( 'Select MainWP Theme', 'mainwp' );
-        ?>
+            <?php
+            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_selected_theme', $custom_theme );
+            esc_html_e( 'Select MainWP Dashboard theme', 'mainwp' );
+            ?>
             </label>
             <div class="ten wide column" tabindex="0" data-tooltip="<?php esc_attr_e( 'Select your MainWP Dashboard theme.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                 <select name="mainwp_settings_custom_theme" id="mainwp_settings_custom_theme" class="ui dropdown selection settings-field-value-change-handler">
                     <option value="default" <?php echo ( 'default' === $custom_theme || empty( $custom_theme ) ) ? 'selected' : ''; ?>><?php esc_html_e( 'Default', 'mainwp' ); ?></option>
+                    <option value="default-dark" <?php echo ( 'default-dark' === $custom_theme || empty( $custom_theme ) ) ? 'selected' : ''; ?>><?php esc_html_e( 'Dark', 'mainwp' ); ?></option>
                     <option value="default-2024" <?php echo ( 'default-2024' === $custom_theme || empty( $custom_theme ) ) ? 'selected' : ''; ?>><?php esc_html_e( 'Default 2024', 'mainwp' ); ?></option>
-                    <option value="classic" <?php echo ( 'classic' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Classic', 'mainwp' ); ?></option>
-                    <option value="dark" <?php echo ( 'dark' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Dark', 'mainwp' ); ?></option>
-                    <option value="wpadmin" <?php echo ( 'wpadmin' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'WP Admin', 'mainwp' ); ?></option>
-                    <option value="minimalistic" <?php echo ( 'minimalistic' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Minimalistic', 'mainwp' ); ?></option>
-        <?php
-        foreach ( $themes_files as $file_name => $theme ) {
-            $theme   = ucfirst( $theme );
-            $_select = '';
-            if ( $custom_theme === $file_name ) {
-                $_select = 'selected';
-            }
-            echo '<option value="' . esc_attr( $file_name ) . '" ' . esc_attr( $_select ) . '>' . esc_html( $theme ) . '</option>';
-        }
-        ?>
+                    <option value="dark" <?php echo ( 'dark' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Dark 2024', 'mainwp' ); ?></option>
+                    <option value="classic" <?php echo ( 'classic' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Classic (Legacy)', 'mainwp' ); ?></option>
+                    <option value="wpadmin" <?php echo ( 'wpadmin' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'WP Admin (Legacy)', 'mainwp' ); ?></option>
+                    <option value="minimalistic" <?php echo ( 'minimalistic' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Minimalistic (Legacy)', 'mainwp' ); ?></option>
+                    <?php
+                    foreach ( $themes_files as $file_name => $theme ) {
+                        $theme   = ucfirst( $theme );
+                        $_select = '';
+                        if ( $custom_theme === $file_name ) {
+                            $_select = 'selected';
+                        }
+                        echo '<option value="' . esc_attr( $file_name ) . '" ' . esc_attr( $_select ) . '>' . esc_html( $theme ) . '</option>';
+                    }
+                    ?>
                 </select>
             </div>
         </div>
@@ -2295,7 +2296,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         }
 
         if ( ! empty( $custom_theme ) ) {
-            if ( 'default' === $custom_theme || 'default-2024' === $custom_theme || 'dark' === $custom_theme || 'wpadmin' === $custom_theme || 'minimalistic' === $custom_theme ) {
+            if ( 'default' === $custom_theme || 'default-dark' === $custom_theme || 'default-2024' === $custom_theme || 'dark' === $custom_theme || 'wpadmin' === $custom_theme || 'minimalistic' === $custom_theme ) {
                 return $custom_theme;
             }
             $dirs      = $this->get_custom_theme_folder();

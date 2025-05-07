@@ -10170,7 +10170,7 @@ msgid "MainWP"
 msgstr "MainWP"
 
 #: modules/cost-tracker/ui/js/cost-tracker.js:67
-msgid "Are you sure."
+msgid "Are you sure?"
 msgstr "¿Estás seguro?"
 
 #: modules/cost-tracker/widgets/widget-cost-tracker-category-totals.php:58

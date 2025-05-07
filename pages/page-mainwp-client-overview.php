@@ -327,6 +327,12 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             do_action( 'mainwp_before_overview_widgets', 'clients' );
             ?>
             <div id="mainwp-grid-wrapper" class="gridster">
+                <div id="mainwp-widgets-placeholder" class="ui page dimmer">
+                    <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
+                </div>
+                <script>
+                jQuery('#mainwp-widgets-placeholder').dimmer('show');
+                </script>
                 <?php MainWP_UI::do_widget_boxes( $screen->id ); ?>
         </div>
             <?php
@@ -353,7 +359,7 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 return false;
             };
             jQuery('#reset-clients-overview-settings').on('click', function () {
-                mainwp_confirm(__('Are you sure.'), function(){
+                mainwp_confirm(__('Are you sure?'), function(){
                     jQuery('.mainwp_hide_wpmenu_checkboxes input[name="mainwp_show_widgets[]"]').prop('checked', true);
                     jQuery('input[name=reset_client_overview_settings]').attr('value', 1);
                     jQuery('#submit-client-overview-settings').click();

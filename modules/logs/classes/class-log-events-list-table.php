@@ -393,6 +393,8 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             $title = esc_html__( 'Theme', 'mainwp' );
         } elseif ( 'translation' === $context ) {
             $title = esc_html__( 'Translation', 'mainwp' );
+        } elseif ( 'core' === $context ) {
+            $title = esc_html__( 'WP Core WordPress', 'mainwp' );
         } elseif ( 'posts' === $connector ) {
             if ( 'post' === $context ) {
                 $title = esc_html__( 'Post', 'mainwp' );
@@ -586,14 +588,16 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             <?php
         }
         ?>
-        <table id="<?php echo esc_attr( $events_tbl_id ); ?>" style="width:100%" class="ui single line <?php echo 'manage-events' === $this->table_id_prefix ? 'selectable' : ''; ?> unstackable table mainwp-with-preview-table">
-            <thead>
-                <tr><?php $this->print_column_headers( true ); ?></tr>
-            </thead>
-            <tfoot>
-                <tr><?php $this->print_column_headers( false ); ?></tr>
-            </tfoot>
-        </table>
+        <div id="mainwp-module-log-records-table-container" style="opacity:0;">
+            <table id="<?php echo esc_attr( $events_tbl_id ); ?>" style="width:100%" class="ui single line <?php echo 'manage-events' === $this->table_id_prefix ? 'selectable' : ''; ?> unstackable table mainwp-with-preview-table">
+                <thead>
+                    <tr><?php $this->print_column_headers( true ); ?></tr>
+                </thead>
+                <tfoot>
+                    <tr><?php $this->print_column_headers( false ); ?></tr>
+                </tfoot>
+            </table>
+        </div>
         <?php
 
         if ( 'manage-events' === $this->table_id_prefix ) {
@@ -611,9 +615,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             <?php
         }
         ?>
-    <div id="mainwp-loading-sites" style="display: none;">
-    <div class="ui active inverted dimmer">
-    <div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading ...', 'mainwp' ); ?></div>
+    <div id="mainwp-loading-sites">
+    <div class="ui active page dimmer">
+    <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
     </div>
     </div>
         <?php
@@ -755,6 +759,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                             },
                             "drawCallback": function( settings ) {
                                 this.api().tables().body().to$().attr( 'id', 'mainwp-module-log-records-body-table' );
+                                jQuery( '#mainwp-module-log-records-table-container' ).css( 'opacity', '1' );
                                 mainwp_datatable_fix_menu_overflow(manage_tbl_id);
                                 if ( typeof mainwp_preview_init_event !== "undefined" ) {
                                     mainwp_preview_init_event();
@@ -769,22 +774,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                         mainwp_datatable_fix_menu_overflow(manage_tbl_id);
                                         mainwp_table_check_columns_init(manage_tbl_id);
                                     }, 1000);
-                                } else if('widget-overview' === '<?php echo esc_js( $this->table_id_prefix ); ?>'){
-                                    jQuery('#mainwp-module-log-records-table-widget-overview #mainwp-module-log-records-body-table td.check-column input[type="checkbox"]').on('change', function(){
-                                        console.log('onchange sites changes.');
-                                        if( jQuery('#mainwp-module-log-records-body-table input[type="checkbox"]:checked').length == 0 ){
-                                            jQuery('#mainwp_widget_sites_changes_bulk_dismiss_selected_btn').addClass('disabled');
-                                        } else {
-                                            jQuery('#mainwp_widget_sites_changes_bulk_dismiss_selected_btn').removeClass('disabled');
-                                        }
-                                    });
                                 }
                             },
                             "initComplete": function( settings, json ) {
-                                if ( 'widget-overview' === '<?php echo esc_js( $this->table_id_prefix ); ?>' ){
-                                    const searchInput = $('#mainwp-module-log-records-table-widget-overview_wrapper input[type="search"]');
-                                    searchInput.val('');
-                                }
                             },
                             rowCallback: function (row, data) {
                                 jQuery( row ).addClass(data.rowClass);

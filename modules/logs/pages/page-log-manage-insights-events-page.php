@@ -957,7 +957,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
         <script type="text/javascript">
             jQuery( document ).ready( function () {
                 jQuery('#reset-manage-events-settings').on( 'click', function () {
-                    mainwp_confirm(__( 'Are you sure.' ), function(){
+                    mainwp_confirm(__( 'Are you sure?' ), function(){
                         jQuery('input[name=mainwp_default_sites_per_page]').val(25);
                         jQuery('.mainwp_hide_wpmenu_checkboxes input[id^="mainwp_show_column_"]').prop( 'checked', false );
                         //default columns.

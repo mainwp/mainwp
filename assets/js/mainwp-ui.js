@@ -790,6 +790,8 @@ let mainwp_help_modal_content_onclick = function (hide, isToolsPage) {
     let enab_video = jQuery('#mainwp-guided-video-check').checkbox('is checked') ? 1 : 0;
     let enab_chatbase = jQuery('#mainwp-guided-chatbase-check').checkbox('is checked') ? 1 : 0;
 
+    const me = jQuery('#mainwp-update-permissions-button');
+
     let data = mainwp_secure_data({
         action: 'mainwp_help_modal_content_update',
         enable_tour: enab_tour,
@@ -797,23 +799,33 @@ let mainwp_help_modal_content_onclick = function (hide, isToolsPage) {
         enable_chatbase: enab_chatbase,
     });
 
+    jQuery(me).html('<i class="notched circle loading icon"></i> Saving...').addClass('disabled');
+
     jQuery.post(ajaxurl, data, function () {
         if (typeof isToolsPage !== "undefined" && isToolsPage) {
             location.href = 'admin.php?page=MainWPTools';
         } else {
-            jQuery('#revoke-third-party-perms').fadeIn('100');
-            jQuery('#mainwp-help-modal-content').fadeIn('100');
-            jQuery('#mainwp-help-modal-consent-content').fadeOut('100');
+            if ( jQuery('#mainwp-guided-chatbase-option').is(':checked') ) {
+                jQuery('#mainwp-start-chat-card').removeClass('mainwp-disabled-link');
+            } else {
+                jQuery('#mainwp-start-chat-card').addClass('mainwp-disabled-link');
+                jQuery('#mainwp-chatbase-chat-screen').fadeIn('100').find('iframe').attr('src', '');
+            }
 
-            if (enab_tour) {
-                jQuery('#mainwp-start-tour-card').fadeIn('100');
+            if ( jQuery('#mainwp-guided-tours-option').is(':checked') ) {
+                jQuery('#mainwp-start-tour-card').removeClass('mainwp-disabled-link');
+            } else {
+                jQuery('#mainwp-start-tour-card').addClass('mainwp-disabled-link');
             }
-            if (enab_chatbase) {
-                jQuery('#mainwp-start-chat-card').fadeIn('100');
+
+            if ( jQuery('#mainwp-guided-video-option').is(':checked') ) {
+                jQuery('#mainwp-start-video-card').removeClass('mainwp-disabled-link');
+            } else {
+                jQuery('#mainwp-start-video-card').addClass('mainwp-disabled-link');
+                jQuery('#mainwp-chatbase-video-screen').fadeIn('100').find('iframe').attr('src', '');
             }
-            if (enab_video) {
-                jQuery('#mainwp-start-video-card').fadeIn('100');
-            }
+            
+            jQuery(me).html('Update Permissions').removeClass('disabled');
         }
     });
 }

@@ -132,7 +132,7 @@ class Api_Backups_Settings {
         <div id="3rd-party-api-manager">
             <div class="ui segment">
                 
-                <div class="ui grid">
+                <div class="ui stackable grid">
                     <div class="three wide column">
                         <div class="ui vertical fluid pointing menu">
                             <h3 class="item ui header"><?php esc_html_e( 'Backup API Providers', 'mainwp' ); ?></h3>

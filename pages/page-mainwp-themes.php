@@ -471,8 +471,8 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         </div>
                     <?php endif; ?>
                     <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
-                    <div id="mainwp-loading-themes-row" class="ui active inverted dimmer" style="display:none">
-                        <div class="ui large text loader"><?php esc_html_e( 'Loading Themes...', 'mainwp' ); ?></div>
+                    <div id="mainwp-loading-themes-row" class="ui active page dimmer" style="display:none">
+                        <div class="ui text double loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
                     </div>
                     <div id="mainwp-themes-main-content" <?php echo ( null !== $cachedSearch ) ? 'style="display: block;"' : ''; ?> >
                         <div id="mainwp-themes-content">
@@ -549,10 +549,6 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                      */
                     do_action( 'mainwp_manage_themes_before_search_options' );
                     ?>
-                    <div class="ui info message">
-                        <i class="close icon mainwp-notice-dismiss" notice-id="themes-manage-info"></i>
-                        <?php esc_html_e( 'A theme needs to be Inactive for it to be Activated or Deleted.', 'mainwp' ); ?>
-                    </div>
                     <div class="ui mini form">
                         <div class="field">
                             <select class="ui fluid dropdown" id="mainwp_themes_search_by_status">
@@ -1655,17 +1651,17 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public static function render_bulk_actions( $status ) { // phpcs:ignore -- NOSONAR - complex.
         ob_start();
         ?>
-        <select class="ui dropdown" id="mainwp-bulk-actions">
-            <option value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
-                <?php if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-                    <option data-value="ignore_updates" value="ignore_updates"><?php esc_html_e( 'Ignore updates', 'mainwp' ); ?></option>
-                <?php endif; ?>
-                <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_themes' ) ) : ?>
-                    <?php if ( 'inactive' === $status ) : ?>
+        <select class="ui compact dropdown" id="mainwp-bulk-actions">
+            <option value="none"><?php esc_html_e( 'Bulk actions', 'mainwp' ); ?></option>
+            <?php if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+                <option data-value="ignore_updates" value="ignore_updates"><?php esc_html_e( 'Ignore updates', 'mainwp' ); ?></option>
+            <?php endif; ?>
+            <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_themes' ) ) : ?>
+                <?php if ( 'inactive' === $status ) : ?>
                     <option data-value="activate" value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></option>
-                    <?php else : ?>
-                        <option data-value="activate" disabled value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></option>
-                    <?php endif; ?>
+                <?php else : ?>
+                    <option data-value="activate" disabled value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?><br/><span class="ui small text"><?php esc_html_e( 'To deactivate, view Active themes.', 'mainwp' ); ?></span></option>
+                <?php endif; ?>
                 <?php endif; ?>
                 <?php if ( 'inactive' === $status ) : ?>
                     <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_themes' ) ) : ?>
@@ -1678,7 +1674,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 <?php endif; ?>
                 <?php if ( 'all' === $status ) : ?>
                     <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_themes' ) ) : ?>
-                        <option data-value="activate" disabled value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></option>
+                        <option data-value="activate" disabled value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?><br/><span class="ui small text"><?php esc_html_e( 'To activate, view Inactive themes.', 'mainwp' ); ?></span></option>
                     <?php endif; ?>
                     <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_themes' ) ) : ?>
                         <option data-value="delete" disabled value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
@@ -1805,7 +1801,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <div class="mainwp-upload-theme mainwp-bulk-install-showhide-content">
                         <?php MainWP_Install_Bulk::render_upload( 'theme' ); ?>
                     </div>
-                    <div id="themes-loading" class="ui large text loader"><?php esc_html_e( 'Loading Themes...', 'mainwp' ); ?></div>
+                    <div id="themes-loading" class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
                     <form id="theme-filter" method="post" class="mainwp-bulk-install-showhide-content">
                         <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                         <div class="mainwp-browse-themes content-filterable"></div>
@@ -2057,8 +2053,8 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                             <div><strong><?php esc_html_e( 'Advanced Auto Updates a delayed approximately 24 hours from the update release. Ignored themes can not be automatically updated.', 'mainwp' ); ?></strong></div>
                         </div>
                         <?php endif; ?>
-                        <div class="ui inverted dimmer">
-                            <div class="ui text loader"><?php esc_html_e( 'Loading themes', 'mainwp' ); ?></div>
+                        <div class="ui page dimmer">
+                            <div class="ui text double loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
                         </div>
                         <div id="mainwp-auto-updates-themes-table-wrapper">
                             <?php
@@ -2293,6 +2289,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <thead>
                 <tr>
                     <th scope="col"  class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
+                    <th scope="col" class="collapsing"></th>
                     <th scope="col" data-priority="1"><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
                     <th scope="col" ><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
                     <th scope="col"  data-priority="2" class="collapsing"><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
@@ -2328,10 +2325,11 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 ?>
                 <tr theme-slug="<?php echo esc_attr( rawurlencode( $slug ) ); ?>" theme-name="<?php echo esc_attr( $name ); ?>">
                     <td class="check-column"><span class="ui checkbox"><input type="checkbox" name="theme[]" value="<?php echo esc_attr( rawurlencode( $slug ) ); ?>"></span></td>
-                    <td><?php echo MainWP_System_Utility::get_theme_icon( $slug ) . '&nbsp;&nbsp;&nbsp;&nbsp;' . esc_html( $name ); //phpcs:ignore -- escaped. ?></td>
-                    <td><?php echo ( 1 === (int) $theme['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); //phpcs:ignore -- escaped. ?></td>
-                    <td><?php echo ( in_array( $slug, $trustedThemes ) ) ? '<span class="ui mini green fluid center aligned label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red fluid center aligned label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
-                    <td><?php echo ( isset( $decodedIgnoredThemes[ $slug ] ) ) ? '<span class="ui mini label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
+                    <td><?php echo MainWP_System_Utility::get_theme_icon( $slug ); ?></td>
+                    <td><?php echo esc_html( $name ); //phpcs:ignore -- escaped. ?></td>
+                    <td><?php echo ( 1 === (int) $theme['active'] ) ? '<span class="ui tiny basic label"><i class="circle green icon"></i> ' . esc_html__( 'Active', 'mainwp' ) . '</span>' : '<span class="ui tiny basic label"><i class="circle red icon"></i> ' . esc_html__( 'Inactive', 'mainwp' ) . '</span>'; //phpcs:ignore -- escaped. ?></td>
+                    <td><?php echo ( in_array( $slug, $trustedThemes ) ) ? '<span class="ui mini green basic label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red basic label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
+                    <td><?php echo ( isset( $decodedIgnoredThemes[ $slug ] ) ) ? '<span class="ui mini basic label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
                     <td><?php echo ( isset( $decodedIgnoredThemes[ $slug ] ) ) ? '<span data-tooltip="Ignored themes will not be automatically updated." data-inverted=""><i class="info red circle icon"></i></span>' : ''; ?></td>
                     <td class="collapsing center aligned">
                     <?php if ( '' === $esc_note ) : ?>
@@ -2344,18 +2342,6 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 </tr>
             <?php endforeach; ?>
             </tbody>
-
-            <tfoot>
-                <tr>
-                    <th scope="col" class="no-sort check-column"><span class="ui checkbox"><input id="cb-select-all-bottom" type="checkbox" /></span></th>
-                    <th scope="col" ><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'Ignored Status', 'mainwp' ); ?></th>
-                    <th scope="col" class="collapsing"></th>
-                    <th scope="col" ><?php esc_html_e( 'Notes', 'mainwp' ); ?></th>
-                </tr>
-            </tfoot>
         </table>
         <?php
         /**

@@ -534,35 +534,13 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         if ( empty( $backup_api ) ) {
-            ?>
-                <div class="ui placeholder segment">
-                    <div class="ui icon header">
-                        <i class="key icon"></i>
-                    <?php
-                        printf(
-                            esc_html__(
-                                '%1$sNo API Backup Solution has been chosen.%2$s
-                    Please double check that you have set the %3$sAPI Key%4$s
-                    on the %5$s page%6$s
-                    and have set the %7$sInstance ID%8$s on the %9$s page.',
-                                'mainwp'
-                            ),
-                            '<em>',
-                            '</em> <br/><br>',
-                            '<em>',
-                            '</em>',
-                            '<a href="admin.php?page=SettingsApiBackups">API Backups Settings</a>',
-                            '</br>',
-                            '<em>',
-                            '</em>',
-                            '<a href="admin.php?page=managesites&id=' . intval( $website_id ) . '">Child Site -> Edit</a>'
-                        );
-                    ?>
-                    </div>
-                </div>
-            <?php } else { ?>
-
-                <?php
+            \MainWP\Dashboard\MainWP_UI::render_empty_page_placeholder( 
+                $title   = esc_html__( 'No API Backup Solution has been chosen.', 'mainwp' ),
+                $message = esc_html__( 'Please double check that you have set the API Key on the API Backups Settings page and have set the Instance ID on the Child Site -> Edit page.', 'mainwp' ),
+                $icon    = '<i class="key icon"></i>'
+            );
+                
+            } else {
                 $columns = 'one';
                 if ( 'cpanel' === $backup_api || 'plesk' === $backup_api ) {
                     $columns = 'two';
@@ -1265,31 +1243,13 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                     </tfoot>
                                 </table>
                         <?php else : // Display message if WP-Toolkit is not enabled. ?>
-                            <div class="ui placeholder segment">
-                                <div class="ui icon header">
-                                    <i class="key icon"></i>
-                                    <?php
-                                    printf(
-                                        esc_html__(
-                                            '%1$sThe WP-Toolkit API has not been enabled.%2$s
-                                        Please double check that you have set the cPanel %3$sAPI Key%4$s
-                                        on the %5$s page%6$s
-                                        and have enabled the %7$sWP Toolkit API%8$s on the %9$s page.',
-                                            'mainwp'
-                                        ),
-                                        '<em>',
-                                        '</em> <br/><br>',
-                                        '<em>',
-                                        '</em>',
-                                        '<a href="admin.php?page=SettingsApiBackups">API Backups Settings</a>',
-                                        '</br>',
-                                        '<em>',
-                                        '</em>',
-                                        '<a href="admin.php?page=managesites&id=' . intval( $website_id ) . '">Child Site -> Edit</a>'
-                                    );
-                                    ?>
-                                </div>
-                            </div>
+                            <?php
+                            \MainWP\Dashboard\MainWP_UI::render_empty_page_placeholder( 
+                                $title   = esc_html__( 'The WP-Toolkit API has not been enabled.', 'mainwp' ),
+                                $message = esc_html__( 'Please double check that you have set the cPanel API Key on the API Backups Settings page and have enabled the WP Toolkit API on the Child Site -> Edit page.', 'mainwp' ),
+                                $icon    = '<i class="key icon"></i>'
+                            );
+                            ?>
                         <?php endif; ?>
                     </div>
                 <?php } ?>

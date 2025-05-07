@@ -482,8 +482,8 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         </div>
                     <?php endif; ?>
                     <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
-                    <div id="mainwp-loading-plugins-row" class="ui active inverted dimmer" style="display:none">
-                        <div class="ui large text loader"><?php esc_html_e( 'Loading Plugins...', 'mainwp' ); ?></div>
+                    <div id="mainwp-loading-plugins-row" class="ui active page dimmer" style="display:none">
+                        <div class="ui text double loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
                     </div>
                     <div id="mainwp-plugins-main-content" <?php echo ( null !== $cachedSearch ) ? 'style="display: block;"' : ''; ?> >
                         <div id="mainwp-plugins-content">
@@ -561,10 +561,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                      */
                     do_action( 'mainwp_manage_plugins_before_search_options' );
                     ?>
-                    <div class="ui info message">
-                        <i class="close icon mainwp-notice-dismiss" notice-id="plugins-manage-info"></i>
-                        <?php esc_html_e( 'A plugin needs to be Inactive for it to be Activated or Deleted.', 'mainwp' ); ?>
-                    </div>
+                    
                     <div class="ui mini form">
                         <div class="field">
                             <select class="ui fluid dropdown" id="mainwp_plugins_search_by_status">
@@ -1112,46 +1109,47 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     public static function render_bulk_actions( $status ) {
         ob_start();
         ?>
-        <select class="ui dropdown" id="mainwp-bulk-actions">
-            <option value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
+        <select class="ui compact dropdown" id="mainwp-bulk-actions">
+            <option value="none"><?php esc_html_e( 'Bulk actions', 'mainwp' ); ?></option>
             <?php if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
                 <option value="ignore_updates" data-value="ignore_updates"><?php esc_html_e( 'Ignore updates', 'mainwp' ); ?></option>
             <?php endif; ?>
-        <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) : ?>
+            <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) : ?>
                 <?php if ( 'active' === $status ) : ?>
-                <option value="deactivate" data-value="deactivate"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></option>
+                    <option value="deactivate" data-value="deactivate"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></option>
                 <?php else : ?>
-                    <option value="deactivate" disabled data-value="deactivate"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></option>
+                    <option value="deactivate" disabled data-value="deactivate"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?><br/><span class="ui small text"><?php esc_html_e( 'To deactivate, view Active plugins.', 'mainwp' ); ?></span></option>
+                <?php endif; ?>
             <?php endif; ?>
-        <?php endif; ?>
             <?php if ( 'inactive' === $status ) : ?>
                 <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) : ?>
                 <option value="activate" data-value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></option>
-            <?php endif; ?>
+                <?php endif; ?>
                 <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) : ?>
                 <option value="delete" data-value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
-            <?php endif; ?>
+                <?php endif; ?>
             <?php else : ?>
                 <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) : ?>
-                    <option value="activate" disabled data-value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></option>
+                    <option value="activate" disabled data-value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?><br/><span class="ui small text"><?php esc_html_e( 'To activate, view Inactive plugins.', 'mainwp' ); ?></span></option>
                 <?php endif; ?>
                 <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) : ?>
                     <option value="delete" data-value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
-        <?php endif; ?>
-        <?php endif; ?>
-        <?php
-        /**
-         * Action: mainwp_plugins_bulk_action
-         *
-         * Adds a new action to the Manage Plugins bulk actions menu.
-         *
-         * @param string $status Status search parameter.
-         *
-         * @since 4.1
-         */
-        do_action( 'mainwp_plugins_bulk_action' );
-        ?>
+                <?php endif; ?>
+            <?php endif; ?>
+            <?php
+            /**
+             * Action: mainwp_plugins_bulk_action
+             *
+             * Adds a new action to the Manage Plugins bulk actions menu.
+             *
+             * @param string $status Status search parameter.
+             *
+             * @since 4.1
+             */
+            do_action( 'mainwp_plugins_bulk_action' );
+            ?>
         </select>
+
         <button class="ui mini basic button" href="javascript:void(0)" id="mainwp-do-plugins-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
         <span id="mainwp_bulk_action_loading"><i class="ui active inline loader tiny"></i></span>
         <?php
@@ -2074,8 +2072,8 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             <div><strong><?php esc_html_e( 'Advanced Auto Updates a delayed approximately 24 hours from the update release.  Ignored plugins can not be automatically updated.', 'mainwp' ); ?></strong></div>
                         </div>
                         <?php endif; ?>
-                        <div class="ui inverted dimmer">
-                            <div class="ui text loader"><?php esc_html_e( 'Loading plugins', 'mainwp' ); ?></div>
+                        <div class="ui page dimmer">
+                            <div class="ui text double loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
                         </div>
                         <div id="mainwp-auto-updates-plugins-table-wrapper">
                         <?php
@@ -2376,9 +2374,9 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         <td class="check-column"><span class="ui checkbox"><input type="checkbox" name="plugin[]" value="<?php echo esc_attr( rawurlencode( $slug ) ); ?>"></span></td>
                         <td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
                         <td><a href="<?php echo esc_url( admin_url() ) . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $wpid ) . '&plugin=' . rawurlencode( dirname( $slug ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $name ); ?></a></td>
-                        <td><?php echo ( 1 === (int) $plugin['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); //phpcs:ignore -- escaped. ?></td>
-                        <td><?php echo ( in_array( $slug, $trustedPlugins ) ) ? '<span class="ui mini green fluid center aligned label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red fluid center aligned label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
-                        <td><?php echo MainWP_Common_Functions::instance()->is_ignored_updates( $plugin, $decodedIgnoredPlugins, 'plugin' ) ? '<span class="ui mini label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
+                        <td><?php echo ( 1 === (int) $plugin['active'] ) ? '<span class="ui tiny basic label"><i class="circle green icon"></i> ' . esc_html__( 'Active', 'mainwp' ) . '</span>' : '<span class="ui tiny basic label"><i class="circle red icon"></i> ' . esc_html__( 'Inactive', 'mainwp' ) . '</span>'; //phpcs:ignore -- escaped. ?></td>
+                        <td><?php echo ( in_array( $slug, $trustedPlugins ) ) ? '<span class="ui mini green basic label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red basic label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
+                        <td><?php echo MainWP_Common_Functions::instance()->is_ignored_updates( $plugin, $decodedIgnoredPlugins, 'plugin' ) ? '<span class="ui mini basic label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
                         <td><?php echo MainWP_Common_Functions::instance()->is_ignored_updates( $plugin, $decodedIgnoredPlugins, 'plugin' ) ? '<span data-tooltip="Ignored plugins will not be automatically updated." data-inverted=""><i class="info red circle icon" ></i></span>' : ''; ?></td>
                         <td class="collapsing center aligned">
                         <?php if ( '' === $esc_note ) : ?>
@@ -2392,18 +2390,6 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     <?php // phpcs:enable ?>
                 <?php endforeach; ?>
             </tbody>
-            <tfoot>
-                <tr>
-                    <th scope="col" class="no-sort check-column"><span class="ui checkbox"><input id="cb-select-all-bottom" type="checkbox" /></span></th>
-                    <th scope="col" ></th>
-                    <th scope="col" ><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'Ignored Status', 'mainwp' ); ?></th>
-                    <th scope="col" class="collapsing"></th>
-                    <th scope="col" ><?php esc_html_e( 'Notes', 'mainwp' ); ?></th>
-                </tr>
-            </tfoot>
         </table>
         <?php
         /**

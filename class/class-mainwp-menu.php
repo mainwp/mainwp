@@ -1269,7 +1269,8 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                 $link['tip'] = $go_back_link['tip'];
                             }
                         }
-                     } ?>
+                    }
+                    ?>
                 <div class="ui three column grid">
                     <div class="column">
                         <a href="<?php echo esc_html( $link['url'] ); ?>" class="ui mini basic fluid button"><i class="icon wordpress"></i> <?php echo esc_html( $link['text'] ); ?></a><?php //phpcs:ignore -- to avoid auto fix icon wordpress ?>

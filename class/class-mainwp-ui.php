@@ -734,7 +734,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                                     <i class="globe icon"></i>
                                     <a target="_blank" href="<?php echo esc_url( $website->url ); ?>"><?php esc_html_e( 'Visit Site', 'mainwp' ); ?></a>
                                 </div>
-                                
+
                                 <?php
                                 /**
                                  * Action: mainwp_quick_sites_shortcut
@@ -1374,7 +1374,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         <a id="mainwp-screen-options-button" class="ui icon button" onclick="jQuery( '#mainwp-overview-screen-options-modal' ).modal({allowMultiple:true}).modal( 'show' ); return false;" data-inverted="" data-position="bottom right" href="#" aria-label="<?php esc_attr_e( 'Page Settings', 'mainwp' ); ?>" data-tooltip="<?php esc_html_e( 'Page Settings', 'mainwp' ); ?>">
             <i class="cog icon"></i>
         </a>
-        
+
         <?php endif; ?>
         <?php
         // phpcs:enable
@@ -2367,7 +2367,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         <div id="mainwp-help-modal" class="ui modal">
             <i class="close icon"></i>
             <div class="header"><?php esc_html_e( 'Support', 'mainwp' ); ?></div>
-            
+
             <div class="scrolling center aligned content" id="mainwp-help-modal-content">
                 <div class="ui two cards" id="mainwp-help-modal-options">
 
@@ -2410,7 +2410,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                                 <i class="map marked alternate big grey icon" style="opacity:0.3"></i>
                                 <div class="ui fitted hidden divider"></div><br/>
                                 <span class="ui grey small text"><?php esc_html_e( 'New here? Learn how to navigate and use key features with an interactive step-by-step tour.', 'mainwp' ); ?></span>
-                                
+
                             </a>
                         </div>
                         <div class="content">
@@ -2442,7 +2442,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                                 <i class="youtube big grey icon" style="opacity:0.3"></i>
                                 <div class="ui fitted hidden divider"></div><br/>
                                 <span class="ui grey small text"><?php esc_html_e( 'Discover the essential features of this page in our quick, step-by-step video guide.', 'mainwp' ); ?></span>
-                                
+
                             </a>
                         </div>
                         <div class="content">
@@ -2473,8 +2473,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             <div class="ui hidden divider"></div>
                             <i class="ticket big grey icon" style="opacity:0.3"></i>
                             <div class="ui fitted hidden divider"></div><br/>
-                            <span class="ui grey small text"><?php esc_html_e( 'Get in touch with our team for any inquiries or support – we\'re here to help you.', 'mainwp' ); ?></span>
-                            
+                            <span class="ui grey small text"><?php esc_html_e( 'Get in touch with our team for any inquiries or support ï¿½ we\'re here to help you.', 'mainwp' ); ?></span>
+
                             </a>
                         </div>
                         <div class="content">
@@ -2513,7 +2513,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         <a href="#" style="display:none" id="mainwp-help-back-button" class="ui mini basic button" onclick="jQuery('#mainwp-help-modal-options').fadeIn(200);jQuery('#mainwp-chatbase-video-screen').fadeOut(200);jQuery('#mainwp-chatbase-chat-screen').fadeOut(200);jQuery('#mainwp-help-back-button').fadeOut(200);jQuery('#mainwp-update-permissions-button').fadeIn(200);return false;"><?php esc_html_e( 'Back to Support options', 'mainwp' ); ?></a>
                     </div>
                     <div class="eight wide right aligned middle aligned column">
-                        
+
                     </div>
                 </div>
             </div>

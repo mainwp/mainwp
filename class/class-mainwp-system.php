@@ -338,7 +338,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_maximumInstallUpdateRequests',
                 'mainwp_maximumSyncRequests',
                 'mainwp_primaryBackup',
-                'mainwp_security',
                 'mainwp_use_favicon',
                 'mainwp_wp_cron',
                 'mainwp_timeDailyUpdate',

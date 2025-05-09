@@ -438,17 +438,50 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
      * @param int $updated Update code (copied, saved or deleted).
      */
     public static function render_update_template_message( $updated ) {
-        ?>
-        <?php if ( 1 === (int) $updated ) : ?>
-        <div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Custom email template deleted successfully.', 'mainwp' ); ?></div>
-        <?php endif; ?>
-        <?php if ( 2 === (int) $updated ) : ?>
-        <div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Email template copied successfully.', 'mainwp' ); ?></div>
-        <?php endif; ?>
-        <?php if ( 3 === (int) $updated ) : ?>
-        <div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Email template updated successfully.', 'mainwp' ); ?></div>
-        <?php endif; ?>
-        <?php
+        switch ( (int) $updated ) {
+            case 1:
+                ?>
+                <div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Custom email template deleted successfully.', 'mainwp' ); ?></div>
+                <?php
+                break;
+            case 2:
+                ?>
+                <div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Email template copied successfully.', 'mainwp' ); ?></div>
+                <?php
+                break;
+            case 3:
+                ?>
+                <div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Email template updated successfully.', 'mainwp' ); ?></div>
+                <?php
+                break;
+            case 31:
+                ?>
+                <div class="ui message yellow"><i class="close icon"></i> <?php esc_html_e( 'Email template update failed. Please try again.', 'mainwp' ); ?></div>
+                <?php
+                break;
+            case 32:
+                ?>
+                <div class="ui message yellow"><i class="close icon"></i> <?php esc_html_e( 'Email template failed to open. Please try again.', 'mainwp' ); ?></div>
+                <?php
+                break;
+            case 33:
+                ?>
+                <div class="ui message yellow"><i class="close icon"></i> <?php esc_html_e( 'Email template is not writable. Please try again.', 'mainwp' ); ?></div>
+                <?php
+                break;
+            case 34:
+                ?>
+                <div class="ui message yellow"><i class="close icon"></i> <?php esc_html_e( 'The destination email template is invalid and could not be saved. Please try again.', 'mainwp' ); ?></div>
+                <?php
+                break;
+            case 35:
+                ?>
+                <div class="ui message yellow"><i class="close icon"></i> <?php esc_html_e( 'Email template update failed. Please ensure you have theme editing permissions and try again.', 'mainwp' ); ?></div>
+                <?php
+                break;
+            default:
+                break;
+        }
     }
 
     /**

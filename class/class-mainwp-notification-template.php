@@ -360,8 +360,10 @@ class MainWP_Notification_Template { // phpcs:ignore Generic.Classes.OpeningBrac
         if ( ! empty( $templ_base_name ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'save-email-template' ) ) {
             $template_code = isset( $_POST[ 'edit_' . $type . '_code' ] ) ? wp_unslash( $_POST[ 'edit_' . $type . '_code' ] ) : ''; //phpcs:ignore -- saving template content.
             $updated       = $this->save_template( $template_code, $templ_base_name );
-            if ( $updated ) {
+            if ( true === $updated ) {
                 $updated_templ = 3;
+            } else {
+                $updated_templ = $updated;
             }
         }
 
@@ -384,7 +386,12 @@ class MainWP_Notification_Template { // phpcs:ignore Generic.Classes.OpeningBrac
      * @param string $template Template.
      */
     public function save_template( $template_code, $template ) {
-        if ( current_user_can( 'edit_themes' ) && ! empty( $template_code ) && ! empty( $template ) ) {
+        $failed = 31;
+        if ( empty( $template ) || empty( $template_code ) ) {
+            $failed = 34;
+        } elseif ( ! current_user_can( 'edit_themes' ) ) {
+            $failed = 35;
+        } else {
             $saved = false;
             $file  = $this->template_custom_path . $template;
             $code  = str_replace( PHP_EOL, '', $template_code ); // to fix issue create extra line breaks in custom template file.
@@ -397,7 +404,11 @@ class MainWP_Notification_Template { // phpcs:ignore Generic.Classes.OpeningBrac
                     fwrite( $f, $code );
                     fclose( $f );
                     $saved = true;
+                } else {
+                    $failed = 32;
                 }
+            } else {
+                $failed = 33;
             }
             //phpcs:enable
 
@@ -405,6 +416,7 @@ class MainWP_Notification_Template { // phpcs:ignore Generic.Classes.OpeningBrac
                 return true;
             }
         }
-        return false;
+        MainWP_Logger::instance()->debug( 'Saving email template failed :: [file=' . $this->template_custom_path . $template . ']' );
+        return $failed;
     }
 }

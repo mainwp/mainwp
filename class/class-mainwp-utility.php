@@ -1878,4 +1878,31 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
         echo '<span data-tooltip="' . $tooltip . '" data-position="left center" data-inverted=""><i class="' . $icon . ' icon"></i></span>';  //phpcs:ignore -- ok.
     }
+
+    /**
+     * Returns the appropriate Fomantic UI color class based on number of updates
+     * 
+     * @param int $update_count Number of available updates
+     * 
+     * @return string CSS class for the element
+     */
+    public static function mainwp_get_update_count_class( $update_count ) {
+        // Convert to integer using intval()
+        $update_count = intval( $update_count );
+        
+        // Ensure count is not negative
+        if ( 0 > $update_count ) {
+            $update_count = 0;
+        }
+
+        if ( 0 === $update_count ) {
+            return "grey";
+        } elseif ( $update_count >= 1 && $update_count <= 3 ) {
+            return "yellow";
+        } elseif ( $update_count >= 4 && $update_count <= 5 ) {
+            return "orange";
+        } else {
+            return "red";
+        }
+    }
 }

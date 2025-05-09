@@ -33,15 +33,20 @@ class Log_Query {
         global $wpdb;
 
         // To support none mainwp actions.
-        $log_id       = isset( $args['log_id'] ) ? intval( $args['log_id'] ) : 0;
-        $site_id      = isset( $args['wpid'] ) ? $args['wpid'] : 0; // int or array of int site ids.
-        $object_id    = isset( $args['object_id'] ) ? sanitize_text_field( $args['object_id'] ) : '';
-        $where_extra  = ''; // compatible.
-        $check_access = isset( $args['check_access'] ) ? $args['check_access'] : true;
-        $view         = isset( $args['view'] ) ? sanitize_text_field( $args['view'] ) : '';
+        $log_id        = isset( $args['log_id'] ) ? intval( $args['log_id'] ) : 0;
+        $site_id       = isset( $args['wpid'] ) ? $args['wpid'] : 0; // int or array of int site ids.
+        $object_id     = isset( $args['object_id'] ) ? sanitize_text_field( $args['object_id'] ) : '';
+        $where_extra   = ''; // compatible.
+        $check_access  = isset( $args['check_access'] ) ? $args['check_access'] : true;
+        $view          = isset( $args['view'] ) ? sanitize_text_field( $args['view'] ) : '';
+        $beta_optimize = isset( $args['optimize'] ) && ! empty( $args['optimize'] ) ? true : false;
 
-        $join  = '';
-        $where = '';
+        $join      = '';
+        $join_meta = '';
+        $join_sub  = '';
+
+        $where      = '';
+        $search_str = '';
 
         $count_only = ! empty( $args['count_only'] ) ? true : false;
         $not_count  = ! empty( $args['not_count'] ) ? true : false;
@@ -57,8 +62,10 @@ class Log_Query {
                     $where_search .= ' OR lg.item LIKE  "%' . $search_str . '%" ';
                     if ( 'events_list' === $view ) {
                         $where_search .= ' OR sub_lg.source LIKE  "%' . $search_str . '%" ';
-                        $where_search .= ' OR meta_view.user_login LIKE  "%' . $search_str . '%" ';
-                        $mt_search     = true;
+                        if ( ! $beta_optimize ) {
+                            $where_search .= ' OR meta_view.user_login LIKE  "%' . $search_str . '%" ';
+                        }
+                        $mt_search = true;
                     }
                     $where_search .= ') ';
                     $where        .= $where_search;
@@ -207,7 +214,7 @@ class Log_Query {
 
         if ( in_array( $args['orderby'], $orderable, true ) ) {
             if ( in_array( $args['orderby'], array( 'name', 'url' ) ) ) {
-                $orderby = sprintf( '%s.%s', 'meta_view', $args['orderby'] );
+                $orderby = sprintf( '%s', $args['orderby'] );
             } elseif ( 'event' === $args['orderby'] ) {
                 $orderby = sprintf( '%s.%s', 'lg', 'action' );
             } else {
@@ -259,9 +266,7 @@ class Log_Query {
             $where_actions .= MainWP_DB::instance()->get_sql_where_allow_access_sites( 'wp' );
         }
 
-        $where_dismiss = ! empty( $args['dismiss'] ) ? ' AND dismiss = 1 ' : ' AND dismiss = 0 ';
-
-        $where .= $where_actions . $where_extra . $where_dismiss;
+        $where .= $where_actions . $where_extra;
 
         /**
          * PARSE FIELDS PARAMETER
@@ -274,10 +279,6 @@ class Log_Query {
             $selects[] = 'wp.name as log_site_name';
         }
 
-        $selects[] = 'meta_view.*';
-
-        $select = implode( ', ', $selects );
-
         if ( 'api-view' !== $view ) {
             $join = ' LEFT JOIN ' . $wpdb->mainwp_tbl_wp . ' wp ON lg.site_id = wp.id ';
         }
@@ -286,10 +287,13 @@ class Log_Query {
         if ( $mt_search ) {
             $mt_params['user_login'] = true;
         }
-        $join .= ' LEFT JOIN ' . $this->get_log_meta_view( $mt_params ) . ' meta_view ON lg.log_id = meta_view.view_log_id ';
+
+        if ( ! $beta_optimize ) {
+            $join_meta .= ' LEFT JOIN ' . $this->get_log_meta_view( $mt_params ) . ' meta_view ON lg.log_id = meta_view.view_log_id ';
+        }
 
         if ( 'events_list' === $view ) {
-            $join .= ' LEFT JOIN ' . $this->get_sub_query_view() . ' sub_lg ON lg.log_id = sub_lg.sub_log_id ';
+            $join_sub .= ' LEFT JOIN ' . $this->get_sub_query_view() . ' sub_lg ON lg.log_id = sub_lg.sub_log_id ';
         }
 
         $recent_where = '';
@@ -301,12 +305,25 @@ class Log_Query {
             $recent_query = "SELECT MAX( lg.created )
             FROM $wpdb->mainwp_tbl_logs as lg
             {$join}
-            WHERE `lg`.`connector` != 'compact' AND lg.dismiss = 0 ORDER BY lg.created DESC {$recent_limits}";
+            {$join_meta}
+            {$join_sub}
+            WHERE `lg`.`connector` != 'compact' ORDER BY lg.created DESC {$recent_limits}";
 
             $recent_created = $wpdb->get_var( $recent_query ); //phpcs:ignore -- NOSONAR - ok.
 
             $recent_where = ' AND lg.created <= ' . (int) $recent_created;
         }
+
+        if ( ! empty( $recent_where ) ) {
+            $orderby = '';
+            $limits  = '';
+        }
+
+        if ( ! empty( $join_meta ) ) {
+            $selects[] = 'meta_view.*';
+        }
+
+        $select = implode( ', ', $selects );
 
         /**
          * BUILD THE FINAL QUERY
@@ -314,29 +331,38 @@ class Log_Query {
         $query = "SELECT {$select}
         FROM $wpdb->mainwp_tbl_logs as lg
         {$join}
-        WHERE `lg`.`connector` != 'compact' {$where} {$recent_where} {$where_users_filter}
+        {$join_meta}
+        {$join_sub}
+        WHERE `lg`.`connector` != 'compact' {$where} {$where_users_filter} {$recent_where}
         {$orderby}
         {$limits}";
 
         // Build result count query.
+        // Join meta, join sub for search conditionals if existed.
         $count_query = "SELECT COUNT(*)
         FROM $wpdb->mainwp_tbl_logs as lg
-        {$join}
-        WHERE `lg`.`connector` != 'compact' {$where} {$recent_where} {$where_users_filter}";
+        {$join}";
+        if ( ! empty( $search_str ) ) {
+            $count_query .= "{$join_meta} {$join_sub}";
+        }
+        $count_query .= " WHERE `lg`.`connector` != 'compact' {$where} {$where_users_filter} {$recent_where} ";
+
+        if ( ! empty( $recent_query ) ) {
+            MainWP_DB::instance()->log_system_query( $args, $recent_query, $this );
+        }
+
+        if ( ! $count_only ) {
+            MainWP_DB::instance()->log_system_query( $args, $query, $this );
+        }
+
+        if ( $count_only || ! $not_count ) {
+            MainWP_DB::instance()->log_system_query( $args, $count_query, $this );
+        }
 
         if ( $count_only ) {
             return array(
                 'count' => absint( $wpdb->get_var( $count_query ) ),  // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
             );
-        }
-
-        if ( ! empty( $args['dev_log_query'] ) ) {
-            //phpcs:disable Squiz.PHP.CommentedOutCode.Found,WordPress.PHP.DevelopmentFunctions
-            error_log( print_r( $args, true ) );
-            error_log( $recent_query );
-            error_log( $query );
-            error_log( $count_query );
-            //phpcs:enable Squiz.PHP.CommentedOutCode.Found,WordPress.PHP.DevelopmentFunctions
         }
 
         /**

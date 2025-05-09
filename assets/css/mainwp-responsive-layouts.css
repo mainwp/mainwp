@@ -2,6 +2,10 @@
 /*---------------[RESPONSIVE LAYOUTS]-------------*/
 /*------------------------------------------------*/
 
+#mainwp-top-header #mainwp-mobile-menu-trigger {
+	display: none;
+}
+
 @media only screen and (max-height: 500px) {
 	.mainwp-nav-menu .item-wp-admin {
 		position: relative !important;
@@ -87,6 +91,24 @@
 
 @media screen and (max-width: 1140px) {
 
+	#mainwp-top-header .ui.button {
+		width: auto !important;
+		min-width: auto !important;
+	}
+
+	#mainwp-top-header .ui.button {
+		width: auto !important;
+		min-width: auto !important;
+	}
+
+	#mainwp-main-mobile-navigation-container .ui.button {
+		width: 100% !important;
+	}
+
+	#mainwp-top-header #mainwp-mobile-menu-trigger {
+		display: inline-block !important;
+	}
+
 	#mainwp-navigation-icon {
 		margin: 0 !important;
 		width: 35px !important;
@@ -101,11 +123,6 @@
 
 	#mainwp-main-navigation-container {
 		display: none !important;
-	}
-
-	.mainwp-main-mobile-navigation-container {
-		display: block;
-		padding: 1em;
 	}
 
 	.mainwp-ui.toplevel_page_mainwp_tab.mainwp-ui-leftmenu .mainwp-content-wrap,
@@ -128,6 +145,10 @@
 	#mainwp-main-menu.ui.menu {
 		min-height: 0;
 	}
+
+	.mainwp-ui .ui.page.dimmer {
+		margin-left: 0 !important;
+	}
 }
 
 @media screen and (max-width: 767.98px) {
@@ -140,12 +161,6 @@
 	.mainwp-ui.mainwp-custom-theme div.dt-container.dt-semanticUI div.dt-search span.input input,
 	.mainwp-ui.mainwp-custom-theme div.dt-container.dt-semanticUI div.dt-length .ui.selection.dropdown {
 		font-size: 1em !important;
-	}
-
-	.mainwp-ui.mainwp-custom-theme div.dt-container.dt-semanticUI .column:has( .dt-length ),
-	.mainwp-ui.mainwp-custom-theme div.dt-container.dt-semanticUI .column:has( .dt-search ) {
-		width: 50% !important;
-		vertical-align: top !important;
 	}
 
 
@@ -238,11 +253,14 @@
 	.mainwp-ui [data-tooltip]:after {
 		display: none !important;
 	}
-
+	.mainwp-ui .mainwp-actions-bar .ui.mini.form .ui.dropdown, 
+	.mainwp-ui .mainwp-actions-bar.ui.mini.form .ui.dropdown, 
+	.mainwp-ui .mainwp-sub-header .ui.mini.form .ui.dropdown, 
+	.mainwp-ui .mainwp-sub-header.ui.mini.form .ui.dropdown,
 	.mainwp-ui .ui.dropdown {
 		width: 100% !important;
+		font-size: 1rem !important;
 	}
-
 
 
 	.mainwp-main-content {
@@ -264,18 +282,12 @@
 		width: auto !important;
 	}
 
-	#mainwp-top-header .ui.icon.button {
+	#mainwp-top-header .ui.icon.button:not(#mainwp-mobile-menu-trigger) {
 		display: none !important;
 	}
 
 	#mainwp-top-header .ui.icon.button#mainwp-sync-sites {
-		display: block !important;
-	}
-
-	#mainwp-top-header #mainwp-sync-sites {
-		display: block;
-		width: 100%;
-		margin-bottom: 20px;
+		display: inline-block !important;
 	}
 
 	.mainwp-widget .ui.icon.button {
@@ -291,9 +303,10 @@
 	.mainwp-side-content.mainwp-no-padding {
 		padding: 1em !important;
 	}
-
+	.mainwp-ui .ui.button:not(.icon),
 	.mainwp-ui .ui.button:not(.mini),
-	.mainwp-ui .ui.button:not(.icon) {
+	.mainwp-ui .ui.button:not(#mainwp-sync-sites),
+	.mainwp-ui .ui.button:not(#mainwp-mobile-menu-trigger) {
 		width: 100%;
 		margin-left: 0 !important;
 		margin-right: 0 !important;
@@ -316,6 +329,24 @@
 		flex-direction: column;
 	}
 
+	/*--- Buttons ---*/
+
+	.mainwp-ui .ui.button {
+		font-size: 1rem !important;
+		min-width: 50% !important;
+	}
+
+	.mainwp-ui .ui.table .ui.button {
+		font-size: 0.78571429rem !important;
+		min-width: auto !important;
+	}
+
+	/*--- Inputs ---*/
+
+	.mainwp-ui .ui.icon.input {
+		font-size: 1rem !important;
+		width: 100% !important;
+	}
 
 	/*--- Tables ---*/
 
@@ -533,11 +564,6 @@
 
 	.mainwp-ui #mainwp-top-header .ui.stackable.grid .right.floated.column.right.aligned {
 		padding: 1rem 0 !important;
-	}
-
-	#mainwp-sync-sites.ui.button.green {
-		padding-left: 15px !important;
-		padding-right: 15px !important;
 	}
 
 	#mainwp-main-menu.ui.menu {

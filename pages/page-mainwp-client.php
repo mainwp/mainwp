@@ -454,7 +454,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             if ( $client ) {
                 $arr_client      = MainWP_Utility::map_fields( $client, array( 'image', 'selected_icon_info' ), false ); // array map.
                 $client_pic      = MainWP_Client_Handler::get_client_contact_image( $arr_client );
-                $params['title'] = $client_pic . '<div class="content">' . $client->name . '<div class="sub header"><a href="mailto:' . $client->client_email . '" target="_blank" style="font-weight:normal!important;">' . $client->client_email . '</a> </div></div>';
+                $params['title'] = $client_pic . '<div class="content">' . $client->name . '<div class="sub header"><a href="mailto:' . esc_attr( $client->client_email ) . '" target="_blank" style="font-weight:normal!important;">' . $client->client_email . '</a> </div></div>';
             }
         }
 

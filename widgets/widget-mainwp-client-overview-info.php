@@ -116,7 +116,7 @@ class MainWP_Client_Overview_Info { // phpcs:ignore Generic.Classes.OpeningBrace
 
                     <div class="sixteen wide center aligned column">
                         <?php if ( isset( $client_info['client_email'] ) && '' !== $client_info['client_email'] ) : ?>
-                            <a href="mailto:<?php echo esc_url( $client_info['client_email'] ); ?>" class="ui basic icon button" target="_blank" data-tooltip="<?php echo esc_attr( $client_info['client_email'] ); ?>" data-inverted="" data-position="top center">
+                            <a href="mailto:<?php echo esc_attr( $client_info['client_email'] ); ?>" class="ui basic icon button" target="_blank" data-tooltip="<?php echo esc_attr( $client_info['client_email'] ); ?>" data-inverted="" data-position="top center">
                                 <i class="envelope grey icon"></i>
                             </a>
                         <?php endif; ?>

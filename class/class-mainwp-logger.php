@@ -18,21 +18,21 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
     // phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write logging file.
 
-    const UPDATE_CHECK_LOG_PRIORITY        = 10;
-    const EXECUTION_TIME_LOG_PRIORITY      = 15;
-    const LOGS_AUTO_PURGE_LOG_PRIORITY     = 16;
-    const LOGS_REGULAR_SCHEDULE            = 18;
-    const DEBUG_UPDATES_SCHEDULE           = 19;
-    const COST_TRACKER_LOG_PRIORITY        = 20230112;
-    const API_BACKUPS_LOG_PRIORITY         = 20240130;
-    const CONNECT_LOG_PRIORITY             = 20241001;
-    const UPTIME_CHECK_LOG_PRIORITY        = 20241017;
-    const UPTIME_NOTICE_LOG_PRIORITY       = 202411106;
-    const DISABLED                         = - 1;
-    const LOG                              = 0;
-    const WARNING                          = 1;
-    const INFO                             = 2;
-    const DEBUG                            = 3;
+    const UPDATE_CHECK_LOG_PRIORITY    = 10;
+    const EXECUTION_TIME_LOG_PRIORITY  = 15;
+    const LOGS_AUTO_PURGE_LOG_PRIORITY = 16;
+    const LOGS_REGULAR_SCHEDULE        = 18;
+    const DEBUG_UPDATES_SCHEDULE       = 19;
+    const COST_TRACKER_LOG_PRIORITY    = 20230112;
+    const API_BACKUPS_LOG_PRIORITY     = 20240130;
+    const CONNECT_LOG_PRIORITY         = 20241001;
+    const UPTIME_CHECK_LOG_PRIORITY    = 20241017;
+    const UPTIME_NOTICE_LOG_PRIORITY   = 202411106;
+    const DISABLED                     = - 1;
+    const LOG                          = 0;
+    const WARNING                      = 1;
+    const INFO                         = 2;
+    const DEBUG                        = 3;
 
     const LOG_COLOR     = '#999999';
     const DEBUG_COLOR   = '#666666';

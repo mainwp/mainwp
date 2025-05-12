@@ -260,10 +260,11 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @param string $subject email subject.
      * @param string $mail_content email content.
      * @param bool   $plain_text Text format.
+     * @param object $site_mo Monitor website.
      *
      * @uses \MainWP\Dashboard\MainWP_Logger::debug()
      */
-    public static function send_websites_uptime_monitoring( $emails, $subject, $mail_content, $plain_text ) {
+    public static function send_websites_uptime_monitoring( $emails, $subject, $mail_content, $plain_text, $site_mo = false ) {
 
         if ( $plain_text ) {
             $content_type = "Content-Type: text/plain; charset=\"utf-8\"\r\n";
@@ -273,6 +274,10 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         if ( ! empty( $emails ) && ! empty( $mail_content ) ) {
             MainWP_Logger::instance()->log_uptime_notice( 'Uptime monitoring status :: send mail :: ' . $subject );
+            if ( $site_mo ) {
+                $event_time = ! empty( $site_mo->hb_time_check ) ? gmdate( 'Y-m-d H:i:s', $site_mo->hb_time_check ) : '';
+                MainWP_Logger::instance()->log_uptime_notice( 'Sending notification :: [subject=' . esc_html( $subject ) . '] :: [event-time=' . $event_time . '] :: [monitorid=' . $site_mo->monitor_id . '] :: [monitor-url=' . ( empty( $site_mo->issub ) ? $site_mo->url : $site_mo->suburl ) . ']' );
+            }
             static::send_wp_mail(
                 $emails,
                 $subject,

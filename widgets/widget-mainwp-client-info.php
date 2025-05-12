@@ -144,7 +144,7 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                             </a>
                         <?php endif; ?>
                         <?php if ( isset( $client_info['client_phone'] ) && '' !== $client_info['client_phone'] ) : ?>
-                            <a href="tel:<?php echo esc_url( $client_info['client_phone'] ); ?>" class="ui basic icon button" target="_blank" data-tooltip="<?php echo esc_attr( $client_info['client_phone'] ); ?>" data-inverted="" data-position="top center">
+                            <a href="tel:<?php echo esc_attr( $client_info['client_phone'] ); ?>" class="ui basic icon button" target="_blank" data-tooltip="<?php echo esc_attr( $client_info['client_phone'] ); ?>" data-inverted="" data-position="top center">
                                 <i class="phone grey icon"></i>
                             </a>
                         <?php endif; ?>

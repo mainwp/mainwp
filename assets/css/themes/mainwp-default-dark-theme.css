@@ -803,7 +803,7 @@
   border-radius: 0 0 0 0.28571429rem !important;
 }
 .mainwp-ui.mainwp-custom-theme .ui.table > tbody > tr:last-child > td:last-child {
-  border-radius: 0 0 0.28571429rem 0 !important;
+  border-radius: 0 0 0.28571429rem !important;
 }
 
 .mainwp-ui table.dataTable thead tr th.check-column {

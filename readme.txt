@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.8.1
 Requires PHP: 7.4
-Stable tag: 5.4.0.8
+Stable tag: 5.4.0.9
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -146,6 +146,15 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.4.0.9 - Maintenance Release - 5-13-2025 =
+
+* Fixed: Adjusted phone number and email link escaping from URL to attribute context for improved HTML output. [(#781)](https://github.com/mainwp/mainwp/issues/781)
+* Fixed: Refined uptime monitoring notification sending to include site-specific context.
+* Fixed: Updated API backup key handling to clear child website options more precisely. [(#784)](https://github.com/mainwp/mainwp/issues/784)
+* Added: More detailed warning messages for email template operation failures, providing clearer feedback on issues such as permission problems or invalid destinations.
+* Updated: Improved incident statistics for uptime monitoring to more accurately count incidents based on importance and monitor type. [(#782)](https://github.com/mainwp/mainwp/issues/782)
+* Updated: Enhanced logging behavior for uptime monitoring notifications with added contextual information.
 
 = 5.4.0.8 - Maintenance Release - 5-6-2025 =
 

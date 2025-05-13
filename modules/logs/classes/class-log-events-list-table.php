@@ -132,10 +132,6 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             unset( $columns['source'] );
         }
 
-        if ( $this->optimize_table ) {
-            unset( $columns['user_id'] );
-        }
-
         return $columns;
     }
 
@@ -518,7 +514,8 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         );
 
         if ( isset( $_REQUEST['optimize_table'] ) && 1 === intval( $_REQUEST['optimize_table'] ) ) {
-            $args['optimize'] = 1;
+            $args['optimize']           = 1;
+            $args['optimize_with_meta'] = 1;
         }
 
         $args['records_per_page'] = $perPage;

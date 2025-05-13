@@ -33,13 +33,14 @@ class Log_Query {
         global $wpdb;
 
         // To support none mainwp actions.
-        $log_id        = isset( $args['log_id'] ) ? intval( $args['log_id'] ) : 0;
-        $site_id       = isset( $args['wpid'] ) ? $args['wpid'] : 0; // int or array of int site ids.
-        $object_id     = isset( $args['object_id'] ) ? sanitize_text_field( $args['object_id'] ) : '';
-        $where_extra   = ''; // compatible.
-        $check_access  = isset( $args['check_access'] ) ? $args['check_access'] : true;
-        $view          = isset( $args['view'] ) ? sanitize_text_field( $args['view'] ) : '';
-        $beta_optimize = isset( $args['optimize'] ) && ! empty( $args['optimize'] ) ? true : false;
+        $log_id          = isset( $args['log_id'] ) ? intval( $args['log_id'] ) : 0;
+        $site_id         = isset( $args['wpid'] ) ? $args['wpid'] : 0; // int or array of int site ids.
+        $object_id       = isset( $args['object_id'] ) ? sanitize_text_field( $args['object_id'] ) : '';
+        $where_extra     = ''; // compatible.
+        $check_access    = isset( $args['check_access'] ) ? $args['check_access'] : true;
+        $view            = isset( $args['view'] ) ? sanitize_text_field( $args['view'] ) : '';
+        $optimize_get_dt = isset( $args['optimize'] ) && ! empty( $args['optimize'] ) ? true : false;
+        $opti_with_meta  = isset( $args['optimize_with_meta'] ) && ! empty( $args['optimize_with_meta'] ) ? true : false;
 
         $join      = '';
         $join_meta = '';
@@ -62,7 +63,7 @@ class Log_Query {
                     $where_search .= ' OR lg.item LIKE  "%' . $search_str . '%" ';
                     if ( 'events_list' === $view ) {
                         $where_search .= ' OR sub_lg.source LIKE  "%' . $search_str . '%" ';
-                        if ( ! $beta_optimize ) {
+                        if ( ! $optimize_get_dt ) {
                             $where_search .= ' OR meta_view.user_login LIKE  "%' . $search_str . '%" ';
                         }
                         $mt_search = true;
@@ -288,8 +289,11 @@ class Log_Query {
             $mt_params['user_login'] = true;
         }
 
-        if ( ! $beta_optimize ) {
+        $optimize_get_meta = false;
+        if ( ! $optimize_get_dt ) {
             $join_meta .= ' LEFT JOIN ' . $this->get_log_meta_view( $mt_params ) . ' meta_view ON lg.log_id = meta_view.view_log_id ';
+        } elseif ( $opti_with_meta ) {
+            $optimize_get_meta = true;
         }
 
         if ( 'events_list' === $view ) {
@@ -365,11 +369,51 @@ class Log_Query {
             );
         }
 
+        $items = $wpdb->get_results( $query ); // phpcs:ignore -- ok.
+
+        if ( $optimize_get_dt && $optimize_get_meta ) {
+
+            $ids = array_map( 'absint', wp_list_pluck( $items, 'log_id' ) );
+
+            $start_slice = 0;
+            $max_slice   = 100;
+            while ( $start_slice <= count( $ids ) ) {
+                $slice_ids    = array_slice( $ids, $start_slice, $max_slice );
+                $start_slice += $max_slice;
+
+                if ( ! empty( $slice_ids ) ) {
+
+                    $sql_meta = sprintf(
+                        "SELECT * FROM $wpdb->mainwp_tbl_logs_meta WHERE meta_log_id IN ( %s )",
+                        implode( ',', $slice_ids )
+                    );
+
+                    $meta_records = $wpdb->get_results( $sql_meta );
+                    $ids_flip     = array_flip( $ids );
+
+                    foreach ( $meta_records as $meta_record ) {
+                        if ( ! empty( $meta_record->meta_value ) ) {
+                            $items[ $ids_flip[ $meta_record->meta_log_id ] ]->user_meta_json[ $meta_record->meta_key ][] = $meta_record->meta_value;
+                            // compatible format.
+                            if ( in_array( $meta_record->meta_key, array( 'user_meta_json', 'user_login', 'extra_info' ) ) ) {
+                                $items[ $ids_flip[ $meta_record->meta_log_id ] ]->{$meta_record->meta_key} = $meta_record->meta_value;
+                            } else {
+                                if ( empty( $items[ $ids_flip[ $meta_record->meta_log_id ] ]->meta ) ) {
+                                    $items[ $ids_flip[ $meta_record->meta_log_id ] ]->meta = array();
+                                }
+                                $items[ $ids_flip[ $meta_record->meta_log_id ] ]->meta[ $meta_record->meta_key ] = $meta_record->meta_value;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         /**
          * QUERY THE DATABASE FOR RESULTS
          */
         $results = array(
-            'items' => $wpdb->get_results( $query ), // phpcs:ignore -- ok.
+            'items' => $items,
         );
         if ( ! $not_count ) {
             $results['count'] = absint( $wpdb->get_var( $count_query ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared

@@ -96,9 +96,9 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     private $logSpecific = 0;
 
     /**
-     * Private varibale to hold the log Specific priotrity.
+     * Private varibale to hold the auto enable logging actions.
      *
-     * @var string Disabled
+     * @var array Auto enable logging.
      */
     private $autoEnableLoggingActions = array();
 
@@ -519,7 +519,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
 
         if ( static::DISABLED === $this->logPriority ) {
-            return;
+            return false;
         }
 
         $log_to_db = apply_filters( 'mainwp_logger_to_db', true, $website );

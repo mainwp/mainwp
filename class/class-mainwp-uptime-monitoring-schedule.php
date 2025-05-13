@@ -54,7 +54,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
      * @param  array $list_values process list.
      */
     public function hook_regular_sequence_process( $list_values ) {
-        if ( is_array( $list_values ) && apply_filters( 'mainwp_favorites_enable_schedule_items_update', true ) ) {
+        if ( is_array( $list_values ) && apply_filters( 'mainwp_uptime_monitors_enable_schedule_notifications', true ) ) {
             $list_values['uptime_notification'] = array(
                 'priority' => 0,
                 'callback' => array( __CLASS__, 'run_schedule_uptime_notification' ), // must be array( class_name, method).
@@ -317,7 +317,6 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
      * @param bool   $to_admin Send to admin or not.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
-     * @uses \MainWP\Dashboard\MainWP_Notification::send_websites_uptime_monitoring()
      * @uses \MainWP\Dashboard\MainWP_Notification_Template::get_template_html()
      */
     public static function send_uptime_notification_heartbeats_importance_status( $uptime_notices, $admin_email, $email_settings, $plain_text, $to_admin = false ) { //phpcs:ignore -- NOSONAR - complex.

@@ -3280,12 +3280,15 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *
      * @param  array  $params params.
      * @param  string $sql query.
+     * @param  mixed  $caller Instance of caller class.
      * @return void
      */
-    public function log_system_query( $params, $sql ) {
+    public function log_system_query( $params, $sql, $caller = false ) {
+        $params = apply_filters( 'mainwp_log_system_query_params', $params, $sql, $caller );
         if ( is_array( $params ) && ! empty( $params['dev_log_query'] ) && ! empty( $sql ) ) {
+            error_log( print_r($params, true ) ); //phpcs:ignore -- NOSONAR - for dev.
             error_log( $sql ); //phpcs:ignore -- NOSONAR - for dev.
-            do_action( 'mainwp_log_system_query', $params, $sql );
+            do_action( 'mainwp_log_system_query', $params, $sql, $caller );
         }
     }
 }

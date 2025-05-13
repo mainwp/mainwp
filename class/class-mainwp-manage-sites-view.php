@@ -385,8 +385,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      */
     public static function render_import_sites() { // phpcs:ignore -- NOSONAR - complex.
         ?>
-        <div id="mainwp-importing-sites" class="ui active inverted dimmer">
-            <div class="ui medium text loader"><?php esc_html_e( 'Importing', 'mainwp' ); ?></div>
+        <div id="mainwp-importing-sites" class="ui active dimmer">
+            <div class="ui double text loader"><?php esc_html_e( 'Importing...', 'mainwp' ); ?></div>
         </div>
         <div class="ui message" id="mainwp-import-sites-status-message">
             <?php echo '<i class="notched circle loading icon"></i> ' . esc_html__( 'Importing...', 'mainwp' ); ?>
@@ -1406,7 +1406,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <i class="close icon"></i>
             <div class="header"><?php esc_html_e( 'Connection Test', 'mainwp' ); ?></div>
             <div class="content">
-                <div class="ui active inverted dimmer">
+                <div class="ui active dimmer">
                     <div class="ui text loader"><?php esc_html_e( 'Testing connection...', 'mainwp' ); ?></div>
                 </div>
                 <div id="mainwp-test-connection-result" class="ui segment" style="display:none">

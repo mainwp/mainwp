@@ -139,12 +139,8 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         ?>
         <div id="mainwp-manage-extensions">
-            <div class="mainwp-extensions-api-loading" style="display:none">
-                <div class="ui active inverted page dimmer">
-                    <div class="ui medium text loader"></div>
-                </div>
-            </div>
             <div class="mainwp-main-content">
+                
                 <?php if ( empty( $extensions ) && empty( $extensions_disabled ) ) { ?>
                     <?php static::render_intro_notice(); ?>
                 <?php } else { ?>
@@ -179,6 +175,11 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         <div class="ui info message"><?php esc_html_e( 'Your search returned no results. The add-on may need to be installed or does not exist.' ); ?></div>
                     </div>
                     <div class="ui segment">
+                        <div class="mainwp-extensions-api-loading" style="display:none">
+                            <div class="ui active dimmer">
+                                <div class="ui double text loader"></div>
+                            </div>
+                        </div>
                         <div class="ui four cards" id="mainwp-extensions-list">
                             <?php if ( isset( $extensions ) && is_array( $extensions ) ) { ?>
                                 <?php foreach ( $extensions as $extension ) { ?>

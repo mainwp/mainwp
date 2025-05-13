@@ -113,6 +113,12 @@ class Log {
 
         $dura = $dura / $dura_bulk;
 
+        $created = time();
+        if ( ! empty( $args['created'] ) ) {
+            $created = $args['created'];
+            unset( $args['created'] );
+        }
+
         // Prevent any meta with null values from being logged.
         $logs_meta = array_filter(
             $args,
@@ -141,7 +147,7 @@ class Log {
             'context'   => (string) $context,
             'action'    => (string) $action,
             'duration'  => $dura,
-            'created'   => time(),
+            'created'   => $created,
             'state'     => $state,
             'meta'      => (array) $logs_meta,
         );

@@ -737,7 +737,8 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
 
         // If post $value is empty, delete option.
         if ( empty( $value ) ) {
-            delete_option( $opt_name );
+            // Delete the site serviceapi key.
+            Api_Backups_Helper::update_website_option( $website_id, $opt_name, '' );
             if ( ! empty( $key_file ) ) {
                 do_action( 'mainwp_delete_key_file', $key_file );
             }

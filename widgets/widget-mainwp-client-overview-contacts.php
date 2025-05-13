@@ -112,12 +112,12 @@ class MainWP_Client_Overview_Contacts { // phpcs:ignore Generic.Classes.OpeningB
 
                     <div class="sixteen wide center aligned column">
                         <?php if ( isset( $contact_info['contact_email'] ) && '' !== $contact_info['contact_email'] ) : ?>
-                            <a href="mailto:<?php echo esc_url( $contact_info['contact_email'] ); ?>" class="ui basic icon button" target="_blank" data-tooltip="<?php echo esc_attr( $contact_info['contact_email'] ); ?>" data-inverted="" data-position="top center">
+                            <a href="mailto:<?php echo esc_attr( $contact_info['contact_email'] ); ?>" class="ui basic icon button" target="_blank" data-tooltip="<?php echo esc_attr( $contact_info['contact_email'] ); ?>" data-inverted="" data-position="top center">
                                 <i class="envelope grey icon"></i>
                             </a>
                         <?php endif; ?>
                         <?php if ( isset( $contact_info['contact_phone'] ) && '' !== $contact_info['contact_phone'] ) : ?>
-                            <a href="tel:<?php echo esc_url( $contact_info['contact_phone'] ); ?>" class="ui basic icon button" target="_blank" data-tooltip="<?php echo esc_attr( $contact_info['contact_phone'] ); ?>" data-inverted="" data-position="top center">
+                            <a href="tel:<?php echo esc_attr( $contact_info['contact_phone'] ); ?>" class="ui basic icon button" target="_blank" data-tooltip="<?php echo esc_attr( $contact_info['contact_phone'] ); ?>" data-inverted="" data-position="top center">
                                 <i class="phone grey icon"></i>
                             </a>
                         <?php endif; ?>

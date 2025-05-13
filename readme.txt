@@ -147,6 +147,15 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
+= 5.4.0.9 - Maintenance Release - 5-13-2025 =
+
+* Fixed: Adjusted phone number and email link escaping from URL to attribute context for improved HTML output. [(#781)](https://github.com/mainwp/mainwp/issues/781)
+* Fixed: Refined uptime monitoring notification sending to include site-specific context.
+* Fixed: Updated API backup key handling to clear child website options more precisely. [(#784)](https://github.com/mainwp/mainwp/issues/784)
+* Added: More detailed warning messages for email template operation failures, providing clearer feedback on issues such as permission problems or invalid destinations.
+* Updated: Improved incident statistics for uptime monitoring to more accurately count incidents based on importance and monitor type. [(#782)](https://github.com/mainwp/mainwp/issues/782)
+* Updated: Enhanced logging behavior for uptime monitoring notifications with added contextual information.
+
 = 5.4.0.8 - Maintenance Release - 5-6-2025 =
 
 * Fixed: Incorrect type property for the Vulnerability Checker which made it appear as a Pro add-on.

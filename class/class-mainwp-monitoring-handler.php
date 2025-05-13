@@ -196,7 +196,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
             if ( ! empty( $mail_content ) ) {
                 MainWP_Logger::instance()->log_uptime_notice( 'Uptime notification is being sent for individual site.' );
-                MainWP_Notification::send_websites_uptime_monitoring( $email, $subject, $mail_content, $plain_text );
+                MainWP_Notification::send_websites_uptime_monitoring( $email, $subject, $mail_content, $plain_text, $site );
                 usleep( 100000 );
             }
             do_action( 'mainwp_after_notice_sites_uptime_monitoring_individual', $site );

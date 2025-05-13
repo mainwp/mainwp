@@ -1018,12 +1018,12 @@ KEY idx_wpid (wpid)";
         $end   = isset( $params['end'] ) ? $params['end'] . ' 23:59:59' : gmdate( 'Y-m-d 23:59:59', time() );
 
         $sql = $this->wpdb->prepare(
-            'SELECT ' .
-            ' ( SELECT count(*) FROM ' . $this->table_name( 'monitor_heartbeat' ) . ' he WHERE he.time > "' . $this->escape( $start ) . '" AND he.time <= "' . $this->escape( $end ) . '" AND he.monitor_id = he.monitor_id AND he.status = 0 ) AS count_incidents' .
+            'SELECT mo.wpid, mo.monitor_id, ' .
+            ' ( SELECT count(*) FROM ' . $this->table_name( 'monitor_heartbeat' ) . ' he2 WHERE he2.time > "' . $this->escape( $start ) . '" AND he2.time <= "' . $this->escape( $end ) . '" AND he2.monitor_id = mo.monitor_id AND he2.status = 0 AND he2.importance = 1 ) AS count_incidents' .
             ' FROM ' . $this->table_name( 'monitors' ) . ' mo ' .
             ' LEFT JOIN ' . $this->table_name( 'monitor_heartbeat' ) . ' he ' .
             ' ON mo.monitor_id = he.monitor_id ' .
-            ' WHERE mo.wpid = %d LIMIT 1',
+            ' WHERE mo.wpid = %d AND mo.issub = 0 LIMIT 1 ',
             $siteid
         );
 

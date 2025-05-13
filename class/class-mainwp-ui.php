@@ -2473,8 +2473,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             <div class="ui hidden divider"></div>
                             <i class="ticket big grey icon" style="opacity:0.3"></i>
                             <div class="ui fitted hidden divider"></div><br/>
-                            <span class="ui grey small text"><?php esc_html_e( 'Get in touch with our team for any inquiries or support � we\'re here to help you.', 'mainwp' ); ?></span>
-
+                            <span class="ui grey small text"><?php esc_html_e( 'Get in touch with our team for any inquiries or support – we\'re here to help you.', 'mainwp' ); ?></span>
+                            
                             </a>
                         </div>
                         <div class="content">

@@ -1393,7 +1393,9 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      *
      * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     * @uses \MainWP\Dashboard\MainWP_Sync::sync_site()
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
      */
     public function upgrade_plugin_theme() { // phpcs:ignore -- NOSONAR - complex.
         try {
@@ -1454,6 +1456,16 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
                 * @since 4.1
                 */
                 do_action( 'mainwp_after_plugin_theme_translation_update', $information, $type, implode( ',', $slugs ), $website );
+
+                // Update website data here.
+                if ( isset( $information['upgrades'] ) && is_array( $information['upgrades'] ) && is_array( $slugs ) ) {
+                    foreach ( $slugs as $slug ) {
+                        if ( isset( $information['upgrades'][ $slug ] ) && $information['upgrades'][ $slug ] === true ) {
+                            MainWP_Sync::sync_site( $website, false, false );
+                            break; // Just sync once if there is any Slug update.
+                        }
+                    }
+                }
 
                 if ( isset( $information['sync'] ) ) {
                     unset( $information['sync'] );

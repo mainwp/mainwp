@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.8.1
 Requires PHP: 7.4
-Stable tag: 5.4.0.9
+Stable tag: 5.4.0.10
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -146,6 +146,11 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.4.0.10 - Maintenance Release - 5-20-2025 =
+
+* Fixed: Corrected a typo in the Force IPv4 option tooltip for improved clarity. [(#787)](https://github.com/mainwp/mainwp/issues/787)
+* Fixed: Changed incorrect "Theme advanced automatic updates" option label to "Translation advanced automatic updates" and updated the corresponding tooltip to accurately reflect its function.
 
 = 5.4.0.9 - Maintenance Release - 5-13-2025 =
 

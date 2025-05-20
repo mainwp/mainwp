@@ -258,8 +258,8 @@ class Log_Settings {
                             </div>
                         </div>
                         <div class="ui grid field">
-                            <label class="six wide column middle aligned"><?php esc_html_e( 'Enable auto archive', 'mainwp' ); ?></label>
-                            <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements"  hide-parent="auto-archive" data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will auto archive logs.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                            <label class="six wide column middle aligned"><?php esc_html_e( 'Auto-archive logs', 'mainwp' ); ?></label>
+                            <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements"  hide-parent="auto-archive" data-tooltip="<?php esc_attr_e( 'Automatically move older logs to the archive after a specified period of time. This helps keep your active logs organized while maintaining a searchable history.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                                 <input type="checkbox" name="mainwp_module_log_enable_auto_archive" id="mainwp_module_log_enable_auto_archive" <?php echo $enabled_auto_archive ? 'checked="true"' : ''; ?> /><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
                             </div>
                         </div>
@@ -268,10 +268,10 @@ class Log_Settings {
                                 <?php
                                 $records_ttl = $this->options['records_logs_ttl'];
                                 MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_module_log_records_ttl', $records_ttl, true, 3 * YEAR_IN_SECONDS );
-                                esc_html_e( 'Keep records for', 'mainwp' );
+                                esc_html_e( 'Insights data retention period', 'mainwp' );
                                 ?>
                                 </label>
-                                <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Maximum number of days to keep activity records.', 'mainwp' ); ?>" data-inverted="" data-position="top left" >
+                                <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Define how long logs should remain active before being automatically moved to the archive.', 'mainwp' ); ?>" data-inverted="" data-position="top left" >
                                     <select name="mainwp_module_log_records_ttl" id="mainwp_module_log_records_ttl" class="ui dropdown settings-field-value-change-handler">
                                         <option value="<?php echo (int) MONTH_IN_SECONDS; ?>" <?php echo (int) MONTH_IN_SECONDS === (int) $records_ttl ? 'selected' : ''; ?>><?php esc_html_e( 'One month', 'mainwp' ); ?></option>
                                         <option value="<?php echo 2 * MONTH_IN_SECONDS; ?>" <?php echo 2 * MONTH_IN_SECONDS === (int) $records_ttl ? 'selected' : ''; ?>><?php esc_html_e( 'Two months', 'mainwp' ); ?></option>
@@ -355,14 +355,14 @@ class Log_Settings {
             <label class="six wide column top aligned">
             <?php
             MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-logs-data' );
-            esc_html_e( 'Select sites changes to logging', 'mainwp' );
+            esc_html_e( 'Events to log', 'mainwp' );
             ?>
             </label>
-            <div class="ten wide column" <?php echo $setting_page ? 'data-tooltip="' . esc_attr__( 'Select sites changes that you want to logs.', 'mainwp' ) . '"' : ''; ?> data-inverted="" data-position="top left">
+            <div class="ten wide column" <?php echo $setting_page ? 'data-tooltip="' . esc_attr__( 'Select which types of site changes should be recorded in the logs. Only checked items will generate log entries, helping you focus on the most relevant activity.', 'mainwp' ) . '"' : ''; ?> data-inverted="" data-position="top left">
                 <?php
                 foreach ( $list_logs as $type => $items ) {
                     ?>
-                    <div class="ui header"><?php echo 'dashboard' === $type ? esc_html__( 'Dashboard', 'mainwp' ) : esc_html__( 'Non mainwp changes', 'mainwp' ); ?></div>
+                    <div class="ui header"><?php echo 'dashboard' === $type ? esc_html__( 'Events triggered from MainWP Dashboard', 'mainwp' ) : esc_html__( 'Non-MainWP Changes - Events triggered on child sites', 'mainwp' ); ?></div>
                     <ul class="mainwp_hide_wpmenu_checkboxes">
                     <?php
                     foreach ( $items as $name => $title ) {
@@ -406,76 +406,76 @@ class Log_Settings {
 
         $logs = array(
             'dashboard'        => array(
-                'sites_added'           => __( 'Site added', 'mainwp' ), // site::added.
-                'sites_updated'         => __( 'Site updated', 'mainwp' ),  // site::updated.
-                'sites_sync'            => __( 'Site sync', 'mainwp' ),  // site::synced.
-                'sites_deleted'         => __( 'Site deleted', 'mainwp' ),  // site::deleted.
-                'sites_reconnect'       => __( 'Site reconnect', 'mainwp' ),  // site::reconnected.
-                'sites_suspend'         => __( 'Site suspend', 'mainwp' ),  // site::updated suspended value.
-                'sites_unsuspend'       => __( 'Site unsuspend', 'mainwp' ),  // site::updated suspended value.
+                'sites_added'           => __( 'Site Added', 'mainwp' ),
+                'sites_updated'         => __( 'Site Updated', 'mainwp' ),
+                'sites_sync'            => __( 'Site Synchronized', 'mainwp' ),
+                'sites_deleted'         => __( 'Site Deleted', 'mainwp' ),
+                'sites_reconnect'       => __( 'Site Reconnected', 'mainwp' ),
+                'sites_suspend'         => __( 'Site Suspended', 'mainwp' ),
+                'sites_unsuspend'       => __( 'Site Unsuspended', 'mainwp' ),
 
-                'tags_created'          => __( 'Tag created', 'mainwp' ),
-                'tags_deleted'          => __( 'Tag deleted', 'mainwp' ),
-                'tags_updated'          => __( 'Tag updated', 'mainwp' ),
+                'tags_created'          => __( 'Tag Created', 'mainwp' ),
+                'tags_deleted'          => __( 'Tag Deleted', 'mainwp' ),
+                'tags_updated'          => __( 'Tag Updated', 'mainwp' ),
 
-                'theme_install'         => __( 'Install themes', 'mainwp' ),
-                'theme_activate'        => __( 'Active themes', 'mainwp' ),
-                'theme_deactivate'      => __( 'Deactive themes', 'mainwp' ),
-                'theme_update'          => __( 'Update themes', 'mainwp' ),
-                'theme_switch'          => __( 'Switch themes', 'mainwp' ),
-                'theme_delete'          => __( 'Delete themes', 'mainwp' ),
+                'theme_install'         => __( 'Theme Installed', 'mainwp' ),
+                'theme_activate'        => __( 'Theme Activated', 'mainwp' ),
+                'theme_deactivate'      => __( 'Theme Deactivated', 'mainwp' ),
+                'theme_update'          => __( 'Theme Updated', 'mainwp' ),
+                'theme_switch'          => __( 'Theme Switched', 'mainwp' ),
+                'theme_delete'          => __( 'Theme Deleted', 'mainwp' ),
 
-                'plugin_install'        => __( 'Install plugins', 'mainwp' ),
-                'plugin_activate'       => __( 'Active plugins', 'mainwp' ),
-                'plugin_deactivate'     => __( 'Deactive plugins', 'mainwp' ),
-                'plugin_updated'        => __( 'Update plugins', 'mainwp' ),
-                'plugin_delete'         => __( 'Delete plugins', 'mainwp' ),
+                'plugin_install'        => __( 'Plugin Installed', 'mainwp' ),
+                'plugin_activate'       => __( 'Plugin Activated', 'mainwp' ),
+                'plugin_deactivate'     => __( 'Plugin Deactivated', 'mainwp' ),
+                'plugin_updated'        => __( 'Plugin Updated', 'mainwp' ),
+                'plugin_delete'         => __( 'Plugin Deleted', 'mainwp' ),
 
-                'translation_updated'   => __( 'Translation update', 'mainwp' ),
-                'core_updated'          => __( 'WordPress updated', 'mainwp' ),
+                'translation_updated'   => __( 'Translation Updated', 'mainwp' ),
+                'core_updated'          => __( 'WordPress Core Updated', 'mainwp' ),
 
-                'post_created'          => __( 'Posts created', 'mainwp' ),
-                'post_published'        => __( 'Posts publish', 'mainwp' ),
-                'post_unpublished'      => __( 'Posts unpublish', 'mainwp' ),
-                'post_updated'          => __( 'Posts updated', 'mainwp' ),
-                'post_trashed'          => __( 'Posts trashed', 'mainwp' ),
-                'post_deleted'          => __( 'Posts deleted', 'mainwp' ),
-                'post_restored'         => __( 'Posts restored', 'mainwp' ),
+                'post_created'          => __( 'Post Created', 'mainwp' ),
+                'post_published'        => __( 'Post Published', 'mainwp' ),
+                'post_unpublished'      => __( 'Post Unpublished', 'mainwp' ),
+                'post_updated'          => __( 'Post Updated', 'mainwp' ),
+                'post_trashed'          => __( 'Post Trashed', 'mainwp' ),
+                'post_deleted'          => __( 'Post Deleted', 'mainwp' ),
+                'post_restored'         => __( 'Post Restored', 'mainwp' ),
 
-                'page_created'          => __( 'Pages created', 'mainwp' ),
-                'page_published'        => __( 'Pages publish', 'mainwp' ),
-                'page_unpublished'      => __( 'Pages unpublish', 'mainwp' ),
-                'page_updated'          => __( 'Pages updated', 'mainwp' ),
-                'page_trashed'          => __( 'Pages trashed', 'mainwp' ),
-                'page_deleted'          => __( 'Pages deleted', 'mainwp' ),
-                'page_restored'         => __( 'Pages restored', 'mainwp' ),
+                'page_created'          => __( 'Page Created', 'mainwp' ),
+                'page_published'        => __( 'Page Published', 'mainwp' ),
+                'page_unpublished'      => __( 'Page Unpublished', 'mainwp' ),
+                'page_updated'          => __( 'Page Updated', 'mainwp' ),
+                'page_trashed'          => __( 'Page Trashed', 'mainwp' ),
+                'page_deleted'          => __( 'Page Deleted', 'mainwp' ),
+                'page_restored'         => __( 'Page Restored', 'mainwp' ),
 
-                'clients_created'       => __( 'Client created', 'mainwp' ),
-                'clients_updated'       => __( 'Client updated', 'mainwp' ),
-                'clients_suspend'       => __( 'Client suspend', 'mainwp' ),
-                'clients_unsuspend'     => __( 'Client unsuspend', 'mainwp' ),
-                'clients_lead'          => __( 'Client lead', 'mainwp' ),
-                'clients_lost'          => __( 'Client lost', 'mainwp' ),
+                'clients_created'       => __( 'Client Created', 'mainwp' ),
+                'clients_updated'       => __( 'Client Updated', 'mainwp' ),
+                'clients_suspend'       => __( 'Client Suspended', 'mainwp' ),
+                'clients_unsuspend'     => __( 'Client Unsuspended', 'mainwp' ),
+                'clients_lead'          => __( 'Client Marked as Lead', 'mainwp' ),
+                'clients_lost'          => __( 'Client Marked as Lost', 'mainwp' ),
 
-                'users_created'         => __( 'User created', 'mainwp' ),
-                'users_update'          => __( 'User update', 'mainwp' ),
-                'users_delete'          => __( 'User delete', 'mainwp' ),
-                'users_change_role'     => __( 'User change role', 'mainwp' ),
-                'users_update_password' => __( 'Update admin password', 'mainwp' ),
+                'users_created'         => __( 'User Created', 'mainwp' ),
+                'users_update'          => __( 'User Updated', 'mainwp' ),
+                'users_delete'          => __( 'User Deleted', 'mainwp' ),
+                'users_change_role'     => __( 'User Role Changed', 'mainwp' ),
+                'users_update_password' => __( 'Admin Password Updated', 'mainwp' ),
             ),
             'nonmainwpchanges' => array(
-                'theme_install'     => __( 'Install themes', 'mainwp' ),
-                'theme_activate'    => __( 'Active themes', 'mainwp' ),
-                'theme_deactivate'  => __( 'Deactive themes', 'mainwp' ),
-                'theme_updated'     => __( 'Update themes', 'mainwp' ),
-                'theme_switch'      => __( 'Switch themes', 'mainwp' ),
-                'theme_delete'      => __( 'Delete themes', 'mainwp' ),
-                'plugin_install'    => __( 'Install plugins', 'mainwp' ),
-                'plugin_activate'   => __( 'Active plugins', 'mainwp' ),
-                'plugin_deactivate' => __( 'Deactive plugins', 'mainwp' ),
-                'plugin_updated'    => __( 'Update plugins', 'mainwp' ),
-                'plugin_delete'     => __( 'Delete plugins', 'mainwp' ),
-                'core_updated'      => __( 'WordPress updated', 'mainwp' ),
+                'theme_install'     => __( 'Theme Installed', 'mainwp' ),
+                'theme_activate'    => __( 'Theme Activated', 'mainwp' ),
+                'theme_deactivate'  => __( 'Theme Deactivated', 'mainwp' ),
+                'theme_updated'     => __( 'Theme Updated', 'mainwp' ),
+                'theme_switch'      => __( 'Theme Switched', 'mainwp' ),
+                'theme_delete'      => __( 'Theme Deleted', 'mainwp' ),
+                'plugin_install'    => __( 'Plugin Installed', 'mainwp' ),
+                'plugin_activate'   => __( 'Plugin Activated', 'mainwp' ),
+                'plugin_deactivate' => __( 'Plugin Deactivated', 'mainwp' ),
+                'plugin_updated'    => __( 'Plugin Updated', 'mainwp' ),
+                'plugin_delete'     => __( 'Plugin Deleted', 'mainwp' ),
+                'core_updated'      => __( 'WordPress Core Updated', 'mainwp' ),
             ),
         );
 

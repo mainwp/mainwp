@@ -580,8 +580,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             ?>
 
             <h3 class="ui dividing header">
-                <?php esc_html_e( 'Extensions Settings Synchronization', 'mainwp' ); ?>
-                <div class="sub header"><?php esc_html_e( 'Select the plugins you want to install and if you want to apply the Extensions default settings to this Child site.', 'mainwp' ); ?></div>
+                <?php esc_html_e( 'Add-ons Settings Synchronization', 'mainwp' ); ?>
+                <div class="sub header"><?php esc_html_e( 'Select the plugins you want to install and if you want to apply the Add-ons default settings to this Child site.', 'mainwp' ); ?></div>
             </h3>
 
             <?php
@@ -1693,7 +1693,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <div class="ui large modal" id="mainwp-edit-email-template-modal">
                 <i class="close icon"></i>
                 <div class="header"><?php esc_html_e( 'Edit Email Template', 'mainwp' ); ?></div>
-                    <div class="scrolling header">
+                    <div class="scrolling content">
                     <form method="POST" id="email-template-form" action="<?php echo esc_html( $localion ); ?>" class="ui form">
                         <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'save-email-template' ) ); ?>" />
                         <div class="template <?php echo esc_attr( $type ); ?>">

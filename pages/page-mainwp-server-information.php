@@ -445,24 +445,24 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         <table id="mainwp-system-report-wordpress-table" class="ui unstackable table single line mainwp-system-report-table mainwp-system-info-table">
                 <thead>
                     <tr>
-                        <th scope="col" ><?php esc_html_e( 'WordPress Check', 'mainwp' ); ?></th>
-                        <th scope="col" ><?php esc_html_e( 'Required', 'mainwp' ); ?></th>
-                        <th scope="col" ><?php esc_html_e( 'Detected', 'mainwp' ); ?></th>
-                        <th scope="col" class="right aligned"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                        <th scope="col" class="four wide"><?php esc_html_e( 'WordPress Check', 'mainwp' ); ?></th>
+                        <th scope="col" class="four wide"><?php esc_html_e( 'Required', 'mainwp' ); ?></th>
+                        <th scope="col" class="four wide"><?php esc_html_e( 'Detected', 'mainwp' ); ?></th>
+                        <th scope="col" class="four wide right aligned"></th>
                     </tr>
                 </thead>
                 <tbody>
-                <?php static::render_wordpress_check_tbody(); ?>
-            </tbody>
+                    <?php static::render_wordpress_check_tbody(); ?>
+                </tbody>
         </table>
 
         <table id="mainwp-system-report-php-table" class="ui unstackable table fixed mainwp-system-report-table mainwp-system-info-table">
             <thead>
                 <tr>
-                    <th scope="col" ><?php esc_html_e( 'PHP', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'Required', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'Detected', 'mainwp' ); ?></th>
-                    <th scope="col" class="right aligned"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                    <th scope="col" class="four wide"><?php esc_html_e( 'PHP', 'mainwp' ); ?></th>
+                    <th scope="col" class="four wide"><?php esc_html_e( 'Required', 'mainwp' ); ?></th>
+                    <th scope="col" class="four wide"><?php esc_html_e( 'Detected', 'mainwp' ); ?></th>
+                    <th scope="col" class="four wide right aligned"></th>
                 </tr>
             </thead>
             <tbody>
@@ -473,10 +473,10 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         <table id="mainwp-system-report-mysql-table" class="ui unstackable table mainwp-system-report-table mainwp-system-info-table">
             <thead>
                 <tr>
-                    <th scope="col" ><?php esc_html_e( 'MySQL', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'Required', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'Detected', 'mainwp' ); ?></th>
-                    <th scope="col" class="right aligned"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                    <th scope="col" class="four wide"><?php esc_html_e( 'MySQL', 'mainwp' ); ?></th>
+                    <th scope="col" class="four wide"><?php esc_html_e( 'Required', 'mainwp' ); ?></th>
+                    <th scope="col" class="four wide"><?php esc_html_e( 'Detected', 'mainwp' ); ?></th>
+                    <th scope="col" class="four wide right aligned"></th>
                 </tr>
             </thead>
             <tbody>
@@ -487,8 +487,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         <table id="mainwp-system-report-server-table" class="ui unstackable table mainwp-system-report-table mainwp-system-info-table">
             <thead>
                 <tr>
-                    <th scope="col" ><?php esc_html_e( 'Server Configuration', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'Detected Value', 'mainwp' ); ?></th>
+                    <th scope="col" class="eight wide"><?php esc_html_e( 'Server Configuration', 'mainwp' ); ?></th>
+                    <th scope="col" class="eight wide"><?php esc_html_e( 'Detected Value', 'mainwp' ); ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -498,10 +498,10 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         <table id="mainwp-system-report-dashboard-table" class="ui unstackable table mainwp-system-report-table mainwp-system-info-table">
             <thead>
-                    <tr>
-                    <th scope="col" ><?php esc_html_e( 'MainWP Dashboard Settings', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'Detected Value', 'mainwp' ); ?></th>
-                    </tr>
+                <tr>
+                    <th scope="col" class="eight wide"><?php esc_html_e( 'MainWP Dashboard Settings', 'mainwp' ); ?></th>
+                    <th scope="col" class="eight wide right aligned"></th>
+                </tr>
             </thead>
             <tbody>
                 <?php static::render_dashboard_check_tbody(); ?>
@@ -510,12 +510,12 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         <table id="mainwp-system-report-extensions-table" class="ui unstackable table single line mainwp-system-report-table mainwp-system-info-table">
             <thead>
-                    <tr>
-                    <th scope="col" ><?php esc_html_e( 'Extensions', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'License', 'mainwp' ); ?></th>
-                    <th scope="col" class="right aligned"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                    </tr>
+                <tr>
+                    <th scope="col" class="four wide"><?php esc_html_e( 'Extensions', 'mainwp' ); ?></th>
+                    <th scope="col" class="four wide"><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+                    <th scope="col" class="four wide"><?php esc_html_e( 'License', 'mainwp' ); ?></th>
+                    <th scope="col" class="four wide right aligned"></th>
+                </tr>
             </thead>
             <tbody>
                 <?php static::render_extensions_license_check_tbody(); ?>
@@ -525,9 +525,9 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         <table id="mainwp-system-report-plugins-table" class="ui single line table unstackable mainwp-system-report-table mainwp-system-info-table">
             <thead>
                 <tr>
-                    <th scope="col" ><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                    <th scope="col" class="eight wide"><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+                    <th scope="col" class="four wide"><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+                    <th scope="col" class="four wide right aligned"></th>
                 </tr>
             </thead>
             <tbody>

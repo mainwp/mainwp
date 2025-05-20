@@ -1072,8 +1072,14 @@
   width: 198px !important;
 }
 .mainwp-ui.mainwp-custom-theme #mainwp-page-navigation-wrapper .menu .item {
-  color: var(--mainwp-text) !important;
+  color: var(--mainwp-text-secondary) !important;
   background-color: var(--mainwp-element-background);
+  font-weight: 400 !important;
+}
+.mainwp-ui.mainwp-custom-theme #mainwp-page-navigation-wrapper .menu .item.active {
+  color: var(--mainwp-text) !important;
+  background-color: var(--mainwp-element-background-secondary);
+  font-weight: 600 !important;
 }
 .mainwp-ui.mainwp-custom-theme #mainwp-page-navigation-wrapper .menu .item:first-child {
   border-radius: var(--area-radius) var(--area-radius) 0 0 !important;
@@ -1182,12 +1188,12 @@
     border-color: var(--mainwp-border) !important;
   }
 
-  .mainwp-ui.mainwp-custom-theme .ui.tabular.menu .item {
+  .mainwp-ui.mainwp-custom-theme .ui.tabular.menu:not(.pointing) .item {
     background-color: var(--mainwp-element-background) !important;
     color: var(--mainwp-text) !important;
   }
 
-  .mainwp-ui.mainwp-custom-theme .ui.tabular.menu .active.item {
+  .mainwp-ui.mainwp-custom-theme .ui.tabular.menu:not(.pointing) .active.item {
     background-color: var(--mainwp-element-background) !important;
     color: var(--mainwp-text) !important;
     border-color: var(--mainwp-border) !important;
@@ -1445,6 +1451,30 @@ body.mainwp-ui.mainwp-custom-theme,
   .mainwp-ui.mainwp-custom-theme .ui.celled.grid > .row > .column {
       box-shadow: -1px 0 0 0 var(--mainwp-border) !important;
   }
+
+/* Steps
+========================================================================== */
+.mainwp-ui.mainwp-custom-theme .ui.steps .step {
+  background-color: var(--mainwp-element-background) !important;
+  border-right: 1px solid var(--mainwp-border) !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.steps .step.active {
+  background-color: var(--mainwp-element-background-secondary) !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.steps .step:after {
+  background-color: var(--mainwp-element-background) !important;
+  border-color: var(--mainwp-border) !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.steps .step.active:after {
+  background-color: var(--mainwp-element-background-secondary) !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.steps .step .title,
+.mainwp-ui.mainwp-custom-theme .ui.steps .step .title .icon {
+  color: var(--mainwp-text-header) !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.steps .step .description {
+  color: var(--mainwp-text) !important;
+}
 
 /* Gridster Fixes
   ========================================================================== */

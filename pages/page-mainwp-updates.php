@@ -2474,8 +2474,8 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         </div>
                     </div>
                     <div class="ui grid field">
-                        <label class="six wide column middle aligned"><?php esc_html_e( 'Theme advanced automatic updates', 'mainwp' ); ?></label>
-                        <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic theme updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Translation advanced automatic updates', 'mainwp' ); ?></label>
+                        <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic translation updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <select name="mainwp_transAutomaticDailyUpdate" id="mainwp_transAutomaticDailyUpdate" class="ui dropdown">
                                 <option value="1" <?php echo 1 === $snTransAutomaticUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
                                 <option value="0" <?php echo ( false !== $snTransAutomaticUpdate && 0 === $snTransAutomaticUpdate ) || 2 === $snTransAutomaticUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>

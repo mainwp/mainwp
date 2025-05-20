@@ -774,6 +774,11 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                 }
                             },
                             "initComplete": function( settings, json ) {
+                                if( 'widget-overview' === '<?php echo esc_js( $this->table_id_prefix ); ?>' ){
+                                    setTimeout(() => {
+                                           jQuery('#mainwp-module-log-records-table-container div.dt-search #dt-search-1').val('');// to fix issue autofill for chrome.
+                                    }, 100);
+                                }
                             },
                             rowCallback: function (row, data) {
                                 jQuery( row ).addClass(data.rowClass);

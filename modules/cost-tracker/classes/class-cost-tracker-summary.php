@@ -357,11 +357,11 @@ class Cost_Tracker_Summary {
         $costs_data = Cost_Tracker_DB::get_instance()->get_summary_data( array( 'sum_data' => 'all' ) );
         ?>
         <div class="mainwp-primary-content-wrap">
-        <div class="ui segment" style="padding-top:0;padding-bottom:0;">
+       
 
-        <?php MainWP_Overview::render_layout_selection(); ?>
+            <?php MainWP_Overview::render_layout_selection(); ?>
 
-        <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
+            <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'cost-summany-widgets' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="cost-summany-widgets"></i>
@@ -380,6 +380,12 @@ class Cost_Tracker_Summary {
             do_action( 'mainwp_before_overview_widgets', 'costsummary' );
             ?>
             <div id="mainwp-grid-wrapper" class="gridster">
+                <div id="mainwp-widgets-placeholder" class="ui page dimmer">
+                    <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
+                </div>
+                <script>
+                jQuery('#mainwp-widgets-placeholder').dimmer('show');
+                </script>
                 <?php
                 MainWP_UI::do_widget_boxes(
                     $screen->id,
@@ -411,7 +417,7 @@ class Cost_Tracker_Summary {
                         return false;
                     };
                     jQuery('#reset-costs-summary-widgets-settings').on('click', function () {
-                        mainwp_confirm(__('Are you sure.'), function(){
+                        mainwp_confirm(__('Are you sure?'), function(){
                             jQuery('.mainwp_hide_wpmenu_checkboxes input[name="mainwp_show_widgets[]"]').prop('checked', true);
                             jQuery('input[name=reset_module_cost_tracker_summary_widgets_settings]').attr('value', 1);
                             jQuery('#submit-cost-summary-widgets-settings').click();

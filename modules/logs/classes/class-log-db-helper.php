@@ -77,6 +77,7 @@ class Log_DB_Helper extends MainWP_DB {
      * @return void.
      */
     public function remove_logs_by( $site_id ) { //phpcs:ignore -- NOSONAR -complex.
+        //phpcs:disable
         $this->wpdb->query(
             $this->wpdb->prepare(
                 'DELETE lo, me
@@ -86,6 +87,7 @@ class Log_DB_Helper extends MainWP_DB {
                 $site_id
             )
         );
+        //phpcs:enable
     }
 
     /**
@@ -93,10 +95,37 @@ class Log_DB_Helper extends MainWP_DB {
      *
      * Handle dismiss all sites changes.
      *
+     * Compatible method.
+     *
      * @return mixed
      */
     public function dismiss_all_changes() {
         return $this->wpdb->update( $this->table_name( 'wp_logs' ), array( 'dismiss' => 1 ), array( 'dismiss' => 0 ) );
+    }
+
+    /**
+     * Method archive_sites_changes().
+     *
+     * @param int $before_timestamp Archive sites changes created before time.
+     *
+     * @return mixed
+     */
+    public function archive_sites_changes( $before_timestamp = 0, $by_limit = 0 ) {
+
+        $where = '';
+        $order = '';
+        if ( ! empty( $before_timestamp ) ) {
+            $where = ' AND created < ' . (int) $before_timestamp;
+        } elseif ( ! empty( $by_limit ) ) {
+            $order = ' ORDER BY created ASC limit = ' . (int) $by_limit;
+        }
+
+        $logs = $this->wpdb->get_results(  'SELECT * FROM ' . $this->table_name('wp_logs') . ' WHERE 1 ' . $where . $order , ARRAY_A ); //phpcs:ignore -- NOSONAR -ok.
+        if ( $logs ) {
+            foreach ( $logs as $log ) {
+                $this->archive_log( $log );
+            }
+        }
     }
 
     /**
@@ -174,5 +203,124 @@ class Log_DB_Helper extends MainWP_DB {
         }
 
         return array();
+    }
+
+    /**
+     * Method get_logs_db_stats().
+     *
+     * @return array DB stats.
+     */
+    public function get_logs_db_stats() {
+        $sql_meta       = 'SELECT meta_key, COUNT(*) AS total
+            FROM ' . $this->table_name( 'wp_logs_meta' ) . '
+            GROUP BY meta_key
+            ORDER BY total DESC';
+        $sql_total      = 'SELECT COUNT(*) AS total FROM ' . $this->table_name( 'wp_logs' );
+        $sql_meta_total = 'SELECT COUNT(*) AS total FROM ' . $this->table_name( 'wp_logs_meta' );
+        return array(
+            'logs_count'   => $this->wpdb->get_var( $sql_total ), //phpcs:ignore --NOSONAR -ok.
+            'logs_meta_count'   => $this->wpdb->get_var( $sql_meta_total ), //phpcs:ignore --NOSONAR -ok.
+            'logs_meta_db_info' => $this->wpdb->get_results( $sql_meta ), //phpcs:ignore --NOSONAR -ok.
+        );
+    }
+
+    /**
+     * Method archive_log().
+     *
+     * @param array $data Log data to archive.
+     *
+     * @return mixed
+     */
+    public function archive_log( $data ) {
+        if ( empty( $data ) || ! is_array( $data ) || empty( $data['log_id'] ) ) {
+            return false;
+        }
+
+        $log_id = $data['log_id'];
+
+        $log = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name('wp_logs') . ' WHERE log_id = %d', $log_id ), ARRAY_A ); //phpcs:ignore -- NOSONAR -ok.
+        if ( $log ) {
+            $log['archived_at'] = time();
+            $this->wpdb->insert( $this->table_name( 'wp_logs_archive' ), $log );
+            $log_mt = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name('wp_logs_meta') . ' WHERE meta_log_id = %d', $log_id ), ARRAY_A ); //phpcs:ignore -- NOSONAR -ok.
+
+            if ( $log_mt ) {
+                foreach ( $log_mt as $mt ) {
+                    $this->wpdb->insert( $this->table_name( 'wp_logs_meta_archive' ), $mt );
+                }
+            }
+
+            $this->wpdb->delete(
+                $this->table_name( 'wp_logs' ),
+                array(
+                    'log_id' => $log_id,
+                )
+            );
+
+            $this->wpdb->delete(
+                $this->table_name( 'wp_logs_meta' ),
+                array(
+                    'meta_log_id' => $log_id,
+                )
+            );
+
+            return $log;
+        }
+        return false;
+    }
+
+    /**
+     * Get db size.
+     *
+     * @return string Return current db size.
+     */
+    public function count_legacy_dismissed() {
+        return $this->wpdb->get_var( 'SELECT count(*) FROM ' . $this->table_name( 'wp_logs' ) . ' WHERE dismiss = 1 ' );
+    }
+
+    /**
+     * Get db size.
+     *
+     * @return string Return current db size.
+     */
+    public function get_db_size() {
+        $size = get_transient( 'mainwp_module_log_transient_db_logs_size' );
+        if ( false !== $size ) {
+            return $size;
+        }
+
+        global $wpdb;
+        $sql = $wpdb->prepare(
+            'SELECT
+        ROUND(SUM(DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024, 2)
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE
+        TABLE_SCHEMA = %s
+        AND (
+        table_name = %s
+        OR table_name = %s
+        OR table_name = %s
+        OR table_name = %s
+        )',
+            $wpdb->dbname,
+            $wpdb->mainwp_tbl_logs,
+            $wpdb->mainwp_tbl_logs_meta,
+            $this->table_name( 'wp_logs_archive' ),
+            $this->table_name( 'wp_logs_meta_archive' )
+        );
+
+        $dbsize_mb = $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery -- prepared SQL.
+
+        set_transient( 'mainwp_module_log_transient_db_logs_size', $dbsize_mb, 15 * MINUTE_IN_SECONDS );
+
+        return $dbsize_mb;
+    }
+
+    /**
+     * Method truncate_archive_tables().
+     */
+    public function truncate_archive_tables() {
+        $this->wpdb->query( 'TRUNCATE TABLE ' . $this->table_name( 'wp_logs_archive' ) );
+        $this->wpdb->query( 'TRUNCATE TABLE ' . $this->table_name( 'wp_logs_meta_archive' ) );
     }
 }

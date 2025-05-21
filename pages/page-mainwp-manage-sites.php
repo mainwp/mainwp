@@ -571,7 +571,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     }
                 } );
                 jQuery('#reset-managersites-settings').on( 'click', function () {
-                    mainwp_confirm(__( 'Are you sure.' ), function(){
+                    mainwp_confirm(__( 'Are you sure?' ), function(){
                         jQuery('#mainwp_sitesviewmode').dropdown( 'set selected', 'table' );
                         jQuery('input[name=mainwp_default_sites_per_page]').val(25);
                         jQuery('.mainwp_hide_wpmenu_checkboxes input[id^="mainwp_show_column_"]').prop( 'checked', false );
@@ -697,8 +697,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <i class="close icon"></i>
                 <div class="header"><?php esc_html_e( 'Connection Test', 'mainwp' ); ?></div>
                 <div class="content">
-                    <div class="ui active inverted dimmer">
-                        <div class="ui text loader"><?php esc_html_e( 'Testing connection...', 'mainwp' ); ?></div>
+                    <div class="ui active dimmer">
+                        <div class="ui double text loader"><?php esc_html_e( 'Testing...', 'mainwp' ); ?></div>
                     </div>
                     <div id="mainwp-test-connection-result" class="ui segment" style="display:none">
                         <h2 class="ui center aligned icon header">
@@ -978,23 +978,25 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 </div>
             </div>
             <?php
-            $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
-            ?>
-            <div class="ui grid field">
-                <label class="six wide column middle aligned"><?php esc_html_e( 'Client (optional)', 'mainwp' ); ?></label>
-                <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add a client to the website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                    <div class="ui search selection dropdown" init-value="" id="mainwp_managesites_add_client_id">
-                        <i class="dropdown icon"></i>
-                        <div class="default text"></div>
-                        <div class="menu">
-                            <div class="item" data-value="0"><?php esc_attr_e( 'Select client', 'mainwp' ); ?></div>
-                            <?php foreach ( $clients as $client ) { ?>
-                                <div class="item" data-value="<?php echo intval( $client->client_id ); ?>"><?php echo esc_html( $client->name ); ?></div>
-                            <?php } ?>
+            if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+                $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
+                ?>
+                <div class="ui grid field">
+                    <label class="six wide column middle aligned"><?php esc_html_e( 'Client (optional)', 'mainwp' ); ?></label>
+                    <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add a client to the website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                        <div class="ui search selection dropdown" init-value="" id="mainwp_managesites_add_client_id">
+                            <i class="dropdown icon"></i>
+                            <div class="default text"></div>
+                            <div class="menu">
+                                <div class="item" data-value="0"><?php esc_attr_e( 'Select client', 'mainwp' ); ?></div>
+                                <?php foreach ( $clients as $client ) { ?>
+                                    <div class="item" data-value="<?php echo intval( $client->client_id ); ?>"><?php echo esc_html( $client->name ); ?></div>
+                                <?php } ?>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            <?php } ?>
 
             <!-- fake fields are a workaround for chrome autofill getting the wrong fields. -->
             <input style="display:none" type="text" name="fakeusernameremembered"/>
@@ -1356,12 +1358,6 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         } else {
             ?>
             <div id="mainwp-import-sites">
-                <div class="ui labeled icon inverted menu mainwp-sub-submenu" id="mainwp-import-sites-tabular-menu">
-                    <a class="item active" data-tab="mainwp-import-csv">
-                        <i class="file excel icon"></i>
-                        <?php esc_html_e( 'CSV Import', 'mainwp' ); ?>
-                    </a>
-                </div>
                 <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-sites-info-message' ) ) : ?>
                     <div class="ui segment">
                         <div class="ui info message">
@@ -1371,7 +1367,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     </div>
                 <?php endif; ?>
                 <form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form" class="ui form">
-                    <div class="ui bottom attached tab segment active" data-tab="mainwp-import-csv">
+                    <div class="ui segment">
                         <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
                         <h2 class="ui dividing header">
                             <?php echo esc_html( $title_page ); ?>
@@ -1396,9 +1392,6 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <input type="button" name="mainwp_managesites_add" id="mainwp_managesites_bulkadd" class="ui big green button" value="<?php echo esc_attr( $title_page ); ?>"/>
                     </div>
                 </form>
-                <script type="text/javascript">
-                    jQuery('#mainwp-import-sites-tabular-menu .item').tab();
-                </script>
             </div>
             <?php
         }
@@ -1497,7 +1490,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
 
         // Load the Client widget.
-        if ( static::$enable_widgets['client_info'] ) {
+        if ( static::$enable_widgets['client_info'] && \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
             MainWP_UI::add_widget_box( 'client_info', array( MainWP_Client_Info::get_class_name(), 'render' ), static::$page, array( -1, -1, 3, 30 ) );
         }
 
@@ -1997,14 +1990,14 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
             MainWP_DB::instance()->update_website( $website->id, $url, $current_user->ID, $site_name, $site_admin, $groupids, $groupnames, $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifycertificate, $archiveFormat, $uniqueId, $http_user, $http_pass, $ssl_version, $disableHealthChecking, $healthThreshold, $backup_method );
 
-            $new_client_id = isset( $_POST['mainwp_managesites_edit_client_id'] ) ? intval( $_POST['mainwp_managesites_edit_client_id'] ) : 0;
-
-            if ( $website->client_id !== $new_client_id ) {
-
-                $update = array(
-                    'client_id' => $new_client_id,
-                );
-                MainWP_DB::instance()->update_website_values( $website->id, $update );
+            if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+                $new_client_id = isset( $_POST['mainwp_managesites_edit_client_id'] ) ? intval( $_POST['mainwp_managesites_edit_client_id'] ) : 0;
+                if ( $website->client_id !== $new_client_id ) {
+                    $update = array(
+                        'client_id' => $new_client_id,
+                    );
+                    MainWP_DB::instance()->update_website_values( $website->id, $update );
+                }
             }
 
             /**

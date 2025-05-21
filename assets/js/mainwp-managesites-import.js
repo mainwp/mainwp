@@ -480,9 +480,10 @@ const mainwp_managesites_import_sites_extract_domain = function (url) { // NOSON
         // Use URL API to parse URL and get only protocol and host part
         return new URL(url);
     } catch (e) {
+        console.log(e);
         // If the URL is invalid or contains an error, return an empty string.
-        return "";
     }
+    return "";
 };
 
 // Delete row when pressing Delete button.

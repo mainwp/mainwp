@@ -277,7 +277,12 @@ jQuery(function () {
     return false;
   });
   jQuery(document).on('click', '.mainwp-plugin-delete', function () {
-    pluginAction(jQuery(this), 'delete');
+    let item = this;
+    let name = jQuery(item).closest('.row-manage-item').attr('plugin-title');
+    let confirmMsg = __('You are about to delete the %1?', name );
+    mainwp_confirm(confirmMsg, function () {
+        pluginAction(jQuery(item), 'delete');
+    });
     return false;
   });
 });
@@ -306,7 +311,12 @@ jQuery(function () {
     return false;
   });
   jQuery(document).on('click', '.mainwp-theme-delete', function () {
-    themeAction(jQuery(this), 'delete');
+    let item = this;
+    let name = jQuery(item).closest('.row-manage-item').children('.themeName').val();
+    let confirmMsg = __('You are about to delete the %1?', name );
+    mainwp_confirm(confirmMsg, function () {
+        themeAction(jQuery(item), 'delete');
+    });
     return false;
   });
 });
@@ -422,7 +432,8 @@ window.mainwp_js_get_error_not_detected_connect = function (jsonStr, what, elemI
         return false; // it is not or invalid json.
       }
     } catch (e) {
-      return false; // it is not or invalid json.
+        console.log(e);
+        return false; // it is not or invalid json.
     }
   }
   return __('MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the MainWP Community for help.');
@@ -617,99 +628,6 @@ window.securityIssues_fix = function (feature) {
   }, 'json');
 };
 
-// Fix all sites all security issues
-jQuery(document).on('click', '.fix-all-security-issues', function () {
-
-  jQuery('#mainwp-secuirty-issues-loader').show();
-
-  jQuery('#mainwp-security-issues-widget-list').show();
-  mainwpVars.bulkInstallTotal = jQuery('#mainwp-security-issues-widget-list .item[status="queue"]').length;
-  jQuery('.fix-all-site-security-issues').addClass('disabled');
-  jQuery('.unfix-all-site-security-issues').addClass('disabled');
-  mainwp_fix_all_security_issues_start_next();
-});
-
-let mainwp_fix_all_security_issues_start_next = function () {
-  while ((siteToFix = jQuery('#mainwp-security-issues-widget-list .item[status="queue"]:first')) && (siteToFix.length > 0) && (bulkInstallCurrentThreads < bulkInstallMaxThreads)) { // NOSONAR -- modified out side the function.
-    mainwp_fix_all_security_issues_specific(siteToFix);
-  }
-}
-
-let mainwp_fix_all_security_issues_specific = function (siteToFix) {
-
-  bulkInstallCurrentThreads++;
-
-  siteToFix.attr('status', 'progress');
-
-  let data = mainwp_secure_data({
-    action: 'mainwp_security_issues_fix',
-    feature: 'all',
-    id: siteToFix.attr('siteid')
-  });
-
-  let el = siteToFix.find('.fix-all-site-security-issues');
-  el.hide();
-
-  jQuery.post(ajaxurl, data, function () {
-    return function () {
-      siteToFix.attr('status', 'done');
-      el.show();
-      bulkInstallCurrentThreads--;
-      bulkInstallDone++;
-      if (bulkInstallDone != 0 && (mainwpVars.bulkInstallTotal == 1 || (bulkInstallDone >= mainwpVars.bulkInstallTotal))) { // NOSONAR - modified outside the function.
-        window.location.href = location.href;
-      }
-      mainwp_fix_all_security_issues_start_next();
-    }
-  }(), 'json');
-}
-
-// Fix all securtiy issues for a site
-jQuery(document).on('click', '.fix-all-site-security-issues', function () {
-  jQuery('#mainwp-secuirty-issues-loader').show();
-  mainwp_fix_all_security_issues(jQuery(this).closest('.item').attr('siteid'), true);
-});
-
-let mainwp_fix_all_security_issues = function (siteId, refresh) {
-  let data = mainwp_secure_data({
-    action: 'mainwp_security_issues_fix',
-    feature: 'all',
-    id: siteId
-  });
-
-  let el = jQuery('#mainwp-security-issues-widget-list .item[siteid="' + siteId + '"] .fix-all-site-security-issues');
-
-  el.hide();
-
-  jQuery('.fix-all-site-security-issues').addClass('disabled');
-  jQuery('.unfix-all-site-security-issues').addClass('disabled');
-
-  jQuery.post(ajaxurl, data, function () {
-    el.show();
-    if (refresh) {
-      window.location.href = location.href;
-    };
-  }, 'json');
-};
-
-jQuery(document).on('click', '.unfix-all-site-security-issues', function () {
-
-  jQuery('#mainwp-secuirty-issues-loader').show();
-
-  let data = mainwp_secure_data({
-    action: 'mainwp_security_issues_unfix',
-    feature: 'all',
-    id: jQuery(jQuery(this).parents('.item')[0]).attr('siteid')
-  });
-
-  jQuery(this).hide();
-  jQuery('.fix-all-site-security-issues').addClass('disabled');
-  jQuery('.unfix-all-site-security-issues').addClass('disabled');
-
-  jQuery.post(ajaxurl, data, function () {
-    window.location.href = location.href;
-  }, 'json');
-});
 let securityIssues_unfix = function (feature) {
   if (jQuery('#' + feature + '_unfix')) {
     jQuery('#' + feature + '_unfix').hide();
@@ -1338,6 +1256,13 @@ let mainwp_tool_clear_activation_data = function (pObj) {
   mainwp_confirm('Are you sure?', function () {
     window.location = loc;
   });
+};
+
+let mainwp_tool_clear_archived_sites_changes = function (pObj) {
+    let loc = jQuery(pObj).attr('href');
+    mainwp_confirm('Are you sure?', function () {
+        window.location = loc;
+    });
 };
 
 /**
@@ -3060,8 +2985,9 @@ function isUrl(url) {
     new URL(url);
     return true;
   } catch (e) {
-    return false;
+    console.log(e);
   }
+  return false;
 }
 
 function removeUrlParams(url,params) {
@@ -3700,11 +3626,17 @@ jQuery(function ($) {
   });
 
   $('#mainwp_sites_changes_bulk_dismiss_all_btn').on('click', function () {
-    if ( jQuery('#mainwp-module-log-records-body-table tr').find('input[type="checkbox"]').length == 0 ){
-        return;
-    }
     let confirmMsg = __("You are about to dismiss all changes?");
     mainwp_confirm(confirmMsg, function () { mainwp_sites_changes_actions_bulk_action('dismiss-all'); });
+  });
+
+  // Trigger the bulk actions
+  $('#mainwp_widget_sites_changes_bulk_dismiss_selected_btn').on('click', function () {
+    if ( jQuery('#mainwp-module-log-records-body-table tr').find('input[type="checkbox"]:checked').length == 0 ){
+        return;
+    }
+    let confirmMsg = __("You are about to dismiss the selected changes?");
+    mainwp_confirm(confirmMsg, function () { mainwp_sites_changes_actions_bulk_action('dismiss-selected', 'widget'); });
   });
 
   $(document).on('click', '.insights-actions-row-dismiss', function () {
@@ -3745,15 +3677,26 @@ let mainwp_insights_row_actions_dismiss = function (obj) {
 
 
 // Manage Bulk Actions
-let mainwp_sites_changes_actions_bulk_action = function (act) {
+let mainwp_sites_changes_actions_bulk_action = function (act, which_act) {
   mainwpVars.bulkInstallTotal = 0;
   bulkInstallCurrentThreads = 0;
   bulkInstallDone = 0;
+  mainwpVars.bulkActionIndent = '';
+  if(which_act === 'widget'){
+    mainwpVars.bulkActionIndent = 'widget';
+  }
   if ( act === 'dismiss-selected' ) {
     jQuery('#mainwp_sites_changes_bulk_dismiss_selected_btn').addClass('disabled');
     let selector = '#mainwp-module-log-records-body-table tr';
     mainwpVars.bulkInstallTotal = jQuery(selector).find('input[type="checkbox"]:checked').length;
     jQuery(selector).addClass('queue');
+    if (jQuery(selector).length) {
+        if(mainwpVars.bulkActionIndent === 'widget'){
+            jQuery('#mainwp_widget_sites_changes_bulk_dismiss_selected_btn').addClass('disabled');
+        } else {
+            jQuery('#mainwp_sites_changes_bulk_dismiss_selected_btn').addClass('disabled');
+        }
+    }
     mainwp_sites_changes_actions_dismiss_start_next(selector);
   } else if( act === 'dismiss-all' ) {
     jQuery('#mainwp_sites_changes_bulk_dismiss_all_btn').addClass('disabled');
@@ -3769,6 +3712,14 @@ let mainwp_sites_changes_actions_dismiss_start_next = function (selector) {
     }
     mainwp_sites_changes_actions_dismiss_specific(objProcess, selector);
   }
+
+    if (mainwpVars.bulkInstallTotal == bulkInstallDone) {
+        if(mainwpVars.bulkActionIndent === 'widget'){
+            jQuery('#mainwp_widget_sites_changes_bulk_dismiss_selected_btn').removeClass('disabled');
+        } else {
+            jQuery('#mainwp_sites_changes_bulk_dismiss_selected_btn').removeClass('disabled');
+        }
+    }
 }
 
 let mainwp_sites_changes_actions_dismiss_specific = function (pObj, selector) {
@@ -3804,9 +3755,6 @@ let mainwp_sites_changes_actions_dismiss_specific = function (pObj, selector) {
     bulkInstallCurrentThreads--;
     bulkInstallDone++;
     mainwp_sites_changes_actions_dismiss_start_next(selector);
-    if (mainwpVars.bulkInstallTotal == bulkInstallDone) {
-        jQuery('#mainwp_sites_changes_bulk_dismiss_selected_btn').removeClass('disabled');
-    }
   }, 'json');
   return false;
 }
@@ -4851,6 +4799,27 @@ jQuery(function ($) {
     return false;
   });
 
+
+    jQuery('#module-update-logs-db-requirement').on('click', function () {
+        let msg = __('Are you sure?');
+        let btn = this;
+        mainwp_confirm(msg, function () {
+            jQuery(btn).closest('.ui.message').fadeOut();
+            mainwp_module_logs_start_update_dismissed_db()
+        });
+        return false;
+    });
+
+    jQuery('#module-update-logs-db-cancel').on('click', function () {
+        let data = mainwp_secure_data({
+            action: 'mainwp_module_log_cancel_update_dismissed_db',
+        });
+        jQuery(this).closest('.ui.message').fadeOut();
+        jQuery.post(ajaxurl, data, function (response) {
+            //ok.
+        }, 'json');
+        return false;
+    });
 });
 
 
@@ -4858,3 +4827,28 @@ jQuery(document).on('click', '#mainwp-sites-changes-filter-toggle-button', funct
     jQuery('#mainwp-module-log-filters-row').toggle(300);
     return false;
 });
+
+let mainwp_module_logs_start_update_dismissed_db = function () {
+    let data = mainwp_secure_data({
+        action: 'mainwp_module_log_update_dismissed_db',
+    });
+    mainwp_set_message_zone('#mainwp-message-zone', '<i class="ui active inline loader tiny"></i> ' + __('Running ...'), 'green');
+    jQuery.post(ajaxurl, data, function (response) {
+        mainwp_set_message_zone('#mainwp-message-zone');
+        let status = response?.status ? response.status : '';
+        if (response.error) {
+            mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + response.error, 'red');
+        } else if (status === 'finished') {
+            mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + __('Logs records has been updated successfully.'), 'green');
+        } else if (status === 'running') {
+            mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + __('Running ...'), 'green');
+            setTimeout(function () {
+                mainwp_module_logs_start_update_dismissed_db();
+            }, 500);
+        } else if (status === 'cancelled') {
+            mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + __("User cancelled the 'Sites Changes' database update process."), 'green');
+        } else {
+            mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + __('Undefined error. Please try again.'), 'red');
+        }
+    }, 'json');
+}

@@ -220,6 +220,14 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
             'not_count'        => true,
         );
 
+        if ( isset( $legacy_params['optimize_view'] ) && $legacy_params['optimize_view'] ) {
+            $compatible_args['optimize'] = 1;
+        }
+
+        if ( isset( $legacy_params['optimize_with_meta'] ) && $legacy_params['optimize_with_meta'] ) {
+            $compatible_args['optimize_with_meta'] = 1;
+        }
+
         // available source values: wpadmin|dashboard|all, default value `wpadmin`.
         if ( ! empty( $legacy_params['source'] ) ) {
             $sources_conds = '';

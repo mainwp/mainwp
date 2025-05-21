@@ -385,8 +385,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      */
     public static function render_import_sites() { // phpcs:ignore -- NOSONAR - complex.
         ?>
-        <div id="mainwp-importing-sites" class="ui active inverted dimmer">
-            <div class="ui medium text loader"><?php esc_html_e( 'Importing', 'mainwp' ); ?></div>
+        <div id="mainwp-importing-sites" class="ui active dimmer">
+            <div class="ui double text loader"><?php esc_html_e( 'Importing...', 'mainwp' ); ?></div>
         </div>
         <div class="ui message" id="mainwp-import-sites-status-message">
             <?php echo '<i class="notched circle loading icon"></i> ' . esc_html__( 'Importing...', 'mainwp' ); ?>
@@ -580,8 +580,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             ?>
 
             <h3 class="ui dividing header">
-                <?php esc_html_e( 'Extensions Settings Synchronization', 'mainwp' ); ?>
-                <div class="sub header"><?php esc_html_e( 'Select the plugins you want to install and if you want to apply the Extensions default settings to this Child site.', 'mainwp' ); ?></div>
+                <?php esc_html_e( 'Add-ons Settings Synchronization', 'mainwp' ); ?>
+                <div class="sub header"><?php esc_html_e( 'Select the plugins you want to install and if you want to apply the Add-ons default settings to this Child site.', 'mainwp' ); ?></div>
             </h3>
 
             <?php
@@ -698,6 +698,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                     <div class="<?php echo 'themes' === $active_tab ? 'active' : ''; ?> item" data-tab="themes" data-value="themes"><?php esc_html_e( 'Theme Updates', 'mainwp' ); ?></div>
                                     <?php if ( $show_language_updates ) { ?>
                                     <div class="<?php echo 'trans' === $active_tab ? 'active' : ''; ?> item" data-tab="translations" data-value="translations"><?php esc_html_e( 'Translation Updates', 'mainwp' ); ?></div>
+                                    <?php } ?>
+                                    <?php if ( is_plugin_active( 'mainwp-database-updater-extension/mainwp-database-updater-extension.php' ) ) { ?>
+                                        <div class="item" data-tab="dbupdates" data-value="dbupdates"><?php esc_html_e( 'Database Updates', 'mainwp' ); ?></div>
                                     <?php } ?>
                                     <div class="<?php echo 'abandoned-plugins' === $active_tab ? 'active' : ''; ?> item" data-tab="abandoned-plugins" data-value="abandoned-plugins"><?php esc_html_e( 'Abandoned Plugins', 'mainwp' ); ?></div>
                                     <div class="<?php echo 'abandoned-themes' === $active_tab ? 'active' : ''; ?> item" data-tab="abandoned-themes" data-value="abandoned-themes"><?php esc_html_e( 'Abandoned Themes', 'mainwp' ); ?></div>
@@ -1074,8 +1077,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     </div>
                 </div>
                 <?php
-                $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
-                ?>
+                if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+                    $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
+                    ?>
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general">
                     <label class="six wide column middle aligned">
                     <?php
@@ -1104,6 +1108,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         <a href="javascript:void(0)" class="ui basic green button edit-site-new-client-button"><?php esc_html_e( 'Create New Client', 'mainwp' ); ?></a>
                     </div>
                 </div>
+                <?php } ?>
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general" default-indi-value="2">
                     <label class="six wide column middle aligned">
                     <?php
@@ -1401,7 +1406,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <i class="close icon"></i>
             <div class="header"><?php esc_html_e( 'Connection Test', 'mainwp' ); ?></div>
             <div class="content">
-                <div class="ui active inverted dimmer">
+                <div class="ui active dimmer">
                     <div class="ui text loader"><?php esc_html_e( 'Testing connection...', 'mainwp' ); ?></div>
                 </div>
                 <div id="mainwp-test-connection-result" class="ui segment" style="display:none">
@@ -1688,7 +1693,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <div class="ui large modal" id="mainwp-edit-email-template-modal">
                 <i class="close icon"></i>
                 <div class="header"><?php esc_html_e( 'Edit Email Template', 'mainwp' ); ?></div>
-                    <div class="scrolling header">
+                    <div class="scrolling content">
                     <form method="POST" id="email-template-form" action="<?php echo esc_html( $localion ); ?>" class="ui form">
                         <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'save-email-template' ) ); ?>" />
                         <div class="template <?php echo esc_attr( $type ); ?>">

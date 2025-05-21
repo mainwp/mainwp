@@ -1265,7 +1265,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      *
      * @return WP_Error|WP_REST_Response
      */
-    public function get_non_mainwp_changes_of_site( $request ) {
+    public function get_non_mainwp_changes_of_site( $request ) { //phpcs:ignore -- NOSONAR -complex.
 
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
@@ -1292,9 +1292,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $params['offset']   = 0;
         }
 
-        $params['actions']     = ! empty( $request['actions'] ) ? sanitize_text_field( wp_unslash( $request['actions'] ) ) : '';
-        $params['contexts']    = ! empty( $request['contexts'] ) ? sanitize_text_field( wp_unslash( $request['contexts'] ) ) : '';
-        $params['total_count'] = ! empty( $request['total_count'] ) ? mainwp_string_to_bool( $request['total_count'] ) : false;
+        $params['actions']            = ! empty( $request['actions'] ) ? sanitize_text_field( wp_unslash( $request['actions'] ) ) : '';
+        $params['contexts']           = ! empty( $request['contexts'] ) ? sanitize_text_field( wp_unslash( $request['contexts'] ) ) : '';
+        $params['total_count']        = ! empty( $request['total_count'] ) ? mainwp_string_to_bool( $request['total_count'] ) : false;
+        $params['optimize_view']      = ! empty( $request['optimize_view'] ) ? mainwp_string_to_bool( $request['optimize_view'] ) : false;
+        $params['optimize_with_meta'] = ! empty( $request['optimize_with_meta'] ) ? mainwp_string_to_bool( $request['optimize_with_meta'] ) : false;
 
         $data = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params, $website );
 

@@ -10,7 +10,7 @@ namespace MainWP\Dashboard\Module\Log;
 
 use MainWP\Dashboard\MainWP_Logger;
 use MainWP\Dashboard\MainWP_Post_Handler;
-
+use MainWP\Dashboard\MainWP_Utility;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -72,7 +72,6 @@ class Log_Admin {
         );
 
         // Auto purge setup.
-        add_action( 'wp_loaded', array( $this, 'hook_purge_scheduled_action' ) );
         add_action( 'admin_init', array( $this, 'admin_init' ) );
     }
 
@@ -94,7 +93,23 @@ class Log_Admin {
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_manage_events_display_rows', array( Log_Manage_Insights_Events_Page::instance(), 'ajax_manage_events_display_rows' ) );
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_widget_insights_display_rows', array( Log_Insights_Page::instance(), 'ajax_events_display_rows' ) );
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_widget_events_overview_display_rows', array( Log_Insights_Page::instance(), 'ajax_events_overview_display_rows' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_update_dismissed_db', array( Log_Insights_Page::instance(), 'ajax_update_dismissed_db' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_cancel_update_dismissed_db', array( Log_Insights_Page::instance(), 'ajax_cancel_update_dismissed_db' ) );
+
+        add_filter( 'mainwp_info_schedules_cron_listing', array( $this, 'hook_schedules_cron_listing' ) );
         Log_Events_Filter_Segment::get_instance()->admin_init();
+        $this->handle_post_archive_data();
+    }
+
+    /**
+     * Handle archive data action.
+     */
+    public function handle_post_archive_data() {
+        if ( isset( $_GET['clearArchivedSitesChangesData'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'clear_archived_sites_changes' ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            Log_DB_Helper::instance()->truncate_archive_tables();
+            wp_safe_redirect( esc_url( admin_url( 'admin.php?page=MainWPTools' ) ) );
+            die();
+        }
     }
 
     /**
@@ -107,7 +122,7 @@ class Log_Admin {
      * @return void
      */
     public function admin_enqueue_scripts( $hook ) {
-        $script_screens = array( 'mainwp_page_InsightsOverview', 'mainwp_page_SettingsDashboardInsights', 'mainwp_page_SettingsInsights' );
+        $script_screens = array( 'mainwp_page_InsightsOverview', 'mainwp_page_SettingsDashboardInsights', 'mainwp_page_SettingsInsights', 'mainwp_page_InsightsManage' );
         wp_enqueue_style( 'mainwp-module-log-admin', $this->manager->locations['url'] . 'ui/css/admin.css', array(), $this->manager->get_version() );
 
         if ( in_array( $hook, $script_screens, true ) ) {
@@ -143,6 +158,33 @@ class Log_Admin {
                 )
             );
         }
+    }
+
+    /**
+     * Method hook_schedules_cron_listing().
+     *
+     * @param  array $cron_list Cron info.
+     * @return array Cron info.
+     */
+    public function hook_schedules_cron_listing( $cron_list = array() ) {
+
+        if ( ! $this->manager->is_enabled_auto_archive_logs() ) {
+            return $cron_list;
+        }
+
+        if ( ! is_array( $cron_list ) ) {
+            $cron_list = array();
+        }
+        $start_lasttime                                       = get_option( 'mainwp_module_log_last_time_auto_archive_logs', 0 );
+        $start_nexttime                                       = wp_next_scheduled( 'mainwp_module_log_cron_job_auto_archive' );
+        $cron_list['mainwp_module_log_cron_job_auto_archive'] = array(
+            'title'     => __( 'Auto archive sites changes', 'mainwp-pro-reports-extension' ),
+            'action'    => 'mainwp_module_log_cron_job_auto_archive',
+            'frequency' => __( 'Once daily', 'mainwp-pro-reports-extension' ),
+            'last_run'  => empty( $start_lasttime ) ? 'N/A' : MainWP_Utility::format_timestamp( $start_lasttime ),
+            'next_run'  => empty( $start_nexttime ) ? 'N/A' : MainWP_Utility::format_timestamp( $start_nexttime ),
+        );
+        return $cron_list;
     }
 
     /**
@@ -192,6 +234,8 @@ class Log_Admin {
     /**
      * Schedules a purge of records.
      *
+     * @compatible
+     *
      * @return void
      */
     public function hook_purge_scheduled_action() { //phpcs:ignore -- NOSONAR - complex.
@@ -230,35 +274,60 @@ class Log_Admin {
 
 
     /**
-     * Get db size.
+     * Render logs db large size notice.
      *
-     * @return string Return current db size.
+     * @param int $limit DB size limit in MByte, default 300 MB.
      */
-    public function get_db_size() {
-        $size = get_transient( 'mainwp_module_log_transient_db_logs_size' );
-        if ( false !== $size ) {
-            return $size;
+    public function render_logs_db_notice( $limit = 300 ) {
+        if ( empty( $limit ) ) {
+            $limit = 300; // MB.
+        }
+        if ( MainWP_Utility::show_mainwp_message( 'notice', 'logs-db-size-large' ) ) {
+            $size = Log_DB_Helper::instance()->get_db_size();
+            if ( $size >= $limit ) {
+                ?>
+                <div class="ui yellow message">
+                    <i class="close icon mainwp-notice-dismiss" notice-id="logs-db-size-large"></i>
+                    <?php printf( esc_html__( 'The Sites Changes database size is too large (%s MB). Go to MainWP Settings > %sTool%s > "Delete archived sites changes data" to delete records if needed.', 'mainwp' ), $size, '<a href="admin.php?page=MainWPTools#mainwp-clear-archived-sites-changes-data">', '</a>' ); // NOSONAR - noopener - open safe. ?>
+                </div>
+                <?php
+            }
+        }
+    }
+
+    /**
+     * Render logs db update notice.
+     */
+    public function render_update_db_notice() {
+        $status = '';
+        $db_ver = Log_Install::instance()->get_current_logs_db_ver();
+        if ( version_compare( $db_ver, '1.0.1.12', '<' ) ) {
+            $count = Log_DB_Helper::instance()->count_legacy_dismissed();
+            if ( $count ) {
+                $status  = 'require_update';
+                $running = get_option( 'mainwp_module_logs_updates_dismissed_db_process_status', '' );
+                if ( 'running' === $running ) {
+                    $status = 'running';
+                }
+            }
         }
 
-        global $wpdb;
-        $sql = $wpdb->prepare(
-            'SELECT
-        ROUND(SUM(DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024, 2)
-        FROM INFORMATION_SCHEMA.TABLES
-        WHERE
-        TABLE_SCHEMA = %s
-        AND table_name = %s
-        OR table_name = %s',
-            $wpdb->dbname,
-            $wpdb->mainwp_tbl_logs,
-            $wpdb->mainwp_tbl_logs_meta
-        );
-
-        $dbsize_mb = $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery -- prepared SQL.
-
-        set_transient( 'mainwp_module_log_transient_db_logs_size', $dbsize_mb, 15 * MINUTE_IN_SECONDS );
-
-        return $dbsize_mb;
+        if ( 'require_update' === $status && MainWP_Utility::show_mainwp_message( 'notice', 'logs-db-update-required' ) ) {
+            ?>
+            <div class="ui yellow message">
+                <i class="close icon mainwp-notice-dismiss" notice-id="logs-db-update-required"></i>
+                <?php printf( esc_html__( 'Your \'Sites Changes\' database needs to be updated. Click %shere%s to start the update.', 'mainwp' ), '<a href="javascript:void(0);" id="module-update-logs-db-requirement">', '</a>' ); ?>
+            </div>
+            <?php
+        } elseif ( 'running' === $status ) {
+            ?>
+            <div class="ui green message">
+                <i class="close icon"></i>
+                <i class="ui active inline loader tiny"></i>&nbsp;
+                <?php printf( esc_html__( 'Updating the \'Sites Changes\' database. Click %shere%s to cancel.', 'mainwp' ), '<a href="javascript:void(0);" id="module-update-logs-db-cancel">', '</a>' ); ?>
+            </div>
+            <?php
+        }
     }
 
     /**

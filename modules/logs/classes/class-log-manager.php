@@ -12,6 +12,7 @@ namespace MainWP\Dashboard\Module\Log;
 use MainWP\Dashboard\MainWP_Execution_Helper;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Utility;
+use MainWP\Dashboard\MainWP_Logger;
 
 /**
  * Class Log_Manager
@@ -151,7 +152,20 @@ class Log_Manager {
         } elseif ( defined( 'DOING_CRON' ) && DOING_CRON ) {
             $this->admin = new Log_Admin( $this, $driver );
         }
+
+        add_filter( 'mainwp_module_log_enable_insert_log_type', array( $this, 'hook_enable_insert_log_type' ), 10, 2 );
+        add_filter( 'mainwp_get_cron_jobs_init', array( $this, 'hook_get_cron_jobs_init' ), 10, 2 ); // on/off by change status of use wp cron option.
+        add_action( 'mainwp_module_log_single_cron_job_archive', array( $this, 'cron_single_cron_job_archive' ) );
+
+        if ( $this->is_enabled_auto_archive_logs() && ! empty( $this->settings->options['records_logs_ttl'] ) ) {
+            add_action( 'mainwp_module_log_cron_job_auto_archive', array( $this, 'cron_module_log_auto_archive' ) );
+        }
+        if ( ! empty( $this->settings->options['enabled'] ) ) {
+            add_action( 'mainwp_module_log_render_db_size_notice', array( $this->admin, 'render_logs_db_notice' ), 10, 1 );
+        }
+        add_action( 'mainwp_module_log_render_db_update_notice', array( $this->admin, 'render_update_db_notice' ), 10, 1 );
     }
+
 
     /**
      * Autoloader for classes.
@@ -211,6 +225,7 @@ class Log_Manager {
     public function init() {
         $this->connectors = new Log_Connectors( $this );
     }
+
 
     /**
      * Getter for the version number.
@@ -308,6 +323,10 @@ class Log_Manager {
             $sum .= ' ';
             $sum .= 'wordpress' !== $data['context'] ? esc_html( ucfirst( rtrim( $data['context'], 's' ) ) ) : 'WordPress'; //phpcs:ignore -- wordpress text.
 
+            if ( 'wordpress' === $data['context'] ) {
+                $sum = 'WordPress';
+            }
+
             if ( isset( $user_meta['wp_user_id'] ) ) {
                 $user_id = ! empty( $user_meta['wp_user_id'] ) ? sanitize_text_field( $user_meta['wp_user_id'] ) : 0;
             } elseif ( ! empty( $user_meta['user_id'] ) ) { // to compatible with old child actions data.
@@ -322,6 +341,8 @@ class Log_Manager {
             );
 
             $contexts_mapping = array(
+                'plugins'   => 'plugin',
+                'themes'    => 'theme',
                 'wordpress' => 'core',
             );
 
@@ -348,6 +369,15 @@ class Log_Manager {
     }
 
     /**
+     * Method is_enabled_auto_archive_logs().
+     *
+     * @return bool True|False Enabled auto archive log or not.
+     */
+    public function is_enabled_auto_archive_logs() {
+        return is_array( $this->settings->options ) && ! empty( $this->settings->options['enabled'] ) && ! empty( $this->settings->options['auto_archive'] ) ? true : false;
+    }
+
+    /**
      * Method hook_delete_site()
      *
      * @param mixed $site site object.
@@ -359,5 +389,85 @@ class Log_Manager {
             return false;
         }
         return Log_DB_Helper::instance()->remove_logs_by( $site->id );
+    }
+
+    /**
+     * Method hook_enable_insert_log_type()
+     *
+     * @param bool  $enabled Enable input value.
+     * @param array $data Log data.
+     *
+     * @return bool True: Enable log.
+     */
+    public function hook_enable_insert_log_type( $enabled, $data ) {
+        if ( is_array( $data ) && isset( $data['connector'] ) && isset( $data['context'] ) && isset( $data['action'] ) ) {
+            if ( 'non-mainwp-changes' === $data['connector'] ) {
+                return Log_Settings::is_action_log_enabled( $data['context'] . '_' . $data['action'], 'nonmainwpchanges' );
+            } elseif ( 'compact' !== $data['connector'] ) {
+                return Log_Settings::is_action_log_enabled( $data['context'] . '_' . $data['action'], 'dashboard' );
+            }
+        }
+        return $enabled;
+    }
+
+    /**
+     * Method hook_get_cron_jobs_init()
+     *
+     * @param array $init_jobs Jobs to init.
+     *
+     * @return array Init Jobs.
+     */
+    public function hook_get_cron_jobs_init( $init_jobs ) {
+        if ( $this->is_enabled_auto_archive_logs() ) {
+            $init_jobs['mainwp_module_log_cron_job_auto_archive'] = 'daily';
+        }
+        return $init_jobs;
+    }
+
+    /**
+     * Method cron_module_log_auto_archive()
+     */
+    public function cron_module_log_auto_archive() {
+        $ttl = 3 * YEAR_IN_SECONDS;
+        if ( is_array( $this->settings->options ) && isset( $this->settings->options['records_logs_ttl'] ) ) {
+            $ttl = intval( $this->settings->options['records_logs_ttl'] );
+        }
+        if ( $ttl ) {
+            do_action( 'mainwp_log_action', 'Module Log :: Archive logs schedule start.', MainWP_Logger::LOGS_AUTO_PURGE_LOG_PRIORITY );
+            $time   = time();
+            $before = $time - $ttl;
+            Log_DB_Helper::instance()->archive_sites_changes( $before );
+            update_option( 'mainwp_module_log_last_time_auto_archive_logs', $time );
+            update_option( 'mainwp_module_log_next_time_auto_archive_logs', $time + $ttl );
+        }
+    }
+
+    /**
+     * Method handle_single_cron_job_archive()
+     */
+    public function handle_single_cron_job_archive() {
+        return $this->cron_single_cron_job_archive();
+    }
+
+    /**
+     * Method cron_single_cron_job_archive()
+     */
+    public function cron_single_cron_job_archive() {
+        $count       = Log_DB_Helper::instance()->count_legacy_dismissed();
+        $user_cancel = get_option( 'mainwp_module_logs_updates_dismissed_db_cancelled' );
+        $status      = 'finished';
+
+        if ( $count && empty( $user_cancel ) ) {
+            $status = 'running';
+            Log_DB_Helper::instance()->archive_sites_changes( 0, 200 );
+            $count = Log_DB_Helper::instance()->count_legacy_dismissed();
+            if ( $count ) {
+                wp_schedule_single_event( MINUTE_IN_SECONDS, 'mainwp_module_log_single_cron_job_archive' );
+            } else {
+                $status = 'finished';
+            }
+        }
+        update_option( 'mainwp_module_logs_updates_dismissed_db_process_status', $status );
+        return $status;
     }
 }

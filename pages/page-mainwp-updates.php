@@ -591,6 +591,36 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $total_themes_outdate += count( $themes_outdate );
             }
 
+            // to fix displaying per sites/tags.
+            if ( is_array( $plugins_outdate ) ) {
+                foreach ( $plugins_outdate as $slug => $plugin_outdate ) {
+                    $slug = esc_html( $slug );
+                    if ( ! isset( $allPluginsOutdate[ $slug ] ) ) {
+                        $allPluginsOutdate[ $slug ] = array(
+                            'name' => esc_html( $plugin_outdate['Name'] ),
+                            'cnt'  => 1,
+                            'uri'  => esc_html( $plugin_outdate['PluginURI'] ),
+                        );
+                    } else {
+                        ++$allPluginsOutdate[ $slug ]['cnt'];
+                    }
+                }
+            }
+
+            if ( is_array( $themes_outdate ) ) {
+                foreach ( $themes_outdate as $slug => $theme_outdate ) {
+                    $slug = esc_html( $slug );
+                    if ( ! isset( $allThemesOutdate[ $slug ] ) ) {
+                        $allThemesOutdate[ $slug ] = array(
+                            'name' => esc_html( $theme_outdate['Name'] ),
+                            'cnt'  => 1,
+                        );
+                    } else {
+                        ++$allThemesOutdate[ $slug ]['cnt'];
+                    }
+                }
+            }
+
             if ( MAINWP_VIEW_PER_PLUGIN_THEME === $site_view ) {
                 if ( is_array( $translation_upgrades ) ) {
                     foreach ( $translation_upgrades as $translation_upgrade ) {
@@ -654,35 +684,6 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             'name'    => $up_th_name,
                             'premium' => ( isset( $theme_upgrade['premium'] ) ? esc_html( $theme_upgrade['premium'] ) : 0 ),
                         );
-                    }
-                }
-
-                if ( is_array( $plugins_outdate ) ) {
-                    foreach ( $plugins_outdate as $slug => $plugin_outdate ) {
-                        $slug = esc_html( $slug );
-                        if ( ! isset( $allPluginsOutdate[ $slug ] ) ) {
-                            $allPluginsOutdate[ $slug ] = array(
-                                'name' => esc_html( $plugin_outdate['Name'] ),
-                                'cnt'  => 1,
-                                'uri'  => esc_html( $plugin_outdate['PluginURI'] ),
-                            );
-                        } else {
-                            ++$allPluginsOutdate[ $slug ]['cnt'];
-                        }
-                    }
-                }
-
-                if ( is_array( $themes_outdate ) ) {
-                    foreach ( $themes_outdate as $slug => $theme_outdate ) {
-                        $slug = esc_html( $slug );
-                        if ( ! isset( $allThemesOutdate[ $slug ] ) ) {
-                            $allThemesOutdate[ $slug ] = array(
-                                'name' => esc_html( $theme_outdate['Name'] ),
-                                'cnt'  => 1,
-                            );
-                        } else {
-                            ++$allThemesOutdate[ $slug ]['cnt'];
-                        }
                     }
                 }
             }
@@ -2473,8 +2474,8 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         </div>
                     </div>
                     <div class="ui grid field">
-                        <label class="six wide column middle aligned"><?php esc_html_e( 'Theme advanced automatic updates', 'mainwp' ); ?></label>
-                        <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic theme updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Translation advanced automatic updates', 'mainwp' ); ?></label>
+                        <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic translation updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <select name="mainwp_transAutomaticDailyUpdate" id="mainwp_transAutomaticDailyUpdate" class="ui dropdown">
                                 <option value="1" <?php echo 1 === $snTransAutomaticUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
                                 <option value="0" <?php echo ( false !== $snTransAutomaticUpdate && 0 === $snTransAutomaticUpdate ) || 2 === $snTransAutomaticUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>

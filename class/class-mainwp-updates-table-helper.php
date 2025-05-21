@@ -90,6 +90,9 @@ class MainWP_Updates_Table_Helper { // phpcs:ignore Generic.Classes.OpeningBrace
         if ( MAINWP_VIEW_PER_PLUGIN_THEME === $this->view_per ) {
             unset( $columns['trusted'] );
         }
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+            unset( $columns['client'] );
+        }
         return $columns;
     }
 

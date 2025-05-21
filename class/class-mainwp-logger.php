@@ -28,6 +28,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     const CONNECT_LOG_PRIORITY         = 20241001;
     const UPTIME_CHECK_LOG_PRIORITY    = 20241017;
     const UPTIME_NOTICE_LOG_PRIORITY   = 202411106;
+    const SITES_CHANGES_LOG_PRIORITY   = 20250417;
     const DISABLED                     = - 1;
     const LOG                          = 0;
     const WARNING                      = 1;
@@ -96,9 +97,9 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     private $logSpecific = 0;
 
     /**
-     * Private varibale to hold the log Specific priotrity.
+     * Private varibale to hold the auto enable logging actions.
      *
-     * @var string Disabled
+     * @var array Auto enable logging.
      */
     private $autoEnableLoggingActions = array();
 
@@ -146,6 +147,8 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $this->autoEnableLoggingActions = array(
             static::CONNECT_LOG_PRIORITY,
         );
+        add_action( 'mainwp_module_log_record_inserted', array( $this, 'hook_module_log_record_inserted' ), 10, 2 );
+        add_filter( 'mainwp_custom_log_enabled_log_priority', array( $this, 'hook_is_enabled_log_priority' ), 10, 1 );
     }
 
     /**
@@ -225,7 +228,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param int $type Log type value.
      * @param int $logcolor Log color value.
      *
-     * @return int $currentColor log color code.
+     * @return array $currentColor log color code.
      */
     public function get_log_type_info( $type, $logcolor ) {
         $currentColor = '';
@@ -321,6 +324,9 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 break;
             case 'debug-updates-crons':
                 $this->log_action( '[Debug updates crons] :: ' . $text, static::DEBUG_UPDATES_SCHEDULE );
+                break;
+            case 'sites-changes':
+                $this->log_action( '[Sites Changes] :: ' . $text, static::SITES_CHANGES_LOG_PRIORITY );
                 break;
             default:
                 break;
@@ -500,6 +506,42 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     }
 
     /**
+     * Method hook_is_enabled_log_priority().
+     *
+     * @param int $priority Log priority.
+     *
+     * @return bool true|false True if enabled log for priority.
+     */
+    public function hook_is_enabled_log_priority( $priority ) {
+        return $this->enabled_log_priority( $priority );
+    }
+
+    /**
+     * Method enabled_log_priority()
+     *
+     * @param int $priority Set priority.
+     *
+     * @return bool true|false Default is False.
+     */
+    public function enabled_log_priority( $priority ) {
+
+        if ( static::DISABLED === $this->logPriority ) {
+            return false;
+        }
+
+        $priority = (int) apply_filters( 'mainwp_log_to_db_priority', $priority );
+        $do_log   = false;
+        if ( 1 === $this->logSpecific ) { // 1 - specific log, 0 - not specific log.
+            if ( $this->logPriority === $priority ) { // specific priority number saved setting.
+                $do_log = true;
+            }
+        } elseif ( $this->logPriority >= $priority ) {
+            $do_log = true;
+        }
+        return $do_log;
+    }
+
+    /**
      * Method log()
      *
      * Create Log File.
@@ -519,7 +561,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
 
         if ( static::DISABLED === $this->logPriority ) {
-            return;
+            return false;
         }
 
         $log_to_db = apply_filters( 'mainwp_logger_to_db', true, $website );
@@ -979,5 +1021,19 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         <?php
 
         fclose( $fh );
+    }
+
+        /**
+         * Method hook_module_log_record_inserted()
+         *
+         * @param int   $record_id Log id.
+         * @param array $record Log data.
+         *
+         * @return void
+         */
+    public function hook_module_log_record_inserted( $record_id = false, $record = false ) {
+        if ( $record_id && is_array( $record ) && isset( $record['connector'] ) && isset( $record['action'] ) && isset( $record['item'] ) && isset( $record['context'] ) ) {
+            $this->log_events( 'sites-changes', 'Logging info :: [log_id=' . $record_id . '] :: [item=' . $record['item'] . '] :: [connector=' . $record['connector'] . '] :: [context=' . $record['context'] . '] :: [action=' . $record['action'] . ']' );
+        }
     }
 }

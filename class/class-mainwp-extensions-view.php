@@ -139,12 +139,8 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         ?>
         <div id="mainwp-manage-extensions">
-            <div class="mainwp-extensions-api-loading" style="display:none">
-                <div class="ui active inverted page dimmer">
-                    <div class="ui medium text loader"></div>
-                </div>
-            </div>
             <div class="mainwp-main-content">
+                
                 <?php if ( empty( $extensions ) && empty( $extensions_disabled ) ) { ?>
                     <?php static::render_intro_notice(); ?>
                 <?php } else { ?>
@@ -179,6 +175,11 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         <div class="ui info message"><?php esc_html_e( 'Your search returned no results. The add-on may need to be installed or does not exist.' ); ?></div>
                     </div>
                     <div class="ui segment">
+                        <div class="mainwp-extensions-api-loading" style="display:none">
+                            <div class="ui active dimmer">
+                                <div class="ui double text loader"></div>
+                            </div>
+                        </div>
                         <div class="ui four cards" id="mainwp-extensions-list">
                             <?php if ( isset( $extensions ) && is_array( $extensions ) ) { ?>
                                 <?php foreach ( $extensions as $extension ) { ?>
@@ -1595,7 +1596,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             ),
             'mainwp-vulnerability-checker-extension'  =>
             array(
-                'type'                   => 'pro',
+                'type'                   => 'free',
                 'model'                  => 'integration',
                 'slug'                   => 'mainwp-vulnerability-checker-extension',
                 'title'                  => 'MainWP Vulnerability Checker Extension',
@@ -1816,6 +1817,23 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'integration_owner'    => 'VPSrobots Inc.',
                 'integration_owner_pp' => 'https://wpvivid.com/privacy-policy',
                 'desc'                 => 'WPvivid Backup for MainWP enables you to create and download backups of a specific child site, set backup schedules, set WPvivid Backup Plugin settings for all of your child sites directly from your MainWP Dashboard.',
+            ),
+            'independent-analytics-for-mainwp'        => array(
+                'type'                 => 'org',
+                'model'                => 'integration',
+                'product_id'           => 'independent-analytics-for-mainwp',
+                'slug'                 => 'independent-analytics-for-mainwp/independent-analytics-for-mainwp.php',
+                'title'                => 'Independent Analytics for MainWP',
+                'link'                 => 'https://wordpress.org/plugins/independent-analytics-for-mainwp/',
+                'changelog_url'        => 'https://wordpress.org/plugins/independent-analytics-for-mainwp/#developers',
+                'url'                  => 'https://wordpress.org/plugins/independent-analytics-for-mainwp/',
+                'group'                => array( 'visitor' ),
+                'privacy'              => 2,
+                'integration'          => 'Independent Analytics',
+                'integration_url'      => 'https://independentwp.com/',
+                'integration_owner'    => 'Independent Insights',
+                'integration_owner_pp' => 'https://independentwp.com/privacy-policy/',
+                'desc'                 => 'This is a free extension for MainWP that lets you view stats from all of your sites using Independent Analytics in the main Overview menu.',
             ),
         );
 

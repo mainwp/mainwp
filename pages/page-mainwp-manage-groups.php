@@ -254,10 +254,10 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 </td>
                 <td><a href="<?php echo esc_url( $website->url ); ?>" class="ui grey text" target="_blank"><?php echo esc_html( $website->url ); ?></a></td>
                 <td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
-                <td class="not-selectable">
+                <td class="not-selectable center aligned">
                     <span class="mainwp-preview-item" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'Click to see the site homepage screenshot . ', 'mainwp' ); ?>" preview-site-url="<?php echo esc_url( $website->url ); ?>" ><i class="camera icon"></i></span>
                 </td>
-                <td class="not-selectable">
+                <td class="not-selectable center aligned">
                 <?php if ( empty( $website->note ) ) : ?>
                     <a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website->id ); ?>" data-tooltip="<?php esc_attr_e( 'Click to add a note . ', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
                 <?php else : ?>
@@ -525,8 +525,8 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     <th scope="col" class="no-sort collapsing"><i class="sign in icon"></i></th>
                     <th scope="col" ><?php esc_html_e( 'URL', 'mainwp' ); ?></th>
                     <th scope="col" ><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
-                    <th scope="col" class="no-sort collapsing"><i class="camera icon"></i></th>
-                    <th scope="col" class="no-sort collapsing"><i class="sticky note outline icon"></i></th>
+                    <th scope="col" class="no-sort collapsing center aligned"><i class="camera icon"></i></th>
+                    <th scope="col" class="no-sort collapsing center aligned"><i class="sticky note outline icon"></i></th>
                 </tr>
             </thead>
             <tbody>
@@ -537,7 +537,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         <a href="#" class="ui green button" id="mainwp-save-sites-groups-selection-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Save the selected tag sites selection.', 'mainwp' ); ?>"><?php esc_html_e( 'Save Selection', 'mainwp' ); ?></a>
         <div class="ui hidden divider"></div>
         <div class="ui inverted dimmer">
-            <div class="ui loader"></div>
+            <div class="ui double loader"></div>
         </div>
         <?php
     }

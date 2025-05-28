@@ -924,7 +924,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                             array(
                                 'adminname'          => $website->adminname,
                                 'pubkey'             => $website->pubkey,
-                                'privkey'            => base64_encode( $en_privkey ), //phpcs:ignore -- NOSONAR -ok.
+                                'privkey'            => is_array( $en_privkey ) ? base64_encode( json_encode( $en_privkey ) ) : base64_encode( $en_privkey ), //phpcs:ignore -- NOSONAR -ok.
                                 'verify_certificate' => $website->verify_certificate,
                                 'uniqueId'           => ( null !== $website->uniqueId ? $website->uniqueId : '' ),
                                 'http_user'          => $website->http_user,

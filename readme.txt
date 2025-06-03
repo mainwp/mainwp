@@ -6,8 +6,8 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.8.1
-Requires PHP: 7.4
-Stable tag: 5.4.0.10
+Requires PHP: 8.1
+Stable tag: 5.4.0.11
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -146,6 +146,10 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.4.0.11 - Maintenance Release - 6-3-2025 =
+
+* Fixed: Resolved an issue that could prevent staging sites from being created successfully by improving data handling in the cloning process.
 
 = 5.4.0.10 - Maintenance Release - 5-20-2025 =
 

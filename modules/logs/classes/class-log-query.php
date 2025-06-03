@@ -391,17 +391,19 @@ class Log_Query {
                     $meta_records = $wpdb->get_results( $sql_meta );
                     $ids_flip     = array_flip( $ids );
 
-                    foreach ( $meta_records as $meta_record ) {
-                        if ( ! empty( $meta_record->meta_value ) ) {
-                            $items[ $ids_flip[ $meta_record->meta_log_id ] ]->user_meta_json[ $meta_record->meta_key ][] = $meta_record->meta_value;
-                            // compatible format.
-                            if ( in_array( $meta_record->meta_key, array( 'user_meta_json', 'user_login', 'extra_info' ) ) ) {
-                                $items[ $ids_flip[ $meta_record->meta_log_id ] ]->{$meta_record->meta_key} = $meta_record->meta_value;
-                            } else {
-                                if ( empty( $items[ $ids_flip[ $meta_record->meta_log_id ] ]->meta ) ) {
-                                    $items[ $ids_flip[ $meta_record->meta_log_id ] ]->meta = array();
+                    if ( is_array( $meta_records ) ) {
+                        foreach ( $meta_records as $meta_record ) {
+                            if ( ! empty( $meta_record->meta_value ) ) {
+                                $items[ $ids_flip[ $meta_record->meta_log_id ] ]->user_meta_json[ $meta_record->meta_key ][] = $meta_record->meta_value;
+                                // compatible format.
+                                if ( in_array( $meta_record->meta_key, array( 'user_meta_json', 'user_login', 'extra_info' ) ) ) {
+                                    $items[ $ids_flip[ $meta_record->meta_log_id ] ]->{$meta_record->meta_key} = $meta_record->meta_value;
+                                } else {
+                                    if ( empty( $items[ $ids_flip[ $meta_record->meta_log_id ] ]->meta ) ) {
+                                        $items[ $ids_flip[ $meta_record->meta_log_id ] ]->meta = array();
+                                    }
+                                    $items[ $ids_flip[ $meta_record->meta_log_id ] ]->meta[ $meta_record->meta_key ] = $meta_record->meta_value;
                                 }
-                                $items[ $ids_flip[ $meta_record->meta_log_id ] ]->meta[ $meta_record->meta_key ] = $meta_record->meta_value;
                             }
                         }
                     }

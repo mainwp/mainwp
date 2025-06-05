@@ -1437,9 +1437,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 if ( empty( $contact_name ) ) {
                     continue;
                 }
-                $contact_to_add['contact_name'] = $contact_name;
+                $contact_to_add['contact_name'] = sanitize_text_field( wp_unslash( $contact_name ) );
 
-                $contact_email = $client_fields['contacts_field']['contact.email'][ $indx ];
+                $contact_email = sanitize_text_field( wp_unslash( $client_fields['contacts_field']['contact.email'][ $indx ] ) );
                 if ( empty( $contact_email ) ) {
                     continue;
                 }
@@ -1458,12 +1458,12 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
                 $contact_to_add['contact_email'] = $contact_email;
 
-                $contact_to_add['contact_phone'] = $client_fields['contacts_field']['contact.phone'][ $indx ];
-                $contact_to_add['contact_role']  = $client_fields['contacts_field']['contact.role'][ $indx ];
-                $contact_to_add['facebook']      = $client_fields['contacts_field']['contact.facebook'][ $indx ];
-                $contact_to_add['twitter']       = $client_fields['contacts_field']['contact.twitter'][ $indx ];
-                $contact_to_add['instagram']     = $client_fields['contacts_field']['contact.instagram'][ $indx ];
-                $contact_to_add['linkedin']      = $client_fields['contacts_field']['contact.linkedin'][ $indx ];
+                $contact_to_add['contact_phone'] = sanitize_text_field( wp_unslash( $client_fields['contacts_field']['contact.phone'][ $indx ] ) );
+                $contact_to_add['contact_role']  = sanitize_text_field( wp_unslash( $client_fields['contacts_field']['contact.role'][ $indx ] ) );
+                $contact_to_add['facebook']      = sanitize_text_field( wp_unslash( $client_fields['contacts_field']['contact.facebook'][ $indx ] ) );
+                $contact_to_add['twitter']       = sanitize_text_field( wp_unslash( $client_fields['contacts_field']['contact.twitter'][ $indx ] ) );
+                $contact_to_add['instagram']     = sanitize_text_field( wp_unslash( $client_fields['contacts_field']['contact.instagram'][ $indx ] ) );
+                $contact_to_add['linkedin']      = sanitize_text_field( wp_unslash( $client_fields['contacts_field']['contact.linkedin'][ $indx ] ) );
 
                 $cust_icon  = sanitize_text_field( wp_unslash( $client_fields['contacts_field']['selected_icon'][ $indx ] ) );
                 $cust_color = sanitize_hex_color( wp_unslash( $client_fields['contacts_field']['selected_color'][ $indx ] ) );

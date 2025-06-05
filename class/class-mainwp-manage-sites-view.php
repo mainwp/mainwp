@@ -441,7 +441,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         $items = str_getcsv( $line, ',' );
 
                         if ( ( null === $header_line ) && ! empty( $_POST['mainwp_managesites_chk_header_first'] ) ) {
-                            $header_line = $line . "\r";
+                            $header_line = sanitize_text_field( $line ) . "\r";
                             continue;
                         }
 
@@ -461,12 +461,12 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                 }
                             }
 
-                            $import_data[ $field ] = $value;
+                            $import_data[ $field ] = sanitize_text_field( wp_unslash( $value ) );
                             ++$x;
                         }
                         $encoded = wp_json_encode( $import_data );
                         ?>
-                        <input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo esc_attr( $row + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( $encoded ); ?>" original="<?php echo esc_attr( $originalLine ); ?>" />
+                        <input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo esc_attr( $row + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( $encoded ); ?>" original="<?php echo esc_attr( sanitize_text_field( $originalLine ) ); ?>" />
                         <?php
                         ++$row;
                     }

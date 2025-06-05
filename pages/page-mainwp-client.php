@@ -1141,7 +1141,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 $items = str_getcsv( $line, ',' );
 
                 if ( ( null === $header_line ) && ! empty( $_POST['mainwp_client_import_chk_header_first'] ) ) {  // phpcs:ignore WordPress.Security.NonceVerification.Missing -- NOSONAR
-                    $header_line = $line . "\r";
+                    $header_line = sanitize_text_field( $line ) . "\r";
                     continue;
                 }
                 if ( 3 > count( $items ) ) {
@@ -1153,7 +1153,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 // Take data from the CSV file into the array.
                 foreach ( $default_values as $field => $val ) {
                     $value                   = isset( $items[ $x ] ) ? $items[ $x ] : $val;
-                    $import_fields[ $field ] = $value;
+                    $import_fields[ $field ] = sanitize_text_field( $value );
                     ++$x;
                 }
                 $import_data[] = $import_fields;
@@ -1163,12 +1163,12 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         if ( ! empty( $import_data ) ) {
             foreach ( $import_data as $k_import => $val_import ) {
                 if ( ! empty( $val_import['client.url'] ) ) {
-                    $import_data[ $k_import ]['client.url'] = explode( ';', $val_import['client.url'] );
+                    $import_data[ $k_import ]['client.url'] = explode( ';', sanitize_text_field( $val_import['client.url'] ) );
                 }
             }
         }
         return array(
-            'header_line' => $header_line,
+            'header_line' => esc_js( text: $header_line ),
             'data'        => $import_data,
         );
     }

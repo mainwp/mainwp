@@ -147,6 +147,10 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
+= 5.4.0.11 - Maintenance Release - 6-3-2025 =
+
+* Fixed: Resolved an issue that could prevent staging sites from being created successfully by improving data handling in the cloning process.
+
 = 5.4.0.10 - Maintenance Release - 5-20-2025 =
 
 * Fixed: Corrected a typo in the Force IPv4 option tooltip for improved clarity. [(#787)](https://github.com/mainwp/mainwp/issues/787)

@@ -33,13 +33,15 @@ jQuery(function ($) {
   // review for new UI update
   jQuery(document).on('click', '#mainwp-category-add-submit', function () {
     let newCat = jQuery('#newcategory').val();
-    if (jQuery('#categorychecklist .menu').find('.item[data-value="' + encodeURIComponent(newCat) + '"]').length > 0) {
-      console.log('Existed: ' + encodeURIComponent(newCat));
+    newCat = encodeURIComponent(newCat).replace(/%20/g, ' ');
+
+    if (jQuery('#categorychecklist .menu').find('.item[data-value="' + newCat + '"]').length > 0) {
+      console.log('Existed: ' + newCat);
       jQuery('#newcategory').val('');
       return;
     }
     let selected_categories = jQuery('#categorychecklist').dropdown('get value');
-    jQuery('#categorychecklist .menu').append('<div class="item" data-value="' + encodeURIComponent(newCat) + '">' + newCat + '</div>');
+    jQuery('#categorychecklist .menu').append('<div class="item" data-value="' + newCat + '">' + newCat + '</div>');
     jQuery('#categorychecklist .menu').dropdown('set selected', selected_categories); // to refresh.
     jQuery('#newcategory').val('');
   });

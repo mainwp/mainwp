@@ -113,9 +113,10 @@ class Log {
 
         $dura = $dura / $dura_bulk;
 
-        $created = time();
+        $created = microtime(true);
+
         if ( ! empty( $args['created'] ) ) {
-            $created = $args['created'];
+            $created = ( float ) $args['created'];
             unset( $args['created'] );
         }
 
@@ -140,16 +141,16 @@ class Log {
         $logs_meta['user_meta_json'] = wp_json_encode( $user_meta );
 
         $recordarr = array(
-            'site_id'   => (int) $site_id,
-            'user_id'   => (int) $user_id,
-            'item'      => (string) vsprintf( $message, $args ),
-            'connector' => (string) $connector,
-            'context'   => (string) $context,
-            'action'    => (string) $action,
-            'duration'  => $dura,
-            'created'   => $created,
-            'state'     => $state,
-            'meta'      => (array) $logs_meta,
+            'site_id'    => (int) $site_id,
+            'user_id'    => (int) $user_id,
+            'item'       => (string) vsprintf( $message, $args ),
+            'connector'  => (string) $connector,
+            'context'    => (string) $context,
+            'action'     => (string) $action,
+            'duration'   => $dura,
+            'created'    => $created,
+            'state'      => $state,
+            'meta'       => (array) $logs_meta,
         );
 
         if ( 0 === $recordarr['site_id'] ) {

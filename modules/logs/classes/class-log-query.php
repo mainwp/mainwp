@@ -35,7 +35,6 @@ class Log_Query {
         // To support none mainwp actions.
         $log_id          = isset( $args['log_id'] ) ? intval( $args['log_id'] ) : 0;
         $site_id         = isset( $args['wpid'] ) ? $args['wpid'] : 0; // int or array of int site ids.
-        $object_id       = isset( $args['object_id'] ) ? sanitize_text_field( $args['object_id'] ) : '';
         $where_extra     = ''; // compatible.
         $check_access    = isset( $args['check_access'] ) ? $args['check_access'] : true;
         $view            = isset( $args['view'] ) ? sanitize_text_field( $args['view'] ) : '';
@@ -148,9 +147,9 @@ class Log_Query {
         // available sources conds values: wp-admin-only|dashboard-only|empty.
         if ( ! empty( $args['sources_conds'] ) ) {
             if ( 'wp-admin-only' === $args['sources_conds'] ) {
-                $where .= ' AND `lg`.`connector` = "non-mainwp-changes" ';
+                $where .= ' AND ( `lg`.`connector` = "non-mainwp-changes" OR `lg`.`connector` = "changes-logs" ) ';
             } elseif ( 'dashboard-only' === $args['sources_conds'] ) {
-                $where .= ' AND `lg`.`connector` != "non-mainwp-changes" ';
+                $where .= ' AND `lg`.`connector` != "non-mainwp-changes" AND `lg`.`connector` != "changes-logs" ';
             }
         }
 
@@ -226,7 +225,7 @@ class Log_Query {
         if ( 'source' === $args['orderby'] ) {
             $orderby = " ORDER BY
             CASE
-            WHEN connector = 'non-mainwp-changes' THEN 2
+            WHEN connector = 'non-mainwp-changes' OR connector = 'changes-logs' THEN 2
             ELSE 1
             END " . $order;
         } elseif ( 'log_object' === $args['orderby'] ) {
@@ -254,12 +253,6 @@ class Log_Query {
                     $sql_and        = ' AND ';
                     $where_actions .= $sql_and . ' lg.site_id = ' . intval( $site_id );
                 }
-            }
-            if ( ! empty( $object_id ) ) {
-                if ( empty( $sql_and ) ) {
-                    $sql_and = ' AND ';
-                }
-                $where_actions .= $sql_and . ' lg.object_id = "' . $object_id . '" ';
             }
         }
 

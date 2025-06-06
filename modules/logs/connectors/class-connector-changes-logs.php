@@ -1,9 +1,9 @@
 <?php
 /**
- * Module Logs Installer connector class.
+ * Module Logs connector class.
  *
  * @package MainWP\Dashboard
- * @version 4.5.1
+ * @since 4.5.1
  */
 
 namespace MainWP\Dashboard\Module\Log;
@@ -17,14 +17,14 @@ defined( 'ABSPATH' ) || exit;
  *
  * @package MainWP\Dashboard
  */
-class Connector_Non_Mainwp_Changes extends Log_Connector {
+class Connector_Changes_Logs extends Log_Connector {
 
     /**
      * Connector name.
      *
      * @var string Connector slug.
      * */
-    public $name = 'non-mainwp-changes';
+    public $name = 'changes-logs';
 
     /**
      * Actions names.
@@ -32,7 +32,7 @@ class Connector_Non_Mainwp_Changes extends Log_Connector {
      * @var array Actions registered for this connector.
      * */
     public $actions = array(
-        'mainwp_sync_site_log_install_actions',
+        'mainwp_sync_site_log_changes_logs',
     );
 
 
@@ -75,18 +75,26 @@ class Connector_Non_Mainwp_Changes extends Log_Connector {
     }
 
     /**
-     * Log site action.
+     * Log site changes logs.
      *
-     * @action mainwp_sync_site_log_install_actions.
+     * @action mainwp_sync_site_log_changes_logs.
      *
-     * @param object $website  website.
-     * @param array  $record meta data.
+     * @param object $website  Website.
+     * @param array  $record Logs data.
+     * @param array  $raw_data Raw log data.
      */
-    public function callback_mainwp_sync_site_log_install_actions( $website, $record ) { //phpcs:ignore -- NOSONAR - complex method.
-
-        if ( empty( $website ) || ! is_array( $record ) ) {
+    public function callback_mainwp_sync_site_log_changes_logs( $website, $record, $raw_data ) { //phpcs:ignore -- NOSONAR - complex method.
+        if ( empty( $website ) || ! is_array( $record ) || empty( $record['created'] ) ) {
             return;
         }
+
+        if ( is_array( $raw_data ) && isset( $raw_data['log_type_id'] ) ) {
+            $enable_log_type = apply_filters( 'mainwp_module_log_enable_insert_log_type', true, $raw_data );
+            if ( ! $enable_log_type ) {
+                return false;
+            }
+        }
+
         $record['connector'] = $this->name;
         $this->log_record( $record );
     }

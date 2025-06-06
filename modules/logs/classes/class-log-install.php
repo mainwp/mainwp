@@ -23,7 +23,7 @@ class Log_Install extends MainWP_Install {
      *
      * @var string DB version info.
      */
-    public $log_db_version = '1.0.1.12'; // NOSONAR - no IP.
+    public $log_db_version = '1.0.1.16'; // NOSONAR - no IP.
 
     /**
      * Protected variable to hold the database option name.
@@ -80,14 +80,13 @@ class Log_Install extends MainWP_Install {
         $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_logs' ) . " (
     log_id bigint(20) NOT NULL auto_increment,
     site_id bigint(20) unsigned NULL,
-    object_id varchar(20) NOT NULL DEFAULT '',
     item varchar(256) NOT NULL DEFAULT '',
     user_id int(11) unsigned NOT NULL DEFAULT '0',
     action varchar(100) NOT NULL,
     context varchar(100) NOT NULL,
     connector varchar(100) NOT NULL,
     state tinyint(1) unsigned NULL,
-    created int(11) NOT NULL DEFAULT 0,
+    created double NOT NULL,
     duration float(11,4) NOT NULL DEFAULT '0',
     dismiss tinyint(1) NOT NULL DEFAULT 0,
     KEY site_id (site_id),
@@ -98,7 +97,7 @@ class Log_Install extends MainWP_Install {
     KEY connector (connector),
     KEY action (action),
     KEY state (state),
-    KEY index_site_object_id(site_id, object_id),
+    KEY idx_site_created(site_id, created),
     KEY item (item(191))";
 
         if ( empty( $currentVersion ) ) {
@@ -140,12 +139,10 @@ class Log_Install extends MainWP_Install {
         if ( empty( $currentVersion ) ) {
             $this->create_archive_tables();
         }
-
+        MainWP_Utility::update_option( $this->log_db_option_key, $this->log_db_version );
+        $this->update_log_db( $currentVersion );
         $wpdb->suppress_errors( $suppress );
 
-        MainWP_Utility::update_option( $this->log_db_option_key, $this->log_db_version );
-
-        $this->update_log_db( $currentVersion );
     }
 
     /**
@@ -154,10 +151,6 @@ class Log_Install extends MainWP_Install {
      * @param string $currentVersion Current db version.
      */
     public function update_log_db( $currentVersion ) {
-        if ( version_compare( $currentVersion, '1.0.1.7', '<' ) ) { // NOSONAR - non-ip.
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' ADD INDEX index_site_object_id (site_id, object_id)' ); //phpcs:ignore -- ok.
-        }
-
         if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.9', '<' ) ) { // NOSONAR - non-ip.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' MODIFY COLUMN item varchar(256) NOT NULL DEFAULT ""' ); //phpcs:ignore -- ok.
         }
@@ -169,6 +162,25 @@ class Log_Install extends MainWP_Install {
 
         if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.11', '<' ) ) { // NOSONAR - non-ip.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' ADD INDEX item (item(191))' ); //phpcs:ignore -- ok.
+        }
+
+        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.16', '<' ) ) { // NOSONAR - non-ip.
+
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' DROP INDEX created' ); //phpcs:ignore -- ok.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' DROP INDEX index_site_object_id' ); //phpcs:ignore -- ok.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' DROP COLUMN object_id' ); //phpcs:ignore -- ok.
+
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' MODIFY COLUMN created double NOT NULL' ); //phpcs:ignore -- ok.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' ADD INDEX created ( created )' ); //phpcs:ignore -- ok.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' ADD INDEX idx_site_created(site_id, created)' ); //phpcs:ignore -- ok.
+
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' DROP INDEX created' ); //phpcs:ignore -- ok.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' DROP INDEX index_site_object_id' ); //phpcs:ignore -- ok.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' DROP COLUMN object_id' ); //phpcs:ignore -- ok.
+
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' MODIFY COLUMN created double NOT NULL' ); //phpcs:ignore -- ok.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD INDEX created ( created )' ); //phpcs:ignore -- ok.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD INDEX idx_site_created(site_id, created)' ); //phpcs:ignore -- ok.
         }
     }
 

@@ -79,7 +79,7 @@ class Connector_Installer extends Log_Connector {
      *
      * @action mainwp_install_update_actions.
      *
-     * @param array  $website  website.
+     * @param object $website  website.
      * @param string $pAction install action.
      * @param array  $data data result.
      * @param string $type action type.

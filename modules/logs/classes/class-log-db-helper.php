@@ -165,11 +165,15 @@ class Log_DB_Helper extends MainWP_DB {
                 if ( ! empty( $item->site_id ) && ! empty( $item->name ) && ! empty( $item->meta_value ) ) {
                     $info = json_decode( $item->meta_value, true );
                     if ( is_array( $info ) ) {
-                        if ( ! empty( $info['wp_user_id'] ) ) { // child site users.
+                        if ( isset( $info['wp_user_id'] ) ) { // child site users, or child site system user.
+                            $act_user = $info['action_user'];
+                            if ( 'wp_cron' === $act_user ) {
+                                $act_user = __( 'during WP Cron', 'mainwp' );
+                            }
                             $logs_users[ $item->log_id ] = array(
                                 'id'         => $item->user_id,
                                 'site_id'    => $item->site_id,
-                                'login'      => $info['action_user'],
+                                'login'      => $act_user,
                                 'nicename'   => $info['display_name'],
                                 'source'     => ! empty( $item->name ) ? $item->name : '',
                                 'wp_user_id' => $info['wp_user_id'],
@@ -184,6 +188,9 @@ class Log_DB_Helper extends MainWP_DB {
                             if ( empty( $nicename ) ) {
                                 if ( ! empty( $info['agent'] ) ) {
                                     $nicename = $info['agent'];
+                                    if ( 'wp_cron' === $nicename ) {
+                                        $nicename = __( 'during WP Cron', 'mainwp' );
+                                    }
                                 } else {
                                     $nicename = 'N/A';
                                 }
@@ -267,6 +274,34 @@ class Log_DB_Helper extends MainWP_DB {
             return $log;
         }
         return false;
+    }
+
+    /**
+     * Returns the most recent changes logs stored for the given site.
+     *
+     * @param integer $site_id - The ID of the site to retrieve the most recent event.
+     * @param integer $limit - Limit number of result.
+     *
+     * @return array
+     *
+     * @since 5.4.1
+     */
+    public function get_latest_changes_by_siteid( $site_id, $limit = 1 ): array {
+        return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_logs' ) . " WHERE site_id=%d AND `connector` = 'changes-logs' ORDER BY created DESC LIMIT %d", $site_id, $limit ) ); //phpcs:ignore -- ok.
+    }
+
+    /**
+     * Returns the most recent non-mainwp-changes stored for the given site.
+     *
+     * @param integer $site_id - The ID of the site to retrieve the most recent event.
+     * @param integer $limit - Limit number of result.
+     *
+     * @return array
+     *
+     * @since 5.4.1
+     */
+    public function get_latest_non_mainwp_changes_by_siteid( $site_id, $limit = 1 ): array {
+        return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_logs' ) . " WHERE site_id=%d AND `connector` = 'non-mainwp-changes' ORDER BY created DESC LIMIT %d", $site_id, $limit ) ); //phpcs:ignore -- ok.
     }
 
     /**

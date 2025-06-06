@@ -152,7 +152,7 @@ class Log_Record {
         $this->action        = isset( $log->action ) ? $log->action : null;
         $this->state         = isset( $log->state ) ? $log->state : null;
         $this->duration      = isset( $log->duration ) ? $log->duration : null;
-        $this->object_id     = isset( $log->object_id ) ? $log->object_id : null;
+        $this->object_id     = null; // compatible.
         $this->extra_meta    = isset( $log->extra_info ) ? $log->extra_info : null;
 
         $user_meta = ! empty( $log->user_meta_json ) ? json_decode( $log->user_meta_json, true ) : array();

@@ -185,7 +185,6 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
 
         $action_id       = isset( $legacy_params['action_id'] ) ? intval( $legacy_params['action_id'] ) : 0;
         $site_id         = isset( $legacy_params['wpid'] ) ? $legacy_params['wpid'] : 0;
-        $object_id       = isset( $legacy_params['object_id'] ) ? $this->escape( $legacy_params['object_id'] ) : '';
         $where_extra     = isset( $legacy_params['where_extra'] ) ? $legacy_params['where_extra'] : ''; // compatible.
         $dism            = ! empty( $legacy_params['dismiss'] ) ? 1 : 0;
         $check_access    = isset( $legacy_params['check_access'] ) ? $legacy_params['check_access'] : true;
@@ -214,7 +213,6 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
             'where_extra'      => $where_extra,
             'log_id'           => $action_id,
             'wpid'             => $site_id,
-            'object_id'        => $object_id,
             'dismiss'          => $dism,
             'check_access'     => $check_access,
             'not_count'        => true,

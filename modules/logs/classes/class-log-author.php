@@ -111,7 +111,11 @@ class Log_Author {
         // child users.
         if ( isset( $this->meta['wp_user_id'] ) || isset( $this->meta['user_id'] ) ) { // 'user_id' to compare with old child wp.
             if ( ! empty( $this->meta['action_user'] ) ) {
-                return esc_html( $this->meta['action_user'] );
+                $act_user = esc_html( $this->meta['action_user'] );
+                if ( 'wp_cron' === $act_user ) {
+                    $act_user = 'during WP Cron';
+                }
+                return $act_user;
             } elseif ( ! empty( $this->meta['system_user_name'] ) ) {
                 return esc_html( $this->meta['system_user_name'] );
             }

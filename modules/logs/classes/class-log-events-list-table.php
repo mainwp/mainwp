@@ -255,7 +255,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 if ( ! empty( $record->source ) ) {
                     $out = $record->source; // sub query field.
                 } else {
-                    $out = 'non-mainwp-changes' === $record->connector ? 'WP Admin' : 'Dashboard';
+                    $out = ( 'non-mainwp-changes' === $record->connector || 'changes-logs' === $record->connector ) ? 'WP Admin' : 'Dashboard';
                 }
                 break;
             case 'col_action':
@@ -361,7 +361,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             }
         } elseif ( 'site' === $record->connector ) {
             $title = esc_html__( 'Website', 'mainwp' );
-        } elseif ( 'non-mainwp-changes' === $record->connector ) {
+        } elseif ( 'non-mainwp-changes' === $record->connector || 'changes-logs' === $record->connector ) {
             $title = esc_html( $record->item );
         } elseif ( isset( $extra_meta['name'] ) ) {
             $title = $extra_meta['name'];
@@ -369,7 +369,11 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $roll_msg = MainWP_Updates_Helper::get_roll_msg( $extra_meta['rollback_info'], true ) . ' ';
             }
         }
-        $title = $roll_msg . esc_html( $title ) . $this->get_context_title( $record->context, $record->connector );
+
+        if ( 'changes-logs' !== $record->connector ) {
+            $title = $roll_msg . esc_html( $title ) . $this->get_context_title( $record->context, $record->connector );
+        }
+
         return $title;
     }
 
@@ -776,7 +780,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                             "initComplete": function( settings, json ) {
                                 if( 'widget-overview' === '<?php echo esc_js( $this->table_id_prefix ); ?>' ){
                                     setTimeout(() => {
-                                           jQuery('#mainwp-module-log-records-table-container div.dt-search #dt-search-1').val('');// to fix issue autofill for chrome.
+                                            jQuery('#mainwp-module-log-records-table-container div.dt-search #dt-search-1').val('');// to fix issue autofill for chrome.
                                     }, 100);
                                 }
                             },

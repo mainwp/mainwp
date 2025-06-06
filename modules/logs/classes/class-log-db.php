@@ -122,7 +122,6 @@ class Log_DB extends MainWP_DB {
         $record_defaults = array(
             'site_id'   => null,
             'user_id'   => null,
-            'object_id' => null,
             'created'   => null,
             'item'      => null,
             'connector' => null,
@@ -312,16 +311,7 @@ class Log_DB extends MainWP_DB {
      *
      * @return mixed Results.
      */
-    public function is_site_action_log_existed( $site_id, $object_id ) {
-        global $wpdb;
-        return $wpdb->query( //phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-            $wpdb->prepare(
-                "SELECT `log_id`
-                FROM {$wpdb->mainwp_tbl_logs}
-                WHERE `site_id` = %d AND `object_id` = %s LIMIT 1 ",
-                $site_id,
-                $object_id
-            )
-        );
+    public function is_site_action_log_existed( $site_id = false, $object_id = false ) { //phpcs:ignore -- compatible.
+        return false;
     }
 }

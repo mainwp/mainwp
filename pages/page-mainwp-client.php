@@ -1168,7 +1168,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             }
         }
         return array(
-            'header_line' => esc_js( text: $header_line ),
+            'header_line' => esc_js( $header_line ),
             'data'        => $import_data,
         );
     }

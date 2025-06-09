@@ -68,10 +68,11 @@ class Log {
                 return false;
         }
 
-        $user = new \WP_User( $user_id );
+        $user       = new \WP_User( $user_id );
+        $user_login = ! empty( $user->user_login ) ? (string) $user->user_login : '';
 
         $user_meta = array(
-            'user_login' => (string) ! empty( $user->user_login ) ? $user->user_login : '',
+            'user_login' => $user_login,
             'agent'      => (string) $agent,
         );
 
@@ -113,10 +114,10 @@ class Log {
 
         $dura = $dura / $dura_bulk;
 
-        $created = microtime(true);
+        $created = microtime( true );
 
         if ( ! empty( $args['created'] ) ) {
-            $created = ( float ) $args['created'];
+            $created = (float) $args['created'];
             unset( $args['created'] );
         }
 
@@ -128,7 +129,6 @@ class Log {
             }
         );
 
-        // To support searching user on meta.
         if ( empty( $logs_meta['user_login'] ) ) {
             if ( ! empty( $user_meta['user_login'] ) ) {
                 $logs_meta['user_login'] = $user_meta['user_login'];
@@ -143,6 +143,7 @@ class Log {
         $recordarr = array(
             'site_id'    => (int) $site_id,
             'user_id'    => (int) $user_id,
+            'user_login' => (string) $user_login,
             'item'       => (string) vsprintf( $message, $args ),
             'connector'  => (string) $connector,
             'context'    => (string) $context,

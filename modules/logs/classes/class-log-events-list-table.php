@@ -255,7 +255,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 if ( ! empty( $record->source ) ) {
                     $out = $record->source; // sub query field.
                 } else {
-                    $out = ( 'non-mainwp-changes' === $record->connector || 'changes-logs' === $record->connector ) ? 'WP Admin' : 'Dashboard';
+                    $out = ( 'non-mainwp-changes' === $record->connector ) ? 'WP Admin' : 'Dashboard';
                 }
                 break;
             case 'col_action':
@@ -361,7 +361,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             }
         } elseif ( 'site' === $record->connector ) {
             $title = esc_html__( 'Website', 'mainwp' );
-        } elseif ( 'non-mainwp-changes' === $record->connector || 'changes-logs' === $record->connector ) {
+        } elseif ( 'non-mainwp-changes' === $record->connector ) {
             $title = esc_html( $record->item );
         } elseif ( isset( $extra_meta['name'] ) ) {
             $title = $extra_meta['name'];
@@ -370,7 +370,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             }
         }
 
-        if ( 'changes-logs' !== $record->connector ) {
+        if ( empty( $record->log_type_id ) ) {
             $title = $roll_msg . esc_html( $title ) . $this->get_context_title( $record->context, $record->connector );
         }
 

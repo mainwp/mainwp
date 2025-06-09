@@ -576,7 +576,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                                 $users = $manager->admin->get_all_users();
                                 foreach ( $users as $item ) {
                                     ?>
-                                    <div class="item" data-value="<?php echo intval( $item['id'] ) . '-' . (int) $item['site_id'] . '-' . ( empty( $item['wp_user_id'] ) ? 1 : 0 ); ?>"><?php echo ( ! empty( $item['login'] ) ? esc_html( $item['login'] ) : esc_html( $item['nicename'] ) ) . ' (' . esc_html( $item['source'] ) . ')'; ?></div>
+                                    <div class="item" data-value="<?php echo intval( $item['id'] ) . '-' . (int) $item['site_id'] . '-' . ( ! empty( $item['is_dashboard_user'] ) ? 1 : 0 ); ?>"><?php echo ( ! empty( $item['login'] ) ? esc_html( $item['login'] ) : esc_html( $item['nicename'] ) ) . ' (' . esc_html( $item['source'] ) . ')'; ?></div>
                                     <?php
                                 }
                                 ?>

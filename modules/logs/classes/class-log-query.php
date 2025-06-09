@@ -50,7 +50,6 @@ class Log_Query {
 
         $count_only = ! empty( $args['count_only'] ) ? true : false;
         $not_count  = ! empty( $args['not_count'] ) ? true : false;
-        $mt_search  = false;
         if ( ! empty( $args['search'] ) ) {
             $search_str = MainWP_DB::instance()->escape( $args['search'] );
             // for searching.
@@ -62,10 +61,7 @@ class Log_Query {
                     $where_search .= ' OR lg.item LIKE  "%' . $search_str . '%" ';
                     if ( 'events_list' === $view ) {
                         $where_search .= ' OR sub_lg.source LIKE  "%' . $search_str . '%" ';
-                        if ( ! $optimize_get_dt ) {
-                            $where_search .= ' OR meta_view.user_login LIKE  "%' . $search_str . '%" ';
-                        }
-                        $mt_search = true;
+                        $where_search .= ' OR lg.user_login LIKE  "%' . $search_str . '%" ';
                     }
                     $where_search .= ') ';
                     $where        .= $where_search;
@@ -147,9 +143,9 @@ class Log_Query {
         // available sources conds values: wp-admin-only|dashboard-only|empty.
         if ( ! empty( $args['sources_conds'] ) ) {
             if ( 'wp-admin-only' === $args['sources_conds'] ) {
-                $where .= ' AND ( `lg`.`connector` = "non-mainwp-changes" OR `lg`.`connector` = "changes-logs" ) ';
+                $where .= ' AND ( `lg`.`connector` = "non-mainwp-changes" ) ';
             } elseif ( 'dashboard-only' === $args['sources_conds'] ) {
-                $where .= ' AND `lg`.`connector` != "non-mainwp-changes" AND `lg`.`connector` != "changes-logs" ';
+                $where .= ' AND `lg`.`connector` != "non-mainwp-changes" ';
             }
         }
 
@@ -225,7 +221,7 @@ class Log_Query {
         if ( 'source' === $args['orderby'] ) {
             $orderby = " ORDER BY
             CASE
-            WHEN connector = 'non-mainwp-changes' OR connector = 'changes-logs' THEN 2
+            WHEN connector = 'non-mainwp-changes' THEN 2
             ELSE 1
             END " . $order;
         } elseif ( 'log_object' === $args['orderby'] ) {
@@ -278,9 +274,6 @@ class Log_Query {
         }
 
         $mt_params = array();
-        if ( $mt_search ) {
-            $mt_params['user_login'] = true;
-        }
 
         $optimize_get_meta = false;
         if ( ! $optimize_get_dt ) {
@@ -426,9 +419,6 @@ class Log_Query {
         $view .= '(SELECT meta_name.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' meta_name WHERE  meta_name.meta_log_id = intlog.log_id AND meta_name.meta_key = "name" LIMIT 1) AS meta_name, ';
         $view .= '(SELECT user_meta_json.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' user_meta_json WHERE  user_meta_json.meta_log_id = intlog.log_id AND user_meta_json.meta_key = "user_meta_json" LIMIT 1) AS user_meta_json, ';
         $view .= '(SELECT usermeta.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' usermeta WHERE  usermeta.meta_log_id = intlog.log_id AND usermeta.meta_key = "user_meta" LIMIT 1) AS usermeta, '; // compatible user_meta data.
-        if ( ! empty( $params['user_login'] ) ) {
-            $view .= '(SELECT user_login.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' user_login WHERE  user_login.meta_log_id = intlog.log_id AND user_login.meta_key = "user_login" LIMIT 1) AS user_login, ';
-        }
         $view .= '(SELECT extra_info.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' extra_info WHERE  extra_info.meta_log_id = intlog.log_id AND extra_info.meta_key = "extra_info" LIMIT 1) AS extra_info ';
         $view .= ' FROM ' . $wpdb->mainwp_tbl_logs . ' intlog)';
         return $view;

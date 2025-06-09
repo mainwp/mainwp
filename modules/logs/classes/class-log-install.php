@@ -23,7 +23,7 @@ class Log_Install extends MainWP_Install {
      *
      * @var string DB version info.
      */
-    public $log_db_version = '1.0.1.16'; // NOSONAR - no IP.
+    public $log_db_version = '1.0.1.20'; // NOSONAR - no IP.
 
     /**
      * Protected variable to hold the database option name.
@@ -80,8 +80,10 @@ class Log_Install extends MainWP_Install {
         $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_logs' ) . " (
     log_id bigint(20) NOT NULL auto_increment,
     site_id bigint(20) unsigned NULL,
+    log_type_id bigint NULL DEFAULT NULL,
     item varchar(256) NOT NULL DEFAULT '',
     user_id int(11) unsigned NOT NULL DEFAULT '0',
+    user_login varchar(100) NOT NULL,
     action varchar(100) NOT NULL,
     context varchar(100) NOT NULL,
     connector varchar(100) NOT NULL,
@@ -91,6 +93,7 @@ class Log_Install extends MainWP_Install {
     dismiss tinyint(1) NOT NULL DEFAULT 0,
     KEY site_id (site_id),
     KEY user_id (user_id),
+    KEY user_login (user_login),
     KEY created (created),
     KEY duration (duration),
     KEY context (context),
@@ -142,7 +145,6 @@ class Log_Install extends MainWP_Install {
         MainWP_Utility::update_option( $this->log_db_option_key, $this->log_db_version );
         $this->update_log_db( $currentVersion );
         $wpdb->suppress_errors( $suppress );
-
     }
 
     /**
@@ -181,6 +183,12 @@ class Log_Install extends MainWP_Install {
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' MODIFY COLUMN created double NOT NULL' ); //phpcs:ignore -- ok.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD INDEX created ( created )' ); //phpcs:ignore -- ok.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD INDEX idx_site_created(site_id, created)' ); //phpcs:ignore -- ok.
+        }
+
+        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.20', '<' ) ) { // NOSONAR - non-ip.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD COLUMN user_login varchar(100) NOT NULL' ); //phpcs:ignore -- ok.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD COLUMN log_type_id bigint NULL DEFAULT NULL' ); //phpcs:ignore -- ok.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD INDEX user_login ( user_login )' ); //phpcs:ignore -- ok.
         }
     }
 

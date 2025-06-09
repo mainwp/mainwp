@@ -145,7 +145,7 @@ class Log_DB_Helper extends MainWP_DB {
      */
     public function get_logs_users() { //phpcs:ignore -- NOSONAR -complex.
         $where = MainWP_DB::instance()->get_sql_where_allow_access_sites( 'wp' );
-        $sql   = 'SELECT lo.log_id, lo.site_id, lo.user_id, lo.connector, wp.name, me.meta_log_id, me.meta_key, me.meta_value '
+        $sql   = 'SELECT lo.log_id, lo.site_id, lo.user_id, lo.user_login, lo.connector, wp.name, me.meta_log_id, me.meta_key, me.meta_value '
         . ', CASE
                 WHEN connector != "non-mainwp-changes" THEN "dashboard"
                 ELSE "wpadmin"
@@ -165,26 +165,43 @@ class Log_DB_Helper extends MainWP_DB {
                 if ( ! empty( $item->site_id ) && ! empty( $item->name ) && ! empty( $item->meta_value ) ) {
                     $info = json_decode( $item->meta_value, true );
                     if ( is_array( $info ) ) {
-                        if ( isset( $info['wp_user_id'] ) ) { // child site users, or child site system user.
-                            $act_user = $info['action_user'];
+                        if ( 'non-mainwp-changes' === $item->connector ) { // child site users ID, 0 is child site system user.
+                            if ( ! empty( isset( $info['user_id'] ) ) && ! empty( $info['user_login'] ) ) {
+                                $act_user = $info['user_login'];
+                            } else {
+                                // to compatible.
+                                $act_user = $info['action_user'];
+                            }
+
                             if ( 'wp_cron' === $act_user ) {
                                 $act_user = __( 'during WP Cron', 'mainwp' );
                             }
+
                             $logs_users[ $item->log_id ] = array(
-                                'id'         => $item->user_id,
-                                'site_id'    => $item->site_id,
-                                'login'      => $act_user,
-                                'nicename'   => $info['display_name'],
-                                'source'     => ! empty( $item->name ) ? $item->name : '',
-                                'wp_user_id' => $info['wp_user_id'],
+                                'id'                => $item->user_id,
+                                'site_id'           => $item->site_id,
+                                'login'             => $act_user,
+                                'nicename'          => $info['display_name'],
+                                'source'            => ! empty( $item->name ) ? $item->name : '', // site name.
+                                'is_dashboard_user' => 0,
                             );
-                        } elseif ( isset( $info['user_login'] ) ) { // dashboard users.
+                        } else { // dashboard users.
                             // to prevent add double dashboard users in the users selection.
                             if ( in_array( $item->user_id, $dash_users ) ) {
                                 continue;
                             }
+
+                            $user_login  = '';
+
+                            if ( ! empty( $item->user_login ) ) {
+                                $user_login = $item->user_login;
+                            } elseif ( ! empty( $info['user_login'] ) ) { // compatible user login value.
+                                $user_login = $info['user_login'];
+                            }
+
                             $dash_users[] = $item->user_id;
-                            $nicename     = ! empty( $info['user_login'] ) ? $info['user_login'] : '';
+
+                            $nicename     = $user_login;
                             if ( empty( $nicename ) ) {
                                 if ( ! empty( $info['agent'] ) ) {
                                     $nicename = $info['agent'];
@@ -196,11 +213,12 @@ class Log_DB_Helper extends MainWP_DB {
                                 }
                             }
                             $logs_users[ $item->log_id ] = array(
-                                'id'       => (int) $item->user_id,
-                                'site_id'  => $item->site_id,
-                                'login'    => $info['user_login'],
-                                'nicename' => $nicename,
-                                'source'   => 'dashboard',
+                                'id'                => (int) $item->user_id,
+                                'site_id'           => $item->site_id,
+                                'login'             => $user_login,
+                                'nicename'          => $nicename,
+                                'source'            => 'dashboard',
+                                'is_dashboard_user' => 1,
                             );
                         }
                     }
@@ -277,20 +295,6 @@ class Log_DB_Helper extends MainWP_DB {
     }
 
     /**
-     * Returns the most recent changes logs stored for the given site.
-     *
-     * @param integer $site_id - The ID of the site to retrieve the most recent event.
-     * @param integer $limit - Limit number of result.
-     *
-     * @return array
-     *
-     * @since 5.4.1
-     */
-    public function get_latest_changes_by_siteid( $site_id, $limit = 1 ): array {
-        return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_logs' ) . " WHERE site_id=%d AND `connector` = 'changes-logs' ORDER BY created DESC LIMIT %d", $site_id, $limit ) ); //phpcs:ignore -- ok.
-    }
-
-    /**
      * Returns the most recent non-mainwp-changes stored for the given site.
      *
      * @param integer $site_id - The ID of the site to retrieve the most recent event.
@@ -300,8 +304,22 @@ class Log_DB_Helper extends MainWP_DB {
      *
      * @since 5.4.1
      */
-    public function get_latest_non_mainwp_changes_by_siteid( $site_id, $limit = 1 ): array {
-        return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_logs' ) . " WHERE site_id=%d AND `connector` = 'non-mainwp-changes' ORDER BY created DESC LIMIT %d", $site_id, $limit ) ); //phpcs:ignore -- ok.
+    public function get_latest_changes_logs_by_siteid( $site_id, $limit = 1 ): array {
+        return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_logs' ) . " WHERE site_id=%d AND `connector` = 'non-mainwp-changes' AND log_type_id IS NOT NULL AND log_type_id != 0 ORDER BY created DESC LIMIT %d", $site_id, $limit ) ); //phpcs:ignore -- ok.
+    }
+
+        /**
+         * Returns the most recent non-mainwp-changes stored for the given site.
+         *
+         * @param integer $site_id - The ID of the site to retrieve the most recent event.
+         * @param integer $limit - Limit number of result.
+         *
+         * @return array
+         *
+         * @since 5.4.1
+         */
+    public function get_latest_non_mainwp_changes_logs_by_siteid( $site_id, $limit = 1 ): array {
+        return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_logs' ) . " WHERE site_id=%d AND `connector` = 'non-mainwp-changes' AND ( log_type_id IS NULL OR log_type_id = 0 ) ORDER BY created DESC LIMIT %d", $site_id, $limit ) ); //phpcs:ignore -- ok.
     }
 
     /**

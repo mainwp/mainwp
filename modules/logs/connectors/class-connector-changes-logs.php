@@ -24,7 +24,7 @@ class Connector_Changes_Logs extends Log_Connector {
      *
      * @var string Connector slug.
      * */
-    public $name = 'changes-logs';
+    public $name = 'non-mainwp-changes'; //same connector with connector at the file: class-connector-non-mainwp-changes.php.
 
     /**
      * Actions names.
@@ -81,20 +81,11 @@ class Connector_Changes_Logs extends Log_Connector {
      *
      * @param object $website  Website.
      * @param array  $record Logs data.
-     * @param array  $raw_data Raw log data.
      */
-    public function callback_mainwp_sync_site_log_changes_logs( $website, $record, $raw_data ) { //phpcs:ignore -- NOSONAR - complex method.
+    public function callback_mainwp_sync_site_log_changes_logs( $website, $record ) { //phpcs:ignore -- NOSONAR - complex method.
         if ( empty( $website ) || ! is_array( $record ) || empty( $record['created'] ) ) {
             return;
         }
-
-        if ( is_array( $raw_data ) && isset( $raw_data['log_type_id'] ) ) {
-            $enable_log_type = apply_filters( 'mainwp_module_log_enable_insert_log_type', true, $raw_data );
-            if ( ! $enable_log_type ) {
-                return false;
-            }
-        }
-
         $record['connector'] = $this->name;
         $this->log_record( $record );
     }

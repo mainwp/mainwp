@@ -9,6 +9,8 @@
 
 namespace MainWP\Dashboard\Module\Log;
 
+use MainWP\Dashboard\MainWP_DB;
+
 /**
  * Class Log_Changes_logs_Helper
  *
@@ -32,6 +34,13 @@ class Log_Changes_logs_Helper {
     private static $event_action_types = array();
 
     /**
+     * Holds the last log created time.
+     *
+     * @var array
+     */
+    private static $last_log_created;
+
+    /**
      * Return the single instance of the class.
      *
      * @return mixed $instance The single instance of the class.
@@ -52,6 +61,40 @@ class Log_Changes_logs_Helper {
     }
 
     /**
+     * Method get_sync_changes_logs_last_created().
+     *
+     * Sync site changes logs data.
+     *
+     * @param int $site_id site id.
+     *
+     * @return bool
+     */
+    public function get_sync_changes_logs_last_created( $site_id ) {
+
+        if ( null === static::$last_log_created ) {
+            $site_opts = MainWP_DB::instance()->get_website_options_array( $site_id, array( 'changes_logs_sync_last_created' ) );
+
+            if ( ! is_array( $site_opts ) ) {
+                $site_opts = array();
+            }
+
+            static::$last_log_created = isset( $site_opts['changes_logs_sync_last_created'] ) ? $site_opts['changes_logs_sync_last_created'] : 0;
+
+            // to sure.
+            if ( empty( static::$last_log_created ) ) {
+                $last_item = Log_DB_Helper::instance()->get_latest_changes_logs_by_siteid( $site_id );
+                if ( $last_item ) {
+                    $last_item                = $last_item[0];
+                    static::$last_log_created = $last_item->created;
+                }
+            }
+        }
+
+        return static::$last_log_created;
+    }
+
+
+    /**
      * Method sync_changes_logs().
      *
      * Sync site changes logs data.
@@ -68,12 +111,30 @@ class Log_Changes_logs_Helper {
             return false;
         }
 
+        $sync_last_created = $this->get_sync_changes_logs_last_created( $site_id );
+        $new_last_created  = 0;
+
         foreach ( $sync_changes as $data ) {
 
-            if ( ! is_array( $data ) || empty( $data['created_on'] ) ) {
+            if ( ! is_array( $data ) || empty( $data['created_on'] ) || empty( $data['log_type_id'] ) ) {
                 continue;
             }
 
+            // to fix issue of last sync value.
+            if ( $new_last_created < $data['created_on'] ) {
+                $new_last_created = $data['created_on'];
+            }
+
+            if ( $sync_last_created > $data['created_on'] ) {
+                continue;
+            }
+
+            $enable_log_type = apply_filters( 'mainwp_module_log_enable_insert_log_type', true, $data );
+            if ( ! $enable_log_type ) {
+                continue;
+            }
+
+            $type_id    = intval( $data['log_type_id'] );
             $user_id    = ! empty( $data['user_id'] ) ? sanitize_text_field( $data['user_id'] ) : 0;
             $user_login = ! empty( $data['username'] ) ? sanitize_text_field( $data['username'] ) : '';
 
@@ -92,26 +153,32 @@ class Log_Changes_logs_Helper {
             $duration = isset( $data['duration'] ) ? sanitize_text_field( $data['duration'] ) : 0; // sanitize_text_field for seconds.
             $created  = isset( $data['created_on'] ) ? (float) ( $data['created_on'] ) : microtime( true );
 
-            // To support searching user on meta.
-            $meta['user_login'] = $user_login;
-
             $record_mapping = array(
-                'site_id'  => $site_id,
-                'user_id'  => $user_id,
-                'created'  => $created,
-                'context'  => $context,
-                'action'   => $action,
-                'state'    => 1,
-                'duration' => $duration,
-                'meta'     => $meta,
+                'site_id'    => $site_id,
+                'user_id'    => $user_id,
+                'user_login' => $user_login,
+                'created'    => $created,
+                'context'    => $context,
+                'action'     => $action,
+                'state'      => 1,
+                'duration'   => $duration,
+                'meta'       => $meta,
             );
+
+            if ( null !== $type_id ) {
+                $record_mapping['log_type_id'] = $type_id;
+            }
 
             $sum = 'wordpress' !== $record_mapping['context'] ? esc_html( ucfirst( rtrim( $record_mapping['context'], 's' ) ) ) : 'WordPress'; //phpcs:ignore -- wordpress text.
             if ( 'wordpress' === $record_mapping['context'] ) {
                 $sum = 'WordPress';
             }
             $record_mapping['item'] = $sum;
-            do_action( 'mainwp_sync_site_log_changes_logs', $website, $record_mapping, $data );
+            do_action( 'mainwp_sync_site_log_changes_logs', $website, $record_mapping );
+        }
+
+        if ( $new_last_created ) {
+            MainWP_DB::instance()->update_website_option( $site_id, 'changes_logs_sync_last_created', $new_last_created );
         }
 
         return true;

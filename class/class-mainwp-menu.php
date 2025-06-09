@@ -597,6 +597,9 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         if ( isset( $params['active_params'] ) ) {
             $others['active_params'] = $params['active_params'];
         }
+        if ( ! empty( $params['item_class'] ) ) {
+            $others['item_class'] = $params['item_class'];
+        }
 
         /**
          * MainWP Left Menu, Sub Menu & Active menu slugs.
@@ -1334,6 +1337,10 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
 
             $item_classes = 'inactive' === $ext_state ? 'extension-inactive' : '';
+
+            if ( ! empty( $others['item_class'] ) ) {
+                $item_classes .= ' ' . $others['item_class'];
+            }
 
             $_blank = false;
             if ( '_blank' === $id ) {

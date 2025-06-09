@@ -1205,7 +1205,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             <a class="item" href="admin.php?page=AddApiKeys"><?php esc_html_e( 'Add API Keys', 'mainwp' ); ?></a>
                         </div>
                     </div>
-                    
+
                     <div class="item"><i class="cog left floated icon"></i>
                         <div class="title"><a href="admin.php?page=Settings" class="with-sub"><?php esc_html_e( 'Settings', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
                         <div class="content menu">
@@ -1279,7 +1279,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         <a id="mainwp-help-menu-item" class="ui mini basic fluid button" href="#"><i class="question circle icon"></i> <?php esc_html_e( 'Quick Help', 'mainwp' ); ?></a>
                     </div>
                     <div class="column item-wp-admin">
-                        <a class="ui mini basic fluid button" href="<?php echo wp_logout_url(); ?>"><i class="sign out icon"></i> <?php esc_html_e( 'Log Out', 'mainwp' ); ?></a> 
+                        <a class="ui mini basic fluid button" href="<?php echo wp_logout_url(); ?>"><i class="sign out icon"></i> <?php esc_html_e( 'Log Out', 'mainwp' ); ?></a>
                     </div>
                 </div>
             </div>

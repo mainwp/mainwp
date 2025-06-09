@@ -939,25 +939,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             $(this).css( 'margin-left', '0px' );
                         }
                     });
-                    // Initialize flyout
-                    $('#mainwp-main-mobile-navigation-container.ui.flyout')
-                    .flyout({
-                        dimPage: true,
-                        onShow: function() {
-                            $(this).css({
-                                'top': '58px',
-                            });
-                            $('#mainwp-mobile-menu-trigger').find('i.icon').removeClass('bars').addClass('times');
-                        },
-                        onHide: function() {
-                            $('#mainwp-mobile-menu-trigger').find('i.icon').removeClass('times').addClass('bars');
-                        }
-                    });
-
-                    // Trigger button
-                    $('#mainwp-mobile-menu-trigger').on('click', function() {
-                        $('#mainwp-main-mobile-navigation-container.ui.flyout').flyout('toggle');
-                    });
                 });
             </script>
 
@@ -1058,7 +1039,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             ?>
 
             <script type="text/javascript">
-            jQuery( document ).ready( function () {
+            jQuery( document ).ready( function ($) {
 
                 let pulse = jQuery( '#mainwp-screen-options-pulse-control' ).val();
 
@@ -1097,6 +1078,34 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     return false;
                 } );
                 jQuery( '#mainwp-sites-sidebar-menu' ).accordion();
+
+                if( jQuery( '#mainwp-main-mobile-navigation-container' ).length ){
+                    jQuery('<div class="pusher"></div>')
+                    .append($('#wpwrap'))
+                    .prependTo('body');
+                    jQuery( '#mainwp-main-mobile-navigation-container' ).prependTo( 'body' );
+                    setTimeout(function () {
+                        //  Initialize flyout
+                        $('#mainwp-main-mobile-navigation-container.ui.flyout')
+                        .flyout({
+                            dimPage: true,
+                            onShow: function() {
+                                $(this).css({
+                                    'top': '58px',
+                                });
+                                $('#mainwp-mobile-menu-trigger').find('i.icon').removeClass('bars').addClass('times');
+                            },
+                            onHide: function() {
+                                $('#mainwp-mobile-menu-trigger').find('i.icon').removeClass('times').addClass('bars');
+                            }
+                        });
+                    }, 2000);
+
+                    // Trigger button
+                    $('#mainwp-mobile-menu-trigger').on('click', function() {
+                        $('#mainwp-main-mobile-navigation-container.ui.flyout').flyout('toggle');
+                    });
+                }
             } );
             </script>
 
@@ -2474,7 +2483,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             <i class="ticket big grey icon" style="opacity:0.3"></i>
                             <div class="ui fitted hidden divider"></div><br/>
                             <span class="ui grey small text"><?php esc_html_e( 'Get in touch with our team for any inquiries or support – we\'re here to help you.', 'mainwp' ); ?></span>
-                            
+
                             </a>
                         </div>
                         <div class="content">

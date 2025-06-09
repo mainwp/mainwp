@@ -311,6 +311,7 @@ jQuery(function () {
                 if (response.result == 'SUCCESS') {
                     jQuery('#mainwp-notes-status').html('<i class="green check icon"></i> ' + __('Note saved!'));
                     rowEl.find('.esc-content-note').html(response?.esc_note_content??'');
+                    jQuery('#mainwp-notes-html').html(response?.esc_note_content??'');
 
                     if (newnote == '') {
                         rowEl.find('.mainwp-edit-plugin-note').html('<i class="sticky note outline icon"></i>');
@@ -359,6 +360,7 @@ jQuery(function () {
                 if (response.result == 'SUCCESS') {
                     jQuery('#mainwp-notes-status').html('<i class="green check icon"></i> ' + __('Note saved!'));
                     rowEl.find('.esc-content-note').html(response?.esc_note_content??'');
+                    jQuery('#mainwp-notes-html').html(response?.esc_note_content??'');
                     if (newnote == '') {
                         rowEl.find('.mainwp-edit-theme-note').html('<i class="sticky note outline icon"></i>');
                     } else {

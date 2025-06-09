@@ -205,8 +205,15 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      */
     public function mainwp_trusted_theme_notes_save() {
         $this->secure_request( 'mainwp_trusted_theme_notes_save' );
-        MainWP_Themes_Handler::save_trusted_theme_note();
-        die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
+        $esc_note = MainWP_Themes_Handler::save_trusted_theme_note();
+        die(
+            wp_json_encode(
+                array(
+                    'result'           => 'SUCCESS',
+                    'esc_note_content' => $esc_note,
+                )
+            )
+        );
     }
 
     /**
@@ -314,8 +321,15 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      */
     public function mainwp_trusted_plugin_notes_save() {
         $this->secure_request( 'mainwp_trusted_plugin_notes_save' );
-        MainWP_Plugins_Handler::save_trusted_plugin_note();
-        die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
+        $esc_note = MainWP_Plugins_Handler::save_trusted_plugin_note();
+        die(
+            wp_json_encode(
+                array(
+                    'result'           => 'SUCCESS',
+                    'esc_note_content' => $esc_note,
+                )
+            )
+        );
     }
 
     /**

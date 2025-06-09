@@ -2313,7 +2313,14 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'note'      => $esc_note,
             );
             MainWP_DB_Client::instance()->update_client( $update );
-            die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
+            die(
+                wp_json_encode(
+                    array(
+                        'result'           => 'SUCCESS',
+                        'esc_note_content' => $esc_note,
+                    )
+                )
+            );
         }
         die( wp_json_encode( array( 'undefined_error' => true ) ) );
     }

@@ -406,10 +406,10 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
                 $format = '';
                 if ( ! empty( $use_tzformat['date_format'] ) ) {
-                    $format = $use_tzformat['date_format'] . ' ';
+                    $format .= $use_tzformat['date_format'] . ' ';
                 }
                 if ( ! empty( $use_tzformat['time_format'] ) ) {
-                    $format = $use_tzformat['time_format'] . ' ';
+                    $format .= $use_tzformat['time_format'] . ' ';
                 }
                 $format = rtrim( $format );
 

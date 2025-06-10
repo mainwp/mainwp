@@ -213,9 +213,11 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      *
      * @param object $item         Record data.
      * @param string $column_name  Column name.
+     * @param mixed  $site_dtf  Child site date time format.
+     *
      * @return string $out Output.
      */
-    public function column_default( $item, $column_name, $sites_opts ) { //phpcs:ignore -- NOSONAR -complex.
+    public function column_default( $item, $column_name, $site_dtf ) { //phpcs:ignore -- NOSONAR -complex.
         $out = '';
 
         $record = new Log_Record( $item );
@@ -239,13 +241,10 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $escaped     = true;
                 break;
             case 'created':
-                $site_info = is_array( $this->sites_opts ) && isset( $this->sites_opts[ $record->site_id ] ) && isset( $this->sites_opts[ $record->site_id ]['site_info'] ) ? $this->sites_opts[ $record->site_id ]['site_info'] : array();
-                $site_dtf  = is_array( $site_info ) && isset( $site_info['format_datetime'] ) ? $site_info['format_datetime'] : array();
-
                 $child_time = MainWP_Utility::format_timezone( (int) $record->created, $site_dtf );
                 if ( ! empty( $child_time ) ) {
                     $date_string = sprintf(
-                        '<span data-tooltip="' . esc_attr__( 'Child site time: %s', 'mainwp' ) . ' " data-inverted="" data-position="top left"><time datetime="%s" class="relative-time record-created">%s</time></span>',
+                        '<span data-tooltip="' . esc_attr__( 'Child Site time: %s', 'mainwp' ) . ' " data-inverted="" data-position="top left"><time datetime="%s" class="relative-time record-created">%s</time></span>',
                         $child_time,
                         mainwp_module_log_get_iso_8601_extended_date( $record->created ),
                         MainWP_Utility::format_timezone( $record->created )
@@ -1051,10 +1050,12 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
                 $cols_data = array();
 
+                $site_info = is_array( $this->sites_opts ) && isset( $this->sites_opts[ $log->site_id ] ) && isset( $this->sites_opts[ $log->site_id ]['site_info'] ) ? $this->sites_opts[ $log->site_id ]['site_info'] : array();
+                $site_dtf  = is_array( $site_info ) && isset( $site_info['format_datetime'] ) ? $site_info['format_datetime'] : false;
+
                 foreach ( $columns as $column_name => $column_display_name ) {
-                    $site_tzf = is_array( $this->sites_opts ) && isset( $this->sites_opts['format_datetime'] ) ? $this->sites_opts['format_datetime'] : '';
                     ob_start();
-                    echo $this->column_default( $log, $column_name, $site_tzf ); // phpcs:ignore WordPress.Security.EscapeOutput
+                    echo $this->column_default( $log, $column_name, $site_dtf ); // phpcs:ignore WordPress.Security.EscapeOutput
                     $cols_data[ $column_name ] = ob_get_clean();
                 }
                 $all_rows[]  = $cols_data;

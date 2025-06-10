@@ -290,7 +290,11 @@ class MainWP_Themes_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         MainWP_DB_Common::instance()->update_user_extension( $userExtension );
     }
 
-    /** This Method Saves a Trusted theme note. */
+    /**
+     * This Method Saves a Trusted theme note.
+     *
+     * @return string Escaped note.
+     */
     public static function save_trusted_theme_note() {
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $slug = isset( $_POST['slug'] ) ? urldecode( sanitize_text_field( wp_unslash( $_POST['slug'] ) ) ) : '';
@@ -305,5 +309,6 @@ class MainWP_Themes_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $trustedThemesNotes[ $slug ]         = $esc_note;
         $userExtension->trusted_themes_notes = wp_json_encode( $trustedThemesNotes );
         MainWP_DB_Common::instance()->update_user_extension( $userExtension );
+        return $esc_note;
     }
 }

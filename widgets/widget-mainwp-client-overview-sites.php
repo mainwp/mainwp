@@ -564,22 +564,9 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
         }
 
         $total_updates = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades;
-
-        if ( 5 < $total_updates ) {
-            $a_color = 'red';
-        } elseif ( 0 < $total_updates && 5 >= $total_updates ) {
-            $a_color = 'yellow';
-        } else {
-            $a_color = 'green';
-        }
-
         $hasSyncErrors = ( '' !== $website['sync_errors'] );
 
         // @NO_SONAR_END@  .
-
-        if ( $hasSyncErrors ) {
-            $a_color = '';
-        }
 
         list( $columns ) = $this->get_column_info();
 

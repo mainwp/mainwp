@@ -364,7 +364,7 @@ class Log_Query {
 
         $items = $wpdb->get_results( $query ); // phpcs:ignore -- ok.
 
-        if ( $optimize_get_dt && $optimize_get_meta ) {
+        if ( $optimize_get_dt && $optimize_get_meta && $items ) {
 
             $ids = array_map( 'absint', wp_list_pluck( $items, 'log_id' ) );
 
@@ -403,13 +403,54 @@ class Log_Query {
                 }
             }
         }
+        $sites_opts = array();
+        // get sites meta data.
+        if ( $items ) {
+            $wp_options_tbl = MainWP_DB::instance()->get_table_name( 'wp_options' );
+            $ids            = array_map( 'absint', wp_list_pluck( $items, 'site_id' ) );
+
+            $start_slice = 0;
+            $max_slice   = 100;
+            while ( $start_slice <= count( $ids ) ) {
+                $slice_ids    = array_slice( $ids, $start_slice, $max_slice );
+                $start_slice += $max_slice;
+
+                if ( ! empty( $slice_ids ) ) {
+
+                    $sql_sites_meta = sprintf(
+                        "SELECT name,value,wpid FROM $wp_options_tbl WHERE wpid IN ( %s ) AND name='site_info'",
+                        implode( ',', array_unique( $slice_ids ) )
+                    );
+                    $opts_records   = $wpdb->get_results( $sql_sites_meta );
+                    if ( is_array( $opts_records ) ) {
+                        foreach ( $opts_records as $opt_record ) {
+                            if ( ! isset( $sites_opts[ $opt_record->wpid ] ) ) {
+                                $sites_opts[ $opt_record->wpid ] = array();
+                            }
+                            if ( ! empty( $opt_record->value ) ) {
+                                $values = $opt_record->value;
+                                if ( 'site_info' === $opt_record->name ) {
+                                    $values = json_decode( $values, true );
+                                    if ( ! is_array( $values ) ) {
+                                        $values = array();
+                                    }
+                                }
+                                $sites_opts[ $opt_record->wpid ][ $opt_record->name ] = $values;
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         /**
          * QUERY THE DATABASE FOR RESULTS
          */
         $results = array(
-            'items' => $items,
+            'items'      => $items,
+            'sites_opts' => $sites_opts,
         );
+
         if ( ! $not_count ) {
             $results['count'] = absint( $wpdb->get_var( $count_query ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         }

@@ -33,6 +33,14 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      */
     public $items;
 
+
+    /**
+     * Public variable to hold Items information.
+     *
+     * @var array
+     */
+    public $sites_opts = array();
+
     /**
      * Public variable to hold Previous Items information.
      *
@@ -207,7 +215,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * @param string $column_name  Column name.
      * @return string $out Output.
      */
-    public function column_default( $item, $column_name ) { //phpcs:ignore -- NOSONAR -complex.
+    public function column_default( $item, $column_name, $sites_opts ) { //phpcs:ignore -- NOSONAR -complex.
         $out = '';
 
         $record = new Log_Record( $item );
@@ -231,13 +239,26 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $escaped     = true;
                 break;
             case 'created':
-                $date_string = sprintf(
-                    '<time datetime="%s" class="relative-time record-created">%s</time>',
-                    mainwp_module_log_get_iso_8601_extended_date( $record->created ),
-                    MainWP_Utility::format_timezone( $record->created )
-                );
-                $out         = $date_string;
-                $escaped     = true;
+                $site_info = is_array( $this->sites_opts ) && isset( $this->sites_opts[ $record->site_id ] ) && isset( $this->sites_opts[ $record->site_id ]['site_info'] ) ? $this->sites_opts[ $record->site_id ]['site_info'] : array();
+                $site_dtf  = is_array( $site_info ) && isset( $site_info['format_datetime'] ) ? $site_info['format_datetime'] : array();
+
+                $child_time = MainWP_Utility::format_timezone( (int) $record->created, $site_dtf );
+                if ( ! empty( $child_time ) ) {
+                    $date_string = sprintf(
+                        '<span data-tooltip="' . esc_attr__( 'Child site time: %s', 'mainwp' ) . ' " data-inverted="" data-position="top left"><time datetime="%s" class="relative-time record-created">%s</time></span>',
+                        $child_time,
+                        mainwp_module_log_get_iso_8601_extended_date( $record->created ),
+                        MainWP_Utility::format_timezone( $record->created )
+                    );
+                } else {
+                    $date_string = sprintf(
+                        '<time datetime="%s" class="relative-time record-created">%s</time>',
+                        mainwp_module_log_get_iso_8601_extended_date( $record->created ),
+                        MainWP_Utility::format_timezone( $record->created )
+                    );
+                }
+                $out     = $date_string;
+                $escaped = true;
                 break;
             case 'name':
                 $out     = ! empty( $record->log_site_name ) ? '<a href="admin.php?page=managesites&dashboard=' . intval( $record->site_id ) . '">' . esc_html( $record->log_site_name ) . '</a>' : 'N/A';
@@ -527,6 +548,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
         $this->items       = $this->manager->db->get_records( $args );
         $this->total_items = $this->manager->db->get_found_records_count(); // get this value for recent events request only.
+        $this->sites_opts  = $this->manager->db->get_logs_sites_opts();
 
         $this->items_prev = array();
         if ( $with_prev_data && ! empty( $args['timestart'] ) && ! empty( $args['timestop'] ) && $args['timestart'] < $args['timestop'] ) {
@@ -1030,8 +1052,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $cols_data = array();
 
                 foreach ( $columns as $column_name => $column_display_name ) {
+                    $site_tzf = is_array( $this->sites_opts ) && isset( $this->sites_opts['format_datetime'] ) ? $this->sites_opts['format_datetime'] : '';
                     ob_start();
-                    echo $this->column_default( $log, $column_name ); // phpcs:ignore WordPress.Security.EscapeOutput
+                    echo $this->column_default( $log, $column_name, $site_tzf ); // phpcs:ignore WordPress.Security.EscapeOutput
                     $cols_data[ $column_name ] = ob_get_clean();
                 }
                 $all_rows[]  = $cols_data;

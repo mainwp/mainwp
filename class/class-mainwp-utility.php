@@ -394,12 +394,40 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * Format the given timestamp.
      *
      * @param mixed $timestamp Timestamp to format.
-     *
+     * @param mixed $tzformat Timezone format.
+
      * @return string Formatted timestamp.
      */
-    public static function format_timezone( $timestamp ) {
+    public static function format_timezone( $timestamp, $use_tzformat = false ) {
+
+        if ( false !== $use_tzformat ) {
+            if ( is_array( $use_tzformat ) && ( isset( $use_tzformat['timezone_string'] ) || isset( $use_tzformat['gmt_offset'] ) || isset( $use_tzformat['date_format'] ) || isset( $use_tzformat['time_format'] ) ) ) {
+                $wp_timezone = ! empty( $use_tzformat['timezone_string'] ) ? $use_tzformat['timezone_string'] : '';
+
+                $format = '';
+                if ( ! empty( $use_tzformat['date_format'] ) ) {
+                    $format = $use_tzformat['date_format'] . ' ';
+                }
+                if ( ! empty( $use_tzformat['time_format'] ) ) {
+                    $format = $use_tzformat['time_format'] . ' ';
+                }
+                $format = rtrim( $format );
+
+                if ( empty( $wp_timezone ) ) {
+                    $gmt = ! empty( $use_tzformat['gmt_offset'] ) ? $use_tzformat['gmt_offset'] : 0;
+                    return date_i18n( $format, $timestamp, $gmt );
+                }
+
+                $datetime = new \DateTime( '@' . $timestamp );
+                $datetime->setTimezone( new \DateTimeZone( $wp_timezone ) );
+
+                return $datetime->format( $format );
+            }
+            return '';
+        }
 
         $wp_timezone = get_option( 'timezone_string' );
+
         if ( ! $wp_timezone ) {
             return static::format_timestamp( static::get_timestamp( $timestamp ) );
         }
@@ -1881,28 +1909,28 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
     /**
      * Returns the appropriate Fomantic UI color class based on number of updates
-     * 
+     *
      * @param int $update_count Number of available updates
-     * 
+     *
      * @return string CSS class for the element
      */
     public static function mainwp_get_update_count_class( $update_count ) {
         // Convert to integer using intval()
         $update_count = intval( $update_count );
-        
+
         // Ensure count is not negative
         if ( 0 > $update_count ) {
             $update_count = 0;
         }
 
         if ( 0 === $update_count ) {
-            return "grey";
+            return 'grey';
         } elseif ( $update_count >= 1 && $update_count <= 3 ) {
-            return "yellow";
+            return 'yellow';
         } elseif ( $update_count >= 4 && $update_count <= 5 ) {
-            return "orange";
+            return 'orange';
         } else {
-            return "red";
+            return 'red';
         }
     }
 }

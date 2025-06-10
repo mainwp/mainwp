@@ -73,6 +73,11 @@ class Log_Admin {
 
         // Auto purge setup.
         add_action( 'admin_init', array( $this, 'admin_init' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_delete_records', array( $this, 'ajax_delete_records' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_compact_records', array( $this, 'ajax_compact_records' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_manage_events_display_rows', array( Log_Manage_Insights_Events_Page::instance(), 'ajax_manage_events_display_rows' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_widget_insights_display_rows', array( Log_Insights_Page::instance(), 'ajax_events_display_rows' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_widget_events_overview_display_rows', array( Log_Insights_Page::instance(), 'ajax_events_overview_display_rows' ) );
     }
 
     /**
@@ -88,15 +93,6 @@ class Log_Admin {
      * Handle admin_init action.
      */
     public function admin_init() {
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_delete_records', array( $this, 'ajax_delete_records' ) );
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_compact_records', array( $this, 'ajax_compact_records' ) );
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_manage_events_display_rows', array( Log_Manage_Insights_Events_Page::instance(), 'ajax_manage_events_display_rows' ) );
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_widget_insights_display_rows', array( Log_Insights_Page::instance(), 'ajax_events_display_rows' ) );
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_widget_events_overview_display_rows', array( Log_Insights_Page::instance(), 'ajax_events_overview_display_rows' ) );
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_update_dismissed_db', array( Log_Insights_Page::instance(), 'ajax_update_dismissed_db' ) );
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_cancel_update_dismissed_db', array( Log_Insights_Page::instance(), 'ajax_cancel_update_dismissed_db' ) );
-
-        add_filter( 'mainwp_info_schedules_cron_listing', array( $this, 'hook_schedules_cron_listing' ) );
         Log_Events_Filter_Segment::get_instance()->admin_init();
         $this->handle_post_archive_data();
     }

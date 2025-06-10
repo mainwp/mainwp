@@ -966,7 +966,10 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                 'note' => $esc_note,
             );
             Cost_Tracker_DB::get_instance()->update_cost_tracker( $update );
-            die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
+            die( wp_json_encode( array(
+                'result'           => 'SUCCESS',
+                'esc_note_content' => $esc_note,
+            ) ) );
         } else {
             die( wp_json_encode( array( 'error' => esc_html__( 'Invalid cost tracker ID or item not found.', 'mainwp' ) ) ) );
         }

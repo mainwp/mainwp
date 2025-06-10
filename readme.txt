@@ -147,6 +147,10 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
+= 5.4.0.12 - Maintenance Release - 6-10-2025 =
+
+* Security: Fixed multiple XSS vulnerabilities in administrator areas including Tags Notes, Client Notes, Create Category, Contact Name, and Cost Tracker Notes fields. All vulnerabilities required administrator privileges to exploit. Update to version 5.4.0.12 required.
+
 = 5.4.0.11 - Maintenance Release - 6-3-2025 =
 
 * Fixed: Resolved an issue that could prevent staging sites from being created successfully by improving data handling in the cloning process.

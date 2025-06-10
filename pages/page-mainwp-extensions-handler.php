@@ -136,6 +136,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 'Mainwp',
                 'Extension',
                 'MainWP',
+                'Add-on',
             ),
             '',
             $name

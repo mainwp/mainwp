@@ -8,7 +8,7 @@
  --mainwp-text-header: #F2F2F2;
  --mainwp-link-color: #5c9fd6;
 /* General Colors */
- --mainwp-green: #4c7600;
+ --mainwp-green: #6c9800;
  --mainwp-blue: #5c9fd6;
  --mainwp-red: #d95e5e;
  --mainwp-yellow: #e6c25a;
@@ -105,6 +105,10 @@
   -webkit-border-radius: var(--button-radius) !important;
   box-shadow: none !important;
   transition: filter 0.1s ease-in-out;
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.button:not( .mini, .tiny, .small ) {
+  font-weight: 600 !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.button:hover {
@@ -445,6 +449,10 @@
 
 /* Invert Modal */
 
+.mainwp-ui.mainwp-custom-theme .ui.modal {
+  border: 1px solid var(--mainwp-border) !important;
+}
+
 .mainwp-ui.mainwp-custom-theme .ui.modal > .header {
   background-color: var(--mainwp-element-background) !important;
   border-color: var(--mainwp-border) !important;
@@ -474,10 +482,6 @@
   color: var(--mainwp-text) !important;
 }
 
-.mainwp-ui.mainwp-custom-theme .ui.progress[data-percent="0"] .bar .progress {
-  color: var(--mainwp-text) !important;
-}
-
 .mainwp-ui.mainwp-custom-theme .ui.modal .ui.progress .label {
   color: var(--mainwp-text) !important;
 }
@@ -498,6 +502,21 @@
   color: var(--mainwp-text-header) !important;
   opacity: 1 !important;
   text-shadow: none !important;
+}
+
+/* Invert Progress UI element */
+
+.mainwp-ui.mainwp-custom-theme .ui.progress {
+  background-color: var(--mainwp-element-background-secondary) !important;
+  color: var(--mainwp-text) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.progress[data-percent="0"] .bar .progress {
+  color: var(--mainwp-text) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.progress .label {
+  color: var(--mainwp-text) !important;
 }
 
 /* Invert Form Fields */
@@ -538,7 +557,6 @@
 .mainwp-ui.mainwp-custom-theme .ui.disabled.checkbox label::before {
   background-color: var(--mainwp-element-background-secondary) !important;
   opacity: 0.75 !important;
-  
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.toggle.checkbox.checked label::before,
@@ -565,7 +583,7 @@
 .mainwp-ui.mainwp-custom-theme .ui.radio.checkbox input~label::before {
   background: var(--mainwp-element-background-secondary) !important;
   color: var(--mainwp-text) !important;
-  border-color: var(--mainwp-border-strong);
+  border-color: var(--mainwp-text-secondary);
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.checkbox.checked input~label::before,
@@ -634,6 +652,8 @@
 
 .mainwp-ui.mainwp-custom-theme .ui.dropdown .menu:after {
   background: var(--mainwp-element-background-secondary) !important;
+  border-left: 1px solid var(--mainwp-border) !important;
+  border-top: 1px solid var(--mainwp-border) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.dropdown .menu .item {
@@ -796,6 +816,23 @@
   background: var(--mainwp-element-background) !important;
   color: var(--mainwp-text);
 }
+.mainwp-ui.mainwp-custom-theme .ui.table:not(.day, .hour, .minute, .compact) > tbody > tr.error > td,
+.mainwp-ui.mainwp-custom-theme .ui.table:not(.day, .hour, .minute, .compact) > tbody > tr.negative > td {
+  background-color: #AD000010 !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.table:not(.day, .hour, .minute, .compact) > tbody > tr.error > td a,
+.mainwp-ui.mainwp-custom-theme .ui.table:not(.day, .hour, .minute, .compact) > tbody > tr.negative > td a {
+  text-decoration: none !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.table:not(.day, .hour, .minute, .compact) > tbody > tr.warning > td {
+  background-color: #FFD50010 !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.table:not(.day, .hour, .minute, .compact) > tbody > tr.positive {
+  background-color: var(--mainwp-element-background) !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.table:not(.day, .hour, .minute, .compact) > tbody > tr.positive > td {
+  background-color: #7fb10010 !important;
+}
 .mainwp-ui.mainwp-custom-theme .ui.table {
   border-radius: 0.28571429rem !important;
 }
@@ -826,6 +863,7 @@
 
 .mainwp-ui.mainwp-custom-theme .ui.table > tbody > tr.active {
   background-color: var(--mainwp-element-background-secondary) !important;
+  color: var(--mainwp-text) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.table > tbody > tr.warning,

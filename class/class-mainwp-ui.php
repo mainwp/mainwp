@@ -1435,37 +1435,37 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             }
             ?>
             <div class="menu">
-                <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=Settings' ) ); ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Go to MainWP Settings', 'mainwp' ); ?>">
+                <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=Settings' ) ); ?>">
                     <i class="cog grey icon"></i> <?php esc_html_e( 'MainWP Settings', 'mainwp' ); ?>
                 </a>
-                <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=ServerInformation' ) ); ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Go to MainWP Info', 'mainwp' ); ?>">
+                <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=ServerInformation' ) ); ?>">
                     <i class="circle grey info icon"></i> <?php esc_html_e( 'System Info', 'mainwp' ); ?>
                 </a>
-                <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=PluginPrivacy' ) ); ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Read the MainWP plugin privacy policy.', 'mainwp' ); ?>">
+                <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=PluginPrivacy' ) ); ?>">
                     <i class="file contract grey icon"></i> <?php esc_html_e( 'Privacy Policy', 'mainwp' ); ?>
                 </a>
-                <a id="mainwp-help-sidebar" class="item" data-inverted="" data-position="left center" href="#" target="_blank" data-tooltip="<?php esc_attr_e( 'Need help?', 'mainwp' ); ?>">
+                <a id="mainwp-help-sidebar" class="item" href="#" target="_blank">
                     <i class="life ring grey icon"></i> <?php esc_html_e( 'Get Help', 'mainwp' ); ?>
                 </a>
                 <div class="ui divider"></div>
-                <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'index.php' ) ); ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Go to WP Admin', 'mainwp' ); ?>">
+                <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'index.php' ) ); ?>">
                     <i class="wordpress grey icon"></i> <?php //phpcs:ignore -- ignore wordpress icon. ?> <?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?>
                 </a>
                 <?php $all_updates = wp_get_update_data(); ?>
                 <?php if ( is_array( $all_updates ) && isset( $all_updates['counts']['total'] ) && 0 < $all_updates['counts']['total'] ) : ?>
-                <a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Your MainWP Dashboard sites needs your attention. Please check the available updates', 'mainwp' ); ?>" aria-label="<?php esc_attr_e( 'Your MainWP Dashboard sites needs your attention. Please check the available updates', 'mainwp' ); ?>" href="update-core.php">
+                <a class="item" aria-label="<?php esc_attr_e( 'Your MainWP Dashboard sites needs your attention. Please check the available updates', 'mainwp' ); ?>" href="update-core.php">
                     <i class="exclamation triangle red icon"></i> <?php esc_html_e( 'Update Dashboard Site', 'mainwp' ); ?>
                 </a>
                 <?php endif; ?>
                 <div class="ui divider"></div>
-                <a class="item" id="mainwp-community-button" data-inverted="" data-position="left center" href="https://community.mainwp.com/" target="_blank" data-tooltip="<?php esc_attr_e( 'MainWP Community', 'mainwp' ); ?>">
+                <a class="item" id="mainwp-community-button" href="https://community.mainwp.com/" target="_blank">
                     <i class="discourse grey icon"></i> <?php esc_html_e( 'Managers Community', 'mainwp' ); ?>
                 </a>
-                <a  class="item" id="mainwp-account-button" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Go to your MainWP Account at MainWP.com', 'mainwp' ); ?>" target="_blank" href="https://mainwp.com/my-account/"> <?php // NOSONAR - noopener - open safe. ?>
+                <a  class="item" id="mainwp-account-button" target="_blank" href="https://mainwp.com/my-account/"> <?php // NOSONAR - noopener - open safe. ?>
                     <i class="user grey icon"></i> <?php esc_html_e( 'My MainWP Account', 'mainwp' ); ?>
                 </a>
                 <div class="ui divider"></div>
-                <a class="item" href="<?php echo wp_logout_url(); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Log out of your MainWP Dashboard', 'mainwp' ); ?>">
+                <a class="item" href="<?php echo wp_logout_url(); // phpcs:ignore WordPress.Security.EscapeOutput ?>">
                     <i class="sign out grey icon"></i> <?php esc_html_e( 'Log Out', 'mainwp' ); ?>
                 </a>
             </div>

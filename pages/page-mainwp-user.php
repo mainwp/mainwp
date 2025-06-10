@@ -2072,20 +2072,20 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         }
 
                         $import_data = array(
-                            'user_login'    => trim( $items[0] ),
-                            'email'         => trim( $items[1] ),
-                            'first_name'    => trim( $items[2] ),
-                            'last_name'     => trim( $items[3] ),
-                            'url'           => trim( $items[4] ),
-                            'pass1'         => trim( $items[5] ),
+                            'user_login'    => sanitize_text_field( wp_unslash( $items[0] ) ),
+                            'email'         => sanitize_text_field( wp_unslash( $items[1] ) ),
+                            'first_name'    => sanitize_text_field( wp_unslash( $items[2] ) ),
+                            'last_name'     => sanitize_text_field( wp_unslash( $items[3] ) ),
+                            'url'           => sanitize_text_field( wp_unslash( $items[4] ) ),
+                            'pass1'         => sanitize_text_field( wp_unslash( $items[5] ) ),
                             'send_password' => intval( $items[6] ),
-                            'role'          => trim( strtolower( $items[7] ) ),
-                            'select_sites'  => trim( $items[8] ),
-                            'select_groups' => trim( $items[9] ),
+                            'role'          => sanitize_text_field( wp_unslash( strtolower( $items[7] ) ) ),
+                            'select_sites'  => sanitize_text_field( wp_unslash( $items[8] ) ),
+                            'select_groups' => sanitize_text_field( wp_unslash( $items[9] ) ),
                         );
                         $encoded     = wp_json_encode( $import_data );
                         ?>
-                        <input type="hidden" id="user_import_csv_line_<?php echo intval( $i + 1 ); ?>" original-line="<?php echo esc_html( $line ); ?>" encoded-data="<?php echo esc_html( $encoded ); ?>" />
+                        <input type="hidden" id="user_import_csv_line_<?php echo intval( $i + 1 ); ?>" original-line="<?php echo esc_attr( sanitize_text_field( $line ) ); ?>" encoded-data="<?php echo esc_html( $encoded ); ?>" />
                         <?php
                         ++$i;
                     }

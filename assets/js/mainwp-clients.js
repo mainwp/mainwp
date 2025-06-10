@@ -633,7 +633,8 @@ let mainwp_notes_client_save = function () {
     } else if (response.result == 'SUCCESS') {
       jQuery('#mainwp-notes-status').html(__('Note saved successfully.')).addClass('green');
       if (jQuery('#mainwp-notes-' + normalid + '-note').length > 0) {
-        jQuery('#mainwp-notes-' + normalid + '-note').html(jQuery('#mainwp-notes-note').val());
+        jQuery('#mainwp-notes-' + normalid + '-note').html(response?.esc_note_content??'');
+        jQuery('#mainwp-notes-html').html(response?.esc_note_content??'');
       }
     } else {
       jQuery('#mainwp-notes-status').html(__('Undefined error occured while saving your note!')).addClass('red');

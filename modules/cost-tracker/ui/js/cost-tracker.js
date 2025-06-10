@@ -132,8 +132,6 @@ jQuery(document).on('click', '#mainwp-notes-subs-cancel', function () {
 
 jQuery(document).on('click', '#mainwp-notes-subs-save', function () {
     mainwp_module_cost_tracker_notes_save();
-    let newnote = jQuery('#mainwp-notes-subs-note').val();
-    jQuery('#mainwp-notes-subs-html').html(newnote);
     return false;
 });
 
@@ -173,8 +171,9 @@ let mainwp_module_cost_tracker_notes_save = function () {
         } else if (response.result == 'SUCCESS') {
             jQuery('#mainwp-notes-subs-status').html(__('Note saved successfully.')).addClass('green');
             if (jQuery('#mainwp-notes-subs-' + normalid + '-note').length > 0) {
-                jQuery('#mainwp-notes-subs-' + normalid + '-note').html(jQuery('#mainwp-notes-subs-note').val());
+                jQuery('#mainwp-notes-subs-' + normalid + '-note').html(response?.esc_note_content??'');
             }
+            jQuery('#mainwp-notes-subs-html').html(response?.esc_note_content??'');
         } else {
             jQuery('#mainwp-notes-subs-status').html(__('Undefined error occured while saving your note!')).addClass('red');
         }

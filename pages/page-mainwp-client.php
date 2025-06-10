@@ -1141,7 +1141,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 $items = str_getcsv( $line, ',' );
 
                 if ( ( null === $header_line ) && ! empty( $_POST['mainwp_client_import_chk_header_first'] ) ) {  // phpcs:ignore WordPress.Security.NonceVerification.Missing -- NOSONAR
-                    $header_line = $line . "\r";
+                    $header_line = sanitize_text_field( $line ) . "\r";
                     continue;
                 }
                 if ( 3 > count( $items ) ) {
@@ -1153,7 +1153,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 // Take data from the CSV file into the array.
                 foreach ( $default_values as $field => $val ) {
                     $value                   = isset( $items[ $x ] ) ? $items[ $x ] : $val;
-                    $import_fields[ $field ] = $value;
+                    $import_fields[ $field ] = sanitize_text_field( $value );
                     ++$x;
                 }
                 $import_data[] = $import_fields;
@@ -1163,12 +1163,12 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         if ( ! empty( $import_data ) ) {
             foreach ( $import_data as $k_import => $val_import ) {
                 if ( ! empty( $val_import['client.url'] ) ) {
-                    $import_data[ $k_import ]['client.url'] = explode( ';', $val_import['client.url'] );
+                    $import_data[ $k_import ]['client.url'] = explode( ';', sanitize_text_field( $val_import['client.url'] ) );
                 }
             }
         }
         return array(
-            'header_line' => $header_line,
+            'header_line' => esc_js( $header_line ),
             'data'        => $import_data,
         );
     }
@@ -1437,9 +1437,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 if ( empty( $contact_name ) ) {
                     continue;
                 }
-                $contact_to_add['contact_name'] = $contact_name;
+                $contact_to_add['contact_name'] = sanitize_text_field( wp_unslash( $contact_name ) );
 
-                $contact_email = $client_fields['contacts_field']['contact.email'][ $indx ];
+                $contact_email = sanitize_text_field( wp_unslash( $client_fields['contacts_field']['contact.email'][ $indx ] ) );
                 if ( empty( $contact_email ) ) {
                     continue;
                 }
@@ -1458,12 +1458,12 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
                 $contact_to_add['contact_email'] = $contact_email;
 
-                $contact_to_add['contact_phone'] = $client_fields['contacts_field']['contact.phone'][ $indx ];
-                $contact_to_add['contact_role']  = $client_fields['contacts_field']['contact.role'][ $indx ];
-                $contact_to_add['facebook']      = $client_fields['contacts_field']['contact.facebook'][ $indx ];
-                $contact_to_add['twitter']       = $client_fields['contacts_field']['contact.twitter'][ $indx ];
-                $contact_to_add['instagram']     = $client_fields['contacts_field']['contact.instagram'][ $indx ];
-                $contact_to_add['linkedin']      = $client_fields['contacts_field']['contact.linkedin'][ $indx ];
+                $contact_to_add['contact_phone'] = sanitize_text_field( wp_unslash( $client_fields['contacts_field']['contact.phone'][ $indx ] ) );
+                $contact_to_add['contact_role']  = sanitize_text_field( wp_unslash( $client_fields['contacts_field']['contact.role'][ $indx ] ) );
+                $contact_to_add['facebook']      = sanitize_text_field( wp_unslash( $client_fields['contacts_field']['contact.facebook'][ $indx ] ) );
+                $contact_to_add['twitter']       = sanitize_text_field( wp_unslash( $client_fields['contacts_field']['contact.twitter'][ $indx ] ) );
+                $contact_to_add['instagram']     = sanitize_text_field( wp_unslash( $client_fields['contacts_field']['contact.instagram'][ $indx ] ) );
+                $contact_to_add['linkedin']      = sanitize_text_field( wp_unslash( $client_fields['contacts_field']['contact.linkedin'][ $indx ] ) );
 
                 $cust_icon  = sanitize_text_field( wp_unslash( $client_fields['contacts_field']['selected_icon'][ $indx ] ) );
                 $cust_color = sanitize_hex_color( wp_unslash( $client_fields['contacts_field']['selected_color'][ $indx ] ) );
@@ -2313,7 +2313,14 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'note'      => $esc_note,
             );
             MainWP_DB_Client::instance()->update_client( $update );
-            die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
+            die(
+                wp_json_encode(
+                    array(
+                        'result'           => 'SUCCESS',
+                        'esc_note_content' => $esc_note,
+                    )
+                )
+            );
         }
         die( wp_json_encode( array( 'undefined_error' => true ) ) );
     }

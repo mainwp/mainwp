@@ -302,7 +302,14 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
                 $esc_note = MainWP_Utility::esc_content( $note );
                 MainWP_DB_Common::instance()->update_note( $website->id, $esc_note );
 
-                die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
+                die(
+                    wp_json_encode(
+                        array(
+                            'result'           => 'SUCCESS',
+                            'esc_note_content' => $esc_note,
+                        )
+                    )
+                );
             } else {
                 die( wp_json_encode( array( 'error' => esc_html__( 'Are you sure this is your website?', 'mainwp' ) ) ) );
             }

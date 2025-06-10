@@ -33,13 +33,15 @@ jQuery(function ($) {
   // review for new UI update
   jQuery(document).on('click', '#mainwp-category-add-submit', function () {
     let newCat = jQuery('#newcategory').val();
-    if (jQuery('#categorychecklist .menu').find('.item[data-value="' + encodeURIComponent(newCat) + '"]').length > 0) {
-      console.log('Existed: ' + encodeURIComponent(newCat));
+    newCat = encodeURIComponent(newCat).replace(/%20/g, ' ');
+
+    if (jQuery('#categorychecklist .menu').find('.item[data-value="' + newCat + '"]').length > 0) {
+      console.log('Existed: ' + newCat);
       jQuery('#newcategory').val('');
       return;
     }
     let selected_categories = jQuery('#categorychecklist').dropdown('get value');
-    jQuery('#categorychecklist .menu').append('<div class="item" data-value="' + encodeURIComponent(newCat) + '">' + newCat + '</div>');
+    jQuery('#categorychecklist .menu').append('<div class="item" data-value="' + newCat + '">' + newCat + '</div>');
     jQuery('#categorychecklist .menu').dropdown('set selected', selected_categories); // to refresh.
     jQuery('#newcategory').val('');
   });
@@ -3122,8 +3124,6 @@ jQuery(function () {
     } else if (which == 'client') {
       mainwp_notes_client_save();
     }
-    let newnote = jQuery('#mainwp-notes-note').val();
-    jQuery('#mainwp-notes-html').html(newnote);
     return false;
   });
 
@@ -3195,7 +3195,8 @@ let mainwp_notes_site_save = function () {
     } else if (response.result == 'SUCCESS') {
       jQuery('#mainwp-notes-status').html(__('Note saved successfully.')).addClass('green');
       if (jQuery('#mainwp-notes-' + normalid + '-note').length > 0) {
-        jQuery('#mainwp-notes-' + normalid + '-note').html(jQuery('#mainwp-notes-note').val());
+        jQuery('#mainwp-notes-' + normalid + '-note').html(response?.esc_note_content??'');
+        jQuery('#mainwp-notes-html').html(response?.esc_note_content??'');
       }
     } else {
       jQuery('#mainwp-notes-status').html(__('Undefined error occured while saving your note!')).addClass('red');

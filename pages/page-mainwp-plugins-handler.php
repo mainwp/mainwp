@@ -340,9 +340,10 @@ class MainWP_Plugins_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
+     *
      * Save the trusted plugin note.
      *
-     * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
+     * @return string Escaped note.
      */
     public static function save_trusted_plugin_note() {
         // phpcs:disable WordPress.Security.NonceVerification
@@ -358,5 +359,6 @@ class MainWP_Plugins_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $trustedPluginsNotes[ $slug ]         = $esc_note;
         $userExtension->trusted_plugins_notes = wp_json_encode( $trustedPluginsNotes );
         MainWP_DB_Common::instance()->update_user_extension( $userExtension );
+        return $esc_note;
     }
 }

@@ -597,6 +597,9 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         if ( isset( $params['active_params'] ) ) {
             $others['active_params'] = $params['active_params'];
         }
+        if ( ! empty( $params['item_class'] ) ) {
+            $others['item_class'] = $params['item_class'];
+        }
 
         /**
          * MainWP Left Menu, Sub Menu & Active menu slugs.
@@ -1205,7 +1208,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             <a class="item" href="admin.php?page=AddApiKeys"><?php esc_html_e( 'Add API Keys', 'mainwp' ); ?></a>
                         </div>
                     </div>
-                    
+
                     <div class="item"><i class="cog left floated icon"></i>
                         <div class="title"><a href="admin.php?page=Settings" class="with-sub"><?php esc_html_e( 'Settings', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
                         <div class="content menu">
@@ -1279,7 +1282,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         <a id="mainwp-help-menu-item" class="ui mini basic fluid button" href="#"><i class="question circle icon"></i> <?php esc_html_e( 'Quick Help', 'mainwp' ); ?></a>
                     </div>
                     <div class="column item-wp-admin">
-                        <a class="ui mini basic fluid button" href="<?php echo wp_logout_url(); ?>"><i class="sign out icon"></i> <?php esc_html_e( 'Log Out', 'mainwp' ); ?></a> 
+                        <a class="ui mini basic fluid button" href="<?php echo wp_logout_url(); ?>"><i class="sign out icon"></i> <?php esc_html_e( 'Log Out', 'mainwp' ); ?></a>
                     </div>
                 </div>
             </div>
@@ -1334,6 +1337,10 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
 
             $item_classes = 'inactive' === $ext_state ? 'extension-inactive' : '';
+
+            if ( ! empty( $others['item_class'] ) ) {
+                $item_classes .= ' ' . $others['item_class'];
+            }
 
             $_blank = false;
             if ( '_blank' === $id ) {

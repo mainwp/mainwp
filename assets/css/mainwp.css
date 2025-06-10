@@ -145,6 +145,10 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     padding: 0px;
 }
 
+.hidden-menu-item{
+    display: none !important;
+}
+
 /* Header */
 
 #mainwp-top-header {
@@ -516,7 +520,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     color: #fff !important;
 }
 
-#mainwp-main-menu .icon.left.floated { 
+#mainwp-main-menu .icon.left.floated {
     float: left !important;
     margin-right: 1em !important;
 }
@@ -658,7 +662,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     right: 0px !important;
 }
 
-.mainwp-ui table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control:before, 
+.mainwp-ui table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control:before,
 .mainwp-ui table.dataTable.dtr-inline.collapsed>tbody>tr>th.dtr-control:before {
   background-color: none !important;
   border: none !important;

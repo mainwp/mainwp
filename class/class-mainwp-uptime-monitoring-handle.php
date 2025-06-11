@@ -384,7 +384,6 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
      *
      * @return mixed Check result.
      *
-     * @uses \MainWP\Dashboard\MainWP_Connect::check_ignored_http_code()
      * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
      */
     public function handle_update_website_legacy_uptime_status( $website, $params ) {

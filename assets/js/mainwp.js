@@ -1285,6 +1285,13 @@ jQuery(function ($) {
     hiel.split(';').forEach(function (hi) {
       mainwp_showhide_elements(hi, $(chk).find('input').is(':checked'));
     });
+    let hideEvent = $(chk).attr('fire-event-parent')??'';
+    if(hideEvent != ''){
+            // to sure click events finished.
+        setTimeout(function () {
+            document.dispatchEvent(new Event(hideEvent));
+        }, 200);
+    }
   });
 
   jQuery('.mainwp-selecter-showhide-elements').on('change', function () {

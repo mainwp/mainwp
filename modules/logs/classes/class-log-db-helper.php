@@ -106,18 +106,26 @@ class Log_DB_Helper extends MainWP_DB {
     /**
      * Method archive_sites_changes().
      *
-     * @param int $before_timestamp Archive sites changes created before time.
+     * @param int   $before_timestamp Archive sites changes created before time.
+     * @param int   $by_limit By limit.
+     * @param mixed $dismiss Dismiss: false|0|1.
      *
      * @return mixed
      */
-    public function archive_sites_changes( $before_timestamp = 0, $by_limit = 0 ) {
+    public function archive_sites_changes( $before_timestamp = 0, $by_limit = 0, $dismiss = false ) {
 
         $where = '';
         $order = '';
         if ( ! empty( $before_timestamp ) ) {
-            $where = ' AND created < ' . (int) $before_timestamp;
-        } elseif ( ! empty( $by_limit ) ) {
-            $order = ' ORDER BY created ASC limit = ' . (int) $by_limit;
+            $where .= ' AND created < ' . (int) $before_timestamp;
+        }
+
+        if ( ! empty( $by_limit ) ) {
+            $order .= ' ORDER BY created ASC LIMIT ' . (int) $by_limit;
+        }
+
+        if ( false !== $dismiss ) {
+            $where .= ' AND dismiss = ' . intval( $dismiss );
         }
 
         $logs = $this->wpdb->get_results(  'SELECT * FROM ' . $this->table_name('wp_logs') . ' WHERE 1 ' . $where . $order , ARRAY_A ); //phpcs:ignore -- NOSONAR -ok.
@@ -191,7 +199,7 @@ class Log_DB_Helper extends MainWP_DB {
                                 continue;
                             }
 
-                            $user_login  = '';
+                            $user_login = '';
 
                             if ( ! empty( $item->user_login ) ) {
                                 $user_login = $item->user_login;
@@ -201,7 +209,7 @@ class Log_DB_Helper extends MainWP_DB {
 
                             $dash_users[] = $item->user_id;
 
-                            $nicename     = $user_login;
+                            $nicename = $user_login;
                             if ( empty( $nicename ) ) {
                                 if ( ! empty( $info['agent'] ) ) {
                                     $nicename = $info['agent'];

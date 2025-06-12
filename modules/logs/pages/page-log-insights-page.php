@@ -884,11 +884,23 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
 
 
     /**
-     * Method ajax_update_dismissed_db()
+     * Method ajax_archive_dismissed_db()
      */
-    public static function ajax_update_dismissed_db() {
+    public static function ajax_archive_dismissed_db() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_update_dismissed_db' );
-        $status = Log_Manager::instance()->handle_single_cron_job_archive();
+        $user_cancel = get_option( 'mainwp_module_logs_updates_dismissed_db_cancelled' );
+        if ( $user_cancel ) {
+            $status = 'cancelled';
+        } else {
+            Log_DB_Helper::instance()->archive_sites_changes( 0, 200, 1 );
+            $count = Log_DB_Helper::instance()->count_legacy_dismissed();
+            if ( $count ) {
+                $status = 'running';
+            } else {
+                $status = 'finished';
+            }
+        }
+        update_option( 'mainwp_module_logs_updates_dismissed_db_process_status', $status );
         die( wp_json_encode( array( 'status' => esc_html( $status ) ) ) );
     }
 

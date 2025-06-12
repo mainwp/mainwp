@@ -73,11 +73,14 @@ class Log_Admin {
 
         // Auto purge setup.
         add_action( 'admin_init', array( $this, 'admin_init' ) );
+        $log_page = Log_Insights_Page::instance();
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_delete_records', array( $this, 'ajax_delete_records' ) );
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_compact_records', array( $this, 'ajax_compact_records' ) );
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_manage_events_display_rows', array( Log_Manage_Insights_Events_Page::instance(), 'ajax_manage_events_display_rows' ) );
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_widget_insights_display_rows', array( Log_Insights_Page::instance(), 'ajax_events_display_rows' ) );
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_widget_events_overview_display_rows', array( Log_Insights_Page::instance(), 'ajax_events_overview_display_rows' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_widget_insights_display_rows', array( $log_page, 'ajax_events_display_rows' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_widget_events_overview_display_rows', array( $log_page, 'ajax_events_overview_display_rows' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_update_dismissed_db', array( $log_page, 'ajax_archive_dismissed_db' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_cancel_update_dismissed_db', array( $log_page, 'ajax_cancel_update_dismissed_db' ) );
     }
 
     /**
@@ -296,19 +299,15 @@ class Log_Admin {
      */
     public function render_update_db_notice() {
         $status = '';
-        $db_ver = Log_Install::instance()->get_current_logs_db_ver();
-        if ( version_compare( $db_ver, '1.0.1.12', '<' ) ) {
-            $count = Log_DB_Helper::instance()->count_legacy_dismissed();
-            if ( $count ) {
-                $status  = 'require_update';
-                $running = get_option( 'mainwp_module_logs_updates_dismissed_db_process_status', '' );
-                if ( 'running' === $running ) {
-                    $status = 'running';
-                }
-            }
+        $dbver  = Log_Install::instance()->get_current_logs_db_ver();
+        if ( version_compare( $dbver, '1.0.1.26', '=' ) && ! get_option( 'mainwp_module_logs_updates_dismissed_db_cancelled' ) ) { // checks ver <= 22 only.
+            $status = get_option( 'mainwp_module_logs_updates_dismissed_db_process_status', '' );
         }
-
-        if ( 'require_update' === $status && MainWP_Utility::show_mainwp_message( 'notice', 'logs-db-update-required' ) ) {
+        ?>
+        <div class="ui green message" id="module-log-update-dissmised-logs-running" style="display:none;"></div>
+        <?php
+        if ( 'require_update' === $status ) {
+            delete_option( 'mainwp_module_logs_updates_dismissed_db_cancelled' ); // To ensure it does not retrieve old saved values.
             ?>
             <div class="ui yellow message">
                 <i class="close icon mainwp-notice-dismiss" notice-id="logs-db-update-required"></i>
@@ -317,11 +316,11 @@ class Log_Admin {
             <?php
         } elseif ( 'running' === $status ) {
             ?>
-            <div class="ui green message">
-                <i class="close icon"></i>
-                <i class="ui active inline loader tiny"></i>&nbsp;
-                <?php printf( esc_html__( 'Updating the \'Sites Changes\' database. Click %shere%s to cancel.', 'mainwp' ), '<a href="javascript:void(0);" id="module-update-logs-db-cancel">', '</a>' ); ?>
-            </div>
+            <script type="text/javascript">
+                jQuery(function ($) {
+                    mainwp_module_logs_start_update_dismissed_db();
+                });
+            </script>
             <?php
         }
     }

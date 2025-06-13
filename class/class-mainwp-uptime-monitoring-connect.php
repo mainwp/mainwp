@@ -1066,7 +1066,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
      * @return mixed
      */
     public function is_importance_status( $previous, $current ) {
-        // * ? -> ANY STATUS | FIRST = important [isFirstBeat]
+        // * ? -> ANY STATUS | FIRST = not important
         // UP -> PENDING = not important
         // * UP -> DOWN = important
         // UP -> UP = not important
@@ -1077,7 +1077,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         // DOWN -> DOWN = not important
         // * DOWN -> UP = important
 
-        return static::FIRST === $previous || ( static::UP === $previous && static::DOWN === $current ) ||
+        return ( static::UP === $previous && static::DOWN === $current ) ||
         ( static::PENDING === $previous && static::DOWN === $current ) ||
         ( static::DOWN === $previous && static::UP === $current );
     }

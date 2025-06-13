@@ -306,7 +306,7 @@ class Log_Admin {
         ?>
         <div class="ui green message" id="module-log-update-dissmised-logs-running" style="display:none;"></div>
         <?php
-        if ( 'require_update' === $status ) {
+        if ( 'require_update' === $status && MainWP_Utility::show_mainwp_message( 'notice', 'logs-db-update-required' ) ) {
             delete_option( 'mainwp_module_logs_updates_dismissed_db_cancelled' ); // To ensure it does not retrieve old saved values.
             ?>
             <div class="ui yellow message">

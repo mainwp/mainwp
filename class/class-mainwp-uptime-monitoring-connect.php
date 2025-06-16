@@ -761,15 +761,15 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $error   = $parsed['error'];
         $success = $parsed['success'];
 
-        if ( $set_retry ) {
-            $status = static::PENDING;
-        }
-
         $up_codes = $this->get_up_codes( $monitor, $global_settings );
         $up_codes = ! empty( $up_codes ) ? explode( ',', $up_codes ) : array();
 
         // check up status codes.
-        if ( ! empty( $http_code ) && is_array( $up_codes ) ) {
+        if ( $set_retry ) {
+            $status = static::PENDING;
+        } elseif ( false !== strpos( $data, 'Briefly unavailable for scheduled maintenance' ) ) {
+            $status = static::PENDING;
+        } elseif ( ! empty( $http_code ) && is_array( $up_codes ) ) {
             if ( in_array( $http_code, $up_codes ) ) {
                 $status = static::UP;
             } elseif ( static::UP === $status ) {
@@ -906,7 +906,11 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         $debug  = 'Check Uptime - ' . ( $success ? 'succeeded' : 'not succeed' );
         $debug .= ' :: [monitor_url=' . $mo_url . ']';
-        $debug .= ' :: [status=' . ( static::UP === $status ? 'UP' : 'DOWN' ) . ']';
+        if ( static::PENDING === $status ) {
+            $debug .= ' :: [status=PENDING]';
+        } else {
+            $debug .= ' :: [status=' . ( static::UP === $status ? 'UP' : 'DOWN' ) . ']';
+        }
         $debug .= ' :: [msg=' . $heart_msg . ']';
         MainWP_Logger::instance()->log_uptime_check( $debug );
 
@@ -924,6 +928,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         if ( empty( $data ) ) {
             MainWP_Logger::instance()->log_uptime_check( '[data=EMPTY]' );
+        } elseif ( static::UP !== $status && is_string( $data ) ) {
+            MainWP_Logger::instance()->log_uptime_check( '[data=' . $data . ']' );
         }
 
         // for compatible http status data.

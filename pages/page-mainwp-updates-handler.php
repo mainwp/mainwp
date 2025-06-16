@@ -59,7 +59,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     if ( $website->id === $html_regression_icon ) {
                         $html_regression_icon = '';
                     }
-                    return '<i class="green check icon"></i>' . $html_regression_icon;
+                    return '<span data-inverted="" data-position="left center" data-tooltip="' . esc_html__( 'Update successful', 'mainwp' ) . '"><i class="green check icon"></i></span>' . $html_regression_icon;
                 } elseif ( isset( $information['upgrade'] ) ) {
                     $errorMsg = '';
                     if ( 'LOCALIZATION' === $information['upgrade'] ) {

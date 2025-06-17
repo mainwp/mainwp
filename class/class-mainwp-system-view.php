@@ -569,7 +569,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
     }
 
     /**
-     * Renders PHP 7 Version Notice.
+     * Renders PHP 8.0 Version Notice.
      *
      * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
      */
@@ -579,17 +579,19 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             $last_hidden = (int) get_user_option( 'lasttime_hidden_phpver_8_0' );
             if ( time() > $last_hidden + 30 * DAY_IN_SECONDS || MainWP_Utility::show_mainwp_message( 'notice', 'phpver_8_0' ) ) {
                 ?>
-                <div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;display:block;">
-                    <i class="exclamation circle icon" style="float:left;"></i>
-                    <?php esc_html_e( 'Important Notice: In the coming months, support for PHP versions earlier than 8 will be discontinued on your MainWP Dashboard. To ensure continued functionality and security, please update your PHP version to a currently supported release, such as PHP 8.3.', 'mainwp' ); ?>
+                <div class="ui yellow message" style="margin-bottom: 0; border-radius: 0;display:block;">
+                    <div class="ui header"><?php esc_html_e( 'Upcoming PHP Requirement Change', 'mainwp' ); ?></div>
+                    <?php esc_html_e( 'In the coming months, support for PHP versions earlier than 8.1 will be discontinued on your MainWP Dashboard. To ensure continued functionality and security, please update your PHP version to a currently supported release, such as PHP 8.3.', 'mainwp' ); ?>
                     <?php printf( esc_html__( 'You can check the list of actively maintained PHP versions %shere%s.', 'mainwp' ), '<a href="https://www.php.net/supported-versions.php" target="_blank">', '</a>' ); ?>
-                    <?php esc_html_e( 'This upcoming change does not affect your child sites, only your MainWP Dashboard.', 'mainwp' ); ?>
+                    <br/><br/>
+                    <strong><?php esc_html_e( 'This upcoming change does not affect your child sites, only your MainWP Dashboard.', 'mainwp' ); ?></strong>
                     <i class="close icon mainwp-notice-dismiss" notice-id="phpver_8_0"></i>
                 </div>
                 <?php
             }
         }
     }
+
 
     /**
      * Renders Guided Tours Notice.

@@ -761,15 +761,15 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $error   = $parsed['error'];
         $success = $parsed['success'];
 
-        if ( $set_retry ) {
-            $status = static::PENDING;
-        }
-
         $up_codes = $this->get_up_codes( $monitor, $global_settings );
         $up_codes = ! empty( $up_codes ) ? explode( ',', $up_codes ) : array();
 
         // check up status codes.
-        if ( ! empty( $http_code ) && is_array( $up_codes ) ) {
+        if ( $set_retry ) {
+            $status = static::PENDING;
+        } elseif ( is_string( $data ) && false !== stripos( $data, 'Briefly unavailable for scheduled maintenance' ) ) {
+            $status = static::PENDING;
+        } elseif ( ! empty( $http_code ) && is_array( $up_codes ) ) {
             if ( in_array( $http_code, $up_codes ) ) {
                 $status = static::UP;
             } elseif ( static::UP === $status ) {
@@ -906,7 +906,11 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         $debug  = 'Check Uptime - ' . ( $success ? 'succeeded' : 'not succeed' );
         $debug .= ' :: [monitor_url=' . $mo_url . ']';
-        $debug .= ' :: [status=' . ( static::UP === $status ? 'UP' : 'DOWN' ) . ']';
+        if ( static::PENDING === $status ) {
+            $debug .= ' :: [status=PENDING]';
+        } else {
+            $debug .= ' :: [status=' . ( static::UP === $status ? 'UP' : 'DOWN' ) . ']';
+        }
         $debug .= ' :: [msg=' . $heart_msg . ']';
         MainWP_Logger::instance()->log_uptime_check( $debug );
 
@@ -1066,7 +1070,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
      * @return mixed
      */
     public function is_importance_status( $previous, $current ) {
-        // * ? -> ANY STATUS | FIRST = important [isFirstBeat]
+        // * ? -> ANY STATUS | FIRST = not important
         // UP -> PENDING = not important
         // * UP -> DOWN = important
         // UP -> UP = not important
@@ -1077,7 +1081,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         // DOWN -> DOWN = not important
         // * DOWN -> UP = important
 
-        return static::FIRST === $previous || ( static::UP === $previous && static::DOWN === $current ) ||
+        return ( static::UP === $previous && static::DOWN === $current ) ||
         ( static::PENDING === $previous && static::DOWN === $current ) ||
         ( static::DOWN === $previous && static::UP === $current );
     }

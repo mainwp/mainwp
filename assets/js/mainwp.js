@@ -1730,7 +1730,7 @@ let mainwp_managesites_add = function () {
       let name = jQuery('#mainwp_managesites_add_wpname').val();
       name = name.replace(/"/g, '&quot;');
       let group_ids = jQuery('#mainwp_managesites_add_addgroups').dropdown('get value');
-      let client_id = jQuery('#mainwp_managesites_add_client_id').dropdown('get value');
+      let client_id = jQuery('#mainwp_managesites_add_client_id').length ? jQuery('#mainwp_managesites_add_client_id').dropdown('get value') : 0;
       let data = mainwp_secure_data({
         action: 'mainwp_addwp',
         managesites_add_wpname: name,

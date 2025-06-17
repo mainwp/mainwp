@@ -6,8 +6,8 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.8.1
-Requires PHP: 8.1
-Stable tag: 5.4.0.12
+Requires PHP: 7.4
+Stable tag: 5.4.0.13
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -146,6 +146,16 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.4.0.13 - Maintenance Release - 6-17-2025 =
+
+* Fixed: Resolved DataTables warning occurring on the "Sites Changes" widget table on the "Overview" page for certain configurations.
+* Fixed: Resolved issue where adding a site would fail for Team Control roles lacking "Manage Clients" and/or "Bulk Install & Activate Extensions" permissions. [(#799)](https://github.com/mainwp/mainwp/issues/799)
+* Fixed: Corrected update counter displaying updates from disconnected sites while those updates weren't shown in the actual updates list. [(#798)](https://github.com/mainwp/mainwp/issues/798)
+* Fixed: Prevented Uptime Monitor notifications from being incorrectly sent immediately after adding a new site on the first heartbeat.
+* Updated: Enhanced updates progress indicator icon to support upcoming regression testing add-on changes.
+* Updated: Implemented improvements for better PHP 8.4 compatibility to ensure smooth operation with newer PHP versions.
+* Updated: Modified information notice regarding end of support for deprecated PHP versions.
 
 = 5.4.0.12 - Maintenance Release - 6-10-2025 =
 

@@ -928,8 +928,6 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         if ( empty( $data ) ) {
             MainWP_Logger::instance()->log_uptime_check( '[data=EMPTY]' );
-        } elseif ( static::UP !== $status && is_string( $data ) ) {
-            MainWP_Logger::instance()->log_uptime_check( '[data=' . $data . ']' );
         }
 
         // for compatible http status data.

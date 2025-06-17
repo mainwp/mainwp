@@ -767,7 +767,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         // check up status codes.
         if ( $set_retry ) {
             $status = static::PENDING;
-        } elseif ( false !== strpos( $data, 'Briefly unavailable for scheduled maintenance' ) ) {
+        } elseif ( is_string( $data ) && false !== stripos( $data, 'Briefly unavailable for scheduled maintenance' ) ) {
             $status = static::PENDING;
         } elseif ( ! empty( $http_code ) && is_array( $up_codes ) ) {
             if ( in_array( $http_code, $up_codes ) ) {

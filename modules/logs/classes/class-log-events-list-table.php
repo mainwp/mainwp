@@ -233,9 +233,13 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $escaped = true;
                 break;
             case 'event':
-                $act_label = $this->get_event_title( $record->action, 'action', true );
-                $out       = $act_label;
-                $escaped   = true;
+                if ( 5028 === (int) $record->log_type_id ) {
+                    $event_label = esc_html__( 'Modified', 'mainwp' );
+                } else {
+                    $event_label = $this->get_event_title( $record->action, 'action', true );
+                }
+                $out     = $event_label;
+                $escaped = true;
                 break;
             case 'action':
                 $act_label = $this->get_action_title( $record, $record->action, 'action' );

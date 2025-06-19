@@ -542,4 +542,26 @@ class Log_Changes_logs_Helper {
         }
         return \apply_filters( 'mainwp_module_log_changes_logs_mapping_contexts', $context, $type );
     }
+
+    /**
+     * Get custom event title.
+     *
+     * @param int   $log_type_id    - Event type id.
+     * @param array $data    - Event data.
+     *
+     * @return string
+     */
+    public static function get_log_title( $log_type_id, $data = array() ) {
+        if ( ! is_array( $data ) ) {
+            $data = array();
+        }
+        $title = Log_Settings::get_changes_events_title_default( $log_type_id );
+        if ( ! empty( $title ) ) {
+            if ( isset( $data['action'] ) ) {
+                $title = str_replace( '%action%', $data['action'], $title );
+            }
+            return $title;
+        }
+        return '';
+    }
 }

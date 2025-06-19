@@ -538,7 +538,7 @@ class Log_Settings {
 
         $changes_default_logs = array(
             esc_html__( 'Defaults Logs', 'mainwp' ) => array(
-                esc_html__( 'Post', 'mainwp' )       => array(
+                esc_html__( 'Post', 'mainwp' )           => array(
                     array(
                         2000,
                         esc_html__( 'Created a new post', 'mainwp' ),
@@ -879,7 +879,7 @@ class Log_Settings {
                         esc_html__( 'Added tag(s) to a post', 'mainwp' ),
                         esc_html__( 'Added tag(s) to the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'ID', 'mainwp' ) => '%PostID%',
+                            esc_html__( 'ID', 'mainwp' )   => '%PostID%',
                             esc_html__( 'Type', 'mainwp' ) => '%PostType%',
                             esc_html__( 'Status', 'mainwp' ) => '%PostStatus%',
                             esc_html__( 'Added tag(s)', 'mainwp' ) => '%tag%',
@@ -893,7 +893,7 @@ class Log_Settings {
                         esc_html__( 'Removed tag(s) from a post', 'mainwp' ),
                         esc_html__( 'Removed tag(s) from the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'ID', 'mainwp' ) => '%PostID%',
+                            esc_html__( 'ID', 'mainwp' )   => '%PostID%',
                             esc_html__( 'Type', 'mainwp' ) => '%PostType%',
                             esc_html__( 'Status', 'mainwp' ) => '%PostStatus%',
                             esc_html__( 'Removed tag(s)', 'mainwp' ) => '%tag%',
@@ -947,7 +947,7 @@ class Log_Settings {
                         'modified',
                     ),
                 ),
-                esc_html__( 'Custom field', 'mainwp' ) => array(
+                esc_html__( 'Custom field', 'mainwp' )   => array(
                     array(
                         2131,
                         esc_html__( 'Added a relationship in an ACF custom field', 'mainwp' ),
@@ -1019,7 +1019,7 @@ class Log_Settings {
                         'renamed',
                     ),
                 ),
-                esc_html__( 'Categories', 'mainwp' ) => array(
+                esc_html__( 'Categories', 'mainwp' )     => array(
                     array(
                         2023,
                         esc_html__( 'Created a new category', 'mainwp' ),
@@ -1077,7 +1077,7 @@ class Log_Settings {
                         'modified',
                     ),
                 ),
-                esc_html__( 'Tag', 'mainwp' )        => array(
+                esc_html__( 'Tag', 'mainwp' )            => array(
                     array(
                         2121,
                         esc_html__( 'Created a new tag', 'mainwp' ),
@@ -1136,7 +1136,7 @@ class Log_Settings {
                         'modified',
                     ),
                 ),
-                esc_html__( 'File', 'mainwp' )       => array(
+                esc_html__( 'File', 'mainwp' )           => array(
                     array(
                         2010,
                         esc_html__( 'Uploaded a file', 'mainwp' ),
@@ -1160,7 +1160,7 @@ class Log_Settings {
                         'deleted',
                     ),
                 ),
-                esc_html__( 'Widget', 'mainwp' )     => array(
+                esc_html__( 'Widget', 'mainwp' )         => array(
                     array(
                         2042,
                         esc_html__( 'Added a new widget', 'mainwp' ),
@@ -1194,7 +1194,7 @@ class Log_Settings {
                         esc_html__( 'Moved the %WidgetName% widget.', 'mainwp' ),
                         array(
                             esc_html__( 'From', 'mainwp' ) => '%OldSidebar%',
-                            esc_html__( 'To', 'mainwp' ) => '%NewSidebar%',
+                            esc_html__( 'To', 'mainwp' )   => '%NewSidebar%',
                         ),
                         array(),
                         'widget',
@@ -1210,7 +1210,7 @@ class Log_Settings {
                         'modified',
                     ),
                 ),
-                esc_html__( 'Plugin', 'mainwp' )     => array(
+                esc_html__( 'Plugin', 'mainwp' )         => array(
                     array(
                         2051,
                         esc_html__( 'Modified a file with the plugin editor', 'mainwp' ),
@@ -1232,7 +1232,7 @@ class Log_Settings {
                         'enabled',
                     ),
                 ),
-                esc_html__( 'Theme', 'mainwp' )      => array(
+                esc_html__( 'Theme', 'mainwp' )          => array(
                     array(
                         2046,
                         esc_html__( 'Modified a file with the theme editor', 'mainwp' ),
@@ -1254,7 +1254,7 @@ class Log_Settings {
                         'enabled',
                     ),
                 ),
-                esc_html__( 'Menu', 'mainwp' )       => array(
+                esc_html__( 'Menu', 'mainwp' )           => array(
                     array(
                         2078,
                         esc_html__( 'Created a menu', 'mainwp' ),
@@ -1346,7 +1346,7 @@ class Log_Settings {
                         'modified',
                     ),
                 ),
-                esc_html__( 'Comment', 'mainwp' )    => array(
+                esc_html__( 'Comment', 'mainwp' )        => array(
                     array(
                         2090,
                         esc_html__( 'Approved a comment', 'mainwp' ),
@@ -1488,7 +1488,7 @@ class Log_Settings {
                         'created',
                     ),
                 ),
-                esc_html__( 'User', 'mainwp' )       => array(
+                esc_html__( 'User', 'mainwp' )           => array(
                     array(
                         1000,
                         esc_html__( 'Successfully logged in', 'mainwp' ),
@@ -1564,7 +1564,7 @@ class Log_Settings {
                         esc_html__( 'A new user was created', 'mainwp' ),
                         __( 'A new user %NewUserData->Username% is created via registration.', 'mainwp' ),
                         array(
-                            esc_html__( 'User', 'mainwp' )  => '%NewUserData->Username%',
+                            esc_html__( 'User', 'mainwp' ) => '%NewUserData->Username%',
                             esc_html__( 'Email', 'mainwp' ) => '%NewUserData->Email%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink' ) ),
@@ -1576,7 +1576,7 @@ class Log_Settings {
                         esc_html__( 'User created a new user', 'mainwp' ),
                         __( 'Created the new user: %NewUserData->Username%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp' )  => '%NewUserData->Roles%',
+                            esc_html__( 'Role', 'mainwp' ) => '%NewUserData->Roles%',
                             esc_html__( 'First name', 'mainwp' ) => '%NewUserData->FirstName%',
                             esc_html__( 'Last name', 'mainwp' ) => '%NewUserData->LastName%',
                             esc_html__( 'Email', 'mainwp' ) => '%NewUserData->Email%',
@@ -1906,7 +1906,7 @@ class Log_Settings {
                         'revoked',
                     ),
                 ),
-                esc_html__( 'Database', 'mainwp' )   => array(
+                esc_html__( 'Database', 'mainwp' )       => array(
                     array(
                         5010,
                         esc_html__( 'Plugin created database table(s)', 'mainwp' ),
@@ -2456,5 +2456,22 @@ class Log_Settings {
         }
 
         return $result;
+    }
+
+
+    /**
+     * Method get_changes_events_title_default().
+     *
+     * @param string $type_id Type of logs info.
+     *
+     * @return array data.
+     */
+    public static function get_changes_events_title_default( $type_id ) {
+        $defaults = array(
+            5028 => array(
+                __( '%action% automatic update', 'mainwp' ),
+            ),
+        );
+        return isset( $defaults[ $type_id ] ) ? $defaults[ $type_id ][0] : '';
     }
 }

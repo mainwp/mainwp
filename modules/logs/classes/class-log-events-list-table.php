@@ -111,6 +111,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
     public function get_sortable_columns() {
         return array(
             'event'      => array( 'event', false ),
+            'action'     => array( 'action', false ),
             'log_object' => array( 'log_object', false ),
             'created'    => array( 'created', false ),
             'name'       => array( 'name', false ),
@@ -128,6 +129,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         $columns = array(
             'cb'         => '<input type="checkbox" />',
             'event'      => esc_html__( 'Event', 'mainwp' ),
+            'action'     => esc_html__( 'Action', 'mainwp' ),
             'log_object' => esc_html__( 'Object', 'mainwp' ),
             'created'    => esc_html__( 'Date', 'mainwp' ),
             'name'       => esc_html__( 'Website', 'mainwp' ),
@@ -231,7 +233,12 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $escaped = true;
                 break;
             case 'event':
-                $act_label = $this->get_action_title( $record->action, 'action', true );
+                $act_label = $this->get_event_title( $record->action, 'action', true );
+                $out       = $act_label;
+                $escaped   = true;
+                break;
+            case 'action':
+                $act_label = $this->get_action_title( $record, $record->action, 'action' );
                 $out       = $act_label;
                 $escaped   = true;
                 break;
@@ -333,12 +340,47 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
     /**
      * Returns the label for a connector term.
      *
+     * @param object $record  Event data.
      * @param string $act  Action type.
      * @param string $type  Connector term.
      * @param bool   $coloring Coloring term.
      * @return string
      */
-    public function get_action_title( $act, $type, $coloring = false ) {
+    public function get_action_title( $record, $act, $type, $coloring = false ) {
+        if ( ! isset( $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ] ) ) {
+            $title = $act;
+        } else {
+            $title = $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ];
+        }
+
+        $title = is_string( $title ) ? ucfirst( $title ) : $title;
+        if ( $coloring ) {
+            $format_title = '<span class="ui medium text">%s</span>';
+            if ( 'deactivate' === $act || 'deleted' === $act || 'delete' === $act ) {
+                $format_title = '<span class="ui medium red text">%s</span>';
+            } elseif ( 'activate' === $act || 'updated' === $act || 'update' === $act ) {
+                $format_title = '<span class="ui medium blue text">%s</span>';
+            } elseif ( 'install' === $act || 'created' === $act || 'added' === $act || 'sync' === $act ) {
+                $format_title = '<span class="ui medium green text">%s</span>';
+            }
+            $title = sprintf( $format_title, esc_html( $title ) );
+        }
+        $action = $title;
+        if ( ! empty( $record->log_type_id ) ) {
+            $action = $this->parse_event_changes_title( $record, $action );
+        }
+        return $action;
+    }
+
+    /**
+     * Returns the label for a connector term.
+     *
+     * @param string $act  Action type.
+     * @param string $type  Connector term.
+     * @param bool   $coloring Coloring term.
+     * @return string
+     */
+    public function get_event_title( $act, $type, $coloring = false ) {
 
         if ( ! isset( $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ] ) ) {
             $title = $act;
@@ -395,6 +437,23 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         }
 
         return $title;
+    }
+
+    /**
+     * Parse event changes logs title.
+     *
+     * @param object $record  Log record object.
+     * @param title  $title  Default title.
+     * @return string
+     */
+    public function parse_event_changes_title( $record, $title = '' ) {
+        $data = array();
+        if ( 5028 === (int) $record->log_type_id ) {
+            $data = array( 'action' => 'enabled' === $record->action ? 'Enabled' : 'Disabled' );
+        }
+        $parse_title = Log_Changes_logs_Helper::get_log_title( $record->log_type_id, $data );
+
+        return ! empty( $parse_title ) ? $parse_title : $title;
     }
 
     /**

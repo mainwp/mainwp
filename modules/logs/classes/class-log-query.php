@@ -211,7 +211,7 @@ class Log_Query {
         if ( in_array( $args['orderby'], $orderable, true ) ) {
             if ( in_array( $args['orderby'], array( 'name', 'url' ) ) ) {
                 $orderby = sprintf( '%s', $args['orderby'] );
-            } elseif ( 'event' === $args['orderby'] ) {
+            } elseif ( 'event' === $args['orderby'] || 'action' === $args['orderby'] ) {
                 $orderby = sprintf( '%s.%s', 'lg', 'action' );
             } else {
                 $orderby = sprintf( '%s.%s', 'lg', $args['orderby'] );

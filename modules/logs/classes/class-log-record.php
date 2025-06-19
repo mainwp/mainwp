@@ -119,6 +119,13 @@ class Log_Record {
      */
     public $object_id;
 
+    /**
+     *  Log type id.
+     *
+     * @var string
+     */
+    public $log_type_id;
+
 
     /**
      * Record meta data
@@ -149,6 +156,7 @@ class Log_Record {
         $this->item          = isset( $log->item ) ? $log->item : null;
         $this->connector     = isset( $log->connector ) ? $log->connector : null;
         $this->context       = isset( $log->context ) ? $log->context : null;
+        $this->log_type_id   = isset( $log->log_type_id ) ? $log->log_type_id : null;
         $this->action        = isset( $log->action ) ? $log->action : null;
         $this->state         = isset( $log->state ) ? $log->state : null;
         $this->duration      = isset( $log->duration ) ? $log->duration : null;

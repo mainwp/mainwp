@@ -537,16 +537,16 @@ class Log_Settings {
     public static function get_changes_logs() {
 
         $changes_default_logs = array(
-            esc_html__( 'Defaults Logs', 'mainwp-child' ) => array(
-                esc_html__( 'Post', 'mainwp-child' )       => array(
+            esc_html__( 'Defaults Logs', 'mainwp' ) => array(
+                esc_html__( 'Post', 'mainwp' )       => array(
                     array(
                         2000,
-                        esc_html__( 'Created a new post', 'mainwp-child' ),
-                        esc_html__( 'Created the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Created a new post', 'mainwp' ),
+                        esc_html__( 'Created the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -554,12 +554,12 @@ class Log_Settings {
                     ),
                     array(
                         2001,
-                        esc_html__( 'Published a post', 'mainwp-child' ),
-                        esc_html__( 'Published the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Published a post', 'mainwp' ),
+                        esc_html__( 'Published the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -567,12 +567,12 @@ class Log_Settings {
                     ),
                     array(
                         2002,
-                        esc_html__( 'Modified a post', 'mainwp-child' ),
-                        esc_html__( 'Modified the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Modified a post', 'mainwp' ),
+                        esc_html__( 'Modified the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -580,12 +580,12 @@ class Log_Settings {
                     ),
                     array(
                         2008,
-                        esc_html__( 'Permanently deleted a post', 'mainwp-child' ),
-                        esc_html__( 'Permanently deleted the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Permanently deleted a post', 'mainwp' ),
+                        esc_html__( 'Permanently deleted the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
                         ),
                         array(),
                         'post',
@@ -593,12 +593,12 @@ class Log_Settings {
                     ),
                     array(
                         2012,
-                        esc_html__( 'Moved a post to trash', 'mainwp-child' ),
-                        esc_html__( 'Moved the post %PostTitle% to trash.', 'mainwp-child' ),
+                        esc_html__( 'Moved a post to trash', 'mainwp' ),
+                        esc_html__( 'Moved the post %PostTitle% to trash.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
                         ),
                         static::ws_al_defaults_build_links( array( 'PostUrlIfPublished' ) ),
                         'post',
@@ -606,12 +606,12 @@ class Log_Settings {
                     ),
                     array(
                         2014,
-                        esc_html__( 'Restored a post from trash', 'mainwp-child' ),
-                        esc_html__( 'Restored the post %PostTitle% from trash.', 'mainwp-child' ),
+                        esc_html__( 'Restored a post from trash', 'mainwp' ),
+                        esc_html__( 'Restored the post %PostTitle% from trash.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -619,14 +619,14 @@ class Log_Settings {
                     ),
                     array(
                         2016,
-                        esc_html__( 'Changed the category of a post', 'mainwp-child' ),
-                        esc_html__( 'Changed the category(ies) of the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the category of a post', 'mainwp' ),
+                        esc_html__( 'Changed the category(ies) of the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )                => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )              => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' )            => '%PostStatus%',
-                            esc_html__( 'New category(ies)', 'mainwp-child' )      => '%NewCategories%',
-                            esc_html__( 'Previous category(ies)', 'mainwp-child' ) => '%OldCategories%',
+                            esc_html__( 'Post ID', 'mainwp' )                => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )              => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' )            => '%PostStatus%',
+                            esc_html__( 'New category(ies)', 'mainwp' )      => '%NewCategories%',
+                            esc_html__( 'Previous category(ies)', 'mainwp' ) => '%OldCategories%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -634,14 +634,14 @@ class Log_Settings {
                     ),
                     array(
                         2017,
-                        esc_html__( 'Changed the URL of a post', 'mainwp-child' ),
-                        esc_html__( 'Changed the URL of the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the URL of a post', 'mainwp' ),
+                        esc_html__( 'Changed the URL of the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )      => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )    => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' )  => '%PostStatus%',
-                            esc_html__( 'Previous URL', 'mainwp-child' ) => '%OldUrl%',
-                            esc_html__( 'New URL', 'mainwp-child' )      => '%NewUrl%',
+                            esc_html__( 'Post ID', 'mainwp' )      => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )    => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' )  => '%PostStatus%',
+                            esc_html__( 'Previous URL', 'mainwp' ) => '%OldUrl%',
+                            esc_html__( 'New URL', 'mainwp' )      => '%NewUrl%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost' ) ),
                         'post',
@@ -649,13 +649,13 @@ class Log_Settings {
                     ),
                     array(
                         2019,
-                        esc_html__( 'Changed the author of a post', 'mainwp-child' ),
-                        esc_html__( 'Changed the author of the post %PostTitle% to %NewAuthor%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the author of a post', 'mainwp' ),
+                        esc_html__( 'Changed the author of the post %PostTitle% to %NewAuthor%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )         => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )       => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' )     => '%PostStatus%',
-                            esc_html__( 'Previous author', 'mainwp-child' ) => '%OldAuthor%',
+                            esc_html__( 'Post ID', 'mainwp' )         => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )       => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' )     => '%PostStatus%',
+                            esc_html__( 'Previous author', 'mainwp' ) => '%OldAuthor%',
                         ),
                         static::ws_al_defaults_build_links( array( 'PostUrlIfPublished' ) ),
                         'post',
@@ -663,12 +663,12 @@ class Log_Settings {
                     ),
                     array(
                         2021,
-                        esc_html__( 'Changed the status of a post', 'mainwp-child' ),
-                        esc_html__( 'Changed the status of the post %PostTitle% to %NewStatus%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the status of a post', 'mainwp' ),
+                        esc_html__( 'Changed the status of the post %PostTitle% to %NewStatus%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )         => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )       => '%PostType%',
-                            esc_html__( 'Previous status', 'mainwp-child' ) => '%OldStatus%',
+                            esc_html__( 'Post ID', 'mainwp' )         => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )       => '%PostType%',
+                            esc_html__( 'Previous status', 'mainwp' ) => '%OldStatus%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -676,13 +676,13 @@ class Log_Settings {
                     ),
                     array(
                         2047,
-                        esc_html__( 'Changed the parent of a post', 'mainwp-child' ),
-                        esc_html__( 'Changed the parent of the post %PostTitle% to %NewParentName%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the parent of a post', 'mainwp' ),
+                        esc_html__( 'Changed the parent of the post %PostTitle% to %NewParentName%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )         => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )       => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' )     => '%PostStatus%',
-                            esc_html__( 'Previous parent', 'mainwp-child' ) => '%OldParentName%',
+                            esc_html__( 'Post ID', 'mainwp' )         => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )       => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' )     => '%PostStatus%',
+                            esc_html__( 'Previous parent', 'mainwp' ) => '%OldParentName%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -690,13 +690,13 @@ class Log_Settings {
                     ),
                     array(
                         2048,
-                        esc_html__( 'Changed the template of a post', 'mainwp-child' ),
-                        esc_html__( 'Changed the template of the post %PostTitle% to %NewTemplate%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the template of a post', 'mainwp' ),
+                        esc_html__( 'Changed the template of the post %PostTitle% to %NewTemplate%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )           => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )         => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' )       => '%PostStatus%',
-                            esc_html__( 'Previous template', 'mainwp-child' ) => '%OldTemplate%',
+                            esc_html__( 'Post ID', 'mainwp' )           => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )         => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' )       => '%PostStatus%',
+                            esc_html__( 'Previous template', 'mainwp' ) => '%OldTemplate%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -704,12 +704,12 @@ class Log_Settings {
                     ),
                     array(
                         2049,
-                        esc_html__( 'Set a post as Sticky', 'mainwp-child' ),
-                        esc_html__( 'Set the post %PostTitle% as sticky.', 'mainwp-child' ),
+                        esc_html__( 'Set a post as Sticky', 'mainwp' ),
+                        esc_html__( 'Set the post %PostTitle% as sticky.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -717,12 +717,12 @@ class Log_Settings {
                     ),
                     array(
                         2050,
-                        esc_html__( 'Removed post from Sticky', 'mainwp-child' ),
-                        esc_html__( 'Removed the post %PostTitle% from sticky.', 'mainwp-child' ),
+                        esc_html__( 'Removed post from Sticky', 'mainwp' ),
+                        esc_html__( 'Removed the post %PostTitle% from sticky.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -730,13 +730,13 @@ class Log_Settings {
                     ),
                     array(
                         2053,
-                        esc_html__( 'Created a custom field in a post', 'mainwp-child' ),
-                        esc_html__( 'Created the new custom field %MetaKey% in the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Created a custom field in a post', 'mainwp' ),
+                        esc_html__( 'Created the new custom field %MetaKey% in the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )            => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )          => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' )        => '%PostStatus%',
-                            esc_html__( 'Custom field value', 'mainwp-child' ) => '%MetaValue%',
+                            esc_html__( 'Post ID', 'mainwp' )            => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )          => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' )        => '%PostStatus%',
+                            esc_html__( 'Custom field value', 'mainwp' ) => '%MetaValue%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'MetaLink', 'PostUrlIfPublished' ) ),
                         'post',
@@ -744,12 +744,12 @@ class Log_Settings {
                     ),
                     array(
                         2073,
-                        esc_html__( 'Submitted post for review', 'mainwp-child' ),
-                        esc_html__( 'Submitted the post %PostTitle% for review.', 'mainwp-child' ),
+                        esc_html__( 'Submitted post for review', 'mainwp' ),
+                        esc_html__( 'Submitted the post %PostTitle% for review.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -757,12 +757,12 @@ class Log_Settings {
                     ),
                     array(
                         2074,
-                        esc_html__( 'Scheduled a post for publishing', 'mainwp-child' ),
-                        esc_html__( 'Scheduled the post %PostTitle% to be published on %PublishingDate%.', 'mainwp-child' ),
+                        esc_html__( 'Scheduled a post for publishing', 'mainwp' ),
+                        esc_html__( 'Scheduled the post %PostTitle% to be published on %PublishingDate%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -770,13 +770,13 @@ class Log_Settings {
                     ),
                     array(
                         2025,
-                        esc_html__( 'User changed the visibility of a post', 'mainwp-child' ),
-                        esc_html__( 'Changed the visibility of the post %PostTitle% to %NewVisibility%.', 'mainwp-child' ),
+                        esc_html__( 'User changed the visibility of a post', 'mainwp' ),
+                        esc_html__( 'Changed the visibility of the post %PostTitle% to %NewVisibility%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )                    => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )                  => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' )                => '%PostStatus%',
-                            esc_html__( 'Previous visibility status', 'mainwp-child' ) => '%OldVisibility%',
+                            esc_html__( 'Post ID', 'mainwp' )                    => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )                  => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' )                => '%PostStatus%',
+                            esc_html__( 'Previous visibility status', 'mainwp' ) => '%OldVisibility%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -784,13 +784,13 @@ class Log_Settings {
                     ),
                     array(
                         2027,
-                        esc_html__( 'Changed the date of a post', 'mainwp-child' ),
-                        esc_html__( 'Changed the date of the post %PostTitle% to %NewDate%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the date of a post', 'mainwp' ),
+                        esc_html__( 'Changed the date of the post %PostTitle% to %NewDate%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )       => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )     => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' )   => '%PostStatus%',
-                            esc_html__( 'Previous date', 'mainwp-child' ) => '%OldDate%',
+                            esc_html__( 'Post ID', 'mainwp' )       => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )     => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' )   => '%PostStatus%',
+                            esc_html__( 'Previous date', 'mainwp' ) => '%OldDate%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -798,12 +798,12 @@ class Log_Settings {
                     ),
                     array(
                         2065,
-                        esc_html__( 'Modified the content of a post', 'mainwp-child' ),
-                        esc_html__( 'Modified the content of the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Modified the content of a post', 'mainwp' ),
+                        esc_html__( 'Modified the content of the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
                         ),
                         static::ws_al_defaults_build_links( array( 'RevisionLink', 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -811,12 +811,12 @@ class Log_Settings {
                     ),
                     array(
                         2086,
-                        esc_html__( 'Changed title of a post', 'mainwp-child' ),
-                        esc_html__( 'Changed the title of the post %OldTitle% to %NewTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Changed title of a post', 'mainwp' ),
+                        esc_html__( 'Changed the title of the post %OldTitle% to %NewTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -824,12 +824,12 @@ class Log_Settings {
                     ),
                     array(
                         2100,
-                        esc_html__( 'Opened a post in editor', 'mainwp-child' ),
-                        esc_html__( 'Opened the post %PostTitle% in the editor.', 'mainwp-child' ),
+                        esc_html__( 'Opened a post in editor', 'mainwp' ),
+                        esc_html__( 'Opened the post %PostTitle% in the editor.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -837,12 +837,12 @@ class Log_Settings {
                     ),
                     array(
                         2101,
-                        esc_html__( 'Viewed a post', 'mainwp-child' ),
-                        esc_html__( 'Viewed the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Viewed a post', 'mainwp' ),
+                        esc_html__( 'Viewed the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
                         ),
                         static::ws_al_defaults_build_links( array( 'PostUrl', 'EditorLinkPost' ) ),
                         'post',
@@ -850,12 +850,12 @@ class Log_Settings {
                     ),
                     array(
                         2111,
-                        esc_html__( 'Enabled / disabled comments in a post', 'mainwp-child' ),
-                        esc_html__( 'Comments in the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Enabled / disabled comments in a post', 'mainwp' ),
+                        esc_html__( 'Comments in the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -863,12 +863,12 @@ class Log_Settings {
                     ),
                     array(
                         2112,
-                        esc_html__( 'Enabled / disabled trackbacks in a post', 'mainwp-child' ),
-                        esc_html__( 'Pingbacks and Trackbacks in the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Enabled / disabled trackbacks in a post', 'mainwp' ),
+                        esc_html__( 'Pingbacks and Trackbacks in the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -876,13 +876,13 @@ class Log_Settings {
                     ),
                     array(
                         2119,
-                        esc_html__( 'Added tag(s) to a post', 'mainwp-child' ),
-                        esc_html__( 'Added tag(s) to the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Added tag(s) to a post', 'mainwp' ),
+                        esc_html__( 'Added tag(s) to the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'ID', 'mainwp-child' ) => '%PostID%',
-                            esc_html__( 'Type', 'mainwp-child' ) => '%PostType%',
-                            esc_html__( 'Status', 'mainwp-child' ) => '%PostStatus%',
-                            esc_html__( 'Added tag(s)', 'mainwp-child' ) => '%tag%',
+                            esc_html__( 'ID', 'mainwp' ) => '%PostID%',
+                            esc_html__( 'Type', 'mainwp' ) => '%PostType%',
+                            esc_html__( 'Status', 'mainwp' ) => '%PostStatus%',
+                            esc_html__( 'Added tag(s)', 'mainwp' ) => '%tag%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost' ) ),
                         'post',
@@ -890,13 +890,13 @@ class Log_Settings {
                     ),
                     array(
                         2120,
-                        esc_html__( 'Removed tag(s) from a post', 'mainwp-child' ),
-                        esc_html__( 'Removed tag(s) from the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Removed tag(s) from a post', 'mainwp' ),
+                        esc_html__( 'Removed tag(s) from the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'ID', 'mainwp-child' ) => '%PostID%',
-                            esc_html__( 'Type', 'mainwp-child' ) => '%PostType%',
-                            esc_html__( 'Status', 'mainwp-child' ) => '%PostStatus%',
-                            esc_html__( 'Removed tag(s)', 'mainwp-child' ) => '%tag%',
+                            esc_html__( 'ID', 'mainwp' ) => '%PostID%',
+                            esc_html__( 'Type', 'mainwp' ) => '%PostType%',
+                            esc_html__( 'Status', 'mainwp' ) => '%PostStatus%',
+                            esc_html__( 'Removed tag(s)', 'mainwp' ) => '%tag%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -904,14 +904,14 @@ class Log_Settings {
                     ),
                     array(
                         2129,
-                        esc_html__( 'Updated the excerpt of a post', 'mainwp-child' ),
-                        esc_html__( 'The excerpt of the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Updated the excerpt of a post', 'mainwp' ),
+                        esc_html__( 'The excerpt of the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )                => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )              => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' )            => '%PostStatus%',
-                            esc_html__( 'Previous excerpt entry', 'mainwp-child' ) => '%old_post_excerpt%',
-                            esc_html__( 'New excerpt entry', 'mainwp-child' )      => '%post_excerpt%',
+                            esc_html__( 'Post ID', 'mainwp' )                => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )              => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' )            => '%PostStatus%',
+                            esc_html__( 'Previous excerpt entry', 'mainwp' ) => '%old_post_excerpt%',
+                            esc_html__( 'New excerpt entry', 'mainwp' )      => '%post_excerpt%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -919,14 +919,14 @@ class Log_Settings {
                     ),
                     array(
                         2130,
-                        esc_html__( 'Updated the feature image of a post', 'mainwp-child' ),
-                        esc_html__( 'The featured image of the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Updated the feature image of a post', 'mainwp' ),
+                        esc_html__( 'The featured image of the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )        => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )      => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' )    => '%PostStatus%',
-                            esc_html__( 'Previous image', 'mainwp-child' ) => '%previous_image%',
-                            esc_html__( 'New image', 'mainwp-child' )      => '%new_image%',
+                            esc_html__( 'Post ID', 'mainwp' )        => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )      => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' )    => '%PostStatus%',
+                            esc_html__( 'Previous image', 'mainwp' ) => '%previous_image%',
+                            esc_html__( 'New image', 'mainwp' )      => '%new_image%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
@@ -935,28 +935,28 @@ class Log_Settings {
                     // Post 9043 - Added / changed / removed a post’s featured image
                     array(
                         2133,
-                        esc_html__( 'Taken over a post from another user', 'mainwp-child' ),
-                        esc_html__( 'Has taken over the post %PostTitle% from %user%', 'mainwp-child' ),
+                        esc_html__( 'Taken over a post from another user', 'mainwp' ),
+                        esc_html__( 'Has taken over the post %PostTitle% from %user%', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )        => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )      => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' )    => '%PostStatus%',
+                            esc_html__( 'Post ID', 'mainwp' )        => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )      => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' )    => '%PostStatus%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'post',
                         'modified',
                     ),
                 ),
-                esc_html__( 'Custom field', 'mainwp-child' ) => array(
+                esc_html__( 'Custom field', 'mainwp' ) => array(
                     array(
                         2131,
-                        esc_html__( 'Added a relationship in an ACF custom field', 'mainwp-child' ),
-                        esc_html__( 'Added relationships to the custom field %MetaKey% in the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Added a relationship in an ACF custom field', 'mainwp' ),
+                        esc_html__( 'Added relationships to the custom field %MetaKey% in the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )           => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )         => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' )       => '%PostStatus%',
-                            esc_html__( 'New relationships', 'mainwp-child' ) => '%Relationships%',
+                            esc_html__( 'Post ID', 'mainwp' )           => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )         => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' )       => '%PostStatus%',
+                            esc_html__( 'New relationships', 'mainwp' ) => '%Relationships%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'MetaLink' ) ),
                         'custom-field',
@@ -964,13 +964,13 @@ class Log_Settings {
                     ),
                     array(
                         2132,
-                        esc_html__( 'Removed a relationship from an ACF custom field', 'mainwp-child' ),
-                        esc_html__( 'Removed relationships from the custom field %MetaKey% in the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Removed a relationship from an ACF custom field', 'mainwp' ),
+                        esc_html__( 'Removed relationships from the custom field %MetaKey% in the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )               => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )             => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' )           => '%PostStatus%',
-                            esc_html__( 'Removed relationships', 'mainwp-child' ) => '%Relationships%',
+                            esc_html__( 'Post ID', 'mainwp' )               => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )             => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' )           => '%PostStatus%',
+                            esc_html__( 'Removed relationships', 'mainwp' ) => '%Relationships%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'MetaLink' ) ),
                         'custom-field',
@@ -978,14 +978,14 @@ class Log_Settings {
                     ),
                     array(
                         2054,
-                        esc_html__( 'Changed the value of a custom field', 'mainwp-child' ),
-                        esc_html__( 'Modified the value of the custom field %MetaKey% in the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the value of a custom field', 'mainwp' ),
+                        esc_html__( 'Modified the value of the custom field %MetaKey% in the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )                     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )                   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' )                 => '%PostStatus%',
-                            esc_html__( 'Previous custom field value', 'mainwp-child' ) => '%MetaValueOld%',
-                            esc_html__( 'New custom field value', 'mainwp-child' )      => '%MetaValueNew%',
+                            esc_html__( 'Post ID', 'mainwp' )                     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )                   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' )                 => '%PostStatus%',
+                            esc_html__( 'Previous custom field value', 'mainwp' ) => '%MetaValueOld%',
+                            esc_html__( 'New custom field value', 'mainwp' )      => '%MetaValueNew%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'MetaLink', 'PostUrlIfPublished' ) ),
                         'custom-field',
@@ -993,12 +993,12 @@ class Log_Settings {
                     ),
                     array(
                         2055,
-                        esc_html__( 'Deleted a custom field', 'mainwp-child' ),
-                        esc_html__( 'Deleted the custom field %MetaKey% from the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Deleted a custom field', 'mainwp' ),
+                        esc_html__( 'Deleted the custom field %MetaKey% from the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'custom-field',
@@ -1006,26 +1006,26 @@ class Log_Settings {
                     ),
                     array(
                         2062,
-                        esc_html__( 'Renamed a custom field', 'mainwp-child' ),
-                        esc_html__( 'Renamed the custom field %MetaKeyOld% on post %PostTitle% to %MetaKeyNew%.', 'mainwp-child' ),
+                        esc_html__( 'Renamed a custom field', 'mainwp' ),
+                        esc_html__( 'Renamed the custom field %MetaKeyOld% on post %PostTitle% to %MetaKeyNew%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post', 'mainwp-child' ) => '%PostTitle%',
-                            esc_html__( 'Post ID', 'mainwp-child' ) => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' ) => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
+                            esc_html__( 'Post', 'mainwp' ) => '%PostTitle%',
+                            esc_html__( 'Post ID', 'mainwp' ) => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' ) => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditorLinkPost', 'PostUrlIfPublished' ) ),
                         'custom-field',
                         'renamed',
                     ),
                 ),
-                esc_html__( 'Categories', 'mainwp-child' ) => array(
+                esc_html__( 'Categories', 'mainwp' ) => array(
                     array(
                         2023,
-                        esc_html__( 'Created a new category', 'mainwp-child' ),
-                        esc_html__( 'Created the category %CategoryName%.', 'mainwp-child' ),
+                        esc_html__( 'Created a new category', 'mainwp' ),
+                        esc_html__( 'Created the category %CategoryName%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Slug', 'mainwp-child' ) => 'Slug',
+                            esc_html__( 'Slug', 'mainwp' ) => 'Slug',
                         ),
                         static::ws_al_defaults_build_links( array( 'CategoryLink' ) ),
                         'category',
@@ -1033,10 +1033,10 @@ class Log_Settings {
                     ),
                     array(
                         2024,
-                        esc_html__( 'Deleted a category', 'mainwp-child' ),
-                        esc_html__( 'Deleted the category %CategoryName%.', 'mainwp-child' ),
+                        esc_html__( 'Deleted a category', 'mainwp' ),
+                        esc_html__( 'Deleted the category %CategoryName%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Slug', 'mainwp-child' ) => 'Slug',
+                            esc_html__( 'Slug', 'mainwp' ) => 'Slug',
                         ),
                         array(),
                         'category',
@@ -1044,11 +1044,11 @@ class Log_Settings {
                     ),
                     array(
                         2052,
-                        esc_html__( 'Changed the parent of a category', 'mainwp-child' ),
-                        esc_html__( 'Changed the parent of the category %CategoryName% to %NewParent%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the parent of a category', 'mainwp' ),
+                        esc_html__( 'Changed the parent of the category %CategoryName% to %NewParent%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Slug', 'mainwp-child' ) => '%Slug%',
-                            esc_html__( 'Previous parent', 'mainwp-child' ) => '%OldParent%',
+                            esc_html__( 'Slug', 'mainwp' ) => '%Slug%',
+                            esc_html__( 'Previous parent', 'mainwp' ) => '%OldParent%',
                         ),
                         static::ws_al_defaults_build_links( array( 'CategoryLink' ) ),
                         'category',
@@ -1056,10 +1056,10 @@ class Log_Settings {
                     ),
                     array(
                         2127,
-                        esc_html__( 'Renamed a category', 'mainwp-child' ),
-                        esc_html__( 'Renamed the category %old_name% to %new_name%.', 'mainwp-child' ),
+                        esc_html__( 'Renamed a category', 'mainwp' ),
+                        esc_html__( 'Renamed the category %old_name% to %new_name%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Slug', 'mainwp-child' ) => '%slug%',
+                            esc_html__( 'Slug', 'mainwp' ) => '%slug%',
                         ),
                         static::ws_al_defaults_build_links( array( 'cat_link' ) ),
                         'category',
@@ -1067,23 +1067,23 @@ class Log_Settings {
                     ),
                     array(
                         2128,
-                        esc_html__( 'Renamed a category', 'mainwp-child' ),
-                        esc_html__( 'Changed the slug of the category %CategoryName% to %new_slug%.', 'mainwp-child' ),
+                        esc_html__( 'Renamed a category', 'mainwp' ),
+                        esc_html__( 'Changed the slug of the category %CategoryName% to %new_slug%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Previous slug', 'mainwp-child' ) => '%old_slug%',
+                            esc_html__( 'Previous slug', 'mainwp' ) => '%old_slug%',
                         ),
                         static::ws_al_defaults_build_links( array( 'cat_link' ) ),
                         'category',
                         'modified',
                     ),
                 ),
-                esc_html__( 'Tag', 'mainwp-child' )        => array(
+                esc_html__( 'Tag', 'mainwp' )        => array(
                     array(
                         2121,
-                        esc_html__( 'Created a new tag', 'mainwp-child' ),
-                        esc_html__( 'Created the tag %TagName%.', 'mainwp-child' ),
+                        esc_html__( 'Created a new tag', 'mainwp' ),
+                        esc_html__( 'Created the tag %TagName%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Slug', 'mainwp-child' ) => 'Slug',
+                            esc_html__( 'Slug', 'mainwp' ) => 'Slug',
                         ),
                         static::ws_al_defaults_build_links( array( 'TagLink' ) ),
                         'tag',
@@ -1091,10 +1091,10 @@ class Log_Settings {
                     ),
                     array(
                         2122,
-                        esc_html__( 'Deleted a tag', 'mainwp-child' ),
-                        esc_html__( 'Deleted the tag %TagName%.', 'mainwp-child' ),
+                        esc_html__( 'Deleted a tag', 'mainwp' ),
+                        esc_html__( 'Deleted the tag %TagName%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Slug', 'mainwp-child' ) => 'Slug',
+                            esc_html__( 'Slug', 'mainwp' ) => 'Slug',
                         ),
                         array(),
                         'tag',
@@ -1102,10 +1102,10 @@ class Log_Settings {
                     ),
                     array(
                         2123,
-                        esc_html__( 'Renamed the tag %old_name% to %new_name%.', 'mainwp-child' ),
+                        esc_html__( 'Renamed the tag %old_name% to %new_name%.', 'mainwp' ),
                         '',
                         array(
-                            esc_html__( 'Slug', 'mainwp-child' ) => '%Slug%',
+                            esc_html__( 'Slug', 'mainwp' ) => '%Slug%',
                         ),
                         static::ws_al_defaults_build_links( array( 'TagLink' ) ),
                         'tag',
@@ -1113,10 +1113,10 @@ class Log_Settings {
                     ),
                     array(
                         2124,
-                        esc_html__( 'Changed the slug of a tag', 'mainwp-child' ),
-                        esc_html__( 'Changed the slug of the tag %tag% to %new_slug%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the slug of a tag', 'mainwp' ),
+                        esc_html__( 'Changed the slug of the tag %tag% to %new_slug%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Previous slug', 'mainwp-child' ) => '%old_slug%',
+                            esc_html__( 'Previous slug', 'mainwp' ) => '%old_slug%',
                         ),
                         static::ws_al_defaults_build_links( array( 'TagLink' ) ),
                         'tag',
@@ -1124,25 +1124,25 @@ class Log_Settings {
                     ),
                     array(
                         2125,
-                        esc_html__( 'Changed the description of a tag', 'mainwp-child' ),
-                        esc_html__( 'Changed the description of the tag %tag%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the description of a tag', 'mainwp' ),
+                        esc_html__( 'Changed the description of the tag %tag%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Slug', 'mainwp-child' ) => '%Slug%',
-                            esc_html__( 'Previous description', 'mainwp-child' ) => '%old_desc%',
-                            esc_html__( 'New description', 'mainwp-child' ) => '%new_desc%',
+                            esc_html__( 'Slug', 'mainwp' ) => '%Slug%',
+                            esc_html__( 'Previous description', 'mainwp' ) => '%old_desc%',
+                            esc_html__( 'New description', 'mainwp' ) => '%new_desc%',
                         ),
                         static::ws_al_defaults_build_links( array( 'TagLink' ) ),
                         'tag',
                         'modified',
                     ),
                 ),
-                esc_html__( 'File', 'mainwp-child' )       => array(
+                esc_html__( 'File', 'mainwp' )       => array(
                     array(
                         2010,
-                        esc_html__( 'Uploaded a file', 'mainwp-child' ),
-                        esc_html__( 'Uploaded a file called %FileName%.', 'mainwp-child' ),
+                        esc_html__( 'Uploaded a file', 'mainwp' ),
+                        esc_html__( 'Uploaded a file called %FileName%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Directory', 'mainwp-child' ) => '%FilePath%',
+                            esc_html__( 'Directory', 'mainwp' ) => '%FilePath%',
                         ),
                         static::ws_al_defaults_build_links( array( 'AttachmentUrl' ) ),
                         'file',
@@ -1150,21 +1150,21 @@ class Log_Settings {
                     ),
                     array(
                         2011,
-                        esc_html__( 'Deleted a file', 'mainwp-child' ),
-                        esc_html__( 'Deleted the file %FileName%.', 'mainwp-child' ),
+                        esc_html__( 'Deleted a file', 'mainwp' ),
+                        esc_html__( 'Deleted the file %FileName%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Directory', 'mainwp-child' ) => '%FilePath%',
+                            esc_html__( 'Directory', 'mainwp' ) => '%FilePath%',
                         ),
                         array(),
                         'file',
                         'deleted',
                     ),
                 ),
-                esc_html__( 'Widget', 'mainwp-child' )     => array(
+                esc_html__( 'Widget', 'mainwp' )     => array(
                     array(
                         2042,
-                        esc_html__( 'Added a new widget', 'mainwp-child' ),
-                        esc_html__( 'Added a new %WidgetName% widget in %Sidebar%.', 'mainwp-child' ),
+                        esc_html__( 'Added a new widget', 'mainwp' ),
+                        esc_html__( 'Added a new %WidgetName% widget in %Sidebar%.', 'mainwp' ),
                         array(),
                         array(),
                         'widget',
@@ -1172,8 +1172,8 @@ class Log_Settings {
                     ),
                     array(
                         2043,
-                        esc_html__( 'Modified a widget', 'mainwp-child' ),
-                        esc_html__( 'Modified the %WidgetName% widget in %Sidebar%.', 'mainwp-child' ),
+                        esc_html__( 'Modified a widget', 'mainwp' ),
+                        esc_html__( 'Modified the %WidgetName% widget in %Sidebar%.', 'mainwp' ),
                         array(),
                         array(),
                         'widget',
@@ -1181,8 +1181,8 @@ class Log_Settings {
                     ),
                     array(
                         2044,
-                        esc_html__( 'Deleted a widget', 'mainwp-child' ),
-                        esc_html__( 'Deleted the %WidgetName% widget from %Sidebar%.', 'mainwp-child' ),
+                        esc_html__( 'Deleted a widget', 'mainwp' ),
+                        esc_html__( 'Deleted the %WidgetName% widget from %Sidebar%.', 'mainwp' ),
                         array(),
                         array(),
                         'widget',
@@ -1190,11 +1190,11 @@ class Log_Settings {
                     ),
                     array(
                         2045,
-                        esc_html__( 'Moved a widget in between sections', 'mainwp-child' ),
-                        esc_html__( 'Moved the %WidgetName% widget.', 'mainwp-child' ),
+                        esc_html__( 'Moved a widget in between sections', 'mainwp' ),
+                        esc_html__( 'Moved the %WidgetName% widget.', 'mainwp' ),
                         array(
-                            esc_html__( 'From', 'mainwp-child' ) => '%OldSidebar%',
-                            esc_html__( 'To', 'mainwp-child' ) => '%NewSidebar%',
+                            esc_html__( 'From', 'mainwp' ) => '%OldSidebar%',
+                            esc_html__( 'To', 'mainwp' ) => '%NewSidebar%',
                         ),
                         array(),
                         'widget',
@@ -1202,19 +1202,19 @@ class Log_Settings {
                     ),
                     array(
                         2071,
-                        esc_html__( 'Changed the position of a widget in a section', 'mainwp-child' ),
-                        esc_html__( 'Changed the position of the %WidgetName% widget in %Sidebar%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the position of a widget in a section', 'mainwp' ),
+                        esc_html__( 'Changed the position of the %WidgetName% widget in %Sidebar%.', 'mainwp' ),
                         array(),
                         array(),
                         'widget',
                         'modified',
                     ),
                 ),
-                esc_html__( 'Plugin', 'mainwp-child' )     => array(
+                esc_html__( 'Plugin', 'mainwp' )     => array(
                     array(
                         2051,
-                        esc_html__( 'Modified a file with the plugin editor', 'mainwp-child' ),
-                        esc_html__( 'Modified the file %File% with the plugin editor.', 'mainwp-child' ),
+                        esc_html__( 'Modified a file with the plugin editor', 'mainwp' ),
+                        esc_html__( 'Modified the file %File% with the plugin editor.', 'mainwp' ),
                         array(),
                         array(),
                         'file',
@@ -1222,21 +1222,21 @@ class Log_Settings {
                     ),
                     array(
                         5028,
-                        esc_html__( 'The automatic updates setting for a plugin was changed.', 'mainwp-child' ),
-                        esc_html__( 'Changed the Automatic updates setting for the plugin %name%.', 'mainwp-child' ),
+                        esc_html__( 'The automatic updates setting for a plugin was changed.', 'mainwp' ),
+                        esc_html__( 'Changed the Automatic updates setting for the plugin %name%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Install location', 'mainwp-child' )     => '%install_directory%',
+                            esc_html__( 'Install location', 'mainwp' )     => '%install_directory%',
                         ),
                         array(),
                         'plugin',
                         'enabled',
                     ),
                 ),
-                esc_html__( 'Theme', 'mainwp-child' )      => array(
+                esc_html__( 'Theme', 'mainwp' )      => array(
                     array(
                         2046,
-                        esc_html__( 'Modified a file with the theme editor', 'mainwp-child' ),
-                        esc_html__( 'Modified the file %Theme%/%File% with the theme editor.', 'mainwp-child' ),
+                        esc_html__( 'Modified a file with the theme editor', 'mainwp' ),
+                        esc_html__( 'Modified the file %Theme%/%File% with the theme editor.', 'mainwp' ),
                         array(),
                         array(),
                         'file',
@@ -1244,21 +1244,21 @@ class Log_Settings {
                     ),
                     array(
                         5029,
-                        esc_html__( 'The automatic updates setting for a theme was changed.', 'mainwp-child' ),
-                        esc_html__( 'Changed the Automatic updates setting for the theme %name%.', 'mainwp-child' ),
+                        esc_html__( 'The automatic updates setting for a theme was changed.', 'mainwp' ),
+                        esc_html__( 'Changed the Automatic updates setting for the theme %name%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Install location', 'mainwp-child' )     => '%install_directory%',
+                            esc_html__( 'Install location', 'mainwp' )     => '%install_directory%',
                         ),
                         array(),
                         'theme',
                         'enabled',
                     ),
                 ),
-                esc_html__( 'Menu', 'mainwp-child' )       => array(
+                esc_html__( 'Menu', 'mainwp' )       => array(
                     array(
                         2078,
-                        esc_html__( 'Created a menu', 'mainwp-child' ),
-                        esc_html__( 'New menu called %MenuName%.', 'mainwp-child' ),
+                        esc_html__( 'Created a menu', 'mainwp' ),
+                        esc_html__( 'New menu called %MenuName%.', 'mainwp' ),
                         array(),
                         static::ws_al_defaults_build_links( array( 'MenuUrl' ) ),
                         'menu',
@@ -1266,10 +1266,10 @@ class Log_Settings {
                     ),
                     array(
                         2079,
-                        esc_html__( 'Added item(s) to a menu', 'mainwp-child' ),
-                        esc_html__( 'Added the item %ContentName% to the menu %MenuName%.', 'mainwp-child' ),
+                        esc_html__( 'Added item(s) to a menu', 'mainwp' ),
+                        esc_html__( 'Added the item %ContentName% to the menu %MenuName%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Item type', 'mainwp-child' ) => '%ContentType%',
+                            esc_html__( 'Item type', 'mainwp' ) => '%ContentType%',
                         ),
                         static::ws_al_defaults_build_links( array( 'MenuUrl' ) ),
                         'menu',
@@ -1277,10 +1277,10 @@ class Log_Settings {
                     ),
                     array(
                         2080,
-                        esc_html__( 'Removed item(s) from a menu', 'mainwp-child' ),
-                        esc_html__( 'Removed the item %ContentName% from the menu %MenuName%.', 'mainwp-child' ),
+                        esc_html__( 'Removed item(s) from a menu', 'mainwp' ),
+                        esc_html__( 'Removed the item %ContentName% from the menu %MenuName%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Item type', 'mainwp-child' ) => '%ContentType%',
+                            esc_html__( 'Item type', 'mainwp' ) => '%ContentType%',
                         ),
                         static::ws_al_defaults_build_links( array( 'MenuUrl' ) ),
                         'menu',
@@ -1288,8 +1288,8 @@ class Log_Settings {
                     ),
                     array(
                         2081,
-                        esc_html__( 'Deleted a menu', 'mainwp-child' ),
-                        esc_html__( 'Deleted the menu %MenuName%.', 'mainwp-child' ),
+                        esc_html__( 'Deleted a menu', 'mainwp' ),
+                        esc_html__( 'Deleted the menu %MenuName%.', 'mainwp' ),
                         array(),
                         array(),
                         'menu',
@@ -1297,8 +1297,8 @@ class Log_Settings {
                     ),
                     array(
                         2082,
-                        esc_html__( 'Changed the settings of a menu', 'mainwp-child' ),
-                        esc_html__( 'The setting %MenuSetting% in the menu %MenuName%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the settings of a menu', 'mainwp' ),
+                        esc_html__( 'The setting %MenuSetting% in the menu %MenuName%.', 'mainwp' ),
                         array(),
                         static::ws_al_defaults_build_links( array( 'MenuUrl' ) ),
                         'menu',
@@ -1306,10 +1306,10 @@ class Log_Settings {
                     ),
                     array(
                         2083,
-                        esc_html__( 'Modified the item(s) in a menu', 'mainwp-child' ),
-                        esc_html__( 'Modified the item %ContentName% in the menu %MenuName%.', 'mainwp-child' ),
+                        esc_html__( 'Modified the item(s) in a menu', 'mainwp' ),
+                        esc_html__( 'Modified the item %ContentName% in the menu %MenuName%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Item type', 'mainwp-child' ) => '%ContentType%',
+                            esc_html__( 'Item type', 'mainwp' ) => '%ContentType%',
                         ),
                         static::ws_al_defaults_build_links( array( 'MenuUrl' ) ),
                         'menu',
@@ -1317,8 +1317,8 @@ class Log_Settings {
                     ),
                     array(
                         2084,
-                        esc_html__( 'Renamed a menu', 'mainwp-child' ),
-                        esc_html__( 'Renamed the menu %OldMenuName% to %MenuName%.', 'mainwp-child' ),
+                        esc_html__( 'Renamed a menu', 'mainwp' ),
+                        esc_html__( 'Renamed the menu %OldMenuName% to %MenuName%.', 'mainwp' ),
                         array(),
                         static::ws_al_defaults_build_links( array( 'MenuUrl' ) ),
                         'menu',
@@ -1326,8 +1326,8 @@ class Log_Settings {
                     ),
                     array(
                         2085,
-                        esc_html__( 'Changed the order of the objects in a menu.', 'mainwp-child' ),
-                        esc_html__( 'Changed the order of the items in the menu %MenuName%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the order of the objects in a menu.', 'mainwp' ),
+                        esc_html__( 'Changed the order of the items in the menu %MenuName%.', 'mainwp' ),
                         array(),
                         static::ws_al_defaults_build_links( array( 'MenuUrl' ) ),
                         'menu',
@@ -1335,27 +1335,27 @@ class Log_Settings {
                     ),
                     array(
                         2089,
-                        esc_html__( 'Moved an item as a sub-item in a menu', 'mainwp-child' ),
-                        esc_html__( 'Moved items as sub-items in the menu %MenuName%.', 'mainwp-child' ),
+                        esc_html__( 'Moved an item as a sub-item in a menu', 'mainwp' ),
+                        esc_html__( 'Moved items as sub-items in the menu %MenuName%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Moved item', 'mainwp-child' )       => '%ItemName%',
-                            esc_html__( 'as a sub-item of', 'mainwp-child' ) => '%ParentName%',
+                            esc_html__( 'Moved item', 'mainwp' )       => '%ItemName%',
+                            esc_html__( 'as a sub-item of', 'mainwp' ) => '%ParentName%',
                         ),
                         static::ws_al_defaults_build_links( array( 'MenuUrl' ) ),
                         'menu',
                         'modified',
                     ),
                 ),
-                esc_html__( 'Comment', 'mainwp-child' )    => array(
+                esc_html__( 'Comment', 'mainwp' )    => array(
                     array(
                         2090,
-                        esc_html__( 'Approved a comment', 'mainwp-child' ),
-                        esc_html__( 'Approved the comment posted by %Author% on the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Approved a comment', 'mainwp' ),
+                        esc_html__( 'Approved the comment posted by %Author% on the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
-                            esc_html__( 'Comment ID', 'mainwp-child' )  => '%CommentID%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
+                            esc_html__( 'Comment ID', 'mainwp' )  => '%CommentID%',
                         ),
                         static::ws_al_defaults_build_links( array( 'CommentLink', 'PostUrlIfPublished' ) ),
                         'comment',
@@ -1363,13 +1363,13 @@ class Log_Settings {
                     ),
                     array(
                         2091,
-                        esc_html__( 'Unapproved a comment', 'mainwp-child' ),
-                        esc_html__( 'Unapproved the comment posted by %Author% on the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Unapproved a comment', 'mainwp' ),
+                        esc_html__( 'Unapproved the comment posted by %Author% on the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
-                            esc_html__( 'Comment ID', 'mainwp-child' )  => '%CommentID%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
+                            esc_html__( 'Comment ID', 'mainwp' )  => '%CommentID%',
                         ),
                         static::ws_al_defaults_build_links( array( 'CommentLink', 'PostUrlIfPublished' ) ),
                         'comment',
@@ -1377,13 +1377,13 @@ class Log_Settings {
                     ),
                     array(
                         2092,
-                        esc_html__( 'Replied to a comment', 'mainwp-child' ),
-                        esc_html__( 'Replied to the comment posted by %Author% on the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Replied to a comment', 'mainwp' ),
+                        esc_html__( 'Replied to the comment posted by %Author% on the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
-                            esc_html__( 'Comment ID', 'mainwp-child' )  => '%CommentID%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
+                            esc_html__( 'Comment ID', 'mainwp' )  => '%CommentID%',
                         ),
                         static::ws_al_defaults_build_links( array( 'CommentLink', 'PostUrlIfPublished' ) ),
                         'comment',
@@ -1391,13 +1391,13 @@ class Log_Settings {
                     ),
                     array(
                         2093,
-                        esc_html__( 'Edited a comment', 'mainwp-child' ),
-                        esc_html__( 'Edited the comment posted by %Author% on the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Edited a comment', 'mainwp' ),
+                        esc_html__( 'Edited the comment posted by %Author% on the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
-                            esc_html__( 'Comment ID', 'mainwp-child' )  => '%CommentID%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
+                            esc_html__( 'Comment ID', 'mainwp' )  => '%CommentID%',
                         ),
                         static::ws_al_defaults_build_links( array( 'CommentLink', 'PostUrlIfPublished' ) ),
                         'comment',
@@ -1405,13 +1405,13 @@ class Log_Settings {
                     ),
                     array(
                         2094,
-                        esc_html__( 'Marked a comment as spam', 'mainwp-child' ),
-                        esc_html__( 'Marked the comment posted by %Author% on the post %PostTitle% as spam.', 'mainwp-child' ),
+                        esc_html__( 'Marked a comment as spam', 'mainwp' ),
+                        esc_html__( 'Marked the comment posted by %Author% on the post %PostTitle% as spam.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
-                            esc_html__( 'Comment ID', 'mainwp-child' )  => '%CommentID%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
+                            esc_html__( 'Comment ID', 'mainwp' )  => '%CommentID%',
                         ),
                         static::ws_al_defaults_build_links( array( 'CommentLink', 'PostUrlIfPublished' ) ),
                         'comment',
@@ -1419,13 +1419,13 @@ class Log_Settings {
                     ),
                     array(
                         2095,
-                        esc_html__( 'Marked a comment as not spam', 'mainwp-child' ),
-                        esc_html__( 'Marked the comment posted by %Author% on the post %PostTitle% as not spam.', 'mainwp-child' ),
+                        esc_html__( 'Marked a comment as not spam', 'mainwp' ),
+                        esc_html__( 'Marked the comment posted by %Author% on the post %PostTitle% as not spam.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
-                            esc_html__( 'Comment ID', 'mainwp-child' )  => '%CommentID%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
+                            esc_html__( 'Comment ID', 'mainwp' )  => '%CommentID%',
                         ),
                         static::ws_al_defaults_build_links( array( 'CommentLink', 'PostUrlIfPublished' ) ),
                         'comment',
@@ -1433,13 +1433,13 @@ class Log_Settings {
                     ),
                     array(
                         2096,
-                        esc_html__( 'Moved a comment to trash', 'mainwp-child' ),
-                        esc_html__( 'Moved the comment posted by %Author% on the post %PostTitle% to trash.', 'mainwp-child' ),
+                        esc_html__( 'Moved a comment to trash', 'mainwp' ),
+                        esc_html__( 'Moved the comment posted by %Author% on the post %PostTitle% to trash.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
-                            esc_html__( 'Comment ID', 'mainwp-child' )  => '%CommentID%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
+                            esc_html__( 'Comment ID', 'mainwp' )  => '%CommentID%',
                         ),
                         static::ws_al_defaults_build_links( array( 'CommentLink', 'PostUrlIfPublished' ) ),
                         'comment',
@@ -1447,13 +1447,13 @@ class Log_Settings {
                     ),
                     array(
                         2097,
-                        esc_html__( 'Restored a comment from the trash', 'mainwp-child' ),
-                        esc_html__( 'Restored the comment posted by %Author% on the post %PostTitle% from trash.', 'mainwp-child' ),
+                        esc_html__( 'Restored a comment from the trash', 'mainwp' ),
+                        esc_html__( 'Restored the comment posted by %Author% on the post %PostTitle% from trash.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
-                            esc_html__( 'Comment ID', 'mainwp-child' )  => '%CommentID%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
+                            esc_html__( 'Comment ID', 'mainwp' )  => '%CommentID%',
                         ),
                         static::ws_al_defaults_build_links( array( 'CommentLink', 'PostUrlIfPublished' ) ),
                         'comment',
@@ -1461,13 +1461,13 @@ class Log_Settings {
                     ),
                     array(
                         2098,
-                        esc_html__( 'Permanently deleted a comment', 'mainwp-child' ),
-                        esc_html__( 'Permanently deleted the comment posted by %Author% on the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Permanently deleted a comment', 'mainwp' ),
+                        esc_html__( 'Permanently deleted the comment posted by %Author% on the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
-                            esc_html__( 'Comment ID', 'mainwp-child' )  => '%CommentID%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
+                            esc_html__( 'Comment ID', 'mainwp' )  => '%CommentID%',
                         ),
                         static::ws_al_defaults_build_links( array( 'PostUrlIfPublished' ) ),
                         'comment',
@@ -1475,24 +1475,24 @@ class Log_Settings {
                     ),
                     array(
                         2099,
-                        esc_html__( 'Posted a comment', 'mainwp-child' ),
-                        esc_html__( 'Posted a comment on the post %PostTitle%.', 'mainwp-child' ),
+                        esc_html__( 'Posted a comment', 'mainwp' ),
+                        esc_html__( 'Posted a comment on the post %PostTitle%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Post ID', 'mainwp-child' )     => '%PostID%',
-                            esc_html__( 'Post type', 'mainwp-child' )   => '%PostType%',
-                            esc_html__( 'Post status', 'mainwp-child' ) => '%PostStatus%',
-                            esc_html__( 'Comment ID', 'mainwp-child' )  => '%CommentID%',
+                            esc_html__( 'Post ID', 'mainwp' )     => '%PostID%',
+                            esc_html__( 'Post type', 'mainwp' )   => '%PostType%',
+                            esc_html__( 'Post status', 'mainwp' ) => '%PostStatus%',
+                            esc_html__( 'Comment ID', 'mainwp' )  => '%CommentID%',
                         ),
                         static::ws_al_defaults_build_links( array( 'CommentLink', 'PostUrlIfPublished' ) ),
                         'comment',
                         'created',
                     ),
                 ),
-                esc_html__( 'User', 'mainwp-child' )       => array(
+                esc_html__( 'User', 'mainwp' )       => array(
                     array(
                         1000,
-                        esc_html__( 'Successfully logged in', 'mainwp-child' ),
-                        esc_html__( 'User logged in.', 'mainwp-child' ),
+                        esc_html__( 'Successfully logged in', 'mainwp' ),
+                        esc_html__( 'User logged in.', 'mainwp' ),
                         array(),
                         array(),
                         'user',
@@ -1500,8 +1500,8 @@ class Log_Settings {
                     ),
                     array(
                         1001,
-                        esc_html__( 'Successfully logged out', 'mainwp-child' ),
-                        esc_html__( 'User logged out.', 'mainwp-child' ),
+                        esc_html__( 'Successfully logged out', 'mainwp' ),
+                        esc_html__( 'User logged out.', 'mainwp' ),
                         array(),
                         array(),
                         'user',
@@ -1509,10 +1509,10 @@ class Log_Settings {
                     ),
                     array(
                         1005,
-                        esc_html__( 'Successful log in but other sessions exist for user', 'mainwp-child' ),
-                        esc_html__( 'User logged in however there are other session(s) already for this user.', 'mainwp-child' ),
+                        esc_html__( 'Successful log in but other sessions exist for user', 'mainwp' ),
+                        esc_html__( 'User logged in however there are other session(s) already for this user.', 'mainwp' ),
                         array(
-                            esc_html__( 'IP address(es)', 'mainwp-child' ) => '%IPAddress%',
+                            esc_html__( 'IP address(es)', 'mainwp' ) => '%IPAddress%',
                         ),
                         array(),
                         'user',
@@ -1520,8 +1520,8 @@ class Log_Settings {
                     ),
                     array(
                         1006,
-                        esc_html__( 'Logged out all other sessions with same user', 'mainwp-child' ),
-                        esc_html__( 'Logged out all other sessions with the same user.', 'mainwp-child' ),
+                        esc_html__( 'Logged out all other sessions with same user', 'mainwp' ),
+                        esc_html__( 'Logged out all other sessions with the same user.', 'mainwp' ),
                         array(),
                         array(),
                         'user',
@@ -1529,11 +1529,11 @@ class Log_Settings {
                     ),
                     array(
                         1009,
-                        esc_html__( 'Terminated a user session', 'mainwp-child' ),
-                        esc_html__( 'The plugin terminated an idle session for the user %username%.', 'mainwp-child' ),
+                        esc_html__( 'Terminated a user session', 'mainwp' ),
+                        esc_html__( 'The plugin terminated an idle session for the user %username%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%TargetUserRole%',
-                            esc_html__( 'Session ID', 'mainwp-child' ) => '%SessionID%',
+                            esc_html__( 'Role', 'mainwp' ) => '%TargetUserRole%',
+                            esc_html__( 'Session ID', 'mainwp' ) => '%SessionID%',
                         ),
                         array(),
                         'user',
@@ -1541,10 +1541,10 @@ class Log_Settings {
                     ),
                     array(
                         1008,
-                        esc_html__( 'Switched to another user', 'mainwp-child' ),
-                        esc_html__( 'Switched the session to being logged in as %TargetUserName%.', 'mainwp-child' ),
+                        esc_html__( 'Switched to another user', 'mainwp' ),
+                        esc_html__( 'Switched the session to being logged in as %TargetUserName%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%TargetUserRole%',
+                            esc_html__( 'Role', 'mainwp' ) => '%TargetUserRole%',
                         ),
                         array(),
                         'user',
@@ -1552,8 +1552,8 @@ class Log_Settings {
                     ),
                     array(
                         1010,
-                        esc_html__( 'User requested a password reset', 'mainwp-child' ),
-                        esc_html__( 'User requested a password reset. This does not mean that the password was changed.', 'mainwp-child' ),
+                        esc_html__( 'User requested a password reset', 'mainwp' ),
+                        esc_html__( 'User requested a password reset. This does not mean that the password was changed.', 'mainwp' ),
                         array(),
                         array(),
                         'user',
@@ -1561,11 +1561,11 @@ class Log_Settings {
                     ),
                     array(
                         4000,
-                        esc_html__( 'A new user was created', 'mainwp-child' ),
-                        __( 'A new user %NewUserData->Username% is created via registration.', 'mainwp-child' ),
+                        esc_html__( 'A new user was created', 'mainwp' ),
+                        __( 'A new user %NewUserData->Username% is created via registration.', 'mainwp' ),
                         array(
-                            esc_html__( 'User', 'mainwp-child' )  => '%NewUserData->Username%',
-                            esc_html__( 'Email', 'mainwp-child' ) => '%NewUserData->Email%',
+                            esc_html__( 'User', 'mainwp' )  => '%NewUserData->Username%',
+                            esc_html__( 'Email', 'mainwp' ) => '%NewUserData->Email%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink' ) ),
                         'user',
@@ -1573,13 +1573,13 @@ class Log_Settings {
                     ),
                     array(
                         4001,
-                        esc_html__( 'User created a new user', 'mainwp-child' ),
-                        __( 'Created the new user: %NewUserData->Username%.', 'mainwp-child' ),
+                        esc_html__( 'User created a new user', 'mainwp' ),
+                        __( 'Created the new user: %NewUserData->Username%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' )  => '%NewUserData->Roles%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%NewUserData->FirstName%',
-                            esc_html__( 'Last name', 'mainwp-child' ) => '%NewUserData->LastName%',
-                            esc_html__( 'Email', 'mainwp-child' ) => '%NewUserData->Email%',
+                            esc_html__( 'Role', 'mainwp' )  => '%NewUserData->Roles%',
+                            esc_html__( 'First name', 'mainwp' ) => '%NewUserData->FirstName%',
+                            esc_html__( 'Last name', 'mainwp' ) => '%NewUserData->LastName%',
+                            esc_html__( 'Email', 'mainwp' ) => '%NewUserData->Email%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink' ) ),
                         'user',
@@ -1587,12 +1587,12 @@ class Log_Settings {
                     ),
                     array(
                         4002,
-                        esc_html__( 'Change the role of a user', 'mainwp-child' ),
-                        esc_html__( 'Changed the role of user %TargetUsername% to %NewRole%.', 'mainwp-child' ),
+                        esc_html__( 'Change the role of a user', 'mainwp' ),
+                        esc_html__( 'Changed the role of user %TargetUsername% to %NewRole%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Previous role', 'mainwp-child' ) => '%OldRole%',
-                            esc_html__( 'First name', 'mainwp-child' )    => '%FirstName%',
-                            esc_html__( 'Last name', 'mainwp-child' )     => '%LastName%',
+                            esc_html__( 'Previous role', 'mainwp' ) => '%OldRole%',
+                            esc_html__( 'First name', 'mainwp' )    => '%FirstName%',
+                            esc_html__( 'Last name', 'mainwp' )     => '%LastName%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink' ) ),
                         'user',
@@ -1600,12 +1600,12 @@ class Log_Settings {
                     ),
                     array(
                         4003,
-                        esc_html__( 'Changed the password', 'mainwp-child' ),
-                        esc_html__( 'Changed the password.', 'mainwp-child' ),
+                        esc_html__( 'Changed the password', 'mainwp' ),
+                        esc_html__( 'Changed the password.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%TargetUserData->Roles%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%TargetUserData->FirstName%',
-                            esc_html__( 'Last name', 'mainwp-child' ) => '%TargetUserData->LastName%',
+                            esc_html__( 'Role', 'mainwp' ) => '%TargetUserData->Roles%',
+                            esc_html__( 'First name', 'mainwp' ) => '%TargetUserData->FirstName%',
+                            esc_html__( 'Last name', 'mainwp' ) => '%TargetUserData->LastName%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink' ) ),
                         'user',
@@ -1613,12 +1613,12 @@ class Log_Settings {
                     ),
                     array(
                         4004,
-                        esc_html__( 'Changed the password of a user', 'mainwp-child' ),
-                        __( 'Changed the password of the user %TargetUserData->Username%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the password of a user', 'mainwp' ),
+                        __( 'Changed the password of the user %TargetUserData->Username%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%TargetUserData->Roles%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%TargetUserData->FirstName%',
-                            esc_html__( 'Last name', 'mainwp-child' ) => '%TargetUserData->LastName%',
+                            esc_html__( 'Role', 'mainwp' ) => '%TargetUserData->Roles%',
+                            esc_html__( 'First name', 'mainwp' ) => '%TargetUserData->FirstName%',
+                            esc_html__( 'Last name', 'mainwp' ) => '%TargetUserData->LastName%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink' ) ),
                         'user',
@@ -1626,13 +1626,13 @@ class Log_Settings {
                     ),
                     array(
                         4005,
-                        esc_html__( 'Changed the email address', 'mainwp-child' ),
-                        esc_html__( 'Changed the email address to %NewEmail%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the email address', 'mainwp' ),
+                        esc_html__( 'Changed the email address to %NewEmail%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%Roles%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%FirstName%',
-                            esc_html__( 'Last name', 'mainwp-child' ) => '%LastName%',
-                            esc_html__( 'Previous email address', 'mainwp-child' ) => '%OldEmail%',
+                            esc_html__( 'Role', 'mainwp' ) => '%Roles%',
+                            esc_html__( 'First name', 'mainwp' ) => '%FirstName%',
+                            esc_html__( 'Last name', 'mainwp' ) => '%LastName%',
+                            esc_html__( 'Previous email address', 'mainwp' ) => '%OldEmail%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink' ) ),
                         'user',
@@ -1640,13 +1640,13 @@ class Log_Settings {
                     ),
                     array(
                         4006,
-                        esc_html__( 'Changed the email address of a user', 'mainwp-child' ),
-                        esc_html__( 'Changed the email address of the user %TargetUsername% to %NewEmail%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the email address of a user', 'mainwp' ),
+                        esc_html__( 'Changed the email address of the user %TargetUsername% to %NewEmail%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%Roles%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%FirstName%',
-                            esc_html__( 'Last name', 'mainwp-child' ) => '%LastName%',
-                            esc_html__( 'Previous email address', 'mainwp-child' ) => '%OldEmail%',
+                            esc_html__( 'Role', 'mainwp' ) => '%Roles%',
+                            esc_html__( 'First name', 'mainwp' ) => '%FirstName%',
+                            esc_html__( 'Last name', 'mainwp' ) => '%LastName%',
+                            esc_html__( 'Previous email address', 'mainwp' ) => '%OldEmail%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink' ) ),
                         'user',
@@ -1654,12 +1654,12 @@ class Log_Settings {
                     ),
                     array(
                         4007,
-                        esc_html__( 'Deleted a user', 'mainwp-child' ),
-                        __( 'Deleted the user %TargetUserData->Username%.', 'mainwp-child' ),
+                        esc_html__( 'Deleted a user', 'mainwp' ),
+                        __( 'Deleted the user %TargetUserData->Username%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%TargetUserData->Roles%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%NewUserData->FirstName%',
-                            esc_html__( 'Last name', 'mainwp-child' ) => '%NewUserData->LastName%',
+                            esc_html__( 'Role', 'mainwp' ) => '%TargetUserData->Roles%',
+                            esc_html__( 'First name', 'mainwp' ) => '%NewUserData->FirstName%',
+                            esc_html__( 'Last name', 'mainwp' ) => '%NewUserData->LastName%',
                         ),
                         array(),
                         'user',
@@ -1667,12 +1667,12 @@ class Log_Settings {
                     ),
                     array(
                         4008,
-                        esc_html__( 'Granted super admin privileges to a user', 'mainwp-child' ),
-                        esc_html__( 'Granted Super Admin privileges to the user %TargetUsername%.', 'mainwp-child' ),
+                        esc_html__( 'Granted super admin privileges to a user', 'mainwp' ),
+                        esc_html__( 'Granted Super Admin privileges to the user %TargetUsername%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%Roles%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%FirstName%',
-                            esc_html__( 'Last name', 'mainwp-child' ) => '%LastName%',
+                            esc_html__( 'Role', 'mainwp' ) => '%Roles%',
+                            esc_html__( 'First name', 'mainwp' ) => '%FirstName%',
+                            esc_html__( 'Last name', 'mainwp' ) => '%LastName%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink' ) ),
                         'user',
@@ -1680,12 +1680,12 @@ class Log_Settings {
                     ),
                     array(
                         4009,
-                        esc_html__( 'Revoked super admin privileges from a user', 'mainwp-child' ),
-                        esc_html__( 'Revoked Super Admin privileges from %TargetUsername%.', 'mainwp-child' ),
+                        esc_html__( 'Revoked super admin privileges from a user', 'mainwp' ),
+                        esc_html__( 'Revoked Super Admin privileges from %TargetUsername%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%Roles%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%FirstName%',
-                            esc_html__( 'Last name', 'mainwp-child' ) => '%LastName%',
+                            esc_html__( 'Role', 'mainwp' ) => '%Roles%',
+                            esc_html__( 'First name', 'mainwp' ) => '%FirstName%',
+                            esc_html__( 'Last name', 'mainwp' ) => '%LastName%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink' ) ),
                         'user',
@@ -1693,11 +1693,11 @@ class Log_Settings {
                     ),
                     array(
                         4012,
-                        esc_html__( 'Added a network user to a site', 'mainwp-child' ),
-                        __( 'Created the new network user %NewUserData->Username%.', 'mainwp-child' ),
+                        esc_html__( 'Added a network user to a site', 'mainwp' ),
+                        __( 'Created the new network user %NewUserData->Username%.', 'mainwp' ),
                         array(
-                            esc_html__( 'First name', 'mainwp-child' ) => '%NewUserData->FirstName%',
-                            esc_html__( 'Last name', 'mainwp-child' )  => '%NewUserData->LastName%',
+                            esc_html__( 'First name', 'mainwp' ) => '%NewUserData->FirstName%',
+                            esc_html__( 'Last name', 'mainwp' )  => '%NewUserData->LastName%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink' ) ),
                         'user',
@@ -1705,12 +1705,12 @@ class Log_Settings {
                     ),
                     array(
                         4011,
-                        esc_html__( 'Removed a network user from a site', 'mainwp-child' ),
-                        esc_html__( 'Removed user %TargetUsername% from the site %SiteName%', 'mainwp-child' ),
+                        esc_html__( 'Removed a network user from a site', 'mainwp' ),
+                        esc_html__( 'Removed user %TargetUsername% from the site %SiteName%', 'mainwp' ),
                         array(
-                            esc_html__( 'Site role', 'mainwp-child' )  => '%TargetUserRole%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%FirstName%',
-                            esc_html__( 'Last name', 'mainwp-child' )  => '%LastName%',
+                            esc_html__( 'Site role', 'mainwp' )  => '%TargetUserRole%',
+                            esc_html__( 'First name', 'mainwp' ) => '%FirstName%',
+                            esc_html__( 'Last name', 'mainwp' )  => '%LastName%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink' ) ),
                         'user',
@@ -1718,12 +1718,12 @@ class Log_Settings {
                     ),
                     array(
                         4010,
-                        esc_html__( 'Created a new network user', 'mainwp-child' ),
-                        esc_html__( 'Added user %TargetUsername% to the site %SiteName%.', 'mainwp-child' ),
+                        esc_html__( 'Created a new network user', 'mainwp' ),
+                        esc_html__( 'Added user %TargetUsername% to the site %SiteName%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%TargetUserRole%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%FirstName%',
-                            esc_html__( 'Last name', 'mainwp-child' ) => '%LastName%',
+                            esc_html__( 'Role', 'mainwp' ) => '%TargetUserRole%',
+                            esc_html__( 'First name', 'mainwp' ) => '%FirstName%',
+                            esc_html__( 'Last name', 'mainwp' ) => '%LastName%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink' ) ),
                         'user',
@@ -1731,12 +1731,12 @@ class Log_Settings {
                     ),
                     array(
                         4013,
-                        esc_html__( 'User has been activated on the network', 'mainwp-child' ),
-                        __( 'User %NewUserData->Username% has been activated.', 'mainwp-child' ),
+                        esc_html__( 'User has been activated on the network', 'mainwp' ),
+                        __( 'User %NewUserData->Username% has been activated.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%NewUserData->Roles%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%NewUserData->FirstName%',
-                            esc_html__( 'Last name', 'mainwp-child' ) => '%NewUserData->LastName%',
+                            esc_html__( 'Role', 'mainwp' ) => '%NewUserData->Roles%',
+                            esc_html__( 'First name', 'mainwp' ) => '%NewUserData->FirstName%',
+                            esc_html__( 'Last name', 'mainwp' ) => '%NewUserData->LastName%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink' ) ),
                         'user',
@@ -1744,12 +1744,12 @@ class Log_Settings {
                     ),
                     array(
                         4014,
-                        esc_html__( 'Opened the profile page of a user', 'mainwp-child' ),
-                        esc_html__( 'Opened the profile page of user %TargetUsername%.', 'mainwp-child' ),
+                        esc_html__( 'Opened the profile page of a user', 'mainwp' ),
+                        esc_html__( 'Opened the profile page of user %TargetUsername%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%Roles%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%FirstName%',
-                            esc_html__( 'Last name', 'mainwp-child' ) => '%LastName%',
+                            esc_html__( 'Role', 'mainwp' ) => '%Roles%',
+                            esc_html__( 'First name', 'mainwp' ) => '%FirstName%',
+                            esc_html__( 'Last name', 'mainwp' ) => '%LastName%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink' ) ),
                         'user',
@@ -1757,14 +1757,14 @@ class Log_Settings {
                     ),
                     array(
                         4015,
-                        esc_html__( 'Changed a custom field value in user profile', 'mainwp-child' ),
-                        esc_html__( 'Changed the value of the custom field %custom_field_name% in the user profile %TargetUsername%.', 'mainwp-child' ),
+                        esc_html__( 'Changed a custom field value in user profile', 'mainwp' ),
+                        esc_html__( 'Changed the value of the custom field %custom_field_name% in the user profile %TargetUsername%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%Roles%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%FirstName%',
-                            esc_html__( 'Last name', 'mainwp-child' ) => '%LastName%',
-                            esc_html__( 'Previous value', 'mainwp-child' ) => '%old_value%',
-                            esc_html__( 'New value', 'mainwp-child' ) => '%new_value%',
+                            esc_html__( 'Role', 'mainwp' ) => '%Roles%',
+                            esc_html__( 'First name', 'mainwp' ) => '%FirstName%',
+                            esc_html__( 'Last name', 'mainwp' ) => '%LastName%',
+                            esc_html__( 'Previous value', 'mainwp' ) => '%old_value%',
+                            esc_html__( 'New value', 'mainwp' ) => '%new_value%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink', 'MetaLink' ) ),
                         'user',
@@ -1772,13 +1772,13 @@ class Log_Settings {
                     ),
                     array(
                         4016,
-                        esc_html__( 'Created a custom field in a user profile', 'mainwp-child' ),
-                        esc_html__( 'Created the custom field %custom_field_name% in the user profile %TargetUsername%.', 'mainwp-child' ),
+                        esc_html__( 'Created a custom field in a user profile', 'mainwp' ),
+                        esc_html__( 'Created the custom field %custom_field_name% in the user profile %TargetUsername%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%Roles%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%FirstName%',
-                            esc_html__( 'Last name', 'mainwp-child' ) => '%LastName%',
-                            esc_html__( 'Custom field value', 'mainwp-child' ) => '%new_value%',
+                            esc_html__( 'Role', 'mainwp' ) => '%Roles%',
+                            esc_html__( 'First name', 'mainwp' ) => '%FirstName%',
+                            esc_html__( 'Last name', 'mainwp' ) => '%LastName%',
+                            esc_html__( 'Custom field value', 'mainwp' ) => '%new_value%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink', 'MetaLink' ) ),
                         'user',
@@ -1786,12 +1786,12 @@ class Log_Settings {
                     ),
                     array(
                         4017,
-                        esc_html__( 'Changed the first name (of a user)', 'mainwp-child' ),
-                        esc_html__( 'Changed the first name of the user %TargetUsername% to %new_firstname%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the first name (of a user)', 'mainwp' ),
+                        esc_html__( 'Changed the first name of the user %TargetUsername% to %new_firstname%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%Roles%',
-                            esc_html__( 'Previous name', 'mainwp-child' ) => '%old_firstname%',
-                            esc_html__( 'Last name', 'mainwp-child' ) => '%LastName%',
+                            esc_html__( 'Role', 'mainwp' ) => '%Roles%',
+                            esc_html__( 'Previous name', 'mainwp' ) => '%old_firstname%',
+                            esc_html__( 'Last name', 'mainwp' ) => '%LastName%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink' ) ),
                         'user',
@@ -1799,12 +1799,12 @@ class Log_Settings {
                     ),
                     array(
                         4018,
-                        esc_html__( 'Changed the last name (of a user)', 'mainwp-child' ),
-                        esc_html__( 'Changed the last name of the user %TargetUsername% to %new_lastname%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the last name (of a user)', 'mainwp' ),
+                        esc_html__( 'Changed the last name of the user %TargetUsername% to %new_lastname%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%Roles%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%FirstName%',
-                            esc_html__( 'Previous last name', 'mainwp-child' ) => '%old_lastname%',
+                            esc_html__( 'Role', 'mainwp' ) => '%Roles%',
+                            esc_html__( 'First name', 'mainwp' ) => '%FirstName%',
+                            esc_html__( 'Previous last name', 'mainwp' ) => '%old_lastname%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink' ) ),
                         'user',
@@ -1812,13 +1812,13 @@ class Log_Settings {
                     ),
                     array(
                         4019,
-                        esc_html__( 'Changed the nickname (of a user)', 'mainwp-child' ),
-                        esc_html__( 'Changed the nickname of the user %TargetUsername% to %new_nickname%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the nickname (of a user)', 'mainwp' ),
+                        esc_html__( 'Changed the nickname of the user %TargetUsername% to %new_nickname%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%Roles%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%FirstName%',
-                            esc_html__( 'Last name', 'mainwp-child' ) => '%LastName%',
-                            esc_html__( 'Previous nickname', 'mainwp-child' ) => '%old_nickname%',
+                            esc_html__( 'Role', 'mainwp' ) => '%Roles%',
+                            esc_html__( 'First name', 'mainwp' ) => '%FirstName%',
+                            esc_html__( 'Last name', 'mainwp' ) => '%LastName%',
+                            esc_html__( 'Previous nickname', 'mainwp' ) => '%old_nickname%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink' ) ),
                         'user',
@@ -1826,13 +1826,13 @@ class Log_Settings {
                     ),
                     array(
                         4020,
-                        esc_html__( 'Changed the display name (of a user)', 'mainwp-child' ),
-                        esc_html__( 'Changed the display name of the user %TargetUsername% to %new_displayname%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the display name (of a user)', 'mainwp' ),
+                        esc_html__( 'Changed the display name of the user %TargetUsername% to %new_displayname%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%Roles%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%FirstName%',
-                            esc_html__( 'Last name', 'mainwp-child' ) => '%LastName%',
-                            esc_html__( 'Previous display name', 'mainwp-child' ) => '%old_displayname%',
+                            esc_html__( 'Role', 'mainwp' ) => '%Roles%',
+                            esc_html__( 'First name', 'mainwp' ) => '%FirstName%',
+                            esc_html__( 'Last name', 'mainwp' ) => '%LastName%',
+                            esc_html__( 'Previous display name', 'mainwp' ) => '%old_displayname%',
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink' ) ),
                         'user',
@@ -1840,13 +1840,13 @@ class Log_Settings {
                     ),
                     array(
                         4021,
-                        esc_html__( 'Changed the website URL of the user', 'mainwp-child' ),
-                        esc_html__( 'Changed the website URL of the user %TargetUsername% to %new_url%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the website URL of the user', 'mainwp' ),
+                        esc_html__( 'Changed the website URL of the user %TargetUsername% to %new_url%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%Roles%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%FirstName%',
-                            esc_html__( 'Last name', 'mainwp-child' ) => '%LastName%',
-                            esc_html__( 'Previous website URL', 'mainwp-child' ) => '%old_url%',
+                            esc_html__( 'Role', 'mainwp' ) => '%Roles%',
+                            esc_html__( 'First name', 'mainwp' ) => '%FirstName%',
+                            esc_html__( 'Last name', 'mainwp' ) => '%LastName%',
+                            esc_html__( 'Previous website URL', 'mainwp' ) => '%old_url%',
 
                         ),
                         static::ws_al_defaults_build_links( array( 'EditUserLink' ) ),
@@ -1855,12 +1855,12 @@ class Log_Settings {
                     ),
                     array(
                         4025,
-                        esc_html__( 'User added / removed application password from own profile', 'mainwp-child' ),
-                        esc_html__( 'The application password %friendly_name%.', 'mainwp-child' ),
+                        esc_html__( 'User added / removed application password from own profile', 'mainwp' ),
+                        esc_html__( 'The application password %friendly_name%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%roles%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%firstname%',
-                            esc_html__( 'Last name', 'mainwp-child' ) => '%lastname%',
+                            esc_html__( 'Role', 'mainwp' ) => '%roles%',
+                            esc_html__( 'First name', 'mainwp' ) => '%firstname%',
+                            esc_html__( 'Last name', 'mainwp' ) => '%lastname%',
                         ),
                         array(),
                         'user',
@@ -1868,12 +1868,12 @@ class Log_Settings {
                     ),
                     array(
                         4026,
-                        esc_html__( 'User added / removed application password from another user’s profile', 'mainwp-child' ),
-                        esc_html__( 'The application password %friendly_name% for the user %login%.', 'mainwp-child' ),
+                        esc_html__( 'User added / removed application password from another user’s profile', 'mainwp' ),
+                        esc_html__( 'The application password %friendly_name% for the user %login%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%roles%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%firstname%',
-                            esc_html__( 'Last name', 'mainwp-child' ) => '%lastname%',
+                            esc_html__( 'Role', 'mainwp' ) => '%roles%',
+                            esc_html__( 'First name', 'mainwp' ) => '%firstname%',
+                            esc_html__( 'Last name', 'mainwp' ) => '%lastname%',
                         ),
                         array(),
                         'user',
@@ -1881,12 +1881,12 @@ class Log_Settings {
                     ),
                     array(
                         4028,
-                        esc_html__( 'User revoked all application passwords from own profile', 'mainwp-child' ),
-                        esc_html__( 'All application passwords from the user %login%.', 'mainwp-child' ),
+                        esc_html__( 'User revoked all application passwords from own profile', 'mainwp' ),
+                        esc_html__( 'All application passwords from the user %login%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%roles%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%firstname%',
-                            esc_html__( 'Last name', 'mainwp-child' ) => '%lastname%',
+                            esc_html__( 'Role', 'mainwp' ) => '%roles%',
+                            esc_html__( 'First name', 'mainwp' ) => '%firstname%',
+                            esc_html__( 'Last name', 'mainwp' ) => '%lastname%',
                         ),
                         array(),
                         'user',
@@ -1894,25 +1894,25 @@ class Log_Settings {
                     ),
                     array(
                         4027,
-                        esc_html__( 'User revoked all application passwords from another user’s profile', 'mainwp-child' ),
-                        esc_html__( 'All application passwords.', 'mainwp-child' ),
+                        esc_html__( 'User revoked all application passwords from another user’s profile', 'mainwp' ),
+                        esc_html__( 'All application passwords.', 'mainwp' ),
                         array(
-                            esc_html__( 'Role', 'mainwp-child' ) => '%roles%',
-                            esc_html__( 'First name', 'mainwp-child' ) => '%firstname%',
-                            esc_html__( 'Last name', 'mainwp-child' ) => '%lastname%',
+                            esc_html__( 'Role', 'mainwp' ) => '%roles%',
+                            esc_html__( 'First name', 'mainwp' ) => '%firstname%',
+                            esc_html__( 'Last name', 'mainwp' ) => '%lastname%',
                         ),
                         array(),
                         'user',
                         'revoked',
                     ),
                 ),
-                esc_html__( 'Database', 'mainwp-child' )   => array(
+                esc_html__( 'Database', 'mainwp' )   => array(
                     array(
                         5010,
-                        esc_html__( 'Plugin created database table(s)', 'mainwp-child' ),
-                        __( 'The plugin %Plugin->Name% created this table in the database.', 'mainwp-child' ),
+                        esc_html__( 'Plugin created database table(s)', 'mainwp' ),
+                        __( 'The plugin %Plugin->Name% created this table in the database.', 'mainwp' ),
                         array(
-                            esc_html__( 'Table', 'mainwp-child' ) => '%TableNames%',
+                            esc_html__( 'Table', 'mainwp' ) => '%TableNames%',
                         ),
                         array(),
                         'database',
@@ -1920,10 +1920,10 @@ class Log_Settings {
                     ),
                     array(
                         5011,
-                        esc_html__( 'Plugin modified the structure of database table(s)', 'mainwp-child' ),
-                        __( 'The plugin %Plugin->Name% modified the structure of a database table.', 'mainwp-child' ),
+                        esc_html__( 'Plugin modified the structure of database table(s)', 'mainwp' ),
+                        __( 'The plugin %Plugin->Name% modified the structure of a database table.', 'mainwp' ),
                         array(
-                            esc_html__( 'Table', 'mainwp-child' ) => '%TableNames%',
+                            esc_html__( 'Table', 'mainwp' ) => '%TableNames%',
                         ),
                         array(),
                         'database',
@@ -1931,10 +1931,10 @@ class Log_Settings {
                     ),
                     array(
                         5012,
-                        esc_html__( 'Plugin deleted database table(s)', 'mainwp-child' ),
-                        __( 'The plugin %Plugin->Name% deleted this table from the database.', 'mainwp-child' ),
+                        esc_html__( 'Plugin deleted database table(s)', 'mainwp' ),
+                        __( 'The plugin %Plugin->Name% deleted this table from the database.', 'mainwp' ),
                         array(
-                            esc_html__( 'Table', 'mainwp-child' ) => '%TableNames%',
+                            esc_html__( 'Table', 'mainwp' ) => '%TableNames%',
                         ),
                         array(),
                         'database',
@@ -1942,10 +1942,10 @@ class Log_Settings {
                     ),
                     array(
                         5013,
-                        esc_html__( 'Theme created database table(s)', 'mainwp-child' ),
-                        __( 'The theme %Theme->Name% created this tables in the database.', 'mainwp-child' ),
+                        esc_html__( 'Theme created database table(s)', 'mainwp' ),
+                        __( 'The theme %Theme->Name% created this tables in the database.', 'mainwp' ),
                         array(
-                            esc_html__( 'Table', 'mainwp-child' ) => '%TableNames%',
+                            esc_html__( 'Table', 'mainwp' ) => '%TableNames%',
                         ),
                         array(),
                         'database',
@@ -1953,10 +1953,10 @@ class Log_Settings {
                     ),
                     array(
                         5014,
-                        esc_html__( 'Theme modified the structure of table(s) in the database', 'mainwp-child' ),
-                        __( 'The theme %Theme->Name% modified the structure of this database table', 'mainwp-child' ),
+                        esc_html__( 'Theme modified the structure of table(s) in the database', 'mainwp' ),
+                        __( 'The theme %Theme->Name% modified the structure of this database table', 'mainwp' ),
                         array(
-                            esc_html__( 'Table', 'mainwp-child' ) => '%TableNames%',
+                            esc_html__( 'Table', 'mainwp' ) => '%TableNames%',
                         ),
                         array(),
                         'database',
@@ -1964,10 +1964,10 @@ class Log_Settings {
                     ),
                     array(
                         5015,
-                        esc_html__( 'Theme deleted database table(s)', 'mainwp-child' ),
-                        __( 'The theme %Theme->Name% deleted this table from the database.', 'mainwp-child' ),
+                        esc_html__( 'Theme deleted database table(s)', 'mainwp' ),
+                        __( 'The theme %Theme->Name% deleted this table from the database.', 'mainwp' ),
                         array(
-                            esc_html__( 'Tables', 'mainwp-child' ) => '%TableNames%',
+                            esc_html__( 'Tables', 'mainwp' ) => '%TableNames%',
                         ),
                         array(),
                         'database',
@@ -1975,10 +1975,10 @@ class Log_Settings {
                     ),
                     array(
                         5016,
-                        esc_html__( 'Unknown component created database table(s)', 'mainwp-child' ),
-                        esc_html__( 'An unknown component created these tables in the database.', 'mainwp-child' ),
+                        esc_html__( 'Unknown component created database table(s)', 'mainwp' ),
+                        esc_html__( 'An unknown component created these tables in the database.', 'mainwp' ),
                         array(
-                            esc_html__( 'Tables', 'mainwp-child' ) => '%TableNames%',
+                            esc_html__( 'Tables', 'mainwp' ) => '%TableNames%',
                         ),
                         array(),
                         'database',
@@ -1986,10 +1986,10 @@ class Log_Settings {
                     ),
                     array(
                         5017,
-                        esc_html__( 'Unknown component modified the structure of table(s )in the database', 'mainwp-child' ),
-                        esc_html__( 'An unknown component modified the structure of these database tables.', 'mainwp-child' ),
+                        esc_html__( 'Unknown component modified the structure of table(s )in the database', 'mainwp' ),
+                        esc_html__( 'An unknown component modified the structure of these database tables.', 'mainwp' ),
                         array(
-                            esc_html__( 'Tables', 'mainwp-child' ) => '%TableNames%',
+                            esc_html__( 'Tables', 'mainwp' ) => '%TableNames%',
                         ),
                         array(),
                         'database',
@@ -1997,21 +1997,21 @@ class Log_Settings {
                     ),
                     array(
                         5018,
-                        esc_html__( 'Unknown component deleted database table(s)', 'mainwp-child' ),
-                        esc_html__( 'An unknown component deleted these tables from the database.', 'mainwp-child' ),
+                        esc_html__( 'Unknown component deleted database table(s)', 'mainwp' ),
+                        esc_html__( 'An unknown component deleted these tables from the database.', 'mainwp' ),
                         array(
-                            esc_html__( 'Tables', 'mainwp-child' ) => '%TableNames%',
+                            esc_html__( 'Tables', 'mainwp' ) => '%TableNames%',
                         ),
                         array(),
                         'database',
                         'deleted',
                     ),
                 ),
-                esc_html__( 'System setting', 'mainwp-child' ) => array(
+                esc_html__( 'System setting', 'mainwp' ) => array(
                     array(
                         6001,
-                        esc_html__( 'Changed the option anyone can register', 'mainwp-child' ),
-                        __( 'The <strong>Membership</strong> setting <strong>Anyone can register</strong>.', 'mainwp-child' ),
+                        esc_html__( 'Changed the option anyone can register', 'mainwp' ),
+                        __( 'The <strong>Membership</strong> setting <strong>Anyone can register</strong>.', 'mainwp' ),
                         array(),
                         array(),
                         'system-setting',
@@ -2019,11 +2019,11 @@ class Log_Settings {
                     ),
                     array(
                         6002,
-                        esc_html__( 'Changed the new user default role', 'mainwp-child' ),
-                        __( 'Changed the <strong>New user default role</strong> WordPress setting.', 'mainwp-child' ),
+                        esc_html__( 'Changed the new user default role', 'mainwp' ),
+                        __( 'Changed the <strong>New user default role</strong> WordPress setting.', 'mainwp' ),
                         array(
-                            esc_html__( 'Previous role', 'mainwp-child' ) => '%OldRole%',
-                            esc_html__( 'New role', 'mainwp-child' )      => '%NewRole%',
+                            esc_html__( 'Previous role', 'mainwp' ) => '%OldRole%',
+                            esc_html__( 'New role', 'mainwp' )      => '%NewRole%',
                         ),
                         array(),
                         'system-setting',
@@ -2031,11 +2031,11 @@ class Log_Settings {
                     ),
                     array(
                         6003,
-                        esc_html__( 'Changed the WordPress administrator notification email address', 'mainwp-child' ),
-                        __( 'Change the <strong>Administrator email address</strong> in the WordPress settings.', 'mainwp-child' ),
+                        esc_html__( 'Changed the WordPress administrator notification email address', 'mainwp' ),
+                        __( 'Change the <strong>Administrator email address</strong> in the WordPress settings.', 'mainwp' ),
                         array(
-                            esc_html__( 'Previous address', 'mainwp-child' ) => '%OldEmail%',
-                            esc_html__( 'New address', 'mainwp-child' )      => '%NewEmail%',
+                            esc_html__( 'Previous address', 'mainwp' ) => '%OldEmail%',
+                            esc_html__( 'New address', 'mainwp' )      => '%NewEmail%',
                         ),
                         array(),
                         'system-setting',
@@ -2043,11 +2043,11 @@ class Log_Settings {
                     ),
                     array(
                         6005,
-                        esc_html__( 'Changed the WordPress permalinks', 'mainwp-child' ),
-                        __( 'Changed the <strong>WordPress permalinks</strong>.', 'mainwp-child' ),
+                        esc_html__( 'Changed the WordPress permalinks', 'mainwp' ),
+                        __( 'Changed the <strong>WordPress permalinks</strong>.', 'mainwp' ),
                         array(
-                            esc_html__( 'Previous permalinks', 'mainwp-child' ) => '%OldPattern%',
-                            esc_html__( 'New permalinks', 'mainwp-child' )      => '%NewPattern%',
+                            esc_html__( 'Previous permalinks', 'mainwp' ) => '%OldPattern%',
+                            esc_html__( 'New permalinks', 'mainwp' )      => '%NewPattern%',
                         ),
                         array(),
                         'system-setting',
@@ -2055,8 +2055,8 @@ class Log_Settings {
                     ),
                     array(
                         6008,
-                        esc_html__( 'Changed the setting: Discourage search engines from indexing this site', 'mainwp-child' ),
-                        __( 'Changed the status of the WordPress setting <strong>Search engine visibility</strong> (Discourage search engines from indexing this site)', 'mainwp-child' ),
+                        esc_html__( 'Changed the setting: Discourage search engines from indexing this site', 'mainwp' ),
+                        __( 'Changed the status of the WordPress setting <strong>Search engine visibility</strong> (Discourage search engines from indexing this site)', 'mainwp' ),
                         array(),
                         array(),
                         'system-setting',
@@ -2064,8 +2064,8 @@ class Log_Settings {
                     ),
                     array(
                         6009,
-                        esc_html__( 'Enabled / disabled comments on the website', 'mainwp-child' ),
-                        __( 'Changed the status of the WordPress setting <strong>Allow people to submit comments on new posts</strong>.', 'mainwp-child' ),
+                        esc_html__( 'Enabled / disabled comments on the website', 'mainwp' ),
+                        __( 'Changed the status of the WordPress setting <strong>Allow people to submit comments on new posts</strong>.', 'mainwp' ),
                         array(),
                         array(),
                         'system-setting',
@@ -2074,8 +2074,8 @@ class Log_Settings {
 
                     array(
                         6010,
-                        esc_html__( 'Changed the setting: Comment author must fill out name and email', 'mainwp-child' ),
-                        __( 'Changed the status of the WordPress setting <strong>.Comment author must fill out name and email</strong>.', 'mainwp-child' ),
+                        esc_html__( 'Changed the setting: Comment author must fill out name and email', 'mainwp' ),
+                        __( 'Changed the status of the WordPress setting <strong>.Comment author must fill out name and email</strong>.', 'mainwp' ),
                         array(),
                         array(),
                         'system-setting',
@@ -2083,8 +2083,8 @@ class Log_Settings {
                     ),
                     array(
                         6011,
-                        esc_html__( 'Changed the setting: Users must be logged in and registered to comment', 'mainwp-child' ),
-                        __( 'Changed the status of the WordPress setting <strong>Users must be registered and logged in to comment</strong>.', 'mainwp-child' ),
+                        esc_html__( 'Changed the setting: Users must be logged in and registered to comment', 'mainwp' ),
+                        __( 'Changed the status of the WordPress setting <strong>Users must be registered and logged in to comment</strong>.', 'mainwp' ),
                         array(),
                         array(),
                         'system-setting',
@@ -2092,8 +2092,8 @@ class Log_Settings {
                     ),
                     array(
                         6012,
-                        esc_html__( 'Changed the setting: Automatically close comments after a number of days', 'mainwp-child' ),
-                        __( 'Changed the status of the WordPress setting <strong>Automatically close comments after %Value% days</strong>.', 'mainwp-child' ),
+                        esc_html__( 'Changed the setting: Automatically close comments after a number of days', 'mainwp' ),
+                        __( 'Changed the status of the WordPress setting <strong>Automatically close comments after %Value% days</strong>.', 'mainwp' ),
                         array(),
                         array(),
                         'system-setting',
@@ -2101,10 +2101,10 @@ class Log_Settings {
                     ),
                     array(
                         6013,
-                        esc_html__( 'Changed the value of the setting: Automatically close comments after a number of days.', 'mainwp-child' ),
-                        __( 'Changed the value of the WordPress setting <strong>Automatically close comments after a number of days</strong> to %NewValue%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the value of the setting: Automatically close comments after a number of days.', 'mainwp' ),
+                        __( 'Changed the value of the WordPress setting <strong>Automatically close comments after a number of days</strong> to %NewValue%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Previous value', 'mainwp-child' ) => '%OldValue%',
+                            esc_html__( 'Previous value', 'mainwp' ) => '%OldValue%',
                         ),
                         array(),
                         'system-setting',
@@ -2112,8 +2112,8 @@ class Log_Settings {
                     ),
                     array(
                         6014,
-                        esc_html__( 'Changed the setting: Comments must be manually approved', 'mainwp-child' ),
-                        __( 'Changed the value of the WordPress setting <strong>Comments must be manualy approved</strong>.', 'mainwp-child' ),
+                        esc_html__( 'Changed the setting: Comments must be manually approved', 'mainwp' ),
+                        __( 'Changed the value of the WordPress setting <strong>Comments must be manualy approved</strong>.', 'mainwp' ),
                         array(),
                         array(),
                         'system-setting',
@@ -2121,8 +2121,8 @@ class Log_Settings {
                     ),
                     array(
                         6015,
-                        esc_html__( 'Changed the setting: Author must have previously approved comments for the comments to appear', 'mainwp-child' ),
-                        __( 'Changed the value of the WordPress setting <strong>Comment author must have a previously approved comment</strong>.', 'mainwp-child' ),
+                        esc_html__( 'Changed the setting: Author must have previously approved comments for the comments to appear', 'mainwp' ),
+                        __( 'Changed the value of the WordPress setting <strong>Comment author must have a previously approved comment</strong>.', 'mainwp' ),
                         array(),
                         array(),
                         'system-setting',
@@ -2130,10 +2130,10 @@ class Log_Settings {
                     ),
                     array(
                         6016,
-                        esc_html__( 'Changed the minimum number of links that a comment must have to be held in the queue', 'mainwp-child' ),
-                        __( 'Changed the value of the WordPress setting <strong>Hold a comment in the queue if it contains links</strong> to %NewValue% links.', 'mainwp-child' ),
+                        esc_html__( 'Changed the minimum number of links that a comment must have to be held in the queue', 'mainwp' ),
+                        __( 'Changed the value of the WordPress setting <strong>Hold a comment in the queue if it contains links</strong> to %NewValue% links.', 'mainwp' ),
                         array(
-                            esc_html__( 'Previous value', 'mainwp-child' ) => '%OldValue%',
+                            esc_html__( 'Previous value', 'mainwp' ) => '%OldValue%',
                         ),
                         array(),
                         'system-setting',
@@ -2141,8 +2141,8 @@ class Log_Settings {
                     ),
                     array(
                         6017,
-                        esc_html__( 'Modified the list of keywords for comments moderation', 'mainwp-child' ),
-                        esc_html__( 'Modified the list of keywords for comments moderation in WordPress.', 'mainwp-child' ),
+                        esc_html__( 'Modified the list of keywords for comments moderation', 'mainwp' ),
+                        esc_html__( 'Modified the list of keywords for comments moderation in WordPress.', 'mainwp' ),
                         array(),
                         array(),
                         'system-setting',
@@ -2150,8 +2150,8 @@ class Log_Settings {
                     ),
                     array(
                         6018,
-                        esc_html__( 'Modified the list of keywords for comments blacklisting', 'mainwp-child' ),
-                        __( 'Modified the list of <strong>Disallowed comment keys</strong> (keywords) for comments blacklisting in WordPress.', 'mainwp-child' ),
+                        esc_html__( 'Modified the list of keywords for comments blacklisting', 'mainwp' ),
+                        __( 'Modified the list of <strong>Disallowed comment keys</strong> (keywords) for comments blacklisting in WordPress.', 'mainwp' ),
                         array(),
                         array(),
                         'system-setting',
@@ -2159,10 +2159,10 @@ class Log_Settings {
                     ),
                     array(
                         6024,
-                        esc_html__( 'Changed the WordPress address (URL)', 'mainwp-child' ),
-                        __( 'Changed the <strong>WordPress address (URL)</strong> to %new_url%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the WordPress address (URL)', 'mainwp' ),
+                        __( 'Changed the <strong>WordPress address (URL)</strong> to %new_url%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Previous URL', 'mainwp-child' ) => '%old_url%',
+                            esc_html__( 'Previous URL', 'mainwp' ) => '%old_url%',
                         ),
                         array(),
                         'system-setting',
@@ -2170,10 +2170,10 @@ class Log_Settings {
                     ),
                     array(
                         6025,
-                        esc_html__( 'Changed the site address (URL)', 'mainwp-child' ),
-                        __( 'Changed the <strong>Site address (URL)</strong> to %new_url%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the site address (URL)', 'mainwp' ),
+                        __( 'Changed the <strong>Site address (URL)</strong> to %new_url%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Previous URL', 'mainwp-child' ) => '%old_url%',
+                            esc_html__( 'Previous URL', 'mainwp' ) => '%old_url%',
                         ),
                         array(),
                         'system-setting',
@@ -2181,10 +2181,10 @@ class Log_Settings {
                     ),
                     array(
                         6035,
-                        esc_html__( 'Changed the “Your homepage displays” WordPress setting', 'mainwp-child' ),
-                        __( 'Changed the <strong>Your homepage displays</strong> WordPress setting to %new_homepage%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the “Your homepage displays” WordPress setting', 'mainwp' ),
+                        __( 'Changed the <strong>Your homepage displays</strong> WordPress setting to %new_homepage%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Previous setting', 'mainwp-child' ) => '%old_homepage%',
+                            esc_html__( 'Previous setting', 'mainwp' ) => '%old_homepage%',
                         ),
                         array(),
                         'system-setting',
@@ -2192,10 +2192,10 @@ class Log_Settings {
                     ),
                     array(
                         6036,
-                        esc_html__( 'Changed the homepage in the WordPress setting', 'mainwp-child' ),
-                        __( 'Changed the <strong>Homepage</strong> in the WordPress settings to %new_page%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the homepage in the WordPress setting', 'mainwp' ),
+                        __( 'Changed the <strong>Homepage</strong> in the WordPress settings to %new_page%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Previous page', 'mainwp-child' ) => '%old_page%',
+                            esc_html__( 'Previous page', 'mainwp' ) => '%old_page%',
                         ),
                         array(),
                         'system-setting',
@@ -2203,10 +2203,10 @@ class Log_Settings {
                     ),
                     array(
                         6037,
-                        esc_html__( 'Changed the posts page in the WordPress settings', 'mainwp-child' ),
-                        __( 'Changed the <strong> Posts</strong>  page in the WordPress settings to %new_page%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the posts page in the WordPress settings', 'mainwp' ),
+                        __( 'Changed the <strong> Posts</strong>  page in the WordPress settings to %new_page%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Previous page', 'mainwp-child' ) => '%old_page%',
+                            esc_html__( 'Previous page', 'mainwp' ) => '%old_page%',
                         ),
                         array(),
                         'system-setting',
@@ -2215,10 +2215,10 @@ class Log_Settings {
 
                     array(
                         6040,
-                        esc_html__( 'Changed the Timezone in the WordPress settings', 'mainwp-child' ),
-                        __( 'Changed the <strong>Timezone</strong> in the WordPress settings to %new_timezone%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the Timezone in the WordPress settings', 'mainwp' ),
+                        __( 'Changed the <strong>Timezone</strong> in the WordPress settings to %new_timezone%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Previous timezone', 'mainwp-child' ) => '%old_timezone%',
+                            esc_html__( 'Previous timezone', 'mainwp' ) => '%old_timezone%',
                         ),
                         array(),
                         'system-setting',
@@ -2226,10 +2226,10 @@ class Log_Settings {
                     ),
                     array(
                         6041,
-                        esc_html__( 'Changed the Date format in the WordPress settings', 'mainwp-child' ),
-                        __( 'Changed the <strong>Date format</strong> in the WordPress settings to %new_date_format%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the Date format in the WordPress settings', 'mainwp' ),
+                        __( 'Changed the <strong>Date format</strong> in the WordPress settings to %new_date_format%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Previous format', 'mainwp-child' ) => '%old_date_format%',
+                            esc_html__( 'Previous format', 'mainwp' ) => '%old_date_format%',
                         ),
                         array(),
                         'system-setting',
@@ -2237,10 +2237,10 @@ class Log_Settings {
                     ),
                     array(
                         6042,
-                        esc_html__( 'Changed the Time format in the WordPress settings', 'mainwp-child' ),
-                        __( 'Changed the <strong>Time format</strong> in the WordPress settings to %new_time_format%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the Time format in the WordPress settings', 'mainwp' ),
+                        __( 'Changed the <strong>Time format</strong> in the WordPress settings to %new_time_format%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Previous format', 'mainwp-child' ) => '%old_time_format%',
+                            esc_html__( 'Previous format', 'mainwp' ) => '%old_time_format%',
                         ),
                         array(),
                         'system-setting',
@@ -2248,10 +2248,10 @@ class Log_Settings {
                     ),
                     array(
                         6044,
-                        esc_html__( 'User changed the WordPress automatic update settings', 'mainwp-child' ),
-                        __( 'Changed the <strong>Automatic updates</strong> setting.', 'mainwp-child' ),
+                        esc_html__( 'User changed the WordPress automatic update settings', 'mainwp' ),
+                        __( 'Changed the <strong>Automatic updates</strong> setting.', 'mainwp' ),
                         array(
-                            esc_html__( 'New setting status', 'mainwp-child' ) => '%updates_status%',
+                            esc_html__( 'New setting status', 'mainwp' ) => '%updates_status%',
                         ),
                         array(),
                         'system-setting',
@@ -2259,10 +2259,10 @@ class Log_Settings {
                     ),
                     array(
                         6045,
-                        esc_html__( 'Changed the site language', 'mainwp-child' ),
-                        __( 'Changed the <strong>Site Language</strong> to %new_value%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the site language', 'mainwp' ),
+                        __( 'Changed the <strong>Site Language</strong> to %new_value%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Previous setting', 'mainwp-child' ) => '%previous_value%',
+                            esc_html__( 'Previous setting', 'mainwp' ) => '%previous_value%',
                         ),
                         array(),
                         'system-setting',
@@ -2270,10 +2270,10 @@ class Log_Settings {
                     ),
                     array(
                         6059,
-                        esc_html__( 'Changed the site title', 'mainwp-child' ),
-                        __( 'Changed the <strong>Site Title</strong> to %new_value%.', 'mainwp-child' ),
+                        esc_html__( 'Changed the site title', 'mainwp' ),
+                        __( 'Changed the <strong>Site Title</strong> to %new_value%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Previous setting', 'mainwp-child' ) => '%previous_value%',
+                            esc_html__( 'Previous setting', 'mainwp' ) => '%previous_value%',
                         ),
                         array(),
                         'system-setting',
@@ -2281,10 +2281,10 @@ class Log_Settings {
                     ),
                     array(
                         6063,
-                        esc_html__( 'Added site icon', 'mainwp-child' ),
-                        __( 'Added a new website Site Icon %filename%.', 'mainwp-child' ),
+                        esc_html__( 'Added site icon', 'mainwp' ),
+                        __( 'Added a new website Site Icon %filename%.', 'mainwp' ),
                         array(
-                            esc_html__( 'New directory', 'mainwp-child' ) => '%new_path%',
+                            esc_html__( 'New directory', 'mainwp' ) => '%new_path%',
                         ),
                         array(),
                         'system-setting',
@@ -2292,24 +2292,24 @@ class Log_Settings {
                     ),
                     array(
                         6064,
-                        esc_html__( 'Changed site icon', 'mainwp-child' ),
-                        __( 'Changed the Site Icon from %old_filename% to %filename%.', 'mainwp-child' ),
+                        esc_html__( 'Changed site icon', 'mainwp' ),
+                        __( 'Changed the Site Icon from %old_filename% to %filename%.', 'mainwp' ),
                         array(
-                            esc_html__( 'Old directory', 'mainwp-child' ) => '%old_path%',
-                            esc_html__( 'New directory', 'mainwp-child' ) => '%new_path%',
+                            esc_html__( 'Old directory', 'mainwp' ) => '%old_path%',
+                            esc_html__( 'New directory', 'mainwp' ) => '%new_path%',
                         ),
                         array(),
                         'system-setting',
                         'modified',
                     ),
                 ),
-                esc_html__( 'WordPress Cron', 'mainwp-child' ) => array(
+                esc_html__( 'WordPress Cron', 'mainwp' ) => array(
                     array(
                         6066,
-                        esc_html__( 'New one time task (cron job) created', 'mainwp-child' ),
-                        __( 'A new one-time task called %task_name% has been scheduled.', 'mainwp-child' ),
+                        esc_html__( 'New one time task (cron job) created', 'mainwp' ),
+                        __( 'A new one-time task called %task_name% has been scheduled.', 'mainwp' ),
                         array(
-                            esc_html__( 'The task is scheduled to run on', 'mainwp-child' ) => '%timestamp%',
+                            esc_html__( 'The task is scheduled to run on', 'mainwp' ) => '%timestamp%',
                         ),
                         array(),
                         'cron-job',
@@ -2317,11 +2317,11 @@ class Log_Settings {
                     ),
                     array(
                         6067,
-                        esc_html__( 'New recurring task (cron job) created', 'mainwp-child' ),
-                        __( 'A new recurring task (cron job) called %task_name% has been created.', 'mainwp-child' ),
+                        esc_html__( 'New recurring task (cron job) created', 'mainwp' ),
+                        __( 'A new recurring task (cron job) called %task_name% has been created.', 'mainwp' ),
                         array(
-                            esc_html__( 'Task\'s first run: ', 'mainwp-child' ) => '%timestamp%',
-                            esc_html__( 'Task\'s interval: ', 'mainwp-child' ) => '%display_name%',
+                            esc_html__( 'Task\'s first run: ', 'mainwp' ) => '%timestamp%',
+                            esc_html__( 'Task\'s interval: ', 'mainwp' ) => '%display_name%',
                         ),
                         array(),
                         'cron-job',
@@ -2329,11 +2329,11 @@ class Log_Settings {
                     ),
                     array(
                         6068,
-                        esc_html__( 'Recurring task (cron job) modified', 'mainwp-child' ),
-                        __( 'The schedule of recurring task (cron job) called %task_name% has changed.', 'mainwp-child' ),
+                        esc_html__( 'Recurring task (cron job) modified', 'mainwp' ),
+                        __( 'The schedule of recurring task (cron job) called %task_name% has changed.', 'mainwp' ),
                         array(
-                            esc_html__( 'Task\'s old schedule: ', 'mainwp-child' ) => '%old_display_name%',
-                            esc_html__( 'Task\'s new schedule: ', 'mainwp-child' ) => '%new_display_name%',
+                            esc_html__( 'Task\'s old schedule: ', 'mainwp' ) => '%old_display_name%',
+                            esc_html__( 'Task\'s new schedule: ', 'mainwp' ) => '%new_display_name%',
                         ),
                         array(),
                         'cron-job',
@@ -2341,10 +2341,10 @@ class Log_Settings {
                     ),
                     array(
                         6069,
-                        esc_html__( 'One time task (cron job) executed', 'mainwp-child' ),
-                        __( 'The one-time task called %task_name% has been executed.', 'mainwp-child' ),
+                        esc_html__( 'One time task (cron job) executed', 'mainwp' ),
+                        __( 'The one-time task called %task_name% has been executed.', 'mainwp' ),
                         array(
-                            esc_html__( 'Task\'s schedule was: ', 'mainwp-child' ) => '%timestamp%',
+                            esc_html__( 'Task\'s schedule was: ', 'mainwp' ) => '%timestamp%',
                         ),
                         array(),
                         'cron-job',
@@ -2352,10 +2352,10 @@ class Log_Settings {
                     ),
                     array(
                         6070,
-                        esc_html__( 'Recurring task (cron job) executed', 'mainwp-child' ),
-                        __( ' The recurring task (cron job) called %task_name% has been executed.', 'mainwp-child' ),
+                        esc_html__( 'Recurring task (cron job) executed', 'mainwp' ),
+                        __( ' The recurring task (cron job) called %task_name% has been executed.', 'mainwp' ),
                         array(
-                            esc_html__( 'Task\'s schedule was: ', 'mainwp-child' ) => '%display_name%',
+                            esc_html__( 'Task\'s schedule was: ', 'mainwp' ) => '%display_name%',
                         ),
                         array(),
                         'cron-job',
@@ -2363,8 +2363,8 @@ class Log_Settings {
                     ),
                     array(
                         6071,
-                        esc_html__( 'Deleted one-time task (cron job)', 'mainwp-child' ),
-                        __( 'The one-time task  (cron job) called %task_name% has been deleted.', 'mainwp-child' ),
+                        esc_html__( 'Deleted one-time task (cron job)', 'mainwp' ),
+                        __( 'The one-time task  (cron job) called %task_name% has been deleted.', 'mainwp' ),
                         array(),
                         array(),
                         'cron-job',
@@ -2372,10 +2372,10 @@ class Log_Settings {
                     ),
                     array(
                         6072,
-                        esc_html__( 'Deleted recurring task (cron job)', 'mainwp-child' ),
-                        __( 'The recurring task (cron job) called %task_name% has been deleted.', 'mainwp-child' ),
+                        esc_html__( 'Deleted recurring task (cron job)', 'mainwp' ),
+                        __( 'The recurring task (cron job) called %task_name% has been deleted.', 'mainwp' ),
                         array(
-                            esc_html__( 'Task\'s schedule was: ', 'mainwp-child' ) => '%display_name%',
+                            esc_html__( 'Task\'s schedule was: ', 'mainwp' ) => '%display_name%',
                         ),
                         array(),
                         'cron-job',
@@ -2400,42 +2400,42 @@ class Log_Settings {
         $result = array();
 
         if ( empty( self::$ws_al_built_links ) ) {
-            self::$ws_al_built_links['CategoryLink']   = array( esc_html__( 'View category', 'mainwp-child' ) => '%CategoryLink%' );
-            self::$ws_al_built_links['cat_link']       = array( esc_html__( 'View category', 'mainwp-child' ) => '%cat_link%' );
-            self::$ws_al_built_links['ProductCatLink'] = array( esc_html__( 'View category', 'mainwp-child' ) => '%ProductCatLink%' );
+            self::$ws_al_built_links['CategoryLink']   = array( esc_html__( 'View category', 'mainwp' ) => '%CategoryLink%' );
+            self::$ws_al_built_links['cat_link']       = array( esc_html__( 'View category', 'mainwp' ) => '%cat_link%' );
+            self::$ws_al_built_links['ProductCatLink'] = array( esc_html__( 'View category', 'mainwp' ) => '%ProductCatLink%' );
 
-            self::$ws_al_built_links['ContactSupport'] = array( esc_html__( 'Contact Support', 'mainwp-child' ) => 'https://melapress.com/contact/' );
+            self::$ws_al_built_links['ContactSupport'] = array( esc_html__( 'Contact Support', 'mainwp' ) => 'https://melapress.com/contact/' );
 
             self::$ws_al_built_links['CommentLink'] = array(
-                esc_html__( 'Comment', 'mainwp-child' ) => array(
+                esc_html__( 'Comment', 'mainwp' ) => array(
                     'url'   => '%CommentLink%',
                     'label' => '%CommentDate%',
                 ),
             );
 
-            self::$ws_al_built_links['EditorLinkPage'] = array( esc_html__( 'View page in the editor', 'mainwp-child' ) => '%EditorLinkPage%' );
+            self::$ws_al_built_links['EditorLinkPage'] = array( esc_html__( 'View page in the editor', 'mainwp' ) => '%EditorLinkPage%' );
 
-            self::$ws_al_built_links['EditorLinkPost'] = array( esc_html__( 'View the post in editor', 'mainwp-child' ) => '%EditorLinkPost%' );
+            self::$ws_al_built_links['EditorLinkPost'] = array( esc_html__( 'View the post in editor', 'mainwp' ) => '%EditorLinkPost%' );
 
-            self::$ws_al_built_links['EditorLinkOrder'] = array( esc_html__( 'View the order', 'mainwp-child' ) => '%EditorLinkOrder%' );
+            self::$ws_al_built_links['EditorLinkOrder'] = array( esc_html__( 'View the order', 'mainwp' ) => '%EditorLinkOrder%' );
 
-            self::$ws_al_built_links['EditUserLink'] = array( esc_html__( 'User profile page', 'mainwp-child' ) => '%EditUserLink%' );
+            self::$ws_al_built_links['EditUserLink'] = array( esc_html__( 'User profile page', 'mainwp' ) => '%EditUserLink%' );
 
-            self::$ws_al_built_links['LinkFile'] = array( esc_html__( 'Open the log file', 'mainwp-child' ) => '%LinkFile%' );
+            self::$ws_al_built_links['LinkFile'] = array( esc_html__( 'Open the log file', 'mainwp' ) => '%LinkFile%' );
 
-            self::$ws_al_built_links['MenuUrl'] = array( esc_html__( 'View menu', 'mainwp-child' ) => '%MenuUrl%' );
+            self::$ws_al_built_links['MenuUrl'] = array( esc_html__( 'View menu', 'mainwp' ) => '%MenuUrl%' );
 
-            self::$ws_al_built_links['PostUrl'] = array( esc_html__( 'URL', 'mainwp-child' ) => '%PostUrl%' );
+            self::$ws_al_built_links['PostUrl'] = array( esc_html__( 'URL', 'mainwp' ) => '%PostUrl%' );
 
-            self::$ws_al_built_links['AttachmentUrl'] = array( esc_html__( 'View attachment page', 'mainwp-child' ) => '%AttachmentUrl%' );
+            self::$ws_al_built_links['AttachmentUrl'] = array( esc_html__( 'View attachment page', 'mainwp' ) => '%AttachmentUrl%' );
 
-            self::$ws_al_built_links['PostUrlIfPlublished'] = array( esc_html__( 'URL', 'mainwp-child' ) => '%PostUrlIfPlublished%' );
+            self::$ws_al_built_links['PostUrlIfPlublished'] = array( esc_html__( 'URL', 'mainwp' ) => '%PostUrlIfPlublished%' );
 
-            self::$ws_al_built_links['PostUrlIfPublished'] = array( esc_html__( 'URL', 'mainwp-child' ) => '%PostUrlIfPlublished%' );
+            self::$ws_al_built_links['PostUrlIfPublished'] = array( esc_html__( 'URL', 'mainwp' ) => '%PostUrlIfPlublished%' );
 
-            self::$ws_al_built_links['RevisionLink'] = array( esc_html__( 'View the content changes', 'mainwp-child' ) => '%RevisionLink%' );
+            self::$ws_al_built_links['RevisionLink'] = array( esc_html__( 'View the content changes', 'mainwp' ) => '%RevisionLink%' );
 
-            self::$ws_al_built_links['TagLink'] = array( esc_html__( 'View tag', 'mainwp-child' ) => '%RevisionLink%' );
+            self::$ws_al_built_links['TagLink'] = array( esc_html__( 'View tag', 'mainwp' ) => '%RevisionLink%' );
 
             /*
             * All these links are formatted (including any label) because they

@@ -208,6 +208,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             case 'plugin_update':
             case 'theme_update':
             case 'backup':
+            case 'wpcore_version':
             case 'security':
             case 'uptime':
             case 'last_sync':
@@ -276,11 +277,12 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             'login'          => '<i class="sign in alternate icon"></i>',
             'url'            => esc_html__( 'URL', 'mainwp' ),
             'tags'           => esc_html__( 'Tags', 'mainwp' ),
+            'client_name'    => esc_html__( 'Client', 'mainwp' ),
             'update'         => esc_html__( 'Updates', 'mainwp' ),
             'wpcore_update'  => '<i class="icon wordpress"></i>', // phpcs:ignore -- Prevent modify WP icon.
             'plugin_update'  => '<i class="plug icon"></i>',
             'theme_update'   => '<i class="tint icon"></i>',
-            'client_name'    => esc_html__( 'Client', 'mainwp' ),
+            'wpcore_version' => esc_html__( 'WP Version', 'mainwp' ),
             'security'       => esc_html__( 'Security', 'mainwp' ),
             'language'       => esc_html__( 'Language', 'mainwp' ),
             'index'          => esc_html__( 'Indexable', 'mainwp' ),
@@ -463,6 +465,10 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         $defines[] = array(
             'targets'   => array( 'manage-index-column' ),
             'className' => 'center aligned collapsing',
+        );
+        $defines[] = array(
+            'targets'   => array( 'manage-wpcore_version-column' ),
+            'className' => 'right aligned collapsing',
         );
         $defines[] = array(
             'targets'   => array( 'manage-site_actions-column' ),
@@ -1778,7 +1784,15 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                     <?php } elseif ( 'tags' === $column_name ) { ?>
                         <?php echo MainWP_System_Utility::get_site_tags_belong( $website ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
                         <?php
-                    } elseif ( 'update' === $column_name ) {
+                    } elseif ( 'client_name' === $column_name ) { ?>
+                        <?php if ( ! empty( $website['client_name'] ) ) : ?>
+                            <a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website['client_id'] ); ?>">
+                                <?php echo $client_image; //phpcs:ignore -- NOSONAR - ok.?> <?php echo esc_html( $website['client_name'] ); ?>
+                            </a>
+                        <?php else : ?>
+                            <?php echo $client_image; //phpcs:ignore -- NOSONAR - ok.?> <span><?php echo esc_html( 'Unassigned' ); ?></span>
+                        <?php endif; ?>
+                    <?php } elseif ( 'update' === $column_name ) {
                         $ignored_info = ! empty( $total_ignored_updates ) ? ' (' . (int) $total_ignored_updates . ' updates ignored)' : '';
                         ?>
                         <a data-tooltip="<?php echo ! empty( $website['dtsSync'] ) ? esc_attr__( 'Last sync: ', 'mainwp' ) . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['dtsSync'] ) ) : ''; echo $ignored_info; //phpcs:ignore -- ok. ?> " data-position="left center" data-inverted="" class="ui mini grey button" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>">
@@ -1796,14 +1810,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         <a class="ui mini basic grey button" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>&tab=themes-updates">
                             <i class="sync alternate icon"></i> <?php echo intval( $total_theme_upgrades ); ?>
                         </a>
-                    <?php } elseif ( 'client_name' === $column_name ) { ?>
-                        <?php if ( ! empty( $website['client_name'] ) ) : ?>
-                            <a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website['client_id'] ); ?>">
-                                <?php echo $client_image; //phpcs:ignore -- NOSONAR - ok.?> <?php echo esc_html( $website['client_name'] ); ?>
-                            </a>
-                        <?php else : ?>
-                            <?php echo $client_image; //phpcs:ignore -- NOSONAR - ok.?> <span><?php echo esc_html( 'Unassigned' ); ?></span>
-                        <?php endif; ?>
+                    <?php } elseif ( 'wpcore_version' === $column_name ) { ?>
+                        <?php echo ! empty( $website_info['wpversion'] ) ? esc_html( $website_info['wpversion'] ) : ''; ?>
                     <?php } elseif ( 'security' === $column_name ) { ?>
                         <?php if ( ! empty( $website['securityIssues'] ) && '[]' !== $website['securityIssues'] ) : ?>
                             <?php if ( 0 < $website['securityIssues'] ) : ?>

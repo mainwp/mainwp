@@ -426,7 +426,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( false === $show_cols ) { // to backwards.
             $show_cols = array();
             foreach ( $columns as $name => $title ) {
-                if ( in_array( $name, array( 'status', 'favicon', 'site_combo', 'update', 'client_name', 'security', 'index', 'backup', 'site_actions' ) ) ) {
+                if ( in_array( $name, array( 'status', 'favicon', 'site_combo', 'client_name', 'update', 'wpcore_version', 'security', 'index', 'backup', 'site_actions' ) ) ) {
                     $show_cols[ $name ] = 1;
                 } else {
                     $show_cols[ $name ] = 0;
@@ -576,7 +576,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         jQuery('input[name=mainwp_default_sites_per_page]').val(25);
                         jQuery('.mainwp_hide_wpmenu_checkboxes input[id^="mainwp_show_column_"]').prop( 'checked', false );
                         //default columns.
-                        let cols = ['status', 'favicon', 'site_combo','update','client_name', 'security', 'index', 'site_actions'];
+                        let cols = ['status', 'favicon', 'site_combo','client_name', 'update', 'wpcore_version', 'security', 'index', 'site_actions'];
                         jQuery.each( cols, function ( index, value ) {
                             jQuery('.mainwp_hide_wpmenu_checkboxes input[id="mainwp_show_column_' + value + '"]').prop( 'checked', true );
                         } );

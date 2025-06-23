@@ -254,8 +254,11 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             </div>
 
             <div class="mainwp-side-content mainwp-no-padding">
-
-                <?php static::render_side_box( $mainwp_api_key ); ?>
+            <?php
+            if ( \mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) {
+                static::render_side_box( $mainwp_api_key );
+            }
+            ?>
             </div>
             <div id="mainwp-extensions-privacy-info">
                 <?php $priv_extensions = static::get_available_extensions( 'all' ); ?>
@@ -484,12 +487,14 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         <?php if ( ! $simple ) { ?>
         <div class="extra content">
             <div class="">
+                <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) { ?>
                 <a class="ui mini basic icon button extension-the-plugin-action" data-tooltip="<?php echo esc_html__( 'Disable/Enable Add-on', 'mainwp' ); ?>" data-position="top left" data-inverted="" plugin-action="<?php echo $disabled ? 'active' : 'disable'; ?>"><?php echo $disabled ? '<i class="toggle on icon"></i> ' : '<i class="toggle off icon"></i> '; ?></a>
+                <?php } ?>
                 <a class="ui mini extension-privacy-info-link icon basic button" base-slug="<?php echo esc_attr( $item_slug ); ?>" data-tooltip="<?php echo esc_html__( 'Privacy info.', 'mainwp' ); ?>" data-position="top left" data-inverted=""><?php echo $privacy_class; ?></a> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
-                <?php if ( $disabled ) { ?>
+                <?php if ( $disabled && \mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) { ?>
                 <a class="ui mini basic icon right floated button extension-the-plugin-action" plugin-action="remove" data-tooltip="<?php echo esc_html__( 'Delete Add-on', 'mainwp' ); ?>" data-position="top right" data-inverted=""><i class="trash icon"></i></a>
                 <?php } ?>
-                <?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) { ?>
+                <?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] && \mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) { ?>
                 <a class="ui mini activate-api-status mainwp-manage-extension-license icon basic right floated button" data-tooltip="<?php echo $active ? esc_html__( 'License activated.', 'mainwp' ) : esc_html__( 'License not activated. Click activate.', 'mainwp' ); ?>" api-actived="<?php echo $active ? '1' : '0'; ?>" data-position="top right" data-inverted=""><?php echo $license_class; ?></a> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
                 <?php } ?>
             </div>

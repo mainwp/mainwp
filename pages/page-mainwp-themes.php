@@ -1118,7 +1118,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 }
 
                 if ( is_array( $decodedIgnoredThemes ) ) {
-                    $theme_upgrades = array_diff_key( $theme_upgrades, $decodedIgnoredThemes );
+                    $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $decodedIgnoredThemes );
                 }
             }
             $updateWebsites[ $site_id ] = $theme_upgrades;
@@ -1393,7 +1393,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 }
 
                 if ( is_array( $decodedIgnoredThemes ) ) {
-                    $theme_upgrades = array_diff_key( $theme_upgrades, $decodedIgnoredThemes );
+                    $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $decodedIgnoredThemes );
                 }
             }
             $updateWebsites[ $site_id ] = $theme_upgrades;

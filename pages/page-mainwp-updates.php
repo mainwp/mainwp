@@ -538,12 +538,12 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( is_array( $theme_upgrades ) ) {
                 $_ignored_themes = json_decode( $website->ignored_themes, true );
                 if ( is_array( $_ignored_themes ) ) {
-                    $theme_upgrades = array_diff_key( $theme_upgrades, $_ignored_themes );
+                    $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $_ignored_themes );
                 }
 
                 $_ignored_themes = json_decode( $userExtension->ignored_themes, true );
                 if ( is_array( $_ignored_themes ) ) {
-                    $theme_upgrades = array_diff_key( $theme_upgrades, $_ignored_themes );
+                    $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $_ignored_themes );
                 }
 
                 $total_theme_upgrades += count( $theme_upgrades );

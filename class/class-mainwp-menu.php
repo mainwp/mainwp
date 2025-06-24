@@ -269,11 +269,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $menus_items[] = array(
                 'slug'               => 'Extensions',
                 'menu_level'         => 2,
-                'menu_rights'        => array(
-                    'dashboard' => array(
-                        'manage_extensions',
-                    ),
-                ),
+                'menu_rights'        => true,
                 'init_menu_callback' => array( MainWP_Extensions::class, 'init_menu' ),
                 'leftbar_order'      => 3,
             );

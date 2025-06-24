@@ -726,7 +726,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             if ( '_ALL_' === $slug ) {
                 $decodedIgnoredThemes = array();
             } else {
-                $decodedIgnoredThemes = json_decode( $userExtension->ignored_plugins, true );
+                $decodedIgnoredThemes = json_decode( $userExtension->ignored_themes, true );
                 if ( ! is_array( $decodedIgnoredThemes ) ) {
                     $decodedIgnoredThemes = array();
                 }

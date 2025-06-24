@@ -79,7 +79,7 @@ let updatesoverview_upgrade = function (id, obj) {
 
     if (upgradeElement.val() != 0)
         return false;
-    // Show icon waiting 
+    // Show icon waiting
     const regression_waiting_icon = render_html_regression_waiting_icon();
     let waiting_icon = '';
     if (regression_waiting_icon && "" !== regression_waiting_icon) {
@@ -284,7 +284,7 @@ let updatesoverview_wordpress_upgrade_all_update_site_status = function (siteId,
 let updatesoverview_wordpress_upgrade_all_upgrade_next = function () {
     mainwpVars.currentThreads++;
     mainwpVars.websitesLeft--;
-    // Show icon waiting 
+    // Show icon waiting
     const regression_waiting_icon = render_html_regression_waiting_icon();
     let waiting_icon = render_tooltip_loading_icon('<i class="notched circle loading icon"></i>');
     if (regression_waiting_icon && "" !== regression_waiting_icon) {
@@ -547,7 +547,7 @@ let updatesoverview_translations_upgrade_all_update_site_status = function (site
 let updatesoverview_translations_upgrade_all_upgrade_next = function () {
     mainwpVars.currentThreads++;
     mainwpVars.websitesLeft--;
-    // Show icon waiting 
+    // Show icon waiting
     const regression_waiting_icon = render_html_regression_waiting_icon();
     let waiting_icon = render_tooltip_loading_icon('<i class="notched circle loading icon"></i>');
     if (regression_waiting_icon && "" !== regression_waiting_icon) {
@@ -577,7 +577,7 @@ let updatesoverview_translations_upgrade_all_update_done = function () {
 
     updatesoverview_translations_upgrade_all_loop_next();
 };
-let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMode, noCheck) {
+let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMode, noCheck) { // NOSONAR - nest functions.
 
     updatesoverviewContinueAfterBackup = function () {
         // need declare variables.
@@ -586,7 +586,7 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
         let pBulkMode = bulkMode;
 
         let slugParts = pSlug.split(',');
-        // Show icon waiting 
+        // Show icon waiting
         const regression_waiting_icon = render_html_regression_waiting_icon();
         let waiting_icon = render_tooltip_loading_icon('<i class="notched circle loading icon"></i> ' + __('Updating. Please wait...'));
         if (regression_waiting_icon && "" !== regression_waiting_icon) {
@@ -969,7 +969,7 @@ let updatesoverview_plugins_upgrade_all_upgrade_next = function () {
     mainwpVars.currentThreads++;
     mainwpVars.websitesLeft--;
 
-    // Show icon waiting 
+    // Show icon waiting
     const regression_waiting_icon = render_html_regression_waiting_icon();
     let waiting_icon = render_tooltip_loading_icon('<i class="notched circle loading icon"></i>');
     if (regression_waiting_icon && "" !== regression_waiting_icon) {
@@ -1011,7 +1011,7 @@ let updatesoverview_plugins_upgrade_all_update_done = function () {
     updatesoverview_plugins_upgrade_all_loop_next();
 };
 
-let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsiteId, pBulkMode) {
+let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsiteId, pBulkMode) { // NOSONAR - nest functions.
     return function () {
         let slugParts = pSlug.split(',');
         const regression_waiting_icon = render_html_regression_waiting_icon();
@@ -1457,7 +1457,7 @@ let updatesoverview_themes_upgrade_all_update_done = function () {
 };
 let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode) {
     let slugParts = slug.split(',');
-    // Show icon waiting 
+    // Show icon waiting
     const regression_waiting_icon = render_html_regression_waiting_icon();
     let waiting_icon = render_tooltip_loading_icon('<i class="notched circle loading icon"></i> ' + __('Updating. Please wait...'));
     if (regression_waiting_icon && "" !== regression_waiting_icon) {
@@ -1868,7 +1868,7 @@ let updatesoverview_upgrade_all_update_site_bold = function (siteId, sub, msg) {
 let updatesoverview_upgrade_all_upgrade_next = function () {
     mainwpVars.currentThreads++;
     mainwpVars.websitesLeft--;
-    // Show icon waiting 
+    // Show icon waiting
     const regression_waiting_icon = render_html_regression_waiting_icon();
     let waiting_icon = render_tooltip_loading_icon('<i class="notched circle loading icon"></i>');
     if (regression_waiting_icon && "" !== regression_waiting_icon) {
@@ -3356,7 +3356,7 @@ let updatesoverview_group_upgrade_plugintheme_all = function (what, id, noCheck,
     return mainwp_updatesoverview_checkBackups(sitesToUpdate, siteNames);
 };
 
-let updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck, groupId) {
+let updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck, groupId) { // NOSONAR - nest functions.
     updatesoverviewContinueAfterBackup = function (pWhat, pId, pList, pGroupId) {
         return function () {
             let strGroup = '';
@@ -3365,7 +3365,7 @@ let updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck
             }
             let newList = [];
 
-            // Show icon waiting 
+            // Show icon waiting
             const regression_waiting_icon = render_html_regression_waiting_icon();
             let waiting_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Updating...', 'mainwp') + '"><i class="notched circle loading icon"></i></span> ' + __('Updating. Please wait...');
             if (regression_waiting_icon && "" !== regression_waiting_icon) {
@@ -3478,7 +3478,7 @@ let updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteN
         slug: list.join(',')
     });
 
-    // Show icon waiting 
+    // Show icon waiting
     const regression_waiting_icon = render_html_regression_waiting_icon();
     let waiting_icon = render_tooltip_loading_icon('<i class="notched circle loading icon"></i>');
     if (regression_waiting_icon && "" !== regression_waiting_icon) {
@@ -3708,8 +3708,7 @@ const render_html_regression_icon = function (result, onDone) {
     setTimeout(() => {
         let _icon = '';
         if (
-            result &&
-            result.html_regression_max_scope &&
+            result?.html_regression_max_scope &&
             typeof result.html_regression_max_scope === 'object' &&
             !Array.isArray(result.html_regression_max_scope) &&
             Object.keys(result.html_regression_max_scope).length > 0

@@ -5155,12 +5155,15 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      *
      * Save backups to DB for the selected server.
      *
-     * @return void
+     * @param  array $credentials Kinsta credentials.
+     * @param  bool  $return_result Return or not
+     *
+     * @return mixed
      */
-    public static function kinsta_action_refresh_available_backups() {
+    public static function kinsta_action_refresh_available_backups( $credentials = array(), $return_result = false ) {
 
         // Authenticate kinsta account.
-        $kinsta_authentication_credentials = static::get_kinsta_authentication_credentials();
+        $kinsta_authentication_credentials = empty( $credentials ) || ! is_array( $credentials ) ? static::get_kinsta_authentication_credentials() : $credentials;
         $kinsta_baseurl                    = $kinsta_authentication_credentials[0]['kinsta_baseurl'];
         $kinsta_api_key                    = $kinsta_authentication_credentials[0]['kinsta_api_key'];
         $kinsta_env_id                     = $kinsta_authentication_credentials[0]['kinsta_environment_id'];
@@ -5172,6 +5175,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         // Grab backup meta.
         $api_response = static::call_kinsta_api( 'GET', '/sites/environments/' . $kinsta_env_id . '/backups', $kinsta_baseurl, $kinsta_api_key, $action );
 
+        $success = false;
+
         if ( 'true' === $api_response['status'] ) {
             $all_backups = $api_response['response'];
             Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_kinsta_available_backups', $all_backups );
@@ -5180,7 +5185,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
             $action = 'kinsta_action_refresh_available_backups_downloadable';
 
             $downloadable_backups = static::call_kinsta_api( 'GET', '/sites/environments/' . $kinsta_env_id . '/downloadable-backups', $kinsta_baseurl, $kinsta_api_key, $action );
-
+            $success              = true;
         } else {
             Api_Backups_Utility::log_debug( 'Kinsta API Error: ' . $api_response['response'] );
         }
@@ -5191,6 +5196,10 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
             }
         } else {
             Api_Backups_Utility::log_debug( 'Kinsta API Error: There was an issue while refreshing available backups.' );
+        }
+
+        if ( $return_result ) {
+            return $success;
         }
 
         // Return AJAX.
@@ -5281,6 +5290,10 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
 
         // Send Payload & create backup.
         $api_response = static::call_kinsta_api( 'DELETE', $payload_url, $kinsta_baseurl, $kinsta_api_key, '' );
+
+        if ( is_array( $api_response ) && isset( $api_response['status'] ) && 'true' === $api_response['status'] ) {
+            static::kinsta_action_refresh_available_backups( $kinsta_authentication_credentials, true );
+        }
 
         if ( $return_values ) {
             return $api_response;

@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.8.1
 Requires PHP: 7.4
-Stable tag: 5.4.0.13
+Stable tag: 5.4.0.14
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -146,6 +146,13 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.4.0.14 - Maintenance Release - 6-24-2025 =
+
+* Fixed: Corrected permissions logic to ensure users without "Manage Extensions" permission can still access extension features they are authorized to use. [(#801)](https://github.com/mainwp/mainwp/issues/801)
+* Fixed: Resolved an issue where ignored plugin updates incorrectly appeared in the "Ignored Themes" list after being unignored.
+* Fixed: Corrected the ignore functionality to properly handle version-specific ignores, ensuring updates ignored for one version only don't automatically ignore subsequent versions. [(#802)](https://github.com/mainwp/mainwp/issues/802)
+* Fixed: Resolved an issue where backup deletions through the Kinsta API integration were not working properly.
 
 = 5.4.0.13 - Maintenance Release - 6-17-2025 =
 

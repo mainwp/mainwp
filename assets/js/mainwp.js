@@ -1695,7 +1695,7 @@ let mainwp_managesites_add = function () {
     http_pass: jQuery('#mainwp_managesites_add_http_pass').val().trim()
   });
 
-  jQuery.post(ajaxurl, data, function (res_things) {
+  jQuery.post(ajaxurl, data, function (res_things) { // NOSONAR - nest functions.
     let response = res_things.response;
     response = response.trim();
     let errors = [];

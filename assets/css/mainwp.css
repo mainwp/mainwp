@@ -628,6 +628,8 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
 /* Tables */
 
 .mainwp-ui table.dataTable thead>tr>th span.dt-column-order {
+    position: relative !important;
+    left: 8px !important;
     right: 0px !important;
 }
 
@@ -1277,13 +1279,6 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
 .indicator-accordion-sorting.ascending .up.icon,
 .indicator-accordion-sorting.descending .down.icon {
     display: inline-block;
-}
-
-
-th .sort.icon,
-th .up.icon,
-th .down.icon {
-    float: right;
 }
 
 .trigger-handle-arrow .icon {

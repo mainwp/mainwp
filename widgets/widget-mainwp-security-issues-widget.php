@@ -97,7 +97,7 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
                          */
                         echo esc_html( apply_filters( 'mainwp_security_issues_widget_title', esc_html__( 'Site Hardening', 'mainwp' ) ) );
                         ?>
-                        <div class="sub header"><?php esc_html_e( 'Identify and strengthen weak spots to boost site hardening', 'mainwp' ); ?></div>
+                        <div class="sub header"><?php esc_html_e( 'Identify weak spots to boost site hardening.', 'mainwp' ); ?></div>
                     </h2>
                 </div>
 
@@ -284,7 +284,9 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
 
             </div>
         </div>
-        <div class="ui active inverted dimmer" style="display:none" id="mainwp-secuirty-issues-loader"><div class="ui text loader"><?php esc_html_e( 'Please wait...', 'mainwp' ); ?></div></div>
+        <div class="ui active dimmer" style="display:none" id="mainwp-secuirty-issues-loader">
+            <div class="ui double text loader"></div>
+        </div>
         <?php
     }
 }

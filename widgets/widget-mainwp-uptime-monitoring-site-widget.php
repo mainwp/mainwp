@@ -246,8 +246,8 @@ class MainWP_Uptime_Monitoring_Site_Widget {
 
         <div class="mainwp-scrolly-overflow">
             <div id="mainwp-monitor-widget-loader">
-                <div class="ui active inverted dimmer">
-                    <div class="ui text loader"><?php esc_html_e( 'Loading', 'mainwp' ); ?></div>
+                <div class="ui active dimmer">
+                    <div class="ui double loader"><?php esc_html_e( 'Loading', 'mainwp' ); ?></div>
                 </div>
                 <p></p>
             </div>

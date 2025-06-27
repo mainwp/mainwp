@@ -160,6 +160,13 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         $jobs = $this->get_cron_jobs();
 
+        /**
+         * Hook mainwp_get_cron_jobs_init.
+         *
+         * @since 5.4.1.
+         */
+        $jobs = apply_filters( 'mainwp_get_cron_jobs_init', $jobs, $useWPCron );
+
         foreach ( $jobs as $hook => $recur ) {
             $this->init_mainwp_cron( $useWPCron, $hook, $recur );
         }

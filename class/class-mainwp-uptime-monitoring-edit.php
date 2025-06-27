@@ -375,8 +375,36 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 </div>
                 <?php
             }
-
             ?>
+            <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates">
+                <label class="six wide column middle aligned">
+                <?php
+                MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_check_http_response', get_option( 'mainwp_check_http_response', '' ) );
+                esc_html_e( 'Check site HTTP response after update', 'mainwp' );
+                ?>
+                </label>
+                <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="http-respon-check"  <?php echo ! $individual ? 'fire-event-parent="on-showhide-up-http-codes-element"' : ''; ?> data-tooltip="<?php esc_attr_e( 'Enable if you want your MainWP Dashboard to check child site header response after updates.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                    <input type="checkbox" class="settings-field-value-change-handler" inverted-value="1" name="mainwp_check_http_response" id="mainwp_check_http_response" <?php echo 1 === (int) get_option( 'mainwp_check_http_response', 0 ) ? 'checked="true"' : ''; ?>/>
+                </div>
+            </div>
+            <?php
+            $chk_http_method = get_option( 'mainwp_check_http_response_method', 'head' );
+            $chk_http_method = in_array( $chk_http_method, array( 'get', 'head' ) ) ? $chk_http_method : 'head';
+            ?>
+            <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates" default-indi-value="head" <?php echo 1 !== (int) get_option( 'mainwp_check_http_response', 0 ) ? 'style="display:none"' : ''; ?> hide-element="http-respon-check">
+                <label class="six wide column middle aligned">
+                <?php
+                MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_check_http_response_method', (string) $chk_http_method );
+                esc_html_e( 'Check site HTTP response method', 'mainwp' );
+                ?>
+                </label>
+                <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select Check site HTTP response method. If you are not sure, select "Default".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                    <select class="ui dropdown settings-field-value-change-handler"id="mainwp_check_http_response_method" name="mainwp_check_http_response_method">
+                        <option <?php echo 'head' === $chk_http_method ? 'selected' : ''; ?> value="head"><?php esc_html_e( 'Head (default)', 'mainwp' ); ?></option>
+                        <option <?php echo 'get' === $chk_http_method ? 'selected' : ''; ?> value="get"><?php esc_html_e( 'Get', 'mainwp' ); ?></option>
+                    </select>
+                </div>
+            </div>
             <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-monitor-general" default-indi-value="<?php echo $individual ? -1 : 0; ?>">
                 <label class="six wide column middle aligned">
                 <?php
@@ -397,7 +425,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                     <?php
                 } else {
                     ?>
-                    <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="uptime-monitoring">
+                    <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="uptime-monitoring" <?php echo ! $individual ? 'fire-event-parent="on-showhide-up-http-codes-element"' : ''; ?>>
                         <input type="checkbox" value="1" class="settings-field-value-change-handler" name="mainwp_edit_monitor_active" id="mainwp_edit_monitor_active" <?php echo 1 === (int) $mo_settings['active'] ? 'checked="true"' : ''; ?>/>
                     </div>
                     <?php
@@ -514,15 +542,15 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
             <?php
             $http_error_codes = MainWP_Utility::get_http_codes();
             ?>
-            <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-monitor-general" <?php echo $disableGeneralSitesMonitoring ? 'style="display:none"' : ''; ?> hide-element="uptime-monitoring">
+            <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-monitor-general" <?php echo $disableGeneralSitesMonitoring && 1 !== (int) get_option( 'mainwp_check_http_response', 0 ) ? 'style="display:none"' : ''; ?> hide-element="uptime-monitoring" id="up-http-codes-selection">
                     <label class="six wide column middle aligned">
                     <?php
                     $up_statuscodes = ! empty( $mo_settings['up_status_codes'] ) ? $mo_settings['up_status_codes'] : '';
                     MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_edit_monitor_up_status_codes', $up_statuscodes );
-                    esc_html_e( 'Up HTTP Codes', 'mainwp' );
+                    esc_html_e( 'Up HTTP Codes for HTTP Response and Uptime Monitoring', 'mainwp' );
                     ?>
                     </label>
-                    <div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'Select Up HTTP Codes.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                    <div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'Select Up HTTP Codes for HTTP Response and Uptime Monitoring.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                         <div class="ui multiple selection dropdown" init-value="<?php echo esc_attr( $up_statuscodes ); ?>">
                             <input name="mainwp_edit_monitor_up_status_codes" class="settings-field-value-change-handler" type="hidden">
                             <i class="dropdown icon"></i>
@@ -649,6 +677,19 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                                 }
                             } );
                         } );
+                        document.addEventListener('on-showhide-up-http-codes-element', function() {
+                            let hideCodes = true;
+                            jQuery('[fire-event-parent="on-showhide-up-http-codes-element"]').each(function(){
+                                if(jQuery(this).hasClass('checked')){
+                                    hideCodes = false;
+                                }
+                            });
+                            if(hideCodes){
+                                jQuery('#up-http-codes-selection').fadeOut(100);
+                            }else{
+                                jQuery('#up-http-codes-selection').fadeIn(100);
+                            }
+                        });
                 </script>
 
             <?php if ( $individual ) { ?>

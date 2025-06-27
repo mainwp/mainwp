@@ -128,18 +128,17 @@ class Log_DB extends MainWP_DB {
         }
 
         $record_defaults = array(
-            'site_id'     => null,
-            'user_id'     => null,
-            'user_login'  => null,
-            'created'     => null,
-            'log_type_id' => null,
-            'item'        => null,
-            'connector'   => null,
-            'context'     => null,
-            'action'      => null,
-            'state'       => null,
-            'duration'    => null,
-            'meta'        => array(),
+            'site_id'    => null,
+            'user_id'    => null,
+            'user_login' => null,
+            'created'    => null,
+            'item'       => null,
+            'connector'  => null,
+            'context'    => null,
+            'action'     => null,
+            'state'      => null,
+            'duration'   => null,
+            'meta'       => array(),
         );
 
         // Records can have only these fields.

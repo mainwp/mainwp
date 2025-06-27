@@ -156,7 +156,6 @@ class Log_Manager {
 
         add_filter( 'mainwp_module_log_enable_insert_log_type', array( $this, 'hook_enable_insert_log_type' ), 10, 2 );
         add_filter( 'mainwp_get_cron_jobs_init', array( $this, 'hook_get_cron_jobs_init' ), 10, 2 ); // on/off by change status of use wp cron option.
-        add_filter( 'mainwp_module_logs_changes_logs_sync_params', array( $this, 'hook_changes_logs_sync_params' ), 10, 2 ); // on/off by change status of use wp cron option.
 
         if ( $this->is_enabled_auto_archive_logs() && ! empty( $this->settings->options['records_logs_ttl'] ) ) {
             add_action( 'mainwp_module_log_cron_job_auto_archive', array( $this, 'cron_module_log_auto_archive' ) );
@@ -443,8 +442,6 @@ class Log_Manager {
             } elseif ( 'compact' !== $data['connector'] ) {
                 return Log_Settings::is_action_log_enabled( $data['context'] . '_' . $data['action'], 'dashboard' );
             }
-        } elseif ( is_array( $data ) && isset( $data['log_type_id'] ) ) {
-            return Log_Settings::is_action_log_enabled( $data['log_type_id'], 'changeslogs' );
         }
         return $enabled;
     }
@@ -479,35 +476,5 @@ class Log_Manager {
             update_option( 'mainwp_module_log_last_time_auto_archive_logs', $time );
             update_option( 'mainwp_module_log_next_time_auto_archive_logs', $time + $ttl );
         }
-    }
-
-    /**
-     * Method hook_changes_logs_sync_params()
-     *
-     * @param  string $params Input value.
-     * @param  int    $site_id Site id.
-     * @param  array  $postdata Post data.
-     * @param  object $website The website object
-     *
-     * @return string Empty or json encoded value.
-     *
-     * @since 5.4.1
-     */
-    public function hook_changes_logs_sync_params( $params, $site_id, $postdata = array(), $website = false ) {
-
-        // if it is not a manual sync data.
-        $sync_logs = isset( $_POST['action'] ) && 'mainwp_syncsites' === $_POST['action'] ? true : false;
-        $sync_logs = apply_filters( 'mainwp_module_logs_sync_changes_log', $sync_logs );
-
-        if ( ! $sync_logs ) {
-            return $params;
-        }
-
-        $last_created = Log_Changes_logs_Helper::instance()->get_sync_changes_logs_last_created( $site_id );
-        $events_count = apply_filters( 'mainwp_module_log_changes_logs_sync_count', 100, $site_id, $postdata );
-        return array(
-            'newer_than'   => $last_created,
-            'events_count' => $events_count,
-        );
     }
 }

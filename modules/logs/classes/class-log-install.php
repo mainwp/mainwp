@@ -80,7 +80,6 @@ class Log_Install extends MainWP_Install {
         $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_logs' ) . " (
     log_id bigint(20) NOT NULL auto_increment,
     site_id bigint(20) unsigned NULL,
-    log_type_id bigint NULL DEFAULT NULL,
     item varchar(256) NOT NULL DEFAULT '',
     user_id int(11) unsigned NOT NULL DEFAULT '0',
     user_login varchar(100) NOT NULL,
@@ -187,7 +186,6 @@ class Log_Install extends MainWP_Install {
 
         if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.20', '<' ) ) { // NOSONAR - non-ip.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD COLUMN user_login varchar(100) NOT NULL' ); //phpcs:ignore -- ok.
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD COLUMN log_type_id bigint NULL DEFAULT NULL' ); //phpcs:ignore -- ok.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD INDEX user_login ( user_login )' ); //phpcs:ignore -- ok.
         }
 

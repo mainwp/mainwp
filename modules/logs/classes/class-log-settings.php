@@ -97,12 +97,11 @@ class Log_Settings {
             $logs_data = array(
                 'dashboard'        => array(),
                 'nonmainwpchanges' => array(),
-                'changeslogs'      => array(),
             );
 
             if ( isset( $_POST['mainwp_settings_logs_data'] ) && is_array( $_POST['mainwp_settings_logs_data'] ) ) {
                 $selected_data = $_POST['mainwp_settings_logs_data']; //phpcs:ignore -- NOSONAR -ok.
-                foreach ( array( 'dashboard', 'nonmainwpchanges', 'changeslogs' ) as $type ) {
+                foreach ( array( 'dashboard', 'nonmainwpchanges' ) as $type ) {
                     $selected_type = isset( $selected_data[ $type ] ) && is_array( $selected_data[ $type ] ) ? array_map( 'sanitize_text_field', wp_unslash( $selected_data[ $type ] ) ) : array();
                     foreach ( $selected_type as $name ) {
                         $logs_data[ $type ][ $name ] = 1;
@@ -112,7 +111,7 @@ class Log_Settings {
 
             if ( isset( $_POST['mainwp_settings_logs_name'] ) && is_array( $_POST['mainwp_settings_logs_name'] ) ) {
                 $name_data = $_POST['mainwp_settings_logs_name']; //phpcs:ignore -- NOSONAR -ok.
-                foreach ( array( 'dashboard', 'nonmainwpchanges', 'changeslogs' ) as $type ) {
+                foreach ( array( 'dashboard', 'nonmainwpchanges' ) as $type ) {
                     $name_type = isset( $name_data[ $type ] ) && is_array( $name_data[ $type ] ) ? array_map( 'sanitize_text_field', wp_unslash( $name_data[ $type ] ) ) : array();
                     foreach ( $name_type as $name ) {
                         if ( ! isset( $logs_data[ $type ][ $name ] ) ) {
@@ -319,7 +318,7 @@ class Log_Settings {
      */
     public static function is_action_log_enabled( $name, $type = 'dashboard' ) {
 
-        if ( ! in_array( $type, array( 'dashboard', 'nonmainwpchanges', 'changeslogs' ) ) ) {
+        if ( ! in_array( $type, array( 'dashboard', 'nonmainwpchanges' ) ) ) {
             return true;
         }
 
@@ -369,12 +368,9 @@ class Log_Settings {
             <div class="ten wide column" <?php echo $setting_page ? 'data-tooltip="' . esc_attr__( 'Select which types of site changes should be recorded in the logs. Only checked items will generate log entries, helping you focus on the most relevant activity.', 'mainwp' ) . '"' : ''; ?> data-inverted="" data-position="top left">
                 <?php
                 foreach ( $list_logs as $type => $items ) {
-
-                    if ( 'changeslogs_list' !== $type ) {
-                        ?>
-                        <div class="ui header"><?php echo 'dashboard' === $type ? esc_html__( 'Events triggered from MainWP Dashboard', 'mainwp' ) : esc_html__( 'Non-MainWP Changes - Events triggered on child sites', 'mainwp' ); ?></div>
-                        <?php
-                    }
+                    ?>
+                    <div class="ui header"><?php echo 'dashboard' === $type ? esc_html__( 'Events triggered from MainWP Dashboard', 'mainwp' ) : esc_html__( 'Non-MainWP Changes - Events triggered on child sites', 'mainwp' ); ?></div>
+                    <?php
                     ?>
                     <ul class="mainwp_hide_wpmenu_checkboxes">
                     <?php
@@ -384,27 +380,6 @@ class Log_Settings {
                             if ( static::is_action_log_enabled( $name, $type ) ) {
                                 $_selected = 'checked';
                             }
-                            ?>
-                            <li>
-                                <div class="ui checkbox">
-                                    <input type="checkbox" class="settings-field-value-change-handler" id="mainwp_select_logs_<?php echo esc_attr( $type ); ?>_<?php echo esc_attr( $name ); ?>" name="mainwp_settings_logs_data[<?php echo esc_attr( $type ); ?>][]" <?php echo esc_html( $_selected ); ?> value="<?php echo esc_attr( $name ); ?>">
-                                    <label for="mainwp_select_logs_<?php echo esc_attr( $type ); ?>_<?php echo esc_attr( $name ); ?>" ><?php echo esc_html( $title ); ?></label>
-                                </div>
-                                <input type="hidden" name="mainwp_settings_logs_name[<?php echo esc_attr( $type ); ?>][]" value="<?php echo esc_attr( $name ); ?>">
-                            </li>
-                            <?php
-                        }
-                    } elseif ( 'changeslogs_list' === $type ) {
-
-                        foreach ( $items as $item ) {
-                            $name  = $item['type_id'];
-                            $title = $item['desc'];
-
-                            $_selected = '';
-                            if ( static::is_action_log_enabled( $name, $type ) ) {
-                                $_selected = 'checked';
-                            }
-
                             ?>
                             <li>
                                 <div class="ui checkbox">
@@ -514,8 +489,6 @@ class Log_Settings {
                 'core_updated'      => __( 'WordPress Core Updated', 'mainwp' ),
             ),
         );
-
-        $logs['changeslogs_list'] = Log_Changes_logs_Helper::get_changes_logs_types();
 
         if ( 'unlogs' === $type ) {
             return $init_un_logs;

@@ -365,11 +365,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             }
             $title = sprintf( $format_title, esc_html( $title ) );
         }
-        $action = $title;
-        if ( ! empty( $record->log_type_id ) ) {
-            $action = $this->parse_event_changes_title( $record, $action );
-        }
-        return $action;
+        return $title;
     }
 
     /**
@@ -384,19 +380,12 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
         $act = $record->action;
 
-        if ( ! empty( $record->log_type_id ) ) {
+        if ( ! isset( $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ] ) ) {
             $title = $act;
-            if ( 15028 === (int) $record->log_type_id ) {
-                $title = esc_html__( 'Modified', 'mainwp' );
-            }
         } else {
-            if ( ! isset( $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ] ) ) {
-                $title = $act;
-            } else {
-                $title = $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ];
-            }
-            $title = is_string( $title ) ? ucfirst( $title ) : $title;
+            $title = $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ];
         }
+        $title = is_string( $title ) ? ucfirst( $title ) : $title;
 
         if ( $coloring ) {
             $format_title = '<span class="ui medium text">%s</span>';
@@ -441,28 +430,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             }
         }
 
-        if ( empty( $record->log_type_id ) ) {
-            $title = $roll_msg . esc_html( $title ) . $this->get_context_title( $record->context, $record->connector );
-        }
+        $title = $roll_msg . esc_html( $title ) . $this->get_context_title( $record->context, $record->connector );
 
         return $title;
-    }
-
-    /**
-     * Parse event changes logs title.
-     *
-     * @param object $record  Log record object.
-     * @param title  $title  Default title.
-     * @return string
-     */
-    public function parse_event_changes_title( $record, $title = '' ) {
-        $data = array();
-        if ( 15028 === (int) $record->log_type_id ) {
-            $data = array( 'action' => 'enabled' === $record->action ? 'Enabled' : 'Disabled' );
-        }
-        $parse_title = Log_Changes_logs_Helper::get_log_title( $record->log_type_id, $data );
-
-        return ! empty( $parse_title ) ? $parse_title : $title;
     }
 
     /**

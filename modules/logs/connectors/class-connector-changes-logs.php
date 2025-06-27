@@ -24,7 +24,7 @@ class Connector_Changes_Logs extends Log_Connector {
      *
      * @var string Connector slug.
      * */
-    public $name = 'non-mainwp-changes'; //same connector with connector at the file: class-connector-non-mainwp-changes.php.
+    public $name = 'non-mainwp-changes'; // same connector with connector at the file: class-connector-non-mainwp-changes.php.
 
     /**
      * Actions names.

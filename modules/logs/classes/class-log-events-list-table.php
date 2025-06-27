@@ -234,8 +234,8 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 break;
             case 'event':
                 $event_label = $this->get_event_title( $record, 'action', true );
-                $out     = $event_label;
-                $escaped = true;
+                $out         = $event_label;
+                $escaped     = true;
                 break;
             case 'action':
                 $act_label = $this->get_action_title( $record, $record->action, 'action' );

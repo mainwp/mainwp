@@ -370,8 +370,6 @@ class Log_Settings {
                 foreach ( $list_logs as $type => $items ) {
                     ?>
                     <div class="ui header"><?php echo 'dashboard' === $type ? esc_html__( 'Events triggered from MainWP Dashboard', 'mainwp' ) : esc_html__( 'Non-MainWP Changes - Events triggered on child sites', 'mainwp' ); ?></div>
-                    <?php
-                    ?>
                     <ul class="mainwp_hide_wpmenu_checkboxes">
                     <?php
                     if ( in_array( $type, array( 'dashboard', 'nonmainwpchanges' ) ) ) {

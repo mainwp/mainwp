@@ -147,6 +147,23 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
+= 5.4.0.14 - Maintenance Release - 6-24-2025 =
+
+* Fixed: Corrected permissions logic to ensure users without "Manage Extensions" permission can still access extension features they are authorized to use. [(#801)](https://github.com/mainwp/mainwp/issues/801)
+* Fixed: Resolved an issue where ignored plugin updates incorrectly appeared in the "Ignored Themes" list after being unignored.
+* Fixed: Corrected the ignore functionality to properly handle version-specific ignores, ensuring updates ignored for one version only don't automatically ignore subsequent versions. [(#802)](https://github.com/mainwp/mainwp/issues/802)
+* Fixed: Resolved an issue where backup deletions through the Kinsta API integration were not working properly.
+
+= 5.4.0.13 - Maintenance Release - 6-17-2025 =
+
+* Fixed: Resolved DataTables warning occurring on the "Sites Changes" widget table on the "Overview" page for certain configurations.
+* Fixed: Resolved issue where adding a site would fail for Team Control roles lacking "Manage Clients" and/or "Bulk Install & Activate Extensions" permissions. [(#799)](https://github.com/mainwp/mainwp/issues/799)
+* Fixed: Corrected update counter displaying updates from disconnected sites while those updates weren't shown in the actual updates list. [(#798)](https://github.com/mainwp/mainwp/issues/798)
+* Fixed: Prevented Uptime Monitor notifications from being incorrectly sent immediately after adding a new site on the first heartbeat.
+* Updated: Enhanced updates progress indicator icon to support upcoming regression testing add-on changes.
+* Updated: Implemented improvements for better PHP 8.4 compatibility to ensure smooth operation with newer PHP versions.
+* Updated: Modified information notice regarding end of support for deprecated PHP versions.
+
 = 5.4.0.12 - Maintenance Release - 6-10-2025 =
 
 * Security: Fixed multiple XSS vulnerabilities in administrator areas including Tags Notes, Client Notes, Create Category, Contact Name, and Cost Tracker Notes fields. All vulnerabilities required administrator privileges to exploit. Update to version 5.4.0.12 required.

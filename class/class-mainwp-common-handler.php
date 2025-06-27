@@ -61,7 +61,7 @@ class MainWP_Common_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $supported_db_updater_plugins = apply_filters( 'mainwp_database_updater_supported_plugins', array() );
         }
 
-        $sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, $get_fields, $is_staging );
+        $sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, $get_fields, $is_staging, array( 'connected' => 'yes' ) );
 
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();
 

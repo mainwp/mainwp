@@ -233,19 +233,16 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $escaped = true;
                 break;
             case 'event':
-                $event_label = $this->get_event_title( $record, 'action', true );
-                $out     = $event_label;
+                $out     = $this->get_event_title( $record, 'action', true );
                 $escaped = true;
                 break;
             case 'action':
-                $act_label = $this->get_action_title( $record, $record->action, 'action' );
-                $out       = $act_label;
-                $escaped   = true;
+                $out     = $this->get_action_title( $record, $record->action, 'action' );
+                $escaped = true;
                 break;
             case 'log_object':
-                $event_title = $this->parse_event_title( $record );
-                $out         = $event_title;
-                $escaped     = true;
+                $out     = $this->get_object_title( $record );
+                $escaped = true;
                 break;
             case 'created':
                 $child_time = MainWP_Utility::format_timezone( (int) $record->created, $site_dtf );
@@ -418,7 +415,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * @param object $record  Log record object.
      * @return string
      */
-    public function parse_event_title( $record ) {
+    public function get_object_title( $record ) {
         $extra_meta = ! empty( $record->extra_meta ) ? json_decode( $record->extra_meta, true ) : array();
         if ( ! is_array( $extra_meta ) ) {
             $extra_meta = array();
@@ -434,6 +431,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             $title = esc_html__( 'Website', 'mainwp' );
         } elseif ( 'non-mainwp-changes' === $record->connector ) {
             $title = esc_html( $record->item );
+            if ( ! empty( $record->log_type_id ) ) {
+                $title = $this->get_changes_object_title( $record );
+            }
         } elseif ( isset( $extra_meta['name'] ) ) {
             $title = $extra_meta['name'];
             if ( 'installer' === $record->connector && ! empty( $extra_meta['rollback_info'] ) ) {
@@ -460,7 +460,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         if ( 15028 === (int) $record->log_type_id ) {
             $data = array( 'action' => 'enabled' === $record->action ? 'Enabled' : 'Disabled' );
         }
-        $parse_title = Log_Changes_logs_Helper::get_log_title( $record->log_type_id, $data );
+        $parse_title = Log_Changes_Logs_Helper::get_log_title( $record->log_type_id, $data );
 
         return ! empty( $parse_title ) ? $parse_title : $title;
     }
@@ -502,6 +502,16 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         }
 
         return $title;
+    }
+
+    /**
+     * Parse changes logs object title.
+     *
+     * @param object $record  Log record object.
+     * @return string
+     */
+    public function get_changes_object_title( $record ) {
+        return esc_html( ucfirst( $record->context ) );
     }
 
     /**

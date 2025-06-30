@@ -437,14 +437,14 @@ class Log_Manager {
      * @return bool True: Enable log.
      */
     public function hook_enable_insert_log_type( $enabled, $data ) {
-        if ( is_array( $data ) && isset( $data['connector'] ) && isset( $data['context'] ) && isset( $data['action'] ) ) {
+        if ( is_array( $data ) && ! empty( $data['log_type_id'] ) ) {
+            return Log_Settings::is_action_log_enabled( $data['log_type_id'], 'changeslogs' );
+        } elseif ( is_array( $data ) && isset( $data['connector'] ) && isset( $data['context'] ) && isset( $data['action'] ) ) {
             if ( 'non-mainwp-changes' === $data['connector'] ) {
                 return Log_Settings::is_action_log_enabled( $data['context'] . '_' . $data['action'], 'nonmainwpchanges' );
             } elseif ( 'compact' !== $data['connector'] ) {
                 return Log_Settings::is_action_log_enabled( $data['context'] . '_' . $data['action'], 'dashboard' );
             }
-        } elseif ( is_array( $data ) && isset( $data['log_type_id'] ) ) {
-            return Log_Settings::is_action_log_enabled( $data['log_type_id'], 'changeslogs' );
         }
         return $enabled;
     }
@@ -503,7 +503,7 @@ class Log_Manager {
             return $params;
         }
 
-        $last_created = Log_Changes_logs_Helper::instance()->get_sync_changes_logs_last_created( $site_id );
+        $last_created = Log_Changes_Logs_Helper::instance()->get_sync_changes_logs_last_created( $site_id );
         $events_count = apply_filters( 'mainwp_module_log_changes_logs_sync_count', 100, $site_id, $postdata );
         return array(
             'newer_than'   => $last_created,

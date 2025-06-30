@@ -80,7 +80,7 @@ class Log_Install extends MainWP_Install {
         $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_logs' ) . " (
     log_id bigint(20) NOT NULL auto_increment,
     site_id bigint(20) unsigned NULL,
-    log_type_id bigint NULL DEFAULT NULL,
+    log_type_id bigint NOT NULL DEFAULT 0,
     item varchar(256) NOT NULL DEFAULT '',
     user_id int(11) unsigned NOT NULL DEFAULT '0',
     user_login varchar(100) NOT NULL,

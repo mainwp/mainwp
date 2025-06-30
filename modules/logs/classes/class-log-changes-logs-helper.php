@@ -12,11 +12,11 @@ namespace MainWP\Dashboard\Module\Log;
 use MainWP\Dashboard\MainWP_DB;
 
 /**
- * Class Log_Changes_logs_Helper
+ * Class Log_Changes_Logs_Helper
  *
  * @package MainWP\Dashboard
  */
-class Log_Changes_logs_Helper {
+class Log_Changes_Logs_Helper {
 
 
     /**
@@ -25,13 +25,6 @@ class Log_Changes_logs_Helper {
      * @var mixed Default null
      */
     protected static $instance = null;
-
-    /**
-     * Holds the array with the event types
-     *
-     * @var array
-     */
-    private static $event_action_types = array();
 
     /**
      * Holds the last log created time.
@@ -113,6 +106,7 @@ class Log_Changes_logs_Helper {
 
         $sync_last_created = $this->get_sync_changes_logs_last_created( $site_id );
         $new_last_created  = 0;
+        $created_success   = false;
 
         foreach ( $sync_changes as $data ) {
 
@@ -154,30 +148,27 @@ class Log_Changes_logs_Helper {
             $created  = isset( $data['created_on'] ) ? (float) ( $data['created_on'] ) : microtime( true );
 
             $record_mapping = array(
-                'site_id'    => $site_id,
-                'user_id'    => $user_id,
-                'user_login' => $user_login,
-                'created'    => $created,
-                'context'    => $context,
-                'action'     => $action,
-                'state'      => 1,
-                'duration'   => $duration,
-                'meta'       => $meta,
+                'site_id'     => $site_id,
+                'user_id'     => $user_id,
+                'user_login'  => $user_login,
+                'created'     => $created,
+                'context'     => $context,
+                'action'      => $action,
+                'state'       => 1,
+                'duration'    => $duration,
+                'meta'        => $meta,
+                'log_type_id' => $type_id,
             );
 
-            if ( null !== $type_id ) {
-                $record_mapping['log_type_id'] = $type_id;
-            }
-
             $sum = 'wordpress' !== $record_mapping['context'] ? esc_html( ucfirst( rtrim( $record_mapping['context'], 's' ) ) ) : 'WordPress'; //phpcs:ignore -- wordpress text.
-            if ( 'wordpress' === $record_mapping['context'] ) {
-                $sum = 'WordPress';
-            }
             $record_mapping['item'] = $sum;
-            do_action( 'mainwp_sync_site_log_changes_logs', $website, $record_mapping );
+            $inserted_id            = apply_filters( 'mainwp_sync_site_log_changes_logs', false, $website, $record_mapping );
+            if ( $inserted_id ) {
+                $created_success = true;
+            }
         }
 
-        if ( $new_last_created ) {
+        if ( $new_last_created && $created_success ) {
             MainWP_DB::instance()->update_website_option( $site_id, 'changes_logs_sync_last_created', $new_last_created );
         }
 
@@ -206,14 +197,14 @@ class Log_Changes_logs_Helper {
     /**
      * Method map_change_logs_context()
      *
-     * @param string $type Logs type code.
+     * @param int $type_id Logs type code.
      *
      * @return string Dashboard logs context to store in db.
      */
-    public function map_change_logs_context( $type ) {
-        $context = isset( $this->get_changes_logs_types( $type )['object'] ) ? $this->get_changes_logs_types( $type )['object'] : '';
+    public function map_change_logs_context( $type_id ) {
+        $context = isset( $this->get_changes_logs_types( $type_id )['object'] ) ? $this->get_changes_logs_types( $type_id )['object'] : '';
         $context = 'cron-job' === $context ? 'cron' : $context;
-        return \apply_filters( 'mainwp_module_log_changes_logs_mapping_contexts', $context, $type );
+        return \apply_filters( 'mainwp_module_log_changes_logs_mapping_contexts', $context, $type_id );
     }
 
     /**
@@ -325,10 +316,12 @@ class Log_Changes_logs_Helper {
     /**
      * Method get_changes_logs_types().
      *
+     * @param int $type_id Logs type code.
+     *
      * @return array data.
      */
-    public static function get_changes_logs_types() { //phpcs:ignore -- NOSONAR - long function.
-        return array(
+    public static function get_changes_logs_types( $type_id = null ) { //phpcs:ignore -- NOSONAR - long function.
+        $defaults = array(
             // Post.
             12000 => array(
                 'type_id'    => 12000,
@@ -1987,5 +1980,10 @@ class Log_Changes_logs_Helper {
                 'event_type' => 'deleted',
             ),
         );
+
+        if ( null !== $type_id ) {
+            return is_scalar( $type_id ) && isset( $defaults[ $type_id ] ) ? $defaults[ $type_id ] : array();
+        }
+        return $defaults;
     }
 }

@@ -536,8 +536,8 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $done = true;
         }
 
-        if ( ! empty( $information['changes_logs_data'] ) && class_exists( '\MainWP\Dashboard\Module\Log\Log_Changes_logs_Helper' ) ) {
-            \MainWP\Dashboard\Module\Log\Log_Changes_logs_Helper::instance()->sync_changes_logs( $pWebsite->id, $information['changes_logs_data'], $pWebsite );
+        if ( ! empty( $information['changes_logs_data'] ) && class_exists( '\MainWP\Dashboard\Module\Log\Log_Changes_Logs_Helper' ) ) {
+            \MainWP\Dashboard\Module\Log\Log_Changes_Logs_Helper::instance()->sync_changes_logs( $pWebsite->id, $information['changes_logs_data'], $pWebsite );
             $done = true;
         }
 

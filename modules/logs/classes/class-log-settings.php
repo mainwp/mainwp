@@ -515,7 +515,7 @@ class Log_Settings {
             ),
         );
 
-        $logs['changeslogs_list'] = Log_Changes_logs_Helper::get_changes_logs_types();
+        $logs['changeslogs_list'] = Log_Changes_Logs_Helper::get_changes_logs_types();
 
         if ( 'unlogs' === $type ) {
             return $init_un_logs;

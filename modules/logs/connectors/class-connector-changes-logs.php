@@ -24,7 +24,16 @@ class Connector_Changes_Logs extends Log_Connector {
      *
      * @var string Connector slug.
      * */
-    public $name = 'non-mainwp-changes'; // same connector with connector at the file: class-connector-non-mainwp-changes.php.
+    public $name = 'changes-logs'; // same connector with connector at the file: class-connector-non-mainwp-changes.php.
+
+
+    /**
+     * Specific connector.
+     *
+     * @var string Specific connector slug.
+     * */
+    public $connector = 'non-mainwp-changes'; // same connector with connector at the file: class-connector-non-mainwp-changes.php.
+
 
     /**
      * Actions names.
@@ -86,7 +95,9 @@ class Connector_Changes_Logs extends Log_Connector {
         if ( empty( $website ) || ! is_array( $record ) || empty( $record['created'] ) ) {
             return;
         }
-        $record['connector'] = $this->name;
+
+        $record['connector'] = $this->connector;
+
         $this->log_record( $record );
     }
 }

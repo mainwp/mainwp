@@ -142,8 +142,16 @@ class Log_Changes_Logs_Helper {
             $meta                   = array();
             $meta['user_meta_json'] = wp_json_encode( $user_meta );
 
-            $action   = isset( $data['event_type'] ) ? $this->map_changes_action( $data['event_type'] ) : '';
-            $context  = isset( $data['log_type_id'] ) ? $this->map_change_logs_context( $data['log_type_id'] ) : '';
+            $action = isset( $data['event_type'] ) ? $this->map_changes_action( $data['event_type'] ) : '';
+
+            $context = '';
+
+            if ( isset( $data['object'] ) ) {
+                $context = $this->map_change_logs_context( $data['object'] );
+            } elseif ( isset( $data['log_type_id'] ) ) {
+                $context = $this->map_change_logs_context( '', $data['log_type_id'] );
+            }
+
             $duration = isset( $data['duration'] ) ? sanitize_text_field( $data['duration'] ) : 0; // sanitize_text_field for seconds.
             $created  = isset( $data['created_on'] ) ? (float) ( $data['created_on'] ) : microtime( true );
 
@@ -197,12 +205,15 @@ class Log_Changes_Logs_Helper {
     /**
      * Method map_change_logs_context()
      *
-     * @param int $type_id Logs type code.
+     * @param string $context Log context|object.
+     * @param int    $type_id Logs type code.
      *
      * @return string Dashboard logs context to store in db.
      */
-    public function map_change_logs_context( $type_id ) {
-        $context = isset( $this->get_changes_logs_types( $type_id )['object'] ) ? $this->get_changes_logs_types( $type_id )['object'] : '';
+    public function map_change_logs_context( $context, $type_id = 0 ) {
+        if ( empty( $context ) && ! empty( $type_id ) ) {
+            $context = isset( $this->get_changes_logs_types( $type_id )['object'] ) ? $this->get_changes_logs_types( $type_id )['object'] : '';
+        }
         $context = 'cron-job' === $context ? 'cron' : $context;
         return \apply_filters( 'mainwp_module_log_changes_logs_mapping_contexts', $context, $type_id );
     }

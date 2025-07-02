@@ -156,7 +156,6 @@ class Log_Manager {
 
         add_filter( 'mainwp_module_log_enable_insert_log_type', array( $this, 'hook_enable_insert_log_type' ), 10, 2 );
         add_filter( 'mainwp_get_cron_jobs_init', array( $this, 'hook_get_cron_jobs_init' ), 10, 2 ); // on/off by change status of use wp cron option.
-        add_filter( 'mainwp_module_logs_changes_logs_sync_params', array( $this, 'hook_changes_logs_sync_params' ), 10, 2 ); // on/off by change status of use wp cron option.
 
         if ( $this->is_enabled_auto_archive_logs() && ! empty( $this->settings->options['records_logs_ttl'] ) ) {
             add_action( 'mainwp_module_log_cron_job_auto_archive', array( $this, 'cron_module_log_auto_archive' ) );

@@ -1782,7 +1782,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                     <?php } elseif ( 'tags' === $column_name ) { ?>
                         <?php echo MainWP_System_Utility::get_site_tags_belong( $website ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
                         <?php
-                    } elseif ( 'client_name' === $column_name ) { ?>
+                    } elseif ( 'client_name' === $column_name ) {
+                        ?>
                         <?php if ( ! empty( $website['client_name'] ) ) : ?>
                             <a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website['client_id'] ); ?>">
                                 <?php echo $client_image; //phpcs:ignore -- NOSONAR - ok.?> <?php echo esc_html( $website['client_name'] ); ?>
@@ -1790,7 +1791,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         <?php else : ?>
                             <?php echo $client_image; //phpcs:ignore -- NOSONAR - ok.?> <span><?php echo esc_html( 'Unassigned' ); ?></span>
                         <?php endif; ?>
-                    <?php } elseif ( 'update' === $column_name ) {
+                        <?php
+                    } elseif ( 'update' === $column_name ) {
                         $ignored_info = ! empty( $total_ignored_updates ) ? ' (' . (int) $total_ignored_updates . ' updates ignored)' : '';
                         ?>
                         <a data-tooltip="<?php echo ! empty( $website['dtsSync'] ) ? esc_attr__( 'Last sync: ', 'mainwp' ) . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['dtsSync'] ) ) : ''; echo $ignored_info; //phpcs:ignore -- ok. ?> " data-position="left center" data-inverted="" class="ui mini <?php echo esc_attr( MainWP_Utility::mainwp_get_update_count_class( $total_updates ) ); ?> button" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>">

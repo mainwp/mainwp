@@ -302,7 +302,7 @@ class Log_Manager {
 
         MainWP_Utility::array_sort_existed_keys( $sync_actions, 'created', SORT_NUMERIC );
 
-        $sync_last_created = $this->get_sync_actions_last_created( $site_id );
+        $sync_last_created = (float) $this->get_sync_actions_last_created( $site_id );
 
         $new_last_created = 0;
 
@@ -311,12 +311,14 @@ class Log_Manager {
                 continue;
             }
 
-            if ( (float) $data['created'] <= (float) $sync_last_created ) {
+            $item_created = round( (float) $data['created'], 4 ); // to fix float comparing issue.
+
+            if ( $item_created <= $sync_last_created ) {
                 continue;
             }
 
-            if ( $new_last_created < $data['created'] ) {
-                $new_last_created = $data['created'];
+            if ( $new_last_created < $item_created ) {
+                $new_last_created = $item_created;
             }
 
             $user_meta  = array();

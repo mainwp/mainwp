@@ -9,8 +9,6 @@
 
 namespace MainWP\Dashboard;
 
-use MainWP\Dashboard\Module\Log\Log_Manager;
-
 /**
  * Class MainWP_Sync
  *
@@ -530,7 +528,9 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             if ( is_array( $information['child_site_actions_data'] ) && isset( $information['child_site_actions_data']['connected_admin'] ) ) {
                 unset( $information['child_site_actions_data']['connected_admin'] );
             }
-            Log_Manager::instance()->sync_log_site_actions( $pWebsite->id, $information['child_site_actions_data'], $pWebsite );
+            if ( class_exists( '\MainWP\Dashboard\Module\Log\Log_Manager' ) ) {
+                \MainWP\Dashboard\Module\Log\Log_Manager::instance()->sync_log_site_actions( $pWebsite->id, $information['child_site_actions_data'], $pWebsite );
+            }
             $done = true;
         }
 

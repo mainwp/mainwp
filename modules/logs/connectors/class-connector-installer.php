@@ -79,7 +79,7 @@ class Connector_Installer extends Log_Connector {
      *
      * @action mainwp_install_update_actions.
      *
-     * @param array  $website  website.
+     * @param object $website  website.
      * @param string $pAction install action.
      * @param array  $data data result.
      * @param string $type action type.
@@ -259,11 +259,15 @@ class Connector_Installer extends Log_Connector {
         foreach ( $action_data as $item ) {
             $item = $this->sanitize_data( $item );
             if ( ! empty( $item ) && isset( $item['name'] ) ) {
-                $logs_args[] = array(
+                $log_arg = array(
                     'name'    => $item['name'],
                     'version' => $item['version'],
                     'slug'    => $item['slug'],
                 );
+                if ( ! empty( $item['created'] ) ) {
+                    $log_arg['created'] = $item['created'];
+                }
+                $logs_args[] = $log_arg;
             }
         }
 
@@ -282,9 +286,8 @@ class Connector_Installer extends Log_Connector {
 
         $state = 1;
 
-        $count_bulk = count( $logs_args );
         foreach ( $logs_args as $args ) {
-            $args['duration_bulk'] = $count_bulk;
+            $args['duration_bulk'] = is_array( $params ) && ! empty( $params['duration_bulk'] ) ? $params['duration_bulk'] : count( $logs_args );
             $this->log(
                 $message,
                 $args,

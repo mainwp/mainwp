@@ -306,6 +306,10 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         ?>
         <div class="mainwp-primary-content-wrap">
         <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
+        <?php
+            do_action( 'mainwp_module_log_render_db_update_notice' );
+            do_action( 'mainwp_module_log_render_db_size_notice' );
+        ?>
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'client-widgets' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="client-widgets"></i>
@@ -323,6 +327,12 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             do_action( 'mainwp_before_overview_widgets', 'clients' );
             ?>
             <div id="mainwp-grid-wrapper" class="gridster">
+                <div id="mainwp-widgets-placeholder" class="ui page dimmer">
+                    <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
+                </div>
+                <script>
+                jQuery('#mainwp-widgets-placeholder').dimmer('show');
+                </script>
                 <?php MainWP_UI::do_widget_boxes( $screen->id ); ?>
         </div>
             <?php
@@ -349,7 +359,7 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 return false;
             };
             jQuery('#reset-clients-overview-settings').on('click', function () {
-                mainwp_confirm(__('Are you sure.'), function(){
+                mainwp_confirm(__('Are you sure?'), function(){
                     jQuery('.mainwp_hide_wpmenu_checkboxes input[name="mainwp_show_widgets[]"]').prop('checked', true);
                     jQuery('input[name=reset_client_overview_settings]').attr('value', 1);
                     jQuery('#submit-client-overview-settings').click();

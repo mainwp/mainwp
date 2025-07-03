@@ -139,12 +139,8 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         ?>
         <div id="mainwp-manage-extensions">
-            <div class="mainwp-extensions-api-loading" style="display:none">
-                <div class="ui active inverted page dimmer">
-                    <div class="ui medium text loader"></div>
-                </div>
-            </div>
             <div class="mainwp-main-content">
+                
                 <?php if ( empty( $extensions ) && empty( $extensions_disabled ) ) { ?>
                     <?php static::render_intro_notice(); ?>
                 <?php } else { ?>
@@ -179,6 +175,11 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         <div class="ui info message"><?php esc_html_e( 'Your search returned no results. The add-on may need to be installed or does not exist.' ); ?></div>
                     </div>
                     <div class="ui segment">
+                        <div class="mainwp-extensions-api-loading" style="display:none">
+                            <div class="ui active dimmer">
+                                <div class="ui double text loader"></div>
+                            </div>
+                        </div>
                         <div class="ui four cards" id="mainwp-extensions-list">
                             <?php if ( isset( $extensions ) && is_array( $extensions ) ) { ?>
                                 <?php foreach ( $extensions as $extension ) { ?>
@@ -362,7 +363,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 <div class="item"><?php esc_html_e( 'Critical Security & Performance updates for MainWP Add-ons', 'mainwp' ); ?></div>
                 <div class="item"><?php esc_html_e( 'Priority support via Helpdesk & Community for MainWP products', 'mainwp' ); ?></div>
             </div>
-            <a class="ui basic green button" href="https://mainwp.com/mainwp-extensions/" target="_blank"><?php esc_html_e( 'Browse All Add-ons', 'mainwp' ); ?></a> <a class="ui green button" href="https://mainwp.com/free-vs-pro/" target="_blank"><?php esc_html_e( 'Free Vs. Pro', 'mainwp' ); ?></a> <a class="ui green button" href="https://mainwp.com/signup/" target="_blank"><?php esc_html_e( 'Get Pro', 'mainwp' ); ?></a> <?php // NOSONAR - noopener - open safe. ?>
+            <a class="ui basic green button" href="https://mainwp.com/mainwp-add-ons/" target="_blank"><?php esc_html_e( 'Browse All Add-ons', 'mainwp' ); ?></a> <a class="ui green button" href="https://mainwp.com/free-vs-pro/" target="_blank"><?php esc_html_e( 'Free Vs. Pro', 'mainwp' ); ?></a> <a class="ui green button" href="https://mainwp.com/signup/" target="_blank"><?php esc_html_e( 'Get Pro', 'mainwp' ); ?></a> <?php // NOSONAR - noopener - open safe. ?>
             <h2 class="header"><?php esc_html_e( 'How to install your MainWP Add-ons?', 'mainwp' ); ?></h2>
             <p><?php printf( esc_html__( 'Once you have ordered MainWP Add-ons, you can either use the %1$sautomatic add-on installation%2$s option or %3$smanual installation%4$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/install-extensions/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://mainwp.com/kb/my-downloads-and-api-keys/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></p> <?php // NOSONAR - noopener - open safe. ?>
         </div>

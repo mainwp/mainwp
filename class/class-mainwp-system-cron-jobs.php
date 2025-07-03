@@ -163,7 +163,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         /**
          * Hook mainwp_get_cron_jobs_init.
          *
-         * @since 5.4.1.
+         * @since 5.5.
          */
         $jobs = apply_filters( 'mainwp_get_cron_jobs_init', $jobs, $useWPCron );
 

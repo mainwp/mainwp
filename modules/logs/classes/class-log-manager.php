@@ -486,13 +486,12 @@ class Log_Manager {
      * @param  string $params Input value.
      * @param  int    $site_id Site id.
      * @param  array  $postdata Post data.
-     * @param  object $website The website object
      *
      * @return string Empty or json encoded value.
      *
-     * @since 5.4.1
+     * @since 5.5
      */
-    public function hook_changes_logs_sync_params( $params, $site_id, $postdata = array(), $website = false ) {
+    public function hook_changes_logs_sync_params( $params, $site_id, $postdata = array() ) {
 
         // if it is not a manual sync data.
         $sync_logs = isset( $_POST['action'] ) && 'mainwp_syncsites' === $_POST['action'] ? true : false;

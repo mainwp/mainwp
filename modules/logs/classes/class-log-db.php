@@ -76,7 +76,7 @@ class Log_DB extends MainWP_DB {
         /**
          * Hook mainwp_module_log_enable_insert_log_type.
          *
-         * @since 5.4.1.
+         * @since 5.5.
          */
         $enable_log_type = apply_filters( 'mainwp_module_log_enable_insert_log_type', true, $record );
 

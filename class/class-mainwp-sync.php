@@ -188,6 +188,8 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 $postdata['sync_regverify'] = 1;
             }
 
+            $postdata['params_logs'] = apply_filters( 'mainwp_module_logs_changes_logs_sync_params', '', $pWebsite->id, $postdata, $pWebsite );
+
             $synclist             = MainWP_Settings::get_instance()->get_data_list_to_sync();
             $postdata['syncdata'] = wp_json_encode( $synclist );
 

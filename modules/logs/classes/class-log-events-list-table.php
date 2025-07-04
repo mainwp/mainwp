@@ -362,7 +362,11 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             }
             $title = sprintf( $format_title, esc_html( $title ) );
         }
-        return $title;
+        $action = $title;
+        if ( ! empty( $record->log_type_id ) ) {
+            $action = $this->parse_event_changes_title( $record, $action );
+        }
+        return $action;
     }
 
     /**
@@ -377,12 +381,19 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
         $act = $record->action;
 
-        if ( ! isset( $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ] ) ) {
+        if ( ! empty( $record->log_type_id ) ) {
             $title = $act;
+            if ( 15028 === (int) $record->log_type_id ) {
+                $title = esc_html__( 'Modified', 'mainwp' );
+            }
         } else {
-            $title = $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ];
+            if ( ! isset( $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ] ) ) {
+                $title = $act;
+            } else {
+                $title = $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ];
+            }
+            $title = is_string( $title ) ? ucfirst( $title ) : $title;
         }
-        $title = is_string( $title ) ? ucfirst( $title ) : $title;
 
         if ( $coloring ) {
             $format_title = '<span class="ui medium text">%s</span>';
@@ -430,7 +441,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             }
         }
 
-        $title = $roll_msg . esc_html( $title ) . $this->get_context_title( $record->context, $record->connector );
+        if ( empty( $record->log_type_id ) ) {
+            $title = $roll_msg . esc_html( $title ) . $this->get_context_title( $record->context, $record->connector );
+        }
 
         return $title;
     }

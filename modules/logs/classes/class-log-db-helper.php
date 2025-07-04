@@ -317,6 +317,21 @@ class Log_DB_Helper extends MainWP_DB {
         return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_logs' ) . " WHERE site_id=%d AND `connector` = 'non-mainwp-changes' AND log_type_id = 0 ORDER BY created DESC LIMIT %d", $site_id, $limit ) ); //phpcs:ignore -- ok.
     }
 
+
+    /**
+     * Returns the most recent non-mainwp-changes changes logs stored for the given site.
+     *
+     * @param integer $site_id - The ID of the site to retrieve the most recent event.
+     * @param integer $limit - Limit number of result.
+     *
+     * @return array
+     *
+     * @since 5.5
+     */
+    public function get_latest_changes_logs_by_siteid( $site_id, $limit = 1 ): array {
+        return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_logs' ) . " WHERE site_id=%d AND `connector` = 'non-mainwp-changes' AND log_type_id IS NOT NULL AND log_type_id != 0 ORDER BY created DESC LIMIT %d", $site_id, $limit ) ); //phpcs:ignore -- ok.
+    }
+
     /**
      * Get db size.
      *

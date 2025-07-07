@@ -548,9 +548,10 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * Clear sites in group.
      *
      * @param mixed $groupId ID of group.
+     * @param mixed $exclude_wpids Empty or array of wp ids to exclude.
      */
-    public function clear_group( $groupId ) {
-        $this->wpdb->query( 'DELETE FROM ' . $this->table_name( 'wp_group' ) . ' WHERE groupid=' . $groupId );
+    public function clear_group( $groupId, $exclude_wpids = array() ) {
+        $this->wpdb->query( 'DELETE FROM ' . $this->table_name( 'wp_group' ) . ' WHERE groupid=' . $groupId . ( ! empty( $exclude_wpids ) && is_array( $exclude_wpids ) ? ' AND wpid NOT IN (' . implode( ',', array_map( 'intval', $exclude_wpids ) ) . ')' : '' ) );
     }
 
 

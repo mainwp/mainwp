@@ -155,10 +155,22 @@ jQuery(function () {
       return;
     }
 
+    let tag_siteids = jQuery('#mainwp-save-sites-groups-selection-button').attr('selected-tag-siteids');
+    tag_siteids = '' != tag_siteids ? JSON.parse(tag_siteids) : '';
+    let invisibleIds = [];
+    if(tag_siteids?.length){
+        tag_siteids.forEach(function(val){
+            if(jQuery('#mainwp-manage-groups-sites-table input.mainwp-site-checkbox[value=' + val + ']').length == 0 ){
+                invisibleIds.push(val);
+            }
+        });
+    }
+
     let data = mainwp_secure_data({
       action: 'mainwp_group_updategroup',
       groupId: groupID,
-      websiteIds: sitesIDs
+      websiteIds: sitesIDs,
+      invisibleSiteIds: invisibleIds
     });
 
     jQuery(this).addClass('disabled');
@@ -191,6 +203,7 @@ jQuery(function () {
         jQuery('input[value="' + id + '"].mainwp-site-checkbox').prop('checked', true);
         jQuery('input[value="' + id + '"].mainwp-site-checkbox').closest('tr').addClass('selected');
       }
+      jQuery('#mainwp-save-sites-groups-selection-button').attr('selected-tag-siteids', sites?.length ? response : '' );
       mainwp_datatable_fix_to_update_selected_rows_status(dtApi, 'selected'); // clear saved state.
     });
     return false;

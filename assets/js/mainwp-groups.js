@@ -138,39 +138,45 @@ jQuery(function () {
     }
   });
 
-  // Save selected sites for a group
+// Keep update selected tag site ids.
+jQuery(document).on('change', '#mainwp-manage-groups-sites-table .mainwp-site-checkbox', function() {
+    console.log('on-changes');
+    if(typeof jQuery('#mainwp-save-sites-groups-selection-button').attr('selected-tag-siteids') !== "undefined"){
+        let tag_siteids = jQuery('#mainwp-save-sites-groups-selection-button').attr('selected-tag-siteids');
+        tag_siteids = '' != tag_siteids ? JSON.parse(tag_siteids) : [];
+
+        const valSiteId = jQuery(this).val();
+        if (jQuery(this).is(':checked')) {
+            if (!tag_siteids.includes(valSiteId)) {
+                tag_siteids.push(valSiteId);
+            }
+        } else {
+            const index = tag_siteids.indexOf(valSiteId);
+            if (index !== -1) {
+                tag_siteids.splice(index,1);
+            }
+        }
+
+        jQuery('#mainwp-save-sites-groups-selection-button').attr('selected-tag-siteids', tag_siteids.length ? JSON.stringify(tag_siteids) : '' )
+    }
+});
+
+
+// Save selected sites for a group
   jQuery(document).on('click', '#mainwp-save-sites-groups-selection-button', function (e) {
 
     e.preventDefault();
 
     let groupID = jQuery('#mainwp-groups-menu').find('.active').attr('id');
-    let sites = jQuery('#mainwp-manage-groups-sites-table').find('input.mainwp-site-checkbox:checked');
-    let sitesIDs = [];
-
-    for (let id of sites) {
-      sitesIDs.push(jQuery(id).val());
-    }
+    let tag_siteids = jQuery('#mainwp-save-sites-groups-selection-button').attr('selected-tag-siteids');
 
     if (groupID == undefined) {
       return;
     }
-
-    let tag_siteids = jQuery('#mainwp-save-sites-groups-selection-button').attr('selected-tag-siteids');
-    tag_siteids = '' != tag_siteids ? JSON.parse(tag_siteids) : '';
-    let invisibleIds = [];
-    if(tag_siteids?.length){
-        tag_siteids.forEach(function(val){
-            if(jQuery('#mainwp-manage-groups-sites-table input.mainwp-site-checkbox[value=' + val + ']').length == 0 ){
-                invisibleIds.push(val);
-            }
-        });
-    }
-
     let data = mainwp_secure_data({
       action: 'mainwp_group_updategroup',
       groupId: groupID,
-      websiteIds: sitesIDs,
-      invisibleSiteIds: invisibleIds
+      websiteIds: tag_siteids != '' ? JSON.parse(tag_siteids) : [],
     });
 
     jQuery(this).addClass('disabled');

@@ -757,8 +757,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         if ( $groupid ) {
             $group = MainWP_DB_Common::instance()->get_group_by_id( $groupid );
             if ( ! empty( $group ) ) {
-                $exclude_wpids = ! empty( $_POST['invisibleSiteIds'] ) && is_array( $_POST['invisibleSiteIds'] ) ? array_map( 'intval', wp_unslash( $_POST['invisibleSiteIds'] ) ) : array();
-                MainWP_DB_Common::instance()->clear_group( $group->id, $exclude_wpids );
+                MainWP_DB_Common::instance()->clear_group( $group->id );
                 if ( isset( $_POST['websiteIds'] ) ) {
                     foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST['websiteIds'] ) ) as $websiteId ) {
                         $website = MainWP_DB::instance()->get_website_by_id( $websiteId );

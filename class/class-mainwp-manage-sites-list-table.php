@@ -750,8 +750,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                                 THEN 3
                                             ELSE 4
                                                 + (CASE wp_upgrades WHEN "[]" THEN 0 ELSE 1 END)
-                                                + (CASE plugin_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(plugin_upgrades) - LENGTH(REPLACE(plugin_upgrades, "\"Name\":", "\"Name\"")) END)
-                                                + (CASE theme_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(theme_upgrades) - LENGTH(REPLACE(theme_upgrades, "\"Name\":", "\"Name\"")) END)
+                                                + (CASE plugin_upgrades WHEN "[]" THEN 0 ELSE LENGTH(plugin_upgrades) - LENGTH(REPLACE(plugin_upgrades, "\"Name\":", "\"Name\"")) END)
+                                                + (CASE theme_upgrades WHEN "[]" THEN 0 ELSE LENGTH(theme_upgrades) - LENGTH(REPLACE(theme_upgrades, "\"Name\":", "\"Name\"")) END)
                                             END ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'phpversion' === $req_orderby ) {
                     $orderby = ' INET_ATON(SUBSTRING_INDEX(CONCAT(wp_optionview.phpversion,".0.0.0"),".",4)) ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
@@ -762,8 +762,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                             WHEN (wp_sync.sync_errors IS NOT NULL) AND (wp_sync.sync_errors <> "")
                                                 THEN 3
                                             ELSE 4
-                                                + (CASE plugin_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(plugin_upgrades) - LENGTH(REPLACE(plugin_upgrades, "\"Name\":", "\"Name\"")) END)
-                                                + (CASE theme_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(theme_upgrades) - LENGTH(REPLACE(theme_upgrades, "\"Name\":", "\"Name\"")) END)
+                                                + (CASE plugin_upgrades WHEN "[]" THEN 0 ELSE LENGTH(plugin_upgrades) - LENGTH(REPLACE(plugin_upgrades, "\"Name\":", "\"Name\"")) END)
+                                                + (CASE theme_upgrades WHEN "[]" THEN 0 ELSE LENGTH(theme_upgrades) - LENGTH(REPLACE(theme_upgrades, "\"Name\":", "\"Name\"")) END)
                                                 + (CASE wp_upgrades WHEN "[]" THEN 0 ELSE 1 END)
                                             END ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'last_post' === $req_orderby ) {

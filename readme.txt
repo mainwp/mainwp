@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.8.1
 Requires PHP: 7.4
-Stable tag: 5.4.0.14
+Stable tag: 5.4.0.15
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -146,6 +146,12 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.4.0.15 - Maintenance Release - 7-8-2025 =
+
+* Fixed: Resolved a sorting issue in the "Manage Sites" table that could cause sites to appear in incorrect positions. [(#808)](https://github.com/mainwp/mainwp/issues/808)
+* Fixed: Corrected tooltip text for the Regression Testing add-on to improve clarity.
+* Fixed: Resolved an issue where the "Save Selection" function for tags would only preserve sites visible in the current search or filter results. [(#810)](https://github.com/mainwp/mainwp/issues/810)
 
 = 5.4.0.14 - Maintenance Release - 6-24-2025 =
 

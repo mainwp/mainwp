@@ -3740,5 +3740,5 @@ const render_html_regression_waiting_icon = function () {
 
 // Render Tooltip Loading Icon.
 const render_tooltip_loading_icon = function (icon_html) {
-    return `<span data-inverted="" data-position="left center" data-tooltip="${__('Update in process…', 'mainwp')}">${icon_html}</span>`
+    return `<span data-inverted="" data-position="left center" data-tooltip="${__('Update in progress…', 'mainwp')}">${icon_html}</span>`
 }

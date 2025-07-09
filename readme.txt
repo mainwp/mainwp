@@ -147,6 +147,12 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
+= 5.4.0.15 - Maintenance Release - 7-8-2025 =
+
+* Fixed: Resolved a sorting issue in the "Manage Sites" table that could cause sites to appear in incorrect positions. [(#808)](https://github.com/mainwp/mainwp/issues/808)
+* Fixed: Corrected tooltip text for the Regression Testing add-on to improve clarity.
+* Fixed: Resolved an issue where the "Save Selection" function for tags would only preserve sites visible in the current search or filter results. [(#810)](https://github.com/mainwp/mainwp/issues/810)
+
 = 5.4.0.14 - Maintenance Release - 6-24-2025 =
 
 * Fixed: Corrected permissions logic to ensure users without "Manage Extensions" permission can still access extension features they are authorized to use. [(#801)](https://github.com/mainwp/mainwp/issues/801)

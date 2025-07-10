@@ -57,6 +57,18 @@ class Log {
             $site_id = 0;
         }
 
+        $disable_cron_log = false;
+
+        if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
+            $disable_cron_log = true; // disable log cron tasks.
+        }
+
+        $disable_cron_log = apply_filters( 'mainwp_module_log_disable_cron_log', $disable_cron_log, $connector, $message, $args, $site_id, $context, $action, $user_id, $state );
+
+        if ( $disable_cron_log ) {
+                return false;
+        }
+
         $cron_tracking = apply_filters( 'mainwp_module_log_cron_tracking', true, $connector, $message, $args, $site_id, $context, $action, $user_id, $state );
 
         $author = new Log_Author( $user_id );

@@ -142,6 +142,10 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             unset( $columns['source'] );
         }
 
+        if ( 'widget-overview' === $this->table_id_prefix ) {
+            unset( $columns['log_site_name'] );
+        }
+
         return $columns;
     }
 

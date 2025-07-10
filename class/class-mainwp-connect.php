@@ -873,6 +873,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
             curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
             curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
+            curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
             curl_setopt( $ch, CURLOPT_ENCODING, 'none' );
             if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
                 $http_pass = stripslashes( $http_pass );

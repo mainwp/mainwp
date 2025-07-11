@@ -102,6 +102,26 @@ class Log_Author {
     }
 
     /**
+     * Get the full name display of the user
+     *
+     * @return string
+     */
+    public function get_full_name() { //phpcs:ignore -- NOSONAR - complex.
+        $fullname = '';
+        // child users.
+        if ( ! empty( $this->meta['full_name'] ) ) {
+            $fullname = esc_html( $this->meta['full_name'] );
+            if ( ! empty( $this->meta['ip'] ) ) {
+                $fullname .= ' ' . esc_html( $this->meta['ip'] );
+            }
+        }
+        if ( empty( $fullname ) && ! empty( $this->meta['username'] ) ) {
+                $fullname = esc_html( $this->meta['username'] );
+        }
+        return $fullname;
+    }
+
+    /**
      * Get the display name of the user
      *
      * @return string

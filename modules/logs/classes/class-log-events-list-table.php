@@ -269,7 +269,10 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 break;
             case 'user_id':
                 $user = new Log_Author( $record->user_id, $record->user_meta );
-                $out  = $user->get_display_name();
+                $out  = $user->get_full_name();
+                if ( empty( $out ) ) {
+                    $out = $user->get_display_name();
+                }
                 if ( empty( $out ) ) {
                     $out = $user->get_agent_label( $user->get_agent() );
                 }

@@ -595,13 +595,14 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
      *
      * @param string $type    Email type.
      * @param object $website Object containing the child site information.
+     * @param mixed  $website_status Object containing the child site status.
      *
      * @return array An array containing the email settings.
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_tokens_site_values()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::replace_tokens_values()
      */
-    public static function get_site_email_settings( $type, $website ) {
+    public static function get_site_email_settings( $type, $website, $website_status = false ) {
         if ( empty( $website ) || ! property_exists( $website, 'settings_notification_emails' ) ) {
             return array( 'disable' => 1 );
         }
@@ -619,7 +620,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
         $options = array_merge( $default, $options );
 
         if ( preg_match( '/\[[^\]]+\]/is', $options['subject'] . $options['heading'], $matches ) ) {
-            $tokens_values      = MainWP_System_Utility::get_tokens_site_values( $website, true );
+            $tokens_values      = MainWP_System_Utility::get_tokens_site_values( $website, true, $website_status );
             $options['subject'] = MainWP_System_Utility::replace_tokens_values( $options['subject'], $tokens_values );
             $options['heading'] = MainWP_System_Utility::replace_tokens_values( $options['heading'], $tokens_values );
         }

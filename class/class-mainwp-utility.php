@@ -394,12 +394,13 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * Format the given timestamp.
      *
      * @param mixed $timestamp Timestamp to format.
-     * @param mixed $tzformat Timezone format.
-
+     * @param mixed $with_tz_info Return date time with timezone infor.
+     * @param mixed $use_tzformat Input tz format, to support display tz child site format.
+     *
      * @return string Formatted timestamp.
      */
-    public static function format_timezone( $timestamp, $use_tzformat = false ) {
-
+    public static function format_timezone( $timestamp, $with_tz_info = false, $use_tzformat = false ) {
+        $tzinfo      = '';
         if ( false !== $use_tzformat ) {
             if ( is_array( $use_tzformat ) && ( isset( $use_tzformat['timezone_string'] ) || isset( $use_tzformat['gmt_offset'] ) || isset( $use_tzformat['date_format'] ) || isset( $use_tzformat['time_format'] ) ) ) {
                 $wp_timezone = ! empty( $use_tzformat['timezone_string'] ) ? $use_tzformat['timezone_string'] : '';
@@ -429,13 +430,20 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $wp_timezone = get_option( 'timezone_string' );
 
         if ( ! $wp_timezone ) {
-            return static::format_timestamp( static::get_timestamp( $timestamp ) );
+            if ( $with_tz_info ) {
+                $tzinfo = ' ( UTC ' . get_option( 'gmt_offset' ) . ' )';
+            }
+            return static::format_timestamp( static::get_timestamp( $timestamp ) ) . $tzinfo;
+        }
+
+        if ( $with_tz_info ) {
+            $tzinfo = ' ( ' . $wp_timezone . ' )';
         }
 
         $datetime = new \DateTime( '@' . $timestamp );
         $datetime->setTimezone( new \DateTimeZone( $wp_timezone ) );
 
-        $format = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
+        $format = get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) . $tzinfo;
         return $datetime->format( $format );
     }
 

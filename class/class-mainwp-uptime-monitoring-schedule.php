@@ -330,7 +330,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
                             $new_obj                = clone $notice;  // to fix reference to object.
                             $new_obj->hb_http_code  = $hb_notice->http_code; // to fix for monitor with multi heartbeats down status.
                             $new_obj->status        = $hb_notice->status;
-                            $new_obj->hb_time_check = strtotime( $hb_notice->time );
+                            $new_obj->hb_time_check = strtotime( $hb_notice->time . ' UTC' );
                             $heartbeats_notices[]   = $new_obj;
 
                             if ( $need_to_prepared_tokens && false === $current_heartbeat ) {

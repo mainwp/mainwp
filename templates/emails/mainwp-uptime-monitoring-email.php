@@ -83,7 +83,7 @@ if ( empty( $heading ) ) {
                             </tr>
                             <tr>
                                 <td style="vertical-align:top;text-align:left;padding:30px 30px 0 30px;">
-                                    <strong><?php esc_html_e( 'Event timestamp: ', 'mainwp' ); ?></strong><?php echo MainWP\Dashboard\MainWP_Utility::format_timestamp( $site->hb_time_check ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                                    <strong><?php esc_html_e( 'Event timestamp: ', 'mainwp' ); ?></strong><?php echo MainWP\Dashboard\MainWP_Utility::format_timezone( $site->hb_time_check, true ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
                                 </td>
                             </tr>
                                 <?php
@@ -119,7 +119,7 @@ if ( empty( $heading ) ) {
                                                 if ( ! empty( $site->hb_time_check ) ) {
                                                     $last_time = $site->hb_time_check;
                                                 }
-                                                echo MainWP\Dashboard\MainWP_Utility::format_timestamp( $last_time ); // phpcs:ignore WordPress.Security.EscapeOutput
+                                                echo MainWP\Dashboard\MainWP_Utility::format_timezone( $last_time, true ); // phpcs:ignore WordPress.Security.EscapeOutput
                                                 ?>
                                             </td>
                                         </tr>

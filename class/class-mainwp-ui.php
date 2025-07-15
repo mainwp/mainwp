@@ -1665,6 +1665,10 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             $wgsorted = get_user_option( 'mainwp_widgets_sorted_' . $page );
         }
 
+        if ( empty( $wgsorted ) ) {
+            $wgsorted = get_user_option( 'mainwp_widgets_sorted_' . strtolower( $page ) );
+        }
+
         if ( ! empty( $wgsorted ) && is_string( $wgsorted ) ) {
             $wgsorted = json_decode( $wgsorted, true );
         }
@@ -1788,6 +1792,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     }
 
                     let grid = GridStack.init(gsOpts);
+                    jQuery('#mainwp-widgets-placeholder').dimmer('hide');
                     grid.on('change', function() {
                         mainwp_overview_gridstack_save_layout(<?php echo (int) $client_id; ?>);
                     });

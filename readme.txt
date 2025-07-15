@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 6.2
-Tested up to: 6.8.1
+Tested up to: 6.8.2
 Requires PHP: 7.4
-Stable tag: 5.4.0.15
+Stable tag: 5.4.0.16
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -146,6 +146,11 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.4.0.16 - Maintenance Release - 7-15-2025 =
+
+* Fixed: Corrected the `[uptime.status]` token in Uptime Notification email subjects to display the accurate monitor status.
+* Fixed: Updated the Event time info in the Uptime Monitor email to display in the user's configured timezone instead of defaulting to UTC +0.
 
 = 5.4.0.15 - Maintenance Release - 7-8-2025 =
 

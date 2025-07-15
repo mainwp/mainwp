@@ -253,10 +253,6 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
         // general uptime notification, to administrator.
         $gene_email_settings = MainWP_Notification_Settings::get_general_email_settings( 'uptime' );
 
-        if ( ! empty( $process_notices ) ) {
-            MainWP_Notification_Settings::prepare_general_email_settings_for_site( $gene_email_settings, $process_notices[0] );
-        }
-
         $debug_settings = array(
             'admin_email'            => $admin_email,
             'general_email_settings' => $admin_email,
@@ -265,7 +261,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
 
         if ( ! $gene_email_settings['disable'] ) {
             MainWP_Logger::instance()->log_uptime_notice( 'General uptime notifications are now being sent to the admin.' );
-            static::send_uptime_notification_heartbeats_importance_status( $process_notices, $admin_email, $gene_email_settings, $plain_text );
+            static::send_uptime_notification_heartbeats_importance_status( $process_notices, $admin_email, $gene_email_settings, $plain_text, false, true );
         }
 
         $individual_admin_uptimeSites = array();
@@ -297,10 +293,9 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
             $admin_email_settings               = MainWP_Notification_Settings::get_default_emails_fields( 'uptime', '', true ); // get default subject and heading only.
             $admin_email_settings['disable']    = 0;
             $admin_email_settings['recipients'] = ''; // sent to admin only.
-            MainWP_Notification_Settings::prepare_general_email_settings_for_site( $admin_email_settings, $uptime_notice );
             // send to admin, all individual sites in one email.
             MainWP_Logger::instance()->log_uptime_notice( 'Send all individual uptime notifications to the admin in a single email. [count=' . count( $individual_admin_uptimeSites ) . ']' );
-            static::send_uptime_notification_heartbeats_importance_status( $individual_admin_uptimeSites, $admin_email, $admin_email_settings, $plain_text, true );
+            static::send_uptime_notification_heartbeats_importance_status( $individual_admin_uptimeSites, $admin_email, $admin_email_settings, $plain_text, true, true );
         }
         MainWP_Logger::instance()->log_uptime_notice( 'Uptime notifications email settings :: debug :: ' . print_r( $debug_settings, true ) ); //phpcs:ignore -- NOSONAR -ok.
         return true;
@@ -315,12 +310,17 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
      * @param string $email_settings Email settings.
      * @param bool   $plain_text     Determines if the plain text format should be used.
      * @param bool   $to_admin Send to admin or not.
+     * @param bool   $need_to_prepared_tokens Need to check and replace tokens in email settings, or not.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
      * @uses \MainWP\Dashboard\MainWP_Notification_Template::get_template_html()
      */
-    public static function send_uptime_notification_heartbeats_importance_status( $uptime_notices, $admin_email, $email_settings, $plain_text, $to_admin = false ) { //phpcs:ignore -- NOSONAR - complex.
+    public static function send_uptime_notification_heartbeats_importance_status( $uptime_notices, $admin_email, $email_settings, $plain_text, $to_admin = false, $need_to_prepared_tokens = false ) { //phpcs:ignore -- NOSONAR - complex.
         if ( is_array( $uptime_notices ) ) {
+
+            $current_mo        = false;
+            $current_heartbeat = false;
+
             $heartbeats_notices = array();
             foreach ( $uptime_notices as $notice ) {
                 if ( ! empty( $notice->dts_process_init_time ) ) {
@@ -330,13 +330,21 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
                             $new_obj                = clone $notice;  // to fix reference to object.
                             $new_obj->hb_http_code  = $hb_notice->http_code; // to fix for monitor with multi heartbeats down status.
                             $new_obj->status        = $hb_notice->status;
-                            $new_obj->hb_time_check = strtotime( $hb_notice->time );
+                            $new_obj->hb_time_check = strtotime( $hb_notice->time . ' UTC' );
                             $heartbeats_notices[]   = $new_obj;
+
+                            if ( $need_to_prepared_tokens && false === $current_heartbeat ) {
+                                $current_mo        = $notice;
+                                $current_heartbeat = $new_obj;
+                            }
                         }
                     }
                 }
             }
             if ( ! empty( $heartbeats_notices ) ) {
+                if ( $need_to_prepared_tokens && $current_mo && $current_heartbeat ) {
+                    MainWP_Notification_Settings::prepare_general_email_settings_for_site( $email_settings, $current_mo, $current_heartbeat );
+                }
                 MainWP_Logger::instance()->log_uptime_notice( 'Uptime notification :: heartbeats :: [count=' . count( $heartbeats_notices ) . ']' );
                 MainWP_Monitoring_Handler::notice_sites_uptime_monitoring( $heartbeats_notices, $admin_email, $email_settings, $plain_text, $to_admin );
             }

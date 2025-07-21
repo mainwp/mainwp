@@ -347,31 +347,18 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * @param object $record  Event data.
      * @param string $act  Action type.
      * @param string $type  Connector term.
-     * @param bool   $coloring Coloring term.
      * @return string
      */
-    public function get_action_title( $record, $act, $type, $coloring = false ) {
+    public function get_action_title( $record, $act, $type ) {
         if ( ! isset( $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ] ) ) {
             $title = $act;
         } else {
             $title = $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ];
         }
-
-        $title = is_string( $title ) ? ucfirst( $title ) : $title;
-        if ( $coloring ) {
-            $format_title = '<span class="ui medium text">%s</span>';
-            if ( 'deactivate' === $act || 'deleted' === $act || 'delete' === $act ) {
-                $format_title = '<span class="ui medium red text">%s</span>';
-            } elseif ( 'activate' === $act || 'updated' === $act || 'update' === $act ) {
-                $format_title = '<span class="ui medium blue text">%s</span>';
-            } elseif ( 'install' === $act || 'created' === $act || 'added' === $act || 'sync' === $act ) {
-                $format_title = '<span class="ui medium green text">%s</span>';
-            }
-            $title = sprintf( $format_title, esc_html( $title ) );
-        }
+        $title  = is_string( $title ) ? ucfirst( $title ) : $title;
         $action = $title;
         if ( ! empty( $record->log_type_id ) ) {
-            $action = $this->parse_event_changes_title( $record, $action );
+            $action = $this->parse_changes_action_title( $record, $action );
         }
         return $action;
     }
@@ -392,6 +379,8 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             $title = $act;
             if ( 15028 === (int) $record->log_type_id ) {
                 $title = esc_html__( 'Modified', 'mainwp' );
+            } else {
+                $title = ucfirst( $title );
             }
         } else {
             if ( ! isset( $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ] ) ) {
@@ -462,7 +451,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * @param title  $title  Default title.
      * @return string
      */
-    public function parse_event_changes_title( $record, $title = '' ) {
+    public function parse_changes_action_title( $record, $title = '' ) {
         $data = array();
         if ( 15028 === (int) $record->log_type_id ) {
             $data = array( 'action' => 'enabled' === $record->action ? 'Enabled' : 'Disabled' );

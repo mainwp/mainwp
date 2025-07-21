@@ -397,7 +397,7 @@ class Log_Settings {
 
                         foreach ( $items as $item ) {
                             $name  = $item['type_id'];
-                            $title = $item['desc'];
+                            $title = isset( $item['desc'] ) ? $item['desc'] : '';
 
                             $_selected = '';
                             if ( static::is_action_log_enabled( $name, $type ) ) {

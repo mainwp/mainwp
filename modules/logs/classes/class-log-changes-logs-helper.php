@@ -236,6 +236,10 @@ class Log_Changes_Logs_Helper {
                 $title = str_replace( '%action%', $data['action'], $title );
             }
             return $title;
+        } elseif ( in_array( $log_type_id, array( 1596 ) ) ) {
+            if ( isset( static::get_changes_logs_types( $log_type_id )['desc'] ) ) {
+                return static::get_changes_logs_types( $log_type_id )['desc'];
+            }
         }
         return '';
     }
@@ -821,9 +825,15 @@ class Log_Changes_Logs_Helper {
                 'context'     => 'user',
                 'action_name' => 'login',
             ),
-            11010 => array(
-                'type_id'     => 11010,
-                'desc'        => esc_html__( 'User requested a password reset', 'mainwp' ),
+            1596 => array(
+                'type_id'     => 1596,
+                'desc'        => esc_html__( 'User login from dashboard', 'mainwp-child' ),
+                'context'     => 'user',
+                'action_name' => 'login',
+            ),
+            1600 => array(
+                'type_id'     => 1600,
+                'desc'        => esc_html__( 'User requested a password reset', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'submitted',
             ),
@@ -977,9 +987,9 @@ class Log_Changes_Logs_Helper {
                 'context'     => 'user',
                 'action_name' => 'revoked',
             ),
-            14027 => array(
-                'type_id'     => 14027,
-                'desc'        => esc_html__( 'User revoked all application passwords from another user’s profile', 'mainwp' ),
+            1585 => array(
+                'type_id'     => 1735,
+                'desc'        => esc_html__( 'User revoked all application passwords from another user’s profile', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'revoked',
             ),

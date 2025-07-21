@@ -99,6 +99,16 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
         }
         $open_download = ! empty( $params['filedl'] ) ? true : false;
         $close_window  = ! empty( $_GET['closeWindow'] ) ? true : false; //phpcs:ignore -- ok.
+
+        /**
+         * Action: mainwp_site_go_to_wpadmin
+         *
+         * Fire before go to wp admin child site.
+         *
+         * @since 5.5
+         */
+        do_action( 'mainwp_site_go_to_wpadmin', $website, $location, $params );
+
         ?>
         <div class="ui segment" style="padding: 25rem">
             <div class="ui active dimmer <?php echo $open_download || $close_window ? 'open-site-close-window' : ''; ?>">

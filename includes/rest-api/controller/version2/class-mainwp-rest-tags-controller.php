@@ -381,7 +381,7 @@ class MainWP_Rest_Tags_Controller extends MainWP_REST_Controller{ //phpcs:ignore
             return $item;
         }
 
-        $websites = MainWP_DB::instance()->get_websites_by_group_id( $item->id, false, 'wp.url', false, false, null, null, array( 'view_query' => 'default' ) ); // To fix some empty fields of response.
+        $websites = MainWP_DB::instance()->get_websites_by_group_id( $item->id, true, 'wp.url', false, false, null, null, array( 'view_query' => 'default' ) ); // To fix some empty fields of response.
 
         $data = array();
 

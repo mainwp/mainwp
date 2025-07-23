@@ -489,7 +489,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         <div class="extra content">
             <div class="">
                 <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) { ?>
-                <a class="ui mini basic icon button extension-the-plugin-action" data-tooltip="<?php echo esc_html__( 'Disable/Enable Add-on', 'mainwp' ); ?>" data-position="top left" data-inverted="" plugin-action="<?php echo $disabled ? 'active' : 'disable'; ?>"><?php echo $disabled ? '<i class="toggle on icon"></i> ' : '<i class="toggle off icon"></i> '; ?></a>
+                <a class="ui mini basic icon button extension-the-plugin-action" data-tooltip="<?php echo esc_html__( 'Disable/Enable Add-on', 'mainwp' ); ?>" data-position="top left" data-inverted="" plugin-action="<?php echo $disabled ? 'active' : 'disable'; ?>"><?php echo $disabled ? '<i class="toggle off icon"></i> ' : '<i class="toggle green on icon"></i> '; ?></a>
                 <?php } ?>
                 <a class="ui mini extension-privacy-info-link icon basic button" base-slug="<?php echo esc_attr( $item_slug ); ?>" data-tooltip="<?php echo esc_html__( 'Privacy info.', 'mainwp' ); ?>" data-position="top left" data-inverted=""><?php echo $privacy_class; ?></a> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
                 <?php if ( $disabled && \mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) { ?>
@@ -628,11 +628,6 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 <?php esc_html_e( 'MainWP License Settings', 'mainwp' ); ?>
             </div>
             <div class="content active">
-                <?php if ( empty( $mainwp_api_key ) ) { ?>
-                    <div class="ui message info">
-                        <?php printf( esc_html__( 'Not sure how to find your MainWP Main API Key? %1$sClick here to get it.%2$s', 'mainwp' ), '<a href="https://mainwp.com/my-account/my-api-keys/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
-                    </div>
-                <?php } ?>
                 <div class="ui form" id="mainwp-extensions-api-fields">
                     <div class="field">
                         <label for="mainwp_com_api_key"></label>
@@ -640,6 +635,11 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             <input type="password" id="mainwp_com_api_key" autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="<?php esc_attr_e( 'Enter your MainWP Main API Key', 'mainwp' ); ?>" value="<?php echo esc_attr( $mainwp_api_key ); ?>"/>
                             <i class="key icon"></i>
                         </div>
+                        <?php if ( empty( $mainwp_api_key ) ) { ?>
+                            <span class="ui small text">
+                                <?php printf( esc_html__( 'Not sure how to find your MainWP Main API Key? %1$sClick here to get it.%2$s', 'mainwp' ), '<a href="https://mainwp.com/my-account/my-api-keys/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
+                            </span>
+                        <?php } ?>
                     </div>
                     <div class="field">
                         <div class="ui checkbox">

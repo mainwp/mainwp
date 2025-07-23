@@ -546,7 +546,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     do_action( 'mainwp_manage_users_before_search_options' );
                     ?>
                     <div class="ui mini form">
-                        <div class="field" data-tooltip="<?php esc_attr_e( 'Select specific roles that you want to search for.', 'mainwp' ); ?>" data-inverted="" data-position="top right">
+                        <div class="field">
                             <select multiple="" class="ui fluid mini dropdown" id="mainwp_user_roles">
                                 <option value=""><?php esc_html_e( 'Select wanted role(s)', 'mainwp' ); ?></option>
                                 <?php
@@ -636,7 +636,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         ?>
 
         <div class="ui mini form">
-            <div class="field" data-tooltip="<?php esc_attr_e( 'Enter specific username that you want to search for.', 'mainwp' ); ?>" data-inverted="" data-position="top right">
+            <div class="field">
                 <div class="ui input fluid">
                     <input type="text" placeholder="<?php esc_attr_e( 'Username', 'mainwp' ); ?>" id="mainwp_search_users" class="text" value="<?php echo ( null !== $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>" />
                 </div>

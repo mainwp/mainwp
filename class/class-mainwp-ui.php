@@ -1358,7 +1358,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 </a>
             <?php endif; ?>
         <?php else : ?>
-            <a class="ui icon green <?php echo 0 < $sites_count ? '' : 'disabled'; ?> button" id="mainwp-sync-sites" data-tooltip="<?php esc_attr_e( 'Click here to sync data now.', 'mainwp' ); ?>" data-inverted="" data-position="bottom right" aria-label="<?php esc_attr_e( 'Click here to sync data now.', 'mainwp' ); ?>">
+            <a class="ui icon green <?php echo 0 < $sites_count ? '' : 'disabled'; ?> button" id="mainwp-sync-sites" data-tooltip="<?php esc_attr_e( 'Click here to sync data now.', 'mainwp' ); ?>" data-inverted="" data-position="left center" aria-label="<?php esc_attr_e( 'Click here to sync data now.', 'mainwp' ); ?>">
                 <i class="sync alternate icon"></i>
             </a>
         <?php endif; ?>
@@ -1399,7 +1399,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             echo $actions; // phpcs:ignore WordPress.Security.EscapeOutput
         }
         ?>
-        <a class="ui button icon" id="mainwp-sites-sidebar" aria-label="<?php esc_attr_e( 'Open sites shortcuts sidebar', 'mainwp' ); ?>" data-inverted="" data-position="bottom right" href="#" data-tooltip="<?php esc_attr_e( 'Quick sites shortcuts', 'mainwp' ); ?>">
+        <a class="ui button icon" id="mainwp-sites-sidebar" aria-label="<?php esc_attr_e( 'Open sites shortcuts sidebar', 'mainwp' ); ?>">
             <i class="globe icon"></i>
         </a>
         <div id="mainwp-select-theme-button" class="ui button icon mainwp-selecte-theme-button" aria-label="<?php esc_attr_e( 'Select MainWP theme', 'mainwp' ); ?>" custom-theme="default" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_html_e( 'Select MainWP theme', 'mainwp' ); ?>">
@@ -2482,7 +2482,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             <div class="ui hidden divider"></div>
                             <i class="ticket big grey icon" style="opacity:0.3"></i>
                             <div class="ui fitted hidden divider"></div><br/>
-                            <span class="ui grey small text"><?php esc_html_e( 'Get in touch with our team for any inquiries or support â€“ we\'re here to help you.', 'mainwp' ); ?></span>
+                            <span class="ui grey small text"><?php esc_html_e( 'Get in touch with our team for any inquiries or support – we\'re here to help you.', 'mainwp' ); ?></span>
 
                             </a>
                         </div>

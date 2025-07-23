@@ -957,47 +957,33 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             static::render_import_client_modal();
         }
         ?>
-        <div class=""  id="mainwp-import-clients">
-            <div class="ui labeled icon inverted menu mainwp-sub-submenu" id="mainwp-import-client-tabular-menu">
-                <a class="item active" data-tab="mainwp-client-import-csv">
-                    <i class="file excel icon"></i>
-                    <?php esc_html_e( 'CSV Import ', 'mainwp' ); ?>
-                </a>
-            </div>
-            <div class="ui segment">
-                <div id="" class="ui tab tab-client-import-csv active" data-tab="mainwp-client-import-csv">
-                    <div class="ui info message">
-                        <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-sites-info-message"></i>
-                        <?php printf( esc_html__( 'You can download the sample CSV file to see how to format the import file properly. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/import-sites/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
-                    </div>
-                    <form method="POST" action="" enctype="multipart/form-data" id="mainwp_client_import_form" class="ui form">
-                        <div class="ui bottom attached tab segment active" data-tab="mainwp-import-csv">
-                            <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
-                            <h3 class="ui dividing header">
-                                <?php echo esc_html( $title_page ); ?>
-                                <div class="sub header"><?php esc_html_e( 'Import multiple clients to your MainWP Dashboard.', 'mainwp' ); ?></div>
-                            </h3>
-                            <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-                            <div class="ui grid field">
-                                <label class="three wide column middle aligned" for="mainwp_client_import_file_bulkupload"><?php esc_html_e( 'Upload CSV', 'mainwp' ); ?> (<a href="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/csv/sample_clients.csv' ); ?>" target="_blank"><?php esc_html_e( 'Download Sample', 'mainwp' ); ?></a>)</label>
-                                <div class="nine wide column">
-                                    <div class="ui file input">
-                                    <input type="file" name="mainwp_client_import_file_bulkupload" id="mainwp_client_import_file_bulkupload" accept="text/comma-separated-values"/>
-                                    </div>
-                                </div>
-                                <div class="ui toggle checkbox four wide column middle aligned">
-                                    <input type="checkbox" name="mainwp_client_import_chk_header_first" checked="checked" id="mainwp_client_import_chk_header_first" value="1"/>
-                                    <label for="mainwp_client_import_chk_header_first"><?php esc_html_e( 'CSV file contains a header', 'mainwp' ); ?></label>
-                                </div>
+        <div class="ui segment"  id="mainwp-import-clients">
+            <form method="POST" action="" enctype="multipart/form-data" id="mainwp_client_import_form" class="ui form">
+                <div>
+                    <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
+                    <h3 class="ui dividing header">
+                        <?php echo esc_html( $title_page ); ?>
+                        <div class="sub header"><?php esc_html_e( 'Import multiple clients to your MainWP Dashboard.', 'mainwp' ); ?></div>
+                    </h3>
+                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                    <div class="ui grid field">
+                        <label class="three wide column middle aligned" for="mainwp_client_import_file_bulkupload"><?php esc_html_e( 'Upload CSV', 'mainwp' ); ?> (<a href="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/csv/sample_clients.csv' ); ?>" target="_blank"><?php esc_html_e( 'Download Sample', 'mainwp' ); ?></a>)</label>
+                        <div class="nine wide column">
+                            <div class="ui file input">
+                            <input type="file" name="mainwp_client_import_file_bulkupload" id="mainwp_client_import_file_bulkupload" accept="text/comma-separated-values"/>
                             </div>
                         </div>
-                        <div class="ui segment">
-                            <div class="ui divider"></div>
-                            <input type="submit" name="mainwp_client_import_add" id="mainwp_client_import_bulkadd" class="ui big green button" value="<?php echo esc_attr( $title_page ); ?>"/>
+                        <div class="ui toggle checkbox four wide column middle aligned">
+                            <input type="checkbox" name="mainwp_client_import_chk_header_first" checked="checked" id="mainwp_client_import_chk_header_first" value="1"/>
+                            <label for="mainwp_client_import_chk_header_first"><?php esc_html_e( 'CSV file contains a header', 'mainwp' ); ?></label>
                         </div>
-                    </form>
+                    </div>
                 </div>
-            </div>
+                <div class="ui segment">
+                    <div class="ui divider"></div>
+                    <input type="submit" name="mainwp_client_import_add" id="mainwp_client_import_bulkadd" class="ui big green button" value="<?php echo esc_attr( $title_page ); ?>"/>
+                </div>
+            </form>
         </div>
         <script type="text/javascript">
             jQuery('#mainwp-import-client-tabular-menu .item').tab();

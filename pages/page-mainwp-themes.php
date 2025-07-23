@@ -1240,7 +1240,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                     <?php echo $parent_str; //phpcs:ignore -- escaped. ?>
                                 <?php else : ?>
                                     <?php if ( $actived ) { ?>
-                                    <span data-tooltip="<?php echo esc_html__( 'Active theme on the site can not be deleted.', 'mainwp' ); ?>" data-position="right center" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>
+                                    <span data-tooltip="<?php echo esc_html__( 'Active theme on the site can not be deleted.', 'mainwp' ); ?>" data-position="bottom left" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>
                                     <?php } ?>
                                     <div class="ui checkbox">
                                         <input type="checkbox"  class="mainwp-selected-theme-site" />
@@ -1532,7 +1532,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                         <?php echo $parent_str; //phpcs:ignore -- escaped. ?>
                                     <?php else : ?>
                                         <?php if ( $actived ) { ?>
-                                        <span data-tooltip="<?php echo esc_html__( 'Active theme on the site can not be deleted.', 'mainwp' ); ?>" data-position="right center" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>
+                                        <span data-tooltip="<?php echo esc_html__( 'Active theme on the site can not be deleted.', 'mainwp' ); ?>" data-position="bottom left" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>
                                         <?php } ?>
                                         <div class="ui checkbox">
                                             <input type="checkbox"  class="mainwp-selected-theme-site" />

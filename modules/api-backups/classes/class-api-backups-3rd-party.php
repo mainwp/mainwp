@@ -312,15 +312,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                 </div>
             </div>
             <div class="ui segment" id="mainwp-3rd-party-api-backups">
-            <?php if ( Api_Backups_Utility::show_mainwp_message( 'mainwp-module-api-backups-info-message' ) ) : ?>
-                    <div class="ui info message">
-                        <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-module-api-backups-info-message"></i>
-                        <div><?php esc_html_e( 'This page will list the last backups created by the API Backups Extension for each Child Site that is setup with an API provider.', 'mainwp' ); ?></div>
-                    </div>
-                <?php endif; ?>
             <?php static::action_notifications(); ?>
             <?php static::render_api_backups_table( '3rd-party-api-backups' ); ?>
-
             </div>
             <?php
     }
@@ -354,9 +347,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                         </span>
                     </th>
                     <th scope="col"><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
-                    <th scope="col" class="no-sort collapsing"><i class="sign in alternate icon"></i></th>
-                    <th scope="col"><?php esc_html_e( 'URL', 'mainwp' ); ?></th>
-                    <th scope="col"><?php esc_html_e( 'Provider', 'mainwp' ); ?></th>
+                    <th scope="col"><?php esc_html_e( 'API Provider', 'mainwp' ); ?></th>
                     <th scope="col"><?php esc_html_e( 'Last Manual Backup Date', 'mainwp' ); ?></th>
                     <th scope="col" class="no-sort collapsing"></th>
                 </tr>
@@ -403,14 +394,18 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                 </span>
                             <?php endif; ?>
                         </td>
-                        <td><a href="admin.php?page=ManageSitesApiBackups&id=<?php echo intval( $website->id ); ?>"><?php esc_html_e( $website->name, 'mainwp' ); ?></a> <span class="running"></span></td>
                         <td>
-                            <a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_attr( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank">
-                                <i class="sign in alternate icon"></i>
-                            </a>
+                            <div>
+                                <a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_attr( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank">
+                                    <i class="sign in alternate icon"></i>
+                                </a>
+                                <a href="admin.php?page=ManageSitesApiBackups&id=<?php echo intval( $website->id ); ?>"><?php esc_html_e( $website->name, 'mainwp' ); ?></a> <span class="running"></span>
+                            </div>
+                            <span class="ui small text">
+                                <a href="<?php echo esc_url( $website->url ); ?>" target="_blank" class="ui grey text"><?php echo esc_url( $website->url ); ?></a>
+                            </span>
                         </td>
-                        <td><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_url( $website->url ); ?></a></td>
-                        <td><?php esc_html_e( $api_provider, 'mainwp' ); ?></td>
+                        <td><?php echo esc_html( $api_provider ); ?></td>
                         <td class="last-backup-date" ><?php echo ( $last_backup ) ? esc_html( $last_backup ) : esc_html__( 'Awaiting first backup', 'mainwp' ); ?></td>
                         <td class="collapsing not-selectable">
                             <i class="ui notched circle loading icon" style="display:none;"></i>

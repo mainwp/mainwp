@@ -249,7 +249,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $escaped = true;
                 break;
             case 'created':
-                $child_time = MainWP_Utility::format_timezone( (int) $record->created, $site_dtf );
+                $child_time = MainWP_Utility::format_timezone( (int) $record->created, false, $site_dtf );
                 if ( ! empty( $child_time ) ) {
                     $date_string = sprintf(
                         '<span data-tooltip="' . esc_attr__( 'Child Site time: %s', 'mainwp' ) . ' " created-time="' . esc_attr( $record->created ).'" data-inverted="" data-position="top left"><time datetime="%s" class="relative-time record-created">%s</time></span>',

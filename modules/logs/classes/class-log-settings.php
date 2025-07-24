@@ -369,7 +369,7 @@ class Log_Settings {
             <div class="ten wide column" <?php echo $setting_page ? 'data-tooltip="' . esc_attr__( 'Select which types of site changes should be recorded in the logs. Only checked items will generate log entries, helping you focus on the most relevant activity.', 'mainwp' ) . '"' : ''; ?> data-inverted="" data-position="top left">
                 <?php
                 foreach ( $list_logs as $type => $items ) {
-                    if ( 'changeslogs_list' !== $type ) {
+                    if ( 'changeslogs' !== $type ) {
                         ?>
                         <div class="ui header"><?php echo 'dashboard' === $type ? esc_html__( 'Events triggered from MainWP Dashboard', 'mainwp' ) : esc_html__( 'Non-MainWP Changes - Events triggered on child sites', 'mainwp' ); ?></div>
                         <?php
@@ -393,7 +393,7 @@ class Log_Settings {
                             </li>
                             <?php
                         }
-                    } elseif ( 'changeslogs_list' === $type ) {
+                    } elseif ( 'changeslogs' === $type ) {
 
                         foreach ( $items as $item ) {
                             $name  = $item['type_id'];
@@ -514,7 +514,7 @@ class Log_Settings {
             ),
         );
 
-        $logs['changeslogs_list'] = Log_Changes_Logs_Helper::get_changes_logs_types();
+        $logs['changeslogs'] = Log_Changes_Logs_Helper::get_changes_logs_types();
 
         if ( 'unlogs' === $type ) {
             return $init_un_logs;

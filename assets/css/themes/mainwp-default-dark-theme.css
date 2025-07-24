@@ -89,14 +89,6 @@
   color: var(--mainwp-text);
 }
 
-/* default theme */
-.mainwp-ui.mainwp-custom-theme .dt-scroll-body tbody tr.selected .ui.red.button,
-.mainwp-ui.mainwp-custom-theme .dt-scroll-body tbody tr.selected .ui.basic.red.button,
-.mainwp-ui.mainwp-custom-theme .dt-scroll-body tbody tr.selected .ui.button.green,
-.mainwp-ui.mainwp-custom-theme .dt-scroll-body tbody tr.selected .ui.button.basic.green {
-  color: var(--mainwp-element-background) !important;
-}
-/* end */
 
 /* Buttons */
 
@@ -552,7 +544,7 @@
 
 .ui.form:not(.inverted) .field label:not(.button) {
   color: var(--mainwp-text) !important;
-} 
+}
 
 .mainwp-ui.mainwp-custom-theme .ui.disabled.checkbox label::before {
   background-color: var(--mainwp-element-background-secondary) !important;
@@ -640,7 +632,7 @@
   color: var(--mainwp-text);
 }
 
-.mainwp-ui.mainwp-custom-theme .ui.dimmer .ui.dropdown .text, 
+.mainwp-ui.mainwp-custom-theme .ui.dimmer .ui.dropdown .text,
 .mainwp-ui.mainwp-custom-theme .ui.dropdown .text  {
   color: var(--mainwp-text) !important;
 }
@@ -703,7 +695,7 @@
 }
 
 /* Lists */
-.mainwp-ui.mainwp-custom-theme .ui.selection.list .list > .item, 
+.mainwp-ui.mainwp-custom-theme .ui.selection.list .list > .item,
 .mainwp-ui.mainwp-custom-theme .ui.selection.list > .item {
   border-color: var(--mainwp-border) !important;
   padding: .5rem 0;
@@ -1197,7 +1189,7 @@
   padding: 1rem 2rem !important;
 }
 
-.mainwp-ui.mainwp-custom-theme #mainwp-main-mobile-navigation-container #mainwp-main-menu .item .item .menu.active .item, 
+.mainwp-ui.mainwp-custom-theme #mainwp-main-mobile-navigation-container #mainwp-main-menu .item .item .menu.active .item,
 .mainwp-ui.mainwp-custom-theme #mainwp-main-mobile-navigation-container #mainwp-main-menu .item .item .menu.active .item.title,
 .mainwp-ui.mainwp-custom-theme #mainwp-main-mobile-navigation-container #mainwp-main-menu .item .item .menu.active .item.content {
   background-color: rgba(255, 255, 255, 0.08) !important;
@@ -1362,7 +1354,7 @@
 body.mainwp-ui.mainwp-custom-theme.pushable > .pusher,
 body.mainwp-ui.mainwp-custom-theme,
 .mainwp-ui.mainwp-custom-theme #wpwrap,
-.mainwp-ui.mainwp-custom-theme #wpbody-content, 
+.mainwp-ui.mainwp-custom-theme #wpbody-content,
 .mainwp-ui.mainwp-custom-theme .ui.segment:not(.mainwp-widget),
 .mainwp-ui.mainwp-custom-theme .mainwp-ui-leftmenu .mainwp-content-wrap,
 .mainwp-ui.mainwp-custom-theme .mainwp-primary-content-wrap {
@@ -1513,7 +1505,7 @@ body.mainwp-ui.mainwp-custom-theme,
   color: var(--mainwp-text) !important;
 }
 
-.mainwp-ui.mainwp-custom-theme .mainwp-manage-plugin-item-website, 
+.mainwp-ui.mainwp-custom-theme .mainwp-manage-plugin-item-website,
 .mainwp-ui.mainwp-custom-theme .mainwp-manage-theme-item-website {
   background-color: var(--mainwp-element-background-secondary) !important;
 }
@@ -1599,7 +1591,7 @@ body.mainwp-ui.mainwp-custom-theme,
     box-shadow: 0 -1px 0 0 var(--mainwp-border) !important;
   }
 
-  .mainwp-ui.mainwp-custom-theme .ui.celled.grid > .column:not(.row), 
+  .mainwp-ui.mainwp-custom-theme .ui.celled.grid > .column:not(.row),
   .mainwp-ui.mainwp-custom-theme .ui.celled.grid > .row > .column {
       box-shadow: -1px 0 0 0 var(--mainwp-border) !important;
   }
@@ -1642,6 +1634,7 @@ body.mainwp-ui.mainwp-custom-theme,
   ========================================================================== */
 
 .mainwp-ui.mainwp-custom-theme #ngBulkSettingsManagerId {
+  background: var(--mainwp-element-background) !important;
   background-color: var(--mainwp-element-background) !important;
 }
 
@@ -1774,10 +1767,6 @@ body.mainwp-ui.mainwp-custom-theme,
   color: var(--mainwp-text) !important;
 }
 
-
-.mainwp-ui.mainwp-custom-theme #ngBulkSettingsManagerId {
-  background: var(--mainwp-element-background) !important;
-}
 
 /* Buddy Support */
 .mainwp-ui.mainwp-custom-theme .profile_box {
@@ -1945,9 +1934,9 @@ body.mainwp-ui.mainwp-custom-theme,
     width: 100% !important;
   }
 
-  .mainwp-ui.mainwp-custom-theme .mainwp-sub-header, 
+  .mainwp-ui.mainwp-custom-theme .mainwp-sub-header,
   .mainwp-ui.mainwp-custom-theme .mainwp-actions-bar {
     margin-top: 1rem !important;
   }
-  
+
 }

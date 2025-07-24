@@ -2325,7 +2325,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 ?>
                 <tr theme-slug="<?php echo esc_attr( rawurlencode( $slug ) ); ?>" theme-name="<?php echo esc_attr( $name ); ?>">
                     <td class="check-column"><span class="ui checkbox"><input type="checkbox" name="theme[]" value="<?php echo esc_attr( rawurlencode( $slug ) ); ?>"></span></td>
-                    <td><?php echo MainWP_System_Utility::get_theme_icon( $slug ); ?></td>
+                    <td><?php echo MainWP_System_Utility::get_theme_icon( $slug ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
                     <td><?php echo esc_html( $name ); //phpcs:ignore -- escaped. ?></td>
                     <td><?php echo ( 1 === (int) $theme['active'] ) ? '<span class="ui tiny basic label"><i class="circle green icon"></i> ' . esc_html__( 'Active', 'mainwp' ) . '</span>' : '<span class="ui tiny basic label"><i class="circle red icon"></i> ' . esc_html__( 'Inactive', 'mainwp' ) . '</span>'; //phpcs:ignore -- escaped. ?></td>
                     <td><?php echo ( in_array( $slug, $trustedThemes ) ) ? '<span class="ui mini green basic label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red basic label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>

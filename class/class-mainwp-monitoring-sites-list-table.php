@@ -1453,7 +1453,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
     /**
      * Method column_site.
      *
-     * @param  mixed $website website.
+     * @param  mixed $website Website.
      *
      * @return void
      */

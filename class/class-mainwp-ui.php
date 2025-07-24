@@ -1465,7 +1465,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     <i class="user grey icon"></i> <?php esc_html_e( 'My MainWP Account', 'mainwp' ); ?>
                 </a>
                 <div class="ui divider"></div>
-                <a class="item" href="<?php echo wp_logout_url(); // phpcs:ignore WordPress.Security.EscapeOutput ?>">
+                <a class="item" href="<?php echo esc_url_raw( wp_logout_url() ); // phpcs:ignore WordPress.Security.EscapeOutput ?>">
                     <i class="sign out grey icon"></i> <?php esc_html_e( 'Log Out', 'mainwp' ); ?>
                 </a>
             </div>
@@ -2482,7 +2482,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             <div class="ui hidden divider"></div>
                             <i class="ticket big grey icon" style="opacity:0.3"></i>
                             <div class="ui fitted hidden divider"></div><br/>
-                            <span class="ui grey small text"><?php esc_html_e( 'Get in touch with our team for any inquiries or support – we\'re here to help you.', 'mainwp' ); ?></span>
+                            <span class="ui grey small text"><?php esc_html_e( 'Get in touch with our team for any inquiries or support ï¿½ we\'re here to help you.', 'mainwp' ); ?></span>
 
                             </a>
                         </div>

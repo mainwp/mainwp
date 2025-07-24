@@ -287,7 +287,7 @@ class Log_Admin {
                 ?>
                 <div class="ui yellow message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="logs-db-size-large"></i>
-                    <?php printf( esc_html__( 'The Sites Changes database size is too large (%s MB). Go to MainWP Settings > %sTool%s > "Delete archived sites changes data" to delete records if needed.', 'mainwp' ), $size, '<a href="admin.php?page=MainWPTools#mainwp-clear-archived-sites-changes-data">', '</a>' ); // NOSONAR - noopener - open safe. ?>
+                    <?php printf( esc_html__( 'The Sites Changes database size is too large (%s MB). Go to MainWP Settings > %sTool%s > "Delete archived sites changes data" to delete records if needed.', 'mainwp' ), esc_html( $size ), '<a href="admin.php?page=MainWPTools#mainwp-clear-archived-sites-changes-data">', '</a>' ); // NOSONAR - noopener - open safe. ?>
                 </div>
                 <?php
             }

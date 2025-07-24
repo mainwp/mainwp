@@ -529,12 +529,10 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         if ( empty( $backup_api ) ) {
-            \MainWP\Dashboard\MainWP_UI::render_empty_page_placeholder(
-                $title   = esc_html__( 'No API Backup Solution has been chosen.', 'mainwp' ),
-                $message = esc_html__( 'Please double check that you have set the API Key on the API Backups Settings page and have set the Instance ID on the Child Site -> Edit page.', 'mainwp' ),
-                $icon    = '<i class="key icon"></i>'
-            );
-
+            $title   = esc_html__( 'No API Backup Solution has been chosen.', 'mainwp' );
+            $message = esc_html__( 'Please double check that you have set the API Key on the API Backups Settings page and have set the Instance ID on the Child Site -> Edit page.', 'mainwp' );
+            $icon    = '<i class="key icon"></i>';
+            \MainWP\Dashboard\MainWP_UI::render_empty_page_placeholder( $title, $message, $icon );
         } else {
             $columns = 'one';
             if ( 'cpanel' === $backup_api || 'plesk' === $backup_api ) {
@@ -5111,7 +5109,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * Save backups to DB for the selected server.
      *
      * @param  array $credentials Kinsta credentials.
-     * @param  bool  $return_result Return or not
+     * @param  bool  $return_result Return or not.
      *
      * @return mixed
      */

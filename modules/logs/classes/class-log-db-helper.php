@@ -308,7 +308,7 @@ class Log_DB_Helper extends MainWP_DB {
      * @return string Return current db size.
      */
     public function count_legacy_dismissed() {
-        return $this->wpdb->get_var( 'SELECT count(*) FROM ' . $this->table_name( 'wp_logs' ) . ' WHERE dismiss = 1 ' );
+        return $this->wpdb->get_var( 'SELECT count(*) FROM ' . $this->table_name( 'wp_logs' ) . ' WHERE dismiss = 1 ' ); //phpcs:ignore -- ok.
     }
 
     /**
@@ -353,7 +353,7 @@ class Log_DB_Helper extends MainWP_DB {
      * Method truncate_archive_tables().
      */
     public function truncate_archive_tables() {
-        $this->wpdb->query( 'TRUNCATE TABLE ' . $this->table_name( 'wp_logs_archive' ) );
-        $this->wpdb->query( 'TRUNCATE TABLE ' . $this->table_name( 'wp_logs_meta_archive' ) );
+        $this->wpdb->query( 'TRUNCATE TABLE ' . $this->table_name( 'wp_logs_archive' ) ); //phpcs:ignore -- ok.
+        $this->wpdb->query( 'TRUNCATE TABLE ' . $this->table_name( 'wp_logs_meta_archive' ) ); //phpcs:ignore -- ok.
     }
 }

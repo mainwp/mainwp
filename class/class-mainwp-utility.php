@@ -1918,15 +1918,15 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Returns the appropriate Fomantic UI color class based on number of updates
      *
-     * @param int $update_count Number of available updates
+     * @param int $update_count Number of available updates.
      *
      * @return string CSS class for the element
      */
     public static function mainwp_get_update_count_class( $update_count ) {
-        // Convert to integer using intval()
+        // Convert to integer using intval().
         $update_count = intval( $update_count );
 
-        // Ensure count is not negative
+        // Ensure count is not negative.
         if ( 0 > $update_count ) {
             $update_count = 0;
         }

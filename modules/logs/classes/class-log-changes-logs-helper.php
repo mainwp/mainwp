@@ -934,7 +934,7 @@ class Log_Changes_Logs_Helper {
                 'context'     => 'user',
                 'action_name' => 'revoked',
             ),
-            1585 => array(
+            1735 => array(
                 'type_id'     => 1735,
                 'desc'        => esc_html__( 'User revoked all application passwords from another user’s profile', 'mainwp-child' ),
                 'context'     => 'user',

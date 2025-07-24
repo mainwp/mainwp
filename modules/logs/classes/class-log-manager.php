@@ -493,7 +493,7 @@ class Log_Manager {
     public function hook_changes_logs_sync_params( $params, $site_id, $postdata = array() ) {
 
         // if it is not a manual sync data.
-        $sync_logs = isset( $_POST['action'] ) && 'mainwp_syncsites' === $_POST['action'] ? true : false;
+        $sync_logs = isset( $_POST['action'] ) && 'mainwp_syncsites' === $_POST['action'] ? true : false; //phpcs:ignore --ok.
         $sync_logs = apply_filters( 'mainwp_module_logs_sync_changes_log', $sync_logs );
 
         if ( ! $sync_logs ) {

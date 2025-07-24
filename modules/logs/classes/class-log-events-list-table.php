@@ -86,6 +86,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      *
      * @param Log_Manager $manager Instance of manager object.
      * @param Strings     $type Events table type: manage_events|widget_overview|widget_insight.
+     * @param bool     $optimize Whether optimize table.
      */
     public function __construct( $manager, $type = '', $optimize = false ) {
         $this->manager         = $manager;
@@ -611,7 +612,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'events'                => $array_events_list,
         );
 
-        if ( isset( $_REQUEST['optimize_table'] ) && 1 === intval( $_REQUEST['optimize_table'] ) ) {
+        if ( isset( $_REQUEST['optimize_table'] ) && 1 === intval( $_REQUEST['optimize_table'] ) ) { //phpcs:ignore --ok.
             $args['optimize']           = 1;
             $args['optimize_with_meta'] = 1;
         }

@@ -1787,7 +1787,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
     public static function pre_load_logs_page() {
         if ( MainWP_Logger::instance()->enabled_log_priority( MainWP_Logger::SITES_CHANGES_LOG_PRIORITY ) ) {
             $stats = Log_DB_Helper::instance()->get_logs_db_stats();
-            MainWP_Logger::instance()->log_events( 'sites-changes', 'DB Info :: ' . print_r( $stats, true ) );
+            MainWP_Logger::instance()->log_events( 'sites-changes', 'DB Info :: ' . print_r( $stats, true ) ); //phpcs:ignore --ok.
         }
     }
 

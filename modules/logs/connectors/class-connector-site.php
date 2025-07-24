@@ -370,9 +370,9 @@ class Connector_Site extends Log_Connector {
     /**
      * Go to wp admin actions.
      *
-     * @param  mixed $website
-     * @param  mixed $location
-     * @param  mixed $params
+     * @param  mixed $website The site.
+     * @param  mixed $location Location.
+     * @param  mixed $params Other params.
      *
      * @return void.
      */
@@ -411,6 +411,5 @@ class Connector_Site extends Log_Connector {
             'sites',
             $action
         );
-        return true;
     }
 }

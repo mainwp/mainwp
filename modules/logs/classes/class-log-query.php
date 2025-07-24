@@ -374,7 +374,7 @@ class Log_Query {
                         implode( ',', $slice_ids )
                     );
 
-                    $meta_records = $wpdb->get_results( $sql_meta );
+                    $meta_records = $wpdb->get_results( $sql_meta ); //phpcs:ignore -- ok.
                     $ids_flip     = array_flip( $ids );
 
                     if ( is_array( $meta_records ) ) {
@@ -403,7 +403,9 @@ class Log_Query {
 
             $start_slice = 0;
             $max_slice   = 100;
-            while ( $start_slice <= count( $ids ) ) {
+            $count       = count( $ids );
+
+            while ( $start_slice <= $count ) {
                 $slice_ids    = array_slice( $ids, $start_slice, $max_slice );
                 $start_slice += $max_slice;
 
@@ -413,7 +415,7 @@ class Log_Query {
                         "SELECT name,value,wpid FROM $wp_options_tbl WHERE wpid IN ( %s ) AND name='site_info'",
                         implode( ',', array_unique( $slice_ids ) )
                     );
-                    $opts_records   = $wpdb->get_results( $sql_sites_meta );
+                    $opts_records   = $wpdb->get_results( $sql_sites_meta );  //phpcs:ignore -- ok.
                     if ( is_array( $opts_records ) ) {
                         foreach ( $opts_records as $opt_record ) {
                             if ( ! isset( $sites_opts[ $opt_record->wpid ] ) ) {
@@ -452,10 +454,9 @@ class Log_Query {
     /**
      * Get logs meta database table view.
      *
-     * @param array $params Params.
      * @return string logs meta view.
      */
-    public function get_log_meta_view( $params = array() ) {
+    public function get_log_meta_view() {
         global $wpdb;
         $view  = '(SELECT intlog.log_id AS view_log_id, ';
         $view .= '(SELECT meta_name.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' meta_name WHERE  meta_name.meta_log_id = intlog.log_id AND meta_name.meta_key = "name" LIMIT 1) AS meta_name, ';

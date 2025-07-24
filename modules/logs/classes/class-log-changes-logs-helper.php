@@ -121,7 +121,6 @@ class Log_Changes_Logs_Helper {
                 $new_last_created = $item_created;
             }
 
-
             $enable_log_type = apply_filters( 'mainwp_module_log_enable_insert_log_type', true, $data );
             if ( ! $enable_log_type ) {
                 continue;

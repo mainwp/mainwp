@@ -110,14 +110,17 @@ class Log_Changes_Logs_Helper {
                 continue;
             }
 
-            // to fix issue of last sync value.
-            if ( $new_last_created < $data['created_on'] ) {
-                $new_last_created = $data['created_on'];
-            }
+            $item_created = round( (float) $data['created_on'], 4 ); // to fix float comparing issue.
 
-            if ( $sync_last_created > $data['created_on'] ) {
+            if ( $item_created <= $sync_last_created ) {
                 continue;
             }
+
+            // to fix issue of last sync value.
+            if ( $new_last_created < $item_created ) {
+                $new_last_created = $item_created;
+            }
+
 
             $enable_log_type = apply_filters( 'mainwp_module_log_enable_insert_log_type', true, $data );
             if ( ! $enable_log_type ) {

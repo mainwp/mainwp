@@ -275,11 +275,7 @@ class Log_Manager {
 
             // to sure.
             if ( empty( static::$last_log_created ) ) {
-                $last_item = Log_DB_Helper::instance()->get_latest_non_mainwp_changes_logs_by_siteid( $site_id );
-                if ( $last_item ) {
-                    $last_item                = $last_item[0];
-                    static::$last_log_created = $last_item->created;
-                }
+                static::$last_log_created = time();
             }
         }
 

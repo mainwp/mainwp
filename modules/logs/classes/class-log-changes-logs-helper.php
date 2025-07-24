@@ -75,11 +75,7 @@ class Log_Changes_Logs_Helper {
 
             // to sure.
             if ( empty( static::$last_log_created ) ) {
-                $last_item = Log_DB_Helper::instance()->get_latest_changes_logs_by_siteid( $site_id );
-                if ( $last_item ) {
-                    $last_item                = $last_item[0];
-                    static::$last_log_created = $last_item->created;
-                }
+                static::$last_log_created = time();
             }
         }
 
@@ -211,7 +207,7 @@ class Log_Changes_Logs_Helper {
      * @return string Dashboard logs context to store in db.
      */
     public function map_change_logs_context( $context, $type_id = 0 ) {
-        if ( empty( $context ) && ! empty( $type_id ) ) {
+        if ( ! empty( $type_id ) ) {
             $context = isset( $this->get_changes_logs_types( $type_id )['context'] ) ? $this->get_changes_logs_types( $type_id )['context'] : '';
         }
         $context = 'cron-job' === $context ? 'cron' : $context;
@@ -236,10 +232,8 @@ class Log_Changes_Logs_Helper {
                 $title = str_replace( '%action%', $data['action'], $title );
             }
             return $title;
-        } elseif ( in_array( $log_type_id, array( 1596 ) ) ) {
-            if ( isset( static::get_changes_logs_types( $log_type_id )['desc'] ) ) {
+        } elseif ( isset( static::get_changes_logs_types( $log_type_id )['desc'] ) ) {
                 return static::get_changes_logs_types( $log_type_id )['desc'];
-            }
         }
         return '';
     }

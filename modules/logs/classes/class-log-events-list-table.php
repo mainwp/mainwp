@@ -86,7 +86,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      *
      * @param Log_Manager $manager Instance of manager object.
      * @param Strings     $type Events table type: manage_events|widget_overview|widget_insight.
-     * @param bool     $optimize Whether optimize table.
+     * @param bool        $optimize Whether optimize table.
      */
     public function __construct( $manager, $type = '', $optimize = false ) {
         $this->manager         = $manager;

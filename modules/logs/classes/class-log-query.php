@@ -363,7 +363,9 @@ class Log_Query {
 
             $start_slice = 0;
             $max_slice   = 100;
-            while ( $start_slice <= count( $ids ) ) {
+            $count       = count( $ids );
+
+            while ( $start_slice <= $count ) {
                 $slice_ids    = array_slice( $ids, $start_slice, $max_slice );
                 $start_slice += $max_slice;
 

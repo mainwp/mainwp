@@ -775,6 +775,7 @@
   border: none !important;
   box-shadow: none !important;
   color: var(--mainwp-text);
+  border-radius: 0.28571429rem !important;
 }
 
 .mainwp-ui.mainwp-custom-theme table.dataTable thead > tr > th.dt-orderable-asc:hover,
@@ -824,9 +825,6 @@
 }
 .mainwp-ui.mainwp-custom-theme .ui.table:not(.day, .hour, .minute, .compact) > tbody > tr.positive > td {
   background-color: #7fb10010 !important;
-}
-.mainwp-ui.mainwp-custom-theme .ui.table {
-  border-radius: 0.28571429rem !important;
 }
 .mainwp-ui.mainwp-custom-theme .ui.table > tbody > tr:last-child > td:first-child {
   border-radius: 0 0 0 0.28571429rem !important;

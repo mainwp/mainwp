@@ -1237,11 +1237,10 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                 </table>
                         <?php else : // Display message if WP-Toolkit is not enabled. ?>
                             <?php
-                            \MainWP\Dashboard\MainWP_UI::render_empty_page_placeholder(
-                                $title   = esc_html__( 'The WP-Toolkit API has not been enabled.', 'mainwp' ),
-                                $message = esc_html__( 'Please double check that you have set the cPanel API Key on the API Backups Settings page and have enabled the WP Toolkit API on the Child Site -> Edit page.', 'mainwp' ),
-                                $icon    = '<i class="key icon"></i>'
-                            );
+                            $title   = esc_html__( 'The WP-Toolkit API has not been enabled.', 'mainwp' );
+                            $message = esc_html__( 'Please double check that you have set the cPanel API Key on the API Backups Settings page and have enabled the WP Toolkit API on the Child Site -> Edit page.', 'mainwp' );
+                            $icon    = '<i class="key icon"></i>';
+                            \MainWP\Dashboard\MainWP_UI::render_empty_page_placeholder( $title, $message, $icon );
                             ?>
                         <?php endif; ?>
                     </div>

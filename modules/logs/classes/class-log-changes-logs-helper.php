@@ -208,7 +208,7 @@ class Log_Changes_Logs_Helper {
      */
     public function map_change_logs_context( $context, $type_id = 0 ) {
         if ( ! empty( $type_id ) ) {
-            $context = isset( $this->get_changes_logs_types( $type_id )['context'] ) ? $this->get_changes_logs_types( $type_id )['context'] : '';
+            $context = isset( static::get_changes_logs_types( $type_id )['context'] ) ? static::get_changes_logs_types( $type_id )['context'] : '';
         }
         $context = 'cron-job' === $context ? 'cron' : $context;
         return \apply_filters( 'mainwp_module_log_changes_logs_mapping_contexts', $context, $type_id );
@@ -248,79 +248,13 @@ class Log_Changes_Logs_Helper {
      */
     public static function get_changes_events_title_default( $type_id ) {
         $defaults = array(
-            15028 => array(
+            1460 => array(
                 __( '%action% automatic update', 'mainwp' ),
             ),
         );
         return isset( $defaults[ $type_id ] ) ? $defaults[ $type_id ][0] : '';
     }
 
-
-    /**
-     * Loads changes logs groups.
-     *
-     * @return array
-     */
-    public static function get_groups_changes_logs() {
-        return array(
-            array(
-                'context' => 'post',
-                'title'   => esc_html__( 'Post', 'mainwp' ),
-            ),
-            array(
-                'context' => 'custom-field',
-                'title'   => esc_html__( 'Custom field', 'mainwp' ),
-            ),
-            array(
-                'context' => 'category',
-                'title'   => esc_html__( 'Categories', 'mainwp' ),
-            ),
-            array(
-                'context' => 'tag',
-                'title'   => esc_html__( 'Tag', 'mainwp' ),
-            ),
-            array(
-                'context' => 'file',
-                'title'   => esc_html__( 'File', 'mainwp' ),
-            ),
-            array(
-                'context' => 'widget',
-                'title'   => esc_html__( 'Widget', 'mainwp' ),
-            ),
-            array(
-                'context' => 'plugin',
-                'title'   => esc_html__( 'Plugin', 'mainwp' ),
-            ),
-            array(
-                'context' => 'theme',
-                'title'   => esc_html__( 'Theme', 'mainwp' ),
-            ),
-            array(
-                'context' => 'menu',
-                'title'   => esc_html__( 'Menu', 'mainwp' ),
-            ),
-            array(
-                'context' => 'comment',
-                'title'   => esc_html__( 'Comment', 'mainwp' ),
-            ),
-            array(
-                'context' => 'user',
-                'title'   => esc_html__( 'User', 'mainwp' ),
-            ),
-            array(
-                'context' => 'database',
-                'title'   => esc_html__( 'Database', 'mainwp' ),
-            ),
-            array(
-                'context' => 'cron-job',
-                'title'   => esc_html__( 'WordPress Cron', 'mainwp' ),
-            ),
-            array(
-                'context' => 'system-setting',
-                'title'   => esc_html__( 'System setting', 'mainwp' ),
-            ),
-        );
-    }
 
     /**
      * Method get_changes_logs_types().
@@ -332,490 +266,501 @@ class Log_Changes_Logs_Helper {
     public static function get_changes_logs_types( $type_id = null ) { //phpcs:ignore -- NOSONAR - long function.
         $defaults = array(
             // Post.
-            12000 => array(
-                'type_id'     => 12000,
-                'desc'        => esc_html__( 'Created a new post', 'mainwp' ),
+            1200 => array(
+                'type_id'     => 1200,
+                'desc'        => esc_html__( 'Created a new post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'created',
             ),
-            12001 => array(
-                'type_id'     => 12001,
-                'desc'        => esc_html__( 'Published a post', 'mainwp' ),
+            1205 => array(
+                'type_id'     => 1205,
+                'desc'        => esc_html__( 'Published a post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'published',
             ),
-            12002 => array(
-                'type_id'     => 12002,
-                'desc'        => esc_html__( 'Modified a post', 'mainwp' ),
+            1210 => array(
+                'type_id'     => 1210,
+                'desc'        => esc_html__( 'Modified a post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'modified',
             ),
-            12008 => array(
-                'type_id'     => 12008,
-                'desc'        => esc_html__( 'Permanently deleted a post', 'mainwp' ),
+            1215 => array(
+                'type_id'     => 1215,
+                'desc'        => esc_html__( 'Permanently deleted a post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'deleted',
             ),
-            12012 => array(
-                'type_id'     => 12012,
-                'desc'        => esc_html__( 'Moved a post to trash', 'mainwp' ),
+            1220 => array(
+                'type_id'     => 1220,
+                'desc'        => esc_html__( 'Permanently deleted a page', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'deleted',
             ),
-            12014 => array(
-                'type_id'     => 12014,
-                'desc'        => esc_html__( 'Restored a post from trash', 'mainwp' ),
+            1225 => array(
+                'type_id'     => 1225,
+                'desc'        => esc_html__( 'Moved a post to trash', 'mainwp-child' ),
+                'context'     => 'post',
+                'action_name' => 'deleted',
+            ),
+            1230 => array(
+                'type_id'     => 1230,
+                'desc'        => esc_html__( 'Restored a post from trash', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'restored',
             ),
-            12016 => array(
-                'type_id'     => 12016,
-                'desc'        => esc_html__( 'Changed the category of a post', 'mainwp' ),
+            1235 => array(
+                'type_id'     => 1235,
+                'desc'        => esc_html__( 'Changed the category of a post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'modified',
             ),
-            12017 => array(
-                'type_id'     => 12017,
-                'desc'        => esc_html__( 'Changed the URL of a post', 'mainwp' ),
+            1240 => array(
+                'type_id'     => 1240,
+                'desc'        => esc_html__( 'Changed the URL of a post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'modified',
             ),
-            12019 => array(
-                'type_id'     => 12019,
-                'desc'        => esc_html__( 'Changed the author of a post', 'mainwp' ),
+            1245 => array(
+                'type_id'     => 1245,
+                'desc'        => esc_html__( 'Changed the author of a post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'modified',
             ),
-            12021 => array(
-                'type_id'     => 12021,
-                'desc'        => esc_html__( 'Changed the status of a post', 'mainwp' ),
+            1250 => array(
+                'type_id'     => 1250,
+                'desc'        => esc_html__( 'Changed the status of a post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'modified',
             ),
-            12047 => array(
-                'type_id'     => 12047,
-                'desc'        => esc_html__( 'Changed the parent of a post', 'mainwp' ),
-                'tite'        => esc_html__( 'Changed the parent of the post %PostTitle% to %NewParentName%.', 'mainwp' ),
+            1255 => array(
+                'type_id'     => 1255,
+                'desc'        => esc_html__( 'Changed the parent of a post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'modified',
             ),
-            12048 => array(
-                'type_id'     => 12048,
-                'desc'        => esc_html__( 'Changed the template of a post', 'mainwp' ),
+            1260 => array(
+                'type_id'     => 1260,
+                'desc'        => esc_html__( 'Changed the template of a post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'modified',
             ),
-            12049 => array(
-                'type_id'     => 12049,
-                'desc'        => esc_html__( 'Set a post as Sticky', 'mainwp' ),
+            1265 => array(
+                'type_id'     => 1265,
+                'desc'        => esc_html__( 'Set a post as Sticky', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'modified',
             ),
-            12050 => array(
-                'type_id'     => 12050,
-                'desc'        => esc_html__( 'Removed post from Sticky', 'mainwp' ),
+            1270 => array(
+                'type_id'     => 1270,
+                'desc'        => esc_html__( 'Removed post from Sticky', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'modified',
             ),
-            12053 => array(
-                'type_id'     => 12053,
-                'desc'        => esc_html__( 'Created a custom field in a post', 'mainwp' ),
+            1275 => array(
+                'type_id'     => 1275,
+                'desc'        => esc_html__( 'Created a custom field in a post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'modified',
             ),
-            12073 => array(
-                'type_id'     => 12073,
-                'desc'        => esc_html__( 'Submitted post for review', 'mainwp' ),
+            1280 => array(
+                'type_id'     => 1280,
+                'desc'        => esc_html__( 'Submitted post for review', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'modified',
             ),
-            12074 => array(
-                'type_id'     => 12074,
-                'desc'        => esc_html__( 'Scheduled a post for publishing', 'mainwp' ),
+            1285 => array(
+                'type_id'     => 1285,
+                'desc'        => esc_html__( 'Scheduled a post for publishing', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'modified',
             ),
-            12025 => array(
-                'type_id'     => 12025,
-                'desc'        => esc_html__( 'User changed the visibility of a post', 'mainwp' ),
+            1290 => array(
+                'type_id'     => 1290,
+                'desc'        => esc_html__( 'User changed the visibility of a post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'modified',
             ),
-            12027 => array(
-                'type_id'     => 12027,
-                'disc'        => esc_html__( 'Changed the date of a post', 'mainwp' ),
+            1295 => array(
+                'type_id'     => 1295,
+                'desc'        => esc_html__( 'Changed the date of a post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'modified',
             ),
-            12065 => array(
-                'type_id'     => 12065,
-                'desc'        => esc_html__( 'Modified the content of a post', 'mainwp' ),
+            1300 => array(
+                'type_id'     => 1300,
+                'desc'        => esc_html__( 'Modified the content of a post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'modified',
             ),
-            12086 => array(
-                'type_id'     => 12086,
-                'desc'        => esc_html__( 'Changed title of a post', 'mainwp' ),
+            1305 => array(
+                'type_id'     => 1305,
+                'desc'        => esc_html__( 'Changed title of a post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'modified',
             ),
-            12100 => array(
-                'type_id'     => 12100,
-                'desc'        => esc_html__( 'Opened a post in editor', 'mainwp' ),
+            1310 => array(
+                'type_id'     => 1310,
+                'desc'        => esc_html__( 'Opened a post in editor', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'opened',
             ),
-            12101 => array(
-                'type_id'     => 12101,
-                'desc'        => esc_html__( 'Viewed a post', 'mainwp' ),
+            1315 => array(
+                'type_id'     => 1315,
+                'desc'        => esc_html__( 'Viewed a post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'viewed',
             ),
-            12111 => array(
-                'type_id'     => 12111,
-                'desc'        => esc_html__( 'Enabled / disabled comments in a post', 'mainwp' ),
+            1320 => array(
+                'type_id'     => 1320,
+                'desc'        => esc_html__( 'Enabled / disabled comments in a post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'enabled',
             ),
-            12112 => array(
-                'type_id'     => 12112,
-                'desc'        => esc_html__( 'Enabled / disabled trackbacks in a post', 'mainwp' ),
+            1325 => array(
+                'type_id'     => 1325,
+                'desc'        => esc_html__( 'Enabled / disabled trackbacks in a post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'enabled',
             ),
-            12129 => array(
-                'type_id'     => 12129,
-                'desc'        => esc_html__( 'Updated the excerpt of a post', 'mainwp' ),
+            1330 => array(
+                'type_id'     => 1330,
+                'desc'        => esc_html__( 'Updated the excerpt of a post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'modified',
             ),
             // xxxx, // Added / changed / removed a post’s excerpt ???.
-            12130 => array(
-                'type_id'     => 12130,
-                'desc'        => esc_html__( 'Updated the feature image of a post', 'mainwp' ),
+            1335 => array(
+                'type_id'     => 1335,
+                'desc'        => esc_html__( 'Updated the feature image of a post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'modified',
             ),
-            12133 => array(
-                'type_id'     => 12133,
-                'desc'        => esc_html__( 'Taken over a post from another user', 'mainwp' ),
+            1340 => array(
+                'type_id'     => 1340,
+                'desc'        => esc_html__( 'Taken over a post from another user', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'modified',
             ),
             // Custom field.
-            12131 => array(
-                'type_id'     => 12131,
-                'desc'        => esc_html__( 'Added a relationship in an ACF custom field', 'mainwp' ),
+            1345 => array(
+                'type_id'     => 1345,
+                'desc'        => esc_html__( 'Added a relationship in an ACF custom field', 'mainwp-child' ),
                 'context'     => 'custom-field',
                 'action_name' => 'modified',
             ),
-            12132 => array(
-                'type_id'     => 12132,
-                'desc'        => esc_html__( 'Removed a relationship from an ACF custom field', 'mainwp' ),
+            1350 => array(
+                'type_id'     => 1350,
+                'desc'        => esc_html__( 'Removed a relationship from an ACF custom field', 'mainwp-child' ),
                 'context'     => 'custom-field',
                 'action_name' => 'modified',
             ),
-            12054 => array(
-                'type_id'     => 12054,
-                'desc'        => esc_html__( 'Changed the value of a custom field', 'mainwp' ),
+            1355 => array(
+                'type_id'     => 1355,
+                'desc'        => esc_html__( 'Changed the value of a custom field', 'mainwp-child' ),
                 'context'     => 'custom-field',
                 'action_name' => 'modified',
             ),
-            12055 => array(
-                'type_id'     => 12055,
-                'desc'        => esc_html__( 'Deleted a custom field', 'mainwp' ),
+            1360 => array(
+                'type_id'     => 1360,
+                'desc'        => esc_html__( 'Deleted a custom field', 'mainwp-child' ),
                 'context'     => 'custom-field',
                 'action_name' => 'deleted',
             ),
-            12062 => array(
-                'type_id'     => 12062,
-                'desc'        => esc_html__( 'Renamed a custom field', 'mainwp' ),
+            1365 => array(
+                'type_id'     => 1365,
+                'desc'        => esc_html__( 'Renamed a custom field', 'mainwp-child' ),
                 'context'     => 'custom-field',
                 'action_name' => 'renamed',
             ),
             // Category.
-            12023 => array(
-                'type_id'     => 12023,
-                'desc'        => esc_html__( 'Created a new category', 'mainwp' ),
+            1370 => array(
+                'type_id'     => 1370,
+                'desc'        => esc_html__( 'Created a new category', 'mainwp-child' ),
                 'context'     => 'category',
                 'action_name' => 'created',
             ),
-            12024 => array(
-                'type_id'     => 12024,
-                'desc'        => esc_html__( 'Deleted a category', 'mainwp' ),
+            1375 => array(
+                'type_id'     => 1375,
+                'desc'        => esc_html__( 'Deleted a category', 'mainwp-child' ),
                 'context'     => 'category',
                 'action_name' => 'deleted',
             ),
-            12052 => array(
-                'type_id'     => 12052,
-                'desc'        => esc_html__( 'Changed the parent of a category', 'mainwp' ),
+            1380 => array(
+                'type_id'     => 1380,
+                'desc'        => esc_html__( 'Changed the parent of a category', 'mainwp-child' ),
                 'context'     => 'category',
                 'action_name' => 'modified',
             ),
-            12127 => array(
-                'type_id'     => 12127,
-                'desc'        => esc_html__( 'Renamed a category', 'mainwp' ),
+            1385 => array(
+                'type_id'     => 1385,
+                'desc'        => esc_html__( 'Renamed a category', 'mainwp-child' ),
                 'context'     => 'category',
                 'action_name' => 'renamed',
             ),
-            12128 => array(
-                'type_id'     => 12128,
-                'desc'        => esc_html__( 'Renamed a category', 'mainwp' ),
+            1390 => array(
+                'type_id'     => 1390,
+                'desc'        => esc_html__( 'Changed slug of a category', 'mainwp-child' ),
                 'context'     => 'category',
                 'action_name' => 'modified',
             ),
             // Tag.
-            12119 => array(
-                'type_id'     => 12119,
-                'desc'        => esc_html__( 'Added tag(s) to a post', 'mainwp' ),
+            1395 => array(
+                'type_id'     => 1395,
+                'desc'        => esc_html__( 'Added tag(s) to a post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'modified',
             ),
-            12120 => array(
-                'type_id'     => 12120,
-                'desc'        => esc_html__( 'Removed tag(s) from a post', 'mainwp' ),
+            1400 => array(
+                'type_id'     => 1400,
+                'desc'        => esc_html__( 'Removed tag(s) from a post', 'mainwp-child' ),
                 'context'     => 'post',
                 'action_name' => 'modified',
             ),
-            12123 => array(
-                'type_id'     => 12123,
-                'desc'        => esc_html__( 'Renamed tag', 'mainwp' ),
+            1405 => array(
+                'type_id'     => 1405,
+                'desc'        => esc_html__( 'Renamed tag', 'mainwp-child' ),
                 'context'     => 'tag',
                 'action_name' => 'renamed',
             ),
-            12124 => array(
-                'type_id'     => 12124,
-                'desc'        => esc_html__( 'Changed the slug of a tag', 'mainwp' ),
+            1410 => array(
+                'type_id'     => 1410,
+                'desc'        => esc_html__( 'Changed the slug of a tag', 'mainwp-child' ),
                 'context'     => 'tag',
                 'action_name' => 'modified',
             ),
-            12125 => array(
-                'type_id'     => 12125,
-                'desc'        => esc_html__( 'Changed the description of a tag', 'mainwp' ),
+            1415 => array(
+                'type_id'     => 1415,
+                'desc'        => esc_html__( 'Changed the description of a tag', 'mainwp-child' ),
                 'context'     => 'tag',
                 'action_name' => 'modified',
             ),
             // File.
-            12010 => array(
-                'type_id'     => 12010,
-                'desc'        => esc_html__( 'Uploaded a file', 'mainwp' ),
+            1420 => array(
+                'type_id'     => 1420,
+                'desc'        => esc_html__( 'Uploaded a file', 'mainwp-child' ),
                 'context'     => 'file',
                 'action_name' => 'uploaded',
             ),
-            12011 => array(
-                'type_id'     => 12011,
-                'desc'        => esc_html__( 'Deleted a file', 'mainwp' ),
+            1425 => array(
+                'type_id'     => 1425,
+                'desc'        => esc_html__( 'Deleted a file', 'mainwp-child' ),
                 'context'     => 'file',
                 'action_name' => 'deleted',
             ),
             // Widget.
-            12042 => array(
-                'type_id'     => 12042,
-                'desc'        => esc_html__( 'Added a new widget', 'mainwp' ),
+            1430 => array(
+                'type_id'     => 1430,
+                'desc'        => esc_html__( 'Added a new widget', 'mainwp-child' ),
                 'context'     => 'widget',
                 'action_name' => 'added',
             ),
-            12043 => array(
-                'type_id'     => 12043,
-                'desc'        => esc_html__( 'Modified a widget', 'mainwp' ),
+            1435 => array(
+                'type_id'     => 1435,
+                'desc'        => esc_html__( 'Modified a widget', 'mainwp-child' ),
                 'context'     => 'widget',
                 'action_name' => 'modified',
             ),
-            12044 => array(
-                'type_id'     => 12044,
-                'desc'        => esc_html__( 'Deleted a widget', 'mainwp' ),
+            1440 => array(
+                'type_id'     => 1440,
+                'desc'        => esc_html__( 'Deleted a widget', 'mainwp-child' ),
                 'context'     => 'widget',
                 'action_name' => 'deleted',
             ),
-            12045 => array(
-                'type_id'     => 12045,
-                'desc'        => esc_html__( 'Moved a widget in between sections', 'mainwp' ),
+            1445 => array(
+                'type_id'     => 1445,
+                'desc'        => esc_html__( 'Moved a widget in between sections', 'mainwp-child' ),
                 'context'     => 'widget',
                 'action_name' => 'modified',
             ),
-            12071 => array(
-                'type_id'     => 12071,
-                'desc'        => esc_html__( 'Changed the position of a widget in a section', 'mainwp' ),
+            1450 => array(
+                'type_id'     => 1450,
+                'desc'        => esc_html__( 'Changed the position of a widget in a section', 'mainwp-child' ),
                 'context'     => 'widget',
                 'action_name' => 'modified',
             ),
             // Plugin.
-            12051 => array(
-                'type_id'     => 12051,
-                'desc'        => esc_html__( 'Modified a file with the plugin editor', 'mainwp' ),
+            1455 => array(
+                'type_id'     => 1455,
+                'desc'        => esc_html__( 'Modified a file with the plugin editor', 'mainwp-child' ),
                 'context'     => 'file',
                 'action_name' => 'modified',
             ),
-            15028 => array(
-                'type_id'     => 15028,
-                'desc'        => esc_html__( 'The automatic updates setting for a plugin was changed.', 'mainwp' ),
+            1460 => array(
+                'type_id'     => 1460,
+                'desc'        => esc_html__( 'The automatic updates setting for a plugin was changed.', 'mainwp-child' ),
                 'context'     => 'plugin',
                 'action_name' => 'enabled',
             ),
+            1461 => array( // Added: for recent activated plugins query.
+                'type_id'     => 1461,
+                'desc'        => esc_html__( 'Installed plugin is activated.', 'mainwp-child' ),
+                'context'     => 'plugin',
+                'action_name' => 'activated',
+            ),
             // Theme.
-            12046 => array(
-                'type_id'     => 12046,
-                'desc'        => esc_html__( 'Modified a file with the theme editor', 'mainwp' ),
+            1465 => array(
+                'type_id'     => 1465,
+                'desc'        => esc_html__( 'Modified a file with the theme editor', 'mainwp-child' ),
                 'context'     => 'file',
                 'action_name' => 'modified',
             ),
-            15029 => array(
-                'type_id'     => 15029,
-                'desc'        => esc_html__( 'The automatic updates setting for a theme was changed.', 'mainwp' ),
+            1470 => array(
+                'type_id'     => 1470,
+                'desc'        => esc_html__( 'The automatic updates setting for a theme was changed.', 'mainwp-child' ),
                 'contex'      => 'theme',
                 'action_name' => 'enabled',
             ),
             // Menu.
-            12078 => array(
-                'type_id'     => 12078,
-                'desc'        => esc_html__( 'Created a menu', 'mainwp' ),
+            1475 => array(
+                'type_id'     => 1475,
+                'desc'        => esc_html__( 'Created a menu', 'mainwp-child' ),
                 'context'     => 'menu',
                 'action_name' => 'created',
             ),
-            12079 => array(
-                'type_id'     => 12079,
-                'desc'        => esc_html__( 'Added item(s) to a menu', 'mainwp' ),
+            1480 => array(
+                'type_id'     => 1480,
+                'desc'        => esc_html__( 'Added item(s) to a menu', 'mainwp-child' ),
                 'context'     => 'menu',
                 'action_name' => 'modified',
             ),
-            12080 => array(
-                'type_id'     => 12080,
-                'desc'        => esc_html__( 'Removed item(s) from a menu', 'mainwp' ),
+            1485 => array(
+                'type_id'     => 1485,
+                'desc'        => esc_html__( 'Removed item(s) from a menu', 'mainwp-child' ),
                 'context'     => 'menu',
                 'action_name' => 'modified',
             ),
             // Menu.
-            12081 => array(
-                'type_id'     => 12081,
-                'desc'        => esc_html__( 'Deleted a menu', 'mainwp' ),
+            1490 => array(
+                'type_id'     => 1490,
+                'desc'        => esc_html__( 'Deleted a menu', 'mainwp-child' ),
                 'context'     => 'menu',
                 'action_name' => 'deleted',
             ),
-            12082 => array(
-                'type_id'     => 12082,
-                'desc'        => esc_html__( 'Changed the settings of a menu', 'mainwp' ),
+            1495 => array(
+                'type_id'     => 1495,
+                'desc'        => esc_html__( 'Changed the settings of a menu', 'mainwp-child' ),
                 'contex'      => 'menu',
                 'action_name' => 'enabled',
             ),
-            12083 => array(
-                'type_id'     => 12083,
-                'desc'        => esc_html__( 'Modified the item(s) in a menu', 'mainwp' ),
+            1500 => array(
+                'type_id'     => 1500,
+                'desc'        => esc_html__( 'Modified the item(s) in a menu', 'mainwp-child' ),
                 'context'     => 'menu',
                 'action_name' => 'modified',
             ),
-            12084 => array(
-                'type_id'     => 12084,
-                'desc'        => esc_html__( 'Renamed a menu', 'mainwp' ),
+            1505 => array(
+                'type_id'     => 1505,
+                'desc'        => esc_html__( 'Renamed a menu', 'mainwp-child' ),
                 'context'     => 'menu',
                 'action_name' => 'renamed',
             ),
-            12085 => array(
-                'type_id'     => 12085,
-                'desc'        => esc_html__( 'Changed the order of the objects in a menu.', 'mainwp' ),
+            1510 => array(
+                'type_id'     => 1510,
+                'desc'        => esc_html__( 'Changed the order of the objects in a menu.', 'mainwp-child' ),
                 'context'     => 'menu',
                 'action_name' => 'modified',
             ),
-            12089 => array(
-                'type_id'     => 12089,
-                'desc'        => esc_html__( 'Moved an item as a sub-item in a menu', 'mainwp' ),
+            1515 => array(
+                'type_id'     => 1515,
+                'desc'        => esc_html__( 'Moved an item as a sub-item in a menu', 'mainwp-child' ),
                 'context'     => 'menu',
                 'action_name' => 'modified',
             ),
             // Comment.
-            12090 => array(
-                'type_id'     => 12090,
-                'desc'        => esc_html__( 'Approved a comment', 'mainwp' ),
+            1520 => array(
+                'type_id'     => 1520,
+                'desc'        => esc_html__( 'Approved a comment', 'mainwp-child' ),
                 'context'     => 'comment',
                 'action_name' => 'approved',
             ),
-            12091 => array(
-                'type_id'     => 12091,
-                'desc'        => esc_html__( 'Unapproved a comment', 'mainwp' ),
+            1525 => array(
+                'type_id'     => 1525,
+                'desc'        => esc_html__( 'Unapproved a comment', 'mainwp-child' ),
                 'context'     => 'comment',
                 'action_name' => 'unapproved',
             ),
-            12092 => array(
-                'type_id'     => 12092,
-                'desc'        => esc_html__( 'Replied to a comment', 'mainwp' ),
+            1530 => array(
+                'type_id'     => 1530,
+                'desc'        => esc_html__( 'Replied to a comment', 'mainwp-child' ),
                 'context'     => 'comment',
                 'action_name' => 'created',
             ),
-            12093 => array(
-                'type_id'     => 12093,
-                'desc'        => esc_html__( 'Edited a comment', 'mainwp' ),
+            1535 => array(
+                'type_id'     => 1535,
+                'desc'        => esc_html__( 'Edited a comment', 'mainwp-child' ),
                 'context'     => 'comment',
                 'action_name' => 'modified',
             ),
-            12094 => array(
-                'type_id'     => 12094,
-                'desc'        => esc_html__( 'Marked a comment as spam', 'mainwp' ),
+            1540 => array(
+                'type_id'     => 1540,
+                'desc'        => esc_html__( 'Marked a comment as spam', 'mainwp-child' ),
                 'context'     => 'comment',
                 'action_name' => 'unapproved',
             ),
-            12095 => array(
-                'type_id'     => 12095,
-                'desc'        => esc_html__( 'Marked a comment as not spam', 'mainwp' ),
+            1545 => array(
+                'type_id'     => 1545,
+                'desc'        => esc_html__( 'Marked a comment as not spam', 'mainwp-child' ),
                 'context'     => 'comment',
                 'action_name' => 'approved',
             ),
-            12096 => array(
-                'type_id'     => 12096,
-                'desc'        => esc_html__( 'Moved a comment to trash', 'mainwp' ),
+            1550 => array(
+                'type_id'     => 1550,
+                'desc'        => esc_html__( 'Moved a comment to trash', 'mainwp-child' ),
                 'context'     => 'comment',
                 'action_name' => 'deleted',
             ),
-            12097 => array(
-                'type_id'     => 12097,
-                'desc'        => esc_html__( 'Restored a comment from the trash', 'mainwp' ),
+            1555 => array(
+                'type_id'     => 1555,
+                'desc'        => esc_html__( 'Restored a comment from the trash', 'mainwp-child' ),
                 'context'     => 'comment',
                 'action_name' => 'restored',
             ),
-            12098 => array(
-                'type_id'     => 12098,
-                'desc'        => esc_html__( 'Permanently deleted a comment', 'mainwp' ),
+            1560 => array(
+                'type_id'     => 1560,
+                'desc'        => esc_html__( 'Permanently deleted a comment', 'mainwp-child' ),
                 'context'     => 'comment',
                 'action_name' => 'deleted',
             ),
-            12099 => array(
-                'type_id'     => 12099,
-                'desc'        => esc_html__( 'Posted a comment', 'mainwp' ),
+            1565 => array(
+                'type_id'     => 1565,
+                'desc'        => esc_html__( 'Posted a comment', 'mainwp-child' ),
                 'context'     => 'comment',
                 'action_name' => 'created',
             ),
             // User.
-            11000 => array(
-                'type_id'     => 11000,
-                'desc'        => esc_html__( 'Successfully logged in', 'mainwp' ),
+            1570 => array(
+                'type_id'     => 1570,
+                'desc'        => esc_html__( 'Successfully logged in', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'login',
             ),
-            11001 => array(
-                'type_id'     => 11001,
-                'desc'        => esc_html__( 'Successfully logged out', 'mainwp' ),
+            1575 => array(
+                'type_id'     => 1575,
+                'desc'        => esc_html__( 'Successfully logged out', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'logout',
             ),
-            11005 => array(
-                'type_id'     => 11005,
-                'desc'        => esc_html__( 'Successful log in but other sessions exist for user', 'mainwp' ),
+            1580 => array(
+                'type_id'     => 1580,
+                'desc'        => esc_html__( 'Successful log in but other sessions exist for user', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'login',
             ),
-            11006 => array(
-                'type_id'     => 11006,
-                'desc'        => esc_html__( 'Logged out all other sessions with same user', 'mainwp' ),
+            1585 => array(
+                'type_id'     => 1585,
+                'desc'        => esc_html__( 'Logged out all other sessions with same user', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'logout',
             ),
-            11009 => array( // ??? 1007 - Terminated a user session.
-                'type_id'     => 11009,
-                'desc'        => esc_html__( 'Terminated a user session', 'mainwp' ),
+            1590 => array( // ??? 11007 - Terminated a user session.
+                'type_id'     => 1590,
+                'desc'        => esc_html__( 'Terminated a user session', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'logout',
             ),
-            11008 => array(
-                'type_id'     => 11008,
-                'desc'        => esc_html__( 'Switched to another user', 'mainwp' ),
+            1595 => array(
+                'type_id'     => 1595,
+                'desc'        => esc_html__( 'Switched to another user', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'login',
             ),
@@ -831,153 +776,159 @@ class Log_Changes_Logs_Helper {
                 'context'     => 'user',
                 'action_name' => 'submitted',
             ),
-            14000 => array(
-                'type_id'     => 14000,
-                'desc'        => esc_html__( 'A new user was created', 'mainwp' ),
+            1605 => array(
+                'type_id'     => 1605,
+                'desc'        => esc_html__( 'A new user was created', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'created',
             ),
-            14001 => array(
-                'type_id'     => 14001,
-                'desc'        => esc_html__( 'User created a new user', 'mainwp' ),
+            1610 => array(
+                'type_id'     => 1610,
+                'desc'        => esc_html__( 'User created a new user', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'created',
             ),
-            14002 => array(
-                'type_id'     => 14002,
-                'desc'        => esc_html__( 'Change the role of a user', 'mainwp' ),
+            1615 => array(
+                'type_id'     => 1615,
+                'desc'        => esc_html__( 'Change the role of a user', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'modified',
             ),
-            14003 => array(
-                'type_id'     => 14003,
-                'desc'        => esc_html__( 'Changed the password', 'mainwp' ),
+            1620 => array( // for BBPress users.
+                'type_id'     => 1620,
+                'desc'        => esc_html__( 'Change the role of a user', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'modified',
             ),
-            14004 => array(
-                'type_id'     => 14004,
-                'desc'        => esc_html__( 'Changed the password of a user', 'mainwp' ),
+            1625 => array(
+                'type_id'     => 1625,
+                'desc'        => esc_html__( 'Changed the password', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'modified',
             ),
-            14005 => array(
-                'type_id'     => 14005,
-                'desc'        => esc_html__( 'Changed the email address', 'mainwp' ),
+            1630 => array(
+                'type_id'     => 1630,
+                'desc'        => esc_html__( 'Changed the password of a user', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'modified',
             ),
-            14006 => array(
-                'type_id'     => 14006,
-                'desc'        => esc_html__( 'Changed the email address of a user', 'mainwp' ),
+            1635 => array(
+                'type_id'     => 1635,
+                'desc'        => esc_html__( 'Changed the email address', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'modified',
             ),
-            14007 => array(
-                'type_id'     => 14007,
-                'desc'        => esc_html__( 'Deleted a user', 'mainwp' ),
+            1640 => array(
+                'type_id'     => 1640,
+                'desc'        => esc_html__( 'Changed the email address of a user', 'mainwp-child' ),
+                'context'     => 'user',
+                'action_name' => 'modified',
+            ),
+            1645 => array(
+                'type_id'     => 1645,
+                'desc'        => esc_html__( 'Deleted a user', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'deleted',
             ),
-            14008 => array(
-                'type_id'     => 14008,
-                'desc'        => esc_html__( 'Granted super admin privileges to a user', 'mainwp' ),
+            1650 => array(
+                'type_id'     => 1650,
+                'desc'        => esc_html__( 'Granted super admin privileges to a user', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'modified',
             ),
-            14009 => array(
-                'type_id'     => 14009,
-                'desc'        => esc_html__( 'Revoked super admin privileges from a user', 'mainwp' ),
+            1655 => array(
+                'type_id'     => 1655,
+                'desc'        => esc_html__( 'Revoked super admin privileges from a user', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'modified',
             ),
-            14012 => array(
-                'type_id'     => 14012,
-                'desc'        => esc_html__( 'Added a network user to a site', 'mainwp' ),
+            1660 => array(
+                'type_id'     => 1660,
+                'desc'        => esc_html__( 'Added a network user to a site', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'created',
             ),
-            14011 => array(
-                'type_id'     => 14011,
-                'desc'        => esc_html__( 'Removed a network user from a site', 'mainwp' ),
+            1665 => array(
+                'type_id'     => 1665,
+                'desc'        => esc_html__( 'Removed a network user from a site', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'modified',
             ),
-            14010 => array(
-                'type_id'     => 14010,
-                'desc'        => esc_html__( 'Created a new network user', 'mainwp' ),
+            1670 => array(
+                'type_id'     => 1670,
+                'desc'        => esc_html__( 'Created a new network user', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'modified',
             ),
-            14013 => array(
-                'type_id'     => 14013,
-                'desc'        => esc_html__( 'User has been activated on the network', 'mainwp' ),
+            1675 => array(
+                'type_id'     => 1675,
+                'desc'        => esc_html__( 'User has been activated on the network', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'activated',
             ),
-            14014 => array(
-                'type_id'     => 14014,
-                'desc'        => esc_html__( 'Opened the profile page of a user', 'mainwp' ),
+            1680 => array(
+                'type_id'     => 1680,
+                'desc'        => esc_html__( 'Opened the profile page of a user', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'opened',
             ),
-            14015 => array(
-                'type_id'     => 14015,
-                'desc'        => esc_html__( 'Changed a custom field value in user profile', 'mainwp' ),
+            1685 => array(
+                'type_id'     => 1685,
+                'desc'        => esc_html__( 'Changed a custom field value in user profile', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'modified',
             ),
-            14016 => array(
-                'type_id'     => 14016,
-                'desc'        => esc_html__( 'Created a custom field in a user profile', 'mainwp' ),
+            1690 => array(
+                'type_id'     => 1690,
+                'desc'        => esc_html__( 'Created a custom field in a user profile', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'modified',
             ),
-            14017 => array(
-                'type_id'     => 14017,
-                'desc'        => esc_html__( 'Changed the first name (of a user)', 'mainwp' ),
+            1695 => array(
+                'type_id'     => 1695,
+                'desc'        => esc_html__( 'Changed the first name (of a user)', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'modified',
             ),
-            14018 => array(
-                'type_id'     => 14018,
-                'desc'        => esc_html__( 'Changed the last name (of a user)', 'mainwp' ),
+            1700 => array(
+                'type_id'     => 1700,
+                'desc'        => esc_html__( 'Changed the last name (of a user)', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'modified',
             ),
-            14019 => array(
-                'type_id'     => 14019,
-                'desc'        => esc_html__( 'Changed the nickname (of a user)', 'mainwp' ),
+            1705 => array(
+                'type_id'     => 1705,
+                'desc'        => esc_html__( 'Changed the nickname (of a user)', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'modified',
             ),
-            14020 => array(
-                'type_id'     => 14020,
-                'desc'        => esc_html__( 'Changed the display name (of a user)', 'mainwp' ),
+            1710 => array(
+                'type_id'     => 1710,
+                'desc'        => esc_html__( 'Changed the display name (of a user)', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'modified',
             ),
-            14021 => array(
-                'type_id'     => 14021,
-                'desc'        => esc_html__( 'Changed the website URL of the user', 'mainwp' ),
-                'action_name' => 'user',
+            1715 => array(
+                'type_id'     => 1715,
+                'desc'        => esc_html__( 'Changed the website URL of the user', 'mainwp-child' ),
+                'context'     => 'user',
                 'action_name' => 'modified',
             ),
-            14025 => array(
-                'type_id'     => 14025,
-                'desc'        => esc_html__( 'User added / removed application password from own profile', 'mainwp' ),
+            1720 => array(
+                'type_id'     => 1720,
+                'desc'        => esc_html__( 'User added / removed application password from own profile', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'added',
             ),
-            14026 => array(
-                'type_id'     => 14026,
-                'desc'        => esc_html__( 'User added / removed application password from another user’s profile', 'mainwp' ),
+            1725 => array(
+                'type_id'     => 1725,
+                'desc'        => esc_html__( 'User added / removed application password from another user’s profile', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'added',
             ),
-            14028 => array(
-                'type_id'     => 14028,
-                'desc'        => esc_html__( 'User revoked all application passwords from own profile', 'mainwp' ),
+            1730 => array(
+                'type_id'     => 1730,
+                'desc'        => esc_html__( 'User revoked all application passwords from own profile', 'mainwp-child' ),
                 'context'     => 'user',
                 'action_name' => 'revoked',
             ),
@@ -988,269 +939,269 @@ class Log_Changes_Logs_Helper {
                 'action_name' => 'revoked',
             ),
             // Database.
-            15010 => array(
-                'type_id'     => 15010,
-                'desc'        => esc_html__( 'Plugin created database table(s)', 'mainwp' ),
+            1740 => array(
+                'type_id'     => 1740,
+                'desc'        => esc_html__( 'Plugin created database table(s)', 'mainwp-child' ),
                 'context'     => 'database',
                 'action_name' => 'created',
             ),
-            15011 => array(
-                'type_id'     => 15011,
-                'desc'        => esc_html__( 'Plugin modified the structure of database table(s)', 'mainwp' ),
+            1745 => array(
+                'type_id'     => 1745,
+                'desc'        => esc_html__( 'Plugin modified the structure of database table(s)', 'mainwp-child' ),
                 'context'     => 'database',
                 'action_name' => 'modified',
             ),
-            15012 => array(
-                'type_id'     => 15012,
-                'desc'        => esc_html__( 'Plugin deleted database table(s)', 'mainwp' ),
+            1750 => array(
+                'type_id'     => 1750,
+                'desc'        => esc_html__( 'Plugin deleted database table(s)', 'mainwp-child' ),
                 'context'     => 'database',
                 'action_name' => 'deleted',
             ),
-            15013 => array(
-                'type_id'     => 15013,
-                'desc'        => esc_html__( 'Theme created database table(s)', 'mainwp' ),
+            1755 => array(
+                'type_id'     => 1755,
+                'desc'        => esc_html__( 'Theme created database table(s)', 'mainwp-child' ),
                 'context'     => 'database',
                 'action_name' => 'created',
             ),
-            15014 => array(
-                'type_id'     => 15014,
-                'desc'        => esc_html__( 'Theme modified the structure of table(s) in the database', 'mainwp' ),
+            1760 => array(
+                'type_id'     => 1760,
+                'desc'        => esc_html__( 'Theme modified the structure of table(s) in the database', 'mainwp-child' ),
                 'context'     => 'database',
                 'action_name' => 'modified',
             ),
-            15015 => array(
-                'type_id'     => 15015,
-                'desc'        => esc_html__( 'Theme deleted database table(s)', 'mainwp' ),
+            1765 => array(
+                'type_id'     => 1765,
+                'desc'        => esc_html__( 'Theme deleted database table(s)', 'mainwp-child' ),
                 'context'     => 'database',
                 'action_name' => 'deleted',
             ),
-            15016 => array(
-                'type_id'     => 15016,
-                'desc'        => esc_html__( 'Unknown component created database table(s)', 'mainwp' ),
+            1770 => array(
+                'type_id'     => 1770,
+                'desc'        => esc_html__( 'Unknown component created database table(s)', 'mainwp-child' ),
                 'context'     => 'database',
                 'action_name' => 'created',
             ),
-            15017 => array(
-                'type_id'     => 15017,
-                'desc'        => esc_html__( 'Unknown component modified the structure of table(s )in the database', 'mainwp' ),
+            1775 => array(
+                'type_id'     => 1775,
+                'desc'        => esc_html__( 'Unknown component modified the structure of table(s )in the database', 'mainwp-child' ),
                 'context'     => 'database',
                 'action_name' => 'modified',
             ),
-            15018 => array(
-                'type_id'     => 15018,
-                'desc'        => esc_html__( 'Unknown component deleted database table(s)', 'mainwp' ),
+            1780 => array(
+                'type_id'     => 1780,
+                'desc'        => esc_html__( 'Unknown component deleted database table(s)', 'mainwp-child' ),
                 'context'     => 'database',
                 'action_name' => 'deleted',
             ),
             // System setting.
-            16001 => array(
-                'type_id'     => 16001,
-                'desc'        => esc_html__( 'Changed the option anyone can register', 'mainwp' ),
+            1785 => array(
+                'type_id'     => 1785,
+                'desc'        => esc_html__( 'Changed the option anyone can register', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'enabled',
             ),
-            16002 => array(
-                'type_id'     => 16002,
-                'desc'        => esc_html__( 'Changed the new user default role', 'mainwp' ),
+            1790 => array(
+                'type_id'     => 1790,
+                'desc'        => esc_html__( 'Changed the new user default role', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'modified',
             ),
-            16003 => array(
-                'type_id'     => 16003,
-                'desc'        => esc_html__( 'Changed the WordPress administrator notification email address', 'mainwp' ),
+            1795 => array(
+                'type_id'     => 1795,
+                'desc'        => esc_html__( 'Changed the WordPress administrator notification email address', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'modified',
             ),
-            16005 => array(
-                'type_id'     => 16005,
-                'desc'        => esc_html__( 'Changed the WordPress permalinks', 'mainwp' ),
+            1800 => array(
+                'type_id'     => 1800,
+                'desc'        => esc_html__( 'Changed the WordPress permalinks', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'modified',
             ),
-            16008 => array(
-                'type_id'     => 16008,
-                'desc'        => esc_html__( 'Changed the setting: Discourage search engines from indexing this site', 'mainwp' ),
+            1805 => array(
+                'type_id'     => 1805,
+                'desc'        => esc_html__( 'Changed the setting: Discourage search engines from indexing this site', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'enabled',
             ),
-            16009 => array(
-                'type_id'     => 16009,
-                'desc'        => esc_html__( 'Enabled / disabled comments on the website', 'mainwp' ),
+            1810 => array(
+                'type_id'     => 1810,
+                'desc'        => esc_html__( 'Enabled / disabled comments on the website', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'enabled',
             ),
-            16010 => array(
-                'type_id'     => 16010,
-                'desc'        => esc_html__( 'Changed the setting: Comment author must fill out name and email', 'mainwp' ),
+            1815 => array(
+                'type_id'     => 1815,
+                'desc'        => esc_html__( 'Changed the setting: Comment author must fill out name and email', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'enabled',
             ),
-            16011 => array(
-                'type_id'     => 16011,
-                'desc'        => esc_html__( 'Changed the setting: Users must be logged in and registered to comment', 'mainwp' ),
+            1820 => array(
+                'type_id'     => 1820,
+                'desc'        => esc_html__( 'Changed the setting: Users must be logged in and registered to comment', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'enabled',
             ),
-            16012 => array(
-                'type_id'     => 16012,
-                'desc'        => esc_html__( 'Changed the setting: Automatically close comments after a number of days', 'mainwp' ),
+            1825 => array(
+                'type_id'     => 1825,
+                'desc'        => esc_html__( 'Changed the setting: Automatically close comments after a number of days', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'enabled',
             ),
-            16013 => array(
-                'type_id'     => 16013,
-                'desc'        => esc_html__( 'Changed the value of the setting: Automatically close comments after a number of days.', 'mainwp' ),
+            1830 => array(
+                'type_id'     => 1830,
+                'desc'        => esc_html__( 'Changed the value of the setting: Automatically close comments after a number of days.', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'modified',
             ),
-            16014 => array(
-                'type_id'     => 16014,
-                'desc'        => esc_html__( 'Changed the setting: Comments must be manually approved', 'mainwp' ),
+            1835 => array(
+                'type_id'     => 1835,
+                'desc'        => esc_html__( 'Changed the setting: Comments must be manually approved', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'enabled',
             ),
-            16015 => array(
-                'type_id'     => 16015,
-                'desc'        => esc_html__( 'Changed the setting: Author must have previously approved comments for the comments to appear', 'mainwp' ),
+            1840 => array(
+                'type_id'     => 1840,
+                'desc'        => esc_html__( 'Changed the setting: Author must have previously approved comments for the comments to appear', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'enabled',
             ),
-            16016 => array(
-                'type_id'     => 16016,
-                'desc'        => esc_html__( 'Changed the minimum number of links that a comment must have to be held in the queue', 'mainwp' ),
+            1845 => array(
+                'type_id'     => 1845,
+                'desc'        => esc_html__( 'Changed the minimum number of links that a comment must have to be held in the queue', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'modified',
             ),
-            16017 => array(
-                'type_id'     => 16017,
-                'desc'        => esc_html__( 'Modified the list of keywords for comments moderation', 'mainwp' ),
+            1850 => array(
+                'type_id'     => 1850,
+                'desc'        => esc_html__( 'Modified the list of keywords for comments moderation', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'modified',
             ),
-            16018 => array(
-                'type_id'     => 16018,
-                'desc'        => esc_html__( 'Modified the list of keywords for comments blacklisting', 'mainwp' ),
+            1855 => array(
+                'type_id'     => 1855,
+                'desc'        => esc_html__( 'Modified the list of keywords for comments blacklisting', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'modified',
             ),
-            16024 => array(
-                'type_id'     => 16024,
-                'desc'        => esc_html__( 'Changed the WordPress address (URL)', 'mainwp' ),
+            1860 => array(
+                'type_id'     => 1860,
+                'desc'        => esc_html__( 'Changed the WordPress address (URL)', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'modified',
             ),
-            16025 => array(
-                'type_id'     => 16025,
-                'desc'        => esc_html__( 'Changed the site address (URL)', 'mainwp' ),
+            1865 => array(
+                'type_id'     => 1865,
+                'desc'        => esc_html__( 'Changed the site address (URL)', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'modified',
             ),
-            16035 => array(
-                'type_id'     => 16035,
-                'desc'        => esc_html__( 'Changed the “Your homepage displays” WordPress setting', 'mainwp' ),
+            1870 => array(
+                'type_id'     => 1870,
+                'desc'        => esc_html__( 'Changed the “Your homepage displays” WordPress setting', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'modified',
             ),
-            16036 => array(
-                'type_id'     => 16036,
-                'desc'        => esc_html__( 'Changed the homepage in the WordPress setting', 'mainwp' ),
+            1875 => array(
+                'type_id'     => 1875,
+                'desc'        => esc_html__( 'Changed the homepage in the WordPress setting', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'modified',
             ),
-            16037 => array(
-                'type_id'     => 16037,
-                'desc'        => esc_html__( 'Changed the posts page in the WordPress settings', 'mainwp' ),
+            1880 => array(
+                'type_id'     => 1880,
+                'desc'        => esc_html__( 'Changed the posts page in the WordPress settings', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'modified',
             ),
-            16040 => array(
-                'type_id'     => 16040,
-                'desc'        => esc_html__( 'Changed the Timezone in the WordPress settings', 'mainwp' ),
+            1885 => array(
+                'type_id'     => 1885,
+                'desc'        => esc_html__( 'Changed the Timezone in the WordPress settings', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'modified',
             ),
-            16041 => array(
-                'type_id'     => 16041,
-                'desc'        => esc_html__( 'Changed the Date format in the WordPress settings', 'mainwp' ),
+            1890 => array(
+                'type_id'     => 1890,
+                'desc'        => esc_html__( 'Changed the Date format in the WordPress settings', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'modified',
             ),
-            16042 => array(
-                'type_id'     => 16042,
-                'desc'        => esc_html__( 'Changed the Time format in the WordPress settings', 'mainwp' ),
+            1895 => array(
+                'type_id'     => 1895,
+                'desc'        => esc_html__( 'Changed the Time format in the WordPress settings', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'modified',
             ),
-            16044 => array(
-                'type_id'     => 16044,
-                'desc'        => esc_html__( 'User changed the WordPress automatic update settings', 'mainwp' ),
+            1900 => array(
+                'type_id'     => 1900,
+                'desc'        => esc_html__( 'User changed the WordPress automatic update settings', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'modified',
             ),
-            16045 => array(
-                'type_id'     => 16045,
-                'desc'        => esc_html__( 'Changed the site language', 'mainwp' ),
+            1905 => array(
+                'type_id'     => 1905,
+                'desc'        => esc_html__( 'Changed the site language', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'modified',
             ),
-            16059 => array(
-                'type_id'     => 16059,
-                'desc'        => esc_html__( 'Changed the site title', 'mainwp' ),
+            1910 => array(
+                'type_id'     => 1910,
+                'desc'        => esc_html__( 'Changed the site title', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'modified',
             ),
-            16063 => array(
-                'type_id'     => 16063,
-                'desc'        => esc_html__( 'Added site icon', 'mainwp' ),
+            1915 => array(
+                'type_id'     => 1915,
+                'desc'        => esc_html__( 'Added site icon', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'added',
             ),
-            16064 => array(
-                'type_id'     => 16064,
-                'desc'        => esc_html__( 'Changed site icon', 'mainwp' ),
+            1920 => array(
+                'type_id'     => 1920,
+                'desc'        => esc_html__( 'Changed site icon', 'mainwp-child' ),
                 'context'     => 'system-setting',
                 'action_name' => 'modified',
             ),
             // WordPress Cron.
-            16066 => array(
-                'type_id'     => 16066,
-                'desc'        => esc_html__( 'New one time task (cron job) created', 'mainwp' ),
+            1925 => array(
+                'type_id'     => 1925,
+                'desc'        => esc_html__( 'New one time task (cron job) created', 'mainwp-child' ),
                 'context'     => 'cron-job',
                 'action_name' => 'created',
             ),
-            16067 => array(
-                'type_id'     => 16067,
-                'desc'        => esc_html__( 'New recurring task (cron job) created', 'mainwp' ),
+            1930 => array(
+                'type_id'     => 1930,
+                'desc'        => esc_html__( 'New recurring task (cron job) created', 'mainwp-child' ),
                 'context'     => 'cron-job',
                 'action_name' => 'created',
             ),
-            16068 => array(
-                'type_id'     => 16067,
-                'desc'        => esc_html__( 'New recurring task (cron job) created', 'mainwp' ),
+            1935 => array(
+                'type_id'     => 1935,
+                'desc'        => esc_html__( 'New recurring task (cron job) created', 'mainwp-child' ),
                 'context'     => 'cron-job',
                 'action_name' => 'created',
             ),
-            16069 => array(
-                'type_id'     => 16069,
-                'desc'        => esc_html__( 'One time task (cron job) executed', 'mainwp' ),
+            1940 => array(
+                'type_id'     => 1940,
+                'desc'        => esc_html__( 'One time task (cron job) executed', 'mainwp-child' ),
                 'context'     => 'cron-job',
                 'action_name' => 'executed',
             ),
-            16070 => array(
-                'type_id'     => 16070,
-                'desc'        => esc_html__( 'Recurring task (cron job) executed', 'mainwp' ),
+            1945 => array(
+                'type_id'     => 1945,
+                'desc'        => esc_html__( 'Recurring task (cron job) executed', 'mainwp-child' ),
                 'context'     => 'cron-job',
                 'action_name' => 'executed',
             ),
-            16071 => array(
-                'type_id'     => 16071,
-                'desc'        => esc_html__( 'Deleted one-time task (cron job)', 'mainwp' ),
+            1950 => array(
+                'type_id'     => 1950,
+                'desc'        => esc_html__( 'Deleted one-time task (cron job)', 'mainwp-child' ),
                 'context'     => 'cron-job',
                 'action_name' => 'deleted',
             ),
-            16072 => array(
-                'type_id'     => 16072,
-                'desc'        => esc_html__( 'Deleted recurring task (cron job)', 'mainwp' ),
+            1955 => array(
+                'type_id'     => 1955,
+                'desc'        => esc_html__( 'Deleted recurring task (cron job)', 'mainwp-child' ),
                 'context'     => 'cron-job',
                 'action_name' => 'deleted',
             ),

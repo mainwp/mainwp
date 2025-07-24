@@ -377,7 +377,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
         if ( ! empty( $record->log_type_id ) ) {
             $title = $act;
-            if ( 15028 === (int) $record->log_type_id ) {
+            if ( 1460 === (int) $record->log_type_id ) {
                 $title = esc_html__( 'Modified', 'mainwp' );
             } else {
                 $title = ucfirst( $title );
@@ -453,7 +453,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      */
     public function parse_changes_action_title( $record, $title = '' ) {
         $data = array();
-        if ( 15028 === (int) $record->log_type_id ) {
+        if ( 1460 === (int) $record->log_type_id ) {
             $data = array( 'action' => 'enabled' === $record->action ? 'Enabled' : 'Disabled' );
         }
         $parse_title = Log_Changes_Logs_Helper::get_log_title( $record->log_type_id, $data );

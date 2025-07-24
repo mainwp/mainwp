@@ -529,23 +529,23 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         if ( empty( $backup_api ) ) {
-            \MainWP\Dashboard\MainWP_UI::render_empty_page_placeholder( 
+            \MainWP\Dashboard\MainWP_UI::render_empty_page_placeholder(
                 $title   = esc_html__( 'No API Backup Solution has been chosen.', 'mainwp' ),
                 $message = esc_html__( 'Please double check that you have set the API Key on the API Backups Settings page and have set the Instance ID on the Child Site -> Edit page.', 'mainwp' ),
                 $icon    = '<i class="key icon"></i>'
             );
-                
-            } else {
-                $columns = 'one';
-                if ( 'cpanel' === $backup_api || 'plesk' === $backup_api ) {
-                    $columns = 'two';
-                }
-                ?>
+
+        } else {
+            $columns = 'one';
+            if ( 'cpanel' === $backup_api || 'plesk' === $backup_api ) {
+                $columns = 'two';
+            }
+            ?>
                 <div class="mainwp-sub-header">
                     <div class="ui grid">
                         <div class="ui <?php echo esc_html( $columns ); ?> column row">
                                 <div class="middle aligned column ui">
-                                    <?php if ( 'cpanel' === $backup_api ) : ?>
+                                <?php if ( 'cpanel' === $backup_api ) : ?>
                                         <div id="mainwp_api_cpanel_backup_tabs" class="ui top attached tabular menu">
                                             <div class="active item" data-tab="cpanel-native"><i class="fitted cpanel big icon"></i></div>
                                             <div class="item" data-tab="cpanel-wp-toolkit"><i class="fitted wordpress big icon"></i></div><?php //phpcs:ignore -- skip wordpress.?>
@@ -553,7 +553,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                     <?php endif; ?>
                                 </div>
                             <div class="right aligned middle aligned column">
-                                <?php if ( 'cpanel' === $backup_api ) : ?>
+                            <?php if ( 'cpanel' === $backup_api ) : ?>
                                     <button id="mainwp_3rd_party_api_<?php esc_attr_e( $backup_api ); ?>_action_create_full_backup" website_id="<?php echo intval( $website['id'] ); ?>" class="ui mini green button"><?php esc_html_e( 'Backup Files &amp; Database', 'mainwp' ); ?></button>
                                     <button id="mainwp_3rd_party_api_<?php esc_attr_e( $backup_api ); ?>_action_create_wptk_backup" website_id="<?php echo intval( $website['id'] ); ?>" class="ui mini green button hidden"><?php esc_html_e( 'Backup Now', 'mainwp' ); ?></button>
                                 <?php else : ?>
@@ -561,21 +561,21 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                 <?php endif; ?>
                                 <button id="mainwp_3rd_party_api_<?php esc_attr_e( $backup_api ); ?>_action_refresh_available_backups" website_id="<?php echo intval( $website['id'] ); ?>" class="ui mini green button"><?php esc_html_e( 'Refresh Available Backups', 'mainwp' ); ?></button>
 
-                                <?php // Render DigitalOcean specific action buttons. ?>
-                                <?php
-                                if ( 'digitalocean' === $backup_api ) {
-                                    // Grab Linode instance id.
-                                    $digitalocean_droplet_id = Api_Backups_Helper::get_website_options(
-                                        $website,
-                                        array(
-                                            'mainwp_3rd_party_instance_id',
-                                        )
-                                    );
-                                    $droplet_id              = isset( $digitalocean_droplet_id['mainwp_3rd_party_instance_id'] ) ? $digitalocean_droplet_id['mainwp_3rd_party_instance_id'] : null;
-                                    ?>
+                            <?php // Render DigitalOcean specific action buttons. ?>
+                            <?php
+                            if ( 'digitalocean' === $backup_api ) {
+                                // Grab Linode instance id.
+                                $digitalocean_droplet_id = Api_Backups_Helper::get_website_options(
+                                    $website,
+                                    array(
+                                        'mainwp_3rd_party_instance_id',
+                                    )
+                                );
+                                $droplet_id              = isset( $digitalocean_droplet_id['mainwp_3rd_party_instance_id'] ) ? $digitalocean_droplet_id['mainwp_3rd_party_instance_id'] : null;
+                                ?>
                                         <a href="https://cloud.digitalocean.com/droplets/<?php echo esc_attr( $droplet_id ); ?>/snapshots" target="_blank" class="ui mini button">
                                             <i class="external icon"></i>
-                                        <?php esc_html_e( 'View on DigitalOcean', 'mainwp' ); ?>
+                                    <?php esc_html_e( 'View on DigitalOcean', 'mainwp' ); ?>
                                         </a>
                                     <?php } ?>
                                 <?php // Render Linode specific action buttons. ?>
@@ -1239,7 +1239,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                 </table>
                         <?php else : // Display message if WP-Toolkit is not enabled. ?>
                             <?php
-                            \MainWP\Dashboard\MainWP_UI::render_empty_page_placeholder( 
+                            \MainWP\Dashboard\MainWP_UI::render_empty_page_placeholder(
                                 $title   = esc_html__( 'The WP-Toolkit API has not been enabled.', 'mainwp' ),
                                 $message = esc_html__( 'Please double check that you have set the cPanel API Key on the API Backups Settings page and have enabled the WP Toolkit API on the Child Site -> Edit page.', 'mainwp' ),
                                 $icon    = '<i class="key icon"></i>'
@@ -1636,7 +1636,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                     } );
                 </script>
             <?php
-            } // END if.
+        } // END if.
     }
 
     /*********************************************************************************

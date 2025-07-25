@@ -248,8 +248,14 @@ class Log_Changes_Logs_Helper {
             if ( isset( $data['action'] ) ) {
                 $title = str_replace( '%action%', $data['action'], $title );
             }
-            if ( isset( $data['file'] ) ) {
-                $title = str_replace( '%file%', $data['file'], $title );
+            if ( isset( $data['plugin'] ) ) {
+                $title = str_replace( '%plugin%', $data['plugin'], $title );
+            }
+            if ( isset( $data['theme'] ) ) {
+                $title = str_replace( '%theme%', $data['theme'], $title );
+            }
+            if ( isset( $data['name'] ) ) {
+                $title = str_replace( '%name%', $data['name'], $title );
             }
             return $title;
         } elseif ( isset( static::get_changes_logs_types( $log_type_id )['desc'] ) ) {

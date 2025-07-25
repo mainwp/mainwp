@@ -455,10 +455,20 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      */
     public function parse_changes_action_title( $record ) {
         $data = array( 'action' => ucfirst( $record->action ) );
-        if ( 1460 === (int) $record->log_type_id ) {
-            $data['action'] = 'enabled' === $record->action ? esc_html__( 'Enabled', 'mainwp' ) : esc_html__( 'Disabled', 'mainwp' );
-        } elseif ( 1455 === (int) $record->log_type_id ) {
-            $data['file'] = ! empty( $record->meta ) && is_array( $record->meta ) && ! empty( $record->meta['file'] ) ? $record->meta['file'] : '';
+        $meta = ! empty( $record->meta ) && is_array( $record->meta ) ? $record->meta : array();
+        $na   = 'N/A';
+        switch ( (int) $record->log_type_id ) {
+            case 1455:
+                $data['plugin'] = ! empty( $meta['plugin'] ) ? $meta['plugin'] : $na;
+                break;
+            case 1465:
+                $data['theme'] = ! empty( $meta['theme'] ) ? basename( $meta['theme'] ) : $na;
+                break;
+            case 1460:
+                $data['name'] = ! empty( $meta['name'] ) ? $meta['name'] : $na;
+                break;
+            default:
+                break;
         }
         $parse_title = Log_Changes_Logs_Helper::get_log_title( $record->log_type_id, $data );
         return ! empty( $parse_title ) ? $parse_title : $record->action;

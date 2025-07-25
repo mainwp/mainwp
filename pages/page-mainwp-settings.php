@@ -856,35 +856,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 </select>
                             </div>
                         </div>
-                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates">
-                            <label class="six wide column middle aligned">
-                            <?php
-                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_check_http_response', get_option( 'mainwp_check_http_response', '' ) );
-                            esc_html_e( 'Check site HTTP response after update', 'mainwp' );
-                            ?>
-                            </label>
-                            <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="http-respon-check" data-tooltip="<?php esc_attr_e( 'Enable if you want your MainWP Dashboard to check child site header response after updates.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <input type="checkbox" class="settings-field-value-change-handler" inverted-value="1" name="mainwp_check_http_response" id="mainwp_check_http_response" <?php echo 1 === (int) get_option( 'mainwp_check_http_response', 0 ) ? 'checked="true"' : ''; ?>/>
-                            </div>
-                        </div>
-                        <?php
-                        $chk_http_method = get_option( 'mainwp_check_http_response_method', 'head' );
-                        $chk_http_method = in_array( $chk_http_method, array( 'get', 'head' ) ) ? $chk_http_method : 'head';
-                        ?>
-                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates" default-indi-value="head" <?php echo 1 !== (int) get_option( 'mainwp_check_http_response', 0 ) ? 'style="display:none"' : ''; ?> hide-element="http-respon-check">
-                            <label class="six wide column middle aligned">
-                            <?php
-                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_check_http_response_method', (string) $chk_http_method );
-                            esc_html_e( 'Check site HTTP response method', 'mainwp' );
-                            ?>
-                            </label>
-                            <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select Check site HTTP response method. If you are not sure, select "Default".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <select class="ui dropdown settings-field-value-change-handler"id="mainwp_check_http_response_method" name="mainwp_check_http_response_method">
-                                    <option <?php echo 'head' === $chk_http_method ? 'selected' : ''; ?> value="head"><?php esc_html_e( 'Head (default)', 'mainwp' ); ?></option>
-                                    <option <?php echo 'get' === $chk_http_method ? 'selected' : ''; ?> value="get"><?php esc_html_e( 'Get', 'mainwp' ); ?></option>
-                                </select>
-                            </div>
-                        </div>
                         <?php if ( ( $enableLegacyBackupFeature && empty( $primaryBackup ) ) || ( empty( $enableLegacyBackupFeature ) && ! empty( $primaryBackup ) ) ) { ?>
                         <div class="ui grid field mainwp-parent-toggle settings-field-indicator-wrapper settings-field-indicator-updates">
                             <label class="six wide column middle aligned">
@@ -2085,13 +2056,19 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             <a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'disconnect_sites' ) ); ?>" onclick="mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Sites', 'mainwp' ); ?></a>
                     <?php } ?>
                     </div>
+                    </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Delete add-ons API Activation data', 'mainwp' ); ?></label>
+                        <div class="ten wide column" id="mainwp-clear-activation-data" data-content="<?php esc_attr_e( 'This does not affect extensions settings, it just removes API activation data.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+                            <a href="admin.php?page=MainWPTools&clearActivationData=yes&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'clear_activation_data' ) ); ?>" onclick="mainwp_tool_clear_activation_data(this); return false;" class="ui button green basic"><?php esc_html_e( 'Delete Add-ons API Activation Data', 'mainwp' ); ?></a>
                         </div>
-                        <div class="ui grid field">
-                            <label class="six wide column middle aligned"><?php esc_html_e( 'Delete extensions API Activation data', 'mainwp' ); ?></label>
-                            <div class="ten wide column" id="mainwp-clear-activation-data" data-content="<?php esc_attr_e( 'Delete extensions API activation data. This will not affect extensions settings, it just removes API activation data.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
-                                <a href="admin.php?page=MainWPTools&clearActivationData=yes&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'clear_activation_data' ) ); ?>" onclick="mainwp_tool_clear_activation_data(this); return false;" class="ui button green basic"><?php esc_html_e( 'Delete Extensions API Activation Data', 'mainwp' ); ?></a>
-                            </div>
+                    </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Delete archived sites changes data', 'mainwp' ); ?></label>
+                        <div class="ten wide column" id="mainwp-clear-archived-sites-changes-data" data-content="<?php esc_attr_e( 'Delete archived sites changes data.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+                            <a href="admin.php?page=MainWPTools&clearArchivedSitesChangesData=yes&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'clear_archived_sites_changes' ) ); ?>" onclick="mainwp_tool_clear_archived_sites_changes(this); return false;" class="ui button green basic"><?php esc_html_e( 'Delete Archived Sites Changes Data', 'mainwp' ); ?></a>
                         </div>
+                    </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Restore all info messages', 'mainwp' ); ?></label>
                         <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click this button to restore all info messages in your MainWP Dashboard and Extensions.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -2211,29 +2188,30 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         ?>
         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools" default-indi-value="default">
             <label class="six wide column middle aligned">
-        <?php
-        MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_selected_theme', $custom_theme );
-        esc_html_e( 'Select MainWP Theme', 'mainwp' );
-        ?>
+            <?php
+            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_selected_theme', $custom_theme );
+            esc_html_e( 'Select MainWP Dashboard theme', 'mainwp' );
+            ?>
             </label>
             <div class="ten wide column" tabindex="0" data-tooltip="<?php esc_attr_e( 'Select your MainWP Dashboard theme.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                 <select name="mainwp_settings_custom_theme" id="mainwp_settings_custom_theme" class="ui dropdown selection settings-field-value-change-handler">
                     <option value="default" <?php echo ( 'default' === $custom_theme || empty( $custom_theme ) ) ? 'selected' : ''; ?>><?php esc_html_e( 'Default', 'mainwp' ); ?></option>
+                    <option value="default-dark" <?php echo ( 'default-dark' === $custom_theme || empty( $custom_theme ) ) ? 'selected' : ''; ?>><?php esc_html_e( 'Dark', 'mainwp' ); ?></option>
                     <option value="default-2024" <?php echo ( 'default-2024' === $custom_theme || empty( $custom_theme ) ) ? 'selected' : ''; ?>><?php esc_html_e( 'Default 2024', 'mainwp' ); ?></option>
-                    <option value="classic" <?php echo ( 'classic' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Classic', 'mainwp' ); ?></option>
-                    <option value="dark" <?php echo ( 'dark' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Dark', 'mainwp' ); ?></option>
-                    <option value="wpadmin" <?php echo ( 'wpadmin' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'WP Admin', 'mainwp' ); ?></option>
-                    <option value="minimalistic" <?php echo ( 'minimalistic' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Minimalistic', 'mainwp' ); ?></option>
-        <?php
-        foreach ( $themes_files as $file_name => $theme ) {
-            $theme   = ucfirst( $theme );
-            $_select = '';
-            if ( $custom_theme === $file_name ) {
-                $_select = 'selected';
-            }
-            echo '<option value="' . esc_attr( $file_name ) . '" ' . esc_attr( $_select ) . '>' . esc_html( $theme ) . '</option>';
-        }
-        ?>
+                    <option value="dark" <?php echo ( 'dark' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Dark 2024', 'mainwp' ); ?></option>
+                    <option value="classic" <?php echo ( 'classic' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Classic (Legacy)', 'mainwp' ); ?></option>
+                    <option value="wpadmin" <?php echo ( 'wpadmin' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'WP Admin (Legacy)', 'mainwp' ); ?></option>
+                    <option value="minimalistic" <?php echo ( 'minimalistic' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Minimalistic (Legacy)', 'mainwp' ); ?></option>
+                    <?php
+                    foreach ( $themes_files as $file_name => $theme ) {
+                        $theme   = ucfirst( $theme );
+                        $_select = '';
+                        if ( $custom_theme === $file_name ) {
+                            $_select = 'selected';
+                        }
+                        echo '<option value="' . esc_attr( $file_name ) . '" ' . esc_attr( $_select ) . '>' . esc_html( $theme ) . '</option>';
+                    }
+                    ?>
                 </select>
             </div>
         </div>
@@ -2289,7 +2267,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         }
 
         if ( ! empty( $custom_theme ) ) {
-            if ( 'default' === $custom_theme || 'default-2024' === $custom_theme || 'dark' === $custom_theme || 'wpadmin' === $custom_theme || 'minimalistic' === $custom_theme ) {
+            if ( 'default' === $custom_theme || 'default-dark' === $custom_theme || 'default-2024' === $custom_theme || 'dark' === $custom_theme || 'wpadmin' === $custom_theme || 'minimalistic' === $custom_theme ) {
                 return $custom_theme;
             }
             $dirs      = $this->get_custom_theme_folder();

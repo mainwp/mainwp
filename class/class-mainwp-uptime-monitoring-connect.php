@@ -190,6 +190,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true ); // We want to get the output as a string.
         curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
+        curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
+
 
         $http_user = '';
         $http_pass = '';
@@ -476,6 +478,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
             curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
             curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
+            curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
             curl_setopt( $ch, CURLOPT_ENCODING, 'none' );
 
             if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {

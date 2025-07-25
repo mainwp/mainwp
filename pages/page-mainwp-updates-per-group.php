@@ -87,8 +87,8 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             <td sort-value="0"><span total-uid="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" data-inverted="" data-tooltip="<?php echo esc_attr( esc_html__( 'Click to see available updates', 'mainwp' ) ); ?>"></span></td>
                             <td class="right aligned">
                                 <?php if ( MainWP_Updates::user_can_update_wp() ) : ?>
-                                    <a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update all sites in the tag', 'mainwp' ); ?>" data-inverted="" data-position="left center" btn-all-uid2="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" class="mainwp-update-selected-button ui basic green mini button" onClick="event.stopPropagation();updatesoverview_wordpress_global_upgrade_all( <?php echo esc_attr( $group_id ); ?>, true );  return false;"><?php esc_html_e( 'Update Selected', 'mainwp' ); ?></a>
-                                    <a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update all sites in the tag', 'mainwp' ); ?>" data-inverted="" data-position="left center" btn-all-uid="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" class="mainwp-update-all-button ui green mini button" onClick="updatesoverview_wordpress_global_upgrade_all( <?php echo esc_attr( $group_id ); ?> ); return false;"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+                                    <a href="javascript:void(0)" btn-all-uid2="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" class="mainwp-update-selected-button ui basic green mini button" onClick="event.stopPropagation();updatesoverview_wordpress_global_upgrade_all( <?php echo esc_attr( $group_id ); ?>, true );  return false;"><?php esc_html_e( 'Update Selected', 'mainwp' ); ?></a>
+                                    <a href="javascript:void(0)" btn-all-uid="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" class="mainwp-update-all-button ui green mini button" onClick="updatesoverview_wordpress_global_upgrade_all( <?php echo esc_attr( $group_id ); ?> ); return false;"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -170,7 +170,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                                                         <a href="javascript:void(0)" onClick="return updatesoverview_upgrade_ignore_all_version( <?php echo intval( $website->id ); ?>, this )" class="item"><?php esc_html_e( 'Ignore all versions', 'mainwp' ); ?></a>
                                                                     </div>
                                                                 </div>
-                                                                <a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update', 'mainwp' ) . ' ' . $website->name; ?>" data-inverted="" data-position="left center" class="mainwp-update-now-button ui green button mini" onClick="return updatesoverview_upgrade(<?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Update', 'mainwp' ); ?></a>
+                                                                <a href="javascript:void(0)" class="mainwp-update-now-button ui green button mini" onClick="return updatesoverview_upgrade(<?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Update', 'mainwp' ); ?></a>
                                                             <?php endif; ?>
                                                         <?php endif; ?>
                                                     <?php endif; ?>

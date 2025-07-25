@@ -242,7 +242,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $escaped = true;
                 break;
             case 'action':
-                $out     = $this->get_action_title( $record, $record->action, 'action' );
+                $out     = $this->get_action_title( $record );
                 $escaped = true;
                 break;
             case 'log_object':
@@ -346,20 +346,22 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * Returns the label for a connector term.
      *
      * @param object $record  Event data.
-     * @param string $act  Action type.
-     * @param string $type  Connector term.
      * @return string
      */
-    public function get_action_title( $record, $act, $type ) {
-        if ( ! isset( $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ] ) ) {
-            $title = $act;
-        } else {
-            $title = $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ];
-        }
-        $title  = is_string( $title ) ? ucfirst( $title ) : $title;
-        $action = $title;
+    public function get_action_title( $record ) {
         if ( ! empty( $record->log_type_id ) ) {
-            $action = $this->parse_changes_action_title( $record, $action );
+            $action = $this->parse_changes_action_title( $record );
+        } else {
+            $act  = $record->action;
+            $type = 'action';
+
+            if ( ! isset( $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ] ) ) {
+                $title = $act;
+            } else {
+                $title = $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ];
+            }
+            $title  = is_string( $title ) ? ucfirst( $title ) : $title;
+            $action = $title;
         }
         return $action;
     }
@@ -378,7 +380,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
         if ( ! empty( $record->log_type_id ) ) {
             $title = $act;
-            if ( 1460 === (int) $record->log_type_id ) {
+            if ( in_array( (int) $record->log_type_id, array( 1460, 1330, 1335 ) ) ) {
                 $title = esc_html__( 'Modified', 'mainwp' );
             } else {
                 $title = ucfirst( $title );
@@ -449,17 +451,17 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * Parse event changes logs title.
      *
      * @param object $record  Log record object.
-     * @param title  $title  Default title.
      * @return string
      */
-    public function parse_changes_action_title( $record, $title = '' ) {
+    public function parse_changes_action_title( $record ) {
         $data = array();
         if ( 1460 === (int) $record->log_type_id ) {
             $data = array( 'action' => 'enabled' === $record->action ? 'Enabled' : 'Disabled' );
+        } elseif ( 1330 === (int) $record->log_type_id || 1335 === (int) $record->log_type_id ) {
+            $data = array( 'action' => ucfirst( $record->action ) );
         }
         $parse_title = Log_Changes_Logs_Helper::get_log_title( $record->log_type_id, $data );
-
-        return ! empty( $parse_title ) ? $parse_title : $title;
+        return ! empty( $parse_title ) ? $parse_title : $record->action;
     }
 
     /**
@@ -508,7 +510,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * @return string
      */
     public function get_changes_object_title( $record ) {
-        return esc_html( ucfirst( $record->context ) );
+        return esc_html( ucwords( str_replace( '-', ' ', $record->context ) ) );
     }
 
     /**

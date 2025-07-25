@@ -161,6 +161,7 @@ class Log_Record {
         $this->duration      = isset( $log->duration ) ? $log->duration : null;
         $this->object_id     = null; // compatible.
         $this->extra_meta    = isset( $log->extra_info ) ? $log->extra_info : null;
+        $this->meta          = isset( $log->meta ) ? $log->meta : null;
 
         $user_meta = ! empty( $log->user_meta_json ) ? json_decode( $log->user_meta_json, true ) : array();
         if ( empty( $user_meta ) && ! empty( $log->usermeta ) ) {

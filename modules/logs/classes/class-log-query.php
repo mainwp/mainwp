@@ -40,6 +40,7 @@ class Log_Query {
         $view            = isset( $args['view'] ) ? sanitize_text_field( $args['view'] ) : '';
         $optimize_get_dt = isset( $args['optimize'] ) && ! empty( $args['optimize'] ) ? true : false;
         $opti_with_meta  = isset( $args['optimize_with_meta'] ) && ! empty( $args['optimize_with_meta'] ) ? true : false;
+        $with_logs_meta  = ! empty( $args['with_all_logs_meta'] );
 
         $join      = '';
         $join_meta = '';
@@ -357,7 +358,7 @@ class Log_Query {
 
         $items = $wpdb->get_results( $query ); // phpcs:ignore -- ok.
 
-        if ( $optimize_get_dt && $optimize_get_meta && $items ) {
+        if ( ( ( $optimize_get_dt && $optimize_get_meta ) || $with_logs_meta ) && $items ) {
 
             $ids = array_map( 'absint', wp_list_pluck( $items, 'log_id' ) );
 

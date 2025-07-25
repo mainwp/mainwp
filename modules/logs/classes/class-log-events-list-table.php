@@ -454,11 +454,11 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * @return string
      */
     public function parse_changes_action_title( $record ) {
-        $data = array();
+        $data = array( 'action' => ucfirst( $record->action ) );
         if ( 1460 === (int) $record->log_type_id ) {
-            $data = array( 'action' => 'enabled' === $record->action ? 'Enabled' : 'Disabled' );
-        } elseif ( 1330 === (int) $record->log_type_id || 1335 === (int) $record->log_type_id ) {
-            $data = array( 'action' => ucfirst( $record->action ) );
+            $data['action'] = 'enabled' === $record->action ? esc_html__( 'Enabled', 'mainwp' ) : esc_html__( 'Disabled', 'mainwp' );
+        } elseif ( 1455 === (int) $record->log_type_id ) {
+            $data['file'] = ! empty( $record->meta ) && is_array( $record->meta ) && ! empty( $record->meta['file'] ) ? $record->meta['file'] : '';
         }
         $parse_title = Log_Changes_Logs_Helper::get_log_title( $record->log_type_id, $data );
         return ! empty( $parse_title ) ? $parse_title : $record->action;
@@ -621,6 +621,8 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
         $args['records_per_page'] = $perPage;
         $args['dev_log_query']    = 0; // 1 for dev logs.
+
+        $args['with_all_logs_meta'] = 1;
 
         $this->items       = $this->manager->db->get_records( $args );
         $this->total_items = $this->manager->db->get_found_records_count(); // get this value for recent events request only.

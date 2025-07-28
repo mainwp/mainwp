@@ -802,7 +802,7 @@ return array(
     ),
     1810 => array(
         'type_id'     => 1810,
-        'desc'        => esc_html__( 'Enabled / disabled comments on the website', $tran_loc ),
+        'desc'        => esc_html__( 'Changed the setting: Allow people to submit comments on new posts', $tran_loc ),
         'context'     => 'system-setting',
         'action_name' => 'enabled',
     ),

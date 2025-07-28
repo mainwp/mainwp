@@ -79,6 +79,14 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      */
     private $optimize_table = false;
 
+
+    /**
+     * Private static variable to hold the forced modified events title value.
+     *
+     * @var mixed Default null
+     */
+    private $forced_modified_events = null;
+
     /**
      * Class constructor.
      *
@@ -367,6 +375,23 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
     }
 
     /**
+     * Returns the forced modified event title.
+     *
+     * @return array Logs type ids.
+     */
+    public function get_forced_modified_event_title() {
+        if ( null === $this->forced_modified_events ) {
+            $defaults                     = array( 1460, 1330, 1335, 1495, 1720, 1721, 1725, 1726 );
+            $this->forced_modified_events = apply_filters( 'mainwp_module_logs_forced_modified_event_title', $defaults );
+        }
+        if ( ! is_array( $this->forced_modified_events ) ) {
+            $this->forced_modified_events = array();
+        }
+        return $this->forced_modified_events;
+    }
+
+
+    /**
      * Returns the label for a connector term.
      *
      * @param string $record  Log data.
@@ -380,7 +405,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
         if ( ! empty( $record->log_type_id ) ) {
             $title = $act;
-            if ( in_array( (int) $record->log_type_id, array( 1460, 1330, 1335, 1495 ) ) ) {
+            if ( in_array( (int) $record->log_type_id, $this->get_forced_modified_event_title() ) ) {
                 $title = esc_html__( 'Modified', 'mainwp' );
             } else {
                 $title = ucfirst( $title );

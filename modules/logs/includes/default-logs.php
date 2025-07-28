@@ -680,15 +680,27 @@ return array(
     ),
     1720 => array(
         'type_id'     => 1720,
-        'desc'        => esc_html__( 'User added / removed application password from own profile', $tran_loc ),
+        'desc'        => esc_html__( 'User added application password from own profile', $tran_loc ),
         'context'     => 'user',
-        'action_name' => 'added',
+        'action_name' => 'modified',
+    ),
+    1721 => array(
+        'type_id'     => 1721,
+        'desc'        => esc_html__( 'User removed application password from own profile', $tran_loc ),
+        'context'     => 'user',
+        'action_name' => 'modified',
     ),
     1725 => array(
         'type_id'     => 1725,
-        'desc'        => esc_html__( 'User added / removed application password from another user’s profile', $tran_loc ),
+        'desc'        => esc_html__( 'User added application password from another user’s profile', $tran_loc ),
         'context'     => 'user',
-        'action_name' => 'added',
+        'action_name' => 'modified',
+    ),
+    1726 => array(
+        'type_id'     => 1726,
+        'desc'        => esc_html__( 'User removed application password from another user’s profile', $tran_loc ),
+        'context'     => 'user',
+        'action_name' => 'modified',
     ),
     1730 => array(
         'type_id'     => 1730,

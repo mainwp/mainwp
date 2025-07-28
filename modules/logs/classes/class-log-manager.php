@@ -345,9 +345,9 @@ class Log_Manager {
             $sum = '';
             if ( false !== $extra_info ) {
                 $meta_data['extra_info'] = wp_json_encode( $extra_info );
-                $sum                    .= ! empty( $extra_info['name'] ) ? esc_html( $extra_info['name'] ) : 'WP Core';
+                $sum                    .= ! empty( $extra_info['name'] ) ? esc_html( $extra_info['name'] ) : '';
             } else {
-                $sum .= ! empty( $meta_data['name'] ) ? esc_html( $meta_data['name'] ) : 'WP Core';
+                $sum .= ! empty( $meta_data['name'] ) ? esc_html( $meta_data['name'] ) : '';
             }
             $sum .= ' ';
             $sum .= 'wordpress' !== $data['context'] ? esc_html( ucfirst( rtrim( $data['context'], 's' ) ) ) : 'WordPress'; //phpcs:ignore -- wordpress text.

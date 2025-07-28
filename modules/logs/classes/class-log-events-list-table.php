@@ -466,7 +466,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         }
 
         if ( empty( $record->log_type_id ) ) {
-            $title = $roll_msg . esc_html( $title ) . $this->get_context_title( $record->context, $record->connector );
+            $title = $roll_msg . $this->get_context_title( $title, $record->context, $record->connector );
         }
 
         return $title;
@@ -503,37 +503,40 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
     /**
      * Returns the label for a context.
      *
+     * @param string $title Current title.
      * @param string $context Log context.
      * @param string $connector Log connector.
      * @return string
      */
-    public function get_context_title( $context, $connector ) {
-        $title = '';
+    public function get_context_title( $title, $context, $connector ) {
+        $context_title = '';
 
         if ( 'plugin' === $context ) {
-            $title = esc_html__( 'Plugin', 'mainwp' );
+            $title         = rtrim( $title, ' Plugin' ); // remove Plugin suffix if existed.
+            $context_title = esc_html__( 'Plugin', 'mainwp' );
         } elseif ( 'theme' === $context ) {
-            $title = esc_html__( 'Theme', 'mainwp' );
+            $title         = rtrim( $title, ' Theme' ); // remove Theme suffix if existed.
+            $context_title = esc_html__( 'Theme', 'mainwp' );
         } elseif ( 'translation' === $context ) {
-            $title = esc_html__( 'Translation', 'mainwp' );
+            $context_title = esc_html__( 'Translation', 'mainwp' );
         } elseif ( 'core' === $context ) {
-            $title = esc_html__( 'WP Core WordPress', 'mainwp' );
+            $context_title = esc_html__( 'WordPress', 'mainwp' );
         } elseif ( 'posts' === $connector ) {
             if ( 'post' === $context ) {
-                $title = esc_html__( 'Post', 'mainwp' );
+                $context_title = esc_html__( 'Post', 'mainwp' );
             } elseif ( 'page' === $context ) {
-                $title = esc_html__( 'Page', 'mainwp' );
+                $context_title = esc_html__( 'Page', 'mainwp' );
             } else {
-                $title = esc_html__( 'Custom Post', 'mainwp' );
+                $context_title = esc_html__( 'Custom Post', 'mainwp' );
             }
         } elseif ( 'clients' === $context ) {
-            $title = esc_html__( 'Client', 'mainwp' );
+            $context_title = esc_html__( 'Client', 'mainwp' );
         } elseif ( 'users' === $context ) {
-            $title = esc_html__( 'User', 'mainwp' );
+            $context_title = esc_html__( 'User', 'mainwp' );
         }
 
-        if ( ! empty( $title ) ) {
-            $title = ' ' . $title;
+        if ( ! empty( $context_title ) ) {
+            $title .= ' ' . $context_title;
         }
 
         return $title;

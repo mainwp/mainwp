@@ -465,6 +465,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $data['theme'] = ! empty( $meta['theme'] ) ? basename( $meta['theme'] ) : $na;
                 break;
             case 1460:
+            case 1470:
                 $data['name'] = ! empty( $meta['name'] ) ? $meta['name'] : $na;
                 break;
             default:

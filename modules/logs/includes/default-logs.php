@@ -351,7 +351,7 @@ return array(
         'desc'        => esc_html__( 'The automatic updates setting for a plugin was changed.', $tran_loc ),
         'msg'         => esc_html__( '%action% automatic update the plugin %name%', $tran_loc ),
         'context'     => 'plugin',
-        'action_name' => 'enabled',
+        'action_name' => 'modified',
     ),
     1461 => array( // Added: for recent activated plugins query.
         'type_id'     => 1461,
@@ -370,8 +370,9 @@ return array(
     1470 => array(
         'type_id'     => 1470,
         'desc'        => esc_html__( 'The automatic updates setting for a theme was changed.', $tran_loc ),
+        'msg'         => esc_html__( '%action% automatic update the theme %name%', $tran_loc ),
         'contex'      => 'theme',
-        'action_name' => 'enabled',
+        'action_name' => 'modified',
     ),
     // Menu.
     1475 => array(

@@ -380,7 +380,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
         if ( ! empty( $record->log_type_id ) ) {
             $title = $act;
-            if ( in_array( (int) $record->log_type_id, array( 1460, 1330, 1335 ) ) ) {
+            if ( in_array( (int) $record->log_type_id, array( 1460, 1330, 1335, 1495 ) ) ) {
                 $title = esc_html__( 'Modified', 'mainwp' );
             } else {
                 $title = ucfirst( $title );

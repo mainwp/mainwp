@@ -184,7 +184,6 @@ return array(
         'type_id'     => 1330,
         'desc'        => esc_html__( 'Modified the excerpt of a post', $tran_loc ),
         'msg'         => esc_html__( '%action% the excerpt of a post', $tran_loc ),
-
         'context'     => 'post',
         'action_name' => 'modified',
     ),
@@ -403,8 +402,9 @@ return array(
     1495 => array(
         'type_id'     => 1495,
         'desc'        => esc_html__( 'Changed the settings of a menu', $tran_loc ),
+        'msg'         => esc_html__( 'Modified the settings of a menu', $tran_loc ),
         'contex'      => 'menu',
-        'action_name' => 'enabled',
+        'action_name' => 'modified',
     ),
     1500 => array(
         'type_id'     => 1500,
@@ -416,7 +416,7 @@ return array(
         'type_id'     => 1505,
         'desc'        => esc_html__( 'Renamed a menu', $tran_loc ),
         'context'     => 'menu',
-        'action_name' => 'renamed',
+        'action_name' => 'modified',
     ),
     1510 => array(
         'type_id'     => 1510,
@@ -435,13 +435,13 @@ return array(
         'type_id'     => 1520,
         'desc'        => esc_html__( 'Approved a comment', $tran_loc ),
         'context'     => 'comment',
-        'action_name' => 'approved',
+        'action_name' => 'modified',
     ),
     1525 => array(
         'type_id'     => 1525,
         'desc'        => esc_html__( 'Unapproved a comment', $tran_loc ),
         'context'     => 'comment',
-        'action_name' => 'unapproved',
+        'action_name' => 'modified',
     ),
     1530 => array(
         'type_id'     => 1530,
@@ -459,13 +459,13 @@ return array(
         'type_id'     => 1540,
         'desc'        => esc_html__( 'Marked a comment as spam', $tran_loc ),
         'context'     => 'comment',
-        'action_name' => 'unapproved',
+        'action_name' => 'modified',
     ),
     1545 => array(
         'type_id'     => 1545,
         'desc'        => esc_html__( 'Marked a comment as not spam', $tran_loc ),
         'context'     => 'comment',
-        'action_name' => 'approved',
+        'action_name' => 'modified',
     ),
     1550 => array(
         'type_id'     => 1550,
@@ -477,7 +477,7 @@ return array(
         'type_id'     => 1555,
         'desc'        => esc_html__( 'Restored a comment from the trash', $tran_loc ),
         'context'     => 'comment',
-        'action_name' => 'restored',
+        'action_name' => 'modified',
     ),
     1560 => array(
         'type_id'     => 1560,

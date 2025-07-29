@@ -2204,7 +2204,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *
      * @return object|null Database query result or null on failure.
      */
-    public function get_websites_by_group_id(
+    public function get_websites_by_group_id( //phpcs:ignore -- NOSONAR -ok.
         $id,
         $selectgroups = false,
         $orderBy = 'wp.url',

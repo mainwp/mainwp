@@ -2193,12 +2193,39 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     /**
      * Get child sites by group ID.
      *
-     * @param int $id Group ID.
+     * @param int    $id Group ID.
+     * @param bool   $selectgroups Selected groups. Default: false.
+     * @param string $orderBy      Order list by. Default: URL.
+     * @param bool   $offset       Query offset. Default: false.
+     * @param bool   $rowcount     Row count. Default: falese.
+     * @param null   $where        SQL WHERE value.
+     * @param null   $search_site  Site search field value. Default: null.
+     * @param array  $others  Others params.
      *
      * @return object|null Database query result or null on failure.
      */
-    public function get_websites_by_group_id( $id ) {
-        return $this->get_results_result( $this->get_sql_websites_by_group_id( $id ) );
+    public function get_websites_by_group_id( //phpcs:ignore -- NOSONAR -ok.
+        $id,
+        $selectgroups = false,
+        $orderBy = 'wp.url',
+        $offset = false,
+        $rowcount = false,
+        $where = null,
+        $search_site = null,
+        $others = array()
+    ) {
+        return $this->get_results_result(
+            $this->get_sql_websites_by_group_id(
+                $id,
+                $selectgroups,
+                $orderBy,
+                $offset,
+                $rowcount,
+                $where,
+                $search_site,
+                $others
+            )
+        );
     }
 
     /**
@@ -2244,25 +2271,36 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         $extra_view = is_array( $others ) && isset( $others['extra_view'] ) && is_array( $others['extra_view'] ) && ! empty( $others['extra_view'] ) ? $others['extra_view'] : array( 'site_info' );
 
+        $view_query = null;
+        if ( is_array( $others ) && ! empty( $others['view_query'] ) ) {
+            $view_query = $others['view_query'];
+        }
+
         if ( MainWP_Utility::ctype_digit( $id ) ) {
             $where_allowed = $this->get_sql_where_allow_access_sites( 'wp', $is_staging );
             if ( $selectgroups ) {
+                if ( empty( $view_query ) ) {
+                    $view_query = 'default'; // To compatible.
+                }
                 $qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors
                  FROM ' . $this->table_name( 'wp' ) . ' wp
                  JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid
                  LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
                  LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
                  JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-                 JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+                 JOIN ' . $this->get_option_view( $extra_view, $view_query ) . ' wp_optionview ON wp.id = wp_optionview.wpid
                  WHERE wpgroup.groupid = ' . $id . ' ' .
                 ( empty( $where ) ? '' : ' AND ' . $where ) . $where_allowed . $where_search . '
                  GROUP BY wp.id, wp_sync.sync_id
                  ORDER BY ' . $orderBy;
             } else {
+                if ( empty( $view_query ) ) {
+                    $view_query = 'group'; // To compatible.
+                }
                 $qry = 'SELECT wp.*,wp_optionview.*, wp_sync.* FROM ' . $this->table_name( 'wp' ) . ' wp
                         JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid
                         JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-                        JOIN ' . $this->get_option_view( $extra_view, 'group' ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+                        JOIN ' . $this->get_option_view( $extra_view, $view_query ) . ' wp_optionview ON wp.id = wp_optionview.wpid
                         WHERE wpgroup.groupid = ' . $id . ' ' . $where_allowed . $where_search .
                 ( empty( $where ) ? '' : ' AND ' . $where ) . ' ORDER BY ' . $orderBy;
             }

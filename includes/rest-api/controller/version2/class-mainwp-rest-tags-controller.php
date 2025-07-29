@@ -381,13 +381,13 @@ class MainWP_Rest_Tags_Controller extends MainWP_REST_Controller{ //phpcs:ignore
             return $item;
         }
 
-        $websites = MainWP_DB::instance()->get_websites_by_group_ids( array( $item->id ) );
+        $websites = MainWP_DB::instance()->get_websites_by_group_id( $item->id, true, 'wp.url', false, false, null, null, array( 'view_query' => 'default' ) ); // To fix some empty fields of response.
 
         $data = array();
 
         if ( is_array( $websites ) ) {
             foreach ( $websites as $website ) {
-                $data[] = apply_filters( 'mainwp_rest_routes_sites_controller_filter_allowed_fields_by_context', $website );
+                $data[] = apply_filters( 'mainwp_rest_routes_sites_controller_filter_allowed_fields_by_context', $website, 'view', $request );
             }
         }
 

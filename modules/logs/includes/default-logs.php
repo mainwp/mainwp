@@ -281,6 +281,18 @@ return array(
         'context'     => 'tag',
         'action_name' => 'modified',
     ),
+    1406 => array(
+        'type_id'     => 1406,
+        'desc'        => esc_html__( 'Created a new tag', $tran_loc ),
+        'context'     => 'tag',
+        'action_name' => 'modified',
+    ),
+    1407 => array(
+        'type_id'     => 1407,
+        'desc'        => esc_html__( 'Deleted a tag', $tran_loc ),
+        'context'     => 'tag',
+        'action_name' => 'modified',
+    ),
     1410 => array(
         'type_id'     => 1410,
         'desc'        => esc_html__( 'Changed the slug of a tag', $tran_loc ),

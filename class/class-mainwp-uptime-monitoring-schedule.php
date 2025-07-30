@@ -195,7 +195,21 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
                     MainWP_Logger::instance()->log_uptime_notice( 'Uptime notice starting.' );
                 }
 
+                $global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+                $glo_active      = 0;
+                if ( isset( $global_settings['active'] ) ) {
+                    $glo_active = 1 === (int) $global_settings['active'] ? 1 : 0;
+                }
+
                 foreach ( $process_init as $uptime_notice ) {
+                    if ( -1 === $uptime_notice->active && ! $glo_active ) {
+                        continue;
+                    }
+
+                    if ( 0 === $uptime_notice->active ) {
+                        continue;
+                    }
+
                     if ( ! empty( $uptime_notice->process_id ) ) {
                         MainWP_DB::instance()->update_regular_process(
                             array(

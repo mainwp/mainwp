@@ -416,10 +416,10 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             $item   = array_filter( $request->get_params() );
             $result = MainWP_Client_Handler::rest_api_add_client( $item );
             if ( is_array( $result ) && isset( $result['clientid'] ) ) {
-                $client               = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $result['clientid'] );
+                $client               = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $result['clientid'], OBJECT, array( 'with_selected_sites' => true ) );
                 $resp_data['success'] = 1;
                 $resp_data['message'] = esc_html__( 'Client created Successfully.', 'mainwp' );
-                $resp_data['data']    = $this->filter_response_data_by_allowed_fields( $client, 'simple_view' );
+                $resp_data['data']    = $this->filter_response_data_by_allowed_fields( $client, 'simple_view', array( 'selected_sites' ) );
             } elseif ( is_array( $result ) && ! empty( $result['error'] ) ) {
                 $resp_data['error'] = wp_strip_all_tags( $result['error'] );
             } else {
@@ -455,10 +455,10 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             }
             $result = MainWP_Client_Handler::rest_api_add_client( $data, true );
             if ( is_array( $result ) && isset( $result['clientid'] ) ) {
-                $client               = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $result['clientid'] );
+                $client               = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $result['clientid'], OBJECT, array( 'with_selected_sites' => true ) );
                 $resp_data['success'] = 1;
                 $resp_data['message'] = esc_html__( 'Client updated Successfully.', 'mainwp' );
-                $resp_data['data']    = $this->filter_response_data_by_allowed_fields( $client, 'simple_view' );
+                $resp_data['data']    = $this->filter_response_data_by_allowed_fields( $client, 'simple_view', array( 'selected_sites' ) );
             } elseif ( is_array( $result ) && ! empty( $result['error'] ) ) {
                 $resp_data['error'] = wp_strip_all_tags( $result['error'] );
             } else {

@@ -1127,9 +1127,19 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $value['lasttime_cached'] = time();
 
         if ( $custom_icon ) {
+
+            if ( isset( $value['path_custom'] ) && isset( $value['path'] ) && $value['path_custom'] === $icon && '' === $value['path'] ) {
+                return true; // no change.
+            }
+
             $value['path_custom'] = $icon;
             $value['path']        = '';
         } else {
+
+            if ( isset( $value['path_custom'] ) && isset( $value['path'] ) && $value['path'] === $icon && '' === $value['path_custom'] ) {
+                return true; // no change.
+            }
+
             $value['path']        = $icon;
             $value['path_custom'] = '';
         }

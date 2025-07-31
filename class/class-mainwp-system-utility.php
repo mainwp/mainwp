@@ -1087,7 +1087,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( ! in_array( $file_extension, $file_exts ) ) {
             $icon = '';
         }
-        static::update_cached_icons( $icon, $slug, $type );
+        static::update_cached_icons( $icon, $slug, $type, false, true );
     }
 
     /**
@@ -1099,8 +1099,9 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param string $slug slug.
      * @param string $type Type: plugin|theme.
      * @param bool   $custom_icon Custom icon or not. Default: false.
+     * @param bool   $noexp No expire icon - that for sync icon.
      */
-    public static function update_cached_icons( $icon, $slug, $type, $custom_icon = false ) {
+    public static function update_cached_icons( $icon, $slug, $type, $custom_icon = false, $noexp = false ) {
 
         if ( 'plugin' === $type ) {
             $option_name = 'plugins_icons';
@@ -1142,6 +1143,12 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
             $value['path']        = $icon;
             $value['path_custom'] = '';
+        }
+
+        if ( $noexp ) {
+            $value['noexpire'] = 1;
+        } elseif ( isset( $value['noexpire'] ) ) {
+            unset( $value['noexpire'] );
         }
 
         // update cache.
@@ -1309,7 +1316,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 $updated    = false;
                 $new_cached = array();
                 foreach ( $cached_icons as $sl => $val ) {
-                    if ( empty( $val['path_custom'] ) && time() < ( intval( $val['lasttime_cached'] ) + 12 * MONTH_IN_SECONDS ) ) {
+                    if ( empty( $val['noexpire'] ) && empty( $val['path_custom'] ) && time() < ( intval( $val['lasttime_cached'] ) + 12 * MONTH_IN_SECONDS ) ) {
                         $new_cached[ $sl ] = $val; // unset.
                         $updated           = true;
                     }

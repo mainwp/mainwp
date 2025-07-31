@@ -411,8 +411,11 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $done                    = true;
         }
 
+        $plugins_info = array();
+
         if ( isset( $information['plugins'] ) ) {
-            $websiteValues['plugins'] = wp_json_encode( $information['plugins'] );
+            $plugins_info             = $information['plugins'];
+            $websiteValues['plugins'] = wp_json_encode( $plugins_info );
             $done                     = true;
         }
 
@@ -583,8 +586,18 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         $error = apply_filters( 'mainwp_sync_site_after_sync_result', $error, $pWebsite, $information );
 
+        if ( ! empty( $plugins_info ) && is_array( $plugins_info ) ) {
+            foreach ( $plugins_info as $info ) {
+                if ( ! empty( $info['icon'] ) ) {
+                    $icon_slug = MainWP_Utility::get_dir_slug( $info['slug'] );
+                    MainWP_System_Utility::save_cached_icons( $info['icon'], $icon_slug, 'plugin' );
+                }
+            }
+        }
+
         // Sync action.
         if ( ! $error ) {
+
             do_action_deprecated( 'mainwp-site-synced', array( $pWebsite, $information ), '4.0.7.2', 'mainwp_site_synced' ); // @deprecated Use 'mainwp_site_synced' instead. NOSONAR - not IP.
 
             /**

@@ -1062,6 +1062,35 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     }
 
     /**
+     * Method save_cached_icons().
+     *
+     * Save cached icons
+     *
+     * @param string $icon The icon.
+     * @param string $slug slug.
+     * @param string $type Type: plugin|theme.
+     */
+    public static function save_cached_icons( $icon, $slug, $type ) {
+        $file_extension = strtolower( pathinfo( $icon, PATHINFO_EXTENSION ) );
+
+        $file_exts = apply_filters(
+            'mainwp_save_cached_icons_file_ext',
+            array(
+                'jpeg',
+                'jpg',
+                'gif',
+                'ico',
+                'png',
+            )
+        );
+
+        if ( ! in_array( $file_extension, $file_exts ) ) {
+            $icon = '';
+        }
+        static::update_cached_icons( $icon, $slug, $type );
+    }
+
+    /**
      * Method update_cached_icons().
      *
      * Update cached icons
@@ -1099,8 +1128,10 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         if ( $custom_icon ) {
             $value['path_custom'] = $icon;
+            $value['path']        = '';
         } else {
-            $value['path'] = $icon;
+            $value['path']        = $icon;
+            $value['path_custom'] = '';
         }
 
         // update cache.
@@ -1354,6 +1385,10 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         $cached_icons = MainWP_DB::instance()->get_general_option( $option_name, 'array' );
+
+        if ( ! is_array( $cached_icons ) ) {
+            $cached_icons = array();
+        }
 
         $cached_days = apply_filters( 'mainwp_plugin_theme_icon_cache_days', 15, $slug, $type ); // default 15 days.
 

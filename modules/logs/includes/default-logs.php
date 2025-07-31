@@ -285,13 +285,13 @@ return array(
         'type_id'     => 1406,
         'desc'        => esc_html__( 'Created a new tag', $tran_loc ),
         'context'     => 'tag',
-        'action_name' => 'modified',
+        'action_name' => 'created',
     ),
     1407 => array(
         'type_id'     => 1407,
         'desc'        => esc_html__( 'Deleted a tag', $tran_loc ),
         'context'     => 'tag',
-        'action_name' => 'modified',
+        'action_name' => 'deleted',
     ),
     1410 => array(
         'type_id'     => 1410,
@@ -382,7 +382,7 @@ return array(
         'type_id'     => 1470,
         'desc'        => esc_html__( 'The automatic updates setting for a theme was changed.', $tran_loc ),
         'msg'         => esc_html__( '%action% automatic update the theme %name%', $tran_loc ),
-        'contex'      => 'theme',
+        'context'     => 'theme',
         'action_name' => 'modified',
     ),
     // Menu.
@@ -414,8 +414,7 @@ return array(
     1495 => array(
         'type_id'     => 1495,
         'desc'        => esc_html__( 'Changed the settings of a menu', $tran_loc ),
-        'msg'         => esc_html__( 'Modified the settings of a menu', $tran_loc ),
-        'contex'      => 'menu',
+        'context'     => 'menu',
         'action_name' => 'modified',
     ),
     1500 => array(

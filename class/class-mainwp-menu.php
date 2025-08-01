@@ -1397,8 +1397,10 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
 
             if ( empty( $right ) || ( ! empty( $right ) && \mainwp_current_user_can( $right_group, $right ) ) ) {
+                $menu_itemid = $slug; // compatible.
+                $menu_itemid = 'managesites' === $slug && ! empty( $id ) ? $id : $menu_itemid;
                 ?>
-                <a class="item <?php echo $level2_active ? 'active level-two-active' : ''; ?> <?php echo esc_attr( $item_classes ); ?>" href="<?php echo esc_url( $href ); ?>" id="<?php echo esc_attr( $slug ); ?>" <?php echo $_blank ? 'target="_blank"' : ''; ?>>
+                <a class="item <?php echo $level2_active ? 'active level-two-active' : ''; ?> <?php echo esc_attr( $item_classes ); ?>" href="<?php echo esc_url( $href ); ?>" id="<?php echo esc_attr( $menu_itemid ); ?>" <?php echo $_blank ? 'target="_blank"' : ''; ?>>
                     <?php echo $before_title . $title; //phpcs:ignore -- requires escaped. ?>
                 </a>
                 <?php

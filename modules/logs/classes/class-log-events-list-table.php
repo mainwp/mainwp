@@ -420,16 +420,30 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         }
 
         if ( $coloring ) {
-            $format_title = '<span class="ui medium text">%s</span>';
-            if ( 'deactivate' === $act || 'deleted' === $act || 'delete' === $act ) {
-                $format_title = '<span class="ui medium red text">%s</span>';
-            } elseif ( 'activate' === $act || 'updated' === $act || 'update' === $act ) {
-                $format_title = '<span class="ui medium blue text">%s</span>';
-            } elseif ( 'install' === $act || 'created' === $act || 'added' === $act || 'sync' === $act ) {
-                $format_title = '<span class="ui medium green text">%s</span>';
+
+            $color = '';
+
+            if ( 'deleted' === $act || 'removed' === $act || 'revoked' === $act ) {
+                $color = 'red';
+            } elseif ( 'deactivated' === $act || 'disabled' === $act || 'suspended' === $act ) {
+                $color = 'orange';
+            } elseif ( 'opened' === $act || 'logged-in' === $act || 'logged-out' === $act ) {
+                $color = 'grey';
+            } elseif ( 'activated' === $act || 'updated' === $act || 'modified' === $act ) {
+                $color = 'blue';
+            } elseif ( 'sync' === $act || 'installed' === $act || 'created' === $act || 'published' === $act || 'added' === $act || 'uploaded' === $act ) {
+                $color = 'green';
+            } elseif ( 'deactivate' === $act || 'delete' === $act ) { // to compatible.
+                $color = 'red';
+            } elseif ( 'activate' === $act || 'update' === $act ) { // to compatible.
+                $color = 'blue';
+            } elseif ( 'install' === $act ) { // to compatible.
+                $color = 'green';
             }
-            $title = sprintf( $format_title, esc_html( $title ) );
+
+            $title = sprintf( '<span class="ui mini basic %s label">%s</span>', $color, esc_html( $title ) );
         }
+
         return $title;
     }
 

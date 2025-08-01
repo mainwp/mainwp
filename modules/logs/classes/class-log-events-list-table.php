@@ -448,6 +448,80 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
     }
 
     /**
+     * Returns the icons for object.
+     *
+     * @param string $record  Log data.
+     * @return string
+     */
+    public function get_object_icon( $record ) {
+        $context = $record->context;
+        $icon    = '';
+        switch ( $context ) {
+            case 'post':
+                $icon = 'file text';
+                break;
+            case 'file':
+                $icon = 'file';
+                break;
+            case 'system-setting':
+                $icon = 'cogs';
+                break;
+            case 'category':
+                $icon = 'layer group';
+                break;
+            case 'tag':
+                $icon = 'tag';
+                break;
+            case 'widget':
+                $icon = 'puzzle piece';
+                break;
+            case 'plugin':
+                $icon = 'plug';
+                break;
+            case 'theme':
+                $icon = 'paint brush';
+                break;
+            case 'menu':
+                $icon = 'bars';
+                break;
+            case 'comment':
+                $icon = 'comment';
+                break;
+            case 'user':
+                $icon = 'user';
+                break;
+            case 'database':
+                $icon = 'database';
+                break;
+            case 'cron':
+                $icon = 'clock';
+                break;
+            case 'sites':
+                $icon = 'globe';
+                break;
+            // To compatible.
+            case 'translation':
+                $icon = 'language';
+                break;
+            case 'core':
+                $icon = 'cubes';
+                break;
+            case 'posts':
+                $icon = 'file text';
+                break;
+            case 'clients':
+                $icon = 'address card';
+                break;
+            case 'users':
+                $icon = 'users';
+                break;
+            default:
+                break;
+        }
+        return ! empty( $icon ) ? sprintf( '<i class="%s icon"></i>', $icon ) : '';
+    }
+
+    /**
      * Parse event title.
      *
      * @param object $record  Log record object.
@@ -483,7 +557,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             $title = $roll_msg . $this->get_context_title( $title, $record->context, $record->connector );
         }
 
-        return $title;
+        $obj_icon = $this->get_object_icon( $record );
+
+        return $obj_icon . $title;
     }
 
     /**

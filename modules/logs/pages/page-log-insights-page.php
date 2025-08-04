@@ -892,7 +892,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
         if ( $user_cancel ) {
             $status = 'cancelled';
         } else {
-            Log_DB_Helper::instance()->archive_sites_changes( 0, 200, 1 );
+            Log_DB_Archive::instance()->archive_sites_changes( 0, 200, 1 );
             $count = Log_DB_Helper::instance()->count_legacy_dismissed();
             if ( $count ) {
                 $status = 'running';

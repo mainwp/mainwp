@@ -105,7 +105,7 @@ class Log_Admin {
      */
     public function handle_post_archive_data() {
         if ( isset( $_GET['clearArchivedSitesChangesData'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'clear_archived_sites_changes' ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            Log_DB_Helper::instance()->truncate_archive_tables();
+            Log_DB_Archive::instance()->truncate_archive_tables();
             wp_safe_redirect( esc_url( admin_url( 'admin.php?page=MainWPTools' ) ) );
             die();
         }

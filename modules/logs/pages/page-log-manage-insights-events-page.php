@@ -835,7 +835,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
         $update = array(
             'log_id' => $log_id,
         );
-        Log_DB_Helper::instance()->archive_log( $update );
+        Log_DB_Archive::instance()->archive_log( $update );
         wp_die( wp_json_encode( array( 'success' => 'yes' ) ) );
     }
 
@@ -844,7 +844,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
      */
     public function ajax_sites_changes_dismiss_all() {
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_insight_events_dismiss_all' );
-        Log_DB_Helper::instance()->archive_sites_changes();
+        Log_DB_Archive::instance()->archive_sites_changes();
         wp_die( wp_json_encode( array( 'success' => 'yes' ) ) );
     }
 

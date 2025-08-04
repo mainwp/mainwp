@@ -9,7 +9,10 @@
 namespace MainWP\Dashboard\Module\Log;
 
 use MainWP\Dashboard\MainWP_Utility;
+use MainWP\Dashboard\MainWP_Connect;
+use MainWP\Dashboard\MainWP_Manage_Sites;
 use MainWP\Dashboard\MainWP_Updates_Helper;
+use MainWP\Dashboard\MainWP_Site_Open;
 
 /**
  * Class Log_Events_List_Table
@@ -86,6 +89,13 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * @var mixed Default null
      */
     private $forced_modified_events = null;
+
+    /**
+     * Private static variable to hold the value.
+     *
+     * @var mixed Default null
+     */
+    private $use_site_favico = null;
 
     /**
      * Class constructor.
@@ -228,11 +238,11 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      *
      * @param object $item         Record data.
      * @param string $column_name  Column name.
-     * @param mixed  $site_dtf  Child site date time format.
+     * @param array  $site_opts  Site options.
      *
      * @return string $out Output.
      */
-    public function column_default( $item, $column_name, $site_dtf ) { //phpcs:ignore -- NOSONAR -complex.
+    public function column_default( $item, $column_name ) { //phpcs:ignore -- NOSONAR -complex.
         $out = '';
 
         $record = new Log_Record( $item );
@@ -258,6 +268,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $escaped = true;
                 break;
             case 'created':
+                $site_info = is_array( $this->sites_opts ) && isset( $this->sites_opts[ $record->site_id ] ) && isset( $this->sites_opts[ $record->site_id ]['site_info'] ) ? $this->sites_opts[ $item->site_id ]['site_info'] : array();
+                $site_dtf  = is_array( $site_info ) && isset( $site_info['format_datetime'] ) ? $site_info['format_datetime'] : false;
+
                 $child_time = MainWP_Utility::format_timezone( (int) $record->created, false, $site_dtf );
                 if ( ! empty( $child_time ) ) {
                     $date_string = sprintf(
@@ -277,7 +290,42 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $escaped = true;
                 break;
             case 'name':
-                $out     = ! empty( $record->log_site_name ) ? '<a href="admin.php?page=managesites&dashboard=' . intval( $record->site_id ) . '">' . esc_html( $record->log_site_name ) . '</a>' : 'N/A';
+                $out = 'N/A';
+
+                if ( ! empty( $record->log_site_name ) ) {
+                    $site_icon = '';
+                    if ( $this->use_site_favico ) {
+                        $site_opts = is_array( $this->sites_opts ) && isset( $this->sites_opts[ $record->site_id ] ) ? $this->sites_opts[ $record->site_id ] : array();
+                        $siteObj   = (object) array(
+                            'id'        => $record->site_id,
+                            'url'       => $record->url,
+                            'name'      => $record->log_site_name,
+                            'favi_icon' => is_array( $site_opts ) && isset( $site_opts['favi_icon'] ) ? $site_opts['favi_icon'] : '',
+                        );
+                        $favi_url  = MainWP_Connect::get_favico_url( $siteObj );
+                        $site_icon = MainWP_Manage_Sites::get_instance()->get_site_icon_display( is_array( $site_opts ) && isset( $site_opts['cust_site_icon_info'] ) ? $site_opts['cust_site_icon_info'] : '', $favi_url );
+                    }
+
+                    ob_start();
+
+                    echo $site_icon; // phpcs:ignore WordPress.Security.EscapeOutput
+                    if ( \mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
+                        <a href="<?php MainWP_Site_Open::get_open_site_url( $record->site_id ); ?>" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
+                    <?php endif; ?>
+
+                    <a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $record->site_id ); ?>">
+                        <?php echo esc_attr( stripslashes( $record->log_site_name ) ); ?>
+                    </a>
+                    <div>
+                        <span class="ui small text">
+                            <a href="<?php echo esc_url( $record->url ); ?>" class="mainwp-may-hide-referrer open_site_url ui grey text" target="_blank">
+                                <?php echo esc_html( MainWP_Utility::get_nice_url( $record->url ) ); ?>
+                            </a>
+                        </span>
+                    </div>
+                    <?php
+                    $out = ob_get_clean();
+                }
                 $escaped = true;
                 break;
             case 'user_id':
@@ -1244,6 +1292,8 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
         $columns = $this->get_columns();
 
+        $this->use_site_favico = get_option( 'mainwp_use_favicon', 1 );
+
         if ( $this->items ) {
             foreach ( $this->items as $log ) {
                 $rw_classes = 'log-item mainwp-log-item-' . intval( $log->log_id );
@@ -1255,15 +1305,10 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                     'created'  => $log->created,
                     'state'    => is_null( $log->state ) ? - 1 : $log->state,
                 );
-
                 $cols_data = array();
-
-                $site_info = is_array( $this->sites_opts ) && isset( $this->sites_opts[ $log->site_id ] ) && isset( $this->sites_opts[ $log->site_id ]['site_info'] ) ? $this->sites_opts[ $log->site_id ]['site_info'] : array();
-                $site_dtf  = is_array( $site_info ) && isset( $site_info['format_datetime'] ) ? $site_info['format_datetime'] : false;
-
                 foreach ( $columns as $column_name => $column_display_name ) {
                     ob_start();
-                    echo $this->column_default( $log, $column_name, $site_dtf ); // phpcs:ignore WordPress.Security.EscapeOutput
+                    echo $this->column_default( $log, $column_name ); // phpcs:ignore WordPress.Security.EscapeOutput
                     $cols_data[ $column_name ] = ob_get_clean();
                 }
                 $all_rows[]  = $cols_data;

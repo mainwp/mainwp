@@ -1293,9 +1293,9 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
         $data = explode( ';', $icon_data );
 
-        $uploaded = str_replace( 'uploaded:', '', $data[0] );
-        $selected = str_replace( 'selected:', '', $data[1] );
-        $color    = str_replace( 'color:', '', $data[2] );
+        $uploaded = ! empty( $data[0] ) ? str_replace( 'uploaded:', '', $data[0] ) : '';
+        $selected = ! empty( $data[1] ) ? str_replace( 'selected:', '', $data[1] ) : '';
+        $color    = ! empty( $data[2] ) ? str_replace( 'color:', '', $data[2] ) : '';
 
         if ( empty( $color ) ) {
             $color = '#34424D';

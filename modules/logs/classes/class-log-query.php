@@ -398,10 +398,10 @@ class Log_Query {
                 }
             }
         }
+
         $sites_opts = array();
         // get sites meta data.
         if ( $items ) {
-            $wp_options_tbl = MainWP_DB::instance()->get_table_name( 'wp_options' );
             $ids            = array_map( 'absint', wp_list_pluck( $items, 'site_id' ) );
 
             $start_slice = 0;
@@ -414,11 +414,10 @@ class Log_Query {
 
                 if ( ! empty( $slice_ids ) ) {
 
-                    $sql_sites_meta = sprintf(
-                        "SELECT name,value,wpid FROM $wp_options_tbl WHERE wpid IN ( %s ) AND name='site_info'",
-                        implode( ',', array_unique( $slice_ids ) )
-                    );
-                    $opts_records   = $wpdb->get_results( $sql_sites_meta );  //phpcs:ignore -- ok.
+                    $wp_opts = $with_logs_meta ? array( 'site_info', 'cust_site_icon_info', 'favi_icon' ) : array( 'site_info' );
+
+                    $opts_records = Log_DB_Helper::instance()->get_sites_options( $slice_ids, $wp_opts );
+
                     if ( is_array( $opts_records ) ) {
                         foreach ( $opts_records as $opt_record ) {
                             if ( ! isset( $sites_opts[ $opt_record->wpid ] ) ) {
@@ -449,7 +448,7 @@ class Log_Query {
         );
 
         if ( ! $not_count ) {
-            $results['count'] = absint( $wpdb->get_var( $count_query ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+            $results['count'] = absint( $wpdb->get_var( $count_query ) ); // phpcs:ignore --ok.
         }
         return $results;
     }

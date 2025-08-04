@@ -91,6 +91,38 @@ class Log_DB_Helper extends MainWP_DB {
     }
 
     /**
+     * Method get_sites_options().
+     *
+     * @param array $sites_ids Site Ids array.
+     * @param array $opts Site options array.
+     *
+     * @return array
+     */
+    public function get_sites_options( $sites_ids, $opts = array() ) {
+
+        $where_opts = implode(
+            '" OR name ="',
+            array_map(
+                function ( $val ) {
+                    return $this->escape( $val );
+                },
+                $opts
+            )
+        );
+
+        if ( empty( $where_opts ) ) {
+            return array();
+        }
+
+        $sql = sprintf(
+            'SELECT name,value,wpid FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid IN ( %s ) AND ( name="' . $where_opts . '" )',
+            implode( ',', array_unique( $sites_ids ) )
+        );
+
+        return $this->wpdb->get_results( $sql ); //phpcs:ignore -- ok.
+    }
+
+    /**
      * Method dismiss_all_changes().
      *
      * Handle dismiss all sites changes.
@@ -103,38 +135,6 @@ class Log_DB_Helper extends MainWP_DB {
         return $this->wpdb->update( $this->table_name( 'wp_logs' ), array( 'dismiss' => 1 ), array( 'dismiss' => 0 ) );
     }
 
-    /**
-     * Method archive_sites_changes().
-     *
-     * @param int   $before_timestamp Archive sites changes created before time.
-     * @param int   $by_limit By limit.
-     * @param mixed $dismiss Dismiss: false|0|1.
-     *
-     * @return mixed
-     */
-    public function archive_sites_changes( $before_timestamp = 0, $by_limit = 0, $dismiss = false ) {
-
-        $where = '';
-        $order = '';
-        if ( ! empty( $before_timestamp ) ) {
-            $where .= ' AND created < ' . (int) $before_timestamp;
-        }
-
-        if ( ! empty( $by_limit ) ) {
-            $order .= ' ORDER BY created ASC LIMIT ' . (int) $by_limit;
-        }
-
-        if ( false !== $dismiss ) {
-            $where .= ' AND dismiss = ' . intval( $dismiss );
-        }
-
-        $logs = $this->wpdb->get_results(  'SELECT * FROM ' . $this->table_name('wp_logs') . ' WHERE 1 ' . $where . $order , ARRAY_A ); //phpcs:ignore -- NOSONAR -ok.
-        if ( $logs ) {
-            foreach ( $logs as $log ) {
-                $this->archive_log( $log );
-            }
-        }
-    }
 
     /**
      * Method count_events().
@@ -258,51 +258,6 @@ class Log_DB_Helper extends MainWP_DB {
     }
 
     /**
-     * Method archive_log().
-     *
-     * @param array $data Log data to archive.
-     *
-     * @return mixed
-     */
-    public function archive_log( $data ) {
-        if ( empty( $data ) || ! is_array( $data ) || empty( $data['log_id'] ) ) {
-            return false;
-        }
-
-        $log_id = $data['log_id'];
-
-        $log = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name('wp_logs') . ' WHERE log_id = %d', $log_id ), ARRAY_A ); //phpcs:ignore -- NOSONAR -ok.
-        if ( $log ) {
-            $log['archived_at'] = time();
-            $this->wpdb->insert( $this->table_name( 'wp_logs_archive' ), $log );
-            $log_mt = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name('wp_logs_meta') . ' WHERE meta_log_id = %d', $log_id ), ARRAY_A ); //phpcs:ignore -- NOSONAR -ok.
-
-            if ( $log_mt ) {
-                foreach ( $log_mt as $mt ) {
-                    $this->wpdb->insert( $this->table_name( 'wp_logs_meta_archive' ), $mt );
-                }
-            }
-
-            $this->wpdb->delete(
-                $this->table_name( 'wp_logs' ),
-                array(
-                    'log_id' => $log_id,
-                )
-            );
-
-            $this->wpdb->delete(
-                $this->table_name( 'wp_logs_meta' ),
-                array(
-                    'meta_log_id' => $log_id,
-                )
-            );
-
-            return $log;
-        }
-        return false;
-    }
-
-    /**
      * Get db size.
      *
      * @return string Return current db size.
@@ -347,13 +302,5 @@ class Log_DB_Helper extends MainWP_DB {
         set_transient( 'mainwp_module_log_transient_db_logs_size', $dbsize_mb, 15 * MINUTE_IN_SECONDS );
 
         return $dbsize_mb;
-    }
-
-    /**
-     * Method truncate_archive_tables().
-     */
-    public function truncate_archive_tables() {
-        $this->wpdb->query( 'TRUNCATE TABLE ' . $this->table_name( 'wp_logs_archive' ) ); //phpcs:ignore -- ok.
-        $this->wpdb->query( 'TRUNCATE TABLE ' . $this->table_name( 'wp_logs_meta_archive' ) ); //phpcs:ignore -- ok.
     }
 }

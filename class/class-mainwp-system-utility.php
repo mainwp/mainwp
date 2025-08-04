@@ -1062,6 +1062,35 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     }
 
     /**
+     * Method save_cached_icons().
+     *
+     * Save cached icons
+     *
+     * @param string $icon The icon.
+     * @param string $slug slug.
+     * @param string $type Type: plugin|theme.
+     */
+    public static function save_cached_icons( $icon, $slug, $type ) {
+        $file_extension = strtolower( pathinfo( $icon, PATHINFO_EXTENSION ) );
+
+        $file_exts = apply_filters(
+            'mainwp_save_cached_icons_file_ext',
+            array(
+                'jpeg',
+                'jpg',
+                'gif',
+                'ico',
+                'png',
+            )
+        );
+
+        if ( ! in_array( $file_extension, $file_exts ) ) {
+            $icon = '';
+        }
+        static::update_cached_icons( $icon, $slug, $type, false, true );
+    }
+
+    /**
      * Method update_cached_icons().
      *
      * Update cached icons
@@ -1070,8 +1099,9 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param string $slug slug.
      * @param string $type Type: plugin|theme.
      * @param bool   $custom_icon Custom icon or not. Default: false.
+     * @param bool   $noexp No expire icon - that for sync icon.
      */
-    public static function update_cached_icons( $icon, $slug, $type, $custom_icon = false ) {
+    public static function update_cached_icons( $icon, $slug, $type, $custom_icon = false, $noexp = false ) {
 
         if ( 'plugin' === $type ) {
             $option_name = 'plugins_icons';
@@ -1098,13 +1128,33 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $value['lasttime_cached'] = time();
 
         if ( $custom_icon ) {
+
+            if ( isset( $value['path_custom'] ) && isset( $value['path'] ) && $value['path_custom'] === $icon && '' === $value['path'] ) {
+                return true; // no change.
+            }
+
             $value['path_custom'] = $icon;
+            $value['path']        = '';
         } else {
-            $value['path'] = $icon;
+
+            if ( isset( $value['path_custom'] ) && isset( $value['path'] ) && $value['path'] === $icon && '' === $value['path_custom'] ) {
+                return true; // no change.
+            }
+
+            $value['path']        = $icon;
+            $value['path_custom'] = '';
+        }
+
+        if ( $noexp ) {
+            $value['noexpire'] = 1;
+        } elseif ( isset( $value['noexpire'] ) ) {
+            unset( $value['noexpire'] );
         }
 
         // update cache.
         $cached_icons[ $slug ] = $value;
+
+        $cached_icons = apply_filters( 'mainwp_before_save_cached_icons', $cached_icons, $icon, $slug, $type, $custom_icon, $noexp );
 
         MainWP_DB::instance()->update_general_option( $option_name, $cached_icons, 'array' );
         return true;
@@ -1268,7 +1318,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 $updated    = false;
                 $new_cached = array();
                 foreach ( $cached_icons as $sl => $val ) {
-                    if ( empty( $val['path_custom'] ) && time() < ( intval( $val['lasttime_cached'] ) + 12 * MONTH_IN_SECONDS ) ) {
+                    if ( empty( $val['noexpire'] ) && empty( $val['path_custom'] ) && time() < ( intval( $val['lasttime_cached'] ) + 12 * MONTH_IN_SECONDS ) ) {
                         $new_cached[ $sl ] = $val; // unset.
                         $updated           = true;
                     }
@@ -1354,6 +1404,10 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         $cached_icons = MainWP_DB::instance()->get_general_option( $option_name, 'array' );
+
+        if ( ! is_array( $cached_icons ) ) {
+            $cached_icons = array();
+        }
 
         $cached_days = apply_filters( 'mainwp_plugin_theme_icon_cache_days', 15, $slug, $type ); // default 15 days.
 

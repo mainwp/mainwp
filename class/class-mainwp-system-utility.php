@@ -1154,6 +1154,8 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         // update cache.
         $cached_icons[ $slug ] = $value;
 
+        $cached_icons = apply_filters( 'mainwp_before_save_cached_icons', $cached_icons, $icon, $slug, $type, $custom_icon, $noexp );
+
         MainWP_DB::instance()->update_general_option( $option_name, $cached_icons, 'array' );
         return true;
     }

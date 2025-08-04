@@ -402,7 +402,7 @@ class Log_Query {
         $sites_opts = array();
         // get sites meta data.
         if ( $items ) {
-            $ids            = array_map( 'absint', wp_list_pluck( $items, 'site_id' ) );
+            $ids = array_map( 'absint', wp_list_pluck( $items, 'site_id' ) );
 
             $start_slice = 0;
             $max_slice   = 100;

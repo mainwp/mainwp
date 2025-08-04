@@ -122,6 +122,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
                     'methods'             => WP_REST_Server::CREATABLE,
                     'callback'            => array( $this, 'create_item' ),
                     'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'args'                => $this->get_collection_params(),
                 ),
             )
         );
@@ -282,6 +283,17 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
     }
 
     /**
+     * Get the query params for collections.
+     *
+     * @return array
+     */
+    public function get_collection_params() {
+        $params                       = array();
+        $params['context']['default'] = 'view';
+        return $params;
+    }
+
+    /**
      * Get formatted item object.
      *
      * @since  5.2
@@ -413,7 +425,10 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
         $resp_data            = array();
         $resp_data['success'] = 0;
         try {
-            $item   = array_filter( $request->get_params() );
+            $item = array_filter( $request->get_params() );
+            if ( isset( $item['selected_sites'] ) ) {
+                $item['selected_sites'] = array_unique( wp_parse_list( $item['selected_sites'] ) );
+            }
             $result = MainWP_Client_Handler::rest_api_add_client( $item );
             if ( is_array( $result ) && isset( $result['clientid'] ) ) {
                 $client               = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $result['clientid'], OBJECT, array( 'with_selected_sites' => true ) );
@@ -452,6 +467,9 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             $data = array_filter( $request->get_params() );
             if ( is_array( $data ) ) {
                 $data['client_id'] = $item->client_id;
+            }
+            if ( isset( $data['selected_sites'] ) ) {
+                $data['selected_sites'] = array_unique( wp_parse_list( $data['selected_sites'] ) );
             }
             $result = MainWP_Client_Handler::rest_api_add_client( $data, true );
             if ( is_array( $result ) && isset( $result['clientid'] ) ) {

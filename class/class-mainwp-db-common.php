@@ -172,6 +172,21 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'group' ) . ' WHERE ' . $where . ' ORDER BY name', OBJECT_K );
     }
 
+
+    /**
+     * Method get_sql_version_compare().
+     *
+     * @param string $coln Column compare.
+     * @param string $operator Operator compare.
+     * @param string $ver_str Version compare.
+     *
+     * @return string Sql version compare.
+     */
+    public function get_sql_version_compare( $coln, $operator, $ver_str ) {
+        return ' INET_ATON( SUBSTRING_INDEX( CONCAT( SUBSTRING_INDEX(' . $coln . ", '-', 1), '.0.0.0.0' ), '.', 4) ) " .
+        $operator . " INET_ATON('" . $ver_str . "') ";
+    }
+
     /**
      * Method get_groups_for_current_user()
      *

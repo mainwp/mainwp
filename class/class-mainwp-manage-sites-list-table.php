@@ -754,7 +754,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                                 + (CASE theme_upgrades WHEN "[]" THEN 0 ELSE LENGTH(theme_upgrades) - LENGTH(REPLACE(theme_upgrades, "\"Name\":", "\"Name\"")) END)
                                             END ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'phpversion' === $req_orderby ) {
-                    $orderby = ' INET_ATON(SUBSTRING_INDEX(CONCAT(wp_optionview.phpversion,".0.0.0"),".",4)) ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+                    $orderby = ' INET_ATON( SUBSTRING_INDEX( CONCAT( SUBSTRING_INDEX(wp_optionview.phpversion, "-", 1), ".0.0.0.0" ), ".", 4) ) ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'status' === $req_orderby ) {
                     $orderby = 'CASE true
                                             WHEN (offline_check_result = -1)
@@ -903,14 +903,14 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                     $where = 'wp_sync.health_status = 0';
                 }
             } elseif ( 'phpver7' === $site_status ) {
-                $where = ' INET_ATON(SUBSTRING_INDEX(CONCAT(wp_optionview.phpversion,".0.0.0"),".",4)) < INET_ATON("7.0.0.0") ';
+                $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '<', '7.0.0.0' ); // NOSONAR - no IP.
                 if ( $is_not ) {
-                    $where = ' INET_ATON(SUBSTRING_INDEX(CONCAT(wp_optionview.phpversion,".0.0.0"),".",4)) >= INET_ATON("7.0.0.0") ';
+                    $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '>=', '7.0.0.0' ); // NOSONAR - no IP.
                 }
             } elseif ( 'phpver8' === $site_status ) {
-                $where = ' INET_ATON(SUBSTRING_INDEX(CONCAT(wp_optionview.phpversion,".0.0.0"),".",4)) < INET_ATON("8.0.0.0") ';
+                $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '<', '8.0.0.0' ); // NOSONAR - no IP.
                 if ( $is_not ) {
-                    $where = ' INET_ATON(SUBSTRING_INDEX(CONCAT(wp_optionview.phpversion,".0.0.0"),".",4)) >= INET_ATON("8.0.0.0") ';
+                    $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '>=', '8.0.0.0' ); // NOSONAR - no IP.
                 }
             } elseif ( 'suspended' === $site_status ) {
                 $where = 'wp.suspended = 1'; // query for suspended sites.
@@ -1045,7 +1045,6 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         $this->items       = $websites;
         $this->total_items = $totalRecords;
     }
-
 
     /**
      * Display the table.

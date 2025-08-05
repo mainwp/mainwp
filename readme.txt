@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.8.2
 Requires PHP: 7.4
-Stable tag: 5.4.0.17
+Stable tag: 5.4.0.18
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -146,6 +146,16 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.4.0.18 - Maintenance Release - 8-5-2025 =
+
+* Fixed: Issues with sorting and filtering data by PHP version in cases where version numbers contain text strings. [(#815)](https://github.com/mainwp/mainwp/issues/815)
+* Added: Support for custom plugin and theme icons that may be set by third-party developers.
+* Added: Element ID for the "Log Out" menu item in the user settings menu to improve accessibility and targeting.
+* Updated: Element ID for the "Add New" and "Import Sites" menu items to prevent duplicate ID conflicts.
+* Dev: Refined REST API responses to properly support the `selected_sites` field when creating or updating clients.
+* Dev: Updated `selected_sites` parameter behavior to allow assignment of multiple sites to a single client.
+* Dev: Added `mainwp_before_save_cached_icons` filter hook to allow developers to manipulate cached plugin and theme icons.
 
 = 5.4.0.17 - Maintenance Release - 7-29-2025 =
 

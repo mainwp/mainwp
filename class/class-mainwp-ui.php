@@ -1413,13 +1413,13 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             }
             ?>
             <div class="menu">
-                <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=Settings' ) ); ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Go to MainWP Settings', 'mainwp' ); ?>">
+                <a class="item" id="mainwp-settings-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=Settings' ) ); ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Go to MainWP Settings', 'mainwp' ); ?>">
                     <i class="cog grey icon"></i> <?php esc_html_e( 'MainWP Settings', 'mainwp' ); ?>
                 </a>
-                <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=ServerInformation' ) ); ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Go to MainWP Info', 'mainwp' ); ?>">
+                <a class="item" id="mainwp-system-info-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=ServerInformation' ) ); ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Go to MainWP Info', 'mainwp' ); ?>">
                     <i class="circle grey info icon"></i> <?php esc_html_e( 'System Info', 'mainwp' ); ?>
                 </a>
-                <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=PluginPrivacy' ) ); ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Read the MainWP plugin privacy policy.', 'mainwp' ); ?>">
+                <a class="item" id="mainwp-privacy-policy-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=PluginPrivacy' ) ); ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Read the MainWP plugin privacy policy.', 'mainwp' ); ?>">
                     <i class="file contract grey icon"></i> <?php esc_html_e( 'Privacy Policy', 'mainwp' ); ?>
                 </a>
                 <a id="mainwp-help-sidebar" class="item" data-inverted="" data-position="left center" href="#" target="_blank" data-tooltip="<?php esc_attr_e( 'Need help?', 'mainwp' ); ?>">
@@ -1431,7 +1431,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 </a>
                 <?php $all_updates = wp_get_update_data(); ?>
                 <?php if ( is_array( $all_updates ) && isset( $all_updates['counts']['total'] ) && 0 < $all_updates['counts']['total'] ) : ?>
-                <a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Your MainWP Dashboard sites needs your attention. Please check the available updates', 'mainwp' ); ?>" aria-label="<?php esc_attr_e( 'Your MainWP Dashboard sites needs your attention. Please check the available updates', 'mainwp' ); ?>" href="update-core.php">
+                <a class="item" id="mainwp-available-updates-menu-item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Your MainWP Dashboard sites needs your attention. Please check the available updates', 'mainwp' ); ?>" aria-label="<?php esc_attr_e( 'Your MainWP Dashboard sites needs your attention. Please check the available updates', 'mainwp' ); ?>" href="update-core.php">
                     <i class="exclamation triangle red icon"></i> <?php esc_html_e( 'Update Dashboard Site', 'mainwp' ); ?>
                 </a>
                 <?php endif; ?>
@@ -1443,7 +1443,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     <i class="user grey icon"></i> <?php esc_html_e( 'My MainWP Account', 'mainwp' ); ?>
                 </a>
                 <div class="ui divider"></div>
-                <a class="item" href="<?php echo wp_logout_url(); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Log out of your MainWP Dashboard', 'mainwp' ); ?>">
+                <a class="item" id="mainwp-sign-out-button" href="<?php echo wp_logout_url(); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Log out of your MainWP Dashboard', 'mainwp' ); ?>">
                     <i class="sign out grey icon"></i> <?php esc_html_e( 'Log Out', 'mainwp' ); ?>
                 </a>
             </div>

@@ -579,17 +579,18 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $title        = $params['title'];
         $before_title = ! empty( $params['before_title'] ) ? $params['before_title'] : '';
 
-        $slug  = isset( $params['slug'] ) ? $params['slug'] : '';
-        $href  = isset( $params['href'] ) ? $params['href'] : '';
-        $right = isset( $params['right'] ) ? $params['right'] : '';
-        $id    = isset( $params['id'] ) ? $params['id'] : '';
+        $slug      = isset( $params['slug'] ) ? $params['slug'] : '';
+        $href      = isset( $params['href'] ) ? $params['href'] : '';
+        $right     = isset( $params['right'] ) ? $params['right'] : '';
+        $id        = isset( $params['id'] ) ? $params['id'] : '';
+        $level_cls = 'left-menu-item-level-' . $level;
 
         $icon                 = isset( $params['icon'] ) ? $params['icon'] : '';
         $leftsub_order        = isset( $params['leftsub_order'] ) ? $params['leftsub_order'] : '';
         $leftsub_order_level2 = isset( $params['leftsub_order_level2'] ) ? $params['leftsub_order_level2'] : '';
         $ext_state            = isset( $params['ext_status'] ) && ( 'activated' === $params['ext_status'] || 'inactive' === $params['ext_status'] ) ? $params['ext_status'] : '';
         $parent_key           = isset( $params['parent_key'] ) ? $params['parent_key'] : '';
-        $others               = array();
+        $others               = array( 'level_class' => $level_cls );
         if ( isset( $params['active_params'] ) ) {
             $others['active_params'] = $params['active_params'];
         }
@@ -628,7 +629,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         if ( 0 === $level ) {
             $parent_key                   = 'mainwp_tab'; // forced value.
-            $mainwp_leftmenu['leftbar'][] = array( $title, $slug, $href, $id, $icon );
+            $mainwp_leftmenu['leftbar'][] = array( $title, $slug, $href, $id, $icon, $level_cls );
         } elseif ( 1 === $level ) {
 
             if ( empty( $parent_key ) ) {
@@ -636,9 +637,9 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
 
             if ( 'mainwp_tab' === $parent_key ) {
-                $mainwp_leftmenu[ $parent_key ][] = array( $title, $slug, $href, $id );
+                $mainwp_leftmenu[ $parent_key ][] = array( $title, $slug, $href, $id, $level_cls );
             } else {
-                $mainwp_sub_leftmenu['leftbar'][ $parent_key ][] = array( $title, $slug, $href, $id, $leftsub_order, $ext_state, $active_path );
+                $mainwp_sub_leftmenu['leftbar'][ $parent_key ][] = array( $title, $slug, $href, $id, $leftsub_order, $ext_state, $active_path, $level_cls );
 
                 if ( ! empty( $slug ) ) {
                     $_mainwp_menu_active_slugs['leftbar'][ $slug ] = $parent_key; // to get active menu.
@@ -742,6 +743,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         $href      = $item[2];
                         $item_id   = isset( $item[3] ) ? $item[3] : '';
                         $item_icon = isset( $item[4] ) ? $item[4] : '';
+                        $level_cls = isset( $item[5] ) ? $item[5] : '';
 
                         $has_sub = true;
                         if ( ! isset( $mainwp_sub_leftmenu[ $item_key ] ) || empty( $mainwp_sub_leftmenu[ $item_key ] ) ) {
@@ -768,8 +770,10 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
                         $id_attr = ! empty( $item_id ) ? 'id="' . esc_html( $item_id ) . '"' : '';
 
+                        $item_cls = $level_cls . ' ' . $active_item;
+
                         // phpcs:disable WordPress.Security.EscapeOutput
-                        echo '<a ' . $id_attr . ' title="' . esc_html( $title ) . "\" class=\"item $active_item\" href=\"$href\">";
+                        echo '<a ' . $id_attr . ' title="' . esc_html( $title ) . '" class="item ' . esc_attr( $item_cls ) . "\" href=\"$href\">";
                         echo ! empty( $item_icon ) ? $item_icon : '<i class="th large icon"></i>';
                         echo '<span class="ui small text">' . esc_html( $title ) . '</span>';
                         echo '</a>';
@@ -835,11 +839,12 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     $set_actived = false;
 
                     if ( ! empty( $bar_item_active ) ) {
-                        $item     = $bar_item_active;
-                        $title    = wptexturize( $item[0] );
-                        $item_key = $item[1];
-                        $href     = $item[2];
-                        $item_id  = isset( $item[3] ) ? $item[3] : '';
+                        $item      = $bar_item_active;
+                        $title     = wptexturize( $item[0] );
+                        $item_key  = $item[1];
+                        $href      = $item[2];
+                        $item_id   = isset( $item[3] ) ? $item[3] : '';
+                        $level_cls = isset( $item[5] ) ? $item[5] : '';
 
                         $bar_active_item_key = $item_key;
 
@@ -864,14 +869,14 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
                         // phpcs:disable WordPress.Security.EscapeOutput
                         if ( $has_sub ) {
-                            echo '<div ' . $id_attr . " class=\"item $active_item\">";
+                            echo '<div ' . $id_attr . " class=\"item $active_item " . esc_attr( $level_cls ) . ' ">';
                             echo "<a class=\"title with-sub $active_item\" href=\"$href\">$title <i class=\"dropdown icon\"></i></a>";
                             echo "<div class=\"content menu $active_item\">";
                             static::render_sub_item( $item_key );
                             echo '</div>';
                             echo '</div>';
                         } else {
-                            echo '<div ' . $id_attr . ' class="item">';
+                            echo '<div ' . $id_attr . ' class="item ' . esc_attr( $level_cls ) . '">';
                             echo "<a class='title $active_item' href=\"$href\">$title</a>";
                             echo '</div>';
                         }
@@ -898,6 +903,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                 $href      = $item[2];
                                 $item_id   = isset( $item[3] ) ? $item[3] : '';
                                 $ext_state = isset( $item[5] ) ? $item[5] : '';
+                                $level_cls = isset( $item[7] ) ? $item[7] : '';
 
                                 $item_classes = 'inactive' === $ext_state ? 'extension-inactive' : '';
 
@@ -919,6 +925,10 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                 $hide_item = '';
                                 if ( 'admin.php?page=ManageApiBackups' === $href ) {
                                     $hide_item = ' style="display:none"';
+                                }
+
+                                if ( ! empty( $level_cls ) ) {
+                                    $item_classes = $item_classes . ' ' . $level_cls;
                                 }
 
                                 // phpcs:disable WordPress.Security.EscapeOutput
@@ -1381,9 +1391,16 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 $right_group = 'extension';
                 $right       = str_replace( 'extension_', '', $right );
             }
+
+            if ( ! empty( $others['level_class'] ) ) {
+                $item_classes = $item_classes . ' ' . $others['level_class'];
+            }
+
             if ( empty( $right ) || ( ! empty( $right ) && \mainwp_current_user_can( $right_group, $right ) ) ) {
+                $menu_itemid = $slug; // compatible.
+                $menu_itemid = 'managesites' === $slug && ! empty( $id ) ? $id : $menu_itemid;
                 ?>
-                <a class="item <?php echo $level2_active ? 'active level-two-active' : ''; ?> <?php echo esc_attr( $item_classes ); ?>" href="<?php echo esc_url( $href ); ?>" id="<?php echo esc_attr( $slug ); ?>" <?php echo $_blank ? 'target="_blank"' : ''; ?>>
+                <a class="item <?php echo $level2_active ? 'active level-two-active' : ''; ?> <?php echo esc_attr( $item_classes ); ?>" href="<?php echo esc_url( $href ); ?>" id="<?php echo esc_attr( $menu_itemid ); ?>" <?php echo $_blank ? 'target="_blank"' : ''; ?>>
                     <?php echo $before_title . $title; //phpcs:ignore -- requires escaped. ?>
                 </a>
                 <?php

@@ -638,14 +638,14 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     $where = 'wp_sync.health_status = 0';
                 }
             } elseif ( 'phpver7' === $site_status ) {
-                $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '<', '7.0.0.0' );
+                $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '<', '7.0.0.0' ); // NOSONAR - no IP.
                 if ( $is_not ) {
-                    $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '>=', '7.0.0.0' );
+                    $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '>=', '7.0.0.0' ); // NOSONAR - no IP.
                 }
             } elseif ( 'phpver8' === $site_status ) {
-                $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '<', '8.0.0.0' );
+                $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '<', '8.0.0.0' ); // NOSONAR - no IP.
                 if ( $is_not ) {
-                    $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '>=', '8.0.0.0' );
+                    $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '>=', '8.0.0.0' ); // NOSONAR - no IP.
                 }
             } elseif ( 'suspended' === $site_status ) {
                 $where = 'wp.suspended = 1';

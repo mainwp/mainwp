@@ -185,7 +185,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     public function get_sql_version_compare( $coln, $operator, $ver_str ) {
         // It's safe since it's not user input, but the AI still suggests escaping it.
         return ' INET_ATON( SUBSTRING_INDEX( CONCAT( SUBSTRING_INDEX(' . $this->escape( $coln ) . ", '-', 1), '.0.0.0.0' ), '.', 4) ) " .
-        $this->escape( $operator ) . " INET_ATON('" .  $this->escape( $ver_str ) . "') ";
+        $this->escape( $operator ) . " INET_ATON('" . $this->escape( $ver_str ) . "') ";
     }
 
     /**

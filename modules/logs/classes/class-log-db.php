@@ -32,6 +32,14 @@ class Log_DB extends MainWP_DB {
      */
     protected $found_records_count = 0;
 
+
+    /**
+     * Hold logs sites options.
+     *
+     * @var int
+     */
+    protected $logs_wp_options;
+
     /**
      * Constructor.
      *
@@ -64,6 +72,17 @@ class Log_DB extends MainWP_DB {
          * @return array
          */
         $record = apply_filters( 'mainwp_module_log_record_array', $record );
+
+        /**
+         * Hook mainwp_module_log_enable_insert_log_type.
+         *
+         * @since 5.5.
+         */
+        $enable_log_type = apply_filters( 'mainwp_module_log_enable_insert_log_type', true, $record );
+
+        if ( ! $enable_log_type ) {
+            return false;
+        }
 
         $data = $this->sanitize_record( $record );
 
@@ -109,17 +128,18 @@ class Log_DB extends MainWP_DB {
         }
 
         $record_defaults = array(
-            'site_id'   => null,
-            'user_id'   => null,
-            'object_id' => null,
-            'created'   => null,
-            'item'      => null,
-            'connector' => null,
-            'context'   => null,
-            'action'    => null,
-            'state'     => null,
-            'duration'  => null,
-            'meta'      => array(),
+            'site_id'     => null,
+            'user_id'     => null,
+            'user_login'  => null,
+            'created'     => null,
+            'log_type_id' => null,
+            'item'        => null,
+            'connector'   => null,
+            'context'     => null,
+            'action'      => null,
+            'state'       => null,
+            'duration'    => null,
+            'meta'        => array(),
         );
 
         // Records can have only these fields.
@@ -168,6 +188,7 @@ class Log_DB extends MainWP_DB {
 
         $result                    = (array) $this->driver->get_records( $args );
         $this->found_records_count = isset( $result['count'] ) ? $result['count'] : 0;
+        $this->logs_wp_options     = isset( $result['sites_opts'] ) && is_array( $result['sites_opts'] ) ? $result['sites_opts'] : array();
 
         return empty( $result['items'] ) ? array() : $result['items'];
     }
@@ -190,6 +211,15 @@ class Log_DB extends MainWP_DB {
      */
     public function get_found_records_count() {
         return $this->found_records_count;
+    }
+
+    /**
+     * Return the number of records found in last request
+     *
+     * @return int
+     */
+    public function get_logs_sites_opts() {
+        return $this->logs_wp_options;
     }
 
     /**
@@ -301,16 +331,7 @@ class Log_DB extends MainWP_DB {
      *
      * @return mixed Results.
      */
-    public function is_site_action_log_existed( $site_id, $object_id ) {
-        global $wpdb;
-        return $wpdb->query( //phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-            $wpdb->prepare(
-                "SELECT `log_id`
-                FROM {$wpdb->mainwp_tbl_logs}
-                WHERE `site_id` = %d AND `object_id` = %s LIMIT 1 ",
-                $site_id,
-                $object_id
-            )
-        );
+    public function is_site_action_log_existed( $site_id = false, $object_id = false ) { //phpcs:ignore -- compatible.
+        return false;
     }
 }

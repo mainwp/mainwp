@@ -219,13 +219,6 @@
   left: 1px;
 }
 
-.mainwp-ui .mainwp-actions-bar .ui.mini.form .ui.dropdown,
-.mainwp-ui .mainwp-actions-bar.ui.mini.form .ui.dropdown,
-.mainwp-ui .mainwp-sub-header .ui.mini.form .ui.dropdown,
-.mainwp-ui .mainwp-sub-header.ui.mini.form .ui.dropdown {
-  font-size: 0.78571429rem !important;
-}
-
 .mainwp-ui .ui.dropdown .menu,
 .mainwp-ui .ui.selection.active.dropdown {
   z-index: 9999 !important;
@@ -235,9 +228,25 @@
   height: auto !important;
 }
 
+.mainwp-ui .ui.mini.circular.image {
+  height: 35px !important;
+  width: 35px !important;
+}
+
+.mainwp-ui .ui.dimmer {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.mainwp-ui .ui.page.dimmer {
+  margin-left: 72px;
+  margin-top: 57px;
+}
+
 .mainwp-ui .ui.dimmer.active,
 .mainwp-ui .ui.dimmer.modals.active {
   z-index: 1001;
+  -webkit-backdrop-filter: blur(5px) grayscale(.7);
+  backdrop-filter: blur(5px) grayscale(.7);
 }
 
 .mainwp-ui .ui.modal .mainwp-html-popup {
@@ -311,6 +320,12 @@
 
 /* end */
 
+
+.mainwp-ui .ui.table[class*="center aligned"],
+.mainwp-ui .ui.table [class*="center aligned"] {
+  text-align: center !important;
+}
+
 /* to fix auto align left */
 .mainwp-ui table.dataTable.ui.table th.dt-type-numeric,
 .mainwp-ui table.dataTable.ui.table th.dt-type-date,
@@ -318,3 +333,4 @@
 .mainwp-ui table.dataTable.ui.table td.dt-type-date {
   text-align: left;
 }
+

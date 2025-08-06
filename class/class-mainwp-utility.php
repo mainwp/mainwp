@@ -395,12 +395,40 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @param mixed $timestamp Timestamp to format.
      * @param mixed $with_tz_info Return date time with timezone infor.
+     * @param mixed $use_tzformat Input tz format, to support display tz child site format.
      *
      * @return string Formatted timestamp.
      */
-    public static function format_timezone( $timestamp, $with_tz_info = false ) {
-        $tzinfo      = '';
+    public static function format_timezone( $timestamp, $with_tz_info = false, $use_tzformat = false ) {
+        $tzinfo = '';
+        if ( false !== $use_tzformat ) {
+            if ( is_array( $use_tzformat ) && ( isset( $use_tzformat['timezone_string'] ) || isset( $use_tzformat['gmt_offset'] ) || isset( $use_tzformat['date_format'] ) || isset( $use_tzformat['time_format'] ) ) ) {
+                $wp_timezone = ! empty( $use_tzformat['timezone_string'] ) ? $use_tzformat['timezone_string'] : '';
+
+                $format = '';
+                if ( ! empty( $use_tzformat['date_format'] ) ) {
+                    $format .= $use_tzformat['date_format'] . ' ';
+                }
+                if ( ! empty( $use_tzformat['time_format'] ) ) {
+                    $format .= $use_tzformat['time_format'] . ' ';
+                }
+                $format = rtrim( $format );
+
+                if ( empty( $wp_timezone ) ) {
+                    $gmt = ! empty( $use_tzformat['gmt_offset'] ) ? $use_tzformat['gmt_offset'] : 0;
+                    return date_i18n( $format, $timestamp, $gmt );
+                }
+
+                $datetime = new \DateTime( '@' . $timestamp );
+                $datetime->setTimezone( new \DateTimeZone( $wp_timezone ) );
+
+                return $datetime->format( $format );
+            }
+            return '';
+        }
+
         $wp_timezone = get_option( 'timezone_string' );
+
         if ( ! $wp_timezone ) {
             if ( $with_tz_info ) {
                 $tzinfo = ' ( UTC ' . get_option( 'gmt_offset' ) . ' )';
@@ -1885,5 +1913,32 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $tooltip = 'Indexing status unknown. Resync the site or check manually in WordPress Settings > Reading.';
         }
         echo '<span data-tooltip="' . $tooltip . '" data-position="left center" data-inverted=""><i class="' . $icon . ' icon"></i></span>';  //phpcs:ignore -- ok.
+    }
+
+    /**
+     * Returns the appropriate Fomantic UI color class based on number of updates
+     *
+     * @param int $update_count Number of available updates.
+     *
+     * @return string CSS class for the element
+     */
+    public static function mainwp_get_update_count_class( $update_count ) {
+        // Convert to integer using intval().
+        $update_count = intval( $update_count );
+
+        // Ensure count is not negative.
+        if ( 0 > $update_count ) {
+            $update_count = 0;
+        }
+
+        if ( 0 === $update_count ) {
+            return 'grey';
+        } elseif ( $update_count >= 1 && $update_count <= 3 ) {
+            return 'yellow';
+        } elseif ( $update_count >= 4 && $update_count <= 5 ) {
+            return 'orange';
+        } else {
+            return 'red';
+        }
     }
 }

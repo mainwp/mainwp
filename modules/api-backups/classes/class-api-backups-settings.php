@@ -132,10 +132,10 @@ class Api_Backups_Settings {
         <div id="3rd-party-api-manager">
             <div class="ui segment">
                 
-                <div class="ui grid">
-                    <div class="three wide column">
-                        <div class="ui vertical fluid pointing menu">
-                            <h3 class="item ui header"><?php esc_html_e( 'Backup API Providers', 'mainwp' ); ?></h3>
+                <div class="ui stackable grid">
+                    <div class="sixteen wide column">
+                        <div class="ui secondary pointing fluid menu">
+                            
                             <a class="item active" data-tab="cloudways">
                                 <?php esc_html_e( 'Cloudways', 'mainwp' ); ?>
                             </a>
@@ -162,7 +162,7 @@ class Api_Backups_Settings {
                             </a>
                         </div>
                     </div>
-                    <div class="thirteen wide column">
+                    <div class="sixteen wide column">
                         <?php if ( Api_Backups_Utility::show_mainwp_message( 'mainwp-module-api-backups-manager-info-message' ) ) : ?>
                             <div class="ui blue message">
                                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-module-api-backups-manager-info-message"></i>

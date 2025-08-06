@@ -1238,13 +1238,20 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
      * Included fields are based on item schema and `_fields=` request argument.
      * Updated from WordPress 5.3, included into this class to support old versions.
      *
-     * @param array  $item data.
-     * @param string $context fields to filter.
-     * @return array Fields to be included in the response.
+     * @param array                                                 $item data.
+     * @param string                                                $context fields to filter.
+     * @param array addition_fields  to be included in the response
+     *
+     * @return array addition_fields Fields to be included in the response.
      */
-    public function filter_response_data_by_allowed_fields( $item, $context = 'view' ) { //phpcs:ignore -- NOSONAR - complex.
+    public function filter_response_data_by_allowed_fields( $item, $context = 'view', $addition_fields = array() ) { //phpcs:ignore -- NOSONAR - complex.
         $data   = $this->filter_response_by_context( $item, 'view' );
         $fields = $this->get_allowed_fields_by_context( $context );
+
+        if ( ! empty( $addition_fields ) && is_array( $addition_fields ) ) {
+            $fields = array_values( array_unique( array_merge( $fields, $addition_fields ) ) );
+        }
+
         if ( is_array( $fields ) && ! empty( $fields ) ) {
             $_data = array();
             foreach ( $fields as $field ) {

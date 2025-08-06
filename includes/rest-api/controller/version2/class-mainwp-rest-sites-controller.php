@@ -56,7 +56,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * Constructor.
      */
     public function __construct() {
-        add_filter( 'mainwp_rest_routes_sites_controller_filter_allowed_fields_by_context', array( $this, 'hook_filter_allowed_fields_by_context' ), 10, 2 );
+        add_filter( 'mainwp_rest_routes_sites_controller_filter_allowed_fields_by_context', array( $this, 'hook_filter_allowed_fields_by_context' ), 10, 3 );
         add_filter( 'mainwp_rest_routes_sites_controller_get_allowed_fields_by_context', array( $this, 'hook_get_allowed_fields_by_context' ), 10, 1 );
     }
 
@@ -81,11 +81,12 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      *
      * @param object $item item data.
      * @param string $context context.
+     * @param mixed  $request The rest request.
      *
      * @return object item in context.
      */
-    public function hook_filter_allowed_fields_by_context( $item, $context = 'view' ) {
-        return $this->filter_response_data_by_allowed_fields( $item, $context );
+    public function hook_filter_allowed_fields_by_context( $item, $context = 'view', $request = array() ) {
+        return $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $item, $request ), $context );
     }
 
     /**

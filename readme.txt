@@ -147,6 +147,20 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
+= 5.4.0.18 - Maintenance Release - 8-5-2025 =
+
+* Fixed: Issues with sorting and filtering data by PHP version in cases where version numbers contain text strings. [(#815)](https://github.com/mainwp/mainwp/issues/815)
+* Added: Support for custom plugin and theme icons that may be set by third-party developers.
+* Added: Element ID for the "Log Out" menu item in the user settings menu to improve accessibility and targeting.
+* Updated: Element ID for the "Add New" and "Import Sites" menu items to prevent duplicate ID conflicts.
+* Dev: Refined REST API responses to properly support the `selected_sites` field when creating or updating clients.
+* Dev: Updated `selected_sites` parameter behavior to allow assignment of multiple sites to a single client.
+* Dev: Added `mainwp_before_save_cached_icons` filter hook to allow developers to manipulate cached plugin and theme icons.
+
+= 5.4.0.17 - Maintenance Release - 7-29-2025 =
+
+* Fixed: Retrieval of websites by tag to resolve issues with empty fields in MainWP REST API responses.
+
 = 5.4.0.16 - Maintenance Release - 7-15-2025 =
 
 * Fixed: Corrected the `[uptime.status]` token in Uptime Notification email subjects to display the accurate monitor status.

@@ -120,6 +120,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 'slug'                 => 'managesites',
                 'right'                => 'add_sites',
                 'item_slug'            => 'managesites_add_new',
+                'id'                   => 'managesites-addnew',
                 'leftsub_order_level2' => 2,
             ),
             array(
@@ -129,6 +130,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 'slug'                 => 'managesites',
                 'right'                => 'add_sites',
                 'item_slug'            => 'managesites_import',
+                'id'                   => 'managesites-bulknew',
                 'leftsub_order_level2' => 3,
             ),
         );

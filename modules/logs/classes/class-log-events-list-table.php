@@ -91,13 +91,6 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
     private $forced_modified_events = null;
 
     /**
-     * Private static variable to hold the value.
-     *
-     * @var mixed Default null
-     */
-    private $use_site_favico = null;
-
-    /**
      * Class constructor.
      *
      * Run each time the class is called.
@@ -147,12 +140,13 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
     public function get_default_columns() {
         $columns = array(
             'cb'         => '<input type="checkbox" />',
-            'event'      => esc_html__( 'Event', 'mainwp' ),
+            'created'    => esc_html__( 'Date', 'mainwp' ),
+            'user_id'    => esc_html__( 'User', 'mainwp' ),
             'action'     => esc_html__( 'Action', 'mainwp' ),
             'log_object' => esc_html__( 'Object', 'mainwp' ),
-            'created'    => esc_html__( 'Date', 'mainwp' ),
+            'icon'       => '',
             'name'       => esc_html__( 'Website', 'mainwp' ),
-            'user_id'    => esc_html__( 'User', 'mainwp' ),
+            'event'      => esc_html__( 'Event', 'mainwp' ),
             'source'     => esc_html__( 'Source', 'mainwp' ),
             'col_action' => '',
         );
@@ -163,6 +157,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
         if ( 'widget-overview' === $this->table_id_prefix ) {
             unset( $columns['log_site_name'] );
+            if ( ! empty( $_GET['dashboard'] ) ) { //phpcs:ignore -- ok, individual widget.
+                unset( $columns['icon'] );
+            }
         }
 
         return $columns;
@@ -274,7 +271,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $child_time = MainWP_Utility::format_timezone( (int) $record->created, false, $site_dtf );
                 if ( ! empty( $child_time ) ) {
                     $date_string = sprintf(
-                        '<span data-tooltip="' . esc_attr__( 'Child Site time: %s', 'mainwp' ) . ' " created-time="' . esc_attr( $record->created ) . '" data-inverted="" data-position="top left"><time datetime="%s" class="relative-time record-created">%s</time></span>',
+                        '<span data-tooltip="' . esc_attr__( 'Child Site time: %s', 'mainwp' ) . ' " created-time="' . esc_attr( $record->created ) . '" data-inverted="" data-position="left center"><time datetime="%s" class="relative-time record-created">%s</time></span>',
                         $child_time,
                         mainwp_module_log_get_iso_8601_extended_date( $record->created ),
                         MainWP_Utility::format_timezone( $record->created )
@@ -289,30 +286,33 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $out     = $date_string;
                 $escaped = true;
                 break;
+            case 'icon':
+                $out = 'N/A';
+                if ( ! empty( $record->log_site_name ) ) {
+                    $site_opts = is_array( $this->sites_opts ) && isset( $this->sites_opts[ $record->site_id ] ) ? $this->sites_opts[ $record->site_id ] : array();
+                    $siteObj   = (object) array(
+                        'id'        => $record->site_id,
+                        'url'       => $record->url,
+                        'name'      => $record->log_site_name,
+                        'favi_icon' => is_array( $site_opts ) && isset( $site_opts['favi_icon'] ) ? $site_opts['favi_icon'] : '',
+                    );
+                    $favi_url  = MainWP_Connect::get_favico_url( $siteObj );
+                    $site_icon = MainWP_Manage_Sites::get_instance()->get_site_icon_display( is_array( $site_opts ) && isset( $site_opts['cust_site_icon_info'] ) ? $site_opts['cust_site_icon_info'] : '', $favi_url );
+
+                    ob_start();
+                    echo $site_icon; // phpcs:ignore WordPress.Security.EscapeOutput
+                    $out = ob_get_clean();
+                }
+                $escaped = true;
+                break;
             case 'name':
                 $out = 'N/A';
 
                 if ( ! empty( $record->log_site_name ) ) {
-                    $site_icon = '';
-                    if ( $this->use_site_favico ) {
-                        $site_opts = is_array( $this->sites_opts ) && isset( $this->sites_opts[ $record->site_id ] ) ? $this->sites_opts[ $record->site_id ] : array();
-                        $siteObj   = (object) array(
-                            'id'        => $record->site_id,
-                            'url'       => $record->url,
-                            'name'      => $record->log_site_name,
-                            'favi_icon' => is_array( $site_opts ) && isset( $site_opts['favi_icon'] ) ? $site_opts['favi_icon'] : '',
-                        );
-                        $favi_url  = MainWP_Connect::get_favico_url( $siteObj );
-                        $site_icon = MainWP_Manage_Sites::get_instance()->get_site_icon_display( is_array( $site_opts ) && isset( $site_opts['cust_site_icon_info'] ) ? $site_opts['cust_site_icon_info'] : '', $favi_url );
-                    }
-
                     ob_start();
-
-                    echo $site_icon; // phpcs:ignore WordPress.Security.EscapeOutput
                     if ( \mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
                         <a href="<?php MainWP_Site_Open::get_open_site_url( $record->site_id ); ?>" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
                     <?php endif; ?>
-
                     <a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $record->site_id ); ?>">
                         <?php echo esc_attr( stripslashes( $record->log_site_name ) ); ?>
                     </a>
@@ -477,15 +477,17 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $color = 'orange';
             } elseif ( 'opened' === $act || 'logged-in' === $act || 'logged-out' === $act ) {
                 $color = 'grey';
-            } elseif ( 'activated' === $act || 'updated' === $act || 'modified' === $act ) {
+            } elseif ( 'updated' === $act || 'modified' === $act ) {
                 $color = 'blue';
-            } elseif ( 'sync' === $act || 'installed' === $act || 'created' === $act || 'published' === $act || 'added' === $act || 'uploaded' === $act ) {
+            } elseif ( 'sync' === $act || 'activated' === $act || 'installed' === $act || 'created' === $act || 'published' === $act || 'added' === $act || 'uploaded' === $act || 'enabled' === $act ) {
                 $color = 'green';
-            } elseif ( 'deactivate' === $act || 'delete' === $act ) { // to compatible.
+            } elseif ( 'delete' === $act ) { // to compatible.
                 $color = 'red';
-            } elseif ( 'activate' === $act || 'update' === $act ) { // to compatible.
+            } elseif ( 'deactivate' === $act ) { // to compatible.
+                $color = 'orange';
+            } elseif ( 'update' === $act ) { // to compatible.
                 $color = 'blue';
-            } elseif ( 'install' === $act ) { // to compatible.
+            } elseif ( 'install' === $act || 'activate' === $act ) { // to compatible.
                 $color = 'green';
             }
 
@@ -527,7 +529,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $icon = 'plug';
                 break;
             case 'theme':
-                $icon = 'paint brush';
+                $icon = 'tint icon';
                 break;
             case 'menu':
                 $icon = 'bars';
@@ -552,7 +554,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $icon = 'language';
                 break;
             case 'core':
-                $icon = 'cubes';
+                $icon = 'wordpress icon';
                 break;
             case 'posts':
                 $icon = 'file text';
@@ -1291,8 +1293,6 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         $info_rows = array();
 
         $columns = $this->get_columns();
-
-        $this->use_site_favico = get_option( 'mainwp_use_favicon', 1 );
 
         if ( $this->items ) {
             foreach ( $this->items as $log ) {

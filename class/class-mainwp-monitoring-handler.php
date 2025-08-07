@@ -69,20 +69,8 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         $new_check_result = $is_online ? 1 : -1; // 1 - online, -1 offline.
 
-        $time = isset( $result_comp['check_offline_time'] ) ? $result_comp['check_offline_time'] : time();
-
-        $threshold = HOUR_IN_SECONDS;
-        $noticed   = 1; // default is noticed.
-        if ( property_exists( $website, 'offline_checks_last' ) ) {
-            $last_noticed = (int) $website->offline_checks_last;
-            if ( -1 === $new_check_result ) {
-                $noticed = 0;
-                if ( $last_noticed > time() - $threshold ) {
-                    $noticed = 1;
-                }
-            }
-        }
-
+        $time    = isset( $result_comp['check_offline_time'] ) ? $result_comp['check_offline_time'] : time();
+        $noticed = static::check_to_notice_http_status_notification( $website, $new_check_result );
         // Save last status.
         MainWP_DB::instance()->update_website_values(
             $website->id,
@@ -99,25 +87,40 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
         return $result_comp; // return results for ajax check requests.
     }
 
+
     /**
      * Get a new HTTP status notice.
      *
      * @param object $website  Object containing the website info.
-     * @param int    $new_code The new HTTP code value.
+     * @param int    $check_result The new HTTP code value.
      *
      * @return int $noticed_value New HTTP status.
      */
-    public static function get_http_noticed_status_value( $website, $new_code ) {
-        $old_code      = (int) $website->http_response_code;
-        $noticed_value = $website->http_code_noticed;
-        if ( 200 !== $new_code && (int) $old_code !== $new_code ) {
-            $noticed_value = 0;
-        } elseif ( 200 !== $old_code && 200 === $new_code ) {
-            if ( 0 === $noticed_value ) {
-                $noticed_value = 1;
+    public static function check_to_notice_http_status_notification( $website, $check_result ) {
+        $threshold = HOUR_IN_SECONDS;
+        $noticed   = 1; // default is noticed.
+        if ( property_exists( $website, 'offline_checks_last' ) ) {
+            $last_noticed = (int) $website->offline_checks_last;
+            if ( -1 === $check_result ) {
+                $noticed = 0;
+                if ( $last_noticed > time() - $threshold ) {
+                    $noticed = 1;
+                }
             }
         }
-        return $noticed_value;
+        return $noticed;
+    }
+
+
+    /**
+     * Get a new HTTP status notice.
+     *
+     * @compatible.
+     *
+     * @return int $noticed_value New HTTP status.
+     */
+    public static function get_http_noticed_status_value() {
+        return 1;
     }
 
     /**

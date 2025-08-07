@@ -2799,37 +2799,24 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         return $this->wpdb->get_results(
             'SELECT wp.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
-            WHERE wp.suspended = 0 AND wp.http_code_noticed = 0 AND wp.disable_status_check <> 1 AND wp.offline_check_result = -1' . // offline checked status.
+            WHERE wp.suspended = 0 AND wp.http_code_noticed = 0  AND wp.disable_status_check <> 1 AND wp.offline_check_result = -1' . // offline checked status.
             $where,
             OBJECT
         );
     }
 
     /**
-     * Method set_websites_noticed_http_check().
+     * Method set_website_noticed_http_check().
      *
-     * @param array $sites_ids Array of sites ids .
-     * @param int   $noticed_status Noticed status.
+     * @param array $site_id The site id .
      *
      * @return void
      */
-    public function set_websites_noticed_http_check( $sites_ids = array(), $noticed_status = 1 ) {
-        if ( is_array( $sites_ids ) || empty( $sites_ids ) ) {
+    public function set_website_noticed_http_check( $site_id = array() ) {
+        if ( empty( $site_id ) ) {
             return;
         }
-
-        $ids = array_map(
-            function ( $val ) {
-                return $this->escape( $val );
-            },
-            array_unique( $sites_ids )
-        );
-
-        if (  empty( $ids ) ) {
-            return;
-        }
-
-        $this->wpdb->query( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET http_code_noticed=' . ( $noticed_status ? 1 : 0 ) . ' WHERE id IN (' . implode( ',', $ids ) . ' ) ' );
+        $this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET http_code_noticed = 1 WHERE id = %d', $site_id ) );
     }
 
     /**

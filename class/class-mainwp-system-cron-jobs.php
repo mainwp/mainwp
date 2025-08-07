@@ -1354,6 +1354,8 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
             $settings = MainWP_Notification_Settings::get_site_email_settings( 'http_check', $website ); // get site email settings.
 
+            MainWP_DB::instance()->set_website_noticed_http_check( $website->id );
+
             if ( ! $settings['disable'] ) {
                 $to_admin_HttpCheckWebsites[] = $site;
 
@@ -1371,10 +1373,6 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $admin_email_settings['recipients'] = ''; // sent to admin only.
             MainWP_Notification::send_http_check_notification( $admin_email_settings, $sitesHttpCheck, $plain_text );
         }
-
-        $noticed_siteids = array_column( $sitesHttpCheck, 'id' );
-
-        MainWP_DB::instance()->set_websites_noticed_http_check( $noticed_siteids, 1 );
 
         return true;
     }

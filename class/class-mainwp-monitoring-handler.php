@@ -70,7 +70,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $new_check_result = $is_online ? 1 : -1; // 1 - online, -1 offline.
 
         $time    = isset( $result_comp['check_offline_time'] ) ? $result_comp['check_offline_time'] : time();
-        $noticed = static::check_to_notice_http_status_notification( $website, $new_check_result );
+        $noticed = static::check_http_status_notification_threshold( $website, $new_check_result );
         // Save last status.
         MainWP_DB::instance()->update_website_values(
             $website->id,
@@ -96,7 +96,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * @return int $noticed_value New HTTP status.
      */
-    public static function check_to_notice_http_status_notification( $website, $check_result ) {
+    public static function check_http_status_notification_threshold( $website, $check_result ) {
         $threshold = HOUR_IN_SECONDS;
         $noticed   = 1; // default is noticed.
         if ( property_exists( $website, 'offline_checks_last' ) ) {

@@ -399,7 +399,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
         $time     = isset( $params['check_offline_time'] ) ? $params['check_offline_time'] : time();
 
         $new_check_result = $status ? 1 : -1; // 1 - online, -1 offline.
-        $noticed          = MainWP_Monitoring_Handler::check_to_notice_http_status_notification( $website, $new_check_result );
+        $noticed          = MainWP_Monitoring_Handler::check_http_status_notification_threshold( $website, $new_check_result );
 
         // Save last status.
         MainWP_DB::instance()->update_website_values(

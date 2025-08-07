@@ -272,24 +272,22 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function check_ignored_http_code( $value, $website = false ) {
         $value = (int) $value;
-        if ( 200 === $value ) {
-            return true;
-        }
-
         if ( ! is_object( $website ) || empty( $website->id ) ) {
             return false;
         }
+        $global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
 
         $ignored_code = '';
         if ( ! property_exists( $website, 'monitor_id' ) ) {
             $primary_monitor = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site_id, 'issub', 0 );
 
             if ( $primary_monitor ) {
-                $global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
-                $ignored_code    = MainWP_Uptime_Monitoring_Connect::instance()->get_up_codes( $primary_monitor, $global_settings );
+                $ignored_code = MainWP_Uptime_Monitoring_Connect::instance()->get_up_codes( $primary_monitor, $global_settings );
             } else {
                 return false;
             }
+        } else {
+            $ignored_code = ! empty( $global_settings['up_status_codes'] ) ? $global_settings['up_status_codes'] : '';
         }
 
         if ( ! empty( $ignored_code ) ) {

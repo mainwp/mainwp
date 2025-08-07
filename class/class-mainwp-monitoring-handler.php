@@ -67,17 +67,34 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $is_online = MainWP_Connect::check_ignored_http_code( $new_code ); // legacy check http code.
         }
 
+        $new_check_result = $is_online ? 1 : -1; // 1 - online, -1 offline.
+
         $time = isset( $result_comp['check_offline_time'] ) ? $result_comp['check_offline_time'] : time();
+
+        $threshold = HOUR_IN_SECONDS;
+        $noticed   = 1; // default is noticed.
+        if ( property_exists( $website, 'offline_checks_last' ) ) {
+            $last_noticed = (int) $website->offline_checks_last;
+            if ( -1 === $new_check_result ) {
+                $noticed = 0;
+                if ( $last_noticed > time() - $threshold ) {
+                    $noticed = 1;
+                }
+            }
+        }
 
         // Save last status.
         MainWP_DB::instance()->update_website_values(
             $website->id,
             array(
-                'offline_check_result' => $is_online ? 1 : -1, // 1 - online, -1 offline.
+                'offline_check_result' => $new_check_result,
                 'offline_checks_last'  => $time,
                 'http_response_code'   => $new_code,
+                'http_code_noticed'    => $noticed,
             )
         );
+
+        MainWP_Logger::instance()->log_uptime_check( 'Check website status :: [website=' . (string) $website->url . '] :: [offline_check_result=' . ( $is_online ? 1 : -1 ) . '] :: [http_response_code=' . esc_html( $new_code ) . '] :: [http_code_noticed=' . esc_html( $noticed ) . ']' );
 
         return $result_comp; // return results for ajax check requests.
     }

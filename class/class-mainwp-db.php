@@ -137,6 +137,70 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     }
 
 
+    /**
+     * Method get_wp_options_view().
+     *
+     * @param array  $fields Extra option fields.
+     * @param string $view_query view query.
+     *
+     * @return array wp_options view.
+     */
+    public function get_wp_options_view( $fields = array(), $view_query = 'default' ) {
+
+        if ( ! is_array( $fields ) ) {
+            $fields = array();
+        }
+
+        $view = '(SELECT wpid ';
+
+        $included_opts = array();
+
+        if ( empty( $fields ) || 'default' === $view_query || 'manage_site' === $view_query ) {
+            $view                 .= ',
+                    MAX(CASE WHEN name = "recent_comments" THEN value END) AS recent_comments,
+                    MAX(CASE WHEN name = "recent_posts" THEN value END) AS recent_posts,
+                    MAX(CASE WHEN name = "recent_pages" THEN value END) AS recent_pages,
+                    MAX(CASE WHEN name = "phpversion" THEN value END) AS phpversion,
+                    MAX(CASE WHEN name = "added_timestamp" THEN value END) AS added_timestamp,
+                    MAX(CASE WHEN name = "wp_upgrades" THEN value END) AS wp_upgrades ';
+                    $included_opts = array( 'recent_comments', 'recent_posts', 'recent_pages', 'phpversion', 'added_timestamp', 'wp_upgrades' );
+        }
+
+        if ( ! in_array( 'signature_algo', $fields ) ) {
+            $fields[] = 'signature_algo';
+        }
+
+        if ( ! in_array( 'verify_method', $fields ) ) {
+            $fields[] = 'verify_method';
+        }
+
+        if ( ! in_array( 'cust_site_icon_info', $fields, true ) ) {
+            $fields[] = 'cust_site_icon_info';
+        }
+
+        if ( is_array( $fields ) ) {
+            foreach ( $fields as $field ) {
+                if ( empty( $field ) ) {
+                    continue;
+                }
+                if ( in_array( $field, $included_opts ) ) {
+                    continue;
+                }
+                $view .= ', ';
+                $view .= 'MAX(CASE WHEN name = "' . $this->escape( $field ) . '" THEN value END) AS ' . $this->escape( $field );
+
+                $included_opts[] = $this->escape( $field );
+            }
+        }
+
+        $view .= ' FROM ' . $this->table_name( 'wp_options' ) .
+        " WHERE name IN ('" . implode( "','", $included_opts ) . "')
+        GROUP BY wpid ) ";
+
+        return $view;
+    }
+
+
 
     /**
      * Get SQL to get child sites for current user.
@@ -1817,7 +1881,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgroup.groupid = gr.id
 
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-            JOIN ' . $this->get_option_view( $extra_view, $view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+            JOIN ' . $this->get_wp_options_view( $extra_view, $view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
             WHERE 1 ' . $where . $where_group . $where_client . '
             GROUP BY wp.id, wp_sync.sync_id ' .
             $orderBy;
@@ -1828,7 +1892,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $join_client .
             $join_monitors . '
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-            JOIN ' . $this->get_option_view( $extra_view, $view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+            JOIN ' . $this->get_wp_options_view( $extra_view, $view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
             WHERE 1 ' . $where . $where_group . $where_client . '
             GROUP BY wp.id, wp_sync.sync_id ' .
             $orderBy;

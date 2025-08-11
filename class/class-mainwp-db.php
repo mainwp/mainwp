@@ -151,6 +151,14 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         if ( ! is_array( $params ) ) {
             $params = array();
         }
+
+        /**
+         * The hook mainwp_get_sql_websites_by_params
+         *
+         * @since 5.5
+         */
+        $params = apply_filters( 'mainwp_get_sql_websites_by_params', $params );
+
         $view         = isset( $params['view'] ) ? $params['view'] : 'default';
         $with_clients = isset( $params['with_clients'] ) && $params['with_clients'] ? true : false;
 
@@ -236,6 +244,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
             if ( ! empty( $status_conds ) ) {
                 $where .= ' AND ( ' . implode( ' OR ', $status_conds ) . ' ) ';
+            }
+
+            if ( in_array( 'unsuspended', $status ) && ! in_array( 'suspended', $status ) ) { // to sure not conflict the suspended status.
+                $where .= ' AND wp.suspended = 0 ';
             }
         }
 
@@ -1031,6 +1043,13 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $params = array()
     ) {
 
+        /**
+         * The hook mainwp_get_sql_websites
+         *
+         * @since 5.5
+         */
+        $params = apply_filters( 'mainwp_get_sql_websites', $params, $selectgroups, $search_site, $orderBy, $offset, $rowcount, $extraWhere, $for_manager, $extra_view, $is_staging );
+
         $where = '';
         if ( MainWP_System::instance()->is_multi_user() ) {
 
@@ -1120,6 +1139,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
                 if ( ! empty( $status_conds ) ) {
                     $where .= ' AND ( ' . implode( ' OR ', $status_conds ) . ' ) ';
+                }
+
+                if ( in_array( 'unsuspended', $status ) && ! in_array( 'suspended', $status ) ) { // to sure not conflict the suspended status.
+                    $where .= ' AND wp.suspended = 0 ';
                 }
             }
 

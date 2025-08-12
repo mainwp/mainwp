@@ -127,6 +127,12 @@ class Cost_Tracker_Monthly_Totals {
                 $cost_price = $cost->price;
                 $next_rl    = $cost->next_renewal;
 
+                if ( 'single_site' === $cost->license_type ) {
+                    $cost_sites  = Cost_Tracker_DB::get_instance()->get_sites_of_cost( $cost );
+                    $count_sites = count( $cost_sites );
+                    $cost_price  = $cost->price * $count_sites;
+                }
+
                 for ( $i = 0; $i < 12; $i++ ) {
 
                     if ( ! isset( $series_products_price[ $cost->product_type ][ $i ] ) ) {

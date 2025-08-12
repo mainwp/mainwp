@@ -701,6 +701,8 @@ PRIMARY KEY  (`id`)  ';
      *
      * Get sites of cost.
      *
+     * @SuppressWarnings("php:S1192")
+     *
      * @param object $cost Cost data.
      *
      * @return mixed Result

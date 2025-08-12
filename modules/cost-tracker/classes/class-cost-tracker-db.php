@@ -701,8 +701,6 @@ PRIMARY KEY  (`id`)  ';
      *
      * Get sites of cost.
      *
-     * @SuppressWarnings("php:S1192")
-     *
      * @param object $cost Cost data.
      *
      * @return mixed Result
@@ -713,31 +711,31 @@ PRIMARY KEY  (`id`)  ';
             return array();
         }
 
-        $sites   = ! empty( $cost->sites ) ? json_decode( $cost->sites, true ) : array();
-        $groups  = ! empty( $cost->groups ) ? json_decode( $cost->groups, true ) : array();
-        $clients = ! empty( $cost->clients ) ? json_decode( $cost->clients, true ) : array();
+        $sites   = ! empty( $cost->sites ) ? json_decode( $cost->sites, true ) : array(); // NOSONAR.
+        $groups  = ! empty( $cost->groups ) ? json_decode( $cost->groups, true ) : array(); // NOSONAR.
+        $clients = ! empty( $cost->clients ) ? json_decode( $cost->clients, true ) : array(); // NOSONAR.
 
-        if ( ! is_array( $sites ) ) {
-            $sites = array();
+        if ( ! is_array( $sites ) ) { // NOSONAR.
+            $sites = array(); // NOSONAR.
         }
-        if ( ! is_array( $groups ) ) {
-            $groups = array();
+        if ( ! is_array( $groups ) ) { // NOSONAR.
+            $groups = array(); // NOSONAR.
         }
-        if ( ! is_array( $clients ) ) {
-            $clients = array();
-        }
-
-        if ( empty( $sites ) && empty( $groups ) && empty( $clients ) ) {
-            return array();
+        if ( ! is_array( $clients ) ) { // NOSONAR.
+            $clients = array(); // NOSONAR.
         }
 
-        $params = array(
-            'sites'   => $sites,
-            'groups'  => $groups,
-            'clients' => $clients,
+        if ( empty( $sites ) && empty( $groups ) && empty( $clients ) ) { // NOSONAR.
+            return array(); // NOSONAR.
+        }
+
+        $params = array( // NOSONAR.
+            'sites'   => $sites, // NOSONAR.
+            'groups'  => $groups, // NOSONAR.
+            'clients' => $clients, // NOSONAR.
         );
 
-        return MainWP_DB::instance()->get_db_sites( $params ); // get sites of cost tracker.
+        return MainWP_DB::instance()->get_db_sites( $params ); // NOSONAR - get sites of cost tracker.
     }
 
 

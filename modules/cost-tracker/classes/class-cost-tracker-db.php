@@ -696,6 +696,48 @@ PRIMARY KEY  (`id`)  ';
         return $clients_costs;
     }
 
+    /**
+     * Method get_sites_of_cost().
+     *
+     * Get sites of cost.
+     *
+     * @param object $cost Cost data.
+     *
+     * @return mixed Result
+     */
+    public function get_sites_of_cost( $cost ) { //phpcs:ignore -- NOSONAR - complex method.
+
+        if ( empty( $cost ) || ! is_object( $cost ) ) {
+            return array();
+        }
+
+        $sites   = ! empty( $cost->sites ) ? json_decode( $cost->sites, true ) : array(); // NOSONAR -- duplicate.
+        $groups  = ! empty( $cost->groups ) ? json_decode( $cost->groups, true ) : array(); // NOSONAR -- duplicate.
+        $clients = ! empty( $cost->clients ) ? json_decode( $cost->clients, true ) : array(); // NOSONAR -- duplicate.
+
+        if ( ! is_array( $sites ) ) { // NOSONAR -- duplicate.
+            $sites = array(); // NOSONAR -- duplicate.
+        }
+        if ( ! is_array( $groups ) ) { // NOSONAR -- duplicate.
+            $groups = array(); // NOSONAR -- duplicate.
+        }
+        if ( ! is_array( $clients ) ) { // NOSONAR -- duplicate.
+            $clients = array(); // NOSONAR -- duplicate.
+        }
+
+        if ( empty( $sites ) && empty( $groups ) && empty( $clients ) ) { // NOSONAR -- duplicate.
+            return array(); // NOSONAR -- duplicate.
+        }
+
+        $params = array( // NOSONAR -- duplicate.
+            'sites'   => $sites, // NOSONAR -- duplicate.
+            'groups'  => $groups, // NOSONAR -- duplicate.
+            'clients' => $clients, // NOSONAR -- duplicate.
+        );
+
+        return MainWP_DB::instance()->get_db_sites( $params ); // NOSONAR - get sites of cost tracker.
+    }
+
 
     /**
      * Method get_all_cost_trackers_by_sites().

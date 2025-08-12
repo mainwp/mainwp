@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.8.2
 Requires PHP: 7.4
-Stable tag: 5.4.0.18
+Stable tag: 5.4.0.19
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -146,6 +146,11 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.4.0.19 - Maintenance Release - 8-12-2025 =
+
+* Fixed: Monthly totals calculation for single-site licenses in Cost Tracker by scaling costs based on the number of associated sites. [(#819)](https://github.com/mainwp/mainwp/issues/819)
+* Dev: New hooks `mainwp_get_sql_websites` and `mainwp_get_sql_websites_by_params` to customize website query parameters, enabling greater extensibility for integrations.
 
 = 5.4.0.18 - Maintenance Release - 8-5-2025 =
 

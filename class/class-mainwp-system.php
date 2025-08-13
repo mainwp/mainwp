@@ -1100,7 +1100,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             if ( is_array( $enqueue_scripts ) && ! empty( $enqueue_scripts['apexcharts'] ) ) {
                 wp_enqueue_script(
                     'mainwp-apexcharts',
-                    MAINWP_PLUGIN_URL . 'assets/js/apexcharts/apexcharts.js',
+                    MAINWP_PLUGIN_URL . 'assets/js/apexcharts/apexcharts.min.js',
                     array(
                         'jquery',
                         'mainwp',

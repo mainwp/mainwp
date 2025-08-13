@@ -280,7 +280,6 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
 }
 
 .mainwp-ui .ui.pagination.menu .item {
-    padding: 0;
     border: none;
     margin: 0;
     text-align: center;
@@ -289,7 +288,6 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
 .mainwp-ui .ui.pagination.menu .item:hover,
 .mainwp-ui .ui.pagination.menu .item.active {
     background: #7fb100;
-    padding: 0;
     border-radius: 0;
 }
 
@@ -520,7 +518,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     color: #fff !important;
 }
 
-#mainwp-main-menu .icon.left.floated { 
+#mainwp-main-menu .icon.left.floated {
     float: left !important;
     margin-right: 1em !important;
 }
@@ -664,7 +662,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     right: 0px !important;
 }
 
-.mainwp-ui table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control:before, 
+.mainwp-ui table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control:before,
 .mainwp-ui table.dataTable.dtr-inline.collapsed>tbody>tr>th.dtr-control:before {
   background-color: none !important;
   border: none !important;

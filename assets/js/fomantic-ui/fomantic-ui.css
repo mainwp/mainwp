@@ -19,7 +19,7 @@
  */
 
  /* stylelint-disable */
- 
+
 /*******************************
            Variables
  *******************************/
@@ -64619,7 +64619,7 @@ a.inverted.ui.card:hover,
 .ui.accordion .ui.header > .dropdown.icon::before,
 .ui.accordion .title > .dropdown.icon::before,
 .ui.accordion .accordion .title > .dropdown.icon::before {
-  content: "\f0da" 
+  content: "\f0da"
 ;
 }
 
@@ -68700,7 +68700,7 @@ select.ui.dropdown {
 /* Sub Menu */
 
 .ui.dropdown .menu .item .dropdown.icon::before {
-  content: "\f0da" 
+  content: "\f0da"
 ;
 }
 
@@ -68712,7 +68712,7 @@ select.ui.dropdown {
 /* Vertical Menu Dropdown */
 
 .ui.vertical.menu .dropdown.item > .dropdown.icon::before {
-  content: "\f0da" 
+  content: "\f0da"
 ;
 }
 

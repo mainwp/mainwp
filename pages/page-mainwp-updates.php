@@ -1902,7 +1902,8 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 }
             }
             $params = array(
-                'connected' => 'yes',
+                'connected'   => 'yes',
+                'maybe_cache' => true,
             );
 
             $limit_sites = get_option( 'mainwp_manage_updates_limit_sites' );

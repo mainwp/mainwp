@@ -21,8 +21,9 @@ final class MainWP_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSa
     /**
      * Cache Groups consts.
      */
-    const GC_SITES   = 'manage_sites';
-    const GC_UPDATES = 'updates';
+    const GC_SITES     = 'manage_sites';
+    const GC_UPDATES   = 'updates';
+    const GC_SYNC_DATA = 'sync_sites';
 
     /**
      * Cache hits counter.
@@ -268,11 +269,16 @@ final class MainWP_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     private static function clean_and_sort_params( $params, $opts = array() ) {
 
+        $default_igkeys = array( 'maybe_cache' );
+
         $coerceTypes     = $opts['coerce_types'] ?? true;
         $numericToNumber = $opts['numeric_to_number'] ?? true;
         $sortLists       = $opts['sort_lists'] ?? true;
         $dropEmptyArrays = $opts['drop_empty_arrays'] ?? true;
-        $ignoreKeys      = array_flip( $opts['ignore_keys'] ?? array() );
+
+        $ignoreKeys = $opts['ignore_keys'] ?? array();
+        $ignoreKeys = is_array( $ignoreKeys ) ? array_merge( $ignoreKeys, $default_igkeys ) : $ignoreKeys;
+        $ignoreKeys = array_flip( $ignoreKeys );
 
         $isAssoc = static function ( array $a ) {
             $i = 0;

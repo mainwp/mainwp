@@ -244,6 +244,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $page     = isset( $params['page'] ) ? intval( $params['page'] ) : false;
         $per_page = isset( $params['per_page'] ) ? intval( $params['per_page'] ) : false;
 
+        // This parameter is used to enable caching in certain cases.
+        $_included_cache_ids = isset( $params['_included_cache_ids'] ) ? wp_parse_id_list( $params['_included_cache_ids'] ) : array();
+
         $where = '';
 
         if ( ! empty( $extraWhere ) ) {
@@ -272,6 +275,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         if ( ! empty( $include ) ) {
             $where .= ' AND  wp.id IN (' . implode( ',', $include ) . ') ';
+        }
+
+        if ( ! empty( $_included_cache_ids ) ) {
+            $where .= ' AND  wp.id IN (' . implode( ',', $_included_cache_ids ) . ') ';
         }
 
         // any, connected, disconnected, suspended, available_update.
@@ -1157,6 +1164,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $page     = isset( $params['page'] ) ? intval( $params['page'] ) : false;
             $per_page = isset( $params['per_page'] ) ? intval( $params['per_page'] ) : false;
 
+            // This parameter is used to enable caching in certain cases.
+            $_included_cache_ids = isset( $params['_included_cache_ids'] ) ? wp_parse_id_list( $params['_included_cache_ids'] ) : array();
+
             if ( ! empty( $s ) ) {
                 $where .= ' AND ( wp.id LIKE "%' . $this->escape( $s ) . '%" OR wp.name LIKE "%' . $this->escape( $s ) . '%" OR wp.url LIKE "%' . $this->escape( $s ) . '%" ) ';
             }
@@ -1167,6 +1177,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
             if ( ! empty( $include ) ) {
                 $where .= ' AND  wp.id IN (' . implode( ',', $include ) . ') ';
+            }
+
+            if ( ! empty( $_included_cache_ids ) ) {
+                $where .= ' AND  wp.id IN (' . implode( ',', $_included_cache_ids ) . ') ';
             }
 
             // any, connected, disconnected, suspended, available_update.

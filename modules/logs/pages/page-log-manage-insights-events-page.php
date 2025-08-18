@@ -17,6 +17,7 @@ use MainWP\Dashboard\MainWP_DB_Client;
 use MainWP\Dashboard\MainWP_DB_Common;
 use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_Logger;
+use MainWP\Dashboard\MainWP_Cache_Helper;
 
 /**
  * Class Log_Manage_Insights_Events_Page
@@ -632,13 +633,30 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                                 <div class="default text"><?php esc_html_e( 'All Websites', 'mainwp' ); ?></div>
                                 <div class="menu">
                                     <?php
-                                    $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params() );
-                                    while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-                                        ?>
-                                        <div class="item" data-value="<?php echo esc_attr( $website->id ); ?>"><?php echo esc_html( MainWP_Utility::get_nice_url( stripslashes( $website->name ) ) ); ?></div>
-                                        <?php
+                                    $cache_group    = MainWP_Cache_Helper::GC_SYNC_DATA;
+                                    $cache_key      = MainWP_Cache_Helper::get_cache_key( 'list_sites', $cache_group, $params );
+                                    $cache_websites = MainWP_Cache_Helper::instance()->get_cache(
+                                        $cache_key,
+                                        $cache_group
+                                    );
+                                    if ( '_get_cache_false' !== $cache_websites ) {
+                                        $websites = $cache_websites;
+                                    } else {
+                                        $get_websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params() );
+                                        $websites     = array();
+                                        while ( $get_websites && ( $website = MainWP_DB::fetch_object( $get_websites ) ) ) {
+                                            $websites[ $website->id ] = $website->name;
+                                        }
+                                        // Set list sites cache.
+                                        MainWP_Cache_Helper::add_cache( $cache_key, $cache_group, $websites );
                                     }
-
+                                    if ( is_array( $websites ) ) {
+                                        foreach ( $websites as $site_id => $name ) {
+                                            ?>
+                                            <div class="item" data-value="<?php echo esc_attr( $site_id ); ?>"><?php echo esc_html( MainWP_Utility::get_nice_url( stripslashes( $name ) ) ); ?></div>
+                                            <?php
+                                        }
+                                    }
                                     ?>
                                     <div class="item" data-value="allsites"><?php esc_html_e( 'All Websites', 'mainwp' ); ?></div>
                             </div>

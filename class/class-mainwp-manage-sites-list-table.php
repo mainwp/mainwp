@@ -1004,21 +1004,35 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             }
         }
 
-        $total_websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $total_params ) );
-        $totalRecords   = ( $total_websites ? MainWP_DB::num_rows( $total_websites ) : 0 );
-        if ( $total_websites ) {
-            MainWP_DB::free_result( $total_websites );
-        }
+        $totalRecords = $this->get_total_sites( $total_params );
 
         $params['extra_view']    = $extra_view;
         $params['view']          = 'manage_site';
-        $params['dev_log_query'] = 0;
+        $params['dev_log_query'] = 1;
+
+        $cache_group = MainWP_Cache_Helper::GC_SITES;
+
+        $cache_key = MainWP_Cache_Helper::get_cache_key( 'sites_ids', $cache_group, $params );
+
+        $cache_ids = MainWP_Cache_Helper::instance()->get_cache(
+            $cache_key,
+            $cache_group
+        );
+
+        if ( '_get_cache_false' !== $cache_ids ) {
+            $params['selected_sites'] = $cache_ids;
+        }
 
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
 
         $site_ids = array();
         while ( $websites && ( $site = MainWP_DB::fetch_object( $websites ) ) ) {
             $site_ids[] = $site->id;
+        }
+
+        if ( '_get_cache_false' === $cache_ids ) {
+            // set cache.
+            MainWP_Cache_Helper::add_cache( $cache_key, $cache_group, $site_ids );
         }
 
         /**
@@ -1040,10 +1054,49 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
          */
         do_action( 'mainwp_sitestable_prepared_items', $websites, $site_ids );
 
-        MainWP_DB::data_seek( $websites, 0 );
-
         $this->items       = $websites;
         $this->total_items = $totalRecords;
+    }
+
+
+    /**
+     * Get total sites.
+     *
+     * @param array $params Params.
+     *
+     * @return int Total
+     */
+    public function get_total_sites( $params ) {
+        $cache_group = MainWP_Cache_Helper::GC_SITES;
+        $cache_key   = MainWP_Cache_Helper::get_cache_key( 'total_sites', $cache_group, $params );
+
+        return MainWP_Cache_Helper::instance()->get_cache(
+            $cache_key,
+            $cache_group,
+            function ( $filters ) {
+                $total_websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $filters ) );
+                $totalRecords   = $total_websites ? MainWP_DB::num_rows( $total_websites ) : 0;
+
+                if ( MainWP_DB::is_result( $total_websites ) ) {
+                    MainWP_DB::free_result( $total_websites );
+                }
+                return $totalRecords;
+            },
+            array( $params )
+        );
+    }
+
+    /**
+     * Handle invalidate manage sites cache group.
+     */
+    public static function invalidate_manage_sites_cache() {
+        $invalidates = array(
+            MainWP_Cache_Helper::GC_SITES,
+            MainWP_Cache_Helper::GC_UPDATES,
+        );
+        foreach ( $invalidates as $value ) {
+            MainWP_Cache_Helper::invalidate_cache_group( $value );
+        }
     }
 
     /**

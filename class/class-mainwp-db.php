@@ -1864,6 +1864,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         }
 
         if ( ! empty( $params['dev_log_query'] ) ) {
+            error_log( print_r( $params, true ) ); //phpcs:ignore -- NOSONAR - for dev.
             error_log( $qry ); //phpcs:ignore -- NOSONAR - for dev.
         }
 
@@ -2528,7 +2529,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                         )
                     );
                 }
-
+                MainWP_Manage_Sites_List_Table::invalidate_manage_sites_cache();
                 return $websiteid;
             }
         }
@@ -2553,6 +2554,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid=%d', $websiteid ) );
             MainWP_Encrypt_Data_Lib::remove_key_file( $websiteid );
             MainWP_DB_Uptime_Monitoring::instance()->delete_monitor( array( 'wpid' => $websiteid ) );
+            MainWP_Manage_Sites_List_Table::invalidate_manage_sites_cache();
             return $nr;
         }
 

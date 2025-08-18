@@ -1252,6 +1252,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
         }
 
+        if ( $updating_website || in_array( $what, array( 'installplugintheme', 'stats' ) ) ) {
+            MainWP_Cache_Helper::invalidate_cache_group( MainWP_Cache_Helper::GC_UPDATES );
+        }
+
         return $information;
     }
 

@@ -74,14 +74,22 @@ class MainWP_Execution_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * Method get_exec_time().
      *
      * Get execution time start value.
+     *
+     *  @param bool $log_exec To log execution time or not.
+     *
+     * @return int $sec Execution time.
      */
-    public function get_exec_time() {
+    public function get_exec_time( $log_exec = true ) {
         if ( null === static::$exec_start ) {
             static::$exec_start = microtime( true );
         }
 
         $sec = microtime( true ) - static::$exec_start; // seconds.
-        MainWP_Logger::instance()->log_action( 'execution time :: [value=' . round( $sec, 4 ) . '](seconds)', MainWP_Logger::EXECUTION_TIME_LOG_PRIORITY );
+
+        if ( $log_exec ) {
+            MainWP_Logger::instance()->log_action( 'execution time :: [value=' . round( $sec, 4 ) . '](seconds)', MainWP_Logger::EXECUTION_TIME_LOG_PRIORITY );
+        }
+
         return $sec;
     }
 }

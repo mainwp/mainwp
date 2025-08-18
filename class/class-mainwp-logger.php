@@ -28,6 +28,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     const CONNECT_LOG_PRIORITY         = 20241001;
     const UPTIME_CHECK_LOG_PRIORITY    = 20241017;
     const UPTIME_NOTICE_LOG_PRIORITY   = 202411106;
+    const CACHE_METRICS_LOG_PRIORITY   = 20250814;
     const DISABLED                     = - 1;
     const LOG                          = 0;
     const WARNING                      = 1;
@@ -321,6 +322,9 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 break;
             case 'debug-updates-crons':
                 $this->log_action( '[Debug updates crons] :: ' . $text, static::DEBUG_UPDATES_SCHEDULE );
+                break;
+            case 'cache-metrics':
+                $this->log_action( '[MainWP Cache] :: ' . $text, static::CACHE_METRICS_LOG_PRIORITY );
                 break;
             default:
                 break;
@@ -865,7 +869,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
             $prefix = $time . ' ' . $showInfo['log_prefix'];
 
-            $line = htmlentities( $line );
+            $line = nl2br( htmlentities( $line ) );
 
             if ( false !== strpos( $line, '[data-start]' ) ) {
                 $line = str_replace( '[data-start]', $start_wrapper, $line );

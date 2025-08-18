@@ -911,6 +911,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 MainWP_Logger::instance()->log_action( '[Fatal ERROR detected=' . print_r( $error, true ) . ']', false, MainWP_Logger::WARNING_COLOR, true ); //phpcs:ignore -- NOSONAR.
             }
         }
+        MainWP_Cache_Helper::log_metrics();
     }
 
     /**

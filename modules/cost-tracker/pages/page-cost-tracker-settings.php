@@ -93,11 +93,8 @@ class Cost_Tracker_Settings {
     public function render_settings_content() { //phpcs:ignore -- NOSONAR - complex.
 
         $currencies        = Cost_Tracker_Utility::get_all_currency_symbols();
-        $selected_currency = Cost_Tracker_Utility::get_instance()->get_option( 'currency' );
-        if ( empty( $selected_currency ) ) {
-            $selected_currency = 'USD';
-        }
-        $currency_format = Cost_Tracker_Utility::get_instance()->get_option( 'currency_format', array() );
+        $selected_currency = Cost_Tracker_Utility::get_instance()->get_option( 'currency', 'USD' );
+        $currency_format   = Cost_Tracker_Utility::get_instance()->get_option( 'currency_format', array() );
 
         if ( ! is_array( $currency_format ) ) {
             $currency_format = array();

@@ -1406,6 +1406,16 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         &$output = array()
     ) {
 
+        /**
+         * Enables data to be returned prior to connecting to the site.
+         *
+         * @since 5.5
+         */
+        $dev_data = apply_filters( 'mainwp_dev_return_data_before_connect_to_site', false, $website, $url, $postdata, $checkConstraints, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others, $output );
+        if ( false !== $dev_data ) {
+            return $dev_data;
+        }
+
         $agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
         if ( ! empty( $website ) ) {

@@ -259,7 +259,17 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function ping( $link ) {
         if ( self::use_mysqli() ) { // NOSONAR - required.
-            return \mysqli_ping( $link );
+            if ( version_compare( phpversion(), '8.4', '<' ) ) {
+                return \mysqli_ping( $link );
+            } else {
+                try {
+                    self::$instance->wpdb->query( 'DO 1' );
+                    return true;
+                } catch ( \mysqli_sql_exception $e ) { // NOSONAR - ok.
+                    // error.
+                    return false;
+                }
+            }
         } else {
             return \mysql_ping( $link );
         }

@@ -5156,7 +5156,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * Save backups to DB for the selected server.
      *
      * @param  array $credentials Kinsta credentials.
-     * @param  bool  $return_result Return or not
+     * @param  bool  $return_result Return or not.
      *
      * @return mixed
      */

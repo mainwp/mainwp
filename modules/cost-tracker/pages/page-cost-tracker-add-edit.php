@@ -131,7 +131,7 @@ class Cost_Tracker_Add_Edit {
         $renewal_frequency = $all_defaults['renewal_frequency'];
         $cost_status       = $all_defaults['cost_status'];
 
-        $currency        = Cost_Tracker_Utility::get_instance()->get_option( 'currency' );
+        $currency        = Cost_Tracker_Utility::get_instance()->get_option( 'currency', 'USD' );
         $currency_symbol = Cost_Tracker_Utility::get_instance()->get_currency_symbol( $currency );
         $product_icons   = Cost_Tracker_Utility::get_product_default_icons();
 

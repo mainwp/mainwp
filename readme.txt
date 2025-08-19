@@ -147,6 +147,12 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
+= 5.4.0.20 - Maintenance Release - 8-19-2025 =
+
+* Fixed: Currency display now defaults to USD to prevent empty currency formatting issues in financial reports and cost tracking features.
+* Fixed: PHP deprecation warning on PHP 8.4+ installations by updating the database connection ping method to ensure reliable connectivity checks across all PHP versions.
+* Fixed: REST API v2 responses now properly handle empty or invalid data objects to prevent API errors and improve third-party integration reliability.
+
 = 5.4.0.19 - Maintenance Release - 8-12-2025 =
 
 * Fixed: Monthly totals calculation for single-site licenses in Cost Tracker by scaling costs based on the number of associated sites. [(#819)](https://github.com/mainwp/mainwp/issues/819)

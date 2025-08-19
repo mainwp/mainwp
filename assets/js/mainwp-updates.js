@@ -577,9 +577,9 @@ let updatesoverview_translations_upgrade_all_update_done = function () {
 
     updatesoverview_translations_upgrade_all_loop_next();
 };
-let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMode, noCheck) { // NOSONAR - nest functions.
+let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMode, noCheck) { //NOSONAR
 
-    updatesoverviewContinueAfterBackup = function () {
+    updatesoverviewContinueAfterBackup = function () { //NOSONAR
         // need declare variables.
         let pSlug = slug;
         let pWebsiteId = websiteId;
@@ -613,8 +613,8 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
             type: "POST",
             url: ajaxurl,
             data: data,
-            success: function (pSlug, pWebsiteId, pBulkMode) {
-                return function (response) { // NOSONAR - complex.
+            success: function (pSlug, pWebsiteId, pBulkMode) { //NOSONAR
+                return function (response) { //NOSONAR
                     let slugParts = pSlug.split(',');
                     let done = false;
                     for (let sid of slugParts) {
@@ -635,7 +635,7 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
                             let res = response.result;
                             if (res[sid]) {
                                 // Show icon success + icon loading
-                                let regression_loading_icon = render_html_regression_icon(res, function (regression_final_icon) {
+                                let regression_loading_icon = render_html_regression_icon(res, function (regression_final_icon) { //NOSONAR
                                     // After 1,5s, update the element in the dom with the icon
                                     const final_icon = `<i class="green check icon"></i> ${regression_final_icon}`;
                                     if (!done && pBulkMode) {
@@ -1039,7 +1039,7 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
             url: ajaxurl,
             data: data,
             success: function (pSlug, pWebsiteId, pBulkMode) {
-                return function (response) { // NOSONAR - complex.
+                return function (response) { //NOSONAR
                     let slugParts = pSlug.split(',');
                     let done = false;
                     let bulk_errors = [];
@@ -3356,9 +3356,9 @@ let updatesoverview_group_upgrade_plugintheme_all = function (what, id, noCheck,
     return mainwp_updatesoverview_checkBackups(sitesToUpdate, siteNames);
 };
 
-let updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck, groupId) { // NOSONAR - nest functions.
-    updatesoverviewContinueAfterBackup = function (pWhat, pId, pList, pGroupId) {
-        return function () {
+let updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck, groupId) { //NOSONAR
+    updatesoverviewContinueAfterBackup = function (pWhat, pId, pList, pGroupId) { //NOSONAR
+        return function () { //NOSONAR
             let strGroup = '';
             if (typeof pGroupId !== 'undefined') {
                 strGroup = '_group_' + pGroupId;
@@ -3391,7 +3391,7 @@ let updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck
                     type: pWhat,
                     slug: newList.join(',')
                 });
-                jQuery.post(ajaxurl, data, function (response) { // NOSONAR - complex ok.
+                jQuery.post(ajaxurl, data, function (response) { //NOSONAR
                     let success = false;
                     let extErr = '';
                     let _icon_success = '<i class="green check icon"></i>';

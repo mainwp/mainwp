@@ -563,8 +563,9 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         );
         $websites = MainWP_DB::instance()->get_websites_for_current_user( $params );
         $data     = $websites ? current( $websites ) : array();
-
-        $data = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $data, $request ), 'view' );
+        if ( ! empty( $data ) ) {
+            $data = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $data, $request ), 'view' );
+        }
         return rest_ensure_response( array( 'data' => $data ) );
     }
 
@@ -2254,6 +2255,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_REST_Response $response Response data.
      */
     public function prepare_item_for_response( $item, $request, $args = array() ) { //phpcs:ignore -- NOSONAR - complex.
+
+        if ( ! is_object( $item ) ) {
+            $item = new \stdClass();
+        }
 
         $fields = $this->get_fields_for_response( $request );
 

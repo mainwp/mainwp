@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.8.2
 Requires PHP: 7.4
-Stable tag: 5.4.0.19
+Stable tag: 5.4.0.20
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -146,6 +146,12 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.4.0.20 - Maintenance Release - 8-19-2025 =
+
+* Fixed: Currency display now defaults to USD to prevent empty currency formatting issues in financial reports and cost tracking features.
+* Fixed: PHP deprecation warning on PHP 8.4+ installations by updating the database connection ping method to ensure reliable connectivity checks across all PHP versions.
+* Fixed: REST API v2 responses now properly handle empty or invalid data objects to prevent API errors and improve third-party integration reliability.
 
 = 5.4.0.19 - Maintenance Release - 8-12-2025 =
 

@@ -171,6 +171,9 @@ class Cost_Tracker_Utility {
         $get_decimals        = ! empty( $params['get_decimals'] ) ? true : false;
 
         $currency = static::get_instance()->get_option( 'currency' );
+        if ( empty( $currency ) ) {
+            $currency = 'USD';
+        }
         $settings = static::get_instance()->get_option( 'currency_format' );
 
         if ( ! is_array( $settings ) ) {

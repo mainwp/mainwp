@@ -613,7 +613,7 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
             type: "POST",
             url: ajaxurl,
             data: data,
-            success: function (pSlug, pWebsiteId, pBulkMode) {
+            success: function (pSlug, pWebsiteId, pBulkMode) { // NOSONAR - ok.
                 return function (response) { // NOSONAR - complex.
                     let slugParts = pSlug.split(',');
                     let done = false;

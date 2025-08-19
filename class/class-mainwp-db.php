@@ -420,13 +420,21 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         } elseif ( ! empty( $specific_wp_fields ) ) { // Optimize select sites data.
             $select    = $specific_wp_fields;
             $join_sync = '';
+            $join_view = '';
+
             if ( ! empty( $specific_sync_fields ) ) {
                 $select   .= ',' . $specific_wp_fields;
                 $join_sync = 'JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid';
             }
+
+            if ( ! empty( $view ) && ! empty( $others_fields ) ) {
+                $select   .= ',wp_optionview.* ';
+                $join_view = 'JOIN ' . $this->get_option_view_by( $view, $others_fields ) . ' wp_optionview ON wp.id = wp_optionview.wpid ';
+            }
+
             $qry = 'SELECT ' . $select . '
             FROM ' . $this->table_name( 'wp' ) . ' wp
-            ' . $join_sync . '
+            ' . $join_sync . $join_view . '
             WHERE 1 ' . $where . $connected_sql . '
             GROUP BY wp.id, wp_sync.sync_id
             ORDER BY ' . $orderBy;
@@ -481,6 +489,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             'wp_upgrades',
         );
 
+        $fields = array();
+
         if ( 'updates_view' === $view ) {
             $fields = array(
                 'wp_upgrades',
@@ -491,7 +501,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             if ( 'monitor_view' === $view ) {
                 $fields[] = 'health_site_status';
             }
-        } else {
+        } elseif ( 'custom_view' !== $view ) {
             $fields = $default;
         }
 
@@ -501,12 +511,14 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         $view_query = '(SELECT intwp.id AS wpid ';
 
-        if ( ! in_array( 'signature_algo', $fields ) ) {
-            $fields[] = 'signature_algo';
-        }
+        if ( 'custom_view' !== $view ) {
+            if ( ! in_array( 'signature_algo', $fields ) ) {
+                $fields[] = 'signature_algo';
+            }
 
-        if ( ! in_array( 'verify_method', $fields ) ) {
-            $fields[] = 'verify_method';
+            if ( ! in_array( 'verify_method', $fields ) ) {
+                $fields[] = 'verify_method';
+            }
         }
 
         foreach ( $fields as $field ) {

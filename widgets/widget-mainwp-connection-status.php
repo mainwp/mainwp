@@ -52,8 +52,16 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
      */
     public static function render_sites() { // phpcs:ignore -- NOSONAR - current complexity required to achieve desired results. Pull request solutions appreciated.
 
-        $sql      = MainWP_DB::instance()->get_sql_websites_for_current_user();
-        $websites = MainWP_DB::instance()->query( $sql );
+        $wpsite_fields = array( 'id', 'name', 'url', 'adminname' );
+        $sync_fields   = array( 'sync_errors', 'dtsSync' );
+        $websites      = MainWP_DB::instance()->query(
+            MainWP_DB::instance()->get_sql_websites_for_current_user_by_params(
+                array(
+                    'select_wp_fields'   => $wpsite_fields,
+                    'select_sync_fields' => $sync_fields,
+                )
+            )
+        );
 
         $count_connected    = 0;
         $count_disconnected = 0;

@@ -118,8 +118,9 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     if ( ! is_array( static::$disallowed_clone_sites ) ) {
                         static::$disallowed_clone_sites = array();
                     }
-                    $sync_fields   = array( 'id', 'name', 'url', 'adminname' );
-                    $wpsite_fields = array( 'extauth', 'totalsize' );
+
+                    $wpsite_fields = array( 'id', 'name', 'url', 'adminname' );
+                    $sync_fields   = array( 'extauth', 'totalsize' );
                     $websites      = MainWP_DB::instance()->query(
                         MainWP_DB::instance()->get_sql_websites_for_current_user_by_params(
                             array(

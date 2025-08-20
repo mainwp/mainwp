@@ -97,25 +97,6 @@ final class MainWP_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
-     * Get transient version.
-     *
-     * @param  string  $group   Name for the group of transients we need to invalidate.
-     * @param  boolean $refresh true to force a new version.
-     * @return string transient version based on time(), 10 digits.
-     */
-    public static function get_transient_version( $group, $refresh = false ) {
-        $transient_name  = 'mainwp-transient-' . $group . '-version';
-        $transient_value = get_transient( $transient_name );
-
-        if ( false === $transient_value || true === $refresh ) {
-            $transient_value = (string) time();
-            set_transient( $transient_name, $transient_value );
-        }
-        return $transient_value;
-    }
-
-
-    /**
      * Get cache key.
      *
      * @param  string $key_suffix Key suffix.

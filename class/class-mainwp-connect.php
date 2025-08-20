@@ -1411,8 +1411,20 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          * Enables data to be returned prior to connecting to the site.
          *
          * @since 5.5
+         *
+         * @param  mixed false
+         * @param  mixed $website
+         * @param  mixed $url
+         * @param  mixed $postdata
+         * @param  mixed $checkConstraints
+         * @param  mixed $verifyCertificate
+         * @param  mixed $http_user
+         * @param  mixed $http_pass
+         * @param  mixed $sslVersion
+         * @param  mixed $others
+         * @param  mixed $output
          */
-        $dev_data = apply_filters( 'mainwp_dev_return_data_before_connect_to_site', false, $website, $url, $postdata, $checkConstraints, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others, $output );
+        $dev_data = apply_filters( 'mainwp_dev_return_data_before_connect_site', false, $website, $url, $postdata, $checkConstraints, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others, $output );
         if ( false !== $dev_data ) {
             return $dev_data;
         }

@@ -965,7 +965,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <label class="six wide column middle aligned">
                     <?php esc_html_e( 'Tags (optional)', 'mainwp' ); ?>
                 </label>
-                <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add the website to existing tag(s).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                <div class="ten wide column">
                     <div class="ui multiple search selection dropdown" init-value="" id="mainwp_managesites_add_addgroups">
                         <i class="dropdown icon"></i>
                         <div class="default text"></div>
@@ -983,7 +983,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 ?>
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Client (optional)', 'mainwp' ); ?></label>
-                    <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add a client to the website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                    <div class="ten wide column">
                         <div class="ui search selection dropdown" init-value="" id="mainwp_managesites_add_client_id">
                             <i class="dropdown icon"></i>
                             <div class="default text"></div>

@@ -655,11 +655,21 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
 }
 
 /* Tables */
-
+/*
 .mainwp-ui table.dataTable thead>tr>th span.dt-column-order {
     position: relative !important;
     left: 8px !important;
     right: 0px !important;
+}
+*/
+.mainwp-ui table.dataTable thead > tr > th .dt-column-header {
+    justify-content: start !important;
+    flex-direction: row !important;
+    gap: 0.5rem !important;
+}
+
+.mainwp-ui table.dataTable thead > tr > th .dt-column-header .dt-column-title {
+    flex-grow: 0 !important;
 }
 
 .mainwp-ui table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control:before,

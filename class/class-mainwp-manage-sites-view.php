@@ -1065,7 +1065,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $init_groups );
                     ?>
                     <?php esc_html_e( 'Tags', 'mainwp' ); ?></label>
-                    <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add the website to existing tags(s).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                    <div class="ten wide column">
                         <div class="ui multiple selection dropdown" init-value="<?php echo esc_attr( $init_groups ); ?>">
                             <input name="mainwp_managesites_edit_addgroups" value="" class="settings-field-value-change-handler" type="hidden">
                             <i class="dropdown icon"></i>

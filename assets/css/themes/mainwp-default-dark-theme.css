@@ -533,6 +533,10 @@
   color: var(--mainwp-text);
 }
 
+.mainwp-ui.mainwp-custom-theme .ui.form input.search {
+  color: var(--mainwp-text) !important;
+}
+
 .mainwp-ui.mainwp-custom-theme .ui.input input[disabled] {
   background-color: var(--mainwp-element-background-secondary) !important;
   color: var(--mainwp-text-secondary) !important;
@@ -662,6 +666,10 @@
 
 .mainwp-ui.mainwp-custom-theme .ui.active.dropdown .menu .item:hover {
   background-color: var(--mainwp-element-background) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.active.dropdown .menu .message {
+  color: var(--mainwp-text);
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-select-sites-filter {
@@ -970,10 +978,12 @@
 }
 .mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item a {
   color: var(--mainwp-link-color) !important;
+  padding: 0.5rem 1rem !important;
 }
 .mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item:hover,
 .mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item.active {
   background: var(--mainwp-element-background-secondary);
+  padding: 0.5rem 1rem !important;
 }
 .mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item:hover .page-link,
 .mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item.active .page-link {
@@ -981,6 +991,12 @@
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.pagination.menu .item.disabled .page-link {
+  color: var(--mainwp-text-secondary) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme div.dt-container .dt-paging .dt-paging-button.disabled, 
+.mainwp-ui.mainwp-custom-theme div.dt-container .dt-paging .dt-paging-button.disabled:hover, 
+.mainwp-ui.mainwp-custom-theme div.dt-container .dt-paging .dt-paging-button.disabled:active {
   color: var(--mainwp-text-secondary) !important;
 }
 
@@ -1747,7 +1763,15 @@ body.mainwp-ui.mainwp-custom-theme,
   font-family: "icons", sans-serif;
 }
 
+.mainwp-ui.mainwp-custom-theme table.dataTable tr th:first-child,
+.mainwp-ui.mainwp-custom-theme table.dataTable tr td:first-child {
+    border-left: none !important;
+}
 
+.mainwp-ui.mainwp-custom-theme table.dataTable tr th:last-child,
+.mainwp-ui.mainwp-custom-themetable.dataTable tr td:last-child {
+    border-right: none !important;
+}
 
 /* WP Widget */
 

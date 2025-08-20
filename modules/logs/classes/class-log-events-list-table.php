@@ -271,7 +271,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $child_time = MainWP_Utility::format_timezone( (int) $record->created, false, $site_dtf );
                 if ( ! empty( $child_time ) ) {
                     $date_string = sprintf(
-                        '<span data-tooltip="' . esc_attr__( 'Child Site time: %s', 'mainwp' ) . ' " created-time="' . esc_attr( $record->created ) . '" data-inverted="" data-position="left center"><time datetime="%s" class="relative-time record-created">%s</time></span>',
+                        '<span data-tooltip="' . esc_attr__( 'Child Site time: %s', 'mainwp' ) . ' " created-time="' . esc_attr( $record->created ) . '" data-inverted="" data-position="right center"><time datetime="%s" class="relative-time record-created">%s</time></span>',
                         $child_time,
                         mainwp_module_log_get_iso_8601_extended_date( $record->created ),
                         MainWP_Utility::format_timezone( $record->created )

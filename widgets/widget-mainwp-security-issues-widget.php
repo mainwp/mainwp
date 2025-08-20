@@ -118,11 +118,6 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
                         <div class="header">
                             <span class="ui large text"><i class="shield alternate icon"></i> <?php echo intval( $total_securityIssues ); ?></span>
                         </div>
-                        <div class="meta">
-                            <div class="ui tiny progress mainwp-site-hardening-progress"  data-total="<?php echo esc_attr( $max_issues ); ?>" data-value="<?php echo esc_attr( $resolved_issues ); ?>">
-                                <div class="green bar"></div>
-                            </div>
-                        </div>
                         <div class="description">
                             <strong><?php echo esc_html( _n( 'Recommendation', 'Recommendations', $total_securityIssues, 'mainwp' ) ); ?></strong>
                         </div>
@@ -130,7 +125,6 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
                 </div>
             </div>
             <script type="text/javascript">
-                jQuery('.mainwp-site-hardening-progress').progress();
 
                 jQuery( document ).ready( function () {
                     let curTab = mainwp_ui_state_load('security-widget-issues');

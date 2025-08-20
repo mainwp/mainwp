@@ -435,6 +435,14 @@ body.mainwp-ui.mainwp-custom-theme,
   color: var(--font-color);
 }
 
+.mainwp-ui.mainwp-custom-theme table.dataTable tr th:first-child,table.dataTable tr td:first-child {
+    border-left: none !important;
+}
+
+.mainwp-ui.mainwp-custom-theme table.dataTable tr th:last-child,table.dataTable tr td:last-child {
+    border-right: none !important;
+}
+
 /* Invert Form Fields */
 
 .mainwp-ui.mainwp-custom-theme .ui.tab textarea,

@@ -247,8 +247,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         // This parameter is used to enable caching in certain cases.
         $_included_cache_ids = isset( $params['_included_cache_ids'] ) ? wp_parse_id_list( $params['_included_cache_ids'] ) : array();
 
-        $select_wpfields   = isset( $params['select_wp_fields'] ) ? wp_parse_id_list( $params['select_wp_fields'] ) : '';
-        $select_syncfields = isset( $params['select_sync_fields'] ) ? wp_parse_id_list( $params['select_sync_fields'] ) : '';
+        $select_wpfields   = isset( $params['select_wp_fields'] ) ? wp_parse_list( $params['select_wp_fields'] ) : '';
+        $select_syncfields = isset( $params['select_sync_fields'] ) ? wp_parse_list( $params['select_sync_fields'] ) : '';
 
         $where = '';
 
@@ -421,10 +421,12 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $select    = $specific_wp_fields;
             $join_sync = '';
             $join_view = '';
+            $group_by  = 'wp.id';
 
             if ( ! empty( $specific_sync_fields ) ) {
-                $select   .= ',' . $specific_wp_fields;
+                $select   .= ',' . $specific_sync_fields;
                 $join_sync = 'JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid';
+                $group_by .= ', wp_sync.sync_id';
             }
 
             if ( ! empty( $view ) && ! empty( $others_fields ) ) {
@@ -436,7 +438,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             FROM ' . $this->table_name( 'wp' ) . ' wp
             ' . $join_sync . $join_view . '
             WHERE 1 ' . $where . $connected_sql . '
-            GROUP BY wp.id, wp_sync.sync_id
+            GROUP BY ' . $group_by . '
             ORDER BY ' . $orderBy;
         } else {
             $qry = 'SELECT ' . $select .

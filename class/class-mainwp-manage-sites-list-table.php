@@ -1008,9 +1008,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
 
         $params['extra_view']    = $extra_view;
         $params['view']          = 'manage_site';
-        $params['dev_log_query'] = 1;
+        $params['dev_log_query'] = 0;
 
-        $cache_group = MainWP_Cache_Helper::GC_SITES;
+        $cache_group = MainWP_Cache_Helper::CGR_SITES;
 
         $cache_key = MainWP_Cache_Helper::get_cache_key( 'sites_ids', $cache_group, $params );
 
@@ -1069,7 +1069,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      * @return int Total
      */
     public function get_total_sites_by_pramas( $params ) {
-        $cache_group = MainWP_Cache_Helper::GC_SITES;
+        $cache_group = MainWP_Cache_Helper::CGR_SITES;
         $cache_key   = MainWP_Cache_Helper::get_cache_key( 'total_sites', $cache_group, $params );
 
         return MainWP_Cache_Helper::instance()->get_cache(
@@ -1093,9 +1093,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      */
     public static function invalidate_manage_sites_cache() {
         $invalidates = array(
-            MainWP_Cache_Helper::GC_SITES,
-            MainWP_Cache_Helper::GC_UPDATES,
-            MainWP_Cache_Helper::GC_SYNC_DATA,
+            MainWP_Cache_Helper::CGR_SITES,
+            MainWP_Cache_Helper::CGR_UPDATES,
+            MainWP_Cache_Helper::CGR_SYNC_DATA,
         );
         foreach ( $invalidates as $value ) {
             MainWP_Cache_Helper::invalidate_cache_group( $value );

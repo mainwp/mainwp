@@ -18,12 +18,14 @@ final class MainWP_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
     const CACHE_TTL = 12 * HOUR_IN_SECONDS;
 
+    const GROUP_VER = '1';
+
     /**
      * Cache Groups consts.
      */
-    const GC_SITES     = 'manage_sites';
-    const GC_UPDATES   = 'updates';
-    const GC_SYNC_DATA = 'sync_sites';
+    const CGR_SITES     = 'manage_sites';
+    const CGR_UPDATES   = 'updates';
+    const CGR_SYNC_DATA = 'sync_sites';
 
     /**
      * Cache hits counter.
@@ -134,7 +136,7 @@ final class MainWP_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return string Group prefix.
      */
     public static function get_key_group( $group ) {
-        return 'mainwp_cache_' . $group . '_prefix';
+        return 'mainwp_cache_' . $group . '_' . self::GROUP_VER . '_prefix';
     }
 
     /**

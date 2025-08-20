@@ -714,7 +714,7 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'ignored_wp_upgrades',
         );
 
-        $cache_group = MainWP_Cache_Helper::GC_SITES;
+        $cache_group = MainWP_Cache_Helper::CGR_SITES;
 
         $cache_key = MainWP_Cache_Helper::get_cache_key( 'sites_ids', $cache_group, $params );
 

@@ -47,7 +47,7 @@ class MainWP_Common_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public function sites_available_updates_count() {  // phpcs:ignore -- NOSONAR - complex function.
 
-        $cache_group = MainWP_Cache_Helper::GC_UPDATES;
+        $cache_group = MainWP_Cache_Helper::CGR_UPDATES;
 
         $cache_key = MainWP_Cache_Helper::get_cache_key( 'updates_count', $cache_group );
 

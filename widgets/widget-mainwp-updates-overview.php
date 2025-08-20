@@ -140,19 +140,10 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ), $is_staging );
         }
 
-        $userExtension  = MainWP_DB_Common::instance()->get_user_extension();
-        $websites       = MainWP_DB::instance()->query( $sql );
-        $count_websites = MainWP_DB::instance()->get_websites_count();
+        $userExtension = MainWP_DB_Common::instance()->get_user_extension();
 
         $mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
-
-        $decodedDismissedPlugins = ! empty( $userExtension->dismissed_plugins ) ? json_decode( $userExtension->dismissed_plugins, true ) : array();
-        $decodedDismissedThemes  = ! empty( $userExtension->dismissed_themes ) ? json_decode( $userExtension->dismissed_themes, true ) : array();
-        $decodedIgnoredCores     = ! empty( $userExtension->ignored_wp_upgrades ) ? json_decode( $userExtension->ignored_wp_upgrades, true ) : array();
-
-        if ( ! is_array( $decodedIgnoredCores ) ) {
-            $decodedIgnoredCores = array();
-        }
+        $count_websites               = 0;
 
         $total_wp_upgrades          = 0;
         $total_plugin_upgrades      = 0;
@@ -166,190 +157,255 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $all_plugins_updates      = array();
         $all_themes_updates       = array();
         $all_translations_updates = array();
-
-        MainWP_DB::data_seek( $websites, 0 );
+        $sites_ids                = array();
 
         $currentSite = null;
 
         $count_plugins = 0;
         $count_themes  = 0;
 
-        while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-            if ( ! $globalView ) {
-                $currentSite = $website;
+        $cache_overview = array();
+        $use_cached     = false;
+
+        $cache_group = '';
+        if ( $globalView ) {
+            $count_websites = MainWP_DB::instance()->get_websites_count();
+            $cache_group    = MainWP_Cache_Helper::CGR_UPDATES;
+            $cache_key      = MainWP_Cache_Helper::get_cache_key( 'updates_overview', $cache_group, array( 'staging' => $is_staging ) );
+            $cache_overview = MainWP_Cache_Helper::instance()->get_cache(
+                $cache_key,
+                $cache_group
+            );
+        }
+
+        if ( ! empty( $cache_overview ) && is_array( $cache_overview ) ) {
+            $use_cached                 = true;
+            $total_wp_upgrades          = isset( $cache_overview['total_wp_upgrades'] ) ? intval( $cache_overview['total_wp_upgrades'] ) : 0;
+            $total_plugin_upgrades      = isset( $cache_overview['total_plugin_upgrades'] ) ? intval( $cache_overview['total_plugin_upgrades'] ) : 0;
+            $total_translation_upgrades = isset( $cache_overview['total_translation_upgrades'] ) ? intval( $cache_overview['total_translation_upgrades'] ) : 0;
+            $total_theme_upgrades       = isset( $cache_overview['total_theme_upgrades'] ) ? intval( $cache_overview['total_theme_upgrades'] ) : 0;
+
+            $count_plugins = isset( $cache_overview['count_plugins'] ) ? intval( $cache_overview['count_plugins'] ) : 0;
+            $count_themes  = isset( $cache_overview['count_themes'] ) ? intval( $cache_overview['count_themes'] ) : 0;
+
+            $total_plugins_outdate = isset( $cache_overview['total_plugins_outdate'] ) ? intval( $cache_overview['total_plugins_outdate'] ) : 0;
+            $total_themes_outdate  = isset( $cache_overview['total_themes_outdate'] ) ? intval( $cache_overview['total_themes_outdate'] ) : 0;
+
+            $all_wp_updates           = isset( $cache_overview['all_wp_updates'] ) && is_array( $cache_overview['all_wp_updates'] ) ? $cache_overview['all_wp_updates'] : array();
+            $all_plugins_updates      = isset( $cache_overview['all_plugins_updates'] ) && is_array( $cache_overview['all_plugins_updates'] ) ? $cache_overview['all_plugins_updates'] : array();
+            $all_themes_updates       = isset( $cache_overview['all_themes_updates'] ) && is_array( $cache_overview['all_themes_updates'] ) ? $cache_overview['all_themes_updates'] : array();
+            $all_translations_updates = isset( $cache_overview['all_translations_updates'] ) && is_array( $cache_overview['all_translations_updates'] ) ? $cache_overview['all_translations_updates'] : array();
+            $sites_ids                = isset( $cache_overview['sites_ids'] ) && is_array( $cache_overview['sites_ids'] ) ? $cache_overview['sites_ids'] : array();
+        } else {
+            $decodedDismissedPlugins = ! empty( $userExtension->dismissed_plugins ) ? json_decode( $userExtension->dismissed_plugins, true ) : array();
+            $decodedDismissedThemes  = ! empty( $userExtension->dismissed_themes ) ? json_decode( $userExtension->dismissed_themes, true ) : array();
+            $decodedIgnoredCores     = ! empty( $userExtension->ignored_wp_upgrades ) ? json_decode( $userExtension->ignored_wp_upgrades, true ) : array();
+            if ( ! is_array( $decodedIgnoredCores ) ) {
+                $decodedIgnoredCores = array();
             }
+        }
 
-            $count_plugins += ! empty( $website->plugins ) ? count( json_decode( $website->plugins, true ) ) : 0;
-            $count_themes  += ! empty( $website->themes ) ? count( json_decode( $website->themes, true ) ) : 0;
+        if ( ! $globalView || ! $use_cached ) {
+            $websites = MainWP_DB::instance()->query( $sql );
+            MainWP_DB::data_seek( $websites, 0 );
+            while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+                if ( ! $globalView ) {
+                    $currentSite = $website;
+                }
 
-            $pluginsIgnoredAbandoned_perSites = array();
-            $themesIgnoredAbandoned_perSites  = array();
+                $sites_ids[] = $website->id;
 
-            $wp_upgrades           = ! empty( $website->wp_upgrades ) ? json_decode( $website->wp_upgrades, true ) : array();
-            $ignored_core_upgrades = ! empty( $website->ignored_wp_upgrades ) ? json_decode( $website->ignored_wp_upgrades, true ) : array();
+                $count_plugins += ! empty( $website->plugins ) ? count( json_decode( $website->plugins, true ) ) : 0;
+                $count_themes  += ! empty( $website->themes ) ? count( json_decode( $website->themes, true ) ) : 0;
 
-            if ( $website->is_ignoreCoreUpdates || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $ignored_core_upgrades, 'core' ) || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $decodedIgnoredCores, 'core' ) ) {
-                $wp_upgrades = array();
-            }
+                $pluginsIgnoredAbandoned_perSites = array();
+                $themesIgnoredAbandoned_perSites  = array();
 
-            if ( is_array( $wp_upgrades ) && ! empty( $wp_upgrades ) ) {
-                ++$total_wp_upgrades;
-                $all_wp_updates[] = array(
-                    'id'   => $website->id,
-                    'name' => $website->name,
-                );
-            }
+                $wp_upgrades           = ! empty( $website->wp_upgrades ) ? json_decode( $website->wp_upgrades, true ) : array();
+                $ignored_core_upgrades = ! empty( $website->ignored_wp_upgrades ) ? json_decode( $website->ignored_wp_upgrades, true ) : array();
 
-            $translation_upgrades = ! empty( $website->translation_upgrades ) ? json_decode( $website->translation_upgrades, true ) : array();
+                if ( $website->is_ignoreCoreUpdates || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $ignored_core_upgrades, 'core' ) || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $decodedIgnoredCores, 'core' ) ) {
+                    $wp_upgrades = array();
+                }
 
-            $plugin_upgrades = ! empty( $website->plugin_upgrades ) ? json_decode( $website->plugin_upgrades, true ) : array();
+                if ( is_array( $wp_upgrades ) && ! empty( $wp_upgrades ) ) {
+                    ++$total_wp_upgrades;
+                    $all_wp_updates[] = array(
+                        'id'   => $website->id,
+                        'name' => $website->name,
+                    );
+                }
 
-            if ( $website->is_ignorePluginUpdates ) {
-                $plugin_upgrades = array();
-            }
+                $translation_upgrades = ! empty( $website->translation_upgrades ) ? json_decode( $website->translation_upgrades, true ) : array();
 
-            $theme_upgrades = ! empty( $website->theme_upgrades ) ? json_decode( $website->theme_upgrades, true ) : array();
-            if ( $website->is_ignoreThemeUpdates ) {
-                $theme_upgrades = array();
-            }
+                $plugin_upgrades = ! empty( $website->plugin_upgrades ) ? json_decode( $website->plugin_upgrades, true ) : array();
 
-            $decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
-            $decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+                if ( $website->is_ignorePluginUpdates ) {
+                    $plugin_upgrades = array();
+                }
 
-            if ( is_array( $decodedPremiumUpgrades ) ) {
-                foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
-                    $premiumUpgrade['premium'] = true;
+                $theme_upgrades = ! empty( $website->theme_upgrades ) ? json_decode( $website->theme_upgrades, true ) : array();
+                if ( $website->is_ignoreThemeUpdates ) {
+                    $theme_upgrades = array();
+                }
 
-                    if ( 'plugin' === $premiumUpgrade['type'] ) {
-                        if ( ! is_array( $plugin_upgrades ) ) {
-                            $plugin_upgrades = array();
-                        }
-                        if ( ! $website->is_ignorePluginUpdates ) {
+                $decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
+                $decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
 
-                            $premiumUpgrade = array_filter( $premiumUpgrade );
-                            if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
-                                continue;
+                if ( is_array( $decodedPremiumUpgrades ) ) {
+                    foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
+                        $premiumUpgrade['premium'] = true;
+
+                        if ( 'plugin' === $premiumUpgrade['type'] ) {
+                            if ( ! is_array( $plugin_upgrades ) ) {
+                                $plugin_upgrades = array();
                             }
+                            if ( ! $website->is_ignorePluginUpdates ) {
 
-                            $plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
+                                $premiumUpgrade = array_filter( $premiumUpgrade );
+                                if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
+                                    continue;
+                                }
+
+                                $plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
+                            }
+                        } elseif ( 'theme' === $premiumUpgrade['type'] ) {
+                            if ( ! is_array( $theme_upgrades ) ) {
+                                $theme_upgrades = array();
+                            }
+                            if ( ! $website->is_ignoreThemeUpdates ) {
+                                $theme_upgrades[ $crrSlug ] = $premiumUpgrade;
+                            }
                         }
-                    } elseif ( 'theme' === $premiumUpgrade['type'] ) {
-                        if ( ! is_array( $theme_upgrades ) ) {
-                            $theme_upgrades = array();
+                    }
+                }
+
+                if ( is_array( $translation_upgrades ) ) {
+
+                    $total_translation_upgrades += count( $translation_upgrades );
+
+                    if ( ! empty( $translation_upgrades ) ) {
+                        foreach ( $translation_upgrades as $trans_upgrade ) {
+                            $slug                       = $trans_upgrade['slug'];
+                            $all_translations_updates[] = array(
+                                'id'               => $website->id,
+                                'name'             => $website->name,
+                                'translation_slug' => $slug,
+                            );
                         }
-                        if ( ! $website->is_ignoreThemeUpdates ) {
-                            $theme_upgrades[ $crrSlug ] = $premiumUpgrade;
+                    }
+                }
+
+                if ( is_array( $plugin_upgrades ) ) {
+                    $ignored_plugins = ! empty( $website->ignored_plugins ) ? json_decode( $website->ignored_plugins, true ) : array();
+                    if ( is_array( $ignored_plugins ) ) {
+                        $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
+
+                    }
+
+                    $ignored_plugins = ! empty( $userExtension->ignored_plugins ) ? json_decode( $userExtension->ignored_plugins, true ) : array();
+                    if ( is_array( $ignored_plugins ) ) {
+                        $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
+
+                    }
+
+                    $total_plugin_upgrades += count( $plugin_upgrades );
+
+                    if ( ! empty( $plugin_upgrades ) ) {
+                        foreach ( $plugin_upgrades as $slug => $value ) {
+                            $all_plugins_updates[] = array(
+                                'id'          => $website->id,
+                                'name'        => $website->name,
+                                'plugin_slug' => $slug,
+                            );
                         }
                     }
                 }
-            }
 
-            if ( is_array( $translation_upgrades ) ) {
+                if ( is_array( $theme_upgrades ) ) {
+                    $ignored_themes = ! empty( $website->ignored_themes ) ? json_decode( $website->ignored_themes, true ) : array();
+                    if ( is_array( $ignored_themes ) ) {
+                        $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
+                    }
 
-                $total_translation_upgrades += count( $translation_upgrades );
+                    $ignored_themes = ! empty( $userExtension->ignored_themes ) ? json_decode( $userExtension->ignored_themes, true ) : array();
+                    if ( is_array( $ignored_themes ) ) {
+                        $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
+                    }
 
-                if ( ! empty( $translation_upgrades ) ) {
-                    foreach ( $translation_upgrades as $trans_upgrade ) {
-                        $slug                       = $trans_upgrade['slug'];
-                        $all_translations_updates[] = array(
-                            'id'               => $website->id,
-                            'name'             => $website->name,
-                            'translation_slug' => $slug,
-                        );
+                    $total_theme_upgrades += count( $theme_upgrades );
+
+                    if ( ! empty( $theme_upgrades ) ) {
+                        foreach ( $theme_upgrades as $slug => $value ) {
+                            $all_themes_updates[] = array(
+                                'id'         => $website->id,
+                                'name'       => $website->name,
+                                'theme_slug' => $slug,
+                            );
+                        }
                     }
                 }
-            }
 
-            if ( is_array( $plugin_upgrades ) ) {
-                $ignored_plugins = ! empty( $website->ignored_plugins ) ? json_decode( $website->ignored_plugins, true ) : array();
-                if ( is_array( $ignored_plugins ) ) {
-                    $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
-
-                }
-
-                $ignored_plugins = ! empty( $userExtension->ignored_plugins ) ? json_decode( $userExtension->ignored_plugins, true ) : array();
-                if ( is_array( $ignored_plugins ) ) {
-                    $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
-
-                }
-
-                $total_plugin_upgrades += count( $plugin_upgrades );
-
-                if ( ! empty( $plugin_upgrades ) ) {
-                    foreach ( $plugin_upgrades as $slug => $value ) {
-                        $all_plugins_updates[] = array(
-                            'id'          => $website->id,
-                            'name'        => $website->name,
-                            'plugin_slug' => $slug,
-                        );
-                    }
-                }
-            }
-
-            if ( is_array( $theme_upgrades ) ) {
-                $ignored_themes = ! empty( $website->ignored_themes ) ? json_decode( $website->ignored_themes, true ) : array();
-                if ( is_array( $ignored_themes ) ) {
-                    $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
-                }
-
-                $ignored_themes = ! empty( $userExtension->ignored_themes ) ? json_decode( $userExtension->ignored_themes, true ) : array();
-                if ( is_array( $ignored_themes ) ) {
-                    $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
-                }
-
-                $total_theme_upgrades += count( $theme_upgrades );
-
-                if ( ! empty( $theme_upgrades ) ) {
-                    foreach ( $theme_upgrades as $slug => $value ) {
-                        $all_themes_updates[] = array(
-                            'id'         => $website->id,
-                            'name'       => $website->name,
-                            'theme_slug' => $slug,
-                        );
-                    }
-                }
-            }
-
-            $pluginsIgnoredAbandoned_perSites = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
-            $pluginsIgnoredAbandoned_perSites = ! empty( $pluginsIgnoredAbandoned_perSites ) ? json_decode( $pluginsIgnoredAbandoned_perSites, true ) : array();
-            if ( is_array( $pluginsIgnoredAbandoned_perSites ) ) {
-                $pluginsIgnoredAbandoned_perSites = array_filter( $pluginsIgnoredAbandoned_perSites );
-            }
-
-            $themesIgnoredAbandoned_perSites = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' );
-            $themesIgnoredAbandoned_perSites = ! empty( $themesIgnoredAbandoned_perSites ) ? json_decode( $themesIgnoredAbandoned_perSites, true ) : array();
-            if ( is_array( $themesIgnoredAbandoned_perSites ) ) {
-                $themesIgnoredAbandoned_perSites = array_filter( $themesIgnoredAbandoned_perSites );
-            }
-
-            $plugins_outdate = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
-            $plugins_outdate = ! empty( $plugins_outdate ) ? json_decode( $plugins_outdate, true ) : array();
-
-            $themes_outdate = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' );
-            $themes_outdate = ! empty( $themes_outdate ) ? json_decode( $themes_outdate, true ) : array();
-
-            if ( is_array( $plugins_outdate ) ) {
+                $pluginsIgnoredAbandoned_perSites = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
+                $pluginsIgnoredAbandoned_perSites = ! empty( $pluginsIgnoredAbandoned_perSites ) ? json_decode( $pluginsIgnoredAbandoned_perSites, true ) : array();
                 if ( is_array( $pluginsIgnoredAbandoned_perSites ) ) {
-                    $plugins_outdate = array_diff_key( $plugins_outdate, $pluginsIgnoredAbandoned_perSites );
+                    $pluginsIgnoredAbandoned_perSites = array_filter( $pluginsIgnoredAbandoned_perSites );
                 }
 
-                if ( is_array( $decodedDismissedPlugins ) ) {
-                    $plugins_outdate = array_diff_key( $plugins_outdate, $decodedDismissedPlugins );
+                $themesIgnoredAbandoned_perSites = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' );
+                $themesIgnoredAbandoned_perSites = ! empty( $themesIgnoredAbandoned_perSites ) ? json_decode( $themesIgnoredAbandoned_perSites, true ) : array();
+                if ( is_array( $themesIgnoredAbandoned_perSites ) ) {
+                    $themesIgnoredAbandoned_perSites = array_filter( $themesIgnoredAbandoned_perSites );
                 }
 
-                $total_plugins_outdate += count( $plugins_outdate );
+                $plugins_outdate = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
+                $plugins_outdate = ! empty( $plugins_outdate ) ? json_decode( $plugins_outdate, true ) : array();
+
+                $themes_outdate = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' );
+                $themes_outdate = ! empty( $themes_outdate ) ? json_decode( $themes_outdate, true ) : array();
+
+                if ( is_array( $plugins_outdate ) ) {
+                    if ( is_array( $pluginsIgnoredAbandoned_perSites ) ) {
+                        $plugins_outdate = array_diff_key( $plugins_outdate, $pluginsIgnoredAbandoned_perSites );
+                    }
+
+                    if ( is_array( $decodedDismissedPlugins ) ) {
+                        $plugins_outdate = array_diff_key( $plugins_outdate, $decodedDismissedPlugins );
+                    }
+
+                    $total_plugins_outdate += count( $plugins_outdate );
+                }
+
+                if ( is_array( $themes_outdate ) ) {
+                    if ( is_array( $themesIgnoredAbandoned_perSites ) ) {
+                        $themes_outdate = array_diff_key( $themes_outdate, $themesIgnoredAbandoned_perSites );
+                    }
+
+                    if ( is_array( $decodedDismissedThemes ) ) {
+                        $themes_outdate = array_diff_key( $themes_outdate, $decodedDismissedThemes );
+                    }
+
+                    $total_themes_outdate += count( $themes_outdate );
+                }
             }
 
-            if ( is_array( $themes_outdate ) ) {
-                if ( is_array( $themesIgnoredAbandoned_perSites ) ) {
-                    $themes_outdate = array_diff_key( $themes_outdate, $themesIgnoredAbandoned_perSites );
-                }
-
-                if ( is_array( $decodedDismissedThemes ) ) {
-                    $themes_outdate = array_diff_key( $themes_outdate, $decodedDismissedThemes );
-                }
-
-                $total_themes_outdate += count( $themes_outdate );
+            if ( $globalView && ! empty( $cache_key ) ) {
+                $data = array(
+                    'total_wp_upgrades',
+                    'total_plugin_upgrades',
+                    'total_translation_upgrades',
+                    'total_theme_upgrades',
+                    'total_plugins_outdate',
+                    'total_themes_outdate',
+                    'all_wp_updates',
+                    'all_plugins_updates',
+                    'all_themes_updates',
+                    'all_translations_updates',
+                    'count_plugins',
+                    'count_themes',
+                    'sites_ids',
+                );
+                MainWP_Cache_Helper::add_cache( $cache_key, $cache_group, compact( $data ) );
             }
         }
 
@@ -451,7 +507,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $total_translation_upgrades,
             $all_translations_updates
         );
-        static::render_bottom( $websites, $globalView );
+        static::render_bottom( $sites_ids, $globalView );
     }
 
     /**
@@ -1096,21 +1152,14 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Render bottom of widget.
      *
-     * @param object $websites   Object containing child sites info.
-     * @param bool   $globalView Whether it's global or individual site view.
+     * @param array $sites_ids   Child sites ids.
+     * @param bool  $globalView Whether it's global or individual site view.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
      */
-    public static function render_bottom( $websites, $globalView ) {
-
-        MainWP_DB::data_seek( $websites, 0 );
-
-        $site_ids = array();
-        while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-            $site_ids[] = $website->id;
-        }
+    public static function render_bottom( $sites_ids, $globalView ) {
 
         /**
          * Action: mainwp_updatesoverview_widget_bottom
@@ -1122,7 +1171,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
          *
          * @since 4.0
          */
-        do_action( 'mainwp_updatesoverview_widget_bottom', $site_ids, $globalView );
+        do_action( 'mainwp_updatesoverview_widget_bottom', $sites_ids, $globalView );
         ?>
         <div class="ui modal" id="updatesoverview-backup-box" tabindex="0">
             <div class="header"><?php esc_html_e( 'Backup Check', 'mainwp' ); ?></div>
@@ -1133,9 +1182,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 <input id="updatesoverview-backup-ignore" type="button" name="<?php esc_attr_e( 'Ignore', 'mainwp' ); ?>" value="<?php esc_attr_e( 'Ignore', 'mainwp' ); ?>" class="button"/>
             </div>
         </div>
-
         <?php
-        MainWP_DB::free_result( $websites );
     }
 
     /**

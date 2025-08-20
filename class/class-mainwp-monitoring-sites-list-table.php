@@ -613,7 +613,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
         $extra_view           = array_unique( $extra_view );
         $params['extra_view'] = $extra_view;
 
-        $cache_group = MainWP_Cache_Helper::GC_SITES;
+        $cache_group = MainWP_Cache_Helper::CGR_SITES;
 
         $cache_key = MainWP_Cache_Helper::get_cache_key( 'sites_ids', $cache_group, $params );
 
@@ -667,7 +667,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      * @return int Total
      */
     public function get_total_sites_by_pramas( $params ) {
-        $cache_group = MainWP_Cache_Helper::GC_SITES;
+        $cache_group = MainWP_Cache_Helper::CGR_SITES;
         $cache_key   = MainWP_Cache_Helper::get_cache_key( 'total_sites', $cache_group, $params );
 
         return MainWP_Cache_Helper::instance()->get_cache(

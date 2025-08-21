@@ -101,12 +101,6 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $noticed   = 1; // default is noticed.
         if ( property_exists( $website, 'offline_checks_last' ) ) {
             $last_noticed = MainWP_DB::instance()->get_website_option( $website, 'http_status_notice_check_time', 0 );
-
-            if ( empty( $last_noticed ) ) {
-                MainWP_DB::instance()->update_website_option( $website->id, 'http_status_notice_check_time', time() );
-                return $noticed;
-            }
-
             if ( -1 === $check_result ) {
                 $noticed = 0;
                 if ( $last_noticed > time() - $threshold ) {

@@ -1327,6 +1327,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     'url'  => $site->url,
                     'code' => $code,
                 );
+                MainWP_DB::instance()->update_website_option( $site->id, 'http_status_notice_check_time', time() );
             }
         }
 

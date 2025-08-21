@@ -94,13 +94,19 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @param object $website  Object containing the website info.
      * @param int    $check_result The new HTTP code value.
      *
-     * @return int $noticed_value New HTTP status.
+     * @return int $noticed Noticed value.
      */
     public static function check_http_status_notification_threshold( $website, $check_result ) {
         $threshold = HOUR_IN_SECONDS;
         $noticed   = 1; // default is noticed.
         if ( property_exists( $website, 'offline_checks_last' ) ) {
-            $last_noticed = (int) $website->offline_checks_last;
+            $last_noticed = MainWP_DB::instance()->get_website_option( $website, 'http_status_notice_check_time', 0 );
+
+            if ( empty( $last_noticed ) ) {
+                MainWP_DB::instance()->update_website_option( $website->id, 'http_status_notice_check_time', time() );
+                return $noticed;
+            }
+
             if ( -1 === $check_result ) {
                 $noticed = 0;
                 if ( $last_noticed > time() - $threshold ) {

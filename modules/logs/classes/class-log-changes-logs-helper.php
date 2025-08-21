@@ -100,9 +100,11 @@ class Log_Changes_Logs_Helper {
             return false;
         }
 
-        $sync_last_created = $this->get_sync_changes_logs_last_created( $site_id );
-        $new_last_created  = 0;
-        $created_success   = false;
+        $sync_last_created          = $this->get_sync_changes_logs_last_created( $site_id );
+        $new_last_created           = 0;
+        $disabled_type_last_created = 0;
+
+        $created_success = false;
 
         $ignored_meta_fields = apply_filters( 'mainwp_module_log_sync_ignored_meta_fields', array( 'userdata', 'user_meta' ) );
 
@@ -129,6 +131,10 @@ class Log_Changes_Logs_Helper {
 
             $enable_log_type = apply_filters( 'mainwp_module_log_enable_insert_log_type', true, $data );
             if ( ! $enable_log_type ) {
+                // to fix issue of last sync value.
+                if ( $disabled_type_last_created < $item_created ) {
+                    $disabled_type_last_created = $item_created;
+                }
                 continue;
             }
 
@@ -189,8 +195,18 @@ class Log_Changes_Logs_Helper {
             }
         }
 
+        // to fix last created sync.
+        $update_sync_last_created = 0;
         if ( $new_last_created && $created_success ) {
-            MainWP_DB::instance()->update_website_option( $site_id, 'changes_logs_sync_last_created', $new_last_created );
+            $update_sync_last_created = $new_last_created;
+        }
+
+        if ( $disabled_type_last_created && $update_sync_last_created < $disabled_type_last_created ) {
+            $update_sync_last_created = $disabled_type_last_created;
+        }
+
+        if ( ! empty( $update_sync_last_created ) ) {
+            MainWP_DB::instance()->update_website_option( $site_id, 'changes_logs_sync_last_created', $update_sync_last_created );
         }
 
         return true;

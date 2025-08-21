@@ -97,14 +97,6 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 $formated_content,
                 $content_type
             );
-
-            if ( is_array( $sites_status ) ) {
-                $cur_site = current( $sites_status );
-                if ( ! empty( $cur_site['id'] ) ) {
-                    MainWP_DB::instance()->update_website_option( $cur_site['id'], 'http_status_notice_lasttime', time() );
-                }
-            }
-
             return true;
         }
 

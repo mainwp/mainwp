@@ -399,20 +399,18 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
         $time     = isset( $params['check_offline_time'] ) ? $params['check_offline_time'] : time();
 
         $new_check_result = $status ? 1 : -1; // 1 - online, -1 offline.
-        $noticed          = MainWP_Monitoring_Handler::check_http_status_notification_threshold( $website, $new_check_result );
 
-        // Save last status.
+        // Save last status, do not update http status notification.
         MainWP_DB::instance()->update_website_values(
             $website->id,
             array(
                 'offline_check_result' => $new_check_result, // 1 - online, -1 offline.
                 'offline_checks_last'  => $time,
                 'http_response_code'   => $new_code,
-                'http_code_noticed'    => $noticed,
             )
         );
 
-        MainWP_Logger::instance()->log_uptime_check( 'Check website status :: [website=' . (string) $website->url . '] :: [offline_check_result=' . ( $status ? 1 : -1 ) . '] :: [http_response_code=' . esc_html( $new_code ) . '] :: [http_code_noticed=' . esc_html( $noticed ) . ']' );
+        MainWP_Logger::instance()->log_uptime_check( 'Check website status :: [website=' . (string) $website->url . '] :: [offline_check_result=' . ( $status ? 1 : -1 ) . '] :: [http_response_code=' . esc_html( $new_code ) . ']' );
 
         return true;
     }

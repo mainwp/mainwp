@@ -73,6 +73,17 @@ class Log_DB extends MainWP_DB {
          */
         $record = apply_filters( 'mainwp_module_log_record_array', $record );
 
+        /**
+         * Hook mainwp_module_log_enable_insert_log_type.
+         *
+         * @since 5.5.
+         */
+        $enable_log_type = apply_filters( 'mainwp_module_log_enable_insert_log_type', true, $record );
+
+        if ( ! $enable_log_type ) {
+            return false;
+        }
+
         $data = $this->sanitize_record( $record );
 
         if ( empty( $data ) ) {

@@ -697,12 +697,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      */
     public function no_items() {
         ?>
-        <div class="ui center aligned segment">
-            <i class="globe massive icon"></i>
-            <div class="ui header">
-                <?php esc_html_e( 'No records found.', 'mainwp' ); ?>
-            </div>
-        </div>
+        <?php esc_html_e( 'No records found.', 'mainwp' ); ?>
         <?php
     }
 
@@ -889,9 +884,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         $count = $this->get_total_found_rows();
         if ( empty( $count ) ) {
             ?>
-        <div id="sites-table-count-empty" style="display: none;">
-            <?php $this->no_items(); ?>
-        </div>
+            <div id="sites-table-count-empty" style="display: none;">
+                <?php $this->no_items(); ?>
+            </div>
             <?php
         }
         ?>

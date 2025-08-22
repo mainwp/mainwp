@@ -210,6 +210,10 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'className' => 'mainwp-created-cell',
         );
         $defines[] = array(
+            'targets'   => 'manage-icon-column',
+            'className' => 'manage-icon-cell center aligned collapsing',
+        );
+        $defines[] = array(
             'targets'   => 'manage-site-column',
             'className' => 'column-site-bulk mainwp-site-cell',
         );

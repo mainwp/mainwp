@@ -1955,37 +1955,35 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         $website_id = intval( $website_id );
-        $website = MainWP_DB::instance()->get_website_by_id( $website_id );
+        $website    = MainWP_DB::instance()->get_website_by_id( $website_id );
         if ( ! $website ) {
             return '';
         }
 
         $site_name = esc_html( stripslashes( $website->name ) );
-        $site_url = esc_url( $website->url );
-        $nice_url = esc_html( static::get_nice_url( $website->url ) );
-        
+        $site_url  = esc_url( $website->url );
+        $nice_url  = esc_html( static::get_nice_url( $website->url ) );
+
         $html = '<div class="mainwp-site-display">';
-        
+
         // WP Admin link (if enabled and user has permission)
         if ( $wp_admin && \mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) {
             $admin_url = MainWP_Site_Open::get_open_site_url( $website->id, '', false );
-            $html .= '<a href="' . esc_url( $admin_url ) . '" class="open_newwindow_wpadmin" target="_blank" data-tooltip="' . esc_attr__( 'Go to WP Admin', 'mainwp' ) . '" data-position="top left" data-inverted=""><i class="sign in icon"></i></a> ';
+            $html     .= '<a href="' . esc_url( $admin_url ) . '" class="open_newwindow_wpadmin" target="_blank" data-tooltip="' . esc_attr__( 'Go to WP Admin', 'mainwp' ) . '" data-position="top left" data-inverted=""><i class="sign in icon"></i></a> ';
         } elseif ( $wp_admin ) {
             $html .= '<i class="sign in icon"></i> ';
         }
-        
+
         // Site name with dashboard link
         $html .= '<a href="' . esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . intval( $website->id ) ) ) . '">' . $site_name . '</a>';
-        
+
         // Site URL
         $html .= '<div><span class="ui small text">';
         $html .= '<a href="' . $site_url . '" class="mainwp-may-hide-referrer open_site_url ui grey text" target="_blank">' . $nice_url . '</a>';
         $html .= '</span></div>';
-        
+
         $html .= '</div>';
-        
+
         return $html;
     }
 }
-
-

@@ -10,6 +10,7 @@
 namespace MainWP\Dashboard\Module\Log;
 
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Logger;
 
 /**
  * Class Log_Changes_Logs_Helper
@@ -75,7 +76,7 @@ class Log_Changes_Logs_Helper {
 
             // to sure.
             if ( empty( static::$last_log_created ) ) {
-                static::$last_log_created = time();
+                static::$last_log_created = time() - DAY_IN_SECONDS; // to prevent "strange" issue.
             }
         }
 
@@ -95,6 +96,8 @@ class Log_Changes_Logs_Helper {
      * @return bool
      */
     public function sync_changes_logs( $site_id, $sync_changes, $website ) { // phpcs:ignore -- NOSONAR - complex.
+
+        MainWP_Logger::instance()->log_events( 'sites-changes', 'Sync changes logs :: [site_id=' . $site_id . '] :: [count=' . ( is_array( $sync_changes ) ? count( $sync_changes ) : 0 ) . ']' );
 
         if ( empty( $sync_changes ) || ! is_array( $sync_changes ) ) {
             return false;

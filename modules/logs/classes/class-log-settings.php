@@ -310,6 +310,26 @@ class Log_Settings {
 
 
     /**
+     * Method load_actions_logs_selection_settings().
+     *
+     * @return array Enable logs types.
+     */
+    public static function load_actions_logs_selection_settings() {
+        if ( null === static::$enable_logs_items ) {
+            $enable_logs = get_option( 'mainwp_module_log_settings_logs_selection_data' );
+
+            if ( ! empty( $enable_logs ) ) {
+                static::$enable_logs_items = json_decode( $enable_logs, true );
+            }
+
+            if ( ! is_array( static::$enable_logs_items ) ) {
+                static::$enable_logs_items = array();
+            }
+        }
+        return static::$enable_logs_items;
+    }
+
+    /**
      * Method is_action_log_enabled().
      *
      * @param string $name Log item name.
@@ -323,17 +343,7 @@ class Log_Settings {
             return true;
         }
 
-        if ( null === static::$enable_logs_items ) {
-            $enable_logs = get_option( 'mainwp_module_log_settings_logs_selection_data' );
-
-            if ( ! empty( $enable_logs ) ) {
-                static::$enable_logs_items = json_decode( $enable_logs, true );
-            }
-
-            if ( ! is_array( static::$enable_logs_items ) ) {
-                static::$enable_logs_items = array();
-            }
-        }
+        static::load_actions_logs_selection_settings();
 
         if ( isset( static::$enable_logs_items[ $type ][ $name ] ) ) {
             return ! empty( static::$enable_logs_items[ $type ][ $name ] ) ? true : false;
@@ -348,6 +358,36 @@ class Log_Settings {
         }
 
         return true;
+    }
+
+    /**
+     * Method get_disabled_logs_type().
+     *
+     * @param string $type Log type dashboard|nonmainwpchanges|changeslogs.
+     *
+     * @return mixed Disabled logs settings.
+     */
+    public static function get_disabled_logs_type( $type = 'dashboard' ) {
+        if ( ! in_array( $type, array( 'dashboard', 'nonmainwpchanges', 'changeslogs' ) ) ) {
+            return false;
+        }
+
+        static::load_actions_logs_selection_settings();
+
+        $selection_items_type = isset( static::$enable_logs_items[ $type ] ) ? static::$enable_logs_items[ $type ] : array();
+
+        if ( ! is_array( $selection_items_type ) || empty( $selection_items_type ) ) {
+            return array();
+        }
+
+        return array_keys(
+            array_filter(
+                $selection_items_type,
+                function ( $value ) {
+                    return empty( $value );
+                }
+            )
+        );
     }
 
     /**

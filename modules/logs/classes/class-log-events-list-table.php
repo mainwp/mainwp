@@ -624,7 +624,11 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         $na   = 'N/A';
         switch ( (int) $record->log_type_id ) {
             case 1455:
-                $data['plugin'] = ! empty( $meta['plugin'] ) ? $meta['plugin'] : $na;
+                $name = ! empty( $meta['name'] ) ? $meta['name'] : '';
+                if ( empty( $name ) ) {
+                    $name = ! empty( $meta['plugin'] ) ? $meta['plugin'] : $na;
+                }
+                $data['plugin'] = $name;
                 break;
             case 1465:
                 $data['theme'] = ! empty( $meta['theme'] ) ? basename( $meta['theme'] ) : $na;

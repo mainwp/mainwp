@@ -77,6 +77,13 @@ class Rest_Api_V1 { //phpcs:ignore -- NOSONAR - multi methods.
      * Adds an action to create the rest API endpoints if activated in the plugin settings.
      */
     public function init() {
+        add_action( 'init', array( &$this, 'init_hooks' ), 9 ); // Fix the issue where database tables are not created on a fresh install.
+    }
+
+    /**
+     * Method init hooks.
+     */
+    public function init_hooks() {
         if ( $this->is_rest_api_enabled() ) {
             add_filter( 'mainwp_rest_api_validate', array( &$this, 'rest_api_validate' ), 10, 2 ); // to compatible version 1 rest api validate.
             // run API.

@@ -101,7 +101,7 @@ jQuery(function($) {
 	 * @return string The mShot URL;
 	 */
 	function mainwp_preview_mshot_url(linkUrl, retry) {
-		let mshotUrl = '//s0.wordpress.com/mshots/v1/' + encodeURIComponent(linkUrl) + '?w=900';
+		let mshotUrl = '//s0.wp.com/mshots/v1/' + encodeURIComponent(linkUrl) + '?w=900';
 
 		if (retry) {
 			mshotUrl += '&r=' + encodeURIComponent(retry);

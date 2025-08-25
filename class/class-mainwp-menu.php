@@ -494,11 +494,12 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         foreach ( $subPages as $subPage ) {
             if ( ! isset( $subPage['menu_hidden'] ) || ( isset( $subPage['menu_hidden'] ) && empty( $subPage['menu_hidden'] ) ) ) {
-                $_item = array(
-                    'title'      => $subPage['title'],
+                $sub_slug = isset( $subPage['slug'] ) ? $subPage['slug'] : '';
+                $_item    = array(
+                    'title'      => isset( $subPage['title'] ) ? $subPage['title'] : '',
                     'parent_key' => $parentKey,
-                    'href'       => 'admin.php?page=' . $slug . $subPage['slug'],
-                    'slug'       => $slug . $subPage['slug'],
+                    'href'       => 'admin.php?page=' . $slug . $sub_slug,
+                    'slug'       => $slug . $sub_slug,
                     'right'      => '',
                 );
 

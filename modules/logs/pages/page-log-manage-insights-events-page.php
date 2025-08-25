@@ -477,11 +477,9 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                 <a href="javascript:void(0)" id="mainwp_sites_changes_bulk_dismiss_all_btn" class="ui mini green button"><?php esc_html_e( 'Dismiss All Changes', 'mainwp' ); ?></a>
             </div>
             <div class="eight wide right aligned middle aligned column">
-                <span data-tooltip="<?php esc_html_e( 'Click to filter sites.', 'mainwp' ); ?>" data-position="bottom right" data-inverted="">
-                    <a href="#" class="ui mini icon basic button" id="mainwp-sites-changes-filter-toggle-button">
-                        <i class="filter icon"></i> <?php esc_html_e( 'Filter Sites Changes', 'mainwp' ); ?>
-                    </a>
-                </span>
+                <a href="#" class="ui mini icon basic button" id="mainwp-sites-changes-filter-toggle-button">
+                    <i class="filter icon"></i> <?php esc_html_e( 'Filter Logs', 'mainwp' ); ?>
+                </a>
             </div>
         </div>
 

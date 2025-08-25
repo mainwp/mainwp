@@ -1,3 +1,10 @@
+.mainwp-ui a.mainwp-disabled-link {
+    pointer-events: none;
+    cursor: not-allowed;
+    opacity: 0.5;
+    text-decoration: none;
+}
+
 /* 22px - 24px */
 .mainwp-ui h1 {
     font-size: clamp(1.96rem, 0.47vi + 1.86rem, 2.29rem);
@@ -138,6 +145,10 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     padding: 0px;
 }
 
+.hidden-menu-item{
+    display: none !important;
+}
+
 /* Header */
 
 #mainwp-top-header {
@@ -185,8 +196,17 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     border-bottom: 1px solid #dadada;
 }
 
-.mainwp-sub-header #mainwp-sites-bulk-actions-menu.ui.selection.dropdown {
-    min-width: 20em;
+.mainwp-sub-header #mainwp-sites-bulk-actions-menu.ui.selection.dropdown,
+.mainwp-ui #mainwp-manage-plugins #mainwp-plugins-bulk-actions-wapper .ui.dropdown,
+.mainwp-ui #mainwp-manage-themes #mainwp-themes-bulk-actions-wapper .ui.dropdown {
+    min-width: 20em !important;
+}
+
+.mainwp-ui .mainwp-actions-bar .ui.mini.form .ui.dropdown,
+.mainwp-ui .mainwp-actions-bar.ui.mini.form .ui.dropdown,
+.mainwp-ui .mainwp-sub-header .ui.mini.form .ui.dropdown,
+.mainwp-ui .mainwp-sub-header.ui.mini.form .ui.dropdown {
+  font-size: 0.78571429rem;
 }
 
 /* Page Navigation */
@@ -260,7 +280,6 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
 }
 
 .mainwp-ui .ui.pagination.menu .item {
-    padding: 0;
     border: none;
     margin: 0;
     text-align: center;
@@ -269,7 +288,6 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
 .mainwp-ui .ui.pagination.menu .item:hover,
 .mainwp-ui .ui.pagination.menu .item.active {
     background: #7fb100;
-    padding: 0;
     border-radius: 0;
 }
 
@@ -317,6 +335,21 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     overflow-y: auto;
     overflow-x: hidden;
     padding-top: 25px;
+}
+
+#mainwp-support-menu {
+    text-align: center;
+    padding: 0.92857143em;
+}
+
+#mainwp-support-menu a#mainwp-help-menu-item {
+    color: #ffffff !important;
+}
+
+#mainwp-support-menu .icon {
+    margin: 0px !important;
+    font-size: 1.71428571em !important;
+    color: #ffffff !important;
 }
 
 #mainwp-version-label {
@@ -426,15 +459,6 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     margin-top: 5px;
 }
 
-.mainwp-main-mobile-navigation-container {
-    background-color: #1c1d1b;
-    display: none;
-}
-
-.mainwp-main-mobile-navigation-container .item.active {
-    background: rgba(255, 255, 255, 0.08) !important;
-}
-
 .mainwp-ui #mainwp-main-navigation-container.hoverli {
     background-color: #1c1d1b !important;
 }
@@ -492,6 +516,11 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
 
 #mainwp-main-menu .icon {
     color: #fff !important;
+}
+
+#mainwp-main-menu .icon.left.floated {
+    float: left !important;
+    margin-right: 1em !important;
 }
 
 /* Widgets */
@@ -626,14 +655,45 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
 }
 
 /* Tables */
-
+/*
 .mainwp-ui table.dataTable thead>tr>th span.dt-column-order {
+    position: relative !important;
+    left: 8px !important;
     right: 0px !important;
 }
+*/
+.mainwp-ui table.dataTable thead > tr > th .dt-column-header {
+    justify-content: start !important;
+    flex-direction: row !important;
+    gap: 0.5rem !important;
+}
 
-.mainwp-ui table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control::before,
-.mainwp-ui table.dataTable.dtr-inline.collapsed>tbody>tr>th.dtr-control::before {
-    background-color: rgba(0, 0, 0, 0.3);
+.mainwp-ui table.dataTable thead > tr > th .dt-column-header .dt-column-title {
+    flex-grow: 0 !important;
+}
+
+.mainwp-ui table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control:before,
+.mainwp-ui table.dataTable.dtr-inline.collapsed>tbody>tr>th.dtr-control:before {
+  background-color: none !important;
+  border: none !important;
+  content: "\f0da";
+  font-family: "icons", sans-serif;
+  margin-right: 0.5rem !important;
+}
+
+.mainwp-ui table.dataTable > tbody > tr.child span.dtr-title {
+    font-weight: 600 !important;
+    min-width: 50% !important;
+    text-align: left !important;
+}
+
+.mainwp-ui table.dataTable > tbody > tr.child span.dtr-data {
+    min-width: 50% !important;
+    text-align: right !important;
+}
+
+.mainwp-ui table.dataTable >tbody > tr.child ul.dtr-details > li {
+    border-bottom: 0px solid #000000 !important;
 }
 
 
@@ -728,6 +788,17 @@ table.mainwp-manage-wpsites-table .error a {
 
 #mainwp-manage-updates table tr.active table td {
     background: #f9ffea !important;
+}
+
+.mainwp-ui .master-checkbox.title .dropdown.dropdown-trigger.icon,
+.mainwp-ui .main-master-checkbox.title .accordion-trigger .icon,
+.mainwp-ui .master-checkbox.title .accordion-trigger .icon {
+    transform: rotate(-90deg);
+}
+.mainwp-ui .master-checkbox.active.title .dropdown.dropdown-trigger.icon,
+.mainwp-ui .main-master-checkbox.active.title .accordion-trigger .icon,
+.mainwp-ui .master-checkbox.active.title .accordion-trigger .icon {
+    transform: rotate(0deg);
 }
 
 /* Manaage Plugins & Themes */
@@ -1279,13 +1350,6 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
     display: inline-block;
 }
 
-
-th .sort.icon,
-th .up.icon,
-th .down.icon {
-    float: right;
-}
-
 .trigger-handle-arrow .icon {
     float: left;
 }
@@ -1413,6 +1477,13 @@ th .down.icon {
 #mainwp-posting-running,
 #mainwp-publish-dimmer {
     height: 100vh;
+    width: 100% !important
+}
+
+.mainwp-ui .ui.dimmer:has(#mainwp-posting-post-modal),
+.mainwp-ui .ui.dimmer:has(#mainwp-posting-page-modal) {
+    margin-top: 0 !important;
+    margin-left: 0 !important;
 }
 
 #plugin-information-footer {
@@ -1476,10 +1547,4 @@ th .down.icon {
     /* Make sure it's visible */
     bottom: 1.25rem !important;
     left: 1.25rem !important;
-}
-.master-checkbox.title .dropdown.dropdown-trigger.icon{
-    transform: rotate(-90deg);
-}
-.master-checkbox.active.title .dropdown.dropdown-trigger.icon{
-    transform: rotate(0deg);
 }

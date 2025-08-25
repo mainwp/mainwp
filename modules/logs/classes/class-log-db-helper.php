@@ -91,15 +91,50 @@ class Log_DB_Helper extends MainWP_DB {
     }
 
     /**
+     * Method get_sites_options().
+     *
+     * @param array $sites_ids Site Ids array.
+     * @param array $opts Site options array.
+     *
+     * @return array
+     */
+    public function get_sites_options( $sites_ids, $opts = array() ) {
+
+        $where_opts = implode(
+            '" OR name ="',
+            array_map(
+                function ( $val ) {
+                    return $this->escape( $val );
+                },
+                $opts
+            )
+        );
+
+        if ( empty( $where_opts ) ) {
+            return array();
+        }
+
+        $sql = sprintf(
+            'SELECT name,value,wpid FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid IN ( %s ) AND ( name="' . $where_opts . '" )',
+            implode( ',', array_unique( $sites_ids ) )
+        );
+
+        return $this->wpdb->get_results( $sql ); //phpcs:ignore -- ok.
+    }
+
+    /**
      * Method dismiss_all_changes().
      *
      * Handle dismiss all sites changes.
+     *
+     * Compatible method.
      *
      * @return mixed
      */
     public function dismiss_all_changes() {
         return $this->wpdb->update( $this->table_name( 'wp_logs' ), array( 'dismiss' => 1 ), array( 'dismiss' => 0 ) );
     }
+
 
     /**
      * Method count_events().
@@ -118,7 +153,7 @@ class Log_DB_Helper extends MainWP_DB {
      */
     public function get_logs_users() { //phpcs:ignore -- NOSONAR -complex.
         $where = MainWP_DB::instance()->get_sql_where_allow_access_sites( 'wp' );
-        $sql   = 'SELECT lo.log_id, lo.site_id, lo.user_id, lo.connector, wp.name, me.meta_log_id, me.meta_key, me.meta_value '
+        $sql   = 'SELECT lo.log_id, lo.site_id, lo.user_id, lo.user_login, lo.connector, wp.name, me.meta_log_id, me.meta_key, me.meta_value '
         . ', CASE
                 WHEN connector != "non-mainwp-changes" THEN "dashboard"
                 ELSE "wpadmin"
@@ -138,35 +173,60 @@ class Log_DB_Helper extends MainWP_DB {
                 if ( ! empty( $item->site_id ) && ! empty( $item->name ) && ! empty( $item->meta_value ) ) {
                     $info = json_decode( $item->meta_value, true );
                     if ( is_array( $info ) ) {
-                        if ( ! empty( $info['wp_user_id'] ) ) { // child site users.
+                        if ( 'non-mainwp-changes' === $item->connector ) { // child site users ID, 0 is child site system user.
+                            if ( ! empty( isset( $info['user_id'] ) ) && ! empty( $info['user_login'] ) ) {
+                                $act_user = $info['user_login'];
+                            } else {
+                                // to compatible.
+                                $act_user = $info['action_user'];
+                            }
+
+                            if ( 'wp_cron' === $act_user ) {
+                                $act_user = __( 'during WP Cron', 'mainwp' );
+                            }
+
                             $logs_users[ $item->log_id ] = array(
-                                'id'         => $item->user_id,
-                                'site_id'    => $item->site_id,
-                                'login'      => $info['action_user'],
-                                'nicename'   => $info['display_name'],
-                                'source'     => ! empty( $item->name ) ? $item->name : '',
-                                'wp_user_id' => $info['wp_user_id'],
+                                'id'                => $item->user_id,
+                                'site_id'           => $item->site_id,
+                                'login'             => $act_user,
+                                'nicename'          => $info['display_name'],
+                                'source'            => ! empty( $item->name ) ? $item->name : '', // site name.
+                                'is_dashboard_user' => 0,
                             );
-                        } elseif ( isset( $info['user_login'] ) ) { // dashboard users.
+                        } else { // dashboard users.
                             // to prevent add double dashboard users in the users selection.
                             if ( in_array( $item->user_id, $dash_users ) ) {
                                 continue;
                             }
+
+                            $user_login = '';
+
+                            if ( ! empty( $item->user_login ) ) {
+                                $user_login = $item->user_login;
+                            } elseif ( ! empty( $info['user_login'] ) ) { // compatible user login value.
+                                $user_login = $info['user_login'];
+                            }
+
                             $dash_users[] = $item->user_id;
-                            $nicename     = ! empty( $info['user_login'] ) ? $info['user_login'] : '';
+
+                            $nicename = $user_login;
                             if ( empty( $nicename ) ) {
                                 if ( ! empty( $info['agent'] ) ) {
                                     $nicename = $info['agent'];
+                                    if ( 'wp_cron' === $nicename ) {
+                                        $nicename = __( 'during WP Cron', 'mainwp' );
+                                    }
                                 } else {
                                     $nicename = 'N/A';
                                 }
                             }
                             $logs_users[ $item->log_id ] = array(
-                                'id'       => (int) $item->user_id,
-                                'site_id'  => $item->site_id,
-                                'login'    => $info['user_login'],
-                                'nicename' => $nicename,
-                                'source'   => 'dashboard',
+                                'id'                => (int) $item->user_id,
+                                'site_id'           => $item->site_id,
+                                'login'             => $user_login,
+                                'nicename'          => $nicename,
+                                'source'            => 'dashboard',
+                                'is_dashboard_user' => 1,
                             );
                         }
                     }
@@ -176,5 +236,71 @@ class Log_DB_Helper extends MainWP_DB {
         }
 
         return array();
+    }
+
+    /**
+     * Method get_logs_db_stats().
+     *
+     * @return array DB stats.
+     */
+    public function get_logs_db_stats() {
+        $sql_meta       = 'SELECT meta_key, COUNT(*) AS total
+            FROM ' . $this->table_name( 'wp_logs_meta' ) . '
+            GROUP BY meta_key
+            ORDER BY total DESC';
+        $sql_total      = 'SELECT COUNT(*) AS total FROM ' . $this->table_name( 'wp_logs' );
+        $sql_meta_total = 'SELECT COUNT(*) AS total FROM ' . $this->table_name( 'wp_logs_meta' );
+        return array(
+            'logs_count'   => $this->wpdb->get_var( $sql_total ), //phpcs:ignore --NOSONAR -ok.
+            'logs_meta_count'   => $this->wpdb->get_var( $sql_meta_total ), //phpcs:ignore --NOSONAR -ok.
+            'logs_meta_db_info' => $this->wpdb->get_results( $sql_meta ), //phpcs:ignore --NOSONAR -ok.
+        );
+    }
+
+    /**
+     * Get db size.
+     *
+     * @return string Return current db size.
+     */
+    public function count_legacy_dismissed() {
+        return $this->wpdb->get_var( 'SELECT count(*) FROM ' . $this->table_name( 'wp_logs' ) . ' WHERE dismiss = 1 ' ); //phpcs:ignore -- ok.
+    }
+
+    /**
+     * Get db size.
+     *
+     * @return string Return current db size.
+     */
+    public function get_db_size() {
+        $size = get_transient( 'mainwp_module_log_transient_db_logs_size' );
+        if ( false !== $size ) {
+            return $size;
+        }
+
+        global $wpdb;
+        $sql = $wpdb->prepare(
+            'SELECT
+        ROUND(SUM(DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024, 2)
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE
+        TABLE_SCHEMA = %s
+        AND (
+        table_name = %s
+        OR table_name = %s
+        OR table_name = %s
+        OR table_name = %s
+        )',
+            $wpdb->dbname,
+            $wpdb->mainwp_tbl_logs,
+            $wpdb->mainwp_tbl_logs_meta,
+            $this->table_name( 'wp_logs_archive' ),
+            $this->table_name( 'wp_logs_meta_archive' )
+        );
+
+        $dbsize_mb = $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery -- prepared SQL.
+
+        set_transient( 'mainwp_module_log_transient_db_logs_size', $dbsize_mb, 15 * MINUTE_IN_SECONDS );
+
+        return $dbsize_mb;
     }
 }

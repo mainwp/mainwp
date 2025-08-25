@@ -80,8 +80,6 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                     return '<a href="' . esc_attr( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="instagram grey icon"></i></a>';
                 case 'client_linkedin':
                     return '<a href="' . esc_attr( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="linkedin grey icon"></i></a>';
-                case 'contact_name':
-                    return esc_html( $item[ $column_name ] );
                 default:
                     return $item[ $column_name ];
             }
@@ -388,8 +386,8 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
             </tbody>
         </table>
         <div id="mainwp-loading-sites" style="display: none;">
-            <div class="ui active inverted dimmer">
-                <div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading ...', 'mainwp' ); ?></div>
+            <div class="ui active dimmer">
+                <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
             </div>
         </div>
         <?php MainWP_UI::render_modal_edit_notes( 'client' ); ?>

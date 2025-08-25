@@ -395,12 +395,40 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @param mixed $timestamp Timestamp to format.
      * @param mixed $with_tz_info Return date time with timezone infor.
+     * @param mixed $use_tzformat Input tz format, to support display tz child site format.
      *
      * @return string Formatted timestamp.
      */
-    public static function format_timezone( $timestamp, $with_tz_info = false ) {
-        $tzinfo      = '';
+    public static function format_timezone( $timestamp, $with_tz_info = false, $use_tzformat = false ) {
+        $tzinfo = '';
+        if ( false !== $use_tzformat ) {
+            if ( is_array( $use_tzformat ) && ( isset( $use_tzformat['timezone_string'] ) || isset( $use_tzformat['gmt_offset'] ) || isset( $use_tzformat['date_format'] ) || isset( $use_tzformat['time_format'] ) ) ) {
+                $wp_timezone = ! empty( $use_tzformat['timezone_string'] ) ? $use_tzformat['timezone_string'] : '';
+
+                $format = '';
+                if ( ! empty( $use_tzformat['date_format'] ) ) {
+                    $format .= $use_tzformat['date_format'] . ' ';
+                }
+                if ( ! empty( $use_tzformat['time_format'] ) ) {
+                    $format .= $use_tzformat['time_format'] . ' ';
+                }
+                $format = rtrim( $format );
+
+                if ( empty( $wp_timezone ) ) {
+                    $gmt = ! empty( $use_tzformat['gmt_offset'] ) ? $use_tzformat['gmt_offset'] : 0;
+                    return date_i18n( $format, $timestamp, $gmt );
+                }
+
+                $datetime = new \DateTime( '@' . $timestamp );
+                $datetime->setTimezone( new \DateTimeZone( $wp_timezone ) );
+
+                return $datetime->format( $format );
+            }
+            return '';
+        }
+
         $wp_timezone = get_option( 'timezone_string' );
+
         if ( ! $wp_timezone ) {
             if ( $with_tz_info ) {
                 $tzinfo = ' ( UTC ' . get_option( 'gmt_offset' ) . ' )';
@@ -1885,5 +1913,77 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $tooltip = 'Indexing status unknown. Resync the site or check manually in WordPress Settings > Reading.';
         }
         echo '<span data-tooltip="' . $tooltip . '" data-position="left center" data-inverted=""><i class="' . $icon . ' icon"></i></span>';  //phpcs:ignore -- ok.
+    }
+
+    /**
+     * Returns the appropriate Fomantic UI color class based on number of updates
+     *
+     * @param int $update_count Number of available updates.
+     *
+     * @return string CSS class for the element
+     */
+    public static function mainwp_get_update_count_class( $update_count ) {
+        // Convert to integer using intval().
+        $update_count = intval( $update_count );
+
+        // Ensure count is not negative.
+        if ( 0 > $update_count ) {
+            $update_count = 0;
+        }
+
+        if ( 0 === $update_count ) {
+            return 'grey';
+        } elseif ( $update_count >= 1 && $update_count <= 3 ) {
+            return 'yellow';
+        } elseif ( $update_count >= 4 && $update_count <= 5 ) {
+            return 'orange';
+        } else {
+            return 'red';
+        }
+    }
+
+    /**
+     * Display site name and URL with optional WP Admin link.
+     *
+     * @param int|string $website_id Site ID.
+     * @param bool       $wp_admin   Whether to show WP Admin link.
+     * @return string HTML markup for site display.
+     */
+    public static function mainwp_display_site( $website_id = '', $wp_admin = true ) {
+        if ( empty( $website_id ) || ! static::ctype_digit( $website_id ) ) {
+            return '';
+        }
+
+        $website_id = intval( $website_id );
+        $website    = MainWP_DB::instance()->get_website_by_id( $website_id );
+        if ( ! $website ) {
+            return '';
+        }
+
+        $site_name = esc_html( stripslashes( $website->name ) );
+        $site_url  = esc_url( $website->url );
+        $nice_url  = esc_html( static::get_nice_url( $website->url ) );
+
+        $html = '<div class="mainwp-site-display">';
+
+        // WP Admin link (if enabled and user has permission)
+        if ( $wp_admin && \mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) {
+            $admin_url = MainWP_Site_Open::get_open_site_url( $website->id, '', false );
+            $html     .= '<a href="' . esc_url( $admin_url ) . '" class="open_newwindow_wpadmin" target="_blank" data-tooltip="' . esc_attr__( 'Go to WP Admin', 'mainwp' ) . '" data-position="top left" data-inverted=""><i class="sign in icon"></i></a> ';
+        } elseif ( $wp_admin ) {
+            $html .= '<i class="sign in icon"></i> ';
+        }
+
+        // Site name with dashboard link
+        $html .= '<a href="' . esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . intval( $website->id ) ) ) . '">' . $site_name . '</a>';
+
+        // Site URL
+        $html .= '<div><span class="ui small text">';
+        $html .= '<a href="' . $site_url . '" class="mainwp-may-hide-referrer open_site_url ui grey text" target="_blank">' . $nice_url . '</a>';
+        $html .= '</span></div>';
+
+        $html .= '</div>';
+
+        return $html;
     }
 }

@@ -97,7 +97,7 @@ class Cost_Tracker_Hooks {
      * @return array $input Input.
      */
     public function hook_widgets_screen_options( $input ) {
-        $input['advanced-cost-tracker-widget'] = esc_html__( 'Cost Tracker', 'mainwp' );
+        $input['advanced-cost-tracker-widget'] = esc_html__( 'Cost Tracker (Individual Site Overview page)', 'mainwp' );
         return $input;
     }
 

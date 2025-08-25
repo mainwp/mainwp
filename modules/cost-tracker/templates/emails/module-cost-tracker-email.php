@@ -34,12 +34,13 @@ if ( empty( $heading ) ) {
              * @since 4.0
              */
             do_action( 'mainwp_module_cost_tracker_email_header' );
+            // old html style for email clients display.
             ?>
-            <table style="border:0;height:100%;padding:0;border-spacing:0;margin-top:30px;margin-bottom:30px;">
+            <table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%" style="margin-top:30px;margin-bottom:30px;" aria-hidden="true">
                 <tr>
-                    <td style="text-align:center;vertical-align:top;">
-                        <table style="border:0;padding:0;border-spacing:0;width:600px;background-color:#ffffff;border:1px solid #dedede;box-shadow: 0 1px 4px rgba(0,0,0,0.1);border-radius:3px;padding-bottom:30px;">
-                            <!-- Header -->
+                    <td align="center" valign="top">
+                        <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color:#ffffff;border:1px solid #dedede;box-shadow: 0 1px 4px rgba(0,0,0,0.1);border-radius:3px;padding-bottom:30px;" aria-hidden="true">
+                        <!-- Header -->
                             <tr>
                                 <td style="text-align:center;vertical-align:top;">
                                     <table style="border:0;width:600px;padding:0;border-spacing:0;">

@@ -99,17 +99,27 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
         }
         $open_download = ! empty( $params['filedl'] ) ? true : false;
         $close_window  = ! empty( $_GET['closeWindow'] ) ? true : false; //phpcs:ignore -- ok.
+
+        /**
+         * Action: mainwp_site_go_to_wpadmin
+         *
+         * Fire before go to wp admin child site.
+         *
+         * @since 5.5
+         */
+        do_action( 'mainwp_site_go_to_wpadmin', $website, $location, $params );
+
         ?>
         <div class="ui segment" style="padding: 25rem">
-            <div class="ui active inverted dimmer <?php echo $open_download || $close_window ? 'open-site-close-window' : ''; ?>">
+            <div class="ui active dimmer <?php echo $open_download || $close_window ? 'open-site-close-window' : ''; ?>">
                 <?php
                 if ( $open_download ) {
                     ?>
-                    <div class="ui massive text loader"><?php esc_html_e( 'Downloading...', 'mainwp' ); ?></div>
+                    <div class="ui double text loader"><?php esc_html_e( 'Downloading...', 'mainwp' ); ?></div>
                     <?php
                 } else {
                     ?>
-                    <div class="ui massive text loader"><?php esc_html_e( 'Redirecting...', 'mainwp' ); ?></div>
+                    <div class="ui double text loader"><?php esc_html_e( 'Redirecting...', 'mainwp' ); ?></div>
                     <?php
                 }
                 ?>
@@ -166,8 +176,8 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
     public static function open_site_restore( $website, $file, $size ) {
         ?>
         <div class="ui segment" style="padding: 25rem">
-            <div class="ui active inverted dimmer">
-                <div class="ui massive text loader"><?php esc_html_e( 'Redirecting...', 'mainwp' ); ?></div>
+            <div class="ui active dimmer">
+                <div class="ui massive double text loader"><?php esc_html_e( 'Redirecting...', 'mainwp' ); ?></div>
             </div>
             <?php
 
@@ -212,8 +222,8 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
     public static function open_site_location( $website, $open_location ) {
         ?>
         <div class="ui segment" style="padding: 25rem">
-            <div class="ui active inverted dimmer">
-                <div class="ui massive text loader"><?php esc_html_e( 'Redirecting...', 'mainwp' ); ?></div>
+            <div class="ui active dimmer">
+                <div class="ui massive double text loader"><?php esc_html_e( 'Redirecting...', 'mainwp' ); ?></div>
             </div>
             <?php
 

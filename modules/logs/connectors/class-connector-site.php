@@ -35,6 +35,7 @@ class Connector_Site extends Log_Connector {
         'mainwp_site_reconnected', // site::reconnected.
         'mainwp_site_suspended', // site::updated suspended value.
         'mainwp_site_tag_action',
+        'mainwp_site_go_to_wpadmin',
     );
 
     /**
@@ -60,6 +61,7 @@ class Connector_Site extends Log_Connector {
             'suspend'   => esc_html__( 'Suspend', 'mainwp' ),
             'unsuspend' => esc_html__( 'Unsuspend', 'mainwp' ),
             'reconnect' => esc_html__( 'Reconnected', 'mainwp' ),
+            'opensite'  => esc_html__( 'Go to WP Admin', 'mainwp' ),
         );
     }
 
@@ -363,5 +365,51 @@ class Connector_Site extends Log_Connector {
             $state
         );
         return true;
+    }
+
+    /**
+     * Go to wp admin actions.
+     *
+     * @param  mixed $website The site.
+     * @param  mixed $location Location.
+     * @param  mixed $params Other params.
+     *
+     * @return void.
+     */
+    public function callback_mainwp_site_go_to_wpadmin( $website, $location, $params = array() ) {
+
+        if ( empty( $website ) || ! is_object( $website ) || empty( $website->id ) ) {
+            return;
+        }
+
+        $user = wp_get_current_user();
+
+        if ( empty( $user ) ) {
+            return;
+        }
+
+        if ( ! is_array( $params ) ) {
+            $params = array();
+        }
+
+        $message = esc_html_x(
+            '%1$s',
+            '1. Item',
+            'mainwp'
+        );
+
+        $args = array(
+            'item' => esc_html__( 'Go to WP Admin', 'mainwp' ),
+        );
+
+        $action = 'opensite';
+
+        $this->log(
+            $message,
+            $args,
+            $website->id,
+            'sites',
+            $action
+        );
     }
 }

@@ -64,11 +64,13 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     if ( isset( $subPages ) && is_array( $subPages ) ) {
                         foreach ( $subPages as $subPage ) {
                             if ( ! isset( $subPage['menu_hidden'] ) || ( isset( $subPage['menu_hidden'] ) && true !== $subPage['menu_hidden'] ) ) {
-                                if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageSites' . $subPage['slug'] ) ) {
+                                $sub_slug  = isset( $subPage['slug'] ) ? $subPage['slug'] : '';
+                                $sub_title = isset( $subPage['title'] ) ? $subPage['title'] : '';
+                                if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageSites' . $sub_slug ) ) {
                                     continue;
                                 }
                                 ?>
-                                <a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageSites' . $subPage['slug'] ) ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
+                                <a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageSites' . $sub_slug ) ); ?>" class="mainwp-submenu"><?php echo esc_html( $sub_title ); ?></a>
                                 <?php
                             }
                         }

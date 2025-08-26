@@ -155,7 +155,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public function init() {
         $enabled = get_option( 'mainwp_actionlogs' );
-        if ( false === $enabled ) {
+        if ( false === $enabled && ! get_transient( 'mainwp_transient_action_logs' ) ) {
             $sites_count = MainWP_DB::instance()->get_websites_count();
             if ( empty( $sites_count ) ) {
                 set_transient( 'mainwp_transient_action_logs', true, 2 * WEEK_IN_SECONDS );

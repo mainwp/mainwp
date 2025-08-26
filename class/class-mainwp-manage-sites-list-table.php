@@ -243,6 +243,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             'site_health'    => array( 'site_health', false ),
             'status_code'    => array( 'status_code', false ),
             'notes'          => array( 'notes', false ),
+            'ip'             => array( 'ip', false ),
             'phpversion'     => array( 'phpversion', false ),
             'update'         => array( 'update', false ),
             'added_datetime' => array( 'added_datetime', false ),
@@ -283,6 +284,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             'client_name'    => esc_html__( 'Client', 'mainwp' ),
             'security'       => esc_html__( 'Security', 'mainwp' ),
             'language'       => esc_html__( 'Language', 'mainwp' ),
+            'ip'             => esc_html__( 'Server IP', 'mainwp' ),
             'index'          => esc_html__( 'Indexable', 'mainwp' ),
             'uptime'         => esc_html__( 'Uptime', 'mainwp' ),
             'last_sync'      => esc_html__( 'Last Sync', 'mainwp' ),
@@ -458,6 +460,10 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         );
         $defines[] = array(
             'targets'   => array( 'manage-language-column' ),
+            'className' => 'center aligned collapsing',
+        );
+        $defines[] = array(
+            'targets'   => array( 'manage-ip-column' ),
             'className' => 'center aligned collapsing',
         );
         $defines[] = array(
@@ -755,6 +761,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                             END ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'phpversion' === $req_orderby ) {
                     $orderby = ' INET_ATON( SUBSTRING_INDEX( CONCAT( SUBSTRING_INDEX(wp_optionview.phpversion, "-", 1), ".0.0.0.0" ), ".", 4) ) ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+                } elseif ( 'ip' === $req_orderby ) {
+                    // Sort by Server IP (string sort covers both IPv4 and IPv6).
+                    $orderby = ' wp.ip ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'status' === $req_orderby ) {
                     $orderby = 'CASE true
                                             WHEN (offline_check_result = -1)
@@ -1854,6 +1863,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                             <span style="display: none" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
                     <?php } elseif ( 'phpversion' === $column_name ) { ?>
                         <?php echo ! empty( $website['phpversion'] ) ? '<i class="php icon"></i> ' . esc_html( substr( $website['phpversion'], 0, 6 ) ) : ''; ?>
+                    <?php } elseif ( 'ip' === $column_name ) { ?>
+                        <?php echo ! empty( $website['ip'] ) ? esc_html( $website['ip'] ) : ''; ?>
                     <?php } elseif ( 'language' === $column_name ) { ?>
                         <?php MainWP_Utility::get_language_code_as_flag( ! empty( $website_info['site_lang'] ) ? $website_info['site_lang'] : '' ); ?>
                     <?php } elseif ( 'index' === $column_name ) { ?>
@@ -2270,6 +2281,10 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 </td>
         <?php } elseif ( 'phpversion' === $column_name ) { ?>
                 <td class="collapsing center aligned mainwp-php-cell"><?php echo esc_html( substr( $website['phpversion'], 0, 6 ) ); ?></td>
+                <?php
+        } elseif ( 'ip' === $column_name ) {
+            ?>
+                <td class="collapsing center aligned mainwp-ip-cell"><?php echo ! empty( $website['ip'] ) ? esc_html( $website['ip'] ) : ''; ?></td>
                 <?php
         } elseif ( 'added_datetime' === $column_name ) {
             ?>

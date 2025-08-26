@@ -276,19 +276,24 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return true;
         }
 
-        if ( ! is_object( $website ) || empty( $website->id ) ) {
-            return false;
-        }
+        $site_id = is_object( $website ) && ! empty( $website->id ) ? $website->id : 0;
 
         $ignored_code = '';
-        if ( ! property_exists( $website, 'monitor_id' ) ) {
-            $primary_monitor = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site_id, 'issub', 0 );
 
+        if ( $site_id ) {
+
+            $primary_monitor = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site_id, 'issub', 0 );
+            $global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+
+            $mo_active = 0;
             if ( $primary_monitor ) {
-                $global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
-                $ignored_code    = MainWP_Uptime_Monitoring_Connect::instance()->get_up_codes( $primary_monitor, $global_settings );
+                $mo_active = MainWP_Uptime_Monitoring_Connect::get_apply_setting( 'active', (int) $primary_monitor->active, $global_settings, -1, 0 );
+            }
+
+            if ( $mo_active ) {
+                $ignored_code = MainWP_Uptime_Monitoring_Connect::instance()->get_up_codes( $primary_monitor, $global_settings );
             } else {
-                return false;
+                $ignored_code = is_array( $global_settings ) && isset( $global_settings['up_status_codes'] ) ? $global_settings['up_status_codes'] : '';
             }
         }
 
@@ -873,6 +878,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
             curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
             curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
+            curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
             curl_setopt( $ch, CURLOPT_ENCODING, 'none' );
             if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
                 $http_pass = stripslashes( $http_pass );

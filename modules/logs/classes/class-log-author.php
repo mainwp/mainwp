@@ -102,6 +102,26 @@ class Log_Author {
     }
 
     /**
+     * Get the full name display of the user
+     *
+     * @return string
+     */
+    public function get_full_name() { //phpcs:ignore -- NOSONAR - complex.
+        $fullname = '';
+        // child users.
+        if ( ! empty( $this->meta['full_name'] ) ) {
+            $fullname = esc_html( $this->meta['full_name'] );
+            if ( ! empty( $this->meta['ip'] ) ) {
+                $fullname .= ' ' . esc_html( $this->meta['ip'] );
+            }
+        }
+        if ( empty( $fullname ) && ! empty( $this->meta['username'] ) ) {
+                $fullname = esc_html( $this->meta['username'] );
+        }
+        return $fullname;
+    }
+
+    /**
      * Get the display name of the user
      *
      * @return string
@@ -111,7 +131,11 @@ class Log_Author {
         // child users.
         if ( isset( $this->meta['wp_user_id'] ) || isset( $this->meta['user_id'] ) ) { // 'user_id' to compare with old child wp.
             if ( ! empty( $this->meta['action_user'] ) ) {
-                return esc_html( $this->meta['action_user'] );
+                $act_user = esc_html( $this->meta['action_user'] );
+                if ( 'wp_cron' === $act_user ) {
+                    $act_user = 'during WP Cron';
+                }
+                return $act_user;
             } elseif ( ! empty( $this->meta['system_user_name'] ) ) {
                 return esc_html( $this->meta['system_user_name'] );
             }

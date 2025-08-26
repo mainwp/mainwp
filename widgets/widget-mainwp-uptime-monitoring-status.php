@@ -78,7 +78,7 @@ class MainWP_Uptime_Monitoring_Status { // phpcs:ignore Generic.Classes.OpeningB
         <div class="ui stackable grid mainwp-widget-footer">
             <div class="eight wide left aligned middle aligned column"></div>
             <div class="eight wide right aligned middle aligned column">
-                <a href="<?php echo esc_url( admin_url( 'admin.php?page=MonitoringSites' ) ); ?>"><?php esc_html_e( 'See Monitors', 'mainwp' ); ?></a>
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=MonitoringSites' ) ); ?>" class="ui mini basic button"><?php esc_html_e( 'See Monitors', 'mainwp' ); ?></a>
             </div>
         </div>
         <?php

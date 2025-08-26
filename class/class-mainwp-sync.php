@@ -9,8 +9,6 @@
 
 namespace MainWP\Dashboard;
 
-use MainWP\Dashboard\Module\Log\Log_Manager;
-
 /**
  * Class MainWP_Sync
  *
@@ -189,6 +187,8 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             if ( empty( $reg_verify ) ) {
                 $postdata['sync_regverify'] = 1;
             }
+
+            $postdata['params_logs'] = apply_filters( 'mainwp_module_logs_changes_logs_sync_params', '', $pWebsite->id, $postdata, $pWebsite );
 
             $synclist             = MainWP_Settings::get_instance()->get_data_list_to_sync();
             $postdata['syncdata'] = wp_json_encode( $synclist );
@@ -533,7 +533,14 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             if ( is_array( $information['child_site_actions_data'] ) && isset( $information['child_site_actions_data']['connected_admin'] ) ) {
                 unset( $information['child_site_actions_data']['connected_admin'] );
             }
-            Log_Manager::instance()->sync_log_site_actions( $pWebsite->id, $information['child_site_actions_data'], $pWebsite );
+            if ( class_exists( '\MainWP\Dashboard\Module\Log\Log_Manager' ) ) {
+                \MainWP\Dashboard\Module\Log\Log_Manager::instance()->sync_log_site_actions( $pWebsite->id, $information['child_site_actions_data'], $pWebsite );
+            }
+            $done = true;
+        }
+
+        if ( ! empty( $information['changes_logs_data'] ) && class_exists( '\MainWP\Dashboard\Module\Log\Log_Changes_Logs_Helper' ) ) {
+            \MainWP\Dashboard\Module\Log\Log_Changes_Logs_Helper::instance()->sync_changes_logs( $pWebsite->id, $information['changes_logs_data'], $pWebsite );
             $done = true;
         }
 

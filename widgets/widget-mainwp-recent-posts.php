@@ -269,7 +269,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
                 ?>
                 <div class="item">
-                    <div class="ui stackable grid">
+                    <div class="ui grid">
                         <input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_published[ $i ]['id'] ); ?>"/>
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_published[ $i ]['website']->id ); ?>"/>
                         <div class="fourteen wide column middle aligned">
@@ -361,7 +361,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 $name = wp_strip_all_tags( $recent_posts_draft[ $i ]['website']->name );
                 ?>
                 <div class="item">
-                    <div class="ui stackable grid">
+                    <div class="ui grid">
                         <input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_draft[ $i ]['id'] ); ?>"/>
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_draft[ $i ]['website']->id ); ?>"/>
                         <div class="fourteen wide column middle aligned">
@@ -452,7 +452,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 $name = wp_strip_all_tags( $recent_posts_pending[ $i ]['website']->name );
                 ?>
                 <div class="item">
-                    <div class="ui stackable grid">
+                    <div class="ui grid">
                         <input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_pending[ $i ]['id'] ); ?>"/>
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_pending[ $i ]['website']->id ); ?>"/>
                         <div class="fourteen wide column middle aligned">
@@ -543,7 +543,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $name = wp_strip_all_tags( $recent_posts_future[ $i ]['website']->name );
             ?>
                 <div class="item">
-                    <div class="ui stackable grid">
+                    <div class="ui grid">
                         <input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_future[ $i ]['id'] ); ?>"/>
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_future[ $i ]['website']->id ); ?>"/>
                         <div class="fourteen wide column middle aligned">
@@ -635,7 +635,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $name = wp_strip_all_tags( $recent_posts_trash[ $i ]['website']->name );
             ?>
             <div class="item">
-                <div class="ui stackable grid">
+                <div class="ui grid">
                     <input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_trash[ $i ]['id'] ); ?>"/>
                     <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_trash[ $i ]['website']->id ); ?>"/>
                     <div class="fourteen wide column middle aligned">

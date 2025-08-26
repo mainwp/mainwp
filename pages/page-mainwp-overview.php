@@ -377,6 +377,10 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         <?php printf( esc_html__( 'To hide or show a widget, click the Cog (%1$s) icon.', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
                 </div>
             <?php endif; ?>
+            <?php
+            do_action( 'mainwp_module_log_render_db_update_notice' );
+            do_action( 'mainwp_module_log_render_db_size_notice' );
+            ?>
             </div>
             <?php
             /**
@@ -389,6 +393,12 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             do_action( 'mainwp_before_overview_widgets', 'dashboard' );
             ?>
             <div id="mainwp-grid-wrapper" class="gridster">
+                <div id="mainwp-widgets-placeholder" class="ui page dimmer">
+                    <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
+                </div>
+                <script>
+                jQuery('#mainwp-widgets-placeholder').dimmer('show');
+                </script>
                 <?php MainWP_UI::do_widget_boxes( $screen->id ); ?>
             </div>
             <?php

@@ -81,19 +81,13 @@ class Connector_Non_Mainwp_Changes extends Log_Connector {
      *
      * @param object $website  website.
      * @param array  $record meta data.
-     * @param string $object_id Object Id.
      */
-    public function callback_mainwp_sync_site_log_install_actions( $website, $record, $object_id ) { //phpcs:ignore -- NOSONAR - complex method.
+    public function callback_mainwp_sync_site_log_install_actions( $website, $record ) { //phpcs:ignore -- NOSONAR - complex method.
 
-        if ( empty( $website ) || empty( $object_id ) || ! is_array( $record ) ) {
+        if ( empty( $website ) || ! is_array( $record ) ) {
             return;
         }
-
         $record['connector'] = $this->name;
-
-        $success = $this->log_record( $record );
-        if ( $success ) {
-            MainWP_DB::instance()->update_website_option( $website, 'non_mainwp_action_last_object_id', $record['created'] );
-        }
+        $this->log_record( $record );
     }
 }

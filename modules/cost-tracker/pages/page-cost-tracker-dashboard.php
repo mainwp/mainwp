@@ -446,57 +446,60 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
             $filtered = true;
         }
         ?>
-        <table class="ui single line table" id="mainwp-module-cost-tracker-sites-table" style="width:100%">
-            <thead>
-                <tr>
-                    <th scope="col" class="no-sort collapsing check-column column-check"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox"></span></th>
-                    <th id="cost_status" class="collapsing column-status"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                    <th id="icon" class="no-sort column-icon collapsing"></th>
-                    <th id="name" class="column-name"><?php esc_html_e( 'Name', 'mainwp' ); ?></th>
-                    <?php if ( $filtered ) : ?>
-                        <th id="per_site_price" class="no-sort collapsing column-site-price"><?php esc_html_e( 'Per Site Price', 'mainwp' ); ?></th>
-                        <th id="price" class="collapsing column-total-price"><?php esc_html_e( 'Total Price', 'mainwp' ); ?></th>
-                    <?php else : ?>
-                        <th id="price" class="collapsing column-price"><?php esc_html_e( 'Price', 'mainwp' ); ?></th>
-                    <?php endif; ?>
-                    <th id="license_type" class="collapsing column-license-type"><?php esc_html_e( 'License', 'mainwp' ); ?></th>
-                    <th id="product_type" class="collapsing column-product-type"><?php esc_html_e( 'Category', 'mainwp' ); ?></th>
-                    <th id="type" class="collapsing column-type"><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
-                    <th id="last_renewal" class="collapsing column-last-renewal"><?php esc_html_e( 'Purchased', 'mainwp' ); ?></th>
-                    <th id="payment_method" class="collapsing center aligned column-payment-method"><?php esc_html_e( 'Method', 'mainwp' ); ?></th>
-                    <th id="next_renewal" class="collapsing column-next-renewal"><?php esc_html_e( 'Renews', 'mainwp' ); ?></th>
-                    <th id="sites" class="no-sort collapsing center aligned column-sites"><?php esc_html_e( 'Sites', 'mainwp' ); ?></th>
-                    <th id="actions" class="no-sort collapsing right aligned column-actions"></th>
-                </tr>
-            </thead>
-            <tfoot>
-                <tr>
-                    <th scope="col" class="no-sort collapsing check-column column-check"><span class="ui checkbox"><input id="cb-select-all-bottom" type="checkbox"></span></th>
-                    <th id="cost_status-bottom" class="collapsing column-status"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                    <th id="icon-bottom" class="column-icon collapsing"></th>
-                    <th id="name-bottom" class="column-name" ><?php esc_html_e( 'Name', 'mainwp' ); ?></th>
-                    <?php if ( $filtered ) : ?>
-                        <th id="per_site_price-bottom" class="no-sort collapsing column-site-price"><?php esc_html_e( 'Per Site Price', 'mainwp' ); ?></th>
-                        <th id="price-bottom" class="collapsing column-price"><?php esc_html_e( 'Total Price', 'mainwp' ); ?></th>
-                    <?php else : ?>
-                        <th id="price-bottom" class="collapsing column-price"><?php esc_html_e( 'Price', 'mainwp' ); ?></th>
-                    <?php endif; ?>
-                    <th id="license_type-bottom" class="collapsing column-license-type"><?php esc_html_e( 'License', 'mainwp' ); ?></th>
-                    <th id="product_type-bottom" class="collapsing column-product-type"><?php esc_html_e( 'Category', 'mainwp' ); ?></th>
-                    <th id="type-bottom" class="column-type"><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
-                    <th id="last_renewal-bottom" class="collapsing column-last-renewal"><?php esc_html_e( 'Purchased', 'mainwp' ); ?></th>
-                    <th id="payment_method-bottom" class="collapsing center aligned column-payment-method"><?php esc_html_e( 'Method', 'mainwp' ); ?></th>
-                    <th id="next_renewal-bottom" class="collapsing column-next-renewal"><?php esc_html_e( 'Renews', 'mainwp' ); ?></th>
-                    <th id="sites-bottom" class="collapsing column-sites"><?php esc_html_e( 'Sites', 'mainwp' ); ?></th>
-                    <th id="actions-bottom" class="no-sort collapsing right aligned column-actions"></th>
-                </tr>
-            </tfoot>
-        </table>
         <div id="mainwp-loading-sites" style="display: none;">
-            <div class="ui active inverted dimmer">
-                <div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading ...', 'mainwp-time-tracker-extension' ); ?></div>
+            <div class="ui active page dimmer">
+                <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
             </div>
         </div>
+        <div id="mainwp-module-cost-tracker-sites-table-container" style="opacity:0;">
+            <table class="ui single line table" id="mainwp-module-cost-tracker-sites-table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th scope="col" class="no-sort collapsing check-column column-check"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox"></span></th>
+                        <th id="cost_status" class="collapsing column-status"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                        <th id="icon" class="no-sort column-icon collapsing"></th>
+                        <th id="name" class="column-name"><?php esc_html_e( 'Name', 'mainwp' ); ?></th>
+                        <?php if ( $filtered ) : ?>
+                            <th id="per_site_price" class="no-sort collapsing column-site-price"><?php esc_html_e( 'Per Site Price', 'mainwp' ); ?></th>
+                            <th id="price" class="collapsing column-total-price"><?php esc_html_e( 'Total Price', 'mainwp' ); ?></th>
+                        <?php else : ?>
+                            <th id="price" class="collapsing column-price"><?php esc_html_e( 'Price', 'mainwp' ); ?></th>
+                        <?php endif; ?>
+                        <th id="license_type" class="collapsing column-license-type"><?php esc_html_e( 'License', 'mainwp' ); ?></th>
+                        <th id="product_type" class="collapsing column-product-type"><?php esc_html_e( 'Category', 'mainwp' ); ?></th>
+                        <th id="type" class="collapsing column-type"><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
+                        <th id="last_renewal" class="collapsing column-last-renewal"><?php esc_html_e( 'Purchased', 'mainwp' ); ?></th>
+                        <th id="payment_method" class="collapsing center aligned column-payment-method"><?php esc_html_e( 'Method', 'mainwp' ); ?></th>
+                        <th id="next_renewal" class="collapsing column-next-renewal"><?php esc_html_e( 'Renews', 'mainwp' ); ?></th>
+                        <th id="sites" class="no-sort collapsing center aligned column-sites"><?php esc_html_e( 'Sites', 'mainwp' ); ?></th>
+                        <th id="actions" class="no-sort collapsing right aligned column-actions"></th>
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr>
+                        <th scope="col" class="no-sort collapsing check-column column-check"><span class="ui checkbox"><input id="cb-select-all-bottom" type="checkbox"></span></th>
+                        <th id="cost_status-bottom" class="collapsing column-status"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                        <th id="icon-bottom" class="column-icon collapsing"></th>
+                        <th id="name-bottom" class="column-name" ><?php esc_html_e( 'Name', 'mainwp' ); ?></th>
+                        <?php if ( $filtered ) : ?>
+                            <th id="per_site_price-bottom" class="no-sort collapsing column-site-price"><?php esc_html_e( 'Per Site Price', 'mainwp' ); ?></th>
+                            <th id="price-bottom" class="collapsing column-price"><?php esc_html_e( 'Total Price', 'mainwp' ); ?></th>
+                        <?php else : ?>
+                            <th id="price-bottom" class="collapsing column-price"><?php esc_html_e( 'Price', 'mainwp' ); ?></th>
+                        <?php endif; ?>
+                        <th id="license_type-bottom" class="collapsing column-license-type"><?php esc_html_e( 'License', 'mainwp' ); ?></th>
+                        <th id="product_type-bottom" class="collapsing column-product-type"><?php esc_html_e( 'Category', 'mainwp' ); ?></th>
+                        <th id="type-bottom" class="column-type"><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
+                        <th id="last_renewal-bottom" class="collapsing column-last-renewal"><?php esc_html_e( 'Purchased', 'mainwp' ); ?></th>
+                        <th id="payment_method-bottom" class="collapsing center aligned column-payment-method"><?php esc_html_e( 'Method', 'mainwp' ); ?></th>
+                        <th id="next_renewal-bottom" class="collapsing column-next-renewal"><?php esc_html_e( 'Renews', 'mainwp' ); ?></th>
+                        <th id="sites-bottom" class="collapsing column-sites"><?php esc_html_e( 'Sites', 'mainwp' ); ?></th>
+                        <th id="actions-bottom" class="no-sort collapsing right aligned column-actions"></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        
         <?php
         static::render_modal_edit_notes();
         static::render_screen_options();
@@ -617,6 +620,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                             },
                             "drawCallback": function( settings ) {
                                 this.api().tables().body().to$().attr( 'id', 'mainwp-module-cost-tracker-body-table' );
+                                jQuery( '#mainwp-module-cost-tracker-sites-table-container' ).css( 'opacity', '1' );
                                 mainwp_datatable_fix_menu_overflow();
                             },
                             "initComplete": function( settings, json ) {
@@ -1395,7 +1399,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                     </div>
                 </div>
                 <div class="three wide top aligned right aligned column">
-                    <div class="ui compact grid">
+                    <div class="ui compact stackable grid">
                         <div class="eight wide column"></div>
                         <div class="eight wide column">
                             <button class="ui mini green fluid button" id="module-cost-tracker-filter-save-segment-button" selected-segment-id="" selected-segment-name=""><?php esc_html_e( 'Save Segment', 'mainwp' ); ?></button>
@@ -1790,7 +1794,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
         <script type="text/javascript">
             jQuery( document ).ready( function () {
                 jQuery('#reset-subscriptionsites-settings').on( 'click', function () {
-                    mainwp_confirm(__( 'Are you sure.' ), function(){
+                    mainwp_confirm(__( 'Are you sure?' ), function(){
                         jQuery('.mainwp_hide_wpmenu_checkboxes input[id^="mainwp_show_column_"]').prop( 'checked', false );
                         //default columns
                         let cols = ['name','type','product_type','price','cost_status','license_type','last_renewal','next_renewal','payment_method','sites','actions'];

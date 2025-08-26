@@ -698,7 +698,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     </div>
                     <div class="right aligned middle aligned column">
                         <?php if ( 0 < $total_wp_upgrades ) : ?>
-                            <a href="<?php echo esc_url( $detail_wp_up ); ?>"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+                            <a href="<?php echo esc_url( $detail_wp_up ); ?>" class="ui mini basic button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -775,7 +775,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     </div>
                     <div class="right aligned middle aligned column">
                         <?php if ( ! empty( $total_plugin_upgrades ) ) : ?>
-                            <a href="<?php echo esc_url( $detail_plugins_up ); ?>"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+                            <a href="<?php echo esc_url( $detail_plugins_up ); ?>" class="ui mini basic button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -852,7 +852,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     </div>
                     <div class="right aligned middle aligned column">
                         <?php if ( ! empty( $total_theme_upgrades ) ) : ?>
-                            <a href="<?php echo esc_url( $detail_themes_up ); ?>"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+                            <a href="<?php echo esc_url( $detail_themes_up ); ?>" class="ui mini basic button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -915,7 +915,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     </div>
                     <div class="right aligned middle aligned column">
                         <?php if ( ! empty( $total_translation_upgrades ) ) : ?>
-                            <a href="<?php echo esc_url( $detail_trans_up ); ?>"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+                            <a href="<?php echo esc_url( $detail_trans_up ); ?>" class="ui mini basic button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -985,7 +985,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
                     </div>
                     <div class="right aligned middle aligned column">
-                        <a href="<?php echo esc_url( $detail_aban_plugins ); ?>"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+                        <a href="<?php echo esc_url( $detail_aban_plugins ); ?>" class="ui mini basic button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
                     </div>
                 </div>
             </div>
@@ -1039,7 +1039,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
                     </div>
                     <div class="right aligned middle aligned column">
-                        <a href="<?php echo esc_url( $detail_aban_themes ); ?>"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+                        <a href="<?php echo esc_url( $detail_aban_themes ); ?>" class="ui mini basic button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
                     </div>
                 </div>
             </div>

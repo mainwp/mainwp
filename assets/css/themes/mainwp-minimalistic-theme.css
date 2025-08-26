@@ -20,6 +20,8 @@
   /* Sets color for red elements. */
   --red-color: #D55E00;
 
+  --orange-color: #c47335;
+
   /* Sets color for blue elements. */
   --blue-color: #0072B2;
 
@@ -531,6 +533,13 @@ body.mainwp-ui.mainwp-custom-theme,
 
 .mainwp-ui.mainwp-custom-theme .ui.button.red {
   background-color: var(--red-color);
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.button.yellow {
+  background-color: var(--yellow-color);
+}
+.mainwp-ui.mainwp-custom-theme .ui.button.orange {
+  background-color: var(--orange-color);
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.mini.compact.button {

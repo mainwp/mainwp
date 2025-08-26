@@ -348,7 +348,6 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                     <button class="ui tiny basic button" id="mainwp-do-monitors-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
                 </div>
                 <div class="right aligned middle aligned column">
-                        <?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
                         <div id="mainwp-filter-sites-group" multiple="" class="ui selection multiple dropdown">
                             <input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
                             <i class="dropdown icon"></i>
@@ -742,8 +741,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             </tfoot>
     </table>
     <div id="mainwp-loading-sites" style="display: none;">
-    <div class="ui active inverted dimmer">
-    <div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading ...', 'mainwp' ); ?></div>
+    <div class="ui active dimmer">
+    <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
     </div>
     </div>
 
@@ -1499,7 +1498,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
     /**
      * Method column_site.
      *
-     * @param  mixed $website website.
+     * @param  mixed $website Website.
      *
      * @return void
      */

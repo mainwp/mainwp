@@ -521,8 +521,8 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             <div class="ui right pointing dropdown" style="z-index:999">
                             <i class="ellipsis vertical icon"></i>
                                 <div class="menu">
-                                <a class="item" href="admin.php?page=AddApiKeys&editkey=<?php echo esc_html( $endcoded_ck ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><i class="pen icon"></i><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
-                                <a class="item" href="javascript:void(0)" onclick="mainwp_restapi_remove_key_confirm(jQuery(this).closest('tr').find('.check-column INPUT:checkbox'));" ><i class="trash icon"></i><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+                                <a class="item" href="admin.php?page=AddApiKeys&editkey=<?php echo esc_html( $endcoded_ck ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+                                <a class="item" href="javascript:void(0)" onclick="mainwp_restapi_remove_key_confirm(jQuery(this).closest('tr').find('.check-column INPUT:checkbox'));" ><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
                                 </div>
                             </div>
                         </td>
@@ -858,13 +858,13 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     ?>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Enable API key', 'mainwp' ); ?></label>
-                        <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the REST API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                        <div class="ten wide column ui toggle checkbox">
                             <input type="checkbox" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" checked="true" aria-label="<?php esc_attr_e( 'Enable REST API key', 'mainwp' ); ?>"/>
                         </div>
                     </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'API key name', 'mainwp' ); ?></label>
-                        <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Name your API Key.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                        <div class="five wide column">
                             <input type="text" name="mainwp_rest_add_api_key_desc" id="mainwp_rest_add_api_key_desc" value="" aria-label="<?php esc_attr_e( 'API key name.', 'mainwp' ); ?>"/>
                         </div>
                     </div>

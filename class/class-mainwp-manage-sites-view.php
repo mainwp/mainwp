@@ -389,8 +389,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      */
     public static function render_import_sites() { // phpcs:ignore -- NOSONAR - complex.
         ?>
-        <div id="mainwp-importing-sites" class="ui active inverted dimmer">
-            <div class="ui medium text loader"><?php esc_html_e( 'Importing', 'mainwp' ); ?></div>
+        <div id="mainwp-importing-sites" class="ui active dimmer">
+            <div class="ui double text loader"><?php esc_html_e( 'Importing...', 'mainwp' ); ?></div>
         </div>
         <div class="ui message" id="mainwp-import-sites-status-message">
             <?php echo '<i class="notched circle loading icon"></i> ' . esc_html__( 'Importing...', 'mainwp' ); ?>
@@ -584,8 +584,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             ?>
 
             <h3 class="ui dividing header">
-                <?php esc_html_e( 'Extensions Settings Synchronization', 'mainwp' ); ?>
-                <div class="sub header"><?php esc_html_e( 'Select the plugins you want to install and if you want to apply the Extensions default settings to this Child site.', 'mainwp' ); ?></div>
+                <?php esc_html_e( 'Add-ons Settings Synchronization', 'mainwp' ); ?>
+                <div class="sub header"><?php esc_html_e( 'Select the plugins you want to install and if you want to apply the Add-ons default settings to this Child site.', 'mainwp' ); ?></div>
             </h3>
 
             <?php
@@ -719,7 +719,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                      *
                      * Updates actions top content.
                      *
-                     * @since 5.4.1
+                     * @since 5.5
                      */
                     do_action( 'mainwp_widget_updates_actions_top', $active_tab );
                     ?>
@@ -1067,7 +1067,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $init_groups );
                     ?>
                     <?php esc_html_e( 'Tags', 'mainwp' ); ?></label>
-                    <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add the website to existing tags(s).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                    <div class="ten wide column">
                         <div class="ui multiple selection dropdown" init-value="<?php echo esc_attr( $init_groups ); ?>">
                             <input name="mainwp_managesites_edit_addgroups" value="" class="settings-field-value-change-handler" type="hidden">
                             <i class="dropdown icon"></i>
@@ -1410,7 +1410,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <i class="close icon"></i>
             <div class="header"><?php esc_html_e( 'Connection Test', 'mainwp' ); ?></div>
             <div class="content">
-                <div class="ui active inverted dimmer">
+                <div class="ui active dimmer">
                     <div class="ui text loader"><?php esc_html_e( 'Testing connection...', 'mainwp' ); ?></div>
                 </div>
                 <div id="mainwp-test-connection-result" class="ui segment" style="display:none">
@@ -1697,7 +1697,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <div class="ui large modal" id="mainwp-edit-email-template-modal">
                 <i class="close icon"></i>
                 <div class="header"><?php esc_html_e( 'Edit Email Template', 'mainwp' ); ?></div>
-                    <div class="scrolling header">
+                    <div class="scrolling content">
                     <form method="POST" id="email-template-form" action="<?php echo esc_html( $localion ); ?>" class="ui form">
                         <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'save-email-template' ) ); ?>" />
                         <div class="template <?php echo esc_attr( $type ); ?>">

@@ -23,7 +23,7 @@ class Log_Install extends MainWP_Install {
      *
      * @var string DB version info.
      */
-    protected $log_db_version = '1.0.1.9'; // NOSONAR - no IP.
+    public $log_db_version = '1.0.1.29'; // NOSONAR - no IP.
 
     /**
      * Protected variable to hold the database option name.
@@ -64,7 +64,7 @@ class Log_Install extends MainWP_Install {
         global $wpdb;
 
         // get_site_option is multisite aware!
-        $currentVersion = get_site_option( $this->log_db_option_key );
+        $currentVersion = get_option( $this->log_db_option_key );
 
         $rslt = $this->query( "SHOW TABLES LIKE '" . $this->table_name( 'wp_logs' ) . "'" );
         if ( empty( static::num_rows( $rslt ) ) ) {
@@ -80,23 +80,28 @@ class Log_Install extends MainWP_Install {
         $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_logs' ) . " (
     log_id bigint(20) NOT NULL auto_increment,
     site_id bigint(20) unsigned NULL,
-    object_id varchar(20) NOT NULL DEFAULT '',
-    item text NOT NULL,
+    log_type_id bigint NOT NULL DEFAULT 0,
+    item varchar(256) NOT NULL DEFAULT '',
     user_id int(11) unsigned NOT NULL DEFAULT '0',
+    user_login varchar(100) NOT NULL,
     action varchar(100) NOT NULL,
     context varchar(100) NOT NULL,
     connector varchar(100) NOT NULL,
     state tinyint(1) unsigned NULL,
-    created int(11) NOT NULL DEFAULT 0,
+    created double NOT NULL,
     duration float(11,4) NOT NULL DEFAULT '0',
     dismiss tinyint(1) NOT NULL DEFAULT 0,
     KEY site_id (site_id),
     KEY user_id (user_id),
+    KEY user_login (user_login),
     KEY created (created),
     KEY duration (duration),
     KEY context (context),
     KEY connector (connector),
-    KEY action (action)";
+    KEY action (action),
+    KEY state (state),
+    KEY idx_site_created(site_id, created),
+    KEY item (item(191))";
 
         if ( empty( $currentVersion ) ) {
             $tbl .= ',
@@ -136,7 +141,11 @@ class Log_Install extends MainWP_Install {
         $this->update_log_db( $currentVersion );
         $this->wpdb->suppress_errors( $suppress );
 
+        if ( empty( $currentVersion ) ) {
+            $this->create_archive_tables();
+        }
         MainWP_Utility::update_option( $this->log_db_option_key, $this->log_db_version );
+        $wpdb->suppress_errors( $suppress );
     }
 
     /**
@@ -145,11 +154,71 @@ class Log_Install extends MainWP_Install {
      * @param string $currentVersion Current db version.
      */
     public function update_log_db( $currentVersion ) {
-        if ( version_compare( $currentVersion, '1.0.1.7', '<' ) ) { // NOSONAR - non-ip.
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' ADD INDEX index_site_object_id (site_id, object_id)' ); //phpcs:ignore -- ok.
+        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.9', '<' ) ) { // NOSONAR - non-ip.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' MODIFY COLUMN item varchar(256) NOT NULL DEFAULT ""' ); //phpcs:ignore -- ok.
+        }
+
+        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.10', '<' ) ) { // NOSONAR - non-ip.
+            $this->create_archive_tables();
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD COLUMN archived_at int(11) NOT NULL DEFAULT 0' ); //phpcs:ignore -- ok.
+        }
+
+        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.11', '<' ) ) { // NOSONAR - non-ip.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' ADD INDEX item (item(191))' ); //phpcs:ignore -- ok.
+        }
+
+        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.16', '<' ) ) { // NOSONAR - non-ip.
+
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' DROP INDEX created' ); //phpcs:ignore -- ok.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' DROP INDEX index_site_object_id' ); //phpcs:ignore -- ok.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' DROP COLUMN object_id' ); //phpcs:ignore -- ok.
+
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' MODIFY COLUMN created double NOT NULL' ); //phpcs:ignore -- ok.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' ADD INDEX created ( created )' ); //phpcs:ignore -- ok.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' ADD INDEX idx_site_created(site_id, created)' ); //phpcs:ignore -- ok.
+
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' DROP INDEX created' ); //phpcs:ignore -- ok.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' DROP INDEX index_site_object_id' ); //phpcs:ignore -- ok.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' DROP COLUMN object_id' ); //phpcs:ignore -- ok.
+
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' MODIFY COLUMN created double NOT NULL' ); //phpcs:ignore -- ok.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD INDEX created ( created )' ); //phpcs:ignore -- ok.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD INDEX idx_site_created(site_id, created)' ); //phpcs:ignore -- ok.
+        }
+
+        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.20', '<' ) ) { // NOSONAR - non-ip.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD COLUMN user_login varchar(100) NOT NULL' ); //phpcs:ignore -- ok.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD INDEX user_login ( user_login )' ); //phpcs:ignore -- ok.
+        }
+
+        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.26', '<' ) ) { // NOSONAR - non-ip.
+            $count = Log_DB_Helper::instance()->count_legacy_dismissed();
+            if ( ! empty( $count ) ) {
+                update_option( 'mainwp_module_logs_updates_dismissed_db_process_status', 'require_update' );
+            }
+        }
+
+        if ( empty( $currentVersion ) || version_compare( $currentVersion, '1.0.1.29', '<' ) ) { // NOSONAR - non-ip.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' MODIFY log_id bigint(20) NOT NULL' ); //phpcs:ignore -- ok.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_meta_archive' ) . ' MODIFY meta_id bigint(20) unsigned' ); //phpcs:ignore -- ok.
         }
         if ( version_compare( $currentVersion, '1.0.1.7', '>=' ) && version_compare( $currentVersion, '1.0.1.9', '<' ) ) { // NOSONAR - non-ip.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' DROP INDEX state' ); //phpcs:ignore -- ok.
         }
+    }
+
+    /**
+     * Method get_current_logs_db_ver().
+     */
+    public function get_current_logs_db_ver() {
+        return get_option( $this->log_db_option_key );
+    }
+
+    /**
+     * Create archive_ logs tables.
+     */
+    public function create_archive_tables() {
+        $this->wpdb->query( 'CREATE TABLE IF NOT EXISTS ' . $this->table_name( 'wp_logs_archive' ) . ' LIKE ' . $this->table_name( 'wp_logs' ) ); //phpcs:ignore -- ok.
+        $this->wpdb->query( 'CREATE TABLE IF NOT EXISTS ' . $this->table_name( 'wp_logs_meta_archive' ) . ' LIKE ' . $this->table_name( 'wp_logs_meta' ) ); //phpcs:ignore -- ok.
     }
 }

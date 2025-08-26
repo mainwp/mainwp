@@ -426,7 +426,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( false === $show_cols ) { // to backwards.
             $show_cols = array();
             foreach ( $columns as $name => $title ) {
-                if ( in_array( $name, array( 'status', 'favicon', 'site_combo', 'update', 'client_name', 'security', 'index', 'backup', 'site_actions' ) ) ) {
+                if ( in_array( $name, array( 'status', 'favicon', 'site_combo', 'client_name', 'update', 'wpcore_version', 'security', 'index', 'backup', 'site_actions' ) ) ) {
                     $show_cols[ $name ] = 1;
                 } else {
                     $show_cols[ $name ] = 0;
@@ -571,12 +571,12 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     }
                 } );
                 jQuery('#reset-managersites-settings').on( 'click', function () {
-                    mainwp_confirm(__( 'Are you sure.' ), function(){
+                    mainwp_confirm(__( 'Are you sure?' ), function(){
                         jQuery('#mainwp_sitesviewmode').dropdown( 'set selected', 'table' );
                         jQuery('input[name=mainwp_default_sites_per_page]').val(25);
                         jQuery('.mainwp_hide_wpmenu_checkboxes input[id^="mainwp_show_column_"]').prop( 'checked', false );
                         //default columns.
-                        let cols = ['status', 'favicon', 'site_combo','update','client_name', 'security', 'index', 'site_actions'];
+                        let cols = ['status', 'favicon', 'site_combo','client_name', 'update', 'wpcore_version', 'security', 'index', 'site_actions'];
                         jQuery.each( cols, function ( index, value ) {
                             jQuery('.mainwp_hide_wpmenu_checkboxes input[id="mainwp_show_column_' + value + '"]').prop( 'checked', true );
                         } );
@@ -697,8 +697,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <i class="close icon"></i>
                 <div class="header"><?php esc_html_e( 'Connection Test', 'mainwp' ); ?></div>
                 <div class="content">
-                    <div class="ui active inverted dimmer">
-                        <div class="ui text loader"><?php esc_html_e( 'Testing connection...', 'mainwp' ); ?></div>
+                    <div class="ui active dimmer">
+                        <div class="ui double text loader"><?php esc_html_e( 'Testing...', 'mainwp' ); ?></div>
                     </div>
                     <div id="mainwp-test-connection-result" class="ui segment" style="display:none">
                         <h2 class="ui center aligned icon header">
@@ -965,7 +965,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <label class="six wide column middle aligned">
                     <?php esc_html_e( 'Tags (optional)', 'mainwp' ); ?>
                 </label>
-                <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add the website to existing tag(s).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                <div class="ten wide column">
                     <div class="ui multiple search selection dropdown" init-value="" id="mainwp_managesites_add_addgroups">
                         <i class="dropdown icon"></i>
                         <div class="default text"></div>
@@ -983,7 +983,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 ?>
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Client (optional)', 'mainwp' ); ?></label>
-                    <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add a client to the website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                    <div class="ten wide column">
                         <div class="ui search selection dropdown" init-value="" id="mainwp_managesites_add_client_id">
                             <i class="dropdown icon"></i>
                             <div class="default text"></div>
@@ -1293,9 +1293,9 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
         $data = explode( ';', $icon_data );
 
-        $uploaded = str_replace( 'uploaded:', '', $data[0] );
-        $selected = str_replace( 'selected:', '', $data[1] );
-        $color    = str_replace( 'color:', '', $data[2] );
+        $uploaded = ! empty( $data[0] ) ? str_replace( 'uploaded:', '', $data[0] ) : '';
+        $selected = ! empty( $data[1] ) ? str_replace( 'selected:', '', $data[1] ) : '';
+        $color    = ! empty( $data[2] ) ? str_replace( 'color:', '', $data[2] ) : '';
 
         if ( empty( $color ) ) {
             $color = '#34424D';
@@ -1358,12 +1358,6 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         } else {
             ?>
             <div id="mainwp-import-sites">
-                <div class="ui labeled icon inverted menu mainwp-sub-submenu" id="mainwp-import-sites-tabular-menu">
-                    <a class="item active" data-tab="mainwp-import-csv">
-                        <i class="file excel icon"></i>
-                        <?php esc_html_e( 'CSV Import', 'mainwp' ); ?>
-                    </a>
-                </div>
                 <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-sites-info-message' ) ) : ?>
                     <div class="ui segment">
                         <div class="ui info message">
@@ -1373,7 +1367,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     </div>
                 <?php endif; ?>
                 <form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form" class="ui form">
-                    <div class="ui bottom attached tab segment active" data-tab="mainwp-import-csv">
+                    <div class="ui segment">
                         <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
                         <h2 class="ui dividing header">
                             <?php echo esc_html( $title_page ); ?>
@@ -1398,9 +1392,6 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <input type="button" name="mainwp_managesites_add" id="mainwp_managesites_bulkadd" class="ui big green button" value="<?php echo esc_attr( $title_page ); ?>"/>
                     </div>
                 </form>
-                <script type="text/javascript">
-                    jQuery('#mainwp-import-sites-tabular-menu .item').tab();
-                </script>
             </div>
             <?php
         }

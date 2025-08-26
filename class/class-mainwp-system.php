@@ -29,7 +29,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '5.4.0.21'; // NOSONAR.
+    public static $version = '5.5-beta2'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -232,8 +232,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         MainWP_Install_Bulk::init();
 
-        MainWP_System_Cron_Jobs::instance()->init_cron_jobs();
-
         add_action( 'mainwp_after_header', array( MainWP_System_View::get_class_name(), 'admin_notices' ) );
         add_action( 'admin_notices', array( MainWP_System_View::get_class_name(), 'wp_admin_notices' ) );
         add_action( 'wp_mail_failed', array( &$this, 'wp_mail_failed' ) );
@@ -268,6 +266,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_Updates_Overview::init();
         MainWP_Client::init();
         MainWP_Rest_Api_Page::init();
+        MainWP_Logger::instance();
 
         if ( class_exists( '\MainWP\Dashboard\Module\Log\Log_Manage_Insights_Events_Page' ) ) {
             Log_Manage_Insights_Events_Page::instance();
@@ -339,7 +338,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_maximumInstallUpdateRequests',
                 'mainwp_maximumSyncRequests',
                 'mainwp_primaryBackup',
-                'mainwp_security',
                 'mainwp_use_favicon',
                 'mainwp_wp_cron',
                 'mainwp_timeDailyUpdate',
@@ -374,6 +372,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_maximum_uptime_monitoring_requests',
                 'mainwp_actionlogs',
                 'mainwp_process_uptime_notification_run_status',
+                'mainwp_module_log_settings_logs_selection_data',
             );
 
             $options = apply_filters( 'mainwp_init_load_all_options', $options );
@@ -1086,13 +1085,12 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'assets/js/moment/moment.min.js', array(), $this->current_version, true );
             wp_enqueue_script( 'fomantic-ui', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.js', array( 'jquery' ), $this->current_version, false );
 
-            wp_enqueue_script( 'datatables', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.js', array( 'jquery' ), $this->current_version, false );
-            wp_enqueue_script( 'datatables-semanticui', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.semanticui.js', array( 'datatables' ), $this->current_version, false );
+            wp_enqueue_script( 'datatables', MAINWP_PLUGIN_URL . 'assets/js/datatables/datatables.min.js', array( 'jquery' ), $this->current_version, false );
+            wp_enqueue_script( 'datatables-semanticui', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.semanticui.min.js', array( 'datatables' ), $this->current_version, false );
             wp_enqueue_script( 'datatables-select', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.select.min.js', array( 'datatables' ), $this->current_version, false );
-            wp_enqueue_script( 'datatables-add-ons', MAINWP_PLUGIN_URL . 'assets/js/datatables/datatables.min.js', array( 'datatables' ), $this->current_version, false );
+            wp_enqueue_script( 'datatables-add-ons', MAINWP_PLUGIN_URL . 'assets/js/datatables/add-ons.datatables.min.js', array( 'datatables' ), $this->current_version, false );
 
-            wp_enqueue_script( 'hamburger', MAINWP_PLUGIN_URL . 'assets/js/hamburger/hamburger.js', array( 'jquery' ), $this->current_version, true );
-            wp_enqueue_script( 'datatables-natural-sorting', MAINWP_PLUGIN_URL . 'assets/js/sorting/natural.js', array( 'jquery' ), $this->current_version, true );
+            wp_enqueue_script( 'datatables-natural-sorting', MAINWP_PLUGIN_URL . 'assets/js/sorting/natural.min.js', array( 'jquery' ), $this->current_version, true );
 
             wp_enqueue_script( 'mainwp-clipboard', MAINWP_PLUGIN_URL . 'assets/js/clipboard/clipboard.min.js', array( 'jquery' ), $this->current_version, true );
             wp_enqueue_script( 'mainwp-rest-api', MAINWP_PLUGIN_URL . 'assets/js/mainwp-rest-api.js', array(), $this->current_version, true );
@@ -1104,7 +1102,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             if ( is_array( $enqueue_scripts ) && ! empty( $enqueue_scripts['apexcharts'] ) ) {
                 wp_enqueue_script(
                     'mainwp-apexcharts',
-                    MAINWP_PLUGIN_URL . 'assets/js/apexcharts/apexcharts.js',
+                    MAINWP_PLUGIN_URL . 'assets/js/apexcharts/apexcharts.min.js',
                     array(
                         'jquery',
                         'mainwp',
@@ -1170,12 +1168,10 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             wp_enqueue_style( 'fomantic-ui', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.css', array(), $this->current_version );
             wp_enqueue_style( 'mainwp-fomantic', MAINWP_PLUGIN_URL . 'assets/css/mainwp-fomantic.css', array(), $this->current_version );
 
-            wp_enqueue_style( 'datatables', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.dataTables.css', array(), $this->current_version );
-            wp_enqueue_style( 'datatables-semanticui', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.semanticui.css', array(), $this->current_version );
+            wp_enqueue_style( 'datatables', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.dataTables.min.css', array(), $this->current_version );
+            wp_enqueue_style( 'datatables-semanticui', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.semanticui.min.css', array(), $this->current_version );
             wp_enqueue_style( 'datatables-select', MAINWP_PLUGIN_URL . 'assets/js/datatables/select.semanticui.min.css', array(), $this->current_version );
-            wp_enqueue_style( 'datatables-add-ons', MAINWP_PLUGIN_URL . 'assets/js/datatables/datatables.min.css', array(), $this->current_version );
-
-            wp_enqueue_style( 'hamburger', MAINWP_PLUGIN_URL . 'assets/js/hamburger/hamburger.css', array(), $this->current_version );
+            wp_enqueue_style( 'datatables-add-ons', MAINWP_PLUGIN_URL . 'assets/js/datatables/add-ons.datatables.min.css', array(), $this->current_version );
             // to fix conflict layout.
             wp_enqueue_style( 'jquery-ui-style', MAINWP_PLUGIN_URL . 'assets/css/1.11.1/jquery-ui.min.css', array(), '1.11.1' );
 
@@ -1192,6 +1188,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     wp_enqueue_style( 'mainwp-custom-dashboard-extension-default-2024-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-default-2024-theme.css', array(), $this->current_version );
                 } elseif ( 'default' === $selected_theme ) {
                     wp_enqueue_style( 'mainwp-custom-dashboard-extension-default-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-default-theme.css', array(), $this->current_version );
+                } elseif ( 'default-dark' === $selected_theme ) {
+                    wp_enqueue_style( 'mainwp-custom-dashboard-extension-default-dark-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-default-dark-theme.css', array(), $this->current_version );
                 } else {
                     $dirs             = MainWP_Settings::get_instance()->get_custom_theme_folder();
                     $custom_theme_url = $dirs[1];

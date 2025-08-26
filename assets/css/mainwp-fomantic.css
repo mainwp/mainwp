@@ -1,77 +1,77 @@
 .mainwp-widget .header {
-  margin-bottom: 15px;
+    margin-bottom: 15px;
 }
 
 .mainwp-widget .header .right {
-  float: right;
+    float: right;
 }
 
 .mainwp-widget .header .inline {
-  display: inline;
+    display: inline;
 }
 
 .mainwp-ui .ui.menu {
-  padding-top: 0 !important;
+    padding-top: 0 !important;
 }
 
 .mainwp-ui #mainwp-main-menu .menu .item {
-  font-size: .95em;
+    font-size: .95em;
 }
 
 .mainwp-ui .ui.vertical.menu>.item:first-child {
-  border-radius: 0 !important;
+    border-radius: 0 !important;
 }
 
 .mainwp-ui .ui.message:last-child {
-  margin-bottom: 1em;
+    margin-bottom: 1em;
 }
 
 .iconlbl {
-  width: 40px;
-  display: inline-block;
+    width: 40px;
+    display: inline-block;
 }
 
 .mainwp-ui .ui.toggle.checkbox input:checked~.box::before,
 .mainwp-ui .ui.toggle.checkbox input:checked~label::before {
-  background-color: #7fb100 !important;
+    background-color: #7fb100 !important;
 }
 
 .mainwp-ui .alternate {
-  background-color: rgba(255, 0, 0, 0) !important;
+    background-color: rgba(255, 0, 0, 0) !important;
 }
 
 .mainwp-ui .ui.search,
 .mainwp-ui .icon.search {
-  background: none !important;
+    background: none !important;
 }
 
 .mainwp-ui:not(.mainwp-ui-setup) .ui.segment:not(.mainwp-widget) {
-  border-radius: 0;
-  border: 0;
-  margin-top: 0;
-  margin-bottom: 10px;
-  box-shadow: none;
+    border-radius: 0;
+    border: 0;
+    margin-top: 0;
+    margin-bottom: 10px;
+    box-shadow: none;
 }
 
 .mainwp-ui .ui.secondary.segment,
 .mainwp-quick-setup .ui.secondary.segment {
-  box-shadow: none;
+    box-shadow: none;
 }
 
 .mainwp-ui .ui.alt.segment {
-  border-top: none;
-  padding-top: 0;
+    border-top: none;
+    padding-top: 0;
 }
 
 .mainwp-ui .green.pulsating.transition {
-  box-shadow: 0 0 0 0 rgba(127, 177, 0, 0.5)
+    box-shadow: 0 0 0 0 rgba(127, 177, 0, 0.5)
 }
 
 #mainwp-ignored-abandoned-plugins,
 #mainwp-ignored-plugins,
 #mainwp-ignored-abandoned-themes,
 #mainwp-ignored-themes {
-  padding-top: 1em;
+    padding-top: 1em;
 }
 
 #mainwp-general-settings .mainwp-main-content,
@@ -80,15 +80,15 @@
 #mainwp-mcrwc-settings .mainwp-main-content,
 #mainwp-add-new-site .mainwp-main-content,
 #mainwp-edit-site .mainwp-main-content {
-  padding-top: 1em;
+    padding-top: 1em;
 }
 
 .mainwp-ui .ui.alt.mainwp-posts.segment {
-  padding: 0 !important;
+    padding: 0 !important;
 }
 
 .mainwp-ui .ui.alt.mainwp-posts.segment .mainwp-main-content {
-  padding-right: 0;
+    padding-right: 0;
 }
 
 .mainwp-ui #mainwp-manage-plugins,
@@ -101,15 +101,15 @@
 .mainwp-ui #mainwp-theme-auto-updates,
 .mainwp-ui #mainwp-manage-users,
 .mainwp-ui #mainwp-add-clients {
-  padding: 0 !important;
+    padding: 0 !important;
 }
 
 .mainwp-ui #mainwp-add-new-bulkpost {
-  padding: 0 !important;
+    padding: 0 !important;
 }
 
 .mainwp-ui #mainwp-add-new-bulkpost .mainwp-main-content {
-  padding-left: 1em !important;
+    padding-left: 1em !important;
 }
 
 .mainwp-ui .mainwp-posts .mainwp-main-content,
@@ -123,7 +123,7 @@
 .mainwp-ui #mainwp-manage-users .mainwp-main-content,
 .mainwp-ui #mainwp-manage-extensions .mainwp-main-content,
 .mainwp-ui #mainwp-add-clients .mainwp-main-content {
-  padding-right: 0 !important;
+    padding-right: 0 !important;
 }
 
 .mainwp-ui .mainwp-sidebar-left .mainwp-posts .mainwp-main-content,
@@ -136,185 +136,208 @@
 .mainwp-ui .mainwp-sidebar-left #mainwp-theme-auto-updates .mainwp-main-content,
 .mainwp-ui .mainwp-sidebar-left #mainwp-manage-users .mainwp-main-content,
 .mainwp-ui .mainwp-sidebar-left #mainwp-add-clients .mainwp-main-content {
-  padding-left: 0 !important;
+    padding-left: 0 !important;
 }
 
 .mainwp-ui #mainwp-groups-table tr.active {
-  background: #f9fafb !important;
+    background: #f9fafb !important;
 }
 
 .mainwp-ui .ui.message.green a:not(.button) {
-  color: #7fb100;
-  font-weight: bolder;
-  text-decoration: underline !important;
+    color: #7fb100;
+    font-weight: bolder;
+    text-decoration: underline !important;
 }
 
 .mainwp-ui .ui.message.yellow a:not(.button) {
-  color: #b58105;
-  font-weight: bolder;
-  text-decoration: underline !important;
+    color: #b58105;
+    font-weight: bolder;
+    text-decoration: underline !important;
 }
 
 .mainwp-ui .ui.message.info a:not(.button) {
-  color: #276f86;
-  font-weight: bolder;
-  text-decoration: underline !important;
+    color: #276f86;
+    font-weight: bolder;
+    text-decoration: underline !important;
 }
 
 .mainwp-ui .ui.message.red a:not(.button) {
-  color: #a00000;
-  font-weight: bolder;
-  text-decoration: underline !important;
+    color: #a00000;
+    font-weight: bolder;
+    text-decoration: underline !important;
 }
 
 .mainwp-ui .ui.message a:not(.button) {
-  color: rgba(0, 0, 0, .87);
-  font-weight: bolder;
-  text-decoration: underline !important;
+    color: rgba(0, 0, 0, .87);
+    font-weight: bolder;
+    text-decoration: underline !important;
 }
 
 .mainwp-ui [data-tooltip][data-inverted]:before,
 .mainwp-ui [data-tooltip][data-inverted]:after {
-  z-index: 9999 !important;
+    z-index: 9999 !important;
 }
 
 .mainwp-ui [data-tooltip][data-inverted]:after {
-  white-space: normal;
-  width: max-content;
-  max-width: 500px;
+    white-space: normal;
+    width: max-content;
+    max-width: 500px;
 }
 
 .mainwp-ui .progress .bar {
-  border-radius: 0;
+    border-radius: 0;
 }
 
 .mainwp-ui .ui.em.divider {
-  margin-top: 0.5em !important;
-  margin-bottom: 0.5em !important;
+    margin-top: 0.5em !important;
+    margin-bottom: 0.5em !important;
 }
 
 .mainwp-ui .ui.vertical.menu {
-  box-shadow: none !important;
-  -webkit-box-shadow: none !important;
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
 }
 
 .mainwp-ui .ui.vertical.right.pointing.menu .active.item::after {
-  left: -9px !important;
-  right: auto !important;
-  border-top: 0 solid #d4d4d5;
-  border-right: 0 solid #d4d4d5;
-  border-bottom: 1px solid #d4d4d5;
-  border-left: 1px solid #d4d4d5;
+    left: -9px !important;
+    right: auto !important;
+    border-top: 0 solid #d4d4d5;
+    border-right: 0 solid #d4d4d5;
+    border-bottom: 1px solid #d4d4d5;
+    border-left: 1px solid #d4d4d5;
 }
 
 .mainwp-ui .ui.multiple.dropdown>.label {
-  vertical-align: baseline;
+    vertical-align: baseline;
 }
 
 .mainwp-ui .mainwp-main-content .ui.checkbox:not(.slider, .toggle) .box::after,
 .mainwp-ui .mainwp-main-content .ui.checkbox:not(.slider, .toggle) label::after,
 .mainwp-ui #mainwp-manage-sites-content .ui.checkbox:not(.slider, .toggle) .box::after,
 .mainwp-ui #mainwp-manage-sites-content .ui.checkbox:not(.slider, .toggle) label::after {
-  top: 1px;
-  left: 1px;
-}
-
-.mainwp-ui .mainwp-actions-bar .ui.mini.form .ui.dropdown,
-.mainwp-ui .mainwp-actions-bar.ui.mini.form .ui.dropdown,
-.mainwp-ui .mainwp-sub-header .ui.mini.form .ui.dropdown,
-.mainwp-ui .mainwp-sub-header.ui.mini.form .ui.dropdown {
-  font-size: 0.78571429rem !important;
+    top: 1px;
+    left: 1px;
 }
 
 .mainwp-ui .ui.dropdown .menu,
 .mainwp-ui .ui.selection.active.dropdown {
-  z-index: 9999 !important;
+    z-index: 9999 !important;
 }
 
 .mainwp-ui i.plug.circular.icon {
-  height: auto !important;
+    height: auto !important;
+}
+
+.mainwp-ui .ui.mini.circular.image {
+    height: 35px !important;
+    width: 35px !important;
+}
+
+.mainwp-ui .ui.dimmer {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.mainwp-ui .ui.page.dimmer {
+    margin-left: 72px;
+    margin-top: 57px;
 }
 
 .mainwp-ui .ui.dimmer.active,
 .mainwp-ui .ui.dimmer.modals.active {
-  z-index: 1001;
+    z-index: 1001;
+    -webkit-backdrop-filter: blur(5px) grayscale(.7);
+    backdrop-filter: blur(5px) grayscale(.7);
 }
 
 .mainwp-ui .ui.modal .mainwp-html-popup {
-  overflow: visible;
-  z-index: 9999 !important;
+    overflow: visible;
+    z-index: 9999 !important;
 }
 
 .mainwp-ui .dt-scroll-body .ui.modal .mainwp-html-popup {
-  overflow: visible;
-  z-index: 9999 !important;
-  border: 1px dashed red;
-  position: absolute
+    overflow: visible;
+    z-index: 9999 !important;
+    border: 1px dashed red;
+    position: absolute
 }
 
 .mainwp-ui .icon.card {
-  padding: 0;
-  min-width: auto;
-  max-width: none;
-  border: none;
-  box-shadow: none;
-  background: none !important;
+    padding: 0;
+    min-width: auto;
+    max-width: none;
+    border: none;
+    box-shadow: none;
+    background: none !important;
 }
 
 .mainwp-ui .left.action.input .mainwp-color-picker-input {
-  min-height: 2.71428571em;
-  padding: 5px !important;
-  max-width: 65px !important;
+    min-height: 2.71428571em;
+    padding: 5px !important;
+    max-width: 65px !important;
 }
 
 .mainwp-widget .mainwp-scrolly-overflow table.ui.dataTable {
-  width: 100% !important;
+    width: 100% !important;
 }
 
 .mainwp-widget table.dataTable.ui.table th.dt-type-numeric,
 .mainwp-widget table.dataTable.ui.table td.dt-type-numeric {
-  text-align: left !important;
+    text-align: left !important;
 }
 
 .mainwp-ui #widget-uptime_monitoring_response_time .ui.card {
-  min-width: 100px !important;
+    min-width: 100px !important;
 }
 
 .mainwp-ui .mainwp-cards .ui.card {
-  flex: 1 1 100px;
-  min-width: 240px;
-  max-width: 500px;
+    flex: 1 1 100px;
+    min-width: 240px;
+    max-width: 500px;
 }
 
 /* classic theme */
 .mainwp-ui .dt-scroll-body tbody tr.selected .ui.red.button {
-  color: #fff !important;
+    color: #fff !important;
 }
 
 .mainwp-ui .dt-scroll-body tbody tr.selected .ui.basic.red.button {
-  color: var(--mainwp-red) !important;
+    color: var(--mainwp-red) !important;
 }
 
 .mainwp-ui .dt-scroll-body tbody tr.selected .ui.button.green {
-  color: #fff !important;
+    color: #fff !important;
 }
 
 .mainwp-ui .dt-scroll-body tbody tr.selected .ui.button.basic.green {
-  color: var(--mainwp-green) !important;
+    color: var(--mainwp-green) !important;
 }
 
 /* end */
 
 .mainwp-ui div.dt-container .dt-scroll-body {
-  border-bottom: none !important;
+    border-bottom: none !important;
 }
 
 /* end */
+
+
+.mainwp-ui .ui.table[class*="center aligned"],
+.mainwp-ui .ui.table [class*="center aligned"] {
+    text-align: center !important;
+}
 
 /* to fix auto align left */
 .mainwp-ui table.dataTable.ui.table th.dt-type-numeric,
 .mainwp-ui table.dataTable.ui.table th.dt-type-date,
 .mainwp-ui table.dataTable.ui.table td.dt-type-numeric,
 .mainwp-ui table.dataTable.ui.table td.dt-type-date {
-  text-align: left;
+    text-align: left;
+}
+
+.mainwp-ui-page [data-tooltip][data-inverted]::before {
+    background: #1c1d1b !important;
+}
+
+.mainwp-ui-page i.red.icon.icon.icon.icon.icon {
+    color: #a00000 !important;
 }

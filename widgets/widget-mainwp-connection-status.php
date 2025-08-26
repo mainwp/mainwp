@@ -229,11 +229,6 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <div class="header">
                         <span class="ui large text"><i class="ui een check icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( $count_connected ) ); ?></span>
                     </div>
-                    <div class="meta">
-                        <div class="ui tiny progress mainwp-site-status-progress" id="" data-total="<?php echo esc_attr( $count_total ); ?>" data-value="<?php echo esc_attr( $count_connected ); ?>">
-                            <div class="green bar"></div>
-                        </div>
-                    </div>
                     <div class="description"><strong><?php esc_html_e( 'Connected Sites', 'mainwp' ); ?></strong></div>
                 </div>
             </div>
@@ -242,18 +237,10 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <div class="header">
                         <span class="ui large text"><i class="ui unlink icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( $count_disconnected ) ); ?></span>
                     </div>
-                    <div class="meta">
-                        <div class="ui tiny progress mainwp-site-status-progress" id="" data-total="<?php echo esc_attr( $count_total ); ?>" data-value="<?php echo esc_attr( $count_disconnected ); ?>">
-                            <div class="red bar"></div>
-                        </div>
-                    </div>
                     <div class="description"><strong><?php esc_html_e( 'Disconnected Sites', 'mainwp' ); ?></strong></div>
                 </div>
             </div>
         </div>
-        <script type="text/javascript">
-            jQuery('.mainwp-site-status-progress').progress();
-        </script>
         <?php
     }
 

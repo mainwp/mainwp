@@ -206,7 +206,7 @@ class Cost_Tracker_Add_Edit {
                     esc_html_e( 'Name', 'mainwp' );
                     ?>
                     </label>
-                    <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter the Company (Product) name.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+                    <div class="five wide column">
                         <input type="text" class="settings-field-value-change-handler" aria-label="<?php esc_attr_e( 'Enter the Company (Product) name.', 'mainwp' ); ?>" name="mainwp_module_cost_tracker_edit_name" id="mainwp_module_cost_tracker_edit_name" value="<?php echo $edit_cost ? esc_html( $edit_cost->name ) : ''; ?>">
                     </div>
                 </div>
@@ -217,7 +217,7 @@ class Cost_Tracker_Add_Edit {
                     esc_html_e( 'Product URL', 'mainwp' );
                     ?>
                     </label>
-                    <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter the URL of the product (optional).', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+                    <div class="five wide column">
                         <input type="text" class="settings-field-value-change-handler" aria-label="<?php esc_attr_e( 'Enter the URL of the product (optional).', 'mainwp' ); ?>" name="mainwp_module_cost_tracker_edit_url" id="mainwp_module_cost_tracker_edit_url" value="<?php echo $edit_cost ? esc_html( $edit_cost->url ) : ''; ?>">
                     </div>
                 </div>
@@ -255,7 +255,7 @@ class Cost_Tracker_Add_Edit {
                     ?>
                     </label>
                     <input type="hidden"  class="settings-field-value-change-handler" id="mainwp_module_cost_tracker_edit_select_icon_hidden" value="<?php echo esc_attr( $selected_prod_icon ); ?>">
-                    <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select an icon if not using original product icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+                    <div class="five wide column">
                         <div class="ui left action input">
                             <div class="ui five column selection search dropdown not-auto-init" style="min-width:21em" id="mainwp_module_cost_tracker_edit_icon_select">
                                 <div class="text">
@@ -280,7 +280,7 @@ class Cost_Tracker_Add_Edit {
                     esc_html_e( 'Type', 'mainwp' );
                     ?>
                     </label>
-                    <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select the type of this cost.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+                    <div class="five wide column">
                         <select id="mainwp_module_cost_tracker_edit_payment_type" name="mainwp_module_cost_tracker_edit_payment_type" class="ui dropdown not-auto-init settings-field-value-change-handler">
                             <?php foreach ( $payment_types as $key => $val ) : ?>
                                 <?php
@@ -304,7 +304,7 @@ class Cost_Tracker_Add_Edit {
                     esc_html_e( 'Renewal frequency', 'mainwp' );
                     ?>
                     </label>
-                    <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter renewal frequency.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+                    <div class="five wide column">
                         <select id="mainwp_module_cost_tracker_edit_renewal_type" name="mainwp_module_cost_tracker_edit_renewal_type" class="ui dropdown settings-field-value-change-handler">
                             <?php foreach ( $renewal_frequency as $key => $val ) : ?>
                                 <?php
@@ -325,7 +325,7 @@ class Cost_Tracker_Add_Edit {
                     esc_html_e( 'Subscription status', 'mainwp' );
                     ?>
                     </label>
-                    <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter subscription status.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+                    <div class="five wide column">
                         <select id="mainwp_module_cost_tracker_edit_cost_tracker_status" name="mainwp_module_cost_tracker_edit_cost_tracker_status" class="ui dropdown settings-field-value-change-handler">
                             <?php foreach ( $cost_status as $key => $val ) : ?>
                                 <?php
@@ -362,8 +362,7 @@ class Cost_Tracker_Add_Edit {
                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $edit_cost ? ( 'plugin' !== $selected_product_type ) : '' );
                     ?>
                     <?php esc_html_e( 'Category', 'mainwp' ); ?></label>
-                    <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select the category for this cost.', 'mainwp' ); ?>
-                    " data-inverted="" data-position="left center">
+                    <div class="five wide column">
                         <select id="mainwp_module_cost_tracker_edit_product_type" name="mainwp_module_cost_tracker_edit_product_type" class="ui dropdown not-auto-init settings-field-value-change-handler">
                             <?php foreach ( $product_types as $key => $val ) : ?>
                                 <?php
@@ -384,7 +383,7 @@ class Cost_Tracker_Add_Edit {
                     esc_html_e( 'Slug', 'mainwp' );
                     ?>
                     </label>
-                    <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter the product slug.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+                    <div class="five wide column">
                         <input type="text" class="settings-field-value-change-handler" aria-label="<?php esc_attr_e( 'Enter the product slug.', 'mainwp' ); ?>" name="mainwp_module_cost_tracker_edit_product_slug" id="mainwp_module_cost_tracker_edit_product_slug" value="<?php echo esc_attr( $slug ); ?>">
                     </div>
                 </div>
@@ -395,7 +394,7 @@ class Cost_Tracker_Add_Edit {
                     esc_html_e( 'License type', 'mainwp' );
                     ?>
                     </label>
-                    <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select the license type of this cost.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+                    <div class="five wide column">
                         <select id="mainwp_module_cost_tracker_edit_license_type" name="mainwp_module_cost_tracker_edit_license_type" class="ui dropdown settings-field-value-change-handler">
                             <?php foreach ( $license_types as $key => $val ) : ?>
                                 <?php
@@ -430,7 +429,7 @@ class Cost_Tracker_Add_Edit {
                     esc_html_e( 'Purchase date', 'mainwp' );
                     ?>
                     </label>
-                    <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter the purchase date.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+                    <div class="five wide column">
                         <div class="ui calendar mainwp_datepicker">
                             <div class="ui input left icon">
                                 <i class="calendar icon"></i>
@@ -447,7 +446,7 @@ class Cost_Tracker_Add_Edit {
                     esc_html_e( 'Payment method', 'mainwp' );
                     ?>
                     </label>
-                    <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enter the payment method.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+                    <div class="ten wide column">
                         <select id="mainwp_module_cost_tracker_edit_payment_method" name="mainwp_module_cost_tracker_edit_payment_method" class="ui dropdown settings-field-value-change-handler">
                             <?php foreach ( $payment_methods as $key => $val ) : ?>
                                 <?php
@@ -469,7 +468,7 @@ class Cost_Tracker_Add_Edit {
                     esc_html_e( 'Notes', 'mainwp' );
                     ?>
                     </label>
-                    <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enter the description for this cost tracking item.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+                    <div class="ten wide column">
                         <textarea id="mainwp_module_cost_tracker_edit_note" class="settings-field-value-change-handler" name="mainwp_module_cost_tracker_edit_note"><?php echo $edit_cost ? esc_html( $edit_cost->note ) : ''; ?></textarea>
                     </div>
                 </div>

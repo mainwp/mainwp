@@ -337,7 +337,6 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             if ( ! empty( $status_conds ) ) {
                 $where .= ' AND ( ' . implode( ' OR ', $status_conds ) . ' ) ';
             }
-
             if ( in_array( 'unsuspended', $status ) && ! in_array( 'suspended', $status ) ) { // to sure not conflict the suspended status.
                 $where .= ' AND wp.suspended = 0 ';
             }
@@ -469,6 +468,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $start        = $current_page * $limit_sites;
                 $qry         .= ' LIMIT ' . intval( $start ) . ', ' . intval( $limit_sites );
             }
+        }
+
+        if ( ! empty( $_included_cache_ids ) ) {
+            MainWP_Logger::instance()->log_events( 'cache-metrics', sprintf( '[sql websites by params=%s]', $qry ) );
         }
 
         return $qry;
@@ -1324,6 +1327,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             }
         }
 
+        if ( ! empty( $_included_cache_ids ) ) {
+            MainWP_Logger::instance()->log_events( 'cache-metrics', sprintf( '[sql websites=%s]', $qry ) );
+        }
+
         return $qry;
     }
 
@@ -1723,6 +1730,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $is_not         = isset( $params['isnot'] ) && ! empty( $params['isnot'] ) ? true : false;
         $selected_sites = isset( $params['selected_sites'] ) ? $params['selected_sites'] : array();
 
+        // This parameter is used to enable caching in certain cases.
+        $_included_cache_ids = isset( $params['_included_cache_ids'] ) ? wp_parse_id_list( $params['_included_cache_ids'] ) : array();
+        $where_cache_ids     = '';
+
         if ( ! is_array( $group_ids ) ) {
             $group_ids = array();
         }
@@ -1782,17 +1793,21 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $where .= ' AND wp.userid = ' . $current_user->ID . ' ';
         }
 
-        if ( ! empty( $selected_sites ) ) {
-            $where .= ' AND wp.id IN (' . implode( ',', $selected_sites ) . ') ';
-        }
+        if ( ! empty( $_included_cache_ids ) ) {
+            $where_cache_ids .= ' AND  wp.id IN (' . implode( ',', $_included_cache_ids ) . ') ';
+        } else {
+            if ( ! empty( $selected_sites ) ) {
+                $where .= ' AND wp.id IN (' . implode( ',', $selected_sites ) . ') ';
+            }
 
-        // for searching.
-        if ( null !== $search_site && '' !== $search_site ) {
-            $where .= ' AND (wp.name LIKE "%' . $search_site . '%" OR wp.url LIKE  "%' . $search_site . '%") ';
-        }
+            // for searching.
+            if ( null !== $search_site && '' !== $search_site ) {
+                $where .= ' AND (wp.name LIKE "%' . $search_site . '%" OR wp.url LIKE  "%' . $search_site . '%") ';
+            }
 
-        if ( null !== $extraWhere ) {
-            $where .= ' AND ' . $extraWhere;
+            if ( null !== $extraWhere ) {
+                $where .= ' AND ' . $extraWhere;
+            }
         }
 
         $staging_enabled = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php' ) || is_plugin_active( 'mainwp-timecapsule-extension/mainwp-timecapsule-extension.php' );
@@ -1969,7 +1984,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_wp_options_view( $extra_view, $view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
-            WHERE 1 ' . $where . $where_group . $where_client . '
+            WHERE 1 ' . $where_cache_ids . $where . $where_group . $where_client . '
             GROUP BY wp.id, wp_sync.sync_id ' .
             $orderBy;
         } else {
@@ -1980,7 +1995,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $join_monitors . '
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_wp_options_view( $extra_view, $view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
-            WHERE 1 ' . $where . $where_group . $where_client . '
+            WHERE 1 ' . $where_cache_ids . $where . $where_group . $where_client . '
             GROUP BY wp.id, wp_sync.sync_id ' .
             $orderBy;
         }
@@ -1996,6 +2011,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             error_log( $qry ); //phpcs:ignore -- NOSONAR - for dev.
         }
 
+        if ( ! empty( $where_cache_ids ) ) {
+            MainWP_Logger::instance()->log_events( 'cache-metrics', sprintf( '[sql search websites=%s]', $qry ) );
+        }
         return $qry;
     }
 

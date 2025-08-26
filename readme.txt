@@ -147,6 +147,12 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
+= 5.4.0.21 - Maintenance Release - 8-26-2025 =
+
+* Fixed: Resolved database table creation issues for `wp_mainwp_wp` and `wp_mainwp_api_keys` on installations running PHP 8.4. [(#827)](https://github.com/mainwp/mainwp/issues/827)
+* Fixed: Eliminated multiple "Undefined array key" PHP warnings that occurred on fresh WordPress installations running PHP 8.4.
+* Updated: Changed mShot API base URL from `s0.wordpress.com` to s0.wp.com` to eliminate unnecessary redirections and improve screenshot generation performance.
+
 = 5.4.0.20 - Maintenance Release - 8-19-2025 =
 
 * Fixed: Currency display now defaults to USD to prevent empty currency formatting issues in financial reports and cost tracking features.

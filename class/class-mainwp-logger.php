@@ -136,6 +136,8 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     private function __construct() {
 
+        add_action( 'init', array( $this, 'init' ) ); // Fix the issue where database tables do not exist.
+
         $enabled  = $this->get_log_status();
         $specific = $this->get_log_specific();
 
@@ -149,6 +151,19 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         );
         add_action( 'mainwp_module_log_record_inserted', array( $this, 'hook_module_log_record_inserted' ), 10, 2 );
         add_filter( 'mainwp_custom_log_enabled_log_priority', array( $this, 'hook_is_enabled_log_priority' ), 10, 1 );
+    }
+
+    /**
+     * Method init.
+     */
+    public function init() {
+        $enabled = get_option( 'mainwp_actionlogs' );
+        if ( false === $enabled && ! get_transient( 'mainwp_transient_action_logs' ) ) {
+            $sites_count = MainWP_DB::instance()->get_websites_count();
+            if ( empty( $sites_count ) ) {
+                set_transient( 'mainwp_transient_action_logs', true, 2 * WEEK_IN_SECONDS );
+            }
+        }
     }
 
     /**
@@ -193,13 +208,8 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public function get_log_status() {
         $enabled = get_option( 'mainwp_actionlogs' );
-
         if ( false === $enabled ) {
-            $sites_count = MainWP_DB::instance()->get_websites_count();
-            if ( empty( $sites_count ) ) {
-                $enabled = self::DEBUG;
-                set_transient( 'mainwp_transient_action_logs', true, 2 * WEEK_IN_SECONDS );
-            } elseif ( get_transient( 'mainwp_transient_action_logs' ) ) {
+            if ( get_transient( 'mainwp_transient_action_logs' ) ) {
                 $enabled = self::DEBUG;
             } else {
                 $enabled = static::DISABLED;

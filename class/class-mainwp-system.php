@@ -854,6 +854,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             'roll_ui_icon'                     => MainWP_Updates_Helper::get_roll_icon( '', true ),
         );
         wp_localize_script( 'mainwp', 'mainwpParams', $mainwpParams );
+        wp_localize_script( 'mainwp', 'mainwpVersion', static::$version );
 
         $mainwpTranslations = MainWP_System_View::get_mainwp_translations();
 
@@ -911,6 +912,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 MainWP_Logger::instance()->log_action( '[Fatal ERROR detected=' . print_r( $error, true ) . ']', false, MainWP_Logger::WARNING_COLOR, true ); //phpcs:ignore -- NOSONAR.
             }
         }
+        MainWP_Cache_Helper::log_metrics();
     }
 
     /**

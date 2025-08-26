@@ -84,12 +84,21 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         } else {
             if ( $current_wpid ) {
                 $sql        = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid );
+                $websites   = MainWP_DB::instance()->query( $sql );
                 $individual = true;
             } else {
-                $sql        = MainWP_DB::instance()->get_sql_websites_for_current_user();
-                $individual = false;
+                $wpsite_fields = array( 'id', 'name', 'url' );
+                $websites      = MainWP_DB::instance()->query(
+                    MainWP_DB::instance()->get_sql_websites_for_current_user_by_params(
+                        array(
+                            'view'             => 'custom_view',
+                            'others_fields'    => array( 'recent_pages' ),
+                            'select_wp_fields' => $wpsite_fields,
+                        )
+                    )
+                );
+                $individual    = false;
             }
-            $websites = MainWP_DB::instance()->query( $sql );
 
             if ( $websites ) {
                 while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {

@@ -1004,15 +1004,28 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             }
         }
 
-        $total_websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $total_params ) );
-        $totalRecords   = ( $total_websites ? MainWP_DB::num_rows( $total_websites ) : 0 );
-        if ( $total_websites ) {
-            MainWP_DB::free_result( $total_websites );
-        }
+        $totalRecords = $this->get_total_sites_by_pramas( $total_params );
 
         $params['extra_view']    = $extra_view;
         $params['view']          = 'manage_site';
         $params['dev_log_query'] = 0;
+
+        $cache_group = MainWP_Cache_Helper::CGR_SITES;
+
+        $cache_key = MainWP_Cache_Helper::get_cache_key( 'sites_ids', $cache_group, $params );
+
+        $cache_ids = MainWP_Cache_Helper::instance()->get_cache(
+            $cache_key,
+            $cache_group
+        );
+
+        if ( '_get_cache_false' !== $cache_ids ) {
+            if ( empty( $cache_ids ) ) {
+                $params['_included_cache_ids'] = array( -1 ); // not found if get cached success but empty.
+            } else {
+                $params['_included_cache_ids'] = $cache_ids;
+            }
+        }
 
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
 
@@ -1020,6 +1033,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         while ( $websites && ( $site = MainWP_DB::fetch_object( $websites ) ) ) {
             $site_ids[] = $site->id;
         }
+
+        // Set manage sites ids cache.
+        MainWP_Cache_Helper::add_cache( $cache_key, $cache_group, $site_ids );
 
         /**
          * Action is being replaced with mainwp_sitestable_prepared_items
@@ -1040,10 +1056,50 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
          */
         do_action( 'mainwp_sitestable_prepared_items', $websites, $site_ids );
 
-        MainWP_DB::data_seek( $websites, 0 );
-
         $this->items       = $websites;
         $this->total_items = $totalRecords;
+    }
+
+
+    /**
+     * Get total sites by params.
+     *
+     * @param array $params Params.
+     *
+     * @return int Total
+     */
+    public function get_total_sites_by_pramas( $params ) {
+        $cache_group = MainWP_Cache_Helper::CGR_SITES;
+        $cache_key   = MainWP_Cache_Helper::get_cache_key( 'total_sites', $cache_group, $params );
+
+        return MainWP_Cache_Helper::instance()->get_cache(
+            $cache_key,
+            $cache_group,
+            function ( $filters ) {
+                $total_websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $filters ) );
+                $totalRecords   = $total_websites ? MainWP_DB::num_rows( $total_websites ) : 0;
+
+                if ( MainWP_DB::is_result( $total_websites ) ) {
+                    MainWP_DB::free_result( $total_websites );
+                }
+                return $totalRecords;
+            },
+            array( $params )
+        );
+    }
+
+    /**
+     * Handle invalidate manage sites cache group.
+     */
+    public static function invalidate_manage_sites_cache() {
+        $invalidates = array(
+            MainWP_Cache_Helper::CGR_SITES,
+            MainWP_Cache_Helper::CGR_UPDATES,
+            MainWP_Cache_Helper::CGR_SYNC_DATA,
+        );
+        foreach ( $invalidates as $value ) {
+            MainWP_Cache_Helper::invalidate_cache_group( $value );
+        }
     }
 
     /**
@@ -1131,7 +1187,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             'info'          => 'true',
             'colReorder'    => ' {columns:":not(.check-column):not(.manage-site_actions-column)"} ',
             'stateSave'     => 'true',
-            'stateDuration' => '0',
+            'stateDuration' => '60 * 60 * 24 * 30',
             'order'         => '[]',
             'scrollX'       => 'true',
             'responsive'    => 'true',
@@ -1318,6 +1374,16 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                 style: 'multi+shift',
                                 selector: 'tr>td.check-column'
                             },
+                            // Version the saved state so UI changes don’t brick users.
+                            stateSaveParams: function (settings, data) {
+                                data._mwpv = window.mainwpVersion || 'dev';
+                            },
+                            stateLoadParams: function (settings, data) {
+                                if ((window.mainwpVersion || 'dev') !== data._mwpv) return false; // drop stale state
+                            },
+                            search: { regex: false, smart: false }, // Make search cheaper on the server.
+                            orderMulti: false,
+                            searchDelay: 350
                         }).on('select', function (e, dt, type, indexes) {
                             if( 'row' == type ){
                                 dt.rows(indexes)

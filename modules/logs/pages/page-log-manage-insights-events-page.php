@@ -17,6 +17,7 @@ use MainWP\Dashboard\MainWP_DB_Client;
 use MainWP\Dashboard\MainWP_DB_Common;
 use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_Logger;
+use MainWP\Dashboard\MainWP_Cache_Helper;
 
 /**
  * Class Log_Manage_Insights_Events_Page
@@ -632,13 +633,14 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                                 <div class="default text"><?php esc_html_e( 'All Websites', 'mainwp' ); ?></div>
                                 <div class="menu">
                                     <?php
-                                    $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params() );
+                                    $wpsite_fields = array( 'id', 'name' );
+                                    $websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( array( 'select_wp_fields' => $wpsite_fields ) ) );
                                     while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
                                         ?>
                                         <div class="item" data-value="<?php echo esc_attr( $website->id ); ?>"><?php echo esc_html( MainWP_Utility::get_nice_url( stripslashes( $website->name ) ) ); ?></div>
                                         <?php
                                     }
-
+                                    MainWP_DB::free_result( $websites );
                                     ?>
                                     <div class="item" data-value="allsites"><?php esc_html_e( 'All Websites', 'mainwp' ); ?></div>
                             </div>

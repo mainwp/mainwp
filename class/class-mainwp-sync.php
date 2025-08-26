@@ -119,7 +119,17 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         static::$disallowed_clone_sites = array();
                     }
 
-                    $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+                    $wpsite_fields = array( 'id', 'name', 'url', 'adminname' );
+                    $sync_fields   = array( 'extauth', 'totalsize' );
+                    $websites      = MainWP_DB::instance()->query(
+                        MainWP_DB::instance()->get_sql_websites_for_current_user_by_params(
+                            array(
+                                'select_wp_fields'   => $wpsite_fields,
+                                'select_sync_fields' => $sync_fields,
+                            )
+                        )
+                    );
+
                     if ( $websites ) {
                         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
                             if ( in_array( $website->id, static::$disallowed_clone_sites ) ) {

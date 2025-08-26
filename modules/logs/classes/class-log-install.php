@@ -23,7 +23,7 @@ class Log_Install extends MainWP_Install {
      *
      * @var string DB version info.
      */
-    protected $log_db_version = '1.0.1.8'; // NOSONAR - no IP.
+    protected $log_db_version = '1.0.1.9'; // NOSONAR - no IP.
 
     /**
      * Protected variable to hold the database option name.
@@ -96,8 +96,7 @@ class Log_Install extends MainWP_Install {
     KEY duration (duration),
     KEY context (context),
     KEY connector (connector),
-    KEY action (action),
-    KEY state (state)";
+    KEY action (action)";
 
         if ( empty( $currentVersion ) ) {
             $tbl .= ',
@@ -130,15 +129,14 @@ class Log_Install extends MainWP_Install {
             error_reporting(0); // phpcs:ignore -- try to disabled the error_log somewhere in WP.
         }
 
-        $suppress = $wpdb->suppress_errors();
+        $suppress = $this->wpdb->suppress_errors();
         foreach ( $sql as $query ) {
             dbDelta( $query );
         }
-        $wpdb->suppress_errors( $suppress );
+        $this->update_log_db( $currentVersion );
+        $this->wpdb->suppress_errors( $suppress );
 
         MainWP_Utility::update_option( $this->log_db_option_key, $this->log_db_version );
-
-        $this->update_log_db( $currentVersion );
     }
 
     /**
@@ -149,6 +147,9 @@ class Log_Install extends MainWP_Install {
     public function update_log_db( $currentVersion ) {
         if ( version_compare( $currentVersion, '1.0.1.7', '<' ) ) { // NOSONAR - non-ip.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' ADD INDEX index_site_object_id (site_id, object_id)' ); //phpcs:ignore -- ok.
+        }
+        if ( version_compare( $currentVersion, '1.0.1.7', '>=' ) && version_compare( $currentVersion, '1.0.1.9', '<' ) ) { // NOSONAR - non-ip.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' DROP INDEX state' ); //phpcs:ignore -- ok.
         }
     }
 }

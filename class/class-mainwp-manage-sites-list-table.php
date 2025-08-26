@@ -1187,7 +1187,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             'info'          => 'true',
             'colReorder'    => ' {columns:":not(.check-column):not(.manage-site_actions-column)"} ',
             'stateSave'     => 'true',
-            'stateDuration' => '0',
+            'stateDuration' => '60 * 60 * 24 * 30',
             'order'         => '[]',
             'scrollX'       => 'true',
             'responsive'    => 'true',
@@ -1374,6 +1374,16 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                 style: 'multi+shift',
                                 selector: 'tr>td.check-column'
                             },
+                            // Version the saved state so UI changes don’t brick users.
+                            stateSaveParams: function (settings, data) {
+                                data._mwpv = window.mainwpVersion || 'dev';
+                            },
+                            stateLoadParams: function (settings, data) {
+                                if ((window.mainwpVersion || 'dev') !== data._mwpv) return false; // drop stale state
+                            },
+                            search: { regex: false, smart: false }, // Make search cheaper on the server.
+                            orderMulti: false,
+                            searchDelay: 350
                         }).on('select', function (e, dt, type, indexes) {
                             if( 'row' == type ){
                                 dt.rows(indexes)

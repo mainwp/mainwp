@@ -854,6 +854,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             'roll_ui_icon'                     => MainWP_Updates_Helper::get_roll_icon( '', true ),
         );
         wp_localize_script( 'mainwp', 'mainwpParams', $mainwpParams );
+        wp_localize_script( 'mainwp', 'mainwpVersion', static::$version );
 
         $mainwpTranslations = MainWP_System_View::get_mainwp_translations();
 

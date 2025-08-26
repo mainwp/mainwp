@@ -3771,21 +3771,21 @@ let mainwp_sites_changes_actions_dismiss_all = function () {
     let data = mainwp_secure_data({
         action: 'mainwp_insight_events_dismiss_all',
     });
-    mainwp_showhide_message('mainwp-message-zone-top', '<i class="notched circle loading icon"></i> Please wait...', 'green');
+    mainwp_showhide_message('mainwp-message-zone-top', '<i class="notched circle loading icon"></i> Please wait...', '');
     jQuery.post(ajaxurl, data, function (response) {
         if (response) {
             if (response['error']) {
-                mainwp_showhide_message('mainwp-message-zone-top', '<i class="times red icon"></i> ' + response['error'], 'red');
+                mainwp_showhide_message('mainwp-message-zone-top', response['error'], 'red');
             } else if (response['success'] == 'yes') {
-                mainwp_showhide_message('mainwp-message-zone-top', '<i class="green check icon"></i> All changes has been dismissed.', 'green');
+                mainwp_showhide_message('mainwp-message-zone-top', 'All changes have been dismissed.', 'green');
                 setTimeout(function () {
                     window.location.href = location.href
                 }, 2000);
             } else {
-                mainwp_showhide_message('mainwp-message-zone-top', '<i class="times red icon"></i> Failed. Please try again.', 'green');
+                mainwp_showhide_message('mainwp-message-zone-top', 'Failed. Please try again.', 'red');
             }
         } else {
-            mainwp_showhide_message('mainwp-message-zone-top', '<i class="times red icon"></i> Failed. Please try again.', 'green');
+            mainwp_showhide_message('mainwp-message-zone-top', 'Failed. Please try again.', 'red');
         }
     }, 'json');
     return false;

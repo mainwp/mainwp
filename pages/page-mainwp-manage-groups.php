@@ -362,7 +362,16 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             items: 'row',
                             style: 'multi+shift',
                             selector: 'tr>td:not(.not-selectable)'
-                        }
+                        },
+                        stateSaveParams: function (settings, data) {
+                            data._mwpv = window.mainwpVersion || 'dev';
+                        },
+                        stateLoadParams: function (settings, data) {
+                            if ((window.mainwpVersion || 'dev') !== data._mwpv) return false;
+                        },
+                        search: { regex: false, smart: false },
+                        orderMulti: false,
+                        searchDelay: 350
                     }).on('select', function (e, dt, type, indexes) {
                         console.log('select');
                         if( 'row' == type ){

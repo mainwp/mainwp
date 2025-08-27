@@ -1954,14 +1954,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         } elseif ( 'monitor_view' === $view ) {
             $select_fields   = $light_fields;
             $select_fields[] = 'mo.*';
-            $join_monitors   = ' LEFT JOIN (
-                SELECT wpid, MAX(monitor_id) AS monitor_id
-                FROM ' . $this->table_name( 'monitors' ) . '
-                WHERE issub = 0
-                GROUP BY wpid
-            ) AS mo
-            ON mo.wpid = wp.id ';
-
+            $join_monitors   = ' LEFT JOIN ' . $this->table_name( 'monitors' ) . ' mo ON wp.id = mo.wpid AND mo.issub = 0  ';
         } elseif ( 'manage_site' === $view ) {
             $select_fields[] = 'mo.monitor_id';
             $join_monitors   = ' LEFT JOIN (

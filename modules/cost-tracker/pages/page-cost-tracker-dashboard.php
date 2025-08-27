@@ -499,7 +499,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                 </tfoot>
             </table>
         </div>
-        
+
         <?php
         static::render_modal_edit_notes();
         static::render_screen_options();
@@ -635,7 +635,16 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                                 items: 'row',
                                 style: 'multi+shift',
                                 selector: 'tr>td:not(.not-selectable)'
-                            }
+                            },
+                            stateSaveParams: function (settings, data) {
+                                data._mwpv = window.mainwpVersion || 'dev';
+                            },
+                            stateLoadParams: function (settings, data) {
+                                if ((window.mainwpVersion || 'dev') !== data._mwpv) return false;
+                            },
+                            search: { regex: false, smart: false },
+                            orderMulti: false,
+                            searchDelay: 350
                         }).on('select', function (e, dt, type, indexes) {
                             if( 'row' == type ){
                                 dt.rows(indexes)

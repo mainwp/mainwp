@@ -426,13 +426,13 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
             if ( ! empty( $specific_sync_fields ) ) {
                 $select   .= ',' . $specific_sync_fields;
-                $join_sync = 'JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid';
+                $join_sync = ' JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid';
                 $group_by .= ', wp_sync.sync_id';
             }
 
             if ( ! empty( $view ) && ! empty( $others_fields ) ) {
                 $select   .= ',wp_optionview.* ';
-                $join_view = 'JOIN ' . $this->get_option_view_by( $view, $others_fields ) . ' wp_optionview ON wp.id = wp_optionview.wpid ';
+                $join_view = ' JOIN ' . $this->get_option_view_by( $view, $others_fields ) . ' wp_optionview ON wp.id = wp_optionview.wpid ';
             }
 
             $qry = 'SELECT ' . $select . '
@@ -469,11 +469,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $qry         .= ' LIMIT ' . intval( $start ) . ', ' . intval( $limit_sites );
             }
         }
-
-        if ( ! empty( $_included_cache_ids ) ) {
-            MainWP_Logger::instance()->log_events( 'cache-metrics', sprintf( '[sql websites by params=%s]', $qry ) );
-        }
-
+        MainWP_Logger::instance()->log_events( 'cache-metrics|db-queries', sprintf( '[sql websites by params=%s]', $qry ) );
         return $qry;
     }
 
@@ -1327,9 +1323,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             }
         }
 
-        if ( ! empty( $_included_cache_ids ) ) {
-            MainWP_Logger::instance()->log_events( 'cache-metrics', sprintf( '[sql websites=%s]', $qry ) );
-        }
+        MainWP_Logger::instance()->log_events( 'cache-metrics|db-queries', sprintf( '[sql websites=%s]', $qry ) );
 
         return $qry;
     }
@@ -1960,10 +1954,24 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         } elseif ( 'monitor_view' === $view ) {
             $select_fields   = $light_fields;
             $select_fields[] = 'mo.*';
-            $join_monitors   = ' LEFT JOIN ' . $this->table_name( 'monitors' ) . ' mo ON wp.id = mo.wpid AND mo.issub = 0  ';
+            $join_monitors   = ' LEFT JOIN (
+                SELECT wpid, MAX(monitor_id) AS monitor_id
+                FROM ' . $this->table_name( 'monitors' ) . '
+                WHERE issub = 0
+                GROUP BY wpid
+            ) AS mo
+            ON mo.wpid = wp.id ';
+
         } elseif ( 'manage_site' === $view ) {
             $select_fields[] = 'mo.monitor_id';
-            $join_monitors   = ' LEFT JOIN ' . $this->table_name( 'monitors' ) . ' mo ON wp.id = mo.wpid AND mo.issub = 0  ';
+            $join_monitors   = ' LEFT JOIN (
+                SELECT wpid, MAX(monitor_id) AS monitor_id
+                FROM ' . $this->table_name( 'monitors' ) . '
+                WHERE issub = 0
+                GROUP BY wpid
+            ) AS mo
+            ON mo.wpid = wp.id ';
+
         }
 
         $select = implode( ',', $select_fields );
@@ -1985,7 +1993,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_wp_options_view( $extra_view, $view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
             WHERE 1 ' . $where_cache_ids . $where . $where_group . $where_client . '
-            GROUP BY wp.id, wp_sync.sync_id ' .
+            GROUP BY wp.id ' .
             $orderBy;
         } else {
             $qry = 'SELECT ' . $select . ', wp_optionview.*, wpclient.name as client_name ' .
@@ -1996,7 +2004,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_wp_options_view( $extra_view, $view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
             WHERE 1 ' . $where_cache_ids . $where . $where_group . $where_client . '
-            GROUP BY wp.id, wp_sync.sync_id ' .
+            GROUP BY wp.id ' .
             $orderBy;
         }
 
@@ -2011,9 +2019,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             error_log( $qry ); //phpcs:ignore -- NOSONAR - for dev.
         }
 
-        if ( ! empty( $where_cache_ids ) ) {
-            MainWP_Logger::instance()->log_events( 'cache-metrics', sprintf( '[sql search websites=%s]', $qry ) );
-        }
+        MainWP_Logger::instance()->log_events( 'cache-metrics|db-queries', sprintf( '[sql search websites=%s]', $qry ) );
         return $qry;
     }
 
@@ -2642,9 +2648,11 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             );
             if ( $this->wpdb->insert( $this->table_name( 'wp' ), $values ) ) {
                 $websiteid = $this->wpdb->insert_id;
+                MainWP_Logger::instance()->log_events( 'db-queries', sprintf( '[Insert site=%s]', $this->get_last_query() ) ); // after: $this->wpdb->insert_id.
                 MainWP_Encrypt_Data_Lib::instance()->encrypt_save_keys( $websiteid, $en_pk_data );
                 $syncValues['wpid'] = $websiteid;
                 $this->wpdb->insert( $this->table_name( 'wp_sync' ), $syncValues );
+                MainWP_Logger::instance()->log_events( 'db-queries', sprintf( '[Insert sync data=%s]', $this->get_last_query() ) );
                 $this->wpdb->insert(
                     $this->table_name( 'wp_settings_backup' ),
                     array(

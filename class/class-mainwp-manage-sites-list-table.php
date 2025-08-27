@@ -1180,7 +1180,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
          */
         do_action( 'mainwp_after_manage_sites_table' );
         ?>
-        
+
 
         <?php
         $table_features = array(
@@ -1277,7 +1277,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                     if ( jQuery('#mainwp-manage-sites-body-table td.dt-empty').length > 0 && jQuery('#sites-table-count-empty').length ){
                                         jQuery('#mainwp-manage-sites-body-table td.dt-empty').html(jQuery('#sites-table-count-empty').html());
                                     }
-                                }
+                                },
+                                deferRender: true
                             } );
 
                         } catch(err) {

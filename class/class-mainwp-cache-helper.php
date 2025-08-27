@@ -106,7 +106,9 @@ final class MainWP_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return string Cache key.
      */
     public static function get_cache_key( $key_suffix, $group = 'default', $filters = false ) {
-        return self::get_cache_prefix( $group, $filters ) . $key_suffix;
+        $cache_key = self::get_cache_prefix( $group, $filters ) . $key_suffix;
+        MainWP_Logger::instance()->log_events( 'cache-metrics', sprintf( 'Get cache key :: [key_suffix=%s] :: [group=%s] :: [cache_key=%s]', $key_suffix, $group, $cache_key ) );
+        return $cache_key;
     }
 
     /**
@@ -185,10 +187,11 @@ final class MainWP_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @param string $group Group of cache to clear.
      */
     public static function invalidate_cache_group( $group ) {
-        $mct       = microtime( true );
+        $mctime    = microtime( true );
         $key_group = self::get_key_group( $group );
-        wp_cache_set( $key_group, $mct, $group );
-        set_transient( $key_group, $mct, $group );
+        MainWP_Logger::instance()->log_events( 'cache-metrics', sprintf( 'Invalidate cache group :: [group=%s] :: [key_group=%s]', $group, $key_group ) );
+        wp_cache_set( $key_group, $mctime, $group );
+        set_transient( $key_group, $mctime );
     }
 
     /**

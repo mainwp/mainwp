@@ -76,7 +76,8 @@ wpid int(11) NOT NULL,
 `dts_auto_monitoring_time` int(11) NOT NULL DEFAULT 0,
 `dts_auto_monitoring_start` int(11) NOT NULL DEFAULT 0,
 `dts_auto_monitoring_retry_time` int(11) NOT NULL DEFAULT 0,
-KEY idx_wpid (wpid)";
+KEY idx_wpid (wpid),
+KEY idx_wpid_issub (wpid, issub)";
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.0.41', '<' ) ) { // NOSONAR - no ip.
             $tbl .= ',
     PRIMARY KEY (monitor_id) ';
@@ -140,6 +141,11 @@ KEY idx_wpid (wpid)";
         $suppress = $this->wpdb->suppress_errors();
         $this->update_db_90041( $current_version );
         $this->update_db_90043( $current_version );
+
+        if ( ! empty( $current_version ) && version_compare( $current_version, '9.0.1.2', '<' ) ) {
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'monitors' ) . ' ADD INDEX idx_wpid_issub (wpid, issub)' ); //phpcs:ignore -- ok.
+        }
+
         $this->wpdb->suppress_errors( $suppress );
     }
 

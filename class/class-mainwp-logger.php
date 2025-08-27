@@ -27,9 +27,10 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     const API_BACKUPS_LOG_PRIORITY     = 20240130;
     const CONNECT_LOG_PRIORITY         = 20241001;
     const UPTIME_CHECK_LOG_PRIORITY    = 20241017;
-    const UPTIME_NOTICE_LOG_PRIORITY   = 202411106;
+    const UPTIME_NOTICE_LOG_PRIORITY   = 20241106;
     const SITES_CHANGES_LOG_PRIORITY   = 20250417;
     const CACHE_METRICS_LOG_PRIORITY   = 20250814;
+    const DB_QUERIES_LOG_PRIORITY      = 20250827;
     const DISABLED                     = - 1;
     const LOG                          = 0;
     const WARNING                      = 1;
@@ -326,24 +327,32 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param string $text Log update check.
      */
     public function log_events( $event_name, $text = '' ) {
-        switch ( $event_name ) {
-            case 'update-check':
-                $this->log_action( '[Update Checks] :: ' . $text, static::UPDATE_CHECK_LOG_PRIORITY );
-                break;
-            case 'regular-schedule':
-                $this->log_action( '[Regular Schedule] :: ' . $text, static::LOGS_REGULAR_SCHEDULE );
-                break;
-            case 'debug-updates-crons':
-                $this->log_action( '[Debug updates crons] :: ' . $text, static::DEBUG_UPDATES_SCHEDULE );
-                break;
-            case 'sites-changes':
-                $this->log_action( '[Sites Changes] :: ' . $text, static::SITES_CHANGES_LOG_PRIORITY );
-                break;
-            case 'cache-metrics':
-                $this->log_action( '[MainWP Cache] :: ' . $text, static::CACHE_METRICS_LOG_PRIORITY );
-                break;
-            default:
-                break;
+        $events = is_array( $event_name ) ? $event_name : explode( '|', $event_name );
+        if ( is_array( $events ) ) {
+            foreach ( $events as $event ) {
+                switch ( $event ) {
+                    case 'update-check':
+                        $this->log_action( '[Update Checks] :: ' . $text, static::UPDATE_CHECK_LOG_PRIORITY );
+                        break;
+                    case 'regular-schedule':
+                        $this->log_action( '[Regular Schedule] :: ' . $text, static::LOGS_REGULAR_SCHEDULE );
+                        break;
+                    case 'debug-updates-crons':
+                        $this->log_action( '[Debug updates crons] :: ' . $text, static::DEBUG_UPDATES_SCHEDULE );
+                        break;
+                    case 'sites-changes':
+                        $this->log_action( '[Sites Changes] :: ' . $text, static::SITES_CHANGES_LOG_PRIORITY );
+                        break;
+                    case 'cache-metrics':
+                        $this->log_action( '[MainWP Cache] :: ' . $text, static::CACHE_METRICS_LOG_PRIORITY );
+                        break;
+                    case 'db-queries':
+                        $this->log_action( '[DB Queries] :: ' . $text, static::DB_QUERIES_LOG_PRIORITY );
+                        break;
+                    default:
+                        break;
+                }
+            }
         }
     }
 

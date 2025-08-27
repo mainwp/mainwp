@@ -1708,7 +1708,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             MainWP_Logger::LOGS_AUTO_PURGE_LOG_PRIORITY => esc_html__( 'Auto Archive Sites Changes', 'mainwp' ),
             MainWP_Logger::CONNECT_LOG_PRIORITY         => esc_html__( 'Dashboard Connect', 'mainwp' ),
             MainWP_Logger::SITES_CHANGES_LOG_PRIORITY   => esc_html__( 'Sites Changes', 'mainwp' ),
-            MainWP_Logger::CACHE_METRICS_LOG_PRIORITY   => esc_html__( 'Cache metrics', 'mainwp' ),
+            MainWP_Logger::CACHE_METRICS_LOG_PRIORITY   => esc_html__( 'Cache Metrics', 'mainwp' ),
+            MainWP_Logger::DB_QUERIES_LOG_PRIORITY      => esc_html__( 'DB Queries', 'mainwp' ),
         );
         $specific_logs    = apply_filters( 'mainwp_specific_action_logs', $specific_default ); // deprecated since 4.3.1, use 'mainwp_log_specific_actions' instead.
         $specific_logs    = apply_filters( 'mainwp_log_specific_actions', $specific_logs );

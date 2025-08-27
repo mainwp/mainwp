@@ -596,9 +596,11 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
         }
         MainWP_DB::instance()->update_website_sync_values( $pWebsite->id, $websiteSyncValues );
+        MainWP_Logger::instance()->log_events( 'db-queries', sprintf( '[Update sync values=%s]', MainWP_DB::instance()->get_last_query() ) );
 
         if ( ! empty( $websiteValues ) ) {
             MainWP_DB::instance()->update_website_values( $pWebsite->id, $websiteValues );
+            MainWP_Logger::instance()->log_events( 'db-queries', sprintf( '[Update site sync data=%s]', MainWP_DB::instance()->get_last_query() ) );
         }
 
         $error = apply_filters( 'mainwp_sync_site_after_sync_result', $error, $pWebsite, $information );

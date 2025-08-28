@@ -468,7 +468,11 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $qry         .= ' LIMIT ' . intval( $start ) . ', ' . intval( $limit_sites );
             }
         }
-        MainWP_Logger::instance()->log_events( 'cache-metrics|db-queries', sprintf( '[sql websites by params=%s]', $qry ) );
+
+        if ( ! empty( $_included_cache_ids ) ) {
+            MainWP_Logger::instance()->log_events( 'cache-metrics', sprintf( '[sql websites by params=%s]', $qry ) );
+        }
+        MainWP_Logger::instance()->log_events( 'db-queries', sprintf( '[sql websites by params=%s]', $qry ) );
         return $qry;
     }
 
@@ -1322,7 +1326,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             }
         }
 
-        MainWP_Logger::instance()->log_events( 'cache-metrics|db-queries', sprintf( '[sql websites=%s]', $qry ) );
+        if ( ! empty( $_included_cache_ids ) ) {
+            MainWP_Logger::instance()->log_events( 'cache-metrics', sprintf( '[sql websites=%s]', $qry ) );
+        }
+        MainWP_Logger::instance()->log_events( 'db-queries', sprintf( '[sql websites=%s]', $qry ) );
 
         return $qry;
     }
@@ -1953,7 +1960,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         } elseif ( 'monitor_view' === $view ) {
             $select_fields   = $light_fields;
             $select_fields[] = 'mo.*';
-            $join_monitors = 'LEFT JOIN (
+            $join_monitors   = 'LEFT JOIN (
                 SELECT m1.*
                 FROM ' . $this->table_name( 'monitors' ) . '  m1
                 JOIN (
@@ -2020,7 +2027,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             error_log( $qry ); //phpcs:ignore -- NOSONAR - for dev.
         }
 
-        MainWP_Logger::instance()->log_events( 'cache-metrics|db-queries', sprintf( '[sql search websites=%s]', $qry ) );
+        if ( ! empty( $_included_cache_ids ) ) {
+            MainWP_Logger::instance()->log_events( 'cache-metrics', sprintf( '[sql search websites=%s]', $qry ) );
+        }
+        MainWP_Logger::instance()->log_events( 'db-queries', sprintf( '[sql search websites=%s]', $qry ) );
         return $qry;
     }
 

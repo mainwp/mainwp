@@ -1195,6 +1195,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             'scrollX'       => 'true',
             'responsive'    => 'true',
             'fixedColumns'  => '',
+            'searchDelay'   => 350,
         );
 
         /**
@@ -1278,7 +1279,16 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                         jQuery('#mainwp-manage-sites-body-table td.dt-empty').html(jQuery('#sites-table-count-empty').html());
                                     }
                                 },
-                                deferRender: true
+                                deferRender: true,
+                                stateSaveParams: function (settings, data) {
+                                    data._mwpv = window.mainwpVersion || 'dev';
+                                },
+                                stateLoadParams: function (settings, data) {
+                                    if ((window.mainwpVersion || 'dev') !== data._mwpv) return false;
+                                },
+                                search: { regex: false, smart: false },
+                                orderMulti: false,
+                                searchDelay: <?php echo intval( $table_features['searchDelay'] ); ?>
                             } );
 
                         } catch(err) {
@@ -1388,7 +1398,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                             },
                             search: { regex: false, smart: false }, // Make search cheaper on the server.
                             orderMulti: false,
-                            searchDelay: 350
+                            searchDelay: <?php echo intval( $table_features['searchDelay'] ); ?>
                         }).on('select', function (e, dt, type, indexes) {
                             if( 'row' == type ){
                                 dt.rows(indexes)

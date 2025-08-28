@@ -400,13 +400,14 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
             'info'          => 'true',
             'colReorder'    => '{columns:":not(.check-column):not(.manage-client_actions-column)"}',
             'stateSave'     => 'true',
-            'stateDuration' => '0',
+            'stateDuration' => '60 * 60 * 24 * 30',
             'order'         => '[]',
             'scrollX'       => 'true',
             'responsive'    => 'true',
+            'searchDelay'   => 350,
         );
 
-        /**
+        /**z
          * Filter: mainwp_clients_table_features
          *
          * Filter the Clients table features.
@@ -475,7 +476,16 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                             items: 'row',
                             style: 'multi+shift',
                             selector: 'tr>td.check-column'
-                        }
+                        },
+                        stateSaveParams: function (settings, data) {
+                            data._mwpv = window.mainwpVersion || 'dev';
+                        },
+                        stateLoadParams: function (settings, data) {
+                            if ((window.mainwpVersion || 'dev') !== data._mwpv) return false;
+                        },
+                        search: { regex: false, smart: false },
+                        orderMulti: false,
+                        searchDelay: <?php echo intval( $table_features['searchDelay'] ); ?>
                     } ).on( 'columns-reordered', function () {
                         console.log('columns-reorderede');
                         setTimeout(() => {

@@ -195,10 +195,11 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                     'info'          => 'false',
                     'colReorder'    => '{ columns:":not(.manage-status-column):not(.manage-site_actions-column)"} ',
                     'stateSave'     => 'true',
-                    'stateDuration' => '0',
+                    'stateDuration' => '60 * 60 * 24 * 30',
                     'order'         => '[]',
                     'scrollX'       => 'true',
                     'responsive'    => 'true',
+                    'searchDelay'   => 350,
                 );
 
                 ?>
@@ -237,7 +238,16 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                                 if ( jQuery('#mainwp-manage-sites-body-table td.dt-empty').length > 0 && jQuery('#sites-table-count-empty').length ){
                                     jQuery('#mainwp-manage-sites-body-table td.dt-empty').html(jQuery('#sites-table-count-empty').html());
                                 }
-                            }
+                            },
+                            stateSaveParams: function (settings, data) {
+                                data._mwpv = window.mainwpVersion || 'dev';
+                            },
+                            stateLoadParams: function (settings, data) {
+                                if ((window.mainwpVersion || 'dev') !== data._mwpv) return false;
+                            },
+                            search: { regex: false, smart: false },
+                            orderMulti: false,
+                            searchDelay: <?php echo intval( $table_features['searchDelay'] ); ?>
                         } ).on( 'columns-reordered', function () {
                             console.log('columns-reordered');
                             setTimeout(() => {

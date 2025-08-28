@@ -911,11 +911,12 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'info'          => 'true',
             'colReorder'    => '{columns:":not(.check-column):not(:last-child)"}',
             'stateSave'     => 'true',
-            'stateDuration' => '0',
+            'stateDuration' => '60 * 60 * 24 * 30',
             'order'         => '[]',
             'scrollX'       => 'true',
             'responsive'    => 'true',
             'fixedColumns'  => '',
+            'searchDelay'   => 350,
         );
 
         // Fix for widget state save overview table.
@@ -1072,7 +1073,16 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                 jQuery( row ).attr( 'log-id',  data.log_id );
                                 jQuery( row ).find('.mainwp-date-cell').attr('data-sort', data.created_sort );
                                 jQuery( row ).find('.mainwp-state-cell').attr('data-sort', data.state_sort );
-                            }
+                            },
+                            stateSaveParams: function (settings, data) {
+                                data._mwpv = window.mainwpVersion || 'dev';
+                            },
+                            stateLoadParams: function (settings, data) {
+                                if ((window.mainwpVersion || 'dev') !== data._mwpv) return false;
+                            },
+                            search: { regex: false, smart: false },
+                            orderMulti: false,
+                            searchDelay: <?php echo intval( $table_features['searchDelay'] ); ?>
                             <?php
                             if ( 'manage-events' === $this->table_id_prefix ) {
                                 echo ",select: {

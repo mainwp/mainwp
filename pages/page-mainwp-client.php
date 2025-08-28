@@ -687,7 +687,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                             </div>
                         </div>
                     </div>
-                        
+
                 </form>
             </div>
             <div class="actions">
@@ -1230,6 +1230,15 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             "drawCallback" : function( settings ) {
                 jQuery( '#mainwp-clients-custom-fields-table .ui.dropdown').dropdown();
             },
+            stateSaveParams: function (settings, data) {
+                data._mwpv = window.mainwpVersion || 'dev';
+            },
+            stateLoadParams: function (settings, data) {
+                if ((window.mainwpVersion || 'dev') !== data._mwpv) return false;
+            },
+            search: { regex: false, smart: false },
+            orderMulti: false,
+            searchDelay: 350
         } );
         </script>
         </div>

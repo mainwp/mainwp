@@ -372,7 +372,6 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             'wp.pubkey',
             'wp.wpe',
             'wp.is_staging',
-            'wp.pubkey',
             'wp.force_use_ipv4',
             'wp.siteurl',
             'wp.suspended',
@@ -1954,7 +1953,16 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         } elseif ( 'monitor_view' === $view ) {
             $select_fields   = $light_fields;
             $select_fields[] = 'mo.*';
-            $join_monitors   = ' LEFT JOIN ' . $this->table_name( 'monitors' ) . ' mo ON wp.id = mo.wpid AND mo.issub = 0  ';
+            $join_monitors = 'LEFT JOIN (
+                SELECT m1.*
+                FROM ' . $this->table_name( 'monitors' ) . '  m1
+                JOIN (
+                    SELECT wpid, MAX(monitor_id) AS max_id
+                    FROM ' . $this->table_name( 'monitors' ) . '
+                    WHERE issub = 0
+                    GROUP BY wpid
+                ) mm ON mm.wpid = m1.wpid AND m1.monitor_id = mm.max_id
+                ) mo ON mo.wpid = wp.id ';
         } elseif ( 'manage_site' === $view ) {
             $select_fields[] = 'mo.monitor_id';
             $join_monitors   = ' LEFT JOIN (

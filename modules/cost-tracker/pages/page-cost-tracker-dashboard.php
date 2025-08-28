@@ -531,11 +531,12 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
             'info'          => 'true',
             'colReorder'    => '{columns:":not(.check-column):not(.column-actions)"}',
             'stateSave'     => 'true',
-            'stateDuration' => '0',
+            'stateDuration' => '60 * 60 * 24 * 30',
             'order'         => '[]',
             'scrollX'       => 'true',
             'responsive'    => 'true',
             'fixedColumns'  => '',
+            'searchDelay'   => 350,
         );
 
         ?>
@@ -644,7 +645,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                             },
                             search: { regex: false, smart: false },
                             orderMulti: false,
-                            searchDelay: 350
+                            searchDelay: <?php echo intval( $table_features['searchDelay'] ); ?>
                         }).on('select', function (e, dt, type, indexes) {
                             if( 'row' == type ){
                                 dt.rows(indexes)

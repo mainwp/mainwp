@@ -757,10 +757,11 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             'info'          => 'true',
             'colReorder'    => '{columns:":not(.check-column):not(:last-child)"}',
             'stateSave'     => 'true',
-            'stateDuration' => '0',
+            'stateDuration' => '60 * 60 * 24 * 30',
             'order'         => '[]',
             'scrollX'       => 'true',
             'responsive'    => 'true',
+            'searchDelay'   => 350,
         );
 
         /**
@@ -916,7 +917,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                         },
                         search: { regex: false, smart: false },
                         orderMulti: false,
-                        searchDelay: 350
+                        searchDelay: <?php echo intval( $table_features['searchDelay'] ); ?>
                     }).on('select', function (e, dt, type, indexes) {
                         if( 'row' == type ){
                             dt.rows(indexes)
@@ -988,7 +989,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                             },
                             search: { regex: false, smart: false },
                             orderMulti: false,
-                            searchDelay: 350
+                            searchDelay: <?php echo intval( $table_features['searchDelay'] ); ?>
                         } ).on('select', function (e, dt, type, indexes) {
                             if( 'row' == type ){
                                 dt.rows(indexes)

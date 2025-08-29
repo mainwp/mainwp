@@ -584,7 +584,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $href      = isset( $params['href'] ) ? $params['href'] : '';
         $right     = isset( $params['right'] ) ? $params['right'] : '';
         $id        = isset( $params['id'] ) ? $params['id'] : '';
-        $level_cls = 'left-menu-item-level-' . $level;
+        $level_cls = 'js-prefetch left-menu-item-level-' . $level;
 
         $icon                 = isset( $params['icon'] ) ? $params['icon'] : '';
         $leftsub_order        = isset( $params['leftsub_order'] ) ? $params['leftsub_order'] : '';

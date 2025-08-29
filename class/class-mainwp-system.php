@@ -222,6 +222,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         add_action( 'init', array( &$this, 'parse_init' ) );
         add_action( 'init', array( &$this, 'init_jobs' ) );
         add_action( 'init', array( &$this, 'init' ), 9999 );
+        add_action( 'current_screen', array( __CLASS__, 'init_no_cache_header' ), 999 );
+
         add_action( 'admin_init', array( $this, 'admin_redirects' ) );
         add_action( 'current_screen', array( &$this, 'current_screen_redirects' ), 15 );
         add_filter( 'plugin_action_links', array( $this, 'hook_plugin_action_links' ), 10, 4 );
@@ -835,6 +837,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
         wp_enqueue_script( 'mainwp', MAINWP_PLUGIN_URL . 'assets/js/mainwp.js', $en_params, $this->current_version, true );
         wp_enqueue_script( 'mainwp-uptime', MAINWP_PLUGIN_URL . 'assets/js/mainwp-uptime.js', $en_params, $this->current_version, true );
+        wp_enqueue_script( 'mainwp-cache-warm', MAINWP_PLUGIN_URL . 'assets/js/mainwp-cache-warm.js', array(), $this->current_version, true );
 
         $disable_backup_checking = true; // removed option.
         $mainwpParams            = array(
@@ -898,6 +901,25 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         if ( ! current_user_can( 'update_core' ) ) {
             remove_action( 'admin_notices', 'update_nag', 3 );
+        }
+    }
+
+    /**
+     * Method init_no_cache_header()
+     */
+    public static function init_no_cache_header() {
+        if ( self::is_mainwp_pages() ) {
+            if ( ! headers_sent() ) {
+                // Clear conflicting headers first.
+                header_remove( 'Pragma' );
+                header_remove( 'Expires' );
+                header_remove( 'Cache-Control' );
+
+                // Then set a single, consistent policy.
+                header( 'Cache-Control: private, max-age=60, stale-while-revalidate=30', true );
+                header( 'Expires: ' . gmdate( 'D, d M Y H:i:s', time() + 60 ) . ' GMT', true );
+                header( 'X-Robots-Tag: noindex, nofollow', true );
+            }
         }
     }
 

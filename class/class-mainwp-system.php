@@ -281,6 +281,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         if ( defined( 'DOING_CRON' ) && DOING_CRON && isset( $_GET['mainwp_run'] ) && 'test' === $_GET['mainwp_run'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             add_action( 'init', array( MainWP_System_Cron_Jobs::instance(), 'cron_active' ), PHP_INT_MAX );
         }
+        MainWP_Unhooks_Helper::instance();
     }
 
     /**
@@ -911,6 +912,13 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 MainWP_Logger::instance()->log_action( '[Fatal ERROR detected=' . print_r( $error, true ) . ']', false, MainWP_Logger::WARNING_COLOR, true ); //phpcs:ignore -- NOSONAR.
             }
         }
+
+        /**
+         * MainWP shutdown.
+         *
+         * @since 5.5.
+         */
+        do_action( 'mainwp_shutdown' );
     }
 
     /**

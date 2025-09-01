@@ -28,6 +28,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     const CONNECT_LOG_PRIORITY         = 20241001;
     const UPTIME_CHECK_LOG_PRIORITY    = 20241017;
     const UPTIME_NOTICE_LOG_PRIORITY   = 202411106;
+    const UNHOOKS_LOG_PRIORITY         = 20250901;
     const DISABLED                     = - 1;
     const LOG                          = 0;
     const WARNING                      = 1;
@@ -320,17 +321,21 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @param string $event_name Event name.
      * @param string $text Log update check.
+     * @param mixed  $color Log color.
      */
-    public function log_events( $event_name, $text = '' ) {
+    public function log_events( $event_name, $text = '', $color = false ) {
         switch ( $event_name ) {
             case 'update-check':
-                $this->log_action( '[Update Checks] :: ' . $text, static::UPDATE_CHECK_LOG_PRIORITY );
+                $this->log_action( '[Update Checks] :: ' . $text, static::UPDATE_CHECK_LOG_PRIORITY, $color );
                 break;
             case 'regular-schedule':
-                $this->log_action( '[Regular Schedule] :: ' . $text, static::LOGS_REGULAR_SCHEDULE );
+                $this->log_action( '[Regular Schedule] :: ' . $text, static::LOGS_REGULAR_SCHEDULE, $color );
                 break;
             case 'debug-updates-crons':
-                $this->log_action( '[Debug updates crons] :: ' . $text, static::DEBUG_UPDATES_SCHEDULE );
+                $this->log_action( '[Debug updates crons] :: ' . $text, static::DEBUG_UPDATES_SCHEDULE, $color );
+                break;
+            case 'unhooks':
+                $this->log_action( '[Unhooks infor] :: ' . $text, static::UNHOOKS_LOG_PRIORITY, $color );
                 break;
             default:
                 break;
@@ -684,6 +689,26 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public function log_execution_time( $text = '' ) {
         $exec_time = $this->get_execution_time();
         $this->log_action( 'execution time :: ' . ( ! empty( $text ) ? (string) $text : '<empty>' ) . ' :: [time=' . round( $exec_time, 4 ) . '](seconds)', static::EXECUTION_TIME_LOG_PRIORITY );
+    }
+
+    /**
+     * Method get_run_time().
+     *
+     * Get the execution time value.
+     *
+     * @return float execution time.
+     */
+    public static function get_run_time() {
+
+        $start = is_array( static::$time_start ) && isset( static::$time_start['start'] ) ? static::$time_start['start'] : 0;
+
+        if ( empty( $start ) ) {
+            return 0;
+        }
+
+        $rtime = microtime( true ) - $start; // seconds.
+
+        return round( $rtime, 4 );
     }
 
 

@@ -272,11 +272,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function check_ignored_http_code( $value, $website = false ) {
         $value = (int) $value;
-        if ( 200 === $value ) {
-            return true;
-        }
-
         $site_id = is_object( $website ) && ! empty( $website->id ) ? $website->id : 0;
+        $global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
 
         $ignored_code = '';
 
@@ -295,6 +292,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             } else {
                 $ignored_code = is_array( $global_settings ) && isset( $global_settings['up_status_codes'] ) ? $global_settings['up_status_codes'] : '';
             }
+        } else {
+            $ignored_code = ! empty( $global_settings['up_status_codes'] ) ? $global_settings['up_status_codes'] : '';
         }
 
         if ( ! empty( $ignored_code ) ) {

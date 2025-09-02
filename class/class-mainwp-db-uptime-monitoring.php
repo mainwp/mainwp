@@ -513,12 +513,13 @@ KEY idx_wpid_issub (wpid, issub)";
      * @param  int $limit limit.
      * @return mixed
      */
-    public function get_uptime_notification_to_start_send( $limit = 50 ) {
+    public function get_uptime_notification_to_start_send( $limit = 50, $global_active = 1 ) {
 
         $sql = $this->wpdb->prepare(
             ' SELECT pro.process_id,pro.status,pro.dts_process_start,pro.dts_process_stop,mo.* FROM ' . $this->table_name( 'monitors' ) . ' mo ' .
             ' LEFT JOIN ' . $this->table_name( 'schedule_processes' ) . ' pro ON mo.monitor_id = pro.item_id ' .
             " WHERE ( pro.type = 'monitor' AND pro.process_slug = 'uptime_notification' " .
+            ' AND ( ( mo.active = -1 AND 1 = ' . ( $global_active ? 1 : 0 ) . ' ) OR mo.active = 1  ) ' .
             " AND ( pro.dts_process_stop > pro.dts_process_start OR pro.dts_process_start = 0 ) AND pro.status = 'active' ) " . // get active process and stop > start - it is finished status of previous process.
             ' ORDER BY pro.dts_process_start ASC LIMIT %d ',
             $limit

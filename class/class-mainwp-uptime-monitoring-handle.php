@@ -91,8 +91,9 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
             'timeout'         => -1, // use global setting default.
         );
         if ( ! $individual ) {
+            $up_codes = array( 200, 201, 202, 203, 204, 205, 206 );
             // global defaults.
-            $default['up_status_codes'] = '';
+            $default['up_status_codes'] = implode( ',', $up_codes );
             $default['active']          = 0;
             $default['type']            = 'http';
             $default['maxretries']      = 1;
@@ -396,15 +397,19 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
         $status   = isset( $params['new_uptime_status'] ) ? (int) $params['new_uptime_status'] : 0;
         $time     = isset( $params['check_offline_time'] ) ? $params['check_offline_time'] : time();
 
-        // Save last status.
+        $new_check_result = $status ? 1 : -1; // 1 - online, -1 offline.
+
+        // Save last status, do not update http status notification.
         MainWP_DB::instance()->update_website_values(
             $website->id,
             array(
-                'offline_check_result' => $status ? 1 : -1, // 1 - online, -1 offline.
+                'offline_check_result' => $new_check_result, // 1 - online, -1 offline.
                 'offline_checks_last'  => $time,
                 'http_response_code'   => $new_code,
             )
         );
+
+        MainWP_Logger::instance()->log_uptime_check( 'Check website status :: [website=' . (string) $website->url . '] :: [offline_check_result=' . ( $status ? 1 : -1 ) . '] :: [http_response_code=' . esc_html( $new_code ) . ']' );
 
         return true;
     }

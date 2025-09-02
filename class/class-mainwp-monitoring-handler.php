@@ -67,40 +67,60 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $is_online = MainWP_Connect::check_ignored_http_code( $new_code, $website ); // legacy check http code.
         }
 
-        $time = isset( $result_comp['check_offline_time'] ) ? $result_comp['check_offline_time'] : time();
+        $new_check_result = $is_online ? 1 : -1; // 1 - online, -1 offline.
 
+        $time    = isset( $result_comp['check_offline_time'] ) ? $result_comp['check_offline_time'] : time();
+        $noticed = static::check_http_status_notification_threshold( $website, $new_check_result );
         // Save last status.
         MainWP_DB::instance()->update_website_values(
             $website->id,
             array(
-                'offline_check_result' => $is_online ? 1 : -1, // 1 - online, -1 offline.
+                'offline_check_result' => $new_check_result,
                 'offline_checks_last'  => $time,
                 'http_response_code'   => $new_code,
+                'http_code_noticed'    => $noticed,
             )
         );
 
+        MainWP_Logger::instance()->log_uptime_check( 'Check website status :: [website=' . (string) $website->url . '] :: [offline_check_result=' . ( $is_online ? 1 : -1 ) . '] :: [http_response_code=' . esc_html( $new_code ) . '] :: [http_code_noticed=' . esc_html( $noticed ) . ']' );
+
         return $result_comp; // return results for ajax check requests.
     }
+
 
     /**
      * Get a new HTTP status notice.
      *
      * @param object $website  Object containing the website info.
-     * @param int    $new_code The new HTTP code value.
+     * @param int    $check_result The new HTTP code value.
+     *
+     * @return int $noticed Noticed value.
+     */
+    public static function check_http_status_notification_threshold( $website, $check_result ) {
+        $threshold = HOUR_IN_SECONDS;
+        $noticed   = 1; // default is noticed.
+        if ( property_exists( $website, 'offline_checks_last' ) ) {
+            $last_noticed = MainWP_DB::instance()->get_website_option( $website, 'http_status_notice_check_time', 0 );
+            if ( -1 === $check_result ) {
+                $noticed = 0;
+                if ( $last_noticed > time() - $threshold ) {
+                    $noticed = 1;
+                }
+            }
+        }
+        return $noticed;
+    }
+
+
+    /**
+     * Get a new HTTP status notice.
+     *
+     * @compatible.
      *
      * @return int $noticed_value New HTTP status.
      */
-    public static function get_http_noticed_status_value( $website, $new_code ) {
-        $old_code      = (int) $website->http_response_code;
-        $noticed_value = $website->http_code_noticed;
-        if ( 200 !== $new_code && (int) $old_code !== $new_code ) {
-            $noticed_value = 0;
-        } elseif ( 200 !== $old_code && 200 === $new_code ) {
-            if ( 0 === $noticed_value ) {
-                $noticed_value = 1;
-            }
-        }
-        return $noticed_value;
+    public static function get_http_noticed_status_value() {
+        return 1;
     }
 
     /**

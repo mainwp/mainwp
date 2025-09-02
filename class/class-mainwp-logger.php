@@ -31,6 +31,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     const SITES_CHANGES_LOG_PRIORITY   = 20250417;
     const CACHE_METRICS_LOG_PRIORITY   = 20250814;
     const DB_QUERIES_LOG_PRIORITY      = 20250827;
+    const UNHOOKS_LOG_PRIORITY         = 20250901;
     const DISABLED                     = - 1;
     const LOG                          = 0;
     const WARNING                      = 1;
@@ -325,8 +326,9 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @param string $event_name Event name.
      * @param string $text Log update check.
+     * @param mixed  $color Log color.
      */
-    public function log_events( $event_name, $text = '' ) {
+    public function log_events( $event_name, $text = '', $color = false ) {
         $events = is_array( $event_name ) ? $event_name : explode( '|', $event_name );
         if ( is_array( $events ) ) {
             foreach ( $events as $event ) {
@@ -349,6 +351,9 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     case 'db-queries':
                         $this->log_action( '[DB Queries] :: ' . $text, static::DB_QUERIES_LOG_PRIORITY );
                         break;
+					case 'unhooks':
+		                $this->log_action( '[Unhooks infor] :: ' . $text, static::UNHOOKS_LOG_PRIORITY, $color );
+		                break;
                     default:
                         break;
                 }
@@ -739,6 +744,26 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public function log_execution_time( $text = '' ) {
         $exec_time = $this->get_execution_time();
         $this->log_action( 'execution time :: ' . ( ! empty( $text ) ? (string) $text : '<empty>' ) . ' :: [time=' . round( $exec_time, 4 ) . '](seconds)', static::EXECUTION_TIME_LOG_PRIORITY );
+    }
+
+    /**
+     * Method get_run_time().
+     *
+     * Get the execution time value.
+     *
+     * @return float execution time.
+     */
+    public static function get_run_time() {
+
+        $start = is_array( static::$time_start ) && isset( static::$time_start['start'] ) ? static::$time_start['start'] : 0;
+
+        if ( empty( $start ) ) {
+            return 0;
+        }
+
+        $rtime = microtime( true ) - $start; // seconds.
+
+        return round( $rtime, 4 );
     }
 
 

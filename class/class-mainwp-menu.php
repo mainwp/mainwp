@@ -1379,7 +1379,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         $level2_active = true;
                     }
 
-                    if ( ! $level2_active && ! isset( $_GET['do'] ) && 'InsightsManage' !== $page_name && 'Extensions-Mainwp-Clone-Extension' !== $page_name && 'admin.php?page=managesites' === $href ) {
+                    if ( ! $level2_active && ! isset( $_GET['do'] ) && 'InsightsManage' !== $page_name && 'Extensions-Mainwp-Clone-Extension' !== $page_name && 'managesites-root' === $id ) {
                         $level2_active = true;
                     }
                 }

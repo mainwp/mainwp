@@ -48,7 +48,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <div class="wp-submenu sub-open" style="">
                 <div class="mainwp_boxout">
                     <div class="mainwp_boxoutin"></div>
-                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Sites', 'mainwp' ); ?></a>
+                    <a href="<?php echo esc_url( admin_url( MainWP_Unhooks_Helper::add_unhooks_params( 'admin.php?page=managesites' ) ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Sites', 'mainwp' ); ?></a>
                     <?php if ( \mainwp_current_user_can( 'dashboard', 'add_sites' ) ) { ?>
                         <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'managesites_add_new' ) ) { ?>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
@@ -100,7 +100,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 'title'      => esc_html__( 'Sites', 'mainwp' ),
                 'parent_key' => 'mainwp_tab',
                 'slug'       => 'managesites',
-                'href'       => 'admin.php?page=managesites',
+                'href'       => MainWP_Unhooks_Helper::add_unhooks_params( 'admin.php?page=managesites' ),
                 'icon'       => '<i class="globe icon"></i>',
             ),
             0
@@ -111,9 +111,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 'title'                => esc_html__( 'Manage Sites', 'mainwp' ),
                 'parent_key'           => 'managesites',
                 'slug'                 => 'managesites',
-                'href'                 => 'admin.php?page=managesites',
+                'href'                 => MainWP_Unhooks_Helper::add_unhooks_params( 'admin.php?page=managesites' ),
                 'right'                => '',
                 'leftsub_order_level2' => 1,
+                'id'                   => 'managesites-root',
             ),
             array(
                 'title'                => esc_html__( 'Add New', 'mainwp' ),
@@ -193,7 +194,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
         $managesites_pages = array(
             'ManageSites'     => array(
-                'href'   => 'admin.php?page=managesites',
+                'href'   => MainWP_Unhooks_Helper::add_unhooks_params( 'admin.php?page=managesites' ),
                 'title'  => esc_html__( 'Manage Sites', 'mainwp' ),
                 'access' => true,
             ),

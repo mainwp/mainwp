@@ -961,7 +961,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                         jQuery('input[name=mainwp_default_sites_per_page]').val(25);
                         jQuery('.mainwp_hide_wpmenu_checkboxes input[id^="mainwp_show_column_"]').prop( 'checked', false );
                         //default columns.
-                        let cols = ['event', 'log_object', 'created','log_site_name','user_id', 'source', 'col_action'];
+                        let cols = ['created', 'user_id', 'action', 'log_object', 'name', 'event', 'source', 'col_action'];
                         jQuery.each( cols, function ( index, value ) {
                             jQuery('.mainwp_hide_wpmenu_checkboxes input[id="mainwp_show_column_' + value + '"]').prop( 'checked', true );
                         } );

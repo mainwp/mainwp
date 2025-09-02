@@ -176,6 +176,8 @@ class Api_Backups_Settings {
                                     '</a> <i class="external alternate icon"></i>'
                                 );
                                 ?>
+                                <div class="ui hidden divider"></div>
+                                <strong><?php esc_html_e( 'Note: VHM (Virtual Host Manager) is not supported.', 'mainwp' ); ?></strong> <?php esc_html_e( 'The purpose of having these global cPanel settings is to save you time when setting up per-site cPanel settings, which is particularly useful if you manage multiple child sites on the same cPanel account.', 'mainwp' ); ?>
                             </div>
                         <?php endif; ?>
 

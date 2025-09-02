@@ -101,10 +101,10 @@ let updatesoverview_upgrade = function (id, obj) {
                     if (response.error.extra) {
                         err_msg = response.error.extra + ' ';
                     }
-                    jQuery('.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + err_msg + '"><i class="red times icon"></i></span>' + ' ' + mainwp_links_visit_site_and_admin('', pId));
+                    jQuery('.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + err_msg + '"><i class="red times icon"></i></span>');
                 } else {
 
-                    jQuery('.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child').html(response.result + ' ' + mainwp_links_visit_site_and_admin('', pId));
+                    jQuery('.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child').html(response.result);
 
                 }
 
@@ -1069,9 +1069,7 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
                                     if (!done && pBulkMode) {
                                         updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, success_html);
                                     }
-                                    websiteHolder.find('td:last-child').html(
-                                        success_html + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId)
-                                    );
+                                    websiteHolder.find('td:last-child').html(success_html);
                                 });
 
                                 // Immediately display the loading icon
@@ -1082,7 +1080,7 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
                                 }
 
                                 websiteHolder.attr('updated', 1);
-                                websiteHolder.find('td:last-child').html(loading_html + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
+                                websiteHolder.find('td:last-child').html(loading_html);
                             } else if (res_error[sid]) {
                                 let _error = res_error[sid];
                                 let roll_error = mainwp_updates_get_rollback_msg(_error);
@@ -1514,19 +1512,17 @@ let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode) {
                                     updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, success_html);
                                 }
 
-                                websiteHolder.find('td:last-child').html(
-                                    success_html + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId)
-                                );
+                                websiteHolder.find('td:last-child').html(success_html);
                             });
 
                             // Immediately display the loading icon
                             const loading_html = `${success_icon} ${regression_icon_loading}`;
                             if (!done && pBulkMode) {
-                                updatesoverview_themes_upgrade_all_update_site_status(pWebsiteId, loading_html + ' ' + mainwp_links_visit_site_and_admin('', websiteId));
+                                updatesoverview_themes_upgrade_all_update_site_status(pWebsiteId, loading_html);
                             }
 
                             websiteHolder.attr('updated', 1);
-                            websiteHolder.find('td:last-child').html(loading_html + ' ' + mainwp_links_visit_site_and_admin('', websiteId));
+                            websiteHolder.find('td:last-child').html(loading_html);
                         } else {
                             let _error = '';
                             let _icon = '';

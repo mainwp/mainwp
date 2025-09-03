@@ -741,9 +741,9 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             </tfoot>
     </table>
     <div id="mainwp-loading-sites" style="display: none;">
-    <div class="ui active dimmer">
-    <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
-    </div>
+        <div class="ui active page dimmer">
+            <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
+        </div>
     </div>
 
         <?php

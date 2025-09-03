@@ -419,9 +419,7 @@
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.modals.dimmer {
-  -webkit-backdrop-filter: blur(5px) grayscale(.7);
-  backdrop-filter: blur(5px) grayscale(.7);
-  background: rgba(231, 238, 246, 0.80)
+  background: rgba(231, 238, 246, 1)
 }
 
 /* Dimmer & Loader */

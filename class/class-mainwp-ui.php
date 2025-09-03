@@ -1110,6 +1110,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             </script>
 
             <?php static::render_help_modal(); ?>
+            <?php static::render_loader_element(); ?>
             <?php
             /**
              * Action: mainwp_after_header
@@ -2529,6 +2530,35 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
 
         </div>
 
+        <?php
+    }
+
+    /**
+     * Method render_loader_element()
+     *
+     * Renders navigation loading dimmer element with click handlers.
+     *
+     * Displays a page dimmer with loading text that shows when users click
+     * on left menu items (level 0 and level 2). The dimmer provides visual
+     * feedback during page navigation transitions.
+     *
+     * @return void Outputs HTML dimmer element and JavaScript event handlers.
+     */
+    public static function render_loader_element() {
+        ?>
+        <div id="mainwp-nav-dimmer" class="ui page dimmer">
+            <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
+        </div>
+        <script>
+            jQuery( document ).ready( function () {
+                jQuery('.left-menu-item-level-0, .left-menu-item-level-2').on('click', function () {
+                    jQuery('#mainwp-nav-dimmer').dimmer({
+                        duration: 25,
+                        opacity: 1,
+                    }).dimmer('show');
+                });
+            } );
+        </script>
         <?php
     }
 

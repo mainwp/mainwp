@@ -916,7 +916,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 header_remove( 'Cache-Control' );
 
                 // Then set a single, consistent policy.
-                header( 'Cache-Control: private, max-age=60, stale-while-revalidate=30', true );
+                header( 'Cache-Control: private, max-age=600, stale-while-revalidate=30', true );
                 header( 'Expires: ' . gmdate( 'D, d M Y H:i:s', time() + 60 ) . ' GMT', true );
                 header( 'X-Robots-Tag: noindex, nofollow', true );
             }

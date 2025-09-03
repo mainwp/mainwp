@@ -501,7 +501,7 @@ final class MainWP_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return false;
         }
 
-        $sec = MainWP_Execution_Helper::instance()->get_exec_time();
+        $sec = MainWP_Execution_Helper::get_run_time();
         MainWP_Logger::instance()->log_events( 'cache-metrics', sprintf( '[hits=%d] :: [misses=%d] :: [sets=%d] :: [execution time=%s]', self::$hits, self::$misses, self::$sets, round( $sec, 4 ) ) );
         MainWP_Logger::instance()->log_events( 'cache-metrics', sprintf( '[cache_keys=%s]', implode( "\n", self::$metrics_list ) ) );
     }

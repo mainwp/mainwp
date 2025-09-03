@@ -9,7 +9,6 @@
 
 namespace MainWP\Dashboard\Module\Log;
 
-use MainWP\Dashboard\MainWP_Execution_Helper;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_Logger;
@@ -34,13 +33,6 @@ class Log_Manager {
      * @var \MainWP\Dashboard\Module\Log\Log_Admin Admin class.
      * */
     public $admin;
-
-    /**
-     * MainWP_Execution_Helper
-     *
-     * @var \MainWP\Dashboard\MainWP_Execution_Helper class.
-     * */
-    public $executor;
 
     /**
      * Holds Instance of settings object
@@ -133,7 +125,6 @@ class Log_Manager {
 
         $driver         = new Log_DB_Driver_WPDB();
         $this->db       = new Log_DB( $driver );
-        $this->executor = MainWP_Execution_Helper::instance();
         $this->settings = new Log_Settings( $this );
 
         // Load logger class.

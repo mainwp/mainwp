@@ -920,6 +920,9 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
          * @since 5.5.
          */
         do_action( 'mainwp_shutdown' );
+
+        $exctime = MainWP_Execution_Helper::get_run_time();
+        MainWP_Logger::instance()->log_events( 'execution-time', 'Shutdown :: ' . $exctime );
     }
 
     /**

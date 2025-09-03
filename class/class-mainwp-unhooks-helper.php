@@ -85,6 +85,18 @@ class MainWP_Unhooks_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             );
             return;
         }
+
+        /**
+         * Hook remove unwanted hooks.
+         *
+         * @since 5.5.
+         */
+        $remove = apply_filters( 'mainwp_unhooks_remove_unwanted_hooks', true, 'unwanted_hooks' ); //phpcs:ignore -- ok.
+
+        if ( ! $remove ) {
+            return;
+        }
+
         MainWP_Logger::instance()->log_events( 'unhooks', '[hook_remove_unwanted_hooks] :: [page=' . ( isset( $_GET['page'] ) ? esc_html( wp_unslash( $_GET['page'] ) ) : '' ) . ']' );  //phpcs:ignore -- ok.
         $this->remove_slow_hooks();
     }
@@ -102,7 +114,9 @@ class MainWP_Unhooks_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return;
         }
 
-        if ( $this->is_excluded_page() ) {
+        $page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore -- ok.
+
+        if ( $this->is_excluded_pages( $page ) ) {
             return;
         }
 
@@ -111,10 +125,9 @@ class MainWP_Unhooks_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
          *
          * @since 5.5.
          */
-        $remove = apply_filters( 'mainwp_unhooks_default_mainwp_pages', true, $_GET ); //phpcs:ignore -- ok.
+        $remove = apply_filters( 'mainwp_unhooks_remove_unwanted_hooks', true, 'default_pages' ); //phpcs:ignore -- ok.
 
         if ( $remove ) {
-            $page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore -- ok.
             MainWP_Logger::instance()->log_events( 'unhooks', '[hook_remove_unwanted_hooks_default_pages] :: [page=' . $page . ']' );  //phpcs:ignore -- ok.
             $this->remove_slow_hooks();
         }
@@ -122,12 +135,13 @@ class MainWP_Unhooks_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
 
     /**
-     * Method is_excluded_page().
+     * Method is_excluded_pages().
+     *
+     * @param string $page Excluded page check.
      *
      * @return bool Excluded page or not
      */
-    public function is_excluded_page() {
-        $page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore -- ok.
+    public function is_excluded_pages( $page = '' ) {
         if ( empty( $page ) || in_array( $page, (array) $this->get_default_excluded_pages() ) ) {
             return true;
         }
@@ -138,8 +152,10 @@ class MainWP_Unhooks_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * Hook shutdown.
      */
     public function hook_unhook_shutdown() {
-        if ( ! $this->is_excluded_page() || static::is_request_unhooks() ) {
-        MainWP_Logger::instance()->log_events( 'unhooks', '[Execution time=' . MainWP_Logger::get_run_time() . ']', MainWP_Logger::INFO ); //phpcs:ignore -- ok.
+        if ( ! $this->is_excluded_pages() || static::is_request_unhooks() ) {
+            $rt = MainWP_Execution_Helper::get_run_time();
+            MainWP_Logger::instance()->log_events( 'unhooks', '[Execution time=' . $rt . '] (seconds)', MainWP_Logger::INFO ); // phpcs:ignore -- ok.
+            MainWP_Logger::instance()->log_events( 'execution-time', '[Unhooks] :: [runtime=' . $rt . '] (seconds)', MainWP_Logger::INFO ); // phpcs:ignore -- ok.
         }
     }
 
@@ -400,8 +416,9 @@ class MainWP_Unhooks_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
                     if ( $found ) {
                         $success = remove_action( $hook, $callable, (int) $priority );
-                        ++$removed;
-                        if ( ! $success ) {
+                        if ( $success ) {
+                            ++$removed;
+                        } else {
                             ++$failed;
                         }
                     }
@@ -440,6 +457,8 @@ class MainWP_Unhooks_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $plugins_dir = str_replace( ABSPATH, '', WP_PLUGIN_DIR );
         }
 
+        $lists          = array();
+        $lists[ $hook ] = array();
         foreach ( $callbacks as $priority => $list ) {
             foreach ( $list as $idx => $entry ) {
                 $callable = $entry['function'] ?? null;
@@ -455,8 +474,10 @@ class MainWP_Unhooks_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     }
                     if ( $found ) {
                         $success = remove_action( $hook, $callable, (int) $priority );
-                        ++$removed;
-                        if ( ! $success ) {
+                        if ( $success ) {
+                            ++$removed;
+                            $lists[ $hook ][] = $file;
+                        } else {
                             ++$failed;
                         }
                     }
@@ -466,7 +487,8 @@ class MainWP_Unhooks_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         if ( $removed || $failed ) {
-            MainWP_Logger::instance()->log_events( 'unhooks', '[Unhooks by files :: [hook=' . $hook . '] :: [removed=' . $removed . '] :: [failed=' . $failed . ']' ); //phpcs:ignore -- ok.
+            MainWP_Logger::instance()->log_events( 'unhooks', '[Unhooks by files] :: [hook=' . $hook . '] :: [removed=' . $removed . '] :: [failed=' . $failed . ']' ); //phpcs:ignore -- ok.
+            MainWP_Logger::instance()->log_events( 'unhooks', '[Unhooks by files] :: [lists=' . print_r($lists, true ) . ']' ); //phpcs:ignore -- ok.
         }
 
         return $removed;
@@ -510,8 +532,9 @@ class MainWP_Unhooks_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
                         if ( $found ) {
                             $success = remove_action( $hook, $callable, (int) $priority );
-                            ++$removed;
-                            if ( ! $success ) {
+                            if ( $success ) {
+                                ++$removed;
+                            } else {
                                 ++$failed;
                             }
                         }

@@ -9,6 +9,8 @@
 
 namespace MainWP\Dashboard\Module\Log;
 
+use MainWP\Dashboard\MainWP_Execution_Helper;
+
 /**
  * Class Logs
  */
@@ -108,7 +110,7 @@ class Log {
             $system_user = 'wp_rest_api';
         }
 
-        $dura = isset( $args['duration'] ) ? floatval( $args['duration'] ) : $this->manager->executor->get_exec_time();
+        $dura = isset( $args['duration'] ) ? floatval( $args['duration'] ) : MainWP_Execution_Helper::get_run_time();
 
         if ( isset( $args['duration'] ) ) {
             unset( $args['duration'] );

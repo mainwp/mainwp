@@ -63,9 +63,6 @@ class MainWP_Execution_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * Init execution time start value.
      */
     public function init_exec_time() {
-        if ( null === static::$exec_start ) {
-            static::$exec_start = microtime( true );
-        }
         MainWP_Logger::instance()->init_execution_time(); // compatible.
         return static::$exec_start;
     }
@@ -73,9 +70,11 @@ class MainWP_Execution_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Method get_exec_time().
      *
+     * @deprecated Compatible.
+     *
      * Get execution time start value.
      *
-     *  @param bool $log_exec To log execution time or not.
+     * @param bool $log_exec To log execution time or not.
      *
      * @return int $sec Execution time.
      */
@@ -91,5 +90,23 @@ class MainWP_Execution_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSame
         }
 
         return $sec;
+    }
+
+
+    /**
+     * Method get_run_time().
+     *
+     * Get the execution time value.
+     *
+     * @since 5.5.
+     *
+     * @return float execution time.
+     */
+    public static function get_run_time() {
+        if ( empty( static::$exec_start ) ) {
+            return 0;
+        }
+        $rtime = microtime( true ) - static::$exec_start; // seconds.
+        return round( $rtime, 4 );
     }
 }

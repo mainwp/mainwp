@@ -139,8 +139,10 @@
 
         // Intent-based warm (hover/focus)
         document.addEventListener('pointerenter', (e) => {
-            const a = e.target.closest('a');
-            if (!isWarmableLink(a)) return;
+            const target = e.target;
+            if (!(target instanceof Element)) return; // skip if not an element
+            const a = target.closest('a');
+            if (!a || !isWarmableLink(a)) return;
             scheduleHoverWarm(a);
         }, true);
         document.addEventListener('focusin', (e) => {

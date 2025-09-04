@@ -86,8 +86,12 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
      * Admin init.
      */
     public function admin_init() {
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_cost_tracker_notes_save', array( $this, 'ajax_notes_save' ) );
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_cost_tracker_delete', array( $this, 'ajax_cost_tracker_delete' ) );
+        if ( \mainwp_current_user_can( 'dashboard', 'edit_costs' ) ) {
+            MainWP_Post_Handler::instance()->add_action( 'mainwp_module_cost_tracker_notes_save', array( $this, 'ajax_notes_save' ) );
+        }
+        if ( \mainwp_current_user_can( 'dashboard', 'delete_costs' ) ) {
+            MainWP_Post_Handler::instance()->add_action( 'mainwp_module_cost_tracker_delete', array( $this, 'ajax_cost_tracker_delete' ) );
+        }
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_cost_tracker_lists_display_rows', array( $this, 'ajax_display_rows' ) );
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_cost_tracker_filter_save_segment', array( $this, 'ajax_costs_filter_save_segment' ) );
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_cost_tracker_filter_load_segments', array( $this, 'ajax_costs_filter_load_segments' ) );
@@ -192,8 +196,8 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
      * When the page loads render the body content.
      */
     public function render_overview_page() {
-        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_cost_tracker' ) ) {
-            \mainwp_do_not_have_permissions( esc_html__( 'manage cost tracker', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'access_manage_costs' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'access manage costs', 'mainwp' ) );
             return;
         }
 
@@ -915,14 +919,18 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                             <div class="ui right pointing dropdown">
                                 <a href="javascript:void(0)" aria-label="<?php esc_attr_e( 'Actions menu', 'mainwp' ); ?>"><i class="ellipsis vertical icon"></i></a>
                                 <div class="menu">
-                                    <a class="item" href="admin.php?page=CostTrackerAdd&id=<?php echo intval( $subscription->id ); ?>"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+                                    <?php if ( \mainwp_current_user_can( 'dashboard', 'edit_costs' ) ) { ?>
+                                        <a class="item" href="admin.php?page=CostTrackerAdd&id=<?php echo intval( $subscription->id ); ?>"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+                                    <?php } ?>
                                     <?php if ( empty( $subscription->note ) ) : ?>
                                         <a href="javascript:void(0)" class="item mainwp-edit-sub-note"><?php esc_html_e( 'Add Notes', 'mainwp' ); ?></a>
                                     <?php else : ?>
                                         <a href="javascript:void(0)" class="item mainwp-edit-sub-note" data-tooltip="<?php echo esc_attr( substr( wp_unslash( $strip_note ), 0, 100 ) ); ?>" data-position="left center" data-inverted=""><?php esc_html_e( 'View Notes', 'mainwp' ); ?></a>
                                     <?php endif; ?>
                                     <span style="display: none" id="sub-notes-<?php echo intval( $subscription->id ); ?>-note"><?php echo wp_unslash( $esc_note ); //phpcs:ignore -- escaped. ?></span>
-                                    <a class="item subscription_menu_item_delete" href="javascript:void(0)"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+                                    <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_costs' ) ) { ?>
+                                        <a class="item subscription_menu_item_delete" href="javascript:void(0)"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+                                    <?php } ?>
                                 </div>
                             </div>
                             <?php

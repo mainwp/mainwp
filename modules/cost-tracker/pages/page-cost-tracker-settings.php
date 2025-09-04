@@ -65,8 +65,8 @@ class Cost_Tracker_Settings {
      * Renders the extension settings page.
      */
     public function render_settings_page() {
-        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_cost_tracker' ) ) {
-            \mainwp_do_not_have_permissions( esc_html__( 'manage cost tracker', 'mainwp' ) );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_costs_settings' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage cost tracker settings', 'mainwp' ) );
             return;
         }
         MainWP_Settings::render_header( 'CostTrackerSettings' );

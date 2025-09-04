@@ -183,7 +183,9 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             'menu_level'         => 2,
             'menu_rights'        => array(
                 'dashboard' => array(
-                    'manage_cost_tracker',
+                    'access_manage_costs',
+                    'access_cost_summary_dashboard',
+                    'add_costs',
                 ),
             ),
             'init_menu_callback' => array( static::class, 'init_menu' ),
@@ -253,41 +255,62 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
      */
     public static function init_menu() {
 
-        static::$page = add_submenu_page(
-            'mainwp_tab',
-            esc_html__( 'Cost Tracker', 'mainwp' ),
-            '<span id="mainwp-cost-tracker-summary">' . esc_html__( 'Cost Tracker', 'mainwp' ) . '</span>',
-            'read',
-            'CostSummary',
-            array(
-                Cost_Tracker_Summary::instance(),
-                'render_summary_page',
-            )
-        );
+        $summary_right = \mainwp_current_user_can( 'dashboard', 'access_cost_summary_dashboard' ) ? true : false;
+        $manage_right  = \mainwp_current_user_can( 'dashboard', 'access_manage_costs' ) ? true : false;
+        $add_right     = \mainwp_current_user_can( 'dashboard', 'add_costs' ) ? true : false;
 
-        add_submenu_page(
-            'mainwp_tab',
-            esc_html__( 'Manage Cost Tracker', 'mainwp' ),
-            '<div class="mainwp-hidden">' . esc_html__( 'Manage Cost Tracker', 'mainwp' ) . '</div>',
-            'read',
-            'ManageCostTracker',
-            array(
-                Cost_Tracker_Dashboard::get_instance(),
-                'render_overview_page',
-            )
-        );
+        $parent_key = '';
+        if ( $summary_right ) {
+            $parent_key = 'CostSummary';
+        } elseif ( $manage_right ) {
+            $parent_key = 'ManageCostTracker';
+        } elseif ( $add_right ) {
+            $parent_key = 'CostTrackerAdd';
+        } else {
+            return;
+        }
 
-        add_submenu_page(
-            'mainwp_tab',
-            esc_html__( 'Add New', 'mainwp' ),
-            '<div class="mainwp-hidden">' . esc_html__( 'Add New', 'mainwp' ) . '</div>',
-            'read',
-            'CostTrackerAdd',
-            array(
-                Cost_Tracker_Add_Edit::get_instance(),
-                'render_add_edit_page',
-            )
-        );
+        if ( $summary_right ) {
+            static::$page = add_submenu_page(
+                'mainwp_tab',
+                esc_html__( 'Cost Tracker', 'mainwp' ),
+                '<span id="mainwp-cost-tracker-summary">' . esc_html__( 'Cost Tracker', 'mainwp' ) . '</span>',
+                'read',
+                'CostSummary',
+                array(
+                    Cost_Tracker_Summary::instance(),
+                    'render_summary_page',
+                )
+            );
+        }
+
+        if ( $manage_right ) {
+            add_submenu_page(
+                'mainwp_tab',
+                esc_html__( 'Manage Cost Tracker', 'mainwp' ),
+                '<div class="' . ( 'ManageCostTracker' === $parent_key ? '' : 'mainwp-hidden' ) . '">' . esc_html__( 'Manage Cost Tracker', 'mainwp' ) . '</div>',
+                'read',
+                'ManageCostTracker',
+                array(
+                    Cost_Tracker_Dashboard::get_instance(),
+                    'render_overview_page',
+                )
+            );
+        }
+
+        if ( $add_right ) {
+            add_submenu_page(
+                'mainwp_tab',
+                esc_html__( 'Add New', 'mainwp' ),
+                '<div class="' . ( 'CostTrackerAdd' === $parent_key ? '' : 'mainwp-hidden' ) . '">' . esc_html__( 'Add New', 'mainwp' ) . '</div>',
+                'read',
+                'CostTrackerAdd',
+                array(
+                    Cost_Tracker_Add_Edit::get_instance(),
+                    'render_add_edit_page',
+                )
+            );
+        }
 
         /**
          * This hook allows you to add extra sub pages to the client page via the 'mainwp_getsubpages_cost_tracker' filter.
@@ -305,13 +328,16 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
                 add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . esc_html( $subPage['title'] ) . '</div>', 'read', 'ManageCostTracker' . $subPage['slug'], $subPage['callback'] );
             }
         }
-        add_action( 'load-' . static::$page, array( static::class, 'on_load_summary_page' ) );
+
+        if ( ! empty( static::$page ) ) {
+            add_action( 'load-' . static::$page, array( static::class, 'on_load_summary_page' ) );
+        }
 
         if ( isset( $_GET['page'] ) && 'CostSummary' === $_GET['page'] ) { //phpcs:ignore WordPress.Security.NonceVerification.Recommended
             add_filter( 'mainwp_enqueue_script_gridster', '__return_true' );
         }
 
-        static::init_left_menu( static::$subPages );
+        static::init_left_menu( static::$subPages, $summary_right, $manage_right, $add_right, $parent_key );
     }
 
     /**
@@ -326,11 +352,18 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
     /**
      * Initiates Cost Tracker menu.
      *
-     * @param array $subPages Cost Tracker sub pages.
+     * @param array  $subPages Cost Subpages costs.
+     * @param bool   $summary_right Summary right.
+     * @param bool   $manage_right Manage right.
+     * @param bool   $add_right Add right.
+     * @param string $parent_key Parent key.
      */
-    public static function init_left_menu( $subPages ) {
-        MainWP_Menu::add_left_menu(
-            array(
+    public static function init_left_menu( $subPages, $summary_right = true, $manage_right = true, $add_right = true, $parent_key = 'CostSummary' ) {
+
+        $left_root_menu = false;
+
+        if ( $summary_right ) {
+            $left_root_menu = array(
                 'title'      => esc_html__( 'Cost Tracker', 'mainwp' ),
                 'parent_key' => 'mainwp_tab',
                 'slug'       => 'CostSummary',
@@ -338,34 +371,66 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
                 'icon'       => '<i class="dollar sign icon"></i>',
                 'desc'       => 'Costr Tracker Summary',
                 'nosubmenu'  => true,
-            ),
-            0
-        );
-        $init_sub_subleftmenu = array(
-            array(
+            );
+        } elseif ( $manage_right ) {
+            $left_root_menu = array(
+                'title'      => esc_html__( 'Cost Tracker', 'mainwp' ),
+                'parent_key' => 'mainwp_tab',
+                'slug'       => 'ManageCostTracker',
+                'href'       => 'admin.php?page=ManageCostTracker',
+                'icon'       => '<i class="dollar sign icon"></i>',
+                'desc'       => 'Manage Costs Tracker',
+                'nosubmenu'  => true,
+            );
+        } elseif ( $add_right ) {
+            $left_root_menu = array(
+                'title'      => esc_html__( 'Cost Tracker', 'mainwp' ),
+                'parent_key' => 'mainwp_tab',
+                'slug'       => 'CostTrackerAdd',
+                'href'       => 'admin.php?page=CostTrackerAdd',
+                'icon'       => '<i class="dollar sign icon"></i>',
+                'desc'       => 'Add New Cost',
+                'nosubmenu'  => true,
+            );
+        } else {
+            return;
+        }
+
+        $init_sub_subleftmenu = array();
+
+        if ( $summary_right ) {
+            $init_sub_subleftmenu[] = array(
                 'title'      => esc_html__( 'Cost Summary', 'mainwp' ),
-                'parent_key' => 'CostSummary',
+                'parent_key' => $parent_key,
                 'href'       => 'admin.php?page=CostSummary',
                 'slug'       => 'CostSummary',
-                'right'      => 'manage_cost_tracker',
-            ),
-            array(
+            );
+        }
+
+        if ( $manage_right ) {
+            $init_sub_subleftmenu[] = array(
                 'title'      => esc_html__( 'Manage Costs', 'mainwp' ),
-                'parent_key' => 'CostSummary',
+                'parent_key' => $parent_key,
                 'href'       => 'admin.php?page=ManageCostTracker',
                 'slug'       => 'ManageCostTracker',
-                'right'      => 'manage_cost_tracker',
-            ),
-            array(
+            );
+        }
+
+        if ( $add_right ) {
+            $init_sub_subleftmenu[] = array(
                 'title'      => esc_html__( 'Add New', 'mainwp' ),
-                'parent_key' => 'CostSummary',
+                'parent_key' => $parent_key,
                 'href'       => 'admin.php?page=CostTrackerAdd',
                 'slug'       => 'CostTrackerAdd',
-                'right'      => '',
-            ),
+            );
+        }
+
+        MainWP_Menu::add_left_menu(
+            $left_root_menu,
+            0
         );
 
-        MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'ManageCostTracker', 'ManageCostTracker' );
+        MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, $parent_key, 'ManageCostTracker' );
 
         foreach ( $init_sub_subleftmenu as $item ) {
             if ( MainWP_Menu::is_disable_menu_item( 3, $item['slug'] ) ) {
@@ -395,7 +460,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
 
         $renderItems = array();
 
-        if ( \mainwp_current_user_can( 'dashboard', 'manage_cost_tracker' ) ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'access_cost_summary_dashboard' ) ) {
             $renderItems[] = array(
                 'title'  => esc_html__( 'Overview', 'mainwp' ),
                 'href'   => 'admin.php?page=ManageCostTracker',
@@ -403,7 +468,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             );
         }
 
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CostTrackerAdd' ) ) {
+        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CostTrackerAdd' ) && \mainwp_current_user_can( 'dashboard', 'add_costs' ) ) {
             $renderItems[] = array(
                 'title'  => esc_html__( 'Add New', 'mainwp' ),
                 'href'   => 'admin.php?page=CostTrackerAdd',

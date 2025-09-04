@@ -62,13 +62,19 @@ class Cost_Tracker_Add_Edit {
      */
     public function render_add_edit_page() {
 
-        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_cost_tracker' ) ) {
-            \mainwp_do_not_have_permissions( esc_html__( 'manage cost tracker', 'mainwp' ) );
+        $edit_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : false; //phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+        if ( $edit_id && ( ! \mainwp_current_user_can( 'dashboard', 'edit_costs' ) && ! \mainwp_current_user_can( 'dashboard', 'add_costs' ) ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'edit costs', 'mainwp' ) );
             return;
         }
 
-        $edit_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : false; //phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        $show    = $edit_id ? 'edit' : 'add';
+        if ( ! $edit_id && ! \mainwp_current_user_can( 'dashboard', 'add_costs' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'add costs', 'mainwp' ) );
+            return;
+        }
+
+        $show = $edit_id ? 'edit' : 'add';
         Cost_Tracker_Admin::render_header( $show );
         $params = $edit_id ? '&id=' . $edit_id : '';
         ?>

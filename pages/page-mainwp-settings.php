@@ -246,7 +246,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsEmail' ) ) { ?>
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=SettingsEmail' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Email Settings', 'mainwp' ); ?></a>
                     <?php } ?>
-                    <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CostTrackerSettings' ) ) { ?>
+                    <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CostTrackerSettings' ) && \mainwp_current_user_can( 'dashboard', 'manage_costs_settings' ) ) { ?>
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=CostTrackerSettings' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Cost Tracker', 'mainwp' ); ?></a>
                     <?php } ?>
                     <?php
@@ -382,7 +382,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             );
         }
 
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CostTrackerSettings' ) ) {
+        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CostTrackerSettings' ) && \mainwp_current_user_can( 'dashboard', 'manage_costs_settings' ) ) {
             $renderItems[] = array(
                 'title'  => esc_html__( 'Cost Tracker', 'mainwp' ),
                 'href'   => 'admin.php?page=CostTrackerSettings',

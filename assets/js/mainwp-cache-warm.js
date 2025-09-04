@@ -1,6 +1,6 @@
 // Cache-warming prefetch for MainWP (no DOM swap)
 // Targets only safe links.
-// Opt-in: .js-prefetch or [data-warm]; Opt-out: [data-no-warm]
+// Opt-in: .mainwp-js-prefetch or [mainwp-data-warm]; Opt-out: [mainwp-data-no-warm]
 (function ($) {
     // -------------------- Config --------------------
     const HOVER_DELAY_MS = 200;          // delay before hover prefetch
@@ -25,13 +25,13 @@
     function isWarmableLink(a) {
         if (!a) return false;
         if (a.hasAttribute('download') || a.target === '_blank') return false;
-        if (a.hasAttribute('data-no-warm')) return false;
+        if (a.hasAttribute('mainwp-data-no-warm')) return false;
 
         const href = a.getAttribute('href');
         if (!href) return false;
 
         // Only warm explicitly opt-in links OR MainWP nav links
-        const explicitlyOpted = a.classList.contains('js-prefetch') || a.hasAttribute('data-warm');
+        const explicitlyOpted = a.classList.contains('mainwp-js-prefetch') || a.hasAttribute('mainwp-data-warm');
         const url = new URL(href, location.href);
 
         if (url.origin !== location.origin) return false;      // same-origin only
@@ -129,7 +129,7 @@
             });
         }, { root: null, rootMargin: '200px', threshold: 0 });
 
-        root.querySelectorAll('a.mainwp-nav-link, a.js-prefetch, a[data-warm]')
+        root.querySelectorAll('a.mainwp-js-prefetch, a[mainwp-data-warm]')
             .forEach((a) => { if (isWarmableLink(a)) io.observe(a); });
     }
 

@@ -584,7 +584,11 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $href      = isset( $params['href'] ) ? $params['href'] : '';
         $right     = isset( $params['right'] ) ? $params['right'] : '';
         $id        = isset( $params['id'] ) ? $params['id'] : '';
-        $level_cls = 'js-prefetch left-menu-item-level-' . $level;
+        $level_cls = 'left-menu-item-level-' . $level;
+
+        if ( ! MainWP_System::is_excluded_warm_cache_pages() ) {
+            $level_cls .= ' mainwp-js-prefetch ';
+        }
 
         $icon                 = isset( $params['icon'] ) ? $params['icon'] : '';
         $leftsub_order        = isset( $params['leftsub_order'] ) ? $params['leftsub_order'] : '';
@@ -592,6 +596,25 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $ext_state            = isset( $params['ext_status'] ) && ( 'activated' === $params['ext_status'] || 'inactive' === $params['ext_status'] ) ? $params['ext_status'] : '';
         $parent_key           = isset( $params['parent_key'] ) ? $params['parent_key'] : '';
         $others               = array( 'level_class' => $level_cls );
+
+        $others['classes_item'] = '';
+        if ( ! empty( $params['classes_item'] ) ) {
+            if ( is_array( $params['classes_item'] ) ) {
+                $others['classes_item'] = implode( ' ', $params['classes_item'] );
+            } elseif ( is_string( $params['classes_item'] ) ) {
+                $others['classes_item'] = $params['classes_item'];
+            }
+        }
+
+        /**
+         * Menu excluded warm cache item.
+         *
+         * @since 5.5.
+         */
+        if ( ! apply_filters( 'mainwp_menu_excluded_warm_cache_item', false, $params ) ) {
+            $others['classes_item'] .= ' mainwp-js-prefetch ';
+        }
+
         if ( isset( $params['active_params'] ) ) {
             $others['active_params'] = $params['active_params'];
         }
@@ -1395,6 +1418,10 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
             if ( ! empty( $others['level_class'] ) ) {
                 $item_classes = $item_classes . ' ' . $others['level_class'];
+            }
+
+            if ( ! empty( $others['classes_item'] ) ) {
+                $item_classes = $item_classes . ' ' . $others['classes_item'];
             }
 
             if ( empty( $right ) || ( ! empty( $right ) && \mainwp_current_user_can( $right_group, $right ) ) ) {

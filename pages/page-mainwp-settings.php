@@ -1359,6 +1359,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             MainWP_Utility::update_option( 'mainwp_forceUseIPv4', isset( $_POST['mainwp_forceUseIPv4'] ) ? 1 : 0 );
             $use_wpcron = ! isset( $_POST['mainwp_options_wp_cron'] ) ? 0 : 1;
             MainWP_Utility::update_option( 'mainwp_wp_cron', $use_wpcron );
+            MainWP_Utility::update_option( 'mainwp_warm_cache_pages_ttl', intval( $_POST['mainwp_warm_cache_pages_ttl'] ) );
+
             MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
             MainWP_Utility::update_option( 'mainwp_maximum_uptime_monitoring_requests', ! empty( $_POST['mainwp_maximumUptimeMonitoringRequests'] ) ? intval( $_POST['mainwp_maximumUptimeMonitoringRequests'] ) : 10 );
             MainWP_Utility::update_option( 'mainwp_chunksitesnumber', isset( $_POST['mainwp_chunksitesnumber'] ) ? intval( $_POST['mainwp_chunksitesnumber'] ) : 10 );
@@ -1612,6 +1614,18 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             </label>
                             <div class="ten wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will cache updates for faster loading.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                                 <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_optimize" id="mainwp_optimize" <?php echo 1 === (int) get_option( 'mainwp_optimize', 1 ) ? 'checked="true"' : ''; ?> /><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
+                            </div>
+                        </div>
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-miscellaneous" default-indi-value="10">
+                            <label class="six wide column middle aligned">
+                            <?php
+                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_warm_cache_pages_ttl', (int) get_option( 'mainwp_warm_cache_pages_ttl', 10 ) );
+                            esc_html_e( 'Browser cache expiration time', 'mainwp' );
+                            $browser_cache_ttl = (int) get_option( 'mainwp_warm_cache_pages_ttl', 10 );
+                            ?>
+                            </label>
+                            <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Set how many minutes the browser cache should retain page content before it expires', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <input type="number" class="settings-field-value-change-handler small-text" name="mainwp_warm_cache_pages_ttl" id="mainwp_warm_cache_pages_ttl" placeholder="" min="1" max="24" step="1" value="<?php echo intval( $browser_cache_ttl ); ?>">
                             </div>
                         </div>
                         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-miscellaneous" default-indi-value="1">

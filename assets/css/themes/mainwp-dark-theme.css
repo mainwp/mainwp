@@ -790,7 +790,7 @@ body.mainwp-ui.mainwp-custom-theme,
 .mainwp-ui.mainwp-custom-theme .ui.dimmer,
 .mainwp-ui.mainwp-custom-theme .ui.inverted.dimmer {
   background: var(--background-color-2);
-  opacity: .9;
+  opacity: 1;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.dimmer .text,

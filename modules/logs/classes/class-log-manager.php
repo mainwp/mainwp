@@ -494,7 +494,7 @@ class Log_Manager {
         $last_created = Log_Changes_Logs_Helper::instance()->get_sync_changes_logs_last_created( $site_id );
         $events_count = apply_filters( 'mainwp_module_log_changes_logs_sync_count', 100, $site_id, $postdata );
 
-        $ignore_sync_types    = array( 1750, 1925, 1930, 1935, 1940, 1945, 1950, 1955 );
+        $ignore_sync_types    = Log_Settings::get_disabled_changes_logs_default_settings();
         $disabled_changeslogs = Log_Settings::get_disabled_logs_type( 'changeslogs' );
 
         return array(

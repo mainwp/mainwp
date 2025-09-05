@@ -325,8 +325,21 @@ class Log_Settings {
             if ( ! is_array( static::$enable_logs_items ) ) {
                 static::$enable_logs_items = array();
             }
+
+            if ( ! isset( static::$enable_logs_items['changeslogs'] ) ) {
+                static::$enable_logs_items['changeslogs'] = array_fill_keys( static::get_disabled_changes_logs_default_settings(), 0 );
+            }
         }
         return static::$enable_logs_items;
+    }
+
+    /**
+     * Method get_disabled_changes_logs_default_settings().
+     *
+     * @return array Disalbed default.
+     */
+    public static function get_disabled_changes_logs_default_settings() {
+        return array( 1925, 1930, 1935, 1940, 1945, 1950, 1955 );
     }
 
     /**

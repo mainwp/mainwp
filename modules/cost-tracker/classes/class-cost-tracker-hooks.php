@@ -66,6 +66,7 @@ class Cost_Tracker_Hooks {
      * Runs each time the class is called.
      */
     public function __construct() {
+        add_action( 'admin_init', array( &$this, 'admin_init' ) );
     }
 
     /**
@@ -74,19 +75,27 @@ class Cost_Tracker_Hooks {
      * Initiates hooks for the extension.
      */
     public function init() {
-        add_filter( 'mainwp_widgets_screen_options', array( &$this, 'hook_widgets_screen_options' ), 10, 1 ); // for both client, site overview widgets.
         add_filter( 'mainwp_header_actions_right', array( $this, 'hook_screen_options' ), 10, 2 );
-        add_action( 'mainwp_clientstable_prepared_items', array( &$this, 'hook_clientstable_prepared_items' ), 10, 2 );
-        add_filter( 'mainwp_clients_sitestable_getcolumns', array( &$this, 'hook_manage_clients_column' ), 10 );
-        add_filter( 'mainwp_clients_sitestable_item', array( &$this, 'hook_manage_clients_display_item' ), 10 );
-        add_filter( 'mainwp_sitestable_getcolumns', array( &$this, 'hook_manage_sites_column' ), 10 );
-        add_action( 'mainwp_sitestable_prepared_items', array( &$this, 'hook_sitestable_prepared_items' ), 10, 2 );
-        add_filter( 'mainwp_sitestable_item', array( &$this, 'hook_manage_sites_display_item' ), 10 );
-
-        add_filter( 'mainwp_clients_getmetaboxes', array( &$this, 'hook_get_client_page_metaboxes' ), 10, 1 );
-        add_filter( 'mainwp_clients_widgets_screen_options', array( &$this, 'hook_get_widgets_screen_options' ), 10, 1 );
-
         add_filter( 'mainwp_getmetaboxes', array( &$this, 'hook_get_site_overview_page_metaboxes' ), 10, 2 );
+    }
+
+    /**
+     * Initiate Admin Hooks
+     *
+     * Initiates hooks for the extension.
+     */
+    public function admin_init() {
+        if ( mainwp_current_user_can( 'dashboard', 'access_manage_costs' ) || mainwp_current_user_can( 'dashboard', 'access_cost_summary_dashboard' ) ) {
+            add_filter( 'mainwp_widgets_screen_options', array( &$this, 'hook_widgets_screen_options' ), 10, 1 ); // for both client, site overview widgets.
+            add_action( 'mainwp_clientstable_prepared_items', array( &$this, 'hook_clientstable_prepared_items' ), 10, 2 );
+            add_filter( 'mainwp_clients_sitestable_getcolumns', array( &$this, 'hook_manage_clients_column' ), 10 );
+            add_filter( 'mainwp_clients_sitestable_item', array( &$this, 'hook_manage_clients_display_item' ), 10 );
+            add_filter( 'mainwp_sitestable_getcolumns', array( &$this, 'hook_manage_sites_column' ), 10 );
+            add_action( 'mainwp_sitestable_prepared_items', array( &$this, 'hook_sitestable_prepared_items' ), 10, 2 );
+            add_filter( 'mainwp_sitestable_item', array( &$this, 'hook_manage_sites_display_item' ), 10 );
+            add_filter( 'mainwp_clients_getmetaboxes', array( &$this, 'hook_get_client_page_metaboxes' ), 10, 1 );
+            add_filter( 'mainwp_clients_widgets_screen_options', array( &$this, 'hook_get_widgets_screen_options' ), 10, 1 );
+        }
     }
 
     /**
@@ -373,6 +382,10 @@ class Cost_Tracker_Hooks {
      * @param array $widgets Client widgets.
      */
     public function hook_get_client_page_metaboxes( $widgets ) {
+        if ( ! mainwp_current_user_can( 'dashboard', 'access_manage_costs' ) && ! mainwp_current_user_can( 'dashboard', 'access_cost_summary_dashboard' ) ) {
+            return $widgets;
+        }
+
         $widgets[] = array(
             'id'       => 'cost-tracker-costs',
             'callback' => array( Cost_Tracker_Clients_Widget::instance(), 'callback_render_costs_widget' ),
@@ -392,6 +405,9 @@ class Cost_Tracker_Hooks {
      */
     public function hook_get_site_overview_page_metaboxes( $widgets, $dashboard_siteid = 0 ) {
         if ( ! empty( $dashboard_siteid ) ) {
+            if ( ! mainwp_current_user_can( 'dashboard', 'access_manage_costs' ) && ! mainwp_current_user_can( 'dashboard', 'access_cost_summary_dashboard' ) ) {
+                return $widgets;
+            }
             $widgets[] = array(
                 'id'       => 'cost-tracker-widget',
                 'callback' => array( Cost_Tracker_Sites_Widget::instance(), 'callback_render_costs_widget' ),

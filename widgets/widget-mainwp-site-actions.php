@@ -197,7 +197,9 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <a href="javascript:void(0)" id="mainwp_widget_sites_changes_bulk_dismiss_selected_btn" class="ui button mini basic disabled"><?php esc_html_e( 'Dismiss Selected Changes', 'mainwp' ); ?></a>
                 </div>
                 <div class="right aligned middle aligned column">
-                    <a href="admin.php?page=InsightsManage" class="ui mini basic button"><?php esc_html_e( 'See All Changes', 'mainwp' ); ?></a>
+                    <?php if ( mainwp_current_user_can( 'dashboard', 'manage_insights_actions' ) ) { ?>
+                        <a href="admin.php?page=InsightsManage" class="ui mini basic button"><?php esc_html_e( 'See All Changes', 'mainwp' ); ?></a>
+                    <?php } ?>
                 </div>
             </div>
         </div>

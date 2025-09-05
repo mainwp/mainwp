@@ -85,12 +85,14 @@ class Log_Settings {
      * @action init
      */
     public function add_subpage_menu_settings( $subpages = array() ) {
-        $subpages[] = array(
-            'title'    => esc_html__( 'Dashboard Insights', 'mainwp' ),
-            'slug'     => 'Insights',
-            'callback' => array( $this, 'render_settings_page' ),
-            'class'    => '',
-        );
+        if ( mainwp_current_user_can( 'dashboard', 'access_insights_dashboard' ) || mainwp_current_user_can( 'dashboard', 'manage_insights_actions' ) ) {
+            $subpages[] = array(
+                'title'    => esc_html__( 'Dashboard Insights', 'mainwp' ),
+                'slug'     => 'Insights',
+                'callback' => array( $this, 'render_settings_page' ),
+                'class'    => '',
+            );
+        }
         return $subpages;
     }
 
@@ -163,6 +165,13 @@ class Log_Settings {
     public function render_settings_page() {
         /** This action is documented in ../pages/page-mainwp-manage-sites.php */
         do_action( 'mainwp_pageheader_settings', 'Insights' );
+
+        if ( ! mainwp_current_user_can( 'dashboard', 'access_insights_dashboard' ) && ! mainwp_current_user_can( 'dashboard', 'manage_insights_actions' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'dashboard insights settings', 'mainwp' ) );
+            do_action( 'mainwp_pagefooter_settings', 'Insights' );
+            return;
+        }
+
         $enabled = ! empty( $this->options['enabled'] ) ? true : false;
 
         $enabled_auto_purge = isset( $this->options['auto_purge'] ) && ! empty( $this->options['auto_purge'] ) ? true : false;

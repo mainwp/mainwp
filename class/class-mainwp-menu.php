@@ -898,14 +898,14 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         // phpcs:disable WordPress.Security.EscapeOutput
                         if ( $has_sub ) {
                             echo '<div ' . $id_attr . " class=\"item $active_item " . esc_attr( $level_cls ) . ' ">';
-                            echo "<a class=\"title with-sub $active_item\" href=\"$href\">$title <i class=\"dropdown icon\"></i></a>";
+                            echo "<a class=\"title with-sub $active_item\" href=\"javascript:void(0)\">$title <i class=\"dropdown icon\"></i></a>";
                             echo "<div class=\"content menu $active_item\">";
                             static::render_sub_item( $item_key );
                             echo '</div>';
                             echo '</div>';
                         } else {
                             echo '<div ' . $id_attr . ' class="item ' . esc_attr( $level_cls ) . '">';
-                            echo "<a class='title $active_item' href=\"$href\">$title</a>";
+                            echo "<a class='title $active_item' href=\"javascript:void(0)\">$title</a>";
                             echo '</div>';
                         }
                         // phpcs:enable
@@ -962,14 +962,14 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                 // phpcs:disable WordPress.Security.EscapeOutput
                                 if ( $has_sub ) {
                                     echo '<div ' . $id_attr . " class=\"item $active_item $item_classes\">";
-                                    echo "<a class=\"title with-sub $active_item\" href=\"$href\">$title <i class=\"dropdown icon\"></i></a>";
+                                    echo "<a class=\"title with-sub $active_item\" href=\"javascript:void(0)\">$title <i class=\"dropdown icon\"></i></a>";
                                     echo "<div class=\"content menu $active_item\">";
                                     static::render_sub_item( $item_key );
                                     echo '</div>';
                                     echo '</div>';
                                 } else {
                                     echo '<div ' . $id_attr . $hide_item . " class=\"item $active_item $item_classes\">";
-                                    echo "<a class='title $active_item' href=\"$href\">$title</a>";
+                                    echo "<a class='title $active_item' href=\"javascript:void(0)\">$title</a>";
                                     echo '</div>';
                                 }
                                 // phpcs:enable

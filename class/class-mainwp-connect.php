@@ -141,6 +141,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         MainWP_Logger::instance()->debug( ' :: trying Visit :: [url=' . $url . ']' );
 
+        $http_version = false;
+
         $disabled_functions = ini_get( 'disable_functions' );
         if ( empty( $disabled_functions ) || ( stristr( $disabled_functions, 'curl_multi_exec' ) === false ) ) {
             MainWP_Logger::instance()->debug( ' :: trying Visit :: curl_multi_exec => enabled.' );
@@ -155,6 +157,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     $err         = curl_error( $info['handle'] );
                     $http_status = curl_getinfo( $info['handle'], CURLINFO_HTTP_CODE );
                     $realurl     = curl_getinfo( $info['handle'], CURLINFO_EFFECTIVE_URL );
+                    if ( defined( 'CURLINFO_HTTP_VERSION' ) ) {
+                        $http_version = curl_getinfo( $info['handle'], CURLINFO_HTTP_VERSION );
+                    }
+
                     curl_multi_remove_handle( $mh, $info['handle'] );
                 }
                 usleep( 10000 );
@@ -169,6 +175,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $err         = curl_error( $ch );
             $http_status = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
             $realurl     = curl_getinfo( $ch, CURLINFO_EFFECTIVE_URL );
+
+            if ( defined( 'CURLINFO_HTTP_VERSION' ) ) {
+                $http_version = curl_getinfo( $ch, CURLINFO_HTTP_VERSION );
+            }
+
             if ( 'resource' === gettype( $ch ) ) {
                 curl_close( $ch );
             }
@@ -225,6 +236,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             'host'           => $host,
             'httpCode'       => $http_status,
             'httpCodeString' => MainWP_Utility::get_http_codes( $http_status ),
+            'httpVersion'    => $http_version,
         );
 
         $hidden_data = '[hidden response data]';
@@ -233,7 +245,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $data = $hidden_data;
         }
 
-        MainWP_Logger::instance()->debug( ' :: tryVisit :: [url=' . $url . '] [http_status=' . $http_status . '] [error=' . $err . '] [data-start]' . $data . '[data-end]' );
+        MainWP_Logger::instance()->debug( ' :: tryVisit :: [url=' . $url . '] [http_status=' . $http_status . '] [http_version=' . ( false === $http_version ? 'N/A' : MainWP_System_Utility::get_http_version_const_str( $http_version ) ) . '] [error=' . $err . '] [data-start]' . $data . '[data-end]' );
 
         if ( false !== $ip ) {
             $out['ip'] = $ip;
@@ -271,8 +283,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return bolean True|False.
      */
     public static function check_ignored_http_code( $value, $website = false ) {
-        $value = (int) $value;
-        $site_id = is_object( $website ) && ! empty( $website->id ) ? $website->id : 0;
+        $value           = (int) $value;
+        $site_id         = is_object( $website ) && ! empty( $website->id ) ? $website->id : 0;
         $global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
 
         $ignored_code = '';

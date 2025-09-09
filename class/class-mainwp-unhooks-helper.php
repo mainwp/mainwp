@@ -78,6 +78,10 @@ class MainWP_Unhooks_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public function hook_remove_unwanted_hooks() {
 
+        if ( ! static::is_enabled_unhooks() ) {
+            return;
+        }
+
         if ( ! static::is_request_unhooks() ) {
             add_action(
                 'current_screen',
@@ -148,11 +152,36 @@ class MainWP_Unhooks_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         return false;
     }
 
+
+    /**
+     * Method is_enabled_unhooks().
+     *
+     * @return bool Enabled or not.
+     */
+    public static function is_enabled_unhooks() {
+
+        static $enabled;
+
+        if ( null === $enabled ) {
+            /**
+             * Enable remove unwanted hooks or not.
+             *
+             * Default: false.
+             *
+             * @since 5.5.
+             */
+            $enabled = apply_filters( 'mainwp_unhooks_is_enabled', false ); //phpcs:ignore -- ok.
+        }
+
+        return $enabled ? true : false;
+    }
+
     /**
      * Hook shutdown.
      */
     public function hook_unhook_shutdown() {
-        if ( ! $this->is_excluded_pages() || static::is_request_unhooks() ) {
+
+        if ( static::is_enabled_unhooks() && ( ! $this->is_excluded_pages() || static::is_request_unhooks() ) ) {
             $rt = MainWP_Execution_Helper::get_run_time();
             MainWP_Logger::instance()->log_events( 'unhooks', '[Execution time=' . $rt . '] (seconds)', MainWP_Logger::INFO ); // phpcs:ignore -- ok.
             MainWP_Logger::instance()->log_events( 'execution-time', '[Unhooks] :: [runtime=' . $rt . '] (seconds)', MainWP_Logger::INFO ); // phpcs:ignore -- ok.
@@ -373,13 +402,18 @@ class MainWP_Unhooks_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return string Url with unhook nonce.
      */
     public static function add_unhooks_params( $url ) {
+
+        if ( ! static::is_enabled_unhooks() ) {
+            return $url;
+        }
+
         $url_unhook = $url . '&_uhnonce=' . wp_create_nonce( 'unhooks_nonce' );
         /**
          * Hook add unhooks url params.
          *
          * @since 5.5.
          */
-        return apply_filters( 'mainwp_unhooks_url_params', $url_unhook, $url );
+        return apply_filters( 'mainwp_unhooks_url_params', $url_unhook, $url ); // default disable.
     }
 
     /**

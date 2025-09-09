@@ -1124,6 +1124,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     $this->current_version,
                     true
                 );
+                static::$defer_js_handle[] = 'mainwp-apexcharts';
             }
             wp_enqueue_script( 'mainwp-dropzone', MAINWP_PLUGIN_URL . 'assets/js/dropzone/dropzone.min.js', array(), $this->current_version, true );
             static::$defer_js_handle = array_merge( static::$defer_js_handle, array( 'mainwp-updates', 'mainwp-managesites-action', 'mainwp-managesites-update', 'mainwp-managesites-import', 'mainwp-plugins-themes', 'mainwp-managesites-import', 'mainwp-plugins-themes', 'mainwp-backups', 'mainwp-posts', 'mainwp-users', 'mainwp-clients', 'fomantic-ui', 'datatables', 'datatables-semanticui', 'datatables-select', 'datatables-add-ons', 'mainwp-dropzone' ) );

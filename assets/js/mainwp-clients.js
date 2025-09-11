@@ -363,8 +363,7 @@ jQuery(document).on('click', '#bulk_add_multi_create_client', function (e) {
     });
     jQuery.post(ajaxurl, data, function (response) {
       if (response?.success) {
-        mainwp_forceReload("admin.php?page=ManageClients");
-        window.location.href = 'admin.php?page=mainwp-setup&step=monitoring&message=1';
+        mainwp_forceReload('admin.php?page=mainwp-setup&step=monitoring&message=1');
       } else if (response?.error) {
         mainwp_set_message_zone('#mainwp-message-zone', response.error, 'red');
       } else {

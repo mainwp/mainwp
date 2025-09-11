@@ -1713,8 +1713,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 jQuery( "#mainwp-posting-page-modal" ).modal( {
                     closable: true,
                     onHide: function() {
-                        location.href = 'admin.php?page=PageBulkManage';
-                        mainwp_forceReload('admin.php?page=PostBulkManage');
+                        mainwp_forceReload('admin.php?page=PageBulkManage');
                     }
                 } ).modal( 'show' );
             } );

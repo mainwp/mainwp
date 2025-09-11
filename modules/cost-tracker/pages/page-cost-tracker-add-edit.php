@@ -590,7 +590,6 @@ class Cost_Tracker_Add_Edit {
                                     }
                                 }
                                 setTimeout(function () {
-                                    //window.location.href = location.href;
                                     jQuery('#mainwp-upload-custom-icon-modal').modal('hide')
                                 }, 1000);
                             });

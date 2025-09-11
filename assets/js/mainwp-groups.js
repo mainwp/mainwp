@@ -108,7 +108,7 @@ jQuery(function () {
       }
       jQuery('#mainwp-create-group-modal').modal({
         onHide: function () {
-          window.location.reload();
+          mainwp_forceReload();
           return false;
         }
       }).modal('hide');

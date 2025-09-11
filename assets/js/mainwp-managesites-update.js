@@ -399,7 +399,6 @@ jQuery(document).on('click', '#managesites-backup-all', function () {
     mainwpPopup('#managesites-backup-box').init({
         title: __("Full backup"), callback: function () {
             managesitesContinueAfterBackup = undefined;
-            window.location.href = location.href;
             mainwp_forceReload();
         }
     });

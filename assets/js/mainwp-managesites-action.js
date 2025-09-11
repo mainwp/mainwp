@@ -391,8 +391,7 @@ let mainwp_managesites_bulk_refresh_favico = function (siteIds) {
     statusText: __('updated'),
     callback: function () {
       mainwpVars.bulkManageSitesTaskRunning = false;
-      window.location.href = location.href;
-      mainwp_forceReload(url);
+      mainwp_forceReload();
     }
   };
   mainwpPopup('#mainwp-sync-sites-modal').init(initData);

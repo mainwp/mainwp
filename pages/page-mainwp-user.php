@@ -2128,8 +2128,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                 jQuery( "#mainwp-import-users-modal" ).modal( {
                                     closable: false,
                                     onHide: function() {
-                                        location.href = 'admin.php?page=BulkImportUsers';
-                                        mainwp_forceReload('admin.php?page=PostBulkManage');
+                                        mainwp_forceReload('admin.php?page=BulkImportUsers');
                                     }
                                 } ).modal( 'show' );
                             } );

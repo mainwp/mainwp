@@ -127,7 +127,7 @@ class MainWP_Ui_Manage_Widgets_Layout { // phpcs:ignore Generic.Classes.OpeningB
                             setTimeout(function () {
                                 jQuery('#mainwp-common-edit-widgets-layout-status').fadeOut(300);
                                 jQuery( '#mainwp-common-edit-widgets-layout-modal' ).modal('hide');
-                                window.location.href = location.href;
+                                mainwp_forceReload();
                             }, 2000);
                         } else {
                             mainwpUIHandleWidgetsLayout.showWorkingStatus(__('Undefined error occured while saving your layout!'), 'red');

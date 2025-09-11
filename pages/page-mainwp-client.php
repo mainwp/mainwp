@@ -1967,7 +1967,6 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 }
                             }
                             setTimeout(function () {
-                                //window.location.href = location.href;
                                 jQuery('#mainwp-upload-custom-icon-modal').modal('hide')
                             }, 1000);
                         });
@@ -2006,7 +2005,6 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 }
                             }
                             setTimeout(function () {
-                                //window.location.href = location.href;
                                 jQuery('#mainwp-upload-custom-icon-modal').modal('hide')
                             }, 1000);
                         });

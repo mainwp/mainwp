@@ -227,7 +227,7 @@ jQuery(function () {
 
             if (success) {
                 setTimeout(function () {
-                    location.href = 'admin.php?page=Extensions';
+                    mainwp_forceReload('admin.php?page=Extensions');
                 }, 2000);
             }
         }, 'json');
@@ -305,7 +305,7 @@ function mainwp_extensions_activate(pObj, retring) {
 
         if (success) {
             setTimeout(function () {
-                location.href = 'admin.php?page=Extensions';
+                mainwp_forceReload('admin.php?page=Extensions');
             }, 2000);
         }
     }, 'json');
@@ -354,7 +354,7 @@ jQuery(document).on('click', '.mainwp-extensions-deactivate', function () {
         }
 
         setTimeout(function () {
-            location.href = 'admin.php?page=Extensions';
+            mainwp_forceReload('admin.php?page=Extensions');
         }, 2000);
     }, 'json');
 });
@@ -500,7 +500,7 @@ let extensions_loop_next = function () {
     }
     if ((finishedActivateThreads == totalActivateThreads) && (countSuccessActivation == totalActivateThreads)) {
         setTimeout(function () {
-            location.href = 'admin.php?page=Extensions';
+            mainwp_forceReload('admin.php?page=Extensions');
         }, 2000);
     }
 };
@@ -554,7 +554,7 @@ let extensions_activate_next = function (pObj, bulkAct) {
                 apiEl.find('.mainwp-extensions-deactivate-chkbox').attr('checked', false);
                 if (!bulkAct) {
                     setTimeout(function () {
-                        location.href = 'admin.php?page=Extensions';
+                        mainwp_forceReload('admin.php?page=Extensions');
                     }, 2000);
                 }
             } else if (response.error) {
@@ -619,7 +619,7 @@ let mainwp_extension_grab_purchased = function (retring) {
                         allowMultiple: true,
                         closable: false,
                         onHide: function () {
-                            location.href = 'admin.php?page=Extensions';
+                            mainwp_forceReload('admin.php?page=Extensions');
                         }
                     }).modal('show');
                     jQuery('#mainwp-get-purchased-extensions-modal').find('.content').html(response.data);
@@ -683,7 +683,7 @@ let mainwp_extension_grab_org_extensions = function () {
                     allowMultiple: true,
                     closable: false,
                     onHide: function () {
-                        location.href = 'admin.php?page=Extensions';
+                        mainwp_forceReload('admin.php?page=Extensions');
                     }
                 }).modal('show');
                 jQuery('#mainwp-get-purchased-extensions-modal').find('.content').html(response.data);
@@ -846,7 +846,7 @@ let mainwp_extension_bulk_install_done = function () {
     statusEl.html(__("Installation completed successfully. Page will reload automatically in 3 seconds.")).show();
     if (jQuery('.extension-installed-success').length == bulkExtensionsFinished) {
         setTimeout(function () {
-            location.href = 'admin.php?page=Extensions';
+            mainwp_forceReload('admin.php?page=Extensions');
         }, 3000);
     }
 }

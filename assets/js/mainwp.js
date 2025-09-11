@@ -115,7 +115,7 @@ let mainwp_get_remove_calback = function (side_id) {
 
             if (!error) {
                 setTimeout(function () {
-                    window.location = 'admin.php?page=managesites';
+                    mainwp_forceReload('admin.php?page=managesites');
                 }, 3000);
             }
 
@@ -777,7 +777,7 @@ window.mainwp_managesites_bulk_check_abandoned = function (siteIds, which) {
         statusText: __('started'),
         callback: function () {
             mainwpVars.bulkManageSitesTaskRunning = false;
-            window.location.href = location.href;
+            mainwp_forceReload();
         }
     };
     mainwpPopup('#mainwp-sync-sites-modal').init(initData);
@@ -920,7 +920,7 @@ window.mainwp_sync_sites_data = function (syncSiteIds, pAction) {
         callback: function () {
             mainwpVars.bulkTaskRunning = false;
             history.pushState("", document.title, window.location.pathname + window.location.search); // to fix issue for url with hash
-            window.location.href = location.href;
+            mainwp_forceReload();
         }
     });
 
@@ -1171,7 +1171,7 @@ let mainwp_tool_disconnect_sites = function () {
             progressMax: nrOfWebsites,
             statusText: __('disconnected'),
             callback: function () {
-                window.location.href = location.href;
+                mainwp_forceReload();
             }
         });
 
@@ -1448,7 +1448,7 @@ let mainwp_site_overview_reconnect = function (pElement) {
 
                 jQuery('#mainwp-reconnect-site-with-user-passwd-modal').modal({
                     onHide: function () {
-                        window.location.href = location.href;
+                        mainwp_forceReload();
                     },
                     closable: false
                 }).modal('show');
@@ -1459,7 +1459,7 @@ let mainwp_site_overview_reconnect = function (pElement) {
                 });
             } else {
                 mainwp_set_message_zone('#mainwp-message-zone');
-                window.location.href = location.href;
+                mainwp_forceReload();
             }
         }
     }());
@@ -1509,7 +1509,7 @@ let mainwp_reconnect_with_pw = function (siteid) {
             mainwp_set_message_zone('#mainwp-message-zone-reconnect', mainwp_get_reconnect_error(response, siteid), 'red');
         } else {
             mainwp_set_message_zone('#mainwp-message-zone-reconnect', response, 'green');
-            window.location.href = location.href;
+            mainwp_forceReload();
         }
     });
 };
@@ -1546,7 +1546,7 @@ let mainwp_managesites_reconnect = function (pElement) {
                 feedback('mainwp-message-zone', response, 'green');
             }
             setTimeout(function () {
-                window.location.reload()
+                mainwp_forceReload();
             }, 6000);
         }
 
@@ -1583,7 +1583,7 @@ let mainwp_managesites_cards_reconnect = function (element) {
                 feedback('mainwp-message-zone', response, 'green');
             }
             setTimeout(function () {
-                window.location.reload()
+                mainwp_forceReload();
             }, 6000);
         }
 
@@ -3019,6 +3019,15 @@ function setVisible(what, vis) {
         jQuery(what).hide();
     }
 }
+
+const mainwp_scrollToElement = () => {
+    jQuery('html,body').animate({
+        scrollTop: 0
+    }, 1000);
+
+    return false;
+}
+
 function setHtml(what, text, ptag) {
     if (typeof ptag == "undefined")
         ptag = true;
@@ -3028,7 +3037,7 @@ function setHtml(what, text, ptag) {
         jQuery(what).html('<span>' + text + '</span>');
     else
         jQuery(what).html(text);
-    scrollToElement(what);
+    mainwp_scrollToElement(); // to fix js conflict error from some other add-ons.
 }
 
 
@@ -3093,7 +3102,7 @@ window.mainwp_notes_show = function (reloadClose) {
     if (reloadClose) {
         jQuery('#mainwp-notes-modal').modal({
             onHide: function () {
-                window.location.href = location.href
+                mainwp_forceReload();
             }
         }).modal('show');
     } else {
@@ -3779,7 +3788,7 @@ let mainwp_sites_changes_actions_dismiss_all = function () {
             } else if (response['success'] == 'yes') {
                 mainwp_showhide_message('mainwp-message-zone-top', 'All changes have been dismissed.', 'green');
                 setTimeout(function () {
-                    window.location.href = location.href
+                    mainwp_forceReload();
                 }, 2000);
             } else {
                 mainwp_showhide_message('mainwp-message-zone-top', 'Failed. Please try again.', 'red');
@@ -4172,7 +4181,7 @@ let mainwp_import_demo_data_action = function (obj) {
             }
             if (!error) {
                 setTimeout(function () {
-                    window.location = 'admin.php?page=mainwp_tab' + msg_import;
+                    mainwp_forceReload('admin.php?page=mainwp_tab' + msg_import);
                 }, 3000);
             }
         }, 'json');
@@ -4196,7 +4205,7 @@ let mainwp_remove_demo_data_action = function () {
             }
             if (!error) {
                 setTimeout(function () {
-                    window.location = 'admin.php?page=mainwp-setup';
+                    mainwp_forceReload('admin.php?page=mainwp-setup');
                 }, 3000);
             }
 
@@ -4227,7 +4236,7 @@ let mainwp_tool_renew_connections_show = function () {
         allowMultiple: true,
         closable: false,
         onHide: function () {
-            location.href = 'admin.php?page=MainWPTools';
+            mainwp_forceReload('admin.php?page=MainWPTools');
         },
         onShow: function () {
             if (jQuery('#mainwp-tool-renew-connect-modal .mainwp_selected_sites_item.item.warning').length == 0) {
@@ -4775,7 +4784,7 @@ jQuery(function ($) {
             if (response?.success) {
                 feedback('mainwp-message-zone', __('Monitor have been removed.'), 'green');
                 setTimeout(function () {
-                    window.location = 'admin.php?page=managesites&id=' + wpid;
+                    mainwp_forceReload('admin.php?page=managesites&id=' + wpid);
                 }, 2000);
 
             } else if (response?.error) {
@@ -4795,7 +4804,7 @@ jQuery(function ($) {
         jQuery.post(ajaxurl, data, function (response) {
             if (response?.success) {
                 setTimeout(function () {
-                    window.location.href = location.href
+                    mainwp_forceReload();
                 }, 2000);
 
             } else if (response?.error) {
@@ -4828,10 +4837,10 @@ let mainwp_module_logs_start_update_dismissed_db = function () {
     let data = mainwp_secure_data({
         action: 'mainwp_module_log_update_dismissed_db',
     });
-    if(logs_update_db_cancelled){
+    if (logs_update_db_cancelled) {
         mainwp_set_message_zone('#module-log-update-dissmised-logs-running', '<i class="close icon"></i>' + __("User cancelled the 'Sites Changes' database update process."), 'green');
     } else {
-        mainwp_set_message_zone('#module-log-update-dissmised-logs-running', '<i class="ui active inline loader tiny"></i> ' + __( 'Updating the \'Sites Changes\' database. Click %1here%2 to cancel.', '<a href="javascript:void(0);" id="module-update-logs-db-cancel">', '</a>' ), 'green');
+        mainwp_set_message_zone('#module-log-update-dissmised-logs-running', '<i class="ui active inline loader tiny"></i> ' + __('Updating the \'Sites Changes\' database. Click %1here%2 to cancel.', '<a href="javascript:void(0);" id="module-update-logs-db-cancel">', '</a>'), 'green');
     }
     jQuery.post(ajaxurl, data, function (response) {
         let status = response?.status ?? '';
@@ -4839,7 +4848,7 @@ let mainwp_module_logs_start_update_dismissed_db = function () {
             mainwp_set_message_zone('#module-log-update-dissmised-logs-running', '<i class="close icon"></i>' + response.error, 'red');
         } else if (status === 'finished') {
             mainwp_set_message_zone('#module-log-update-dissmised-logs-running', '<i class="close icon"></i>' + __('Logs records has been updated successfully.'), 'green');
-        } else if (status === 'running' && ! logs_update_db_cancelled ) {
+        } else if (status === 'running' && !logs_update_db_cancelled) {
             setTimeout(function () {
                 mainwp_module_logs_start_update_dismissed_db();
             }, 500);
@@ -4857,4 +4866,24 @@ jQuery(document).on('click', '#module-update-logs-db-cancel', function () {
         //ok.
     }, 'json');
     return false;
+});
+
+function mainwp_forceReload(targetUrl) {
+    // Use provided URL or fallback to current page
+    const url = new URL(targetUrl || window.location.href, window.location.origin);
+    // Add nocache param
+    url.searchParams.set("_mwpnocache", Date.now());
+    // Navigate to URL (force reload from server)
+    window.location.href = url.toString();
+}
+
+// Cleanup _mwpnocache param after page load
+window.addEventListener("load", () => {
+    if (jQuery('body.mainwp-ui-page').length) {
+        const url = new URL(window.location.href);
+        if (url.searchParams.has("_mwpnocache")) {
+            url.searchParams.delete("_mwpnocache");
+            window.history.replaceState({}, document.title, url.pathname + (url.search ? url.search : ""));
+        }
+    }
 });

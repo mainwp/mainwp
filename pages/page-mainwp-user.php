@@ -686,7 +686,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 <div class="ui info message"><?php esc_html_e( 'Empty fields will not be passed to child sites.', 'mainwp' ); ?></div>
                 <form id="update_user_profile" class="ui form">
                     <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-                    
+
                     <h3 class="ui header"><?php esc_html_e( 'Name', 'mainwp' ); ?></h3>
 
                     <div class="ui grid field">
@@ -764,7 +764,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Biographical Info', 'mainwp' ); ?></label>
                         <div class="ui six wide column">
                             <div class="ui input">
-                                <textarea name="description" id="description" rows="5" cols="30" style="width:100%"></textarea> 
+                                <textarea name="description" id="description" rows="5" cols="30" style="width:100%"></textarea>
                             </div>
                         </div>
                     </div>
@@ -780,10 +780,10 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             </div>
                         </div>
                     </div>
-                        
+
                 </form>
             </div>
-            
+
             <div class="actions">
                 <div id="mainwp_update_password_error" style="display: none"></div>
                 <span id="mainwp_users_updating"><i class="ui active inline loader tiny"></i></span>
@@ -2129,6 +2129,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                     closable: false,
                                     onHide: function() {
                                         location.href = 'admin.php?page=BulkImportUsers';
+                                        mainwp_forceReload('admin.php?page=PostBulkManage');
                                     }
                                 } ).modal( 'show' );
                             } );

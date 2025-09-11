@@ -245,6 +245,7 @@ let mainwp_setup_managesites_add = function () {
 
             setTimeout(function () {
               window.location.href = 'admin.php?page=mainwp-setup&step=add_client';
+              mainwp_forceReload();
             }, 3000);
           }
 

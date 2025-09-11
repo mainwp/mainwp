@@ -647,7 +647,7 @@ jQuery(function () {
             allowMultiple: false,
             closable: true,
             onHide: function () {
-                window.location.href = location.href;
+                mainwp_forceReload();
             }
         }).modal('show');
 
@@ -705,7 +705,7 @@ let mainwp_upload_custom_icon = function (iconObj) {
                     mainwp_set_message_zone('#mainwp-message-zone-upload');
                 }
                 setTimeout(function () {
-                    window.location.href = location.href;
+                    mainwp_forceReload();
                 }, 3000);
             } else if (response.error) {
                 feedback('mainwp-message-zone-upload', response.error, 'red');
@@ -778,7 +778,7 @@ let mainwp_guidedtours_onchange = function (me) {
     });
     jQuery.post(ajaxurl, data, function () {
         setTimeout(() => {
-            window.location.href = location.href;
+             mainwp_forceReload();
         }, 1000);
     });
 }
@@ -803,7 +803,7 @@ let mainwp_help_modal_content_onclick = function (hide, isToolsPage) {
 
     jQuery.post(ajaxurl, data, function () {
         if (typeof isToolsPage !== "undefined" && isToolsPage) {
-            location.href = 'admin.php?page=MainWPTools';
+            mainwp_forceReload('admin.php?page=MainWPTools');
         } else {
             if ( jQuery('#mainwp-guided-chatbase-option').is(':checked') ) {
                 jQuery('#mainwp-start-chat-card').removeClass('mainwp-disabled-link');
@@ -824,7 +824,7 @@ let mainwp_help_modal_content_onclick = function (hide, isToolsPage) {
                 jQuery('#mainwp-start-video-card').addClass('mainwp-disabled-link');
                 jQuery('#mainwp-chatbase-video-screen').fadeIn('100').find('iframe').attr('src', '');
             }
-            
+
             jQuery(me).html('Update Permissions').removeClass('disabled');
         }
     });

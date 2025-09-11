@@ -1316,7 +1316,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                         let noti_id = jQuery('#mainwp-install-check-modal').attr('noti-slug');
                         mainwp_notice_dismiss(noti_id, 1);
                         setTimeout(function () {
-                            window.location.href = location.href;
+                            mainwp_forceReload();
                         }, 1000);
                     },
                 }).modal('show');

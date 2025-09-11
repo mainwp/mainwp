@@ -1714,6 +1714,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     closable: true,
                     onHide: function() {
                         location.href = 'admin.php?page=PageBulkManage';
+                        mainwp_forceReload('admin.php?page=PostBulkManage');
                     }
                 } ).modal( 'show' );
             } );

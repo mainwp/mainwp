@@ -768,7 +768,6 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                         }
                                     }
                                     setTimeout(function () {
-                                        //window.location.href = location.href;
                                         jQuery('#mainwp-upload-custom-icon-modal').modal('hide')
                                     }, 1000);
                                 });

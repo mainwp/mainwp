@@ -490,7 +490,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 jQuery( "#mainwp-posting-post-modal" ).modal( {
                     closable: true,
                     onHide: function() {
-                        location.href = 'admin.php?page=PostBulkManage';
+                        mainwp_forceReload('admin.php?page=PostBulkManage');
                     }
                 } ).modal( 'show' );
             } );
@@ -540,6 +540,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     closable: true,
                     onHide: function() {
                         location.href = 'admin.php?page=PostBulkManage';
+                        mainwp_forceReload('admin.php?page=BulkImportUsers');
                     }
                 } ).modal( 'show' );
                 mainwp_post_posting_start_next( true );

@@ -1087,7 +1087,7 @@ let mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAf
         mainwpPopup('#managesites-backup-box').init({
             title: __("Checking backup settings..."), callback: function () {
                 mainwpVars.bulkManageSitesTaskRunning = false;
-                window.location.href = location.href;
+                mainwp_forceReload();
             }
         });
 
@@ -1129,7 +1129,7 @@ let mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAf
                     mainwpPopup('#managesites-backup-box').init({
                         title: __("Full backup required!"), callback: function () {
                             continueAfterBackup = undefined;
-                            window.location.href = location.href;
+                            mainwp_forceReload();
                         }
                     });
 

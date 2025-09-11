@@ -32,7 +32,7 @@ window.mainwp_uptime_monitor_check_now = function (itemsData) {
     callback: function () {
       mainwpVars.bulkTaskRunning = false;
       history.pushState("", document.title, window.location.pathname + window.location.search); // to fix issue for url with hash
-      window.location.href = location.href;
+      mainwp_forceReload();
     }
   });
   uptime_monitoring_prepare_items_rows(itemsData);

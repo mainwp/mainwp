@@ -180,7 +180,7 @@ let mainwp_manageclients_bulk_remove_next = function () {
   if ((bulkManageClientsTotal > 0) && (bulkManageClientsFinished == bulkManageClientsTotal)) { // NOSONAR -- modified out side the function.
     setHtml('#mainwp-message-zone-client', __("Process completed. Reloading page..."));
     setTimeout(function () {
-      window.location.reload()
+        mainwp_forceReload();
     }, 3000);
   }
 }
@@ -363,6 +363,7 @@ jQuery(document).on('click', '#bulk_add_multi_create_client', function (e) {
     });
     jQuery.post(ajaxurl, data, function (response) {
       if (response?.success) {
+        mainwp_forceReload("admin.php?page=ManageClients");
         window.location.href = 'admin.php?page=mainwp-setup&step=monitoring&message=1';
       } else if (response?.error) {
         mainwp_set_message_zone('#mainwp-message-zone', response.error, 'red');
@@ -459,11 +460,11 @@ let mainwp_createclient = function (currPage) {
       jQuery('#bulk_add_createclient').prop("disabled", false);
       if (response?.success) {
         if ('add-new' == currPage) {
-          window.location.href = "admin.php?page=ManageClients";
+          mainwp_forceReload("admin.php?page=ManageClients");
         } else if ('qsw-add' == currPage) {
-          window.location.href = 'admin.php?page=mainwp-setup&step=monitoring&message=1';
+            mainwp_forceReload('admin.php?page=mainwp-setup&step=monitoring&message=1');
         } else {
-          window.location.href = location.href;
+            mainwp_forceReload();
         }
       } else if (response?.error) {
         feedback('mainwp-message-zone-client', response.error, 'red');
@@ -549,7 +550,7 @@ let mainwp_clients_update_custom_field = function (me) {
   jQuery.post(ajaxurl, fields, function (response) {
     if (response) {
       if (response.success) {
-        window.location.href = location.href;
+        mainwp_forceReload();
       } else if (response.error) {
         parent.find('.ui.message').html(response.error).show().removeClass('yellow').addClass('red');
       } else {

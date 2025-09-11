@@ -136,7 +136,7 @@ let updatesoverview_update_popup_init = function (data) {
     data.allowMultiple = true;
     data.callback = function () {
         mainwpVars.bulkTaskRunning = false;
-        window.location.href = location.href;
+        mainwp_forceReload();
     };
     data.statusText = __('updated');
     mainwpPopup('#mainwp-sync-sites-modal').init(data);
@@ -3524,7 +3524,7 @@ let updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteN
             if (jQuery('.updates-regression-score-red-flag').length === 0) {
                 setTimeout(function () {
                     mainwpPopup('#mainwp-sync-sites-modal').close();
-                    window.location.href = location.href;
+                    mainwp_forceReload();
                 }, 3000);
             }
 

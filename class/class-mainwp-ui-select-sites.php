@@ -284,7 +284,7 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             jQuery( '#mainwp-create-new-tag-button' ).on( 'click', function() {
                 jQuery( '#mainwp-create-group-sites-modal' ).modal( {
                     onHide: function () {
-                        window.location.href = location.href;
+                        mainwp_forceReload();
                         return false;
                     },
                 } ).modal( 'show' );

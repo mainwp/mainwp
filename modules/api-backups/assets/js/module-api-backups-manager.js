@@ -454,7 +454,7 @@ let cloudways_action_backup = function (pObj) {
             ;
 
             setTimeout(function () {
-                location.reload();
+                mainwp_forceReload();
             }, 5000);
 
         } else {
@@ -466,7 +466,7 @@ let cloudways_action_backup = function (pObj) {
             ;
 
             setTimeout(function () {
-                location.reload();
+                mainwp_forceReload();
             }, 5000);
 
         }
@@ -719,7 +719,7 @@ let vultr_action_create_snapshot = function (pObj) {
             jQuery('#mainwp-api-backups-message-zone .content .message')
                 .html('A backup has been requested.');
             setTimeout(function () {
-                location.reload();
+                mainwp_forceReload();
             }, 5000);
 
         } else {
@@ -730,7 +730,7 @@ let vultr_action_create_snapshot = function (pObj) {
             jQuery('#mainwp-api-backups-message-zone .content .message')
                 .html( err_message );
             setTimeout(function () {
-                location.reload();
+                mainwp_forceReload();
             }, 5000);
 
         }
@@ -932,7 +932,7 @@ let gridpane_action_create_backup = function (pObj) {
             ;
 
             setTimeout(function () {
-                location.reload();
+                mainwp_forceReload();
             }, 5000);
 
         } else {
@@ -944,7 +944,7 @@ let gridpane_action_create_backup = function (pObj) {
             ;
 
             setTimeout(function () {
-                location.reload();
+                mainwp_forceReload();
             }, 5000);
 
         }
@@ -1149,7 +1149,7 @@ let linode_action_create_backup = function (pObj) {
             ;
 
             setTimeout(function () {
-                location.reload();
+                mainwp_forceReload();
             }, 5000);
 
         } else {
@@ -1161,7 +1161,7 @@ let linode_action_create_backup = function (pObj) {
             ;
 
             setTimeout(function () {
-                location.reload();
+                mainwp_forceReload();
             }, 5000);
         }
     });
@@ -1360,7 +1360,7 @@ let digitalocean_action_create_backup = function (pObj) {
             ;
 
             setTimeout(function () {
-                location.reload();
+                mainwp_forceReload();
             }, 5000);
         } else {
 
@@ -1371,7 +1371,7 @@ let digitalocean_action_create_backup = function (pObj) {
             ;
 
             setTimeout(function () {
-                location.reload();
+                mainwp_forceReload();
             }, 5000);
         }
     });

@@ -16,7 +16,7 @@ jQuery(function () {
   jQuery(document).on('click', '#mainwp-new-sites-group-button', function () {
     jQuery('#mainwp-create-group-modal').modal({
       onHide: function () {
-        window.location.href = location.href;
+        mainwp_forceReload();
       },
       onShow: function () {
         jQuery('#mainwp-create-group-modal').find('input#mainwp-group-name').val('');
@@ -29,7 +29,7 @@ jQuery(function () {
   jQuery(document).on('click', '#mainwp-rename-group-button', function () {
     jQuery('#mainwp-rename-group-modal').modal({
       onHide: function () {
-        window.location.href = location.href;
+        mainwp_forceReload();
       },
       onShow: function () {
         let groupName = jQuery('#mainwp-groups-menu').find('.active').find('#mainwp-hidden-group-name').val();
@@ -61,7 +61,7 @@ jQuery(function () {
       }
       jQuery('#mainwp-create-group-modal').modal({
         onHide: function () {
-          window.location.reload();
+           mainwp_forceReload();
         }
       }).modal('hide');
     });

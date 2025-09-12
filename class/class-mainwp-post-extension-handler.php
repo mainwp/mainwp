@@ -121,6 +121,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
         $plugin_slug = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $action      = isset( $_POST['what'] ) ? sanitize_text_field( wp_unslash( $_POST['what'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! empty( $plugin_slug ) && in_array( $action, array( 'active', 'disable', 'remove' ) ) ) {
+            $this->invalidate_warm_cache();
             if ( 'disable' === $action ) {
                 if ( is_plugin_active( $plugin_slug ) ) {
                     deactivate_plugins( $plugin_slug, false );
@@ -138,6 +139,14 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
             }
         }
         wp_send_json( array( 'error' => esc_html__( 'Invalid data provided.', 'mainwp' ) ) );
+    }
+
+
+    /**
+     * Method invalidate_warm_cache()
+     */
+    public function invalidate_warm_cache() {
+        do_action( 'mainwp_invalidate_warm_cache_pages', array( 'Extensions' ) );
     }
 
     /**

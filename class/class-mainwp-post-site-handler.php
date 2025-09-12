@@ -352,7 +352,17 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
 
         $this->secure_request( 'mainwp_removesite' );
 
+        static::invalidate_warm_cache();
+
         MainWP_Manage_Sites_Handler::remove_site();
+    }
+
+
+    /**
+     * Method invalidate_warm_cache()
+     */
+    public static function invalidate_warm_cache() {
+        do_action( 'mainwp_invalidate_warm_cache_pages', array( 'managesites', 'mainwp_tab' ) );
     }
 
     /**

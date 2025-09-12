@@ -996,6 +996,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             MainWP_DB_Client::instance()->delete_client( $client_id );
             $ret['success'] = 'SUCCESS';
             $ret['result']  = esc_html__( 'Client removed successfully.', 'mainwp' );
+            MainWP_Client::invalidate_warm_cache();
         } else {
             $ret['result'] = esc_html__( 'Client ID empty.', 'mainwp' );
         }
@@ -1011,6 +1012,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      */
     public function mainwp_clients_save_field() {
         $this->check_security( 'mainwp_clients_save_field' );
+        MainWP_Client::invalidate_warm_cache();
         MainWP_Client::save_client_field();
         die();
     }
@@ -1030,6 +1032,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         if ( MainWP_DB_Client::instance()->delete_client_field_by( 'field_id', $field_id, $client_id ) ) {
             $ret['success'] = true;
         }
+        MainWP_Client::invalidate_warm_cache();
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         echo wp_json_encode( $ret );
         exit;

@@ -187,6 +187,13 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
+     * Method invalidate_warm_cache()
+     */
+    public static function invalidate_warm_cache() {
+        do_action( 'mainwp_invalidate_warm_cache_pages', array( 'ManageCostTracker', 'CostSummary' ) );
+    }
+
+    /**
      * Renders overview.
      *
      * When the page loads render the body content.
@@ -1122,6 +1129,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
         $sub_id = isset( $_POST['sub_id'] ) ? intval( $_POST['sub_id'] ) : 0; //phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         if ( Cost_Tracker_DB::get_instance()->delete_cost_tracker( 'id', $sub_id ) ) {
+            static::invalidate_warm_cache();
             die( wp_json_encode( array( 'status' => 'success' ) ) );
         } else {
             die( wp_json_encode( array( 'error' => esc_html__( 'Failed.', 'mainwp' ) ) ) );

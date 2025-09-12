@@ -1349,6 +1349,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
 
         if ( is_object( $inserted ) ) {
+
+            static::invalidate_warm_cache();
+
             /**
              * Add client
              *
@@ -1574,6 +1577,13 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'client_id' => $client_id,
             )
         );
+    }
+
+    /**
+     * Method invalidate_warm_cache()
+     */
+    public static function invalidate_warm_cache() {
+        do_action( 'mainwp_invalidate_warm_cache_pages', array( 'ManageClients', 'ClientAddField' ) );
     }
 
     /**

@@ -264,6 +264,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     $scope = 'write';
                 }
             }
+            $this->invalidate_warm_cache();
             MainWP_DB::instance()->insert_rest_api_key( $consumer_key, $consumer_secret, $scope, $desc, $enabled );
             // end.
             wp_safe_redirect( admin_url( 'admin.php?page=RESTAPI&message=created' ) ); //phpcs:ignore -- ok.
@@ -334,9 +335,19 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             if ( $updated ) {
                 $msg = '&message=saved';
             }
+
+            $this->invalidate_warm_cache();
+
             wp_safe_redirect( admin_url( 'admin.php?page=RESTAPI' . $msg ) ); //phpcs:ignore -- ok.
             exit();
         }
+    }
+
+    /**
+     * Method invalidate_warm_cache()
+     */
+    public function invalidate_warm_cache() {
+        do_action( 'mainwp_invalidate_warm_cache_pages', array( 'RESTAPI' ) );
     }
 
     /**
@@ -369,6 +380,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             }
             $ret['success'] = 'SUCCESS';
             $ret['result']  = esc_html__( 'REST API Key deleted successfully.', 'mainwp' );
+            $this->invalidate_warm_cache();
         } else {
             $ret['error'] = esc_html__( 'REST API Key ID empty.', 'mainwp' );
         }

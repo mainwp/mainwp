@@ -164,24 +164,9 @@
     });
 })(jQuery);
 
-
 function mainwp_forceReload(targetUrl) {
-    // Use provided URL or fallback to current page
-    const url = new URL(targetUrl || window.location.href, mainwpParams.admin_url_base);
-    // Add nocache param
-    url.searchParams.set("_mwpnocache", Date.now());
     // Navigate to URL (force reload from server)
-    window.location.href = url.toString();
+    window.location.href = targetUrl;
 }
 
-// Cleanup _mwpnocache param after page load
-window.addEventListener("load", () => {
-    if (jQuery('body.mainwp-ui-page').length) {
-        const url = new URL(window.location.href);
-        if (url.searchParams.has("_mwpnocache")) {
-            url.searchParams.delete("_mwpnocache");
-            window.history.replaceState({}, document.title, url.pathname + (url.search ? url.search : ""));
-        }
-    }
-});
 

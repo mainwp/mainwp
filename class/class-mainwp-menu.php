@@ -586,7 +586,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $id        = isset( $params['id'] ) ? $params['id'] : '';
         $level_cls = 'left-menu-item-level-' . $level;
 
-        if ( ! MainWP_System::is_excluded_warm_cache_pages() ) {
+        if ( ! MainWP_Warm_Cache_Helper::is_excluded_warm_cache_pages() ) {
             $level_cls .= ' mainwp-js-prefetch ';
         }
 

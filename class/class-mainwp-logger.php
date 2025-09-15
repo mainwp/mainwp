@@ -32,6 +32,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     const CACHE_METRICS_LOG_PRIORITY   = 20250814;
     const DB_QUERIES_LOG_PRIORITY      = 20250827;
     const UNHOOKS_LOG_PRIORITY         = 20250901;
+    const WARM_CACHE_LOG_PRIORITY      = 20250915;
     const DISABLED                     = - 1;
     const LOG                          = 0;
     const WARNING                      = 1;
@@ -356,6 +357,9 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         break;
                     case 'execution-time':
                         $this->log_action( '[Execution time] :: ' . $text, static::EXECUTION_TIME_LOG_PRIORITY, $color );
+                        break;
+                    case 'warm-cache':
+                        $this->log_action( '[Warm cache] :: ' . $text, static::WARM_CACHE_LOG_PRIORITY, $color );
                         break;
                     default:
                         break;

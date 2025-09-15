@@ -190,7 +190,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
      * Method invalidate_warm_cache()
      */
     public static function invalidate_warm_cache() {
-        do_action( 'mainwp_invalidate_warm_cache_pages', array( 'ManageCostTracker', 'CostSummary' ) );
+        MainWP_Cache_Warm_Helper::invalidate_manage_pages( array( 'ManageCostTracker', 'CostSummary' ) );
     }
 
     /**

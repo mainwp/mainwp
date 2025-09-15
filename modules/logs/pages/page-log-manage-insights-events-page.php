@@ -18,6 +18,7 @@ use MainWP\Dashboard\MainWP_DB_Common;
 use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_Logger;
 use MainWP\Dashboard\MainWP_Cache_Helper;
+use MainWP\Dashboard\MainWP_Cache_Warm_Helper;
 
 /**
  * Class Log_Manage_Insights_Events_Page
@@ -395,23 +396,33 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
             );
         }
 
-        return compact(
+        $filters_params = compact(
             'filter_ranges',
             'filter_groups_ids',
             'filter_client_ids',
             'filter_user_ids',
             'filter_dtsstart',
             'filter_dtsstop',
-            'array_clients_ids',
-            'array_groups_ids',
-            'array_usersfilter_sites_ids',
             'filter_source',
             'filter_sites',
             'filter_events',
-            'sources_conds',
-            'array_sites_ids',
-            'array_events_list',
-            'array_source_list',
+        );
+
+        if ( $save_filter ) { // check invalidate for request to open the page only.
+            MainWP_Cache_Warm_Helper::maybe_invalidate_page_by_params( 'InsightsManage', $filters_params );
+        }
+
+        return array_merge(
+            $filters_params,
+            compact(
+                'array_clients_ids',
+                'array_groups_ids',
+                'array_usersfilter_sites_ids',
+                'sources_conds',
+                'array_sites_ids',
+                'array_events_list',
+                'array_source_list'
+            )
         );
     }
 

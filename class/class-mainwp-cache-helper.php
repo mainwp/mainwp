@@ -218,6 +218,18 @@ final class MainWP_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSa
         self::record_metrics( 'set', $key, $group );
     }
 
+
+    /**
+     * Method get_params_key.
+     *
+     * @param array $params Params to get prefix.
+     *
+     * @return string Prefix.
+     */
+    public static function get_params_key( $params = array() ) {
+        return self::get_normalized_params( $params );
+    }
+
     /**
      * Method get_normalized_params.
      *

@@ -12,7 +12,7 @@ namespace MainWP\Dashboard;
  *
  * @package MainWP\Dashboard
  */
-class MainWP_Warm_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
+class MainWP_Cache_Warm_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     const WPC_VER = '1';
 
@@ -69,16 +69,47 @@ class MainWP_Warm_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
     }
 
-
     /**
      * Method hook_warm_cache_invalidate_pages().
      *
      * @param array $pages List pages to invalidate.
      */
     public static function hook_warm_cache_invalidate_pages( $pages = array() ) {
+        static::invalidate_manage_pages( $pages );
+    }
+
+    /**
+     * Method invalidate_manage_pages().
+     *
+     * @param array $pages List pages to invalidate.
+     */
+    public static function invalidate_manage_pages( $pages = array() ) {
         if ( ! empty( $pages ) && is_array( $pages ) ) {
             foreach ( $pages as $page ) {
                 self::invalidate_page_warm_cache( $page );
+            }
+        }
+    }
+
+    /**
+     * Method maybe_invalidate_page_by_params().
+     *
+     * @param array $page pages to invalidate.
+     * @param array $params Request params.
+     */
+    public static function maybe_invalidate_page_by_params( $page = '', $params = array() ) {
+        if ( ! empty( $page ) ) {
+            $page_key      = static::get_warm_cache_page_key( $page );
+            $prefix_key    = static::get_page_warm_cache_key_prefix( $page_key );
+            $prefix_params = static::generate_warm_cache_params_prefix( $params );
+            MainWP_Logger::instance()->log_events( 'warm-cache', 'Maybe Invalidate :: [page=' . $page . '] :: [params=' . print_r( $params, true ) . '] :: [prefix_key=' . $prefix_key . '] :: [prefix_params=' . $prefix_params . ']' ); //phpcs:ignore -- ok.
+            if ( $prefix_key !== $prefix_params ) {
+                // set new prefix.
+                static::set_page_warm_cache_key_prefix( $page_key, $prefix_params );
+                // invalidate the cache.
+                static::invalidate_page_warm_cache( $page );
+            } else {
+                MainWP_Logger::instance()->log_events( 'warm-cache', 'No Invalidate :: [page=' . $page . ']' );
             }
         }
     }
@@ -158,15 +189,30 @@ class MainWP_Warm_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
     }
 
-
     /**
      * Method get_page_warm_cache_last_change_key().
      *
      * @param string $page The page.
      *
-     * @return string The key.
+     * @return string The key prefix.
      */
     public static function get_page_warm_cache_last_change_key( $page = '' ) {
+        $page_key   = static::get_warm_cache_page_key( $page );
+        $prefix_key = static::get_page_warm_cache_key_prefix( $page_key );
+        if ( empty( $prefix_key ) ) {
+            return '';
+        }
+        return 'mainwp_warm_cache_page_last_changed_key_' . $prefix_key;
+    }
+
+    /**
+     * Method get_warm_cache_page_key().
+     *
+     * @param string $page The page.
+     *
+     * @return string The key.
+     */
+    public static function get_warm_cache_page_key( $page = '' ) {
 
         if ( empty( $page ) ) {
              $page = isset($_GET['page']) ? preg_replace('/[^a-z0-9_\-]/i', '', $_GET['page']) : ''; //phpcs:ignore -- ok.
@@ -182,9 +228,78 @@ class MainWP_Warm_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $userId = 0;
         }
 
-        $key = sha1( 'v:' . static::WPC_VER . "|u:$userId|p:$page" );
-        return 'mainwp_page_warm_cache_last_changed_key_' . $key;
+        return sha1( 'v:' . static::WPC_VER . "|u:$userId|p:$page" );
     }
+
+
+    /**
+     * Method get_page_warm_cache_key_prefix().
+     *
+     * @param string $page_key The page key.
+     *
+     * @return string The key.
+     */
+    public static function get_page_warm_cache_key_prefix( $page_key = '' ) {
+
+        if ( empty( $page_key ) ) {
+            return '';
+        }
+
+        $prefix = get_transient( 'mainwp_warm_cache_last_changed_key_prefix_' . $page_key );
+
+        if ( empty( $prefix ) ) {
+            $prefix = static::set_page_warm_cache_key_prefix( $page_key ); // set default prefix.
+        }
+
+        return $prefix;
+    }
+
+    /**
+     * Method set_page_warm_cache_key_prefix().
+     *
+     * @param string $page_key The page key.
+     * @param string $prefix_params The params prefix.
+     *
+     * @return string The key.
+     */
+    public static function set_page_warm_cache_key_prefix( $page_key = '', $prefix_params = '' ) {
+
+        if ( empty( $page_key ) ) {
+            return '';
+        }
+
+        $maxage  = (int) get_option( 'mainwp_warm_cache_pages_ttl', 10 );
+        $seconds = $maxage * 60;
+
+        if ( ! empty( $prefix_params ) ) {
+            $prefix_key = $prefix_params;
+        } else {
+            $prefix_key = $page_key;
+        }
+
+        set_transient( 'mainwp_warm_cache_last_changed_key_prefix_' . $page_key, $prefix_key, $seconds );
+
+        return $prefix_key;
+    }
+
+    /**
+     * Method generate_warm_cache_params_prefix().
+     *
+     * @param array $params The page params.
+     *
+     * @return string The key.
+     */
+    public static function generate_warm_cache_params_prefix( $params = array() ) {
+        $key_params = 'params:';
+        if ( ! empty( $params ) ) {
+            $normalized_key = MainWP_Cache_Helper::get_params_key( $params );
+            if ( ! empty( $normalized_key ) ) {
+                $key_params .= $normalized_key;
+            }
+        }
+        return sha1( $key_params );
+    }
+
 
     /**
      * Method get_current_page_warm_cache_last_changed().
@@ -195,10 +310,10 @@ class MainWP_Warm_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
         $lastchanged = (int) static::get_page_last_changed_cache();
 
-        $maxage  = get_option( 'mainwp_warm_cache_pages_ttl', 10 );
+        $maxage  = (int) get_option( 'mainwp_warm_cache_pages_ttl', 10 );
         $seconds = $maxage * 60;
 
-        if ( empty( $lastchanged ) || $lastchanged < time() - $seconds ) {
+        if ( empty( $lastchanged ) || (int) $lastchanged < time() - $seconds ) {
             $lastchanged      = time();
             $last_changed_key = static::get_page_warm_cache_last_change_key();
             if ( ! empty( $last_changed_key ) ) {
@@ -251,6 +366,7 @@ class MainWP_Warm_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * Method get_page_last_changed_cache().
      *
      * @param string $page Page to get last changed cache.
+     *
      * @return mixed Page last change.
      */
     public static function get_page_last_changed_cache( $page = '' ) {
@@ -268,15 +384,26 @@ class MainWP_Warm_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @return int Invalidate last change timestamp.
      */
-    public static function invalidate_page_warm_cache( $page ) {
+    private static function invalidate_page_warm_cache( $page ) {
         $last_changed_key = static::get_page_warm_cache_last_change_key( $page );
-        $lastchanged      = time();
-        $maxage           = get_option( 'mainwp_warm_cache_pages_ttl', 10 );
-        $seconds          = $maxage * 60;
-        set_transient( $last_changed_key, $lastchanged, $seconds );
-        return $lastchanged;
+        MainWP_Logger::instance()->log_events( 'warm-cache', 'Invalidate :: [page=' . $page . '] :: [last_changed_key=' . $last_changed_key . ']' );
+        return static::invalidate_warm_cache_key( $last_changed_key );
     }
 
+    /**
+     * Method invalidate_warm_cache_key().
+     *
+     * @param string $last_key Last key to invalidate.
+     *
+     * @return int Invalidate last change timestamp.
+     */
+    private static function invalidate_warm_cache_key( $last_key ) {
+        $lastchanged = time();
+        $maxage      = get_option( 'mainwp_warm_cache_pages_ttl', 10 );
+        $seconds     = $maxage * 60;
+        set_transient( $last_key, $lastchanged, $seconds );
+        return $lastchanged;
+    }
 
     /**
      * Method is_excluded_warm_cache_pages().
@@ -302,6 +429,6 @@ class MainWP_Warm_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 'mainwp-setup',
             )
         );
-        return ! is_array( $exclude_pages ) || ( in_array( '_excluded_all', $exclude_pages ) && ! in_array( $page, $exclude_pages ) ) ? true : false;
+        return ! is_array( $exclude_pages ) || in_array( '_excluded_all', $exclude_pages ) || ! in_array( $page, $exclude_pages ) ? true : false;
     }
 }

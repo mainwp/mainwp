@@ -362,7 +362,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
      * Method invalidate_warm_cache()
      */
     public static function invalidate_warm_cache() {
-        do_action( 'mainwp_invalidate_warm_cache_pages', array( 'managesites', 'mainwp_tab' ) );
+        MainWP_Cache_Warm_Helper::invalidate_manage_pages( array( 'managesites', 'mainwp_tab' ) );
     }
 
     /**

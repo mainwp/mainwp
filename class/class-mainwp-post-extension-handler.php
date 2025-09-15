@@ -146,7 +146,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
      * Method invalidate_warm_cache()
      */
     public function invalidate_warm_cache() {
-        do_action( 'mainwp_invalidate_warm_cache_pages', array( 'Extensions' ) );
+        MainWP_Cache_Warm_Helper::invalidate_manage_pages( array( 'Extensions' )  );
     }
 
     /**

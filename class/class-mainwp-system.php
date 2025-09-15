@@ -282,7 +282,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             add_action( 'init', array( MainWP_System_Cron_Jobs::instance(), 'cron_active' ), PHP_INT_MAX );
         }
         MainWP_Unhooks_Helper::instance();
-        MainWP_Warm_Cache_Helper::instance();
+        MainWP_Cache_Warm_Helper::instance();
     }
 
     /**

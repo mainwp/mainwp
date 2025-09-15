@@ -4701,7 +4701,8 @@ let mainwp_overview_gridstack_save_layout = function (item_id) {
         page: page_sortablewidgets,
         order: JSON.stringify(orders),
         wgids: JSON.stringify(wgIds),
-        item_id: item_id
+        item_id: item_id,
+        page_widget: page_widget
     };
     jQuery.post(ajaxurl, mainwp_secure_data(postVars), function () {
     });

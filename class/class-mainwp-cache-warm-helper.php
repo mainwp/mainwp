@@ -86,7 +86,7 @@ class MainWP_Cache_Warm_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSam
     public static function invalidate_manage_pages( $pages = array() ) {
         if ( ! empty( $pages ) && is_array( $pages ) ) {
             foreach ( $pages as $page ) {
-                self::invalidate_page_warm_cache( $page );
+                static::invalidate_page_warm_cache( $page );
             }
         }
     }

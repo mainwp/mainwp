@@ -1670,6 +1670,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             return;
         }
 
+        $page_widget = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
+
         $wgsorted               = false;
         $selected_widget_layout = '';
 
@@ -1792,6 +1794,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         </div>
         <script type="text/javascript">
                 let page_sortablewidgets = '<?php echo esc_js( $page ); ?>';
+                let page_widget = '<?php echo esc_js( $page_widget ); ?>';
                 jQuery( document ).ready( function( $ ) {
                     let wgIds = [];
                     jQuery( ".mainwp-widget" ).each( function () {

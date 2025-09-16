@@ -1753,7 +1753,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 $layout = array();
                 if ( isset( $wgsorted[ $box['id'] ] ) ) {
                     $val = $wgsorted[ $box['id'] ];
-                    if ( is_array( $val ) && isset( $val['x'] ) ) {
+                    if ( is_array( $val ) && ( isset( $val['x'] ) || isset( $val['w'] ) ) ) {
                         $layout = array(
                             'x' => $val['x'],
                             'y' => $val['y'],
@@ -1764,7 +1764,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 }
 
                 // init widget layout settings.
-                if ( ! isset( $layout['x'] ) && isset( $box['layout']['2'] ) ) {
+                if ( ! isset( $layout['x'] ) && ! isset( $layout['w'] ) && isset( $box['layout']['2'] ) ) {
                     $layout = array(
                         'x' => $box['layout']['0'],
                         'y' => $box['layout']['1'],

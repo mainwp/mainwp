@@ -1774,7 +1774,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 }
 
                 // default settings.
-                if ( ! isset( $layout['x'] ) ) {
+                if ( ! isset( $layout['x'] ) && ! isset( $layout['w'] ) ) {
                     $layout['w'] = 4;
                     $layout['h'] = 4;
                 }

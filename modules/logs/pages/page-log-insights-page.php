@@ -957,7 +957,9 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
                     <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
                 </div>
                 <script>
-                jQuery('#mainwp-widgets-placeholder').dimmer('show');
+                jQuery( document ).ready( function () {
+                    jQuery('#mainwp-widgets-placeholder').dimmer('show');
+                });
                 </script>
                 <?php
                 MainWP_UI::do_widget_boxes(

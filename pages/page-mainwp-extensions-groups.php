@@ -300,7 +300,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
         $extensions_and_leftmenus[] = array(
             'type'                 => 'extension',
-            'title'                => esc_html__( 'iThemes Security', 'mainwp' ),
+            'title'                => esc_html__( 'Solid Security', 'mainwp' ),
             'slug'                 => 'mainwp-ithemes-security-extension/mainwp-ithemes-security-extension.php',
             'parent_key'           => 'Extensions-Mainwp-Security',
             'ext_page'             => 'admin.php?page=Extensions-Mainwp-Ithemes-Security-Extension',

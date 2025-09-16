@@ -1448,11 +1448,13 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     </div>
 
         <script type="text/javascript">
-            jQuery( '.mainwp-manage-plugin-accordion' ).accordion( {
-                "selector": {
-                    "trigger"   : '.dropdown-trigger',
-                }
-            } );
+            jQuery(document).ready(function ($) {
+                $( '.mainwp-manage-plugin-accordion' ).accordion( {
+                    "selector": {
+                        "trigger"   : '.dropdown-trigger',
+                    }
+                } );
+            });
 
             jQuery( '.trigger-all-accordion' ).on( 'click', function() { // not use document here.
                 if ( jQuery( this ).hasClass( 'active' ) ) {
@@ -1751,10 +1753,12 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     </div>
 
         <script type="text/javascript">
-            jQuery( '.mainwp-manage-plugin-accordion' ).accordion( {
-                "selector": {
-                    "trigger"   : '.dropdown-trigger',
-                }
+            jQuery(document).ready(function ($) {
+                $( '.mainwp-manage-plugin-accordion' ).accordion( {
+                    "selector": {
+                        "trigger"   : '.dropdown-trigger',
+                    }
+                } );
             } );
 
             jQuery( '.trigger-all-accordion' ).on( 'click', function() { // not use document here.

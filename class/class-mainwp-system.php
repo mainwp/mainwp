@@ -67,6 +67,15 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     private $plugin_slug;
 
+
+    /**
+     * Private variable to hold the defer js handle.
+     *
+     * @var array Defer js handle.
+     */
+    private static $defer_js_handle = array();
+
+
     /**
      * Method instance()
      *
@@ -836,7 +845,11 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         if ( $use_wp_datepicker ) {
             $en_params[] = 'jquery-ui-datepicker';
         }
+
+        static::$defer_js_handle = array_merge( static::$defer_js_handle, array( 'mainwp', 'mainwp-uptime' ) );
+
         wp_enqueue_script( 'mainwp', MAINWP_PLUGIN_URL . 'assets/js/mainwp.js', $en_params, $this->current_version, true );
+
         wp_enqueue_script( 'mainwp-uptime', MAINWP_PLUGIN_URL . 'assets/js/mainwp-uptime.js', $en_params, $this->current_version, true );
         wp_enqueue_script( 'mainwp-cache-warm', MAINWP_PLUGIN_URL . 'assets/js/mainwp-cache-warm.js', array(), $this->current_version, true );
 
@@ -887,6 +900,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $load_gridstack = apply_filters( 'mainwp_enqueue_script_gridster', $load_gridstack );
 
         if ( $load_gridstack ) {
+            static::$defer_js_handle[] = 'mainwp_gridstack';
             wp_enqueue_script( 'mainwp_gridstack', MAINWP_PLUGIN_URL . 'assets/js/gridstack/gridstack-all.js', array(), $this->current_version, true );
             wp_enqueue_style( 'mainwp_gridstack', MAINWP_PLUGIN_URL . 'assets/js/gridstack/gridstack.min.css', array(), $this->current_version );
         }
@@ -1126,11 +1140,15 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     $this->current_version,
                     true
                 );
+                static::$defer_js_handle[] = 'mainwp-apexcharts';
             }
             wp_enqueue_script( 'mainwp-dropzone', MAINWP_PLUGIN_URL . 'assets/js/dropzone/dropzone.min.js', array(), $this->current_version, true );
+            static::$defer_js_handle = array_merge( static::$defer_js_handle, array( 'mainwp-updates', 'mainwp-managesites-action', 'mainwp-managesites-update', 'mainwp-managesites-import', 'mainwp-plugins-themes', 'mainwp-managesites-import', 'mainwp-plugins-themes', 'mainwp-backups', 'mainwp-posts', 'mainwp-users', 'mainwp-clients', 'fomantic-ui', 'datatables', 'datatables-semanticui', 'datatables-select', 'datatables-add-ons', 'mainwp-dropzone' ) );
+
         }
 
         if ( $load_cust_scripts ) {
+            static::$defer_js_handle[] = 'fomantic-ui';
             wp_enqueue_script( 'fomantic-ui', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.js', array( 'jquery' ), $this->current_version, true );
         }
 
@@ -1139,6 +1157,17 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         // to support extension uploader.
         wp_enqueue_script( 'mainwp-fileuploader', MAINWP_PLUGIN_URL . 'assets/js/fileuploader.js', array(), $this->current_version ); // phpcs:ignore -- fileuploader scripts need to load at header.
         wp_enqueue_script( 'mainwp-filesaver', MAINWP_PLUGIN_URL . 'assets/js/FileSaver.js', array(), $this->current_version, true );
+
+        static::$defer_js_handle[] = 'mainwp-ui';
+
+        if ( is_array( static::$defer_js_handle ) ) {
+            $defer_handle = array_filter( array_unique( static::$defer_js_handle ) );
+            foreach ( $defer_handle as $h ) {
+                if ( wp_script_is( $h, 'enqueued' ) || wp_script_is( $h, 'registered' ) ) {
+                    wp_script_add_data( $h, 'strategy', 'defer' ); // adds defer to <script> tag.
+                }
+            }
+        }
     }
 
     /**

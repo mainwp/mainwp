@@ -133,7 +133,10 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             return $user_id;
         }
 
-        if ( $this->is_ssl_request() ) {
+        if ( ! $this->is_ssl_request() ) {
+            $this->set_error( new \WP_Error( 'mainwp_rest_authentication_bad_request', __( 'Requests to the MainWP REST API must be over HTTPS.', 'mainwp' ), array( 'status' => 400 ) ) );
+            return false;
+        } else {
             return $this->perform_basic_token_authentication();
         }
     }

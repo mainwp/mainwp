@@ -1015,7 +1015,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         ?>
         <div class="ui large modal mainwp-qsw-import-client-modal" id="mainwp-import-client-modal" >
             <i class="close icon"></i>
-            <div class="header"><?php echo esc_html_e( 'Import Clients' ); ?></div>
+            <div class="header"><?php esc_html_e( 'Import Clients', 'mainwp' ); ?></div>
             <div class="scrolling content">
                 <?php static::render_import_client_row_modal(); ?>
             </div>

@@ -1956,7 +1956,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                 return function (response) { // NOSONAR - complex ok.
                     let slugParts = pSlug.split(',');
                     if (response?.error?.errorCode == 'SUSPENDED_SITE') {
-                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause circular yellow inverted icon"></i></span>';
+                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause yellow icon"></i></span>';
                         updatesoverview_upgrade_all_update_site_bold(pWebsiteId, false, msgUI);
                     } else {
                         for (let sid of slugParts) {
@@ -2074,7 +2074,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
             success: function (pWebsiteId, pThemeSlugToUpgrade, pSlug, pWordpressUpgrade, pThemeDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone) { // NOSONAR - compatible.
                 return function (response) { // NOSONAR - complex ok.
                     if (response?.error?.errorCode == 'SUSPENDED_SITE') {
-                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause circular yellow inverted icon"></i></span>';
+                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause yellow icon"></i></span>';
                         updatesoverview_upgrade_all_update_site_bold(pWebsiteId, false, msgUI);
                     } else {
                         let slugParts = pSlug.split(',');
@@ -2182,7 +2182,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
             success: function (WebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pErrorMessage, pTransSlugToUpgrade, pTransDone) { // NOSONAR - compatible.
                 return function (response) {
                     if (response?.error?.errorCode == 'SUSPENDED_SITE') {
-                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause circular yellow inverted icon"></i></span>';
+                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause yellow icon"></i></span>';
                         updatesoverview_upgrade_all_update_site_bold(pWebsiteId, false, msgUI);
                     } else {
                         let result;
@@ -2275,7 +2275,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
             success: function (pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pUpgradeDone, pErrorMessage, pSlug) { // NOSONAR - compatible.
                 return function (response) { // NOSONAR -complex.
                     if (response?.error?.errorCode == 'SUSPENDED_SITE') {
-                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause circular yellow inverted icon"></i></span>';
+                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause yellow icon"></i></span>';
                         updatesoverview_upgrade_all_update_site_bold(pWebsiteId, false, msgUI);
                     } else {
                         let slugParts = pSlug.split(',');

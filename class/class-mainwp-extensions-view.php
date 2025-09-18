@@ -176,8 +176,8 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     </div>
                     <div class="ui segment">
                         <div class="mainwp-extensions-api-loading" style="display:none">
-                            <div class="ui active dimmer">
-                                <div class="ui double text loader"></div>
+                            <div class="ui active page dimmer">
+                                <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
                             </div>
                         </div>
                         <div class="ui four cards" id="mainwp-extensions-list">

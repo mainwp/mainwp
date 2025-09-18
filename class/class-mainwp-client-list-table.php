@@ -246,7 +246,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                             ?>
                         </div>
                     </div>
-                    <button class="ui tiny basic button" id="mainwp-do-clients-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
+                    <button class="ui mini basic button" id="mainwp-do-clients-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
                 </div>
                 <div class="right aligned middle aligned column">
                     <div id="mainwp-filter-clients-group" class="ui selection multiple dropdown" style="vertical-align:bottom">

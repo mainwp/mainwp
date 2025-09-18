@@ -3182,7 +3182,7 @@ window.getErrorMessageInfo = function (repError, outputType) { // NOSONAR - comp
 
     if (repError.errorCode != undefined && repError.errorCode == 'SUSPENDED_SITE') {
         msg = __('Suspended site.');
-        msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause circular yellow inverted icon"></i></span>';
+        msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause yellow icon"></i></span>';
     }
 
     if (repError.errorCode != undefined && repError.errorCode == 'MAINWP_NOTICE') {

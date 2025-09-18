@@ -626,7 +626,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
 
         $resp_data = array(
             'success' => 1,
-            'message' => esc_html__( 'Client suspended successfully.' ),
+            'message' => esc_html__( 'Client suspended successfully.', 'mainwp' ),
             'data'    => $this->filter_response_data_by_allowed_fields( $client, 'simple_view' ),
         );
         return rest_ensure_response( $resp_data );
@@ -656,7 +656,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
 
         $resp_data = array(
             'success' => 1,
-            'message' => esc_html__( 'Client unsuspended successfully.' ),
+            'message' => esc_html__( 'Client unsuspended successfully.', 'mainwp' ),
             'data'    => $this->filter_response_data_by_allowed_fields( $client, 'simple_view' ),
         );
         return rest_ensure_response( $resp_data );

@@ -1370,7 +1370,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $resp_data['success'] = $ret ? 1 : 0;
         } catch ( \Exception $e ) {
             // failed.
-            return new \WP_Error( 'mainwp_rest_reconnect_site_error', esc_html__( sprintf( 'Reconnect Site "%d" error:', $website->id ) ) . ': ' . $e->getMessage() );
+            return new \WP_Error( 'mainwp_rest_reconnect_site_error', sprintf( esc_html__( 'Reconnect Site "%d" error:', 'mainwp' ), $website->id ) . ': ' . $e->getMessage() );
         }
         $website           = $this->get_site_by( 'id', $website->id );
         $resp_data['data'] = $this->filter_response_data_by_allowed_fields( $website, 'simple_view' );
@@ -1436,7 +1436,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $success = is_array( $info ) && isset( $info['result'] ) && 'success' === $info['result'] ? 1 : 0;
             $error   = is_array( $info ) && ! empty( $info['error'] ) ? $info['error'] : '';
         } catch ( \Exception $e ) {
-            return new \WP_Error( 'mainwp_rest_disconnect_site_error', esc_html__( sprintf( 'Disconnect Site "%d" error:', $website->id ) ) . ': ' . $e->getMessage() );
+            return new \WP_Error( 'mainwp_rest_disconnect_site_error', sprintf( esc_html__( 'Disconnect Site "%d" error:', 'mainwp' ), $website->id ) . ': ' . $e->getMessage() );
         }
         $resp_data = array(
             'success' => $success,

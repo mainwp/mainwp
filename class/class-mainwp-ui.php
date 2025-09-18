@@ -2616,7 +2616,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         <div class="header"><?php esc_html_e( 'Select MainWP Theme', 'mainwp' ); ?></div>
         <div class="content ui form">
             <div class="ui blue message">
-                <div class=""><?php printf( esc_html__( 'Did you know you can create your custom theme? %1$sSee here how to do it%2$s!', '' ), '<a href="https://mainwp.com/kb/how-to-change-the-theme-for-mainwp/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
+                <div class=""><?php printf( esc_html__( 'Did you know you can create your custom theme? %1$sSee here how to do it%2$s!', 'mainwp' ), '<a href="https://mainwp.com/kb/how-to-change-the-theme-for-mainwp/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
             </div>
             <form method="POST" action="" name="mainwp_select_mainwp_themes_form" id="mainwp_select_mainwp_themes_form">
             <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>

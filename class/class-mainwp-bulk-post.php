@@ -266,24 +266,24 @@ class MainWP_Bulk_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
         }
 
         $labels = array(
-            'name'               => _x( 'Bulkpost', 'bulkpost' ),
-            'singular_name'      => _x( 'Bulkpost', 'bulkpost' ),
-            'add_new'            => _x( 'Add New', 'bulkpost' ),
-            'add_new_item'       => _x( 'Add New Bulkpost', 'bulkpost' ),
-            'edit_item'          => _x( 'Edit Bulkpost', 'bulkpost' ),
-            'new_item'           => _x( 'New Bulkpost', 'bulkpost' ),
-            'view_item'          => _x( 'View Bulkpost', 'bulkpost' ),
-            'search_items'       => _x( 'Search Bulkpost', 'bulkpost' ),
-            'not_found'          => _x( 'No bulkpost found', 'bulkpost' ),
-            'not_found_in_trash' => _x( 'No bulkpost found in Trash', 'bulkpost' ),
-            'parent_item_colon'  => _x( 'Parent Bulkpost:', 'bulkpost' ),
-            'menu_name'          => _x( 'Bulkpost', 'bulkpost' ),
+            'name'               => _x( 'Bulkpost', 'bulkpost', 'mainwp' ),
+            'singular_name'      => _x( 'Bulkpost', 'bulkpost', 'mainwp' ),
+            'add_new'            => _x( 'Add New', 'bulkpost', 'mainwp' ),
+            'add_new_item'       => _x( 'Add New Bulkpost', 'bulkpost', 'mainwp' ),
+            'edit_item'          => _x( 'Edit Bulkpost', 'bulkpost', 'mainwp' ),
+            'new_item'           => _x( 'New Bulkpost', 'bulkpost', 'mainwp' ),
+            'view_item'          => _x( 'View Bulkpost', 'bulkpost', 'mainwp' ),
+            'search_items'       => _x( 'Search Bulkpost', 'bulkpost', 'mainwp' ),
+            'not_found'          => _x( 'No bulkpost found', 'bulkpost', 'mainwp' ),
+            'not_found_in_trash' => _x( 'No bulkpost found in Trash', 'bulkpost', 'mainwp' ),
+            'parent_item_colon'  => _x( 'Parent Bulkpost:', 'bulkpost', 'mainwp' ),
+            'menu_name'          => _x( 'Bulkpost', 'bulkpost', 'mainwp' ),
         );
 
         $args = array(
             'labels'              => $labels,
             'hierarchical'        => false,
-            'description'         => 'description...',
+            'description'         => __( 'description...', 'mainwp' ),
             'supports'            => array(
                 'title',
                 'editor',
@@ -316,24 +316,24 @@ class MainWP_Bulk_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
         register_post_type( 'bulkpost', $args );
 
         $labels = array(
-            'name'               => _x( 'Bulkpage', 'bulkpage' ),
-            'singular_name'      => _x( 'Bulkpage', 'bulkpage' ),
-            'add_new'            => _x( 'Add New', 'bulkpage' ),
-            'add_new_item'       => _x( 'Add New Bulkpage', 'bulkpage' ),
-            'edit_item'          => _x( 'Edit Bulkpage', 'bulkpage' ),
-            'new_item'           => _x( 'New Bulkpage', 'bulkpage' ),
-            'view_item'          => _x( 'View Bulkpage', 'bulkpage' ),
-            'search_items'       => _x( 'Search Bulkpage', 'bulkpage' ),
-            'not_found'          => _x( 'No bulkpage found', 'bulkpage' ),
-            'not_found_in_trash' => _x( 'No bulkpage found in Trash', 'bulkpage' ),
-            'parent_item_colon'  => _x( 'Parent Bulkpage:', 'bulkpage' ),
-            'menu_name'          => _x( 'Bulkpage', 'bulkpage' ),
+            'name'               => _x( 'Bulkpage', 'bulkpage', 'mainwp' ),
+            'singular_name'      => _x( 'Bulkpage', 'bulkpage', 'mainwp' ),
+            'add_new'            => _x( 'Add New', 'bulkpage', 'mainwp' ),
+            'add_new_item'       => _x( 'Add New Bulkpage', 'bulkpage', 'mainwp' ),
+            'edit_item'          => _x( 'Edit Bulkpage', 'bulkpage', 'mainwp' ),
+            'new_item'           => _x( 'New Bulkpage', 'bulkpage', 'mainwp' ),
+            'view_item'          => _x( 'View Bulkpage', 'bulkpage', 'mainwp' ),
+            'search_items'       => _x( 'Search Bulkpage', 'bulkpage', 'mainwp' ),
+            'not_found'          => _x( 'No bulkpage found', 'bulkpage', 'mainwp' ),
+            'not_found_in_trash' => _x( 'No bulkpage found in Trash', 'bulkpage', 'mainwp' ),
+            'parent_item_colon'  => _x( 'Parent Bulkpage:', 'bulkpage', 'mainwp' ),
+            'menu_name'          => _x( 'Bulkpage', 'bulkpage', 'mainwp' ),
         );
 
         $args = array(
             'labels'              => $labels,
             'hierarchical'        => false,
-            'description'         => 'description...',
+            'description'         => __( 'description...', 'mainwp' ),
             'supports'            => array(
                 'title',
                 'editor',

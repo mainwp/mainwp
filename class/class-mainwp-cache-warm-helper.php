@@ -413,6 +413,11 @@ class MainWP_Cache_Warm_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return bool True|false, excluded or not.
      */
     public static function is_excluded_warm_cache_pages( $page = false ) {
+
+        if ( empty( $page ) ) {
+            $page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : ''; //phpcs:ignore -- ok.
+        }
+
         if ( empty( $page ) ) {
             return true;
         }

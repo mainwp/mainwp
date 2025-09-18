@@ -293,8 +293,10 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             $id = isset( $metaBox['id'] ) ? $metaBox['id'] : $i++;
             $id = 'advanced-' . $id;
 
+            $wg_layout = isset( $metaBox['layout'] ) && is_array( $metaBox['layout'] ) ? $metaBox['layout'] : array( -1, -1, 6, 30 );
+
             if ( $enabled ) {
-                MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( -1, -1, 6, 30 ) );
+                MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, $wg_layout );
             }
         }
     }

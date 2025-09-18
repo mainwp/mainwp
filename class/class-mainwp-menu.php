@@ -606,12 +606,14 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
         }
 
+        $excluded_warm_cached_page = MainWP_Cache_Warm_Helper::is_excluded_warm_cache_pages();
+
         /**
          * Menu excluded warm cache item.
          *
          * @since 5.5.
          */
-        if ( ! apply_filters( 'mainwp_menu_excluded_warm_cache_item', false, $params ) ) {
+        if ( ! apply_filters( 'mainwp_menu_excluded_warm_cache_item', $excluded_warm_cached_page, $params ) ) {
             $others['classes_item'] .= ' mainwp-js-prefetch ';
         }
 

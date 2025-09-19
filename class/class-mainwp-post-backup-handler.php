@@ -462,7 +462,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             if ( ! is_array( $array ) || ! isset( $array[ $unique ] ) ) {
                 die( wp_json_encode( array( 'result' => 0 ) ) );
             } elseif ( isset( $array[ $unique ]['finished'] ) ) {
-                throw new MainWP_Exception( esc_html__( 'finished...', 'maiwnp' ) );
+                throw new MainWP_Exception( esc_html__( 'finished...', 'mainwp' ) );
             } else {
                 wp_send_json( array( 'result' => ( isset( $array[ $unique ]['offset'] ) ? $array[ $unique ]['offset'] : $array[ $unique ] ) ) );
             }

@@ -141,7 +141,7 @@ class Api_Backups_Handler {
                     if ( is_object( $linode_response ) ) {
                         // Handle response.
                         if ( isset( $linode_response->errors ) ) {
-                            $error = new WP_Error( '400', __( $linode_response->errors['0']->reason, 'Some information' ) );
+                            $error = new WP_Error( '400', __( $linode_response->errors['0']->reason, 'mainwp' ), 'Some information' );
                             static::send_backups_response( false, $error );
                         } else {
                             static::send_backups_response();

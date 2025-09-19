@@ -347,7 +347,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * Method invalidate_warm_cache()
      */
     public function invalidate_warm_cache() {
-        MainWP_Warm_Cache_Helper::invalidate_manage_pages( array( 'RESTAPI' ) );
+        MainWP_Cache_Warm_Helper::invalidate_manage_pages( array( 'RESTAPI' ) );
     }
 
     /**

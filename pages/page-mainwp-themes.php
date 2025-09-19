@@ -1715,7 +1715,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     'searchPlaceholder' => esc_html__( 'Search themes...', 'mainwp' ),
                     'upload'            => esc_html__( 'Upload theme', 'mainwp' ),
                     'back'              => esc_html__( 'Back', 'mainwp' ),
-                    'error'             => esc_html__( 'An unexpected error occurred. Something may be wrong with WordPress.org or this server&#8217;s configuration. If you continue to have problems, please try the <a href="https://wordpress.org/support/">support forums</a>.', 'mainwp' ),
+                    'error'             => __( 'An unexpected error occurred. Something may be wrong with WordPress.org or this server&#8217;s configuration. If you continue to have problems, please try the <a href="https://wordpress.org/support/">support forums</a>.', 'mainwp' ),
                     'themesFound'       => esc_html__( 'Number of themes found: %d', 'mainwp' ),
                     'noThemesFound'     => esc_html__( 'No themes found. Try a different search.', 'mainwp' ),
                     'collapseSidebar'   => esc_html__( 'Collapse sidebar', 'mainwp' ),

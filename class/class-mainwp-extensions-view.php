@@ -176,7 +176,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     </div>
 
                     <div class="ui segment" id="mainwp-extensions-search-no-results" style="display:none">
-                        <div class="ui info message"><?php esc_html_e( 'Your search returned no results. The add-on may need to be installed or does not exist.' ); ?></div>
+                        <div class="ui info message"><?php esc_html_e( 'Your search returned no results. The add-on may need to be installed or does not exist.', 'mainwp' ); ?></div>
                     </div>
                     <div class="ui segment">
                         <div class="ui four cards" id="mainwp-extensions-list">
@@ -269,39 +269,39 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     <?php if ( isset( $priv_extension['privacy'] ) && ( 2 === $priv_extension['privacy'] || 1 === (int) $priv_extension['privacy'] ) ) { ?>
                     <input
                         type="hidden"
-                        id="<?php esc_attr_e( $priv_extension['slug'] ); ?>"
-                        name="<?php esc_attr_e( $priv_extension['slug'] ); ?>"
-                        base-slug="<?php esc_attr_e( $item_slug ); ?>"
-                        privacy="<?php esc_attr_e( $priv_extension['privacy'] ); ?>"
-                        integration="<?php esc_attr_e( $priv_extension['integration'] ); ?>"
-                        integration_url="<?php esc_attr_e( $priv_extension['integration_url'] ); ?>"
-                        integration_owner="<?php esc_attr_e( $priv_extension['integration_owner'] ); ?>"
-                        integration_owner_pp="<?php esc_attr_e( $priv_extension['integration_owner_pp'] ); ?>"
-                        extension_title="<?php esc_attr_e( MainWP_Extensions_Handler::polish_string_name( $priv_extension['title'] ) ); ?>"
-                        value="<?php esc_attr_e( $priv_extension['title'] ); ?>"
+                        id="<?php echo esc_attr( $priv_extension['slug'] ); ?>"
+                        name="<?php echo esc_attr( $priv_extension['slug'] ); ?>"
+                        base-slug="<?php echo esc_attr( $item_slug ); ?>"
+                        privacy="<?php echo esc_attr( $priv_extension['privacy'] ); ?>"
+                        integration="<?php echo esc_attr( $priv_extension['integration'] ); ?>"
+                        integration_url="<?php echo esc_attr( $priv_extension['integration_url'] ); ?>"
+                        integration_owner="<?php echo esc_attr( $priv_extension['integration_owner'] ); ?>"
+                        integration_owner_pp="<?php echo esc_attr( $priv_extension['integration_owner_pp'] ); ?>"
+                        extension_title="<?php echo esc_attr( MainWP_Extensions_Handler::polish_string_name( $priv_extension['title'] ) ); ?>"
+                        value="<?php echo esc_attr( $priv_extension['title'] ); ?>"
                     />
                         <?php
                     } elseif ( isset( $priv_extension['privacy'] ) && 0 === (int) $priv_extension['privacy'] ) {
                         ?>
                     <input
                         type="hidden"
-                        id="<?php esc_attr_e( $priv_extension['slug'] ); ?>"
-                        name="<?php esc_attr_e( $priv_extension['slug'] ); ?>"
-                        base-slug="<?php esc_attr_e( $item_slug ); ?>"
-                        privacy="<?php esc_attr_e( $priv_extension['privacy'] ); ?>"
-                        extension_title="<?php esc_attr_e( MainWP_Extensions_Handler::polish_string_name( $priv_extension['title'] ) ); ?>"
-                        value="<?php esc_attr_e( $priv_extension['title'] ); ?>"
+                        id="<?php echo esc_attr( $priv_extension['slug'] ); ?>"
+                        name="<?php echo esc_attr( $priv_extension['slug'] ); ?>"
+                        base-slug="<?php echo esc_attr( $item_slug ); ?>"
+                        privacy="<?php echo esc_attr( $priv_extension['privacy'] ); ?>"
+                        extension_title="<?php echo esc_attr( MainWP_Extensions_Handler::polish_string_name( $priv_extension['title'] ) ); ?>"
+                        value="<?php echo esc_attr( $priv_extension['title'] ); ?>"
                     />
                                         <?php
                     } else {
                         ?>
                         <input
                             type="hidden"
-                            id="<?php esc_attr_e( $priv_extension['slug'] ); ?>"
-                            name="<?php esc_attr_e( $priv_extension['slug'] ); ?>"
-                            base-slug="<?php esc_attr_e( $item_slug ); ?>"
-                            extension_title="<?php esc_attr_e( MainWP_Extensions_Handler::polish_string_name( $priv_extension['title'] ) ); ?>"
-                            value="<?php esc_attr_e( $priv_extension['title'] ); ?>"
+                            id="<?php echo esc_attr( $priv_extension['slug'] ); ?>"
+                            name="<?php echo esc_attr( $priv_extension['slug'] ); ?>"
+                            base-slug="<?php echo esc_attr( $item_slug ); ?>"
+                            extension_title="<?php echo esc_attr( MainWP_Extensions_Handler::polish_string_name( $priv_extension['title'] ) ); ?>"
+                            value="<?php echo esc_attr( $priv_extension['title'] ); ?>"
                         />
                     <?php } ?>
                 <?php } ?>

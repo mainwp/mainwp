@@ -174,7 +174,7 @@ class MainWP_Client_Overview_Info { // phpcs:ignore Generic.Classes.OpeningBrace
                 <a href="javascript:void(0);" suspend-status="<?php echo intval( $client_info['suspended'] ); ?>" class="ui basic mini button client-suspend-unsuspend-sites"><?php echo empty( $client_info['suspended'] ) ? esc_html__( 'Suspend', 'mainwp' ) : esc_html__( 'Unsuspend', 'mainwp' ); ?></a>
             <?php endif; ?>
             <?php if ( is_plugin_active( 'mainwp-pro-reports-extension/mainwp-pro-reports-extension.php' ) ) { ?>
-                <a class="ui basic mini right floated button" href="admin.php?page=Extensions-Mainwp-Pro-Reports-Extension&tab=report&action=newreport&selected_sites=<?php esc_html_e( $selected_sites ); ?>"><?php echo esc_html__( 'Create Report', 'mainwp' ); ?></a>
+                <a class="ui basic mini right floated button" href="admin.php?page=Extensions-Mainwp-Pro-Reports-Extension&tab=report&action=newreport&selected_sites=<?php echo esc_html( $selected_sites ); ?>"><?php echo esc_html__( 'Create Report', 'mainwp' ); ?></a>
             <?php } ?>
         </div>
         <?php

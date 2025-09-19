@@ -1216,9 +1216,9 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         }
 
         $args = array(
-            'method'  => 'GET',
-            'timeout' => 45,
-            'headers' => array(
+            'method'    => 'GET',
+            'timeout'   => 45,
+            'headers'   => array(
                 'content-type' => 'application/json',
             ),
             'sslverify' => (bool) get_option( 'mainwp_sslVerifyCertificate', true ),

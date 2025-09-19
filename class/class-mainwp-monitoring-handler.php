@@ -266,6 +266,10 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $to_email = $general ? $admin_email : $to_email;
 
         foreach ( $websites as $site ) {
+            $email_site_settings = $email_settings;
+            MainWP_Notification_Settings::prepare_general_email_settings_for_site( $email_site_settings, $site );
+            $heading = $email_site_settings['heading'];
+            $subject = $email_site_settings['subject'];
 
             if ( ! $general ) {
                 $addition_emails = $site->monitoring_notification_emails;

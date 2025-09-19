@@ -165,8 +165,9 @@
 })(jQuery);
 
 function mainwp_forceReload(targetUrl) {
+    const url = targetUrl || window.location.href;
     // Navigate to URL (force reload from server)
-    window.location.href = targetUrl;
+    window.location.href = url;
 }
 
 

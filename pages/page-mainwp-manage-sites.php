@@ -715,8 +715,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             </div>
 
             <script type="text/javascript">
-                jQuery('#mainwp-add-sites-tabular-menu .item').tab();
-                jQuery( document ).ready( function () {
+                 jQuery( document ).ready( function () {
+                    jQuery('#mainwp-add-sites-tabular-menu .item').tab();
                     jQuery( '#mainwp_managesites_add_addgroups' ).dropdown( {
                         allowAdditions: true
                     } );

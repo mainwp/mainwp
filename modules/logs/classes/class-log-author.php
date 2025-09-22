@@ -111,9 +111,6 @@ class Log_Author {
         // child users.
         if ( ! empty( $this->meta['full_name'] ) ) {
             $fullname = esc_html( $this->meta['full_name'] );
-            if ( ! empty( $this->meta['ip'] ) ) {
-                $fullname .= ' ' . esc_html( $this->meta['ip'] );
-            }
         }
         if ( empty( $fullname ) && ! empty( $this->meta['username'] ) ) {
                 $fullname = esc_html( $this->meta['username'] );

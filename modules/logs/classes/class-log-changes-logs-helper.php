@@ -155,7 +155,7 @@ class Log_Changes_Logs_Helper {
 
             $meta                   = array();
             $meta['user_meta_json'] = wp_json_encode( $user_meta );
-            $meta['client_ip'] = $data['client_ip'];
+            $meta['client_ip']      = $data['client_ip'];
 
             if ( is_array( $meta_data ) ) {
                 foreach ( $meta_data as $key => $val ) {

@@ -337,16 +337,20 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
                 if ( empty( $user_meta['full_name'] ) && isset( $record->meta['first_name'] ) && isset( $record->meta['last_name'] ) ) {
                     $user_meta['wp_user_id'] = $record->user_id;
-                    $user_meta['first_name'] = $record->meta['first_name'];
-                    $user_meta['last_name']  = $record->meta['last_name'];
+                    $user_meta['full_name']  = $record->meta['first_name'] . ' ' . $record->meta['last_name'];
                     $user_meta['ip']         = ! empty( $record->meta['client_ip'] ) ? $record->meta['client_ip'] : '';
                 }
 
-                $user = new Log_Author( $record->user_id, $user_meta, $record->log_type_id );
+                $user = new Log_Author( $record->user_id, $user_meta );
 
                 if ( empty( $out ) ) {
-                    $out = $user->get_display_name();
+                    if ( ! empty( $record->log_type_id ) || 'non-mainwp-changes' === $record->connector ) {
+                        $out = $user->get_full_name();
+                    } else {
+                        $out = $user->get_display_name();
+                    }
                 }
+
                 if ( empty( $out ) ) {
                     $out = $user->get_agent_label( $user->get_agent() );
                 }

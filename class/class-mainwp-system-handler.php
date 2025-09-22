@@ -640,6 +640,12 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 }
             }
         }
+
+        // Redirect current page after reset and save overview settings.
+        if ( isset( $_GET['page'] ) && isset( $_POST['reset_overview_settings'] ) && ( isset( $_POST['reset_overview_which_settings'] ) && 'overview_settings' === $_POST['reset_overview_which_settings'] ) ) {
+            wp_safe_redirect( admin_url( 'admin.php?page=' . sanitize_text_field( wp_unslash( $_GET['page'] ) ) ) );
+            exit;
+        }
     }
 
     /**

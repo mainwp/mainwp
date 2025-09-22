@@ -176,9 +176,10 @@ class Log_DB_Helper extends MainWP_DB {
                         if ( 'non-mainwp-changes' === $item->connector ) { // child site users ID, 0 is child site system user.
                             if ( ! empty( isset( $info['user_id'] ) ) && ! empty( $info['user_login'] ) ) {
                                 $act_user = $info['user_login'];
-                            } else {
-                                // to compatible.
+                            } elseif ( isset( $info['action_user'] ) ) { // to compatible.
                                 $act_user = $info['action_user'];
+                            } else {
+                                $act_user = $item->user_login;
                             }
 
                             if ( 'wp_cron' === $act_user ) {
@@ -189,7 +190,7 @@ class Log_DB_Helper extends MainWP_DB {
                                 'id'                => $item->user_id,
                                 'site_id'           => $item->site_id,
                                 'login'             => $act_user,
-                                'nicename'          => $info['display_name'],
+                                'nicename'          => isset( $info['display_name'] ) ? $info['display_name'] : $item->user_login,
                                 'source'            => ! empty( $item->name ) ? $item->name : '', // site name.
                                 'is_dashboard_user' => 0,
                             );

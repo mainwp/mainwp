@@ -24,6 +24,13 @@ class MainWP_Cache_Warm_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSam
     private static $instance = null;
 
     /**
+     * Private static variable to hold processed list of invalidated pages.
+     *
+     * @var mixed Default array
+     */
+    private static $invalidated_processed = array();
+
+    /**
      * Method instance()
      *
      * Create a public static instance.
@@ -88,6 +95,22 @@ class MainWP_Cache_Warm_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSam
             foreach ( $pages as $page ) {
                 static::invalidate_page_warm_cache( $page );
             }
+        }
+    }
+
+    /**
+     * Method invalidate_pages_by_site_actions().
+     *
+     * @param array $actions Site actions.
+     */
+    public static function invalidate_pages_by_site_actions( $action ) {
+        switch ( $action ) {
+            case 'stats': // sync.
+                static::invalidate_manage_pages( array( 'mainwp_tab', 'managesites' ) );
+                break;
+            default:
+                // code...
+                break;
         }
     }
 
@@ -382,9 +405,20 @@ class MainWP_Cache_Warm_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @param string $page Page to invalidate.
      *
-     * @return int Invalidate last change timestamp.
+     * @return mixed Invalidate last change timestamp.
      */
     private static function invalidate_page_warm_cache( $page ) {
+
+        if ( ! is_array( static::$invalidated_processed ) ) {
+            static::$invalidated_processed = array();
+        }
+
+        if ( isset( static::$invalidated_processed[ $page ] ) ) {
+            return false;
+        }
+
+        static::$invalidated_processed[ $page ] = 1;
+
         $last_changed_key = static::get_page_warm_cache_last_change_key( $page );
         MainWP_Logger::instance()->log_events( 'warm-cache', 'Invalidate :: [page=' . $page . '] :: [last_changed_key=' . $last_changed_key . ']' );
         return static::invalidate_warm_cache_key( $last_changed_key );

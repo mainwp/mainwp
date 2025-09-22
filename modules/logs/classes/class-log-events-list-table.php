@@ -333,8 +333,17 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $escaped = true;
                 break;
             case 'user_id':
-                $user = new Log_Author( $record->user_id, $record->user_meta );
-                $out  = $user->get_full_name();
+                $user_meta = ! empty( $record->user_meta ) ? $record->user_meta : array();
+
+                if ( empty( $user_meta['full_name'] ) && isset( $record->meta['first_name'] ) && isset( $record->meta['last_name'] ) ) {
+                    $user_meta['wp_user_id'] = $record->user_id;
+                    $user_meta['first_name'] = $record->meta['first_name'];
+                    $user_meta['last_name']  = $record->meta['last_name'];
+                    $user_meta['ip']         = ! empty( $record->meta['client_ip'] ) ? $record->meta['client_ip'] : '';
+                }
+
+                $user = new Log_Author( $record->user_id, $user_meta, $record->log_type_id );
+
                 if ( empty( $out ) ) {
                     $out = $user->get_display_name();
                 }
@@ -644,9 +653,43 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             default:
                 break;
         }
-        $parse_title = Log_Changes_Logs_Helper::get_log_title( $record->log_type_id, $data );
-        return ! empty( $parse_title ) ? $parse_title : $record->action;
+        $parse_title = Log_Changes_Logs_Helper::get_changes_log_title( $record->log_type_id, $data, 'action' );
+        return ! empty( $parse_title ) ? $parse_title : ucfirst( $record->action );
     }
+
+    /**
+     * Parse object changes logs title.
+     *
+     * @param string $title  Object title.
+     * @param object $record  Log record object.
+     * @return string
+     */
+    public function get_changes_formatted_object_title( $title, $record ) {
+        $meta = ! empty( $record->meta ) && is_array( $record->meta ) ? $record->meta : array();
+        $na   = 'N/A';
+        $data = array();
+        switch ( (int) $record->log_type_id ) { // NOSONAR - switch is ok.
+            case 1461:
+                $name = ! empty( $meta['name'] ) ? $meta['name'] : '';
+                if ( empty( $name ) ) {
+                    $name = ! empty( $meta['plugin'] ) ? $meta['plugin'] : $na;
+                }
+                $data['plugin'] = $name;
+                break;
+            default:
+                break;
+        }
+        if ( ! empty( $data ) ) {
+            $formatted_title = Log_Changes_Logs_Helper::get_changes_log_title( $record->log_type_id, $data, 'object' );
+            if ( ! empty( $formatted_title ) ) {
+                return $formatted_title;
+            }
+        }
+        return $title;
+    }
+
+
+
 
     /**
      * Returns the label for a context.
@@ -697,7 +740,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * @return string
      */
     public function get_changes_object_title( $record ) {
-        return esc_html( ucwords( str_replace( '-', ' ', $record->context ) ) );
+        $title = esc_html( ucwords( str_replace( '-', ' ', $record->context ) ) );
+        $title = $this->get_changes_formatted_object_title( $title, $record );
+        return $title;
     }
 
     /**

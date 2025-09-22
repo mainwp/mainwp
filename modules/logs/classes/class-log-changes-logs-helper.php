@@ -77,6 +77,7 @@ class Log_Changes_Logs_Helper {
             // to sure.
             if ( empty( static::$last_log_created ) ) {
                 static::$last_log_created = time() - DAY_IN_SECONDS; // to prevent "strange" issue.
+                MainWP_DB::instance()->update_website_option( $site_id, 'changes_logs_sync_last_created', static::$last_log_created );
             }
         }
 
@@ -154,6 +155,7 @@ class Log_Changes_Logs_Helper {
 
             $meta                   = array();
             $meta['user_meta_json'] = wp_json_encode( $user_meta );
+            $meta['client_ip'] = $data['client_ip'];
 
             if ( is_array( $meta_data ) ) {
                 foreach ( $meta_data as $key => $val ) {
@@ -253,16 +255,26 @@ class Log_Changes_Logs_Helper {
     /**
      * Get custom event title.
      *
-     * @param int   $log_type_id    - Event type id.
-     * @param array $data    - Event data.
+     * @param int    $log_type_id    - Event type id.
+     * @param array  $data    - Event data.
+     * @param string $type    - Title type.
      *
      * @return string
      */
-    public static function get_log_title( $log_type_id, $data = array() ) {
+    public static function get_changes_log_title( $log_type_id, $data, $type ) {
+
         if ( ! is_array( $data ) ) {
             $data = array();
         }
-        $title = isset( static::get_changes_logs_types( $log_type_id )['msg'] ) ? static::get_changes_logs_types( $log_type_id )['msg'] : '';
+
+        $title = '';
+
+        if ( 'action' === $type ) {
+            $title = isset( static::get_changes_logs_types( $log_type_id )['msg'] ) ? static::get_changes_logs_types( $log_type_id )['msg'] : '';
+        } elseif ( 'object' === $type ) {
+            $title = isset( static::get_changes_logs_types( $log_type_id )['object_msg'] ) ? static::get_changes_logs_types( $log_type_id )['object_msg'] : '';
+        }
+
         if ( ! empty( $title ) ) {
             if ( isset( $data['action'] ) ) {
                 $title = str_replace( '%action%', $data['action'], $title );
@@ -277,8 +289,6 @@ class Log_Changes_Logs_Helper {
                 $title = str_replace( '%name%', $data['name'], $title );
             }
             return $title;
-        } elseif ( isset( static::get_changes_logs_types( $log_type_id )['desc'] ) ) {
-                return static::get_changes_logs_types( $log_type_id )['desc'];
         }
         return '';
     }

@@ -200,6 +200,11 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
             $postdata['params_logs'] = apply_filters( 'mainwp_module_logs_changes_logs_sync_params', '', $pWebsite->id, $postdata, $pWebsite );
 
+            if ( class_exists( '\MainWP\Dashboard\Module\Log\Log_Manager' ) ) {
+                $sync_last_created                      = \MainWP\Dashboard\Module\Log\Log_Manager::instance()->get_sync_actions_last_created( $pWebsite->id );
+                $postdata['child_actions_last_created'] = (float) $sync_last_created;
+            }
+
             $synclist             = MainWP_Settings::get_instance()->get_data_list_to_sync();
             $postdata['syncdata'] = wp_json_encode( $synclist );
 

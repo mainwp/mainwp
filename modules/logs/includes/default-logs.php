@@ -367,6 +367,7 @@ return array(
     1461 => array( // Added: for recent activated plugins query.
         'type_id'     => 1461,
         'desc'        => esc_html__( 'Installed plugin is activated.', $tran_loc ),
+        'object_msg'  => esc_html__( '%plugin% plugin', $tran_loc ),
         'context'     => 'plugin',
         'action_name' => 'activated',
     ),

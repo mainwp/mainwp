@@ -1273,6 +1273,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             MainWP_Cache_Helper::invalidate_cache_group( MainWP_Cache_Helper::CGR_UPDATES );
             MainWP_Cache_Helper::invalidate_cache_group( MainWP_Cache_Helper::CGR_SYNC_DATA );
         }
+        MainWP_Cache_Warm_Helper::invalidate_pages_by_site_actions( $what );
 
         return $information;
     }

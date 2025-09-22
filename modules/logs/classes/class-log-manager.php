@@ -266,7 +266,8 @@ class Log_Manager {
 
             // to sure.
             if ( empty( static::$last_log_created ) ) {
-                static::$last_log_created = time();
+                static::$last_log_created = time() - DAY_IN_SECONDS;
+                MainWP_DB::instance()->update_website_option( $site_id, 'non_mainwp_changes_sync_last_created', static::$last_log_created );
             }
         }
 
@@ -351,6 +352,8 @@ class Log_Manager {
                 $user_id = ! empty( $user_meta['wp_user_id'] ) ? sanitize_text_field( $user_meta['wp_user_id'] ) : 0;
             } elseif ( ! empty( $user_meta['user_id'] ) ) { // to compatible with old child actions data.
                 $user_id = sanitize_text_field( $user_meta['user_id'] );
+            } elseif ( isset( $data['user_id'] ) && ! empty( $data['user_id'] ) ) {
+                $user_id = $data['user_id']; // new sync changes logs data.
             }
 
             $actions_mapping = array(
@@ -500,8 +503,8 @@ class Log_Manager {
         return array(
             'newer_than'                    => $last_created,
             'events_count'                  => $events_count,
-            'ignore_sync_changes_logs'      => ! empty( $disabled_changeslogs ) ? $disabled_changeslogs : array(),
-            'ignore_sync_nonmainwp_actions' => ! empty( $disabled_nonmainwp_actions ) ? $disabled_nonmainwp_actions : array(),
+            'ignore_sync_changes_logs'      => ! empty( $disabled_changeslogs ) ? $disabled_changeslogs : -1, // -1 to prevent it removed nested empty array from http query builder.
+            'ignore_sync_nonmainwp_actions' => ! empty( $disabled_nonmainwp_actions ) ? $disabled_nonmainwp_actions : -1,
         );
     }
 }

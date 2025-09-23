@@ -427,7 +427,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return '';
         }
 
-        $wp_timezone = get_option( 'timezone_string' );
+        $wp_timezone = static::clean_wp_timezone_string( get_option( 'timezone_string' ) );
 
         if ( ! $wp_timezone ) {
             if ( $with_tz_info ) {
@@ -445,6 +445,26 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $format = get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) . $tzinfo;
         return $datetime->format( $format );
+    }
+
+    /**
+     * Method clean_wp_timezone_string().
+     *
+     * @param  mixed $raw
+     * @return string Clean tz string.
+     */
+    public static function clean_wp_timezone_string( $raw ) {
+        // If it's already a valid timezone, just return it.
+        if ( in_array( $raw, timezone_identifiers_list(), true ) ) {
+            return $raw;
+        }
+        // Try to find a valid timezone inside the messy string.
+        foreach ( timezone_identifiers_list() as $tz ) {
+            if ( strpos( $raw, $tz ) !== false ) {
+                return $tz;
+            }
+        }
+        return '';
     }
 
     /**

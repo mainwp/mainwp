@@ -1038,8 +1038,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      */
     public static function render_timezone_settings() { // phpcs:ignore -- NOSONAR - complex.
 
-        $current_offset  = get_option( 'gmt_offset' );
-        $tzstring        = get_option( 'timezone_string' );
+        $current_offset = get_option( 'gmt_offset' );
+        $tzstring       = get_option( 'timezone_string' );
+        $tzstring       = MainWP_Utility::clean_wp_timezone_string( $tzstring );
+
         $check_zone_info = true;
 
         // Remove old Etc mappings. Fallback to gmt_offset.

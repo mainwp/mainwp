@@ -453,6 +453,8 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
 
         static::render_browser_extensions_notice();
 
+        static::render_secure_priv_key_connection();
+
         static::mainwp_tmpfile_check();
     }
 
@@ -514,6 +516,46 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             <?php
         }
     }
+
+    /**
+     * Renders Browsers extensions notice.
+     *
+     * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
+     */
+    public static function render_secure_priv_key_connection() {
+        if ( MainWP_DB::instance()->get_websites_count() > 0 && ! static::check_keys_encrypted() && MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_secure_priv_key_notice' ) ) {
+            ?>
+            <div class="ui attention message">
+                <h3><?php esc_html_e( 'New Security Feature: OpenSSL Key Encryption', 'mainwp' ); ?></h3>
+                <div><?php esc_html_e( 'To enhance security, we\'ve added a feature to encrypt your private keys stored in the database. This provides an extra layer of protection in the unlikely event your database is compromised.', 'mainwp' ); ?> <a href="https://mainwp.com/kb/openssl-keys-encryption/" target="_blank"><?php esc_html_e( 'Learn more here.', 'mainwp' ); ?></a></div>
+                <p><button class="ui green mini button" id="increase-connection-security-btn"><?php echo esc_html__( 'Encrypt Keys Now', 'mainwp' ); ?></button></p>
+                <i class="close icon mainwp-notice-dismiss" notice-id="mainwp_secure_priv_key_notice"></i>
+            </div>
+            <?php
+        }
+    }
+
+    /**
+     * Method check_keys_encrypted().
+     *
+     * @return bool Keys encrypted or not.
+     */
+    public static function check_keys_encrypted() {
+        if ( get_option( 'mainwp_keys_is_encrypted' ) ) {
+            return true;
+        }
+        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
+        while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+            // try to decrypt priv key.
+            $de_privkey = MainWP_Encrypt_Data_Lib::instance()->decrypt_privkey( base64_decode( $website->privkey ), $website->id );  // phpcs:ignore -- NOSONAR - base64_encode trust.
+            if ( ! empty( $de_privkey ) ) {
+                update_option( 'mainwp_keys_is_encrypted', 1 );
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     /**
      * Renders wp_mail warning.

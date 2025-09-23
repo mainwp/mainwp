@@ -102,7 +102,7 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
 
         <div class="ui modal" id="managesite-backup-status-box">
             <div class="header">
-                <?php echo esc_html_e( 'Backup ', 'mainwp' ); ?><?php echo esc_html( stripslashes( $website->name ) ); ?>
+                <?php esc_html_e( 'Backup ', 'mainwp' ); ?><?php echo esc_html( stripslashes( $website->name ) ); ?>
             </div>
             <div class="scrolling content mainwp-modal-content">
             </div>

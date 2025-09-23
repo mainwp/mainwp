@@ -521,7 +521,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                         $package_url = apply_filters( 'mainwp_api_manager_upgrade_package_url', $product_info['package'], $product_info );
 
                         $item_html = '
-                                    <div class="item extension extension-to-install ' . esc_attr( $add_on_model ) . '" download-link="' . esc_url( $package_url ) . '" plugin-slug="" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
+                                    <div class="item extension extension-to-install ' . esc_attr( $add_on_model ) . '" download-link="' . esc_url( $package_url ) . '" plugin-slug="" product-id="' . esc_attr( $product_id ) . '" software-title="' . esc_attr( $software_title ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
                                         <div class="ui stackable grid">
                                             <div class="two column row">
                                                 <div class="column"><span class="ui checkbox"><input type="checkbox" status="queue"><label>' . $ext_source_label . '<strong><a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</strong></label></span></div>
@@ -538,7 +538,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
 
                     if ( ! empty( $error ) ) {
                         $item_html = '
-                                    <div class="item extension ' . esc_attr( $add_on_model ) . '" product-id="' . esc_attr( $product_id ) . '">
+                                    <div class="item extension ' . esc_attr( $add_on_model ) . '" product-id="' . esc_attr( $product_id ) . '" software-title="' . esc_attr( $software_title ) . '">
                                         <div class="ui stackable grid">
                                             <div class="two column row">
                                                 <div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</label></span></div>
@@ -549,7 +549,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                     }
                 } elseif ( 'org' === $type ) {
                     $item_html = '
-                                <div class="item extension extension-to-install ' . esc_attr( $add_on_model ) . '" download-link="" plugin-slug="' . esc_attr( $ext['slug'] ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
+                                <div class="item extension extension-to-install ' . esc_attr( $add_on_model ) . '" download-link="" plugin-slug="' . esc_attr( $ext['slug'] ) . '" product-id="' . esc_attr( $product_id ) . '" software-title="' . esc_attr( $software_title ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
                                     <div class="ui stackable grid">
                                         <div class="two column row">
                                             <div class="column"><span class="ui checkbox"><input type="checkbox" status="queue"><label>' . $ext_source_label . '<strong><a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</strong></label></span></div>
@@ -561,7 +561,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             } elseif ( isset( $not_purchased_exts[ $product_id ] ) ) {
                 if ( 'free' === $type || 'pro' === $type ) {
                     $item_html = '
-                        <div class="item extension ' . esc_attr( $add_on_model ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
+                        <div class="item extension ' . esc_attr( $add_on_model ) . '" product-id="' . esc_attr( $product_id ) . '" software-title="' . esc_attr( $software_title ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
                             <div class="ui stackable grid">
                                 <div class="two column row">
                                     <div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</label></span></div>
@@ -571,7 +571,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                         </div>';
                 } elseif ( 'org' === $type ) {
                     $item_html = '
-                            <div class="item extension ' . esc_attr( $add_on_model ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
+                            <div class="item extension ' . esc_attr( $add_on_model ) . '" product-id="' . esc_attr( $product_id ) . '" software-title="' . esc_attr( $software_title ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
                                 <div class="ui stackable grid">
                                     <div class="two column row">
                                         <div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</label></span></div>
@@ -582,7 +582,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                 }
             } elseif ( isset( $installed_softwares[ $product_id ] ) ) {
                 $item_html = '
-                    <div class="item extension ' . esc_attr( $add_on_model ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
+                    <div class="item extension ' . esc_attr( $add_on_model ) . '" product-id="' . esc_attr( $product_id ) . '" software-title="' . esc_attr( $software_title ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
                         <div class="ui stackable grid">
                             <div class="two column row">
                                 <div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a> ' . $notice . '</label></span>' . $privacy . ' ' . $new . '</div>
@@ -695,7 +695,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                 let extensions = jQuery( "#mainwp-extensions-to-install-list" ).find( ".item.extension" );
                 for ( let i = 0; i < extensions.length; i++ ) {
                     let currentExtension = jQuery( extensions[i] );
-                    let extensionTitle = jQuery( currentExtension ).attr( "product-id" ).toLowerCase();
+                    let extensionTitle = jQuery( currentExtension ).attr( "software-title" ).toLowerCase();
                     if ( extensionTitle.indexOf( searchQuery ) > -1 ) {
                         currentExtension.show();
                     } else {

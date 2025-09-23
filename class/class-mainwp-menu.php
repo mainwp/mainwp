@@ -728,6 +728,23 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $mainwp_sub_leftmenu = apply_filters( 'mainwp_main_menu_submenu', $mainwp_sub_leftmenu );
         $sub_bar_leftmenu    = isset( $mainwp_sub_leftmenu['leftbar'] ) ? $mainwp_sub_leftmenu['leftbar'] : array();
 
+        if ( is_array( $mainwp_sub_leftmenu ) && ! empty( $mainwp_sub_leftmenu['Extensions'] ) ) {
+            $add_on_items = $mainwp_sub_leftmenu['Extensions'];
+
+            $head = array_shift( $add_on_items );
+            // sort the rest by first element.
+            usort(
+                $add_on_items,
+                function ( $a, $b ) {
+                    return strcmp( (string) $a[0], (string) $b[0] );
+                }
+            );
+            // put the head back.
+            array_unshift( $add_on_items, $head );
+
+            $mainwp_sub_leftmenu['Extensions'] = $add_on_items;
+        }
+
         $version = get_option( 'mainwp_plugin_version' );
 
         ?>

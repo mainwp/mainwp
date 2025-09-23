@@ -111,7 +111,7 @@ class MainWP_Connect_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         if ( empty( $dbwebsites ) ) {
-            wp_send_json( array( 'error' => esc_html__( 'Site not found. Please try again.' ) ) );
+            wp_send_json( array( 'error' => esc_html__( 'Site not found. Please try again.', 'mainwp' ) ) );
             return;
         }
 

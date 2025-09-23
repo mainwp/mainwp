@@ -785,8 +785,19 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                         <div class="menu" clientid=<?php echo intval( $item['client_id'] ); ?>>
                             <a class="item client_getedit" href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $item['client_id'] ); ?>"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
                             <a class="item" href="admin.php?page=managesites&client=<?php echo intval( $item['client_id'] ); ?>"><?php esc_html_e( 'View Sites', 'mainwp' ); ?></a>
-                            <?php if ( is_plugin_active( 'mainwp-pro-reports-extension/mainwp-pro-reports-extension.php' ) ) { ?>
-                                <a class="item" href="admin.php?page=Extensions-Mainwp-Pro-Reports-Extension&tab=report&action=newreport&selected_sites=<?php echo esc_html( $selected_sites ); ?>"><?php esc_html_e( 'Create Report', 'mainwp' ); ?></a>
+                            <?php
+                            if ( is_plugin_active( 'mainwp-pro-reports-extension/mainwp-pro-reports-extension.php' ) ) {
+                                $report_url = add_query_arg(
+                                    array(
+                                        'page'           => 'Extensions-Mainwp-Pro-Reports-Extension',
+                                        'tab'            => 'report',
+                                        'action'         => 'newreport',
+                                        'selected_sites' => $selected_sites,
+                                    ),
+                                    'admin.php'
+                                );
+                                ?>
+                                <a class="ui basic mini right floated button" href="<?php echo esc_url( $report_url ); ?>"><?php echo esc_html__( 'Create Report', 'mainwp' ); ?></a>
                             <?php } ?>
                             <a class="item client_deleteitem" href="#"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
                         </div>

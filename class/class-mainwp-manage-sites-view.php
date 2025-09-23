@@ -629,7 +629,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     }
                 } else {
                     $html .= '<div class="sync-global-options options-row">';
-                    $html .= '<div class="ui checkbox"><input type="checkbox" /> <label>' . esc_html( sprintf( esc_html__( 'Apply global %1$s options' ), trim( $ext_name ) ) ) . '</label></div> ';
+                    $html .= '<div class="ui checkbox"><input type="checkbox" /> <label>' . esc_html( sprintf( esc_html__( 'Apply global %1$s options', 'mainwp' ), trim( $ext_name ) ) ) . '</label></div> ';
                     $html .= '<i class="ui active inline loader tiny"  style="display: none"></i> <span class="status"></span>';
                     $html .= '</div>';
                 }
@@ -725,8 +725,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     ?>
                     </div>
                     <div class="middle aligned right aligned column select-buttons-individual-updates">
-                            <?php echo '<a href="javascript:void(0)" data-tooltip="' . esc_html__( 'Update Selected Plugins.', 'mainwp' ) . '" onClick="updatesoverview_plugins_global_upgrade_all( false, true ); return false;" class="ui mini green basic button plugins ' . ( 'plugins' === $active_tab ? '' : 'hidden' ) . '  "data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>'; ?>
-                            <?php echo '<a href="javascript:void(0)" onClick="updatesoverview_themes_global_upgrade_all( false, true );return false;" class="ui mini green basic button themes ' . ( 'themes' === $active_tab ? '' : 'hidden' ) . '" data-tooltip="' . esc_html__( 'Update Selected Themes.', 'mainwp' ) . '" data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>'; ?>
+                            <?php echo '<a href="javascript:void(0)" data-tooltip="' . esc_html__( 'Update Selected Plugins.', 'mainwp' ) . '" onClick="updatesoverview_plugins_global_upgrade_all( false, true ); return false;" class="ui mini green basic button plugins ' . ( 'plugins' === $active_tab ? '' : 'hidden' ) . '  "data-inverted="" data-position="top right">' . esc_html__( 'Update Selected', 'mainwp' ) . '</a>'; ?>
+                            <?php echo '<a href="javascript:void(0)" onClick="updatesoverview_themes_global_upgrade_all( false, true );return false;" class="ui mini green basic button themes ' . ( 'themes' === $active_tab ? '' : 'hidden' ) . '" data-tooltip="' . esc_html__( 'Update Selected Themes.', 'mainwp' ) . '" data-inverted="" data-position="top right">' . esc_html__( 'Update Selected', 'mainwp' ) . '</a>'; ?>
                     </div>
                 </div>
             </div>

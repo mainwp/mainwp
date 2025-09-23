@@ -494,7 +494,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
         </table>
         <div id="mainwp-loading-sites" style="display: none;">
             <div class="ui active inverted dimmer">
-                <div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading ...', 'mainwp-time-tracker-extension' ); ?></div>
+                <div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading ...', 'mainwp' ); ?></div>
             </div>
         </div>
         <?php

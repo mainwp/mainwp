@@ -87,7 +87,7 @@ class MainWP_WP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             <?php static::render_global_ignored( $decodedIgnoredCores ); ?>
             <div class="ui hidden divider"></div>
             <h3 class="ui header">
-                <?php esc_html_e( 'Per Site Ignored WordPress' ); ?>
+                <?php esc_html_e( 'Per Site Ignored WordPress', 'mainwp' ); ?>
                 <div class="sub header"><?php esc_html_e( 'These are WordPress you have told your MainWP Dashboard to ignore updates per site level and not notify you about pending updates.', 'mainwp' ); ?></div>
             </h3>
             <?php static::render_sites_ignored( $websites ); ?>

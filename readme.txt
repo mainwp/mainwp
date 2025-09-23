@@ -147,6 +147,17 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
+= 5.4.0.22 - Maintenance Release - 9-23-2025 =
+
+* Fixed: An issue where site tags were duplicated in the "Manage Sites" table display.
+* Fixed: Multiple localization issues to improve translation accuracy and consistency across different languages. ([PR832, PR833, PR834](https://github.com/mainwp/mainwp/pulls)) - thanks [DAnn2012](https://github.com/DAnn2012)
+* Fixed: An issue with generating site screenshots that occurred under specific server configurations.
+* Updated: Team Control support for the Cost Tracker module to enhance permission management and user access controls.
+* Updated: Team Control support for the Insights module to improve role-based access and data visibility controls.
+* Updated: Error messaging in REST API v2 to provide clearer feedback when connections are disallowed over HTTP protocol for security reasons.
+* Dev: SSL certificate verification control in the REST API v2 availability check by introducing an `sslverify` option in the HTTP arguments of `check_rest_api_enabled()` to provide more flexible SSL handling options. ([PR836](https://github.com/mainwp/mainwp/pull/836)) - thanks [Alexis](https://github.com/sixela)
+* Removed: Deprecated HTTP check notification code that was no longer in use to clean up the codebase and improve performance.
+
 = 5.4.0.21 - Maintenance Release - 8-26-2025 =
 
 * Fixed: Resolved database table creation issues for `wp_mainwp_wp` and `wp_mainwp_api_keys` on installations running PHP 8.4. [(#827)](https://github.com/mainwp/mainwp/issues/827)

@@ -120,7 +120,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             return $user_id;
         }
 
-        if ( is_ssl() ) {
+        if ( $this->is_ssl_request() ) {
             $user_id = $this->perform_basic_authentication();
         }
 
@@ -133,9 +133,26 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             return $user_id;
         }
 
-        if ( is_ssl() ) {
+        if ( ! $this->is_ssl_request() ) {
+            $this->set_error( new \WP_Error( 'mainwp_rest_authentication_bad_request', __( 'Requests to the MainWP REST API must be over HTTPS.', 'mainwp' ), array( 'status' => 400 ) ) );
+            return false;
+        } else {
             return $this->perform_basic_token_authentication();
         }
+    }
+
+    /**
+     * Method is_ssl_request().
+     *
+     * Check is https request.
+     *
+     * @return bool
+     */
+    private function is_ssl_request() {
+        if ( is_ssl() || wp_is_using_https() ) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -562,7 +579,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         if ( substr( $request_path, 0, strlen( $wp_base ) ) === $wp_base ) {
             $request_path = substr( $request_path, strlen( $wp_base ) );
         }
-        $base_request_uri = rawurlencode( get_home_url( null, $request_path, is_ssl() ? 'https' : 'http' ) );
+        $base_request_uri = rawurlencode( get_home_url( null, $request_path, $this->is_ssl_request() ? 'https' : 'http' ) );
 
         // Get the signature provided by the consumer and remove it from the parameters prior to checking the signature.
         $consumer_signature = rawurldecode( str_replace( ' ', '+', $params['oauth_signature'] ) );

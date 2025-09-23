@@ -23,7 +23,7 @@ class Log_Install extends MainWP_Install {
      *
      * @var string DB version info.
      */
-    public $log_db_version = '1.0.1.29'; // NOSONAR - no IP.
+    public $log_db_version = '1.0.1.35'; // NOSONAR - no IP.
 
     /**
      * Protected variable to hold the database option name.
@@ -204,6 +204,10 @@ class Log_Install extends MainWP_Install {
         }
         if ( version_compare( $currentVersion, '1.0.1.7', '>=' ) && version_compare( $currentVersion, '1.0.1.9', '<' ) ) { // NOSONAR - non-ip.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' DROP INDEX state' ); //phpcs:ignore -- ok.
+        }
+
+        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.35', '<' ) ) { // NOSONAR - non-ip.
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD COLUMN log_type_id bigint NOT NULL DEFAULT 0' ); //phpcs:ignore -- ok.
         }
     }
 

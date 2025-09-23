@@ -872,7 +872,6 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         $item      = $bar_item_active;
                         $title     = wptexturize( $item[0] );
                         $item_key  = $item[1];
-                        $href      = $item[2];
                         $item_id   = isset( $item[3] ) ? $item[3] : '';
                         $level_cls = isset( $item[5] ) ? $item[5] : '';
 

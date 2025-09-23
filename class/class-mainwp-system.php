@@ -870,9 +870,9 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             'demoMode'                         => MainWP_Demo_Handle::is_demo_mode() ? 1 : 0,
             'roll_ui_icon'                     => MainWP_Updates_Helper::get_roll_icon( '', true ),
             'admin_url_base'                   => admin_url(),
+            'mainwpVersion'                    => static::$version,
         );
         wp_localize_script( 'mainwp', 'mainwpParams', $mainwpParams );
-        wp_localize_script( 'mainwp', 'mainwpVersion', static::$version );
 
         $mainwpTranslations = MainWP_System_View::get_mainwp_translations();
 

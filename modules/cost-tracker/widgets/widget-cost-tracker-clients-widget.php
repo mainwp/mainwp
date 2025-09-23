@@ -170,10 +170,10 @@ class Cost_Tracker_Clients_Widget {
                         jQuery( '#mainwp-module-cost-tracker-costs-widget-table .ui.dropdown' ).dropdown();
                     },
                     stateSaveParams: function (settings, data) {
-                        data._mwpv = window.mainwpVersion || 'dev';
+                        data._mwpv = mainwpParams.mainwpVersion || 'dev';
                     },
                     stateLoadParams: function (settings, data) {
-                        if ((window.mainwpVersion || 'dev') !== data._mwpv) return false;
+                        if ((mainwpParams.mainwpVersion || 'dev') !== data._mwpv) return false;
                     },
                     search: { regex: false, smart: false },
                     orderMulti: false,

@@ -364,10 +364,10 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             selector: 'tr>td:not(.not-selectable)'
                         },
                         stateSaveParams: function (settings, data) {
-                            data._mwpv = window.mainwpVersion || 'dev';
+                            data._mwpv = mainwpParams.mainwpVersion || 'dev';
                         },
                         stateLoadParams: function (settings, data) {
-                            if ((window.mainwpVersion || 'dev') !== data._mwpv) return false;
+                            if ((mainwpParams.mainwpVersion || 'dev') !== data._mwpv) return false;
                         },
                         search: { regex: false, smart: false },
                         orderMulti: false,

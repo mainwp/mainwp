@@ -1124,10 +1124,10 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                 jQuery( row ).find('.mainwp-state-cell').attr('data-sort', data.state_sort );
                             },
                             stateSaveParams: function (settings, data) {
-                                data._mwpv = window.mainwpVersion || 'dev';
+                                data._mwpv = mainwpParams.mainwpVersion || 'dev';
                             },
                             stateLoadParams: function (settings, data) {
-                                if ((window.mainwpVersion || 'dev') !== data._mwpv) return false;
+                                if ((mainwpParams.mainwpVersion || 'dev') !== data._mwpv) return false;
                             },
                             search: { regex: false, smart: false },
                             orderMulti: false,

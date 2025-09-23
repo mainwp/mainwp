@@ -1290,10 +1290,10 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                 },
                                 deferRender: true,
                                 stateSaveParams: function (settings, data) {
-                                    data._mwpv = window.mainwpVersion || 'dev';
+                                    data._mwpv = mainwpParams.mainwpVersion || 'dev';
                                 },
                                 stateLoadParams: function (settings, data) {
-                                    if ((window.mainwpVersion || 'dev') !== data._mwpv) return false;
+                                    if ((mainwpParams.mainwpVersion || 'dev') !== data._mwpv) return false;
                                 },
                                 search: { regex: false, smart: false },
                                 orderMulti: false,
@@ -1400,10 +1400,10 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                             },
                             // Version the saved state so UI changes don’t brick users.
                             stateSaveParams: function (settings, data) {
-                                data._mwpv = window.mainwpVersion || 'dev';
+                                data._mwpv = mainwpParams.mainwpVersion || 'dev';
                             },
                             stateLoadParams: function (settings, data) {
-                                if ((window.mainwpVersion || 'dev') !== data._mwpv) return false; // drop stale state
+                                if ((mainwpParams.mainwpVersion || 'dev') !== data._mwpv) return false; // drop stale state
                             },
                             search: { regex: false, smart: false }, // Make search cheaper on the server.
                             orderMulti: false,

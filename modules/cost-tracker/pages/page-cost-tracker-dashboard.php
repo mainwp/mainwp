@@ -12,6 +12,7 @@ use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_DB_Client;
+use MainWP\Dashboard\MainWP_Cache_Warm_Helper;
 
 /**
  * Class Cost_Tracker_Dashboard

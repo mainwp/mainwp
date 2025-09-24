@@ -707,10 +707,10 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         $context_title = '';
 
         if ( 'plugin' === $context ) {
-            $title         = rtrim( $title, ' Plugin' ); // remove Plugin suffix if existed.
+            $title         = trim( rtrim( $title, 'Plugin' ) ); // remove Plugin suffix if existed - to fix missing 'e' character.
             $context_title = esc_html__( 'Plugin', 'mainwp' );
         } elseif ( 'theme' === $context ) {
-            $title         = rtrim( $title, ' Theme' ); // remove Theme suffix if existed.
+            $title         = trim( rtrim( $title, 'Theme' ) ); // remove Theme suffix if existed - to fix missing 'e' character.
             $context_title = esc_html__( 'Theme', 'mainwp' );
         } elseif ( 'translation' === $context ) {
             $context_title = esc_html__( 'Translation', 'mainwp' );

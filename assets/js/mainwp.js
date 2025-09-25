@@ -1053,7 +1053,17 @@ window.dashboard_update = function (websiteIds, isGlobalSync, pAction) {
   if (mainwpVars.websitesTotal == 0) {
     dashboard_update_done(pAction);
   } else {
-    dashboard_loop_next(pAction);
+    let fistPrefetchRunning = false;
+    if( 'checknow' !== pAction && globalSync ){
+        fetchSiteIds = dashboard_update_pick_siteids_to_prefetch();
+        if(fetchSiteIds.length){
+            dashboard_fetching_int(pAction, fetchSiteIds );
+            fistPrefetchRunning = true;
+        }
+    }
+    if(!fistPrefetchRunning){
+        dashboard_loop_next(pAction);
+    }
   }
 };
 
@@ -1073,24 +1083,21 @@ window.dashboard_update_site_hide = function (siteId) {
 let dashboard_loop_next = function (pAction) {
 
     if( 'checknow' !== pAction && globalSync ){
-        let fetchNext = !mainwpVars.websitesDone || mainwpVars.websitesDone % mainwpVars.maxThreads == 0;
+        let fetchNext = mainwpVars.websitesDone && mainwpVars.websitesDone % mainwpVars.maxThreads == 0;
+
+        let fetchSiteIds = [];
+
         if(fetchNext){
-            let fetchSiteIds = dashboard_update_pick_siteids_to_prefetch();
-            if(fetchSiteIds.length){
-                dashboard_fetching_int(pAction, fetchSiteIds );
-                return;
+            fetchSiteIds = dashboard_update_pick_siteids_to_prefetch(); // prefetch next.
+        } else {
+            let ready_syncid = dashboard_update_pick_one_to_sync(pAction);
+            if( ! ready_syncid && ! mainwpVars.syncPrefetchedRunning ){ // prefetch next.
+                fetchSiteIds = dashboard_update_pick_siteids_to_prefetch();
             }
         }
-    }
 
-    if('checknow' !== pAction){
-        let ready_syncid = dashboard_update_pick_one_to_sync(pAction);
-        if( ! ready_syncid && ! mainwpVars.syncPrefetchedRunning ){
-            let fetchSiteIds = dashboard_update_pick_siteids_to_prefetch();
-            if(fetchSiteIds.length){
-                dashboard_fetching_int(pAction, fetchSiteIds );
-                return;
-            }
+        if(fetchSiteIds.length){
+            dashboard_fetching_int(pAction, fetchSiteIds );
         }
     }
 

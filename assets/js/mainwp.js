@@ -1150,7 +1150,7 @@ let dashboard_update_done = function (pAction, callNext) {
     if (mainwpVars.websitesDone == successSites) {
       mainwpVars.bulkTaskRunning = false;
       setTimeout(function () {
-        //mainwpPopup('#mainwp-sync-sites-modal').close(true);
+        mainwpPopup('#mainwp-sync-sites-modal').close(true);
       }, 3000);
     } else {
       mainwpVars.bulkTaskRunning = false;

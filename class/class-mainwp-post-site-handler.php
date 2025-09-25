@@ -68,6 +68,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
 
         // Widget: RightNow.
         $this->add_action( 'mainwp_syncsites', array( &$this, 'mainwp_syncsites' ) );
+        $this->add_action( 'mainwp_prefetchsyncsites', array( &$this, 'mainwp_prefetch_syncsites' ) );
 
         $this->add_action( 'mainwp_checksites', array( &$this, 'ajax_checksites' ) );
         $this->add_action( 'mainwp_manage_sites_suspend_site', array( &$this, 'manage_suspend_site' ) );
@@ -381,6 +382,54 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
         MainWP_Manage_Sites_Handler::update_child_site_value();
     }
 
+
+    /**
+     * Method mainwp_prefetch_syncsites()
+     *
+     * Prefetch Sync Child Sites.
+     */
+    public function mainwp_prefetch_syncsites() {
+
+        $this->secure_request( 'mainwp_prefetchsyncsites' );
+
+        $site_ids = isset( $_POST['site_ids'] ) && is_array( $_POST['site_ids'] ) ? array_map( 'intval', wp_unslash( $_POST['site_ids'] ) ) : array(); //phpcs:ignore -- ok.
+        $site_ids = array_filter( $site_ids );
+
+        $params = array(
+            'fetch_stats' => 'prefetch_stats',
+        );
+
+        $fetching_wp_ids         = array();
+        $synced_ids              = array();
+
+        foreach ( $site_ids as $k ) {
+            if ( MainWP_Utility::ctype_digit( $k ) ) {
+                $website = MainWP_DB::instance()->get_website_by_id( $k );
+                if ( '' !== $website->sync_errors ) {
+                    continue;
+                }
+
+                $info = MainWP_Sync::sync_website( $website, true, $params );
+
+                if ( is_array( $info ) && ! empty( $info['fetching_stats'] ) ) {
+                    $fetching_wp_ids[] = $website->id;
+                } elseif ( true === $info ) {
+                    $synced_ids[] = $website->id; // synced site.
+                    $ignore       = true;
+                    break;  // ignore others ids to sure it does not run so long.
+                }
+            }
+        }
+        wp_send_json(
+            array(
+                'success'         => 1,
+                'fetching_wp_ids' => $fetching_wp_ids,
+                'synced_ids'      => $synced_ids,
+            )
+        );
+    }
+
+
     /**
      * Method mainwp_syncsites()
      *
@@ -402,7 +451,11 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
             die( wp_json_encode( array( 'error' => esc_html__( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
         }
 
-        if ( MainWP_Sync::sync_website( $website ) ) {
+        $params = array(
+            'fetch_stats' => 'get_fetched_stats',
+        );
+
+        if ( MainWP_Sync::sync_website( $website, true, $params ) ) {
             $website = MainWP_DB::instance()->get_website_by_id( $website->id ); // reload.
             /**
              * Fires immediately after website synced successfully.

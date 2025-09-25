@@ -1037,6 +1037,9 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 <div class="bar"><div class="progress"></div></div>
                 <div class="label"></div>
             </div>
+            <div class="content mainwp-modal-content">
+                <div class="ui middle aligned" id="sync-sites-prefetching-status"></div>
+            </div>
             <div class="scrolling content mainwp-modal-content">
                 <div class="ui middle aligned divided list" id="sync-sites-status">
                     <?php

@@ -414,8 +414,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
                 if ( is_array( $info ) && ! empty( $info['fetching_stats'] ) ) {
                     $fetching_wp_ids[] = $website->id;
                 } elseif ( true === $info ) {
-                    $synced_ids[] = $website->id; // synced site.
-                    $ignore       = true;
+                    $synced_ids[] = $website->id; // synced site, which sites still use older child plugin version.
                     break;  // ignore others ids to sure it does not run so long.
                 }
             }

@@ -1083,18 +1083,6 @@ window.dashboard_update_site_hide = function (siteId) {
 };
 
 let dashboard_loop_next = function (pAction) {
-
-    if( 'checknow' !== pAction && globalSync ){
-        let fetchSiteIds = [];
-        let ready_syncid = dashboard_update_pick_one_to_sync(pAction);
-        if( ! ready_syncid && ! mainwpVars.syncPrefetchedRunning ){ // prefetch next.
-            fetchSiteIds = dashboard_update_pick_siteids_to_prefetch();
-        }
-        if(fetchSiteIds.length){
-            dashboard_fetching_int(pAction, fetchSiteIds );
-        }
-    }
-
     while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxThreads) && (mainwpVars.websitesLeft > 0)) {
         let websiteId = dashboard_update_pick_one_to_sync(pAction);
         if(!websiteId){
@@ -1106,7 +1094,6 @@ let dashboard_loop_next = function (pAction) {
         mainwpVars.syncSitesLoopRunning = true;
         dashboard_update_next(pAction, websiteId);
     }
-
 };
 
 let dashboard_update_pick_one_to_sync = function (pAction) {
@@ -1247,30 +1234,28 @@ let dashboard_fetching_int = function (pAction, fetchSiteIds) {
                         })
                     }
                 }
-
-                fetchNextIds = dashboard_update_pick_siteids_to_prefetch();
-
-                if(fetchNextIds.length){
-                    dashboard_fetching_int(pAction, fetchNextIds);
-                }
-
                 if( mainwpVars.is_firstPrefetching || ! mainwpVars.syncSitesLoopRunning){
                     mainwpVars.is_firstPrefetching = false;
                      dashboard_loop_next(pAction);
                 }
 
+                fetchNextIds = dashboard_update_pick_siteids_to_prefetch();
+                if(fetchNextIds.length){
+                    dashboard_fetching_int(pAction, fetchNextIds);
+                }
             }
         }(),
         error: function () {
             jQuery('#sync-sites-prefetching-status').html('');
-            fetchNextIds = dashboard_update_pick_siteids_to_prefetch();
-            if(fetchNextIds.length){
-                dashboard_fetching_int(pAction, fetchNextIds);
-            }
 
             if( mainwpVars.is_firstPrefetching || ! mainwpVars.syncSitesLoopRunning){
                 mainwpVars.is_firstPrefetching = false;
                 dashboard_loop_next(pAction);
+            }
+
+            fetchNextIds = dashboard_update_pick_siteids_to_prefetch();
+            if(fetchNextIds.length){
+                dashboard_fetching_int(pAction, fetchNextIds);
             }
 
             //nothing.

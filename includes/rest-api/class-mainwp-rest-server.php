@@ -107,11 +107,12 @@ class MainWP_Rest_Server {
      */
     protected function get_v2_controllers() {
         return array(
-            'sites'   => 'MainWP_Rest_Sites_Controller',
-            'clients' => 'MainWP_Rest_Clients_Controller',
-            'tags'    => 'MainWP_Rest_Tags_Controller',
-            'updates' => 'MainWP_Rest_Updates_Controller',
-            'batch'   => 'MainWP_Rest_Global_Batch_Controller',
+            'sites'    => 'MainWP_Rest_Sites_Controller',
+            'clients'  => 'MainWP_Rest_Clients_Controller',
+            'tags'     => 'MainWP_Rest_Tags_Controller',
+            'updates'  => 'MainWP_Rest_Updates_Controller',
+            'batch'    => 'MainWP_Rest_Global_Batch_Controller',
+            'monitors' => 'MainWP_Rest_Monitors_Controller',
         );
     }
 

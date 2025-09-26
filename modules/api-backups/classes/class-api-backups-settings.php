@@ -131,11 +131,11 @@ class Api_Backups_Settings {
         ?>
         <div id="3rd-party-api-manager">
             <div class="ui segment">
-                
+
                 <div class="ui stackable grid">
                     <div class="sixteen wide column">
                         <div class="ui secondary pointing fluid menu">
-                            
+
                             <a class="item active" data-tab="cloudways">
                                 <?php esc_html_e( 'Cloudways', 'mainwp' ); ?>
                             </a>
@@ -1001,6 +1001,8 @@ class Api_Backups_Settings {
         $mainwp_cpanel_account_username       = '';
         $mainwp_plesk_api_url                 = '';
 
+        $cpanel_account_password = '';
+
         if ( is_object( $website ) && property_exists( $website, 'id' ) ) {
             $opts = Api_Backups_Helper::get_website_options(
                 $website,
@@ -1041,6 +1043,24 @@ class Api_Backups_Settings {
                 $mainwp_kinsta_environment_id         = isset( $opts['mainwp_kinsta_environment_id'] ) ? $opts['mainwp_kinsta_environment_id'] : '';
                 $mainwp_kinsta_account_email          = isset( $opts['mainwp_kinsta_account_email'] ) ? $opts['mainwp_kinsta_account_email'] : '';
                 $mainwp_kinsta_company_id             = isset( $opts['mainwp_kinsta_company_id'] ) ? $opts['mainwp_kinsta_company_id'] : '';
+            }
+
+            if ( empty( $mainwp_cpanel_api_url ) && ! empty( get_option( 'mainwp_cpanel_url' ) ) ) {
+                $mainwp_cpanel_api_url = get_option( 'mainwp_cpanel_url' );
+            }
+
+            if ( empty( $mainwp_cpanel_account_username ) && ! empty( get_option( 'mainwp_cpanel_account_username' ) ) ) {
+                $mainwp_cpanel_account_username = get_option( 'mainwp_cpanel_account_username' );
+            }
+
+            $cpanel_account_password = Api_Backups_Utility::get_instance()->get_child_api_key( $website, 'cpanel' );
+            $_api_key                = Api_Backups_3rd_Party::get_cpanel_account_password();
+            if ( empty( $cpanel_account_password ) && ! empty( $_api_key ) ) {
+                $cpanel_account_password = $_api_key;
+            }
+
+            if ( empty( $mainwp_cpanel_site_path ) && ! empty( get_option( 'mainwp_cpanel_site_path' ) ) ) {
+                $mainwp_cpanel_site_path = get_option( 'mainwp_cpanel_site_path' );
             }
         }
 
@@ -1104,9 +1124,6 @@ class Api_Backups_Settings {
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Password', 'mainwp' ); ?></label>
                         <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the cPanel Account Password.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <div class="ui left labeled input">
-                                <?php
-                                    $cpanel_account_password = Api_Backups_Utility::get_instance()->get_child_api_key( $website, 'cpanel' );
-                                ?>
                                 <input type="password" name="mainwp_cpanel_account_password" id="mainwp_cpanel_account_password" value="<?php echo esc_attr( $cpanel_account_password ); ?>"  />
                             </div>
                         </div>

@@ -1116,6 +1116,11 @@ let dashboard_update_pick_siteids_to_prefetch = function () {
     let siteids = [];
     let i = 0;
     let maxPrefetchNumber = 0; // nolimit.
+
+    if(mainwpVars.currentWebsitePrefetching >= mainwpVars.websitesTotal && mainwpVars.websitesIdsProcessed.length < mainwpVars.websitesTotal ){
+        mainwpVars.currentWebsitePrefetching = 0; // need to get to run prefetch one more round, for some sites ids may be skipped, to fix the issue of when some sites still use old child plugin version.
+    }
+
     while(( maxPrefetchNumber === 0 || i < maxPrefetchNumber ) && mainwpVars.currentWebsitePrefetching < mainwpVars.websitesTotal){
         let siteid = mainwpVars.websitesToUpdate[mainwpVars.currentWebsitePrefetching++];
         if(! mainwpVars.websitesIdsProcessed.includes(siteid) && !mainwpVars.websitesIdsPrefetched.includes(siteid)){

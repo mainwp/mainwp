@@ -1101,7 +1101,7 @@ let dashboard_update_pick_one_to_sync = function (pAction) {
     for (let i = 0; i < mainwpVars.websitesToUpdate.length; i++) {
         siteid = mainwpVars.websitesToUpdate[i];
         let prefetched = true; //default is true.
-        if('checknow' !== pAction){
+        if('checknow' !== pAction && globalSync){
             prefetched = mainwpVars.websitesIdsPrefetched.includes(siteid);
         }
         if(prefetched && !mainwpVars.websitesIdsProcessed.includes(siteid)){

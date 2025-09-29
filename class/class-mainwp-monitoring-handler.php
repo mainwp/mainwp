@@ -62,12 +62,17 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $new_code = ( is_array( $result_comp ) && isset( $result_comp['httpCode'] ) ) ? (int) $result_comp['httpCode'] : 0;
 
         if ( isset( $result_comp['new_uptime_status'] ) ) {
-            $is_online = $result_comp['new_uptime_status'];
+            $new_status       = (int) $result_comp['new_uptime_status'];
+            $new_check_result = 0; // pending.
+            if ( MainWP_Uptime_Monitoring_Connect::UP === $new_status ) {
+                $new_check_result = 1; // 1 - online, -1 offline.
+            } elseif ( MainWP_Uptime_Monitoring_Connect::DOWN === $new_status ) {
+                $new_check_result = -1; // 1 - online, -1 offline.
+            }
         } else {
-            $is_online = MainWP_Connect::check_ignored_http_code( $new_code, $website ); // legacy check http code.
+            $new_status       = MainWP_Connect::check_ignored_http_code( $new_code, $website ); // legacy check http code.
+            $new_check_result = $new_status ? 1 : -1; // 1 - online, -1 offline.
         }
-
-        $new_check_result = $is_online ? 1 : -1; // 1 - online, -1 offline.
 
         $time    = isset( $result_comp['check_offline_time'] ) ? $result_comp['check_offline_time'] : time();
         $noticed = static::check_http_status_notification_threshold( $website, $new_check_result );
@@ -82,7 +87,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             )
         );
 
-        MainWP_Logger::instance()->log_uptime_check( 'Check website status :: [website=' . (string) $website->url . '] :: [offline_check_result=' . ( $is_online ? 1 : -1 ) . '] :: [http_response_code=' . esc_html( $new_code ) . '] :: [http_code_noticed=' . esc_html( $noticed ) . ']' );
+        MainWP_Logger::instance()->log_uptime_check( 'Check website status :: [website=' . (string) $website->url . '] :: [offline_check_result=' . intval( $new_check_result ) . '] :: [http_response_code=' . esc_html( $new_code ) . '] :: [http_code_noticed=' . esc_html( $noticed ) . ']' );
 
         return $result_comp; // return results for ajax check requests.
     }

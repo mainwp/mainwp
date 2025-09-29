@@ -192,7 +192,6 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
         curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
 
-
         $http_user = '';
         $http_pass = '';
 
@@ -305,7 +304,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $retry_later   = static::is_http_code_type( 'retry', $http_code );
         $is_notallowed = static::is_http_code_type( 'notallowed', $http_code );
 
-        if ( $retry_later ) {
+        if ( $retry_later && empty( $monitor->issub ) ) {
             $max_retries = static::get_apply_setting( 'maxretries', (int) $monitor->maxretries, $global_settings, -1, 0 );
             if ( $max_retries > 0 && $monitor->retries < $max_retries ) {
                 $is_pending = true;
@@ -325,7 +324,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             'http_error'       => $http_error,
             'down_count'       => $down_count,
             'retry'            => $set_retry,
-            'is_pendding'      => $is_pending ? 1 : 0,
+            'is_pending'       => $is_pending ? 1 : 0,
             'start'            => $start,
             'end'              => microtime( true ),
             'use_monitor_type' => $mo_apply_type,
@@ -577,7 +576,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                         $mo_apply_type = static::get_apply_setting( 'type', $website->type, $global_settings, 'useglobal', 'http' );
 
                         $_try_second = false;
-                        if ( $retry_later ) {
+                        if ( $retry_later && empty( $website->issub ) ) {
                             $max_retries = static::get_apply_setting( 'maxretries', (int) $website->maxretries, $global_settings, -1, 0 );
                             if ( $max_retries > 0 && $website->retries < $max_retries ) {
                                 $is_pending = true;
@@ -679,7 +678,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $mo_apply_method  = static::get_apply_setting( 'method', $website->method, $global_settings, 'useglobal', 'get' );
         $mo_apply_timeout = static::get_apply_setting( 'timeout', (int) $website->timeout, $global_settings, -1, 60 );
 
-        if ( $retry_later ) {
+        if ( $retry_later && empty( $website->issub ) ) {
             $max_retries = static::get_apply_setting( 'maxretries', (int) $website->maxretries, $global_settings, -1, 0 );
             if ( $max_retries > 0 && $website->retries < $max_retries ) {
                 $is_pending = true;
@@ -755,6 +754,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $use_mo_method  = isset( $resp_info['use_method'] ) ? $resp_info['use_method'] : '';
         $use_mo_type    = isset( $resp_info['use_monitor_type'] ) ? $resp_info['use_monitor_type'] : '';
         $use_mo_timeout = isset( $resp_info['use_timeout'] ) ? $resp_info['use_timeout'] : '';
+        $is_pending     = ! empty( $resp_info['is_pending'] ) ? true : false;
 
         $ping = $end - $start; // ms - millisecond.
 
@@ -769,8 +769,16 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         // check up status codes.
         if ( $set_retry ) {
-            $status = static::PENDING;
-        } elseif ( is_string( $data ) && false !== stripos( $data, 'Briefly unavailable for scheduled maintenance' ) ) {
+            if ( $is_pending ) { // to check maxtries.
+                $status = static::PENDING;
+            } else {
+                $status = static::DOWN;
+            }
+        } elseif ( static::PENDING === $status ) {
+            $status = static::DOWN;
+        }
+
+        if ( is_string( $data ) && false !== stripos( $data, 'Briefly unavailable for scheduled maintenance' ) ) {
             $status = static::PENDING;
         } elseif ( ! empty( $http_code ) && is_array( $up_codes ) ) {
             if ( in_array( $http_code, $up_codes ) ) {

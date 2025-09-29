@@ -397,7 +397,12 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
         $status   = isset( $params['new_uptime_status'] ) ? (int) $params['new_uptime_status'] : 0;
         $time     = isset( $params['check_offline_time'] ) ? $params['check_offline_time'] : time();
 
-        $new_check_result = $status ? 1 : -1; // 1 - online, -1 offline.
+        $new_check_result = 99; // pending.
+        if ( MainWP_Uptime_Monitoring_Connect::UP === $status ) {
+            $new_check_result = 1; // 1 - online, -1 offline.
+        } elseif ( MainWP_Uptime_Monitoring_Connect::DOWN === $status ) {
+            $new_check_result = -1;
+        }
 
         // Save last status, do not update http status notification.
         MainWP_DB::instance()->update_website_values(

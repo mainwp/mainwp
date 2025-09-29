@@ -1615,7 +1615,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
         } elseif ( 0 === (int) $uptime_status ) {
             echo '<span class="ui big circular icon red looping pulsating transition label"><i class="chevron down icon"></i></span>';
         } else {
-            echo '<span class="ui big circular icon grey looping pulsating transition label"><i class="circle outline icon"></i></span>';
+            echo '<span class="ui big circular icon grey looping pulsating transition label mo-status-' . intval( $uptime_status ) . '"><i class="circle outline icon"></i></span>';
         }
     }
 

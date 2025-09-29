@@ -399,8 +399,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
             'fetch_stats' => 'prefetch_stats',
         );
 
-        $fetching_wp_ids         = array();
-        $synced_ids              = array();
+        $fetching_wp_ids = array();
+        $synced_ids      = array();
 
         foreach ( $site_ids as $k ) {
             if ( MainWP_Utility::ctype_digit( $k ) ) {
@@ -450,9 +450,11 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
             die( wp_json_encode( array( 'error' => esc_html__( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
         }
 
-        $params = array(
-            'fetch_stats' => 'get_fetched_stats',
-        );
+        $params = array();
+
+        if ( ! empty( $_POST['fetched_stats'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            $params['fetch_stats'] = 'get_fetched_stats';
+        }
 
         if ( MainWP_Sync::sync_website( $website, true, $params ) ) {
             $website = MainWP_DB::instance()->get_website_by_id( $website->id ); // reload.

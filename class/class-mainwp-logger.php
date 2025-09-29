@@ -1067,7 +1067,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
          */
     public function hook_module_log_record_inserted( $record_id = false, $record = false ) {
         if ( $record_id && is_array( $record ) && isset( $record['connector'] ) && isset( $record['action'] ) && isset( $record['item'] ) && isset( $record['context'] ) ) {
-            $this->log_events( 'sites-changes', 'Logging info  :: [site_id=' . $record['site_id'] . '] :: [log_id=' . $record_id . '] :: [log_type_id=' . ( isset( $record['log_type_id'] ) ? $record['log_type_id'] : 0 ) . '] :: [item=' . $record['item'] . '] :: [connector=' . $record['connector'] . '] :: [context=' . $record['context'] . '] :: [action=' . $record['action'] . ']' );
+            $this->log_events( 'sites-changes', 'Logging info  :: [site_id=' . ( isset( $record['site_id'] ) ? $record['site_id'] : 0 ) . '] :: [log_id=' . $record_id . '] :: [log_type_id=' . ( isset( $record['log_type_id'] ) ? $record['log_type_id'] : 0 ) . '] :: [item=' . $record['item'] . '] :: [connector=' . $record['connector'] . '] :: [context=' . $record['context'] . '] :: [action=' . $record['action'] . ']' );
         }
     }
 }

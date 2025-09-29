@@ -283,6 +283,10 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
                 return array(
                     'type' => array( 'any', 'subscription', 'lifetime' ),
                 );
+            case 'get_monitors':
+                return array(
+                    'type' => array( 'any', 'up', 'down' ),
+                );
             default:
                 break;
         }

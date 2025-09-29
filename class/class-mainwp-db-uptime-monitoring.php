@@ -408,10 +408,44 @@ KEY idx_wpid (wpid)";
      *
      * @return object|null Database query results or null on failure.
      */
-    public function get_monitors( $params = array(), $obj = OBJECT ) {
+    public function get_monitors( $params = array(), $obj = OBJECT ) { // phpcs:ignore -- NOSONAR - complexity.
+        if ( ! is_array( $params ) ) {
+            $params = array();
+        }
+
+        // Initialize custom_where if it does not exist.
+        if ( empty( $params['custom_where'] ) ) {
+            $params['custom_where'] = '';
+        }
+
+        // Handel exclude.
+        if ( isset( $params['exclude'] ) && ! empty( $params['exclude'] ) ) {
+            $exclude_ids             = wp_parse_id_list( $params['exclude'] );
+            $params['custom_where'] .= empty( $exclude_ids ) ? '' : ' AND mo.wpid NOT IN (' . implode( ',', $exclude_ids ) . ')';
+        }
+
+        // Handel include.
+        if ( isset( $params['include'] ) && ! empty( $params['include'] ) ) {
+            $include_ids             = wp_parse_id_list( $params['include'] );
+            $params['custom_where'] .= empty( $exclude_ids ) ? '' : ' AND mo.wpid IN (' . implode( ',', $include_ids ) . ')';
+        }
+
+        // Handel status.
+        if ( isset( $params['status'] ) && ! empty( $params['status'] ) ) {
+            $status_values           = wp_parse_list( $params['status'] );
+            $params['custom_where'] .= empty( $status_values ) ? '' : ' AND mo.last_status IN (' . implode( ',', $status_values ) . ')';
+        }
+
+        // Handel search.
+        if ( isset( $params['search'] ) && ! empty( $params['search'] ) ) {
+            $search_term             = $this->escape( htmlspecialchars( $params['search'] ) );
+            $params['custom_where'] .= ' AND (wp.name LIKE "%' . $search_term . '%" OR wp.url LIKE "%' . $search_term . '%" OR mo.suburl LIKE "%' . $search_term . '%")';
+        }
+
         if ( empty( $params['view'] ) ) {
             $params['view'] = 'monitor_view';
         }
+
         return $this->wpdb->get_results( $this->get_sql_monitor( $params ), $obj );
     }
 

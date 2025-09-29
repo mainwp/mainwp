@@ -7,11 +7,7 @@
  * @package MainWP\Dashboard
  */
 
-use MainWP\Dashboard\MainWP_DB_Client;
-use MainWP\Dashboard\MainWP_Client_Handler;
-use MainWP\Dashboard\Module\CostTracker\Cost_Tracker_DB;
-use MainWP\Dashboard\Module\CostTracker\Cost_Tracker_Rest_Api_Handle_V1;
-use MainWP\Dashboard\MainWP_Utility;
+use MainWP\Dashboard\MainWP_DB_Uptime_Monitoring;
 
 /**
  * Class MainWP_Rest_Clients_Controller
@@ -106,16 +102,28 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function count_monitors( $request ) {
-        $args          = $this->prepare_objects_query( $request );
-        $prepared_args = array(
-            'count_only' => true,
+        $args = $this->prepare_objects_query( $request );
+
+        $args = $this->validate_rest_args( $args, $this->get_validate_args_params( 'get_monitors' ) );
+        if ( is_wp_error( $args ) ) {
+            return $args;
+        }
+
+        $params = array(
+            'exclude' => isset( $args['exclude'] ) && ! empty( $args['exclude'] ) ? $args['exclude'] : '',
+            'include' => isset( $args['include'] ) && ! empty( $args['include'] ) ? $args['include'] : '',
+            'status'  => isset( $args['status'] ) && ! empty( $args['status'] ) ? $args['status'] : '',
+            'search'  => isset( $args['s'] ) && ! empty( $args['s'] ) ? $args['s'] : '',
         );
-        // get data.
+
+        // Get data from uptime monitoring DB.
+        $monitors = MainWP_DB_Uptime_Monitoring::instance()->get_monitors( $params );
+        $total    = is_array( $monitors ) ? count( $monitors ) : 0;
 
         return rest_ensure_response(
             array(
                 'success' => 1,
-                'total'   => 10,
+                'total'   => $total,
             )
         );
     }

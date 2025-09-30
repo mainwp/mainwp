@@ -189,8 +189,11 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 'siteId'                          => $pWebsite->id,
                 'child_actions_saved_days_number' => intval( $saved_days_number ),
                 'pingnonce'                       => MainWP_Utility::instance()->create_site_nonce( 'pingnonce', $pWebsite->id ),
-                'fetch_stats'                     => $params['fetch_stats'], // send stats fetched param if child supported.
             );
+
+            if ( ! empty( $params['fetch_stats'] ) ) {
+                $postdata['fetch_stats'] = $params['fetch_stats']; // send stats fetched param if child supported.
+            }
 
             $reg_verify = MainWP_DB::instance()->get_website_option( $pWebsite, 'register_verify_key', '' );
             if ( empty( $reg_verify ) ) {

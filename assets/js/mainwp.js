@@ -1042,9 +1042,9 @@ mainwpVars.currentWebsitePrefetching = 0;
 mainwpVars.is_firstPrefetching = true;
 mainwpVars.syncSitesLoopRunning = false;
 mainwpVars.syncSitesCurrentStep = 'start';
+mainwpVars.maxThreads = mainwpParams['maximumSyncRequests'] == undefined ? 8 : mainwpParams['maximumSyncRequests'];
 mainwpVars.maxPrefetchNumber = 0; // 0: nolimit.
 
-mainwpVars.maxThreads = mainwpParams['maximumSyncRequests'] == undefined ? 8 : mainwpParams['maximumSyncRequests'];
 let globalSync = true;
 
 window.dashboard_update = function (websiteIds, isGlobalSync, pAction) {
@@ -1063,14 +1063,16 @@ window.dashboard_update = function (websiteIds, isGlobalSync, pAction) {
         fetchSiteIds = dashboard_update_pick_siteids_to_prefetch();
         if(fetchSiteIds.length){
             mainwp_time_counter_log('start');
-            mainwp_time_counter_log('log', 'Start prefetch sync data sites.');
+            mainwp_time_counter_log('log', '[PREFETCH] Rrefetch sync data enabled.');
+            mainwp_time_counter_log('log', '[START] Start prefetch sync data sites.');
             dashboard_fetching_int(pAction, fetchSiteIds );
             fistPrefetchRunning = true;
         }
     }
     if(!fistPrefetchRunning){
         mainwp_time_counter_log('start');
-        mainwp_time_counter_log('log', 'Start sync data sites.');
+        mainwp_time_counter_log('log', '[PREFETCH] Rrefetch sync data disabled.');
+        mainwp_time_counter_log('log', '[START] Start sync data sites.');
         dashboard_loop_next(pAction);
     }
   }
@@ -1148,7 +1150,7 @@ let dashboard_update_done = function (pAction, callNext) {
     let successSites = jQuery('#mainwp-sync-sites-modal .check.green.icon').length;
     if (mainwpVars.websitesDone == successSites) {
       mainwpVars.bulkTaskRunning = false;
-      mainwp_time_counter_log('log', 'Finished sync data sites.');
+      mainwp_time_counter_log('log', '[DONE] Finished sync data sites.');
       mainwp_time_counter_log('stop');
       setTimeout(function () {
         mainwpPopup('#mainwp-sync-sites-modal').close(true);
@@ -1254,7 +1256,7 @@ let dashboard_fetching_int = function (pAction, fetchSiteIds) {
                 }
                 if( mainwpVars.is_firstPrefetching || ! mainwpVars.syncSitesLoopRunning){
                     if(mainwpVars.is_firstPrefetching){
-                        mainwp_time_counter_log('log', 'Start sync data sites.');
+                        mainwp_time_counter_log('log', '[START] Start sync data sites.');
                     }
                     mainwpVars.is_firstPrefetching = false;
                     dashboard_loop_next(pAction);

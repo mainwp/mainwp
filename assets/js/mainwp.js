@@ -1042,6 +1042,7 @@ mainwpVars.currentWebsitePrefetching = 0;
 mainwpVars.is_firstPrefetching = true;
 mainwpVars.syncSitesLoopRunning = false;
 mainwpVars.syncSitesCurrentStep = 'start';
+mainwpVars.maxPrefetchNumber = 0; // 0: nolimit.
 
 mainwpVars.maxThreads = mainwpParams['maximumSyncRequests'] == undefined ? 8 : mainwpParams['maximumSyncRequests'];
 let globalSync = true;
@@ -1121,13 +1122,10 @@ let dashboard_update_pick_one_to_sync = function (pAction) {
 let dashboard_update_pick_siteids_to_prefetch = function () {
     let siteids = [];
     let i = 0;
-    let maxPrefetchNumber = mainwpVars.maxThreads; // 0 :nolimit.
-
     if(mainwpVars.currentWebsitePrefetching >= mainwpVars.websitesTotal && mainwpVars.websitesIdsProcessed.length < mainwpVars.websitesTotal ){
         mainwpVars.currentWebsitePrefetching = 0; // need to get to run prefetch one more round, for some sites ids may be skipped, to fix the issue of when some sites still use old child plugin version.
     }
-
-    while(( maxPrefetchNumber === 0 || i < maxPrefetchNumber ) && mainwpVars.currentWebsitePrefetching < mainwpVars.websitesTotal){
+    while(( mainwpVars.maxPrefetchNumber === 0 || i < mainwpVars.maxPrefetchNumber ) && mainwpVars.currentWebsitePrefetching < mainwpVars.websitesTotal){
         let siteid = mainwpVars.websitesToUpdate[mainwpVars.currentWebsitePrefetching++];
         if(! mainwpVars.websitesIdsProcessed.includes(siteid) && !mainwpVars.websitesIdsPrefetched.includes(siteid)){
             siteids.push(siteid);

@@ -1024,12 +1024,21 @@
 .mainwp-ui.mainwp-custom-theme [data-tooltip]::before,
 .mainwp-ui.mainwp-custom-theme [data-tooltip]::after,
 .mainwp-ui.mainwp-custom-theme .ui.slider [data-tooltip][data-variation="black"]::after,
-.mainwp-ui.mainwp-custom-theme .ui.popup:not(.calendar, .menu, .mainwp-popup-tooltip):before,
-.mainwp-ui.mainwp-custom-theme .ui.popup:not(.calendar, .menu, .mainwp-popup-tooltip):after {
+.mainwp-ui.mainwp-custom-theme .ui.popup:not(.calendar, .menu, .mainwp-popup-tooltip, .mainwp-help-popup):before,
+.mainwp-ui.mainwp-custom-theme .ui.popup:not(.calendar, .menu, .mainwp-popup-tooltip, .mainwp-help-popup):after {
   background: var(--mainwp-element-background-secondary) !important;
   border: 1px solid var(--mainwp-element-background-secondary) !important;
   color: var(--mainwp-text) !important;
   box-shadow: none !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .mainwp-help-popup:before {
+  background: #fff !important;
+  border: #fff !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .mainwp-help-popup .ui.header {
+  color: #1c1d1b !important;
 }
 
 /* Placeholder */

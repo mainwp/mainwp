@@ -1702,152 +1702,153 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 </div>
             </div>
             <script>
-            const maximumRequests = <?php echo ! empty( get_option( 'mainwp_maximumRequests' ) ) ? esc_js( get_option( 'mainwp_maximumRequests' ) ) : 4; ?>;
-            jQuery('#mainwp_maximumRequests_slider').slider({
-                min: 1,
-                max: 20,
-                start: maximumRequests,
-                step: 1,
-                restrictedLabels: [1,20],
-                showThumbTooltip: true,
-                tooltipConfig: {
-                    position: 'top center',
-                    variation: 'small visible black'
-                },
-                onChange: function(value) {
-                    jQuery('#mainwp_maximumRequests').val(value);
-                }
-            });
-            const minimumDelay = <?php echo ! empty( get_option( 'mainwp_minimumDelay' ) ) ? esc_js( get_option( 'mainwp_minimumDelay' ) ) : 200; ?>;
-            jQuery('#mainwp_minimumDelay_slider').slider({
-                min: 100,
-                max: 5000,
-                start: minimumDelay,
-                step: 100,
-                restrictedLabels: [100,5000],
-                showThumbTooltip: true,
-                tooltipConfig: {
-                    position: 'top center',
-                    variation: 'small visible black'
-                },
-                onChange: function(value) {
-                    jQuery('#mainwp_minimumDelay').val(value);
-                }
-            });
-            const maximumIPRequests = <?php echo ! empty( get_option( 'mainwp_maximumIPRequests' ) ) ? esc_js( get_option( 'mainwp_maximumIPRequests' ) ) : 1; ?>;
-            jQuery('#mainwp_maximumIPRequests_slider').slider({
-                min: 1,
-                max: 10,
-                start: maximumIPRequests,
-                step: 1,
-                restrictedLabels: [1,10],
-                showThumbTooltip: true,
-                tooltipConfig: {
-                    position: 'top center',
-                    variation: 'small visible black'
-                },
-                onChange: function(value) {
-                    jQuery('#mainwp_maximumIPRequests').val(value);
-                }
-            });
-            const minimumIPDelay = <?php echo ! empty( get_option( 'mainwp_minimumIPDelay' ) ) ? esc_js( get_option( 'mainwp_minimumIPDelay' ) ) : 1000; ?>;
-            jQuery('#mainwp_minimumIPDelay_slider').slider({
-                min: 500,
-                max: 5000,
-                start: minimumIPDelay,
-                step: 100,
-                restrictedLabels: [500,5000],
-                showThumbTooltip: true,
-                tooltipConfig: {
-                    position: 'top center',
-                    variation: 'small visible black'
-                },
-                onChange: function(value) {
-                    jQuery('#mainwp_minimumIPDelay').val(value);
-                }
-            });
-            const maximumSyncRequests = <?php echo ! empty( get_option( 'mainwp_maximumSyncRequests' ) ) ? esc_js( get_option( 'mainwp_maximumSyncRequests' ) ) : 8; ?>;
-            jQuery('#mainwp_maximumSyncRequests_slider').slider({
-                min: 1,
-                max: 20,
-                start: maximumSyncRequests,
-                step: 1,
-                restrictedLabels: [1,20],
-                showThumbTooltip: true,
-                tooltipConfig: {
-                    position: 'top center',
-                    variation: 'small visible black'
-                },
-                onChange: function(value) {
-                    jQuery('#mainwp_maximumSyncRequests').val(value);
-                }
-            });
-            const maximumInstallUpdateRequests = <?php echo ! empty( get_option( 'mainwp_maximumInstallUpdateRequests' ) ) ? esc_js( get_option( 'mainwp_maximumInstallUpdateRequests' ) ) : 3; ?>;
-            jQuery('#mainwp_maximumInstallUpdateRequests_slider').slider({
-                min: 1,
-                max: 20,
-                start: maximumInstallUpdateRequests,
-                step: 1,
-                restrictedLabels: [1,20],
-                showThumbTooltip: true,
-                tooltipConfig: {
-                    position: 'top center',
-                    variation: 'small visible black'
-                },
-                onChange: function(value) {
-                    jQuery('#mainwp_maximumInstallUpdateRequests').val(value);
-                }
-            });
-            const maximumUptimeMonitoringRequests = <?php echo ! empty( get_option( 'mainwp_maximum_uptime_monitoring_requests' ) ) ? esc_js( get_option( 'mainwp_maximum_uptime_monitoring_requests' ) ) : 10; ?>;
-            jQuery('#mainwp_maximumUptimeMonitoringRequests_slider').slider({
-                min: 1,
-                max: 100,
-                start: maximumUptimeMonitoringRequests,
-                step: 1,
-                restrictedLabels: [1,100],
-                showThumbTooltip: true,
-                tooltipConfig: {
-                    position: 'top center',
-                    variation: 'small visible black'
-                },
-                onChange: function(value) {
-                    jQuery('#mainwp_maximumUptimeMonitoringRequests').val(value).change();
-                }
-            });
-            jQuery('#mainwp_maximumUptimeMonitoringRequests_slider').slider('set value', maximumUptimeMonitoringRequests);
+            jQuery(document).ready(function() {
+                const maximumRequests = <?php echo ! empty( get_option( 'mainwp_maximumRequests' ) ) ? esc_js( get_option( 'mainwp_maximumRequests' ) ) : 4; ?>;
+                jQuery('#mainwp_maximumRequests_slider').slider({
+                    min: 1,
+                    max: 20,
+                    start: maximumRequests,
+                    step: 1,
+                    restrictedLabels: [1,20],
+                    showThumbTooltip: true,
+                    tooltipConfig: {
+                        position: 'top center',
+                        variation: 'small visible black'
+                    },
+                    onChange: function(value) {
+                        jQuery('#mainwp_maximumRequests').val(value);
+                    }
+                });
+                const minimumDelay = <?php echo ! empty( get_option( 'mainwp_minimumDelay' ) ) ? esc_js( get_option( 'mainwp_minimumDelay' ) ) : 200; ?>;
+                jQuery('#mainwp_minimumDelay_slider').slider({
+                    min: 100,
+                    max: 5000,
+                    start: minimumDelay,
+                    step: 100,
+                    restrictedLabels: [100,5000],
+                    showThumbTooltip: true,
+                    tooltipConfig: {
+                        position: 'top center',
+                        variation: 'small visible black'
+                    },
+                    onChange: function(value) {
+                        jQuery('#mainwp_minimumDelay').val(value);
+                    }
+                });
+                const maximumIPRequests = <?php echo ! empty( get_option( 'mainwp_maximumIPRequests' ) ) ? esc_js( get_option( 'mainwp_maximumIPRequests' ) ) : 1; ?>;
+                jQuery('#mainwp_maximumIPRequests_slider').slider({
+                    min: 1,
+                    max: 10,
+                    start: maximumIPRequests,
+                    step: 1,
+                    restrictedLabels: [1,10],
+                    showThumbTooltip: true,
+                    tooltipConfig: {
+                        position: 'top center',
+                        variation: 'small visible black'
+                    },
+                    onChange: function(value) {
+                        jQuery('#mainwp_maximumIPRequests').val(value);
+                    }
+                });
+                const minimumIPDelay = <?php echo ! empty( get_option( 'mainwp_minimumIPDelay' ) ) ? esc_js( get_option( 'mainwp_minimumIPDelay' ) ) : 1000; ?>;
+                jQuery('#mainwp_minimumIPDelay_slider').slider({
+                    min: 500,
+                    max: 5000,
+                    start: minimumIPDelay,
+                    step: 100,
+                    restrictedLabels: [500,5000],
+                    showThumbTooltip: true,
+                    tooltipConfig: {
+                        position: 'top center',
+                        variation: 'small visible black'
+                    },
+                    onChange: function(value) {
+                        jQuery('#mainwp_minimumIPDelay').val(value);
+                    }
+                });
+                const maximumSyncRequests = <?php echo ! empty( get_option( 'mainwp_maximumSyncRequests' ) ) ? esc_js( get_option( 'mainwp_maximumSyncRequests' ) ) : 8; ?>;
+                jQuery('#mainwp_maximumSyncRequests_slider').slider({
+                    min: 1,
+                    max: 20,
+                    start: maximumSyncRequests,
+                    step: 1,
+                    restrictedLabels: [1,20],
+                    showThumbTooltip: true,
+                    tooltipConfig: {
+                        position: 'top center',
+                        variation: 'small visible black'
+                    },
+                    onChange: function(value) {
+                        jQuery('#mainwp_maximumSyncRequests').val(value);
+                    }
+                });
+                const maximumInstallUpdateRequests = <?php echo ! empty( get_option( 'mainwp_maximumInstallUpdateRequests' ) ) ? esc_js( get_option( 'mainwp_maximumInstallUpdateRequests' ) ) : 3; ?>;
+                jQuery('#mainwp_maximumInstallUpdateRequests_slider').slider({
+                    min: 1,
+                    max: 20,
+                    start: maximumInstallUpdateRequests,
+                    step: 1,
+                    restrictedLabels: [1,20],
+                    showThumbTooltip: true,
+                    tooltipConfig: {
+                        position: 'top center',
+                        variation: 'small visible black'
+                    },
+                    onChange: function(value) {
+                        jQuery('#mainwp_maximumInstallUpdateRequests').val(value);
+                    }
+                });
+                const maximumUptimeMonitoringRequests = <?php echo ! empty( get_option( 'mainwp_maximum_uptime_monitoring_requests' ) ) ? esc_js( get_option( 'mainwp_maximum_uptime_monitoring_requests' ) ) : 10; ?>;
+                jQuery('#mainwp_maximumUptimeMonitoringRequests_slider').slider({
+                    min: 1,
+                    max: 100,
+                    start: maximumUptimeMonitoringRequests,
+                    step: 1,
+                    restrictedLabels: [1,100],
+                    showThumbTooltip: true,
+                    tooltipConfig: {
+                        position: 'top center',
+                        variation: 'small visible black'
+                    },
+                    onChange: function(value) {
+                        jQuery('#mainwp_maximumUptimeMonitoringRequests').val(value).change();
+                    }
+                });
+                jQuery('#mainwp_maximumUptimeMonitoringRequests_slider').slider('set value', maximumUptimeMonitoringRequests);
 
-            jQuery('#mainwp_chunksitesnumber_slider').slider({
-                min: 1,
-                max: 30,
-                start: <?php echo false !== get_option( 'mainwp_chunksitesnumber' ) ? intval( get_option( 'mainwp_chunksitesnumber' ) ) : 10; ?>,
-                step: 1,
-                restrictedLabels: [1,30],
-                showThumbTooltip: true,
-                tooltipConfig: {
-                    position: 'top center',
-                    variation: 'small visible black'
-                },
-                onChange: function(value) {
-                    jQuery('#mainwp_chunksitesnumber').val(value).change();
-                }
-            });
+                jQuery('#mainwp_chunksitesnumber_slider').slider({
+                    min: 1,
+                    max: 30,
+                    start: <?php echo false !== get_option( 'mainwp_chunksitesnumber' ) ? intval( get_option( 'mainwp_chunksitesnumber' ) ) : 10; ?>,
+                    step: 1,
+                    restrictedLabels: [1,30],
+                    showThumbTooltip: true,
+                    tooltipConfig: {
+                        position: 'top center',
+                        variation: 'small visible black'
+                    },
+                    onChange: function(value) {
+                        jQuery('#mainwp_chunksitesnumber').val(value).change();
+                    }
+                });
 
-            jQuery('#mainwp_chunksleepinterval_slider').slider({
-                min: 0,
-                max: 20,
-                start: <?php echo false !== get_option( 'mainwp_chunksleepinterval' ) ? intval( get_option( 'mainwp_chunksleepinterval' ) ) : 5; ?>,
-                step: 1,
-                restrictedLabels: [0,20],
-                showThumbTooltip: true,
-                tooltipConfig: {
-                    position: 'top center',
-                    variation: 'small visible black'
-                },
-                onChange: function(value) {
-                    jQuery('#mainwp_chunksleepinterval').val(value).change();
-                }
+                jQuery('#mainwp_chunksleepinterval_slider').slider({
+                    min: 0,
+                    max: 20,
+                    start: <?php echo false !== get_option( 'mainwp_chunksleepinterval' ) ? intval( get_option( 'mainwp_chunksleepinterval' ) ) : 5; ?>,
+                    step: 1,
+                    restrictedLabels: [0,20],
+                    showThumbTooltip: true,
+                    tooltipConfig: {
+                        position: 'top center',
+                        variation: 'small visible black'
+                    },
+                    onChange: function(value) {
+                        jQuery('#mainwp_chunksleepinterval').val(value).change();
+                    }
+                });
             });
-
             </script>
         <?php
         static::render_footer( 'Advanced' );

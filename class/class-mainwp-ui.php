@@ -2797,8 +2797,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 <div class="content">
                     <div class="ui header"><?php esc_html_e( 'With your MainWP Pro subscription, you get access to:', 'mainwp' ); ?></div>
                     <div class="ui bulleted list">
-                        <div class="item"><?php esc_html_e( 'All 30+ Existing Premium Extensions', 'mainwp' ); ?></div>
-                        <div class="item"><?php esc_html_e( 'All Future Extensions', 'mainwp' ); ?></div>
+                        <div class="item"><?php esc_html_e( 'All 30+ Existing Premium Add-ons', 'mainwp' ); ?></div>
+                        <div class="item"><?php esc_html_e( 'All Future Add-ons', 'mainwp' ); ?></div>
                         <div class="item"><?php esc_html_e( 'Critical Security & Performance Updates', 'mainwp' ); ?></div>
                         <div class="item"><?php esc_html_e( 'Priority Support with Subscription', 'mainwp' ); ?></div>
                         <div class="item"><?php esc_html_e( 'Manage Unlimited Websites', 'mainwp' ); ?></div>
@@ -2806,14 +2806,14 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     <a href="https://mainwp.com/signup/?utm_campaign=Dashboard%20-%20Upgrade%20to%20Pro&utm_source=Dashboard&utm_medium=grey%20link%20modal&utm_term=get%20mainwp%20pro" class="ui big green button" target="_blank">Get MainWP Pro</a> <?php // NOSONAR - noopener - open safe. ?>
                 </div>
             <?php else : ?>
-                <div class="header"><?php esc_html_e( 'Install Extensions', 'mainwp' ); ?></div>
+                <div class="header"><?php esc_html_e( 'Install Add-ons', 'mainwp' ); ?></div>
                 <div class="content">
-                <div class="ui header"><?php esc_html_e( 'Extension not activated', 'mainwp' ); ?></div>
-                <div><?php esc_html_e( 'Go to the ', 'mainwp' ); ?><a href="admin.php?page=Extensions">MainWP > Extensions</a><?php esc_html_e( ' page to install and activate extensions', 'mainwp' ); ?></div>
+                <div class="ui header"><?php esc_html_e( 'Add-on not activated', 'mainwp' ); ?></div>
+                <div><?php esc_html_e( 'Go to the ', 'mainwp' ); ?><a href="admin.php?page=Extensions">MainWP > Extensions</a><?php esc_html_e( ' page to install and activate add-ons.', 'mainwp' ); ?></div>
                 </div>
             <?php endif; ?>
         </div>
-            <?php
+        <?php
     }
 
     /**

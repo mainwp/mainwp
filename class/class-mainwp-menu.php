@@ -868,6 +868,29 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         <i class="question circle outline icon"></i><br/>
                         <span class="ui small text"><?php esc_html_e( 'Support', 'mainwp' ); ?></span>
                     </a>
+                    <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_support_popup' ) ) : ?>
+                    <span class="ui mainwp-help-popup popup" style="width: 200px !important;">
+                        <h4 class="ui header"><?php esc_html_e( 'Feeling stuck?', 'mainwp' ); ?></h4>
+                        <p><?php esc_html_e( 'Help is just a click away.', 'mainwp' ); ?></p>
+                        <a class="ui mini green button mainwp-notice-dismiss" notice-id="mainwp_support_popup" href="#"><?php esc_html_e( 'Thanks!', 'mainwp' ); ?></a>
+                    </span>
+                    <script>
+                    jQuery(document).ready(function() {
+                        jQuery('#mainwp-help-menu-item').popup({
+                            popup : jQuery('.mainwp-help-popup'),
+                            delay : { show: 2000 },
+                            distanceAway : 10,
+                            closable: false,
+                            position : 'top left',
+                        }).popup('show');
+                        
+                        jQuery('.mainwp-help-popup .mainwp-notice-dismiss').on('click', function (e) {
+                            jQuery('.mainwp-help-popup').removeClass('visible').addClass('hidden').hide();
+                            
+                        });
+                    });
+                    </script>
+                    <?php endif; ?>
                 </div>
                 <div id="mainwp-first-level-navigation-version-label">
                     <?php if ( is_array( $all_updates ) && isset( $all_updates['counts']['total'] ) && 0 < $all_updates['counts']['total'] ) : ?>
@@ -1497,3 +1520,8 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         return $san_path === $san_href;
     }
 }
+
+
+
+
+

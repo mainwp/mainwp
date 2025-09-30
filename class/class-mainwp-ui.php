@@ -1774,10 +1774,10 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 }
 
                 // default settings.
-                if ( ! isset( $layout['x'] ) && ! isset( $layout['w'] ) ) {
-                    $layout['w'] = 4;
-                    $layout['h'] = 4;
-                }
+                // if ( ! isset( $layout['x'] ) && ! isset( $layout['w'] ) ) {
+                //     $layout['w'] = 4;
+                //     $layout['h'] = 4;
+                // }
 
                 $layout_attrs_escaped  = ' gs-y="' . ( isset( $layout['y'] ) && -1 !== (int) ( $layout['y'] ) ? esc_attr( $layout['y'] ) : '' ) . '" gs-x="' . ( isset( $layout['x'] ) && - 1 !== (int) $layout['x'] ? esc_attr( $layout['x'] ) : '' ) . '" ';
                 $layout_attrs_escaped .= ' gs-w="' . ( isset( $layout['w'] ) ? esc_attr( $layout['w'] ) : '' ) . '" gs-h="' . ( isset( $layout['h'] ) ? esc_attr( $layout['h'] ) : '' ) . '" ';

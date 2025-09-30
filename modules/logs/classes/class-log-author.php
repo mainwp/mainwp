@@ -112,6 +112,9 @@ class Log_Author {
         if ( ! empty( $this->meta['full_name'] ) ) {
             $fullname = esc_html( $this->meta['full_name'] );
         }
+        if ( empty( $fullname ) && ! empty( $this->meta['display_name'] ) ) {
+            $fullname = esc_html( $this->meta['display_name'] );
+        }
         if ( empty( $fullname ) && ! empty( $this->meta['username'] ) ) {
                 $fullname = esc_html( $this->meta['username'] );
         }

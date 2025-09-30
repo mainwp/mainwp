@@ -113,6 +113,19 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
 
         register_rest_route(
             $this->namespace,
+            '/' . $this->rest_base . '/basic',
+            array(
+                array(
+                    'methods'             => WP_REST_Server::READABLE,
+                    'callback'            => array( $this, 'get_basic_monitors' ),
+                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'args'                => $this->get_monitors_allowed_fields(),
+                ),
+            )
+        );
+
+        register_rest_route(
+            $this->namespace,
             '/' . $this->rest_base . '/count',
             array(
                 array(
@@ -226,6 +239,60 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             // Filter data by allowed fields.
             $data[] = $this->filter_response_data_by_allowed_fields( $record, 'view' );
         }
+
+        return rest_ensure_response(
+            array(
+                'success' => 1,
+                'total'   => count( $data ),
+                'data'    => $data,
+            )
+        );
+    }
+
+    /**
+     * Get basic all Monitors.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     *
+     * @uses MainWP_DB_Uptime_Monitoring::instance()->get_monitors()
+     * @return WP_Error|WP_REST_Response
+     */
+    public function get_basic_monitors( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $args   = $this->prepare_objects_query( $request );
+        $db     = MainWP_DB_Uptime_Monitoring::instance();
+        $params = array(
+            'exclude'  => ! empty( $args['exclude'] ) ? $args['exclude'] : '',
+            'include'  => ! empty( $args['include'] ) ? $args['include'] : '',
+            'status'   => ! empty( $args['status'] ) ? $args['status'] : '',
+            'search'   => ! empty( $args['s'] ) ? $args['s'] : '',
+            'page'     => ! empty( $args['paged'] ) ? (int) $args['paged'] : 1,
+            'per_page' => ! empty( $args['items_per_page'] ) ? (int) $args['items_per_page'] : 20,
+        );
+
+        // Get data from uptime monitoring DB.
+        $monitors = $db->get_monitors( $params ); // get monitors.
+        if ( empty( $monitors ) || ! is_array( $monitors ) ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 1,
+                    'total'   => 0,
+                    'data'    => array(),
+                )
+            );
+        }
+
+        // Filter data by allowed fields.
+        $data = array_map(
+            function ( $monitor ) {
+                $record = array(
+                    'id'     => $monitor->monitor_id,
+                    'url'    => $monitor->url ?? '',
+                    'status' => $this->uptime_status( $monitor->last_status ?? null ),
+                );
+                return $this->filter_response_data_by_allowed_fields( $record, 'simple_view' );
+            },
+            $monitors
+        );
 
         return rest_ensure_response(
             array(

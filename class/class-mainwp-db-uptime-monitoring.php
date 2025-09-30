@@ -442,6 +442,21 @@ KEY idx_wpid (wpid)";
             $params['custom_where'] .= ' AND (wp.name LIKE "%' . $search_term . '%" OR wp.url LIKE "%' . $search_term . '%" OR mo.suburl LIKE "%' . $search_term . '%")';
         }
 
+        // Handel page and per_page.
+        $page     = '';
+        $per_page = '';
+        if ( isset( $params['page'] ) && ! empty( $params['page'] ) ) {
+            $page = (int) $params['page'];
+        }
+
+        if ( isset( $params['per_page'] ) && ! empty( $params['per_page'] ) ) {
+            $per_page = (int) $params['per_page'];
+        }
+
+        if ( ! empty( $page ) && ! empty( $per_page ) ) {
+            $params['str_limit'] = ' LIMIT ' . ( $page - 1 ) * $per_page . ', ' . $per_page;
+        }
+
         if ( empty( $params['view'] ) ) {
             $params['view'] = 'monitor_view';
         }
@@ -805,6 +820,11 @@ KEY idx_wpid (wpid)";
         $limit_str = '';
         if ( ! empty( $limit ) ) {
             $limit_str = ' LIMIT ' . intval( $limit );
+        }
+
+        // Handle page and per_page.
+        if ( ! empty( $params['str_limit'] ) ) {
+            $limit_str = $params['str_limit'];
         }
 
         $qry = 'SELECT ' . $select . '
@@ -1329,6 +1349,16 @@ KEY idx_wpid (wpid)";
             }
             $sql = $this->wpdb->prepare( 'SELECT stho.* FROM ' . $this->table_name( 'monitor_stat_hourly' ) . ' stho WHERE stho.monitor_id = %d AND stho.timestamp >= %d  ORDER BY stho.timestamp ASC ', $monitor_id, $value );
             return $this->wpdb->get_results( $sql, $obj );
+        } elseif ( 'between' === $by ) {
+            if ( empty( $value ) ) {
+                return false;
+            }
+            $day   = gmdate( 'Y-m-d', $value );
+            $start = strtotime( $day . ' 00:00:00' );
+            $end   = strtotime( $day . ' 23:59:59' );
+
+            $sql = $this->wpdb->prepare( 'SELECT stho.* FROM ' . $this->table_name( 'monitor_stat_hourly' ) . ' stho WHERE stho.monitor_id = %d AND stho.timestamp BETWEEN %d AND %d ORDER BY stho.timestamp ASC ', $monitor_id, $start, $end );
+            return $this->wpdb->get_results( $sql, $obj );
         }
         return false;
     }
@@ -1391,5 +1421,50 @@ KEY idx_wpid (wpid)";
         }
 
         return false;
+    }
+
+    /**
+     * Count the number of transitions (up -> down or down -> up) for a monitor_id in the time period.
+     *
+     * @param int    $monitor_id ID of the monitor.
+     * @param string $start_at Start date (Y-m-d H:i:s).
+     * @param string $end_at End date (Y-m-d H:i:s).
+     * @param string $transition Transition type: 'up_to_down' or 'down_to_up'.
+     *
+     * @return int Number of transitions.
+     */
+    public function count_site_incidents_stats( $monitor_id, $start_at, $end_at, $transition = 'up_to_down' ) {
+        $start      = ! empty( $start_at ) ? $start_at . ' 00:00:00' : gmdate( 'Y-m-d 00:00:00', time() - 7 * DAY_IN_SECONDS );
+        $end        = ! empty( $end_at ) ? $end_at . ' 23:59:59' : gmdate( 'Y-m-d 23:59:59', time() );
+        $table_name = $this->table_name( 'monitor_heartbeat' );
+
+        // Define conditions by transition type.
+        if ( 'up_to_down' === $transition ) {
+            $current_status = MainWP_Uptime_Monitoring_Connect::DOWN;
+            $prev_status    = MainWP_Uptime_Monitoring_Connect::UP;
+        } elseif ( 'down_to_up' === $transition ) {
+            $current_status = MainWP_Uptime_Monitoring_Connect::UP;
+            $prev_status    = MainWP_Uptime_Monitoring_Connect::DOWN;
+        } else {
+            return 0; // Return 0 if transition type is invalid.
+        }
+
+        $sql = "SELECT COUNT(*) AS transition_count
+            FROM {$table_name} h
+            LEFT JOIN {$table_name} p
+            ON p.monitor_id = h.monitor_id
+            AND p.time = (
+                SELECT MAX(time)
+                FROM {$table_name}
+                WHERE monitor_id = h.monitor_id
+                    AND time < h.time
+            )
+            WHERE h.monitor_id = %d
+            AND h.time BETWEEN %s AND %s
+            AND h.status = %d
+            AND p.status = %d";
+
+        $query = $this->wpdb->prepare( $sql, $monitor_id, $start, $end, $current_status, $prev_status );
+        return (int) $this->wpdb->get_var( $query );
     }
 }

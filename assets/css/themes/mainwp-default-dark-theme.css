@@ -1032,9 +1032,10 @@
   box-shadow: none !important;
 }
 
+.mainwp-ui.mainwp-custom-theme .mainwp-help-popup,
 .mainwp-ui.mainwp-custom-theme .mainwp-help-popup:before {
-  background: #fff !important;
-  border: #fff !important;
+  background: var(--mainwp-text) !important;
+  border: var(--mainwp-text) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .mainwp-help-popup .ui.header {

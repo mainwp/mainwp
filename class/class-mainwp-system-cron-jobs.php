@@ -1730,6 +1730,11 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         $managed_processes = array_values( $valid_processes );
 
+        // to fix.
+        if ( empty( $managed_processes ) ) {
+            return;
+        }
+
         $count = count( $managed_processes );
 
         $current_pid = (int) get_option( 'mainwp_regular_sequence_current_process_pid', 0 );

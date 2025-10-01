@@ -18,6 +18,8 @@ use MainWP\Dashboard\Module\Log\Log_Manager;
  */
 class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
+    // phpcs:disable WordPress.DB.RestrictedFunctions, Generic.Metrics.CyclomaticComplexity, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
+
     /**
      * Clone websites setting.
      *
@@ -203,6 +205,10 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $synclist             = MainWP_Settings::get_instance()->get_data_list_to_sync();
             $postdata['syncdata'] = wp_json_encode( $synclist );
 
+            if ( ! empty( $params['get_sync_postdata'] ) ) {
+                return $postdata;
+            }
+
             $information = MainWP_Connect::fetch_url_authed(
                 $pWebsite,
                 'stats',
@@ -230,6 +236,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             return static::sync_information_array( $pWebsite, $information, $sync_errors, false, true, $pAllowDisconnect );
         }
     }
+
 
     /**
      * Method sync_information_array()

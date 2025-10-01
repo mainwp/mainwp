@@ -1040,10 +1040,12 @@ mainwpVars.websitesIdsPrefetched = [];
 mainwpVars.websitesIdsProcessed = [];
 mainwpVars.currentWebsitePrefetching = 0;
 mainwpVars.is_firstPrefetching = true;
-mainwpVars.syncSitesLoopRunning = false;
 mainwpVars.syncSitesCurrentStep = 'start';
 mainwpVars.maxThreads = mainwpParams['maximumSyncRequests'] == undefined ? 8 : mainwpParams['maximumSyncRequests'];
-mainwpVars.maxPrefetchNumber = 0; // 0: nolimit.
+mainwpVars.maxPrefetchNumber = mainwpVars.maxThreads * 2; // 0: nolimit.
+
+mainwpVars.syncPrefetchSyncRunning = false;
+mainwpVars.syncSitesLoopRunning = false;
 
 let globalSync = true;
 
@@ -1063,7 +1065,6 @@ window.dashboard_update = function (websiteIds, isGlobalSync, pAction) {
         fetchSiteIds = dashboard_update_pick_siteids_to_prefetch();
         if(fetchSiteIds.length){
             mainwp_time_counter_log('start');
-            mainwp_time_counter_log('log', '[PREFETCH] Rrefetch sync data enabled.');
             mainwp_time_counter_log('log', '[START] Start prefetch sync data sites.');
             dashboard_fetching_int(pAction, fetchSiteIds );
             fistPrefetchRunning = true;
@@ -1071,7 +1072,6 @@ window.dashboard_update = function (websiteIds, isGlobalSync, pAction) {
     }
     if(!fistPrefetchRunning){
         mainwp_time_counter_log('start');
-        mainwp_time_counter_log('log', '[PREFETCH] Rrefetch sync data disabled.');
         mainwp_time_counter_log('log', '[START] Start sync data sites.');
         dashboard_loop_next(pAction);
     }
@@ -1110,11 +1110,21 @@ let dashboard_update_pick_one_to_sync = function (pAction) {
     for (let i = 0; i < mainwpVars.websitesToUpdate.length; i++) {
         siteid = mainwpVars.websitesToUpdate[i];
         let prefetched = true; //default is true.
-        if('checknow' !== pAction && globalSync && mainwpVars.enablePrefetching ){
-            prefetched = mainwpVars.websitesIdsPrefetched.includes(siteid);
+        if ('checknow' !== pAction && globalSync && mainwpVars.enablePrefetching) {
+            prefetched = mainwpVars.websitesIdsPrefetched.includes(parseInt(siteid));
         }
-        if(prefetched && !mainwpVars.websitesIdsProcessed.includes(siteid)){
+        if (prefetched && !mainwpVars.websitesIdsProcessed.includes(siteid)) {
             break; // get it.
+        }
+        // if prefetch sync stopped.
+        if (!mainwpVars.syncPrefetchSyncRunning) {
+            // Pick a site ID that has not been processed..
+            for (let j = 0; j < mainwpVars.websitesToUpdate.length; j++) {
+                siteid = mainwpVars.websitesToUpdate[j];
+                if (!mainwpVars.websitesIdsProcessed.includes(siteid)) {
+                    return siteid;
+                }
+            }
         }
         siteid = 0; // re-set siteid.
     }
@@ -1124,12 +1134,12 @@ let dashboard_update_pick_one_to_sync = function (pAction) {
 let dashboard_update_pick_siteids_to_prefetch = function () {
     let siteids = [];
     let i = 0;
-    if(mainwpVars.currentWebsitePrefetching >= mainwpVars.websitesTotal && mainwpVars.websitesIdsProcessed.length < mainwpVars.websitesTotal ){
-        mainwpVars.currentWebsitePrefetching = 0; // need to get to run prefetch one more round, for some sites ids may be skipped, to fix the issue of when some sites still use old child plugin version.
+    if(mainwpVars.currentWebsitePrefetching >= mainwpVars.websitesTotal && mainwpVars.websitesIdsProcessed.length < mainwpVars.websitesTotal && mainwpVars.websitesIdsPrefetched.length < mainwpVars.websitesTotal ){
+        //mainwpVars.currentWebsitePrefetching = 0; // need to get to run prefetch one more round, for some sites ids may be skipped, to fix the issue of when some sites still use old child plugin version.
     }
-    while(( mainwpVars.maxPrefetchNumber === 0 || i < mainwpVars.maxPrefetchNumber ) && mainwpVars.currentWebsitePrefetching < mainwpVars.websitesTotal){
+    while(( mainwpVars.maxPrefetchNumber === 0 || i < mainwpVars.maxPrefetchNumber ) && mainwpVars.currentWebsitePrefetching < mainwpVars.websitesTotal && i < mainwpVars.websitesTotal ){
         let siteid = mainwpVars.websitesToUpdate[mainwpVars.currentWebsitePrefetching++];
-        if(! mainwpVars.websitesIdsProcessed.includes(siteid) && !mainwpVars.websitesIdsPrefetched.includes(siteid)){
+        if(! mainwpVars.websitesIdsProcessed.includes(siteid) && ! mainwpVars.websitesIdsPrefetched.includes(siteid) ){
             siteids.push(siteid);
             i++;
         }
@@ -1150,14 +1160,14 @@ let dashboard_update_done = function (pAction, callNext) {
     let successSites = jQuery('#mainwp-sync-sites-modal .check.green.icon').length;
     if (mainwpVars.websitesDone == successSites) {
       mainwpVars.bulkTaskRunning = false;
-      mainwp_time_counter_log('log', '[DONE] Finished sync data sites.');
-      mainwp_time_counter_log('stop');
       setTimeout(function () {
         mainwpPopup('#mainwp-sync-sites-modal').close(true);
       }, 3000);
     } else {
       mainwpVars.bulkTaskRunning = false;
     }
+    mainwp_time_counter_log('log', '[DONE] Finished sync data sites.');
+    mainwp_time_counter_log('stop');
     return;
   }
   if(typeof callNext !== 'undefined' || !callNext){
@@ -1179,7 +1189,7 @@ let dashboard_update_next = function (pAction, websiteId) {
     action: ('checknow' == pAction ? 'mainwp_checksites' : 'mainwp_syncsites'),
     wp_id: websiteId,
     isGlobalSync: globalSync,
-    fetched_stats: mainwpVars.enablePrefetching ? 1 : 0
+    fetched_stats: globalSync && mainwpVars.enablePrefetching ? 1 : 0
   });
   dashboard_update_next_int(websiteId, data, 0, pAction);
 };
@@ -1219,9 +1229,11 @@ let dashboard_update_next_int = function (websiteId, data, errors, action) {
 
 let dashboard_fetching_int = function (pAction, fetchSiteIds) {
     if(fetchSiteIds.length === 0){
+        mainwpVars.syncPrefetchSyncRunning = false;
         mainwp_time_counter_log('log', 'Empty sites IDs to run prefetch sync.');
         return;
     }
+    mainwpVars.syncPrefetchSyncRunning = true;
     mainwp_time_counter_log('log', 'Running prefetch sync data sites.');
     jQuery('#sync-sites-prefetching-status').html('<span><i class="sync alternate loading icon"></i> ' + __('Prefetch syncing data. Please wait...', 'mainwp') + '</span>' );
     let data = mainwp_secure_data({
@@ -1242,7 +1254,9 @@ let dashboard_fetching_int = function (pAction, fetchSiteIds) {
                 if (response?.success) {
                     if (response?.fetching_wp_ids) {
                         response.fetching_wp_ids.forEach((id, index) => {
-                            mainwpVars.websitesIdsPrefetched.push(id);
+                            if (!mainwpVars.websitesIdsPrefetched.includes(id)) {
+                                mainwpVars.websitesIdsPrefetched.push(id);
+                            }
                         })
                     }
                     if (response?.synced_ids) {
@@ -5018,9 +5032,3 @@ let mainwp_time_counter_log = function(action, log ){
     }
     return false;
 }
-
-jQuery(function ($) {
-    setTimeout(function () {
-        mainwp_time_counter_log('get');
-    }, 1000);
-});

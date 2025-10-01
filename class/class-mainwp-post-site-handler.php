@@ -392,33 +392,62 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
 
         $this->secure_request( 'mainwp_prefetchsyncsites' );
 
+        $disabled_functions = ini_get( 'disable_functions' );
+
+        $multi_exec = false;
+
+        if ( empty( $disabled_functions ) || ( false === stristr( $disabled_functions, 'curl_multi_exec' ) ) ) {
+            $multi_exec = true;
+        }
+
         $site_ids = isset( $_POST['site_ids'] ) && is_array( $_POST['site_ids'] ) ? array_map( 'intval', wp_unslash( $_POST['site_ids'] ) ) : array(); //phpcs:ignore -- ok.
         $site_ids = array_filter( $site_ids );
 
-        $params = array(
-            'fetch_stats' => 'prefetch_stats',
-        );
+
 
         $fetching_wp_ids = array();
         $synced_ids      = array();
 
-        foreach ( $site_ids as $k ) {
-            if ( MainWP_Utility::ctype_digit( $k ) ) {
-                $website = MainWP_DB::instance()->get_website_by_id( $k );
-                if ( '' !== $website->sync_errors ) {
-                    continue;
+        if ( $multi_exec && ! empty( $site_ids ) ) {
+
+            $results = MainWP_Connect::fetch_prefetch_sync_sites( $site_ids );
+
+            if ( is_array( $results ) ) {
+                foreach ( $results as $site_id => $info ) {
+                    if ( ! is_array( $info ) ) {
+                        continue;
+                    }
+                    if ( ! empty( $info['fetching_stats'] ) ) {
+                        $fetching_wp_ids[] = $site_id;
+                    } elseif ( ! empty( $info['synced_data'] ) ) {
+                        $synced_ids[] = $site_id; // synced site, which sites still use older child plugin version.
+                    }
                 }
+            }
+        } elseif ( ! $multi_exec ) {
+            $params = array(
+                'fetch_stats' => 'prefetch_stats',
+            );
 
-                $info = MainWP_Sync::sync_website( $website, true, $params );
+            foreach ( $site_ids as $k ) {
+                if ( MainWP_Utility::ctype_digit( $k ) ) {
+                    $website = MainWP_DB::instance()->get_website_by_id( $k );
+                    if ( '' !== $website->sync_errors ) {
+                        continue;
+                    }
 
-                if ( is_array( $info ) && ! empty( $info['fetching_stats'] ) ) {
-                    $fetching_wp_ids[] = $website->id;
-                } elseif ( true === $info ) {
-                    $synced_ids[] = $website->id; // synced site, which sites still use older child plugin version.
-                    break;  // ignore others ids to sure it does not run so long.
+                    $info = MainWP_Sync::sync_website( $website, true, $params );
+
+                    if ( is_array( $info ) && ! empty( $info['fetching_stats'] ) ) {
+                        $fetching_wp_ids[] = $website->id;
+                    } elseif ( true === $info ) {
+                        $synced_ids[] = $website->id; // synced site, which sites still use older child plugin version.
+                        break;  // ignore others ids to sure it does not run so long.
+                    }
                 }
             }
         }
+
         wp_send_json(
             array(
                 'success'         => 1,

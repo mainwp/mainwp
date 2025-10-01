@@ -1762,6 +1762,296 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
+     * Method fetch_prefetch_sync_sites()
+     *
+     * @param array $site_ids           Array of site ids to sync.
+     *
+     * @return array Prefetch results
+     */
+    public static function fetch_prefetch_sync_sites( $site_ids ) {
+
+        if ( empty( $site_ids ) || ! is_array( $site_ids ) ) {
+            return array(); // nothing to do.
+        }
+
+        // concurrency level (tune).
+        $concurrency    = 10;
+        $timeoutConnect = 3;   // seconds.
+        $timeoutTotal   = 10;  // seconds.
+        $maxRetries     = 2;
+
+        $mh      = curl_multi_init();
+        $handles = array();
+        $queue   = array();
+        $results = array();
+
+        foreach ( $site_ids as $id ) {
+            $queue[] = array(
+                'id'      => $id,
+                'retries' => 0,
+            );
+        }
+
+        $active = 0;
+
+        // closure to create and configure a single cURL handle.
+        // inside your existing function (adapted).
+        $create_handle = function ( $item ) use ( $timeoutConnect, $timeoutTotal ) {
+            $ch         = curl_init();
+            $agent      = 'Mozilla/5.0 (compatible; MainWP/' . \MainWP\Dashboard\MainWP_System::$version . '; +http://mainwp.com)';
+            $postFields = $item['payload'];
+            $postdata   = $item['postdata'];
+
+            $headers           = array( 'X-Requested-With' => 'XMLHttpRequest' );
+            $headers['Expect'] = static::get_expect_header( $postdata );
+
+            /**
+             * Filter: mainwp_sync_prefetch_http_request_headers
+             *
+             * @since 5.5
+             */
+            $headers = apply_filters( 'mainwp_sync_prefetch_http_request_headers', $headers, $item );
+
+            if ( class_exists( '\WpOrg\Requests\Requests' ) ) {
+                $headers = \WpOrg\Requests\Requests::flatten( $headers );
+            } else {
+                $headers = \Requests::flatten( $headers );
+            }
+
+            curl_setopt_array( //phpcs:ignore -- ok.
+                $ch,
+                array(
+                    CURLOPT_URL            => $item['url'],
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_FOLLOWLOCATION => true,
+                    CURLOPT_CONNECTTIMEOUT => $timeoutConnect,
+                    CURLOPT_TIMEOUT        => $timeoutTotal,
+                    CURLOPT_HTTPHEADER     => $headers,
+                    CURLOPT_USERAGENT      => $agent,
+                    CURLOPT_FORBID_REUSE   => false,
+                    CURLOPT_FRESH_CONNECT  => false,
+                    CURLOPT_POST           => true,
+                    CURLOPT_POSTFIELDS     => $postFields,
+                    CURLOPT_HEADER         => false,
+                )
+            );
+            return $ch;
+        };
+
+        $dirs      = MainWP_System_Utility::get_mainwp_dir();
+        $cookieDir = $dirs[0] . 'cookies';
+
+        static::init_cookiesdir( $cookieDir );
+
+        $proxy = new \WP_HTTP_Proxy();
+
+        $running = null;
+
+        while ( ! empty( $queue ) || $active > 0 ) {
+            // start new handles while under concurrency limit.
+            while ( $active < $concurrency && ! empty( $queue ) ) {
+                $item    = array_shift( $queue );
+                $site_id = $item['id'];
+
+                if ( ! MainWP_Utility::ctype_digit( $site_id ) ) {
+                    continue;
+                }
+
+                if ( empty( $item['payload'] ) ) {
+
+                    $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+
+                    if ( '' !== $website->sync_errors ) {
+                        continue;
+                    }
+
+                    $params = array(
+                        'fetch_stats'       => 'prefetch_stats',
+                        'get_sync_postdata' => 1,
+                    );
+
+                    $postdata = MainWP_Sync::sync_site( $website, false, false, false, $params );
+
+                    $item['postdata'] = $postdata;
+                    $item['payload']  = static::get_post_data_authed( $website, 'stats', $postdata );
+
+                    $tmpUrl = $website->url;
+                    if ( '/' !== substr( $tmpUrl, - 1 ) ) {
+                        $tmpUrl .= '/';
+                    }
+
+                    if ( false === strpos( $tmpUrl, 'wp-admin' ) ) {
+                        $tmpUrl .= 'wp-admin/admin-ajax.php';
+                    }
+                    $url = $tmpUrl;
+
+                    $item['url']  = $url;
+                    $item['name'] = $website->name;
+                    $item['wpe']  = property_exists( $website, 'wpe' ) && 1 === (int) $website->wpe ? true : false;
+                }
+
+                $ch = $create_handle( $item );
+                if ( $ch ) {
+
+                    if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
+                        curl_setopt( $ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP );
+                        curl_setopt( $ch, CURLOPT_PROXY, $proxy->host() );
+                        curl_setopt( $ch, CURLOPT_PROXYPORT, $proxy->port() );
+
+                        if ( $proxy->use_authentication() ) {
+                            curl_setopt( $ch, CURLOPT_PROXYAUTH, CURLAUTH_ANY );
+                            curl_setopt( $ch, CURLOPT_PROXYUSERPWD, $proxy->authentication() );
+                        }
+                    }
+
+                    if ( ! $item['wpe'] ) {
+                        // to fix.
+                        if ( defined( 'LOGGED_IN_SALT' ) && defined( 'NONCE_SALT' ) ) {
+                            $cookie_salt = sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $site_id ) . NONCE_SALT . 'WP_Cookie' ); // NOSONAR - safe for salt file name.
+                        } else {
+                            $cookie_salt = sha1( sha1( 'mainwp' . $site_id ) . 'WP_Cookie' ); // NOSONAR - safe for salt file name.
+                        }
+                        $cookieFile = $cookieDir . '/' . $cookie_salt;
+                        if ( ! file_exists( $cookieFile ) ) {
+                            @file_put_contents( $cookieFile, '' );
+                        }
+
+                        if ( file_exists( $cookieFile ) ) {
+                            @chmod( $cookieFile, 0644 ); // NOSONAR - correct file permissions, owner: rwe, group & others: r.
+                            curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
+                            curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
+                        }
+                    }
+                }
+                curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
+                curl_multi_add_handle( $mh, $ch );
+
+                $key             = (int) $ch;
+                $handles[ $key ] = array(
+                    'ch'   => $ch,
+                    'meta' => $item,
+                );
+                ++$active;
+            }
+
+            // drive the state machine.
+            do {
+                $mrc = curl_multi_exec( $mh, $running );
+            } while ( CURLM_CALL_MULTI_PERFORM === $mrc );
+
+            // wait for activity — handle curl_multi_select() == -1.
+            $select = curl_multi_select( $mh, 1.0 );
+
+            if ( -1 === $select ) {
+                // avoid busy loop when select fails; short sleep.
+                usleep( 200000 ); // 200ms.
+            }
+
+            // collect finished handles.
+            while ( $info = curl_multi_info_read( $mh ) ) {
+                $ch  = $info['handle'];
+                $key = (int) $ch;
+                if ( ! isset( $handles[ $key ] ) ) {
+                    // unknown handle (shouldn't happen) — cleanup and continue.
+                    curl_multi_remove_handle( $mh, $ch );
+                    curl_close( $ch );
+                    continue;
+                }
+
+                $meta      = $handles[ $key ]['meta'];
+                $data      = curl_multi_getcontent( $ch );
+                $errno     = curl_errno( $ch );
+                $err       = curl_error( $ch );
+                $http_code = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
+
+                // cleanup handle.
+                curl_multi_remove_handle( $mh, $ch );
+                curl_close( $ch );
+                unset( $handles[ $key ] );
+                --$active;
+
+                $_url = $meta['url'];
+
+                $_website       = new stdClass();
+                $_website->url  = $_url;
+                $_website->name = $meta['name'];
+
+                MainWP_Logger::instance()->debug_for_website( $_website, 'prefetch_sync_sites', '[' . $_url . ']' );
+
+                if ( empty( $data ) && empty( $http_code ) ) {
+                    MainWP_Logger::instance()->debug_for_website( $_website, 'prefetch_sync_sites', '[' . $_url . '] HTTP Error: [status=0][' . $err . ']' );
+                }
+
+                $successful = false;
+
+                if ( 0 === $errno && ( (int) 200 <= $http_code && (int) 300 > $http_code || 304 === (int) $http_code ) ) {
+                    $information = array();
+                    if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $matchs ) ) {
+                        $match_data  = $matchs[1];
+                        $information = MainWP_System_Utility::get_child_response( base64_decode( $match_data ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+                    } elseif ( 200 === (int) $http_code && ! empty( $err ) ) {
+                        MainWP_Logger::instance()->debug_for_website( $_website, 'prefetch_sync_sites', '[' . $_url . '] Error: ' . $err );
+                    } else {
+                        MainWP_Logger::instance()->debug_for_website( $_website, 'prefetch_sync_sites', '[' . $_url . '] Error: NOMAINWP' );
+                    }
+
+                    unset( $data );
+
+                    $result = array(
+                        'success'   => true,
+                        'http_code' => $http_code,
+                        'attempts'  => $meta['retries'] + 1,
+                    );
+
+                    // Stats fetching triggered on child; do not update sync info array.
+                    if ( ! empty( $params['fetch_stats'] ) && ! empty( $information['fetching_stats'] ) ) {
+                        $result['fetching_stats'] = 1;
+                    } else {
+                        // compatible with sites with previous child version (5.5).
+                        $pWebsite = MainWP_DB::instance()->get_website_by_id( $meta['id'] );
+                        $done     = static::sync_information_array( $pWebsite, $information, '', false, false, true );
+
+                        if ( $done ) {
+                            $result['synced_data'] = 1;
+                        }
+
+                        MainWP_Logger::instance()->log_execution_time( 'sync :: [siteid=' . $pWebsite->id . ']' );
+                    }
+
+                    $result['attempts']     = $meta['retries'] + 1;
+                    $results[ $meta['id'] ] = $result;
+                    $successful             = true;
+                }
+
+                if ( ! $successful ) {
+                    // prepare error info (so we know why it failed).
+                    $results[ $meta['id'] ] = array(
+                        'success'   => false,
+                        'http_code' => $http_code,
+                        'errno'     => $errno,
+                        'attempts'  => $meta['retries'] + 1,
+                    );
+
+                    if ( $meta['retries'] < $maxRetries ) {
+                        ++$meta['retries'];
+                        // simple backoff: increase sleep slightly by retry count.
+                        usleep( (int) ( 0.1 * 1000000 ) * $meta['retries'] ); // 100ms * retries.
+                        $queue[] = $meta;
+                    } else { //phpcs:ignore -- ok.
+                        // final failure.
+                    }
+                }
+            } // end while info.
+        } // end while queue/active.
+
+        // cleanup.
+        curl_multi_close( $mh );
+
+        return $results;
+    }
+
+
+    /**
      * Method download_to_file()
      *
      * Download to file.

@@ -136,6 +136,19 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 ),
             )
         );
+
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/(?P<id_domain>(\d+|[A-Za-z0-9-\.]*[A-Za-z0-9-]{1,63}\.[A-Za-z]{2,6}))',
+            array(
+                array(
+                    'methods'             => WP_REST_Server::READABLE,
+                    'callback'            => array( $this, 'get_monitor' ),
+                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'args'                => $this->get_monitor_allowed_id_domain_field(),
+                ),
+            )
+        );
     }
 
     /**
@@ -147,7 +160,6 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      * @uses MainWP_DB_Uptime_Monitoring::instance()->get_uptime_monitor_stat_hourly_by()
      * @uses MainWP_Uptime_Monitoring_Handle::get_hourly_key_by_timestamp()
      * @uses MainWP_DB_Uptime_Monitoring::instance()->count_site_incidents_stats()
-     * @uses MainWP_Uptime_Monitoring_Connect::get_apply_setting()
      *
      * @return WP_Error|WP_REST_Response
      */
@@ -198,23 +210,9 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             $incidents_7d  = (int) $db->count_site_incidents_stats( $monitor_id, $one_week_ago, $today );
             $incidents_30d = (int) $db->count_site_incidents_stats( $monitor_id, $one_month_ago, $today );
 
-            // Get monitor type.
-            $type = MainWP_Uptime_Monitoring_Connect::get_apply_setting(
-                'type',
-                $monitor->type ?? '',
-                $this->global_settings,
-                'useglobal',
-                'http'
-            );
-
-            // Get check frequency.
-            $interval_min = (int) MainWP_Uptime_Monitoring_Connect::get_apply_setting(
-                'interval',
-                (int) ( $monitor->interval ?? 0 ),
-                $this->global_settings,
-                -1,
-                60
-            );
+            // Get monitor type & check frequency.
+            $type         = $this->get_apply_setting( 'type', $monitor->type ?? '', 'useglobal', 'http' );
+            $interval_min = (int) $this->get_apply_setting( 'interval', (int) ( $monitor->interval ?? 0 ), -1, 60 );
 
             $record = array(
                 'monitor_id'           => $monitor_id,
@@ -333,6 +331,87 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         );
     }
 
+
+    /**
+     * Get Monitor.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     *
+     * @uses MainWP_Uptime_Monitoring_Handle::get_hourly_key_by_timestamp()
+     * @uses MainWP_DB_Uptime_Monitoring::instance()->get_uptime_monitor_stat_hourly_by()
+     * @uses MainWP_DB_Uptime_Monitoring::instance()->count_site_incidents_stats()
+     * @uses MainWP_DB_Uptime_Monitoring::instance()->get_uptime_monitoring_stats()
+     *
+     * @return WP_Error|WP_REST_Response
+     */
+    public function get_monitor( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $monitor = $this->get_request_item( $request );
+
+        if ( empty( $monitor ) ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 0,
+                    'message' => __( 'Monitor not found.', 'mainwp' ),
+                )
+            );
+        }
+
+        $db = MainWP_DB_Uptime_Monitoring::instance();
+
+        // Get reports data.
+        $now           = time();
+        $today         = gmdate( 'Y-m-d', $now );
+        $one_month_ago = gmdate( 'Y-m-d', $now - 30 * DAY_IN_SECONDS );
+        $one_week_ago  = gmdate( 'Y-m-d', $now - 7 * DAY_IN_SECONDS );
+        // Get last 24h hourly key.
+        $last24_key   = MainWP_Uptime_Monitoring_Handle::get_hourly_key_by_timestamp( $now - DAY_IN_SECONDS );
+        $monitor_id   = (int) ( $monitor->monitor_id ?? 0 );
+        $reports_data = apply_filters( 'mainwp_uptime_monitoring_get_reports_data', $monitor_id, $one_month_ago, $today );
+
+        // Get 24h uptime data as array.
+        $status_24h  = $db->get_uptime_monitor_stat_hourly_by( $monitor_id, 'last24', $last24_key );
+        $last24_data = $this->get_uptime_24h_data( $status_24h, $last24_key );
+
+        // Get 7d and 30d incidents data.
+        $incidents_7d  = (int) $db->count_site_incidents_stats( $monitor_id, $one_week_ago, $today );
+        $incidents_30d = (int) $db->count_site_incidents_stats( $monitor_id, $one_month_ago, $today );
+
+        // Get full heartbeat data.
+        $heartbeat_data = $db->get_uptime_monitoring_stats( $monitor_id, $one_month_ago, $today );
+
+        // Get monitor type & check frequency.
+        $type         = $this->get_apply_setting( 'type', $monitor->type ?? '', 'useglobal', 'http' );
+        $interval_min = (int) $this->get_apply_setting( 'interval', (int) ( $monitor->interval ?? 0 ), -1, 60 );
+
+        $record = array(
+            'monitor_id'           => $monitor_id,
+            'wpid'                 => $monitor->wpid,
+            'name'                 => $monitor->name ?? '',
+            'url'                  => $monitor->url ?? '',
+            'uptime_ratio_7d'      => (float) ( $reports_data['uptime_ratios_data']['uptimeratios7'] ?? 0 ),
+            'uptime_ratio_30d'     => (float) ( $reports_data['uptime_ratios_data']['uptimeratios30'] ?? 0 ),
+            'uptime_24h'           => $last24_data,
+            'incidents_count_7d'   => $incidents_7d,
+            'incidents_count_30d'  => $incidents_30d,
+            'type'                 => $type ? $type : 'http',
+            'check_frequency'      => $interval_min > 0 ? ( $interval_min . 'm' ) : '',
+            'response_time_avg_ms' => (int) ( $reports_data['avg_time_ms'] ?? 0 ),
+            'response_time_min_ms' => (int) ( $reports_data['min_time_ms'] ?? 0 ),
+            'response_time_max_ms' => (int) ( $reports_data['max_time_ms'] ?? 0 ),
+            'heartbeats'           => $heartbeat_data ?? array(),
+            'last_check_at'        => ! empty( $monitor->lasttime_check ) ? gmdate( 'Y-m-d H:i:s', (int) $monitor->lasttime_check ) : '',
+            'status_code'          => ! empty( $monitor->last_http_code ) ? (int) $monitor->last_http_code : '',
+            'status'               => $this->uptime_status( $monitor->last_status ?? null ),
+        );
+
+        return rest_ensure_response(
+            array(
+                'success' => 1,
+                'data'    => $this->filter_response_data_by_allowed_fields( $record, 'view' ),
+            )
+        );
+    }
+
     /**
      * Get uptime status.
      *
@@ -340,7 +419,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      *
      * @return string Uptime status.
      */
-    public function uptime_status( $status ) {
+    private function uptime_status( $status ) {
         switch ( $status ) {
             case 0:
                 return 'down';
@@ -353,6 +432,64 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             default:
                 return 'unknown';
         }
+    }
+
+    /**
+     * Get monitor by.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     *
+     * @uses MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by()
+     *
+     * @return WP_Error|Object Item.
+     */
+    private function get_request_item( $request ) {
+        // Get id or domain raw value.
+        $raw = (string) $request->get_param( 'id_domain' );
+        $raw = trim( $raw );
+
+        if ( empty( $raw ) ) {
+            return false;
+        }
+
+        $db = MainWP_DB_Uptime_Monitoring::instance();
+        // Get monitor by monitor id.
+        if ( ctype_digit( $raw ) ) {
+            $monitor_id = (int) $raw;
+            return $db->get_monitor_by( false, 'monitor_id', $monitor_id );
+        }
+
+        // Get monitor by domain.
+        $domain  = strtolower( rtrim( rawurldecode( $raw ), '/' ) );
+        $website = $this->get_site_by( 'domain', $domain );
+        if ( empty( $website ) ) {
+            return false;
+        }
+
+        $site_id = (int) $website->id;
+        return $db->get_monitor_by( $site_id, 'wpid', $site_id );
+    }
+
+    /**
+     * Get apply setting.
+     *
+     * @param string $name Name.
+     * @param mixed  $indiv_setting Individual setting.
+     * @param mixed  $global_value Global value.
+     * @param mixed  $default_value Default value.
+     *
+     * @uses MainWP_Uptime_Monitoring_Connect::get_apply_setting()
+     *
+     * @return mixed
+     */
+    private function get_apply_setting( $name, $indiv_setting, $global_value, $default_value ) {
+        return MainWP_Uptime_Monitoring_Connect::get_apply_setting(
+            $name,
+            $indiv_setting,
+            $this->global_settings,
+            $global_value,
+            $default_value
+        );
     }
 
     /**
@@ -389,6 +526,21 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             $hourly_key = MainWP_Uptime_Monitoring_Handle::get_hourly_key_by_timestamp( $hourly_key + HOUR_IN_SECONDS );
         }
         return $uptime_24h;
+    }
+
+    /**
+     * Get allowed fields for monitors.
+     *
+     * @return array
+     */
+    private function get_monitor_allowed_id_domain_field() {
+        return array(
+            'id_domain' => array(
+                'description'       => __( 'Site ID (number) or domain (string).', 'mainwp' ),
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ),
+        );
     }
 
     /**
@@ -504,9 +656,10 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      */
     private function field_include() {
         return array(
-            'required'    => false,
-            'type'        => 'string',
-            'description' => __( 'Include monitor IDs (CSV).', 'mainwp' ),
+            'required'          => false,
+            'type'              => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+            'description'       => __( 'Include monitor IDs.', 'mainwp' ),
         );
     }
 
@@ -517,9 +670,10 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      */
     private function field_exclude() {
         return array(
-            'required'    => false,
-            'type'        => 'string',
-            'description' => __( 'Exclude monitor IDs (CSV).', 'mainwp' ),
+            'required'          => false,
+            'type'              => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+            'description'       => __( 'Exclude monitor IDs.', 'mainwp' ),
         );
     }
 
@@ -575,7 +729,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                     'context'     => array( 'view' ),
                 ),
                 'uptime_24h'           => array(
-                    'type'        => 'çååå',
+                    'type'        => 'array',
                     'description' => __( 'Uptime % for last 24h', 'mainwp' ),
                     'context'     => array( 'view' ),
                     'items'       => array(
@@ -625,6 +779,11 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 'response_time_max_ms' => array(
                     'type'        => 'integer',
                     'description' => __( 'Max response time (ms)', 'mainwp' ),
+                    'context'     => array( 'view' ),
+                ),
+                'heartbeats'           => array(
+                    'type'        => 'array',
+                    'description' => __( 'Heartbeats data for last 30 days', 'mainwp' ),
                     'context'     => array( 'view' ),
                 ),
             ),

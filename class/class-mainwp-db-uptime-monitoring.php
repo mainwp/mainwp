@@ -360,7 +360,7 @@ KEY idx_wpid (wpid)";
             $params['wpid'] = $site_id;
         }
 
-        if ( in_array( $by, array( 'suburl', 'monitor_id', 'issub' ), true ) ) {
+        if ( in_array( $by, array( 'suburl', 'monitor_id', 'issub', 'wpid' ), true ) ) {
             $params[ $by ] = $value;
         } else {
             return false;
@@ -427,7 +427,7 @@ KEY idx_wpid (wpid)";
         // Handel include.
         if ( isset( $params['include'] ) && ! empty( $params['include'] ) ) {
             $include_ids             = wp_parse_id_list( $params['include'] );
-            $params['custom_where'] .= empty( $exclude_ids ) ? '' : ' AND mo.wpid IN (' . implode( ',', $include_ids ) . ')';
+            $params['custom_where'] .= empty( $include_ids ) ? '' : ' AND mo.wpid IN (' . implode( ',', $include_ids ) . ')';
         }
 
         // Handel status.
@@ -1466,5 +1466,28 @@ KEY idx_wpid (wpid)";
 
         $query = $this->wpdb->prepare( $sql, $monitor_id, $start, $end, $current_status, $prev_status );
         return (int) $this->wpdb->get_var( $query );
+    }
+
+    /**
+     * Get uptime monitoring stats.
+     *
+     * @param int    $monitor_id Monitor ID.
+     * @param string $start_at Start date (Y-m-d).
+     * @param string $end_at End date (Y-m-d).
+     *
+     * @return array Database query results or empty.
+     */
+    public function get_uptime_monitoring_stats( $monitor_id, $start_at, $end_at ) {
+        $start      = ! empty( $start_at ) ? $start_at . ' 00:00:00' : gmdate( 'Y-m-d 00:00:00', time() - 7 * DAY_IN_SECONDS );
+        $end        = ! empty( $end_at ) ? $end_at . ' 23:59:59' : gmdate( 'Y-m-d 23:59:59', time() );
+        $table_name = $this->table_name( 'monitor_heartbeat' );
+
+        $sql = "SELECT  * FROM {$table_name} h
+            WHERE h.monitor_id = %d
+            AND h.time BETWEEN %s AND %s
+            ORDER BY h.time ASC";
+
+        $query = $this->wpdb->prepare( $sql, $monitor_id, $start, $end );
+        return $this->wpdb->get_results( $query, ARRAY_A );
     }
 }

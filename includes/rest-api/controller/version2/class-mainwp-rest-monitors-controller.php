@@ -149,6 +149,20 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 ),
             )
         );
+
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/(?P<id_domain>(\d+|[A-Za-z0-9-\.]*[A-Za-z0-9-]{1,63}\.[A-Za-z]{2,6}))/basic',
+            array(
+                array(
+                    'methods'             => WP_REST_Server::READABLE,
+                    'callback'            => array( $this, 'get_basic_monitor' ),
+                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'args'                => $this->get_monitor_allowed_id_domain_field(),
+                ),
+            )
+        );
+
     }
 
     /**
@@ -408,6 +422,39 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             array(
                 'success' => 1,
                 'data'    => $this->filter_response_data_by_allowed_fields( $record, 'view' ),
+            )
+        );
+    }
+
+    /**
+     * Get Basic Monitor.
+     *
+     * @param mixed $request Full details about the request.
+     * @return WP_Error|WP_REST_Response
+     */
+    public function get_basic_monitor( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $monitors = $this->get_request_item( $request );
+
+        if ( empty( $monitors ) ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 0,
+                    'message' => __( 'Monitor not found.', 'mainwp' ),
+                )
+            );
+        }
+
+        // Filter data by allowed fields.
+        $data = array(
+            'monitor_id' => $monitors->monitor_id,
+            'url'        => $monitors->url ?? '',
+            'status'     => $this->uptime_status( $monitors->last_status ?? null ),
+        );
+
+        return rest_ensure_response(
+            array(
+                'success' => 1,
+                'data'    => $this->filter_response_data_by_allowed_fields( $data, 'simple_view' ),
             )
         );
     }

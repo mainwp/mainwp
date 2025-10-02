@@ -18,7 +18,7 @@ use MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle;
  */
 class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:ignore -- NOSONAR - multi methods.
 
-    // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
+	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
     /**
      * Protected static variable to hold the single instance of the class.
@@ -60,6 +60,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      */
     public function __construct() {
         add_filter( 'mainwp_rest_routes_monitors_controller_filter_allowed_fields_by_context', array( $this, 'hook_filter_allowed_fields_by_context' ), 10, 2 );
+        add_filter( 'mainwp_rest_heartbeat_monitor_object_query', array( $this, 'heartbeat_monitor_custom_query_args' ), 10, 2 );
 
         $this->global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
     }
@@ -92,12 +93,33 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
+     * Add custom query args.
+     *
+     * @param array           $args    Query args.
+     * @param WP_REST_Request $request Request object.
+     *
+     * @return array
+     */
+    public function heartbeat_monitor_custom_query_args( $args, $request ) {
+        // Add custom args for heartbeat endpoint.
+        if ( ! empty( $request['period'] ) ) {
+            $args['period'] = $request['period'];
+        }
+
+        if ( ! empty( $request['since'] ) ) {
+            $args['since'] = $request['since'];
+        }
+
+        return $args;
+    }
+
+    /**
      * Method register_routes()
      *
      * Creates the necessary endpoints for the api.
      * Note, for a request to be successful the URL query parameters consumer_key and consumer_secret need to be set and correct.
      */
-    public function register_routes() { // phpcs:ignore -- NOSONAR - complex.
+	public function register_routes() { // phpcs:ignore -- NOSONAR - complex.
         register_rest_route(
             $this->namespace,
             '/' . $this->rest_base,
@@ -163,6 +185,18 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             )
         );
 
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/(?P<id_domain>(\d+|[A-Za-z0-9-\.]*[A-Za-z0-9-]{1,63}\.[A-Za-z]{2,6}))/heartbeat',
+            array(
+                array(
+                    'methods'             => WP_REST_Server::READABLE,
+                    'callback'            => array( $this, 'get_heartbeat_monitor' ),
+                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'args'                => $this->get_monitor_heartbeat_allowed_fields(),
+                ),
+            )
+        );
     }
 
     /**
@@ -177,7 +211,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      *
      * @return WP_Error|WP_REST_Response
      */
-    public function get_monitors( $request ) { // phpcs:ignore -- NOSONAR - complex.
+	public function get_monitors( $request ) { // phpcs:ignore -- NOSONAR - complex.
         $args   = $this->prepare_objects_query( $request );
         $db     = MainWP_DB_Uptime_Monitoring::instance();
         $params = array(
@@ -229,8 +263,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             $interval_min = (int) $this->get_apply_setting( 'interval', (int) ( $monitor->interval ?? 0 ), -1, 60 );
 
             $record = array(
-                'monitor_id'           => $monitor_id,
-                'wpid'                 => $wpid,
+                'id'                   => $monitor_id,
                 'name'                 => $monitor->name ?? '',
                 'url'                  => $monitor->url ?? '',
                 'uptime_ratio_7d'      => (float) ( $reports_data['uptime_ratios_data']['uptimeratios7'] ?? 0 ),
@@ -269,7 +302,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      * @uses MainWP_DB_Uptime_Monitoring::instance()->get_monitors()
      * @return WP_Error|WP_REST_Response
      */
-    public function get_basic_monitors( $request ) { // phpcs:ignore -- NOSONAR - complex.
+    public function get_basic_monitors( $request ) {
         $args   = $this->prepare_objects_query( $request );
         $db     = MainWP_DB_Uptime_Monitoring::instance();
         $params = array(
@@ -327,10 +360,10 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         $args = $this->prepare_objects_query( $request );
 
         $params = array(
-            'exclude' => isset( $args['exclude'] ) && ! empty( $args['exclude'] ) ? $args['exclude'] : '',
-            'include' => isset( $args['include'] ) && ! empty( $args['include'] ) ? $args['include'] : '',
-            'status'  => isset( $args['status'] ) && ! empty( $args['status'] ) ? $args['status'] : '',
-            'search'  => isset( $args['s'] ) && ! empty( $args['s'] ) ? $args['s'] : '',
+            'exclude' => ! empty( $args['exclude'] ) ? $args['exclude'] : '',
+            'include' => ! empty( $args['include'] ) ? $args['include'] : '',
+            'status'  => ! empty( $args['status'] ) ? $args['status'] : '',
+            'search'  => ! empty( $args['s'] ) ? $args['s'] : '',
         );
 
         // Get data from uptime monitoring DB.
@@ -340,7 +373,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         return rest_ensure_response(
             array(
                 'success' => 1,
-                'total'   => $total,
+                'count'   => $total,
             )
         );
     }
@@ -358,7 +391,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      *
      * @return WP_Error|WP_REST_Response
      */
-    public function get_monitor( $request ) { // phpcs:ignore -- NOSONAR - complex.
+	public function get_monitor( $request ) { // phpcs:ignore -- NOSONAR - complex.
         $monitor = $this->get_request_item( $request );
 
         if ( empty( $monitor ) ) {
@@ -398,8 +431,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         $interval_min = (int) $this->get_apply_setting( 'interval', (int) ( $monitor->interval ?? 0 ), -1, 60 );
 
         $record = array(
-            'monitor_id'           => $monitor_id,
-            'wpid'                 => $monitor->wpid,
+            'id'                   => $monitor_id,
             'name'                 => $monitor->name ?? '',
             'url'                  => $monitor->url ?? '',
             'uptime_ratio_7d'      => (float) ( $reports_data['uptime_ratios_data']['uptimeratios7'] ?? 0 ),
@@ -421,7 +453,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         return rest_ensure_response(
             array(
                 'success' => 1,
-                'data'    => $this->filter_response_data_by_allowed_fields( $record, 'view' ),
+                'data'    => $this->filter_response_data_by_allowed_fields( $record, 'monitor_view' ),
             )
         );
     }
@@ -432,7 +464,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      * @param mixed $request Full details about the request.
      * @return WP_Error|WP_REST_Response
      */
-    public function get_basic_monitor( $request ) { // phpcs:ignore -- NOSONAR - complex.
+	public function get_basic_monitor( $request ) { // phpcs:ignore -- NOSONAR - complex.
         $monitors = $this->get_request_item( $request );
 
         if ( empty( $monitors ) ) {
@@ -446,9 +478,9 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
 
         // Filter data by allowed fields.
         $data = array(
-            'monitor_id' => $monitors->monitor_id,
-            'url'        => $monitors->url ?? '',
-            'status'     => $this->uptime_status( $monitors->last_status ?? null ),
+            'id'     => $monitors->monitor_id,
+            'url'    => $monitors->url ?? '',
+            'status' => $this->uptime_status( $monitors->last_status ?? null ),
         );
 
         return rest_ensure_response(
@@ -457,6 +489,159 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 'data'    => $this->filter_response_data_by_allowed_fields( $data, 'simple_view' ),
             )
         );
+    }
+
+    /**
+     * Get Monitor Heartbeat.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     *
+     * @uses MainWP_DB_Uptime_Monitoring::instance()->get_heartbeat_count()
+     *
+     * @return WP_Error|WP_REST_Response
+     */
+	public function get_heartbeat_monitor( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $monitor = $this->get_request_item( $request );
+
+        if ( empty( $monitor ) ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 0,
+                    'message' => __( 'Monitor not found.', 'mainwp' ),
+                )
+            );
+        }
+
+        // Get params.
+        $args   = $this->prepare_objects_query( $request, 'heartbeat_monitor' );
+        $params = array(
+            'limit'  => ! empty( $args['limit'] ) ? (int) $args['limit'] : 50,
+            'period' => ! empty( $args['period'] ) ? $args['period'] : '24h',
+            'status' => ! empty( $args['status'] ) ? $args['status'] : '',
+            'since'  => ! empty( $args['since'] ) ? $args['since'] : '',
+            'page'   => ! empty( $args['page'] ) ? (int) $args['page'] : 1,
+        );
+
+        // Parse period to date range.
+        $date_range = $this->parse_period( $params['period'] );
+        if ( is_wp_error( $date_range ) ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 0,
+                    'message' => __( 'Invalid period format.', 'mainwp' ),
+                )
+            );
+        }
+
+        $db         = MainWP_DB_Uptime_Monitoring::instance();
+        $monitor_id = (int) ( $monitor->monitor_id ?? 0 );
+        // Get total count for pagination.
+        $total_count = $db->get_heartbeat_count( $monitor_id, $date_range, $params['status'] );
+        if ( empty( $total_count ) ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 0,
+                    'message' => __( 'No heartbeats found.', 'mainwp' ),
+                )
+            );
+        }
+
+        // Calculate pagination.
+        $per_page    = $params['limit'];
+        $page        = $params['page'];
+        $total_pages = $per_page > 0 ? ceil( $total_count / $per_page ) : 1;
+        $offset      = ( $page - 1 ) * $per_page;
+
+        // Get heartbeats with pagination..
+        $heartbeats = $db->get_heartbeat_data_paginated(
+            $monitor->monitor_id,
+            $date_range,
+            $params['status'],
+            $per_page,
+            $offset
+        );
+
+        if ( empty( $heartbeats ) || ! is_array( $heartbeats ) ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 0,
+                    'message' => __( 'No heartbeats found.', 'mainwp' ),
+                )
+            );
+        }
+
+        $formatted_heartbeats = array();
+        foreach ( $heartbeats as $heartbeat ) {
+            $record                 = array(
+                'heartbeat_id' => (int) $heartbeat->heartbeat_id,
+                'monitor_id'   => (int) $heartbeat->monitor_id,
+                'msg'          => ! empty( $heartbeat->msg ) ? $heartbeat->msg : '',
+                'importance'   => (int) $heartbeat->importance,
+                'status'       => (int) $heartbeat->status,
+                'time'         => gmdate( 'Y-m-d\TH:i:s\Z', strtotime( $heartbeat->time ) ),
+                'ping_ms'      => ! empty( $heartbeat->ping_ms ) ? (int) $heartbeat->ping_ms : null,
+                'http_code'    => ! empty( $heartbeat->http_code ) ? (int) $heartbeat->http_code : null,
+            );
+            $formatted_heartbeats[] = $this->filter_response_data_by_allowed_fields( $record, 'heartbeat_view' );
+        }
+
+        return rest_ensure_response(
+            array(
+                'success' => 1,
+                'data'    => $formatted_heartbeats,
+                'meta'    => array(
+                    'page'        => $page,
+                    'per_page'    => $per_page,
+                    'total'       => $total_count,
+                    'total_pages' => $total_pages,
+                ),
+            )
+        );
+    }
+
+    /**
+     * Parse period to date range.
+     *
+     * @param string $period Period.
+     *
+     * @return array|WP_Error Date range or WP_Error.
+     */
+    private function parse_period( $period ) {
+        $now = time();
+
+        switch ( $period ) {
+            case '24h':
+                return array(
+                    'start' => gmdate( 'Y-m-d H:i:s', $now - DAY_IN_SECONDS ),
+                    'end'   => gmdate( 'Y-m-d H:i:s', $now ),
+                );
+            case '7d':
+                return array(
+                    'start' => gmdate( 'Y-m-d H:i:s', $now - 7 * DAY_IN_SECONDS ),
+                    'end'   => gmdate( 'Y-m-d H:i:s', $now ),
+                );
+            case '30d':
+                return array(
+                    'start' => gmdate( 'Y-m-d H:i:s', $now - 30 * DAY_IN_SECONDS ),
+                    'end'   => gmdate( 'Y-m-d H:i:s', $now ),
+                );
+            default:
+                // Try to parse as ISO8601 range (start/end).
+                if ( strpos( $period, '/' ) !== false ) {
+                    $parts = explode( '/', $period );
+                    if ( count( $parts ) === 2 ) {
+                        $start = strtotime( $parts[0] );
+                        $end   = strtotime( $parts[1] );
+                        if ( $start && $end && $start < $end ) {
+                            return array(
+                                'start' => gmdate( 'Y-m-d H:i:s', $start ),
+                                'end'   => gmdate( 'Y-m-d H:i:s', $end ),
+                            );
+                        }
+                    }
+                }
+                return new WP_Error( 'invalid_period', __( 'Invalid period format.', 'mainwp' ) );
+        }
     }
 
     /**
@@ -576,6 +761,157 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
+     * Get allowed fields for monitor heartbeat.
+     *
+     * @return array
+     */
+    private function get_monitor_heartbeat_allowed_fields() {
+        $args = array(
+            'limit'  => array(
+                'required'          => false,
+                'type'              => 'integer',
+                'sanitize_callback' => 'absint',
+                'default'           => 50,
+                'description'       => __( 'Limit number of heartbeats.', 'mainwp' ),
+            ),
+            'period' => array(
+                'required'          => false,
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+                'validate_callback' => array( $this, 'validate_period_param' ),
+                'default'           => '24h',
+                'description'       => __( 'Time period (24h, 7d, 30d, or ISO8601 range like 2024-01-01T00:00:00Z/2024-01-02T00:00:00Z).', 'mainwp' ),
+            ),
+            'since'  => array(
+                'required'          => false,
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+                'validate_callback' => array( $this, 'validate_datetime_param' ),
+                'description'       => __( 'ISO8601 datetime, only return newer entries.', 'mainwp' ),
+            ),
+            'status' => $this->field_status(),
+            'page'   => $this->field_page(),
+        );
+        return array_merge( $args, $this->get_monitor_allowed_id_domain_field() );
+    }
+
+    /**
+     * Validate period parameter.
+     *
+     * @param string          $value Period value.
+     * @param WP_REST_Request $request Request object.
+     * @param string          $param Parameter name.
+     * @return bool|WP_Error
+     */
+    public function validate_period_param( $value, $request, $param ) {
+        if ( empty( $value ) ) {
+            return true; // Allow empty, will use default.
+        }
+
+        // Check predefined periods.
+        $allowed_periods = array( '24h', '7d', '30d' );
+        if ( in_array( $value, $allowed_periods, true ) ) {
+            return true;
+        }
+
+        // Check ISO8601 range format (start/end).
+        if ( strpos( $value, '/' ) !== false ) {
+            $parts = explode( '/', $value );
+            if ( count( $parts ) !== 2 ) {
+                return new WP_Error(
+                    'invalid_period_format',
+                    __( 'ISO8601 range must be in format: start/end (e.g., 2024-01-01T00:00:00Z/2024-01-02T00:00:00Z)', 'mainwp' )
+                );
+            }
+
+            $start_time = $this->validate_iso8601_datetime( $parts[0] );
+            $end_time   = $this->validate_iso8601_datetime( $parts[1] );
+
+            if ( ! $start_time ) {
+                return new WP_Error(
+                    'invalid_start_datetime',
+                    __( 'Invalid start datetime format. Use ISO8601 format (e.g., 2024-01-01T00:00:00Z)', 'mainwp' )
+                );
+            }
+
+            if ( ! $end_time ) {
+                return new WP_Error(
+                    'invalid_end_datetime',
+                    __( 'Invalid end datetime format. Use ISO8601 format (e.g., 2024-01-01T00:00:00Z)', 'mainwp' )
+                );
+            }
+
+            if ( $start_time >= $end_time ) {
+                return new WP_Error(
+                    'invalid_date_range',
+                    __( 'Start datetime must be earlier than end datetime.', 'mainwp' )
+                );
+            }
+
+            return true;
+        }
+
+        return new WP_Error(
+            'invalid_period',
+            sprintf(
+                __( 'Invalid period format. Allowed values: %s or ISO8601 range (start/end)', 'mainwp' ),
+                implode( ', ', $allowed_periods )
+            )
+        );
+    }
+
+    /**
+     * Validate datetime parameter.
+     *
+     * @param string          $value Datetime value.
+     * @param WP_REST_Request $request Request object.
+     * @param string          $param Parameter name.
+     * @return bool|WP_Error
+     */
+    public function validate_datetime_param( $value, $request, $param ) {
+        if ( empty( $value ) ) {
+            return true; // Allow empty.
+        }
+
+        if ( ! $this->validate_iso8601_datetime( $value ) ) {
+            return new WP_Error(
+                'invalid_datetime',
+                __( 'Invalid datetime format. Use ISO8601 format (e.g., 2024-01-01T00:00:00Z)', 'mainwp' )
+            );
+        }
+
+        return true;
+    }
+
+    /**
+     * Validate ISO8601 datetime format.
+     *
+     * @param string $datetime Datetime string.
+     * @return int|false Unix timestamp or false if invalid.
+     */
+    private function validate_iso8601_datetime( $datetime ) {
+        // Try to parse various ISO8601 formats.
+        $formats = array(
+            'Y-m-d\TH:i:s\Z',
+            'Y-m-d\TH:i:sP',
+            'Y-m-d\TH:i:s',
+            'Y-m-d H:i:s',
+            'Y-m-d',
+        );
+
+        foreach ( $formats as $format ) {
+            $date = DateTime::createFromFormat( $format, $datetime );
+            if ( $date && $date->format( $format ) === $datetime ) {
+                return $date->getTimestamp();
+            }
+        }
+
+        // Try strtotime as fallback.
+        $timestamp = strtotime( $datetime );
+        return false !== $timestamp ? $timestamp : false;
+    }
+
+    /**
      * Get allowed fields for monitors.
      *
      * @return array
@@ -601,24 +937,8 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             'search'   => $this->field_search(),
             'include'  => $this->field_include(),
             'exclude'  => $this->field_exclude(),
-            'page'     => array(
-                'required'          => false,
-                'type'              => 'integer',
-                'default'           => 1,
-                'minimum'           => 1,
-                'sanitize_callback' => 'absint',
-                'description'       => __( 'Page number.', 'mainwp' ),
-            ),
-            'per_page' => array(
-                'required'          => false,
-                'type'              => 'integer',
-                'sanitize_callback' => 'absint',
-                'minimum'           => 1,
-                'default'           => 20,
-                'maximum'           => 200,
-                'description'       => __( 'Number of monitors per page.', 'mainwp' ),
-            ),
-
+            'page'     => $this->field_page(),
+            'per_page' => $this->field_per_page(),
         );
     }
 
@@ -725,12 +1045,45 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
+     * Get page field.
+     *
+     * @return array
+     */
+    private function field_page() {
+        return array(
+            'required'          => false,
+            'type'              => 'integer',
+            'default'           => 1,
+            'minimum'           => 1,
+            'sanitize_callback' => 'absint',
+            'description'       => __( 'Page number.', 'mainwp' ),
+        );
+    }
+
+    /**
+     * Get per_page field.
+     *
+     * @return array
+     */
+    private function field_per_page() {
+        return array(
+            'required'          => false,
+            'type'              => 'integer',
+            'sanitize_callback' => 'absint',
+            'minimum'           => 1,
+            'default'           => 20,
+            'maximum'           => 200,
+            'description'       => __( 'Number of monitors per page.', 'mainwp' ),
+        );
+    }
+
+    /**
      * Get the Tags schema, conforming to JSON Schema.
      *
      * @since  5.2
      * @return array
      */
-    public function get_item_schema() {
+	public function get_item_schema() {  // phpcs:ignore -- NOSONAR - long schema.
         return array(
             '$schema'    => 'http://json-schema.org/draft-04/schema#',
             'title'      => 'monitors',
@@ -739,46 +1092,63 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 'id'                   => array(
                     'type'        => 'integer',
                     'description' => __( 'Monitor ID.', 'mainwp' ),
-                    'context'     => array( 'view', 'simple_view' ),
+                    'context'     => array( 'view', 'monitor_view', 'simple_view' ),
                     'readonly'    => true,
+                ),
+                'monitor_id'           => array(
+                    'type'        => 'integer',
+                    'readonly'    => true,
+                    'description' => __( 'Monitor ID', 'mainwp' ),
+                    'context'     => array( 'heartbeat_view' ),
+                ),
+                'heartbeat_id'         => array(
+                    'type'        => 'integer',
+                    'readonly'    => true,
+                    'description' => __( 'Heartbeat ID', 'mainwp' ),
+                    'context'     => array( 'heartbeat_view' ),
+                ),
+                'name'                 => array(
+                    'type'        => 'string',
+                    'description' => __( 'Website name.', 'mainwp' ),
+                    'context'     => array( 'view', 'monitor_view' ),
                 ),
                 'url'                  => array(
                     'type'        => 'string',
                     'description' => __( 'Website URL.', 'mainwp' ),
                     'format'      => 'uri',
-                    'context'     => array( 'view', 'simple_view' ),
+                    'context'     => array( 'view', 'monitor_view', 'simple_view' ),
                 ),
                 'type'                 => array(
                     'type'        => 'string',
                     'description' => __( 'Monitor type.', 'mainwp' ),
-                    'context'     => array( 'view' ),
+                    'context'     => array( 'view', 'monitor_view' ),
                 ),
                 'status'               => array(
                     'type'        => 'string',
                     'description' => __( 'Monitor Status.', 'mainwp' ),
                     'enum'        => array( 'up', 'down', 'pending', 'first' ),
-                    'context'     => array( 'view', 'simple_view' ),
+                    'context'     => array( 'view', 'simple_view', 'monitor_view', 'heartbeat_view' ),
                 ),
                 'check_frequency'      => array(
                     'type'        => 'string',
                     'description' => __( 'Check Frequency.', 'mainwp' ),
-                    'context'     => array( 'view' ),
+                    'context'     => array( 'view', 'monitor_view' ),
                 ),
                 'last_check_at'        => array(
                     'type'        => array( 'string', 'null' ),
                     'format'      => 'date-time',
                     'description' => __( 'Check interval (e.g. 1m, 5m)', 'mainwp' ),
-                    'context'     => array( 'view' ),
+                    'context'     => array( 'view', 'monitor_view' ),
                 ),
                 'status_code'          => array(
                     'description' => 'Last HTTP status code if applicable',
                     'type'        => array( 'integer', 'null' ),
-                    'context'     => array( 'view' ),
+                    'context'     => array( 'view', 'monitor_view' ),
                 ),
                 'uptime_24h'           => array(
                     'type'        => 'array',
                     'description' => __( 'Uptime % for last 24h', 'mainwp' ),
-                    'context'     => array( 'view' ),
+                    'context'     => array( 'view', 'monitor_view' ),
                     'items'       => array(
                         'type'       => 'object',
                         'properties' => array(
@@ -796,42 +1166,71 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 'uptime_ratio_7d'      => array(
                     'type'        => 'float',
                     'description' => __( 'Uptime % over last 7 days', 'mainwp' ),
-                    'context'     => array( 'view' ),
+                    'context'     => array( 'view', 'monitor_view' ),
                 ),
                 'uptime_ratio_30d'     => array(
                     'type'        => 'float',
                     'description' => __( 'Uptime % over last 30 days', 'mainwp' ),
-                    'context'     => array( 'view' ),
+                    'context'     => array( 'view', 'monitor_view' ),
                 ),
                 'incidents_count_7d'   => array(
                     'type'        => 'integer',
                     'description' => __( 'Incidents count last 7 days', 'mainwp' ),
-                    'context'     => array( 'view' ),
+                    'context'     => array( 'view', 'monitor_view' ),
                 ),
                 'incidents_count_30d'  => array(
                     'type'        => 'integer',
                     'description' => __( 'Incidents count last 30 days', 'mainwp' ),
-                    'context'     => array( 'view' ),
+                    'context'     => array( 'view', 'monitor_view' ),
                 ),
                 'response_time_avg_ms' => array(
                     'type'        => 'integer',
                     'description' => __( 'Average response time (ms)', 'mainwp' ),
-                    'context'     => array( 'view' ),
+                    'context'     => array( 'view', 'monitor_view' ),
                 ),
                 'response_time_min_ms' => array(
                     'type'        => 'integer',
                     'description' => __( 'Min response time (ms)', 'mainwp' ),
-                    'context'     => array( 'view' ),
+                    'context'     => array( 'view', 'monitor_view' ),
                 ),
                 'response_time_max_ms' => array(
                     'type'        => 'integer',
                     'description' => __( 'Max response time (ms)', 'mainwp' ),
-                    'context'     => array( 'view' ),
+                    'context'     => array( 'view', 'monitor_view' ),
                 ),
                 'heartbeats'           => array(
                     'type'        => 'array',
-                    'description' => __( 'Heartbeats data for last 30 days', 'mainwp' ),
-                    'context'     => array( 'view' ),
+                    'description' => __( 'Uptime % for last 24h', 'mainwp' ),
+                    'context'     => array( 'monitor_view' ),
+                    'items'       => array(
+                        'type' => 'object',
+                    ),
+                ),
+                'msg'                  => array(
+                    'type'        => 'string',
+                    'description' => __( 'Heartbeat message', 'mainwp' ),
+                    'context'     => array( 'heartbeat_view' ),
+                ),
+                'importance'           => array(
+                    'type'        => 'integer',
+                    'description' => __( 'Importance status', 'mainwp' ),
+                    'context'     => array( 'heartbeat_view' ),
+                ),
+                'time'                 => array(
+                    'type'        => 'string',
+                    'format'      => 'date-time',
+                    'description' => __( 'Heartbeat time', 'mainwp' ),
+                    'context'     => array( 'heartbeat_view' ),
+                ),
+                'ping_ms'              => array(
+                    'type'        => 'integer',
+                    'description' => __( 'Ping time (ms)', 'mainwp' ),
+                    'context'     => array( 'heartbeat_view' ),
+                ),
+                'http_code'            => array(
+                    'type'        => 'integer',
+                    'description' => __( 'HTTP status code', 'mainwp' ),
+                    'context'     => array( 'heartbeat_view' ),
                 ),
             ),
         );

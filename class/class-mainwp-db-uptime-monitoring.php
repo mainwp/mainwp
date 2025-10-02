@@ -1490,4 +1490,65 @@ KEY idx_wpid (wpid)";
         $query = $this->wpdb->prepare( $sql, $monitor_id, $start, $end );
         return $this->wpdb->get_results( $query, ARRAY_A );
     }
+
+    /**
+     * Get heartbeat count.
+     *
+     * @param int    $monitor_id Monitor ID.
+     * @param array  $date_range Date range.
+     * @param string $status Status.
+     *
+     * @return int Heartbeat count.
+     */
+    public function get_heartbeat_count( $monitor_id, $date_range, $status = '' ) {
+
+        $table_name = $this->table_name( 'monitor_heartbeat' );
+
+        $where_conditions   = array();
+        $where_conditions[] = $this->wpdb->prepare( 'monitor_id = %d', $monitor_id );
+        $where_conditions[] = $this->wpdb->prepare( 'time >= %s', $date_range['start'] );
+        $where_conditions[] = $this->wpdb->prepare( 'time <= %s', $date_range['end'] );
+
+        if ( ! empty( $status ) ) {
+            $where_conditions[] = $this->wpdb->prepare( 'status = %d', $status );
+        }
+
+        $where_clause = 'WHERE ' . implode( ' AND ', $where_conditions );
+
+        $sql = "SELECT COUNT(*) FROM {$table_name} {$where_clause}";
+
+        return (int) $this->wpdb->get_var( $sql );
+    }
+
+
+    /**
+     * Get heartbeat data paginated.
+     *
+     * @param int    $monitor_id Monitor ID.
+     * @param array  $date_range Date range.
+     * @param string $status Status.
+     * @param int    $per_page Number of items per page.
+     * @param int    $offset Offset.
+     *
+     * @return array Heartbeat data.
+     */
+    public function get_heartbeat_data_paginated( $monitor_id, $date_range, $status = '', $per_page = 50, $offset = 0 ) {
+        $table_name = $this->table_name( 'monitor_heartbeat' );
+
+        $where_conditions   = array();
+        $where_conditions[] = $this->wpdb->prepare( 'monitor_id = %d', $monitor_id );
+        $where_conditions[] = $this->wpdb->prepare( 'time >= %s', $date_range['start'] );
+        $where_conditions[] = $this->wpdb->prepare( 'time <= %s', $date_range['end'] );
+
+        if ( ! empty( $status ) ) {
+            $where_conditions[] = $this->wpdb->prepare( 'status = %d', $status );
+        }
+
+        $where_clause = 'WHERE ' . implode( ' AND ', $where_conditions );
+        $limit_clause = $this->wpdb->prepare( 'LIMIT %d OFFSET %d', $per_page, $offset );
+
+        $sql = "SELECT * FROM {$table_name} {$where_clause} ORDER BY time DESC {$limit_clause}";
+
+        return $this->wpdb->get_results( $sql );
+    }
 }

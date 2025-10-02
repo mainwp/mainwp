@@ -1245,7 +1245,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
      * @return array addition_fields Fields to be included in the response.
      */
     public function filter_response_data_by_allowed_fields( $item, $context = 'view', $addition_fields = array() ) { //phpcs:ignore -- NOSONAR - complex.
-        $data   = $this->filter_response_by_context( $item, 'view' );
+        $data   = $this->filter_response_by_context( $item, $context );
         $fields = $this->get_allowed_fields_by_context( $context );
 
         if ( ! empty( $addition_fields ) && is_array( $addition_fields ) ) {

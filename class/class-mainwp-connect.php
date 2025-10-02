@@ -1972,7 +1972,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
                 $_url = $meta['url'];
 
-                $_website       = new stdClass();
+                $_website       = new \stdClass();
                 $_website->url  = $_url;
                 $_website->name = $meta['name'];
 

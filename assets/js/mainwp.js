@@ -1040,7 +1040,6 @@ mainwpVars.websitesIdsPrefetched = [];
 mainwpVars.websitesIdsProcessed = [];
 mainwpVars.currentWebsitePrefetching = 0;
 mainwpVars.is_firstPrefetching = true;
-mainwpVars.syncSitesCurrentStep = 'start';
 mainwpVars.maxThreads = mainwpParams['maximumSyncRequests'] == undefined ? 8 : mainwpParams['maximumSyncRequests'];
 mainwpVars.maxPrefetchNumber = mainwpVars.maxThreads * 2; // 0: nolimit.
 
@@ -1093,7 +1092,9 @@ window.dashboard_update_site_hide = function (siteId) {
 
 let dashboard_loop_next = function (pAction) {
     while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxThreads) && (mainwpVars.websitesLeft > 0)) {
+
         let websiteId = dashboard_update_pick_one_to_sync(pAction);
+
         if(!websiteId){
             mainwpVars.syncSitesLoopRunning = false;
             break; // need to wait next loop or all processed.
@@ -1116,18 +1117,20 @@ let dashboard_update_pick_one_to_sync = function (pAction) {
         if (prefetched && !mainwpVars.websitesIdsProcessed.includes(siteid)) {
             break; // get it.
         }
-        // if prefetch sync stopped.
-        if (!mainwpVars.syncPrefetchSyncRunning) {
-            // Pick a site ID that has not been processed..
-            for (let j = 0; j < mainwpVars.websitesToUpdate.length; j++) {
-                siteid = mainwpVars.websitesToUpdate[j];
-                if (!mainwpVars.websitesIdsProcessed.includes(siteid)) {
-                    return siteid;
-                }
-            }
-        }
         siteid = 0; // re-set siteid.
     }
+
+    // if empty websiteId and prefetch sync stopped.
+    if (!siteid && !mainwpVars.syncPrefetchSyncRunning) {
+        // Pick a site ID that has not been processed..
+        for (let j = 0; j < mainwpVars.websitesToUpdate.length; j++) {
+            siteid = mainwpVars.websitesToUpdate[j];
+            if (!mainwpVars.websitesIdsProcessed.includes(siteid)) {
+                break; // get it.
+            }
+        }
+    }
+
     return siteid;
 }
 
@@ -1176,7 +1179,6 @@ let dashboard_update_done = function (pAction, callNext) {
 };
 
 let dashboard_update_next = function (pAction, websiteId) {
-
     mainwpVars.currentThreads++;
     mainwpVars.websitesLeft--;
     if ('checknow' == pAction) {
@@ -1268,30 +1270,21 @@ let dashboard_fetching_int = function (pAction, fetchSiteIds) {
                         })
                     }
                 }
-                if( mainwpVars.is_firstPrefetching || ! mainwpVars.syncSitesLoopRunning){
-                    if(mainwpVars.is_firstPrefetching){
+                if (mainwpVars.is_firstPrefetching || !mainwpVars.syncSitesLoopRunning) {
+                    if (mainwpVars.is_firstPrefetching) {
                         mainwp_time_counter_log('log', '[START] Start sync data sites.');
+                        mainwpVars.is_firstPrefetching = false;
                     }
-                    mainwpVars.is_firstPrefetching = false;
                     dashboard_loop_next(pAction);
                 }
-
                 fetchNextIds = dashboard_update_pick_siteids_to_prefetch();
                 dashboard_fetching_int(pAction, fetchNextIds);
             }
         }(),
         error: function () {
             jQuery('#sync-sites-prefetching-status').html('');
-
-            if( mainwpVars.is_firstPrefetching || ! mainwpVars.syncSitesLoopRunning){
-                mainwpVars.is_firstPrefetching = false;
-                dashboard_loop_next(pAction);
-            }
-
             fetchNextIds = dashboard_update_pick_siteids_to_prefetch();
             dashboard_fetching_int(pAction, fetchNextIds);
-
-            //nothing.
         },
         dataType: 'json'
     });
@@ -5026,8 +5019,8 @@ jQuery(document).on('click', '#mainwp-sites-changes-filter-toggle-button', funct
 });
 
 let mainwp_time_counter_log = function(action, log ){
-    if(typeof timeCounterHelper !== 'undefined' ){
-        timeCounterHelper(action, log);
+    if(typeof wpLogsToolHelper !== 'undefined' ){
+        wpLogsToolHelper(action, log);
         return true;
     }
     return false;

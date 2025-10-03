@@ -375,11 +375,20 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                         $website_info = MainWP_DB::instance()->get_website_option( $website, 'site_info' );
                         $website_info = ! empty( $website_info ) ? json_decode( $website_info, true ) : array();
 
+                        $mshot_url = MainWP_UI::mshot_preview_image_url( $website->url );
+
+                        /**
+                         * Hook: Site preview image src.
+                         *
+                         * @since 5.4.0.23.
+                         */
+                        $mshot_url = apply_filters( 'mainwp_screenshots_site_preview_image_src', $mshot_url, $website );
+
                         ?>
 
                         <div class="card" site-url="<?php echo esc_url( $website->url ); ?>">
                             <div class="image" data-tooltip="<?php echo esc_attr( $status_tooltip ); ?>" data-position="top center" data-inverted="">
-                                <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" data-src="<?php echo esc_attr( '//s0.wp.com/mshots/v1/' . rawurlencode( esc_url_raw( $website->url ) ) . '?w=900' ); ?>">
+                                <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" data-src="<?php echo esc_attr( $mshot_url ); ?>">
                             </div>
                             <div class="ui <?php echo esc_attr( $status_color ); ?> corner label">
                                 <i class="<?php echo esc_attr( $status_icon ); ?> icon"></i>

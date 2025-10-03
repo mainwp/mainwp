@@ -1498,8 +1498,18 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 }
                 // phpcs:enable
                 $website = MainWP_DB::instance()->get_website_by_id( $id );
+
+                $mshot_url = static::mshot_preview_image_url( $website->url, false, 'small' );
+
+                /**
+                 * Hook: Site preview image src.
+                 *
+                 * @since 5.4.0.23.
+                 */
+                $mshot_url = apply_filters( 'mainwp_site_preview_image_src', $mshot_url, $website );
+
                 ?>
-                <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" src="<?php echo esc_attr( '//s0.wp.com/mshots/v1/' . rawurlencode( esc_url_raw( $website->url ) ) . '?w=170' ); ?>" id="mainwp-site-preview-image">
+                <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" src="<?php echo esc_attr( $mshot_url ); ?>" id="mainwp-site-preview-image">
             <?php endif; ?>
 
             <div class="ui vertical menu mainwp-page-navigation">
@@ -1553,6 +1563,33 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
 
         <?php
     }
+
+    /**
+     * Generate an mShot URL if given a link URL.
+     *
+     * @param string $linkUrl The link to generate a preview for.
+     * @param int    $retry   If retrying a request, the number of the retry.
+     * @return string The mShot URL.
+     */
+    public static function mshot_preview_image_url( $linkUrl, $retry = false, $thumb = '' ) {
+
+        $thumb_param = '?w=900'; // default size.
+
+        if ( 'small' === $thumb ) {
+            $thumb_param = '?w=170';
+        }
+
+        // Base URL with encoded link.
+        $mshotUrl = '//s0.wp.com/mshots/v1/' . rawurlencode( $linkUrl ) . $thumb_param;
+
+        // Add retry parameter if provided.
+        if ( $retry ) {
+            $mshotUrl .= '&retry=true';
+        }
+
+        return $mshotUrl;
+    }
+
 
     /**
      * Method render_header()

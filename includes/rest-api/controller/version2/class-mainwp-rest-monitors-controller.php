@@ -210,6 +210,19 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 ),
             )
         );
+
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/(?P<id_domain>(\d+|[A-Za-z0-9-\.]*[A-Za-z0-9-]{1,63}\.[A-Za-z]{2,6}))/incidents/count',
+            array(
+                array(
+                    'methods'             => WP_REST_Server::READABLE,
+                    'callback'            => array( $this, 'get_monitor_incidents_count' ),
+                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'args'                => $this->get_monitor_incidents_allowed_fields(),
+                ),
+            )
+        );
     }
 
     /**
@@ -650,7 +663,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         }
 
         // Get heartbeats.
-        $db         = MainWP_DB_Uptime_Monitoring::instance();
+        $db = MainWP_DB_Uptime_Monitoring::instance();
         // Get all heartbeat data for this monitor to process incidents.
         $heartbeats = $db->get_heartbeat_data_for_incidents( $monitor_id );
 
@@ -699,6 +712,85 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             array(
                 'success' => 1,
                 'data'    => $formatted,
+            )
+        );
+    }
+
+    /**
+     * Get Monitor Incidents Count.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     *
+     * @uses MainWP_DB_Uptime_Monitoring::instance()->get_heartbeat_data_for_incidents()
+     *
+     * @return WP_Error|WP_REST_Response
+     */
+    public function get_monitor_incidents_count( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $monitor = $this->get_request_item( $request );
+
+        if ( empty( $monitor ) ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 0,
+                    'message' => __( 'Monitor not found.', 'mainwp' ),
+                )
+            );
+        }
+        // Get Params.
+        $args   = $this->prepare_objects_query( $request );
+        $page   = ! empty( $args['page'] ) ? (int) $args['page'] : 1;
+        $limit  = ! empty( $args['items_per_page'] ) ? (int) $args['items_per_page'] : 20;
+        $offset = ( $page > 1 ? ( $page - 1 ) * $limit : 0 );
+
+        $monitor_id = isset( $monitor->monitor_id ) ? (int) $monitor->monitor_id : 0;
+        if ( $monitor_id <= 0 ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 0,
+                    'message' => __( 'Monitor not found.', 'mainwp' ),
+                )
+            );
+        }
+
+        // Get heartbeats.
+        $db = MainWP_DB_Uptime_Monitoring::instance();
+        // Get all heartbeat data for this monitor to process incidents.
+        $heartbeats = $db->get_heartbeat_data_for_incidents( $monitor_id );
+
+        if ( empty( $heartbeats ) || ! is_array( $heartbeats ) ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 0,
+                    'message' => __( 'No heartbeats found.', 'mainwp' ),
+                )
+            );
+        }
+
+        // Process heartbeats to identify incidents.
+        $incidents = $this->process_heartbeats_to_incidents( $heartbeats );
+
+        if ( empty( $incidents ) ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 1,
+                    'count'   => 0,
+                )
+            );
+        }
+
+        // Paginate incidents.
+        $paginated = array_slice( $incidents, $offset, $limit );
+
+        // Format incidents for response.
+        $down_count = 0;
+        foreach ( $paginated as $incident ) {
+            $down_count += isset( $incident['down_count'] ) ? (int) $incident['down_count'] : 0;
+        }
+
+        return rest_ensure_response(
+            array(
+                'success' => 1,
+                'count'   => $down_count,
             )
         );
     }

@@ -432,8 +432,10 @@ KEY idx_wpid (wpid)";
 
         // Handel status.
         if ( isset( $params['status'] ) && ! empty( $params['status'] ) ) {
-            $status_values           = wp_parse_list( $params['status'] );
-            $params['custom_where'] .= empty( $status_values ) ? '' : ' AND mo.last_status IN (' . implode( ',', $status_values ) . ')';
+            $status_values = array_filter( array_map( 'intval', wp_parse_list( $params['status'] ) ) );
+            if ( ! empty( $status_values ) ) {
+                $params['custom_where'] .= ' AND mo.last_status IN (' . implode( ',', $status_values ) . ')';
+            }
         }
 
         // Handel search.
@@ -1185,7 +1187,7 @@ KEY idx_wpid (wpid)";
         }
 
         $period_date['uptimeratios'] = array(
-            'start' => $params['start'] . ' 00:00:01',
+            'start' => $params['start'] . ' 00:00:00',
             'end'   => $params['end'] . ' 23:59:59',
         );
 
@@ -1208,7 +1210,7 @@ KEY idx_wpid (wpid)";
             ' FROM ' . $this->table_name( 'monitors' ) . ' mo ' .
             ' LEFT JOIN ' . $this->table_name( 'monitor_heartbeat' ) . ' he ' .
             ' ON mo.monitor_id = he.monitor_id ' .
-            ' WHERE mo.wpid = %d LIMIT 1',
+            ' WHERE mo.wpid = %d AND mo.issub = 0 LIMIT 1',
             $siteid
         );
 

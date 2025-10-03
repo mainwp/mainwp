@@ -1551,4 +1551,21 @@ KEY idx_wpid (wpid)";
 
         return $this->wpdb->get_results( $sql );
     }
+
+    /**
+     * Get heartbeat data for incidents processing.
+     *
+     * @param int $monitor_id Monitor ID.
+     * @return array Heartbeat data ordered by time.
+     */
+    public function get_heartbeat_data_for_incidents( $monitor_id ) {
+        $table_name = $this->table_name( 'monitor_heartbeat' );
+
+        $sql = $this->wpdb->prepare(
+            'SELECT status, time FROM ' . $table_name . ' WHERE monitor_id = %d ORDER BY time ASC',
+            $monitor_id
+        );
+
+        return $this->wpdb->get_results( $sql );
+    }
 }

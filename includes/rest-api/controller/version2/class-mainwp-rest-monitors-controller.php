@@ -18,7 +18,7 @@ use MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle;
  */
 class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:ignore -- NOSONAR - multi methods.
 
-	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
+    // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
     /**
      * Protected static variable to hold the single instance of the class.
@@ -119,7 +119,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      * Creates the necessary endpoints for the api.
      * Note, for a request to be successful the URL query parameters consumer_key and consumer_secret need to be set and correct.
      */
-	public function register_routes() { // phpcs:ignore -- NOSONAR - complex.
+    public function register_routes() { // phpcs:ignore -- NOSONAR - complex.
         register_rest_route(
             $this->namespace,
             '/' . $this->rest_base,
@@ -197,6 +197,19 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 ),
             )
         );
+
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/(?P<id_domain>(\d+|[A-Za-z0-9-\.]*[A-Za-z0-9-]{1,63}\.[A-Za-z]{2,6}))/incidents',
+            array(
+                array(
+                    'methods'             => WP_REST_Server::READABLE,
+                    'callback'            => array( $this, 'get_monitor_incidents' ),
+                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'args'                => $this->get_monitor_incidents_allowed_fields(),
+                ),
+            )
+        );
     }
 
     /**
@@ -211,7 +224,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      *
      * @return WP_Error|WP_REST_Response
      */
-	public function get_monitors( $request ) { // phpcs:ignore -- NOSONAR - complex.
+    public function get_monitors( $request ) { // phpcs:ignore -- NOSONAR - complex.
         $args   = $this->prepare_objects_query( $request );
         $db     = MainWP_DB_Uptime_Monitoring::instance();
         $params = array(
@@ -349,7 +362,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
-     * Count all Conitors.
+     * Count all Monitors.
      *
      * @param WP_REST_Request $request Full details about the request.
      *
@@ -391,7 +404,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      *
      * @return WP_Error|WP_REST_Response
      */
-	public function get_monitor( $request ) { // phpcs:ignore -- NOSONAR - complex.
+    public function get_monitor( $request ) { // phpcs:ignore -- NOSONAR - complex.
         $monitor = $this->get_request_item( $request );
 
         if ( empty( $monitor ) ) {
@@ -464,7 +477,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      * @param mixed $request Full details about the request.
      * @return WP_Error|WP_REST_Response
      */
-	public function get_basic_monitor( $request ) { // phpcs:ignore -- NOSONAR - complex.
+    public function get_basic_monitor( $request ) { // phpcs:ignore -- NOSONAR - complex.
         $monitors = $this->get_request_item( $request );
 
         if ( empty( $monitors ) ) {
@@ -497,10 +510,11 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      * @param WP_REST_Request $request Full details about the request.
      *
      * @uses MainWP_DB_Uptime_Monitoring::instance()->get_heartbeat_count()
+     * @uses MainWP_DB_Uptime_Monitoring::instance()->get_heartbeat_data_paginated()
      *
      * @return WP_Error|WP_REST_Response
      */
-	public function get_heartbeat_monitor( $request ) { // phpcs:ignore -- NOSONAR - complex.
+    public function get_heartbeat_monitor( $request ) { // phpcs:ignore -- NOSONAR - complex.
         $monitor = $this->get_request_item( $request );
 
         if ( empty( $monitor ) ) {
@@ -595,6 +609,96 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                     'total'       => $total_count,
                     'total_pages' => $total_pages,
                 ),
+            )
+        );
+    }
+
+    /**
+     * Get Monitor Incidents.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     *
+     * @uses MainWP_DB_Uptime_Monitoring::instance()->get_heartbeat_data_for_incidents()
+     *
+     * @return WP_Error|WP_REST_Response
+     */
+    public function get_monitor_incidents( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $monitor = $this->get_request_item( $request );
+
+        if ( empty( $monitor ) ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 0,
+                    'message' => __( 'Monitor not found.', 'mainwp' ),
+                )
+            );
+        }
+        // Get Params.
+        $args   = $this->prepare_objects_query( $request );
+        $page   = ! empty( $args['page'] ) ? (int) $args['page'] : 1;
+        $limit  = ! empty( $args['items_per_page'] ) ? (int) $args['items_per_page'] : 20;
+        $offset = ( $page > 1 ? ( $page - 1 ) * $limit : 0 );
+
+        $monitor_id = isset( $monitor->monitor_id ) ? (int) $monitor->monitor_id : 0;
+        if ( $monitor_id <= 0 ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 0,
+                    'message' => __( 'Monitor not found.', 'mainwp' ),
+                )
+            );
+        }
+
+        // Get heartbeats.
+        $db         = MainWP_DB_Uptime_Monitoring::instance();
+        // Get all heartbeat data for this monitor to process incidents.
+        $heartbeats = $db->get_heartbeat_data_for_incidents( $monitor_id );
+
+        if ( empty( $heartbeats ) || ! is_array( $heartbeats ) ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 0,
+                    'message' => __( 'No heartbeats found.', 'mainwp' ),
+                )
+            );
+        }
+
+        // Process heartbeats to identify incidents.
+        $incidents = $this->process_heartbeats_to_incidents( $heartbeats );
+
+        if ( empty( $incidents ) ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 1,
+                    'data'    => array(),
+                )
+            );
+        }
+
+        // Paginate incidents.
+        $paginated = array_slice( $incidents, $offset, $limit );
+
+        // Format incidents for response.
+        $formatted = array();
+        foreach ( $paginated as $incident ) {
+            $start_ts = isset( $incident['started_at'] ) ? strtotime( $incident['started_at'] ) : null;
+            $end_ts   = ! empty( $incident['ended_at'] ) ? strtotime( $incident['ended_at'] ) : null;
+
+            $record = array(
+                'started_at'   => $start_ts ? gmdate( 'Y-m-d\TH:i:s\Z', $start_ts ) : null,
+                'ended_at'     => $end_ts ? gmdate( 'Y-m-d\TH:i:s\Z', $end_ts ) : null,
+                'duration_sec' => isset( $incident['duration_sec'] ) ? (int) $incident['duration_sec'] : 0,
+                'resolved'     => ! empty( $incident['resolved'] ),
+                'down_count'   => isset( $incident['down_count'] ) ? (int) $incident['down_count'] : 0,
+            );
+
+            $formatted[] = $this->filter_response_data_by_allowed_fields( $record, 'incidents_view' );
+        }
+
+        return rest_ensure_response(
+            array(
+                'success' => 1,
+                'data'    => $formatted,
             )
         );
     }
@@ -758,6 +862,84 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             $hourly_key = MainWP_Uptime_Monitoring_Handle::get_hourly_key_by_timestamp( $hourly_key + HOUR_IN_SECONDS );
         }
         return $uptime_24h;
+    }
+
+    /**
+     * Process heartbeats to identify incidents.
+     *
+     * An incident is a contiguous sequence of heartbeats where status = 0 (down)
+     * bounded by up statuses.
+     *
+     * @param array $heartbeats Array of heartbeat objects with status and time.
+     * @return array Array of incidents with started_at, ended_at, duration_sec, resolved, down_count.
+     */
+    private function process_heartbeats_to_incidents( $heartbeats ) {
+        $incidents        = array();
+        $current_incident = null;
+
+        foreach ( $heartbeats as $heartbeat ) {
+            $status = (int) $heartbeat->status;
+            $time   = $heartbeat->time;
+
+            if ( MainWP_Uptime_Monitoring_Connect::DOWN === $status ) {
+                // Start a new incident or continue existing one.
+                if ( null === $current_incident ) {
+                    $current_incident = array(
+                        'started_at'   => $time,
+                        'ended_at'     => null,
+                        'duration_sec' => null,
+                        'resolved'     => false,
+                        'down_count'   => 1,
+                    );
+                } else {
+                    // Continue existing incident.
+                    ++$current_incident['down_count'];
+                }
+            } elseif ( MainWP_Uptime_Monitoring_Connect::UP === $status ) {
+                // End current incident if one exists.
+                if ( null !== $current_incident ) {
+                    $current_incident['ended_at'] = $time;
+                    $current_incident['resolved'] = true;
+
+                    // Calculate duration in seconds.
+                    $start_timestamp                  = strtotime( $current_incident['started_at'] );
+                    $end_timestamp                    = strtotime( $current_incident['ended_at'] );
+                    $current_incident['duration_sec'] = $end_timestamp - $start_timestamp;
+
+                    $incidents[]      = $current_incident;
+                    $current_incident = null;
+                }
+            }
+            // Note: PENDING and FIRST statuses don't affect incident boundaries.
+        }
+
+        // If there's an ongoing incident (not resolved), add it to the list.
+        if ( null !== $current_incident ) {
+            $incidents[] = $current_incident;
+        }
+
+        // Sort incidents by started_at descending (most recent first).
+        usort(
+            $incidents,
+            function ( $a, $b ) {
+                return strtotime( $b['started_at'] ) - strtotime( $a['started_at'] );
+            }
+        );
+
+        return $incidents;
+    }
+
+    /**
+     * Get monitor incidents allowed fields.
+     *
+     * @return array Allowed fields.
+     */
+    public function get_monitor_incidents_allowed_fields() {
+        $args = array(
+            'page'     => $this->field_page(),
+            'per_page' => $this->field_per_page(),
+        );
+        return array_merge( $args, $this->get_monitor_allowed_id_domain_field() );
     }
 
     /**
@@ -1083,7 +1265,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      * @since  5.2
      * @return array
      */
-	public function get_item_schema() {  // phpcs:ignore -- NOSONAR - long schema.
+    public function get_item_schema() {  // phpcs:ignore -- NOSONAR - long schema.
         return array(
             '$schema'    => 'http://json-schema.org/draft-04/schema#',
             'title'      => 'monitors',
@@ -1231,6 +1413,33 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                     'type'        => 'integer',
                     'description' => __( 'HTTP status code', 'mainwp' ),
                     'context'     => array( 'heartbeat_view' ),
+                ),
+                'started_at'           => array(
+                    'type'        => 'string',
+                    'format'      => 'date-time',
+                    'description' => __( 'Timestamp of the first down in the run', 'mainwp' ),
+                    'context'     => array( 'incidents_view' ),
+                ),
+                'ended_at'             => array(
+                    'type'        => array( 'string', 'null' ),
+                    'format'      => 'date-time',
+                    'description' => __( 'Timestamp of the first subsequent up; null if ongoing', 'mainwp' ),
+                    'context'     => array( 'incidents_view' ),
+                ),
+                'duration_sec'         => array(
+                    'type'        => array( 'integer', 'null' ),
+                    'description' => __( 'Duration in seconds; null if ongoing', 'mainwp' ),
+                    'context'     => array( 'incidents_view' ),
+                ),
+                'resolved'             => array(
+                    'type'        => 'boolean',
+                    'description' => __( 'True if ended_at is present', 'mainwp' ),
+                    'context'     => array( 'incidents_view' ),
+                ),
+                'down_count'           => array(
+                    'type'        => 'integer',
+                    'description' => __( 'Number of down heartbeats in the run', 'mainwp' ),
+                    'context'     => array( 'incidents_view' ),
                 ),
             ),
         );

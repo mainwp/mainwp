@@ -1499,14 +1499,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 // phpcs:enable
                 $website = MainWP_DB::instance()->get_website_by_id( $id );
 
-                $mshot_url = static::mshot_preview_image_url( $website->url, false, 'small' );
-
-                /**
-                 * Hook: Site preview image src.
-                 *
-                 * @since 5.4.0.23.
-                 */
-                $mshot_url = apply_filters( 'mainwp_site_preview_image_src', $mshot_url, $website );
+                $mshot_url = static::get_site_preview_image_url( $website, false, 'small' );
 
                 ?>
                 <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" src="<?php echo esc_attr( $mshot_url ); ?>" id="mainwp-site-preview-image">
@@ -1567,27 +1560,36 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
     /**
      * Generate an mShot URL if given a link URL.
      *
-     * @param string $linkUrl The link to generate a preview for.
+     * @param string $website The website to generate a preview for.
      * @param int    $retry   If retrying a request, the number of the retry.
      * @return string The mShot URL.
      */
-    public static function mshot_preview_image_url( $linkUrl, $retry = false, $thumb = '' ) {
+    public static function get_site_preview_image_url( $website, $retry = false, $thumb = '' ) {
 
-        $thumb_param = '?w=900'; // default size.
+        $mshotUrl = '';
 
-        if ( 'small' === $thumb ) {
-            $thumb_param = '?w=170';
+        if ( ! empty( $website ) && ! empty( $website->url ) ) {
+            $thumb_param = '?w=900'; // default size.
+
+            if ( 'small' === $thumb ) {
+                $thumb_param = '?w=170';
+            }
+
+            // Base URL with encoded link.
+            $mshotUrl = '//s0.wp.com/mshots/v1/' . rawurlencode( $website->url ) . $thumb_param;
+
+            // Add retry parameter if provided.
+            if ( $retry ) {
+                $mshotUrl .= '&retry=true';
+            }
         }
 
-        // Base URL with encoded link.
-        $mshotUrl = '//s0.wp.com/mshots/v1/' . rawurlencode( $linkUrl ) . $thumb_param;
-
-        // Add retry parameter if provided.
-        if ( $retry ) {
-            $mshotUrl .= '&retry=true';
-        }
-
-        return $mshotUrl;
+        /**
+         * Hook: Site preview image src.
+         *
+         * @since 5.4.0.23.
+         */
+        return apply_filters( 'mainwp_screenshots_site_preview_image_src', $mshotUrl, $website );
     }
 
 

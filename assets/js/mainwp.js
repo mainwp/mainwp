@@ -1036,6 +1036,7 @@ mainwpVars.bulkTaskRunning = false;
 mainwpVars.currentThreads = 0;
 
 mainwpVars.enablePrefetching = true;
+mainwpVars.testing_skipPrefetching = false; // If enabled (true) for testing, be sure to run with (false) first.
 mainwpVars.websitesIdsPrefetched = [];
 mainwpVars.websitesIdsProcessed = [];
 mainwpVars.currentWebsitePrefetching = 0;
@@ -1045,6 +1046,9 @@ mainwpVars.maxPrefetchNumber = mainwpVars.maxThreads * 2; // 0: nolimit.
 
 mainwpVars.syncPrefetchSyncRunning = false;
 mainwpVars.syncSitesLoopRunning = false;
+mainwpVars.prefetchTotal = 0;
+mainwpVars.syncedSuccessTotal = 0;
+mainwpVars.starttime_syncSites = 0;
 
 let globalSync = true;
 
@@ -1062,16 +1066,19 @@ window.dashboard_update = function (websiteIds, isGlobalSync, pAction) {
     let fistPrefetchRunning = false;
     if( 'checknow' !== pAction && globalSync && mainwpVars.enablePrefetching ){
         fetchSiteIds = dashboard_update_pick_siteids_to_prefetch();
-        if(fetchSiteIds.length){
+        if (fetchSiteIds.length && !mainwpVars.testing_skipPrefetching) {
             mainwp_time_counter_log('start');
             mainwp_time_counter_log('log', '[START] Start prefetch sync data sites.');
-            dashboard_fetching_int(pAction, fetchSiteIds );
+            dashboard_fetching_int(pAction, fetchSiteIds);
             fistPrefetchRunning = true;
+        } else if (mainwpVars.testing_skipPrefetching) {
+            mainwpVars.websitesIdsProcessed = mainwpVars.websitesToUpdate;
         }
     }
     if(!fistPrefetchRunning){
         mainwp_time_counter_log('start');
-        mainwp_time_counter_log('log', '[START] Start sync data sites.');
+        mainwp_time_counter_log('log', '[START] Start sync data sites ' + mainwpVars.websitesTotal + ' site(s).');
+        mainwpVars.starttime_syncSites = performance.now();
         dashboard_loop_next(pAction);
     }
   }
@@ -1150,6 +1157,23 @@ let dashboard_update_pick_siteids_to_prefetch = function () {
     return siteids;
 }
 
+function formatUITime(ms) {
+    const hours = Math.floor(ms / 3600000);
+    ms %= 3600000;
+    const minutes = Math.floor(ms / 60000);
+    ms %= 60000;
+    const seconds = Math.floor(ms / 1000);
+    const milliseconds = Math.floor(ms % 1000);
+
+    return (
+        String(hours).padStart(2, '0') + "h:" +
+        String(minutes).padStart(2, '0') + "m:" +
+        String(seconds).padStart(2, '0') + "s:" +
+        String(milliseconds).padStart(3, '0') + "ms"
+    );
+}
+
+
 let dashboard_update_done = function (pAction, callNext) {
   if (!mainwpVars.bulkTaskRunning)
     return;
@@ -1169,9 +1193,21 @@ let dashboard_update_done = function (pAction, callNext) {
     } else {
       mainwpVars.bulkTaskRunning = false;
     }
-    mainwp_time_counter_log('log', '[DONE] Finished sync data sites.');
-    mainwp_time_counter_log('stop');
-    return;
+
+      mainwp_time_counter_log('log', '[DONE] Finished sync data sites.');
+      if (mainwpVars.enablePrefetching) {
+          mainwp_time_counter_log('log', 'Total prefetch: ' + mainwpVars.prefetchTotal);
+          mainwp_time_counter_log('log', 'Total synced data prefetch: ' + mainwpVars.syncedSuccessTotal);
+      } else {
+          mainwp_time_counter_log('log', 'Total synced data sites: ' + mainwpVars.syncedSuccessTotal);
+      }
+      const start = mainwpVars.starttime_syncSites;
+      const end = performance.now();
+      mainwp_time_counter_log('log', 'Data sync execution time: ' + formatUITime(end - start));
+
+      mainwp_time_counter_log('stop');
+      return;
+
   }
   if(typeof callNext !== 'undefined' || !callNext){
     dashboard_loop_next(pAction);
@@ -1207,7 +1243,12 @@ let dashboard_update_next_int = function (websiteId, data, errors, action) {
           let extErr = response.error;
           dashboard_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + extErr + '"><i class="exclamation red icon"></i></span>');
         } else {
-          dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Synchronization process completed successfully.', 'mainwp') + '"><i class="check green icon"></i></span>', true);
+            if (mainwpVars.enablePrefetching) {
+                mainwpVars.syncedSuccessTotal += (response?.synced_prefetch ? 1 : 0);
+            } else {
+                mainwpVars.syncedSuccessTotal++;
+            }
+            dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Synchronization process completed successfully.', 'mainwp') + '"><i class="check green icon"></i></span>', true);
         }
         mainwpVars.currentThreads--;
         dashboard_update_done(pAction);
@@ -1259,6 +1300,7 @@ let dashboard_fetching_int = function (pAction, fetchSiteIds) {
                             if (!mainwpVars.websitesIdsPrefetched.includes(id)) {
                                 mainwpVars.websitesIdsPrefetched.push(id);
                             }
+                            mainwpVars.prefetchTotal++;
                         })
                     }
                     if (response?.synced_ids) {
@@ -1272,8 +1314,9 @@ let dashboard_fetching_int = function (pAction, fetchSiteIds) {
                 }
                 if (mainwpVars.is_firstPrefetching || !mainwpVars.syncSitesLoopRunning) {
                     if (mainwpVars.is_firstPrefetching) {
-                        mainwp_time_counter_log('log', '[START] Start sync data sites.');
+                        mainwp_time_counter_log('log', '[START] Start sync data sites: ' + mainwpVars.websitesTotal + ' site(s).');
                         mainwpVars.is_firstPrefetching = false;
+                        mainwpVars.starttime_syncSites = performance.now();
                     }
                     dashboard_loop_next(pAction);
                 }

@@ -51,15 +51,16 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @param object $website object.
      * @param bool   $clear_session to run the ending session or not.
      * @param mixed  $params Addition params.
+     * @param mixed  $output_results Output results.
      *
      * @return bool sync result.
      */
-    public static function sync_website( $website, $clear_session = true, $params = array() ) {
+    public static function sync_website( $website, $clear_session = true, $params = array(), &$output_results = array() ) {
         if ( ! is_object( $website ) ) {
             return false;
         }
         MainWP_DB::instance()->update_website_sync_values( $website->id, array( 'dtsSyncStart' => time() ) );
-        return static::sync_site( $website, false, true, $clear_session, $params );
+        return static::sync_site( $website, false, true, $clear_session, $params, $output_results );
     }
 
     /**
@@ -70,6 +71,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @param bool  $pAllowDisconnect Check if allowed to disconect.
      * @param bool  $clear_session to run the ending session or not.
      * @param mixed $params Addition params.
+     * @param mixed $output_results Output results.
      *
      * @return bool sync_information_array
      *
@@ -82,7 +84,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_primary_backup()
      * @uses  \MainWP\Dashboard\MainWP_Utility::end_session()
      */
-    public static function sync_site( &$pWebsite = null, $pForceFetch = false, $pAllowDisconnect = true, $clear_session = true, $params = array() ) { // phpcs:ignore -- NOSONAR - complexity method.
+    public static function sync_site( &$pWebsite = null, $pForceFetch = false, $pAllowDisconnect = true, $clear_session = true, $params = array(), &$output_results = array() ) { // phpcs:ignore -- NOSONAR - complexity method.
 
         // to support demo data.
         if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $pWebsite ) ) {
@@ -95,6 +97,10 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $userExtension = MainWP_DB_Common::instance()->get_user_extension_by_user_id( $pWebsite->userid );
         if ( null === $userExtension ) {
             return false;
+        }
+
+        if ( ! is_array( $output_results ) ) {
+            $output_results = array();
         }
 
         if ( $clear_session ) {
@@ -220,6 +226,11 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             if ( ! empty( $params['fetch_stats'] ) && ! empty( $information['fetching_stats'] ) ) {
                 return array( 'fetching_stats' => 1 );
             }
+
+            if ( is_array( $information ) && ! empty( $information['is_prefetched_cache'] ) ) {
+                $output_results['prefetched_cache'] = 1;
+            }
+
             $return = static::sync_information_array( $pWebsite, $information, '', false, false, $pAllowDisconnect );
             MainWP_Logger::instance()->log_execution_time( 'sync :: [siteid=' . $pWebsite->id . ']' );
             return $return;

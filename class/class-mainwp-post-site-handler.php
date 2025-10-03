@@ -403,8 +403,6 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
         $site_ids = isset( $_POST['site_ids'] ) && is_array( $_POST['site_ids'] ) ? array_map( 'intval', wp_unslash( $_POST['site_ids'] ) ) : array(); //phpcs:ignore -- ok.
         $site_ids = array_filter( $site_ids );
 
-
-
         $fetching_wp_ids = array();
         $synced_ids      = array();
 
@@ -479,13 +477,15 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
             die( wp_json_encode( array( 'error' => esc_html__( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
         }
 
-        $params = array();
+        $params            = array();
+        $is_get_prefetched = false;
 
         if ( ! empty( $_POST['fetched_stats'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $params['fetch_stats'] = 'get_fetched_stats';
+            $is_get_prefetched     = true;
         }
 
-        if ( MainWP_Sync::sync_website( $website, true, $params ) ) {
+        if ( MainWP_Sync::sync_website( $website, true, $params, $output ) ) {
             $website = MainWP_DB::instance()->get_website_by_id( $website->id ); // reload.
             /**
              * Fires immediately after website synced successfully.
@@ -494,8 +494,17 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
              *
              * @param object $website  website data.
              */
-            do_action( 'mainwp_after_sync_site_success', $website );
-            die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
+            do_action( 'mainwp_after_sync_site_success', $website, $params, $output );
+
+            $results = array(
+                'result' => 'SUCCESS',
+            );
+
+            if ( $is_get_prefetched ) {
+                $results['synced_prefetch'] = is_array( $output ) && ! empty( $output['prefetched_cache'] ) ? 1 : 0;
+            }
+
+            die( wp_json_encode( $results ) );
         }
 
         $website = MainWP_DB::instance()->get_website_by_id( $website->id );

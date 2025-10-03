@@ -149,11 +149,32 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
      * @return bool
      */
     private function is_ssl_request() {
-        if ( is_ssl() || wp_is_using_https() ) {
+        if ( is_ssl() || wp_is_using_https() || $this->is_local_request() ) {
             return true;
         }
         return false;
     }
+
+    /**
+     * Method is_local_request().
+     *
+     * @return bool
+     */
+    private function is_local_request() {
+
+        if ( ! isset( $_SERVER['REMOTE_ADDR'] ) ) {
+            return false;
+        }
+
+        $ip = $_SERVER['REMOTE_ADDR']; //phpcs:ignore -- ok.
+
+        // Always allow localhost.
+        if ( '127.0.0.1' === $ip || '::1' === $ip ) {
+            return true;
+        }
+        return false;
+    }
+
 
     /**
      * Authenticate the user if authentication wasn't performed during the

@@ -2554,7 +2554,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         </div>
         <script>
             jQuery( document ).ready( function () {
-                jQuery('.left-menu-item-level-0, .left-menu-item-level-2').on('click', function () {
+                jQuery('#mainwp-first-level-navigation-menu .left-menu-item-level-0, #mainwp-second-level-navigation .left-menu-item-level-2').on('click', function () {
                     jQuery('#mainwp-nav-dimmer').dimmer({
                         duration: 25,
                         opacity: 1,

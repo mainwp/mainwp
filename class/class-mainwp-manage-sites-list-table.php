@@ -1739,12 +1739,12 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         <div class="ui checkbox"><input type="checkbox" value="<?php echo intval( $website['id'] ); ?>" /></div>
                     <?php } elseif ( 'status' === $column_name ) { ?>
                         <?php if ( $hasSyncErrors ) : ?>
-                            <span data-tooltip="<?php echo esc_attr_e( 'Disconnected', 'mainwp' ); ?>" data-position="right center" data-inverted=""><a class="mainwp_site_reconnect" href="#"><i class="red times large icon"></i></a></span>
+                            <span data-tooltip="<?php esc_attr_e( 'Disconnected', 'mainwp' ); ?>" data-position="right center" data-inverted=""><a class="mainwp_site_reconnect" href="#"><i class="red times large icon"></i></a></span>
                         <?php else : ?>
                             <?php if ( $suspendedSite ) : ?>
-                                <span data-tooltip="<?php echo esc_attr_e( 'Suspended', 'mainwp' ); ?>" data-position="right center" data-inverted=""><a class="managesites_syncdata" href="#"><i class="pause yellow large icon"></i></a></span>
+                                <span data-tooltip="<?php esc_attr_e( 'Suspended', 'mainwp' ); ?>" data-position="right center" data-inverted=""><a class="managesites_syncdata" href="#"><i class="pause yellow large icon"></i></a></span>
                             <?php else : ?>
-                                <span data-tooltip="<?php echo esc_attr_e( 'Connected', 'mainwp' ); ?>" data-position="right center" data-inverted=""><a class="managesites_syncdata" href="#"><i class="green large check icon"></i></a></span>
+                                <span data-tooltip="<?php esc_attr_e( 'Connected', 'mainwp' ); ?>" data-position="right center" data-inverted=""><a class="managesites_syncdata" href="#"><i class="green large check icon"></i></a></span>
                             <?php endif; ?>
                         <?php endif; ?>
                     <?php } elseif ( 'favicon' === $column_name ) { ?>

@@ -51,7 +51,6 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
      */
     public function __construct() {
         parent::__construct();
-        add_action( 'mainwp_delete_site', array( $this, 'hook_delete_site' ), 10, 3 );
     }
 
     /**

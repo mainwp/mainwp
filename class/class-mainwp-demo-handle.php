@@ -170,7 +170,6 @@ class MainWP_Demo_Handle { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                         }
                     }
                     $this->add_demo_wp_option( $wp_options_data_rows, $index, $websiteid );
-                    $this->add_demo_none_mainwp_action( $wp_action_data_rows, $index, $websiteid );
                     // saved import ids to clear.
                     $demo_added_ids['sites_ids'][] = $websiteid;
                     if ( $client_id ) {

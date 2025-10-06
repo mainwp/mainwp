@@ -657,6 +657,34 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
 
 /* Manage Sites Table */
 
+.mainwp-flag-stack {
+    position: relative;
+    display: inline-block;
+    width: 2.2em;
+    height: 1.5em;
+    vertical-align: middle;
+}
+
+.mainwp-flag-stack__flag {
+    position: absolute;
+    display: inline-block;
+    transform: scale(0.88);
+}
+
+.mainwp-flag-stack__flag--primary {
+    top: -0.24em;
+    left: -0.36em;
+    transform-origin: top left;
+    z-index: 1;
+}
+
+.mainwp-flag-stack__flag--secondary {
+    right: -0.08em;
+    bottom: -0.04em;
+    transform-origin: bottom right;
+    z-index: 2;
+}
+
 table.mainwp-manage-wpsites-table {
     margin: 0;
 }

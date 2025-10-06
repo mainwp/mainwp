@@ -673,7 +673,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
 
 .mainwp-flag-stack__flag--primary {
     top: -0.24em;
-    left: -0.26em;
+    left: -0.36em;
     transform-origin: top left;
     z-index: 1;
 }

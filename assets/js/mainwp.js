@@ -1060,6 +1060,12 @@ window.dashboard_update = function (websiteIds, isGlobalSync, pAction) {
 
   mainwpVars.bulkTaskRunning = true;
 
+
+let init_sync_logs = function(){
+    mainwp_time_counter_log('log', '[INIT]');
+    mainwp_time_counter_log('log', 'enablePrefetching: ' + mainwpVars.enablePrefetching + ', ' + 'testing_skipPrefetching: ' + mainwpVars.testing_skipPrefetching + ', ' + 'maxPrefetchNumber: ' + mainwpVars.maxPrefetchNumber);
+}
+
   if (mainwpVars.websitesTotal == 0) {
     dashboard_update_done(pAction);
   } else {
@@ -1068,15 +1074,17 @@ window.dashboard_update = function (websiteIds, isGlobalSync, pAction) {
         fetchSiteIds = dashboard_update_pick_siteids_to_prefetch();
         if (fetchSiteIds.length && !mainwpVars.testing_skipPrefetching) {
             mainwp_time_counter_log('start');
+            init_sync_logs();
             mainwp_time_counter_log('log', '[START] Start prefetch sync data sites.');
             dashboard_fetching_int(pAction, fetchSiteIds);
             fistPrefetchRunning = true;
         } else if (mainwpVars.testing_skipPrefetching) {
-            mainwpVars.websitesIdsProcessed = mainwpVars.websitesToUpdate;
+            mainwpVars.websitesIdsPrefetched = mainwpVars.websitesToUpdate;
         }
     }
     if(!fistPrefetchRunning){
         mainwp_time_counter_log('start');
+        init_sync_logs();
         mainwp_time_counter_log('log', '[START] Start sync data sites ' + mainwpVars.websitesTotal + ' site(s).');
         mainwpVars.starttime_syncSites = performance.now();
         dashboard_loop_next(pAction);
@@ -1203,7 +1211,7 @@ let dashboard_update_done = function (pAction, callNext) {
       }
       const start = mainwpVars.starttime_syncSites;
       const end = performance.now();
-      mainwp_time_counter_log('log', 'Data sync execution time: ' + formatUITime(end - start));
+      mainwp_time_counter_log('log', '[SYNC TIME] Data sync execution time: ' + formatUITime(end - start));
 
       mainwp_time_counter_log('stop');
       return;
@@ -5062,8 +5070,8 @@ jQuery(document).on('click', '#mainwp-sites-changes-filter-toggle-button', funct
 });
 
 let mainwp_time_counter_log = function(action, log ){
-    if(typeof wpLogsToolHelper !== 'undefined' ){
-        wpLogsToolHelper(action, log);
+    if(typeof wpDevRuntimeLogsHelper !== 'undefined' ){
+        wpDevRuntimeLogsHelper(action, log );
         return true;
     }
     return false;

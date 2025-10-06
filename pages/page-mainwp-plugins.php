@@ -2507,7 +2507,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <?php static::render_global_ignored( $ignoredPlugins, $decodedIgnoredPlugins ); ?>
             <div class="ui hidden divider"></div>
             <h3 class="ui header">
-                <?php esc_html_e( 'Per Site Ignored Plugins' ); ?>
+                <?php esc_html_e( 'Per Site Ignored Plugins', 'mainwp' ); ?>
                 <div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore updates per site level and not notify you about pending updates.', 'mainwp' ); ?></div>
             </h3>
             <?php static::render_sites_ignored( $cnt, $websites ); ?>
@@ -2787,13 +2787,13 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             do_action( 'mainwp_plugins_before_ignored_abandoned', $ignoredPlugins, $websites );
             ?>
             <h3 class="ui header">
-                <?php esc_html_e( 'Globally Ignored Abandoned Plugins' ); ?>
+                <?php esc_html_e( 'Globally Ignored Abandoned Plugins', 'mainwp' ); ?>
                 <div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore on global level even though they have passed your Abandoned Plugin Tolerance date', 'mainwp' ); ?></div>
             </h3>
             <?php static::render_global_ignored_abandoned( $ignoredPlugins, $decodedIgnoredPlugins ); ?>
             <div class="ui hidden divider"></div>
             <h3 class="ui header">
-                <?php esc_html_e( 'Per Site Ignored Abandoned Plugins' ); ?>
+                <?php esc_html_e( 'Per Site Ignored Abandoned Plugins', 'mainwp' ); ?>
                 <div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore per site level even though they have passed your Abandoned Plugin Tolerance date', 'mainwp' ); ?></div>
             </h3>
             <?php static::render_sites_ignored_abandoned( $cnt, $websites ); ?>

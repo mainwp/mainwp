@@ -499,7 +499,7 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
         return rest_ensure_response(
             array(
                 'success' => $deleted ? 1 : 0,
-                'message' => $deleted ? esc_html__( 'Cost deteled successfully.' ) : esc_html__( 'Cost deteled failed.' ),
+                'message' => $deleted ? esc_html__( 'Cost deteled successfully.', 'mainwp' ) : esc_html__( 'Cost deteled failed.', 'mainwp' ),
                 'data'    => $cost,
             )
         );

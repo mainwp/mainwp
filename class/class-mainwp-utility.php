@@ -1860,6 +1860,26 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $lowercase_last_two_chars = 'dz';
         }
 
+        $stacked_flags = array(
+            'ca' => array(
+                'primary'   => 'es',
+                'secondary' => 'ad',
+            ),
+        );
+
+        if ( isset( $stacked_flags[ $lowercase_last_two_chars ] ) ) {
+            $primary_flag   = $stacked_flags[ $lowercase_last_two_chars ]['primary'];
+            $secondary_flag = $stacked_flags[ $lowercase_last_two_chars ]['secondary'];
+
+            echo '<span data-tooltip="' . esc_html__( 'Site Language: ', 'mainwp' ) . esc_attr( $display_language ) . '" data-position="left center" data-inverted="">';
+            echo '<span class="mainwp-flag-stack">';
+            echo '<i class="small ' . esc_attr( $primary_flag ) . ' flag mainwp-flag-stack__flag mainwp-flag-stack__flag--primary"></i>';
+            echo '<i class="small ' . esc_attr( $secondary_flag ) . ' flag mainwp-flag-stack__flag mainwp-flag-stack__flag--secondary"></i>';
+            echo '</span>';
+            echo '</span>';
+            return;
+        }
+
         echo '<span data-tooltip="' . esc_html__( 'Site Language: ', 'mainwp' ) . esc_attr( $display_language ) . '" data-position="left center" data-inverted=""><i class="small ' . esc_attr( $lowercase_last_two_chars ) . ' flag"></i></span>';
     }
 

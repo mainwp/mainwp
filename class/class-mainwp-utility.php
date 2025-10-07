@@ -1845,6 +1845,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $last_two_chars = ! empty( $flag_language ) ? substr( $flag_language, -2 ) : '';
         // Convert to lowercase.
         $lowercase_last_two_chars = strtolower( $last_two_chars );
+        $lowercase_flag_language  = strtolower( $flag_language );
 
         // Get display name using the original language string.
         $display_language = function_exists( 'locale_get_display_name' ) ? locale_get_display_name( $language ) : $language;
@@ -1858,6 +1859,39 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
         if ( 'ab' === $lowercase_last_two_chars ) {
             $lowercase_last_two_chars = 'dz';
+        }
+
+        $stacked_flags = array(
+            'ca' => array(
+                'primary'   => 'es',
+                'secondary' => 'ad',
+            ),
+        );
+        // Only stack flags for explicit Catalan locales to avoid affecting Canada.
+        $stacked_flag_locales = array(
+            'ca' => array(
+                'ca',
+            ),
+        );
+
+        if ( isset( $stacked_flags[ $lowercase_last_two_chars ] ) ) {
+            $should_stack = true;
+            if ( isset( $stacked_flag_locales[ $lowercase_last_two_chars ] ) ) {
+                $should_stack = in_array( $lowercase_flag_language, $stacked_flag_locales[ $lowercase_last_two_chars ], true );
+            }
+
+            if ( $should_stack ) {
+                $primary_flag   = $stacked_flags[ $lowercase_last_two_chars ]['primary'];
+                $secondary_flag = $stacked_flags[ $lowercase_last_two_chars ]['secondary'];
+
+                echo '<span data-tooltip="' . esc_html__( 'Site Language: ', 'mainwp' ) . esc_attr( $display_language ) . '" data-position="left center" data-inverted="">';
+                echo '<span class="mainwp-flag-stack">';
+                echo '<i class="small ' . esc_attr( $primary_flag ) . ' flag mainwp-flag-stack__flag mainwp-flag-stack__flag--primary"></i>';
+                echo '<i class="small ' . esc_attr( $secondary_flag ) . ' flag mainwp-flag-stack__flag mainwp-flag-stack__flag--secondary"></i>';
+                echo '</span>';
+                echo '</span>';
+                return;
+            }
         }
 
         echo '<span data-tooltip="' . esc_html__( 'Site Language: ', 'mainwp' ) . esc_attr( $display_language ) . '" data-position="left center" data-inverted=""><i class="small ' . esc_attr( $lowercase_last_two_chars ) . ' flag"></i></span>';

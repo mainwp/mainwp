@@ -5,7 +5,7 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 6.2
-Tested up to: 6.8.2
+Tested up to: 6.8.3
 Requires PHP: 7.4
 Stable tag: 5.5-er3
 License: GPLv3 or later
@@ -146,6 +146,13 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.4.0.23 - Maintenance Release - 10-7-2025 =
+
+* Fixed: Corrected the flag icon displayed for the Catalan (ca) locale. [(#839)](https://github.com/mainwp/mainwp/issues/839)
+* Updated: Implemented small improvements to enhance the reliability of automatic updates across different server environments.
+* Updated: Enabled REST API v2 requests over HTTP protocol on localhost setups to facilitate local development and testing.
+* Updated: Standardized translation and escaping functions to ensure more reliable and consistent text formatting throughout the Dashboard ([PR838](https://github.com/mainwp/mainwp/pull/481)) - thanks [DAnn2012](https://github.com/DAnn2012)
 
 = 5.4.0.22 - Maintenance Release - 9-23-2025 =
 

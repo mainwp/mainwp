@@ -1800,7 +1800,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <?php
                     $indi_val = $edit_client && $client_contacts ? 1 : 0;
                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $indi_val );
-                    echo esc_html_e( 'Client primary contact', 'mainwp' );
+                    esc_html_e( 'Client primary contact', 'mainwp' );
                     ?>
                     </label>
                     <div class="ui six wide column">

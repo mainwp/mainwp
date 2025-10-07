@@ -1847,14 +1847,12 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $groups       = implode( ',', $group_ids );
                 $groups_count = count( $group_ids );
                 if ( $is_not ) {
+                    $where_group = ' AND wpgroup.groupid IS NOT NULL ';
                     if ( 'and' === $group_logic ) {
-                        $where_group = ' AND wpgroup.groupid IS NOT NULL ';
                         $sub_select_match_all = ' SELECT wpand.id FROM ' . $this->table_name( 'wp' ) . ' wpand JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup_and ON wpand.id = wpgroup_and.wpid WHERE wpgroup_and.groupid IN (' . $groups . ') GROUP BY wpand.id HAVING COUNT(DISTINCT wpgroup_and.groupid) = ' . $groups_count . ' ';
                         $where_group         .= ' AND wp.id NOT IN ( ' . $sub_select_match_all . ' ) ';
                     } else {
-                        $where_group = ' AND wpgroup.groupid IS NOT NULL AND wpgroup.groupid NOT IN (' . $groups . ') ';
-                        // to fix.
-                        $sub_select_is_not = ' SELECT wp.id FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid WHERE wpgroup.groupid IN (' . $groups . ') ';
+                        $sub_select_is_not = ' SELECT wp_or.id FROM ' . $this->table_name( 'wp' ) . ' wp_or JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup_or ON wp_or.id = wpgroup_or.wpid WHERE wpgroup_or.groupid IN (' . $groups . ') ';
                         $where_group      .= ' AND wp.id NOT IN ( ' . $sub_select_is_not . ' ) ';
                     }
                 } elseif ( 'and' === $group_logic ) {
@@ -1871,16 +1869,13 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $groups       = implode( ',', $group_ids );
             $groups_count = count( $group_ids );
             if ( $is_not ) {
+                $join_group  = ' LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
+                $where_group = '';
                 if ( 'and' === $group_logic ) {
-                    $join_group  = ' LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
-                    $where_group = '';
                     $sub_select_match_all = ' SELECT wpand.id FROM ' . $this->table_name( 'wp' ) . ' wpand JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup_and ON wpand.id = wpgroup_and.wpid WHERE wpgroup_and.groupid IN (' . $groups . ') GROUP BY wpand.id HAVING COUNT(DISTINCT wpgroup_and.groupid) = ' . $groups_count . ' ';
                     $where_group         .= ' AND wp.id NOT IN ( ' . $sub_select_match_all . ' ) ';
                 } else {
-                    $join_group  = ' LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
-                    $where_group = ' AND ( wpgroup.groupid NOT IN (' . $groups . ') OR wpgroup.groupid IS NULL ) ';
-                    // to fix.
-                    $sub_select_is_not = ' SELECT wp.id FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid WHERE wpgroup.groupid IN (' . $groups . ') ';
+                    $sub_select_is_not = ' SELECT wp_or.id FROM ' . $this->table_name( 'wp' ) . ' wp_or JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup_or ON wp_or.id = wpgroup_or.wpid WHERE wpgroup_or.groupid IN (' . $groups . ') ';
                     $where_group      .= ' AND wp.id NOT IN ( ' . $sub_select_is_not . ' ) ';
                 }
             } else {

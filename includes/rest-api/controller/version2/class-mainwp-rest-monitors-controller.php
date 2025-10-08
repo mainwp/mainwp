@@ -10,6 +10,7 @@
 use MainWP\Dashboard\MainWP_DB_Uptime_Monitoring;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Connect;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle;
+use MainWP\Dashboard\MainWP_Utility;
 
 /**
  * Class MainWP_Rest_Monitors_Controller
@@ -66,9 +67,10 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      * @var array<string,string>
      */
     private const TYPE_MAP = array(
-        'http'    => 'http',
-        'ping'    => 'ping',
-        'keyword' => 'keyword',
+        'useglobal' => 'useglobal',
+        'http'      => 'http',
+        'ping'      => 'ping',
+        'keyword'   => 'keyword',
     );
 
     /**
@@ -77,12 +79,13 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      * @var array<string,string>
      */
     private const METHOD_MAP = array(
-        'head'   => 'head',
-        'get'    => 'get',
-        'post'   => 'post',
-        'push'   => 'push',
-        'patch'  => 'patch',
-        'delete' => 'delete',
+        'useglobal' => 'useglobal',
+        'head'      => 'head',
+        'get'       => 'get',
+        'post'      => 'post',
+        'push'      => 'push',
+        'patch'     => 'patch',
+        'delete'    => 'delete',
     );
 
     /**
@@ -259,11 +262,24 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
 
         register_rest_route(
             $this->namespace,
+            '/' . $this->rest_base . '/(?P<id_domain>(\d+|[A-Za-z0-9-\.]*[A-Za-z0-9-]{1,63}\.[A-Za-z]{2,6}))/settings',
+            array(
+                array(
+                    'methods'             => 'PUT, PATCH',
+                    'callback'            => array( $this, 'update_individual_monitor_settings' ),
+                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'args'                => $this->get_monitor_settings_allowed_fields(),
+                ),
+            )
+        );
+
+        register_rest_route(
+            $this->namespace,
             '/' . $this->rest_base . '/settings',
             array(
                 array(
-                    'methods'             => WP_REST_Server::EDITABLE,
-                    'callback'            => array( $this, 'update_monitoring_settings' ),
+                    'methods'             => WP_REST_Server::CREATABLE,
+                    'callback'            => array( $this, 'update_global_monitoring_settings' ),
                     'permission_callback' => array( $this, 'get_rest_permissions_check' ),
                     'args'                => $this->get_monitoring_settings_allowed_fields(),
                 ),
@@ -841,58 +857,117 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      *
      * @return WP_Error|WP_REST_Response
      */
-    public function update_monitoring_settings( $request ) {
+    public function update_global_monitoring_settings( $request ) {
         // Get request body.
         $body = $request->get_body_params();
         if ( empty( $body ) ) {
-            return rest_ensure_response(
-                array(
-                    'success' => 0,
-                    'message' => __( 'Invalid request body.', 'mainwp' ),
-                )
+            return new WP_Error(
+                'empty_body',
+                __( 'Request body is empty.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 
-        $updated_settings = $this->convert_monitor_settings( $body );
-        if ( empty( $updated_settings ) ) {
-            return rest_ensure_response(
-                array(
-                    'success' => 0,
-                    'message' => __( 'Invalid request body.', 'mainwp' ),
-                )
-            );
+        // Process global monitoring settings update.
+        $result = $this->process_global_monitoring_settings_update( $body );
+
+        if ( is_wp_error( $result ) ) {
+            return $result;
         }
 
-        // Save the updated settings.
-        MainWP_Uptime_Monitoring_Handle::update_uptime_global_settings( $updated_settings );
-
-        // Return the updated settings.
         return rest_ensure_response(
             array(
                 'success' => 1,
-                'data'    => $body,
+                'data'    => $result,
             )
         );
     }
 
     /**
-     * Convert monitor settings from API format to internal format.
+     * Update individual monitor settings (per-monitor API).
      *
-     * @param array $settings Monitor settings in API format.
+     * @param WP_REST_Request $request Full details about the request.
      *
+     * @return WP_Error|WP_REST_Response
+     */
+    public function update_individual_monitor_settings( $request ) {
+        $monitor = $this->get_request_item( $request );
+
+        if ( empty( $monitor ) ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 0,
+                    'message' => __( 'Monitor not found.', 'mainwp' ),
+                )
+            );
+        }
+
+        // Get request body.
+        $body = $request->get_json_params();
+
+        if ( empty( $body ) ) {
+            return new WP_Error(
+                'empty_body',
+                __( 'Request body is empty.', 'mainwp' ),
+            );
+        }
+
+        // Check content type.
+        $content_type = (string) $request->get_header( 'content-type' );
+        if ( 'application/json' !== $content_type ) {
+            return new WP_Error(
+                'invalid_content_type',
+                __( 'Invalid content type. Expected application/json.', 'mainwp' ),
+            );
+        }
+
+        // Validate request body against schema.
+        $schema = $this->get_monitor_settings_schema(); // Get default schema.
+        $valid  = rest_validate_value_from_schema( $body, $schema, 'body' );
+        if ( is_wp_error( $valid ) ) {
+            return $valid;
+        }
+
+        // Sanitize request body.
+        $data = rest_sanitize_value_from_schema( $body, $schema );
+
+        // Process individual monitor settings update.
+        $result = $this->process_individual_monitor_settings_update( $monitor, $data );
+
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response(
+            array(
+                'success' => 1,
+                'data'    => $result,
+            )
+        );
+    }
+
+    /**
+     * Process global monitoring settings update with all business logic.
+     *
+     * @param array $settings Settings to update.
+     *
+     * @uses MainWP_Uptime_Monitoring_Handle::update_uptime_global_settings()
      * @uses MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings()
      *
-     * @return array Monitor settings in internal format.
+     * @return array|WP_Error Updated global settings or error.
      */
-    private function convert_monitor_settings( $settings ) { // phpcs:ignore -- NOSONAR - complex.
+    private function process_global_monitoring_settings_update( $settings ) {  // phpcs:ignore -- NOSONAR - complex.
+
         // Get current settings.
         $current_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
         $updated_settings = $current_settings;
-        // Update settings based on provided parameters.
+
+        // Process enabled setting.
         if ( isset( $settings['active'] ) ) {
             $updated_settings['active'] = $settings['active'] ? 1 : 0;
         }
 
+        // Process interval setting.
         if ( isset( $settings['interval'] ) ) {
             $interval_minutes = $this->convert_api_format_to_interval( $settings['interval'] );
             if ( is_wp_error( $interval_minutes ) ) {
@@ -901,22 +976,34 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             $updated_settings['interval'] = $interval_minutes;
         }
 
+        // Process timeout setting.
         if ( isset( $settings['timeout'] ) ) {
-            $timeout_seconds = (int) $settings['timeout'] / 1000; // Convert milliseconds to seconds.
-            if ( $timeout_seconds < 1 || $timeout_seconds > 3600 ) {
-                return array();
+            $validation_result = $this->validate_timeout( $settings['timeout'] );
+            if ( is_wp_error( $validation_result ) ) {
+                return $validation_result;
             }
-            $updated_settings['timeout'] = $timeout_seconds;
+            $updated_settings['timeout'] = (int) $settings['timeout'] / 1000; // Convert to seconds.
         }
 
+        // Process retries setting.
+        if ( isset( $settings['retries'] ) ) {
+            $validation_result = $this->validate_retries( $settings['retries'] );
+            if ( is_wp_error( $validation_result ) ) {
+                return $validation_result;
+            }
+            $updated_settings['retries'] = (int) $settings['retries'];
+        }
+
+        // Process retries setting.
         if ( isset( $settings['maxretries'] ) ) {
-            $retries = (int) $settings['maxretries'];
-            if ( $retries < 0 || $retries > 3 ) {
-                return array();
+            $validation_result = $this->validate_retries( $settings['maxretries'] );
+            if ( is_wp_error( $validation_result ) ) {
+                return $validation_result;
             }
-            $updated_settings['maxretries'] = 2 === $retries ? '-1' : $retries;
+            $updated_settings['maxretries'] = (int) $settings['maxretries'];
         }
 
+        // Process type setting.
         if ( isset( $settings['type'] ) ) {
             if ( ! in_array( $settings['type'], array_keys( self::TYPE_MAP ), true ) ) {
                 return array();
@@ -924,6 +1011,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             $updated_settings['type'] = $settings['type'];
         }
 
+        // Process method setting.
         if ( isset( $settings['method'] ) ) {
             if ( ! in_array( $settings['method'], array_keys( self::METHOD_MAP ), true ) ) {
                 return array();
@@ -931,7 +1019,208 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             $updated_settings['method'] = $settings['method'];
         }
 
-        return $updated_settings;
+        // Apply filters to allow customization.
+        $updated_settings = apply_filters( 'mainwp_uptime_monitoring_update_global_settings', $updated_settings );
+
+        // Save the updated settings.
+        MainWP_Uptime_Monitoring_Handle::update_uptime_global_settings( $updated_settings );
+
+        return $settings;
+    }
+
+    /**
+     * Process individual monitor settings update with all business logic.
+     *
+     * @param object $monitor Monitor object from database.
+     * @param array  $settings Settings to update.
+     *
+     * @uses MainWP_DB_Uptime_Monitoring::update_wp_monitor()
+     *
+     * @return array|WP_Error Updated monitor settings or error.
+     */
+    private function process_individual_monitor_settings_update( $monitor, $settings ) { // phpcs:ignore -- NOSONAR - complexity.
+        $monitor_id = (int) ( $monitor->monitor_id ?? 0 );
+
+        $update_data = array( 'monitor_id' => $monitor_id );
+
+        // Process active setting.
+        if ( isset( $settings['active'] ) ) {
+            $update_data['active'] = $settings['active'] ? 1 : 0;
+        }
+
+        // Process check_frequency setting.
+        if ( isset( $settings['interval'] ) ) {
+            $interval_minutes = $this->convert_api_format_to_interval( $settings['interval'] );
+            if ( is_wp_error( $interval_minutes ) ) {
+                return $interval_minutes;
+            }
+            $update_data['interval'] = $interval_minutes;
+        }
+
+        // Process timeout setting.
+        if ( isset( $settings['timeout'] ) ) {
+            $validation_result = $this->validate_timeout( $settings['timeout'] );
+            if ( is_wp_error( $validation_result ) ) {
+                return $validation_result;
+            }
+            $update_data['timeout'] = (int) $settings['timeout'] / 1000; // Convert to seconds.
+        }
+
+        // Process retries setting.
+        if ( isset( $settings['retries'] ) ) {
+            $validation_result = $this->validate_retries( $settings['retries'] );
+            if ( is_wp_error( $validation_result ) ) {
+                return $validation_result;
+            }
+            $update_data['retries'] = (int) $settings['retries'];
+        }
+
+        // Process maxretries setting.
+        if ( isset( $settings['maxretries'] ) ) {
+            $validation_result = $this->validate_retries( $settings['maxretries'] );
+            if ( is_wp_error( $validation_result ) ) {
+                return $validation_result;
+            }
+            $update_data['maxretries'] = (int) $settings['maxretries'];
+        }
+
+        // Process HTTP-specific settings.
+        if ( isset( $settings['expected_status'] ) ) {
+            $http_result = $this->process_expected_status_settings( $settings['expected_status'], $update_data );
+            if ( is_wp_error( $http_result ) ) {
+                return $http_result;
+            }
+            $update_data = $http_result;
+        }
+
+        // Process port settings.
+        if ( isset( $settings['keyword_match'] ) ) {
+            $update_data['keyword'] = $settings['keyword'];
+        }
+
+        // Process type setting.
+        if ( isset( $settings['type'] ) ) {
+            if ( ! in_array( $settings['type'], array_keys( self::TYPE_MAP ), true ) ) {
+                return array();
+            }
+            $update_data['type'] = $settings['type'];
+        }
+
+        // Process method setting.
+        if ( isset( $settings['method'] ) ) {
+            if ( ! in_array( $settings['method'], array_keys( self::METHOD_MAP ), true ) ) {
+                return array();
+            }
+            $update_data['method'] = $settings['method'];
+        }
+
+        // Apply filters to allow customization.
+        $update_data = apply_filters( 'mainwp_uptime_monitoring_update_monitor_data', $update_data, $monitor_id );
+
+        // Update the monitor.
+        $result = MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor( $update_data );
+
+        if ( false === $result ) {
+            return new WP_Error(
+                'update_failed',
+                __( 'Failed to update monitor settings.', 'mainwp' ),
+            );
+        }
+
+        return $settings;
+    }
+
+    /**
+     * Process HTTP-specific settings.
+     *
+     * @param array $http_settings HTTP settings from request.
+     * @param array $update_data Current update data.
+     * @return array|WP_Error Updated data or error.
+     */
+    private function process_expected_status_settings( $http_settings, $update_data ) {
+        // Process status codes.
+        $status_codes = isset( $http_settings ) ? wp_parse_id_list( $http_settings ) : array();
+        if ( ! empty( $status_codes ) ) {
+            $http_error_codes = array_keys( MainWP_Utility::get_http_codes() );
+            foreach ( $status_codes as $code ) {
+                if ( ! in_array( $code, $http_error_codes ) ) {
+                    return new WP_Error(
+                        'invalid_status_code',
+                        sprintf( __( 'Invalid HTTP status code: %d', 'mainwp' ), $code ),
+                        array( 'status' => 400 )
+                    );
+                }
+            }
+
+            $update_data['up_status_codes'] = implode( ',', $status_codes );
+        }
+
+        return $update_data;
+    }
+
+    /**
+     * Process heartbeats to identify incidents.
+     *
+     * An incident is a contiguous sequence of heartbeats where status = 0 (down)
+     * bounded by up statuses.
+     *
+     * @param array $heartbeats Array of heartbeat objects with status and time.
+     * @return array Array of incidents with started_at, ended_at, duration_sec, resolved, down_count.
+     */
+    private function process_heartbeats_to_incidents( $heartbeats ) {
+        $incidents        = array();
+        $current_incident = null;
+
+        foreach ( $heartbeats as $heartbeat ) {
+            $status = (int) $heartbeat->status;
+            $time   = $heartbeat->time;
+
+            if ( MainWP_Uptime_Monitoring_Connect::DOWN === $status ) {
+                // Start a new incident or continue existing one.
+                if ( null === $current_incident ) {
+                    $current_incident = array(
+                        'started_at'   => $time,
+                        'ended_at'     => null,
+                        'duration_sec' => null,
+                        'resolved'     => false,
+                        'down_count'   => 1,
+                    );
+                } else {
+                    // Continue existing incident.
+                    ++$current_incident['down_count'];
+                }
+            } elseif ( MainWP_Uptime_Monitoring_Connect::UP === $status ) {
+                // End current incident if one exists.
+                if ( null !== $current_incident ) {
+                    $current_incident['ended_at'] = $time;
+                    $current_incident['resolved'] = true;
+
+                    // Calculate duration in seconds.
+                    $start_timestamp                  = strtotime( $current_incident['started_at'] );
+                    $end_timestamp                    = strtotime( $current_incident['ended_at'] );
+                    $current_incident['duration_sec'] = $end_timestamp - $start_timestamp;
+
+                    $incidents[]      = $current_incident;
+                    $current_incident = null;
+                }
+            }
+            // Note: PENDING and FIRST statuses don't affect incident boundaries.
+        }
+
+        // If there's an ongoing incident (not resolved), add it to the list.
+        if ( null !== $current_incident ) {
+            $incidents[] = $current_incident;
+        }
+
+        // Sort incidents by started_at descending (most recent first).
+        usort(
+            $incidents,
+            function ( $a, $b ) {
+                return strtotime( $b['started_at'] ) - strtotime( $a['started_at'] );
+            }
+        );
+
+        return $incidents;
     }
 
     /**
@@ -1153,71 +1442,6 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
-     * Process heartbeats to identify incidents.
-     *
-     * An incident is a contiguous sequence of heartbeats where status = 0 (down)
-     * bounded by up statuses.
-     *
-     * @param array $heartbeats Array of heartbeat objects with status and time.
-     * @return array Array of incidents with started_at, ended_at, duration_sec, resolved, down_count.
-     */
-    private function process_heartbeats_to_incidents( $heartbeats ) {
-        $incidents        = array();
-        $current_incident = null;
-
-        foreach ( $heartbeats as $heartbeat ) {
-            $status = (int) $heartbeat->status;
-            $time   = $heartbeat->time;
-
-            if ( MainWP_Uptime_Monitoring_Connect::DOWN === $status ) {
-                // Start a new incident or continue existing one.
-                if ( null === $current_incident ) {
-                    $current_incident = array(
-                        'started_at'   => $time,
-                        'ended_at'     => null,
-                        'duration_sec' => null,
-                        'resolved'     => false,
-                        'down_count'   => 1,
-                    );
-                } else {
-                    // Continue existing incident.
-                    ++$current_incident['down_count'];
-                }
-            } elseif ( MainWP_Uptime_Monitoring_Connect::UP === $status ) {
-                // End current incident if one exists.
-                if ( null !== $current_incident ) {
-                    $current_incident['ended_at'] = $time;
-                    $current_incident['resolved'] = true;
-
-                    // Calculate duration in seconds.
-                    $start_timestamp                  = strtotime( $current_incident['started_at'] );
-                    $end_timestamp                    = strtotime( $current_incident['ended_at'] );
-                    $current_incident['duration_sec'] = $end_timestamp - $start_timestamp;
-
-                    $incidents[]      = $current_incident;
-                    $current_incident = null;
-                }
-            }
-            // Note: PENDING and FIRST statuses don't affect incident boundaries.
-        }
-
-        // If there's an ongoing incident (not resolved), add it to the list.
-        if ( null !== $current_incident ) {
-            $incidents[] = $current_incident;
-        }
-
-        // Sort incidents by started_at descending (most recent first).
-        usort(
-            $incidents,
-            function ( $a, $b ) {
-                return strtotime( $b['started_at'] ) - strtotime( $a['started_at'] );
-            }
-        );
-
-        return $incidents;
-    }
-
-    /**
      * Get monitor incidents allowed fields.
      *
      * @return array Allowed fields.
@@ -1252,17 +1476,25 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             ),
             'timeout'    => array(
                 'required'          => false,
-                'type'              => 'integer',
+                'type'              => 'string',
                 'description'       => __( 'Request timeout in milliseconds.', 'mainwp' ),
-                'sanitize_callback' => 'absint',
+                'sanitize_callback' => 'sanitize_text_field',
                 'minimum'           => 1000, // 1 second.
-                'maximum'           => 3600000, // 1 hour.
+                'maximum'           => 51840000, // 1 day.
+            ),
+            'retries'    => array(
+                'required'          => false,
+                'type'              => 'integer',
+                'description'       => __( 'Number of retries on failure.', 'mainwp' ),
+                'sanitize_callback' => 'sanitize_text_field',
+                'minimum'           => -1,
+                'maximum'           => 10,
             ),
             'maxretries' => array(
                 'required'          => false,
                 'type'              => 'integer',
                 'description'       => __( 'Number of retries on failure.', 'mainwp' ),
-                'sanitize_callback' => 'absint',
+                'sanitize_callback' => 'sanitize_text_field',
                 'validate_callback' => array( $this, 'settings_validate_maxretries_param' ),
             ),
             'type'       => array(
@@ -1283,65 +1515,23 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
-     * Validate frequency parameter.
+     * Get allowed fields for monitor settings.
      *
-     * @param string          $value Frequency value.
-     * @param WP_REST_Request $request Request object.
-     * @param string          $param Parameter name.
-     * @return bool|WP_Error
+     * @return array Allowed fields.
      */
-    public function settings_validate_frequency_param( $value, $request, $param ) {
-        if ( empty( $value ) ) {
-            return true; // Allow empty, will use default.
-        }
-
-        $result = $this->convert_api_format_to_interval( $value );
-        return ! is_wp_error( $result );
-    }
-
-    /**
-     * Validate maxretries parameter.
-     *
-     * @param int             $value Max retries value.
-     * @param WP_REST_Request $request Request object.
-     * @param string          $param Parameter name.
-     * @return bool
-     */
-    public function settings_validate_maxretries_param( $value, $request, $param ) {
-        if ( empty( $value ) ) {
-            return true; // Allow empty, will use default.
-        }
-        return $value >= 0 && $value <= 2;
-    }
-
-    /**
-     * Validate type parameter.
-     *
-     * @param string          $value Type value.
-     * @param WP_REST_Request $request Request object.
-     * @param string          $param Parameter name.
-     * @return bool
-     */
-    public function settings_validate_type_param( $value, $request, $param ) {
-        if ( empty( $value ) ) {
-            return true; // Allow empty, will use default.
-        }
-        return in_array( $value, array_keys( self::TYPE_MAP ), true );
-    }
-
-    /**
-     * Validate method parameter.
-     *
-     * @param string          $value Method value.
-     * @param WP_REST_Request $request Request object.
-     * @param string          $param Parameter name.
-     * @return bool
-     */
-    public function settings_validate_method_param( $value, $request, $param ) {
-        if ( empty( $value ) ) {
-            return true; // Allow empty, will use default.
-        }
-        return in_array( $value, array_keys( self::METHOD_MAP ), true );
+    private function get_monitor_settings_allowed_fields() {
+        return array_merge(
+            $this->get_monitor_allowed_id_domain_field(),
+            $this->get_monitoring_settings_allowed_fields(),
+            array(
+                'keyword_match' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'description'       => __( 'Keyword to match.', 'mainwp' ),
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+            )
+        );
     }
 
     /**
@@ -1377,6 +1567,133 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             'page'   => $this->field_page(),
         );
         return array_merge( $args, $this->get_monitor_allowed_id_domain_field() );
+    }
+
+    /**
+     * Get allowed fields for monitors.
+     *
+     * @return array
+     */
+    private function get_monitor_allowed_id_domain_field() {
+        return array(
+            'id_domain' => array(
+                'description'       => __( 'Site ID (number) or domain (string).', 'mainwp' ),
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ),
+        );
+    }
+
+    /**
+     * Get allowed fields for monitors.
+     *
+     * @return array
+     */
+    private function get_monitors_allowed_fields() {
+        return array(
+            'status'   => $this->field_status(),
+            'search'   => $this->field_search(),
+            'include'  => $this->field_include(),
+            'exclude'  => $this->field_exclude(),
+            'page'     => $this->field_page(),
+            'per_page' => $this->field_per_page(),
+        );
+    }
+
+    /**
+     * Get allowed fields for count monitors.
+     *
+     * @return array
+     */
+    private function get_count_monitors_allowed_fields() {
+        return array(
+            'status'  => $this->field_status(),
+            'include' => $this->field_include(),
+            'exclude' => $this->field_exclude(),
+            'search'  => $this->field_search(),
+        );
+    }
+
+    /**
+     * Validate frequency parameter.
+     *
+     * @param string          $value Frequency value.
+     * @param WP_REST_Request $request Request object.
+     * @param string          $param Parameter name.
+     * @return bool|WP_Error
+     */
+    public function settings_validate_frequency_param( $value, $request, $param ) {
+        if ( empty( $value ) ) {
+            return true; // Allow empty, will use default.
+        }
+
+        $result = $this->convert_api_format_to_interval( $value );
+        return ! is_wp_error( $result );
+    }
+
+    /**
+     * Validate maxretries parameter.
+     *
+     * @param int             $value Max retries value.
+     * @param WP_REST_Request $request Request object.
+     * @param string          $param Parameter name.
+     * @return bool
+     */
+    public function settings_validate_maxretries_param( $value, $request, $param ) {
+        if ( empty( $value ) ) {
+            return true; // Allow empty, will use default.
+        }
+        if ( $value < -1 || $value > 1 ) {
+            return new WP_Error(
+                'invalid_maxretries',
+                __( 'The maxretries value must be -1, 0, or 1.', 'mainwp' ),
+            );
+        }
+        return true;
+    }
+
+    /**
+     * Validate type parameter.
+     *
+     * @param string          $value Type value.
+     * @param WP_REST_Request $request Request object.
+     * @param string          $param Parameter name.
+     * @return bool|WP_Error
+     */
+    public function settings_validate_type_param( $value, $request, $param ) {
+        if ( empty( $value ) ) {
+            return true; // Allow empty, will use default.
+        }
+
+        if ( ! in_array( $value, array_keys( self::TYPE_MAP ), true ) ) {
+            return new WP_Error(
+                'invalid_type',
+                __( 'Invalid type value.', 'mainwp' ),
+            );
+        }
+        return true;
+    }
+
+    /**
+     * Validate method parameter.
+     *
+     * @param string          $value Method value.
+     * @param WP_REST_Request $request Request object.
+     * @param string          $param Parameter name.
+     * @return bool|WP_Error
+     */
+    public function settings_validate_method_param( $value, $request, $param ) {
+        if ( empty( $value ) ) {
+            return true; // Allow empty, will use default.
+        }
+
+        if ( ! in_array( $value, array_keys( self::METHOD_MAP ), true ) ) {
+            return new WP_Error(
+                'invalid_method',
+                __( 'Invalid method value.', 'mainwp' ),
+            );
+        }
+        return true;
     }
 
     /**
@@ -1496,55 +1813,10 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
-     * Get allowed fields for monitors.
-     *
-     * @return array
-     */
-    private function get_monitor_allowed_id_domain_field() {
-        return array(
-            'id_domain' => array(
-                'description'       => __( 'Site ID (number) or domain (string).', 'mainwp' ),
-                'type'              => 'string',
-                'sanitize_callback' => 'sanitize_text_field',
-            ),
-        );
-    }
-
-    /**
-     * Get allowed fields for monitors.
-     *
-     * @return array
-     */
-    private function get_monitors_allowed_fields() {
-        return array(
-            'status'   => $this->field_status(),
-            'search'   => $this->field_search(),
-            'include'  => $this->field_include(),
-            'exclude'  => $this->field_exclude(),
-            'page'     => $this->field_page(),
-            'per_page' => $this->field_per_page(),
-        );
-    }
-
-    /**
-     * Get allowed fields for count monitors.
-     *
-     * @return array
-     */
-    private function get_count_monitors_allowed_fields() {
-        return array(
-            'status'  => $this->field_status(),
-            'include' => $this->field_include(),
-            'exclude' => $this->field_exclude(),
-            'search'  => $this->field_search(),
-        );
-    }
-
-    /**
      * Validate status parameter.
      *
      * @param mixed $param The parameter value.
-     * @return bool
+     * @return bool|WP_Error
      */
     public function validate_status_param( $param ) {
         if ( is_string( $param ) ) {
@@ -1555,7 +1827,45 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             $int = (int) $param;
             return in_array( $int, array_values( self::STATUS_MAP ), true );
         }
-        return false;
+
+        return new WP_Error(
+            'invalid_status',
+            __( 'Invalid status value.', 'mainwp' ),
+        );
+    }
+
+    /**
+     * Validate timeout value.
+     *
+     * @param mixed $timeout Timeout in milliseconds.
+     * @return bool|WP_Error
+     */
+    private function validate_timeout( $timeout ) {
+        $timeout_seconds = (int) $timeout / 1000;
+        if ( $timeout_seconds < 1 || $timeout_seconds > 86400 ) { // 1 day max
+            return new WP_Error(
+                'invalid_timeout',
+                __( 'Timeout must be between 1000ms and 51840000ms.', 'mainwp' ),
+            );
+        }
+        return true;
+    }
+
+    /**
+     * Validate retries value.
+     *
+     * @param mixed $retries Number of retries.
+     * @return bool|WP_Error
+     */
+    private function validate_retries( $retries ) {
+        $retries = (int) $retries;
+        if ( $retries < -1 || $retries > 10 ) {
+            return new WP_Error(
+                'invalid_retries',
+                __( 'Retries must be between 0 and 10.', 'mainwp' ),
+            );
+        }
+        return true;
     }
 
     /**
@@ -1660,6 +1970,51 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             'description'       => __( 'Number of monitors per page.', 'mainwp' ),
         );
     }
+
+    /**
+     * Get the monitor schema, conforming to JSON Schema.
+     *
+     * @since  5.2
+     * @return array
+     */
+    private function get_monitor_settings_schema() {
+        return array(
+            '$schema'              => 'http://json-schema.org/draft-04/schema#',
+            'title'                => 'monitor settings',
+            'type'                 => 'object',
+            'additionalProperties' => false,
+            'properties'           => array(
+                'active'          => array( 'type' => 'boolean' ),
+                'type'            => array(
+                    'type' => 'string',
+                    'enum' => array_keys( self::TYPE_MAP ),
+                ),
+                'method'          => array(
+                    'type' => 'string',
+                    'enum' => array_keys( self::METHOD_MAP ),
+                ),
+                'retries'         => array(
+                    'type'    => 'integer',
+                    'minimum' => -1,
+                    'maximum' => 10,
+                ),
+                'maxretries'      => array(
+                    'type'    => 'integer',
+                    'minimum' => -1,
+                    'maximum' => 10,
+                ),
+                'timeout'         => array(
+                    'type'    => 'integer',
+                    'minimum' => -1,
+                    'maximum' => 51840000, // 1 day.
+                ),
+                'interval'        => array( 'type' => 'string' ),
+                'expected_status' => array( 'type' => array( 'string' ) ),
+                'keyword_match'   => array( 'type' => 'string' ),
+            ),
+        );
+    }
+
 
     /**
      * Get the Tags schema, conforming to JSON Schema.

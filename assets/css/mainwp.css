@@ -629,7 +629,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     display: inline-flex;
     align-items: stretch;
     flex: 0 1 auto;
-    margin: 0;
+    margin-right: 0.5rem;
 }
 
 #mainwp-sites-filters-row .mainwp-tags-filter-action .ui.selection.dropdown {

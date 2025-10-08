@@ -689,6 +689,29 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     overflow: visible !important;
 }
 
+#mainwp-sites-filters-row .mainwp-tags-filter-action {
+    display: inline-flex;
+    align-items: stretch;
+    flex: 0 1 auto;
+    margin-right: 0.5rem;
+}
+
+#mainwp-sites-filters-row .mainwp-tags-filter-action .ui.selection.dropdown {
+    min-width: 120px;
+    max-width: 260px;
+    width: auto !important;
+    margin: 0;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+#mainwp-sites-filters-row .mainwp-tags-filter-action .ui.dropdown.button {
+    margin: 0;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-left: none !important;
+}
+
 /* Tables */
 /*
 .mainwp-ui table.dataTable thead>tr>th span.dt-column-order {

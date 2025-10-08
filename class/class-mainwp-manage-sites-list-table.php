@@ -584,29 +584,31 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         <div class="item" data-value="yes"><?php esc_html_e( 'Is not', 'mainwp' ); ?></div>
                     </div>
                 </div>
-                <div id="mainwp-filter-sites-group-logic" class="ui selection mini dropdown seg_site_tags_logic">
-                    <input type="hidden" value="<?php echo esc_html( $selected_group_logic ); ?>">
-                    <i class="dropdown icon"></i>
-                    <div class="default text"><?php esc_html_e( 'Match any tag (OR)', 'mainwp' ); ?></div>
-                    <div class="menu">
-                        <div class="item" data-value="or"><?php esc_html_e( 'Match any selected tag (OR)', 'mainwp' ); ?></div>
-                        <div class="item" data-value="and"><?php esc_html_e( 'Match all selected tags (AND)', 'mainwp' ); ?></div>
-                    </div>
-                </div>
-                <div id="mainwp-filter-sites-group" class="ui selection multiple mini dropdown seg_site_tags">
-                    <input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
-                    <i class="dropdown icon"></i>
-                    <div class="default text"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
-                    <div class="menu">
-                        <?php
-                        $groups = MainWP_DB_Common::instance()->get_groups_for_manage_sites();
-                        foreach ( $groups as $group ) {
-                            ?>
-                            <div class="item" data-value="<?php echo intval( $group->id ); ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
+                <div class="ui mini action input mainwp-tags-filter-action">
+                    <div id="mainwp-filter-sites-group" class="ui selection multiple mini dropdown seg_site_tags">
+                        <input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
+                        <i class="dropdown icon"></i>
+                        <div class="default text"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
+                        <div class="menu">
                             <?php
-                        }
-                        ?>
-                        <div class="item" data-value="nogroups"><?php esc_html_e( 'No Tags', 'mainwp' ); ?></div>
+                            $groups = MainWP_DB_Common::instance()->get_groups_for_manage_sites();
+                            foreach ( $groups as $group ) {
+                                ?>
+                                <div class="item" data-value="<?php echo intval( $group->id ); ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
+                                <?php
+                            }
+                            ?>
+                            <div class="item" data-value="nogroups"><?php esc_html_e( 'No Tags', 'mainwp' ); ?></div>
+                        </div>
+                    </div>
+                    <div id="mainwp-filter-sites-group-logic" class="ui basic mini dropdown button seg_site_tags_logic">
+                        <input type="hidden" value="<?php echo esc_html( $selected_group_logic ); ?>">
+                        <div class="text"><?php echo 'and' === $selected_group_logic ? esc_html__( 'Match all (AND)', 'mainwp' ) : esc_html__( 'Match any (OR)', 'mainwp' ); ?></div>
+                        <i class="dropdown icon"></i>
+                        <div class="menu">
+                            <div class="item" data-value="or"><?php esc_html_e( 'Match any (OR)', 'mainwp' ); ?></div>
+                            <div class="item" data-value="and"><?php esc_html_e( 'Match all (AND)', 'mainwp' ); ?></div>
+                        </div>
                     </div>
                 </div>
                 <div class="ui selection mini dropdown seg_site_status" id="mainwp-filter-sites-status">

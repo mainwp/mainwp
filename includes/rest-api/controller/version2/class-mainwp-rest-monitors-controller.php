@@ -7,10 +7,12 @@
  * @package MainWP\Dashboard
  */
 
+use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Uptime_Monitoring;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Connect;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle;
 use MainWP\Dashboard\MainWP_Utility;
+use MainWP\Dashboard\MainWP_Monitoring_Handler;
 
 /**
  * Class MainWP_Rest_Monitors_Controller
@@ -269,6 +271,18 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                     'callback'            => array( $this, 'update_individual_monitor_settings' ),
                     'permission_callback' => array( $this, 'get_rest_permissions_check' ),
                     'args'                => $this->get_monitor_settings_allowed_fields(),
+                ),
+            )
+        );
+
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/(?P<id_domain>(\d+|[A-Za-z0-9-\.]*[A-Za-z0-9-]{1,63}\.[A-Za-z]{2,6}))/check',
+            array(
+                array(
+                    'methods'             => WP_REST_Server::CREATABLE,
+                    'callback'            => array( $this, 'check_monitor' ),
+                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
                 ),
             )
         );
@@ -942,6 +956,74 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             array(
                 'success' => 1,
                 'data'    => $result,
+            )
+        );
+    }
+
+    /**
+     * Check monitor uptime.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     *
+     * @uses MainWP_DB::instance()->get_website_by_id()
+     * @uses MainWP_Monitoring_Handler::handle_check_website()
+     *
+     * @return WP_Error|WP_REST_Response
+     */
+    public function check_monitor( $request ) {
+        $monitor = $this->get_request_item( $request );
+
+        if ( empty( $monitor ) ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 0,
+                    'message' => __( 'Monitor not found.', 'mainwp' ),
+                )
+            );
+        }
+
+        // Get website.
+        $website_id = isset( $monitor->wpid ) ? (int) $monitor->wpid : 0;
+        $website    = MainWP_DB::instance()->get_website_by_id( intval( $website_id ) );
+        if ( empty( $website ) ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 0,
+                    'message' => __( 'Website not found.', 'mainwp' ),
+                )
+            );
+        }
+
+        // Check website.
+        $error_msg = '';
+        $result    = '';
+        try {
+            $result = MainWP_Monitoring_Handler::handle_check_website( $website );
+        } catch ( \Exception $e ) {
+            $error_msg = $e->getMessage();
+        }
+
+        if ( ! empty( $error_msg ) ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 0,
+                    'message' => $error_msg,
+                )
+            );
+        }
+
+        $http_code = is_array( $result ) && isset( $result['httpCode'] ) ? $result['httpCode'] : 0;
+        if ( is_array( $result ) && isset( $result['new_uptime_status'] ) ) {
+            $check_result = $result['new_uptime_status'];
+        }
+
+        return rest_ensure_response(
+            array(
+                'success' => 1,
+                'data'    => array(
+                    'http_code'     => $http_code,
+                    'uptime_status' => $check_result ? 'up' : 'down',
+                ),
             )
         );
     }

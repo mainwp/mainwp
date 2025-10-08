@@ -596,7 +596,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
     <div class="mainwp-sub-header" id="mainwp-module-log-overview-sub-header">
         <div class="ui stackable grid" id="mainwp-module-log-filters-row">
             <div class="twelve wide column">
-                <div class="ui compact grid">
+                <div class="ui compact stackable grid">
                     <div class="two wide middle aligned column">
                         <div id="mainwp-module-log-filter-ranges" class="ui selection fluid mini dropdown seg_ranges not-auto-init">
                             <input type="hidden" value="<?php echo esc_html( $filter_ranges ); ?>">
@@ -884,6 +884,36 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
 
 
     /**
+     * Method ajax_archive_dismissed_db()
+     */
+    public static function ajax_archive_dismissed_db() {
+        MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_update_dismissed_db' );
+        $user_cancel = get_option( 'mainwp_module_logs_updates_dismissed_db_cancelled' );
+        if ( $user_cancel ) {
+            $status = 'cancelled';
+        } else {
+            Log_DB_Archive::instance()->archive_sites_changes( 0, 200, 1 );
+            $count = Log_DB_Helper::instance()->count_legacy_dismissed();
+            if ( $count ) {
+                $status = 'running';
+            } else {
+                $status = 'finished';
+            }
+        }
+        update_option( 'mainwp_module_logs_updates_dismissed_db_process_status', $status );
+        die( wp_json_encode( array( 'status' => esc_html( $status ) ) ) );
+    }
+
+    /**
+     * Method ajax_cancel_update_dismissed_db()
+     */
+    public static function ajax_cancel_update_dismissed_db() {
+        MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_cancel_update_dismissed_db' );
+        update_option( 'mainwp_module_logs_updates_dismissed_db_cancelled', 1 );
+        die( wp_json_encode( array( 'ok' => 1 ) ) );
+    }
+
+    /**
      * Method render_dashboard_body()
      *
      * Render the logs Dashboard Body content.
@@ -898,6 +928,12 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
         $stats_prev_data = ! empty( $items_prev ) ? Log_Stats::get_stats_data( $items_prev ) : array();
         ?>
         <div class="mainwp-primary-content-wrap">
+            <div class="ui segment">
+            <?php
+            do_action( 'mainwp_module_log_render_db_update_notice' );
+            do_action( 'mainwp_module_log_render_db_size_notice' );
+            ?>
+            </div>
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'insights-widgets' ) ) : ?>
             <div class="ui segment">
                 <div class="ui info message">
@@ -917,6 +953,14 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
             do_action( 'mainwp_before_overview_widgets', 'insights' );
             ?>
             <div id="mainwp-grid-wrapper" class="gridster">
+                <div id="mainwp-widgets-placeholder" class="ui page dimmer">
+                    <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
+                </div>
+                <script>
+                jQuery( document ).ready( function () {
+                    jQuery('#mainwp-widgets-placeholder').dimmer('show');
+                });
+                </script>
                 <?php
                 MainWP_UI::do_widget_boxes(
                     $screen->id,
@@ -952,7 +996,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
                         return false;
                     };
                     jQuery('#reset-log-overview-widgets-settings').on('click', function () {
-                        mainwp_confirm(__('Are you sure.'), function(){
+                        mainwp_confirm(__('Are you sure?'), function(){
                             jQuery('.mainwp_hide_wpmenu_checkboxes input[name="mainwp_show_widgets[]"]').prop('checked', true);
                             jQuery('input[name=reset_module_log_overview_widgets_settings]').attr('value', 1);
                             jQuery('#submit-log-overview-widgets-settings').click();

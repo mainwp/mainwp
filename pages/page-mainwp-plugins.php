@@ -482,8 +482,8 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         </div>
                     <?php endif; ?>
                     <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
-                    <div id="mainwp-loading-plugins-row" class="ui active inverted dimmer" style="display:none">
-                        <div class="ui large text loader"><?php esc_html_e( 'Loading Plugins...', 'mainwp' ); ?></div>
+                    <div id="mainwp-loading-plugins-row" class="ui active page dimmer" style="display:none">
+                        <div class="ui text double loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
                     </div>
                     <div id="mainwp-plugins-main-content" <?php echo ( null !== $cachedSearch ) ? 'style="display: block;"' : ''; ?> >
                         <div id="mainwp-plugins-content">
@@ -561,10 +561,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                      */
                     do_action( 'mainwp_manage_plugins_before_search_options' );
                     ?>
-                    <div class="ui info message">
-                        <i class="close icon mainwp-notice-dismiss" notice-id="plugins-manage-info"></i>
-                        <?php esc_html_e( 'A plugin needs to be Inactive for it to be Activated or Deleted.', 'mainwp' ); ?>
-                    </div>
+                    
                     <div class="ui mini form">
                         <div class="field">
                             <select class="ui fluid dropdown" id="mainwp_plugins_search_by_status">
@@ -627,6 +624,13 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             </div>
             <div style="clear:both"></div>
         </div>
+        <script type="text/javascript">
+            jQuery( document ).ready( function ($) {
+                if($('#mainwp-plugins-content .mainwp-manage-plugins-reload-data').length){
+                    mainwp_fetch_plugins();
+                }
+            } );
+        </script>
         <?php
         static::render_footer( 'Manage' );
     }
@@ -702,6 +706,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param mixed $sites Selected individual Child Sites.
      * @param mixed $not_criteria Show not criteria result.
      * @param mixed $clients Selected Clients.
+     * @param bool  $not_fetchdata True|False fetch data or not.
      *
      * @return string Plugin Table.
      *
@@ -727,7 +732,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      */
-    public static function render_table( $keyword, $status, $groups, $sites, $not_criteria, $clients ) { // phpcs:ignore -- NOSONAR -Current complexity required to achieve desired results. Pull request solutions appreciated.
+    public static function render_table( $keyword, $status, $groups, $sites, $not_criteria, $clients, $not_fetchdata = false ) { // phpcs:ignore -- NOSONAR -Current complexity required to achieve desired results. Pull request solutions appreciated.
         $keyword = trim( $keyword );
         MainWP_Cache::init_cache( 'Plugins' );
 
@@ -743,64 +748,17 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $data_fields[] = 'plugins';
         $data_fields[] = 'rollback_updates_data';
 
-        if ( 1 === (int) get_option( 'mainwp_optimize', 1 ) || MainWP_Demo_Handle::is_demo_mode() ) {
+        if ( ! $not_fetchdata ) {
 
-            $multi_kws = explode( ',', $keyword );
-            $multi_kws = array_filter( array_map( 'trim', $multi_kws ) );
+            if ( 1 === (int) get_option( 'mainwp_optimize', 1 ) || MainWP_Demo_Handle::is_demo_mode() ) {
 
-            if ( ! empty( $sites ) ) {
-                foreach ( $sites as $v ) {
-                    if ( MainWP_Utility::ctype_digit( $v ) ) {
-                        $website          = MainWP_DB::instance()->get_website_by_id( $v, false, array( 'rollback_updates_data' ) );
-                        $allPlugins       = json_decode( $website->plugins, true );
-                        $_count           = count( $allPlugins );
-                        $_count_installed = 0;
-                        for ( $i = 0; $i < $_count; $i++ ) {
-                            $plugin    = $allPlugins[ $i ];
-                            $is_active = 'active' === $status ? 1 : 0;
-                            if ( ( 'active' === $status || 'inactive' === $status ) && $is_active !== (int) $plugin['active'] ) {
-                                continue;
-                            }
+                $multi_kws = explode( ',', $keyword );
+                $multi_kws = array_filter( array_map( 'trim', $multi_kws ) );
 
-                            if ( ! empty( $keyword ) ) {
-                                if ( $not_criteria ) {
-                                    if ( MainWP_Utility::multi_find_keywords( $plugin['name'], $multi_kws ) ) {
-                                        continue;
-                                    }
-                                } elseif ( ! MainWP_Utility::multi_find_keywords( $plugin['name'], $multi_kws ) ) {
-                                    continue;
-                                }
-                            }
-
-                            $plugin['websiteid']   = $website->id;
-                            $plugin['websiteurl']  = $website->url;
-                            $plugin['websitename'] = $website->name;
-                            $output->plugins[]     = $plugin;
-                            ++$_count_installed;
-                        }
-
-                        if ( 0 === $_count_installed && 'not_installed' === $status ) {
-                            for ( $i = 0; $i < $_count; $i++ ) {
-                                $plugin                      = $allPlugins[ $i ];
-                                $plugin['websiteid']         = $website->id;
-                                $plugin['websiteurl']        = $website->url;
-                                $plugin['websitename']       = $website->name;
-                                $output->plugins_installed[] = $plugin;
-                            }
-                        }
-                        $output->roll_items[ $website->id ] = MainWP_Updates_Helper::get_roll_update_plugintheme_items( 'plugin', $website->rollback_updates_data );
-                    }
-                }
-            }
-
-            if ( '' !== $groups ) {
-                foreach ( $groups as $v ) {
-                    if ( MainWP_Utility::ctype_digit( $v ) ) {
-                        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v, false, 'wp.url', false, false, null, null, array( 'extra_view' => array( 'site_info', 'rollback_updates_data' ) ) ) );
-                        while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-                            if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
-                                continue;
-                            }
+                if ( ! empty( $sites ) ) {
+                    foreach ( $sites as $v ) {
+                        if ( MainWP_Utility::ctype_digit( $v ) ) {
+                            $website          = MainWP_DB::instance()->get_website_by_id( $v, false, array( 'rollback_updates_data' ) );
                             $allPlugins       = json_decode( $website->plugins, true );
                             $_count           = count( $allPlugins );
                             $_count_installed = 0;
@@ -839,90 +797,162 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             }
                             $output->roll_items[ $website->id ] = MainWP_Updates_Helper::get_roll_update_plugintheme_items( 'plugin', $website->rollback_updates_data );
                         }
-                        MainWP_DB::free_result( $websites );
                     }
                 }
-            }
 
-            if ( '' !== $clients && is_array( $clients ) ) {
-                $websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
-                    $clients,
-                    array(
-                        'select_data' => $data_fields,
-                        'extra_view'  => array( 'rollback_updates_data' ),
-                    )
-                );
-                if ( $websites ) {
-                    foreach ( $websites as $website ) {
-                        if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
-                            continue;
+                if ( '' !== $groups ) {
+                    foreach ( $groups as $v ) {
+                        if ( MainWP_Utility::ctype_digit( $v ) ) {
+                            $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v, false, 'wp.url', false, false, null, null, array( 'extra_view' => array( 'site_info', 'rollback_updates_data' ) ) ) );
+                            while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+                                if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+                                    continue;
+                                }
+                                $allPlugins       = json_decode( $website->plugins, true );
+                                $_count           = count( $allPlugins );
+                                $_count_installed = 0;
+                                for ( $i = 0; $i < $_count; $i++ ) {
+                                    $plugin    = $allPlugins[ $i ];
+                                    $is_active = 'active' === $status ? 1 : 0;
+                                    if ( ( 'active' === $status || 'inactive' === $status ) && $is_active !== (int) $plugin['active'] ) {
+                                        continue;
+                                    }
+
+                                    if ( ! empty( $keyword ) ) {
+                                        if ( $not_criteria ) {
+                                            if ( MainWP_Utility::multi_find_keywords( $plugin['name'], $multi_kws ) ) {
+                                                continue;
+                                            }
+                                        } elseif ( ! MainWP_Utility::multi_find_keywords( $plugin['name'], $multi_kws ) ) {
+                                            continue;
+                                        }
+                                    }
+
+                                    $plugin['websiteid']   = $website->id;
+                                    $plugin['websiteurl']  = $website->url;
+                                    $plugin['websitename'] = $website->name;
+                                    $output->plugins[]     = $plugin;
+                                    ++$_count_installed;
+                                }
+
+                                if ( 0 === $_count_installed && 'not_installed' === $status ) {
+                                    for ( $i = 0; $i < $_count; $i++ ) {
+                                        $plugin                      = $allPlugins[ $i ];
+                                        $plugin['websiteid']         = $website->id;
+                                        $plugin['websiteurl']        = $website->url;
+                                        $plugin['websitename']       = $website->name;
+                                        $output->plugins_installed[] = $plugin;
+                                    }
+                                }
+                                $output->roll_items[ $website->id ] = MainWP_Updates_Helper::get_roll_update_plugintheme_items( 'plugin', $website->rollback_updates_data );
+                            }
+                            MainWP_DB::free_result( $websites );
                         }
-                        $allPlugins       = json_decode( $website->plugins, true );
-                        $_count           = count( $allPlugins );
-                        $_count_installed = 0;
-                        for ( $i = 0; $i < $_count; $i++ ) {
-                            $plugin = $allPlugins[ $i ];
+                    }
+                }
 
-                            $is_active = ( 'active' === $status ) ? 1 : 0;
+                if ( '' !== $clients && is_array( $clients ) ) {
+                    $websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+                        $clients,
+                        array(
+                            'select_data' => $data_fields,
+                            'extra_view'  => array( 'rollback_updates_data' ),
+                        )
+                    );
+                    if ( $websites ) {
+                        foreach ( $websites as $website ) {
+                            if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+                                continue;
+                            }
+                            $allPlugins       = json_decode( $website->plugins, true );
+                            $_count           = count( $allPlugins );
+                            $_count_installed = 0;
+                            for ( $i = 0; $i < $_count; $i++ ) {
+                                $plugin = $allPlugins[ $i ];
 
-                            if ( ( ( 'active' === $status ) || ( 'inactive' === $status ) ) && ( $is_active !== (int) $plugin['active'] ) ) {
+                                $is_active = ( 'active' === $status ) ? 1 : 0;
+
+                                if ( ( ( 'active' === $status ) || ( 'inactive' === $status ) ) && ( $is_active !== (int) $plugin['active'] ) ) {
+                                    continue;
+                                }
+
+                                if ( ! empty( $keyword ) ) {
+                                    if ( $not_criteria ) {
+                                        if ( MainWP_Utility::multi_find_keywords( $plugin['name'], $multi_kws ) ) {
+                                            continue;
+                                        }
+                                    } elseif ( ! MainWP_Utility::multi_find_keywords( $plugin['name'], $multi_kws ) ) {
+                                        continue;
+                                    }
+                                }
+
+                                $plugin['websiteid']   = $website->id;
+                                $plugin['websiteurl']  = $website->url;
+                                $plugin['websitename'] = $website->name;
+                                $output->plugins[]     = $plugin;
+                                ++$_count_installed;
+                            }
+                            if ( 0 === $_count_installed && 'not_installed' === $status ) {
+                                for ( $i = 0; $i < $_count; $i++ ) {
+                                    $plugin                      = $allPlugins[ $i ];
+                                    $plugin['websiteid']         = $website->id;
+                                    $plugin['websiteurl']        = $website->url;
+                                    $plugin['websitename']       = $website->name;
+                                    $output->plugins_installed[] = $plugin;
+                                }
+                            }
+                            $output->roll_items[ $website->id ] = MainWP_Updates_Helper::get_roll_update_plugintheme_items( 'plugin', $website->rollback_updates_data );
+                        }
+                    }
+                }
+            } else {
+                $dbwebsites = array();
+
+                if ( '' !== $sites ) {
+                    foreach ( $sites as $v ) {
+                        if ( MainWP_Utility::ctype_digit( $v ) ) {
+                            $website = MainWP_DB::instance()->get_website_by_id( $v, false, array( 'rollback_updates_data' ) );
+
+                            if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
                                 continue;
                             }
 
-                            if ( ! empty( $keyword ) ) {
-                                if ( $not_criteria ) {
-                                    if ( MainWP_Utility::multi_find_keywords( $plugin['name'], $multi_kws ) ) {
-                                        continue;
-                                    }
-                                } elseif ( ! MainWP_Utility::multi_find_keywords( $plugin['name'], $multi_kws ) ) {
+                            $dbwebsites[ $website->id ] = MainWP_Utility::map_site(
+                                $website,
+                                $data_fields
+                            );
+                        }
+                    }
+                }
+
+                if ( '' !== $groups ) {
+                    foreach ( $groups as $v ) {
+                        if ( MainWP_Utility::ctype_digit( $v ) ) {
+                            $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v, false, 'wp.url', false, false, null, null, array( 'extra_view' => array( 'site_info', 'rollback_updates_data' ) ) ) );
+                            while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+                                if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
                                     continue;
                                 }
+                                $dbwebsites[ $website->id ] = MainWP_Utility::map_site(
+                                    $website,
+                                    $data_fields
+                                );
                             }
-
-                            $plugin['websiteid']   = $website->id;
-                            $plugin['websiteurl']  = $website->url;
-                            $plugin['websitename'] = $website->name;
-                            $output->plugins[]     = $plugin;
-                            ++$_count_installed;
+                            MainWP_DB::free_result( $websites );
                         }
-                        if ( 0 === $_count_installed && 'not_installed' === $status ) {
-                            for ( $i = 0; $i < $_count; $i++ ) {
-                                $plugin                      = $allPlugins[ $i ];
-                                $plugin['websiteid']         = $website->id;
-                                $plugin['websiteurl']        = $website->url;
-                                $plugin['websitename']       = $website->name;
-                                $output->plugins_installed[] = $plugin;
-                            }
-                        }
-                        $output->roll_items[ $website->id ] = MainWP_Updates_Helper::get_roll_update_plugintheme_items( 'plugin', $website->rollback_updates_data );
                     }
                 }
-            }
-        } else {
-            $dbwebsites = array();
 
-            if ( '' !== $sites ) {
-                foreach ( $sites as $v ) {
-                    if ( MainWP_Utility::ctype_digit( $v ) ) {
-                        $website = MainWP_DB::instance()->get_website_by_id( $v, false, array( 'rollback_updates_data' ) );
-
-                        if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
-                            continue;
-                        }
-
-                        $dbwebsites[ $website->id ] = MainWP_Utility::map_site(
-                            $website,
-                            $data_fields
-                        );
-                    }
-                }
-            }
-
-            if ( '' !== $groups ) {
-                foreach ( $groups as $v ) {
-                    if ( MainWP_Utility::ctype_digit( $v ) ) {
-                        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v, false, 'wp.url', false, false, null, null, array( 'extra_view' => array( 'site_info', 'rollback_updates_data' ) ) ) );
-                        while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+                if ( '' !== $clients && is_array( $clients ) ) {
+                    $websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+                        $clients,
+                        array(
+                            'select_data' => $data_fields,
+                            'extra_view'  => array( 'rollback_updates_data' ),
+                        )
+                    );
+                    if ( $websites ) {
+                        foreach ( $websites as $website ) {
                             if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
                                 continue;
                             }
@@ -931,57 +961,35 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 $data_fields
                             );
                         }
-                        MainWP_DB::free_result( $websites );
                     }
                 }
-            }
 
-            if ( '' !== $clients && is_array( $clients ) ) {
-                $websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
-                    $clients,
-                    array(
-                        'select_data' => $data_fields,
-                        'extra_view'  => array( 'rollback_updates_data' ),
-                    )
+                $post_data = array(
+                    'keyword' => $keyword,
                 );
-                if ( $websites ) {
-                    foreach ( $websites as $website ) {
-                        if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
-                            continue;
-                        }
-                        $dbwebsites[ $website->id ] = MainWP_Utility::map_site(
-                            $website,
-                            $data_fields
-                        );
+
+                if ( 'active' === $status || 'inactive' === $status ) {
+                    $post_data['status'] = $status;
+                    $post_data['filter'] = true;
+                } else {
+                    $post_data['status'] = '';
+                    $post_data['filter'] = false;
+                }
+
+                if ( 'not_installed' === $status ) {
+                    $post_data['not_installed'] = true;
+                }
+
+                $post_data['not_criteria'] = $not_criteria ? true : false;
+                MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_plugins', $post_data, array( MainWP_Plugins_Handler::get_class_name(), 'plugins_search_handler' ), $output );
+                // phpcs:disable WordPress.Security.EscapeOutput
+                if ( ! empty( $output->errors ) ) {
+                    foreach ( $output->errors as $siteid => $error ) {
+                        $error_results .= MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ': ' . $error . ' <br/>';
                     }
                 }
+                // phpcs:enable
             }
-
-            $post_data = array(
-                'keyword' => $keyword,
-            );
-
-            if ( 'active' === $status || 'inactive' === $status ) {
-                $post_data['status'] = $status;
-                $post_data['filter'] = true;
-            } else {
-                $post_data['status'] = '';
-                $post_data['filter'] = false;
-            }
-
-            if ( 'not_installed' === $status ) {
-                $post_data['not_installed'] = true;
-            }
-
-            $post_data['not_criteria'] = $not_criteria ? true : false;
-            MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_plugins', $post_data, array( MainWP_Plugins_Handler::get_class_name(), 'plugins_search_handler' ), $output );
-            // phpcs:disable WordPress.Security.EscapeOutput
-            if ( ! empty( $output->errors ) ) {
-                foreach ( $output->errors as $siteid => $error ) {
-                    $error_results .= MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ': ' . $error . ' <br/>';
-                }
-            }
-            // phpcs:enable
         }
 
         MainWP_Cache::add_context(
@@ -1015,7 +1023,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( 'not_installed' === $status ) {
             if ( empty( $output->plugins_installed ) ) {
                 ?>
-                <div class="ui message yellow"><?php esc_html_e( 'No websites found.', 'mainwp' ); ?></div>
+                <div class="ui message yellow <?php echo $not_fetchdata ? 'mainwp-manage-plugins-reload-data' : ''; ?>"><?php esc_html_e( 'No websites found.', 'mainwp' ); ?></div>
                 <?php
             } else {
                 $plugins_list    = $output->plugins_installed;
@@ -1024,7 +1032,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
         } elseif ( empty( $output->plugins ) ) {
             ?>
-            <div class="ui message yellow"><?php esc_html_e( 'No plugins found.', 'mainwp' ); ?></div>
+            <div class="ui message yellow <?php echo $not_fetchdata ? 'mainwp-manage-plugins-reload-data' : ''; ?>"><?php esc_html_e( 'No plugins found.', 'mainwp' ); ?></div>
             <?php
         } else {
             $plugins_list    = $output->plugins;
@@ -1101,46 +1109,47 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     public static function render_bulk_actions( $status ) {
         ob_start();
         ?>
-        <select class="ui dropdown" id="mainwp-bulk-actions">
-            <option value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
+        <select class="ui compact dropdown" id="mainwp-bulk-actions">
+            <option value="none"><?php esc_html_e( 'Bulk actions', 'mainwp' ); ?></option>
             <?php if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
                 <option value="ignore_updates" data-value="ignore_updates"><?php esc_html_e( 'Ignore updates', 'mainwp' ); ?></option>
             <?php endif; ?>
-        <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) : ?>
+            <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) : ?>
                 <?php if ( 'active' === $status ) : ?>
-                <option value="deactivate" data-value="deactivate"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></option>
+                    <option value="deactivate" data-value="deactivate"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></option>
                 <?php else : ?>
-                    <option value="deactivate" disabled data-value="deactivate"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></option>
+                    <option value="deactivate" disabled data-value="deactivate"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?><br/><span class="ui small text"><?php esc_html_e( 'To deactivate, view Active plugins.', 'mainwp' ); ?></span></option>
+                <?php endif; ?>
             <?php endif; ?>
-        <?php endif; ?>
             <?php if ( 'inactive' === $status ) : ?>
                 <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) : ?>
                 <option value="activate" data-value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></option>
-            <?php endif; ?>
-                <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) : ?>
-                <option value="delete" data-value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
-            <?php endif; ?>
-            <?php else : ?>
-                <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) : ?>
-                    <option value="activate" disabled data-value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></option>
                 <?php endif; ?>
                 <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) : ?>
-                    <option value="delete" disabled data-value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
-        <?php endif; ?>
-        <?php endif; ?>
-        <?php
-        /**
-         * Action: mainwp_plugins_bulk_action
-         *
-         * Adds a new action to the Manage Plugins bulk actions menu.
-         *
-         * @param string $status Status search parameter.
-         *
-         * @since 4.1
-         */
-        do_action( 'mainwp_plugins_bulk_action' );
-        ?>
+                <option value="delete" data-value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
+                <?php endif; ?>
+            <?php else : ?>
+                <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) : ?>
+                    <option value="activate" disabled data-value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?><br/><span class="ui small text"><?php esc_html_e( 'To activate, view Inactive plugins.', 'mainwp' ); ?></span></option>
+                <?php endif; ?>
+                <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) : ?>
+                    <option value="delete" data-value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
+                <?php endif; ?>
+            <?php endif; ?>
+            <?php
+            /**
+             * Action: mainwp_plugins_bulk_action
+             *
+             * Adds a new action to the Manage Plugins bulk actions menu.
+             *
+             * @param string $status Status search parameter.
+             *
+             * @since 4.1
+             */
+            do_action( 'mainwp_plugins_bulk_action' );
+            ?>
         </select>
+
         <button class="ui mini basic button" href="javascript:void(0)" id="mainwp-do-plugins-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
         <span id="mainwp_bulk_action_loading"><i class="ui active inline loader tiny"></i></span>
         <?php
@@ -1411,20 +1420,20 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 </div>
                             <div class="two wide center aligned middle aligned column column-actions">
                                 <?php if ( ! $child_plugin ) : ?>
+                                    <div class="ui mini fluid buttons">
                                     <?php if ( $actived ) { ?>
                                         <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-                                            <a href="#" class="mainwp-manage-plugin-deactivate ui mini fluid button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Deactivate ', 'mainwp' ) . esc_html( $plugin_title ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
+                                            <a href="#" class="mainwp-manage-plugin-deactivate ui button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Deactivate ', 'mainwp' ) . esc_html( $plugin_title ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
                                         <?php } ?>
                                     <?php } else { ?>
-                                        <div class="ui mini fluid buttons">
                                             <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
                                                 <a href="#" class="mainwp-manage-plugin-activate ui green button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Activate ', 'mainwp' ) . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
                                             <?php } ?>
-                                            <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
-                                                <a href="#" class="mainwp-manage-plugin-delete ui button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Delete ', 'mainwp' ) . ' ' . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr__( 'plugin from this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
-                                            <?php } ?>
-                                        </div>
                                     <?php } ?>
+                                    <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
+                                        <a href="#" class="mainwp-manage-plugin-delete ui button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Delete ', 'mainwp' ) . ' ' . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr__( 'plugin from this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+                                    <?php } ?>
+                                    </div>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -1439,11 +1448,13 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     </div>
 
         <script type="text/javascript">
-            jQuery( '.mainwp-manage-plugin-accordion' ).accordion( {
-                "selector": {
-                    "trigger"   : '.dropdown-trigger',
-                }
-            } );
+            jQuery(document).ready(function ($) {
+                $( '.mainwp-manage-plugin-accordion' ).accordion( {
+                    "selector": {
+                        "trigger"   : '.dropdown-trigger',
+                    }
+                } );
+            });
 
             jQuery( '.trigger-all-accordion' ).on( 'click', function() { // not use document here.
                 if ( jQuery( this ).hasClass( 'active' ) ) {
@@ -1710,20 +1721,20 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                     </div>
                                 <div class="two wide center aligned middle aligned column column-actions">
                                     <?php if ( ! $child_plugin ) : ?>
+                                        <div class="ui mini fluid buttons">
                                         <?php if ( $actived ) { ?>
                                             <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-                                                <a href="#" class="mainwp-manage-plugin-deactivate ui mini fluid button <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
-                                        <?php } ?>
-                                    <?php } else { ?>
-                                            <div class="ui mini fluid buttons">
+                                                <a href="#" class="mainwp-manage-plugin-deactivate ui button <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
+                                            <?php } ?>
+                                        <?php } else { ?>
                                             <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-                                                <a href="#" class="mainwp-manage-plugin-activate ui green button <?php echo $is_demo ? 'disabled' : ''; ?>" ><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
+                                                    <a href="#" class="mainwp-manage-plugin-activate ui green button <?php echo $is_demo ? 'disabled' : ''; ?>" ><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
+                                            <?php } ?>
                                         <?php } ?>
-                                            <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
-                                                <a href="#" class="mainwp-manage-plugin-delete ui button <?php echo $is_demo ? 'disabled' : ''; ?>" ><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+                                        <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
+                                            <a href="#" class="mainwp-manage-plugin-delete ui button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Delete ', 'mainwp' ) . ' ' . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr__( 'plugin from this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
                                         <?php } ?>
-                                            </div>
-                                    <?php } ?>
+                                        </div>
                                 <?php endif; ?>
                                 </div>
                             </div>
@@ -1742,10 +1753,12 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     </div>
 
         <script type="text/javascript">
-            jQuery( '.mainwp-manage-plugin-accordion' ).accordion( {
-                "selector": {
-                    "trigger"   : '.dropdown-trigger',
-                }
+            jQuery(document).ready(function ($) {
+                $( '.mainwp-manage-plugin-accordion' ).accordion( {
+                    "selector": {
+                        "trigger"   : '.dropdown-trigger',
+                    }
+                } );
             } );
 
             jQuery( '.trigger-all-accordion' ).on( 'click', function() { // not use document here.
@@ -2063,8 +2076,8 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             <div><strong><?php esc_html_e( 'Advanced Auto Updates a delayed approximately 24 hours from the update release.  Ignored plugins can not be automatically updated.', 'mainwp' ); ?></strong></div>
                         </div>
                         <?php endif; ?>
-                        <div class="ui inverted dimmer">
-                            <div class="ui text loader"><?php esc_html_e( 'Loading plugins', 'mainwp' ); ?></div>
+                        <div class="ui page dimmer">
+                            <div class="ui text double loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
                         </div>
                         <div id="mainwp-auto-updates-plugins-table-wrapper">
                         <?php
@@ -2365,9 +2378,9 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         <td class="check-column"><span class="ui checkbox"><input type="checkbox" name="plugin[]" value="<?php echo esc_attr( rawurlencode( $slug ) ); ?>"></span></td>
                         <td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
                         <td><a href="<?php echo esc_url( admin_url() ) . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $wpid ) . '&plugin=' . rawurlencode( dirname( $slug ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $name ); ?></a></td>
-                        <td><?php echo ( 1 === (int) $plugin['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); //phpcs:ignore -- escaped. ?></td>
-                        <td><?php echo ( in_array( $slug, $trustedPlugins ) ) ? '<span class="ui mini green fluid center aligned label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red fluid center aligned label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
-                        <td><?php echo MainWP_Common_Functions::instance()->is_ignored_updates( $plugin, $decodedIgnoredPlugins, 'plugin' ) ? '<span class="ui mini label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
+                        <td><?php echo ( 1 === (int) $plugin['active'] ) ? '<span class="ui tiny basic label"><i class="circle green icon"></i> ' . esc_html__( 'Active', 'mainwp' ) . '</span>' : '<span class="ui tiny basic label"><i class="circle red icon"></i> ' . esc_html__( 'Inactive', 'mainwp' ) . '</span>'; //phpcs:ignore -- escaped. ?></td>
+                        <td><?php echo ( in_array( $slug, $trustedPlugins ) ) ? '<span class="ui mini green basic label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red basic label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
+                        <td><?php echo MainWP_Common_Functions::instance()->is_ignored_updates( $plugin, $decodedIgnoredPlugins, 'plugin' ) ? '<span class="ui mini basic label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
                         <td><?php echo MainWP_Common_Functions::instance()->is_ignored_updates( $plugin, $decodedIgnoredPlugins, 'plugin' ) ? '<span data-tooltip="Ignored plugins will not be automatically updated." data-inverted=""><i class="info red circle icon" ></i></span>' : ''; ?></td>
                         <td class="collapsing center aligned">
                         <?php if ( '' === $esc_note ) : ?>
@@ -2381,18 +2394,6 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     <?php // phpcs:enable ?>
                 <?php endforeach; ?>
             </tbody>
-            <tfoot>
-                <tr>
-                    <th scope="col" class="no-sort check-column"><span class="ui checkbox"><input id="cb-select-all-bottom" type="checkbox" /></span></th>
-                    <th scope="col" ></th>
-                    <th scope="col" ><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'Ignored Status', 'mainwp' ); ?></th>
-                    <th scope="col" class="collapsing"></th>
-                    <th scope="col" ><?php esc_html_e( 'Notes', 'mainwp' ); ?></th>
-                </tr>
-            </tfoot>
         </table>
         <?php
         /**

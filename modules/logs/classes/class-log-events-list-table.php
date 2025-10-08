@@ -9,7 +9,10 @@
 namespace MainWP\Dashboard\Module\Log;
 
 use MainWP\Dashboard\MainWP_Utility;
+use MainWP\Dashboard\MainWP_Connect;
+use MainWP\Dashboard\MainWP_Manage_Sites;
 use MainWP\Dashboard\MainWP_Updates_Helper;
+use MainWP\Dashboard\MainWP_Site_Open;
 
 /**
  * Class Log_Events_List_Table
@@ -32,6 +35,14 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * @var array
      */
     public $items;
+
+
+    /**
+     * Public variable to hold Items information.
+     *
+     * @var array
+     */
+    public $sites_opts = array();
 
     /**
      * Public variable to hold Previous Items information.
@@ -63,6 +74,22 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      */
     protected $column_headers;
 
+
+    /**
+     * Private static variable to hold the optimize value.
+     *
+     * @var mixed Default null
+     */
+    private $optimize_table = false;
+
+
+    /**
+     * Private static variable to hold the forced modified events title value.
+     *
+     * @var mixed Default null
+     */
+    private $forced_modified_events = null;
+
     /**
      * Class constructor.
      *
@@ -70,10 +97,12 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      *
      * @param Log_Manager $manager Instance of manager object.
      * @param Strings     $type Events table type: manage_events|widget_overview|widget_insight.
+     * @param bool        $optimize Whether optimize table.
      */
-    public function __construct( $manager, $type = '' ) {
+    public function __construct( $manager, $type = '', $optimize = false ) {
         $this->manager         = $manager;
         $this->table_id_prefix = $type;
+        $this->optimize_table  = $optimize;
     }
 
     /**
@@ -93,12 +122,13 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      */
     public function get_sortable_columns() {
         return array(
-            'event'         => array( 'event', false ),
-            'log_object'    => array( 'log_object', false ),
-            'created'       => array( 'created', false ),
-            'log_site_name' => array( 'name', false ),
-            'user_id'       => array( 'user_id', false ),
-            'source'        => array( 'source', false ),
+            'event'      => array( 'event', false ),
+            'action'     => array( 'action', false ),
+            'log_object' => array( 'log_object', false ),
+            'created'    => array( 'created', false ),
+            'name'       => array( 'name', false ),
+            'user_id'    => array( 'user_id', false ),
+            'source'     => array( 'source', false ),
         );
     }
 
@@ -109,18 +139,27 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      */
     public function get_default_columns() {
         $columns = array(
-            'cb'            => '<input type="checkbox" />',
-            'event'         => esc_html__( 'Event', 'mainwp' ),
-            'log_object'    => esc_html__( 'Object', 'mainwp' ),
-            'created'       => esc_html__( 'Date', 'mainwp' ),
-            'log_site_name' => esc_html__( 'Website', 'mainwp' ),
-            'user_id'       => esc_html__( 'User', 'mainwp' ),
-            'source'        => esc_html__( 'Source', 'mainwp' ),
-            'col_action'    => '',
+            'cb'         => '<input type="checkbox" />',
+            'created'    => esc_html__( 'Date', 'mainwp' ),
+            'user_id'    => esc_html__( 'User', 'mainwp' ),
+            'action'     => esc_html__( 'Action', 'mainwp' ),
+            'log_object' => esc_html__( 'Object', 'mainwp' ),
+            'icon'       => '',
+            'name'       => esc_html__( 'Website', 'mainwp' ),
+            'event'      => esc_html__( 'Event', 'mainwp' ),
+            'source'     => esc_html__( 'Source', 'mainwp' ),
+            'col_action' => '',
         );
 
         if ( 'manage-events' !== $this->table_id_prefix ) {
             unset( $columns['source'] );
+        }
+
+        if ( 'widget-overview' === $this->table_id_prefix ) {
+            unset( $columns['log_site_name'] );
+            if ( ! empty( $_GET['dashboard'] ) ) { //phpcs:ignore -- ok, individual widget.
+                unset( $columns['icon'] );
+            }
         }
 
         return $columns;
@@ -171,6 +210,10 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'className' => 'mainwp-created-cell',
         );
         $defines[] = array(
+            'targets'   => 'manage-icon-column',
+            'className' => 'manage-icon-cell center aligned collapsing',
+        );
+        $defines[] = array(
             'targets'   => 'manage-site-column',
             'className' => 'column-site-bulk mainwp-site-cell',
         );
@@ -196,6 +239,8 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      *
      * @param object $item         Record data.
      * @param string $column_name  Column name.
+     * @param array  $site_opts  Site options.
+     *
      * @return string $out Output.
      */
     public function column_default( $item, $column_name ) { //phpcs:ignore -- NOSONAR -complex.
@@ -212,31 +257,100 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $escaped = true;
                 break;
             case 'event':
-                $act_label = $this->get_action_title( $record->action, 'action', true );
-                $out       = $act_label;
-                $escaped   = true;
+                $out     = $this->get_event_title( $record, 'action', true );
+                $escaped = true;
+                break;
+            case 'action':
+                $out     = $this->get_action_title( $record );
+                $escaped = true;
                 break;
             case 'log_object':
-                $event_title = $this->parse_event_title( $record );
-                $out         = $event_title;
-                $escaped     = true;
+                $out     = $this->get_object_title( $record );
+                $escaped = true;
                 break;
             case 'created':
-                $date_string = sprintf(
-                    '<time datetime="%s" class="relative-time record-created">%s</time>',
-                    mainwp_module_log_get_iso_8601_extended_date( $record->created ),
-                    MainWP_Utility::format_timezone( $record->created )
-                );
-                $out         = $date_string;
-                $escaped     = true;
+                $site_info = is_array( $this->sites_opts ) && isset( $this->sites_opts[ $record->site_id ] ) && isset( $this->sites_opts[ $record->site_id ]['site_info'] ) ? $this->sites_opts[ $item->site_id ]['site_info'] : array();
+                $site_dtf  = is_array( $site_info ) && isset( $site_info['format_datetime'] ) ? $site_info['format_datetime'] : false;
+
+                $child_time = MainWP_Utility::format_timezone( (int) $record->created, false, $site_dtf );
+                if ( ! empty( $child_time ) ) {
+                    $date_string = sprintf(
+                        '<span data-tooltip="' . esc_attr__( 'Child Site time: %s', 'mainwp' ) . ' " created-time="' . esc_attr( $record->created ) . '" data-inverted="" data-position="right center"><time datetime="%s" class="relative-time record-created">%s</time></span>',
+                        $child_time,
+                        mainwp_module_log_get_iso_8601_extended_date( $record->created ),
+                        MainWP_Utility::format_timezone( $record->created )
+                    );
+                } else {
+                    $date_string = sprintf(
+                        '<time datetime="%s" created-time="' . esc_attr( $record->created ) . '" class="relative-time record-created">%s</time>',
+                        mainwp_module_log_get_iso_8601_extended_date( $record->created ),
+                        MainWP_Utility::format_timezone( $record->created )
+                    );
+                }
+                $out     = $date_string;
+                $escaped = true;
                 break;
-            case 'log_site_name':
-                $out     = ! empty( $record->log_site_name ) ? '<a href="admin.php?page=managesites&dashboard=' . intval( $record->site_id ) . '">' . esc_html( $record->log_site_name ) . '</a>' : 'N/A';
+            case 'icon':
+                $out = 'N/A';
+                if ( ! empty( $record->log_site_name ) ) {
+                    $site_opts = is_array( $this->sites_opts ) && isset( $this->sites_opts[ $record->site_id ] ) ? $this->sites_opts[ $record->site_id ] : array();
+                    $siteObj   = (object) array(
+                        'id'        => $record->site_id,
+                        'url'       => $record->url,
+                        'name'      => $record->log_site_name,
+                        'favi_icon' => is_array( $site_opts ) && isset( $site_opts['favi_icon'] ) ? $site_opts['favi_icon'] : '',
+                    );
+                    $favi_url  = MainWP_Connect::get_favico_url( $siteObj );
+                    $site_icon = MainWP_Manage_Sites::get_instance()->get_site_icon_display( is_array( $site_opts ) && isset( $site_opts['cust_site_icon_info'] ) ? $site_opts['cust_site_icon_info'] : '', $favi_url );
+
+                    ob_start();
+                    echo $site_icon; // phpcs:ignore WordPress.Security.EscapeOutput
+                    $out = ob_get_clean();
+                }
+                $escaped = true;
+                break;
+            case 'name':
+                $out = 'N/A';
+
+                if ( ! empty( $record->log_site_name ) ) {
+                    ob_start();
+                    if ( \mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
+                        <a href="<?php MainWP_Site_Open::get_open_site_url( $record->site_id ); ?>" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
+                    <?php endif; ?>
+                    <a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $record->site_id ); ?>">
+                        <?php echo esc_attr( stripslashes( $record->log_site_name ) ); ?>
+                    </a>
+                    <div>
+                        <span class="ui small text">
+                            <a href="<?php echo esc_url( $record->url ); ?>" class="mainwp-may-hide-referrer open_site_url ui grey text" target="_blank">
+                                <?php echo esc_html( MainWP_Utility::get_nice_url( $record->url ) ); ?>
+                            </a>
+                        </span>
+                    </div>
+                    <?php
+                    $out = ob_get_clean();
+                }
                 $escaped = true;
                 break;
             case 'user_id':
-                $user = new Log_Author( $record->user_id, $record->user_meta );
-                $out  = $user->get_display_name();
+                $user_meta = ! empty( $record->user_meta ) ? $record->user_meta : array();
+
+                if ( empty( $user_meta['full_name'] ) && isset( $record->meta['first_name'] ) && isset( $record->meta['last_name'] ) ) {
+                    $user_meta['wp_user_id'] = $record->user_id;
+                    $user_meta['full_name']  = $record->meta['first_name'] . ' ' . $record->meta['last_name'];
+                    $user_meta['ip']         = ! empty( $record->meta['client_ip'] ) ? $record->meta['client_ip'] : '';
+                }
+
+                $user = new Log_Author( $record->user_id, $user_meta );
+
+                if ( empty( $out ) ) {
+                    if ( ! empty( $record->log_type_id ) || 'non-mainwp-changes' === $record->connector ) {
+                        $out = $user->get_full_name();
+                    } else {
+                        $out = $user->get_display_name();
+                    }
+                }
+
                 if ( empty( $out ) ) {
                     $out = $user->get_agent_label( $user->get_agent() );
                 }
@@ -246,7 +360,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 if ( ! empty( $record->source ) ) {
                     $out = $record->source; // sub query field.
                 } else {
-                    $out = 'non-mainwp-changes' === $record->connector ? 'WP Admin' : 'Dashboard';
+                    $out = ( 'non-mainwp-changes' === $record->connector ) ? 'WP Admin' : 'Dashboard';
                 }
                 break;
             case 'col_action':
@@ -304,32 +418,174 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
     /**
      * Returns the label for a connector term.
      *
-     * @param string $act  Action type.
+     * @param object $record  Event data.
+     * @return string
+     */
+    public function get_action_title( $record ) {
+        if ( ! empty( $record->log_type_id ) ) {
+            $action = $this->parse_changes_action_title( $record );
+        } else {
+            $act  = $record->action;
+            $type = 'action';
+
+            if ( ! isset( $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ] ) ) {
+                $title = $act;
+            } else {
+                $title = $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ];
+            }
+            $title  = is_string( $title ) ? ucfirst( $title ) : $title;
+            $action = $title;
+        }
+        return $action;
+    }
+
+    /**
+     * Returns the forced modified event title.
+     *
+     * @return array Logs type ids.
+     */
+    public function get_forced_modified_event_title() {
+        if ( null === $this->forced_modified_events ) {
+            $defaults                     = array( 1460, 1330, 1335, 1495, 1720, 1721, 1725, 1726 );
+            $this->forced_modified_events = apply_filters( 'mainwp_module_logs_forced_modified_event_title', $defaults );
+        }
+        if ( ! is_array( $this->forced_modified_events ) ) {
+            $this->forced_modified_events = array();
+        }
+        return $this->forced_modified_events;
+    }
+
+
+    /**
+     * Returns the label for a connector term.
+     *
+     * @param string $record  Log data.
      * @param string $type  Connector term.
      * @param bool   $coloring Coloring term.
      * @return string
      */
-    public function get_action_title( $act, $type, $coloring = false ) {
+    public function get_event_title( $record, $type, $coloring = false ) {
 
-        if ( ! isset( $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ] ) ) {
+        $act = $record->action;
+
+        if ( ! empty( $record->log_type_id ) ) {
             $title = $act;
+            if ( in_array( (int) $record->log_type_id, $this->get_forced_modified_event_title() ) ) {
+                $title = esc_html__( 'Modified', 'mainwp' );
+            } else {
+                $title = ucfirst( $title );
+            }
         } else {
-            $title = $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ];
+            if ( ! isset( $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ] ) ) {
+                $title = $act;
+            } else {
+                $title = $this->manager->connectors->term_labels[ 'logs_' . $type ][ $act ];
+            }
+            $title = is_string( $title ) ? ucfirst( $title ) : $title;
         }
 
-        $title = is_string( $title ) ? ucfirst( $title ) : $title;
         if ( $coloring ) {
-            $format_title = '<span class="ui medium text">%s</span>';
-            if ( 'deactivate' === $act || 'deleted' === $act || 'delete' === $act ) {
-                $format_title = '<span class="ui medium red text">%s</span>';
-            } elseif ( 'activate' === $act || 'updated' === $act || 'update' === $act ) {
-                $format_title = '<span class="ui medium blue text">%s</span>';
-            } elseif ( 'install' === $act || 'created' === $act || 'added' === $act || 'sync' === $act ) {
-                $format_title = '<span class="ui medium green text">%s</span>';
+
+            $color = '';
+
+            if ( 'deleted' === $act || 'removed' === $act || 'revoked' === $act ) {
+                $color = 'red';
+            } elseif ( 'deactivated' === $act || 'disabled' === $act || 'suspended' === $act ) {
+                $color = 'orange';
+            } elseif ( 'opened' === $act || 'logged-in' === $act || 'logged-out' === $act ) {
+                $color = 'grey';
+            } elseif ( 'updated' === $act || 'modified' === $act ) {
+                $color = 'blue';
+            } elseif ( 'sync' === $act || 'activated' === $act || 'installed' === $act || 'created' === $act || 'published' === $act || 'added' === $act || 'uploaded' === $act || 'enabled' === $act ) {
+                $color = 'green';
+            } elseif ( 'delete' === $act ) { // to compatible.
+                $color = 'red';
+            } elseif ( 'deactivate' === $act ) { // to compatible.
+                $color = 'orange';
+            } elseif ( 'update' === $act ) { // to compatible.
+                $color = 'blue';
+            } elseif ( 'install' === $act || 'activate' === $act ) { // to compatible.
+                $color = 'green';
             }
-            $title = sprintf( $format_title, esc_html( $title ) );
+
+            $title = sprintf( '<span class="ui mini basic %s label">%s</span>', $color, esc_html( $title ) );
         }
+
         return $title;
+    }
+
+    /**
+     * Returns the icons for object.
+     *
+     * @param string $record  Log data.
+     * @return string
+     */
+    public function get_object_icon( $record ) {
+        $context = $record->context;
+        $icon    = '';
+        switch ( $context ) {
+            case 'post':
+                $icon = 'file text';
+                break;
+            case 'file':
+                $icon = 'file';
+                break;
+            case 'system-setting':
+                $icon = 'cogs';
+                break;
+            case 'category':
+                $icon = 'layer group';
+                break;
+            case 'tag':
+                $icon = 'tag';
+                break;
+            case 'widget':
+                $icon = 'puzzle piece';
+                break;
+            case 'plugin':
+                $icon = 'plug';
+                break;
+            case 'theme':
+                $icon = 'tint icon';
+                break;
+            case 'menu':
+                $icon = 'bars';
+                break;
+            case 'comment':
+                $icon = 'comment';
+                break;
+            case 'user':
+                $icon = 'user';
+                break;
+            case 'database':
+                $icon = 'database';
+                break;
+            case 'cron':
+                $icon = 'clock';
+                break;
+            case 'sites':
+                $icon = 'globe';
+                break;
+            // To compatible.
+            case 'translation':
+                $icon = 'language';
+                break;
+            case 'core':
+                $icon = 'wordpress icon';
+                break;
+            case 'posts':
+                $icon = 'file text';
+                break;
+            case 'clients':
+                $icon = 'address card';
+                break;
+            case 'users':
+                $icon = 'users';
+                break;
+            default:
+                break;
+        }
+        return ! empty( $icon ) ? sprintf( '<i class="%s icon"></i>', $icon ) : '';
     }
 
     /**
@@ -338,7 +594,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * @param object $record  Log record object.
      * @return string
      */
-    public function parse_event_title( $record ) {
+    public function get_object_title( $record ) {
         $extra_meta = ! empty( $record->extra_meta ) ? json_decode( $record->extra_meta, true ) : array();
         if ( ! is_array( $extra_meta ) ) {
             $extra_meta = array();
@@ -354,50 +610,142 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             $title = esc_html__( 'Website', 'mainwp' );
         } elseif ( 'non-mainwp-changes' === $record->connector ) {
             $title = esc_html( $record->item );
+            if ( ! empty( $record->log_type_id ) ) {
+                $title = $this->get_changes_object_title( $record );
+            }
         } elseif ( isset( $extra_meta['name'] ) ) {
             $title = $extra_meta['name'];
             if ( 'installer' === $record->connector && ! empty( $extra_meta['rollback_info'] ) ) {
                 $roll_msg = MainWP_Updates_Helper::get_roll_msg( $extra_meta['rollback_info'], true ) . ' ';
             }
         }
-        $title = $roll_msg . esc_html( $title ) . $this->get_context_title( $record->context, $record->connector );
+
+        if ( empty( $record->log_type_id ) ) {
+            $title = $roll_msg . $this->get_context_title( $title, $record->context, $record->connector );
+        }
+
+        $obj_icon = $this->get_object_icon( $record );
+
+        return $obj_icon . $title;
+    }
+
+    /**
+     * Parse event changes logs title.
+     *
+     * @param object $record  Log record object.
+     * @return string
+     */
+    public function parse_changes_action_title( $record ) {
+        $data = array( 'action' => ucfirst( $record->action ) );
+        $meta = ! empty( $record->meta ) && is_array( $record->meta ) ? $record->meta : array();
+        $na   = 'N/A';
+        switch ( (int) $record->log_type_id ) {
+            case 1455:
+                $name = ! empty( $meta['name'] ) ? $meta['name'] : '';
+                if ( empty( $name ) ) {
+                    $name = ! empty( $meta['plugin'] ) ? $meta['plugin'] : $na;
+                }
+                $data['plugin'] = $name;
+                break;
+            case 1465:
+                $data['theme'] = ! empty( $meta['theme'] ) ? basename( $meta['theme'] ) : $na;
+                break;
+            case 1460:
+            case 1470:
+                $data['name'] = ! empty( $meta['name'] ) ? $meta['name'] : $na;
+                break;
+            default:
+                break;
+        }
+        $parse_title = Log_Changes_Logs_Helper::get_changes_log_title( $record->log_type_id, $data, 'action' );
+        return ! empty( $parse_title ) ? $parse_title : ucfirst( $record->action );
+    }
+
+    /**
+     * Parse object changes logs title.
+     *
+     * @param string $title  Object title.
+     * @param object $record  Log record object.
+     * @return string
+     */
+    public function get_changes_formatted_object_title( $title, $record ) {
+        $meta = ! empty( $record->meta ) && is_array( $record->meta ) ? $record->meta : array();
+        $na   = 'N/A';
+        $data = array();
+        switch ( (int) $record->log_type_id ) { // NOSONAR - switch is ok.
+            case 1461:
+                $name = ! empty( $meta['name'] ) ? $meta['name'] : '';
+                if ( empty( $name ) ) {
+                    $name = ! empty( $meta['plugin'] ) ? $meta['plugin'] : $na;
+                }
+                $data['plugin'] = $name;
+                break;
+            default:
+                break;
+        }
+        if ( ! empty( $data ) ) {
+            $formatted_title = Log_Changes_Logs_Helper::get_changes_log_title( $record->log_type_id, $data, 'object' );
+            if ( ! empty( $formatted_title ) ) {
+                return $formatted_title;
+            }
+        }
         return $title;
     }
+
+
+
 
     /**
      * Returns the label for a context.
      *
+     * @param string $title Current title.
      * @param string $context Log context.
      * @param string $connector Log connector.
      * @return string
      */
-    public function get_context_title( $context, $connector ) {
-        $title = '';
+    public function get_context_title( $title, $context, $connector ) {
+        $context_title = '';
 
         if ( 'plugin' === $context ) {
-            $title = esc_html__( 'Plugin', 'mainwp' );
+            $title         = trim( rtrim( $title, 'Plugin' ) ); // remove Plugin suffix if existed - to fix missing 'e' character.
+            $context_title = esc_html__( 'Plugin', 'mainwp' );
         } elseif ( 'theme' === $context ) {
-            $title = esc_html__( 'Theme', 'mainwp' );
+            $title         = trim( rtrim( $title, 'Theme' ) ); // remove Theme suffix if existed - to fix missing 'e' character.
+            $context_title = esc_html__( 'Theme', 'mainwp' );
         } elseif ( 'translation' === $context ) {
-            $title = esc_html__( 'Translation', 'mainwp' );
+            $context_title = esc_html__( 'Translation', 'mainwp' );
+        } elseif ( 'core' === $context ) {
+            $context_title = esc_html__( 'WordPress', 'mainwp' );
         } elseif ( 'posts' === $connector ) {
             if ( 'post' === $context ) {
-                $title = esc_html__( 'Post', 'mainwp' );
+                $context_title = esc_html__( 'Post', 'mainwp' );
             } elseif ( 'page' === $context ) {
-                $title = esc_html__( 'Page', 'mainwp' );
+                $context_title = esc_html__( 'Page', 'mainwp' );
             } else {
-                $title = esc_html__( 'Custom Post', 'mainwp' );
+                $context_title = esc_html__( 'Custom Post', 'mainwp' );
             }
         } elseif ( 'clients' === $context ) {
-            $title = esc_html__( 'Client', 'mainwp' );
+            $context_title = esc_html__( 'Client', 'mainwp' );
         } elseif ( 'users' === $context ) {
-            $title = esc_html__( 'User', 'mainwp' );
+            $context_title = esc_html__( 'User', 'mainwp' );
         }
 
-        if ( ! empty( $title ) ) {
-            $title = ' ' . $title;
+        if ( ! empty( $context_title ) ) {
+            $title .= ' ' . $context_title;
         }
 
+        return $title;
+    }
+
+    /**
+     * Parse changes logs object title.
+     *
+     * @param object $record  Log record object.
+     * @return string
+     */
+    public function get_changes_object_title( $record ) {
+        $title = esc_html( ucwords( str_replace( '-', ' ', $record->context ) ) );
+        $title = $this->get_changes_formatted_object_title( $title, $record );
         return $title;
     }
 
@@ -406,12 +754,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      */
     public function no_items() {
         ?>
-        <div class="ui center aligned segment">
-            <i class="globe massive icon"></i>
-            <div class="ui header">
-                <?php esc_html_e( 'No records found.', 'mainwp' ); ?>
-            </div>
-        </div>
+        <?php esc_html_e( 'No records found.', 'mainwp' ); ?>
         <?php
     }
 
@@ -502,11 +845,19 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'events'                => $array_events_list,
         );
 
+        if ( isset( $_REQUEST['optimize_table'] ) && 1 === intval( $_REQUEST['optimize_table'] ) ) { //phpcs:ignore --ok.
+            $args['optimize']           = 1;
+            $args['optimize_with_meta'] = 1;
+        }
+
         $args['records_per_page'] = $perPage;
         $args['dev_log_query']    = 0; // 1 for dev logs.
 
+        $args['with_all_logs_meta'] = 1;
+
         $this->items       = $this->manager->db->get_records( $args );
         $this->total_items = $this->manager->db->get_found_records_count(); // get this value for recent events request only.
+        $this->sites_opts  = $this->manager->db->get_logs_sites_opts();
 
         $this->items_prev = array();
         if ( $with_prev_data && ! empty( $args['timestart'] ) && ! empty( $args['timestop'] ) && $args['timestart'] < $args['timestop'] ) {
@@ -546,7 +897,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             unset( $pages_length[-1] );
         }
 
-        // @since version 5.4.1.
+        // @since version 5.5.
         $pages_length = apply_filters( 'mainwp_site_changes_table_pages_length', $pages_length, $this->table_id_prefix );
 
         $pagelength_val   = implode( ',', array_keys( $pages_length ) );
@@ -569,14 +920,16 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             <?php
         }
         ?>
-        <table id="<?php echo esc_attr( $events_tbl_id ); ?>" style="width:100%" class="ui single line <?php echo 'manage-events' === $this->table_id_prefix ? 'selectable' : ''; ?> unstackable table mainwp-with-preview-table">
-            <thead>
-                <tr><?php $this->print_column_headers( true ); ?></tr>
-            </thead>
-            <tfoot>
-                <tr><?php $this->print_column_headers( false ); ?></tr>
-            </tfoot>
-        </table>
+        <div id="mainwp-module-log-records-table-container" style="opacity:0;">
+            <table id="<?php echo esc_attr( $events_tbl_id ); ?>" style="width:100%" class="ui single line <?php echo 'manage-events' === $this->table_id_prefix ? 'selectable' : ''; ?> unstackable table mainwp-with-preview-table">
+                <thead>
+                    <tr><?php $this->print_column_headers( true ); ?></tr>
+                </thead>
+                <tfoot>
+                    <tr><?php $this->print_column_headers( false ); ?></tr>
+                </tfoot>
+            </table>
+        </div>
         <?php
 
         if ( 'manage-events' === $this->table_id_prefix ) {
@@ -588,17 +941,17 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         $count = $this->get_total_found_rows();
         if ( empty( $count ) ) {
             ?>
-        <div id="sites-table-count-empty" style="display: none;">
-            <?php $this->no_items(); ?>
-        </div>
+            <div id="sites-table-count-empty" style="display: none;">
+                <?php $this->no_items(); ?>
+            </div>
             <?php
         }
         ?>
-    <div id="mainwp-loading-sites" style="display: none;">
-    <div class="ui active inverted dimmer">
-    <div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading ...', 'mainwp' ); ?></div>
-    </div>
-    </div>
+        <div id="mainwp-loading-sites">
+            <div class="ui active page dimmer">
+                <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
+            </div>
+        </div>
         <?php
         $table_features = array(
             'searching'     => 'true',
@@ -607,11 +960,12 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'info'          => 'true',
             'colReorder'    => '{columns:":not(.check-column):not(:last-child)"}',
             'stateSave'     => 'true',
-            'stateDuration' => '0',
+            'stateDuration' => '60 * 60 * 24 * 30',
             'order'         => '[]',
             'scrollX'       => 'true',
             'responsive'    => 'true',
             'fixedColumns'  => '',
+            'searchDelay'   => 350,
         );
 
         // Fix for widget state save overview table.
@@ -670,6 +1024,10 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                         current_client_id: $( '#mainwp-widget-filter-current-client-id').length ? $( '#mainwp-widget-filter-current-client-id').val() : 0,
                                         current_site_id: $( '#mainwp-widget-filter-current-site-id').length ? $( '#mainwp-widget-filter-current-site-id').val() : 0,
                                     } );
+
+                                    <?php if ( $this->optimize_table ) { ?>
+                                        data.optimize_table = 1;
+                                    <?php } ?>
 
                                     if('mainwp_module_log_manage_events_display_rows' === ajax_action ){
                                         data.source =  $( '#mainwp-module-log-filter-source').length ? $( '#mainwp-module-log-filter-source').dropdown('get value') : '';
@@ -734,6 +1092,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                             },
                             "drawCallback": function( settings ) {
                                 this.api().tables().body().to$().attr( 'id', 'mainwp-module-log-records-body-table' );
+                                jQuery( '#mainwp-module-log-records-table-container' ).css( 'opacity', '1' );
                                 mainwp_datatable_fix_menu_overflow(manage_tbl_id);
                                 if ( typeof mainwp_preview_init_event !== "undefined" ) {
                                     mainwp_preview_init_event();
@@ -748,21 +1107,13 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                         mainwp_datatable_fix_menu_overflow(manage_tbl_id);
                                         mainwp_table_check_columns_init(manage_tbl_id);
                                     }, 1000);
-                                } else if('widget-overview' === '<?php echo esc_js( $this->table_id_prefix ); ?>'){
-                                    jQuery('#mainwp-module-log-records-table-widget-overview #mainwp-module-log-records-body-table td.check-column input[type="checkbox"]').on('change', function(){
-                                        console.log('onchange sites changes.');
-                                        if( jQuery('#mainwp-module-log-records-body-table input[type="checkbox"]:checked').length == 0 ){
-                                            jQuery('#mainwp_widget_sites_changes_bulk_dismiss_selected_btn').addClass('disabled');
-                                        } else {
-                                            jQuery('#mainwp_widget_sites_changes_bulk_dismiss_selected_btn').removeClass('disabled');
-                                        }
-                                    });
                                 }
                             },
                             "initComplete": function( settings, json ) {
-                                if ( 'widget-overview' === '<?php echo esc_js( $this->table_id_prefix ); ?>' ){
-                                    const searchInput = $('#mainwp-module-log-records-table-widget-overview_wrapper input[type="search"]');
-                                    searchInput.val('');
+                                if( 'widget-overview' === '<?php echo esc_js( $this->table_id_prefix ); ?>' ){
+                                    setTimeout(() => {
+                                            jQuery('#mainwp-module-log-records-table-container div.dt-search #dt-search-1').val('');// to fix issue autofill for chrome.
+                                    }, 100);
                                 }
                             },
                             rowCallback: function (row, data) {
@@ -771,7 +1122,16 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                 jQuery( row ).attr( 'log-id',  data.log_id );
                                 jQuery( row ).find('.mainwp-date-cell').attr('data-sort', data.created_sort );
                                 jQuery( row ).find('.mainwp-state-cell').attr('data-sort', data.state_sort );
-                            }
+                            },
+                            stateSaveParams: function (settings, data) {
+                                data._mwpv = mainwpParams.mainwpVersion || 'dev';
+                            },
+                            stateLoadParams: function (settings, data) {
+                                if ((mainwpParams.mainwpVersion || 'dev') !== data._mwpv) return false;
+                            },
+                            search: { regex: false, smart: false },
+                            orderMulti: false,
+                            searchDelay: <?php echo intval( $table_features['searchDelay'] ); ?>
                             <?php
                             if ( 'manage-events' === $this->table_id_prefix ) {
                                 echo ",select: {
@@ -1007,9 +1367,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                     'created'  => $log->created,
                     'state'    => is_null( $log->state ) ? - 1 : $log->state,
                 );
-
                 $cols_data = array();
-
                 foreach ( $columns as $column_name => $column_display_name ) {
                     ob_start();
                     echo $this->column_default( $log, $column_name ); // phpcs:ignore WordPress.Security.EscapeOutput

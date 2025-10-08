@@ -114,6 +114,14 @@ class MainWP_Actions_Handler { //phpcs:ignore Generic.Classes.OpeningBraceSameLi
     public function hook_mainwp_fetch_url_authed( $website, $information, $action, $params, $others ) {
         if ( 'plugin_action' === $action ) {
             $plugin_act = isset( $params['action'] ) ? $params['action'] : '';
+
+            if ( 'delete' === $plugin_act && ! empty( $information['other_data']['duration_bulk'] ) ) {
+                $params['duration_bulk'] = $information['other_data']['duration_bulk'];
+            }
+
+            if ( 'delete' === $plugin_act && ! empty( $information['other_data']['plugin_deactivated_data'] ) ) {
+                do_action( 'mainwp_install_plugin_action', $website, 'deactivate', $params, $information['other_data']['plugin_deactivated_data'], $others );
+            }
             if ( in_array( $plugin_act, array( 'activate', 'deactivate', 'delete' ) ) && isset( $information['other_data']['plugin_action_data'] ) ) {
                 do_action( 'mainwp_install_plugin_action', $website, $plugin_act, $params, $information['other_data']['plugin_action_data'], $others );
             }

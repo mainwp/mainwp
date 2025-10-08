@@ -111,8 +111,9 @@ class Log_Graph_Plugins_Widget {
      * Method render_widget_content()
      */
     public function render_widget_content() {
-        $wp_plugins = array();
-        $websites   = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+        $wp_plugins    = array();
+        $wpsite_fields = array( 'id', 'name', 'plugins' );
+        $websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( array( 'select_wp_fields' => $wpsite_fields ) ) );
         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
             $plugins = ! empty( $website->plugins ) ? json_decode( $website->plugins, 1 ) : array();
             if ( ! is_array( $plugins ) ) {

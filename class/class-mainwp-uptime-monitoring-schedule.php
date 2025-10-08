@@ -184,7 +184,13 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
 
             $local_time = mainwp_get_timestamp();
 
-            $process_init = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_notification_to_start_send( 50 );
+            $global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+            $glo_active      = 0;
+            if ( isset( $global_settings['active'] ) ) {
+                $glo_active = 1 === (int) $global_settings['active'] ? 1 : 0;
+            }
+
+            $process_init = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_notification_to_start_send( 50, $glo_active );
 
             if ( is_array( $process_init ) && ! empty( $process_init ) ) {
                 MainWP_Logger::instance()->log_events( 'regular-schedule', 'Uptime notification :: start :: [found=' . count( $process_init ) . ']' );
@@ -196,6 +202,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
                 }
 
                 foreach ( $process_init as $uptime_notice ) {
+
                     if ( ! empty( $uptime_notice->process_id ) ) {
                         MainWP_DB::instance()->update_regular_process(
                             array(

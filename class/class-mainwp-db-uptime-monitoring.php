@@ -76,7 +76,8 @@ wpid int(11) NOT NULL,
 `dts_auto_monitoring_time` int(11) NOT NULL DEFAULT 0,
 `dts_auto_monitoring_start` int(11) NOT NULL DEFAULT 0,
 `dts_auto_monitoring_retry_time` int(11) NOT NULL DEFAULT 0,
-KEY idx_wpid (wpid)";
+KEY idx_wpid (wpid),
+KEY idx_wpid_issub (wpid, issub)";
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.0.41', '<' ) ) { // NOSONAR - no ip.
             $tbl .= ',
     PRIMARY KEY (monitor_id) ';
@@ -140,6 +141,11 @@ KEY idx_wpid (wpid)";
         $suppress = $this->wpdb->suppress_errors();
         $this->update_db_90041( $current_version );
         $this->update_db_90043( $current_version );
+
+        if ( ! empty( $current_version ) && version_compare( $current_version, '9.0.1.2', '<' ) ) {
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'monitors' ) . ' ADD INDEX idx_wpid_issub (wpid, issub)' ); //phpcs:ignore -- ok.
+        }
+
         $this->wpdb->suppress_errors( $suppress );
     }
 
@@ -507,12 +513,13 @@ KEY idx_wpid (wpid)";
      * @param  int $limit limit.
      * @return mixed
      */
-    public function get_uptime_notification_to_start_send( $limit = 50 ) {
+    public function get_uptime_notification_to_start_send( $limit = 50, $global_active = 1 ) {
 
         $sql = $this->wpdb->prepare(
             ' SELECT pro.process_id,pro.status,pro.dts_process_start,pro.dts_process_stop,mo.* FROM ' . $this->table_name( 'monitors' ) . ' mo ' .
             ' LEFT JOIN ' . $this->table_name( 'schedule_processes' ) . ' pro ON mo.monitor_id = pro.item_id ' .
             " WHERE ( pro.type = 'monitor' AND pro.process_slug = 'uptime_notification' " .
+            ' AND ( ( mo.active = -1 AND 1 = ' . ( $global_active ? 1 : 0 ) . ' ) OR mo.active = 1  ) ' .
             " AND ( pro.dts_process_stop > pro.dts_process_start OR pro.dts_process_start = 0 ) AND pro.status = 'active' ) " . // get active process and stop > start - it is finished status of previous process.
             ' ORDER BY pro.dts_process_start ASC LIMIT %d ',
             $limit

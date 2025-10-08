@@ -589,7 +589,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         </div>
                         </td>
                         <td sort-value="<?php echo count( $translation_upgrades ); ?>">
-                            <?php echo count( $translation_upgrades ); ?><?php echo esc_html( _n( 'Update', 'Updates', count( $translation_upgrades ), 'mainwp' ) ); ?>
+                            <?php echo count( $translation_upgrades ); ?> <?php echo esc_html( _n( 'Update', 'Updates', count( $translation_upgrades ), 'mainwp' ) ); ?>
                         </td>
                         <?php if ( $user_can_see_client ) { ?>
                         <td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>

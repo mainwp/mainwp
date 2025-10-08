@@ -64,7 +64,7 @@ jQuery(function ($) {
 
     jQuery(document).on('click', '.subscription_menu_item_delete', function () {
         let objDel = jQuery(this);
-        mainwp_confirm(__('Are you sure.'), function () {
+        mainwp_confirm(__('Are you sure?'), function () {
             mainwp_module_cost_tracker_delete_start_specific(objDel, '', false);
         }, false, false, true);
     })

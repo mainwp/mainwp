@@ -50,8 +50,16 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return string $return all_synced|not_synced|last_sync
      */
     public function get_last_sync_status() {
-        $sql      = $this->get_sql_websites_for_current_user();
-        $websites = $this->query( $sql );
+        $wpsite_fields = array( 'id' );
+        $sync_fields   = array( 'sync_errors', 'dtsSync' );
+        $websites      = $this->query(
+            $this->get_sql_websites_for_current_user_by_params(
+                array(
+                    'select_wp_fields'   => $wpsite_fields,
+                    'select_sync_fields' => $sync_fields,
+                )
+            )
+        );
 
         $return = array(
             'sync_status' => false,

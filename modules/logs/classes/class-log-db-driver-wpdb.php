@@ -88,13 +88,16 @@ class Log_DB_Driver_WPDB implements Log_DB_Driver {
 
         // Insert record meta.
         foreach ( (array) $meta as $key => $vals ) {
-            foreach ( (array) $vals as $val ) {
-                if ( is_scalar( $val ) && '' !== $val ) {
-                    $this->insert_meta( $record_id, $key, $val );
+            if ( is_scalar( $vals ) && '' !== $vals ) {
+                $this->insert_meta( $record_id, $key, $vals );
+            } else {
+                foreach ( (array) $vals as $key_val => $val ) {
+                    if ( is_scalar( $val ) && '' !== $val ) {
+                        $this->insert_meta( $record_id, $key_val, $val );
+                    }
                 }
             }
         }
-
         return $record_id;
     }
 

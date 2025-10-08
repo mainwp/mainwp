@@ -523,7 +523,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
      */
     public static function render_secure_priv_key_connection() {
-        if ( MainWP_DB::instance()->get_websites_count() > 0 && MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_secure_priv_key_notice' ) ) {
+        if ( MainWP_DB::instance()->get_websites_count() > 0 && ! static::check_keys_encrypted() && MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_secure_priv_key_notice' ) ) {
             ?>
             <div class="ui attention message">
                 <h3><?php esc_html_e( 'New Security Feature: OpenSSL Key Encryption', 'mainwp' ); ?></h3>
@@ -534,6 +534,28 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             <?php
         }
     }
+
+    /**
+     * Method check_keys_encrypted().
+     *
+     * @return bool Keys encrypted or not.
+     */
+    public static function check_keys_encrypted() {
+        if ( get_option( 'mainwp_keys_is_encrypted' ) ) {
+            return true;
+        }
+        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
+        while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+            // try to decrypt priv key.
+            $de_privkey = MainWP_Encrypt_Data_Lib::instance()->decrypt_privkey( base64_decode( $website->privkey ), $website->id );  // phpcs:ignore -- NOSONAR - base64_encode trust.
+            if ( ! empty( $de_privkey ) ) {
+                update_option( 'mainwp_keys_is_encrypted', 1 );
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     /**
      * Renders wp_mail warning.
@@ -1226,7 +1248,16 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             return;
         }
 
-        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+        $wpsite_fields = array( 'id', 'name', 'url', 'plugins' );
+        $sync_fields   = array( 'sync_errors', 'totalsize' );
+        $websites      = MainWP_DB::instance()->query(
+            MainWP_DB::instance()->get_sql_websites_for_current_user_by_params(
+                array(
+                    'select_wp_fields'   => $wpsite_fields,
+                    'select_sync_fields' => $sync_fields,
+                )
+            )
+        );
 
         if ( empty( $websites ) ) {
             return;
@@ -1307,7 +1338,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                         let noti_id = jQuery('#mainwp-install-check-modal').attr('noti-slug');
                         mainwp_notice_dismiss(noti_id, 1);
                         setTimeout(function () {
-                            window.location.href = location.href;
+                            mainwp_forceReload();
                         }, 1000);
                     },
                 }).modal('show');

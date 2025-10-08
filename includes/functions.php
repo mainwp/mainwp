@@ -85,7 +85,7 @@ if ( ! function_exists( 'mainwp_send_json_output' ) ) {
      */
     function mainwp_send_json_output( $output ) {
         if ( is_array( $output ) ) {
-            $output['execute_time'] = \MainWP\Dashboard\MainWP_Execution_Helper::instance()->get_exec_time();
+            $output['execute_time'] = \MainWP\Dashboard\MainWP_Execution_Helper::get_run_time();
         }
         wp_send_json( $output );
     }

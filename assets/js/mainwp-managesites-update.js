@@ -399,7 +399,7 @@ jQuery(document).on('click', '#managesites-backup-all', function () {
     mainwpPopup('#managesites-backup-box').init({
         title: __("Full backup"), callback: function () {
             managesitesContinueAfterBackup = undefined;
-            window.location.href = location.href;
+            mainwp_forceReload();
         }
     });
     let sitesToBackup = mainwpPopup('#managesites-backup-box').getContentEl().find('.managesites-backup-site');
@@ -595,7 +595,7 @@ let managesites_wordpress_upgrade_all_upgrade_next = function () {
 	let waiting_icon = '<i class="sync alternate loading icon"></i>';
 	if (regression_waiting_icon && "" !== regression_waiting_icon) {
 		waiting_icon += regression_waiting_icon;
-	} 
+	}
 
     let websiteId = mainwpVars.websitesToUpgrade[mainwpVars.currentWebsite++];
 	dashboard_update_site_status(websiteId, waiting_icon);

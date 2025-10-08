@@ -925,8 +925,8 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         <div id="mainwp-message-zone"></div>
 
         <div id="mainwp-loading-posts-row" style="display: none;">
-            <div class="ui active inverted dimmer">
-                <div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading Posts...', 'mainwp' ); ?></div>
+            <div class="ui active dimmer">
+                <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
             </div>
         </div>
 
@@ -1606,10 +1606,10 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         ?>
 
         <div class="two column row" id="mainwp-metaform-row">
-            <div class="column">
+            <div class="column field">
                 <label for="<?php echo esc_attr( $meta_key_input_id ); ?>"><?php esc_html_e( 'Name', 'mainwp' ); ?></label>
                 <?php if ( $keys ) { ?>
-                    <select id="metakeyselect" name="metakeyselect">
+                    <select id="metakeyselect" name="metakeyselect" class="ui dropdown">
                         <option value="#NONE#"><?php esc_html_e( '&mdash; Select &mdash;', 'mainwp' ); ?></option>
                         <?php
                         foreach ( $keys as $key ) {
@@ -1620,10 +1620,11 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         }
                         ?>
                     </select>
-                    <input class="hide-if-js" type="text" id="metakeyinput" name="metakeyinput" value="" />
-                    <a href="#postcustomstuff" class="hide-if-no-js" onclick="jQuery( '#metakeyinput, #metakeyselect, #enternew, #cancelnew' ).toggle();return false;">
+                    <input style="display:none;" type="text" id="metakeyinput" name="metakeyinput" value="" />
+                    <br/>
+                    <a href="#postcustomstuff" class="ui mini basic grey button" onclick="jQuery('div.ui.dropdown:has(#metakeyselect), #metakeyinput, #enternew, #cancelnew').toggle();return false;">
                         <span id="enternew"><?php esc_html_e( 'Enter new', 'mainwp' ); ?></span>
-                        <span id="cancelnew" class="hidden"><?php esc_html_e( 'Cancel', 'mainwp' ); ?></span>
+                        <span id="cancelnew" style="display:none;"><?php esc_html_e( 'Cancel', 'mainwp' ); ?></span>
                     </a>
                 <?php } else { ?>
                     <input type="text" id="metakeyinput" name="metakeyinput" value="" />
@@ -1634,6 +1635,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 <textarea id="metavalue" name="metavalue" rows="2" cols="25"></textarea>
             </div>
         </div>
+        <div class="ui divider"></div>
         <div class="two column row">
             <div class="column">
                 <input type="button" onclick="mainwp_post_newmeta_submit( 'add' )" class="ui mini button" value="<?php esc_attr_e( 'Add Custom Field', 'mainwp' ); ?>">
@@ -1654,26 +1656,31 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      */
     public static function post_custom_meta_box( $post ) {
         ?>
-        <div class="ui secondary segment">
-            <div class="ui header"><?php esc_html_e( 'Custom Fields', 'mainwp' ); ?></div>
-            <div class="ui grid">
-            <?php
-            $metadata = has_meta( $post->ID );
-            foreach ( $metadata as $key => $value ) {
-                if ( is_protected_meta( $metadata[ $key ]['meta_key'], 'post' ) || ! current_user_can( 'edit_post_meta', $post->ID, $metadata[ $key ]['meta_key'] ) ) {
-                    unset( $metadata[ $key ] );
+        <div class="ui fluid accordion mainwp-sidebar-accordion" style="background:none!important;">
+            <div class="title active" style="background:none!important;">
+                <i class="dropdown icon"></i>
+                <?php esc_html_e( 'Custom Fields', 'mainwp' ); ?>
+            </div>
+            <div class="content active" style="background:none!important;">
+                <div class="ui grid">
+                <?php
+                $metadata = has_meta( $post->ID );
+                foreach ( $metadata as $key => $value ) {
+                    if ( is_protected_meta( $metadata[ $key ]['meta_key'], 'post' ) || ! current_user_can( 'edit_post_meta', $post->ID, $metadata[ $key ]['meta_key'] ) ) {
+                        unset( $metadata[ $key ] );
+                    }
                 }
-            }
 
-            $count = 0;
-            if ( $metadata ) {
-                foreach ( $metadata as $entry ) {
-                    echo static::list_meta_row( $entry, $count ); // phpcs:ignore WordPress.Security.EscapeOutput
+                $count = 0;
+                if ( $metadata ) {
+                    foreach ( $metadata as $entry ) {
+                        echo static::list_meta_row( $entry, $count ); // phpcs:ignore WordPress.Security.EscapeOutput
+                    }
                 }
-            }
 
-            static::meta_form( $post );
-            ?>
+                static::meta_form( $post );
+                ?>
+                </div>
             </div>
         </div>
         <?php
@@ -2356,8 +2363,8 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 } );
             } );
             </script>
-            <div class="ui active inverted dimmer" id="mainwp-publish-dimmer" style="display:none">
-                <div class="ui text loader"><?php esc_html_e( 'Publishing...', 'mainwp' ); ?></div>
+            <div class="ui active page dimmer" id="mainwp-publish-dimmer" style="display:none">
+                <div class="ui double text loader"><?php esc_html_e( 'Publishing...', 'mainwp' ); ?></div>
             </div>
             <div class="ui clearing hidden divider"></div>
         </div>

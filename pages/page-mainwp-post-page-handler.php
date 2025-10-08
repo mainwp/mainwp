@@ -481,8 +481,8 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <a href="admin.php?page=PostBulkAdd" class="ui green button new-bulk-post"><?php esc_html_e( 'New Post', 'mainwp' ); ?></a>
         </div>
     </div>
-    <div class="ui active inverted dimmer" id="mainwp-posting-running">
-    <div class="ui indeterminate large text loader"><?php esc_html_e( 'Running ...', 'mainwp' ); ?></div>
+    <div class="ui active dimmer" id="mainwp-posting-running">
+    <div class="ui double text loader"><?php esc_html_e( 'Running ...', 'mainwp' ); ?></div>
     </div>
         <script type="text/javascript">
             jQuery( document ).ready( function () {
@@ -490,7 +490,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 jQuery( "#mainwp-posting-post-modal" ).modal( {
                     closable: true,
                     onHide: function() {
-                        location.href = 'admin.php?page=PostBulkManage';
+                        mainwp_forceReload('admin.php?page=PostBulkManage');
                     }
                 } ).modal( 'show' );
             } );
@@ -530,8 +530,8 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <a href="admin.php?page=PostBulkAdd" class="ui green button"><?php esc_html_e( 'New Post', 'mainwp' ); ?></a>
         </div>
     </div>
-    <div class="ui active inverted dimmer" id="mainwp-posting-running">
-    <div class="ui indeterminate large text loader"><?php esc_html_e( 'Running ...', 'mainwp' ); ?></div>
+    <div class="ui active dimmer" id="mainwp-posting-running">
+    <div class="ui double text loader"><?php esc_html_e( 'Running...', 'mainwp' ); ?></div>
     </div>
         <script type="text/javascript">
             jQuery( document ).ready( function () {
@@ -539,7 +539,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 jQuery( "#mainwp-posting-post-modal" ).modal( {
                     closable: true,
                     onHide: function() {
-                        location.href = 'admin.php?page=PostBulkManage';
+                        mainwp_forceReload('admin.php?page=PostBulkManage');
                     }
                 } ).modal( 'show' );
                 mainwp_post_posting_start_next( true );

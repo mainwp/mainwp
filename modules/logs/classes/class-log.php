@@ -9,6 +9,8 @@
 
 namespace MainWP\Dashboard\Module\Log;
 
+use MainWP\Dashboard\MainWP_Execution_Helper;
+
 /**
  * Class Logs
  */
@@ -57,6 +59,18 @@ class Log {
             $site_id = 0;
         }
 
+        $disable_cron_log = false;
+
+        if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
+            $disable_cron_log = true; // disable log cron tasks.
+        }
+
+        $disable_cron_log = apply_filters( 'mainwp_module_log_disable_cron_log', $disable_cron_log, $connector, $message, $args, $site_id, $context, $action, $user_id, $state );
+
+        if ( $disable_cron_log ) {
+                return false;
+        }
+
         $cron_tracking = apply_filters( 'mainwp_module_log_cron_tracking', true, $connector, $message, $args, $site_id, $context, $action, $user_id, $state );
 
         $author = new Log_Author( $user_id );
@@ -68,10 +82,11 @@ class Log {
                 return false;
         }
 
-        $user = new \WP_User( $user_id );
+        $user       = new \WP_User( $user_id );
+        $user_login = ! empty( $user->user_login ) ? (string) $user->user_login : '';
 
         $user_meta = array(
-            'user_login' => (string) ! empty( $user->user_login ) ? $user->user_login : '',
+            'user_login' => $user_login,
             'agent'      => (string) $agent,
         );
 
@@ -95,7 +110,7 @@ class Log {
             $system_user = 'wp_rest_api';
         }
 
-        $dura = isset( $args['duration'] ) ? floatval( $args['duration'] ) : $this->manager->executor->get_exec_time();
+        $dura = isset( $args['duration'] ) ? floatval( $args['duration'] ) : MainWP_Execution_Helper::get_run_time();
 
         if ( isset( $args['duration'] ) ) {
             unset( $args['duration'] );
@@ -113,6 +128,13 @@ class Log {
 
         $dura = $dura / $dura_bulk;
 
+        $created = microtime( true );
+
+        if ( ! empty( $args['created'] ) ) {
+            $created = (float) $args['created'];
+            unset( $args['created'] );
+        }
+
         // Prevent any meta with null values from being logged.
         $logs_meta = array_filter(
             $args,
@@ -121,7 +143,6 @@ class Log {
             }
         );
 
-        // To support searching user on meta.
         if ( empty( $logs_meta['user_login'] ) ) {
             if ( ! empty( $user_meta['user_login'] ) ) {
                 $logs_meta['user_login'] = $user_meta['user_login'];
@@ -134,16 +155,17 @@ class Log {
         $logs_meta['user_meta_json'] = wp_json_encode( $user_meta );
 
         $recordarr = array(
-            'site_id'   => (int) $site_id,
-            'user_id'   => (int) $user_id,
-            'item'      => (string) vsprintf( $message, $args ),
-            'connector' => (string) $connector,
-            'context'   => (string) $context,
-            'action'    => (string) $action,
-            'duration'  => $dura,
-            'created'   => time(),
-            'state'     => $state,
-            'meta'      => (array) $logs_meta,
+            'site_id'    => (int) $site_id,
+            'user_id'    => (int) $user_id,
+            'user_login' => (string) $user_login,
+            'item'       => (string) vsprintf( $message, $args ),
+            'connector'  => (string) $connector,
+            'context'    => (string) $context,
+            'action'     => (string) $action,
+            'duration'   => $dura,
+            'created'    => $created,
+            'state'      => $state,
+            'meta'       => (array) $logs_meta,
         );
 
         if ( 0 === $recordarr['site_id'] ) {

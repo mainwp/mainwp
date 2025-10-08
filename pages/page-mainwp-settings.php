@@ -856,35 +856,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 </select>
                             </div>
                         </div>
-                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates">
-                            <label class="six wide column middle aligned">
-                            <?php
-                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_check_http_response', get_option( 'mainwp_check_http_response', '' ) );
-                            esc_html_e( 'Check site HTTP response after update', 'mainwp' );
-                            ?>
-                            </label>
-                            <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="http-respon-check" data-tooltip="<?php esc_attr_e( 'Enable if you want your MainWP Dashboard to check child site header response after updates.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <input type="checkbox" class="settings-field-value-change-handler" inverted-value="1" name="mainwp_check_http_response" id="mainwp_check_http_response" <?php echo 1 === (int) get_option( 'mainwp_check_http_response', 0 ) ? 'checked="true"' : ''; ?>/>
-                            </div>
-                        </div>
-                        <?php
-                        $chk_http_method = get_option( 'mainwp_check_http_response_method', 'head' );
-                        $chk_http_method = in_array( $chk_http_method, array( 'get', 'head' ) ) ? $chk_http_method : 'head';
-                        ?>
-                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates" default-indi-value="head" <?php echo 1 !== (int) get_option( 'mainwp_check_http_response', 0 ) ? 'style="display:none"' : ''; ?> hide-element="http-respon-check">
-                            <label class="six wide column middle aligned">
-                            <?php
-                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_check_http_response_method', (string) $chk_http_method );
-                            esc_html_e( 'Check site HTTP response method', 'mainwp' );
-                            ?>
-                            </label>
-                            <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select Check site HTTP response method. If you are not sure, select "Default".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <select class="ui dropdown settings-field-value-change-handler"id="mainwp_check_http_response_method" name="mainwp_check_http_response_method">
-                                    <option <?php echo 'head' === $chk_http_method ? 'selected' : ''; ?> value="head"><?php esc_html_e( 'Head (default)', 'mainwp' ); ?></option>
-                                    <option <?php echo 'get' === $chk_http_method ? 'selected' : ''; ?> value="get"><?php esc_html_e( 'Get', 'mainwp' ); ?></option>
-                                </select>
-                            </div>
-                        </div>
                         <?php if ( ( $enableLegacyBackupFeature && empty( $primaryBackup ) ) || ( empty( $enableLegacyBackupFeature ) && ! empty( $primaryBackup ) ) ) { ?>
                         <div class="ui grid field mainwp-parent-toggle settings-field-indicator-wrapper settings-field-indicator-updates">
                             <label class="six wide column middle aligned">
@@ -1067,8 +1038,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      */
     public static function render_timezone_settings() { // phpcs:ignore -- NOSONAR - complex.
 
-        $current_offset  = get_option( 'gmt_offset' );
-        $tzstring        = get_option( 'timezone_string' );
+        $current_offset = get_option( 'gmt_offset' );
+        $tzstring       = get_option( 'timezone_string' );
+        $tzstring       = MainWP_Utility::clean_wp_timezone_string( $tzstring );
+
         $check_zone_info = true;
 
         // Remove old Etc mappings. Fallback to gmt_offset.
@@ -1359,6 +1332,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             MainWP_Utility::update_option( 'mainwp_forceUseIPv4', isset( $_POST['mainwp_forceUseIPv4'] ) ? 1 : 0 );
             $use_wpcron = ! isset( $_POST['mainwp_options_wp_cron'] ) ? 0 : 1;
             MainWP_Utility::update_option( 'mainwp_wp_cron', $use_wpcron );
+            MainWP_Utility::update_option( 'mainwp_warm_cache_pages_ttl', intval( $_POST['mainwp_warm_cache_pages_ttl'] ) );
+
             MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
             MainWP_Utility::update_option( 'mainwp_maximum_uptime_monitoring_requests', ! empty( $_POST['mainwp_maximumUptimeMonitoringRequests'] ) ? intval( $_POST['mainwp_maximumUptimeMonitoringRequests'] ) : 10 );
             MainWP_Utility::update_option( 'mainwp_chunksitesnumber', isset( $_POST['mainwp_chunksitesnumber'] ) ? intval( $_POST['mainwp_chunksitesnumber'] ) : 10 );
@@ -1614,6 +1589,18 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_optimize" id="mainwp_optimize" <?php echo 1 === (int) get_option( 'mainwp_optimize', 1 ) ? 'checked="true"' : ''; ?> /><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
                             </div>
                         </div>
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-miscellaneous" default-indi-value="10">
+                            <label class="six wide column middle aligned">
+                            <?php
+                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_warm_cache_pages_ttl', (int) get_option( 'mainwp_warm_cache_pages_ttl', 10 ) );
+                            esc_html_e( 'Browser cache expiration time', 'mainwp' );
+                            $browser_cache_ttl = (int) get_option( 'mainwp_warm_cache_pages_ttl', 10 );
+                            ?>
+                            </label>
+                            <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Set how many minutes the browser cache should retain page content before it expires', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <input type="number" class="settings-field-value-change-handler small-text" name="mainwp_warm_cache_pages_ttl" id="mainwp_warm_cache_pages_ttl" placeholder="" min="1" max="24" step="1" value="<?php echo intval( $browser_cache_ttl ); ?>">
+                            </div>
+                        </div>
                         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-miscellaneous" default-indi-value="1">
                             <label class="six wide column middle aligned">
                             <?php
@@ -1715,152 +1702,153 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 </div>
             </div>
             <script>
-            const maximumRequests = <?php echo ! empty( get_option( 'mainwp_maximumRequests' ) ) ? esc_js( get_option( 'mainwp_maximumRequests' ) ) : 4; ?>;
-            jQuery('#mainwp_maximumRequests_slider').slider({
-                min: 1,
-                max: 20,
-                start: maximumRequests,
-                step: 1,
-                restrictedLabels: [1,20],
-                showThumbTooltip: true,
-                tooltipConfig: {
-                    position: 'top center',
-                    variation: 'small visible black'
-                },
-                onChange: function(value) {
-                    jQuery('#mainwp_maximumRequests').val(value);
-                }
-            });
-            const minimumDelay = <?php echo ! empty( get_option( 'mainwp_minimumDelay' ) ) ? esc_js( get_option( 'mainwp_minimumDelay' ) ) : 200; ?>;
-            jQuery('#mainwp_minimumDelay_slider').slider({
-                min: 100,
-                max: 5000,
-                start: minimumDelay,
-                step: 100,
-                restrictedLabels: [100,5000],
-                showThumbTooltip: true,
-                tooltipConfig: {
-                    position: 'top center',
-                    variation: 'small visible black'
-                },
-                onChange: function(value) {
-                    jQuery('#mainwp_minimumDelay').val(value);
-                }
-            });
-            const maximumIPRequests = <?php echo ! empty( get_option( 'mainwp_maximumIPRequests' ) ) ? esc_js( get_option( 'mainwp_maximumIPRequests' ) ) : 1; ?>;
-            jQuery('#mainwp_maximumIPRequests_slider').slider({
-                min: 1,
-                max: 10,
-                start: maximumIPRequests,
-                step: 1,
-                restrictedLabels: [1,10],
-                showThumbTooltip: true,
-                tooltipConfig: {
-                    position: 'top center',
-                    variation: 'small visible black'
-                },
-                onChange: function(value) {
-                    jQuery('#mainwp_maximumIPRequests').val(value);
-                }
-            });
-            const minimumIPDelay = <?php echo ! empty( get_option( 'mainwp_minimumIPDelay' ) ) ? esc_js( get_option( 'mainwp_minimumIPDelay' ) ) : 1000; ?>;
-            jQuery('#mainwp_minimumIPDelay_slider').slider({
-                min: 500,
-                max: 5000,
-                start: minimumIPDelay,
-                step: 100,
-                restrictedLabels: [500,5000],
-                showThumbTooltip: true,
-                tooltipConfig: {
-                    position: 'top center',
-                    variation: 'small visible black'
-                },
-                onChange: function(value) {
-                    jQuery('#mainwp_minimumIPDelay').val(value);
-                }
-            });
-            const maximumSyncRequests = <?php echo ! empty( get_option( 'mainwp_maximumSyncRequests' ) ) ? esc_js( get_option( 'mainwp_maximumSyncRequests' ) ) : 8; ?>;
-            jQuery('#mainwp_maximumSyncRequests_slider').slider({
-                min: 1,
-                max: 20,
-                start: maximumSyncRequests,
-                step: 1,
-                restrictedLabels: [1,20],
-                showThumbTooltip: true,
-                tooltipConfig: {
-                    position: 'top center',
-                    variation: 'small visible black'
-                },
-                onChange: function(value) {
-                    jQuery('#mainwp_maximumSyncRequests').val(value);
-                }
-            });
-            const maximumInstallUpdateRequests = <?php echo ! empty( get_option( 'mainwp_maximumInstallUpdateRequests' ) ) ? esc_js( get_option( 'mainwp_maximumInstallUpdateRequests' ) ) : 3; ?>;
-            jQuery('#mainwp_maximumInstallUpdateRequests_slider').slider({
-                min: 1,
-                max: 20,
-                start: maximumInstallUpdateRequests,
-                step: 1,
-                restrictedLabels: [1,20],
-                showThumbTooltip: true,
-                tooltipConfig: {
-                    position: 'top center',
-                    variation: 'small visible black'
-                },
-                onChange: function(value) {
-                    jQuery('#mainwp_maximumInstallUpdateRequests').val(value);
-                }
-            });
-            const maximumUptimeMonitoringRequests = <?php echo ! empty( get_option( 'mainwp_maximum_uptime_monitoring_requests' ) ) ? esc_js( get_option( 'mainwp_maximum_uptime_monitoring_requests' ) ) : 10; ?>;
-            jQuery('#mainwp_maximumUptimeMonitoringRequests_slider').slider({
-                min: 1,
-                max: 100,
-                start: maximumUptimeMonitoringRequests,
-                step: 1,
-                restrictedLabels: [1,100],
-                showThumbTooltip: true,
-                tooltipConfig: {
-                    position: 'top center',
-                    variation: 'small visible black'
-                },
-                onChange: function(value) {
-                    jQuery('#mainwp_maximumUptimeMonitoringRequests').val(value).change();
-                }
-            });
-            jQuery('#mainwp_maximumUptimeMonitoringRequests_slider').slider('set value', maximumUptimeMonitoringRequests);
+            jQuery(document).ready(function() {
+                const maximumRequests = <?php echo ! empty( get_option( 'mainwp_maximumRequests' ) ) ? esc_js( get_option( 'mainwp_maximumRequests' ) ) : 4; ?>;
+                jQuery('#mainwp_maximumRequests_slider').slider({
+                    min: 1,
+                    max: 20,
+                    start: maximumRequests,
+                    step: 1,
+                    restrictedLabels: [1,20],
+                    showThumbTooltip: true,
+                    tooltipConfig: {
+                        position: 'top center',
+                        variation: 'small visible black'
+                    },
+                    onChange: function(value) {
+                        jQuery('#mainwp_maximumRequests').val(value);
+                    }
+                });
+                const minimumDelay = <?php echo ! empty( get_option( 'mainwp_minimumDelay' ) ) ? esc_js( get_option( 'mainwp_minimumDelay' ) ) : 200; ?>;
+                jQuery('#mainwp_minimumDelay_slider').slider({
+                    min: 100,
+                    max: 5000,
+                    start: minimumDelay,
+                    step: 100,
+                    restrictedLabels: [100,5000],
+                    showThumbTooltip: true,
+                    tooltipConfig: {
+                        position: 'top center',
+                        variation: 'small visible black'
+                    },
+                    onChange: function(value) {
+                        jQuery('#mainwp_minimumDelay').val(value);
+                    }
+                });
+                const maximumIPRequests = <?php echo ! empty( get_option( 'mainwp_maximumIPRequests' ) ) ? esc_js( get_option( 'mainwp_maximumIPRequests' ) ) : 1; ?>;
+                jQuery('#mainwp_maximumIPRequests_slider').slider({
+                    min: 1,
+                    max: 10,
+                    start: maximumIPRequests,
+                    step: 1,
+                    restrictedLabels: [1,10],
+                    showThumbTooltip: true,
+                    tooltipConfig: {
+                        position: 'top center',
+                        variation: 'small visible black'
+                    },
+                    onChange: function(value) {
+                        jQuery('#mainwp_maximumIPRequests').val(value);
+                    }
+                });
+                const minimumIPDelay = <?php echo ! empty( get_option( 'mainwp_minimumIPDelay' ) ) ? esc_js( get_option( 'mainwp_minimumIPDelay' ) ) : 1000; ?>;
+                jQuery('#mainwp_minimumIPDelay_slider').slider({
+                    min: 500,
+                    max: 5000,
+                    start: minimumIPDelay,
+                    step: 100,
+                    restrictedLabels: [500,5000],
+                    showThumbTooltip: true,
+                    tooltipConfig: {
+                        position: 'top center',
+                        variation: 'small visible black'
+                    },
+                    onChange: function(value) {
+                        jQuery('#mainwp_minimumIPDelay').val(value);
+                    }
+                });
+                const maximumSyncRequests = <?php echo ! empty( get_option( 'mainwp_maximumSyncRequests' ) ) ? esc_js( get_option( 'mainwp_maximumSyncRequests' ) ) : 8; ?>;
+                jQuery('#mainwp_maximumSyncRequests_slider').slider({
+                    min: 1,
+                    max: 20,
+                    start: maximumSyncRequests,
+                    step: 1,
+                    restrictedLabels: [1,20],
+                    showThumbTooltip: true,
+                    tooltipConfig: {
+                        position: 'top center',
+                        variation: 'small visible black'
+                    },
+                    onChange: function(value) {
+                        jQuery('#mainwp_maximumSyncRequests').val(value);
+                    }
+                });
+                const maximumInstallUpdateRequests = <?php echo ! empty( get_option( 'mainwp_maximumInstallUpdateRequests' ) ) ? esc_js( get_option( 'mainwp_maximumInstallUpdateRequests' ) ) : 3; ?>;
+                jQuery('#mainwp_maximumInstallUpdateRequests_slider').slider({
+                    min: 1,
+                    max: 20,
+                    start: maximumInstallUpdateRequests,
+                    step: 1,
+                    restrictedLabels: [1,20],
+                    showThumbTooltip: true,
+                    tooltipConfig: {
+                        position: 'top center',
+                        variation: 'small visible black'
+                    },
+                    onChange: function(value) {
+                        jQuery('#mainwp_maximumInstallUpdateRequests').val(value);
+                    }
+                });
+                const maximumUptimeMonitoringRequests = <?php echo ! empty( get_option( 'mainwp_maximum_uptime_monitoring_requests' ) ) ? esc_js( get_option( 'mainwp_maximum_uptime_monitoring_requests' ) ) : 10; ?>;
+                jQuery('#mainwp_maximumUptimeMonitoringRequests_slider').slider({
+                    min: 1,
+                    max: 100,
+                    start: maximumUptimeMonitoringRequests,
+                    step: 1,
+                    restrictedLabels: [1,100],
+                    showThumbTooltip: true,
+                    tooltipConfig: {
+                        position: 'top center',
+                        variation: 'small visible black'
+                    },
+                    onChange: function(value) {
+                        jQuery('#mainwp_maximumUptimeMonitoringRequests').val(value).change();
+                    }
+                });
+                jQuery('#mainwp_maximumUptimeMonitoringRequests_slider').slider('set value', maximumUptimeMonitoringRequests);
 
-            jQuery('#mainwp_chunksitesnumber_slider').slider({
-                min: 1,
-                max: 30,
-                start: <?php echo false !== get_option( 'mainwp_chunksitesnumber' ) ? intval( get_option( 'mainwp_chunksitesnumber' ) ) : 10; ?>,
-                step: 1,
-                restrictedLabels: [1,30],
-                showThumbTooltip: true,
-                tooltipConfig: {
-                    position: 'top center',
-                    variation: 'small visible black'
-                },
-                onChange: function(value) {
-                    jQuery('#mainwp_chunksitesnumber').val(value).change();
-                }
-            });
+                jQuery('#mainwp_chunksitesnumber_slider').slider({
+                    min: 1,
+                    max: 30,
+                    start: <?php echo false !== get_option( 'mainwp_chunksitesnumber' ) ? intval( get_option( 'mainwp_chunksitesnumber' ) ) : 10; ?>,
+                    step: 1,
+                    restrictedLabels: [1,30],
+                    showThumbTooltip: true,
+                    tooltipConfig: {
+                        position: 'top center',
+                        variation: 'small visible black'
+                    },
+                    onChange: function(value) {
+                        jQuery('#mainwp_chunksitesnumber').val(value).change();
+                    }
+                });
 
-            jQuery('#mainwp_chunksleepinterval_slider').slider({
-                min: 0,
-                max: 20,
-                start: <?php echo false !== get_option( 'mainwp_chunksleepinterval' ) ? intval( get_option( 'mainwp_chunksleepinterval' ) ) : 5; ?>,
-                step: 1,
-                restrictedLabels: [0,20],
-                showThumbTooltip: true,
-                tooltipConfig: {
-                    position: 'top center',
-                    variation: 'small visible black'
-                },
-                onChange: function(value) {
-                    jQuery('#mainwp_chunksleepinterval').val(value).change();
-                }
+                jQuery('#mainwp_chunksleepinterval_slider').slider({
+                    min: 0,
+                    max: 20,
+                    start: <?php echo false !== get_option( 'mainwp_chunksleepinterval' ) ? intval( get_option( 'mainwp_chunksleepinterval' ) ) : 5; ?>,
+                    step: 1,
+                    restrictedLabels: [0,20],
+                    showThumbTooltip: true,
+                    tooltipConfig: {
+                        position: 'top center',
+                        variation: 'small visible black'
+                    },
+                    onChange: function(value) {
+                        jQuery('#mainwp_chunksleepinterval').val(value).change();
+                    }
+                });
             });
-
             </script>
         <?php
         static::render_footer( 'Advanced' );
@@ -2085,13 +2073,19 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             <a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'disconnect_sites' ) ); ?>" onclick="mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Sites', 'mainwp' ); ?></a>
                     <?php } ?>
                     </div>
+                    </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Delete add-ons API Activation data', 'mainwp' ); ?></label>
+                        <div class="ten wide column" id="mainwp-clear-activation-data" data-content="<?php esc_attr_e( 'This does not affect extensions settings, it just removes API activation data.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+                            <a href="admin.php?page=MainWPTools&clearActivationData=yes&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'clear_activation_data' ) ); ?>" onclick="mainwp_tool_clear_activation_data(this); return false;" class="ui button green basic"><?php esc_html_e( 'Delete Add-ons API Activation Data', 'mainwp' ); ?></a>
                         </div>
-                        <div class="ui grid field">
-                            <label class="six wide column middle aligned"><?php esc_html_e( 'Delete extensions API Activation data', 'mainwp' ); ?></label>
-                            <div class="ten wide column" id="mainwp-clear-activation-data" data-content="<?php esc_attr_e( 'Delete extensions API activation data. This will not affect extensions settings, it just removes API activation data.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
-                                <a href="admin.php?page=MainWPTools&clearActivationData=yes&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'clear_activation_data' ) ); ?>" onclick="mainwp_tool_clear_activation_data(this); return false;" class="ui button green basic"><?php esc_html_e( 'Delete Extensions API Activation Data', 'mainwp' ); ?></a>
-                            </div>
+                    </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Delete archived sites changes data', 'mainwp' ); ?></label>
+                        <div class="ten wide column" id="mainwp-clear-archived-sites-changes-data" data-content="<?php esc_attr_e( 'Delete archived sites changes data.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+                            <a href="admin.php?page=MainWPTools&clearArchivedSitesChangesData=yes&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'clear_archived_sites_changes' ) ); ?>" onclick="mainwp_tool_clear_archived_sites_changes(this); return false;" class="ui button green basic"><?php esc_html_e( 'Delete Archived Sites Changes Data', 'mainwp' ); ?></a>
                         </div>
+                    </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Restore all info messages', 'mainwp' ); ?></label>
                         <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click this button to restore all info messages in your MainWP Dashboard and Extensions.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -2211,29 +2205,30 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         ?>
         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools" default-indi-value="default">
             <label class="six wide column middle aligned">
-        <?php
-        MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_selected_theme', $custom_theme );
-        esc_html_e( 'Select MainWP Theme', 'mainwp' );
-        ?>
+            <?php
+            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_selected_theme', $custom_theme );
+            esc_html_e( 'Select MainWP Dashboard theme', 'mainwp' );
+            ?>
             </label>
             <div class="ten wide column" tabindex="0" data-tooltip="<?php esc_attr_e( 'Select your MainWP Dashboard theme.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                 <select name="mainwp_settings_custom_theme" id="mainwp_settings_custom_theme" class="ui dropdown selection settings-field-value-change-handler">
                     <option value="default" <?php echo ( 'default' === $custom_theme || empty( $custom_theme ) ) ? 'selected' : ''; ?>><?php esc_html_e( 'Default', 'mainwp' ); ?></option>
+                    <option value="default-dark" <?php echo ( 'default-dark' === $custom_theme || empty( $custom_theme ) ) ? 'selected' : ''; ?>><?php esc_html_e( 'Dark', 'mainwp' ); ?></option>
                     <option value="default-2024" <?php echo ( 'default-2024' === $custom_theme || empty( $custom_theme ) ) ? 'selected' : ''; ?>><?php esc_html_e( 'Default 2024', 'mainwp' ); ?></option>
-                    <option value="classic" <?php echo ( 'classic' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Classic', 'mainwp' ); ?></option>
-                    <option value="dark" <?php echo ( 'dark' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Dark', 'mainwp' ); ?></option>
-                    <option value="wpadmin" <?php echo ( 'wpadmin' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'WP Admin', 'mainwp' ); ?></option>
-                    <option value="minimalistic" <?php echo ( 'minimalistic' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Minimalistic', 'mainwp' ); ?></option>
-        <?php
-        foreach ( $themes_files as $file_name => $theme ) {
-            $theme   = ucfirst( $theme );
-            $_select = '';
-            if ( $custom_theme === $file_name ) {
-                $_select = 'selected';
-            }
-            echo '<option value="' . esc_attr( $file_name ) . '" ' . esc_attr( $_select ) . '>' . esc_html( $theme ) . '</option>';
-        }
-        ?>
+                    <option value="dark" <?php echo ( 'dark' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Dark 2024', 'mainwp' ); ?></option>
+                    <option value="classic" <?php echo ( 'classic' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Classic (Legacy)', 'mainwp' ); ?></option>
+                    <option value="wpadmin" <?php echo ( 'wpadmin' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'WP Admin (Legacy)', 'mainwp' ); ?></option>
+                    <option value="minimalistic" <?php echo ( 'minimalistic' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Minimalistic (Legacy)', 'mainwp' ); ?></option>
+                    <?php
+                    foreach ( $themes_files as $file_name => $theme ) {
+                        $theme   = ucfirst( $theme );
+                        $_select = '';
+                        if ( $custom_theme === $file_name ) {
+                            $_select = 'selected';
+                        }
+                        echo '<option value="' . esc_attr( $file_name ) . '" ' . esc_attr( $_select ) . '>' . esc_html( $theme ) . '</option>';
+                    }
+                    ?>
                 </select>
             </div>
         </div>
@@ -2289,7 +2284,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         }
 
         if ( ! empty( $custom_theme ) ) {
-            if ( 'default' === $custom_theme || 'default-2024' === $custom_theme || 'dark' === $custom_theme || 'wpadmin' === $custom_theme || 'minimalistic' === $custom_theme ) {
+            if ( 'default' === $custom_theme || 'default-dark' === $custom_theme || 'default-2024' === $custom_theme || 'dark' === $custom_theme || 'wpadmin' === $custom_theme || 'minimalistic' === $custom_theme ) {
                 return $custom_theme;
             }
             $dirs      = $this->get_custom_theme_folder();

@@ -101,10 +101,10 @@ let updatesoverview_upgrade = function (id, obj) {
                     if (response.error.extra) {
                         err_msg = response.error.extra + ' ';
                     }
-                    jQuery('.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + err_msg + '"><i class="red times icon"></i></span>' + ' ' + mainwp_links_visit_site_and_admin('', pId));
+                    jQuery('.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + err_msg + '"><i class="red times icon"></i></span>');
                 } else {
 
-                    jQuery('.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child').html(response.result + ' ' + mainwp_links_visit_site_and_admin('', pId));
+                    jQuery('.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child').html(response.result);
 
                 }
 
@@ -136,7 +136,7 @@ let updatesoverview_update_popup_init = function (data) {
     data.allowMultiple = true;
     data.callback = function () {
         mainwpVars.bulkTaskRunning = false;
-        window.location.href = location.href;
+        mainwp_forceReload();
     };
     data.statusText = __('updated');
     mainwpPopup('#mainwp-sync-sites-modal').init(data);
@@ -1069,9 +1069,7 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
                                     if (!done && pBulkMode) {
                                         updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, success_html);
                                     }
-                                    websiteHolder.find('td:last-child').html(
-                                        success_html + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId)
-                                    );
+                                    websiteHolder.find('td:last-child').html(success_html);
                                 });
 
                                 // Immediately display the loading icon
@@ -1082,7 +1080,7 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
                                 }
 
                                 websiteHolder.attr('updated', 1);
-                                websiteHolder.find('td:last-child').html(loading_html + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
+                                websiteHolder.find('td:last-child').html(loading_html);
                             } else if (res_error[sid]) {
                                 let _error = res_error[sid];
                                 let roll_error = mainwp_updates_get_rollback_msg(_error);
@@ -1514,19 +1512,17 @@ let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode) {
                                     updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, success_html);
                                 }
 
-                                websiteHolder.find('td:last-child').html(
-                                    success_html + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId)
-                                );
+                                websiteHolder.find('td:last-child').html(success_html);
                             });
 
                             // Immediately display the loading icon
                             const loading_html = `${success_icon} ${regression_icon_loading}`;
                             if (!done && pBulkMode) {
-                                updatesoverview_themes_upgrade_all_update_site_status(pWebsiteId, loading_html + ' ' + mainwp_links_visit_site_and_admin('', websiteId));
+                                updatesoverview_themes_upgrade_all_update_site_status(pWebsiteId, loading_html);
                             }
 
                             websiteHolder.attr('updated', 1);
-                            websiteHolder.find('td:last-child').html(loading_html + ' ' + mainwp_links_visit_site_and_admin('', websiteId));
+                            websiteHolder.find('td:last-child').html(loading_html);
                         } else {
                             let _error = '';
                             let _icon = '';
@@ -1960,7 +1956,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                 return function (response) { // NOSONAR - complex ok.
                     let slugParts = pSlug.split(',');
                     if (response?.error?.errorCode == 'SUSPENDED_SITE') {
-                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause circular yellow inverted icon"></i></span>';
+                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause yellow icon"></i></span>';
                         updatesoverview_upgrade_all_update_site_bold(pWebsiteId, false, msgUI);
                     } else {
                         for (let sid of slugParts) {
@@ -2078,7 +2074,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
             success: function (pWebsiteId, pThemeSlugToUpgrade, pSlug, pWordpressUpgrade, pThemeDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone) { // NOSONAR - compatible.
                 return function (response) { // NOSONAR - complex ok.
                     if (response?.error?.errorCode == 'SUSPENDED_SITE') {
-                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause circular yellow inverted icon"></i></span>';
+                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause yellow icon"></i></span>';
                         updatesoverview_upgrade_all_update_site_bold(pWebsiteId, false, msgUI);
                     } else {
                         let slugParts = pSlug.split(',');
@@ -2186,7 +2182,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
             success: function (WebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pErrorMessage, pTransSlugToUpgrade, pTransDone) { // NOSONAR - compatible.
                 return function (response) {
                     if (response?.error?.errorCode == 'SUSPENDED_SITE') {
-                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause circular yellow inverted icon"></i></span>';
+                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause yellow icon"></i></span>';
                         updatesoverview_upgrade_all_update_site_bold(pWebsiteId, false, msgUI);
                     } else {
                         let result;
@@ -2278,9 +2274,8 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
             data: data,
             success: function (pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pUpgradeDone, pErrorMessage, pSlug) { // NOSONAR - compatible.
                 return function (response) { // NOSONAR -complex.
-                    console.log(response);
                     if (response?.error?.errorCode == 'SUSPENDED_SITE') {
-                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause circular yellow inverted icon"></i></span>';
+                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause yellow icon"></i></span>';
                         updatesoverview_upgrade_all_update_site_bold(pWebsiteId, false, msgUI);
                     } else {
                         let slugParts = pSlug.split(',');
@@ -2392,8 +2387,6 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
             }
 
             console.log('Update error.');
-            console.log(pErrorMessage);
-
             updatesoverview_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-html-popup" data-position="left center" data-html="">' + _icon + '</span>');
             mainwp_init_html_popup('.updatesoverview-upgrade-status-wp[siteid="' + pWebsiteId + '"] .mainwp-html-popup', _error);
         } else {
@@ -3531,7 +3524,7 @@ let updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteN
             if (jQuery('.updates-regression-score-red-flag').length === 0) {
                 setTimeout(function () {
                     mainwpPopup('#mainwp-sync-sites-modal').close();
-                    window.location.href = location.href;
+                    mainwp_forceReload();
                 }, 3000);
             }
 

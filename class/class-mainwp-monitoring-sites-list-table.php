@@ -348,7 +348,6 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                     <button class="ui tiny basic button" id="mainwp-do-monitors-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
                 </div>
                 <div class="right aligned middle aligned column">
-                        <?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
                         <div id="mainwp-filter-sites-group" multiple="" class="ui selection multiple dropdown">
                             <input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
                             <i class="dropdown icon"></i>
@@ -607,21 +606,38 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
         $total_params['view'] = 'monitor_view';
 
-        $total_websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $total_params ) );
-        $totalRecords   = ( $total_websites ? MainWP_DB::num_rows( $total_websites ) : 0 );
-        if ( $total_websites ) {
-            MainWP_DB::free_result( $total_websites );
-        }
+        $totalRecords = $this->get_total_sites_by_pramas( $total_params );
 
         $extra_view           = apply_filters( 'mainwp_monitoring_sitestable_prepare_extra_view', array( 'favi_icon', 'health_site_status' ) );
         $extra_view           = array_unique( $extra_view );
         $params['extra_view'] = $extra_view;
-        $websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
+
+        $cache_group = MainWP_Cache_Helper::CGR_SITES;
+
+        $cache_key = MainWP_Cache_Helper::get_cache_key( 'sites_ids', $cache_group, $params );
+
+        $cache_ids = MainWP_Cache_Helper::instance()->get_cache(
+            $cache_key,
+            $cache_group
+        );
+
+        if ( '_get_cache_false' !== $cache_ids ) {
+            if ( empty( $cache_ids ) ) {
+                $params['_included_cache_ids'] = array( -1 ); // not found if get cached success but empty.
+            } else {
+                $params['_included_cache_ids'] = $cache_ids;
+            }
+        }
+
+        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
 
         $site_ids = array();
         while ( $websites && ( $site = MainWP_DB::fetch_object( $websites ) ) ) {
             $site_ids[] = $site->id;
         }
+
+        // Set manage sites ids cache.
+        MainWP_Cache_Helper::add_cache( $cache_key, $cache_group, $site_ids );
 
         /**
          * Action: mainwp_monitoring_sitestable_prepared_items
@@ -639,6 +655,34 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
         $this->items       = $websites;
         $this->total_items = $totalRecords;
+    }
+
+
+    /**
+     * Get total sites by params.
+     *
+     * @param array $params Params.
+     *
+     * @return int Total
+     */
+    public function get_total_sites_by_pramas( $params ) {
+        $cache_group = MainWP_Cache_Helper::CGR_SITES;
+        $cache_key   = MainWP_Cache_Helper::get_cache_key( 'total_sites', $cache_group, $params );
+
+        return MainWP_Cache_Helper::instance()->get_cache(
+            $cache_key,
+            $cache_group,
+            function ( $filters ) {
+                $total_websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $filters ) );
+                $totalRecords   = $total_websites ? MainWP_DB::num_rows( $total_websites ) : 0;
+
+                if ( MainWP_DB::is_result( $total_websites ) ) {
+                    MainWP_DB::free_result( $total_websites );
+                }
+                return $totalRecords;
+            },
+            array( $params )
+        );
     }
 
     /**
@@ -697,9 +741,9 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             </tfoot>
     </table>
     <div id="mainwp-loading-sites" style="display: none;">
-    <div class="ui active inverted dimmer">
-    <div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading ...', 'mainwp' ); ?></div>
-    </div>
+        <div class="ui active page dimmer">
+            <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
+        </div>
     </div>
 
         <?php
@@ -713,10 +757,11 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             'info'          => 'true',
             'colReorder'    => '{columns:":not(.check-column):not(:last-child)"}',
             'stateSave'     => 'true',
-            'stateDuration' => '0',
+            'stateDuration' => '60 * 60 * 24 * 30',
             'order'         => '[]',
             'scrollX'       => 'true',
             'responsive'    => 'true',
+            'searchDelay'   => 350,
         );
 
         /**
@@ -863,7 +908,16 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                             items: 'row',
                             style: 'multi+shift',
                             selector: 'tr>td:not(.not-selectable)'
-                        }
+                        },
+                        stateSaveParams: function (settings, data) {
+                            data._mwpv = mainwpParams.mainwpVersion || 'dev';
+                        },
+                        stateLoadParams: function (settings, data) {
+                            if ((mainwpParams.mainwpVersion || 'dev') !== data._mwpv) return false;
+                        },
+                        search: { regex: false, smart: false },
+                        orderMulti: false,
+                        searchDelay: <?php echo intval( $table_features['searchDelay'] ); ?>
                     }).on('select', function (e, dt, type, indexes) {
                         if( 'row' == type ){
                             dt.rows(indexes)
@@ -926,7 +980,16 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                                 items: 'row',
                                 style: 'multi+shift',
                                 selector: 'tr>td:not(.not-selectable)'
-                            }
+                            },
+                            stateSaveParams: function (settings, data) {
+                                data._mwpv = mainwpParams.mainwpVersion || 'dev';
+                            },
+                            stateLoadParams: function (settings, data) {
+                                if ((mainwpParams.mainwpVersion || 'dev') !== data._mwpv) return false;
+                            },
+                            search: { regex: false, smart: false },
+                            orderMulti: false,
+                            searchDelay: <?php echo intval( $table_features['searchDelay'] ); ?>
                         } ).on('select', function (e, dt, type, indexes) {
                             if( 'row' == type ){
                                 dt.rows(indexes)
@@ -1454,7 +1517,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
     /**
      * Method column_site.
      *
-     * @param  mixed $website website.
+     * @param  mixed $website Website.
      *
      * @return void
      */
@@ -1552,7 +1615,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
         } elseif ( 0 === (int) $uptime_status ) {
             echo '<span class="ui big circular icon red looping pulsating transition label"><i class="chevron down icon"></i></span>';
         } else {
-            echo '<span class="ui big circular icon grey looping pulsating transition label"><i class="circle outline icon"></i></span>';
+            echo '<span class="ui big circular icon grey looping pulsating transition label mo-status-' . intval( $uptime_status ) . '"><i class="circle outline icon"></i></span>';
         }
     }
 

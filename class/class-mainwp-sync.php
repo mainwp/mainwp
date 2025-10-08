@@ -9,8 +9,6 @@
 
 namespace MainWP\Dashboard;
 
-use MainWP\Dashboard\Module\Log\Log_Manager;
-
 /**
  * Class MainWP_Sync
  *
@@ -119,7 +117,17 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         static::$disallowed_clone_sites = array();
                     }
 
-                    $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+                    $wpsite_fields = array( 'id', 'name', 'url', 'adminname' );
+                    $sync_fields   = array( 'extauth', 'totalsize' );
+                    $websites      = MainWP_DB::instance()->query(
+                        MainWP_DB::instance()->get_sql_websites_for_current_user_by_params(
+                            array(
+                                'select_wp_fields'   => $wpsite_fields,
+                                'select_sync_fields' => $sync_fields,
+                            )
+                        )
+                    );
+
                     if ( $websites ) {
                         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
                             if ( in_array( $website->id, static::$disallowed_clone_sites ) ) {
@@ -188,6 +196,13 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $reg_verify = MainWP_DB::instance()->get_website_option( $pWebsite, 'register_verify_key', '' );
             if ( empty( $reg_verify ) ) {
                 $postdata['sync_regverify'] = 1;
+            }
+
+            $postdata['params_logs'] = apply_filters( 'mainwp_module_logs_changes_logs_sync_params', '', $pWebsite->id, $postdata, $pWebsite );
+
+            if ( class_exists( '\MainWP\Dashboard\Module\Log\Log_Manager' ) ) {
+                $sync_last_created                      = \MainWP\Dashboard\Module\Log\Log_Manager::instance()->get_sync_actions_last_created( $pWebsite->id );
+                $postdata['child_actions_last_created'] = (float) $sync_last_created;
             }
 
             $synclist             = MainWP_Settings::get_instance()->get_data_list_to_sync();
@@ -533,7 +548,14 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             if ( is_array( $information['child_site_actions_data'] ) && isset( $information['child_site_actions_data']['connected_admin'] ) ) {
                 unset( $information['child_site_actions_data']['connected_admin'] );
             }
-            Log_Manager::instance()->sync_log_site_actions( $pWebsite->id, $information['child_site_actions_data'], $pWebsite );
+            if ( class_exists( '\MainWP\Dashboard\Module\Log\Log_Manager' ) ) {
+                \MainWP\Dashboard\Module\Log\Log_Manager::instance()->sync_log_site_actions( $pWebsite->id, $information['child_site_actions_data'], $pWebsite );
+            }
+            $done = true;
+        }
+
+        if ( ! empty( $information['changes_logs_data'] ) && class_exists( '\MainWP\Dashboard\Module\Log\Log_Changes_Logs_Helper' ) ) {
+            \MainWP\Dashboard\Module\Log\Log_Changes_Logs_Helper::instance()->sync_changes_logs( $pWebsite->id, $information['changes_logs_data'], $pWebsite );
             $done = true;
         }
 
@@ -579,9 +601,11 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
         }
         MainWP_DB::instance()->update_website_sync_values( $pWebsite->id, $websiteSyncValues );
+        MainWP_Logger::instance()->log_events( 'db-queries', sprintf( '[Update sync values=%s]', MainWP_DB::instance()->get_last_query() ) );
 
         if ( ! empty( $websiteValues ) ) {
             MainWP_DB::instance()->update_website_values( $pWebsite->id, $websiteValues );
+            MainWP_Logger::instance()->log_events( 'db-queries', sprintf( '[Update site sync data=%s]', MainWP_DB::instance()->get_last_query() ) );
         }
 
         $error = apply_filters( 'mainwp_sync_site_after_sync_result', $error, $pWebsite, $information );

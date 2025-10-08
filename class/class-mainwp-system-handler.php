@@ -523,6 +523,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             if ( isset( $_POST['reset_overview_settings'] ) && ! empty( $_POST['reset_overview_settings'] ) && isset( $_POST['reset_overview_which_settings'] ) && 'overview_settings' === $_POST['reset_overview_which_settings'] ) {
                 update_user_option( $user->ID, 'mainwp_widgets_sorted_toplevel_page_mainwp_tab', false, true );
                 update_user_option( $user->ID, 'mainwp_widgets_sorted_mainwp_page_managesites', false, true );
+                MainWP_Cache_Warm_Helper::invalidate_manage_pages( array( 'mainwp_tab' ) );
             }
         }
 

@@ -160,6 +160,13 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         $jobs = $this->get_cron_jobs();
 
+        /**
+         * Hook mainwp_get_cron_jobs_init.
+         *
+         * @since 5.5.
+         */
+        $jobs = apply_filters( 'mainwp_get_cron_jobs_init', $jobs, $useWPCron );
+
         foreach ( $jobs as $hook => $recur ) {
             $this->init_mainwp_cron( $useWPCron, $hook, $recur );
         }
@@ -426,6 +433,12 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
     public function cron_updates_check() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- NOSONAR Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $this->init_environment();
+
+        // send http check notification.
+        if ( 1 === (int) get_option( 'mainwp_check_http_response', 0 ) ) {
+            $plain_text = get_option( 'mainwp_daily_digest_plain_text', false );
+            $this->start_notification_http_check( $plain_text );
+        }
 
         $batch_updates_running = MainWP_Cron_Jobs_Batch::instance()->check_to_run_batch_updates();
         if ( $batch_updates_running ) {
@@ -1305,7 +1318,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $sites_offline = MainWP_DB::instance()->get_websites_http_check_status();
         if ( is_array( $sites_offline ) && ! empty( $sites_offline ) ) {
             foreach ( $sites_offline as $site ) {
-                if ( 200 === (int) $site->http_response_code || empty( $site->http_response_code ) ) { // to fix: ignored 200 http code.
+                if ( empty( $site->http_response_code ) ) { // to fix: ignored 200 http code.
                     continue;
                 }
                 $email_settings_sites[ $site->id ] = $site->settings_notification_emails; // ok.
@@ -1321,6 +1334,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     'url'  => $site->url,
                     'code' => $code,
                 );
+                MainWP_DB::instance()->update_website_option( $site->id, 'http_status_notice_check_time', time() );
             }
         }
 
@@ -1347,6 +1361,8 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $website->settings_notification_emails = $email_settings_sites[ $site['id'] ]; // ok.
 
             $settings = MainWP_Notification_Settings::get_site_email_settings( 'http_check', $website ); // get site email settings.
+
+            MainWP_DB::instance()->set_website_noticed_http_check( $website->id );
 
             if ( ! $settings['disable'] ) {
                 $to_admin_HttpCheckWebsites[] = $site;

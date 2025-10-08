@@ -66,11 +66,11 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
             jQuery('#mainwp_managesites_btn_import').hide();
             if (page_href !== undefined && page_href !== '') {
                 setTimeout(function () {
-                    window.location.href = page_href;
+                    mainwp_forceReload(page_href);
                 }, 2000);
             } else {
                 setTimeout(function () {
-                    location.reload();
+                    mainwp_forceReload();
                 }, 2000);
             }
         } else {

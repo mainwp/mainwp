@@ -168,7 +168,16 @@ class Cost_Tracker_Clients_Widget {
                     "drawCallback": function () {
                         mainwp_datatable_fix_menu_overflow('#mainwp-module-cost-tracker-costs-widget-table', -60, 5);
                         jQuery( '#mainwp-module-cost-tracker-costs-widget-table .ui.dropdown' ).dropdown();
-                    }
+                    },
+                    stateSaveParams: function (settings, data) {
+                        data._mwpv = mainwpParams.mainwpVersion || 'dev';
+                    },
+                    stateLoadParams: function (settings, data) {
+                        if ((mainwpParams.mainwpVersion || 'dev') !== data._mwpv) return false;
+                    },
+                    search: { regex: false, smart: false },
+                    orderMulti: false,
+                    searchDelay: 350
                 } );
                 // to prevent events conflict.
                 setTimeout( function () {

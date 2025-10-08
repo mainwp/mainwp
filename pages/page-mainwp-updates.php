@@ -1902,7 +1902,8 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 }
             }
             $params = array(
-                'connected' => 'yes',
+                'connected'   => 'yes',
+                'maybe_cache' => true,
             );
 
             $limit_sites = get_option( 'mainwp_manage_updates_limit_sites' );
@@ -2040,7 +2041,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                              *
                              * Updates actions top content.
                              *
-                             * @since 5.4.1
+                             * @since 5.5
                              */
                             do_action( 'mainwp_widget_updates_actions_top', $current_tab );
                             ?>

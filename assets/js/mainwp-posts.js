@@ -370,12 +370,16 @@ let mainwppost_postAction = function (elem, what, postType) {
         } else {
             rowElement.hide();
             if (what == 'get_edit' && response.id) {
+                let reloadUrl = '';
                 if (response.redirect_to) {
-                    location.href = response.redirect_to;
+                    reloadUrl = response.redirect_to;
                 } else if (postType == 'post') {
-                    location.href = 'admin.php?page=PostBulkEdit&post_id=' + response.id;
+                    reloadUrl = 'admin.php?page=PostBulkEdit&post_id=' + response.id;
                 } else if (postType == 'page') {
-                    location.href = 'admin.php?page=PageBulkEdit&post_id=' + response.id;
+                    reloadUrl = 'admin.php?page=PageBulkEdit&post_id=' + response.id;
+                }
+                if(reloadUrl !== ''){
+                    mainwp_forceReload(reloadUrl);
                 }
             }
         }

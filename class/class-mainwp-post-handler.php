@@ -643,9 +643,10 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $user = wp_get_current_user();
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( $user && ! empty( $_POST['page'] ) ) {
-            $page  = isset( $_POST['page'] ) ? sanitize_text_field( wp_unslash( $_POST['page'] ) ) : '';
-            $order = isset( $_POST['order'] ) ? sanitize_text_field( wp_unslash( $_POST['order'] ) ) : '';
-            $wgids = isset( $_POST['wgids'] ) ? sanitize_text_field( wp_unslash( $_POST['wgids'] ) ) : '';
+            $page        = isset( $_POST['page'] ) ? sanitize_text_field( wp_unslash( $_POST['page'] ) ) : '';
+            $order       = isset( $_POST['order'] ) ? sanitize_text_field( wp_unslash( $_POST['order'] ) ) : '';
+            $wgids       = isset( $_POST['wgids'] ) ? sanitize_text_field( wp_unslash( $_POST['wgids'] ) ) : '';
+            $page_widget = isset( $_POST['page_widget'] ) ? sanitize_text_field( wp_unslash( $_POST['page_widget'] ) ) : '';
 
             $wgs_orders = array();
 
@@ -679,6 +680,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             } else {
                 update_user_option( $user->ID, 'mainwp_widgets_sorted_' . $page, wp_json_encode( $wgs_orders ), true );
             }
+            MainWP_Cache_Warm_Helper::invalidate_manage_pages( array( $page_widget ) );
             die( 'ok' );
         }
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -996,6 +998,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             MainWP_DB_Client::instance()->delete_client( $client_id );
             $ret['success'] = 'SUCCESS';
             $ret['result']  = esc_html__( 'Client removed successfully.', 'mainwp' );
+            MainWP_Client::invalidate_warm_cache();
         } else {
             $ret['result'] = esc_html__( 'Client ID empty.', 'mainwp' );
         }
@@ -1011,6 +1014,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      */
     public function mainwp_clients_save_field() {
         $this->check_security( 'mainwp_clients_save_field' );
+        MainWP_Client::invalidate_warm_cache();
         MainWP_Client::save_client_field();
         die();
     }
@@ -1030,6 +1034,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         if ( MainWP_DB_Client::instance()->delete_client_field_by( 'field_id', $field_id, $client_id ) ) {
             $ret['success'] = true;
         }
+        MainWP_Client::invalidate_warm_cache();
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         echo wp_json_encode( $ret );
         exit;

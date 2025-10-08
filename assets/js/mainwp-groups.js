@@ -16,7 +16,7 @@ jQuery(function () {
   jQuery(document).on('click', '#mainwp-new-sites-group-button', function () {
     jQuery('#mainwp-create-group-modal').modal({
       onHide: function () {
-        window.location.href = location.href;
+        mainwp_forceReload();
       },
       onShow: function () {
         jQuery('#mainwp-create-group-modal').find('input#mainwp-group-name').val('');
@@ -29,7 +29,7 @@ jQuery(function () {
   jQuery(document).on('click', '#mainwp-rename-group-button', function () {
     jQuery('#mainwp-rename-group-modal').modal({
       onHide: function () {
-        window.location.href = location.href;
+        mainwp_forceReload();
       },
       onShow: function () {
         let groupName = jQuery('#mainwp-groups-menu').find('.active').find('#mainwp-hidden-group-name').val();
@@ -61,7 +61,7 @@ jQuery(function () {
       }
       jQuery('#mainwp-create-group-modal').modal({
         onHide: function () {
-          window.location.reload();
+           mainwp_forceReload();
         }
       }).modal('hide');
     });
@@ -108,7 +108,7 @@ jQuery(function () {
       }
       jQuery('#mainwp-create-group-modal').modal({
         onHide: function () {
-          window.location.reload();
+          mainwp_forceReload();
           return false;
         }
       }).modal('hide');
@@ -194,13 +194,16 @@ jQuery(document).on('change', '#mainwp-manage-groups-sites-table .mainwp-site-ch
       groupId: groupID
     });
     jQuery('.dimmer').addClass('active');
+    var dtApi = jQuery('#mainwp-manage-groups-sites-table').dataTable().api();
+    var searchValue = dtApi.search();
+    dtApi.search('').draw();
     jQuery.post(ajaxurl, data, function (response) {
       jQuery('.dimmer').removeClass('active');
       response = response.trim();
       if (response == 'ERROR') {
+        dtApi.search(searchValue).draw();
         return;
       }
-      let dtApi = jQuery('#mainwp-manage-groups-sites-table').dataTable().api();
       mainwp_datatable_fix_to_update_selected_rows_status(dtApi, 'deselected'); // clear saved state.
       jQuery('input.mainwp-site-checkbox').prop('checked', false);
       jQuery('input.mainwp-site-checkbox').closest('tr').removeClass('selected');
@@ -211,6 +214,7 @@ jQuery(document).on('change', '#mainwp-manage-groups-sites-table .mainwp-site-ch
       }
       jQuery('#mainwp-save-sites-groups-selection-button').attr('selected-tag-siteids', sites?.length ? response : '' );
       mainwp_datatable_fix_to_update_selected_rows_status(dtApi, 'selected'); // clear saved state.
+      dtApi.search(searchValue).draw();
     });
     return false;
   }

@@ -320,6 +320,10 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
      * Run on page load.
      */
     public static function on_load_summary_page() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'access_cost_summary_dashboard' ) && \mainwp_current_user_can( 'dashboard', 'manage_cost_tracker' ) ) {
+            wp_safe_redirect( 'admin.php?page=ManageCostTracker' );
+            exit();
+        }
         Cost_Tracker_Summary::instance()->on_load_page( static::$page );
     }
 
@@ -341,6 +345,13 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             ),
             0
         );
+
+        $sum_item_class = '';
+
+        if ( ! \mainwp_current_user_can( 'dashboard', 'access_cost_summary_dashboard' ) ) {
+            $sum_item_class = 'hidden-menu-item';
+        }
+
         $init_sub_subleftmenu = array(
             array(
                 'title'      => esc_html__( 'Cost Summary', 'mainwp' ),
@@ -348,6 +359,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
                 'href'       => 'admin.php?page=CostSummary',
                 'slug'       => 'CostSummary',
                 'right'      => 'manage_cost_tracker',
+                'item_class' => $sum_item_class,
             ),
             array(
                 'title'      => esc_html__( 'Manage Costs', 'mainwp' ),

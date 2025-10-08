@@ -1779,4 +1779,32 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
         return wp_verify_nonce( $nonce, $type . '-' . $current_user->ID . '-' . $slug );
     }
+
+
+    /**
+     * Method get_http_version_const_str().
+     *
+     * @param  int $http_ver_int Version value.
+     *
+     * @return string Version const string.
+     */
+    public static function get_http_version_const_str( $http_ver_int ) {
+        $const_names = array(
+            'CURL_HTTP_VERSION_1_0',
+            'CURL_HTTP_VERSION_1_1',
+            'CURL_HTTP_VERSION_2',
+            'CURL_HTTP_VERSION_2TLS',
+            'CURL_HTTP_VERSION_2_0',
+            'CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE',
+            'CURL_HTTP_VERSION_3',
+            'CURL_HTTP_VERSION_3ONLY',
+            'CURL_HTTP_VERSION_NONE',
+        );
+        foreach ( $const_names as $const ) {
+            if ( defined( $const ) && constant( $const ) === $http_ver_int ) {
+                    return $const;
+            }
+        }
+        return $http_ver_int;
+    }
 }

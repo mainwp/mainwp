@@ -52,8 +52,16 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
      */
     public static function render_sites() { // phpcs:ignore -- NOSONAR - current complexity required to achieve desired results. Pull request solutions appreciated.
 
-        $sql      = MainWP_DB::instance()->get_sql_websites_for_current_user();
-        $websites = MainWP_DB::instance()->query( $sql );
+        $wpsite_fields = array( 'id', 'name', 'url', 'adminname' );
+        $sync_fields   = array( 'sync_errors', 'dtsSync' );
+        $websites      = MainWP_DB::instance()->query(
+            MainWP_DB::instance()->get_sql_websites_for_current_user_by_params(
+                array(
+                    'select_wp_fields'   => $wpsite_fields,
+                    'select_sync_fields' => $sync_fields,
+                )
+            )
+        );
 
         $count_connected    = 0;
         $count_disconnected = 0;
@@ -221,11 +229,6 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <div class="header">
                         <span class="ui large text"><i class="ui een check icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( $count_connected ) ); ?></span>
                     </div>
-                    <div class="meta">
-                        <div class="ui tiny progress mainwp-site-status-progress" id="" data-total="<?php echo esc_attr( $count_total ); ?>" data-value="<?php echo esc_attr( $count_connected ); ?>">
-                            <div class="green bar"></div>
-                        </div>
-                    </div>
                     <div class="description"><strong><?php esc_html_e( 'Connected Sites', 'mainwp' ); ?></strong></div>
                 </div>
             </div>
@@ -234,18 +237,10 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <div class="header">
                         <span class="ui large text"><i class="ui unlink icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( $count_disconnected ) ); ?></span>
                     </div>
-                    <div class="meta">
-                        <div class="ui tiny progress mainwp-site-status-progress" id="" data-total="<?php echo esc_attr( $count_total ); ?>" data-value="<?php echo esc_attr( $count_disconnected ); ?>">
-                            <div class="red bar"></div>
-                        </div>
-                    </div>
                     <div class="description"><strong><?php esc_html_e( 'Disconnected Sites', 'mainwp' ); ?></strong></div>
                 </div>
             </div>
         </div>
-        <script type="text/javascript">
-            jQuery('.mainwp-site-status-progress').progress();
-        </script>
         <?php
     }
 

@@ -2047,9 +2047,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $color = '#34424D';
         }
 
-        $icon_cls = 'large icon custom-icon';
+        $icon_cls = 'circular inverted icon';
         if ( 'card' === $what ) {
-            $icon_cls = 'icon huge custom-icon';
+            $icon_cls = 'huge circular inverted icon';
         }
 
         $output = '';
@@ -2060,13 +2060,13 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         } elseif ( 'display' === $type || 'display_edit' === $what ) {
             $color_style = '';
             if ( ! empty( $color ) ) {
-                $color_style = 'color:' . esc_attr( $color ) . ';';
+                $color_style = 'background-color:' . esc_attr( $color ) . ';';
             }
             $icon_wrapper_attr = 'class="mainwp_client_icon_display"';
             if ( 'display_edit' === $what ) {
                 $icon_wrapper_attr = ' id="mainwp_add_edit_client_upload_custom_icon" ' . $icon_wrapper_attr;
             }
-            $output = '<div style="display:inline-block;' . $color_style . '" ' . $icon_wrapper_attr . ' ><i class="' . esc_attr( $selected_icon ) . ' ' . $icon_cls . '" ></i></div>';
+            $output = '<div style="display:inline-block;" ' . $icon_wrapper_attr . ' ><i class="' . esc_attr( $selected_icon ) . ' ' . $icon_cls . '" style="' . $color_style . '"></i></div>';
         }
         return $output;
     }

@@ -1145,7 +1145,7 @@ window.wp = window.wp || {};
 
 
         attributes: {
-            placeholder: __('Search themes...'),
+            placeholder: 'Search themes...',
             type: 'text',
             'aria-describedby': 'live-search-desc'
         },

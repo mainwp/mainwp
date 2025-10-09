@@ -488,24 +488,29 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
             $color = '';
 
-            if ( 'deleted' === $act || 'removed' === $act || 'revoked' === $act ) {
+            if ( in_array( $act, [ 'deleted', 'removed', 'revoked', 'deactivated', 'disabled', 'suspended' ], true ) ) {
                 $color = 'red';
-            } elseif ( 'deactivated' === $act || 'disabled' === $act || 'suspended' === $act ) {
+            } elseif ( in_array( $act, [ 'updated', 'modified' ], true ) ) {
                 $color = 'orange';
-            } elseif ( 'opened' === $act || 'logged-in' === $act || 'logged-out' === $act ) {
-                $color = 'grey';
-            } elseif ( 'updated' === $act || 'modified' === $act ) {
-                $color = 'blue';
-            } elseif ( 'sync' === $act || 'activated' === $act || 'installed' === $act || 'created' === $act || 'published' === $act || 'added' === $act || 'uploaded' === $act || 'enabled' === $act ) {
+            } elseif ( in_array( $act, [ 'added', 'activated', 'created', 'published', 'enabled' ], true ) ) {
                 $color = 'green';
-            } elseif ( 'delete' === $act ) { // to compatible.
+            } elseif ( in_array( $act, [ 'synced', 'installed', 'uploaded' ], true ) ) {
+                $color = 'teal';
+            } elseif ( in_array( $act, [ 'opened', 'logged-in', 'logged-out' ], true ) ) {
+                $color = 'blue';
+            } else {
+                $color = 'grey'; // fallback / unknown event
+            }
+
+            /* Compatibility aliases */
+            if ( 'delete' === $act ) {
                 $color = 'red';
-            } elseif ( 'deactivate' === $act ) { // to compatible.
+            } elseif ( 'deactivate' === $act ) {
+                $color = 'red';
+            } elseif ( 'update' === $act ) {
                 $color = 'orange';
-            } elseif ( 'update' === $act ) { // to compatible.
-                $color = 'blue';
-            } elseif ( 'install' === $act || 'activate' === $act ) { // to compatible.
-                $color = 'green';
+            } elseif ( in_array( $act, [ 'install', 'activate' ], true ) ) {
+                $color = 'teal';
             }
 
             $title = sprintf( '<span class="ui mini basic %s label">%s</span>', $color, esc_html( $title ) );
@@ -953,9 +958,6 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 <thead>
                     <tr><?php $this->print_column_headers( true ); ?></tr>
                 </thead>
-                <tfoot>
-                    <tr><?php $this->print_column_headers( false ); ?></tr>
-                </tfoot>
             </table>
         </div>
         <?php

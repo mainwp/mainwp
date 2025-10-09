@@ -102,7 +102,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
 
         $use_tzformat = ! empty( $wp_info['format_datetime'] ) && is_array( $wp_info['format_datetime'] ) ? $wp_info['format_datetime'] : array();
         $offs         = ! empty( $use_tzformat['gmt_offset'] ) ? intval( $use_tzformat['gmt_offset'] ) : 0;
-        $offs_info    = esc_html__( 'Timezone', 'mainwp' ) . ' UTC' . ( $offs > 0 ? '+' . $offs : $offs );
+        $offs_info    = esc_html__( ' - Timezone:', 'mainwp' ) . ' UTC ' . ( $offs > 0 ? '+' . $offs : $offs );
         $site_info    = $website->name . ' (' . $website->url . ') ' . ( ! empty( $offs_info ) ? $offs_info : '' );
 
         ?>
@@ -216,7 +216,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         <div class="ui two column grid mainwp-widget-footer">
             <div class="left aligned middle aligned column"></div>
             <div class="right aligned middle aligned column">
-                <a href="admin.php?page=ThemesManage"><?php esc_html_e( 'Manage Themes', 'mainwp' ); ?></a>
+                <a href="admin.php?page=ThemesManage" class="ui mini basic button"><?php esc_html_e( 'Manage Themes', 'mainwp' ); ?></a>
             </div>
         </div>
         <?php

@@ -1090,7 +1090,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         $data = MainWP_Connect::fetch_url_authed( $website, 'security' );
 
         \WP_CLI::line( '' );
-        \WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Security Issues', 'mainwp' ) . '%n' ) );
+        \WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Potential Secuirty Issues', 'mainwp' ) . '%n' ) );
         \WP_CLI::line( '' );
 
         \WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Database error reporting disabled:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['db_reporting'] ? 'NO' : 'YES' ) );

@@ -306,7 +306,9 @@
 .mainwp-ui.mainwp-custom-theme i.blue.icon.inverted {
   background-color: var(--mainwp-blue) !important;
 }
-
+.mainwp-ui.mainwp-custom-theme i.red.icon {
+  color: var(--mainwp-red) !important;
+}
 .mainwp-ui.mainwp-custom-theme i.red.icon.inverted {
   background-color: var(--mainwp-red) !important;
 }
@@ -1505,11 +1507,6 @@ body.mainwp-ui.mainwp-custom-theme,
 .mainwp-ui.mainwp-custom-theme .ui.dimmer,
 .mainwp-ui.mainwp-custom-theme .ui.inverted.dimmer {
   background-color: var(--mainwp-base-background-secondary) !important;
-}
-
-.mainwp-ui.mainwp-custom-theme .ui.dimmer .text,
-.mainwp-ui.mainwp-custom-theme .ui.inverted.dimmer .text {
-  color: var(--mainwp-green) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.loader:after {

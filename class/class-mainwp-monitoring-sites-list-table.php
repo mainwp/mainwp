@@ -734,11 +734,6 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                 <?php $this->display_rows_or_placeholder(); ?>
             </tbody>
             <?php } ?>
-            <tfoot>
-                <tr>
-                    <?php $this->print_column_headers( $optimize, false ); ?>
-                </tr>
-            </tfoot>
     </table>
     <div id="mainwp-loading-sites" style="display: none;">
         <div class="ui active page dimmer">
@@ -907,7 +902,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                         'select': {
                             items: 'row',
                             style: 'multi+shift',
-                            selector: 'tr>td:not(.not-selectable)'
+                            selector: 'tr>td.check-column'
                         },
                         stateSaveParams: function (settings, data) {
                             data._mwpv = mainwpParams.mainwpVersion || 'dev';
@@ -1483,12 +1478,15 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                         <div class="ui right pointing dropdown"  style="z-index:999;">
                             <i class="ellipsis vertical icon"></i>
                             <div class="menu" siteid="<?php echo intval( $website['id'] ); ?>">
-                                <a class="managesites_checknow item" href="#"><?php esc_html_e( 'Check Now', 'mainwp' ); ?></a>
+                                <a class="managesites_checknow item" href="#"><?php esc_html_e( 'Check Now', 'mainwp' ); ?></a> 
                                 <?php if ( empty( $website['sync_errors'] ) ) : ?>
                                 <a class="managesites_syncdata item" href="#"><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
                                 <?php endif; ?>
                                 <?php if ( \mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ) : ?>
                                 <a class="item" href="admin.php?page=managesites&dashboard=<?php echo intval( $website['id'] ); ?>"><?php esc_html_e( 'Overview', 'mainwp' ); ?></a>
+                                <?php endif; ?>
+                                <?php if ( \mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) : ?>
+                                <a class="item" href="admin.php?page=managesites&id=<?php echo intval( $website['id'] ); ?>"><?php esc_html_e( 'Settings', 'mainwp' ); ?></a>
                                 <?php endif; ?>
                             </div>
                         </div>

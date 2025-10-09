@@ -719,7 +719,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                                     <a href="<?php echo 'admin.php?page=managesites&id=' . intval( $website->id ); ?>"><?php esc_html_e( 'Settings', 'mainwp' ); ?></a>
                                 </div>
                                 <div class="item">
-                                    <i class="sync alt icon"></i>
+                                    <i class="sync alternate icon"></i>
                                     <a href="#" siteid="<?php echo intval( $website->id ); ?>" onClick="updatesoverview_wp_sync( '<?php echo intval( $website->id ); ?>' )"><?php esc_html_e( 'Sync Site', 'mainwp' ); ?></a>
                                 </div>
                                 <div class="item">
@@ -1355,7 +1355,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 <a href="#" class="mainwp-updates-overview-reconnect-site ui green icon button" adminuser="<?php echo esc_attr( $website->adminname ); ?>" siteid="<?php echo intval( $website->id ); ?>" data-position="bottom right" aria-label="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted=""><i class="undo alternate icon"></i></a>
             <?php else : ?>
                 <a class="ui icon green <?php echo 0 < $sites_count ? '' : 'disabled'; ?> button" id="mainwp-sync-sites" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>" data-inverted="" data-position="bottom right" aria-label="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>" >
-                    <i class="sync alt icon"></i>
+                    <i class="sync alternate icon"></i>
                 </a>
             <?php endif; ?>
         <?php else : ?>
@@ -2585,7 +2585,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     'plugins'                         => esc_html__( 'Plugins (Individual Site Overview page)', 'mainwp' ),
                     'themes'                          => esc_html__( 'Themes (Individual Site Overview page)', 'mainwp' ),
                     'connection_status'               => esc_html__( 'Connection Status', 'mainwp' ),
-                    'security_issues'                 => esc_html__( 'Security Issues', 'mainwp' ),
+                    'security_issues'                 => esc_html__( 'Site Hardening', 'mainwp' ),
                     'notes'                           => esc_html__( 'Notes (Individual Site Overview page)', 'mainwp' ),
                     'clients'                         => esc_html__( 'Clients', 'mainwp' ),
                     'child_site_info'                 => esc_html__( 'Child site info (Individual Site Overview page)', 'mainwp' ),

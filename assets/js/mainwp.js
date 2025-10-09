@@ -2925,7 +2925,7 @@ let themeChangesLoadData = {};
 jQuery(function ($) {
     $(document).on('click', '.mainwp-plugin-history', function () {
         let parent = $(this).closest('.row-manage-item');
-        const title = $(parent).attr('plugin-title');
+        const title = $(parent).attr('plugin-name');
         const info = $('#mainwp-widget-active-plugins').attr('site-info');
 
         pluginChangesLoadData = mainwp_secure_data({
@@ -2995,11 +2995,11 @@ let mainwp_item_changes_load = function ( type ) {
             jQuery(md).find('.scrolling.content').html('<div class="ui message red">' + response.error + '</div>');
         } else if (response?.list) {
             if (response.list.length == 0) {
-                let msg = __('No history changes found for the plugin.') ;
+                let msg = __('This plugin has no recorded activity in Dashboard Insights.') ;
                 if('theme' === type){
-                    msg = __('No history changes found for the theme.') ;
+                    msg = __('This theme has no recorded activity in Dashboard Insights.') ;
                 }
-                jQuery(md).find('.scrolling.content').html('<div class="ui message">' + msg + '</div>');
+                jQuery(md).find('.scrolling.content').html('<div class="ui info message">' + msg + '</div>');
             } else {
                 let content = '';
                 Object.entries(response.list).forEach(([indexdt, records]) => {
@@ -3009,12 +3009,12 @@ let mainwp_item_changes_load = function ( type ) {
                             <i class="dropdown icon"></i>
                             ${dt}<span class="title-right"><button class="ui circular blue mini button" >` + __('Day History') + `</button> <button class="ui basic mini button ">${records.length} ` + __('Actions') + `</button></span>
                         </div>
-                        <div class="content">`;
+                        <div class="content ui list">`;
                     records.forEach(record => {
                         content += `<div class="item">
                             <div class="ui grid">
                                 <div class="eight wide column middle aligned">
-                                    <i class="circle tiny tiny grey icon"></i>
+                                    <i class="` + get_icon_history_event(record.details.action) + ` icon"></i>
                                     <span class="ui text ` + get_color_changes_event(record.details.action) + `">${record.details.event}</span> ` + __('by') + ` <strong>${record.details.author_name}</strong> ` + __('from') + `
                                         <strong>${record.details.source}</strong>
                                 </div>
@@ -3060,11 +3060,12 @@ let mainwp_item_changes_load = function ( type ) {
 
 let get_color_changes_event = function( act ){
     const actColorMap = {
-        red: ['deleted','removed','revoked','delete'],
-        orange: ['deactivated','disabled','suspended','deactivate'],
-        grey: ['opened','logged-in','logged-out'],
-        blue: ['updated','modified','update'],
-        green: ['sync','activated','installed','created','published','added','uploaded','enabled','install','activate']
+        red: ['deleted','removed','revoked','delete','deactivated','disabled','suspended','deactivate'],
+        orange: ['updated','modified','update'],
+        grey: ['opened'],
+        blue: ['logged-in','logged-out'],
+        teal: ['sync','installed','install','uploaded'],
+        green: ['activated','activate','created','published','enabled','added']
     };
 
     let color = '';
@@ -3076,6 +3077,26 @@ let get_color_changes_event = function( act ){
         }
     }
     return color;
+}
+
+let get_icon_history_event = function( act ){
+    let icon = '';
+
+    if (act === 'delete' || act === 'deleted') {
+        icon = 'trash red';
+    } else if (act === 'deactivated' || act === 'deactivate') {
+        icon = 'toggle off red';
+    } else if (act === 'activated' || act === 'activate') {
+        icon = 'toggle on green';
+    } else if (act === 'updated' || act === 'update') {
+        icon = 'sync orange';
+    } else if (act === 'installed' || act === 'install') {
+        icon = 'download teal';
+    } else {
+        icon = 'circle grey';
+    }
+
+    return icon;
 }
 
 
@@ -5034,3 +5055,4 @@ jQuery(document).on('click', '#module-update-logs-db-cancel', function () {
     }, 'json');
     return false;
 });
+

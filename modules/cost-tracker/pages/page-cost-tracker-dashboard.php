@@ -643,7 +643,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                             'select': {
                                 items: 'row',
                                 style: 'multi+shift',
-                                selector: 'tr>td:not(.not-selectable)'
+                                selector: 'tr>td.check-column'
                             },
                             stateSaveParams: function (settings, data) {
                                 data._mwpv = mainwpParams.mainwpVersion || 'dev';

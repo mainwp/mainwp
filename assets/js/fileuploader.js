@@ -631,11 +631,11 @@ qq.extend(qq.FileUploader.prototype, {
             totalSuccess++;
             this._find(item, 'file').setAttribute('filename', fileName);
             this._find(item, 'cancel_install').style.display = 'inline';
-            this._find(item, 'success_msg').innerHTML = 'Upload completed.';
+            this._find(item, 'success_msg').innerHTML = '<span data-tooltip="Upload completed successfully." data-inverted="" data-position="left center"><i class="green check icon"></i></span>'; //MAINWP custom code
             //MAINWP custom code
         } else {
             qq.addClass(item, this._classes.fail);
-            this._find(item, 'fail_msg').innerHTML = 'Upload failed.'; //MAINWP custom code
+            this._find(item, 'fail_msg').innerHTML = '<span data-tooltip="Upload failed." data-inverted="" data-position="left center"><i class="red times icon"></i></span>'; //MAINWP custom code
         }
     },
     _addToList: function (id, fileName) {

@@ -374,6 +374,15 @@ class Log_Manager {
 
             $created = isset( $data['created'] ) ? (float) $data['created'] : microtime( true );
 
+            // to fix missing slug meta for theme context issue.
+            if ( ( 'theme' === $context ) && empty( $meta_data['slug'] ) && is_array( $extra_info ) ) {
+                if ( ! empty( $extra_info['slug'] ) ) {
+                    $meta_data['slug'] = $extra_info['slug'];
+                } elseif ( empty( $meta_data['name'] ) && ! empty( $extra_info['name'] ) ) {
+                    $meta_data['name'] = $extra_info['name'];
+                }
+            }
+
             $record_mapping = array(
                 'site_id'    => $site_id,
                 'user_id'    => $user_id,
@@ -506,5 +515,18 @@ class Log_Manager {
             'ignore_sync_changes_logs'      => ! empty( $disabled_changeslogs ) ? $disabled_changeslogs : -1, // -1 to prevent it removed nested empty array from http query builder.
             'ignore_sync_nonmainwp_actions' => ! empty( $disabled_nonmainwp_actions ) ? $disabled_nonmainwp_actions : -1,
         );
+    }
+
+    /**
+     * Method normalize_to_microseconds()
+     *
+     * @param  mixed $time float time value or microsecords to check.
+     *
+     * @return int Normalize microseconds value.
+     *
+     * @since 5.5
+     */
+    public static function normalize_to_microseconds( $time ) {
+        return ( $time < 1e12 ) ? (int) ( $time * 1000000 ) : (int) $time;
     }
 }

@@ -23,7 +23,7 @@ class Log_Install extends MainWP_Install {
      *
      * @var string DB version info.
      */
-    public $log_db_version = '1.0.1.35'; // NOSONAR - no IP.
+    public $log_db_version = '1.0.1.40'; // NOSONAR - no IP.
 
     /**
      * Protected variable to hold the database option name.
@@ -88,7 +88,7 @@ class Log_Install extends MainWP_Install {
     context varchar(100) NOT NULL,
     connector varchar(100) NOT NULL,
     state tinyint(1) unsigned NULL,
-    created double NOT NULL,
+    created created BIGINT(20) UNSIGNED NOT NULL,
     duration float(11,4) NOT NULL DEFAULT '0',
     dismiss tinyint(1) NOT NULL DEFAULT 0,
     KEY site_id (site_id),
@@ -116,7 +116,8 @@ class Log_Install extends MainWP_Install {
     meta_key varchar(200) NOT NULL,
     meta_value mediumtext NOT NULL,
     KEY meta_log_id (meta_log_id),
-    KEY meta_key (meta_key(191))';
+    KEY meta_key (meta_key(191)),
+    KEY meta_log_id_key (meta_log_id, meta_key(191))';
 
         if ( empty( $currentVersion ) ) {
             $tbl .= ',
@@ -139,6 +140,8 @@ class Log_Install extends MainWP_Install {
             dbDelta( $query );
         }
         $this->update_log_db( $currentVersion );
+        $this->update_log_db_56( $currentVersion );
+
         $this->wpdb->suppress_errors( $suppress );
 
         if ( empty( $currentVersion ) ) {
@@ -154,11 +157,14 @@ class Log_Install extends MainWP_Install {
      * @param string $currentVersion Current db version.
      */
     public function update_log_db( $currentVersion ) {
+
+        $is_db_ver_with_archive = version_compare( $currentVersion, '1.0.1.8', '>' );
+
         if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.9', '<' ) ) { // NOSONAR - non-ip.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' MODIFY COLUMN item varchar(256) NOT NULL DEFAULT ""' ); //phpcs:ignore -- ok.
         }
 
-        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.10', '<' ) ) { // NOSONAR - non-ip.
+        if ( ! empty( $currentVersion ) && $is_db_ver_with_archive && version_compare( $currentVersion, '1.0.1.10', '<' ) ) { // NOSONAR - non-ip.
             $this->create_archive_tables();
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD COLUMN archived_at int(11) NOT NULL DEFAULT 0' ); //phpcs:ignore -- ok.
         }
@@ -169,24 +175,19 @@ class Log_Install extends MainWP_Install {
 
         if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.16', '<' ) ) { // NOSONAR - non-ip.
 
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' DROP INDEX created' ); //phpcs:ignore -- ok.
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' DROP INDEX index_site_object_id' ); //phpcs:ignore -- ok.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' DROP COLUMN object_id' ); //phpcs:ignore -- ok.
+            if ( $is_db_ver_with_archive ) {
+                $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' DROP INDEX created' ); //phpcs:ignore -- ok.
+                $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' DROP INDEX index_site_object_id' ); //phpcs:ignore -- ok.
+                $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' DROP COLUMN object_id' ); //phpcs:ignore -- ok.
 
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' MODIFY COLUMN created double NOT NULL' ); //phpcs:ignore -- ok.
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' ADD INDEX created ( created )' ); //phpcs:ignore -- ok.
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' ADD INDEX idx_site_created(site_id, created)' ); //phpcs:ignore -- ok.
-
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' DROP INDEX created' ); //phpcs:ignore -- ok.
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' DROP INDEX index_site_object_id' ); //phpcs:ignore -- ok.
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' DROP COLUMN object_id' ); //phpcs:ignore -- ok.
-
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' MODIFY COLUMN created double NOT NULL' ); //phpcs:ignore -- ok.
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD INDEX created ( created )' ); //phpcs:ignore -- ok.
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD INDEX idx_site_created(site_id, created)' ); //phpcs:ignore -- ok.
+                $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' MODIFY COLUMN created double NOT NULL' ); //phpcs:ignore -- ok.
+                $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD INDEX created ( created )' ); //phpcs:ignore -- ok.
+                $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD INDEX idx_site_created(site_id, created)' ); //phpcs:ignore -- ok.
+            }
         }
 
-        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.20', '<' ) ) { // NOSONAR - non-ip.
+        if ( ! empty( $currentVersion ) && $is_db_ver_with_archive && version_compare( $currentVersion, '1.0.1.20', '<' ) ) { // NOSONAR - non-ip.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD COLUMN user_login varchar(100) NOT NULL' ); //phpcs:ignore -- ok.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD INDEX user_login ( user_login )' ); //phpcs:ignore -- ok.
         }
@@ -198,7 +199,7 @@ class Log_Install extends MainWP_Install {
             }
         }
 
-        if ( empty( $currentVersion ) || version_compare( $currentVersion, '1.0.1.29', '<' ) ) { // NOSONAR - non-ip.
+        if ( $is_db_ver_with_archive && version_compare( $currentVersion, '1.0.1.29', '<' ) ) { // NOSONAR - non-ip.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' MODIFY log_id bigint(20) NOT NULL' ); //phpcs:ignore -- ok.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_meta_archive' ) . ' MODIFY meta_id bigint(20) unsigned' ); //phpcs:ignore -- ok.
         }
@@ -206,8 +207,30 @@ class Log_Install extends MainWP_Install {
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' DROP INDEX state' ); //phpcs:ignore -- ok.
         }
 
-        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.35', '<' ) ) { // NOSONAR - non-ip.
+        if ( ! empty( $currentVersion ) && $is_db_ver_with_archive && version_compare( $currentVersion, '1.0.1.35', '<' ) ) { // NOSONAR - non-ip.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD COLUMN log_type_id bigint NOT NULL DEFAULT 0' ); //phpcs:ignore -- ok.
+        }
+    }
+
+    /**
+     * Method update module log tables.
+     *
+     * @param string $currentVersion Current db version.
+     */
+    public function update_log_db_56( $currentVersion ) {
+        $is_db_ver_with_archive = version_compare( $currentVersion, '1.0.1.8', '>' );
+        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.40', '<' ) ) { // NOSONAR - non-ip.
+            // to save microsecords.
+            if ( $is_db_ver_with_archive ) {
+                $this->wpdb->query( 'UPDATE ' . $this->table_name( 'wp_logs' ) . ' SET created = ROUND(created * 1000000)' ); //phpcs:ignore -- ok.
+            }
+
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' MODIFY COLUMN created BIGINT(20) UNSIGNED NOT NULL' ); //phpcs:ignore -- ok.
+
+            if ( $is_db_ver_with_archive ) {
+                $this->wpdb->query( 'UPDATE ' . $this->table_name( 'wp_logs_archive' ) . ' SET created = ROUND(created * 1000000)' ); //phpcs:ignore -- ok.
+                $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' MODIFY COLUMN created BIGINT(20) UNSIGNED NOT NULL' ); //phpcs:ignore -- ok.
+            }
         }
     }
 

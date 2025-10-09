@@ -630,6 +630,34 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
     }
 
     /**
+     * Method get_log_author_name().
+     *
+     * @param object $record Logs record.
+     *
+     * @return string Author name.
+     */
+    public function get_log_author_name( $record ) { //phpcs:ignore -- NOSONAR - long function.
+        $name      = '';
+        $user_meta = ! empty( $record->user_meta ) ? $record->user_meta : array();
+
+        if ( empty( $user_meta['full_name'] ) && isset( $record->meta['first_name'] ) && isset( $record->meta['last_name'] ) ) {
+            $user_meta['wp_user_id'] = $record->user_id;
+            $user_meta['full_name']  = $record->meta['first_name'] . ' ' . $record->meta['last_name'];
+            $user_meta['ip']         = ! empty( $record->meta['client_ip'] ) ? $record->meta['client_ip'] : '';
+        }
+
+        $user = new Log_Author( $record->user_id, $user_meta );
+
+        if ( ! empty( $record->log_type_id ) || 'non-mainwp-changes' === $record->connector ) {
+            $name = $user->get_full_name();
+        } else {
+            $name = $user->get_display_name();
+        }
+
+        return ! empty( $name ) ? $name : 'N/A';
+    }
+
+    /**
      * Parse event changes logs title.
      *
      * @param object $record  Log record object.
@@ -1358,13 +1386,14 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
         if ( $this->items ) {
             foreach ( $this->items as $log ) {
-                $rw_classes = 'log-item mainwp-log-item-' . intval( $log->log_id );
+                $created_time = $log->created / 1000000; // Seconds.
+                $rw_classes   = 'log-item mainwp-log-item-' . intval( $log->log_id );
 
                 $info_item = array(
                     'rowClass' => esc_html( $rw_classes ),
                     'log_id'   => $log->log_id,
                     'site_id'  => ! empty( $log->site_id ) ? $log->site_id : 0,
-                    'created'  => $log->created,
+                    'created'  => $created_time,
                     'state'    => is_null( $log->state ) ? - 1 : $log->state,
                 );
                 $cols_data = array();

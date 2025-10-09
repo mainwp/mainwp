@@ -7,6 +7,9 @@
 
 namespace MainWP\Dashboard;
 
+use MainWP\Dashboard\Module\Log\Log_DB_Helper;
+use MainWP\Dashboard\Module\Log\Log_Changes_Logs_Helper;
+
 // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
 /**
@@ -153,6 +156,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         // Page:: mainwp-setup.
         $this->add_action( 'mainwp_clients_add_multi_client', array( &$this, 'ajax_clients_add_multi_client' ) );
         $this->add_action( 'mainwp_increase_connection_security', array( &$this, 'ajax_increase_connection_security' ) );
+
+        $this->add_action( 'mainwp_changes_logs_get_item_changes', array( &$this, 'ajax_get_item_changes_logs' ) );
     }
 
     /**
@@ -1885,6 +1890,41 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         wp_die( wp_json_encode( array( 'success' => 1 ) ) );
     }
 
+
+    /**
+     * Handle ajax get changes logs for plugins/themes.
+     */
+    public function ajax_get_item_changes_logs() {
+        $this->check_security( 'mainwp_changes_logs_get_item_changes' );
+
+        $siteId = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $type   = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $slug   = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $name   = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+        if ( empty( $siteId ) || ( empty( $slug ) && empty( $name ) ) || ! in_array( $type, array( 'plugin', 'theme' ) ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'Invalid request data. Please try again.', 'mainwp' ) ) );
+        }
+
+        $from_date = isset( $_POST['from_date'] ) ? sanitize_text_field( wp_unslash( $_POST['from_date'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+        $results = Log_Changes_Logs_Helper::instance()->get_history_changes(
+            array(
+                'wpid'        => $siteId,
+                'from_date'   => $from_date,
+                'days_number' => 10,
+                'slug'        => $slug,
+                'type'        => $type,
+                'name'        => $name,
+            )
+        );
+
+        if ( ! is_array( $results ) ) {
+            $results = array();
+        }
+
+        wp_send_json( $results );
+    }
 
 
     /**

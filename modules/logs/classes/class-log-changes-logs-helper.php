@@ -11,6 +11,7 @@ namespace MainWP\Dashboard\Module\Log;
 
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Logger;
+use MainWP\Dashboard\MainWP_Utility;
 
 /**
  * Class Log_Changes_Logs_Helper
@@ -302,7 +303,7 @@ class Log_Changes_Logs_Helper {
      */
     public static function get_changes_logs_types( $type_id = null ) { //phpcs:ignore -- NOSONAR - long function.
 
-        $tran_loc = 'mainwp'; //phpcs:ignore -- NOSONAR - used in default-logs.php.
+    $tran_loc = 'mainwp'; //phpcs:ignore -- NOSONAR - used in default-logs.php.
 
         static $defaults;
         if ( null === $defaults ) {
@@ -317,5 +318,85 @@ class Log_Changes_Logs_Helper {
             return is_scalar( $type_id ) && isset( $defaults[ $type_id ] ) ? $defaults[ $type_id ] : array();
         }
         return $defaults;
+    }
+
+    /**
+     * Method get_history_changes().
+     *
+     * @param array $args Arguments.
+     *
+     * @return array Results.
+     */
+    public function get_history_changes( $args ) {
+
+        $results = Log_DB_Helper::instance()->get_changes_logs_by( $args );
+
+        if ( ! is_array( $results ) ) {
+            $results = array();
+        }
+
+        $lists = array();
+
+        $manager = Log_Manager::instance();
+
+        $tbl_list = new Log_Events_List_Table( $manager );
+
+        if ( ! empty( $results['items'] ) ) {
+            foreach ( $results['items'] as $item ) {
+                if ( empty( $item->log_id ) ) {
+                    continue;
+                }
+                $record  = new Log_Record( $item );
+                $created = $record->created;
+                $day     = gmdate( 'Y-m-d', $created );
+                if ( ! isset( $list[ $day ] ) ) {
+                    $list[ $day ] = array();
+                }
+                $list_item = array(
+                    'date'    => MainWP_Utility::format_timezone( $created ),
+                    'details' => array(
+                        'author_name' => $tbl_list->get_log_author_name( $record ),
+                        'source'      => 'non-mainwp-changes' === $record->connector ? 'WP Admin' : 'Dashboard',
+                        'at_hour'     => MainWP_Utility::format_time( $created ),
+                        'connector'   => $record->connector,
+                        'context'     => $record->context,
+                        'action'      => $record->action,
+                        'event'       => $tbl_list->get_event_title( $record, 'action' ),
+                    ),
+                );
+
+                if ( 'updated' === $record->action || 'update' === $record->action ) {
+
+                    if ( ! empty( $record->extra_meta ) ) {
+                        $meta = json_decode( $record->extra_meta, true );
+                    } else {
+                        $meta = $record->meta;
+                    }
+
+                    if ( ! is_array( $meta ) ) {
+                        $meta = array();
+                    }
+
+                    if ( ! empty( $meta['version'] ) ) {
+                        $list_item['details']['version'] = $meta['version'];
+                    }
+                    if ( ! empty( $meta['old_version'] ) ) {
+                        $list_item['details']['old_version'] = $meta['old_version'];
+                    }
+                }
+
+                $lists[ $day ][] = $list_item;
+            }
+        }
+
+        $resp = array(
+            'list' => $lists,
+        );
+
+        if ( ! empty( $results['onward_time'] ) ) {
+            $resp['onward_date'] = MainWP_Utility::format_timezone( $results['onward_time'] );
+        }
+
+        return $resp;
     }
 }

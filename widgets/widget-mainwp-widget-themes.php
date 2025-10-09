@@ -93,6 +93,18 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         $inactive_themes = MainWP_Utility::get_sub_array_having( $allThemes, 'active', 0 );
         $inactive_themes = MainWP_Utility::sortmulti( $inactive_themes, 'name', 'asc' );
 
+        $wp_info = MainWP_DB::instance()->get_website_option( $website, 'site_info' );
+        $wp_info = ! empty( $wp_info ) ? json_decode( $wp_info, true ) : array();
+
+        if ( ! is_array( $wp_info ) ) {
+            $wp_info = array();
+        }
+
+        $use_tzformat = ! empty( $wp_info['format_datetime'] ) && is_array( $wp_info['format_datetime'] ) ? $wp_info['format_datetime'] : array();
+        $offs         = ! empty( $use_tzformat['gmt_offset'] ) ? intval( $use_tzformat['gmt_offset'] ) : 0;
+        $offs_info    = esc_html__( 'Timezone', 'mainwp' ) . ' UTC' . ( $offs > 0 ? '+' . $offs : $offs );
+        $site_info    = $website->name . ' (' . $website->url . ') ' . ( ! empty( $offs_info ) ? $offs_info : '' );
+
         ?>
         <div class="mainwp-widget-header">
             <h2 class="ui header handle-drag">
@@ -123,7 +135,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
              */
             do_action( 'mainwp_themes_widget_top', $website, $allThemes );
             ?>
-            <div id="mainwp-widget-inactive-themes">
+            <div id="mainwp-widget-inactive-themes" site-info="<?php echo esc_attr( $site_info ); ?>" site-id="<?php echo intval( $website->id ); ?>">
                 <?php
                 /**
                  * Action: mainwp_before_inactive_themes_list
@@ -145,7 +157,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                         $is_parent = ( isset( $inactive_themes[ $i ]['parent_active'] ) && 1 === (int) $inactive_themes[ $i ]['parent_active'] ) ? true : false;
                         ?>
                         <div class="item row-manage-item">
-                            <input class="themeName" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) ); ?>"/>
+                            <input class="themeName" type="hidden" name="name" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) ); ?>"/>
                             <input class="themeSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_themes[ $i ]['slug'] ) ); ?>"/>
                             <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
                             <div class="right floated content themesAction">
@@ -158,6 +170,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                                         <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_themes' ) ) : ?>
                                             <a href="#" class="<?php echo $is_parent ? '' : 'mainwp-theme-delete'; ?> item <?php echo $is_demo ? 'disabled' : ''; ?>" <?php echo $is_parent ? 'disabled onclick="javascript:void(0)"' : ''; ?>><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
                                         <?php endif; ?>
+                                            <a href="#" class="mainwp-theme-history item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'History', 'mainwp' ); ?></a>
                                     </div>
                                 </div>
                             </div>

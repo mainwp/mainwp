@@ -48,7 +48,7 @@ class Log_DB_Archive extends MainWP_DB {
      * @return mixed
      */
     public function archive_sites_changes( $before_timestamp = 0, $by_limit = 0, $dismiss = false ) {
-
+        $before_timestamp = 1000000 * $before_timestamp;
         $where = '';
         $order = '';
         if ( ! empty( $before_timestamp ) ) {

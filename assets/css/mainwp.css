@@ -693,7 +693,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     display: inline-flex;
     align-items: stretch;
     flex: 0 1 auto;
-    margin-right: 0.5rem;
+    margin: 0;
 }
 
 #mainwp-sites-filters-row .mainwp-tags-filter-action .ui.selection.dropdown {

@@ -120,6 +120,17 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $inactive_plugins = MainWP_Utility::get_sub_array_having( $allPlugins, 'active', 0 );
         $inactive_plugins = MainWP_Utility::sortmulti( $inactive_plugins, 'name', 'asc' );
 
+        $wp_info = MainWP_DB::instance()->get_website_option( $website, 'site_info' );
+        $wp_info = ! empty( $wp_info ) ? json_decode( $wp_info, true ) : array();
+
+        if ( ! is_array( $wp_info ) ) {
+            $wp_info = array();
+        }
+
+        $use_tzformat = ! empty( $wp_info['format_datetime'] ) && is_array( $wp_info['format_datetime'] ) ? $wp_info['format_datetime'] : array();
+        $offs         = ! empty( $use_tzformat['gmt_offset'] ) ? intval( $use_tzformat['gmt_offset'] ) : 0;
+        $offs_info    = esc_html__( 'Timezone', 'mainwp' ) . ' UTC' . ( $offs > 0 ? '+' . $offs : $offs );
+
         ?>
         <div class="ui grid mainwp-widget-header">
             <div class="twelve wide column">
@@ -162,8 +173,9 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
          * @since 4.1
          */
         do_action( 'mainwp_plugins_widget_top', $website, $allPlugins );
+        $site_info = $website->name . ' (' . $website->url . ') ' . ( ! empty( $offs_info ) ? $offs_info : '' );
         ?>
-        <div id="mainwp-widget-active-plugins" class="ui tab active" data-tab="active_plugins">
+        <div id="mainwp-widget-active-plugins" class="ui tab active" data-tab="active_plugins" site-info="<?php echo esc_attr( $site_info ); ?>" site-id="<?php echo intval( $website->id ); ?>">
             <?php
             /**
              * Action: mainwp_before_active_plugins_list
@@ -183,9 +195,10 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 for ( $i = 0; $i < $_count; $i++ ) {
                     $slug             = wp_strip_all_tags( $actived_plugins[ $i ]['slug'] );
                     $plugin_directory = dirname( $slug );
-                    $plugin_title     = $actived_plugins[ $i ]['name'] . ' ' . $actived_plugins[ $i ]['version'];
+                    $plugin_name      = $actived_plugins[ $i ]['name'];
+                    $plugin_title     = $plugin_name . ' ' . $actived_plugins[ $i ]['version'];
                     ?>
-                    <div class="item <?php echo esc_html( dirname( $slug ) ); ?> row-manage-item" plugin-title="<?php echo esc_attr( $plugin_title ); ?>">
+                    <div class="item <?php echo esc_html( dirname( $slug ) ); ?> row-manage-item" plugin-title="<?php echo esc_attr( $plugin_title ); ?>" plugin-name="<?php echo esc_attr( $plugin_name ); ?>" plugin-slug="<?php echo esc_attr( $slug ); ?>">
                         <input class="pluginSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $actived_plugins[ $i ]['slug'] ) ); ?>"/>
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
                         <div class="right floated pluginsAction">
@@ -198,6 +211,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                                     <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
                                         <a href="#" class="mainwp-plugin-delete item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Delete', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
                                     <?php } ?>
+                                        <a href="#" class="mainwp-plugin-history item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'History', 'mainwp' ); ?></a>
                                     </div>
                                 </div>
 
@@ -248,9 +262,10 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 for ( $i = 0; $i < $_count; $i++ ) {
                     $slug             = $inactive_plugins[ $i ]['slug'];
                     $plugin_directory = dirname( $slug );
-                    $plugin_title     = $inactive_plugins[ $i ]['name'] . ' ' . $inactive_plugins[ $i ]['version'];
+                    $plugin_name      = $inactive_plugins[ $i ]['name'];
+                    $plugin_title     = $plugin_name . ' ' . $inactive_plugins[ $i ]['version'];
                     ?>
-                    <div class="item <?php echo esc_html( sanitize_text_field( dirname( $slug ) ) ); ?> row-manage-item" plugin-title="<?php echo esc_attr( $plugin_title ); ?>">
+                    <div class="item <?php echo esc_html( sanitize_text_field( dirname( $slug ) ) ); ?> row-manage-item" plugin-title="<?php echo esc_attr( $plugin_title ); ?>" plugin-name="<?php echo esc_attr( $plugin_name ); ?>" plugin-slug="<?php echo esc_attr( $slug ); ?>">
                         <input class="pluginSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_plugins[ $i ]['slug'] ) ); ?>"/>
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
                         <div class="right floated content pluginsAction">
@@ -263,6 +278,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                                 <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
                                     <a href="#" class="mainwp-plugin-delete item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Delete', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
                                 <?php } ?>
+                                    <a href="#" class="mainwp-plugin-history item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'History', 'mainwp' ); ?></a>
                                 </div>
                             </div>
                         </div>
@@ -312,6 +328,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
          */
         do_action( 'mainwp_plugins_widget_bottom', $website, $allPlugins );
         MainWP_Updates::render_plugin_details_modal();
+        MainWP_Updates::render_item_history_modal();
     }
 
     /**

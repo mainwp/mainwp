@@ -147,7 +147,7 @@ class Log_Record {
      */
     public function __construct( $log ) { //phpcs:ignore -- NOSONAR - complex method.
         $this->log_id        = isset( $log->log_id ) ? $log->log_id : null;
-        $this->created       = isset( $log->created ) ? $log->created : null;
+        $this->created       = isset( $log->created ) ? $log->created / 1000000 : null;
         $this->site_id       = isset( $log->site_id ) ? $log->site_id : null;
         $this->log_site_name = isset( $log->log_site_name ) ? $log->log_site_name : null;
         $this->url           = isset( $log->url ) ? $log->url : null;

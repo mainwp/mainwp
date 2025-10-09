@@ -79,6 +79,10 @@ class Log_DB_Driver_WPDB implements Log_DB_Driver {
             unset( $data['meta'] );
         }
 
+        if ( ! empty( $data['created'] ) ) {
+            $data['created'] = Log_Manager::normalize_to_microseconds( $data['created'] ); // Store timestamps (including microseconds) as a BIGINT.
+        }
+
         $result = $wpdb->insert( $this->table, $data ); //phpcs:ignore -- ok.
         if ( ! $result ) {
             return false;

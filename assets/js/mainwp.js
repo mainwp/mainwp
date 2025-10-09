@@ -2914,6 +2914,172 @@ jQuery(function ($) {
 
 
 /**
+ *
+ * Widget plugins/themes changes history
+ *
+ */
+
+let pluginChangesLoadData = {};
+let themeChangesLoadData = {};
+
+jQuery(function ($) {
+    $(document).on('click', '.mainwp-plugin-history', function () {
+        let parent = $(this).closest('.row-manage-item');
+        const title = $(parent).attr('plugin-title');
+        const info = $('#mainwp-widget-active-plugins').attr('site-info');
+
+        pluginChangesLoadData = mainwp_secure_data({
+            action: 'mainwp_changes_logs_get_item_changes',
+            type: 'plugin',
+            slug: $(parent).attr('plugin-slug'),
+            siteId: $('#mainwp-widget-active-plugins').attr('site-id'),
+            from_date: '' // current date.
+        });
+
+        $('#mainwp-plugin-theme-history-changes-modal').modal({
+            onHide: function () {
+            },
+            onShow: function () {
+                const he = $('#mainwp-plugin-theme-history-changes-modal > div.main.header');
+                he.text(title + ' ' + __('History'));
+                he.last().append(
+                    $('<div class="sub header">').text(info)
+                );
+                mainwp_item_changes_load( 'plugin' );
+            }
+        }).modal('show');
+        return false;
+    });
+
+    $(document).on('click', '.mainwp-theme-history', function () {
+        let parent = $(this).closest('.row-manage-item');
+        const title = $(parent).find('.themeName').val();
+        const info = $('#mainwp-widget-inactive-themes').attr('site-info');
+
+        themeChangesLoadData = mainwp_secure_data({
+            action: 'mainwp_changes_logs_get_item_changes',
+            type: 'theme',
+            slug: $(parent).find('.themeSlug').val(),
+            name: $(parent).find('.themeName').val(),
+            siteId: $('#mainwp-widget-inactive-themes').attr('site-id'),
+            from_date: '' // current date.
+        });
+
+        $('#mainwp-plugin-theme-history-changes-modal').modal({
+            onHide: function () {
+            },
+            onShow: function () {
+                const he = $('#mainwp-plugin-theme-history-changes-modal > div.main.header');
+                he.text(title + ' ' + __('History'));
+                he.last().append(
+                    $('<div class="sub header">').text(info)
+                );
+                mainwp_item_changes_load( 'theme' );
+            }
+        }).modal('show');
+        return false;
+    });
+});
+
+let mainwp_item_changes_load = function ( type ) {
+    let md = jQuery('#mainwp-plugin-theme-history-changes-modal');
+    jQuery(md).find('.scrolling.content').html('<i class="notched circle loading icon"></i>');
+
+    jQuery(md).find('.actions .col-left').html('');
+    jQuery(md).find('.actions .col-right').html('');
+
+    let data = 'plugin' === type ? pluginChangesLoadData : themeChangesLoadData;
+
+    jQuery.post(ajaxurl, data, function (response) {
+        if (response.error != undefined) {
+            jQuery(md).find('.scrolling.content').html('<div class="ui message red">' + response.error + '</div>');
+        } else if (response?.list) {
+            if (response.list.length == 0) {
+                let msg = __('No history changes found for the plugin.') ;
+                if('theme' === type){
+                    msg = __('No history changes found for the theme.') ;
+                }
+                jQuery(md).find('.scrolling.content').html('<div class="ui message">' + msg + '</div>');
+            } else {
+                let content = '';
+                Object.entries(response.list).forEach(([indexdt, records]) => {
+                    const dt = records[0].date;
+                    content += `<div class="ui accordion">
+                        <div class="title">
+                            <i class="dropdown icon"></i>
+                            ${dt}<span class="title-right"><button class="ui circular blue mini button" >` + __('Day History') + `</button> <button class="ui basic mini button ">${records.length} ` + __('Actions') + `</button></span>
+                        </div>
+                        <div class="content">`;
+                    records.forEach(record => {
+                        content += `<div class="item">
+                            <div class="ui grid">
+                                <div class="eight wide column middle aligned">
+                                    <i class="circle tiny tiny grey icon"></i>
+                                    <span class="ui text ` + get_color_changes_event(record.details.action) + `">${record.details.event}</span> ` + __('by') + ` <strong>${record.details.author_name}</strong> ` + __('from') + `
+                                        <strong>${record.details.source}</strong>
+                                </div>
+                                <div class="six wide column middle aligned">
+                                ` + (record.details?.old_version && record.details?.version ? record.details.old_version + '&rarr;' + record.details.version : '') + `
+                                </div>
+                                <div class="two wide column right aligned">
+                                    ${record.details.at_hour}
+                                </div>
+                            </div>
+                        </div>`;
+                    });
+                    content += `</div>
+                    </div>`;
+                });
+
+                if ('' !== content) {
+                    let accordWrapper = jQuery("<div>", {
+                        id: "item-his-accord-wrapper",
+                        html: content
+                    });
+                    jQuery(md).find('.scrolling.content').html(accordWrapper);
+                    jQuery('#item-his-accord-wrapper .ui.accordion').accordion({ exclusive: false });
+                }
+
+                if ( response?.onward_date ) {
+                    jQuery(md).find('.actions .col-left').html('Data available from ' + response.onward_date + ' onward.');
+                }
+                if ( response?.next_date ) {
+                    if( 'plugin' === type ){
+                        pluginChangesLoadData.from_date = response.next_date;
+                    } else {
+                        themeChangesLoadData.from_date = response.next_date;
+                    }
+                    jQuery(md).find('.actions .col-right').html('<a href="javascript:void(0);" onclick="mainwp_item_changes_load("' + type + '");return false;">' + __('Load More') + '</a>');
+                }
+            }
+        } else {
+            jQuery(md).find('.scrolling.content').html('<div class="ui message red">' + __('Undefined error occurred. Please try again.') + '</div>');
+        }
+    }, 'json');
+}
+
+let get_color_changes_event = function( act ){
+    const actColorMap = {
+        red: ['deleted','removed','revoked','delete'],
+        orange: ['deactivated','disabled','suspended','deactivate'],
+        grey: ['opened','logged-in','logged-out'],
+        blue: ['updated','modified','update'],
+        green: ['sync','activated','installed','created','published','added','uploaded','enabled','install','activate']
+    };
+
+    let color = '';
+
+    for (const [c, acts] of Object.entries(actColorMap)) {
+        if (acts.includes(act)) {
+            color = c;
+            break;
+        }
+    }
+    return color;
+}
+
+
+/**
  * Install check plugins.
  *
  */

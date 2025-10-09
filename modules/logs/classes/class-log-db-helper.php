@@ -259,6 +259,182 @@ class Log_DB_Helper extends MainWP_DB {
     }
 
     /**
+     * Method get_changes_logs_by().
+     *
+     * @param array $args Arguments.
+     *
+     * @return array DB stats.
+     */
+    public function get_changes_logs_by( $args ) {
+
+        $site_id = isset( $args['wpid'] ) ? $args['wpid'] : 0; // int or array of int site ids.
+        // Supports querying plugin/theme logs grouped by date.
+        $from_date   = ! empty( $args['from_date'] ) ? sanitize_text_field( $args['from_date'] ) : gmdate( 'Y-m-d' );
+        $days_number = isset( $args['days_number'] ) ? intval( $args['days_number'] ) : 10;
+        $slug_value  = isset( $args['slug'] ) ? sanitize_text_field( $args['slug'] ) : '';
+        $name_value  = isset( $args['name'] ) ? sanitize_text_field( $args['name'] ) : ''; // supports in case slug are empty.
+        $type        = isset( $args['type'] ) ? sanitize_text_field( $args['type'] ) : '';
+        // End.
+
+        if ( empty( $site_id ) || ( empty( $slug_value ) && empty( $name_value ) ) || empty( $days_number ) || ! in_array( $type, array( 'plugin', 'theme' ) ) ) {
+            return array();
+        }
+
+        global $wpdb;
+
+        $cond_meta = '';
+
+        if ( 'plugin' === $type && ! empty( $slug_value ) ) {
+            $cond_meta .= $wpdb->prepare( ' AND m.meta_key = "slug" AND m.meta_value = %s ', $slug_value );
+        } elseif ( 'theme' === $type ) { // only themes have name value.
+            $cond_meta .= $wpdb->prepare( ' AND ( ( m.meta_key = "slug" AND m.meta_value = %s ) OR ( m.meta_key = "name" AND m.meta_value = %s ) ) ', $slug_value, $name_value );
+        } else {
+            return array();
+        }
+
+        $onward = '
+            SELECT i.*
+            FROM ' . $this->table_name( 'wp_logs' ) . ' i
+            LEFT JOIN ' . $this->table_name( 'wp_logs_meta' ) . ' m
+            ON i.log_id = m.meta_log_id
+            AND i.site_id = %d
+            AND i.context = %s
+            ' . $cond_meta . '
+            ORDER BY i.created DESC
+            LIMIT 1;
+        ';
+
+        $sql_onward = $wpdb->prepare(
+            $onward, //phpcs:ignore --ok.
+            $site_id,
+            $type,
+            $type . '_' . $slug_value
+        );
+
+        $found = $wpdb->get_row( $sql_onward ); //phpcs:ignore --ok.
+
+        $count = '
+            SELECT count(*)
+            FROM ' . $this->table_name( 'wp_logs' ) . ' i
+            LEFT JOIN ' . $this->table_name( 'wp_logs_meta' ) . ' m
+            ON i.log_id = m.meta_log_id
+            AND i.site_id = %d
+            ' . $cond_meta . '
+            AND m.meta_key = %s;
+        ';
+
+        $sql_count = $wpdb->prepare(
+            $count, //phpcs:ignore --ok.
+            $site_id,
+            $type,
+            $type . '_' . $slug_value
+        );
+
+        $total_count = $wpdb->get_var( $sql_count ); //phpcs:ignore --ok.
+
+        $query = ' SELECT
+            d.day_start,
+            i.*,
+            m.meta_value
+        FROM (
+            SELECT
+                (FLOOR(created / 86400000000) * 86400000000) AS day_start
+            FROM ' . $this->table_name( 'wp_logs' ) . '
+            WHERE site_id = %d
+                AND created >= (UNIX_TIMESTAMP(%s) * 1000000)
+            GROUP BY day_start
+            ORDER BY day_start
+            LIMIT %d
+        ) d
+        JOIN ' . $this->table_name( 'wp_logs' ) . ' i
+            ON i.created >= d.day_start
+            AND i.created < d.day_start + 86400000000
+            AND i.site_id = %d
+        INNER JOIN  ' . $this->table_name( 'wp_logs_meta' ) . ' m
+            ON i.log_id = m.meta_log_id
+            AND i.context = %s
+            ' . $cond_meta . '
+        ORDER BY d.day_start, i.created;';
+
+        $sql = $wpdb->prepare(
+            $query, //phpcs:ignore --ok.
+            $site_id,
+            $from_date, // from_date string.
+            $days_number,
+            $site_id,
+            $type,
+            $type . '_' . $slug_value
+        );
+
+        $items = $wpdb->get_results( $sql ); //phpcs:ignore --ok.
+
+        if ( $items ) {
+
+            $ids = array_map( 'absint', wp_list_pluck( $items, 'log_id' ) );
+
+            $start_slice = 0;
+            $max_slice   = 100;
+            $count       = count( $ids );
+
+            while ( $start_slice <= $count ) {
+                $slice_ids    = array_slice( $ids, $start_slice, $max_slice );
+                $start_slice += $max_slice;
+
+                if ( ! empty( $slice_ids ) ) {
+
+                    $sql_meta = sprintf(
+                        'SELECT * FROM ' . $this->table_name( 'wp_logs_meta' ) . ' WHERE meta_log_id IN ( %s )',
+                        implode( ',', $slice_ids )
+                    );
+
+                    $meta_records = $wpdb->get_results( $sql_meta ); //phpcs:ignore -- ok.
+                    $ids_flip     = array_flip( $ids );
+
+                    if ( is_array( $meta_records ) ) {
+                        foreach ( $meta_records as $meta_record ) {
+                            if ( ! empty( $meta_record->meta_value ) ) {
+                                // compatible format.
+                                if ( in_array( $meta_record->meta_key, array( 'user_meta_json', 'user_login', 'extra_info' ) ) ) {
+                                    $items[ $ids_flip[ $meta_record->meta_log_id ] ]->{$meta_record->meta_key} = $meta_record->meta_value;
+                                } else {
+                                    if ( empty( $items[ $ids_flip[ $meta_record->meta_log_id ] ]->meta ) ) {
+                                        $items[ $ids_flip[ $meta_record->meta_log_id ] ]->meta = array();
+                                    }
+                                    $items[ $ids_flip[ $meta_record->meta_log_id ] ]->meta[ $meta_record->meta_key ] = $meta_record->meta_value;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        $next_date = '';
+        if ( ! empty( $items ) && ! empty( $found ) ) {
+            $first_created = $found ? $found->created / 1000000 : 0;
+            $end           = end( $items );
+            $end_created   = $end && ! empty( $end->created ) ? $end->created / 1000000 : 0;
+
+            if ( $end_created && $first_created ) {
+                $next_date = gmdate( 'Y-m-d', $end_created );
+                $next_date = gmdate( 'Y-m-d', $first_created ) === $next_date ? '' : $next_date;
+            }
+        }
+
+        if ( ! empty( $next_date ) ) {
+            $next_date = gmdate( 'Y-m-d', strtotime( $next_date . ' -1 day' ) ); // previous day.
+        }
+
+        return array(
+            'items'       => $items,
+            'onward_time' => $first_created,
+            'total'       => $total_count ? $total_count : 0,
+            'next_date'   => $next_date,
+        );
+    }
+
+
+    /**
      * Get db size.
      *
      * @return string Return current db size.

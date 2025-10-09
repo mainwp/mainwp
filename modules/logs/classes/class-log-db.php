@@ -260,7 +260,7 @@ class Log_DB extends MainWP_DB {
                 continue;
             }
 
-            $year = (int) gmdate( 'Y', $item->created );
+            $year = (int) gmdate( 'Y', $item->created / 1000000);
 
             if ( $year < 2020 ) {
                 return;

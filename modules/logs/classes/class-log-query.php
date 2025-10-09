@@ -138,7 +138,9 @@ class Log_Query {
         }
 
         if ( ! empty( $args['timestart'] ) && ! empty( $args['timestop'] ) ) {
-            $where .= $wpdb->prepare( ' AND `lg`.`created` >= %d AND `lg`.`created` <= %d', $args['timestart'], $args['timestop'] );
+            $timestart_us = (int) $args['timestart'] * 1000000;
+            $timestop_us  = (int) $args['timestop'] * 1000000;
+            $where       .= $wpdb->prepare( ' AND `lg`.`created` >= %d AND `lg`.`created` <= %d', $timestart_us, $timestop_us );
         }
 
         // available sources conds values: wp-admin-only|dashboard-only|empty.

@@ -135,6 +135,8 @@ class Log {
             unset( $args['created'] );
         }
 
+        $created = Log_Manager::normalize_to_microseconds( $created ); // Store timestamps (including microseconds) as a BIGINT.
+
         // Prevent any meta with null values from being logged.
         $logs_meta = array_filter(
             $args,

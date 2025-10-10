@@ -115,6 +115,7 @@ final class MainWP_Setup {
         include_once MAINWP_PLUGIN_DIR . 'includes/rest-api/controller/version2/class-mainwp-rest-updates-controller.php';
         include_once MAINWP_PLUGIN_DIR . 'includes/rest-api/controller/version2/class-mainwp-rest-global-batch-controller.php';
         include_once MAINWP_PLUGIN_DIR . 'includes/rest-api/controller/version2/class-mainwp-rest-monitors-controller.php';
+        include_once MAINWP_PLUGIN_DIR . 'includes/rest-api/controller/version2/class-mainwp-rest-api-keys-controller.php';
     }
 }
 MainWP_Setup::instance();

@@ -1200,7 +1200,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         $update_data = apply_filters( 'mainwp_uptime_monitoring_update_monitor_data', $update_data, $monitor_id );
 
         // Update the monitor.
-        $result = MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor( $update_data );
+        $result = $this->db->update_wp_monitor( $update_data );
 
         if ( false === $result ) {
             return new WP_Error(

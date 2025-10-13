@@ -5314,3 +5314,9 @@ let get_local_date_string = function () {
     const d = String(today.getDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
 }
+
+function mainwp_forceReload(targetUrl) {
+    const url = targetUrl || window.location.href;
+    // Navigate to URL (force reload from server)
+    window.location.href = url;
+}

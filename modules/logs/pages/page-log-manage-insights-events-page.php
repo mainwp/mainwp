@@ -611,8 +611,8 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                                 <div class="menu">
                                     <?php
                                     $seg_source = array(
-                                        'dashboard' => esc_html__( 'Dashboard', 'maiwp' ),
-                                        'wp-admin'  => esc_html__( 'WP Admin', 'maiwp' ),
+                                        'dashboard' => esc_html__( 'Dashboard', 'mainwp' ),
+                                        'wp-admin'  => esc_html__( 'WP Admin', 'mainwp' ),
                                     );
                                     foreach ( $seg_source as $sou_name => $sou_title ) {
                                         ?>

@@ -1691,9 +1691,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 $critical = $hstatus['critical'];
 
                 if ( 80 <= $hval && empty( $critical ) ) {
-                    $site_health = '<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website['id'] ) . '&location=' . esc_attr( base64_encode( 'site-health.php' ) ) . '&_opennonce=' . esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ) . '" target="_blank" class="open_newwindow_wpadmin ui mini grey icon basic button" data-tooltip="' . esc_attr__( 'Health Score: ', '' ) . $hval . '" data-position="left center" data-inverted=""><i class="heartbeat green icon"></i></a>'; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+                    $site_health = '<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website['id'] ) . '&location=' . esc_attr( base64_encode( 'site-health.php' ) ) . '&_opennonce=' . esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ) . '" target="_blank" class="open_newwindow_wpadmin ui mini grey icon basic button" data-tooltip="' . esc_attr__( 'Health Score: ', 'mainwp' ) . $hval . '" data-position="left center" data-inverted=""><i class="heartbeat green icon"></i></a>'; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
                 } else {
-                    $site_health = '<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website['id'] ) . '&location=' . esc_attr( base64_encode( 'site-health.php' ) ) . '&_opennonce=' . esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ) . '" target="_blank" class="open_newwindow_wpadmin ui mini grey icon basic button" data-tooltip="' . esc_attr__( 'Health Score: ', '' ) . $hval . esc_attr__( ' | Critical Issues: ', '' ) . $critical . '" data-position="left center" data-inverted=""><i class="heartbeat yellow icon"></i></a>'; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+                    $site_health = '<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website['id'] ) . '&location=' . esc_attr( base64_encode( 'site-health.php' ) ) . '&_opennonce=' . esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ) . '" target="_blank" class="open_newwindow_wpadmin ui mini grey icon basic button" data-tooltip="' . esc_attr__( 'Health Score: ', 'mainwp' ) . $hval . esc_attr__( ' | Critical Issues: ', 'mainwp' ) . $critical . '" data-position="left center" data-inverted=""><i class="heartbeat yellow icon"></i></a>'; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
                 }
 
                 $note       = html_entity_decode( $website['note'] );
@@ -1739,12 +1739,12 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         <div class="ui checkbox"><input type="checkbox" value="<?php echo intval( $website['id'] ); ?>" /></div>
                     <?php } elseif ( 'status' === $column_name ) { ?>
                         <?php if ( $hasSyncErrors ) : ?>
-                            <span data-tooltip="<?php echo esc_attr_e( 'Disconnected', 'mainwp' ); ?>" data-position="right center" data-inverted=""><a class="mainwp_site_reconnect" href="#"><i class="red times large icon"></i></a></span>
+                            <span data-tooltip="<?php esc_attr_e( 'Disconnected', 'mainwp' ); ?>" data-position="right center" data-inverted=""><a class="mainwp_site_reconnect" href="#"><i class="red times large icon"></i></a></span>
                         <?php else : ?>
                             <?php if ( $suspendedSite ) : ?>
-                                <span data-tooltip="<?php echo esc_attr_e( 'Suspended', 'mainwp' ); ?>" data-position="right center" data-inverted=""><a class="managesites_syncdata" href="#"><i class="pause yellow large icon"></i></a></span>
+                                <span data-tooltip="<?php esc_attr_e( 'Suspended', 'mainwp' ); ?>" data-position="right center" data-inverted=""><a class="managesites_syncdata" href="#"><i class="pause yellow large icon"></i></a></span>
                             <?php else : ?>
-                                <span data-tooltip="<?php echo esc_attr_e( 'Connected', 'mainwp' ); ?>" data-position="right center" data-inverted=""><a class="managesites_syncdata" href="#"><i class="green large check icon"></i></a></span>
+                                <span data-tooltip="<?php esc_attr_e( 'Connected', 'mainwp' ); ?>" data-position="right center" data-inverted=""><a class="managesites_syncdata" href="#"><i class="green large check icon"></i></a></span>
                             <?php endif; ?>
                         <?php endif; ?>
                     <?php } elseif ( 'favicon' === $column_name ) { ?>

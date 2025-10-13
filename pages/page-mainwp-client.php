@@ -1015,7 +1015,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         ?>
         <div class="ui large modal mainwp-qsw-import-client-modal" id="mainwp-import-client-modal" >
             <i class="close icon"></i>
-            <div class="header"><?php echo esc_html_e( 'Import Clients' ); ?></div>
+            <div class="header"><?php esc_html_e( 'Import Clients', 'mainwp' ); ?></div>
             <div class="scrolling content">
                 <?php static::render_import_client_row_modal(); ?>
             </div>
@@ -1796,7 +1796,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <?php
                     $indi_val = $edit_client && $client_contacts ? 1 : 0;
                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $indi_val );
-                    echo esc_html_e( 'Client primary contact', 'mainwp' );
+                    esc_html_e( 'Client primary contact', 'mainwp' );
                     ?>
                     </label>
                     <div class="ui six wide column">

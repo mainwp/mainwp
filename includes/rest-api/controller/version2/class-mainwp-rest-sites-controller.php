@@ -1111,7 +1111,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $data    = array();
 
             if ( 'delete' === $action && is_array( $information ) && ! empty( $information['error']['is_activated_theme'] ) ) {
-                $data['error'] = esc_html__( sprintf( 'The theme %s is active.', $information['error']['is_activated_theme'] ), 'mainwp' );
+                $data['error'] = sprintf( esc_html__( 'The theme %s is active.', 'mainwp' ), $information['error']['is_activated_theme'] );
             }
 
             if ( 'activate' === $action && isset( $information['other_data']['theme_deactivate_data'] ) ) {

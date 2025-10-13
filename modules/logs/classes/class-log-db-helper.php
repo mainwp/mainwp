@@ -439,7 +439,7 @@ class Log_DB_Helper extends MainWP_DB {
         $first_created = 0;
 
         if ( ! empty( $items ) && ! empty( $found ) ) {
-            $first_created = $found ? $found->created / 1000000 : 0;
+            $first_created = $found ? intval( $found->created / 1000000 ) : 0;
             $end           = end( $items );
             $end_created   = $end && ! empty( $end->created ) ? $end->created / 1000000 : 0;
 

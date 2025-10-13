@@ -10,6 +10,7 @@
 namespace MainWP\Dashboard\Module\Log;
 
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Utility;
 
 /**
  * Class Log_DB
@@ -268,19 +269,61 @@ class Log_DB_Helper extends MainWP_DB {
     public function get_changes_logs_by( $args ) {
 
         $site_id = isset( $args['wpid'] ) ? $args['wpid'] : 0; // int or array of int site ids.
-        // Supports querying plugin/theme logs grouped by date.
+
         $from_date   = ! empty( $args['from_date'] ) ? sanitize_text_field( $args['from_date'] ) : gmdate( 'Y-m-d' );
         $days_number = isset( $args['days_number'] ) ? intval( $args['days_number'] ) : 10;
         $slug_value  = isset( $args['slug'] ) ? sanitize_text_field( $args['slug'] ) : '';
         $name_value  = isset( $args['name'] ) ? sanitize_text_field( $args['name'] ) : ''; // supports in case slug are empty.
         $type        = isset( $args['type'] ) ? sanitize_text_field( $args['type'] ) : '';
-        // End.
 
-        if ( empty( $site_id ) || ( empty( $slug_value ) && empty( $name_value ) ) || empty( $days_number ) || ! in_array( $type, array( 'plugin', 'theme' ) ) ) {
+        $target_dt = ! empty( $args['target_date'] ) ? sanitize_text_field( $args['target_date'] ) : '';
+
+        if ( ! in_array( $type, array( 'plugin', 'theme' ) ) ) {
             return array();
         }
 
         global $wpdb;
+
+        if ( ! empty( $target_dt ) ) {
+
+            $utc_start = MainWP_Utility::get_utc_timestamp_by_date( $target_dt );
+            $utc_end   = MainWP_Utility::get_utc_timestamp_by_date( $target_dt, 1 );
+
+            $utc_start_micro = (int) $utc_start * 1000000;
+            $utc_end_micro   = (int) $utc_end * 1000000;
+
+            $query = '
+                SELECT i.*
+                FROM ' . $this->table_name( 'wp_logs' ) . ' i
+                WHERE i.context = %s
+                AND i.created >= %d
+                AND i.created < %d
+                ORDER BY i.created DESC
+            ';
+
+            $sql = $wpdb->prepare(
+                $query, //phpcs:ignore --ok.
+                $type,
+                $utc_start_micro,
+                $utc_end_micro
+            );
+
+            $items = $wpdb->get_results( $sql); //phpcs:ignore --ok.
+
+            $this->get_meta_items( $items );
+
+            return array(
+                'items'       => $items,
+                'onward_time' => 0,
+                'total'       => count( $items ),
+                'more_date'   => '',
+            );
+
+        }
+
+        if ( empty( $site_id ) || ( empty( $slug_value ) && empty( $name_value ) ) || empty( $days_number ) ) {
+            return array();
+        }
 
         $cond_meta = '';
 
@@ -307,8 +350,7 @@ class Log_DB_Helper extends MainWP_DB {
         $sql_onward = $wpdb->prepare(
             $onward, //phpcs:ignore --ok.
             $site_id,
-            $type,
-            $type . '_' . $slug_value
+            $type
         );
 
         $found = $wpdb->get_row( $sql_onward ); //phpcs:ignore --ok.
@@ -319,120 +361,240 @@ class Log_DB_Helper extends MainWP_DB {
             LEFT JOIN ' . $this->table_name( 'wp_logs_meta' ) . ' m
             ON i.log_id = m.meta_log_id
             AND i.site_id = %d
-            ' . $cond_meta . '
-            AND m.meta_key = %s;
-        ';
+            ' . $cond_meta;
 
         $sql_count = $wpdb->prepare(
             $count, //phpcs:ignore --ok.
-            $site_id,
-            $type,
-            $type . '_' . $slug_value
+            $site_id
         );
 
         $total_count = $wpdb->get_var( $sql_count ); //phpcs:ignore --ok.
 
-        $query = ' SELECT
+        global $wpdb;
+
+        $ctx = MainWP_Utility::get_time_context( $from_date );
+
+        $day_micros    = $ctx['day_micros'];
+        $offset_micro  = $ctx['offset_micro'];
+        $from_date_utc = $ctx['from_date_utc'];
+
+        $sql = "
+        SELECT
             d.day_start,
             i.*,
             m.meta_value
         FROM (
             SELECT
-                (FLOOR(created / 86400000000) * 86400000000) AS day_start
-            FROM ' . $this->table_name( 'wp_logs' ) . '
+                ((FLOOR((created + %d) / %d) * %d) - %d) AS day_start
+            FROM {$this->table_name('wp_logs')}
             WHERE site_id = %d
-                AND created >= (UNIX_TIMESTAMP(%s) * 1000000)
+            AND created < (UNIX_TIMESTAMP(%s) * 1000000)
             GROUP BY day_start
-            ORDER BY day_start
+            ORDER BY day_start DESC
             LIMIT %d
         ) d
-        JOIN ' . $this->table_name( 'wp_logs' ) . ' i
+        JOIN {$this->table_name('wp_logs')} i
             ON i.created >= d.day_start
-            AND i.created < d.day_start + 86400000000
+            AND i.created < d.day_start + %d
             AND i.site_id = %d
-        INNER JOIN  ' . $this->table_name( 'wp_logs_meta' ) . ' m
+        INNER JOIN {$this->table_name('wp_logs_meta')} m
             ON i.log_id = m.meta_log_id
             AND i.context = %s
-            ' . $cond_meta . '
-        ORDER BY d.day_start, i.created;';
+            {$cond_meta}
+        ORDER BY d.day_start DESC, i.created DESC
+        ;";
 
-        $sql = $wpdb->prepare(
-            $query, //phpcs:ignore --ok.
+        $query = $wpdb->prepare(
+            $sql, //phpcs:ignore --ok.
+            // (created + %d).
+            $offset_micro,
+            // / %d.
+            $day_micros,
+            // * %d.
+            $day_micros,
+            // - %d.
+            $offset_micro,
+            // %d (site_id in inner WHERE).
             $site_id,
-            $from_date, // from_date string.
+            // %s (current date string for UNIX_TIMESTAMP).
+            $from_date_utc, // ← use something like gmdate('Y-m-d H:i:s').
+            // %d (LIMIT).
             $days_number,
+            // %d (d.day_start + %d).
+            $day_micros,
+            // %d (i.site_id).
             $site_id,
-            $type,
-            $type . '_' . $slug_value
+            // %s (type).
+            $type
         );
 
-        $items = $wpdb->get_results( $sql ); //phpcs:ignore --ok.
+        error_log( print_r($args, true ) );
+        error_log( $query );
+
+        $items = $wpdb->get_results( $query ); //phpcs:ignore --ok.
 
         if ( $items ) {
-
-            $ids = array_map( 'absint', wp_list_pluck( $items, 'log_id' ) );
-
-            $start_slice = 0;
-            $max_slice   = 100;
-            $count       = count( $ids );
-
-            while ( $start_slice <= $count ) {
-                $slice_ids    = array_slice( $ids, $start_slice, $max_slice );
-                $start_slice += $max_slice;
-
-                if ( ! empty( $slice_ids ) ) {
-
-                    $sql_meta = sprintf(
-                        'SELECT * FROM ' . $this->table_name( 'wp_logs_meta' ) . ' WHERE meta_log_id IN ( %s )',
-                        implode( ',', $slice_ids )
-                    );
-
-                    $meta_records = $wpdb->get_results( $sql_meta ); //phpcs:ignore -- ok.
-                    $ids_flip     = array_flip( $ids );
-
-                    if ( is_array( $meta_records ) ) {
-                        foreach ( $meta_records as $meta_record ) {
-                            if ( ! empty( $meta_record->meta_value ) ) {
-                                // compatible format.
-                                if ( in_array( $meta_record->meta_key, array( 'user_meta_json', 'user_login', 'extra_info' ) ) ) {
-                                    $items[ $ids_flip[ $meta_record->meta_log_id ] ]->{$meta_record->meta_key} = $meta_record->meta_value;
-                                } else {
-                                    if ( empty( $items[ $ids_flip[ $meta_record->meta_log_id ] ]->meta ) ) {
-                                        $items[ $ids_flip[ $meta_record->meta_log_id ] ]->meta = array();
-                                    }
-                                    $items[ $ids_flip[ $meta_record->meta_log_id ] ]->meta[ $meta_record->meta_key ] = $meta_record->meta_value;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            $this->get_meta_items( $items );
         }
 
-        $next_date = '';
+        $more_date = '';
+
+        $first_created = 0;
+
         if ( ! empty( $items ) && ! empty( $found ) ) {
             $first_created = $found ? $found->created / 1000000 : 0;
             $end           = end( $items );
             $end_created   = $end && ! empty( $end->created ) ? $end->created / 1000000 : 0;
 
             if ( $end_created && $first_created ) {
-                $next_date = gmdate( 'Y-m-d', $end_created );
-                $next_date = gmdate( 'Y-m-d', $first_created ) === $next_date ? '' : $next_date;
+                $more_date = gmdate( 'Y-m-d', (int) $end_created );
+                $more_date = gmdate( 'Y-m-d', (int) $first_created ) === $more_date ? '' : $more_date;
             }
         }
 
-        if ( ! empty( $next_date ) ) {
-            $next_date = gmdate( 'Y-m-d', strtotime( $next_date . ' -1 day' ) ); // previous day.
+        if ( ! empty( $more_date ) ) {
+            $more_date = gmdate( 'Y-m-d', strtotime( $more_date . ' -1 day' ) ); // previous day.
         }
 
         return array(
             'items'       => $items,
             'onward_time' => $first_created,
             'total'       => $total_count ? $total_count : 0,
-            'next_date'   => $next_date,
+            'more_date'   => $more_date,
         );
     }
 
+    /**
+     * Get logs grouped by local day ranges.
+     *
+     * Recommended: convert local $from_date_local to UTC in PHP and pass UTC datetime
+     * to MySQL. This avoids depending on MySQL timezone tables.
+     *
+     * @param int    $site_id
+     * @param string $type           // context/type for meta join
+     * @param string $from_date_local // 'YYYY-MM-DD HH:MM:SS' in $local_timezone
+     * @param int    $days_number
+     * @param string $local_timezone // e.g. 'Asia/Ho_Chi_Minh'.
+     * @return array|object[]
+     */
+    private function get_logs_for_local_date_range_phputc( $site_id, $type, $from_date_local, $days_number = 10, $local_timezone = 'Asia/Ho_Chi_Minh' ) {
+        global $wpdb;
+
+        // micro-constants.
+        $MICRO           = 1000000;
+        $SECONDS_PER_DAY = 86400;
+        $day_micros      = $SECONDS_PER_DAY * $MICRO; // 86400 * 1_000_000.
+
+        // compute offset (seconds east of UTC) for the given timezone at "now".
+        $tz             = new \DateTimeZone( $local_timezone );
+        $dtNow          = new DateTimeImmutable( 'now', $tz );
+        $offset_seconds = $tz->getOffset( $dtNow ); // handles DST if relevant.
+        $offset_micro   = $offset_seconds * $MICRO;
+
+        // convert provided local datetime to UTC string for MySQL.
+        $dt            = new \DateTimeImmutable( $from_date_local, $tz );
+        $from_date_utc = $dt->setTimezone( new \DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' );
+
+        // now you can reuse these:
+        $day_micros    = $context['day_micros'];
+        $offset_micro  = $context['offset_micro'];
+        $from_date_utc = $context['from_date_utc'];
+
+        // build SQL (same structure you provided).
+        $sql = "
+        SELECT
+            d.day_start,
+            i.*,
+            m.meta_value
+        FROM (
+            SELECT
+                ((FLOOR((created + %d) / %d) * %d) - %d) AS day_start
+            FROM {$this->table_name('wp_logs')}
+            WHERE site_id = %d
+            AND created < (UNIX_TIMESTAMP(%s) * 1000000)
+            GROUP BY day_start
+            ORDER BY day_start DESC
+            LIMIT %d
+        ) d
+        JOIN {$this->table_name('wp_logs')} i
+            ON i.created >= d.day_start
+            AND i.created < d.day_start + %d
+            AND i.site_id = %d
+        INNER JOIN {$this->table_name('wp_logs_meta')} m
+            ON i.log_id = m.meta_log_id
+            AND i.context = %s
+        ORDER BY d.day_start DESC, i.created DESC
+        ;";
+
+        // prepare & execute
+        $query = $wpdb->prepare(
+            $sql,
+            $offset_micro,
+            $day_micros,
+            $day_micros,
+            $offset_micro,
+            $site_id,
+            $from_date_utc,   // UTC datetime string
+            $days_number,
+            $day_micros,
+            $site_id,
+            $type
+        );
+
+        return $wpdb->get_results( $query );
+    }
+
+
+
+    /**
+     * Get meta data of logs.
+     */
+    public function get_meta_items( &$items ) {
+
+        global $wpdb;
+
+        if ( ! is_array( $items ) || empty( $items ) ) {
+            return;
+        }
+
+        $ids = array_map( 'absint', wp_list_pluck( $items, 'log_id' ) );
+
+        $start_slice = 0;
+        $max_slice   = 100;
+        $count       = count( $ids );
+
+        while ( $start_slice <= $count ) {
+            $slice_ids    = array_slice( $ids, $start_slice, $max_slice );
+            $start_slice += $max_slice;
+
+            if ( ! empty( $slice_ids ) ) {
+
+                $sql_meta = sprintf(
+                    'SELECT * FROM ' . $this->table_name( 'wp_logs_meta' ) . ' WHERE meta_log_id IN ( %s )',
+                    implode( ',', $slice_ids )
+                );
+
+                $meta_records = $wpdb->get_results( $sql_meta ); //phpcs:ignore -- ok.
+                $ids_flip     = array_flip( $ids );
+
+                if ( is_array( $meta_records ) ) {
+                    foreach ( $meta_records as $meta_record ) {
+                        if ( ! empty( $meta_record->meta_value ) ) {
+                            // compatible format.
+                            if ( in_array( $meta_record->meta_key, array( 'user_meta_json', 'user_login', 'extra_info' ) ) ) {
+                                $items[ $ids_flip[ $meta_record->meta_log_id ] ]->{$meta_record->meta_key} = $meta_record->meta_value;
+                            } else {
+                                if ( empty( $items[ $ids_flip[ $meta_record->meta_log_id ] ]->meta ) ) {
+                                    $items[ $ids_flip[ $meta_record->meta_log_id ] ]->meta = array();
+                                }
+                                $items[ $ids_flip[ $meta_record->meta_log_id ] ]->meta[ $meta_record->meta_key ] = $meta_record->meta_value;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * Get db size.

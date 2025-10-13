@@ -245,6 +245,8 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     if ( empty( $plugin_upgrades ) && empty( $website->sync_errors ) ) {
                         continue;
                     }
+
+                    $tz_info = MainWP_Updates::get_site_tz_info( $website );
                     ?>
                     <tr class="ui title master-checkbox">
                         <td class="accordion-trigger"><i class="icon dropdown"></i></td>
@@ -275,7 +277,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                     <?php $updates_table_helper->print_column_headers(); ?>
                                     </tr>
                                 </thead>
-                                <tbody class="plugins-bulk-updates" id="wp_plugin_upgrades_<?php echo intval( $website->id ); ?>" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>">
+                                <tbody class="plugins-bulk-updates" id="wp_plugin_upgrades_<?php echo intval( $website->id ); ?>" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" site_url="<?php echo esc_attr( $website->url ); ?>" tz-info="<?php echo esc_attr( $tz_info ); ?>">
                                     <?php foreach ( $plugin_upgrades as $slug => $plugin_upgrade ) : ?>
                                         <?php $plugin_name = rawurlencode( $slug ); ?>
                                         <?php
@@ -297,13 +299,14 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                         }
 
                                         ?>
-                                        <tr plugin_slug="<?php echo esc_attr( $plugin_name ); ?>" last-version="<?php echo esc_attr( rawurlencode( $last_version ) ); ?>" site_name="<?php echo esc_attr( stripslashes( $website->name ) ); ?>" premium="<?php echo isset( $plugin_upgrade['premium'] ) && ! empty( $plugin_upgrade['premium'] ) ? 1 : 0; ?>" updated="0">
+                                        <tr plugin_slug="<?php echo esc_attr( $plugin_name ); ?>" plugin_name="<?php echo esc_attr( $plugin_upgrade['Name'] ); ?>" last-version="<?php echo esc_attr( rawurlencode( $last_version ) ); ?>" site_name="<?php echo esc_attr( stripslashes( $website->name ) ); ?>" premium="<?php echo isset( $plugin_upgrade['premium'] ) && ! empty( $plugin_upgrade['premium'] ) ? 1 : 0; ?>" updated="0">
                                             <?php
                                             $row_columns     = $updates_table_helper->render_columns( $row_columns, $website, $others );
                                             $action_rendered = isset( $row_columns['action'] ) ? true : false;
                                             if ( ! $action_rendered ) :
                                                 ?>
                                             <td class="right aligned">
+                                                <a href="#" history-view="update-plugin-per-site" class="mainwp-show-history ui mini button"><?php esc_html_e( 'History', 'mainwp' ); ?></a>
                                                 <?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
                                                     <div class="ui top left pointing dropdown mini button">
                                                         <?php esc_html_e( 'Ignore', 'mainwp' ); ?><i class="dropdown icon"></i>
@@ -434,6 +437,8 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     if ( empty( $theme_upgrades ) && empty( $website->sync_errors ) ) {
                         continue;
                     }
+
+                    $tz_info = MainWP_Updates::get_site_tz_info( $website );
                     ?>
                     <tr class="ui title master-checkbox">
                         <td class="accordion-trigger"><i class="icon dropdown"></i></td>
@@ -463,7 +468,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                     <?php $updates_table_helper->print_column_headers(); ?>
                                     </tr>
                                 </thead>
-                                <tbody class="themes-bulk-updates" id="wp_theme_upgrades_<?php echo intval( $website->id ); ?>" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>">
+                                <tbody class="themes-bulk-updates" id="wp_theme_upgrades_<?php echo intval( $website->id ); ?>" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" site_url="<?php echo esc_attr( $website->url ); ?>" tz-info="<?php echo esc_attr( $tz_info ); ?>">
                                     <?php foreach ( $theme_upgrades as $slug => $theme_upgrade ) : ?>
                                         <?php $theme_name = rawurlencode( $slug ); ?>
                                         <?php $indent_hidden = '<input type="hidden" id="wp_upgraded_theme_' . esc_attr( $website->id ) . '_' . $theme_name . '" value="0" />'; ?>
@@ -485,13 +490,14 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                             $others['roll_info'] = $msg;
                                         }
                                         ?>
-                                        <tr theme_slug="<?php echo esc_attr( $theme_name ); ?>" last-version="<?php echo esc_attr( rawurlencode( $last_version ) ); ?>" premium="<?php echo isset( $theme_upgrade['premium'] ) && ! empty( $theme_upgrade['premium'] ) ? 1 : 0; ?>" updated="0">
+                                        <tr theme_slug="<?php echo esc_attr( $theme_name ); ?>" theme_name="<?php echo esc_attr( $theme_upgrade['Name'] ); ?>" last-version="<?php echo esc_attr( rawurlencode( $last_version ) ); ?>" premium="<?php echo isset( $theme_upgrade['premium'] ) && ! empty( $theme_upgrade['premium'] ) ? 1 : 0; ?>" updated="0">
                                             <?php
                                             $row_columns     = $updates_table_helper->render_columns( $row_columns, $website, $others );
                                             $action_rendered = isset( $row_columns['action'] ) ? true : false;
                                             if ( ! $action_rendered ) :
                                                 ?>
                                             <td class="right aligned">
+                                                <a href="#" history-view="update-theme-per-site" class="mainwp-show-history ui mini button"><?php esc_html_e( 'History', 'mainwp' ); ?></a>
                                                 <?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
                                                     <div class="ui bottom left pointing dropdown mini button">
                                                         <?php esc_html_e( 'Ignore', 'mainwp' ); ?><i class="dropdown icon"></i>

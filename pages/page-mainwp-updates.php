@@ -824,6 +824,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         static::render_plugin_details_modal();
         MainWP_UI::render_modal_upload_icon();
         static::render_screen_options_modal();
+        static::render_changes_history_modal();
         static::render_footer();
         ?>
         <script type="text/javascript">
@@ -1891,7 +1892,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $current_wpid = MainWP_System_Utility::get_current_wpid();
         if ( $current_wpid ) {
-            $sql = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
+            $sql = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon', 'site_info' ) );
         } else {
             $staging_enabled = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php' ) || is_plugin_active( 'mainwp-timecapsule-extension/mainwp-timecapsule-extension.php' );
             $is_staging      = 'no';
@@ -1910,7 +1911,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( ! empty( $limit_sites ) ) {
                 $params['limit_sites'] = $limit_sites;
             }
-            $sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'premium_upgrades', 'rollback_updates_data', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ), $is_staging, $params );
+            $sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'premium_upgrades', 'rollback_updates_data', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon', 'site_info' ), $is_staging, $params );
         }
         return MainWP_DB::instance()->query( $sql );
     }
@@ -2434,9 +2435,29 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
-     * Method render_item_history_modal()
+     * Method get_site_tz_info().
+     *
+     * @param object $website Website.
+     *
+     * @return string Timezone site info.
      */
-    public static function render_item_history_modal() {
+    public static function get_site_tz_info( $website ) {
+        if ( is_object( $website ) && ! empty( $website->site_info ) ) {
+            $wp_info = ! empty( $website->site_info ) ? json_decode( $website->site_info, true ) : array();
+            if ( ! is_array( $wp_info ) ) {
+                $wp_info = array();
+            }
+            $use_tzformat = ! empty( $wp_info['format_datetime'] ) && is_array( $wp_info['format_datetime'] ) ? $wp_info['format_datetime'] : array();
+            $offs         = ! empty( $use_tzformat['gmt_offset'] ) ? intval( $use_tzformat['gmt_offset'] ) : 0;
+            return esc_html__( '- Timezone:', 'mainwp' ) . ' UTC' . ( $offs >= 0 ? '+' . $offs : $offs );
+        }
+        return '';
+    }
+
+    /**
+     * Method render_changes_history_modal()
+     */
+    public static function render_changes_history_modal() {
         ?>
         <div id="mainwp-plugin-theme-history-changes-modal" class="ui first coupled modal">
         <i class="close icon"></i>

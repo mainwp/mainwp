@@ -1577,7 +1577,7 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
     left: 1.25rem !important;
 }
 
-#item-his-accord-wrapper .ui.accordion .title {
+#change-history-according-wrapper .ui.accordion .title {
   border-bottom: 1px solid #ddd;
   display: flex;
 }

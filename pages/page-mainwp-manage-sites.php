@@ -1533,6 +1533,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 MainWP_UI::add_widget_box( $id, $metaBox['callback'], static::$page, $layout );
             }
         }
+        MainWP_Updates::render_changes_history_modal();
     }
 
     /**

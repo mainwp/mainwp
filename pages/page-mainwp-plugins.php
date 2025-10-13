@@ -561,7 +561,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                      */
                     do_action( 'mainwp_manage_plugins_before_search_options' );
                     ?>
-                    
+
                     <div class="ui mini form">
                         <div class="field">
                             <select class="ui fluid dropdown" id="mainwp_plugins_search_by_status">
@@ -747,6 +747,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $data_fields   = MainWP_System_Utility::get_default_map_site_fields();
         $data_fields[] = 'plugins';
         $data_fields[] = 'rollback_updates_data';
+        $data_fields[] = 'site_info';
 
         if ( ! $not_fetchdata ) {
 
@@ -758,7 +759,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 if ( ! empty( $sites ) ) {
                     foreach ( $sites as $v ) {
                         if ( MainWP_Utility::ctype_digit( $v ) ) {
-                            $website          = MainWP_DB::instance()->get_website_by_id( $v, false, array( 'rollback_updates_data' ) );
+                            $website          = MainWP_DB::instance()->get_website_by_id( $v, false, array( 'rollback_updates_data', 'site_info' ) );
                             $allPlugins       = json_decode( $website->plugins, true );
                             $_count           = count( $allPlugins );
                             $_count_installed = 0;
@@ -782,7 +783,9 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 $plugin['websiteid']   = $website->id;
                                 $plugin['websiteurl']  = $website->url;
                                 $plugin['websitename'] = $website->name;
-                                $output->plugins[]     = $plugin;
+                                $plugin['site_info']   = $website->site_info;
+
+                                $output->plugins[] = $plugin;
                                 ++$_count_installed;
                             }
 
@@ -792,6 +795,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                     $plugin['websiteid']         = $website->id;
                                     $plugin['websiteurl']        = $website->url;
                                     $plugin['websitename']       = $website->name;
+                                    $plugin['site_info']         = $website->site_info;
                                     $output->plugins_installed[] = $plugin;
                                 }
                             }
@@ -831,7 +835,9 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                     $plugin['websiteid']   = $website->id;
                                     $plugin['websiteurl']  = $website->url;
                                     $plugin['websitename'] = $website->name;
-                                    $output->plugins[]     = $plugin;
+                                    $plugin['site_info']   = $website->site_info;
+
+                                    $output->plugins[] = $plugin;
                                     ++$_count_installed;
                                 }
 
@@ -841,6 +847,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                         $plugin['websiteid']         = $website->id;
                                         $plugin['websiteurl']        = $website->url;
                                         $plugin['websitename']       = $website->name;
+                                        $plugin['site_info']         = $website->site_info;
                                         $output->plugins_installed[] = $plugin;
                                     }
                                 }
@@ -856,7 +863,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         $clients,
                         array(
                             'select_data' => $data_fields,
-                            'extra_view'  => array( 'rollback_updates_data' ),
+                            'extra_view'  => array( 'rollback_updates_data', 'site_info' ),
                         )
                     );
                     if ( $websites ) {
@@ -889,6 +896,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 $plugin['websiteid']   = $website->id;
                                 $plugin['websiteurl']  = $website->url;
                                 $plugin['websitename'] = $website->name;
+                                $plugin['site_info']   = $website->site_info;
                                 $output->plugins[]     = $plugin;
                                 ++$_count_installed;
                             }
@@ -898,6 +906,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                     $plugin['websiteid']         = $website->id;
                                     $plugin['websiteurl']        = $website->url;
                                     $plugin['websitename']       = $website->name;
+                                    $plugin['site_info']         = $website->site_info;
                                     $output->plugins_installed[] = $plugin;
                                 }
                             }
@@ -911,7 +920,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 if ( '' !== $sites ) {
                     foreach ( $sites as $v ) {
                         if ( MainWP_Utility::ctype_digit( $v ) ) {
-                            $website = MainWP_DB::instance()->get_website_by_id( $v, false, array( 'rollback_updates_data' ) );
+                            $website = MainWP_DB::instance()->get_website_by_id( $v, false, array( 'rollback_updates_data', 'site_info' ) );
 
                             if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
                                 continue;
@@ -948,7 +957,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         $clients,
                         array(
                             'select_data' => $data_fields,
-                            'extra_view'  => array( 'rollback_updates_data' ),
+                            'extra_view'  => array( 'rollback_updates_data', 'site_info' ),
                         )
                     );
                     if ( $websites ) {
@@ -1059,6 +1068,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $sites[ $plugin['websiteid'] ] = array(
                     'websiteurl'  => esc_html( $plugin['websiteurl'] ),
                     'websitename' => $plugin['websitename'],
+                    'site_info'   => $plugin['site_info'],
                 );
 
                 $pluginsSlug[ $slug_ver ] = isset( $plugin['slug'] ) ? $plugin['slug'] : '';
@@ -1086,6 +1096,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
             MainWP_Updates::render_plugin_details_modal();
             MainWP_UI::render_modal_upload_icon();
+            MainWP_Updates::render_changes_history_modal();
         }
 
         $newOutput = ob_get_clean();
@@ -1236,7 +1247,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         foreach ( $sites as $site_id => $info ) {
 
             $plugin_upgrades = array();
-            $website         = MainWP_DB::instance()->get_website_by_id( $site_id, false, array( 'rollback_updates_data' ) );
+            $website         = MainWP_DB::instance()->get_website_by_id( $site_id, false, array( 'rollback_updates_data', 'site_info' ) );
 
             if ( $website && ! $website->is_ignorePluginUpdates ) {
                 $plugin_upgrades        = json_decode( $website->plugin_upgrades, true );
@@ -1300,7 +1311,17 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     <div class="mainwp-manage-plugins-wrapper main-child-checkbox">
         <?php foreach ( $sites as $site_id => $website ) : ?>
             <?php
-            $site_name    = $website['websitename'];
+            $site_name = $website['websitename'];
+            $site_url  = $website['websiteurl'];
+
+            $wp_info = ! empty( $website['site_info'] ) ? json_decode( $website['site_info'], true ) : array();
+            if ( ! is_array( $wp_info ) ) {
+                $wp_info = array();
+            }
+            $use_tzformat = ! empty( $wp_info['format_datetime'] ) && is_array( $wp_info['format_datetime'] ) ? $wp_info['format_datetime'] : array();
+            $offs         = ! empty( $use_tzformat['gmt_offset'] ) ? intval( $use_tzformat['gmt_offset'] ) : 0;
+            $offs_info    = esc_html__( '- Timezone:', 'mainwp' ) . ' UTC' . ( $offs >= 0 ? '+' . $offs : $offs );
+
             $slugVersions = isset( $sitePlugins[ $site_id ] ) ? $sitePlugins[ $site_id ] : array();
 
             if ( ! is_array( $slugVersions ) ) {
@@ -1383,7 +1404,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             $plugin_directory = MainWP_Utility::get_dir_slug( $plugin_slug );
                             $details_link     = self_admin_url( 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $site_id ) . '&plugin=' . rawurlencode( $plugin_directory ) . '&section=changelog' );
                             ?>
-                            <div class="ui very compact stackable grid mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( $plugin_title ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
+                            <div class="ui very compact stackable grid mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( $plugin_title ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_attr( $site_name ); ?>" site-url="<?php echo esc_attr( $site_url ); ?>" tz-info="<?php echo esc_attr( $offs_info ); ?>"  id="<?php echo esc_attr( $item_id ); ?>">
                             <div class="one wide center aligned middle aligned column"></div>
                                 <div class="one wide left aligned middle aligned column">
                                     <div class="ui checkbox child <?php echo 'mainwp-child' === $plugin_directory ? 'disabled' : ''; ?>">
@@ -1419,10 +1440,11 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 <?php endif; ?>
                                 </div>
                             <div class="two wide center aligned middle aligned column column-actions">
-                                <?php if ( ! $child_plugin ) : ?>
-                                    <div class="ui mini fluid buttons">
-                                    <?php if ( $actived ) { ?>
-                                        <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
+                                <div class="ui mini fluid buttons">
+                                    <a href="#" history-view="manage-plugins-per-sites" class="mainwp-show-history ui button <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'History', 'mainwp' ); ?></a>
+                                    <?php if ( ! $child_plugin ) : ?>
+                                        <?php if ( $actived ) { ?>
+                                            <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
                                             <a href="#" class="mainwp-manage-plugin-deactivate ui button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Deactivate ', 'mainwp' ) . esc_html( $plugin_title ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
                                         <?php } ?>
                                     <?php } else { ?>
@@ -1430,11 +1452,11 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                                 <a href="#" class="mainwp-manage-plugin-activate ui green button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Activate ', 'mainwp' ) . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
                                             <?php } ?>
                                     <?php } ?>
-                                    <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
+                                        <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
                                         <a href="#" class="mainwp-manage-plugin-delete ui button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Delete ', 'mainwp' ) . ' ' . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr__( 'plugin from this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
                                     <?php } ?>
-                                    </div>
                                 <?php endif; ?>
+                                </div>
                             </div>
                         </div>
                             <?php
@@ -1627,6 +1649,15 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     // phpcs:enable
                     foreach ( $pluginSites as $site_id => $slugVersions ) :
                         $site_name = $sites[ $site_id ]['websitename'];
+                        $site_url  = $sites[ $site_id ]['websiteurl'];
+
+                        $wp_info = ! empty( $sites[ $site_id ]['site_info'] ) ? json_decode( $sites[ $site_id ]['site_info'], true ) : array();
+                        if ( ! is_array( $wp_info ) ) {
+                            $wp_info = array();
+                        }
+                        $use_tzformat = ! empty( $wp_info['format_datetime'] ) && is_array( $wp_info['format_datetime'] ) ? $wp_info['format_datetime'] : array();
+                        $offs         = ! empty( $use_tzformat['gmt_offset'] ) ? intval( $use_tzformat['gmt_offset'] ) : 0;
+                        $offs_info    = esc_html__( '- Timezone:', 'mainwp' ) . ' UTC' . ( $offs >= 0 ? '+' . $offs : $offs );
 
                         foreach ( $slugVersions as $slug_ver ) :
 
@@ -1680,7 +1711,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 $item_id = preg_replace( '/[[:space:]]+/', '_', $item_id );
 
                                 ?>
-                        <div class="ui stackable grid very compact mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $pluginsName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
+                        <div class="ui stackable grid very compact mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $pluginsName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_attr( $site_name ); ?>" site-url="<?php echo esc_attr( $site_url ); ?>" tz-info="<?php echo esc_attr( $offs_info ); ?>" id="<?php echo esc_html( $item_id ); ?>">
                             <div class="one wide left aligned middle aligned column"></div>
                                 <div class="one wide center aligned middle aligned column">
                                         <?php if ( $child_plugin ) { ?>
@@ -1720,22 +1751,23 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                     <?php endif; ?>
                                     </div>
                                 <div class="two wide center aligned middle aligned column column-actions">
-                                    <?php if ( ! $child_plugin ) : ?>
-                                        <div class="ui mini fluid buttons">
-                                        <?php if ( $actived ) { ?>
-                                            <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
+                                    <div class="ui mini fluid buttons">
+                                        <a href="#" history-view="manage-plugins-per-items" class="mainwp-show-history ui button <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'History', 'mainwp' ); ?></a>
+                                        <?php if ( ! $child_plugin ) : ?>
+                                            <?php if ( $actived ) { ?>
+                                                <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
                                                 <a href="#" class="mainwp-manage-plugin-deactivate ui button <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
                                             <?php } ?>
                                         <?php } else { ?>
-                                            <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
+                                                <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
                                                     <a href="#" class="mainwp-manage-plugin-activate ui green button <?php echo $is_demo ? 'disabled' : ''; ?>" ><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
                                             <?php } ?>
                                         <?php } ?>
-                                        <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
+                                            <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
                                             <a href="#" class="mainwp-manage-plugin-delete ui button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Delete ', 'mainwp' ) . ' ' . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr__( 'plugin from this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
                                         <?php } ?>
-                                        </div>
                                 <?php endif; ?>
+                                    </div>
                                 </div>
                             </div>
                                 <?php

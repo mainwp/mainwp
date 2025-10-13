@@ -329,6 +329,10 @@ class Log_Changes_Logs_Helper {
      */
     public function get_history_changes( $args ) {
 
+        if ( ! is_array( $args ) ) {
+            $args = array();
+        }
+
         $results = Log_DB_Helper::instance()->get_changes_logs_by( $args );
 
         if ( ! is_array( $results ) ) {
@@ -339,6 +343,8 @@ class Log_Changes_Logs_Helper {
 
         $manager = Log_Manager::instance();
 
+        $grouped_by = ! empty( $args['target_date'] ) ? 'name' : 'date';
+
         $tbl_list = new Log_Events_List_Table( $manager );
 
         if ( ! empty( $results['items'] ) ) {
@@ -346,46 +352,98 @@ class Log_Changes_Logs_Helper {
                 if ( empty( $item->log_id ) ) {
                     continue;
                 }
-                $record  = new Log_Record( $item );
-                $created = $record->created;
-                $day     = gmdate( 'Y-m-d', $created );
-                if ( ! isset( $list[ $day ] ) ) {
-                    $list[ $day ] = array();
-                }
-                $list_item = array(
-                    'date'    => MainWP_Utility::format_timezone( $created ),
-                    'details' => array(
-                        'author_name' => $tbl_list->get_log_author_name( $record ),
-                        'source'      => 'non-mainwp-changes' === $record->connector ? 'WP Admin' : 'Dashboard',
-                        'at_hour'     => MainWP_Utility::format_time( $created ),
-                        'connector'   => $record->connector,
-                        'context'     => $record->context,
-                        'action'      => $record->action,
-                        'event'       => $tbl_list->get_event_title( $record, 'action' ),
-                    ),
+                $created_micro = (int) $item->created;
+                $record = new Log_Record( $item );
+
+                $created_sec = (int) $record->created;
+
+                $details     = array(
+                    'author_name' => $tbl_list->get_log_author_name( $record ),
+                    'source'      => 'non-mainwp-changes' === $record->connector ? 'WP Admin' : 'Dashboard',
+                    'at_hour'     => MainWP_Utility::format_time( $created_sec ),
+                    'connector'   => $record->connector,
+                    'context'     => $record->context,
+                    'action'      => $record->action,
+                    'event'       => $tbl_list->get_event_title( $record, 'action' ),
+                    'log_id'      => $item->log_id,
                 );
 
-                if ( 'updated' === $record->action || 'update' === $record->action ) {
+                if ( 'date' === $grouped_by ) {
 
-                    if ( ! empty( $record->extra_meta ) ) {
-                        $meta = json_decode( $record->extra_meta, true );
-                    } else {
-                        $meta = $record->meta;
-                    }
+                    $day = MainWP_Utility::get_local_date_by_utc_timestamp( $created_micro / 1000000 ); // float.
 
-                    if ( ! is_array( $meta ) ) {
-                        $meta = array();
+                    if ( ! isset( $lists[ $day ] ) ) {
+                        $lists[ $day ] = array();
                     }
 
-                    if ( ! empty( $meta['version'] ) ) {
-                        $list_item['details']['version'] = $meta['version'];
+                    $list_item = array(
+                        'date'    => MainWP_Utility::format_timezone( $created_sec ),
+                        'details' => $details,
+                    );
+
+                    if ( 'updated' === $record->action || 'update' === $record->action ) {
+
+                        if ( ! empty( $record->extra_meta ) ) {
+                            $meta = json_decode( $record->extra_meta, true );
+                        } else {
+                            $meta = $record->meta;
+                        }
+
+                        if ( ! is_array( $meta ) ) {
+                            $meta = array();
+                        }
+
+                        if ( ! empty( $meta['version'] ) ) {
+                            $list_item['details']['version'] = $meta['version'];
+                        }
+                        if ( ! empty( $meta['old_version'] ) ) {
+                            $list_item['details']['old_version'] = $meta['old_version'];
+                        }
                     }
-                    if ( ! empty( $meta['old_version'] ) ) {
-                        $list_item['details']['old_version'] = $meta['old_version'];
+
+                    $lists[ $day ][] = $list_item;
+
+                } else { // group by plugin/theme name.
+
+                    if ( ! empty( $record->meta ) && is_array( $record->meta ) ) {
+                        $slug = ! empty( $record->meta['slug'] ) ? $record->meta['slug'] : '';
+                        if ( empty( $slug ) ) {
+                            $slug = ! empty( $record->meta['name'] ) ? $record->meta['name'] : '';
+                        }
                     }
+
+                    if ( ! isset( $lists[ $slug ] ) ) {
+                        $lists[ $slug ] = array();
+                    }
+
+                    $list_item = array(
+                        'name'    => $tbl_list->get_object_title( $record ),
+                        'details' => $details,
+                    );
+
+                    if ( 'updated' === $record->action || 'update' === $record->action ) {
+
+                        if ( ! empty( $record->extra_meta ) ) {
+                            $meta = json_decode( $record->extra_meta, true );
+                        } else {
+                            $meta = $record->meta;
+                        }
+
+                        if ( ! is_array( $meta ) ) {
+                            $meta = array();
+                        }
+
+                        if ( ! empty( $meta['version'] ) ) {
+                            $list_item['details']['version'] = $meta['version'];
+                        }
+                        if ( ! empty( $meta['old_version'] ) ) {
+                            $list_item['details']['old_version'] = $meta['old_version'];
+                        }
+                    }
+
+                    $lists[ $slug ][] = $list_item;
+
                 }
-
-                $lists[ $day ][] = $list_item;
             }
         }
 

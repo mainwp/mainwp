@@ -786,6 +786,7 @@ jQuery(function () {
     });
 });
 
+
 let manage_plugin_Action = function (elem, what) {
     let rowElement = jQuery(elem).closest('.mainwp-manage-plugin-item-website');
     let plugin = rowElement.attr('plugin-slug');

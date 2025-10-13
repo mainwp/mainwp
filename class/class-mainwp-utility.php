@@ -516,6 +516,127 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         return '<bdi>' . esc_html( $formatted_dura ) . '</bdi>';
     }
 
+    /**
+     * Get UTC timestamp by date string.
+     *
+     * @param  string $dt_str date.
+     * @param  int    $add_days Add days.
+     *
+     * @return mixed Local timestamp.
+     */
+    public static function get_utc_timestamp_by_date( $dt_str, $add_days = 0 ) {
+
+        $tz  = wp_timezone(); // site timezone.
+        $day = new \DateTimeImmutable( $dt_str, $tz );
+
+        if ( is_numeric( $add_days ) && $add_days > 0 ) {
+            $day = $day->modify( '+' . $add_days . ' day' );
+        }
+
+        return $day->setTimezone( new \DateTimeZone( 'UTC' ) )->getTimestamp();
+    }
+
+
+    /**
+     * Converts a UTC timestamp (integer or float) to a local date string
+     * using the site's timezone (handles DST automatically).
+     *
+     * Supports:
+     * - Integer seconds timestamps (e.g. 1696930123)
+     * - Float seconds with microseconds (e.g. 1696930123.123456)
+     *
+     * Uses WordPress `wp_timezone()` to determine the local timezone.
+     *
+     * @since 6.0.0
+     *
+     * @param int|float|string $utc_time   UTC timestamp in seconds. Can be integer (seconds)
+     *                                     or float (seconds with microseconds).
+     * @param string           $format_str PHP date format string. Default 'Y-m-d'.
+     * @param int              $add_days   Optional. Number of days to add (can be negative). Default 0.
+     *
+     * @return string Formatted local date string, or empty string on invalid input.
+     *
+     * @example
+     * // From plain timestamp:
+     * echo MyClass::get_local_date_by_utc_timestamp(1696930123, 'Y-m-d H:i:s');
+     * // → "2023-10-10 15:35:23" (depending on site timezone)
+     *
+     * @example
+     * // From microtime (float seconds):
+     * echo MyClass::get_local_date_by_utc_timestamp(1696930123.123456, 'Y-m-d H:i:s.v');
+     * // → "2023-10-10 15:35:23.123" (microseconds preserved)
+     */
+    public static function get_local_date_by_utc_timestamp( $utc_time, $format_str = 'Y-m-d', $add_days = 0 ) {
+        if ( ! is_numeric( $utc_time ) ) {
+            return '';
+        }
+
+        $tz       = wp_timezone();
+        $utc_zone = new \DateTimeZone( 'UTC' );
+
+        // Detect float (has fractional seconds).
+        if ( is_float( $utc_time ) || strpos( (string) $utc_time, '.' ) !== false ) {
+            $dt_utc = \DateTimeImmutable::createFromFormat( 'U.u', sprintf( '%.6F', $utc_time ), $utc_zone );
+        } else {
+            $dt_utc = ( new \DateTimeImmutable( '@' . $utc_time ) )->setTimezone( $utc_zone );
+        }
+
+        if ( $add_days ) {
+            $dt_utc = $dt_utc->modify( sprintf( '%+d day', $add_days ) );
+        }
+
+        return $dt_utc->setTimezone( $tz )->format( $format_str );
+    }
+
+
+    /**
+     * Compute day/offset values and UTC datetime string for a local input time.
+     *
+     * - Automatically uses WordPress site timezone if none provided.
+     * - Converts the local datetime to UTC for MySQL compatibility.
+     * - Returns microsecond constants for daily grouping and offset adjustments.
+     *
+     * @param string      $from_date_local 'Y-m-d H:i:s' in local timezone.
+     * @param string|null $local_timezone Optional. PHP timezone ID (e.g. 'Asia/Ho_Chi_Minh').
+     * @return array {
+     *     @type int    $day_micros     Microseconds in one day (86400000000).
+     *     @type int    $offset_micro   Timezone offset in microseconds (e.g. +25200000000).
+     *     @type string $from_date_utc  UTC datetime string ('Y-m-d H:i:s') for MySQL.
+     *     @type string $local_timezone The timezone actually used.
+     * }
+     */
+    public static function get_time_context( $from_date_local, $local_timezone = null ) {
+        if ( empty( $local_timezone ) ) {
+            if ( function_exists( 'wp_timezone' ) ) {
+                $tz_obj         = wp_timezone();
+                $local_timezone = $tz_obj->getName();
+            } else {
+                $local_timezone = get_option( 'timezone_string' ) ?: 'UTC';
+            }
+        }
+
+        $MICRO           = 1000000;
+        $SECONDS_PER_DAY = 86400;
+        $day_micros      = $SECONDS_PER_DAY * $MICRO;
+
+        $tz = new \DateTimeZone( $local_timezone );
+
+        // 👇 End of local day instead of start.
+        $dt = new \DateTimeImmutable( $from_date_local . ' 23:59:59', $tz );
+
+        $offset_seconds = $tz->getOffset( $dt );
+        $offset_micro   = $offset_seconds * $MICRO;
+
+        $from_date_utc = $dt->setTimezone( new \DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' );
+
+        return array(
+            'day_micros'     => $day_micros,
+            'offset_micro'   => $offset_micro,
+            'from_date_utc'  => $from_date_utc,
+            'local_timezone' => $local_timezone,
+        );
+    }
+
 
     /**
      * Method human_filesize()

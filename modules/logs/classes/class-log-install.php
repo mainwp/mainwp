@@ -23,7 +23,7 @@ class Log_Install extends MainWP_Install {
      *
      * @var string DB version info.
      */
-    public $log_db_version = '1.0.1.40'; // NOSONAR - no IP.
+    public $log_db_version = '1.0.1.50'; // NOSONAR - no IP.
 
     /**
      * Protected variable to hold the database option name.
@@ -75,6 +75,8 @@ class Log_Install extends MainWP_Install {
             return;
         }
 
+        $this->update_log_db_60_before_dbDelta( $currentVersion );
+
         $charset_collate = $wpdb->get_charset_collate();
 
         $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_logs' ) . " (
@@ -116,8 +118,7 @@ class Log_Install extends MainWP_Install {
     meta_key varchar(200) NOT NULL,
     meta_value mediumtext NOT NULL,
     KEY meta_log_id (meta_log_id),
-    KEY meta_key (meta_key(191)),
-    KEY meta_log_id_key (meta_log_id, meta_key(191))';
+    UNIQUE KEY meta_unique (meta_log_id, meta_key(191))';
 
         if ( empty( $currentVersion ) ) {
             $tbl .= ',
@@ -140,7 +141,7 @@ class Log_Install extends MainWP_Install {
             dbDelta( $query );
         }
         $this->update_log_db( $currentVersion );
-        $this->update_log_db_56( $currentVersion );
+        $this->update_log_db_60( $currentVersion );
 
         $this->wpdb->suppress_errors( $suppress );
 
@@ -217,9 +218,75 @@ class Log_Install extends MainWP_Install {
      *
      * @param string $currentVersion Current db version.
      */
-    public function update_log_db_56( $currentVersion ) {
+    private function update_log_db_60_before_dbDelta( $currentVersion ) {
+
+        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.48', '<' ) ) { // NOSONAR - non-ip.
+            global $wpdb;
+
+            $meta_table = $this->table_name( 'wp_logs_meta' );
+
+            $wpdb->query("ALTER TABLE {$meta_table} DROP INDEX meta_log_id_key, DROP INDEX meta_key"); // phpcs:ignore -- ok.
+
+            // Check if duplicates exist.
+            //phpcs:ignore -- ok.
+            $has_duplicates = $wpdb->get_var( "
+                SELECT COUNT(*) FROM (
+                    SELECT 1
+                    FROM {$meta_table}
+                    GROUP BY meta_log_id, meta_key
+                    HAVING COUNT(*) > 1
+                ) dup
+            "
+            );
+
+            if ( $has_duplicates > 0 ) {
+                // Backup duplicates first.
+                //phpcs:ignore -- ok.
+                $wpdb->query( "CREATE TABLE IF NOT EXISTS {$meta_table}_dup_backup LIKE {$meta_table}" );
+
+                $wpdb->query(
+                    "
+                    INSERT IGNORE INTO {$meta_table}_dup_backup
+                    SELECT *
+                    FROM {$meta_table}
+                    WHERE (meta_log_id, meta_key) IN (
+                        SELECT meta_log_id, meta_key
+                        FROM {$meta_table}
+                        GROUP BY meta_log_id, meta_key
+                        HAVING COUNT(*) > 1
+                    )
+                "
+                );
+
+                // Delete duplicates, keep newest (MAX meta_id).
+                //phpcs:ignore -- ok.
+                $wpdb->query( "
+                    DELETE t
+                    FROM {$meta_table} t
+                    JOIN (
+                        SELECT meta_log_id, meta_key, MAX(meta_id) AS keep_id
+                        FROM {$meta_table}
+                        GROUP BY meta_log_id, meta_key
+                        HAVING COUNT(*) > 1
+                    ) dup
+                    ON t.meta_log_id = dup.meta_log_id
+                    AND t.meta_key    = dup.meta_key
+                    WHERE t.meta_id <> dup.keep_id
+                "
+                );
+            }
+        }
+    }
+
+    /**
+     * Method update module log tables.
+     *
+     * @param string $currentVersion Current db version.
+     */
+    private function update_log_db_60( $currentVersion ) {
         $is_db_ver_with_archive = version_compare( $currentVersion, '1.0.1.8', '>' );
         if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.40', '<' ) ) { // NOSONAR - non-ip.
+
             // to save microsecords.
             if ( $is_db_ver_with_archive ) {
                 $this->wpdb->query( 'UPDATE ' . $this->table_name( 'wp_logs' ) . ' SET created = ROUND(created * 1000000)' ); //phpcs:ignore -- ok.
@@ -230,6 +297,68 @@ class Log_Install extends MainWP_Install {
             if ( $is_db_ver_with_archive ) {
                 $this->wpdb->query( 'UPDATE ' . $this->table_name( 'wp_logs_archive' ) . ' SET created = ROUND(created * 1000000)' ); //phpcs:ignore -- ok.
                 $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' MODIFY COLUMN created BIGINT(20) UNSIGNED NOT NULL' ); //phpcs:ignore -- ok.
+            }
+        }
+
+        $this->update_changes_logs_meta_60( $currentVersion );
+    }
+
+    /**
+     * Method update_changes_logs_meta_60().
+     *
+     * @param  mixed $currentVersion
+     * @return void
+     */
+    private function update_changes_logs_meta_60( $currentVersion ) {
+
+        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.46', '<' ) ) {
+
+            $log_table  = $this->table_name( 'wp_logs' );
+            $meta_table = $this->table_name( 'wp_logs_meta' );
+
+            $meta_items = $this->wpdb->get_results(
+                "
+                    SELECT m.meta_log_id, m.meta_value
+                    FROM {$log_table} l
+                    JOIN {$meta_table} m
+                    ON l.log_id = m.meta_log_id
+                    WHERE m.meta_key = 'extra_info'
+                    AND (l.context = 'plugin' OR l.context = 'theme')
+                ",
+                ARRAY_A
+            );
+
+            foreach ( $meta_items as $row ) {
+
+                $extra_info = json_decode( $row['meta_value'], true );
+                if ( ! is_array( $extra_info ) ) {
+                    continue;
+                }
+
+                $key = '';
+                $val = '';
+
+                if ( ! empty( $extra_info['slug'] ) ) {
+                    $key = 'slug';
+                    $val = $extra_info['slug'];
+                } elseif ( ! empty( $extra_info['name'] ) ) {
+                    $key = 'name';
+                    $val = $extra_info['name'];
+                }
+
+                if ( empty( $key ) || empty( $val ) ) {
+                    continue;
+                }
+
+                $this->wpdb->replace(
+                    $meta_table,
+                    array(
+                        'meta_log_id' => (int) $row['meta_log_id'],
+                        'meta_key'    => $key, //phpcs:ignore -- ok.
+                        'meta_value'  => $val, //phpcs:ignore -- ok.
+                    ),
+                    array( '%d', '%s', '%s' )
+                );
             }
         }
     }

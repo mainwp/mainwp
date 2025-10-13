@@ -129,7 +129,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         $use_tzformat = ! empty( $wp_info['format_datetime'] ) && is_array( $wp_info['format_datetime'] ) ? $wp_info['format_datetime'] : array();
         $offs         = ! empty( $use_tzformat['gmt_offset'] ) ? intval( $use_tzformat['gmt_offset'] ) : 0;
-        $offs_info    = esc_html__( ' - Timezone:', 'mainwp' ) . ' UTC' . ( $offs > 0 ? '+' . $offs : $offs );
+        $offs_info    = esc_html__( ' - Timezone:', 'mainwp' ) . ' UTC' . ( $offs >= 0 ? '+' . $offs : $offs );
 
         ?>
         <div class="ui grid mainwp-widget-header">
@@ -211,7 +211,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                                     <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
                                         <a href="#" class="mainwp-plugin-delete item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Delete', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
                                     <?php } ?>
-                                        <a href="#" class="mainwp-plugin-history item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'History', 'mainwp' ); ?></a>
+                                        <a href="#" history-view="widget-plugins" class="mainwp-plugin-history item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'History', 'mainwp' ); ?></a>
                                     </div>
                                 </div>
 
@@ -278,7 +278,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                                 <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
                                     <a href="#" class="mainwp-plugin-delete item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Delete', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
                                 <?php } ?>
-                                    <a href="#" class="mainwp-plugin-history item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'History', 'mainwp' ); ?></a>
+                                    <a href="#" history-view="widget-plugins" class="mainwp-plugin-history item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'History', 'mainwp' ); ?></a>
                                 </div>
                             </div>
                         </div>
@@ -328,7 +328,6 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
          */
         do_action( 'mainwp_plugins_widget_bottom', $website, $allPlugins );
         MainWP_Updates::render_plugin_details_modal();
-        MainWP_Updates::render_item_history_modal();
     }
 
     /**

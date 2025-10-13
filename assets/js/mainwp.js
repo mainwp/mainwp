@@ -2938,95 +2938,211 @@ let pluginChangesLoadData = {};
 let themeChangesLoadData = {};
 
 jQuery(function ($) {
-    $(document).on('click', '.mainwp-plugin-history', function () {
-        let parent = $(this).closest('.row-manage-item');
-        const title = $(parent).attr('plugin-name');
-        const info = $('#mainwp-widget-active-plugins').attr('site-info');
 
-        pluginChangesLoadData = mainwp_secure_data({
-            action: 'mainwp_changes_logs_get_item_changes',
-            type: 'plugin',
-            slug: $(parent).attr('plugin-slug'),
-            siteId: $('#mainwp-widget-active-plugins').attr('site-id'),
-            from_date: '' // current date.
-        });
+     $(document).on('click', '.mainwp-show-history', function (e) {
+
+         e.preventDefault();
+         e.stopPropagation();
+
+         const view = $(this).attr('history-view');
+         let parent = false;
+         let type = 'plugin'; // default.
+         let title = '';
+         let info = '';
+         let name = '';
+         let slug = '';
+         let siteId = 0;
+
+         switch (view) {
+            case 'update-plugins-individual':
+                parent = $(this).closest('.plugins-bulk-updates');
+                siteId = $(parent).attr('site_id');
+                info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
+                title = $(this).closest('tr').attr('plugin_name');
+                slug = decodeURIComponent( $(this).closest('tr').attr('plugin_slug') );
+                name = $(this).closest('tr').attr('plugin_name');
+                break;
+            case 'update-themes-individual':
+                parent = $(this).closest('.themes-bulk-updates');
+                siteId = $(parent).attr('site_id');
+                info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
+                title = $(this).closest('tr').attr('theme_name');
+                slug = $(this).closest('tr').attr('theme_slug');
+                name = $(this).closest('tr').attr('theme_name');
+                type = 'theme';
+                break;
+             case 'manage-plugins-per-sites':
+             case 'manage-plugins-per-items':
+                 parent = $(this).closest('.mainwp-manage-plugin-item-website');
+                 title = $(parent).attr('plugin-name');
+                 info = $(parent).attr('site-name') + ' (' + $(parent).attr('site-url') + ') ' + $(parent).attr('tz-info');
+                 slug = decodeURIComponent($(parent).attr('plugin-slug'));
+                 siteId = $(parent).attr('site-id');
+                 break;
+             case 'manage-themes-per-sites':
+             case 'manage-themes-per-items':
+                 parent = $(this).closest('.mainwp-manage-theme-item-website');
+                 title = $(parent).attr('theme-name');
+                 name = $(parent).attr('theme-name');
+                 info = $(parent).attr('site-name') + ' (' + $(parent).attr('site-url') + ') ' + $(parent).attr('tz-info');
+                 slug = decodeURIComponent($(parent).attr('theme-slug'));
+                 siteId = $(parent).attr('site-id');
+                 type = 'theme';
+                 break;
+             case 'widget-plugins':
+                 parent = $(this).closest('.row-manage-item');
+                 title = $(parent).attr('plugin-name');
+                 info = $('#mainwp-widget-active-plugins').attr('site-info');
+                 slug = $(parent).attr('plugin-slug');
+                 siteId = $('#mainwp-widget-active-plugins').attr('site-id');
+                 break;
+             case 'widget-themes':
+                 parent = $(this).closest('.row-manage-item');
+                 title = $(parent).find('.themeName').val();
+                 info = $('#mainwp-widget-inactive-themes').attr('site-info');
+                 slug = $(parent).find('.themeSlug').val();
+                 name = $(parent).find('.themeName').val();
+                 siteId = $('#mainwp-widget-inactive-themes').attr('site-id');
+                 type = 'theme';
+                 break;
+             case 'update-plugin-per-item':
+                 parent = $(this).closest('tr');
+                 siteId = $(parent).attr('site_id');
+                 info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
+                 title = $(parent).attr('plugin_name');
+                 slug = decodeURIComponent($(parent).attr('plugin_slug'));
+                 break;
+             case 'update-theme-per-item':
+                 parent = $(this).closest('tr');
+                 siteId = $(parent).attr('site_id');
+                 info = $(parent).attr('site_name') + ' (' + decodeURIComponent( $(parent).attr('site_url') ) + ') ' + $(parent).attr('tz-info');
+                 title = $(parent).attr('theme_name');
+                 name = $(parent).attr('theme_name');
+                 slug = decodeURIComponent($(parent).attr('theme_slug'));
+                 type = 'theme';
+                 break;
+             case 'update-plugin-per-site':
+                 parent = $(this).closest('.plugins-bulk-updates');
+                 siteId = $(parent).attr('site_id');
+                 info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
+                 title = $(this).closest('tr').attr('plugin_name');
+                 slug = $(this).closest('tr').attr('plugin_slug');
+                 name = $(this).closest('tr').attr('plugin_name');
+                 break;
+             case 'update-theme-per-site':
+                 parent = $(this).closest('.themes-bulk-updates');
+                 siteId = $(parent).attr('site_id');
+                 info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
+                 title = $(this).closest('tr').attr('theme_name');
+                 slug = $(this).closest('tr').attr('theme_slug');
+                 name = $(this).closest('tr').attr('theme_name');
+                 type = 'theme';
+                 break;
+             case 'update-plugin-per-tag':
+                 parent = $(this).closest('.plugins-bulk-updates');
+                 siteId = $(parent).attr('site_id');
+                 info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
+                 title = $(this).closest('tr').attr('plugin_name');
+                 slug = decodeURIComponent($(this).closest('tr').attr('plugin_slug'));
+                 break;
+             case 'update-theme-per-tag':
+                 parent = $(this).closest('.themes-bulk-updates');
+                 siteId = $(parent).attr('site_id');
+                 info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
+                 title = $(this).closest('tr').attr('theme_name');
+                 name = $(this).closest('tr').attr('theme_name');
+                 slug = $(this).closest('tr').attr('theme_slug');
+                 type = 'theme';
+                 break;
+         }
+
+         if (type === 'plugin') {
+             pluginChangesLoadData = mainwp_secure_data({
+                 action: 'mainwp_changes_logs_get_item_changes',
+                 type: 'plugin',
+                 slug: slug,
+                 siteId: siteId,
+                 from_date: '' // current date.
+             });
+         } else if (type === 'theme') {
+             themeChangesLoadData = mainwp_secure_data({
+                 action: 'mainwp_changes_logs_get_item_changes',
+                 type: 'theme',
+                 slug: slug,
+                 siteId: siteId,
+                 name: name,
+                 from_date: '' // current date.
+             });
+         } else {
+             return false;
+         };
 
         $('#mainwp-plugin-theme-history-changes-modal').modal({
             onHide: function () {
             },
             onShow: function () {
-                const he = $('#mainwp-plugin-theme-history-changes-modal > div.main.header');
-                he.text(title + ' ' + __('History'));
-                he.last().append(
-                    $('<div class="sub header">').text(info)
-                );
-                mainwp_item_changes_load( 'plugin' );
-            }
-        }).modal('show');
-        return false;
-    });
-
-    $(document).on('click', '.mainwp-theme-history', function () {
-        let parent = $(this).closest('.row-manage-item');
-        const title = $(parent).find('.themeName').val();
-        const info = $('#mainwp-widget-inactive-themes').attr('site-info');
-
-        themeChangesLoadData = mainwp_secure_data({
-            action: 'mainwp_changes_logs_get_item_changes',
-            type: 'theme',
-            slug: $(parent).find('.themeSlug').val(),
-            name: $(parent).find('.themeName').val(),
-            siteId: $('#mainwp-widget-inactive-themes').attr('site-id'),
-            from_date: '' // current date.
-        });
-
-        $('#mainwp-plugin-theme-history-changes-modal').modal({
-            onHide: function () {
-            },
-            onShow: function () {
-                const he = $('#mainwp-plugin-theme-history-changes-modal > div.main.header');
-                he.text(title + ' ' + __('History'));
-                he.last().append(
-                    $('<div class="sub header">').text(info)
-                );
-                mainwp_item_changes_load( 'theme' );
+                mainwp_changes_history_box_init(type, title, info);
+                mainwp_item_changes_load();
             }
         }).modal('show');
         return false;
     });
 });
 
-let mainwp_item_changes_load = function ( type ) {
+let mainwp_changes_history_box_init = function ( type, title, info ) {
+    const hd = jQuery('#mainwp-plugin-theme-history-changes-modal > div.main.header');
+    hd.text(title + ' ' + __('History'));
+    hd.append(
+        jQuery('<div class="sub header">').text(info) // safe for escape.
+    );
+    jQuery('#mainwp-plugin-theme-history-changes-modal').attr('history-type', type);
+    jQuery('#mainwp-plugin-theme-history-changes-modal').find('.scrolling.content').html('');
+}
+
+let mainwp_item_changes_load = function ( load_date = '' ) {
+
     let md = jQuery('#mainwp-plugin-theme-history-changes-modal');
-    jQuery(md).find('.scrolling.content').html('<i class="notched circle loading icon"></i>');
+    jQuery(md).find('.scrolling.content').append('<i class="notched circle loading icon changes-history-loading"></i>');
 
     jQuery(md).find('.actions .col-left').html('');
     jQuery(md).find('.actions .col-right').html('');
 
+    const type = jQuery(md).attr('history-type');
+
+    // set load date if provided
+    if(typeof load_date === 'string' && load_date !== ''){
+        if('theme' === type){
+            themeChangesLoadData.from_date = load_date;
+        }else{
+            pluginChangesLoadData.from_date = load_date;
+        }
+    }
+
     let data = 'plugin' === type ? pluginChangesLoadData : themeChangesLoadData;
 
     jQuery.post(ajaxurl, data, function (response) {
+        jQuery(md).find('.scrolling.content').find('.changes-history-loading').remove();
         if (response.error != undefined) {
-            jQuery(md).find('.scrolling.content').html('<div class="ui message red">' + response.error + '</div>');
+            jQuery(md).find('.scrolling.content').append('<div class="ui message red">' + response.error + '</div>');
         } else if (response?.list) {
             if (response.list.length == 0) {
                 let msg = __('This plugin has no recorded activity in Dashboard Insights.') ;
                 if('theme' === type){
                     msg = __('This theme has no recorded activity in Dashboard Insights.') ;
                 }
-                jQuery(md).find('.scrolling.content').html('<div class="ui info message">' + msg + '</div>');
+                jQuery(md).find('.scrolling.content').append('<div class="ui info message">' + msg + '</div>');
             } else {
                 let content = '';
                 Object.entries(response.list).forEach(([indexdt, records]) => {
                     const dt = records[0].date;
-                    content += `<div class="ui accordion">
+                    content += `<div class="ui accordion" data-date="${indexdt}">
                         <div class="title">
                             <i class="dropdown icon"></i>
-                            ${dt}<span class="title-right"><button class="ui circular blue mini button" >` + __('Day History') + `</button> <button class="ui basic mini button ">${records.length} ` + __('Actions') + `</button></span>
+                            ${dt}<span class="title-right"><button type="button" class="ui circular blue mini button mainwp-changes-history-switch-view" current-grouped="actions">` + __('Day History') + `</button> <button class="ui basic mini button actions-count1">${records.length} ` + __('Actions') + `</button><button class="ui basic mini button actions-count2" style="display:none;"></button></span>
                         </div>
                         <div class="content ui list">`;
                     records.forEach(record => {
-                        content += `<div class="item">
+                        content += `<div class="item list-item-actions-in-day" log-id="${record.details.log_id}">
                             <div class="ui grid">
                                 <div class="eight wide column middle aligned">
                                     <i class="` + get_icon_history_event(record.details.action) + ` icon"></i>
@@ -3048,29 +3164,54 @@ let mainwp_item_changes_load = function ( type ) {
 
                 if ('' !== content) {
                     let accordWrapper = jQuery("<div>", {
-                        id: "item-his-accord-wrapper",
+                        id: "change-history-according-wrapper",
                         html: content
                     });
-                    jQuery(md).find('.scrolling.content').html(accordWrapper);
-                    jQuery('#item-his-accord-wrapper .ui.accordion').accordion({ exclusive: false });
+
+                    jQuery(md).find('.scrolling.content').append(accordWrapper);
+
+                    jQuery('#change-history-according-wrapper .ui.accordion').accordion({exclusive: true});
+
+                    jQuery('.mainwp-changes-history-switch-view').off('click.accordionFix').on('click.accordionFix', function(e){
+                        e.preventDefault();
+                        e.stopPropagation(); // now it runs before ancestor handlers
+                        changesHistorySwitchViewHandler(this);
+                        return false;
+                        // action...
+                    });
                 }
 
                 if ( response?.onward_date ) {
                     jQuery(md).find('.actions .col-left').html('Data available from ' + response.onward_date + ' onward.');
                 }
-                if ( response?.next_date ) {
-                    if( 'plugin' === type ){
-                        pluginChangesLoadData.from_date = response.next_date;
-                    } else {
-                        themeChangesLoadData.from_date = response.next_date;
-                    }
-                    jQuery(md).find('.actions .col-right').html('<a href="javascript:void(0);" onclick="mainwp_item_changes_load("' + type + '");return false;">' + __('Load More') + '</a>');
+                if ( response?.more_date ) {
+                    jQuery(md).find('.actions .col-right').html('<a href="javascript:void(0);" onclick="mainwp_item_changes_load(\'' + ( response.more_date ?? get_local_date_string() ) + '\');return false;">' + __('Load More') + '</a>');
                 }
             }
         } else {
-            jQuery(md).find('.scrolling.content').html('<div class="ui message red">' + __('Undefined error occurred. Please try again.') + '</div>');
+            jQuery(md).find('.scrolling.content').append('<div class="ui message red">' + __('Undefined error occurred. Please try again.') + '</div>');
         }
     }, 'json');
+}
+
+let get_icon_history_event = function( act ){
+    let icon = '';
+
+    if (act === 'delete' || act === 'deleted') {
+        icon = 'trash red';
+    } else if (act === 'deactivated' || act === 'deactivate') {
+        icon = 'toggle off red';
+    } else if (act === 'activated' || act === 'activate') {
+        icon = 'toggle on green';
+    } else if (act === 'updated' || act === 'update') {
+        icon = 'sync orange';
+    } else if (act === 'installed' || act === 'install') {
+        icon = 'download teal';
+    } else {
+        icon = 'circle grey';
+    }
+
+    return icon;
 }
 
 let get_color_changes_event = function( act ){
@@ -3094,24 +3235,117 @@ let get_color_changes_event = function( act ){
     return color;
 }
 
-let get_icon_history_event = function( act ){
-    let icon = '';
+let changesHistorySwitchViewHandler = function (btn) {
 
-    if (act === 'delete' || act === 'deleted') {
-        icon = 'trash red';
-    } else if (act === 'deactivated' || act === 'deactivate') {
-        icon = 'toggle off red';
-    } else if (act === 'activated' || act === 'activate') {
-        icon = 'toggle on green';
-    } else if (act === 'updated' || act === 'update') {
-        icon = 'sync orange';
-    } else if (act === 'installed' || act === 'install') {
-        icon = 'download teal';
+    const parent = jQuery(btn).closest('.ui.accordion');
+
+    jQuery(btn).closest('.title').hasClass('active') || jQuery(btn).closest('.title').trigger('click');
+
+    jQuery(parent).find('.content').find('.changes-history-status').remove();
+
+    if (jQuery(btn).attr('current-grouped') == 'actions') {
+        jQuery(btn).attr('current-grouped', 'items');
+        jQuery(btn).text(__('Item History'));
+
+        jQuery(parent).find('.content .list-item-actions-in-day').hide();
+
+        if(jQuery(parent).find('.content .list-all-actions-in-day').length == 0){
+            jQuery(parent).find('.content').append('<div class="ui active centered inline loader history-actions-loading"></div>');
+        } else {
+            jQuery(parent).find('.content .list-all-actions-in-day').show();
+            jQuery(btn).closest('.title').find('.title-right .actions-count1').hide();
+            jQuery(btn).closest('.title').find('.title-right .actions-count2').show();
+            return false;
+        }
     } else {
-        icon = 'circle grey';
+        jQuery(btn).attr('current-grouped', 'actions');
+        jQuery(btn).text(__('Day History'));
+
+        jQuery(btn).closest('.title').find('.title-right .actions-count1').show();
+        jQuery(btn).closest('.title').find('.title-right .actions-count2').hide();
+
+        jQuery(parent).find('.content .list-all-actions-in-day').hide();
+        jQuery(parent).find('.content .list-item-actions-in-day').show();
+        return false;
     }
 
-    return icon;
+    const dt = jQuery(parent).data('date');
+    let md = jQuery('#mainwp-plugin-theme-history-changes-modal');
+    const type = jQuery(md).attr('history-type');
+
+    let data = mainwp_secure_data({
+        action: 'mainwp_changes_logs_get_item_changes',
+        type: type,
+        target_date: dt
+    });
+
+    jQuery.post(ajaxurl, data, function (response) {
+
+         jQuery(parent).find('.history-actions-loading').remove();
+
+        let dayContent = jQuery(parent).find('.content');
+
+        if (response.error != undefined) {
+            dayContent.append('<div class="ui message red changes-history-status">' + response.error + '</div>');
+        } else if (response?.list) {
+
+            if (response.list.length == 0) {
+                let msg = __('This plugin has no recorded activity in Dashboard Insights.');
+                if ('theme' === type && '' === dt) {
+                    msg = __('This theme has no recorded activity in Dashboard Insights.');
+                } else if ('' !== dt) {
+                    if ('plugin' === type) {
+                        msg = __('No history changes found for the plugin on this day.');
+                    } else {
+                        msg = __('No history changes found for the theme on this day.');
+                    }
+                }
+                dayContent.append('<div class="ui message changes-history-status">' + msg + '</div>');
+            } else {
+                let content = '';
+                let count_acts = 0;
+                Object.entries(response.list).forEach(([idxslug, records]) => {
+                    const name = records[0].name;
+                    content += `<div class="ui accordion list-all-actions-in-day" data-slug="${idxslug}">
+                        <div class="title">
+                            <i class="dropdown icon"></i>
+                            ${name}<span class="title-right"><button class="ui basic mini button ">${records.length} ` + __('Actions') + `</button></span>
+                        </div>
+                        <div class="content ui list">`;
+                    records.forEach(record => {
+                        content += `<div class="item" log-id="${record.details.log_id}">
+                            <div class="ui grid">
+                                <div class="eight wide column middle aligned">
+                                    <i class="` + get_icon_history_event(record.details.action) + ` icon"></i>
+                                    <span class="ui text ` + get_color_changes_event(record.details.action) + `">${record.details.event}</span> ` + __('by') + ` <strong>${record.details.author_name}</strong> ` + __('from') + `
+                                        <strong>${record.details.source}</strong>
+                                </div>
+                                <div class="six wide column middle aligned">
+                                ` + (record.details?.old_version && record.details?.version ? record.details.old_version + '&rarr;' + record.details.version : '') + `
+                                </div>
+                                <div class="two wide column right aligned">
+                                    ${record.details.at_hour}
+                                </div>
+                            </div>
+                        </div>`;
+                        count_acts++;
+                    });
+                    content += `</div>
+                    </div>`;
+                });
+
+                if ('' !== content) {
+                    jQuery(parent).find('.title .title-right .actions-count1').hide();
+                    jQuery(parent).find('.title .title-right .actions-count2').html(count_acts + ' ' + __('Actions')).show();
+                    dayContent.append(content);
+                }
+            }
+        } else {
+            dayContent.html('<div class="ui message red changes-history-status">' + __('Undefined error occurred. Please try again.') + '</div>');
+        }
+    }, 'json');
+
+    return false;
 }
 
 
@@ -5071,3 +5305,12 @@ jQuery(document).on('click', '#module-update-logs-db-cancel', function () {
     return false;
 });
 
+
+
+let get_local_date_string = function () {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, '0'); // month starts from 0
+    const d = String(today.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}

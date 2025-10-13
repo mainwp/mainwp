@@ -181,14 +181,17 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                             $others['roll_info'] = $msg;
                                         }
 
+                                        $tz_info = MainWP_Updates::get_site_tz_info( $website );
+
                                         ?>
-                                        <tr site_id="<?php echo esc_attr( $website->id ); ?>" plugin_slug="<?php echo esc_attr( $plugin_name ); ?>" last-version="<?php echo esc_attr( rawurlencode( $last_version ) ); ?>" site_name="<?php echo esc_attr( stripslashes( $website->name ) ); ?>" updated="0" <?php echo $first_wpplugin ? 'open-wpplugin-siteid="' . intval( $website->id ) . '"' : ''; ?>>
+                                        <tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo esc_attr( $website->name ); ?>" site_url="<?php echo esc_attr( $website->url ); ?>" plugin_slug="<?php echo esc_attr( $plugin_name ); ?>" plugin_name="<?php echo esc_attr( $plugin_upgrade['Name'] ); ?>" last-version="<?php echo esc_attr( rawurlencode( $last_version ) ); ?>" site_name="<?php echo esc_attr( stripslashes( $website->name ) ); ?>" updated="0" <?php echo $first_wpplugin ? 'open-wpplugin-siteid="' . intval( $website->id ) . '"' : ''; ?> tz-info="<?php echo esc_attr( $tz_info ); ?>">
                                             <?php
                                             $row_columns     = $updates_table_helper->render_columns( $row_columns, $website, $others );
                                             $action_rendered = isset( $row_columns['action'] ) ? true : false;
                                             if ( ! $action_rendered ) {
                                                 ?>
                                                 <td class="right aligned">
+                                                    <a href="#" history-view="update-plugin-per-item" class="mainwp-show-history ui mini button"><?php esc_html_e( 'History', 'mainwp' ); ?></a>
                                                     <?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
                                                         <div class="ui top left pointing dropdown mini button">
                                                             <?php esc_html_e( 'Ignore', 'mainwp' ); ?><i class="dropdown icon"></i>
@@ -371,14 +374,17 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                             $others['roll_info'] = $msg;
                                         }
 
+                                        $tz_info = MainWP_Updates::get_site_tz_info( $website );
+
                                         ?>
-                                        <tr site_id="<?php echo esc_attr( $website->id ); ?>" theme_slug="<?php echo esc_attr( $theme_name ); ?>" last-version="<?php echo esc_attr( rawurlencode( $last_version ) ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" updated="0">
+                                        <tr site_id="<?php echo esc_attr( $website->id ); ?>" theme_slug="<?php echo esc_attr( $theme_name ); ?>" theme_name="<?php echo esc_attr( $theme_upgrade['Name'] ); ?>" last-version="<?php echo esc_attr( rawurlencode( $last_version ) ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" site_url="<?php echo esc_attr( $website->url ); ?>" updated="0" tz-info="<?php echo esc_attr( $tz_info ); ?>">
                                             <?php
                                             $row_columns     = $updates_table_helper->render_columns( $row_columns, $website, $others );
                                             $action_rendered = isset( $row_columns['action'] ) ? true : false;
                                             if ( ! $action_rendered ) {
                                                 ?>
                                                 <td class="right aligned">
+                                                    <a href="#" history-view="update-theme-per-item" class="mainwp-show-history ui mini button"><?php esc_html_e( 'History', 'mainwp' ); ?></a>
                                                     <?php if ( MainWP_Updates::user_can_ignore_updates() ) { ?>
                                                     <div class="ui top left pointing dropdown mini button">
                                                         <?php esc_html_e( 'Ignore', 'mainwp' ); ?><i class="dropdown icon"></i>

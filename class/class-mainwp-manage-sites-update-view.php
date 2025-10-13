@@ -134,6 +134,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
         </script>
         <?php
         MainWP_UI::render_modal_upload_icon();
+        MainWP_Updates::render_changes_history_modal();
     }
 
     /**
@@ -439,7 +440,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                     $plugin_upgrades = array();
                 }
 
-                $site_opts = MainWP_DB::instance()->get_website_options_array( $website, array( 'premium_upgrades', 'rollback_updates_data' ) );
+                $site_opts = MainWP_DB::instance()->get_website_options_array( $website, array( 'premium_upgrades', 'rollback_updates_data', 'site_info' ) );
                 if ( ! is_array( $site_opts ) ) {
                     $site_opts = array();
                 }
@@ -478,6 +479,14 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
 
                 add_filter( 'mainwp_updates_table_header_content', array( static::class, 'hook_table_update_plugins_header_content' ), 10, 3 );
 
+                $wp_info = ! empty( $site_opts['site_info'] ) ? json_decode( $site_opts['site_info'], true ) : array();
+                if ( ! is_array( $wp_info ) ) {
+                    $wp_info = array();
+                }
+                $use_tzformat = ! empty( $wp_info['format_datetime'] ) && is_array( $wp_info['format_datetime'] ) ? $wp_info['format_datetime'] : array();
+                $offs         = ! empty( $use_tzformat['gmt_offset'] ) ? intval( $use_tzformat['gmt_offset'] ) : 0;
+                $offs_info    = esc_html__( '- Timezone:', 'mainwp' ) . ' UTC' . ( $offs >= 0 ? '+' . $offs : $offs );
+
                 ?>
                 <table id="mainwp-updates-plugins-table" style="width:100% !important;" class="  ui tablet stackable table mainwp-updates-list mainwp-manage-updates-table">
                     <thead class="master-checkbox">
@@ -485,7 +494,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                         <?php $updates_table_helper->print_column_headers(); ?>
                         </tr>
                     </thead>
-                    <tbody class="plugins-bulk-updates child-checkbox" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>">
+                    <tbody class="plugins-bulk-updates child-checkbox" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" site_url="<?php echo esc_attr( $website->url ); ?>" tz-info="<?php echo esc_attr( $offs_info ); ?>">
                     <?php foreach ( $plugin_upgrades as $slug => $plugin_upgrade ) : ?>
                         <?php $plugin_name = rawurlencode( $slug ); ?>
                         <?php
@@ -507,13 +516,14 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                         }
 
                         ?>
-                        <tr plugin_slug="<?php echo esc_attr( $plugin_name ); ?>" last-version="<?php echo esc_js( rawurlencode( $last_version ) ); ?>" site_name="<?php echo esc_attr( stripslashes( $website->name ) ); ?>" premium="<?php echo isset( $plugin_upgrade['premium'] ) && ! empty( $plugin_upgrade['premium'] ) ? 1 : 0; ?>" updated="0">
+                        <tr plugin_slug="<?php echo esc_attr( $plugin_name ); ?>" plugin_name="<?php echo esc_attr( $plugin_upgrade['Name'] ); ?>" last-version="<?php echo esc_js( rawurlencode( $last_version ) ); ?>" premium="<?php echo isset( $plugin_upgrade['premium'] ) && ! empty( $plugin_upgrade['premium'] ) ? 1 : 0; ?>" updated="0">
                             <?php
                             $row_columns     = $updates_table_helper->render_columns( $row_columns, $website, $others );
                             $action_rendered = isset( $row_columns['action'] ) ? true : false;
                             if ( ! $action_rendered ) :
                                 ?>
                             <td>
+                                <a href="#" history-view="update-plugins-individual" class="mainwp-show-history ui mini button"><?php esc_html_e( 'History', 'mainwp' ); ?></a>
                                 <?php if ( $user_can_ignore_unignore ) : ?>
                                 <div class="ui bottom left pointing dropdown mini button"><?php esc_html_e( 'Ignore', 'mainwp' ); ?>
                                     <i class="dropdown icon"></i>
@@ -610,7 +620,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                     $theme_upgrades = array();
                 }
 
-                $site_opts = MainWP_DB::instance()->get_website_options_array( $website, array( 'premium_upgrades', 'rollback_updates_data' ) );
+                $site_opts = MainWP_DB::instance()->get_website_options_array( $website, array( 'premium_upgrades', 'rollback_updates_data', 'site_info' ) );
                 if ( ! is_array( $site_opts ) ) {
                     $site_opts = array();
                 }
@@ -649,6 +659,14 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
 
                 add_filter( 'mainwp_updates_table_header_content', array( static::class, 'hook_table_update_themes_header_content' ), 10, 3 );
 
+                $wp_info = ! empty( $site_opts['site_info'] ) ? json_decode( $site_opts['site_info'], true ) : array();
+                if ( ! is_array( $wp_info ) ) {
+                    $wp_info = array();
+                }
+                $use_tzformat = ! empty( $wp_info['format_datetime'] ) && is_array( $wp_info['format_datetime'] ) ? $wp_info['format_datetime'] : array();
+                $offs         = ! empty( $use_tzformat['gmt_offset'] ) ? intval( $use_tzformat['gmt_offset'] ) : 0;
+                $offs_info    = esc_html__( '- Timezone:', 'mainwp' ) . ' UTC' . ( $offs >= 0 ? '+' . $offs : $offs );
+
                 ?>
                 <table id="mainwp-updates-themes-table" style="width:100% !important;" class="  ui tablet stackable table mainwp-updates-list mainwp-manage-updates-table">
                     <thead class="master-checkbox full-width" >
@@ -656,7 +674,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                         <?php $updates_table_helper->print_column_headers(); ?>
                         </tr>
                     </thead>
-                    <tbody class="themes-bulk-updates child-checkbox" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>">
+                    <tbody class="themes-bulk-updates child-checkbox" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" site_url="<?php echo esc_attr( $website->url ); ?>" tz-info="<?php echo esc_attr( $offs_info ); ?>">
                         <?php foreach ( $theme_upgrades as $slug => $theme_upgrade ) : ?>
                             <?php $theme_name = rawurlencode( $slug ); ?>
                             <?php $indent_hidden = '<input type="hidden" id="wp_upgraded_theme_' . intval( $website->id ) . '_' . esc_attr( $theme_name ) . '" value="0" />'; ?>
@@ -675,13 +693,14 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                                 $others['roll_info'] = $msg;
                             }
                             ?>
-                            <tr theme_slug="<?php echo esc_attr( $theme_name ); ?>" last-version="<?php echo esc_js( rawurlencode( $last_version ) ); ?>" premium="<?php echo isset( $theme_upgrade['premium'] ) && ! empty( $theme_upgrade['premium'] ) ? 1 : 0; ?>" updated="0">
+                            <tr theme_slug="<?php echo esc_attr( $theme_name ); ?>" theme_name="<?php echo esc_attr( $theme_upgrade['Name'] ); ?>" last-version="<?php echo esc_js( rawurlencode( $last_version ) ); ?>" premium="<?php echo isset( $theme_upgrade['premium'] ) && ! empty( $theme_upgrade['premium'] ) ? 1 : 0; ?>" updated="0">
                                 <?php
                                 $row_columns     = $updates_table_helper->render_columns( $row_columns, $website, $others );
                                 $action_rendered = isset( $row_columns['action'] ) ? true : false;
                                 if ( ! $action_rendered ) :
                                     ?>
                                 <td>
+                                    <a href="#" history-view="update-themes-individual" class="mainwp-show-history ui mini button"><?php esc_html_e( 'History', 'mainwp' ); ?></a>
                                     <?php if ( $user_can_ignore_unignore ) : ?>
                                     <div class="ui bottom left pointing dropdown mini button"><?php esc_html_e( 'Ignore', 'mainwp' ); ?>
                                         <i class="dropdown icon"></i>

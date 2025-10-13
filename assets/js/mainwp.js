@@ -2224,7 +2224,7 @@ jQuery(function ($) {
 
   $('.mainwp-generate-password-button').on('click', function (e) {
     e.preventDefault();
-    $('#createuser #password').val(mainwp_gen_passsword(24)).trigger('change');
+    $('#createuser #password, #mainwp-update-admin-password-form #password').val(mainwp_gen_passsword(24)).trigger('change');
   });
 });
 

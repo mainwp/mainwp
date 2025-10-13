@@ -2459,19 +2459,16 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function render_changes_history_modal() {
         ?>
-        <div id="mainwp-plugin-theme-history-changes-modal" class="ui first coupled modal">
-        <i class="close icon"></i>
+        <div class="ui modal" id="mainwp-plugin-theme-history-changes-modal">
+            <i class="close icon"></i>
             <div class="ui header main">
                 <?php esc_html_e( 'History', 'mainwp' ); ?>
             </div>
             <div class="scrolling content"></div>
             <div class="actions">
                 <div class="ui two columns stackable grid">
-                    <div class="left aligned column col-left">
-                    </div>
-                    <div class="right aligned column col-right">
-
-                    </div>
+                    <div class="left aligned column col-left"></div>
+                    <div class="right aligned column col-right"></div>
                 </div>
             </div>
         </div>

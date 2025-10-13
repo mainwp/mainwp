@@ -238,7 +238,6 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
      */
     public static function render_bulk_form( $websites ) {
-        $is_demo = MainWP_Demo_Handle::is_demo_mode();
         /**
          * Filter: mainwp_update_admin_password_complexity
          *
@@ -249,7 +248,7 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
         $pass_complexity = apply_filters( 'mainwp_update_admin_password_complexity', '24' );
         ?>
         <div class="ui alt segment" id="mainwp-bulk-update-admin-passwords">
-                <form action="" method="post" name="createuser" id="createuser">
+            <form action="" method="post" name="mainwp-update-admin-password-form" id="mainwp-update-admin-password-form" enctype="multipart/form-data">
                 <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                 <input type="hidden" name="security" value="<?php echo esc_attr( wp_create_nonce( 'mainwp_updateadminpassword' ) ); ?>"/>
                 <div class="mainwp-main-content" >
@@ -396,7 +395,7 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                         </div>
                         <div class="ui fitted divider"></div>
                         <div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
-                            <div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Update Admin Password', 'mainwp' ); ?></div>
+                            <div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Change Admin Password', 'mainwp' ); ?></div>
                             <div class="content active">
                             <?php
                             /**
@@ -411,12 +410,11 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                             <div class="ui mini form">
                                 <div class="field">
                                     <label><?php esc_html_e( 'New Password', 'mainwp' ); ?></label>
-                                <div class="ui fluid input" data-tooltip="<?php esc_attr_e( 'Enter a new password or use the Generate Password button.', 'mainwp' ); ?>" data-inverted="" data-position="top right">
-                                        <input class="hidden" value=" "/>
+                                    <input class="hidden" value=" "/>
+                                    <div class="ui icon input">
                                         <input type="text" id="password" name="password" autocomplete="off" value="<?php echo esc_attr( wp_generate_password( $pass_complexity ) ); ?>">
+                                        <i class="sync alternate link icon mainwp-generate-password-button"></i>
                                     </div>
-                                    <br />
-                                    <button class="ui basic green fluid button wp-generate-pw"><?php esc_html_e( 'Generate New Password', 'mainwp' ); ?></button>
                                 </div>
                             </div>
                             <?php
@@ -442,13 +440,10 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                              * @since 4.1
                              */
                             do_action( 'mainwp_admin_pass_before_submit_button' );
-                            if ( $is_demo ) {
-                                MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="submit" disabled="disabled" class="ui big green fluid button" value="' . esc_attr__( 'Update Password', 'mainwp' ) . '"/>' );
-                            } else {
-                                ?>
-                                <input type="submit" name="bulk_updateadminpassword" id="bulk_updateadminpassword" class="ui big green fluid button" value="<?php esc_attr_e( 'Update Password', 'mainwp' ); ?> "/>
-                                <?php
-                            }
+                            
+                            ?>
+                            <input type="submit" name="bulk_updateadminpassword" id="bulk_updateadminpassword" class="ui big green fluid button" value="<?php esc_attr_e( 'Update Password', 'mainwp' ); ?> "/>
+                            <?php
                             /**
                              * Action: mainwp_admin_pass_after_submit_button
                              *
@@ -473,6 +468,7 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                     <div style="clear:both"></div>
                 </form>
             </div>
+            
         <?php
     }
 }

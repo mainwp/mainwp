@@ -1506,6 +1506,12 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         <?php printf( esc_html__( 'Use the provided form to create a new user on your child site.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/create-a-new-user/" target="_blank">', '</a>' ); ?>
                     </div>
                 <?php endif; ?>
+                    <?php if ( isset( $_GET['success'] ) && 1 === (int) $_GET['success'] ) : ?>
+                        <div class="ui green message">
+                            <i class="close icon"></i>
+                            <?php esc_html_e( 'User created successfully. You can now manage this user from the Manage Users page, or create another one here.', 'mainwp' ); ?>
+                        </div>
+                    <?php endif; ?>
                     <div class="ui message" id="mainwp-message-zone" style="display:none;"></div>
                     <div id="mainwp-add-new-user-form" >
                         <?php
@@ -1522,7 +1528,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             <div class="ui grid field">
                                 <label class="six wide column middle aligned"><?php esc_html_e( 'Username', 'mainwp' ); ?></label>
                                 <div class="ui six wide column">
-                                    <div class="ui left labeled input">
+                                    <div class="ui input">
                                         <input type="text" id="user_login" name="user_login" value="<?php echo ( isset( $_POST['user_login'] ) ) ? esc_html( sanitize_text_field( wp_unslash( $_POST['user_login'] ) ) ) : ''; ?>">
                                     </div>
                                 </div>
@@ -1530,7 +1536,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             <div class="ui grid field">
                                 <label class="six wide column middle aligned"><?php esc_html_e( 'E-mail', 'mainwp' ); ?></label>
                                 <div class="ui six wide column">
-                                    <div class="ui left labeled input">
+                                    <div class="ui input">
                                         <input type="text" id="email" name="email" value="<?php echo ( isset( $_POST['email'] ) ) ? esc_html( sanitize_text_field( wp_unslash( $_POST['email'] ) ) ) : ''; ?>">
                                     </div>
                                 </div>
@@ -1538,7 +1544,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             <div class="ui grid field">
                                 <label class="six wide column middle aligned"><?php esc_html_e( 'First Name', 'mainwp' ); ?></label>
                                 <div class="ui six wide column">
-                                    <div class="ui left labeled input">
+                                    <div class="ui input">
                                         <input type="text" id="first_name" name="first_name" value="<?php echo ( isset( $_POST['first_name'] ) ) ? esc_html( sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) ) : ''; ?>">
                                     </div>
                                 </div>
@@ -1546,7 +1552,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             <div class="ui grid field">
                                 <label class="six wide column middle aligned"><?php esc_html_e( 'Last Name', 'mainwp' ); ?></label>
                                 <div class="ui six wide column">
-                                    <div class="ui left labeled input">
+                                    <div class="ui input">
                                         <input type="text" id="last_name" name="last_name" value="<?php echo ( isset( $_POST['last_name'] ) ) ? esc_html( sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) ) : ''; ?>">
                                     </div>
                                 </div>
@@ -1554,7 +1560,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             <div class="ui grid field">
                                 <label class="six wide column middle aligned"><?php esc_html_e( 'Website', 'mainwp' ); ?></label>
                                 <div class="ui six wide column">
-                                    <div class="ui left labeled input">
+                                    <div class="ui input">
                                         <input type="text" id="url" name="url" value="<?php echo ( isset( $_POST['url'] ) ) ? esc_url_raw( wp_unslash( $_POST['url'] ) ) : ''; ?>">
                                     </div>
                                 </div>
@@ -1562,10 +1568,10 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             <div class="ui grid field">
                                 <label class="six wide column middle aligned"><?php esc_html_e( 'Password', 'mainwp' ); ?></label>
                                 <div class="ui six wide column">
-                                    <div class="ui left labeled action input">
-                                        <input class="hidden" value=" "/>
+                                    <input class="hidden" value=" "/>
+                                    <div class="ui icon input">
                                         <input type="text" id="password" name="password" autocomplete="off" value="<?php echo esc_attr( wp_generate_password( $pass_complexity ) ); ?>">
-                                        <button class="ui green right button wp-generate-pw"><?php esc_html_e( 'Generate Password', 'mainwp' ); ?></button>
+                                        <i class="sync alternate link icon mainwp-generate-password-button"></i>
                                     </div>
                                 </div>
                             </div>
@@ -1995,21 +2001,38 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         // phpcs:disable WordPress.Security.EscapeOutput
         ?>
         <div id="mainwp-creating-new-user-modal" class="ui modal">
-            <i class="close icon"></i>
-                <div class="header"><?php esc_html_e( 'New User', 'mainwp' ); ?></div>
-                <div class="content">
-                    <div class="ui middle aligned divided list">
-                        <?php foreach ( $dbwebsites as $website ) : ?>
-                        <div class="item ui grid">
-                            <span class="content"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></span>
-                            <span class="right floated content"><?php echo isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ? '<i class="check green icon"></i> ' : '<i class="times red icon"></i> ' . $output->errors[ $website->id ]; ?></span>
-                        </div>
-                        <?php endforeach; ?>
+            <i class="close mainwp-reload icon"></i>
+            <div class="header"><?php esc_html_e( 'New User', 'mainwp' ); ?></div>
+            <div class="content">
+                <div class="ui middle aligned divided list">
+                    <?php foreach ( $dbwebsites as $website ) : ?>
+                    <div class="item ui grid">
+                        <span class="content"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></span>
+                        <span class="right floated content"><?php echo isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ? '<i class="check green icon"></i> ' : '<span data-tooltip="' . esc_attr( $output->errors[ $website->id ] ) . '" data-position="left center" data-inverted=""><i class="times red icon"></i></span>'; ?></span>
                     </div>
+                    <?php endforeach; ?>
                 </div>
-                <div class="actions">
-                </div>
+                <script type="text/javascript">
+                    setTimeout(() => {
+                        // Check if all items have green check icons (no red times icons)
+                        let allSuccess = true;
+                        jQuery('#mainwp-creating-new-user-modal .ui.list .item').each(function() {
+                            // Check if this item has a red times icon
+                            if (jQuery(this).find('.times.red.icon').length > 0) {
+                                allSuccess = false;
+                                return false; // Break the loop
+                            }
+                        });
+                        
+                        // If all items are successful, redirect to success page
+                        if (allSuccess) {
+                            jQuery('#createuser')[0].reset();
+                            location.href = 'admin.php?page=UserBulkAdd&success=1';
+                        }
+                    }, 3000);
+                </script>
             </div>
+        </div>
         <?php
         // phpcs:enable
     }

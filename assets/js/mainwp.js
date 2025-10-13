@@ -2214,6 +2214,20 @@ jQuery(function () {
 /**
  * Add new user
  */
+jQuery(function ($) {
+  function mainwp_gen_passsword(len = 24) {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+{}[]<>?';
+    const arr = new Uint32Array(len);
+    crypto.getRandomValues(arr);
+    return Array.from(arr, x => chars[x % chars.length]).join('');
+  }
+
+  $('.mainwp-generate-password-button').on('click', function (e) {
+    e.preventDefault();
+    $('#createuser #password').val(mainwp_gen_passsword(24)).trigger('change');
+  });
+});
+
 jQuery(function () {
     jQuery(document).on('click', '#bulk_add_createuser', function () {
         mainwp_createuser();
@@ -2312,8 +2326,9 @@ let mainwp_createuser = function () {
                 }
             } else {
                 jQuery('#mainwp-add-new-user-form').append(response);
-                jQuery('#mainwp-creating-new-user-modal').modal('setting', 'closable', false).modal('show');
-
+                jQuery('#mainwp-creating-new-user-modal').modal( {
+                    closable: false,
+                } ).modal( 'show' );
             }
         });
     }

@@ -140,9 +140,6 @@ let mainwpuser_postAction = function (elem, what) {
         data['user_data'] = jQuery('form#update_user_profile').serialize();
     }
 
-
-
-
     rowElement.find('.row-actions').hide();
     if (what === 'delete') {
         rowElement.html('<td colspan="8"><i class="ui active inline loader tiny"></i>  Please wait</td>');

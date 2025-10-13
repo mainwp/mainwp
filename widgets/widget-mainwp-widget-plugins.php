@@ -211,7 +211,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                                     <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
                                         <a href="#" class="mainwp-plugin-delete item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Delete', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
                                     <?php } ?>
-                                        <a href="#" history-view="widget-plugins" class="mainwp-plugin-history item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'History', 'mainwp' ); ?></a>
+                                        <a href="#" history-view="widget-plugins" class="mainwp-show-history item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'History', 'mainwp' ); ?></a>
                                     </div>
                                 </div>
 

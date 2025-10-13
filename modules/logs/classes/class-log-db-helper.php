@@ -428,9 +428,6 @@ class Log_DB_Helper extends MainWP_DB {
             $type
         );
 
-        error_log( print_r($args, true ) );
-        error_log( $query );
-
         $items = $wpdb->get_results( $query ); //phpcs:ignore --ok.
 
         if ( $items ) {
@@ -463,87 +460,6 @@ class Log_DB_Helper extends MainWP_DB {
             'more_date'   => $more_date,
         );
     }
-
-    /**
-     * Get logs grouped by local day ranges.
-     *
-     * Recommended: convert local $from_date_local to UTC in PHP and pass UTC datetime
-     * to MySQL. This avoids depending on MySQL timezone tables.
-     *
-     * @param int    $site_id
-     * @param string $type           // context/type for meta join
-     * @param string $from_date_local // 'YYYY-MM-DD HH:MM:SS' in $local_timezone
-     * @param int    $days_number
-     * @param string $local_timezone // e.g. 'Asia/Ho_Chi_Minh'.
-     * @return array|object[]
-     */
-    private function get_logs_for_local_date_range_phputc( $site_id, $type, $from_date_local, $days_number = 10, $local_timezone = 'Asia/Ho_Chi_Minh' ) {
-        global $wpdb;
-
-        // micro-constants.
-        $MICRO           = 1000000;
-        $SECONDS_PER_DAY = 86400;
-        $day_micros      = $SECONDS_PER_DAY * $MICRO; // 86400 * 1_000_000.
-
-        // compute offset (seconds east of UTC) for the given timezone at "now".
-        $tz             = new \DateTimeZone( $local_timezone );
-        $dtNow          = new DateTimeImmutable( 'now', $tz );
-        $offset_seconds = $tz->getOffset( $dtNow ); // handles DST if relevant.
-        $offset_micro   = $offset_seconds * $MICRO;
-
-        // convert provided local datetime to UTC string for MySQL.
-        $dt            = new \DateTimeImmutable( $from_date_local, $tz );
-        $from_date_utc = $dt->setTimezone( new \DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' );
-
-        // now you can reuse these:
-        $day_micros    = $context['day_micros'];
-        $offset_micro  = $context['offset_micro'];
-        $from_date_utc = $context['from_date_utc'];
-
-        // build SQL (same structure you provided).
-        $sql = "
-        SELECT
-            d.day_start,
-            i.*,
-            m.meta_value
-        FROM (
-            SELECT
-                ((FLOOR((created + %d) / %d) * %d) - %d) AS day_start
-            FROM {$this->table_name('wp_logs')}
-            WHERE site_id = %d
-            AND created < (UNIX_TIMESTAMP(%s) * 1000000)
-            GROUP BY day_start
-            ORDER BY day_start DESC
-            LIMIT %d
-        ) d
-        JOIN {$this->table_name('wp_logs')} i
-            ON i.created >= d.day_start
-            AND i.created < d.day_start + %d
-            AND i.site_id = %d
-        INNER JOIN {$this->table_name('wp_logs_meta')} m
-            ON i.log_id = m.meta_log_id
-            AND i.context = %s
-        ORDER BY d.day_start DESC, i.created DESC
-        ;";
-
-        // prepare & execute
-        $query = $wpdb->prepare(
-            $sql,
-            $offset_micro,
-            $day_micros,
-            $day_micros,
-            $offset_micro,
-            $site_id,
-            $from_date_utc,   // UTC datetime string
-            $days_number,
-            $day_micros,
-            $site_id,
-            $type
-        );
-
-        return $wpdb->get_results( $query );
-    }
-
 
 
     /**

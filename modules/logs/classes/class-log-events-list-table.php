@@ -1388,7 +1388,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
         if ( $this->items ) {
             foreach ( $this->items as $log ) {
-                $created_time = $log->created / 1000000; // Seconds.
+                $created_time = intval( $log->created / 1000000 ); // Seconds.
                 $rw_classes   = 'log-item mainwp-log-item-' . intval( $log->log_id );
 
                 $info_item = array(

@@ -270,6 +270,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
             foreach ( $results['items'] as $item ) {
                 $item->log_site_name = $site->name;
                 $item->url           = $site->url;
+                $item->created       = (int) ( $item->created / 1000000 ); // compatible secords value.
                 $items[]             = $item;
             }
             return $items;

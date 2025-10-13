@@ -170,7 +170,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                                         <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_themes' ) ) : ?>
                                             <a href="#" class="<?php echo $is_parent ? '' : 'mainwp-theme-delete'; ?> item <?php echo $is_demo ? 'disabled' : ''; ?>" <?php echo $is_parent ? 'disabled onclick="javascript:void(0)"' : ''; ?>><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
                                         <?php endif; ?>
-                                            <a href="#" history-view="widget-themes" class="mainwp-theme-history item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'History', 'mainwp' ); ?></a>
+                                            <a href="#" history-view="widget-themes" class="mainwp-show-history item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'History', 'mainwp' ); ?></a>
                                     </div>
                                 </div>
                             </div>

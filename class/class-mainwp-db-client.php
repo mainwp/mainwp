@@ -1208,6 +1208,72 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Method get_client_fields_by_params.
+     *
+     * Get client fields by params.
+     *
+     * @param array  $params params.
+     * @param string $obj OBJECT|ARRAY_A.
+     *
+     * @return mixed|null $fields fields data.
+     */
+    public function get_client_fields_by_params( $params = array(), $obj = OBJECT ) {  // phpcs:ignore -- NOSONAR - complex.
+
+        if ( ! is_array( $params ) ) {
+            $params = array();
+        }
+
+        // Initialize custom_where if it does not exist.
+        $where   = '';
+        $limit   = '';
+        $orderby = 'clients_fields.field_id DESC';
+
+        // Handle exclude.
+        if ( isset( $params['exclude'] ) && ! empty( $params['exclude'] ) ) {
+            $exclude_ids = wp_parse_id_list( $params['exclude'] );
+            $where      .= empty( $exclude_ids ) ? '' : ' AND clients_fields.field_id NOT IN (' . implode( ',', $exclude_ids ) . ')';
+        }
+
+        // Handle include.
+        if ( isset( $params['include'] ) && ! empty( $params['include'] ) ) {
+            $include_ids = wp_parse_id_list( $params['include'] );
+            $where      .= empty( $include_ids ) ? '' : ' AND clients_fields.field_id IN (' . implode( ',', $include_ids ) . ')';
+        }
+
+        // Handle search.
+        if ( isset( $params['search'] ) && ! empty( $params['search'] ) ) {
+            $search_term = $this->escape( htmlspecialchars( $params['search'] ) );
+            $where      .= ' AND clients_fields.field_name LIKE "%' . $search_term . '%"';
+        }
+
+        // Handle client id.
+        if ( isset( $params['client_id'] ) && ! empty( $params['client_id'] ) ) {
+            $client_ids = wp_parse_id_list( $params['client_id'] );
+            $where     .= empty( $client_ids ) ? '' : ' AND clients_fields.client_id IN (' . implode( ',', $client_ids ) . ')';
+        }
+
+        // Handel page and per_page.
+        $page     = '';
+        $per_page = '';
+        if ( isset( $params['page'] ) && ! empty( $params['page'] ) ) {
+            $page = (int) $params['page'];
+        }
+
+        if ( isset( $params['per_page'] ) && ! empty( $params['per_page'] ) ) {
+            $per_page = (int) $params['per_page'];
+        }
+
+        if ( ! empty( $page ) && ! empty( $per_page ) ) {
+            $limit = ' LIMIT ' . ( $page - 1 ) * $per_page . ', ' . $per_page;
+        }
+
+        // Build SQL.
+        $sql = 'SELECT * FROM ' . $this->table_name( 'wp_clients_fields' ) . ' clients_fields WHERE 1=1 ' . $where . ' ORDER BY ' . $orderby . $limit;
+
+        return $this->wpdb->get_results( $sql, $obj );
+    }
+
+    /**
      * Method get_client_fields()
      *
      * Get client fields.

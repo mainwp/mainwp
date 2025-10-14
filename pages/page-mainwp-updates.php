@@ -2461,8 +2461,9 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         ?>
         <div class="ui modal" id="mainwp-plugin-theme-history-changes-modal">
             <i class="close icon"></i>
-            <div class="ui header main">
-                <?php esc_html_e( 'History', 'mainwp' ); ?>
+            <div class="ui header">
+                <div class="main-text"><?php esc_html_e( 'History', 'mainwp' ); ?></div>
+                <div class="sub header" style="display:none;"></div>
             </div>
             <div class="scrolling content"></div>
             <div class="actions">

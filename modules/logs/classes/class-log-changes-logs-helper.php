@@ -353,11 +353,11 @@ class Log_Changes_Logs_Helper {
                     continue;
                 }
                 $created_micro = (int) $item->created;
-                $record = new Log_Record( $item );
+                $record        = new Log_Record( $item );
 
                 $created_sec = (int) $record->created;
 
-                $details     = array(
+                $details = array(
                     'author_name' => $tbl_list->get_log_author_name( $record ),
                     'source'      => 'non-mainwp-changes' === $record->connector ? 'WP Admin' : 'Dashboard',
                     'at_hour'     => MainWP_Utility::format_time( $created_sec ),

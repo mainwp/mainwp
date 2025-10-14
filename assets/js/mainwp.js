@@ -3090,11 +3090,9 @@ jQuery(function ($) {
 });
 
 let mainwp_changes_history_box_init = function ( type, title, info ) {
-    const hd = jQuery('#mainwp-plugin-theme-history-changes-modal > div.main.header');
-    hd.text(title + ' ' + __('History'));
-    hd.append(
-        jQuery('<div class="sub header">').text(info) // safe for escape.
-    );
+    const hd = jQuery('#mainwp-plugin-theme-history-changes-modal > div.header');
+    hd.find('.main-text').text(title + ' ' + __('History')); // safe for escape.
+    hd.find('.sub.header').text(info).show();
     jQuery('#mainwp-plugin-theme-history-changes-modal').attr('history-type', type);
     jQuery('#mainwp-plugin-theme-history-changes-modal').find('.scrolling.content').html('');
 }
@@ -3136,9 +3134,9 @@ let mainwp_item_changes_load = function ( load_date = '' ) {
                 Object.entries(response.list).forEach(([indexdt, records]) => {
                     const dt = records[0].date;
                     content += `<div class="ui accordion" data-date="${indexdt}">
-                        <div class="title">
+                        <div class="title" format-date="${dt}">
                             <i class="dropdown icon"></i>
-                            ${dt}<span class="title-right"><button type="button" class="ui circular blue mini button mainwp-changes-history-switch-view" current-grouped="actions">` + __('Day History') + `</button> <button class="ui basic mini button actions-count1">${records.length} ` + __('Actions') + `</button><button class="ui basic mini button actions-count2" style="display:none;"></button></span>
+                            ${dt}<span class="title-right"><button type="button" class="ui circular blue mini button mainwp-changes-history-switch-view">` + __('Day History') + `</button> <button class="ui basic mini button actions-count1">${records.length} ` + __('Actions') + `</button><button class="ui basic mini button actions-count2" style="display:none;"></button></span>
                         </div>
                         <div class="content ui list">`;
                     records.forEach(record => {
@@ -3177,7 +3175,6 @@ let mainwp_item_changes_load = function ( load_date = '' ) {
                         e.stopPropagation(); // now it runs before ancestor handlers
                         changesHistorySwitchViewHandler(this);
                         return false;
-                        // action...
                     });
                 }
 
@@ -3238,36 +3235,15 @@ let get_color_changes_event = function( act ){
 let changesHistorySwitchViewHandler = function (btn) {
 
     const parent = jQuery(btn).closest('.ui.accordion');
+    const sel_date = jQuery(btn).closest('.title').attr('format-date');
 
     jQuery(btn).closest('.title').hasClass('active') || jQuery(btn).closest('.title').trigger('click');
 
     jQuery(parent).find('.content').find('.changes-history-status').remove();
 
-    if (jQuery(btn).attr('current-grouped') == 'actions') {
-        jQuery(btn).attr('current-grouped', 'items');
-        jQuery(btn).text(__('Item History'));
+    jQuery(parent).find('.content .list-item-actions-in-day').hide();
 
-        jQuery(parent).find('.content .list-item-actions-in-day').hide();
-
-        if(jQuery(parent).find('.content .list-all-actions-in-day').length == 0){
-            jQuery(parent).find('.content').append('<div class="ui active centered inline loader history-actions-loading"></div>');
-        } else {
-            jQuery(parent).find('.content .list-all-actions-in-day').show();
-            jQuery(btn).closest('.title').find('.title-right .actions-count1').hide();
-            jQuery(btn).closest('.title').find('.title-right .actions-count2').show();
-            return false;
-        }
-    } else {
-        jQuery(btn).attr('current-grouped', 'actions');
-        jQuery(btn).text(__('Day History'));
-
-        jQuery(btn).closest('.title').find('.title-right .actions-count1').show();
-        jQuery(btn).closest('.title').find('.title-right .actions-count2').hide();
-
-        jQuery(parent).find('.content .list-all-actions-in-day').hide();
-        jQuery(parent).find('.content .list-item-actions-in-day').show();
-        return false;
-    }
+    jQuery(parent).find('.content').append('<div class="ui active centered inline loader history-actions-loading"></div>');
 
     const dt = jQuery(parent).data('date');
     let md = jQuery('#mainwp-plugin-theme-history-changes-modal');
@@ -3288,7 +3264,6 @@ let changesHistorySwitchViewHandler = function (btn) {
         if (response.error != undefined) {
             dayContent.append('<div class="ui message red changes-history-status">' + response.error + '</div>');
         } else if (response?.list) {
-
             if (response.list.length == 0) {
                 let msg = __('This plugin has no recorded activity in Dashboard Insights.');
                 if ('theme' === type && '' === dt) {
@@ -3335,9 +3310,13 @@ let changesHistorySwitchViewHandler = function (btn) {
                 });
 
                 if ('' !== content) {
-                    jQuery(parent).find('.title .title-right .actions-count1').hide();
-                    jQuery(parent).find('.title .title-right .actions-count2').html(count_acts + ' ' + __('Actions')).show();
-                    dayContent.append(content);
+                    jQuery(md).find('.ui.header .main-text').text(sel_date + ' ' + __('History'));
+                    let accordWrapper = jQuery("<div>", {
+                        id: "change-history-according-wrapper",
+                        html: content
+                    });
+                    jQuery(md).find('.scrolling.content').html(accordWrapper);
+                    jQuery('#change-history-according-wrapper .ui.accordion').accordion({exclusive: true});
                 }
             }
         } else {

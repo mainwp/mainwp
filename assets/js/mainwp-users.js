@@ -106,6 +106,16 @@ jQuery(function () {
             }
         );
     });
+
+    jQuery(document).on('click', '#bulk_updateadminpassword', function () {
+        mainwp_confirm(
+            'You are about to update administrator passwords on selected sites. This will overwrite the current password for the admin account used for connection.',
+            function() {
+                jQuery('#mainwp-update-admin-password-form').submit()
+            }
+        );
+        return false;
+    });
 });
 
 let mainwp_edit_users_box_init = function () {

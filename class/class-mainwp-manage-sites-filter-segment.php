@@ -160,13 +160,11 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
                                 for (const [key, value] of Object.entries(seg_values)) {
                                     try {
                                         if(fieldsAllows.includes(key)){
-                                            console.log(key + ' === '+ value);
                                             jQuery( '#mainwp-sites-filters-row .ui.dropdown.' + key ).dropdown('clear');
                                             arrVal = value.split(",");
                                             jQuery( '#mainwp-sites-filters-row .ui.dropdown.' + key ).dropdown('set selected', arrVal);
                                         }
                                     } catch (err) {
-                                        console.log(key + ' === '+ value);
                                         console.log(err);
                                     }
                                 }

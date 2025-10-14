@@ -169,7 +169,6 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     if ( 'yes' == isNot ){
                         params += '&isnot=yes';
                     }
-                    console.log(params);
                     window.location = 'admin.php?page=managesites' + params;
                     return false;
                 };
@@ -466,7 +465,7 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
             <div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
             <div class="scrolling content ui form">
                 <form method="POST" action="" id="manage-sites-screen-options-form" name="manage_sites_screen_options_form">
-                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                     <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'SreenshotsSitesScrOptions' ) ); ?>" />
                     <div class="ui grid field">
                         <label class="top aligned six wide column" tabindex="0"><?php esc_html_e( 'Sites view mode', 'mainwp' ); ?></label>

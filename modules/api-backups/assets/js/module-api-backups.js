@@ -102,7 +102,6 @@ let mainwp_api_backups_do_backups_specific = function (pObj, bulk, selector) {
 
         if (response && !response.success) {
             rsp = response.data;
-            console.log(rsp);
             // Check for gridPane error..
             if (rsp && rsp['0'].code === 429) {
                 err_msg = 'API rate limit has been met. Please wait 30 seconds and try again.';

@@ -446,7 +446,7 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                              * @since 4.1
                              */
                             do_action( 'mainwp_admin_pass_before_submit_button' );
-                            
+
                             ?>
                             <input type="hidden" name="bulk_updateadminpassword" value="1" />
                             <a href="#" id="bulk_updateadminpassword" class="ui big green fluid button"><?php esc_html_e( 'Update Password', 'mainwp' ); ?></a>

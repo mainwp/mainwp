@@ -454,7 +454,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                             setTimeout(() => {
                                 jQuery('#mainwp-3rd-party-backups-table .ui.checkbox').checkbox();
                                 jQuery('.mainwp-api-backup-table .ui.dropdown').dropdown();
-                                mainwp_datatable_fix_menu_overflow();
+                                mainwp_datatable_fix_menu_overflow('#mainwp-3rd-party-backups-table');
                             }, 1000);
                         },
                         select: {
@@ -475,11 +475,10 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                             .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
                         }
                     }).on( 'columns-reordered', function () {
-                        console.log('columns-reordered');
                         setTimeout(() => {
                             jQuery( '#mainwp-3rd-party-backups-table .ui.dropdown' ).dropdown();
                             jQuery( '#mainwp-3rd-party-backups-table .ui.checkbox' ).checkbox();
-                            mainwp_datatable_fix_menu_overflow();
+                            mainwp_datatable_fix_menu_overflow('#mainwp-3rd-party-backups-table');
                             mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
                         }, 1000);
                     });
@@ -1622,7 +1621,6 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                 }, 1000);
                             }
                         } ).on( 'columns-reordered', function () {
-                            console.log('columns-reordered');
                             setTimeout(() => {
                                 jQuery( '.mainwp-api-backup-table .ui.dropdown' ).dropdown();
                                 jQuery( '.mainwp-api-backup-table .ui.checkbox' ).checkbox();

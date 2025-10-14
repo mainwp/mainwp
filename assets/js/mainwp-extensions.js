@@ -463,7 +463,6 @@ function mainwp_extensions_grabkeys(retring) {
                         statusEl.fadeOut();
                     }, 3000);
                     totalActivateThreads = jQuery('#mainwp-extensions-list .card[status="queue"]').length;
-                    console.log(totalActivateThreads);
                     if (totalActivateThreads > 0)
                         extensions_loop_next();
                 } else if (response.error) {
@@ -652,7 +651,6 @@ let mainwp_extension_grab_purchased = function (retring) {
 
 let mainwp_extension_select_to_install = function () {
     let inst_ext = jQuery('.item.extension[slug="' + jQuery('#extension_install_ext_slug').val() + '"]');
-    console.log(inst_ext);
     if (jQuery(inst_ext).length > 0) {
         jQuery('mainwp-installing-extensions .ui.tab').removeClass('active');
         let curtab = jQuery(inst_ext[0]).closest('.ui.tab').attr('data-tab');

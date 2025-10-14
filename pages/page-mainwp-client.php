@@ -565,7 +565,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
             <form method="post" class="mainwp-table-container">
                 <?php
-                wp_nonce_field( 'mainwp-admin-nonce' );
+                MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
                 static::$itemsTable->display();
                 static::$itemsTable->clear_items();
                 ?>
@@ -606,7 +606,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <div class="scrolling content">
                 <div class="ui info message"><?php esc_html_e( 'Empty fields will not be passed to child sites.', 'mainwp' ); ?></div>
                 <form id="update_client_profile" class="ui form">
-                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                     <h3 class="ui header"><?php esc_html_e( 'Name', 'mainwp' ); ?></h3>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'First Name', 'mainwp' ); ?></label>
@@ -746,7 +746,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
             <div class="scrolling content ui form">
                 <form method="POST" action="" id="manage-sites-screen-options-form" name="manage_sites_screen_options_form">
-                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                     <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'ManageClientsScrOptions' ) ); ?>" />
                     <div class="ui grid field">
                         <label class="six wide column"><?php esc_html_e( 'Default items per page value', 'mainwp' ); ?></label>
@@ -874,7 +874,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         ?>
         <div class="ui alt segment" id="mainwp-add-clients">
             <form action="" method="post" enctype="multipart/form-data" name="createclient_form" id="createclient_form" class="add:clients: validate">
-                <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                 <div class="mainwp-main-content">
                     <div class="ui segment">
                         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-client-info-message' ) ) : ?>
@@ -965,7 +965,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         <?php echo esc_html( $title_page ); ?>
                         <div class="sub header"><?php esc_html_e( 'Import multiple clients to your MainWP Dashboard.', 'mainwp' ); ?></div>
                     </h3>
-                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                     <div class="ui grid field">
                         <label class="three wide column middle aligned" for="mainwp_client_import_file_bulkupload"><?php esc_html_e( 'Upload CSV', 'mainwp' ); ?> (<a href="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/csv/sample_clients.csv' ); ?>" target="_blank"><?php esc_html_e( 'Download Sample', 'mainwp' ); ?></a>)</label>
                         <div class="nine wide column">

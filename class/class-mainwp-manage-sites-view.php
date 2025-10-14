@@ -894,7 +894,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Child site settings saved successfully.', 'mainwp' ); ?></div>
             <?php } ?>
             <form method="POST" action="" id="mainwp-edit-single-site-form" enctype="multipart/form-data" class="ui form">
-                <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                 <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'UpdateWebsite' . $website->id ) ); ?>" />
                 <h3 class="ui dividing header">
                 <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-edit-site-general' ); ?>

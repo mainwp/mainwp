@@ -214,7 +214,6 @@ class MainWP_Uptime_Monitoring_Site_Widget {
 
                 jQuery( '#uptime-monitoring-widget-response-times-top-select' ).dropdown( {
                     onChange: function( value ) {
-                        console.log( value );
                         mainwp_uptime_monitoring_response_time_filter(value);
                     }
                 });
@@ -454,7 +453,6 @@ class MainWP_Uptime_Monitoring_Site_Widget {
                     const values = data.map(item => item.value);
                     let x_counter = -1;
                     let x_div = Math.ceil(categories.length / 12);
-                    console.log(categories ? categories.length : 0);
                     if( !up_monitoring){
                             // Chart configuration.
                             const options = {

@@ -269,7 +269,7 @@ class Api_Backups_Settings {
                             <div class="ui form">
                                 <form method="POST" action="">
                                     <?php
-                                    wp_nonce_field( 'mainwp-admin-nonce' );
+                                    MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
                                     ?>
                                     <input type="hidden" name="wp_nonce_cloudways" value="<?php echo esc_attr( wp_create_nonce( $_nonce_slug ) ); ?>" />
                                     <?php
@@ -346,7 +346,7 @@ class Api_Backups_Settings {
                             <div class="ui hidden divider settings-field-indicator-wrapper settings-field-indicator-gridpane-settings"></div>
                             <div class="ui form">
                                 <form method="POST" action="">
-                                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                                     <input type="hidden" name="wp_nonce_gridpane" value="<?php echo esc_attr( wp_create_nonce( $_nonce_slug ) ); ?>" />
                                     <?php
                                     /**
@@ -413,7 +413,7 @@ class Api_Backups_Settings {
                             <div class="ui hidden divider"></div>
                             <div class="ui form">
                                 <form method="POST" action="">
-                                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                                     <input type="hidden" name="wp_nonce_vultr" value="<?php echo esc_attr( wp_create_nonce( $_nonce_slug ) ); ?>" />
                                     <?php
                                         /**
@@ -479,7 +479,7 @@ class Api_Backups_Settings {
                             <div class="ui hidden divider"></div>
                             <div class="ui form">
                                 <form method="POST" action="">
-                                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                                     <input type="hidden" name="wp_nonce_linode" value="<?php echo esc_attr( wp_create_nonce( $_nonce_slug ) ); ?>" />
                                     <?php
                                         /**
@@ -547,7 +547,7 @@ class Api_Backups_Settings {
                             <div class="ui hidden divider"></div>
                             <div class="ui form">
                                 <form method="POST" action="">
-                                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                                     <input type="hidden" name="wp_nonce_digitalocean" value="<?php echo esc_attr( wp_create_nonce( $_nonce_slug ) ); ?>" />
                                     <?php
                                         /**
@@ -614,7 +614,7 @@ class Api_Backups_Settings {
                             <div class="ui hidden divider"></div>
                             <div class="ui form">
                                 <form method="POST" action="">
-                                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                                     <input type="hidden" name="wp_nonce_cpanel" value="<?php echo esc_attr( wp_create_nonce( $_nonce_slug ) ); ?>" />
                                     <?php
                                     /**
@@ -714,7 +714,7 @@ class Api_Backups_Settings {
                             <div class="ui hidden divider"></div>
                             <div class="ui form">
                                 <form method="POST" action="">
-                                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                                     <input type="hidden" name="wp_nonce_plesk" value="<?php echo esc_attr( wp_create_nonce( $_nonce_slug ) ); ?>" />
                                     <?php
                                     /**
@@ -791,7 +791,7 @@ class Api_Backups_Settings {
                             <div class="ui hidden divider"></div>
                             <div class="ui form">
                                 <form method="POST" action="">
-                                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                                     <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'kinsta_api_form' ) ); ?>" />
                                     <?php
                                         /**

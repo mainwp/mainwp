@@ -339,7 +339,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
             <form method="POST" action="" id="mainwp-edit-monitor-site-form" enctype="multipart/form-data" class="ui form">
         <?php } ?>
 
-            <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+            <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
             <input type="hidden" name="wp_nonce_uptime_settings" value="<?php echo esc_attr( wp_create_nonce( 'UpdateMonitorSettings' ) ); ?>" />
             <input type="hidden" id="mainwp_edit_monitor_site_id" name="mainwp_edit_monitor_site_id" value="<?php echo intval( $site_id ); ?>" />
             <input type="hidden" name="mainwp_edit_monitor_id" id="mainwp_edit_monitor_id" value="<?php echo ! empty( $mo_settings['monitor_id'] ) ? intval( $mo_settings['monitor_id'] ) : 0; ?>" />

@@ -439,7 +439,7 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         </div>
                         <div class="field">
                             <label><?php esc_html_e( 'Select tag color', 'mainwp' ); ?></label>
-                            <input type="color" name="mainwp-group-color" class="mainwp-color-picker-input" id="mainwp-group-color"  value="" />
+                            <input type="color" name="mainwp-group-color" class="mainwp-color-picker-input" id="mainwp-group-color"  value="#ffffff" />
                         </div>
                     </div>
                 </div>

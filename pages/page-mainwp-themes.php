@@ -1836,7 +1836,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     </div>
                     <div id="themes-loading" class="ui double page text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
                     <form id="theme-filter" method="post" class="mainwp-bulk-install-showhide-content">
-                        <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                        <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                         <div class="mainwp-browse-themes content-filterable"></div>
                         <div class="theme-install-overlay wp-full-overlay expanded"></div>
                     </form>

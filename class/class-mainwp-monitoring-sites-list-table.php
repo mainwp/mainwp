@@ -878,7 +878,6 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                         "columns": <?php echo wp_json_encode( $this->get_columns_init() ); ?>,
                         "drawCallback": function( settings ) {
                             this.api().tables().body().to$().attr( 'id', 'mainwp-manage-sites-body-table' );
-                            // mainwp_datatable_fix_menu_overflow( '#mainwp-manage-sites-table' );
                             _init_uptime_status_bar_popup_tooltip();
                         },
                         rowCallback: function (row, data) {
@@ -926,11 +925,9 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                             .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
                         }
                     }).on( 'columns-reordered', function () {
-                        console.log('columns-reordered');
                         setTimeout(() => {
                             $( '#mainwp-manage-sites-table .ui.dropdown' ).dropdown();
                             $( '#mainwp-manage-sites-table .ui.checkbox' ).checkbox();
-                            // mainwp_datatable_fix_menu_overflow( '#mainwp-manage-sites-table' );
                         }, 1000 );
                         _init_uptime_status_bar_popup_tooltip();
                     } );
@@ -998,7 +995,6 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                                 .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
                             }
                         }).on( 'columns-reordered', function () {
-                            console.log('sub pages columns-reordered');
                             setTimeout(() => {
                                 $( tblSelector + ' .ui.dropdown' ).dropdown();
                                 $( tblSelector + ' .ui.checkbox' ).checkbox();
@@ -1478,7 +1474,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                         <div class="ui right pointing dropdown"  style="z-index:999;">
                             <i class="ellipsis vertical icon"></i>
                             <div class="menu" siteid="<?php echo intval( $website['id'] ); ?>">
-                                <a class="managesites_checknow item" href="#"><?php esc_html_e( 'Check Now', 'mainwp' ); ?></a> 
+                                <a class="managesites_checknow item" href="#"><?php esc_html_e( 'Check Now', 'mainwp' ); ?></a>
                                 <?php if ( empty( $website['sync_errors'] ) ) : ?>
                                 <a class="managesites_syncdata item" href="#"><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
                                 <?php endif; ?>

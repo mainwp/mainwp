@@ -831,7 +831,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 do_action( 'mainwp_overview_screen_options_top' );
                 ?>
                 <form method="POST" action="" name="mainwp_overview_screen_options_form" id="mainwp-overview-screen-options-form">
-                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                     <input type="hidden" name="wp_nonce" value="<?php echo esc_html( wp_create_nonce( 'MainWPScrOptions' ) ); ?>" />
                     <?php static::render_screen_options( false ); ?>
                     <?php
@@ -1020,7 +1020,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                                 } catch ( e ) {
                                     if ( _count_retry < 10 ) {
                                         _count_retry++;
-                                        console.log('retry:' + _count_retry);
                                         _try_start_usetiful_tour();
                                     }
                                 }
@@ -1775,8 +1774,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
 
                 // default settings.
                 // if ( ! isset( $layout['x'] ) && ! isset( $layout['w'] ) ) {
-                //     $layout['w'] = 4;
-                //     $layout['h'] = 4;
+                // $layout['w'] = 4;
+                // $layout['h'] = 4;
                 // }
 
                 $layout_attrs_escaped  = ' gs-y="' . ( isset( $layout['y'] ) && -1 !== (int) ( $layout['y'] ) ? esc_attr( $layout['y'] ) : '' ) . '" gs-x="' . ( isset( $layout['x'] ) && - 1 !== (int) $layout['x'] ? esc_attr( $layout['x'] ) : '' ) . '" ';
@@ -1978,7 +1977,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             </div>
                 <div class="content" id="mainwp-upload-custom-icon-content">
                 <form action="" method="post" enctype="multipart/form-data" name="uploadicon_form" id="uploadicon_form" class="">
-                <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                 <div class="ui message" id="mainwp-message-zone-upload" style="display:none;"></div>
                     <?php
                     /**
@@ -2745,7 +2744,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 <div class=""><?php printf( esc_html__( 'Did you know you can create your custom theme? %1$sSee here how to do it%2$s!', 'mainwp' ), '<a href="https://mainwp.com/kb/how-to-change-the-theme-for-mainwp/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
             </div>
             <form method="POST" action="" name="mainwp_select_mainwp_themes_form" id="mainwp_select_mainwp_themes_form">
-            <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+            <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                 <input type="hidden" name="wp_scr_options_nonce" value="<?php echo esc_attr( wp_create_nonce( 'MainWPSelectThemes' ) ); ?>" />
             <?php
             /**
@@ -2920,6 +2919,32 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <input type="hidden" id="mainwp-common-filter-segments-model-name" value="<?php echo esc_attr( $name ); ?>" />
         </div>
         <?php
+    }
+
+
+    /**
+     * Method generate_wp_nonce()
+     *
+     * @param  mixed $act Action.
+     * @param  mixed $name Input name.
+     * @param  mixed $id Input id.
+     * @param  mixed $echo_out Echo or not.
+     * @return mixed Output.
+     */
+    public static function generate_wp_nonce( $act, $name = '_wpnonce', $id = '__auto__', $echo_out = true ) {
+
+        if ( '__auto__' === $id ) {
+            $id = wp_generate_password( 12, false );
+        }
+
+        $nonce = wp_create_nonce( $act );
+        $out   = '<input type="hidden" name="' . esc_attr( $name ) . '" id="' . esc_attr( $id ) . '" value="' . esc_attr( $nonce ) . '" />';
+
+        if ( $echo_out ) {
+            echo $out; //phpcs:ignore --ok.
+            return;
+        }
+        return $out;
     }
 
     /**

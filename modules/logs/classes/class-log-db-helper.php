@@ -298,7 +298,7 @@ class Log_DB_Helper extends MainWP_DB {
                 WHERE i.context = %s
                 AND i.created >= %d
                 AND i.created < %d
-                ORDER BY i.created DESC
+                ORDER BY i.created ASC
             ';
 
             $sql = $wpdb->prepare(
@@ -401,7 +401,7 @@ class Log_DB_Helper extends MainWP_DB {
             ON i.log_id = m.meta_log_id
             AND i.context = %s
             {$cond_meta}
-        ORDER BY d.day_start DESC, i.created DESC
+        ORDER BY d.day_start ASC, i.created ASC
         ;";
 
         $query = $wpdb->prepare(

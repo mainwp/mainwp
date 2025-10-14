@@ -424,6 +424,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         <?php
         MainWP_UI::render_modal_upload_icon();
         MainWP_Updates::render_plugin_details_modal();
+        MainWP_Updates::render_changes_history_modal();
     }
 
     /**

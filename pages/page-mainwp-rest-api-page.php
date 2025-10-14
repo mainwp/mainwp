@@ -856,7 +856,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
 
             <div class="ui form">
                 <form method="POST" action="">
-                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                     <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'RESTAPI' ) ); ?>" />
                     <?php
                     /**
@@ -1026,7 +1026,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         <div id="rest-api-settings" class="ui segment">
             <div class="ui form">
                     <form method="POST" action="">
-                        <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                        <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                         <input type="hidden" name="edit_key_nonce" value="<?php echo esc_attr( wp_create_nonce( 'edit-key-nonce-' . $keyid ) ); ?>" />
                         <input type="hidden" name="editkey_id" value="<?php echo esc_html( $keyid ); ?>" />
                         <input type="hidden" name="rest_v2_edit" value="1" />
@@ -1128,7 +1128,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         <div id="rest-api-settings" class="ui segment">
             <div class="ui form">
                     <form method="POST" action="">
-                        <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                        <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                         <input type="hidden" name="edit_key_nonce" value="<?php echo esc_attr( wp_create_nonce( 'edit-key-nonce-' . $keyid ) ); ?>" />
                         <input type="hidden" name="editkey_id" value="<?php echo esc_html( $keyid ); ?>" />
                         <div class="ui grid field settings-field-indicator-wrapper <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>">

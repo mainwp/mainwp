@@ -2270,7 +2270,6 @@ let kinsta_action_create_backup = function (pObj) {
 // Delete Manual Backup.
 let kinsta_action_delete_backup = function (pObj, backupId) {
 	let websiteId = jQuery('.mainwp_3rd_party_api_kinsta_action_delete_backup ').attr('website_id');
-	console.log(websiteId);
 	let data = mainwp_secure_data({
 		action: 'kinsta_action_delete_backup',
 		backup_id: backupId,
@@ -2283,7 +2282,6 @@ let kinsta_action_delete_backup = function (pObj, backupId) {
 
 	jQuery.post(ajaxurl, data, function (response) {
 		response = jQuery.trim(response);
-		console.log(response);
 		if (response === 'true') {
 
 			// Show message.

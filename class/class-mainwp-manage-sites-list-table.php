@@ -1421,7 +1421,6 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                 .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
                             }
                         }).on( 'columns-reordered', function ( e, settings, details ) {
-                            console.log('columns-reordered');
                             setTimeout(() => {
                                 jQuery( '#mainwp-manage-sites-table .ui.dropdown' ).dropdown();
                                 jQuery( '#mainwp-manage-sites-table .ui.checkbox' ).checkbox();

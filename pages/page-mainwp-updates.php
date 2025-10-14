@@ -1821,7 +1821,6 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             mainwp_datatable_init_and_fix_recalc = function(selector){
                 jQuery(selector).each( function(e) {
                     if(jQuery(this).is(":visible")){
-                        console.log('visible ' + jQuery(this).attr('id'));
                         jQuery(this).css( 'display', 'table' );
                         jQuery(this).DataTable().destroy();
                         let tb = jQuery(this).DataTable({
@@ -2129,7 +2128,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     public static function render_updates_view_options( $site_view = '' ) {
         ?>
         <form method="post" action="" class="ui mini form" style="display:inline flow-root">
-        <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+        <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
             <div class="inline field">
                 <select class="ui mini dropdown" onchange="mainwp_siteview_onchange(this)" id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">
                     <option value="1" class="item" <?php echo MAINWP_VIEW_PER_SITE === $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Show updates per Site', 'mainwp' ); ?></option>
@@ -2461,8 +2460,9 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         ?>
         <div class="ui modal" id="mainwp-plugin-theme-history-changes-modal">
             <i class="close icon"></i>
-            <div class="ui header main">
-                <?php esc_html_e( 'History', 'mainwp' ); ?>
+            <div class="ui header">
+                <div class="main-text"><?php esc_html_e( 'History', 'mainwp' ); ?></div>
+                <div class="sub header" style="display:none;"></div>
             </div>
             <div class="scrolling content"></div>
             <div class="actions">
@@ -2496,7 +2496,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
             <div class="scrolling content ui form">
                 <form method="POST" action="" id="manage-updates-screen-options-form" name="manage-updates-screen-options-form">
-                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                     <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'UpdatesScrOptions' ) ); ?>" />
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Plugin advanced automatic updates', 'mainwp' ); ?></label>

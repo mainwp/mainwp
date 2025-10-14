@@ -162,12 +162,11 @@ let mainwp_fetch_pages = function () {
                 "orderable": false
             }],
             "preDrawCallback": function () {
-                console.log('preDrawCallback js');
                 setTimeout(() => {
                     jQuery('#mainwp-pages-table .ui.dropdown').dropdown();
                     jQuery('#mainwp-pages-table .ui.checkbox').checkbox();
                     mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
-                    mainwp_datatable_fix_menu_overflow();
+                    mainwp_datatable_fix_menu_overflow('#mainwp-pages-table');
                 }, 1000);
             },
             select: {
@@ -188,11 +187,10 @@ let mainwp_fetch_pages = function () {
                     .to$().find('td.check-column .ui.checkbox').checkbox('set unchecked');
             }
         }).on('columns-reordered', function () {
-            console.log('columns-reordered');
             setTimeout(() => {
                 jQuery('#mainwp-pages-table .ui.dropdown').dropdown();
                 jQuery('#mainwp-pages-table .ui.checkbox').checkbox();
-                mainwp_datatable_fix_menu_overflow();
+                mainwp_datatable_fix_menu_overflow('#mainwp-pages-table');
                 mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
             }, 1000);
         });
@@ -405,9 +403,6 @@ let mainwp_fetch_posts = function (postId, userId, start_sites) {
 
     let params = mainwp_fetch_posts_prepare(postId, userId, start_sites);
 
-    console.log('params:');
-    console.log(params);
-
     if (typeof params !== 'object') {
         return;
     }
@@ -530,7 +525,6 @@ let mainwp_fetch_posts_prepare = function (postId, userId, start_sites) { // NOS
         if(selected_groups.length == 0){
             errors.push(select_sites_error);
         } else if (selected_groups.length > 0 && bulk_search && start_sites == undefined) {
-            console.log(num_sites);
             start_sites = 0;
             // get sites of groups.
             let data = mainwp_secure_data({
@@ -620,7 +614,6 @@ let mainwp_fetch_posts_done = function () {
                 .to$().find('td.check-column .ui.checkbox').checkbox('set unchecked');
         }
     }).on('columns-reordered', function () {
-        console.log('columns-reordered');
         setTimeout(() => {
             jQuery('#mainwp-posts-table-wrapper table .ui.dropdown').dropdown();
             jQuery('#mainwp-posts-table-wrapper table .ui.checkbox').checkbox();

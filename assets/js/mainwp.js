@@ -36,7 +36,6 @@ jQuery(function ($) {
         newCat = encodeURIComponent(newCat).replace(/%20/g, ' ');
 
         if (jQuery('#categorychecklist .menu').find('.item[data-value="' + newCat + '"]').length > 0) {
-            console.log('Existed: ' + newCat);
             jQuery('#newcategory').val('');
             return;
         }
@@ -3090,11 +3089,9 @@ jQuery(function ($) {
 });
 
 let mainwp_changes_history_box_init = function ( type, title, info ) {
-    const hd = jQuery('#mainwp-plugin-theme-history-changes-modal > div.main.header');
-    hd.text(title + ' ' + __('History'));
-    hd.append(
-        jQuery('<div class="sub header">').text(info) // safe for escape.
-    );
+    const hd = jQuery('#mainwp-plugin-theme-history-changes-modal > div.header');
+    hd.find('.main-text').text(title + ' ' + __('History')); // safe for escape.
+    hd.find('.sub.header').text(info).show();
     jQuery('#mainwp-plugin-theme-history-changes-modal').attr('history-type', type);
     jQuery('#mainwp-plugin-theme-history-changes-modal').find('.scrolling.content').html('');
 }
@@ -3136,9 +3133,9 @@ let mainwp_item_changes_load = function ( load_date = '' ) {
                 Object.entries(response.list).forEach(([indexdt, records]) => {
                     const dt = records[0].date;
                     content += `<div class="ui accordion" data-date="${indexdt}">
-                        <div class="title">
+                        <div class="title" format-date="${dt}">
                             <i class="dropdown icon"></i>
-                            ${dt}<span class="title-right"><button type="button" class="ui circular blue mini button mainwp-changes-history-switch-view" current-grouped="actions">` + __('Day History') + `</button> <button class="ui basic mini button actions-count1">${records.length} ` + __('Actions') + `</button><button class="ui basic mini button actions-count2" style="display:none;"></button></span>
+                            ${dt}<span class="title-right"><button type="button" class="ui circular blue mini button mainwp-changes-history-switch-view">` + __('Day History') + `</button> <button class="ui basic mini button actions-count1">${records.length} ` + __('Actions') + `</button><button class="ui basic mini button actions-count2" style="display:none;"></button></span>
                         </div>
                         <div class="content ui list">`;
                     records.forEach(record => {
@@ -3177,7 +3174,6 @@ let mainwp_item_changes_load = function ( load_date = '' ) {
                         e.stopPropagation(); // now it runs before ancestor handlers
                         changesHistorySwitchViewHandler(this);
                         return false;
-                        // action...
                     });
                 }
 
@@ -3238,36 +3234,15 @@ let get_color_changes_event = function( act ){
 let changesHistorySwitchViewHandler = function (btn) {
 
     const parent = jQuery(btn).closest('.ui.accordion');
+    const sel_date = jQuery(btn).closest('.title').attr('format-date');
 
     jQuery(btn).closest('.title').hasClass('active') || jQuery(btn).closest('.title').trigger('click');
 
     jQuery(parent).find('.content').find('.changes-history-status').remove();
 
-    if (jQuery(btn).attr('current-grouped') == 'actions') {
-        jQuery(btn).attr('current-grouped', 'items');
-        jQuery(btn).text(__('Item History'));
+    jQuery(parent).find('.content .list-item-actions-in-day').hide();
 
-        jQuery(parent).find('.content .list-item-actions-in-day').hide();
-
-        if(jQuery(parent).find('.content .list-all-actions-in-day').length == 0){
-            jQuery(parent).find('.content').append('<div class="ui active centered inline loader history-actions-loading"></div>');
-        } else {
-            jQuery(parent).find('.content .list-all-actions-in-day').show();
-            jQuery(btn).closest('.title').find('.title-right .actions-count1').hide();
-            jQuery(btn).closest('.title').find('.title-right .actions-count2').show();
-            return false;
-        }
-    } else {
-        jQuery(btn).attr('current-grouped', 'actions');
-        jQuery(btn).text(__('Day History'));
-
-        jQuery(btn).closest('.title').find('.title-right .actions-count1').show();
-        jQuery(btn).closest('.title').find('.title-right .actions-count2').hide();
-
-        jQuery(parent).find('.content .list-all-actions-in-day').hide();
-        jQuery(parent).find('.content .list-item-actions-in-day').show();
-        return false;
-    }
+    jQuery(parent).find('.content').append('<div class="ui active centered inline loader history-actions-loading"></div>');
 
     const dt = jQuery(parent).data('date');
     let md = jQuery('#mainwp-plugin-theme-history-changes-modal');
@@ -3288,7 +3263,6 @@ let changesHistorySwitchViewHandler = function (btn) {
         if (response.error != undefined) {
             dayContent.append('<div class="ui message red changes-history-status">' + response.error + '</div>');
         } else if (response?.list) {
-
             if (response.list.length == 0) {
                 let msg = __('This plugin has no recorded activity in Dashboard Insights.');
                 if ('theme' === type && '' === dt) {
@@ -3335,9 +3309,13 @@ let changesHistorySwitchViewHandler = function (btn) {
                 });
 
                 if ('' !== content) {
-                    jQuery(parent).find('.title .title-right .actions-count1').hide();
-                    jQuery(parent).find('.title .title-right .actions-count2').html(count_acts + ' ' + __('Actions')).show();
-                    dayContent.append(content);
+                    jQuery(md).find('.ui.header .main-text').text(sel_date + ' ' + __('History'));
+                    let accordWrapper = jQuery("<div>", {
+                        id: "change-history-according-wrapper",
+                        html: content
+                    });
+                    jQuery(md).find('.scrolling.content').html(accordWrapper);
+                    jQuery('#change-history-according-wrapper .ui.accordion').accordion({exclusive: true});
                 }
             }
         } else {
@@ -3820,7 +3798,6 @@ jQuery(document).on('click', '#mainwp-download-system-report', function () {
 // event handler such as click.
 let mainwp_copy_to_clipboard = function (text, event) {
     let clipboardDT = event.clipboardData || window.clipboardData || event.originalEvent.clipboardData; // NOSONAR - to compatible.
-    console.log(clipboardDT);
     if (clipboardDT && clipboardDT.setData) {  // NOSONAR - to compatible.
         console.warn("Copy to clipboard.");
         return clipboardDT.setData("Text", text);
@@ -3938,7 +3915,6 @@ window.mainwp_notice_dismiss = function (notice_id, time_set) {
         data['time_set'] = time_set ? 1 : 0;
     }
     jQuery.post(ajaxurl, mainwp_secure_data(data), function () {
-        console.log('dismissed');
     });
     return false;
 }
@@ -4053,11 +4029,8 @@ jQuery(document).on('change', '.cb-select-all-parent-top, .cb-select-all-parent-
     if (false === parentSelector) {
         return;
     }
-    console.log(parentSelector);
     jQuery(parentSelector + ' .ui.checkbox').find(':checkbox')
         .prop('checked', function () {
-            console.log(this);
-            console.log(parentChecked);
             if (parentChecked) {
                 jQuery(this).closest('tr').addClass('selected');
                 return true;
@@ -4240,7 +4213,6 @@ let mainwp_sites_changes_actions_dismiss_all = function () {
 
 window.mainwp_datatable_fix_to_update_selected_rows_status = function (dtApi, setStatus) {
     if (dtApi) {
-        console.log('Datatable - update selected rows status.');
         if ('selected' === setStatus) {
             dtApi.rows('.selected').select(); // update selected status.
         } else if ('deselected' === setStatus) {
@@ -4266,12 +4238,10 @@ window.mainwp_datatable_fix_to_update_rows_state = function (tblSelect) {
         });
 
         mainwp_datatable_fix_to_update_selected_rows_status(dtApi, 'selected'); // to update selected state.
-        console.log('Datatable - update rows state.');
     }
 }
 
 window.mainwp_datatable_fix_reorder_selected_rows_status = function () {
-    console.log('Fixing: reordercol selected rows.');
     jQuery('.table.dataTable tbody').filter(':visible').children('tr.selected').find(':checkbox').prop('checked', true);
 };
 
@@ -4314,7 +4284,6 @@ window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRig
         }
     }
 
-    console.log('mainwp_datatable_fix_menu_overflow :: ' + tblSelect);
 
     // Fix the overflow prbolem for the actions menu element (right pointing menu).
     jQuery(tblSelect + '[fixed-menu-overflow="no"] tr td .ui.right.pointing.dropdown').on('click', function () {
@@ -4337,9 +4306,6 @@ window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRig
             right = right + pRight;
         }
 
-        console.log('right');
-        console.log('tweaks: ' + pTop + ' right: ' + pRight);
-        console.log('top: ' + top + ' right: ' + right);
         jQuery(this).find('.menu').css('min-width', '170px');
         jQuery(this).find('.menu').css('top', top);
         jQuery(this).find('.menu')[0].style.setProperty('right', right + 'px', 'important');
@@ -4365,9 +4331,6 @@ window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRig
         if (pTop !== undefined) {
             top = top + pTop;
         }
-
-        console.log('left');
-        console.log('top: ' + top + ' left: ' + left);
 
         jQuery(this).find('.menu').css('min-width', '150px');
         jQuery(this).removeClass('left');
@@ -4405,7 +4368,6 @@ let mainwp_datatable_fix_child_menu_overflow = function (chilRow, fix_overflow) 
         jQuery(this).find('.menu').css('top', top);
         jQuery(this).find('.menu').css('left', left);
         jQuery(this).find('.menu').css('min-width', '170px');
-        console.log('top:' + top);
     });
 }
 
@@ -4914,8 +4876,6 @@ jQuery(function ($) {
                 me = $('.settings-field-indicator-wrapper.custom-payment-methods');
             }
         }
-        console.log(objName);
-        console.log(val);
         mainwp_settings_fields_value_on_change(me, val);
     });
 
@@ -4925,7 +4885,6 @@ jQuery(function ($) {
             let defval = $(parent).attr('default-indi-value') ?? ''; // put default-indi-value at wrapper because semantic ui some case move class of input too input's parent.
             let indiObj = parent.find('.settings-field-icon-indicator');
             if (indiObj.length) {
-                console.log('value: ' + val + ' - default: ' + defval);
                 if (val == defval || ('0' == val && '' === defval)) { // empty and zero are same.
                     $(indiObj).removeClass('visible-indicator');
                 } else {
@@ -5313,4 +5272,10 @@ let get_local_date_string = function () {
     const m = String(today.getMonth() + 1).padStart(2, '0'); // month starts from 0
     const d = String(today.getDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
+}
+
+function mainwp_forceReload(targetUrl) {
+    const url = targetUrl || window.location.href;
+    // Navigate to URL (force reload from server)
+    window.location.href = url;
 }

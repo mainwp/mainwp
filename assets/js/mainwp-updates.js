@@ -2386,7 +2386,6 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                 _error = __('Update failed. Please try again.');
             }
 
-            console.log('Update error.');
             updatesoverview_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-html-popup" data-position="left center" data-html="">' + _icon + '</span>');
             mainwp_init_html_popup('.updatesoverview-upgrade-status-wp[siteid="' + pWebsiteId + '"] .mainwp-html-popup', _error);
         } else {
@@ -2857,12 +2856,10 @@ let updatesoverview_plugins_ignore_all = function (slug, name, obj, ver) {
         jQuery.post(ajaxurl, data, function (response) {
             if (response.result) {
                 if (ver != undefined && ver != '') { // ignore this version.
-                    console.log('ver' + ver);
                     parent.find('td:last-child').html('<span data-tooltip="Ignored" data-position="left center" data-inverted=""><i class="check green icon"></i></span>');
                     jQuery('tr[plugin_slug="' + slug + '"][last-version="' + ver + '"]').find('td:last-child').html('<span data-tooltip="Ignored" data-position="left center" data-inverted=""><i class="check green icon"></i></span>');
                     jQuery('tr[plugin_slug="' + slug + '"][last-version="' + ver + '"]').attr('updated', '-1');
                 } else {
-                    console.log('not ver');
                     parent.find('td:last-child').html('<span data-tooltip="Ignored" data-position="left center" data-inverted=""><i class="check green icon"></i></span>');
                     jQuery('tr[plugin_slug="' + slug + '"]').find('table tr td:last-child').html('<span data-tooltip="Ignored" data-position="left center" data-inverted=""><i class="check green icon"></i></span>');
                     jQuery('tr[plugin_slug="' + slug + '"]').find('table tr').attr('updated', '-1');
@@ -3591,7 +3588,6 @@ let mainwp_master_checkbox_init = function ($) {
     // Main Master Checkboxes.
     $('.main-master-checkbox .main-master.checkbox').checkbox();
     $('.main-master-checkbox .main-master.checkbox').on('click', function (e) {
-        console.log('main-master click');
         if ($(this).checkbox('is checked')) {
             $(this).closest('.main-master-checkbox').next('.main-child-checkbox').find('.checkbox').checkbox('check');
             $(this).closest('.main-master-checkbox').find('.checkbox').checkbox('check');
@@ -3609,7 +3605,6 @@ window.mainwp_table_check_columns_init = function (pTableSelector) {
     jQuery(document).find(tblSelect + ' th.check-column .checkbox').checkbox({ // table headers.
         // check all children
         onChecked: function () {
-            console.log('parent checked.');
             let $table = jQuery(this).closest('table');
             if ($table.parent().parent().hasClass('dt-scroll-head') || $table.parent().parent().hasClass('dt-scroll-foot')) {
                 $table = jQuery(this).closest('.dt-scroll'); // to compatible with datatable scroll
@@ -3638,7 +3633,6 @@ window.mainwp_table_check_columns_init = function (pTableSelector) {
         fireOnInit: true,
         // Change parent state on each child checkbox change
         onChange: function () {
-            console.log('child checked.');
             let $table = jQuery(this).closest('table');
 
             if ($table.parent().hasClass('dt-scroll-body'))

@@ -685,7 +685,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             <div class="scrolling content">
                 <div class="ui info message"><?php esc_html_e( 'Empty fields will not be passed to child sites.', 'mainwp' ); ?></div>
                 <form id="update_user_profile" class="ui form">
-                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
 
                     <h3 class="ui header"><?php esc_html_e( 'Name', 'mainwp' ); ?></h3>
 
@@ -896,11 +896,10 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         "orderable": false
                     } ],
                     "preDrawCallback": function() {
-                        console.log('preDrawCallback mainwp-users-table');
                         setTimeout(() => {
                             jQuery('#mainwp-users-table .ui.dropdown').dropdown();
                             jQuery('#mainwp-users-table .ui.checkbox').checkbox();
-                            mainwp_datatable_fix_menu_overflow();
+                            mainwp_datatable_fix_menu_overflow('#mainwp-users-table');
                             mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
                         }, 1000);
                     },
@@ -922,11 +921,10 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
                     }
                 }).on( 'columns-reordered', function () {
-                    console.log('columns-reordered');
                     setTimeout(() => {
                         jQuery( '#mainwp-users-table .ui.dropdown' ).dropdown();
                         jQuery( '#mainwp-users-table .ui.checkbox' ).checkbox();
-                        mainwp_datatable_fix_menu_overflow();
+                        mainwp_datatable_fix_menu_overflow('#mainwp-users-table');
                         mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
                     }, 1000);
                 });
@@ -1497,7 +1495,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             do_action( 'mainwp_before_new_user_form' );
             ?>
             <form action="" method="post" name="createuser" id="createuser" class="add:users: validate">
-                <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                 <div class="mainwp-main-content">
                     <div class="ui hidden divider"></div>
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-user-info-message' ) ) : ?>
@@ -1742,7 +1740,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         <?php static::render_header( 'Import' ); ?>
         <div id="MainWP_Bulk_AddUser">
             <form action="" method="post" name="createuser" id="createuser" class="add:users: validate" enctype="multipart/form-data">
-                <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                 <?php static::render_import_users(); ?>
             </form>
         </div>
@@ -1780,7 +1778,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
             <div class="ui form">
                     <form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form">
-                        <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                        <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                         <div class="ui grid field">
                             <label class="six wide column middle aligned"><?php esc_html_e( 'Upload the CSV file', 'mainwp' ); ?></label>
                         <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click to upload the import file.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
@@ -2023,7 +2021,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                 return false; // Break the loop
                             }
                         });
-                        
+
                         // If all items are successful, redirect to success page
                         if (allSuccess) {
                             jQuery('#createuser')[0].reset();

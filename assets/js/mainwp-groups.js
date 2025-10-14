@@ -140,7 +140,6 @@ jQuery(function () {
 
 // Keep update selected tag site ids.
 jQuery(document).on('change', '#mainwp-manage-groups-sites-table .mainwp-site-checkbox', function() {
-    console.log('on-changes');
     if(typeof jQuery('#mainwp-save-sites-groups-selection-button').attr('selected-tag-siteids') !== "undefined"){
         let tag_siteids = jQuery('#mainwp-save-sites-groups-selection-button').attr('selected-tag-siteids');
         tag_siteids = '' != tag_siteids ? JSON.parse(tag_siteids) : [];

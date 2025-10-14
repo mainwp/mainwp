@@ -1202,7 +1202,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( ! $hide_show_updates_per ) {
             ?>
             <form method="post" action="" class="ui mini form right aligned">
-                <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                 <input type="hidden" name="whichview" value="<?php echo esc_attr( $which ); ?>" />
                 <div class="inline field">
                     <select class="ui dropdown" onchange="mainwp_siteview_onchange(this)"  name="select_mainwp_options_plugintheme_view">
@@ -1941,7 +1941,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             </div>
             <div class="mainwp-browse-plugins mainwp-bulk-install-showhide-content">
                 <form id="plugin-filter" method="post">
-                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                     <?php static::$pluginsTable->display(); ?>
                 </form>
             </div>

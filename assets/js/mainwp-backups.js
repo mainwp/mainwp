@@ -1105,7 +1105,6 @@ mainwp_managebackups_add = function () {
         }
     }
 
-    console.log(errors);
 
     if (errors.length > 0) {
         feedback('mainwp-message-zone', errors.join('<br />'), 'red');
@@ -1272,7 +1271,6 @@ managebackups_pause = function (element) {
 jQuery(document).on('click', '#updatesoverview-backup-ignore', function () {
     if (updatesoverviewContinueAfterBackup != undefined) {
         mainwpPopup('#updatesoverview-backup-box').close();
-        console.log(updatesoverviewContinueAfterBackup);
         updatesoverviewContinueAfterBackup();
         updatesoverviewContinueAfterBackup = undefined;
     }

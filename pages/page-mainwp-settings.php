@@ -630,7 +630,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 <?php endif; ?>
                 <div class="ui form">
                     <form method="POST" action="admin.php?page=Settings" id="mainwp-settings-page-form">
-                        <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                        <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                         <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'Settings' ) ); ?>" />
                         <?php
                         /**
@@ -1391,7 +1391,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 <?php endif; ?>
                 <div class="ui form">
                     <form method="POST" action="">
-                        <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                        <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                         <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'SettingsAdvanced' ) ); ?>" />
                         <?php
 
@@ -1996,7 +1996,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             <?php endif; ?>
                 <div class="ui form">
                     <form method="POST" action="">
-        <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+        <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                         <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'MainWPTools' ) ); ?>" />
                         <h3 class="ui dividing header">
         <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-tools' ); ?>

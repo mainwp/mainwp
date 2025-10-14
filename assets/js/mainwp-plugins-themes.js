@@ -184,7 +184,6 @@ jQuery(function () {
                 }
             });
         }
-        console.log(selectedIds);
         if (selectedIds.length == 0) {
             feedback('mainwp-message-zone', __('Please select at least one website.'), 'yellow');
         } else {
@@ -214,7 +213,6 @@ jQuery(function () {
 
     jQuery(document).on('click', '#mainwp-do-plugins-bulk-actions', function () {
         let action = jQuery("#mainwp-bulk-actions").dropdown("get value");
-        console.log(action);
         if (action == '') {
             return false;
         }
@@ -563,7 +561,6 @@ jQuery(function () {
 
     jQuery(document).on('click', '#mainwp-do-themes-bulk-actions', function () {
         let action = jQuery("#mainwp-bulk-actions").dropdown("get value");
-        console.log(action);
         if (action == '' || action == 'none')
             return;
 
@@ -832,7 +829,6 @@ let manage_plugins_upgrade = function (slug, websiteid) {
 };
 
 let manage_plugins_upgrade_continueAfterBackup = function (slug, websiteId, websiteHolder) {
-    console.log('plugin upgrade continue');
     let siteHolder = websiteHolder;
     return function () {
         let data = mainwp_secure_data({
@@ -989,7 +985,6 @@ let manage_themes_upgrade_theme = function (slug, websiteid) {
 };
 
 let manage_themes_upgrade_continueAfterBackup = function (slug, websiteId, websiteHolder) {
-    console.log('theme upgrade continue');
     let siteHolder = websiteHolder;
     let pSlug = slug;
     return function () {
@@ -1126,7 +1121,6 @@ let mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAf
 
                 if (siteFeedback != undefined) {
                     mainwp_managesites_prepare_backup_popup(response, pSiteNames, siteFeedback);
-                    console.log(typeof continueAfterBackup);
                     mainwpPopup('#managesites-backup-box').init({
                         title: __("Full backup required!"), callback: function () {
                             continueAfterBackup = undefined;

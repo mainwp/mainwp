@@ -36,7 +36,6 @@ jQuery(function ($) {
         newCat = encodeURIComponent(newCat).replace(/%20/g, ' ');
 
         if (jQuery('#categorychecklist .menu').find('.item[data-value="' + newCat + '"]').length > 0) {
-            console.log('Existed: ' + newCat);
             jQuery('#newcategory').val('');
             return;
         }
@@ -3799,7 +3798,6 @@ jQuery(document).on('click', '#mainwp-download-system-report', function () {
 // event handler such as click.
 let mainwp_copy_to_clipboard = function (text, event) {
     let clipboardDT = event.clipboardData || window.clipboardData || event.originalEvent.clipboardData; // NOSONAR - to compatible.
-    console.log(clipboardDT);
     if (clipboardDT && clipboardDT.setData) {  // NOSONAR - to compatible.
         console.warn("Copy to clipboard.");
         return clipboardDT.setData("Text", text);
@@ -3917,7 +3915,6 @@ window.mainwp_notice_dismiss = function (notice_id, time_set) {
         data['time_set'] = time_set ? 1 : 0;
     }
     jQuery.post(ajaxurl, mainwp_secure_data(data), function () {
-        console.log('dismissed');
     });
     return false;
 }
@@ -4032,11 +4029,8 @@ jQuery(document).on('change', '.cb-select-all-parent-top, .cb-select-all-parent-
     if (false === parentSelector) {
         return;
     }
-    console.log(parentSelector);
     jQuery(parentSelector + ' .ui.checkbox').find(':checkbox')
         .prop('checked', function () {
-            console.log(this);
-            console.log(parentChecked);
             if (parentChecked) {
                 jQuery(this).closest('tr').addClass('selected');
                 return true;
@@ -4219,7 +4213,6 @@ let mainwp_sites_changes_actions_dismiss_all = function () {
 
 window.mainwp_datatable_fix_to_update_selected_rows_status = function (dtApi, setStatus) {
     if (dtApi) {
-        console.log('Datatable - update selected rows status.');
         if ('selected' === setStatus) {
             dtApi.rows('.selected').select(); // update selected status.
         } else if ('deselected' === setStatus) {
@@ -4245,12 +4238,10 @@ window.mainwp_datatable_fix_to_update_rows_state = function (tblSelect) {
         });
 
         mainwp_datatable_fix_to_update_selected_rows_status(dtApi, 'selected'); // to update selected state.
-        console.log('Datatable - update rows state.');
     }
 }
 
 window.mainwp_datatable_fix_reorder_selected_rows_status = function () {
-    console.log('Fixing: reordercol selected rows.');
     jQuery('.table.dataTable tbody').filter(':visible').children('tr.selected').find(':checkbox').prop('checked', true);
 };
 
@@ -4293,7 +4284,6 @@ window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRig
         }
     }
 
-    console.log('mainwp_datatable_fix_menu_overflow :: ' + tblSelect);
 
     // Fix the overflow prbolem for the actions menu element (right pointing menu).
     jQuery(tblSelect + '[fixed-menu-overflow="no"] tr td .ui.right.pointing.dropdown').on('click', function () {
@@ -4316,9 +4306,6 @@ window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRig
             right = right + pRight;
         }
 
-        console.log('right');
-        console.log('tweaks: ' + pTop + ' right: ' + pRight);
-        console.log('top: ' + top + ' right: ' + right);
         jQuery(this).find('.menu').css('min-width', '170px');
         jQuery(this).find('.menu').css('top', top);
         jQuery(this).find('.menu')[0].style.setProperty('right', right + 'px', 'important');
@@ -4344,9 +4331,6 @@ window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRig
         if (pTop !== undefined) {
             top = top + pTop;
         }
-
-        console.log('left');
-        console.log('top: ' + top + ' left: ' + left);
 
         jQuery(this).find('.menu').css('min-width', '150px');
         jQuery(this).removeClass('left');
@@ -4384,7 +4368,6 @@ let mainwp_datatable_fix_child_menu_overflow = function (chilRow, fix_overflow) 
         jQuery(this).find('.menu').css('top', top);
         jQuery(this).find('.menu').css('left', left);
         jQuery(this).find('.menu').css('min-width', '170px');
-        console.log('top:' + top);
     });
 }
 
@@ -4893,8 +4876,6 @@ jQuery(function ($) {
                 me = $('.settings-field-indicator-wrapper.custom-payment-methods');
             }
         }
-        console.log(objName);
-        console.log(val);
         mainwp_settings_fields_value_on_change(me, val);
     });
 
@@ -4904,7 +4885,6 @@ jQuery(function ($) {
             let defval = $(parent).attr('default-indi-value') ?? ''; // put default-indi-value at wrapper because semantic ui some case move class of input too input's parent.
             let indiObj = parent.find('.settings-field-icon-indicator');
             if (indiObj.length) {
-                console.log('value: ' + val + ' - default: ' + defval);
                 if (val == defval || ('0' == val && '' === defval)) { // empty and zero are same.
                     $(indiObj).removeClass('visible-indicator');
                 } else {

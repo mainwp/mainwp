@@ -84,7 +84,7 @@ class Log_Graph_Status_Widget {
                 ?>
                 <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
                 <?php
-                wp_nonce_field( 'mainwp-admin-nonce' );
+                MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' )admin-nonce' );
                 $this->render_widget_content();
                 ?>
                 <?php

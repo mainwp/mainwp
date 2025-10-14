@@ -249,7 +249,6 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                             orderMulti: false,
                             searchDelay: <?php echo intval( $table_features['searchDelay'] ); ?>
                         } ).on( 'columns-reordered', function () {
-                            console.log('columns-reordered');
                             setTimeout(() => {
                                 $( '#mainwp-manage-sites-monitor-table .ui.dropdown' ).dropdown();
                                 $( '#mainwp-manage-sites-monitor-table .ui.checkbox' ).checkbox();

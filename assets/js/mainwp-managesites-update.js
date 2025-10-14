@@ -277,7 +277,6 @@ let managesites_update_pluginsthemes_next = function (pType) {
 
 
 jQuery(document).on('click', '#managesites-backup-ignore', function () {
-    console.log(typeof managesitesContinueAfterBackup);
     if (managesitesContinueAfterBackup != undefined) {
         ignoredBackupBeforeUpdate = true;
         mainwpPopup('#managesites-backup-box').close();

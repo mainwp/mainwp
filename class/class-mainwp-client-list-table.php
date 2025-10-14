@@ -487,7 +487,6 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                         orderMulti: false,
                         searchDelay: <?php echo intval( $table_features['searchDelay'] ); ?>
                     } ).on( 'columns-reordered', function () {
-                        console.log('columns-reorderede');
                         setTimeout(() => {
                             $( '#mainwp-manage-clients-table .ui.dropdown' ).dropdown();
                             $( '#mainwp-manage-clients-table .ui.checkbox' ).checkbox();

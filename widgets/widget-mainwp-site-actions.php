@@ -174,7 +174,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
                     <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
                     <?php
-                    wp_nonce_field( 'mainwp-admin-nonce' );
+                    MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
                     $this->list_events_table->display();
 
                     /**
@@ -190,7 +190,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     ?>
                 </div>
         </div>
-        
+
         <div class="mainwp-widget-footer">
             <div class="ui two columns stackable grid">
                 <div class="left aligned middle aligned column">

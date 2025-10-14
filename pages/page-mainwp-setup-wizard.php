@@ -437,7 +437,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <h1><?php esc_html_e( 'System Requirements Check', 'mainwp' ); ?></h1>
         <?php MainWP_System_View::mainwp_warning_notice(); ?>
     <form method="post" class="ui form">
-        <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+        <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
         <?php
         $show_ssl = false;
         if ( MainWP_Server_Information_Handler::is_openssl_config_warning() ) {
@@ -551,7 +551,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         </div>
                     </div>
                 <?php } ?>
-                <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                 <div class="ui clearing hidden divider"></div>
                 <div class="ui hidden divider"></div>
                 <div class="ui hidden divider"></div>
@@ -741,7 +741,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <div class="ui hidden divider"></div>
                 <div class="ui hidden divider"></div>
                 <?php wp_nonce_field( 'mwp-setup' ); ?>
-                <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                 <input type="hidden" id="nonce_secure_data" mainwp_addwp="<?php echo esc_js( wp_create_nonce( 'mainwp_addwp' ) ); ?>" mainwp_checkwp="<?php echo esc_attr( wp_create_nonce( 'mainwp_checkwp' ) ); ?>" />
                 <div class="ui grid">
                     <div class="row">
@@ -796,7 +796,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <form action="" method="post" enctype="multipart/form-data" name="createclient_form" id="createclient_form" class="add:clients: validate">
                 <div class="ui red message" id="mainwp-message-zone" style="display:none"></div>
                 <div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
-                <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                 <div class="ui top attached tabular menu mainwp-qsw-add-client">
                     <a class="item <?php echo esc_attr( $item_class_active ); ?>" data-tab="single-client"><?php esc_html_e( 'Single Client', 'mainwp' ); ?></a>
                     <a class="item <?php echo esc_attr( $tab_class_active ); ?>" data-tab="multiple-client"><?php esc_html_e( 'Multiple Clients', 'mainwp' ); ?></a>
@@ -1043,7 +1043,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <div class="ui hidden divider"></div>
         <div class="ui hidden divider"></div>
         <form method="post" class="ui form">
-            <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+            <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
 
             <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-monitor-general" default-indi-value="0">
                 <label class="six wide column middle aligned">

@@ -449,7 +449,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
             <div class="scrolling content ui form">
                 <form method="POST" action="" id="manage-sites-screen-options-form" name="manage_sites_screen_options_form">
-                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                     <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'ManageSitesScrOptions' ) ); ?>" />
                     <div class="ui grid field">
                         <label class="top aligned six wide column" tabindex="0"><?php esc_html_e( 'Sites view mode', 'mainwp' ); ?></label>
@@ -640,7 +640,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             ?>
             <div id="mainwp-add-new-site">
                 <form method="POST" class="ui form" action="" enctype="multipart/form-data" id="mainwp_managesites_add_form">
-                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                     <div class="ui labeled icon inverted menu mainwp-sub-submenu" id="mainwp-add-sites-tabular-menu">
                         <a class="item active" data-tab="single-site">
                             <i class="wordpress icon"></i><?php //phpcs:ignore -- WP icon. ?>
@@ -1372,7 +1372,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <?php echo esc_html( $title_page ); ?>
                             <div class="sub header"><?php esc_html_e( 'Import multiple websites to your MainWP Dashboard.', 'mainwp' ); ?></div>
                         </h2>
-                        <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                        <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                         <div class="ui grid field">
                             <label class="three wide column middle aligned" for="mainwp_managesites_file_bulkupload"><?php esc_html_e( 'Upload CSV', 'mainwp' ); ?> (<a href="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/csv/sample.csv' ); ?>"><?php esc_html_e( 'Download Sample', 'mainwp' ); ?></a>)</label>
                             <div class="nine wide column">
@@ -1725,7 +1725,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <div id="mainwp-manage-sites-content" class="ui segment">
             <div id="mainwp-message-zone" class="ui message" style="display: none;"></div>
             <form method="post" class="mainwp-table-container">
-                <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                 <?php
                 static::$sitesTable->display( $optimize_for_sites_table );
                 static::$sitesTable->clear_items();

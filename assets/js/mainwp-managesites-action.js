@@ -130,7 +130,6 @@ let mainwp_managesites_doaction_process = function (action) {
     return jQuery(el).val();
   });
 
-  console.log(selectedIds);
 
   if (action == 'delete') {
     mainwp_managesites_bulk_remove_next();
@@ -355,7 +354,6 @@ let mainwp_managesites_bulk_refresh_favico = function (siteIds) {
   let allWebsiteIds = jQuery('.dashboard_wp_id[error-status=0]').map(function (indx, el) {
     return jQuery(el).val();
   });
-  console.log(allWebsiteIds);
 
   let selectedIds = [], excludeIds = [];
   if (siteIds instanceof Array) {

@@ -1721,7 +1721,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             <div class="ui mini form two column stackable grid">
                 <div class="column">
                 <form method="POST" action="">
-                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                     <?php // phpcs:disable WordPress.Security.EscapeOutput ?>
                         <select name="actionlogs_status" class="ui mini dropdown">
                         <option value="<?php echo MainWP_Logger::DISABLED; ?>" <?php echo MainWP_Logger::DISABLED === $enabled ? 'selected' : ''; ?>>

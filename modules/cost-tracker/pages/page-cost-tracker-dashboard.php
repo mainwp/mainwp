@@ -630,7 +630,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                             "drawCallback": function( settings ) {
                                 this.api().tables().body().to$().attr( 'id', 'mainwp-module-cost-tracker-body-table' );
                                 jQuery( '#mainwp-module-cost-tracker-sites-table-container' ).css( 'opacity', '1' );
-                                mainwp_datatable_fix_menu_overflow();
+                                mainwp_datatable_fix_menu_overflow('#mainwp-module-cost-tracker-sites-table');
                             },
                             "initComplete": function( settings, json ) {
                             },
@@ -667,7 +667,6 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                                 .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
                             }
                         }).on( 'columns-reordered', function () {
-                            console.log('columns-reordered');
                             setTimeout(() => {
                                 $( '#mainwp-module-cost-tracker-sites-table .ui.dropdown' ).dropdown();
                                 $( '#mainwp-module-cost-tracker-sites-table .ui.checkbox' ).checkbox();
@@ -692,8 +691,6 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                     ( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-clients').dropdown('get value') ) &&
                     ( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-dtsstart').dropdown('get value') ) &&
                     ( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-dtsstop').dropdown('get value') );
-
-                    console.log('emptyFilter: ' + ( emptyFilter ? 'yes' : 'no' ) );
 
                     if(emptyFilter){
                         jQuery( '#mainwp_module_cost_tracker_manage_costs_reset_filters' ).attr('disabled', 'disabled');
@@ -1753,7 +1750,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
             <div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
             <div class="scrolling content ui form">
                 <form method="POST" action="" id="subscription-sites-screen-options-form" name="subscription_sites_screen_options_form">
-                <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                     <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'CostTrackerSitesScrOptions' ) ); ?>" />
                         <div class="ui grid field">
                             <label class="six wide column"><?php esc_html_e( 'Show columns', 'mainwp' ); ?></label>

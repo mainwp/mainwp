@@ -84,13 +84,11 @@ class Cost_Tracker_Yearly_Renewals { // phpcs:ignore -- NOSONAR - multi methods.
             jQuery( document ).ready( function () {
                 var $topSelect = jQuery( '#cost-tracker-widget-yearly-renewals-top-select' ).dropdown( {
                     onChange: function( value ) {
-                        console.log('value:' + value);
                         mainwp_ui_state_save('cost-widget-yearly-renewals', value);
                     }
                 } );
 
                 var curTab = mainwp_ui_state_load('cost-widget-yearly-renewals');
-                console.log('curTab:' + curTab);
                 if(  curTab != '' && curTab != null ){
                     $topSelect.dropdown( 'set selected', curTab );
                     jQuery( '.cost_tracker_yearly_renewals').removeClass('active'); //to fix preset.

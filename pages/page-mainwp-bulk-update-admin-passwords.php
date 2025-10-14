@@ -249,7 +249,7 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
         ?>
         <div class="ui alt segment" id="mainwp-bulk-update-admin-passwords">
             <form action="" method="post" name="mainwp-update-admin-password-form" id="mainwp-update-admin-password-form" enctype="multipart/form-data">
-                <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                 <input type="hidden" name="security" value="<?php echo esc_attr( wp_create_nonce( 'mainwp_updateadminpassword' ) ); ?>"/>
                 <div class="mainwp-main-content" >
                     <div class="ui em hidden divider"></div>
@@ -440,7 +440,7 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                              * @since 4.1
                              */
                             do_action( 'mainwp_admin_pass_before_submit_button' );
-                            
+
                             ?>
                             <input type="submit" name="bulk_updateadminpassword" id="bulk_updateadminpassword" class="ui big green fluid button" value="<?php esc_attr_e( 'Update Password', 'mainwp' ); ?> "/>
                             <?php
@@ -468,7 +468,7 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                     <div style="clear:both"></div>
                 </form>
             </div>
-            
+
         <?php
     }
 }

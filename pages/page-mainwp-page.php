@@ -892,11 +892,10 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     } ],
                     "language" : { "emptyTable": "<?php esc_html_e( 'Use the search options to find the page you want to manage.', 'mainwp' ); ?>" },
                     "drawCallback": function( settings ) {
-                        console.log('drawCallback page');
                         setTimeout(() => { // to fix.
                             jQuery( '#mainwp_pages_wrap_table table .ui.dropdown' ).dropdown();
                             jQuery( '#mainwp_pages_wrap_table table .ui.checkbox' ).checkbox();
-                            mainwp_datatable_fix_menu_overflow();
+                            mainwp_datatable_fix_menu_overflow('#mainwp_pages_wrap_table');
                             mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
                         }, 1000);
                     },
@@ -918,7 +917,6 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
                     }
                 }).on( 'columns-reordered', function () {
-                    console.log('columns-reordered');
                     setTimeout(() => { // to fix.
                         jQuery( '#mainwp_pages_wrap_table table .ui.dropdown' ).dropdown();
                         jQuery( '#mainwp_pages_wrap_table table .ui.checkbox' ).checkbox();

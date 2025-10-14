@@ -452,7 +452,7 @@ class Cost_Tracker_Summary {
                     do_action( 'mainwp_module_cost_tracker_summary_screen_options_top' );
                     ?>
                     <form method="POST" action="" name="mainwp_module_cost_tracker_summary_screen_options_form" id="mainwp-module-log-overview-screen-options-form">
-                        <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                        <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                         <input type="hidden" name="module_cost_tracker_summay_options_nonce" value="<?php echo esc_attr( wp_create_nonce( 'module_cost_tracker_summay_options_nonce' ) ); ?>" />
                         <?php static::render_screen_options( false ); ?>
                         <?php

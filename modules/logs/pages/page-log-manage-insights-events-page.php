@@ -199,7 +199,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
         ?>
         <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
         <?php
-        wp_nonce_field( 'mainwp-admin-nonce' );
+        MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
         $this->list_events_table->display();
 
         /**
@@ -905,7 +905,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
             <div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
             <div class="scrolling content ui form">
                 <form method="POST" action="" id="manage-events-screen-options-form" name="manage_sites_screen_options_form">
-                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                     <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'ManageEventsScrOptions' ) ); ?>" />
                     <div class="ui grid field">
                         <label class="six wide column"><?php esc_html_e( 'Default items per page value', 'mainwp' ); ?></label>

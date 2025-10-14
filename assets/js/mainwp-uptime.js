@@ -185,7 +185,6 @@ let mainwp_managemonitors_doaction = function (action) { // NOSONAR - complex.
       return;
     }
 
-    console.log(checkItems);
     mainwp_uptime_monitor_check_now(checkItems);
     return false;
   } else if ('sync' === action) {

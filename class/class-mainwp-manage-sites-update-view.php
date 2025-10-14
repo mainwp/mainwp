@@ -117,7 +117,6 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
             jQuery(function ($) {
                 $( '.ui.dropdown.select-individual-updates .item' ).tab({
                     'onVisible': function (tab) {
-                        console.log(tab);
                         $('.select-buttons-individual-updates .button.ui').addClass('hidden');
                         $('.select-buttons-individual-updates .button.ui.' + tab).removeClass('hidden');
                     }

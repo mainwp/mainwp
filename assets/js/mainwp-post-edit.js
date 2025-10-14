@@ -161,7 +161,6 @@ jQuery(function ($) {
 		initialDate: function () {
 			let aa = $('#aa').val(), mm = $('#mm').val(), jj = $('#jj').val(), hh = $('#hh').val(), mn = $('#mn').val();
 			let ind = new Date(aa, mm - 1, jj, hh, mn);
-			console.log(ind);
 			return ind;
 		}(),
 		monthFirst: false,
@@ -175,7 +174,6 @@ jQuery(function ($) {
 			}
 		},
 		onChange: function (attemptedDate, textDate) {
-			console.log('onChange:' + textDate);
 			let aa = attemptedDate.getFullYear(), mm = attemptedDate.getMonth() + 1, jj = attemptedDate.getDate(), mn = attemptedDate.getMinutes(), hh = attemptedDate.getHours();
 			mm = ('0' + mm).slice(-2); // to format 01,02,03, ... 11,12
 			$('#aa').val(aa);
@@ -186,7 +184,6 @@ jQuery(function ($) {
 			return updateText(); // not set if invalid date
 		},
 		onSelect: function (attemptedDate, mode) {
-			console.log('onSelect mode:' + mode);
 			let aa = attemptedDate.getFullYear(), mm = attemptedDate.getMonth() + 1, jj = attemptedDate.getDate(), mn = attemptedDate.getMinutes(), hh = attemptedDate.getHours();
 			mm = ('0' + mm).slice(-2); // to format 01,02,03, ... 11,12
 			$('#aa').val(aa);

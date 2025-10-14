@@ -373,7 +373,6 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                         orderMulti: false,
                         searchDelay: 350
                     }).on('select', function (e, dt, type, indexes) {
-                        console.log('select');
                         if( 'row' == type ){
                             dt.rows(indexes)
                             .nodes()
@@ -386,7 +385,6 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
                         }
                     } ).on( 'columns-reordered', function ( e, settings, details ) {
-                            console.log('columns-reordered');
                             setTimeout(() => {
                                 jQuery( '#mainwp-manage-groups-sites-table .ui.checkbox' ).checkbox();
                                 mainwp_datatable_fix_menu_overflow('#mainwp-manage-groups-sites-table' );

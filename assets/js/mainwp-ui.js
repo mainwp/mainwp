@@ -383,7 +383,6 @@ let mainwp_newpost_updateCategories = function () {
         return;
     }
     executingUpdateCategories = true;
-    console.log('mainwp_newpost_updateCategories');
     let catsSelection = jQuery('#categorychecklist');
     if (catsSelection.length > 0) {
         let tab = jQuery('#select_sites_tab').val();
@@ -410,8 +409,6 @@ let mainwp_newpost_updateCategories = function () {
 
         let selected_categories = catsSelection.dropdown('get value');
 
-        console.log('selected cats:');
-        console.log(selected_categories);
 
         let data = mainwp_secure_data({
             action: 'mainwp_get_categories',
@@ -431,7 +428,6 @@ let mainwp_newpost_updateCategories = function () {
                     catsSelection.dropdown('refresh');
                     let arrVal = pSelectedCategories.split(",");
                     catsSelection.dropdown('set selected', arrVal);
-                    console.log('re-selected: ' + pSelectedCategories);
                     updateCategoriesPostFunc();
                 }
             };
@@ -584,7 +580,6 @@ jQuery(function () {
 window.mainwp_get_icon_start = function () {
     jQuery('.cached-icon-expired').attr('queue', 1);
     mainwpVars.bulkInstallTotal = jQuery('.cached-icon-expired[queue="1"]').length;
-    console.log(mainwpVars.bulkInstallTotal + ': expired cached icons');
     if (0 === mainwpVars.bulkInstallTotal) {
         return;
     }
@@ -620,7 +615,6 @@ let mainwp_get_icon_start_specific = function (itemIconProcess) {
         type: type
     });
     jQuery.post(ajaxurl, data, function (response) {
-        console.log(response + ': ' + slug);
         mainwp_get_icon_start_next();
     });
 }

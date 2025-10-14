@@ -160,7 +160,7 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             <div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
             <div class="scrolling content ui form">
                 <form method="POST" action="" id="manage-sites-screen-options-form" name="manage_sites_screen_options_form">
-                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                     <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'MonitoringSitesScrOptions' ) ); ?>" />
                     <div class="ui grid field">
                         <label class="six wide column"><?php esc_html_e( 'Default items per page value', 'mainwp' ); ?></label>
@@ -295,7 +295,7 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
             <form method="post" class="mainwp-table-container">
                 <?php
-                wp_nonce_field( 'mainwp-admin-nonce' );
+                MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
                 static::$sitesTable->display( $optimize_for_sites_table );
                 static::$sitesTable->clear_items();
                 ?>

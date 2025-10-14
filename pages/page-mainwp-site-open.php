@@ -125,7 +125,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
                 ?>
             </div>
             <form method="POST" action="<?php echo $action; // phpcs:ignore WordPress.Security.EscapeOutput ?>" id="redirectForm">
-                <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
             </form>
         </div>
         <?php
@@ -188,7 +188,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
             $postdata['size'] = $size;
             ?>
             <form method="POST" action="<?php echo esc_url( $url ); ?>" id="redirectForm">
-                <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                 <?php
                 foreach ( $postdata as $name => $value ) {
                     echo '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '" />';
@@ -234,7 +234,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
             $postdata['open_location'] = $open_location; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
             ?>
             <form method="POST" action="<?php echo esc_url( $url ); ?>" id="redirectForm">
-                <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                 <?php
                 foreach ( $postdata as $name => $value ) {
                     echo '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '" />';

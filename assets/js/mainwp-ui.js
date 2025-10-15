@@ -563,12 +563,36 @@ window.mainwp_sites_filter_select = function (objInput) {
     }
 }
 
+window.mainwp_tags_filter_select = function (objInput) {
+    let filter = jQuery(objInput).val().toLowerCase();
+    let parent = jQuery(objInput).closest('.mainwp-search-options');
+    let tags = [];
+
+    tags = parent.find('a.item');
+
+    console.log(tags);
+
+    for (let id of tags) {
+        let currentElement = jQuery(id);
+        let value = currentElement.text().toLowerCase();
+        if (value.indexOf(filter) > -1) {
+            currentElement.show();
+        } else {
+            currentElement.hide();
+        }
+    }
+}
+
 jQuery(document).on('keyup', '#mainwp-select-sites-filter', function () {
     mainwp_sites_filter_select(this);
 });
 
 jQuery(document).on('keyup', '#mainwp-screenshots-sites-filter', function () {
     mainwp_sites_filter_select(this);
+});
+
+jQuery(document).on('keyup', '#mainwp-select-tags-filter', function () {
+    mainwp_tags_filter_select(this);
 });
 
 jQuery(function () {

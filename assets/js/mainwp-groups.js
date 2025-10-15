@@ -1,16 +1,52 @@
 jQuery(function () {
 
+  // Auto-select newly created group from URL parameter
+  let urlParams = new URLSearchParams(window.location.search);
+  let newGroupId = urlParams.get('new-tag');
+
+  jQuery(document).ready(function(){
+    if (newGroupId) {
+    // Find the menu item with the new group ID
+    let newGroupItem = jQuery('#mainwp-groups-menu').find('a.item#' + newGroupId);
+    
+    if (newGroupItem.length > 0) {
+      // Trigger click on the new group item to select it
+      newGroupItem.trigger('click');
+      
+      // Show success message
+      feedback('mainwp-message-zone', 'Tag created successfully.', 'ui green message');
+      
+      // Auto-hide message after 5 seconds
+      setTimeout(() => {
+        jQuery('#mainwp-message-zone').fadeOut();
+      }, 5000);
+      
+      // Remove the URL parameter without reloading the page
+      let cleanUrl = window.location.pathname + window.location.search.replace(/[?&]new-tag=[^&]+/, '').replace(/^&/, '?');
+      if (cleanUrl.endsWith('?')) {
+        cleanUrl = cleanUrl.slice(0, -1);
+      }
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  }
+  })
+
   // Init the groups menu
   jQuery('#mainwp-groups-menu').find('a.item').on('click', function () {
-    jQuery(this).addClass('active green');
-    jQuery(this).siblings().removeClass('active green');
-    jQuery(this).find('.label').addClass('green');
-    jQuery(this).siblings().find('.label').removeClass('green');
-    jQuery('#mainwp-delete-group-button').removeClass('disabled');
-    jQuery('#mainwp-rename-group-button').removeClass('disabled');
-    jQuery('#mainwp-save-sites-groups-selection-button').removeClass('disabled');
+    if (!newGroupId) {
+      jQuery(this).addClass('active green');
+      jQuery(this).siblings().removeClass('active green');
+      jQuery(this).find('.label').addClass('green');
+      jQuery(this).siblings().find('.label').removeClass('green');
+      jQuery('#mainwp-delete-group-button').removeClass('disabled');
+      jQuery('#mainwp-rename-group-button').removeClass('disabled');
+      jQuery('#mainwp-save-sites-groups-selection-button').removeClass('disabled');
+      jQuery('#mainwp-message-zone').fadeOut();
+    }
     show_group_items(this);
+    apply_tag_fade_effect(this);
   });
+
 
   // Trigger the create a new group modal
   jQuery(document).on('click', '#mainwp-new-sites-group-button', function () {
@@ -44,9 +80,15 @@ jQuery(function () {
   jQuery(document).on('click', '#mainwp-save-new-group-button', function () {
     let newName = jQuery('#mainwp-create-group-modal').find('input#mainwp-group-name').val();
     let newColor = jQuery('#mainwp-create-group-modal').find('input#mainwp-new-tag-color').val();
+    let selected_sites = [];
+    jQuery( "input[name='sites']:checked" ).each( function () {
+        selected_sites.push( jQuery( this ).val() );
+    } );
 
     let data = mainwp_secure_data({
-      action: 'mainwp_group_add',
+      //action: 'mainwp_group_add',
+      action: 'mainwp_group_sites_add',
+      selected_sites: selected_sites,
       newName: newName,
       newColor: newColor
     });
@@ -56,19 +98,18 @@ jQuery(function () {
 
         if (resp.error != undefined)
           return;
+
+        window.location.href = 'admin.php?page=ManageGroups&new-tag=' + resp.success;
+  
       } catch (err) {
         // to fix js error.
       }
-      jQuery('#mainwp-create-group-modal').modal({
-        onHide: function () {
-           mainwp_forceReload();
-        }
-      }).modal('hide');
+      //jQuery('#mainwp-create-group-modal').modal('hide');
     });
     return false;
   });
 
-  // Delete a group
+  // Delete a Tag
   jQuery(document).on('click', '#mainwp-delete-group-button', function () {
     let gruopItem = jQuery('#mainwp-groups-menu').find('.active');
 
@@ -81,7 +122,7 @@ jQuery(function () {
       jQuery.post(ajaxurl, data, function (response) {
         response = response.trim();
         if (response == 'OK') {
-          gruopItem.fadeOut(300);
+          mainwp_forceReload();
         }
       });
     };
@@ -122,19 +163,19 @@ jQuery(function () {
     let checkboxes = jQuery('#mainwp-manage-groups-sites-table').find(':checkbox');
     if (jQuery(this).prop('checked')) {
       checkboxes.prop('checked', true);
-      checkboxes.parents('tr').addClass('selected');
+      checkboxes.parents('tr').addClass('selected active');
     } else {
       checkboxes.prop('checked', false);
-      checkboxes.parents('tr').removeClass('selected');
+      checkboxes.parents('tr').removeClass('selected active');
     }
   });
 
   // Set class 'active' to selected sites table row
   jQuery('.mainwp-site-checkbox').on('change', function () {
     if (jQuery(this).prop('checked')) {
-      jQuery(this).parents('tr').addClass('selected');
+      jQuery(this).parents('tr').addClass('selected active');
     } else {
-      jQuery(this).parents('tr').removeClass('selected');
+      jQuery(this).parents('tr').removeClass('selected active');
     }
   });
 
@@ -180,8 +221,16 @@ jQuery(document).on('change', '#mainwp-manage-groups-sites-table .mainwp-site-ch
 
     jQuery(this).addClass('disabled');
 
-    jQuery.post(ajaxurl, data, function () {
+    jQuery.post(ajaxurl, data, function (response) {
       jQuery('#mainwp-save-sites-groups-selection-button').removeClass('disabled');
+      if (response && response.result === true) {
+        feedback('mainwp-message-zone', 'Selection saved successfully.', 'ui green message');
+        setTimeout(() => {
+          jQuery('#mainwp-message-zone').fadeOut();
+        }, 5000);
+      } else {
+        feedback('mainwp-message-zone', 'Undefined error occurred. Please try again.', 'ui green message');
+      }
     }, 'json');
   });
 
@@ -205,17 +254,35 @@ jQuery(document).on('change', '#mainwp-manage-groups-sites-table .mainwp-site-ch
       }
       mainwp_datatable_fix_to_update_selected_rows_status(dtApi, 'deselected'); // clear saved state.
       jQuery('input.mainwp-site-checkbox').prop('checked', false);
-      jQuery('input.mainwp-site-checkbox').closest('tr').removeClass('selected');
+      jQuery('input.mainwp-site-checkbox').closest('tr').removeClass('selected active');
       let sites = JSON.parse(response);
       for (let id of sites) {
         jQuery('input[value="' + id + '"].mainwp-site-checkbox').prop('checked', true);
-        jQuery('input[value="' + id + '"].mainwp-site-checkbox').closest('tr').addClass('selected');
+        jQuery('input[value="' + id + '"].mainwp-site-checkbox').closest('tr').addClass('selected active');
       }
       jQuery('#mainwp-save-sites-groups-selection-button').attr('selected-tag-siteids', sites?.length ? response : '' );
-      mainwp_datatable_fix_to_update_selected_rows_status(dtApi, 'selected'); // clear saved state.
+      mainwp_datatable_fix_to_update_selected_rows_status(dtApi, 'selected active'); // clear saved state.
       dtApi.search(searchValue).draw();
     });
     return false;
+  }
+
+  // Apply fade effect to tags in the sites table
+  let apply_tag_fade_effect = function (menuItem) {
+    // Get the selected tag ID from the menu item
+    let selectedTagId = jQuery(menuItem).attr('id');
+    
+    if (!selectedTagId) {
+      // If no tag is selected, reset all tags to full opacity
+      jQuery('#mainwp-manage-groups-sites-table span.ui.tag.label').css('opacity', '1');
+      return;
+    }
+    
+    // Fade all tags to 10% opacity
+    jQuery('#mainwp-manage-groups-sites-table span.ui.tag.label').css('opacity', '0.1');
+    
+    // Restore full opacity for the selected tag
+    jQuery('#mainwp-manage-groups-sites-table span.ui.tag.label[tag_id="' + selectedTagId + '"]').css('opacity', '1');
   }
 
 });

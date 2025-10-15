@@ -135,7 +135,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
         if ( ! $success ) {
             wp_die( wp_json_encode( array( 'error' => esc_html__( 'Unexpected error occurred. Please try again.', 'mainwp' ) ) ) );
         } else {
-            wp_die( wp_json_encode( array( 'success' => 1 ) ) );
+            wp_die( wp_json_encode( array( 'success' => $success ) ) );
         }
     }
 

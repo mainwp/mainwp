@@ -544,6 +544,7 @@
 .mainwp-ui.mainwp-custom-theme .ui.input input[type="color"],
 .mainwp-ui.mainwp-custom-theme input[type="color"],
 .mainwp-ui.mainwp-custom-theme input#mainwp-select-sites-filter,
+.mainwp-ui.mainwp-custom-theme input#mainwp-select-tags-filter,
 .mainwp-ui.mainwp-custom-theme .ui.calendar input,
 .mainwp-ui.mainwp-custom-theme .ui.form textarea,
 .mainwp-ui.mainwp-custom-theme .ui.input > input {
@@ -693,6 +694,7 @@
   color: var(--mainwp-text);
 }
 
+.mainwp-ui.mainwp-custom-theme #mainwp-select-tags-filter,
 .mainwp-ui.mainwp-custom-theme #mainwp-select-sites-filter {
   border-radius: 16px !important;
   -webkit-border-radius: 16px !important;

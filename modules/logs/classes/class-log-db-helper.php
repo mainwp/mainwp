@@ -390,7 +390,7 @@ class Log_DB_Helper extends MainWP_DB {
             WHERE site_id = %d
             AND created < (UNIX_TIMESTAMP(%s) * 1000000)
             GROUP BY day_start
-            ORDER BY day_start ASC
+            ORDER BY day_start DESC
             LIMIT %d
         ) d
         JOIN {$this->table_name('wp_logs')} i
@@ -401,7 +401,7 @@ class Log_DB_Helper extends MainWP_DB {
             ON i.log_id = m.meta_log_id
             AND i.context = %s
             {$cond_meta}
-        ORDER BY d.day_start ASC, i.created ASC
+        ORDER BY d.day_start DESC, i.created DESC
         ;";
 
         $query = $wpdb->prepare(

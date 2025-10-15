@@ -490,7 +490,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                         setTimeout(() => {
                             $( '#mainwp-manage-clients-table .ui.dropdown' ).dropdown();
                             $( '#mainwp-manage-clients-table .ui.checkbox' ).checkbox();
-                            mainwp_datatable_fix_menu_overflow();
+                            mainwp_datatable_fix_menu_overflow('#mainwp-manage-clients-tabl');
                         }, 1000 );
                     } ).on('select', function (e, dt, type, indexes) {
                         if( 'row' == type ){
@@ -508,7 +508,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                 } catch(err) {
                     // to fix js error.
                 }
-                mainwp_datatable_fix_menu_overflow();
+                mainwp_datatable_fix_menu_overflow('#mainwp-manage-clients-table');
                 _init_manage_sites_screen = function() {
                     jQuery( '#mainwp-manage-sites-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
                         let col_id = jQuery( this ).attr( 'id' );

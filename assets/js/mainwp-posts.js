@@ -592,7 +592,7 @@ let mainwp_fetch_posts_done = function () {
             setTimeout(() => {
                 jQuery('#mainwp-posts-table-wrapper table .ui.dropdown').dropdown();
                 jQuery('#mainwp-posts-table-wrapper table .ui.checkbox').checkbox();
-                mainwp_datatable_fix_menu_overflow();
+                mainwp_datatable_fix_menu_overflow('#mainwp-posts-table-wrapper');
                 mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
             }, 1000);
         },
@@ -617,7 +617,7 @@ let mainwp_fetch_posts_done = function () {
         setTimeout(() => {
             jQuery('#mainwp-posts-table-wrapper table .ui.dropdown').dropdown();
             jQuery('#mainwp-posts-table-wrapper table .ui.checkbox').checkbox();
-            mainwp_datatable_fix_menu_overflow();
+            mainwp_datatable_fix_menu_overflow('#mainwp-posts-table-wrapper');
             mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
         }, 1000);
     });

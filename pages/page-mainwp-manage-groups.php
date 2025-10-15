@@ -235,7 +235,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
      */
     public static function get_website_list_content() {
-        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( true ) );
 
         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
             $note       = html_entity_decode( $website->note );
@@ -248,20 +248,25 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                         <input type="checkbox" name="sites" class="mainwp-site-checkbox" value="<?php echo esc_attr( $website->id ); ?>" id="<?php echo 'site-' . esc_attr( $website->id ); ?>" >
                     </div>
                 </td>
-                <td><a href="admin.php?page=managesites&dashboard=<?php echo intval( $website->id ); ?>" data-tooltip="<?php esc_attr_e( 'Go to the site overview.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php echo esc_html( stripslashes( $website->name ) ); ?></a></td>
+                <td><?php echo MainWP_Utility::mainwp_display_site( $website->id ); ?></td>
+                <td><?php echo MainWP_System_Utility::get_site_tags_belong( (array) $website ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
                 <td>
-                    <a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin . ', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
+                    <?php if ( ! empty( $website->client_name ) ) : ?>
+                    <a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>">
+                        <?php echo esc_html( $website->client_name ); ?>
+                    </a>
+                    <?php else : ?>
+                        <span class="ui grey text">-</span>
+                    <?php endif; ?>
                 </td>
-                <td><a href="<?php echo esc_url( $website->url ); ?>" class="ui grey text" target="_blank"><?php echo esc_html( $website->url ); ?></a></td>
-                <td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
                 <td class="not-selectable center aligned">
-                    <span class="mainwp-preview-item" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'Click to see the site homepage screenshot . ', 'mainwp' ); ?>" preview-site-url="<?php echo esc_url( $website->url ); ?>" ><i class="camera icon"></i></span>
+                    <span class="mainwp-preview-item ui mini grey icon basic button" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'Click to see the site homepage screenshot . ', 'mainwp' ); ?>" preview-site-url="<?php echo esc_url( $website->url ); ?>" ><i class="camera icon"></i></span>
                 </td>
                 <td class="not-selectable center aligned">
                 <?php if ( empty( $website->note ) ) : ?>
-                    <a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website->id ); ?>" data-tooltip="<?php esc_attr_e( 'Click to add a note . ', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
+                    <a href="javascript:void(0)" class="mainwp-edit-site-note ui mini icon basic button" id="mainwp-notes-<?php echo intval( $website->id ); ?>" data-tooltip="<?php esc_attr_e( 'Click to add a note . ', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
                 <?php else : ?>
-                    <a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website->id ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+                    <a href="javascript:void(0)" class="mainwp-edit-site-note ui mini icon basic button" id="mainwp-notes-<?php echo intval( $website->id ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
                 <?php endif; ?>
                     <span style="display: none" id="mainwp-notes-<?php echo intval( $website->id ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
                 </td>
@@ -299,184 +304,106 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
          */
         do_action( 'mainwp_pageheader_tags', 'ManageGroups' );
         ?>
-        <div id="mainwp-manage-groups" class="ui segment">
-            <div id="mainwp-message-zone" style="display: none;">
-                <div class="ui message green"><?php esc_html_e( 'Selection saved successfully . ', 'mainwp' ); ?></div>
+        <div id="mainwp-manage-groups" class="ui alt segment">
+            <div class="mainwp-main-content" style="padding-top: 3px;">
+                <div id="mainwp-message-zone" style="display: none;">
+                    <div class="ui message green"><?php esc_html_e( 'Selection saved successfully.', 'mainwp' ); ?></div>
+                </div>
+                <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_groups_info' ) ) { ?>
+                <div class="ui message info">
+                    <i class="close icon mainwp-notice-dismiss" notice-id="mainwp_groups_info"></i>
+                        <div><?php esc_html_e( 'Use tags to organize and quickly filter your connected sites. You can apply multiple tags to one site.', 'mainwp' ); ?></div>
+                        <div><?php printf( esc_html__( 'for more information check the %1$sKnowledgebase %2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/manage-child-site-groups/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
+                </div>
+                <?php } ?>
+                <?php
+                /**
+                 * Action: mainwp_before_groups_table
+                 *
+                 * Fires before the Manage Groups table.
+                 *
+                 * @since 4.1
+                 */
+                do_action( 'mainwp_before_groups_table' );
+                ?>
+                <?php static::render_groups_sites_table_element(); ?>
+                <?php
+                /**
+                 * Action: mainwp_after_groups_table
+                 *
+                 * Fires after the Manage Groups table.
+                 *
+                 * @since 4.1
+                 */
+                do_action( 'mainwp_after_groups_table' );
+                ?>
             </div>
-            <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_groups_info' ) ) { ?>
-            <div class="ui message info">
-                <i class="close icon mainwp-notice-dismiss" notice-id="mainwp_groups_info"></i>
-                    <div><?php esc_html_e( 'In case you are managing a large number of WordPress sites, it could be useful for you to mark them with different tags . Later, you will be able to make Site Selection by a tag that will speed up your work and makes it much easier.', 'mainwp' ); ?></div>
-                    <div><?php esc_html_e( 'One child site can be assigned to multiple Tags at the same time.', 'mainwp' ); ?></div>
-                    <div><?php printf( esc_html__( 'for more information check the %1$sKnowledge Base %2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/manage-child-site-groups/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
+            <div class="mainwp-side-content">
+                <div class="mainwp-search-options">
+                <?php static::render_groups_menu_element(); ?>
+                </div>
             </div>
-            <?php } ?>
-            <?php
-            /**
-             * Action: mainwp_before_groups_table
-             *
-             * Fires before the Manage Groups table.
-             *
-             * @since 4.1
-             */
-            do_action( 'mainwp_before_groups_table' );
-            ?>
-            <div class="ui stackable grid">
-                <div class="<?php echo 1 === (int) $sidebarPosition ? 'twelve' : 'four'; ?> wide column">
-                    <?php if ( 1 === (int) $sidebarPosition ) : ?>
-                        <?php static::render_groups_sites_table_element(); ?>
-                    <?php else : ?>
-                        <?php static::render_groups_menu_element(); ?>
-                    <?php endif; ?>
-                </div>
-                <div class="<?php echo 1 === (int) $sidebarPosition ? 'four' : 'twelve'; ?> wide column">
-                    <?php if ( 1 === (int) $sidebarPosition ) : ?>
-                        <?php static::render_groups_menu_element(); ?>
-                    <?php else : ?>
-                        <?php static::render_groups_sites_table_element(); ?>
-                    <?php endif; ?>
-                </div>
-                <script type="text/javascript">
-                let responsive = true;
-                if( jQuery( window ).width() > 1140 ) {
-                    responsive = false;
-                }
-                jQuery( document ).ready( function() {
-                    jQuery( '#mainwp-manage-groups-sites-table' ).DataTable( {
-                        'searching' : true,
-                        'responsive' : responsive,
-                        'colReorder' : true,
-                        'stateSave':  true,
-                        'paging': false,
-                        'info': false,
-                        'order': [ [ 1, "asc" ] ],
-                        'scrollX' : false,
-                        'columnDefs': [ {
-                            "targets": 'no-sort',
-                            "orderable": false
-                        } ],
-                        'preDrawCallback': function( settings ) {
-                            jQuery( '#mainwp-manage-groups-sites-table .ui.checkbox' ).checkbox();
-                        },
-                        'select': {
-                            items: 'row',
-                            style: 'multi+shift',
-                            selector: 'tr>td:not(.not-selectable)'
-                        },
-                        stateSaveParams: function (settings, data) {
-                            data._mwpv = mainwpParams.mainwpVersion || 'dev';
-                        },
-                        stateLoadParams: function (settings, data) {
-                            if ((mainwpParams.mainwpVersion || 'dev') !== data._mwpv) return false;
-                        },
-                        search: { regex: false, smart: false },
-                        orderMulti: false,
-                        searchDelay: 350
-                    }).on('select', function (e, dt, type, indexes) {
-                        if( 'row' == type ){
-                            dt.rows(indexes)
-                            .nodes()
-                            .to$().find('td.check-column .ui.checkbox' ).checkbox('set checked');
-                        }
-                    }).on('deselect', function (e, dt, type, indexes) {
-                        if( 'row' == type ){
-                            dt.rows(indexes)
-                            .nodes()
-                            .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
-                        }
-                    } ).on( 'columns-reordered', function ( e, settings, details ) {
-                            setTimeout(() => {
-                                jQuery( '#mainwp-manage-groups-sites-table .ui.checkbox' ).checkbox();
-                                mainwp_datatable_fix_menu_overflow('#mainwp-manage-groups-sites-table' );
-                            }, 1000);
-                        } );
-                    mainwp_datatable_fix_to_update_rows_state('#mainwp-manage-groups-sites-table'); // to fix saved rows state.
-            } );
-                </script>
-            </div>
-            <?php MainWP_UI::render_modal_edit_notes(); ?>
-            <div class="ui mini modal" id="mainwp-create-group-modal">
-            <i class="close icon"></i>
-                <div class="header"><?php echo esc_html__( 'Create Tag', 'mainwp' ); ?></div>
-                <div class="content">
-                    <div class="ui form">
-                        <div class="field">
-                            <label><?php esc_html_e( 'Enter tag name', 'mainwp' ); ?></label>
-                            <input type="text" value="" name="mainwp-group-name" id="mainwp-group-name">
-                        </div>
-                        <div class="field">
-                            <label><?php esc_html_e( 'Select tag color', 'mainwp' ); ?></label>
-                            <input type="color" name="mainwp-new-tag-color" class="mainwp-color-picker-input" id="mainwp-new-tag-color"  value="" />
-                        </div>
-                    </div>
-                </div>
-                <div class="actions">
-                    <div class="ui two columns grid">
-                        <div class="left aligned column">
-
-                        </div>
-                        <div class="right aligned column">
-                        <a class="ui green button" id="mainwp-save-new-group-button" href="#"><?php echo esc_html__( 'Create Tag', 'mainwp' ); ?></a>
-                        </div>
-                    </div>
-                </div>
-                <style>
-                    .mainwp-ui .ui.modal .wp-picker-clear {
-                        display:none;
-                    }
-                    .mainwp-ui .ui.modal #mainwp-new-tag-color {
-                        height: 28px;
-                        margin-left: 5px;
-                    }
-                </style>
-            </div>
-
-            <div class="ui mini modal" id="mainwp-rename-group-modal">
-            <i class="close icon"></i>
-                <div class="header"><?php echo esc_html__( 'Rename Tag', 'mainwp' ); ?></div>
-                <div class="content">
-                    <div class="ui form">
-                        <div class="field">
-                            <label><?php esc_html_e( 'Enter tag name', 'mainwp' ); ?></label>
-                            <input type="text" value="" name="mainwp-group-name" id="mainwp-group-name">
-                        </div>
-                        <div class="field">
-                            <label><?php esc_html_e( 'Select tag color', 'mainwp' ); ?></label>
-                            <input type="color" name="mainwp-new-tag-color mainwp-color-picker-input" class="mainwp-color-picker-input" id="mainwp-new-tag-color" value="" />
-                        </div>
-                    </div>
-                </div>
-                <div class="actions">
-                    <div class="ui two columns stackable grid">
-                        <div class="left aligned column">
-
-                        </div>
-                        <div class="right aligned column">
-                        <a class="ui green button" id="mainwp-update-new-group-button" href="#"><?php echo esc_html__( 'Update Tag', 'mainwp' ); ?></a>
-                        </div>
-                    </div>
-                </div>
-                <style>
-                    .mainwp-ui .ui.modal .wp-picker-clear {
-                        display:none;
-                    }
-                    .mainwp-ui .ui.modal #mainwp-new-tag-color {
-                        height: 28px;
-                        margin-left: 5px;
-                    }
-                </style>
-            </div>
-            <?php
-            /**
-             * Action: mainwp_after_groups_table
-             *
-             * Fires after the Manage Groups table.
-             *
-             * @since 4.1
-             */
-            do_action( 'mainwp_after_groups_table' );
-            ?>
         </div>
+        <?php MainWP_UI::render_modal_edit_notes(); ?>
+        <?php static::render_new_tag_modal(); ?>
+        <?php static::render_edit_tag_modal(); ?>
+        <script type="text/javascript">
+            let responsive = true;
+            if( jQuery( window ).width() > 1140 ) {
+                responsive = false;
+            }
+            jQuery( document ).ready( function() {
+                jQuery( '#mainwp-manage-groups-sites-table' ).DataTable( {
+                    'searching' : true,
+                    'responsive' : responsive,
+                    'colReorder' : true,
+                    'stateSave':  true,
+                    'paging': false,
+                    'info': false,
+                    'order': [ [ 1, "asc" ] ],
+                    'scrollX' : false,
+                    'columnDefs': [ {
+                        "targets": 'no-sort',
+                        "orderable": false
+                    } ],
+                    'preDrawCallback': function( settings ) {
+                        jQuery( '#mainwp-manage-groups-sites-table .ui.checkbox' ).checkbox();
+                    },
+                    'select': {
+                        items: 'row',
+                        style: 'multi+shift',
+                        selector: 'tr>td:not(.not-selectable)'
+                    },
+                    stateSaveParams: function (settings, data) {
+                        data._mwpv = mainwpParams.mainwpVersion || 'dev';
+                    },
+                    stateLoadParams: function (settings, data) {
+                        if ((mainwpParams.mainwpVersion || 'dev') !== data._mwpv) return false;
+                    },
+                    search: { regex: false, smart: false },
+                    orderMulti: false,
+                    searchDelay: 350
+                }).on('select', function (e, dt, type, indexes) {
+                    if( 'row' == type ){
+                        dt.rows(indexes)
+                        .nodes()
+                        .to$().find('td.check-column .ui.checkbox' ).checkbox('set checked');
+                    }
+                }).on('deselect', function (e, dt, type, indexes) {
+                    if( 'row' == type ){
+                        dt.rows(indexes)
+                        .nodes()
+                        .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
+                    }
+                } ).on( 'columns-reordered', function ( e, settings, details ) {
+                        setTimeout(() => {
+                            jQuery( '#mainwp-manage-groups-sites-table .ui.checkbox' ).checkbox();
+                            mainwp_datatable_fix_menu_overflow('#mainwp-manage-groups-sites-table' );
+                        }, 1000);
+                    } );
+                mainwp_datatable_fix_to_update_rows_state('#mainwp-manage-groups-sites-table'); // to fix saved rows state.
+            } );
+        </script>
         <?php
         /**
          * Sites Page Footer
@@ -487,6 +414,105 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
          */
         do_action( 'mainwp_pagefooter_tags', 'ManageGroups' );
     }
+    /**
+     * Method render_new_tag_modal()
+     *
+     * Renders the modal dialog for creating a new tag.
+     *
+     * Outputs a Fomantic UI modal with form fields for tag name and color selection.
+     * The modal includes a color picker input and create button.
+     *
+     * @return void
+     */
+    public static function render_new_tag_modal() {
+        ?>
+        <div class="ui mini modal" id="mainwp-create-group-modal">
+            <i class="close icon"></i>
+            <div class="header"><?php echo esc_html__( 'Create New Tag', 'mainwp' ); ?></div>
+            <div class="content">
+                <div class="ui form">
+                    <div class="field">
+                        <label><?php esc_html_e( 'Enter tag name', 'mainwp' ); ?></label>
+                        <input type="text" value="" name="mainwp-group-name" id="mainwp-group-name">
+                    </div>
+                    <div class="field">
+                        <label><?php esc_html_e( 'Select color for this tag', 'mainwp' ); ?></label>
+                        <input type="color" name="mainwp-new-tag-color" class="mainwp-color-picker-input" id="mainwp-new-tag-color"  value="" />
+                    </div>
+                </div>
+            </div>
+            <div class="actions">
+                <div class="ui two columns grid">
+                    <div class="left aligned column">
+
+                    </div>
+                    <div class="right aligned column">
+                    <a class="ui green mini button" id="mainwp-save-new-group-button" href="#"><?php echo esc_html__( 'Create Tag', 'mainwp' ); ?></a>
+                    </div>
+                </div>
+            </div>
+            <style>
+                .mainwp-ui .ui.modal .wp-picker-clear {
+                    display:none;
+                }
+                .mainwp-ui .ui.modal #mainwp-new-tag-color {
+                    height: 28px;
+                    margin-left: 5px;
+                }
+            </style>
+        </div>
+        <?php
+    }
+
+    /**
+     * Method render_edit_tag_modal()
+     *
+     * Renders the modal dialog for editing an existing tag.
+     *
+     * Outputs a Fomantic UI modal with form fields for updating tag name and color.
+     * The modal includes a color picker input and update button.
+     *
+     * @return void
+     */
+    public static function render_edit_tag_modal() {
+        ?>
+        <div class="ui mini modal" id="mainwp-rename-group-modal">
+            <i class="close icon"></i>
+            <div class="header"><?php echo esc_html__( 'Rename Tag', 'mainwp' ); ?></div>
+            <div class="content">
+                <div class="ui form">
+                    <div class="field">
+                        <label><?php esc_html_e( 'Enter tag name', 'mainwp' ); ?></label>
+                        <input type="text" value="" name="mainwp-group-name" id="mainwp-group-name">
+                    </div>
+                    <div class="field">
+                        <label><?php esc_html_e( 'Select tag color', 'mainwp' ); ?></label>
+                        <input type="color" name="mainwp-new-tag-color mainwp-color-picker-input" class="mainwp-color-picker-input" id="mainwp-new-tag-color" value="" />
+                    </div>
+                </div>
+            </div>
+            <div class="actions">
+                <div class="ui two columns stackable grid">
+                    <div class="left aligned column">
+
+                    </div>
+                    <div class="right aligned column">
+                    <a class="ui green button" id="mainwp-update-new-group-button" href="#"><?php echo esc_html__( 'Update Tag', 'mainwp' ); ?></a>
+                    </div>
+                </div>
+            </div>
+            <style>
+                .mainwp-ui .ui.modal .wp-picker-clear {
+                    display:none;
+                }
+                .mainwp-ui .ui.modal #mainwp-new-tag-color {
+                    height: 28px;
+                    margin-left: 5px;
+                }
+            </style>
+        </div>
+        <?php
+    }
 
     /**
      * Method render_groups_menu_element()
@@ -494,18 +520,18 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * Render the groups menu HTML element.
      */
     public static function render_groups_menu_element() {
-        $sidebarPosition = get_user_option( 'mainwp_sidebarPosition' );
-        if ( false === $sidebarPosition ) {
-            $sidebarPosition = 1;
-        }
         ?>
-        <div class="ui fluid <?php echo 1 === (int) $sidebarPosition ? 'right' : ''; ?> pointing vertical menu sticky" id="mainwp-groups-menu" style="margin-top:52px">
+        <div class="ui mini icon fluid input">
+            <input type="text" id="mainwp-select-tags-filter" placeholder="<?php esc_attr_e( 'Search tags...', 'mainwp' ); ?>">
+            <i class="filter icon"></i>
+        </div>
+        <div class="ui fluid pointing vertical menu sticky" id="mainwp-groups-menu">
             <h4 class="item ui header"><?php esc_html_e( 'Tags', 'mainwp' ); ?></h4>
-        <?php static::get_group_list_content(); ?>
+            <?php static::get_group_list_content(); ?>
             <div class="item">
                 <div class="ui two columns stackable grid">
                     <div class="left aligned column">
-                        <a href="javascript:void(0);" class="ui mini green button" id="mainwp-new-sites-group-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Click here to create a new tag.', 'mainwp' ); ?>"><?php esc_html_e( 'New Tag', 'mainwp' ); ?></a>
+                        <a href="javascript:void(0);" class="ui mini green button" id="mainwp-new-sites-group-button"><?php esc_html_e( 'Create Tag', 'mainwp' ); ?></a>
                     </div>
                     <div class="right aligned column">
                         <a href="javascript:void(0);" class="ui mini icon green basic button disabled" id="mainwp-rename-group-button" data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Edit selected tag.', 'mainwp' ); ?>"><i class="pen icon"></i></a>
@@ -529,22 +555,21 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 <tr>
                     <th scope="col" class="no-sort collapsing check-column"><div class="ui checkbox" data-tooltip="<?php esc_attr_e( 'Click to select all sites.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><input type="checkbox" id="cb-select-all-top" name="example"></div></th>
                     <th scope="col" ><?php esc_html_e( 'Sites', 'mainwp' ); ?></th>
-                    <th scope="col" class="no-sort collapsing"><i class="sign in icon"></i></th>
-                    <th scope="col" ><?php esc_html_e( 'URL', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Tags', 'mainwp' ); ?></th>
+                    <th scope="col" class="collapsing"><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
                     <th scope="col" class="no-sort collapsing center aligned"><i class="camera icon"></i></th>
                     <th scope="col" class="no-sort collapsing center aligned"><i class="sticky note outline icon"></i></th>
                 </tr>
             </thead>
             <tbody>
-            <?php static::get_website_list_content(); ?>
+                <?php static::get_website_list_content(); ?>
             </tbody>
         </table>
         <div class="ui hidden fitted divider"></div>
-        <a href="#" class="ui green button" id="mainwp-save-sites-groups-selection-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Save the selected tag sites selection.', 'mainwp' ); ?>"><?php esc_html_e( 'Save Selection', 'mainwp' ); ?></a>
+        <a href="#" class="ui mini green right floated button" id="mainwp-save-sites-groups-selection-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Save the selected tag sites selection.', 'mainwp' ); ?>"><?php esc_html_e( 'Save Selection', 'mainwp' ); ?></a>
         <div class="ui hidden divider"></div>
-        <div class="ui inverted dimmer">
-            <div class="ui double loader"></div>
+        <div class="ui page dimmer">
+            <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
         </div>
         <?php
     }
@@ -741,7 +766,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
              * @param int $groupId Group ID.
              */
             do_action( 'mainwp_added_new_group', $groupId );
-            return true;
+            return $groupId;
         }
 
         return false;

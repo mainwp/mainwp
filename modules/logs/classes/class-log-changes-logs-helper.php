@@ -343,7 +343,11 @@ class Log_Changes_Logs_Helper {
 
         $manager = Log_Manager::instance();
 
-        $grouped_by = ! empty( $args['target_date'] ) ? 'name' : 'date';
+        $index_by_date = ! empty( $args['target_date'] ) ? 'name' : 'date';
+
+        $get_name = ! empty( $args['slug'] ) || ! empty( $args['name'] );
+
+        $name_title = '';
 
         $tbl_list = new Log_Events_List_Table( $manager );
 
@@ -368,7 +372,20 @@ class Log_Changes_Logs_Helper {
                     'log_id'      => $item->log_id,
                 );
 
-                if ( 'date' === $grouped_by ) {
+                $slugidx   = '';
+                $slug      = '';
+                $name_meta = '';
+
+                if ( ! empty( $record->meta ) && is_array( $record->meta ) ) {
+                    $slug    = ! empty( $record->meta['slug'] ) ? $record->meta['slug'] : '';
+                    $slugidx = $slug;
+                    if ( empty( $slug ) ) {
+                        $name_meta = ! empty( $record->meta['name'] ) ? $record->meta['name'] : '';
+                        $slugidx   = $name_meta;
+                    }
+                }
+
+                if ( 'date' === $index_by_date ) {
 
                     $day = MainWP_Utility::get_local_date_by_utc_timestamp( $created_micro / 1000000 ); // float.
 
@@ -377,9 +394,13 @@ class Log_Changes_Logs_Helper {
                     }
 
                     $list_item = array(
-                        'date'    => MainWP_Utility::format_timezone( $created_sec ),
+                        'date'    => MainWP_Utility::format_date( $created_sec ),
                         'details' => $details,
                     );
+
+                    if ( $get_name && empty( $name_title ) ) {
+                        $name_title = $tbl_list->get_object_title( $record, false, false );
+                    }
 
                     if ( 'updated' === $record->action || 'update' === $record->action ) {
 
@@ -405,20 +426,16 @@ class Log_Changes_Logs_Helper {
 
                 } else { // group by plugin/theme name.
 
-                    if ( ! empty( $record->meta ) && is_array( $record->meta ) ) {
-                        $slug = ! empty( $record->meta['slug'] ) ? $record->meta['slug'] : '';
-                        if ( empty( $slug ) ) {
-                            $slug = ! empty( $record->meta['name'] ) ? $record->meta['name'] : '';
-                        }
-                    }
-
-                    if ( ! isset( $lists[ $slug ] ) ) {
-                        $lists[ $slug ] = array();
+                    if ( ! isset( $lists[ $slugidx ] ) ) {
+                        $lists[ $slugidx ] = array();
                     }
 
                     $list_item = array(
-                        'name'    => $tbl_list->get_object_title( $record ),
-                        'details' => $details,
+                        'name'      => $tbl_list->get_object_title( $record ),
+                        'site_id'   => $record->site_id,
+                        'item_name' => $name_meta,
+                        'item_slug' => $slug,
+                        'details'   => $details,
                     );
 
                     if ( 'updated' === $record->action || 'update' === $record->action ) {
@@ -441,7 +458,7 @@ class Log_Changes_Logs_Helper {
                         }
                     }
 
-                    $lists[ $slug ][] = $list_item;
+                    $lists[ $slugidx ][] = $list_item;
 
                 }
             }
@@ -453,6 +470,10 @@ class Log_Changes_Logs_Helper {
 
         if ( ! empty( $results['onward_time'] ) ) {
             $resp['onward_date'] = MainWP_Utility::format_timezone( $results['onward_time'] );
+        }
+
+        if ( ! empty( $name_title ) ) {
+            $resp['name_title'] = $name_title;
         }
 
         return $resp;

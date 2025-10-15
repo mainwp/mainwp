@@ -488,15 +488,15 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
             $color = '';
 
-            if ( in_array( $act, [ 'deleted', 'removed', 'revoked', 'deactivated', 'disabled', 'suspended' ], true ) ) {
+            if ( in_array( $act, array( 'deleted', 'removed', 'revoked', 'deactivated', 'disabled', 'suspended' ), true ) ) {
                 $color = 'red';
-            } elseif ( in_array( $act, [ 'updated', 'modified' ], true ) ) {
+            } elseif ( in_array( $act, array( 'updated', 'modified' ), true ) ) {
                 $color = 'orange';
-            } elseif ( in_array( $act, [ 'added', 'activated', 'created', 'published', 'enabled' ], true ) ) {
+            } elseif ( in_array( $act, array( 'added', 'activated', 'created', 'published', 'enabled' ), true ) ) {
                 $color = 'green';
-            } elseif ( in_array( $act, [ 'synced', 'installed', 'uploaded' ], true ) ) {
+            } elseif ( in_array( $act, array( 'synced', 'installed', 'uploaded' ), true ) ) {
                 $color = 'teal';
-            } elseif ( in_array( $act, [ 'opened', 'logged-in', 'logged-out' ], true ) ) {
+            } elseif ( in_array( $act, array( 'opened', 'logged-in', 'logged-out' ), true ) ) {
                 $color = 'blue';
             } else {
                 $color = 'grey'; // fallback / unknown event
@@ -509,7 +509,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $color = 'red';
             } elseif ( 'update' === $act ) {
                 $color = 'orange';
-            } elseif ( in_array( $act, [ 'install', 'activate' ], true ) ) {
+            } elseif ( in_array( $act, array( 'install', 'activate' ), true ) ) {
                 $color = 'teal';
             }
 
@@ -597,9 +597,12 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * Parse event title.
      *
      * @param object $record  Log record object.
+     * @param bool   $with_icon  Return with icon.
+     * @param bool   $with_context_suffix  Return name object with context suffix.
+     *
      * @return string
      */
-    public function get_object_title( $record ) {
+    public function get_object_title( $record, $with_icon = true, $with_context_suffix = true ) {
         $extra_meta = ! empty( $record->extra_meta ) ? json_decode( $record->extra_meta, true ) : array();
         if ( ! is_array( $extra_meta ) ) {
             $extra_meta = array();
@@ -625,13 +628,21 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             }
         }
 
-        if ( empty( $record->log_type_id ) ) {
+        if ( empty( $record->log_type_id && $with_context_suffix ) ) {
             $title = $roll_msg . $this->get_context_title( $title, $record->context, $record->connector );
         }
 
-        $obj_icon = $this->get_object_icon( $record );
+        if ( ! $with_context_suffix ) {
+            $title = trim( $title );
+            $title = preg_replace( '/([ ]?(plugin|theme))$/i', '', $title );
+        }
 
-        return $obj_icon . $title;
+        if ( $with_icon ) {
+            $obj_icon = $this->get_object_icon( $record );
+            return $obj_icon . $title;
+        }
+
+        return $title;
     }
 
     /**
@@ -739,11 +750,14 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
     public function get_context_title( $title, $context, $connector ) {
         $context_title = '';
 
+        if ( in_array( $context, array( 'plugin', 'theme' ) ) ) {
+            $title = preg_replace( '/([ ]?(plugin|theme|translation))$/i', '', $title );
+            $title = trim( $title );
+        }
+
         if ( 'plugin' === $context ) {
-            $title         = trim( rtrim( $title, 'Plugin' ) ); // remove Plugin suffix if existed - to fix missing 'e' character.
             $context_title = esc_html__( 'Plugin', 'mainwp' );
         } elseif ( 'theme' === $context ) {
-            $title         = trim( rtrim( $title, 'Theme' ) ); // remove Theme suffix if existed - to fix missing 'e' character.
             $context_title = esc_html__( 'Theme', 'mainwp' );
         } elseif ( 'translation' === $context ) {
             $context_title = esc_html__( 'Translation', 'mainwp' );

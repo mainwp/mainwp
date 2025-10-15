@@ -1071,7 +1071,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         setTimeout(() => { // to fix.
                             jQuery( '#mainwp-posts-table .ui.dropdown' ).dropdown();
                             jQuery( '#mainwp-posts-table .ui.checkbox' ).checkbox();
-                            mainwp_datatable_fix_menu_overflow();
+                            mainwp_datatable_fix_menu_overflow('#mainwp-posts-table');
                             mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
                         }, 1000);
                     });

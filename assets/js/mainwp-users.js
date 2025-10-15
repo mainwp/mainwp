@@ -305,7 +305,7 @@ let mainwp_fetch_users = function () {
                 setTimeout(() => {
                     jQuery('#mainwp_users_wrap_table table .ui.dropdown').dropdown();
                     jQuery('#mainwp_users_wrap_table table .ui.checkbox').checkbox();
-                    mainwp_datatable_fix_menu_overflow();
+                    mainwp_datatable_fix_menu_overflow('#mainwp_users_wrap_table table');
                     mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
                 }, 1000);
             },
@@ -330,7 +330,7 @@ let mainwp_fetch_users = function () {
             setTimeout(() => {
                 jQuery('#mainwp_users_wrap_table table .ui.dropdown').dropdown();
                 jQuery('#mainwp_users_wrap_table table .ui.checkbox').checkbox();
-                mainwp_datatable_fix_menu_overflow();
+                mainwp_datatable_fix_menu_overflow('#mainwp_users_wrap_table');
                 mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
             }, 1000);
         });

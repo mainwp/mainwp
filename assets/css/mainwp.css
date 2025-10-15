@@ -1581,7 +1581,3 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
   border-bottom: 1px solid #ddd;
   display: flex;
 }
-.mainwp-ui .ui.accordion .title .title-right{
-    margin-left: auto;
-    display: inline-block;
-}

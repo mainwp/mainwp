@@ -3025,7 +3025,7 @@ jQuery(function ($) {
                  siteId = $(parent).attr('site_id');
                  info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
                  title = $(this).closest('tr').attr('plugin_name');
-                 slug = $(this).closest('tr').attr('plugin_slug');
+                 slug = decodeURIComponent( $(this).closest('tr').attr('plugin_slug') );
                  name = $(this).closest('tr').attr('plugin_name');
                  break;
              case 'update-theme-per-site':
@@ -3081,6 +3081,7 @@ jQuery(function ($) {
             },
             onShow: function () {
                 mainwp_changes_history_box_init(type, title, info);
+                jQuery('#mainwp-plugin-theme-history-changes-modal').find('.content.ui').html('<div class="ui active centered inline loader history-actions-loading"></div>');
                 mainwp_item_changes_load();
             }
         }).modal('show');
@@ -3096,50 +3097,81 @@ let mainwp_changes_history_box_init = function ( type, title, info ) {
     jQuery('#mainwp-plugin-theme-history-changes-modal').find('.scrolling.content').html('');
 }
 
-let mainwp_item_changes_load = function ( load_date = '' ) {
+let mainwp_item_changes_load = function ( btnObj, load_more_date = '' ) {
 
     let md = jQuery('#mainwp-plugin-theme-history-changes-modal');
-    jQuery(md).find('.scrolling.content').append('<i class="notched circle loading icon changes-history-loading"></i>');
+    let parentContent = false;
+    if(typeof btnObj !== 'undefined' && btnObj != false){
+        parentContent = jQuery(btnObj).closest('.ui.accordion').find('.ui.content');
+    } else {
+        parentContent = jQuery(md).find('.scrolling.content')
+    }
 
     jQuery(md).find('.actions .col-left').html('');
     jQuery(md).find('.actions .col-right').html('');
 
     const type = jQuery(md).attr('history-type');
+    const load_more = false;
 
     // set load date if provided
-    if(typeof load_date === 'string' && load_date !== ''){
+    if(typeof load_more_date === 'string' && load_more_date !== ''){
         if('theme' === type){
-            themeChangesLoadData.from_date = load_date;
+            themeChangesLoadData.from_date = load_more_date;
         }else{
-            pluginChangesLoadData.from_date = load_date;
+            pluginChangesLoadData.from_date = load_more_date;
         }
+        load_more = true;
     }
 
     let data = 'plugin' === type ? pluginChangesLoadData : themeChangesLoadData;
 
+
     jQuery.post(ajaxurl, data, function (response) {
-        jQuery(md).find('.scrolling.content').find('.changes-history-loading').remove();
-        if (response.error != undefined) {
-            jQuery(md).find('.scrolling.content').append('<div class="ui message red">' + response.error + '</div>');
+        jQuery(md).find('.history-actions-loading').remove();
+        if (response?.error) {
+            if(parentContent){
+                let err_content = '<div class="ui message red">' + response.error + '</div>';
+                if(!load_more){
+                    jQuery(parentContent).html(err_content);
+                } else {
+                    jQuery(parentContent).append(err_content);
+                }
+            }
         } else if (response?.list) {
             if (response.list.length == 0) {
                 let msg = __('This plugin has no recorded activity in Dashboard Insights.') ;
                 if('theme' === type){
                     msg = __('This theme has no recorded activity in Dashboard Insights.') ;
                 }
-                jQuery(md).find('.scrolling.content').append('<div class="ui info message">' + msg + '</div>');
+                if(parentContent){
+                    let msg_content = '<div class="ui info message">' + msg + '</div>';
+                    if(!load_more){
+                        jQuery(parentContent).html(msg_content);
+                    } else {
+                        jQuery(parentContent).append(msg_content);
+                    }
+                }
             } else {
                 let content = '';
                 Object.entries(response.list).forEach(([indexdt, records]) => {
                     const dt = records[0].date;
                     content += `<div class="ui accordion" data-date="${indexdt}">
                         <div class="title" format-date="${dt}">
-                            <i class="dropdown icon"></i>
-                            ${dt}<span class="title-right"><button type="button" class="ui circular blue mini button mainwp-changes-history-switch-view">` + __('Day History') + `</button> <button class="ui basic mini button actions-count1">${records.length} ` + __('Actions') + `</button><button class="ui basic mini button actions-count2" style="display:none;"></button></span>
+                            <div class="ui container">
+                                <div class="ui grid">
+                                    <div class="ten wide column middle aligned">
+                                            <i class="dropdown icon"></i>
+                                            ${dt}
+                                    </div>
+                                    <div class="six wide column right aligned">
+                                        <button type="button" class="ui circular blue mini button mainwp-day-history-switch-view">` + __('Day History') + `</button> <button class="ui basic mini button actions-count1">${records.length} ` + __('Actions') + `</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="content ui list">`;
                     records.forEach(record => {
-                        content += `<div class="item list-item-actions-in-day" log-id="${record.details.log_id}">
+                        content += `<div class="item" log-id="${record.details.log_id}">
                             <div class="ui grid">
                                 <div class="eight wide column middle aligned">
                                     <i class="` + get_icon_history_event(record.details.action) + ` icon"></i>
@@ -3165,14 +3197,28 @@ let mainwp_item_changes_load = function ( load_date = '' ) {
                         html: content
                     });
 
-                    jQuery(md).find('.scrolling.content').append(accordWrapper);
+                    let name_title = '';
+
+                    if ((data?.name || data?.slug) && response?.name_title) {
+                        name_title = response.name_title;
+                    }
+
+                    if (name_title != '') {
+                        jQuery(md).find('.ui.header .main-text').text(name_title + ' ' + __('History'));
+                    }
+
+                    if (load_more) {
+                        jQuery(md).find('.scrolling.content').append(accordWrapper);
+                    } else {
+                        jQuery(md).find('.scrolling.content').html(accordWrapper);
+                    }
 
                     jQuery('#change-history-according-wrapper .ui.accordion').accordion({exclusive: true});
 
-                    jQuery('.mainwp-changes-history-switch-view').off('click.accordionFix').on('click.accordionFix', function(e){
+                    jQuery('.mainwp-day-history-switch-view').off('click.accordionFix').on('click.accordionFix', function(e){
                         e.preventDefault();
                         e.stopPropagation(); // now it runs before ancestor handlers
-                        changesHistorySwitchViewHandler(this);
+                        dayHistory_SwitchViewHandler(this);
                         return false;
                     });
                 }
@@ -3181,11 +3227,18 @@ let mainwp_item_changes_load = function ( load_date = '' ) {
                     jQuery(md).find('.actions .col-left').html('Data available from ' + response.onward_date + ' onward.');
                 }
                 if ( response?.more_date ) {
-                    jQuery(md).find('.actions .col-right').html('<a href="javascript:void(0);" onclick="mainwp_item_changes_load(\'' + ( response.more_date ?? get_local_date_string() ) + '\');return false;">' + __('Load More') + '</a>');
+                    jQuery(md).find('.actions .col-right').html('<a href="javascript:void(0);" onclick="mainwp_item_changes_load(false,\'' + ( response.more_date ?? get_local_date_string() ) + '\');return false;">' + __('Load More') + '</a>');
                 }
             }
         } else {
-            jQuery(md).find('.scrolling.content').append('<div class="ui message red">' + __('Undefined error occurred. Please try again.') + '</div>');
+            if(parentContent){
+                let err_content = '<div class="ui message red">' + __('Undefined error occurred. Please try again.') + '</div>';
+                if(!load_more){
+                    jQuery(parentContent).html(err_content);
+                } else {
+                    jQuery(parentContent).append(err_content);
+                }
+            }
         }
     }, 'json');
 }
@@ -3231,18 +3284,14 @@ let get_color_changes_event = function( act ){
     return color;
 }
 
-let changesHistorySwitchViewHandler = function (btn) {
+let dayHistory_SwitchViewHandler = function (btn) {
 
     const parent = jQuery(btn).closest('.ui.accordion');
-    const sel_date = jQuery(btn).closest('.title').attr('format-date');
+    const his_date = jQuery(btn).closest('.title').attr('format-date');
 
     jQuery(btn).closest('.title').hasClass('active') || jQuery(btn).closest('.title').trigger('click');
 
-    jQuery(parent).find('.content').find('.changes-history-status').remove();
-
-    jQuery(parent).find('.content .list-item-actions-in-day').hide();
-
-    jQuery(parent).find('.content').append('<div class="ui active centered inline loader history-actions-loading"></div>');
+    jQuery(parent).find('.content.ui').html('<div class="ui active centered inline loader history-actions-loading"></div>');
 
     const dt = jQuery(parent).data('date');
     let md = jQuery('#mainwp-plugin-theme-history-changes-modal');
@@ -3256,7 +3305,7 @@ let changesHistorySwitchViewHandler = function (btn) {
 
     jQuery.post(ajaxurl, data, function (response) {
 
-         jQuery(parent).find('.history-actions-loading').remove();
+        jQuery(parent).find('.history-actions-loading').remove();
 
         let dayContent = jQuery(parent).find('.content');
 
@@ -3280,10 +3329,19 @@ let changesHistorySwitchViewHandler = function (btn) {
                 let count_acts = 0;
                 Object.entries(response.list).forEach(([idxslug, records]) => {
                     const name = records[0].name;
-                    content += `<div class="ui accordion list-all-actions-in-day" data-slug="${idxslug}">
+                    content += `<div class="ui accordion list-all-actions-in-day" data-slug="${records[0].item_slug}" data-name="${records[0].item_name}" data-siteid="${records[0].site_id}">
                         <div class="title">
-                            <i class="dropdown icon"></i>
-                            ${name}<span class="title-right"><button class="ui basic mini button ">${records.length} ` + __('Actions') + `</button></span>
+                            <div class="ui container">
+                                <div class="ui grid">
+                                    <div class="ten wide column middle aligned">
+                                            <i class="dropdown icon"></i>
+                                            ${name}
+                                    </div>
+                                    <div class="six wide column right aligned">
+                                        <button type="button" class="ui circular blue mini button mainwp-list-history-switch-view">` + ( 'plugin' === type ? __('Plugin History') : __('Theme History') ) + `</button> <button class="ui basic mini button ">${records.length} ` + __('Actions') + `</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="content ui list">`;
                     records.forEach(record => {
@@ -3309,13 +3367,20 @@ let changesHistorySwitchViewHandler = function (btn) {
                 });
 
                 if ('' !== content) {
-                    jQuery(md).find('.ui.header .main-text').text(sel_date + ' ' + __('History'));
+                    jQuery(md).find('.ui.header .main-text').text(his_date + ' ' + __('History'));
                     let accordWrapper = jQuery("<div>", {
                         id: "change-history-according-wrapper",
                         html: content
                     });
                     jQuery(md).find('.scrolling.content').html(accordWrapper);
                     jQuery('#change-history-according-wrapper .ui.accordion').accordion({exclusive: true});
+
+                    jQuery('.mainwp-list-history-switch-view').off('click.accordionFix2').on('click.accordionFix2', function(e){
+                        e.preventDefault();
+                        e.stopPropagation(); // now it runs before ancestor handlers
+                        listHistory_SwitchViewHandler(this);
+                        return false;
+                    });
                 }
             }
         } else {
@@ -3324,6 +3389,32 @@ let changesHistorySwitchViewHandler = function (btn) {
     }, 'json');
 
     return false;
+}
+
+
+let listHistory_SwitchViewHandler = function (btn) {
+
+    const parent = jQuery(btn).closest('.ui.accordion');
+
+    jQuery(btn).closest('.title').hasClass('active') || jQuery(btn).closest('.title').trigger('click');
+
+    jQuery(parent).find('.content.ui').html('<div class="ui active centered inline loader history-actions-loading"></div>');
+
+    const dt = jQuery(parent).data('date');
+    let md = jQuery('#mainwp-plugin-theme-history-changes-modal');
+    const type = jQuery(md).attr('history-type');
+
+    if('theme' === type){
+        themeChangesLoadData.slug = jQuery(parent).data('slug');
+        themeChangesLoadData.name = jQuery(parent).data('name');
+        themeChangesLoadData.siteId = jQuery(parent).data('siteid');
+        themeChangesLoadData.from_date = '';
+    }else{
+        pluginChangesLoadData.slug = jQuery(parent).data('slug');;
+        pluginChangesLoadData.siteId = jQuery(parent).data('siteid');;
+        pluginChangesLoadData.from_date = '';
+    }
+    mainwp_item_changes_load( btn );
 }
 
 

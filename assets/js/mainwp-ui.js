@@ -718,6 +718,93 @@ let mainwp_upload_custom_icon = function (iconObj) {
 
 };
 
+/**
+ * Initialize button state based on site selection checkboxes.
+ * Disables specified buttons until at least one site/tag(group)/client is selected.
+ * 
+ * @param {Array|string} buttonIds - Array of button IDs or single button ID string
+ * @param {string} containerSelector - Optional container selector (default: '#mainwp-select-sites')
+ */
+let mainwp_init_button_site_selection_dependency = function(buttonIds, containerSelector) {
+	containerSelector = containerSelector || '#mainwp-select-sites';
+	
+	// Convert single button ID to array
+	if (typeof buttonIds === 'string') {
+		buttonIds = [buttonIds];
+	}
+	
+	// Function to check if any checkbox is selected
+	let checkSelectionState = function() {
+		let hasSelection = false;
+		
+		// Check all three types of checkboxes
+		let selectors = [
+			'input[name="selected_sites[]"]:checked',
+			'input[name="selected_groups[]"]:checked',
+			'input[name="selected_clients[]"]:checked'
+		];
+		
+		jQuery.each(selectors, function(index, selector) {
+			if (jQuery(containerSelector + ' ' + selector).length > 0) {
+				hasSelection = true;
+				return false; // break the loop
+			}
+		});
+		
+		// Enable or disable buttons based on selection state
+		jQuery.each(buttonIds, function(index, buttonId) {
+			let $button = jQuery('#' + buttonId);
+			let $wrapper = jQuery('#' + buttonId + '_wrapper');
+			
+			if ($button.length > 0) {
+				if (hasSelection) {
+					// Enable button
+					$button.removeClass('disabled').css('pointer-events', '');
+					// Remove wrapper tooltip if exists
+					if ($wrapper.length > 0) {
+						$wrapper.removeAttr('data-tooltip');
+					}
+				} else {
+					// Disable button
+					$button.addClass('disabled').css('pointer-events', 'none');
+					// Add wrapper tooltip if exists
+					if ($wrapper.length > 0) {
+						$wrapper.attr('data-tooltip', 'Select at least one site, client or tag.').attr('data-inverted', '').attr('data-position', 'bottom center');
+					}
+				}
+			}
+		});
+	};
+	
+	// Initialize buttons as disabled with tooltip wrapper
+	jQuery.each(buttonIds, function(index, buttonId) {
+		let $button = jQuery('#' + buttonId);
+		if ($button.length > 0) {
+			// Wrap button in a span for tooltip (if not already wrapped)
+			if ($button.parent().attr('id') !== buttonId + '_wrapper') {
+				$button.wrap('<span id="' + buttonId + '_wrapper"></span>');
+			}
+			let $wrapper = jQuery('#' + buttonId + '_wrapper');
+			
+			// Disable button and add tooltip to wrapper
+			$button.addClass('disabled');
+			$wrapper.attr('data-tooltip', 'Select at least one site, client or tag.').attr('data-inverted', '').attr('data-position', 'bottom center');
+		}
+	});
+	
+	// Use event delegation to handle checkbox changes (including dynamically loaded ones)
+	jQuery(document).on('change', containerSelector + ' input[name="selected_sites[]"], ' + 
+	                              containerSelector + ' input[name="selected_groups[]"], ' + 
+	                              containerSelector + ' input[name="selected_clients[]"]', function() {
+		checkSelectionState();
+	});
+	
+	// Also check on page load in case checkboxes are pre-selected
+	jQuery(document).ready(function() {
+		checkSelectionState();
+	});
+};
+
 let mainwp_upload_custom_types_icon = function (iconObj, uploadAct, iconItemId, iconFileSlug, deleteIcon, callback_uploaded) {
     let msg = __('Updating the icon. Please wait...');
     mainwp_set_message_zone('#mainwp-message-zone-upload', '<i class="notched circle loading icon"></i> ' + msg, '');

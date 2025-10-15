@@ -64,14 +64,17 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
      * @uses \MainWP\Dashboard\MainWP_Bulk_Add::get_class_name()
      * @uses \MainWP\Dashboard\MainWP_User::render_header()
      * @uses \MainWP\Dashboard\MainWP_User::render_footer()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      */
     public static function render() { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-        $show_form = true;
-        $errors    = array();
+        $show_form      = true;
+        $dbwebsites     = array();
+        $errors         = array();
+        $form_submitted = false;
 
         if ( isset( $_POST['bulk_updateadminpassword'] ) ) {
+            $form_submitted = true;
             check_admin_referer( 'mainwp_updateadminpassword', 'security' );
 
             if ( isset( $_POST['select_by'] ) ) {
@@ -83,7 +86,7 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                     $errors[] = esc_html__( 'Please select the sites or groups or clients where you want to change the administrator password.', 'mainwp' );
                 }
             } else {
-                $errors[] = esc_html__( 'Please select whether you want to change the administrator password for specific sites or groups or clients.', 'mainwp' );
+                $errors[] = esc_html__( 'Please select whether you want to change the administrator password for specific sites, tags or clients.', 'mainwp' );
             }
 
             if ( ! isset( $_POST['password'] ) || '' === trim( wp_unslash( $_POST['password'] ) ) ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- ok.
@@ -94,10 +97,9 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
 
             if ( empty( $errors ) ) {
                 $show_form = false;
-
+            
                 $new_password = wp_unslash( $_POST['password'] ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- ok.
 
-                $dbwebsites = array();
                 if ( 'site' === $_POST['select_by'] ) { // Get all selected websites.
                     foreach ( $selected_sites as $k ) {
                         if ( MainWP_Utility::ctype_digit( $k ) ) {
@@ -168,12 +170,12 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
         }
 
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'admin_nicename', 'admin_useremail' ) ) );
-
+        
         MainWP_User::render_header( 'UpdateAdminPasswords' );
         if ( ! $show_form ) {
             static::render_modal( $dbwebsites, $output );
         }
-        static::render_bulk_form( $websites );
+        static::render_bulk_form( $websites, $errors, $form_submitted );
         MainWP_User::render_footer( 'UpdateAdminPasswords' );
     }
 
@@ -232,12 +234,15 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
     /**
      * Renders bulk update administrator password form.
      *
-     * @param object $websites Object containing child sites info.
+     * @param object $websites       Object containing child sites info.
+     * @param array  $errors         Array of error messages.
+     * @param bool   $form_submitted Whether the form was submitted.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     * @uses \MainWP\Dashboard\MainWP_Utility::mainwp_display_site()
      */
-    public static function render_bulk_form( $websites ) {
+    public static function render_bulk_form( $websites, $errors = array(), $form_submitted = false ) {
         /**
          * Filter: mainwp_update_admin_password_complexity
          *
@@ -248,15 +253,31 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
         $pass_complexity = apply_filters( 'mainwp_update_admin_password_complexity', '24' );
         ?>
         <div class="ui alt segment" id="mainwp-bulk-update-admin-passwords">
-            <form action="" method="post" name="mainwp-update-admin-password-form" id="mainwp-update-admin-password-form" enctype="multipart/form-data">
-                <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
+            <form action="" method="post" name="mainwp-update-admin-password-form" id="mainwp-update-admin-password-form">
+                <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                 <input type="hidden" name="security" value="<?php echo esc_attr( wp_create_nonce( 'mainwp_updateadminpassword' ) ); ?>"/>
                 <div class="mainwp-main-content" >
-                    <div class="ui em hidden divider"></div>
+                    <div class="ui hidden divider"></div>
+                    <?php if ( $form_submitted ) : ?>
+                        <?php if ( empty( $errors ) ) : ?>
+                            <div class="ui green message">
+                                <i class="close icon"></i>
+                                <?php esc_html_e( 'Passwords updated successfully.', 'mainwp' ); ?>
+                            </div>
+                        <?php else : ?>
+                            <div class="ui red message">
+                                <i class="close icon"></i>
+                                <?php foreach ( $errors as $error ) : ?>
+                                    <div><?php echo esc_html( $error ); ?></div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    <?php endif; ?>
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-admin-pass-info-message' ) ) : ?>
-                        <div class="ui info message">
+                        <div class="ui attention message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-admin-pass-info-message"></i>
-                            <?php printf( esc_html__( 'See the list of Admininstrator users used to establish secure connection between your MainWP Dashboard and child sites.  If needed, use the provided form to set a new password for these accounts.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/bulk-update-administrator-passwords/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
+                            <div><strong><?php esc_html_e( 'Caution: This updates the administrator passwords used for connecting to the selected Child Sites.', 'mainwp' ); ?></strong></div>
+                            <div><?php printf( esc_html__( 'See the list of Admininstrator users used to establish secure connection between your MainWP Dashboard and child sites. If needed, use the provided form to set a new password for these accounts.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/bulk-update-administrator-passwords/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
                         </div>
                     <?php endif; ?>
                         <?php
@@ -272,37 +293,21 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                         <table  id="mainwp-admin-users-table" class="ui single line unstackable table">
                             <thead>
                                 <tr>
-                                    <th scope="col" ><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
-                                    <th scope="col"  class="no-sort collapsing"><i class="sign in icon"></i></th>
-                                    <th scope="col" ><?php esc_html_e( 'Admin Username', 'mainwp' ); ?></th>
-                                    <th scope="col" ><?php esc_html_e( 'Admin Name', 'mainwp' ); ?></th>
-                                    <th scope="col" ><?php esc_html_e( 'Admin Email', 'mainwp' ); ?></th>
+                                    <th scope="col"><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
+                                    <th scope="col" class="collapsing"><?php esc_html_e( 'Admin Username', 'mainwp' ); ?></th>
+                                    <th scope="col" class="collapsing"><?php esc_html_e( 'Admin Email', 'mainwp' ); ?></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php
-                                while ( $websites && $website = MainWP_DB::fetch_object( $websites ) ) :
-                                    $adminname = $website->adminname;
-                                    ?>
+                                <?php while ( $websites && $website = MainWP_DB::fetch_object( $websites ) ) : ?>
                                     <tr>
-                                    <td><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></td>
-                                    <td><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><i class="sign in icon"></i></a></td>
-                                    <td><?php echo esc_html( $adminname ); ?></td>
-                                    <td><?php echo esc_html( $website->admin_nicename ); ?></td>
-                                    <td><?php echo esc_html( $website->admin_useremail ); ?></td>
-                                </tr>
+                                        <td><?php echo MainWP_Utility::mainwp_display_site( $website->id ); ?></td>
+                                        <td><?php echo esc_html( $website->adminname ); ?></td>
+                                        <td><?php echo esc_html( $website->admin_useremail ); ?></td>
+                                    </tr>
                                 <?php endwhile; ?>
                                 <?php MainWP_DB::free_result( $websites ); ?>
                             </tbody>
-                            <tfoot>
-                                <tr>
-                                    <th scope="col" ><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
-                                    <th scope="col" ><i class="sign in icon"></i></th>
-                                    <th scope="col" ><?php esc_html_e( 'Admin Username', 'mainwp' ); ?></th>
-                                    <th scope="col" ><?php esc_html_e( 'Admin Name', 'mainwp' ); ?></th>
-                                    <th scope="col" ><?php esc_html_e( 'Admin Email', 'mainwp' ); ?></th>
-                                </tr>
-                            </tfoot>
                         </table>
                         <?php
                         /**
@@ -408,6 +413,7 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                             do_action( 'mainwp_admin_pass_before_pass_form' );
                             ?>
                             <div class="ui mini form">
+                                <div class="ui blue message"><?php esc_html_e( 'This password will be applied to all administrator accounts used for connecting to the selected Child Sites.', 'mainwp' ); ?></div>
                                 <div class="field">
                                     <label><?php esc_html_e( 'New Password', 'mainwp' ); ?></label>
                                     <input class="hidden" value=" "/>
@@ -442,7 +448,8 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                             do_action( 'mainwp_admin_pass_before_submit_button' );
 
                             ?>
-                            <input type="submit" name="bulk_updateadminpassword" id="bulk_updateadminpassword" class="ui big green fluid button" value="<?php esc_attr_e( 'Update Password', 'mainwp' ); ?> "/>
+                            <input type="hidden" name="bulk_updateadminpassword" value="1" />
+                            <a href="#" id="bulk_updateadminpassword" class="ui big green fluid button"><?php esc_html_e( 'Update Password', 'mainwp' ); ?></a>
                             <?php
                             /**
                              * Action: mainwp_admin_pass_after_submit_button
@@ -468,7 +475,12 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                     <div style="clear:both"></div>
                 </form>
             </div>
-
+            <script type="text/javascript">
+                jQuery( document ).ready( function () {
+                    // Initialize button state based on site selection
+                    mainwp_init_button_site_selection_dependency( 'bulk_updateadminpassword' );
+                } );
+            </script>
         <?php
     }
 }

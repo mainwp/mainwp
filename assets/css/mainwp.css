@@ -108,6 +108,29 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     margin-bottom: 0.5rem;
     margin-top: 0.15rem;
 }
+/* QSW */
+.mainwp-ui-setup::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 75%;
+  right: 0;
+  bottom: 0;
+  background-image: url('../images/mainwp-icon.svg');
+  background-repeat: no-repeat;
+  background-size: cover;
+  opacity: 0.05;
+  z-index: -1;
+}
+.mainwp-ui-setup .mainwp-quick-setup-wizard-steps-content .ui.segment {
+    background: none !important;
+}
+
+#mainwp-qsw-exit-links {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+}
 
 /* Content Wrap */
 
@@ -523,6 +546,23 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     margin-right: 1em !important;
 }
 
+/* Steps */
+
+.mainwp-ui .ui.steps .step.completed > .icon::before,
+.mainwp-ui .ui.ordered.steps .step.completed::before {
+    background: #7fb100;
+    border-color: #7fb100 !important;
+}
+.mainwp-ui .ui.ordered.steps .step.completed::after {
+    background: #7fb100!important;
+    border-color: #7fb100 !important;
+    color: #1c1d1b !important;
+}
+.ui.circular.steps .step.active::before,
+.ui.circular.steps .step.completed::before {
+    border-color: #7fb100 !important;
+}
+
 /* Widgets */
 
 
@@ -586,11 +626,6 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
 
 .mainwp-empty-widget-placeholder img.mainwp-no-results-placeholder {
     margin-bottom: 2rem;
-}
-
-/* Forms - Import Sites */
-.mainwp-managesites-import-rows:nth-of-type(odd) {
-    background-color: rgba(0, 0, 0, .04);
 }
 
 
@@ -1331,6 +1366,14 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
 .mainwp-manage-wpsites-table.dataTable.table th span {
     -webkit-box-sizing: border-box !important;
     box-sizing: border-box !important;
+}
+
+.mainwp-quick-setup .ui.segments > .ui.segment {
+    border: none !important;
+}
+
+.mainwp-quick-setup .ui.segments > .ui.segment:last-child {
+    box-shadow: none !important;
 }
 
 .mainwp-quick-setup .ui.divider {

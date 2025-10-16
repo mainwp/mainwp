@@ -2233,7 +2233,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                         if ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {
                             set_transient( 'mainwp_transient_just_connected_site_id', $id, HOUR_IN_SECONDS );
-                            $message = sprintf( esc_html__( '%1$sCongratulations you have connected %2$s.%3$s After finishing the Quick Setup Wizard, you can add additional sites from the Add New Sites page.', 'mainwp' ), '<div class="ui header">', '<strong>' . esc_html( $params['name'] ) . '</strong>', '</div>' );
+                            $message = sprintf( esc_html__( '%4$s%1$sCongratulations you have connected %2$s.%3$s After finishing the Quick Setup Wizard, you can add additional sites from the Add New Sites page. Proceeding to the next step in 3 seconds...', 'mainwp' ), '<div class="ui header">', '<strong>' . esc_html( $params['name'] ) . '</strong>', '</div>', '<a href="admin.php?page=mainwp-setup&step=monitoring" class="ui mini basic green right floated button">Continue</a>' );
                         } else {
                             $message = sprintf( esc_html__( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.%3$s', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . esc_html__( 'Dashboard', 'mainwp' ) . '">', '</a>', '<br/>' );
                         }

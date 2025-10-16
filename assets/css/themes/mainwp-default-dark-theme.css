@@ -54,6 +54,21 @@
   min-height: 1em !important;
 }
 
+/* Quick Setup Wizard
+  ========================================================================== */
+
+.mainwp-ui.mainwp-custom-theme.mainwp-ui-setup .mainwp-quick-setup-wizard-steps-content .ui.segment {
+    background: none !important;
+}
+.mainwp-ui.mainwp-custom-theme.mainwp-ui-setup .mainwp-quick-setup-wizard-steps-content #mainwp-connection-authentication-accordion {
+    background: var(--mainwp-border) !important;
+}
+.mainwp-ui.mainwp-custom-theme.mainwp-ui-setup .mainwp-quick-setup-wizard-steps-content #mainwp-add-sites-info-accordion,
+.mainwp-ui.mainwp-custom-theme.mainwp-ui-setup .mainwp-quick-setup-wizard-steps-content #mainwp-add-sites-info-accordion .title,
+.mainwp-ui.mainwp-custom-theme.mainwp-ui-setup .mainwp-quick-setup-wizard-steps-content #mainwp-add-sites-info-accordion .content {
+    background: var(--mainwp-border) !important;
+}
+
 /* General styles
   ========================================================================== */
 
@@ -108,6 +123,11 @@
   color: var(--mainwp-text);
 }
 
+/* Divider */
+
+.mainwp-ui .ui.divider {
+  color: var(--mainwp-text-secondary) !important;
+}
 
 /* Buttons */
 
@@ -585,6 +605,7 @@
 .mainwp-ui.mainwp-custom-theme .ui.toggle.checkbox label::before,
 .mainwp-ui.mainwp-custom-theme .ui.slide.checkbox label::before {
   background-color: var(--mainwp-element-background-secondary) !important;
+  border: 1px solid var(--mainwp-border) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.checkbox input~label,
@@ -707,11 +728,6 @@
   border-radius: 16px !important;
   -webkit-border-radius: 16px !important;
   color: var(--mainwp-text);
-}
-
-.mainwp-ui.mainwp-custom-theme .mainwp-managesites-import-rows:nth-of-type(odd),
-.mainwp-ui.mainwp-custom-theme .mainwp-qsw-add-client-rows:nth-of-type(odd) {
-  background-color: var(--mainwp-element-background-secondary) !important;
 }
 
 /* Invert Editor */
@@ -1641,23 +1657,44 @@ body.mainwp-ui.mainwp-custom-theme,
 
 /* Steps
 ========================================================================== */
-.mainwp-ui.mainwp-custom-theme .ui.steps .step {
+.mainwp-ui.mainwp-custom-theme .ui.steps:not(.vertical) .step {
   background-color: var(--mainwp-element-background) !important;
   border-right: 1px solid var(--mainwp-border) !important;
 }
-.mainwp-ui.mainwp-custom-theme .ui.steps .step.active {
-  background-color: var(--mainwp-element-background-secondary) !important;
+.mainwp-ui.mainwp-custom-theme .ui.steps:not(.vertical) .step.active {
+  background-color: var(--mainwp-green) !important;
 }
-.mainwp-ui.mainwp-custom-theme .ui.steps .step:after {
+.mainwp-ui.mainwp-custom-theme .ui.steps:not(.vertical) .step.completed {
+  background-color: var(--mainwp-green) !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.steps:not(.vertical) .step:after {
   background-color: var(--mainwp-element-background) !important;
   border-color: var(--mainwp-border) !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.circular.steps .step::before {
+  border-color: var(--mainwp-border) !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.circular.steps .step.active::before,
+.mainwp-ui.mainwp-custom-theme .ui.circular.steps .step.completed::before {
+  border-color: var(--mainwp-green) !important;
 }
 .mainwp-ui.mainwp-custom-theme .ui.steps .step.active:after {
   background-color: var(--mainwp-element-background-secondary) !important;
 }
+.mainwp-ui.mainwp-custom-theme .ui.circular.steps .step:after {
+  background: none !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.circular.ordered.steps .step.active::before,
+.mainwp-ui.mainwp-custom-theme .ui.circular.steps .step.active:after {
+  color: var(--mainwp-green) !important;
+}
 .mainwp-ui.mainwp-custom-theme .ui.steps .step .title,
 .mainwp-ui.mainwp-custom-theme .ui.steps .step .title .icon {
   color: var(--mainwp-text-header) !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.steps .step.active .title,
+.mainwp-ui.mainwp-custom-theme .ui.steps .step.completed .title {
+  color: var(--mainwp-green) !important;
 }
 .mainwp-ui.mainwp-custom-theme .ui.steps .step .description {
   color: var(--mainwp-text) !important;

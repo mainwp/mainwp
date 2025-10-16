@@ -498,8 +498,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
      */
     public static function render_browser_extensions_notice() {
-        $is_demo = MainWP_Demo_Handle::is_demo_mode();
-        if ( MainWP_DB::instance()->get_websites_count() > 4 && ! $is_demo && MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_browser_extensions_notice' ) ) {
+        if ( MainWP_DB::instance()->get_websites_count() > 4 && MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_browser_extensions_notice' ) ) {
             ?>
             <div class="ui info message" style="margin-bottom: 0; border-radius: 0;">
                 <h3><?php esc_html_e( 'Track Updates and Non-MainWP Changes from Your Browser!', 'mainwp' ); ?></h3>
@@ -508,7 +507,6 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 <br/>
                 <div>
                     <a href="https://chrome.google.com/webstore/detail/mainwp-browser-extension/kjlehednpnfgplekjminjpocdechbnge" target="_blank" class="ui green tiny button"><i class="chrome icon"></i> <?php echo esc_html__( 'Get Chrome Extension', 'mainwp' ); ?></a>
-                    <a href="https://addons.mozilla.org/en-US/firefox/addon/mainwp-browser-extension/" target="_blank" class="ui green tiny button"><i class="firefox icon"></i> <?php echo esc_html__( 'Get Firefox Extension', 'mainwp' ); ?></a>
                     <a href="https://mainwp.com/mainwp-browser-extension/" target="_blank" class="ui tiny button"><?php echo esc_html__( 'Read More', 'mainwp' ); // NOSONAR - noopener - open safe. ?></a>
                 </div>
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp_browser_extensions_notice"></i>

@@ -12,11 +12,11 @@ jQuery(function () {
 
   jQuery('#mainwp-qsw-verify-mainwp-child-active').on('change', function () {
     if (jQuery(this).is(':checked')) {
-      jQuery('#mainwp_managesites_add').attr("disabled", false);
-      jQuery('#mainwp_managesites_add_import').attr("disabled", false);
+      jQuery('#mainwp_managesites_add').removeClass('disabled');
+      jQuery('#mainwp_managesites_add_import').removeClass('disabled');
     } else {
-      jQuery('#mainwp_managesites_add').attr("disabled", true);
-      jQuery('#mainwp_managesites_add_import').attr("disabled", true);
+      jQuery('#mainwp_managesites_add').addClass('disabled');
+      jQuery('#mainwp_managesites_add_import').addClass('disabled');
     }
   });
 
@@ -130,7 +130,7 @@ let mainwp_setup_managesites_add = function () {
   if (errors.length > 0) {
     mainwp_set_message_zone('#mainwp-message-zone', errors.join('<br />'), 'yellow');
   } else {
-    mainwp_set_message_zone('#mainwp-message-zone', 'Adding the site to your MainWP Dashboard. Please wait...', '');
+    mainwp_set_message_zone('#mainwp-message-zone', '<i class="notched circle loading icon"></i> Adding the site to your MainWP Dashboard. Please wait...', '');
     jQuery('#mainwp_managesites_add').attr('disabled', 'true'); //disable button to add..
 
     let url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val().trim();

@@ -446,11 +446,6 @@
   -webkit-border-radius: 10px;
 }
 
-.mainwp-ui.mainwp-custom-theme .mainwp-managesites-import-rows:nth-of-type(odd),
-.mainwp-ui.mainwp-custom-theme .mainwp-qsw-add-client-rows:nth-of-type(odd) {
-  background-color: var(--grey-light) !important;
-}
-
 /* Lists */
 .mainwp-ui.mainwp-custom-theme .ui.divided.list .item {
   border-color: var(--grey-light) !important;

@@ -36,6 +36,13 @@
   height: 1em !important;
 }
 
+/* Quick Setup Wizard
+  ========================================================================== */
+
+.mainwp-ui.mainwp-custom-theme.mainwp-ui-setup .mainwp-quick-setup-wizard-steps-content .ui.segment {
+    background: none !important;
+}
+
 /* General styles
   ========================================================================== */
 
@@ -491,11 +498,6 @@
   -webkit-border-radius: var(--input-radius);
 }
 
-.mainwp-ui.mainwp-custom-theme .mainwp-managesites-import-rows:nth-of-type(odd),
-.mainwp-ui.mainwp-custom-theme .mainwp-qsw-add-client-rows:nth-of-type(odd) {
-  background-color: var(--mainwp-border) !important;
-}
-
 /* Lists */
 .mainwp-ui.mainwp-custom-theme .ui.divided.list > .item {
   border-color: var(--mainwp-border) !important;
@@ -915,6 +917,46 @@ body.mainwp-ui.mainwp-custom-theme,
 
 .mainwp-ui.mainwp-custom-theme #mainwp-sites-filters-row {
   border-top: 1px solid var(--mainwp-border) !important;
+}
+
+/* Steps
+========================================================================== */
+.mainwp-ui.mainwp-custom-theme .ui.steps:not(.vertical) .step {
+  background-color: var(--mainwp-border) !important;
+  border-right: 1px solid var(--mainwp-border) !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.steps:not(.vertical) .step.active {
+  background-color: var(--mainwp-green) !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.steps .step.active .title {
+  color: var(--mainwp-green) !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.steps:not(.vertical) .step.completed {
+  background-color: var(--mainwp-green) !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.steps .step.completed .title {
+  color: var(--mainwp-green) !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.steps .step:after {
+  background-color: var(--mainwp-element-background) !important;
+  border-color: var(--mainwp-border) !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.circular.steps .step::before {
+  border-color: var(--mainwp-border) !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.circular.steps .step.active::before,
+.mainwp-ui.mainwp-custom-theme .ui.circular.steps .step.completed::before {
+  border-color: var(--mainwp-green) !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.steps .step.active:after {
+  background-color: var(--mainwp-element-background-secondary) !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.circular.steps .step:after {
+  background: none !important;
+}
+.mainwp-ui.mainwp-custom-theme .ui.circular.ordered.steps .step.active::before,
+.mainwp-ui.mainwp-custom-theme .ui.circular.steps .step.active:after {
+  color: var(--mainwp-green) !important;
 }
 
 /* Gridster Fixes

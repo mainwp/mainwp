@@ -233,11 +233,11 @@
     width: 35px !important;
 }
 
-.mainwp-ui .ui.dimmer {
+.mainwp-ui:not(.mainwp-ui-setup) .ui.dimmer {
     background: rgba(255, 255, 255, 1);
 }
 
-.mainwp-ui .ui.page.dimmer {
+.mainwp-ui.mainwp-ui:not(.mainwp-ui-setup) .ui.page.dimmer {
     margin-left: 72px;
     margin-top: 57px;
 }

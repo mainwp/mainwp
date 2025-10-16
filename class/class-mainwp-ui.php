@@ -1435,13 +1435,16 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             }
             ?>
             <div class="menu">
-                <a class="item" id="mainwp-settings-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=Settings' ) ); ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Go to MainWP Settings', 'mainwp' ); ?>">
+                <a class="item" id="mainwp-settings-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=Settings' ) ); ?>">
                     <i class="cog grey icon"></i> <?php esc_html_e( 'MainWP Settings', 'mainwp' ); ?>
                 </a>
-                <a class="item" id="mainwp-system-info-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=ServerInformation' ) ); ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Go to MainWP Info', 'mainwp' ); ?>">
+                <a class="item" id="mainwp-tools-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=MainWPTools' ) ); ?>">
+                    <i class="tools grey icon"></i> <?php esc_html_e( 'MainWP Tools', 'mainwp' ); ?>
+                </a>
+                <a class="item" id="mainwp-system-info-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=ServerInformation' ) ); ?>">
                     <i class="circle grey info icon"></i> <?php esc_html_e( 'System Info', 'mainwp' ); ?>
                 </a>
-                <a class="item" id="mainwp-privacy-policy-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=PluginPrivacy' ) ); ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Read the MainWP plugin privacy policy.', 'mainwp' ); ?>">
+                <a class="item" id="mainwp-privacy-policy-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=PluginPrivacy' ) ); ?>">
                     <i class="file contract grey icon"></i> <?php esc_html_e( 'Privacy Policy', 'mainwp' ); ?>
                 </a>
                 <a id="mainwp-help-sidebar" class="item" href="#" target="_blank">
@@ -1465,7 +1468,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     <i class="user grey icon"></i> <?php esc_html_e( 'My MainWP Account', 'mainwp' ); ?>
                 </a>
                 <div class="ui divider"></div>
-                <a class="item" id="mainwp-sign-out-button" href="<?php echo wp_logout_url(); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Log out of your MainWP Dashboard', 'mainwp' ); ?>">
+                <a class="item" id="mainwp-sign-out-button" href="<?php echo wp_logout_url(); // phpcs:ignore WordPress.Security.EscapeOutput ?>">
                     <i class="sign out grey icon"></i> <?php esc_html_e( 'Log Out', 'mainwp' ); ?>
                 </a>
             </div>

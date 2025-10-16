@@ -376,6 +376,30 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         </div>
         <?php
+        if ( empty( get_user_option( 'mainwp_selected_theme' ) ) ) {
+            $sites = MainWP_DB::instance()->get_sites(); // Get site data.
+            if ( empty( $sites ) ) {
+                ?>
+                <script>
+                    jQuery(function ($) {
+                        let detectedMode = '';
+                        if(window.matchMedia('(prefers-color-scheme: dark)').matches){
+                            detectedMode = 'dark';
+                        } else if(window.matchMedia('(prefers-color-scheme: light)').matches){
+                            detectedMode = 'light';
+                        }
+                        let data = mainwp_secure_data({
+                            action: 'mainwp_qsw_ui_mode_detected',
+                            ui_mode: detectedMode,
+                        });
+                        $.post(ajaxurl, data, function (response) {
+                            // nothing.
+                        }, 'json');
+                    });
+                </script>
+                <?php
+            }
+        }
     }
 
     /**

@@ -2212,13 +2212,23 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             </label>
             <div class="ten wide column" tabindex="0" data-tooltip="<?php esc_attr_e( 'Select your MainWP Dashboard theme.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                 <select name="mainwp_settings_custom_theme" id="mainwp_settings_custom_theme" class="ui dropdown selection settings-field-value-change-handler">
-                    <option value="default" <?php echo ( 'default' === $custom_theme || empty( $custom_theme ) ) ? 'selected' : ''; ?>><?php esc_html_e( 'Default', 'mainwp' ); ?></option>
+                    <option value="default" <?php echo ( 'default' === $custom_theme || empty( $custom_theme ) ) ? 'selected' : ''; ?>><?php esc_html_e( 'Light', 'mainwp' ); ?></option>
                     <option value="default-dark" <?php echo ( 'default-dark' === $custom_theme || empty( $custom_theme ) ) ? 'selected' : ''; ?>><?php esc_html_e( 'Dark', 'mainwp' ); ?></option>
-                    <option value="default-2024" <?php echo ( 'default-2024' === $custom_theme || empty( $custom_theme ) ) ? 'selected' : ''; ?>><?php esc_html_e( 'Default 2024', 'mainwp' ); ?></option>
+                    <?php if ( 'default-2024' === $custom_theme ) { ?>
+                    <option value="default-2024" <?php echo ( 'default-2024' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Default 2024', 'mainwp' ); ?></option>
+                    <?php } ?>
+                    <?php if ( 'dark' === $custom_theme ) { ?>
                     <option value="dark" <?php echo ( 'dark' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Dark 2024', 'mainwp' ); ?></option>
+                    <?php } ?>
+                    <?php if ( 'classic' === $custom_theme ) { ?>
                     <option value="classic" <?php echo ( 'classic' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Classic (Legacy)', 'mainwp' ); ?></option>
+                    <?php } ?>
+                    <?php if ( 'wpadmin' === $custom_theme ) { ?>
                     <option value="wpadmin" <?php echo ( 'wpadmin' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'WP Admin (Legacy)', 'mainwp' ); ?></option>
+                    <?php } ?>
+                    <?php if ( 'minimalistic' === $custom_theme ) { ?>
                     <option value="minimalistic" <?php echo ( 'minimalistic' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Minimalistic (Legacy)', 'mainwp' ); ?></option>
+                    <?php } ?>
                     <?php
                     foreach ( $themes_files as $file_name => $theme ) {
                         $theme   = ucfirst( $theme );

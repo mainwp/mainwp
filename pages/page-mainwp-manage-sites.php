@@ -2195,28 +2195,31 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         ?>
         <?php esc_html_e( 'MainWP requires the MainWP Child plugin to be installed and activated on the WordPress sites that you want to connect to your MainWP Dashboard. ', 'mainwp' ); ?>
         <?php esc_html_e( 'To connect multiple sites, please follow these steps:', 'mainwp' ); ?>
-        <ol>
-            <li><?php esc_html_e( 'Fill in the Site URL field by entering the URL of the website you want to connect.', 'mainwp' ); ?></li>
-            <li><?php esc_html_e( 'Enter the username of your Administrator account on the site.', 'mainwp' ); ?></li>
-            <li><?php esc_html_e( 'Optionally, enter a custom Site Name, or MainWP will automatically generate a name for it.', 'mainwp' ); ?></li>
-            <li><?php esc_html_e( 'Enter the administrator account password. If the requirement is disabled in the MainWP Child plugin settings, leave blank.', 'mainwp' ); ?></li>
-        <?php if ( $is_qsw ) : ?>
-            <li><?php esc_html_e( 'To show additional fields (Tags, Security ID, HTTP Username, HTTP Password, SSL Version, and SSL Verification, click the eye icon at the end of the row.', 'mainwp' ); ?></li>
+        <div class="ui hidden divier"></div>
+        <div class="ui relaxed bulleted list">
+            <div class="item"><?php esc_html_e( 'Fill in the Site URL field by entering the URL of the website you want to connect.', 'mainwp' ); ?></div>
+            <div class="item"><?php esc_html_e( 'Enter the username of your Administrator account on the site.', 'mainwp' ); ?></div>
+            <div class="item"><?php esc_html_e( 'Optionally, enter a custom Site Name, or MainWP will automatically generate a name for it.', 'mainwp' ); ?></div>
+            <div class="item"><?php esc_html_e( 'Enter the administrator account password. If the requirement is disabled in the MainWP Child plugin settings, leave blank.', 'mainwp' ); ?></div>
+            <?php if ( $is_qsw ) : ?>
+            <div class="item"><?php esc_html_e( 'To show additional fields (Tags, Security ID, HTTP Username, HTTP Password, SSL Version, and SSL Verification, click the eye icon at the end of the row.', 'mainwp' ); ?></div>
             <?php endif; ?>
-            <li><?php esc_html_e( 'If needed, you can tag your sites in the Tag field.', 'mainwp' ); ?></li>
-            <li><?php esc_html_e( 'If you have enabled the Unique Security ID in the MainWP Child plugin settings, enter the Security ID in the corresponding field.', 'mainwp' ); ?></li>
-            <li><?php esc_html_e( 'If the website you are trying to connect is protected with HTTP Basic Auth, enter the HTTP Username & Password. If not, leave it blank.', 'mainwp' ); ?></li>
-            <li><?php esc_html_e( 'Keep the default value of "1" to verify the SSL certificate for your sites, or change it if you prefer not to verify.', 'mainwp' ); ?></li>
-            <li><?php esc_html_e( 'Leave the SSL Version as "auto" unless you know the specific version required by the site. The "auto" option typically works for most sites.', 'mainwp' ); ?></li>
-            <li><?php esc_html_e( 'Repeat this process for all sites you want to add.', 'mainwp' ); ?></li>
-            <li><?php esc_html_e( 'Use the Add New Row button to add additional rows if you need to connect more sites at once.', 'mainwp' ); ?></li>
-        <?php if ( ! $is_qsw ) : ?>
-            <li><?php esc_html_e( 'After filling in all the required information, submit the form to connect the selected sites to your MainWP Dashboard.', 'mainwp' ); ?></li>
+            <div class="item"><?php esc_html_e( 'If needed, you can tag your sites in the Tag field.', 'mainwp' ); ?></div>
+            <div class="item"><?php esc_html_e( 'If you have enabled the Unique Security ID in the MainWP Child plugin settings, enter the Security ID in the corresponding field.', 'mainwp' ); ?></div>
+            <div class="item"><?php esc_html_e( 'If the website you are trying to connect is protected with HTTP Basic Auth, enter the HTTP Username & Password. If not, leave it blank.', 'mainwp' ); ?></div>
+            <div class="item"><?php esc_html_e( 'Keep the default value of "1" to verify the SSL certificate for your sites, or change it if you prefer not to verify.', 'mainwp' ); ?></div>
+            <div class="item"><?php esc_html_e( 'Leave the SSL Version as "auto" unless you know the specific version required by the site. The "auto" option typically works for most sites.', 'mainwp' ); ?></div>
+            <div class="item"><?php esc_html_e( 'Repeat this process for all sites you want to add.', 'mainwp' ); ?></div>
+            <div class="item"><?php esc_html_e( 'Use the Add New Row button to add additional rows if you need to connect more sites at once.', 'mainwp' ); ?></div>
+            <?php if ( ! $is_qsw ) : ?>
+            <div class="item"><?php esc_html_e( 'After filling in all the required information, submit the form to connect the selected sites to your MainWP Dashboard.', 'mainwp' ); ?></div>
             <?php else : ?>
-            <li><?php esc_html_e( 'After filling in all the required information, confirm that you have the MainWP Child plugin installed and activated and click the Connect Sites button to proceed.', 'mainwp' ); ?></li>
+            <div class="item"><?php esc_html_e( 'After filling in all the required information, confirm that you have the MainWP Child plugin installed and activated and click the Connect Sites button to proceed.', 'mainwp' ); ?></div>
             <?php endif; ?>
-        </ol>
+        </div>
+        <?php if ( ! $is_qsw ) : ?>
         <span class="ui small text">* <?php esc_html_e( 'Your password is never stored by your Dashboard and never sent to MainWP.com. Once this initial connection is complete, your MainWP Dashboard generates a secure Public and Private key pair (2048 bits) using OpenSSL, allowing future connections without needing your password again. For added security, you can even change this admin password once connected, just be sure not to delete the admin account, as this would disrupt the connection.', 'mainwp' ); ?></span>
+        <?php endif; ?>
         <?php
     }
 
@@ -2452,8 +2455,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <div class="one wide column">
                 <div class="ui mini fluid input">
                     <a class="mainwp-managesites-more-import-row " onclick="mainwp_managesites_import_sites_more_row(<?php echo esc_attr( $index ); ?>)" style="margin-right: 10px !important;" href="javascript:void(0)">
-                        <i class="eye outline icon"  id="icon-visible-<?php echo esc_attr( $index ); ?>"></i>
-                        <i class="eye slash outline icon" id="icon-hidden-<?php echo esc_attr( $index ); ?>" style="<?php echo esc_attr( $display_none ); ?>"></i>
+                        <i class="caret left icon"  id="icon-visible-<?php echo esc_attr( $index ); ?>"></i>
+                        <i class="caret down icon" id="icon-hidden-<?php echo esc_attr( $index ); ?>" style="<?php echo esc_attr( $display_none ); ?>"></i>
                     </a>
                     <a class="mainwp-managesites-delete-import-row" href="javascript:void(0)" onclick="mainwp_managesites_import_sites_delete_row(<?php echo esc_attr( $index ); ?>)">
                         <i class="trash alternate outline icon"></i>
@@ -2461,7 +2464,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 </div>
             </div>
             <?php foreach ( $optional_fields as $key_optional => $field_optional ) : ?>
-                <div class="<?php echo ( 'verify_certificate' === $key_optional || 'ssl_version' === $key_optional ) ? 'two' : 'three'; ?> wide column mainwp-managesites-import-column-more-<?php echo esc_attr( $index ); ?>" style="<?php echo esc_attr( $display_none ); ?>">
+                <div class="<?php echo ( 'verify_certificate' === $key_optional || 'ssl_version' === $key_optional ) ? 'two' : 'two'; ?> wide column mainwp-managesites-import-column-more-<?php echo esc_attr( $index ); ?>" style="<?php echo esc_attr( $display_none ); ?>">
                     <div class="">
                         <span class="ui small text"><?php echo esc_html( $field_optional['label'] ); ?></span>
                         <?php self::mainwp_managesites_form_import_sites_render_input( $index, $key_optional, $field_optional, $field, $site ); ?>

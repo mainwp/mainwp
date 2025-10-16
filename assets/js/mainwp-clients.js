@@ -442,7 +442,7 @@ let mainwp_createclient = function (currPage) {
   mainwp_set_message_zone('#mainwp-message-zone-client', '<i class="notched circle loading icon"></i> ' + msg);
   jQuery('#bulk_add_createclient').attr('disabled', 'disabled');
 
-  //Add user via ajax!!
+  //Add Client via ajax!!
   let formdata = new FormData(jQuery('#createclient_form')[0]);
   formdata.append("action", 'mainwp_clients_add_client');
   formdata.append("select_by", jQuery('#select_by').val());
@@ -461,7 +461,10 @@ let mainwp_createclient = function (currPage) {
         if ('add-new' == currPage) {
           mainwp_forceReload("admin.php?page=ManageClients");
         } else if ('qsw-add' == currPage) {
-            mainwp_forceReload('admin.php?page=mainwp-setup&step=monitoring&message=1');
+            mainwp_set_message_zone('#mainwp-message-zone', '<a href="admin.php?page=mainwp-setup&step=monitoring" class="ui mini basic green right floated button">Continue</a><div class="ui header">Congratulations! You have added your first client.</div> After finishing the Quick Setup Wizard, you can add more clients from the Add New Client page. Proceeding to the next step in 3 seconds...', 'green');
+            setTimeout(function () {
+              mainwp_forceReload('admin.php?page=mainwp-setup&step=monitoring&message=1');
+            }, 3000);
         } else {
             mainwp_forceReload();
         }

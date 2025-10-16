@@ -479,6 +479,10 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
             $translation_upgrades = json_decode( $website->translation_upgrades, true );
 
+            if ( ! empty( $website->ignored_trans_updates ) ) {
+                $translation_upgrades = array();
+            }
+
             $plugin_upgrades = json_decode( $website->plugin_upgrades, true );
             if ( $website->is_ignorePluginUpdates ) {
                 $plugin_upgrades = array();
@@ -1891,7 +1895,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $current_wpid = MainWP_System_Utility::get_current_wpid();
         if ( $current_wpid ) {
-            $sql = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon', 'site_info' ) );
+            $sql = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'ignored_wp_upgrades', 'ignored_trans_updates', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon', 'site_info' ) );
         } else {
             $staging_enabled = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php' ) || is_plugin_active( 'mainwp-timecapsule-extension/mainwp-timecapsule-extension.php' );
             $is_staging      = 'no';
@@ -1910,7 +1914,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( ! empty( $limit_sites ) ) {
                 $params['limit_sites'] = $limit_sites;
             }
-            $sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'premium_upgrades', 'rollback_updates_data', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon', 'site_info' ), $is_staging, $params );
+            $sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'ignored_trans_updates', 'premium_upgrades', 'rollback_updates_data', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon', 'site_info' ), $is_staging, $params );
         }
         return MainWP_DB::instance()->query( $sql );
     }

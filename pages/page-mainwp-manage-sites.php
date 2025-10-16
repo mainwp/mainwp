@@ -715,7 +715,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             </div>
 
             <script type="text/javascript">
-                 jQuery( document ).ready( function () {
+                jQuery( document ).ready( function () {
                     jQuery('#mainwp-add-sites-tabular-menu .item').tab();
                     jQuery( '#mainwp_managesites_add_addgroups' ).dropdown( {
                         allowAdditions: true
@@ -2034,6 +2034,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 $newValues['is_ignoreCoreUpdates']   = ! empty( $_POST['mainwp_is_ignoreCoreUpdates'] ) ? 1 : 0;
                 $newValues['is_ignorePluginUpdates'] = ! empty( $_POST['mainwp_is_ignorePluginUpdates'] ) ? 1 : 0;
                 $newValues['is_ignoreThemeUpdates']  = ! empty( $_POST['mainwp_is_ignoreThemeUpdates'] ) ? 1 : 0;
+                MainWP_DB::instance()->update_website_option( $website, 'ignored_trans_updates', ! empty( $_POST['mainwp_is_ignore_trans_updates'] ) ? 1 : 0 );
             }
 
             MainWP_DB::instance()->update_website_values( $website->id, $newValues );

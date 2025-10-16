@@ -428,6 +428,8 @@ class Log_DB_Helper extends MainWP_DB {
             $type
         );
 
+        error_log($query);
+
         $items = $wpdb->get_results( $query ); //phpcs:ignore --ok.
 
         if ( $items ) {

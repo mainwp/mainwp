@@ -776,8 +776,15 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      * @param object $website    Object containing child site data.
      */
     public static function callback_site_site_available_updates( $args = array(), $assoc_args = array(), $website = false ) { // phpcs:ignore -- NOSONAR - complex.
-        $wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
-        $wp_upgrades = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
+        $site_options          = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'ignored_trans_updates' ) );
+        $wp_upgrades           = isset( $site_options['wp_upgrades'] ) ? json_decode( $site_options['wp_upgrades'], true ) : array();
+        $ignored_core_upgrades = isset( $site_options['ignored_wp_upgrades'] ) ? json_decode( $site_options['ignored_wp_upgrades'], true ) : array();
+
+        if ( $website->is_ignoreCoreUpdates || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $ignored_core_upgrades, 'core' ) ) {
+            $wp_upgrades = array();
+        }
+
+        $ignored_trans_updates = isset( $site_options['ignored_trans_updates'] ) ? (int) $site_options['ignored_trans_updates'] : false;
 
         $plugin_upgrades      = json_decode( $website->plugin_upgrades, true );
         $theme_upgrades       = json_decode( $website->theme_upgrades, true );
@@ -788,6 +795,10 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         }
         if ( $website->is_ignoreThemeUpdates ) {
             $theme_upgrades = array();
+        }
+
+        if ( $ignored_trans_updates ) {
+            $translation_upgrades = array();
         }
 
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();
@@ -1514,6 +1525,17 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
 
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
+
+            $site_options          = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'ignored_trans_updates' ) );
+            $wp_upgrades           = isset( $site_options['wp_upgrades'] ) ? json_decode( $site_options['wp_upgrades'], true ) : array();
+            $ignored_core_upgrades = isset( $site_options['ignored_wp_upgrades'] ) ? json_decode( $site_options['ignored_wp_upgrades'], true ) : array();
+
+            if ( $website->is_ignoreCoreUpdates || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $ignored_core_upgrades, 'core' ) ) {
+                $wp_upgrades = array();
+            }
+
+            $ignored_trans_updates = isset( $site_options['ignored_trans_updates'] ) ? (int) $site_options['ignored_trans_updates'] : false;
+
             $wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
             $wp_upgrades = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
 
@@ -1526,6 +1548,10 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
             }
             if ( $website->is_ignoreThemeUpdates ) {
                 $theme_upgrades = array();
+            }
+
+            if ( $ignored_trans_updates ) {
+                $translation_upgrades = array();
             }
 
             $userExtension = MainWP_DB_Common::instance()->get_user_extension();

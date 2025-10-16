@@ -859,7 +859,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return;
         }
 
-        $website = MainWP_DB::instance()->get_website_by_id( $websiteid, false, array( 'monitoring_notification_emails', 'settings_notification_emails' ) );
+        $website = MainWP_DB::instance()->get_website_by_id( $websiteid, false, array( 'monitoring_notification_emails', 'settings_notification_emails', 'ignored_trans_updates' ) );
         if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
             $website = null;
         }
@@ -1183,6 +1183,17 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         </label>
                         <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to ignore theme updates on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <input type="checkbox" name="mainwp_is_ignoreThemeUpdates" class="settings-field-value-change-handler" id="mainwp_is_ignoreThemeUpdates" <?php echo 1 === (int) $website->is_ignoreThemeUpdates ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_is_ignoreThemeUpdates"></label>
+                        </div>
+                    </div>
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general">
+                        <label class="six wide column middle aligned">
+                        <?php
+                        MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_is_ignore_trans_updates', (int) $website->ignored_trans_updates );
+                        esc_html_e( 'Ignore translation updates', 'mainwp' );
+                        ?>
+                        </label>
+                        <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to ignore translation updates on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <input type="checkbox" name="mainwp_is_ignore_trans_updates" class="settings-field-value-change-handler" id="mainwp_is_ignore_trans_updates" <?php echo 1 === (int) $website->ignored_trans_updates ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_is_ignore_trans_updates"></label>
                         </div>
                     </div>
                 <?php } ?>

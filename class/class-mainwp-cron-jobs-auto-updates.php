@@ -219,6 +219,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                     'trans_update_check',
                     'premium_upgrades',
                     'ignored_wp_upgrades',
+                    'ignored_trans_updates',
                     'bulk_wp_upgrades',
                     'bulk_plugin_upgrades',
                     'bulk_theme_upgrades',

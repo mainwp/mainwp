@@ -137,10 +137,13 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $extensions_count          = 0;
         $extensions_disabled_count = 0;
 
+        static::sort_extensions( $extensions );
+        static::sort_extensions( $extensions_disabled );
+
         ?>
         <div id="mainwp-manage-extensions">
             <div class="mainwp-main-content">
-                
+
                 <?php if ( empty( $extensions ) && empty( $extensions_disabled ) ) { ?>
                     <?php static::render_intro_notice(); ?>
                 <?php } else { ?>
@@ -438,6 +441,8 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $new = '<span class="ui floating green mini label">NEW!</span>';
         }
 
+        $polish_name = ! empty( $extension['_polish_name'] ) ? $extension['_polish_name'] : MainWP_Extensions_Handler::polish_ext_name( $extension, true );
+
         ?>
 
         <!-- Fixed the issue extension missing model type. -->
@@ -455,12 +460,12 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         do_action( 'mainwp_extension_card_top', $extension );
         ?>
         <div class="content">
-            <img class="right floated mini ui image" alt="<?php echo esc_attr( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?>" src="<?php echo esc_html( $img_url ); ?>">
+            <img class="right floated mini ui image" alt="<?php echo esc_attr( $polish_name ); ?>" src="<?php echo esc_html( $img_url ); ?>">
             <div class="header">
                 <?php if ( ! $disabled ) { ?>
-                    <a href="<?php echo esc_url( $extension_page_url ); ?>"><?php echo esc_html( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?></a>
+                    <a href="<?php echo esc_url( $extension_page_url ); ?>"><?php echo esc_html( $polish_name ); ?></a>
                 <?php } else { ?>
-                    <?php echo esc_html( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?>
+                    <?php echo esc_html( $polish_name ); ?>
                 <?php } ?>
             </div>
 
@@ -566,12 +571,15 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         if ( ! isset( $extension['version'] ) ) {
             $extension['version'] = '';
         }
+
+        $polish_name = ! empty( $extension['_polish_name'] ) ? $extension['_polish_name'] : MainWP_Extensions_Handler::polish_ext_name( $extension, true );
+
         ?>
-        <div class="ui card extension grey mainwp-disabled-extension extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-title="<?php echo esc_attr( MainWP_Extensions_Handler::polish_ext_name( $extension, false ) ); ?>" base-slug="<?php echo esc_attr( $extension['slug'] ); ?>">
+        <div class="ui card extension grey mainwp-disabled-extension extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-title="<?php echo esc_attr( $polish_name ); ?>" base-slug="<?php echo esc_attr( $extension['slug'] ); ?>">
             <div class="content">
-                <img class="right floated mini ui image" alt="<?php echo esc_attr( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?>" src="<?php echo esc_html( $img_url ); ?>">
+                <img class="right floated mini ui image" alt="<?php echo esc_attr( $polish_name ); ?>" src="<?php echo esc_html( $img_url ); ?>">
                 <div class="header">
-                    <?php echo esc_html( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?>
+                    <?php echo esc_html( $polish_name ); ?>
                 </div>
 
                 <?php if ( $installed ) : ?>
@@ -682,6 +690,29 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             });
         </script>
         <?php
+    }
+
+
+
+    /**
+     * Method sort_extensions().
+     *
+     * @param  array $exts Array of extensions.
+     *
+     * @return void
+     */
+    public static function sort_extensions( &$exts ) {
+
+        if ( ! is_array( $exts ) ) {
+            return;
+        }
+        foreach ( $exts as $idx => $ext ) {
+            if ( isset( $ext['name'] ) ) {
+                $exts[ $idx ]['_polish_name'] = MainWP_Extensions_Handler::polish_ext_name( $ext, true );
+
+            }
+        }
+        MainWP_Utility::array_sort_existed_keys( $exts, '_polish_name' ); //phpcs:ignore Squiz.PHP.CommentedOutCode.Found -- 4 => 'leftsub_order'.
     }
 
     /**

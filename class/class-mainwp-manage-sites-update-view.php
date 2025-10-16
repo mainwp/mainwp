@@ -55,7 +55,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
          */
         global $current_user;
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();
-        $sql           = MainWP_DB::instance()->get_sql_website_by_id( $id, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
+        $sql           = MainWP_DB::instance()->get_sql_website_by_id( $id, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'ignored_trans_upgrades', 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
         $websites      = MainWP_DB::instance()->query( $sql );
 
         MainWP_DB::data_seek( $websites, 0 );
@@ -152,7 +152,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
             $decodedIgnoredCores = array();
         }
 
-        $sql      = MainWP_DB::instance()->get_sql_website_by_id( $site_id, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
+        $sql      = MainWP_DB::instance()->get_sql_website_by_id( $site_id, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'ignored_trans_updates', 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
         $websites = MainWP_DB::instance()->query( $sql );
 
         MainWP_DB::data_seek( $websites, 0 );
@@ -263,6 +263,11 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
         if ( ! is_array( $translation_upgrades ) ) {
             $translation_upgrades = array();
         }
+
+        if ( ! empty( $website->ignored_trans_updates ) ) {
+            $translation_upgrades = array();
+        }
+
         $return['total_trans'] = count( $translation_upgrades );
 
         $plugins_outdate = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
@@ -764,7 +769,16 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                     </tr>
                 </thead>
                 <tbody class="translations-bulk-updates" id="wp_translation_upgrades_<?php echo intval( $website->id ); ?>" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>">
-                <?php $translation_upgrades = json_decode( $website->translation_upgrades, true ); ?>
+                <?php
+                if ( empty( $website->ignored_trans_updates ) ) {
+                    $translation_upgrades = json_decode( $website->translation_upgrades, true );
+                    if ( ! is_array( $translation_upgrades ) ) {
+                        $translation_upgrades = array();
+                    }
+                } else {
+                    $translation_upgrades = array();
+                }
+                ?>
                 <?php foreach ( $translation_upgrades as $translation_upgrade ) : ?>
                     <?php
                     $translation_name = isset( $translation_upgrade['name'] ) ? $translation_upgrade['name'] : $translation_upgrade['slug'];

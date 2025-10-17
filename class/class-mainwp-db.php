@@ -2027,7 +2027,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_wp_options_view( $extra_view, $view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
-            WHERE 1 ' . $where_cache_ids . $where . $where_group . $where_client . $group_by . 
+            WHERE 1 ' . $where_cache_ids . $where . $where_group . $where_client . $group_by .
             $orderBy;
         } else {
             $qry = 'SELECT ' . $select . ', wp_optionview.*, wpclient.name as client_name ' .
@@ -2037,7 +2037,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $join_monitors . '
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_wp_options_view( $extra_view, $view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
-            WHERE 1 ' . $where_cache_ids . $where . $where_group . $where_client . $group_by  . '
+            WHERE 1 ' . $where_cache_ids . $where . $where_group . $where_client . $group_by  .
             $orderBy;
         }
 

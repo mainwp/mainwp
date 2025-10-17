@@ -593,6 +593,10 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     padding: 1em !important;
 }
 
+.mainwp-widget .mainwp-scrolly-overflow .ui.tab.active {
+    height: 100%;
+}
+
 .mainwp-widget .mainwp-widget-footer {
     padding: 1em !important;
 }

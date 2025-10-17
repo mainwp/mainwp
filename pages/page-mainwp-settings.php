@@ -2081,9 +2081,9 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         </div>
                     </div>
                     <div class="ui grid field">
-                        <label class="six wide column middle aligned"><?php esc_html_e( 'Delete archived sites changes data', 'mainwp' ); ?></label>
-                        <div class="ten wide column" id="mainwp-clear-archived-sites-changes-data" data-content="<?php esc_attr_e( 'Delete archived sites changes data.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
-                            <a href="admin.php?page=MainWPTools&clearArchivedSitesChangesData=yes&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'clear_archived_sites_changes' ) ); ?>" onclick="mainwp_tool_clear_archived_sites_changes(this); return false;" class="ui button green basic"><?php esc_html_e( 'Delete Archived Sites Changes Data', 'mainwp' ); ?></a>
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Delete archived Network Activity data', 'mainwp' ); ?></label>
+                        <div class="ten wide column" id="mainwp-clear-archived-sites-changes-data" data-content="<?php esc_attr_e( 'Delete archived sNetwork Activity data.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+                            <a href="admin.php?page=MainWPTools&clearArchivedSitesChangesData=yes&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'clear_archived_sites_changes' ) ); ?>" onclick="mainwp_tool_clear_archived_sites_changes(this); return false;" class="ui button green basic"><?php esc_html_e( 'Delete Archived Network Activity Data', 'mainwp' ); ?></a>
                         </div>
                     </div>
                     <div class="ui grid field">

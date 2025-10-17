@@ -1494,7 +1494,7 @@ body.mainwp-ui.mainwp-custom-theme,
 
 .mainwp-ui.mainwp-custom-theme .mainwp-sub-header,
 .mainwp-ui.mainwp-custom-theme .mainwp-actions-bar {
-  background-color: var(--mainwp-base-background);
+  background-color: var(--mainwp-element-background);
   border: 1px solid var(--mainwp-border) !important;
   padding: var(--mainwp-area-padding) !important;
   margin-top: calc(1em + 58px) !important;
@@ -1509,7 +1509,6 @@ body.mainwp-ui.mainwp-custom-theme,
 .mainwp-ui.mainwp-custom-theme .mainwp-sub-submenu ~ .ui.tab .mainwp-actions-bar,
 .mainwp-ui.mainwp-custom-theme #mainwp-updraftplus-extension .mainwp-actions-bar,
 .mainwp-ui.mainwp-custom-theme .mainwp_page_Extensions-Mainwp-Backwpup-Extension .mainwp-actions-bar,
-.mainwp-ui.mainwp-custom-theme #mainwp-module-log-overview-sub-header.mainwp-sub-header,
 .mainwp-ui.mainwp-custom-theme .mainwp-main-content .mainwp-sub-header,
 .mainwp-ui.mainwp-custom-theme .mainwp-main-content .mainwp-actions-bar,
 .mainwp-ui.mainwp-custom-theme #mainwp-site-mode-wrap .mainwp-sub-header,
@@ -1530,7 +1529,7 @@ body.mainwp-ui.mainwp-custom-theme,
 
 .mainwp-ui.mainwp-custom-theme .ui.dimmer,
 .mainwp-ui.mainwp-custom-theme .ui.inverted.dimmer {
-  background-color: var(--mainwp-base-background-secondary) !important;
+  background-color: var(--mainwp-element-background-secondary) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.loader:after {

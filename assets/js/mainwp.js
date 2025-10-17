@@ -5316,6 +5316,7 @@ jQuery(function ($) {
 
 jQuery(document).on('click', '#mainwp-sites-changes-filter-toggle-button', function () {
     jQuery('#mainwp-module-log-filters-row').toggle(300);
+    jQuery('#mainwp-module-log-segment-buttons').toggle(300);
     return false;
 });
 

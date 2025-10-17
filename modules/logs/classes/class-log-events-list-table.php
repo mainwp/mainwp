@@ -9,6 +9,7 @@
 namespace MainWP\Dashboard\Module\Log;
 
 use MainWP\Dashboard\MainWP_Utility;
+use MainWP\Dashboard\MainWP_UI;
 use MainWP\Dashboard\MainWP_Connect;
 use MainWP\Dashboard\MainWP_Manage_Sites;
 use MainWP\Dashboard\MainWP_Updates_Helper;
@@ -736,9 +737,6 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         return $title;
     }
 
-
-
-
     /**
      * Returns the label for a context.
      *
@@ -800,9 +798,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * Html output if no Child Sites are connected.
      */
     public function no_items() {
-        ?>
-        <?php esc_html_e( 'No records found.', 'mainwp' ); ?>
-        <?php
+        MainWP_UI::render_empty_element_placeholder( __( 'No Activity Logged Yet', 'mainwp' ), __( 'Site actions and updates will appear here once activity is detected.', 'mainwp' ), '<em data-emoji=":calendar_spiral:" class="medium"></em>' );
     }
 
     /**
@@ -961,34 +957,25 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         if ( ! empty( $this->table_id_prefix ) ) {
             $events_tbl_id .= '-' . esc_attr( $this->table_id_prefix );
         }
+
         if ( 'manage-events' === $this->table_id_prefix ) {
-            ?>
+        ?>
         <div class="ui segment">
-            <?php
+        <?php
         }
         ?>
-        <div id="mainwp-module-log-records-table-container" style="opacity:0;">
-            <table id="<?php echo esc_attr( $events_tbl_id ); ?>" style="width:100%" class="ui single line <?php echo 'manage-events' === $this->table_id_prefix ? 'selectable' : ''; ?> unstackable table mainwp-with-preview-table">
-                <thead>
-                    <tr><?php $this->print_column_headers( true ); ?></tr>
-                </thead>
-            </table>
+            <div id="mainwp-module-log-records-table-container" style="opacity:0;">
+                <table id="<?php echo esc_attr( $events_tbl_id ); ?>" style="width:100%" class="ui single line <?php echo 'manage-events' === $this->table_id_prefix ? 'selectable' : ''; ?> unstackable table mainwp-with-preview-table">
+                    <thead>
+                        <tr><?php $this->print_column_headers( true ); ?></tr>
+                    </thead>
+                </table>
+            </div>
+        <?php
+        if ( 'manage-events' === $this->table_id_prefix ) {
+        ?>
         </div>
         <?php
-
-        if ( 'manage-events' === $this->table_id_prefix ) {
-            ?>
-            </div>
-            <?php
-        }
-
-        $count = $this->get_total_found_rows();
-        if ( empty( $count ) ) {
-            ?>
-            <div id="sites-table-count-empty" style="display: none;">
-                <?php $this->no_items(); ?>
-            </div>
-            <?php
         }
         ?>
         <div id="mainwp-loading-sites">
@@ -997,6 +984,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             </div>
         </div>
         <?php
+        
         $table_features = array(
             'searching'     => 'true',
             'paging'        => 'true',
@@ -1017,7 +1005,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             $table_features['stateSave'] = 'false';
         }
 
-        ?>
+    ?>
 
     <script type="text/javascript">
             var responsive = <?php echo esc_js( $table_features['responsive'] ); ?>;

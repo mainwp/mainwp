@@ -433,7 +433,7 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'websites'           => esc_html__( 'Websites', 'mainwp' ),
             'recent_posts'       => esc_html__( 'Recent Posts', 'mainwp' ),
             'recent_pages'       => esc_html__( 'Recent Pages', 'mainwp' ),
-            'non_mainwp_changes' => esc_html__( 'Sites Changes', 'mainwp' ),
+            'non_mainwp_changes' => esc_html__( 'Network Activity', 'mainwp' ),
         );
 
         if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized

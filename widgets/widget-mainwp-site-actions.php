@@ -9,6 +9,7 @@
 
 namespace MainWP\Dashboard;
 
+use MainWP\Dashboard\MainWP_UI;
 use MainWP\Dashboard\Module\Log\Log_Manager;
 use MainWP\Dashboard\Module\Log\Log_Events_List_Table;
 use MainWP\Dashboard\Module\Log\Log_DB_Helper;
@@ -124,7 +125,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                          *
                          * @since 4.1
                          */
-                        echo esc_html( apply_filters( 'mainwp_non_mainwp_changes_widget_title', esc_html__( 'Sites Changes', 'mainwp' ), $website ) );
+                        echo esc_html( apply_filters( 'mainwp_non_mainwp_changes_widget_title', esc_html__( 'Network Activity', 'mainwp' ), $website ) );
                         ?>
                         <div class="sub header"><?php esc_html_e( 'The most recent changes made to your Child Sites.', 'mainwp' ); ?></div>
                     </h2>
@@ -158,37 +159,37 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
              */
             do_action( 'mainwp_non_mainwp_changes_widget_top', $website );
             ?>
+            <?php
+            /**
+             * Action: mainwp_non_mainwp_changes_table_top
+             *
+             * Fires at the top of the Site Info table in Site Info widget on the Individual site overview page.
+             *
+             * @param object $website Object containing the child site info.
+             *
+             * @since 4.0
+             */
+            do_action( 'mainwp_non_mainwp_changes_table_top', $website );
+            ?>
+            <div id="mainwp-non-mainwp-changes-feed">
+                <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
                 <?php
-                /**
-                 * Action: mainwp_non_mainwp_changes_table_top
-                 *
-                 * Fires at the top of the Site Info table in Site Info widget on the Individual site overview page.
-                 *
-                 * @param object $website Object containing the child site info.
-                 *
-                 * @since 4.0
-                 */
-                do_action( 'mainwp_non_mainwp_changes_table_top', $website );
+                MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
+                $this->list_events_table->display();
                 ?>
-                <div class="ui small feed" id="mainwp-non-mainwp-changes-feed">
-
-                    <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
-                    <?php
-                    MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
-                    $this->list_events_table->display();
-
-                    /**
-                     * Action: mainwp_non_mainwp_changes_table_bottom
-                     *
-                     * Fires at the bottom of the Site Info table in Site Info widget on the Individual site overview page.
-                     *
-                     * @param object $website Object containing the child site info.
-                     *
-                     * @since 4.0
-                     */
-                    do_action( 'mainwp_non_mainwp_changes_table_bottom', $website );
-                    ?>
-                </div>
+            </div>
+            <?php
+            /**
+             * Action: mainwp_non_mainwp_changes_table_bottom
+             *
+             * Fires at the bottom of the Site Info table in Site Info widget on the Individual site overview page.
+             *
+             * @param object $website Object containing the child site info.
+             *
+             * @since 4.0
+             */
+            do_action( 'mainwp_non_mainwp_changes_table_bottom', $website );
+            ?>
         </div>
 
         <div class="mainwp-widget-footer">

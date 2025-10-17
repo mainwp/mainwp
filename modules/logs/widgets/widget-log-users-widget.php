@@ -11,6 +11,7 @@
 namespace MainWP\Dashboard\Module\Log;
 
 use MainWP\Dashboard\MainWP_Utility;
+use MainWP\Dashboard\MainWP_UI;
 
 /**
  * Class Log_Users_Widget

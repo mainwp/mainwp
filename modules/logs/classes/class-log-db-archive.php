@@ -41,7 +41,7 @@ class Log_DB_Archive extends MainWP_DB {
     /**
      * Method archive_sites_changes().
      *
-     * @param int   $before_timestamp Archive sites changes created before time.
+     * @param int   $before_timestamp Archive Network Activity data created before time.
      * @param int   $by_limit By limit.
      * @param mixed $dismiss Dismiss: false|0|1.
      *

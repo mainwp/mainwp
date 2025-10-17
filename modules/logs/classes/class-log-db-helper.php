@@ -126,7 +126,7 @@ class Log_DB_Helper extends MainWP_DB {
     /**
      * Method dismiss_all_changes().
      *
-     * Handle dismiss all sites changes.
+     * Handle dismiss all Network Activity data.
      *
      * Compatible method.
      *

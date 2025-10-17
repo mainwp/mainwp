@@ -2556,7 +2556,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         </div>
         <script>
             jQuery( document ).ready( function () {
-                jQuery('#mainwp-first-level-navigation-menu .left-menu-item-level-0, #mainwp-second-level-navigation .left-menu-item-level-2').on('click', function () {
+                jQuery('#mainwp-first-level-navigation-menu .left-menu-item-level-0, #mainwp-second-level-navigation .left-menu-item-level-2:not(.extension-inactive)').on('click', function () {
                     jQuery('#mainwp-nav-dimmer').dimmer({
                         duration: 25,
                         opacity: 1,
@@ -2592,7 +2592,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     'clients'                         => esc_html__( 'Clients', 'mainwp' ),
                     'child_site_info'                 => esc_html__( 'Child site info (Individual Site Overview page)', 'mainwp' ),
                     'client_info'                     => esc_html__( 'Client info (Individual Site Overview page)', 'mainwp' ),
-                    'non_mainwp_changes'              => esc_html__( 'Sites Changes', 'mainwp' ),
+                    'non_mainwp_changes'              => esc_html__( 'Network Activity', 'mainwp' ),
                     'get-started'                     => esc_html__( 'Get Started with MainWP', 'mainwp' ),
                     'uptime_monitoring_status'        => esc_html__( 'Uptime Monitoring', 'mainwp' ),
                     'uptime_monitoring_response_time' => esc_html__( 'Uptime Monitoring (Individual Site Overview page)', 'mainwp' ),
@@ -2794,7 +2794,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         ?>
         <div class="ui small modal" id="mainwp-install-extensions-promo-modal">
             <i class="close icon"></i>
-        <?php if ( empty( $mainwp_api_key ) ) : ?>
+            <?php if ( empty( $mainwp_api_key ) ) : ?>
                 <div class="header"><?php esc_html_e( 'Get MainWP Pro', 'mainwp' ); ?></div>
                 <div class="content">
                     <div class="ui header"><?php esc_html_e( 'With your MainWP Pro subscription, you get access to:', 'mainwp' ); ?></div>

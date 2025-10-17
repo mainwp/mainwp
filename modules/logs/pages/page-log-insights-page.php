@@ -750,9 +750,13 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
                         if(value == 'custom'){
                             $('#mainwp-module-log-filter-dtsstart input[type=text]').attr('disabled', false);
                             $('#mainwp-module-log-filter-dtsstop input[type=text]').attr('disabled', false);
+                            $('#mainwp-module-log-filter-dtsstart-column').show();
+                            $('#mainwp-module-log-filter-dtsstop-column').show();
                         } else {
                             $('#mainwp-module-log-filter-dtsstart input[type=text]').attr('disabled', 'disabled');
                             $('#mainwp-module-log-filter-dtsstop input[type=text]').attr('disabled', 'disabled');
+                            $('#mainwp-module-log-filter-dtsstart-column').hide();
+                            $('#mainwp-module-log-filter-dtsstop-column').hide();
                         }
                         $('#mainwp-module-log-filter-dtsstart').calendar('set date', dateRanges[value]['start']);
                         $('#mainwp-module-log-filter-dtsstop').calendar('set date', dateRanges[value]['end']);
@@ -1006,7 +1010,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
                 } );
             </script>
         <div class="ui modal" id="mainwp-module-log-overview-screen-options-modal">
-        <i class="close icon"></i>
+            <i class="close icon"></i>
                 <div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
                 <div class="content ui form">
                     <?php

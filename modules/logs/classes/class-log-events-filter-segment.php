@@ -68,15 +68,10 @@ class Log_Events_Filter_Segment {
     public function render_filters_segment( $filter_name = 'module_log' ) {
         $saved_segments = MainWP_Manage_Sites_Filter_Segment::set_get_manage_sites_filter_segments( false, array(), $filter_name );
         ?>
-
-        <div class="four wide right aligned column">
-            <button class="ui mini green button" id="mainwp-module-log-filter-save-segment-button" selected-segment-id="" selected-segment-name=""><?php esc_html_e( 'Save Segment', 'mainwp' ); ?></button>
-            <?php if ( ! empty( $saved_segments ) ) : ?>
-                <button class="ui mini button mainwp_module_log_filter_choose_segment"><?php esc_html_e( 'Load Segment', 'mainwp' ); ?></button>
-            <?php else : ?>
-                <button class="ui mini disabled button"><?php esc_html_e( 'Load Segment', 'mainwp' ); ?></button>
-            <?php endif; ?>
-        </div>
+        <button class="ui mini green button" id="mainwp-module-log-filter-save-segment-button" selected-segment-id="" selected-segment-name=""><?php esc_html_e( 'Save Segment', 'mainwp' ); ?></button>
+        <?php if ( ! empty( $saved_segments ) ) : ?>
+            <button class="ui mini button mainwp_module_log_filter_choose_segment"><?php esc_html_e( 'Load Segment', 'mainwp' ); ?></button>
+        <?php endif; ?>
         <input type="hidden" name="mainwp-common-filter-option-name" id="mainwp-common-filter-option-name"  value="<?php echo esc_attr( $filter_name ); ?>"/>
 
         <script type="text/javascript">

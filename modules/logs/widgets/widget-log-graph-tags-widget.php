@@ -14,6 +14,7 @@ use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Common;
 use MainWP\Dashboard\MainWP_DB_Client;
 use MainWP\Dashboard\MainWP_Utility;
+use MainWP\Dashboard\MainWP_UI;
 
 /**
  * Class Log_Graph_Tags_Widget
@@ -86,7 +87,7 @@ class Log_Graph_Tags_Widget {
                 ?>
                 <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
                 <?php
-                MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' )admin-nonce' );
+                MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
                 $this->render_widget_content();
                 ?>
                 <?php

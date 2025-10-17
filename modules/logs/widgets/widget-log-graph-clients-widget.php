@@ -12,6 +12,7 @@ namespace MainWP\Dashboard\Module\Log;
 
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Client;
+use MainWP\Dashboard\MainWP_UI;
 
 /**
  * Class Log_Graph_Clients_Widget

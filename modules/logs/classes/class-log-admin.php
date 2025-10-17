@@ -177,7 +177,7 @@ class Log_Admin {
         $start_lasttime                                       = get_option( 'mainwp_module_log_last_time_auto_archive_logs', 0 );
         $start_nexttime                                       = wp_next_scheduled( 'mainwp_module_log_cron_job_auto_archive' );
         $cron_list['mainwp_module_log_cron_job_auto_archive'] = array(
-            'title'     => __( 'Auto archive sites changes', 'mainwp-pro-reports-extension' ),
+            'title'     => __( 'Auto archive Network Activity logs', 'mainwp-pro-reports-extension' ),
             'action'    => 'mainwp_module_log_cron_job_auto_archive',
             'frequency' => __( 'Once daily', 'mainwp-pro-reports-extension' ),
             'last_run'  => empty( $start_lasttime ) ? 'N/A' : MainWP_Utility::format_timestamp( $start_lasttime ),
@@ -287,7 +287,7 @@ class Log_Admin {
                 ?>
                 <div class="ui yellow message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="logs-db-size-large"></i>
-                    <?php printf( esc_html__( 'The Sites Changes database size is too large (%s MB). Go to MainWP Settings > %sTool%s > "Delete archived sites changes data" to delete records if needed.', 'mainwp' ), esc_html( $size ), '<a href="admin.php?page=MainWPTools#mainwp-clear-archived-sites-changes-data">', '</a>' ); // NOSONAR - noopener - open safe. ?>
+                    <?php printf( esc_html__( 'The Network Activity database size is too large (%s MB). Go to MainWP Settings > %sTool%s > "Delete archived Network Activity data" to delete records if needed.', 'mainwp' ), esc_html( $size ), '<a href="admin.php?page=MainWPTools#mainwp-clear-archived-sites-changes-data">', '</a>' ); // NOSONAR - noopener - open safe. ?>
                 </div>
                 <?php
             }
@@ -311,7 +311,7 @@ class Log_Admin {
             ?>
             <div class="ui yellow message">
                 <i class="close icon mainwp-notice-dismiss" notice-id="logs-db-update-required"></i>
-                <?php printf( esc_html__( 'Your \'Sites Changes\' database needs to be updated. Click %shere%s to start the update.', 'mainwp' ), '<a href="javascript:void(0);" id="module-update-logs-db-requirement">', '</a>' ); ?>
+                <?php printf( esc_html__( 'Your \'Network Activity\' database needs to be updated. Click %shere%s to start the update.', 'mainwp' ), '<a href="javascript:void(0);" id="module-update-logs-db-requirement">', '</a>' ); ?>
             </div>
             <?php
         } elseif ( 'running' === $status ) {

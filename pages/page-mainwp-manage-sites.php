@@ -653,6 +653,10 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             </div>
                             <?php esc_html_e( 'Multiple Sites', 'mainwp' ); ?>
                         </a>
+                        <a class="item" href="admin.php?page=managesites&do=bulknew">
+                            <i class="file upload icon"></i>
+                            <?php esc_html_e( 'Import Sites', 'mainwp' ); ?>
+                        </a>
                     </div>
                     <div class="ui bottom attached tab segment active" data-tab="single-site">
                         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-site-info-message' ) ) : ?>
@@ -717,6 +721,16 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <script type="text/javascript">
                 jQuery( document ).ready( function () {
                     jQuery('#mainwp-add-sites-tabular-menu .item').tab();
+                    jQuery(document).ready(function () {
+                        // Parse query parameter
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const tabName = urlParams.get('data-tab');
+
+                        if (tabName) {
+                        // Activate tab by name
+                        jQuery('.menu .item').tab('change tab', tabName);
+                        }
+                    });
                     jQuery( '#mainwp_managesites_add_addgroups' ).dropdown( {
                         allowAdditions: true
                     } );
@@ -1362,6 +1376,14 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <div class="ui info message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-sites-info-message"></i>
                             <?php printf( esc_html__( 'You can download the sample CSV file to see how to format the import file properly. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/import-sites/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-new-sites-info-message' ) ) : ?>
+                    <div class="ui segment">
+                        <div class="ui message">
+                            <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-new-sites-info-message"></i>
+                            <?php printf( esc_html__( '%1$s Tip: If you\'re importing 10 or fewer sites, we recommend using the %2$sAdd Multiple Sites%3$s screen instead , it\'s faster and doesn\'t require a CSV file.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<a href="admin.php?page=managesites&do=new&data-tab=multiple-site">', '</a>' ); ?>
                         </div>
                     </div>
                 <?php endif; ?>

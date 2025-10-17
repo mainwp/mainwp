@@ -159,7 +159,7 @@ class Log_Install extends MainWP_Install {
      */
     public function update_log_db( $currentVersion ) {
 
-        $is_db_ver_with_archive = version_compare( $currentVersion, '1.0.1.8', '>' );
+        $is_db_ver_with_archive = version_compare( $currentVersion, '1.0.1.8', '>=' );
 
         if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.9', '<' ) ) { // NOSONAR - non-ip.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs' ) . ' MODIFY COLUMN item varchar(256) NOT NULL DEFAULT ""' ); //phpcs:ignore -- ok.
@@ -284,7 +284,7 @@ class Log_Install extends MainWP_Install {
      * @param string $currentVersion Current db version.
      */
     private function update_log_db_60( $currentVersion ) {
-        $is_db_ver_with_archive = version_compare( $currentVersion, '1.0.1.8', '>' );
+        $is_db_ver_with_archive = version_compare( $currentVersion, '1.0.1.8', '>=' );
         if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.40', '<' ) ) { // NOSONAR - non-ip.
 
             // to save microsecords.

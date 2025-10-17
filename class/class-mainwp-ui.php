@@ -2825,15 +2825,28 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      *
      * @param string $placeholder Placelolder text.
      */
-    public static function render_empty_element_placeholder( $placeholder = '' ) {
+    public static function render_empty_element_placeholder( $title = '', $message = '', $icon = '' ) {
         ?>
         <div class="mainwp-empty-widget-placeholder">
-            <img alt="<?php esc_attr_e( 'Nothing to show here, check back later!', 'mainwp' ); ?>" src="<?php echo esc_url( MAINWP_PLUGIN_URL ); ?>assets/images/mainwp-widget-placeholder.png" class="mainwp-no-results-placeholder"/>
-            <?php if ( '' !== $placeholder ) : ?>
-                <p><?php echo $placeholder; //phpcs:ignore -- requires escaped. ?></p>
-            <?php else : ?>
-                <p><?php echo esc_html__( 'Nothing to show here, check back later!', 'mainwp' ); ?></p>
-            <?php endif; ?>
+            <h3 class="ui big icon header">
+                <?php if ( '' !== $icon ) : ?>
+                    <?php echo $icon; //phpcs:ignore -- requires escaped. ?>
+                <?php else : ?>
+                    <i class="search icon"></i>
+                <?php endif; ?>
+                <div class="content">
+                    <?php if ( '' !== $title ) : ?>
+                        <?php echo $title; //phpcs:ignore -- requires escaped. ?>
+                    <?php else : ?>
+                        <?php echo esc_html__( 'Nothing to show here, check back later!', 'mainwp' ); ?>
+                    <?php endif; ?>
+                    <?php if ( '' !== $message ) : ?>
+                    <div class="sub header">
+                        <?php echo $message; //phpcs:ignore -- requires escaped. ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </h3>
         </div>
         <?php
     }

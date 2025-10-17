@@ -251,7 +251,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
              */
             do_action( 'mainwp_recent_posts_before_publised_list', $allPosts, $recent_number );
             if ( empty( $recent_posts_published ) ) {
-                MainWP_UI::render_empty_element_placeholder();
+                MainWP_UI::render_empty_element_placeholder( __( 'No Recent Posts Found', 'mainwp' ), __( 'Recent post changes will appear here once activity is detected.', 'mainwp' ), '<em data-emoji=":pencil:" class="medium"></em>' );
             }
             ?>
             <div class="ui middle aligned divided list">
@@ -345,7 +345,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
              */
             do_action( 'mainwp_recent_posts_before_draft_list', $allPosts, $recent_number );
             if ( empty( $recent_posts_draft ) ) {
-                MainWP_UI::render_empty_element_placeholder();
+                MainWP_UI::render_empty_element_placeholder( __( 'No Recent Posts Found', 'mainwp' ), __( 'Recent post changes will appear here once activity is detected.', 'mainwp' ), '<em data-emoji=":pencil:" class="big"></em>' );
             }
             ?>
             <div class="ui middle aligned divided list">
@@ -436,7 +436,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                  */
                 do_action( 'mainwp_recent_posts_before_pending_list', $allPosts, $recent_number );
                 if ( empty( $recent_posts_pending ) ) {
-                    MainWP_UI::render_empty_element_placeholder();
+                    MainWP_UI::render_empty_element_placeholder( __( 'No Recent Posts Found', 'mainwp' ), __( 'Recent post changes will appear here once activity is detected.', 'mainwp' ), '<em data-emoji=":pencil:" class="big"></em>' );
                 }
                 ?>
             <div class="ui middle aligned divided list">
@@ -527,7 +527,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
          */
         do_action( 'mainwp_recent_posts_before_future_list', $allPosts, $recent_number );
         if ( empty( $recent_posts_future ) ) {
-            MainWP_UI::render_empty_element_placeholder();
+            MainWP_UI::render_empty_element_placeholder( __( 'No Recent Posts Found', 'mainwp' ), __( 'Recent post changes will appear here once activity is detected.', 'mainwp' ), '<em data-emoji=":pencil:" class="big"></em>' );
         }
         ?>
         <div class="ui middle aligned divided list">
@@ -619,7 +619,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
          */
         do_action( 'mainwp_recent_posts_before_trash_list', $allPosts, $recent_number );
         if ( empty( $recent_posts_trash ) ) {
-            MainWP_UI::render_empty_element_placeholder();
+            MainWP_UI::render_empty_element_placeholder( __( 'No Recent Posts Found', 'mainwp' ), __( 'Recent post changes will appear here once activity is detected.', 'mainwp' ), '<em data-emoji=":pencil:" class="big"></em>' );
         }
         ?>
         <div class="ui middle aligned divided list">

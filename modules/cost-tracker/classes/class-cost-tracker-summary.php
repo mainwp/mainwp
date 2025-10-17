@@ -353,21 +353,48 @@ class Cost_Tracker_Summary {
      * Render the summary costs content.
      */
     public static function render_summary_body() {
-        $screen     = get_current_screen();
-        $costs_data = Cost_Tracker_DB::get_instance()->get_summary_data( array( 'sum_data' => 'all' ) );
+        $screen      = get_current_screen();
+        $costs_data  = Cost_Tracker_DB::get_instance()->get_summary_data( array( 'sum_data' => 'all' ) );
+        $costs       = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'all' );
+        $costs_count = count( $costs );
         ?>
         <div class="mainwp-primary-content-wrap">
-
-
+            <?php if ( 0 == $costs_count ) : ?>
             <?php MainWP_Overview::render_layout_selection(); ?>
-
-            <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
-        <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'cost-summany-widgets' ) ) : ?>
-                <div class="ui info message">
-                    <i class="close icon mainwp-notice-dismiss" notice-id="cost-summany-widgets"></i>
-                    <?php printf( esc_html__( 'To hide or show a widget, click the Cog (%1$s) icon.', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
-                </div>
             <?php endif; ?>
+            <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'cost-summany-widgets' ) ) : ?>
+            <div class="ui segment" style="margin-bottom:0px;">
+                <div class="ui info message" style="margin-bottom:0px;">
+                    <i class="close icon mainwp-notice-dismiss" notice-id="cost-summany-widgets"></i>
+                    <?php printf( esc_html__( 'You can drag and drop widgets to reorder your dashboard or use %1$s to show/hide widgets.', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
+                </div>
+            </div>
+            <?php endif; ?>
+            <?php if ( 0 < $costs_count && 3 >= $costs_count ) : ?>
+                <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'cost-summany-low-data-info' ) ) : ?>
+                <div class="ui segment" style="margin-bottom:0px;">
+                    <div class="ui info message" style="margin-bottom:0px;">
+                        <i class="close icon mainwp-notice-dismiss" notice-id="cost-summany-low-data-info"></i>
+                        <?php esc_html_e( 'Keep building your cost history. Add more expenses to unlock trend insights.', 'mainwp' ); ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+            <?php endif; ?>
+            <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-cost-summany-welcome-message' ) && 0 == $costs_count ) : ?>
+            <div class="ui segment" style="margin-bottom:0px;">
+                <div class="ui icon message mainwp-welcome-message" style="margin-bottom:0px;">
+                    <em data-emoji=":wave:" class="big"></em>
+                    <div class="content">
+                        <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-cost-summany-welcome-message" style="float:right;cursor:pointer;"></i>
+                        <div class="ui massive header"><?php esc_html_e( 'Welcome to Cost Tracker', 'mainwp' ); ?></div>
+                        <p><?php esc_html_e( 'Track and forecast your agency\'s expenses across all sites and subscriptions.', 'mainwp' ); ?></p>
+                        <p><?php printf( esc_html__( 'Start by %1$sadding your first cost%2$s or %3$screating custom cost categories%4$s.', 'mainwp' ), '<a href="admin.php?page=CostTrackerAdd">', '</a>', '<a href="admin.php?page=CostTrackerSettings">', '</a>' ); ?></p>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+            <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
+            
         </div>
             <?php
             /**

@@ -190,6 +190,9 @@ class Cost_Tracker_Monthly_Totals {
         $costs_data = Cost_Tracker_DB::get_instance()->get_summary_data( array( 'sum_data' => 'all' ) );
         $chart_data = static::get_costs_widgets_data( $costs_data );
         ?>
+        <?php if ( empty( $costs_data ) ) : ?>
+            <?php MainWP_UI::render_empty_element_placeholder( __( 'No Monthly Data Yet', 'mainwp' ), '<a href="admin.php?page=CostTrackerAdd">' . __( 'Add cost tracker data to view your monthly totals.', 'mainwp' ) . '</a>', '<em data-emoji=":bar_chart:" class="medium"></em>' ); ?>
+        <?php else : ?>
         <div id="mainwp-module-cost-tracker-monthly-totals-wrapper"></div>
         <script type="text/javascript">
             jQuery( document ).ready( function() {
@@ -262,6 +265,7 @@ class Cost_Tracker_Monthly_Totals {
                 }, 1000);
             } );
         </script>
+        <?php endif; ?>
         <?php
     }
 }

@@ -10,6 +10,7 @@ namespace MainWP\Dashboard\Module\CostTracker;
 
 use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_UI;
 use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_DB_Client;
 use MainWP\Dashboard\MainWP_Cache_Warm_Helper;
@@ -215,15 +216,36 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                 update_user_option( $current_user->ID, 'mainwp_module_cost_tracker_onetime_filters_saved', $sel_ids );
             }
         }
+        $costs       = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'all' );
+        $costs_count = count( $costs );
         Cost_Tracker_Admin::render_header();
         ?>
         <div id="mainwp-module-cost-tracker-dashboard-tab">
-            <?php static::render_manage_tasks_table_top( $sel_ids ); ?>
-            <?php $this->render_actions_bar(); ?>
-                <div class="ui segment">
-                <?php $this->render_dashboard_body(); ?>
+            <?php if ( 1 > $costs_count ) : ?>
+                <div class="ui segment" style="margin-bottom:0px;">
+                <div class="ui icon message mainwp-welcome-message" style="margin-bottom:0px;">
+                    <em data-emoji=":bar_chart:" class="big"></em>
+                    <div class="content">
+                        <div class="ui massive header"><?php esc_html_e( 'No costs tracked yet.', 'mainwp' ); ?></div>
+                        <p><?php esc_html_e( 'Tracking your costs lets you forecast renewals and monitor expenses across all Child Sites.', 'mainwp' ); ?></p>
+                        <a class="ui green button" href="admin.php?page=CostTrackerAdd"><?php esc_html_e( 'Start Tracking Now!', 'mainwp' ); ?></a>
+                    </div>
                 </div>
             </div>
+            <?php else : ?>
+            <?php $this->render_actions_bar(); ?>
+            <?php static::render_manage_tasks_table_top( $sel_ids ); ?>
+            <div class="ui segment">
+                <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'manage-cost-info-notice' ) ) : ?>
+                    <div class="ui info message" style="margin-bottom:0px;">
+                        <i class="close icon mainwp-notice-dismiss" notice-id="manage-cost-info-notice"></i>
+                        <?php esc_html_e( 'View and manage all your tracked costs and renewals.', 'mainwp' ); ?>
+                    </div>
+                    <?php endif; ?>
+                <?php $this->render_dashboard_body(); ?>
+            </div>
+            <?php endif; ?>
+        </div>
         <?php
     }
 
@@ -483,28 +505,6 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                         <th id="actions" class="no-sort collapsing right aligned column-actions"></th>
                     </tr>
                 </thead>
-                <tfoot>
-                    <tr>
-                        <th scope="col" class="no-sort collapsing check-column column-check"><span class="ui checkbox"><input id="cb-select-all-bottom" type="checkbox"></span></th>
-                        <th id="cost_status-bottom" class="collapsing column-status"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                        <th id="icon-bottom" class="column-icon collapsing"></th>
-                        <th id="name-bottom" class="column-name" ><?php esc_html_e( 'Name', 'mainwp' ); ?></th>
-                        <?php if ( $filtered ) : ?>
-                            <th id="per_site_price-bottom" class="no-sort collapsing column-site-price"><?php esc_html_e( 'Per Site Price', 'mainwp' ); ?></th>
-                            <th id="price-bottom" class="collapsing column-price"><?php esc_html_e( 'Total Price', 'mainwp' ); ?></th>
-                        <?php else : ?>
-                            <th id="price-bottom" class="collapsing column-price"><?php esc_html_e( 'Price', 'mainwp' ); ?></th>
-                        <?php endif; ?>
-                        <th id="license_type-bottom" class="collapsing column-license-type"><?php esc_html_e( 'License', 'mainwp' ); ?></th>
-                        <th id="product_type-bottom" class="collapsing column-product-type"><?php esc_html_e( 'Category', 'mainwp' ); ?></th>
-                        <th id="type-bottom" class="column-type"><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
-                        <th id="last_renewal-bottom" class="collapsing column-last-renewal"><?php esc_html_e( 'Purchased', 'mainwp' ); ?></th>
-                        <th id="payment_method-bottom" class="collapsing center aligned column-payment-method"><?php esc_html_e( 'Method', 'mainwp' ); ?></th>
-                        <th id="next_renewal-bottom" class="collapsing column-next-renewal"><?php esc_html_e( 'Renews', 'mainwp' ); ?></th>
-                        <th id="sites-bottom" class="collapsing column-sites"><?php esc_html_e( 'Sites', 'mainwp' ); ?></th>
-                        <th id="actions-bottom" class="no-sort collapsing right aligned column-actions"></th>
-                    </tr>
-                </tfoot>
             </table>
         </div>
 
@@ -1154,7 +1154,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                 <div class="right aligned middle aligned column">
                     <div class="ui stackable grid">
                         <div class="eight wide right aligned middle aligned column"><?php do_action( 'mainwp_module_cost_tracker_actions_bar_right' ); ?></div>
-                        <div class="eight wide right aligned middle aligned column"><a href="#" class="ui mini basic button" id="mainwp-manage-costs-filter-toggle-button" aria-label="<?php esc_attr_e( 'Available filters.', 'mainwp' ); ?>"><i class="filter grey icon"></i> <?php esc_html_e( 'Filter Costs', 'mainwp' ); ?></a></div>
+                        <div class="eight wide right aligned middle aligned column"><a href="admin.php?page=CostTrackerAdd" class="ui mini green button" aria-label="<?php esc_attr_e( 'Add Cost', 'mainwp' ); ?>"><i class="plus icon"></i> <?php esc_html_e( 'Add Cost', 'mainwp' ); ?></a> <a href="#" class="ui mini basic button" id="mainwp-manage-costs-filter-toggle-button" aria-label="<?php esc_attr_e( 'Available filters.', 'mainwp' ); ?>"><i class="filter grey icon"></i> <?php esc_html_e( 'Filter Costs', 'mainwp' ); ?></a></div>
                     </div>
                 </div>
             </div>

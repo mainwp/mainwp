@@ -357,6 +357,11 @@
 
 /* Messages */
 
+.mainwp-ui.mainwp-custom-theme .ui.message.mainwp-welcome-message {
+  border-radius: var(--area-radius) !important;
+  margin-bottom: 0 !important;
+}
+
 .mainwp-ui.mainwp-custom-theme .ui.message.info a:not(.button) {
   color: var(--mainwp-link-color) !important;
 }
@@ -1510,7 +1515,8 @@ body.mainwp-ui.mainwp-custom-theme,
 .mainwp-ui.mainwp-custom-theme #mainwp-site-mode-wrap .mainwp-sub-header,
 .mainwp-ui.mainwp-custom-theme #mainwp-site-mode-wrap .mainwp-actions-bar,
 .mainwp-ui.mainwp-custom-theme #mainwp-article-uploader-import .mainwp-actions-bar,
-.mainwp-ui.mainwp-custom-theme .mainwp_wfc_tabs_content .mainwp-actions-bar {
+.mainwp-ui.mainwp-custom-theme .mainwp_wfc_tabs_content .mainwp-actions-bar,
+.mainwp-ui.mainwp-custom-theme #mainwp-module-cost-tracker-list-sub-header {
   margin-top: 1em !important;
 }
 

@@ -61,31 +61,31 @@ class Cost_Tracker_Category_Totals {
         </div>
 
         <div class="mainwp-scrolly-overflow">
-                <?php
-                /**
-                 * Action: mainwp_module_cost_tracker_widget_top
-                 *
-                 * Fires at the top of the widget.
-                 *
-                 * @since 5.0.2
-                 */
-                do_action( 'mainwp_module_cost_tracker_widget_top', 'category-totals' );
-                ?>
-                <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
-                <?php
-                $this->render_widget_content();
-                ?>
-                <?php
-                /**
-                 * Action: mainwp_module_cost_tracker_widget_bottom
-                 *
-                 * Fires at the bottom of the widget.
-                 *
-                 * @since 5.0.2
-                 */
-                do_action( 'mainwp_module_cost_tracker_widget_bottom', 'category-totals' );
-                ?>
-            </div>
+            <?php
+            /**
+             * Action: mainwp_module_cost_tracker_widget_top
+             *
+             * Fires at the top of the widget.
+             *
+             * @since 5.0.2
+             */
+            do_action( 'mainwp_module_cost_tracker_widget_top', 'category-totals' );
+            ?>
+            <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
+            <?php
+            $this->render_widget_content();
+            ?>
+            <?php
+            /**
+             * Action: mainwp_module_cost_tracker_widget_bottom
+             *
+             * Fires at the bottom of the widget.
+             *
+             * @since 5.0.2
+             */
+            do_action( 'mainwp_module_cost_tracker_widget_bottom', 'category-totals' );
+            ?>
+        </div>
         <?php
     }
 
@@ -153,73 +153,77 @@ class Cost_Tracker_Category_Totals {
         $costs_data = Cost_Tracker_DB::get_instance()->get_summary_data( array( 'sum_data' => 'all' ) );
         $chart_data = static::get_costs_widgets_data( $costs_data );
         ?>
-        <div id="mainwp-module-cost-tracker-category-totals-wrapper"></div>
-        <script type="text/javascript">
-            jQuery( document ).ready( function() {
+        <?php if ( ! empty( $costs_data ) ) : ?>
+            <div id="mainwp-module-cost-tracker-category-totals-wrapper"></div>
+            <script type="text/javascript">
+                jQuery( document ).ready( function() {
 
-                let cost_chart_colors = <?php echo wp_json_encode($chart_data['colors'], true ); //phpcs:ignore -- ok. ?>;
-                let cost_chart_currency_format = '<?php echo esc_js($chart_data['currency_format']); //phpcs:ignore -- ok. ?>';
+                    let cost_chart_colors = <?php echo wp_json_encode($chart_data['colors'], true ); //phpcs:ignore -- ok. ?>;
+                    let cost_chart_currency_format = '<?php echo esc_js($chart_data['currency_format']); //phpcs:ignore -- ok. ?>';
 
-                let options = {
-                    series: <?php echo wp_json_encode($chart_data['series'], true ); //phpcs:ignore -- ok. ?>,
-                    chart: {
-                        height: '95%',
-                        type: 'donut',
-                    },
-                    labels: <?php echo wp_json_encode($chart_data['categories'], true ); //phpcs:ignore -- ok. ?>,
-                    legend: {
-                        show: true,
-                        labels: {
-                            colors: '#999999',
-                            useSeriesColors: false
+                    let options = {
+                        series: <?php echo wp_json_encode($chart_data['series'], true ); //phpcs:ignore -- ok. ?>,
+                        chart: {
+                            height: '95%',
+                            type: 'donut',
                         },
-                    },
-                    responsive: [{
-                        breakpoint: 480,
-                        options: {
-                            chart: {
-                                width: 200
-                            },
-                            legend: {
-                                show: false
-                            }
-                        }
-                    }],
-                    colors: [
-                        function ( { value, seriesIndex, dataPointIndex, w } ) {
-                            if (cost_chart_colors[seriesIndex] !== undefined) {
-                                return cost_chart_colors[seriesIndex];
-                            } else {
-                                return "#5ec130";
-                            }
-                        }
-                    ],
-                    xaxis: {
-                        labels: {
-                            style: {
+                        labels: <?php echo wp_json_encode($chart_data['categories'], true ); //phpcs:ignore -- ok. ?>,
+                        legend: {
+                            show: true,
+                            labels: {
                                 colors: '#999999',
-                            }
-                        }
-                    },
-                    yaxis:{
-                        type: 'string',
-                        labels: {
-                            formatter: function (value) {
-                                return __(cost_chart_currency_format, value );
+                                useSeriesColors: false
                             },
-                            style: {
-                                colors: '#999999',
+                        },
+                        responsive: [{
+                            breakpoint: 480,
+                            options: {
+                                chart: {
+                                    width: 200
+                                },
+                                legend: {
+                                    show: false
+                                }
                             }
-                        }
-                    },
-                };
+                        }],
+                        colors: [
+                            function ( { value, seriesIndex, dataPointIndex, w } ) {
+                                if (cost_chart_colors[seriesIndex] !== undefined) {
+                                    return cost_chart_colors[seriesIndex];
+                                } else {
+                                    return "#5ec130";
+                                }
+                            }
+                        ],
+                        xaxis: {
+                            labels: {
+                                style: {
+                                    colors: '#999999',
+                                }
+                            }
+                        },
+                        yaxis:{
+                            type: 'string',
+                            labels: {
+                                formatter: function (value) {
+                                    return __(cost_chart_currency_format, value );
+                                },
+                                style: {
+                                    colors: '#999999',
+                                }
+                            }
+                        },
+                    };
 
-                let cost_chart = new ApexCharts(document.querySelector("#mainwp-module-cost-tracker-category-totals-wrapper"), options);
-                setTimeout(() => {
-                    cost_chart.render();
-                }, 1000);
-            } );
-        </script>
+                    let cost_chart = new ApexCharts(document.querySelector("#mainwp-module-cost-tracker-category-totals-wrapper"), options);
+                    setTimeout(() => {
+                        cost_chart.render();
+                    }, 1000);
+                } );
+            </script>
+        <?php else : ?>
+            <?php MainWP_UI::render_empty_element_placeholder( __( 'No Annual Data Yet', 'mainwp' ), '<a href="admin.php?page=CostTrackerAdd">' . __( 'Add cost tracker data to visualize your yearly spending.', 'mainwp' ) . '</a>', '<em data-emoji=":bar_chart:" class="medium"></em>' ); ?>
+        <?php endif; ?>
         <?php
     }
 }

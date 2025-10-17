@@ -12,6 +12,7 @@ namespace MainWP\Dashboard\Module\CostTracker;
 
 use MainWP\Dashboard\MainWP_DB_Client;
 use MainWP\Dashboard\MainWP_Utility;
+use MainWP\Dashboard\MainWP_UI;
 
 /**
  * Class Cost_Tracker_Clients_Widget
@@ -114,6 +115,9 @@ class Cost_Tracker_Clients_Widget {
         }
 
         ?>
+        <?php if ( empty( $site_costs ) ) : ?>
+            <?php MainWP_UI::render_empty_element_placeholder( __( 'No Costs Added', 'mainwp' ), __( 'Add your costs to track upcoming payments.', 'mainwp' ), '<em data-emoji=":calendar_spiral:" class="medium"></em>' ); ?>
+        <?php else : ?>
         <table class="ui table" id="mainwp-module-cost-tracker-costs-widget-table">
             <thead>
                 <tr>
@@ -185,6 +189,7 @@ class Cost_Tracker_Clients_Widget {
                 }, 1000 );
             } );
         </script>
+        <?php endif; ?>
         <?php
     }
 

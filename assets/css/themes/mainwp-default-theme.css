@@ -288,6 +288,11 @@
 
 /* Messages */
 
+.mainwp-ui.mainwp-custom-theme .ui.message.mainwp-welcome-message {
+  border-radius: var(--area-radius) !important;
+  margin-bottom: 0 !important;
+}
+
 .mainwp-ui.mainwp-custom-theme .ui.message {
   background-color: var(--mainwp-light);
   color: var(--mainwp-text-primary);

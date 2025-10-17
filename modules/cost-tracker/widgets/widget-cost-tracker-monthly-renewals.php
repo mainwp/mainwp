@@ -199,7 +199,7 @@ class Cost_Tracker_Monthly_Renewals { // phpcs:ignore -- NOSONAR - multi methods
              */
             do_action( 'mainwp_module_monthly_renewals_before_costs_list', $tab, $cost_data );
             if ( empty( $lists ) ) {
-                MainWP_UI::render_empty_element_placeholder( __( 'No upcoming renewals for the selected priod.', 'mainwp' ) );
+                MainWP_UI::render_empty_element_placeholder( __( 'No Upcoming Renewals', 'mainwp' ), '<a href="admin.php?page=CostTrackerAdd">' . __( 'Add monthly costs to track recurring subscriptions', 'mainwp' ) . '</a>', '<em data-emoji=":calendar_spiral:" class="medium"></em>' );
             } else {
                 ?>
                 <table class="ui stacking table" id="mainwp-monthly-renewals-table-<?php echo esc_attr( $tab ); ?>">

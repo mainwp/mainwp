@@ -247,7 +247,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
              */
             do_action( 'mainwp_recent_pages_before_publised_list', $allPages, $recent_number );
             if ( empty( $recent_pages_published ) ) :
-                MainWP_UI::render_empty_element_placeholder();
+                MainWP_UI::render_empty_element_placeholder( __( 'No Recent Pages Found', 'mainwp' ), __( 'Recent post changes will appear here once activity is detected.', 'mainwp' ), '<em data-emoji=":page_facing_up:" class="medium"></em>' );
             endif;
             ?>
             <div class="ui middle aligned divided list">
@@ -342,7 +342,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                  */
                 do_action( 'mainwp_recent_pages_before_draft_list', $allPages, $recent_number );
                 if ( empty( $recent_pages_draft ) ) {
-                    MainWP_UI::render_empty_element_placeholder();
+                    MainWP_UI::render_empty_element_placeholder( __( 'No Recent Pages Found', 'mainwp' ), __( 'Recent post changes will appear here once activity is detected.', 'mainwp' ), '<em data-emoji=":page_facing_up:" class="medium"></em>' );
                 }
                 ?>
                 <div class="ui middle aligned divided list">
@@ -433,7 +433,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                  */
                 do_action( 'mainwp_recent_pages_before_pending_list', $allPages, $recent_number );
                 if ( empty( $recent_pages_pending ) ) {
-                    MainWP_UI::render_empty_element_placeholder();
+                    MainWP_UI::render_empty_element_placeholder( __( 'No Recent Pages Found', 'mainwp' ), __( 'Recent post changes will appear here once activity is detected.', 'mainwp' ), '<em data-emoji=":page_facing_up:" class="medium"></em>' );
                 }
                 ?>
                 <div class="ui middle aligned divided list">
@@ -525,7 +525,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
          */
         do_action( 'mainwp_recent_pages_before_future_list', $allPages, $recent_number );
         if ( empty( $recent_pages_future ) ) {
-            MainWP_UI::render_empty_element_placeholder();
+            MainWP_UI::render_empty_element_placeholder( __( 'No Recent Pages Found', 'mainwp' ), __( 'Recent post changes will appear here once activity is detected.', 'mainwp' ), '<em data-emoji=":page_facing_up:" class="medium"></em>' );
         }
         ?>
         <div class="ui middle aligned divided list">
@@ -618,7 +618,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
          */
         do_action( 'mainwp_recent_pages_before_trash_list', $allPages, $recent_number );
         if ( empty( $recent_pages_trash ) ) {
-            MainWP_UI::render_empty_element_placeholder();
+            MainWP_UI::render_empty_element_placeholder( __( 'No Recent Pages Found', 'mainwp' ), __( 'Recent post changes will appear here once activity is detected.', 'mainwp' ), '<em data-emoji=":page_facing_up:" class="medium"></em>' );
         }
         ?>
             <div class="ui middle aligned divided list">

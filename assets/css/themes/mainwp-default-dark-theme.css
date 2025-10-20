@@ -355,6 +355,14 @@
   text-shadow: -1px -1px 0 var(--mainwp-base-background), 1px -1px 0 var(--mainwp-base-background), -1px 1px 0 var(--mainwp-base-background), 1px 1px 0 var(--mainwp-base-background) !important
 }
 
+.mainwp-ui.mainwp-custom-theme .ui.grey.label:not(.tag, .transition) .icon.green {
+  color: var(--mainwp-green) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.grey.label:not(.tag, .transition) .icon.red {
+  color: var(--mainwp-red) !important;
+}
+
 /* Messages */
 
 .mainwp-ui.mainwp-custom-theme .ui.message.mainwp-welcome-message {

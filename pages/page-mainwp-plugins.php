@@ -2069,52 +2069,61 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 <div class="left aligned column">
                                     <select id="mainwp-bulk-actions" name="bulk_action" class="ui mini selection dropdown">
                                         <option class="item" value=""><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
-                                        <option class="item" value="trust"><?php esc_html_e( 'Trust', 'mainwp' ); ?></option>
-                                        <option class="item" value="untrust"><?php esc_html_e( 'Untrust', 'mainwp' ); ?></option>
-                                                <?php
-                                                /**
-                                                 * Action: mainwp_plugins_auto_updates_bulk_action
-                                                 *
-                                                 * Adds new action to the bulk actions menu on Plugins Auto Updates.
-                                                 *
-                                                 * @since 4.1
-                                                 */
-                                                do_action( 'mainwp_plugins_auto_updates_bulk_action' );
-                                                ?>
+                                        <option class="item" value="trust">
+                                            <?php esc_html_e( 'Mark as Trusted', 'mainwp' ); ?><br/>
+                                            <span class="ui small grey text"><?php esc_html_e( 'Auto updated by your Dashboard', 'mainwp' ); ?></span>
+                                        </option>
+                                        <option class="item" value="untrust">
+                                            <?php esc_html_e( 'Mark as Untrusted', 'mainwp' ); ?><br/>
+                                            <span class="ui small grey text"><?php esc_html_e( 'Require manual updates', 'mainwp' ); ?></span>
+                                        </option>
+                                        <?php
+                                        /**
+                                         * Action: mainwp_plugins_auto_updates_bulk_action
+                                         *
+                                         * Adds new action to the bulk actions menu on Plugins Auto Updates.
+                                         *
+                                         * @since 4.1
+                                         */
+                                        do_action( 'mainwp_plugins_auto_updates_bulk_action' );
+                                        ?>
                                     </select>
-                                        <input type="button" name="" id="mainwp-bulk-trust-plugins-action-apply" class="ui mini basic button" value="<?php esc_attr_e( 'Apply', 'mainwp' ); ?>"/>
-                                    </div>
-                                <div class="right aligned column"></div>
-                            </div>
+                                    <input type="button" name="" id="mainwp-bulk-trust-plugins-action-apply" class="ui mini basic button" value="<?php esc_attr_e( 'Apply', 'mainwp' ); ?>"/>
+                                </div>
+                            <div class="right aligned column"></div>
                         </div>
                     </div>
+                </div>
 
-                    <?php if ( isset( $_GET['message'] ) && 'saved' === $_GET['message'] ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
-                        <div class="ui message green"><?php esc_html_e( 'Settings have been saved.', 'mainwp' ); ?></div>
-                    <?php endif; ?>
-                    <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
-                    <div id="mainwp-auto-updates-plugins-content" class="ui segment">
-                        <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-disable-auto-updates-info-message' ) ) : ?>
-                        <div class="ui info message">
-                            <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-disable-auto-updates-info-message"></i>
-                            <div><?php printf( esc_html__( 'Check out %1$show to disable the WordPress built in auto-updates feature%2$s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
-                        </div>
-                        <?php endif; ?>
-                        <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-plugins-auto-updates-info-message' ) ) : ?>
+                <?php if ( isset( $_GET['message'] ) && 'saved' === $_GET['message'] ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
+                    <div class="ui message green"><?php esc_html_e( 'Settings have been saved.', 'mainwp' ); ?></div>
+                <?php endif; ?>
+                <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
+                <div id="mainwp-auto-updates-plugins-content" class="ui segment">
+                    <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-plugins-auto-updates-info-message' ) ) : ?>
                         <div class="ui info message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-plugins-auto-updates-info-message"></i>
+                            <div class="header"><?php esc_html_e( 'Automatically update only the plguins you trust!', 'mainwp' ); ?></div>
                             <div><?php esc_html_e( 'The MainWP Advanced Auto Updates feature is a tool for your Dashboard to automatically update plugins that you trust to be updated without breaking your Child sites.', 'mainwp' ); ?></div>
                             <div><?php esc_html_e( 'Only mark plugins as trusted if you are absolutely sure they can be automatically updated by your MainWP Dashboard without causing issues on the Child sites!', 'mainwp' ); ?></div>
                             <div><strong><?php esc_html_e( 'Advanced Auto Updates a delayed approximately 24 hours from the update release.  Ignored plugins can not be automatically updated.', 'mainwp' ); ?></strong></div>
                         </div>
-                        <?php endif; ?>
-                        <div class="ui page dimmer">
-                            <div class="ui text double loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
+                    <?php endif; ?>
+                    <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-disable-auto-updates-info-message' ) ) : ?>
+                        <div class="ui message">
+                            <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-disable-auto-updates-info-message"></i>
+                            <div><em data-emoji=":bulb:" class="small"></em> <?php printf( esc_html__( 'Check out %1$show to disable the WordPress built in auto-updates feature%2$s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
                         </div>
-                        <div id="mainwp-auto-updates-plugins-table-wrapper">
+                    <?php endif; ?>
+                    <div class="ui page dimmer">
+                        <div class="ui text double loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
+                    </div>
+                    <div id="mainwp-auto-updates-plugins-table-wrapper">
                         <?php
                         if ( isset( $_SESSION['MainWP_PluginsActive'] ) ) {
                             static::render_all_active_table( $_SESSION['MainWP_PluginsActive'] ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+                        } else {
+                            MainWP_UI::render_empty_page_placeholder( __( 'No plugins loaded yet.', 'mainwp' ), __( 'Click Show Plugins button to view your installed plugins and manage their trust settings.', 'mainwp' ), '<i class="massive grey search icon"></i>' );
                         }
                         ?>
                     </div>
@@ -2368,13 +2377,13 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <thead>
                 <tr>
                     <th scope="col" class="no-sort check-column collapsing"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
-                    <th scope="col" class="no-sort"></th>
+                    <th scope="col" class="no-sort center aligned"></th>
                     <th scope="col" data-priority="1"><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-                    <th scope="col" ><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                    <th scope="col" class="collapsing" data-priority="2"><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
-                    <th scope="col"><?php esc_html_e( 'Ignored Status', 'mainwp' ); ?></th>
-                    <th scope="col" class="collapsing"></th>
-                    <th scope="col" class="collapsing"><?php esc_html_e( 'Notes', 'mainwp' ); ?></th>
+                    <th scope="col" class="collapsing center aligned"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                    <th scope="col" class="collapsing center aligned" data-priority="2"><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
+                    <th scope="col" class="collapsing center aligned"><?php esc_html_e( 'Ignored Status', 'mainwp' ); ?></th>
+                    <th scope="col" class="collapsing center aligned"></th>
+                    <th scope="col" class="collapsing center aligned"><?php esc_html_e( 'Notes', 'mainwp' ); ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -2406,14 +2415,14 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     $plugin_directory = dirname( $slug );
                     ?>
                     <?php // phpcs:disable WordPress.Security.EscapeOutput ?>
-                    <tr plugin-slug="<?php echo esc_attr( rawurlencode( $slug ) ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $name ) ); ?>">
+                    <tr plugin-slug="<?php echo esc_attr( rawurlencode( $slug ) ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $name ) ); ?>" <?php echo ( in_array( $slug, $trustedPlugins ) ) ? 'class=""' : 'class="active"'; ?>>
                         <td class="check-column"><span class="ui checkbox"><input type="checkbox" name="plugin[]" value="<?php echo esc_attr( rawurlencode( $slug ) ); ?>"></span></td>
                         <td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
                         <td><a href="<?php echo esc_url( admin_url() ) . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $wpid ) . '&plugin=' . rawurlencode( dirname( $slug ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $name ); ?></a></td>
-                        <td><?php echo ( 1 === (int) $plugin['active'] ) ? '<span class="ui tiny basic label"><i class="circle green icon"></i> ' . esc_html__( 'Active', 'mainwp' ) . '</span>' : '<span class="ui tiny basic label"><i class="circle red icon"></i> ' . esc_html__( 'Inactive', 'mainwp' ) . '</span>'; //phpcs:ignore -- escaped. ?></td>
-                        <td><?php echo ( in_array( $slug, $trustedPlugins ) ) ? '<span class="ui mini green basic label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red basic label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
-                        <td><?php echo MainWP_Common_Functions::instance()->is_ignored_updates( $plugin, $decodedIgnoredPlugins, 'plugin' ) ? '<span class="ui mini basic label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
-                        <td><?php echo MainWP_Common_Functions::instance()->is_ignored_updates( $plugin, $decodedIgnoredPlugins, 'plugin' ) ? '<span data-tooltip="Ignored plugins will not be automatically updated." data-inverted=""><i class="info red circle icon" ></i></span>' : ''; ?></td>
+                        <td class="collapsing center aligned"><?php echo ( 1 === (int) $plugin['active'] ) ? '<span class="ui tiny grey label"><i class="circle green icon"></i> ' . esc_html__( 'Active', 'mainwp' ) . '</span>' : '<span class="ui tiny grey label"><i class="circle red icon"></i> ' . esc_html__( 'Inactive', 'mainwp' ) . '</span>'; //phpcs:ignore -- escaped. ?></td>
+                        <td class="collapsing center aligned"><?php echo ( in_array( $slug, $trustedPlugins ) ) ? '<span class="ui mini green label"><i class="lock green icon"></i> ' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red label"><i class="lock open red icon"></i> ' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
+                        <td class="collapsing center aligned"><?php echo MainWP_Common_Functions::instance()->is_ignored_updates( $plugin, $decodedIgnoredPlugins, 'plugin' ) ? '<span class="ui mini basic label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
+                        <td class="collapsing center aligned"><?php echo MainWP_Common_Functions::instance()->is_ignored_updates( $plugin, $decodedIgnoredPlugins, 'plugin' ) ? '<span data-tooltip="Ignored plugins will not be automatically updated." data-inverted=""><i class="info red circle icon" ></i></span>' : ''; ?></td>
                         <td class="collapsing center aligned">
                         <?php if ( '' === $esc_note ) : ?>
                             <a href="javascript:void(0)" class="mainwp-edit-plugin-note" ><i class="sticky note outline icon"></i></a>

@@ -475,10 +475,13 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-plugins-info-message' ) ) : ?>
                         <div class="ui info message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-plugins-info-message"></i>
+                            <div class="header"><?php esc_html_e( 'How to Manage Plugins', 'mainwp' ); ?></div>
                             <div><?php echo esc_html__( 'Manage installed plugins on your child sites. Here you can activate, deactivate, and delete installed plugins.', 'mainwp' ); ?></div>
-                            <p><?php echo esc_html__( 'To Activate or Delete a specific plugin, you must search only for Inactive plugin on your child sites. If you search for Active or both Active and Inactive, the Activate and Delete actions will be disabled.', 'mainwp' ); ?></p>
-                            <p><?php echo esc_html__( 'To Deactivate a specific plugin, you must search only for Active plugins on your child sites. If you search for Inactive or both Active and Inactive, the Deactivate action will be disabled.', 'mainwp' ); ?></p>
-                            <p><?php printf( esc_html__( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/managing-plugins-with-mainwp/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></p>
+                            <div class="ui bulleted list">
+                                <div class="item"><?php echo esc_html__( 'To Activate or Delete a specific plugin, you must search only for Inactive plugin on your child sites. If you search for Active or both Active and Inactive, the Activate and Delete actions will be disabled.', 'mainwp' ); ?></div>
+                                <div class="item"><?php echo esc_html__( 'To Deactivate a specific plugin, you must search only for Active plugins on your child sites. If you search for Inactive or both Active and Inactive, the Deactivate action will be disabled.', 'mainwp' ); ?></div>
+                            </div>
+                            <div><?php printf( esc_html__( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/managing-plugins-with-mainwp/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
                         </div>
                     <?php endif; ?>
                     <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -490,10 +493,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             <?php if ( is_array( $cachedResult ) && isset( $cachedResult['result'] ) ) : ?>
                                 <?php echo $cachedResult['result']; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                             <?php else : ?>
-                                <div class="ui hidden divider"></div>
-                                <div class="ui hidden divider"></div>
-                                <div class="ui hidden divider"></div>
-                                <?php MainWP_UI::render_empty_element_placeholder( __( 'Use the search options to find the plugin you want to manage', 'mainwp' ) ); ?>
+                                <?php MainWP_UI::render_empty_page_placeholder( __( 'No plugins loaded yet.', 'mainwp' ), __( 'Select one or more Child Sites and click the Show Plugins button to view installed plugins.', 'mainwp' ), '<i class="massive grey search icon"></i>' ); ?>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -660,7 +660,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     </div>
                     <div class="ui hidden fitted divider"></div>
                     <div class="field">
-                        <div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Display sites not meeting the above search criteria.', 'mainwp' ); ?>" data-position="left center" data-inverted="">
+                        <div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Display sites not meeting the above search criteria.', 'mainwp' ); ?>" data-position="center left" data-inverted="">
                                 <input type="checkbox" <?php echo $disabledNegative ? 'disabled' : ''; ?> <?php echo $checkedNegative ? 'checked="true"' : ''; ?> value="1" id="display_sites_not_meeting_criteria" />
                             <label for="display_sites_not_meeting_criteria"><?php esc_html_e( 'Exclude plugin', 'mainwp' ); ?></label>
                             </div>
@@ -1294,6 +1294,14 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          */
         do_action( 'mainwp_before_plugins_table' );
         ?>
+
+        <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-plugins-bulk-actions-tip' ) ) : ?>
+            <div class="ui message">
+                <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-plugins-bulk-actions-tip"></i>
+                <div><em data-emoji=":bulb:" class="small"></em> <?php esc_html_e( 'Tip: Use Bulk Actions to activate, deactivate, or delete selected plugins.', 'mainwp' ); ?></div>
+            </div>
+        <?php endif; ?>
+        
         <div class="ui secondary segment main-master-checkbox">
             <div class="ui stackable grid">
                 <div class="one wide left aligned middle aligned column">
@@ -1381,9 +1389,9 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         if ( isset( $sitePlugins[ $site_id ][ $slug_ver ] ) && ( empty( $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) || 1 === (int) $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) ) {
                             $actived = true;
                             if ( isset( $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) && 1 === (int) $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) {
-                                $plugin_status = '<span class="ui small green basic label">' . esc_html__( 'Active', 'mainwp' ) . '</span>';
+                                $plugin_status = '<span class="ui tiny grey label"><i class="circle green icon"></i> ' . esc_html__( 'Active', 'mainwp' ) . '</span>';
                             } elseif ( isset( $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) && 0 === (int) $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) {
-                                $plugin_status = '<span class="ui small red basic label">' . esc_html__( 'Inactive', 'mainwp' ) . '</span>';
+                                $plugin_status = '<span class="ui tiny grey label"><i class="circle red icon"></i> ' . esc_html__( 'Inactive', 'mainwp' ) . '</span>';
                                 $actived       = false;
                             } else {
                                 $plugin_status = '';
@@ -1418,11 +1426,12 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 <?php // phpcs:disable WordPress.Security.EscapeOutput ?>
                                 <div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></div>
                                 <?php // phpcs:enable ?>
-                                <div class="three wide middle aligned column"><a class="open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>" target="_blank" ><?php echo esc_html( $plugin_title ); ?></a></div>
-                                <div class="one wide center aligned middle aligned column"><?php echo $plugin_status; //phpcs:ignore -- escaped. ?></div>
-                                <div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny basic green label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny basic grey label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
+                                <div class="two wide middle aligned column"><a class="open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>" target="_blank" ><?php echo esc_html( $plugin_title ); ?></a></div>
+                                <div class="two wide center aligned middle aligned column"><?php echo $plugin_status; //phpcs:ignore -- escaped. ?></div>
+                                <div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny green label"><i class="locks icon"></i> ' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny red label"><i class="lock open icon"></i> ' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
                                 <div class="one wide center aligned middle aligned column"><?php echo $plugin_mu ? '<span class="ui small label"><i class="exclamation orange triangle icon"></i> MU</span>' : ''; ?></div>
-                                <div class="two wide right aligned middle aligned column current-version">
+                                <div class="two wide left aligned middle aligned column current-version">
+                                    <span class="ui small text">
                                     <?php echo esc_html( $plugin_version ); ?>
                                     <?php if ( ! empty( $new_version ) ) : ?>
                                     &rarr;
@@ -1433,27 +1442,33 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                         echo esc_html( $new_version );
                                         ?>
                                     <?php endif; ?>
+                                    </span>
                                 </div>
-                                <div class="two wide right aligned middle aligned column update-column" updated="0">
+
+                                
+
+
+                                <div class="one wide right aligned middle aligned column update-column" updated="0">
                                 <?php if ( ! empty( $upgradeInfo ) && MainWP_Updates::user_can_update_plugins() ) : ?>
                                     <span data-position="top right" data-tooltip="<?php echo esc_attr__( 'Update ', 'mainwp' ) . esc_html( $plugin_title ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><a href="javascript:void(0)" class="ui mini green basic button <?php echo $is_demo ? 'disabled' : ''; ?>" onClick="return manage_plugins_upgrade( '<?php echo esc_js( rawurlencode( $plugin_slug ) ); ?>', <?php echo esc_attr( $site_id ); ?> )"><?php esc_html_e( 'Update', 'mainwp' ); ?></a></span>
                                 <?php endif; ?>
                                 </div>
+                                <div class="one wide center aligned middle aligned column"><a href="#" history-view="manage-plugins-per-sites" data-tooltip="<?php esc_attr_e( 'View history', 'mainwp' ); ?>" data-inverted="" data-possition="center left" class="mainwp-show-history ui mini basic grey icon button"><i class="history icon"></i></a></div>
                             <div class="two wide center aligned middle aligned column column-actions">
                                 <div class="ui mini fluid buttons">
-                                    <a href="#" history-view="manage-plugins-per-sites" class="mainwp-show-history ui button <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'History', 'mainwp' ); ?></a>
+                                    
                                     <?php if ( ! $child_plugin ) : ?>
                                         <?php if ( $actived ) { ?>
                                             <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-                                            <a href="#" class="mainwp-manage-plugin-deactivate ui button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Deactivate ', 'mainwp' ) . esc_html( $plugin_title ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
+                                            <a href="#" class="mainwp-manage-plugin-deactivate ui button" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Deactivate ', 'mainwp' ) . esc_html( $plugin_title ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
                                         <?php } ?>
                                     <?php } else { ?>
                                             <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-                                                <a href="#" class="mainwp-manage-plugin-activate ui green button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Activate ', 'mainwp' ) . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
+                                                <a href="#" class="mainwp-manage-plugin-activate ui green button" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Activate ', 'mainwp' ) . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
                                             <?php } ?>
                                     <?php } ?>
                                         <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
-                                        <a href="#" class="mainwp-manage-plugin-delete ui button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Delete ', 'mainwp' ) . ' ' . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr__( 'plugin from this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+                                        <a href="#" class="mainwp-manage-plugin-delete ui button" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Delete ', 'mainwp' ) . ' ' . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr__( 'plugin from this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
                                     <?php } ?>
                                 <?php endif; ?>
                                 </div>
@@ -1592,6 +1607,14 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          */
         do_action( 'mainwp_before_plugins_table' );
         ?>
+        
+        <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-plugins-bulk-actions-tip' ) ) : ?>
+            <div class="ui message">
+                <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-plugins-bulk-actions-tip"></i>
+                <div><em data-emoji=":bulb:" class="small"></em> <?php esc_html_e( 'Tip: Use Bulk Actions to activate, deactivate, or delete selected plugins.', 'mainwp' ); ?></div>
+            </div>
+        <?php endif; ?>
+        
         <div class="ui secondary segment main-master-checkbox">
             <div class="ui stackable grid">
                 <div class="one wide left aligned middle aligned column">
@@ -1692,9 +1715,9 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             if ( isset( $sitePlugins[ $site_id ][ $slug_ver ] ) && ( 0 === (int) $sitePlugins[ $site_id ][ $slug_ver ]['active'] || 1 === (int) $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) ) {
                                 $actived = true;
                                 if ( isset( $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) && 1 === (int) $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) {
-                                    $plugin_status = '<span class="ui small green basic label">' . esc_html__( 'Active', 'mainwp' ) . '</span>';
+                                    $plugin_status = '<span class="ui tiny grey label"><i class="circle green icon"></i> ' . esc_html__( 'Active', 'mainwp' ) . '</span>';
                                 } elseif ( isset( $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) && 0 === (int) $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) {
-                                    $plugin_status = '<span class="ui small red basic label">' . esc_html__( 'Inactive', 'mainwp' ) . '</span>';
+                                    $plugin_status = '<span class="ui tiny grey label"><i class="circle red icon"></i> ' . esc_html__( 'Inactive', 'mainwp' ) . '</span>';
                                     $actived       = false;
                                 } else {
                                     $plugin_status = '';
@@ -1713,66 +1736,69 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 ?>
                         <div class="ui stackable grid very compact mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $pluginsName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_attr( $site_name ); ?>" site-url="<?php echo esc_attr( $site_url ); ?>" tz-info="<?php echo esc_attr( $offs_info ); ?>" id="<?php echo esc_html( $item_id ); ?>">
                             <div class="one wide left aligned middle aligned column"></div>
-                                <div class="one wide center aligned middle aligned column">
-                                        <?php if ( $child_plugin ) { ?>
-                                            <div class="ui disabled checkbox"><input type="checkbox" disabled="disabled"><label></label></div>
-                                    <?php } else { ?>
-                                        <div class="ui checkbox child">
-                                            <input type="checkbox" class="mainwp-selected-plugin-site" />
-                                            <label></label>
-                                        </div>
-                                            <?php
-                                    }
-                                    ?>
+                            <div class="one wide center aligned middle aligned column">
+                                <?php if ( $child_plugin ) : ?>
+                                <div class="ui disabled checkbox"><input type="checkbox" disabled="disabled"><label></label></div>
+                                <?php else : ?>
+                                <div class="ui checkbox child">
+                                    <input type="checkbox" class="mainwp-selected-plugin-site" />
+                                    <label></label>
                                 </div>
-                                    <div class="three wide middle aligned column"><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $site_id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo intval( $site_id ); ?>"><?php echo esc_html( $site_name ); ?></a></div>
-                                    <div class="one wide middle aligned column"></div>
-                                <div class="one wide center aligned middle aligned column"><?php echo $plugin_status; //phpcs:ignore -- escaped. ?></div>
-                                    <div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny basic green label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny basic grey label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
+                                <?php endif; ?>
+                            </div>
 
+                            <div class="two wide middle aligned column"><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $site_id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo intval( $site_id ); ?>"><?php echo esc_html( $site_name ); ?></a></div>
+                                
+                            <div class="two wide center aligned middle aligned column"><?php echo $plugin_status; //phpcs:ignore -- escaped. ?></div>
+                            
+                            <div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny green label"><i class="lock icon"></i> ' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny red label"><i class="lock open icon"></i> ' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
 
-                                    <div class="one wide center aligned middle aligned column"><?php echo $plugin_mu ? '<span class="ui small label"><i class="exclamation orange triangle icon"></i> MU</span>' : ''; ?></div>
+                            <div class="one wide center aligned middle aligned column"><?php echo $plugin_mu ? '<span class="ui small label"><i class="exclamation orange triangle icon"></i> MU</span>' : ''; ?></div>
 
-                                    <div class="two wide center aligned middle aligned column current-version">
-                                        <?php echo esc_html( $plugin_version ); ?>
-                                        <?php if ( ! empty( $new_version ) ) : ?>
-                                        &rarr;
-                                            <?php
-                                            if ( ! empty( $roll_list[ $site_id ][ $plugin_slug ][ $new_version ] ) ) {
-                                                echo MainWP_Updates_Helper::get_roll_msg( $roll_list[ $site_id ][ $plugin_slug ][ $new_version ], true, 'notice' ); //phpcs:ignore -- NOSONAR -- ok.
-                                            }
-                                            echo esc_html( $new_version );
-                                            ?>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="two wide right aligned middle aligned column update-column" updated="0">
-                                    <?php if ( ! empty( $upgradeInfo ) && MainWP_Updates::user_can_update_plugins() ) : ?>
-                                        <span data-position="top right" data-tooltip="<?php echo esc_attr__( 'Update ', 'mainwp' ) . esc_html( $plugin_title ) . ' ' . esc_attr__( 'lugin on this child site.', 'mainwp' ); ?>" data-inverted="" ><a href="javascript:void(0)" class="ui mini green basic button <?php echo $is_demo ? 'disabled' : ''; ?>" onClick="return manage_plugins_upgrade( '<?php echo esc_js( rawurlencode( $plugin_slug ) ); ?>', <?php echo esc_attr( $site_id ); ?> )"><?php esc_html_e( 'Update', 'mainwp' ); ?></a></span>
-                                    <?php endif; ?>
-                                    </div>
-                                <div class="two wide center aligned middle aligned column column-actions">
-                                    <div class="ui mini fluid buttons">
-                                        <a href="#" history-view="manage-plugins-per-items" class="mainwp-show-history ui button <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'History', 'mainwp' ); ?></a>
-                                        <?php if ( ! $child_plugin ) : ?>
-                                            <?php if ( $actived ) { ?>
-                                                <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-                                                <a href="#" class="mainwp-manage-plugin-deactivate ui button <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
-                                            <?php } ?>
+                            <div class="two wide center aligned middle aligned column current-version">
+                                <span class="ui small text">
+                                <?php echo esc_html( $plugin_version ); ?>
+                                <?php if ( ! empty( $new_version ) ) : ?>
+                                &rarr;
+                                    <?php
+                                    if ( ! empty( $roll_list[ $site_id ][ $plugin_slug ][ $new_version ] ) ) {
+                                        echo MainWP_Updates_Helper::get_roll_msg( $roll_list[ $site_id ][ $plugin_slug ][ $new_version ], true, 'notice' ); //phpcs:ignore -- NOSONAR -- ok.
+                                    }
+                                    echo esc_html( $new_version );
+                                    ?>
+                                <?php endif; ?>
+                                </span>
+                            </div>
+
+                            <div class="two wide right aligned middle aligned column update-column" updated="0">
+                                <?php if ( ! empty( $upgradeInfo ) && MainWP_Updates::user_can_update_plugins() ) : ?>
+                                    <span data-position="top right" data-tooltip="<?php echo esc_attr__( 'Update ', 'mainwp' ) . esc_html( $plugin_title ) . ' ' . esc_attr__( 'plugin on this child site.', 'mainwp' ); ?>" data-inverted="" ><a href="javascript:void(0)" class="ui mini green basic button <?php echo $is_demo ? 'disabled' : ''; ?>" onClick="return manage_plugins_upgrade( '<?php echo esc_js( rawurlencode( $plugin_slug ) ); ?>', <?php echo esc_attr( $site_id ); ?> )"><?php esc_html_e( 'Update', 'mainwp' ); ?></a></span>
+                                <?php endif; ?>
+                            </div>
+
+                            <div class="one wide middle aligned center aligned column"><a href="#" history-view="manage-plugins-per-items" data-tooltip="<?php esc_attr_e( 'View history', 'mainwp' ); ?>" data-inverted="" data-possition="center left" class="mainwp-show-history ui mini icon basic grey button"><i class="history icon"></i></a></div>
+
+                            <div class="two wide center aligned middle aligned column column-actions">
+                                <div class="ui mini fluid buttons">
+                                    <?php if ( ! $child_plugin ) : ?>
+                                        <?php if ( $actived ) { ?>
+                                            <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
+                                            <a href="#" class="mainwp-manage-plugin-deactivate ui button <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
+                                        <?php } ?>
                                         <?php } else { ?>
-                                                <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-                                                    <a href="#" class="mainwp-manage-plugin-activate ui green button <?php echo $is_demo ? 'disabled' : ''; ?>" ><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
+                                            <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
+                                                <a href="#" class="mainwp-manage-plugin-activate ui green button <?php echo $is_demo ? 'disabled' : ''; ?>" ><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
                                             <?php } ?>
                                         <?php } ?>
                                             <?php if ( ! $plugin_mu && \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
                                             <a href="#" class="mainwp-manage-plugin-delete ui button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php echo esc_attr__( 'Delete ', 'mainwp' ) . ' ' . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr__( 'plugin from this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
                                         <?php } ?>
-                                <?php endif; ?>
-                                    </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
-                                <?php
-
-                            }
+                        </div>
+                        <?php
+                        }
                     endforeach;
                         ?>
                         <span style="display:none" class="lastest-version-hidden" lastest-version="<?php echo esc_html( $lastest_version ); ?>"></span>
@@ -1988,13 +2014,13 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <div class="content active">
             <div class="ui form">
                 <div class="field">
-                    <div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the plugin will be automatically activated after the installation.', 'mainwp' ); ?>" data-position="left center" data-inverted="">
+                    <div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the plugin will be automatically activated after the installation.', 'mainwp' ); ?>" data-position="center left" data-inverted="">
                         <input type="checkbox" value="1" checked="checked" id="chk_activate_plugin" />
                         <label for="chk_activate_plugin"><?php esc_html_e( 'Activate after installation', 'mainwp' ); ?></label>
                     </div>
                 </div>
                 <div class="field">
-                    <div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled and the plugin already installed on the sites, the already installed version will be overwritten.', 'mainwp' ); ?>" data-position="left center" data-inverted="">
+                    <div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled and the plugin already installed on the sites, the already installed version will be overwritten.', 'mainwp' ); ?>" data-position="center left" data-inverted="">
                         <input type="checkbox" value="2" checked="checked" id="chk_overwrite" />
                         <label for="chk_overwrite"><?php esc_html_e( 'Overwrite existing version', 'mainwp' ); ?></label>
                     </div>
@@ -2112,7 +2138,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-disable-auto-updates-info-message' ) ) : ?>
                         <div class="ui message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-disable-auto-updates-info-message"></i>
-                            <div><em data-emoji=":bulb:" class="small"></em> <?php printf( esc_html__( 'Check out %1$show to disable the WordPress built in auto-updates feature%2$s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
+                            <div><em data-emoji=":bulb:" class="small"></em> <?php printf( esc_html__( 'Tip: Check out %1$show to disable the WordPress built in auto-updates feature%2$s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
                         </div>
                     <?php endif; ?>
                     <div class="ui page dimmer">
@@ -2427,7 +2453,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         <?php if ( '' === $esc_note ) : ?>
                             <a href="javascript:void(0)" class="mainwp-edit-plugin-note" ><i class="sticky note outline icon"></i></a>
                         <?php else : ?>
-                            <a href="javascript:void(0)" class="mainwp-edit-plugin-note" data-tooltip="<?php echo substr( $strip_note, 0, 100 ); //phpcs:ignore -- escaped. ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+                            <a href="javascript:void(0)" class="mainwp-edit-plugin-note" data-tooltip="<?php echo substr( $strip_note, 0, 100 ); //phpcs:ignore -- escaped. ?>" data-position="center left" data-inverted=""><i class="sticky green note icon"></i></a>
                         <?php endif; ?>
                             <span style="display: none" class="esc-content-note"><?php echo $esc_note; //phpcs:ignore -- escaped. ?></span>
                         </td>

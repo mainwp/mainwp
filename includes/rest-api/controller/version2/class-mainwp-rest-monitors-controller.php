@@ -61,6 +61,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         'down'    => MainWP_Uptime_Monitoring_Connect::DOWN,
         'pending' => MainWP_Uptime_Monitoring_Connect::PENDING,
         'first'   => MainWP_Uptime_Monitoring_Connect::FIRST,
+        'paused'  => -1,
     );
 
     /**
@@ -377,8 +378,8 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 'response_time_min_ms' => (int) ( $reports_data['min_time_ms'] ?? 0 ),
                 'response_time_max_ms' => (int) ( $reports_data['max_time_ms'] ?? 0 ),
                 'last_check_at'        => ! empty( $monitor->lasttime_check ) ? gmdate( 'Y-m-d H:i:s', (int) $monitor->lasttime_check ) : '',
-                'status_code'          => ! empty( $monitor->last_http_code ) ? (int) $monitor->last_http_code : '',
-                'status'               => $this->uptime_status( $monitor->last_status ?? null ),
+                'last_status_code'     => ! empty( $monitor->last_http_code ) ? (int) $monitor->last_http_code : '',
+                'last_status'          => $this->uptime_status( $monitor->last_status ?? null ),
             );
 
             // Filter data by allowed fields.
@@ -429,9 +430,9 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         $data = array_map(
             function ( $monitor ) {
                 $record = array(
-                    'id'     => $monitor->monitor_id,
-                    'url'    => $monitor->url ?? '',
-                    'status' => $this->uptime_status( $monitor->last_status ?? null ),
+                    'id'          => $monitor->monitor_id,
+                    'url'         => $monitor->url ?? '',
+                    'last_status' => $this->uptime_status( $monitor->last_status ?? null ),
                 );
                 return $this->filter_response_data_by_allowed_fields( $record, 'simple_view' );
             },
@@ -543,8 +544,8 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             'response_time_max_ms' => (int) ( $reports_data['max_time_ms'] ?? 0 ),
             'heartbeats'           => $heartbeat_data ?? array(),
             'last_check_at'        => ! empty( $monitor->lasttime_check ) ? gmdate( 'Y-m-d H:i:s', (int) $monitor->lasttime_check ) : '',
-            'status_code'          => ! empty( $monitor->last_http_code ) ? (int) $monitor->last_http_code : '',
-            'status'               => $this->uptime_status( $monitor->last_status ?? null ),
+            'last_status_code'     => ! empty( $monitor->last_http_code ) ? (int) $monitor->last_http_code : '',
+            'last_status'          => $this->uptime_status( $monitor->last_status ?? null ),
         );
 
         return rest_ensure_response(
@@ -2156,11 +2157,17 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                     'description' => __( 'Monitor type.', 'mainwp' ),
                     'context'     => array( 'view', 'monitor_view' ),
                 ),
+                'last_status'          => array(
+                    'type'        => 'string',
+                    'description' => __( 'Monitor Status.', 'mainwp' ),
+                    'enum'        => array( 'up', 'down', 'pending', 'first' ),
+                    'context'     => array( 'view', 'simple_view', 'monitor_view' ),
+                ),
                 'status'               => array(
                     'type'        => 'string',
                     'description' => __( 'Monitor Status.', 'mainwp' ),
                     'enum'        => array( 'up', 'down', 'pending', 'first' ),
-                    'context'     => array( 'view', 'simple_view', 'monitor_view', 'heartbeat_view' ),
+                    'context'     => array( 'heartbeat_view' ),
                 ),
                 'check_frequency'      => array(
                     'type'        => 'string',
@@ -2173,7 +2180,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                     'description' => __( 'Check interval (e.g. 1m, 5m)', 'mainwp' ),
                     'context'     => array( 'view', 'monitor_view' ),
                 ),
-                'status_code'          => array(
+                'last_status_code'     => array(
                     'description' => 'Last HTTP status code if applicable',
                     'type'        => array( 'integer', 'null' ),
                     'context'     => array( 'view', 'monitor_view' ),

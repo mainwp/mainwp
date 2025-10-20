@@ -432,15 +432,10 @@ KEY idx_wpid (wpid)";
 
         // Handel status.
         if ( isset( $params['status'] ) ) {
-            $status_values = '';
-            if ( is_array( $params['status'] ) ) {
-                $status_values = array_filter( array_map( 'intval', wp_parse_list( $params['status'] ) ) );
-            } elseif ( is_numeric( $params['status'] ) ) {
-                $status_values = array( $params['status'] );
-            }
-
-            if ( ! empty( $status_values ) ) {
-                $params['custom_where'] .= ' AND mo.last_status IN (' . implode( ',', $status_values ) . ')';
+            if ( is_numeric( $params['status'] ) && -1 !== (int) $params['status'] ) {
+                $params['custom_where'] .= ' AND wp.offline_check_result = ' . $params['status'];
+            } elseif ( -1 === (int) $params['status'] ) {
+                $params['custom_where'] .= ' AND wp.offline_check_result = -1';
             }
         }
 

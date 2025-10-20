@@ -930,6 +930,9 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
         $screen          = get_current_screen();
         $stats_data      = Log_Stats::get_stats_data( $items );
         $stats_prev_data = ! empty( $items_prev ) ? Log_Stats::get_stats_data( $items_prev ) : array();
+
+        $size = Log_DB_Helper::instance()->get_db_size();
+        MainWP_Logger::instance()->debug( 'Network Activity DB Size: ' . $size . ' MB' );
         ?>
         <div class="mainwp-primary-content-wrap">
             <div class="ui segment">

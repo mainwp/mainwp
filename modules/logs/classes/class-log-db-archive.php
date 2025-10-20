@@ -122,5 +122,6 @@ class Log_DB_Archive extends MainWP_DB {
     public function truncate_archive_tables() {
         $this->wpdb->query( 'TRUNCATE TABLE ' . $this->table_name( 'wp_logs_archive' ) ); //phpcs:ignore -- ok.
         $this->wpdb->query( 'TRUNCATE TABLE ' . $this->table_name( 'wp_logs_meta_archive' ) ); //phpcs:ignore -- ok.
+        delete_transient( 'mainwp_module_log_transient_db_logs_size' );
     }
 }

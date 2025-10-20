@@ -421,18 +421,24 @@ KEY idx_wpid (wpid)";
         // Handel exclude.
         if ( isset( $params['exclude'] ) && ! empty( $params['exclude'] ) ) {
             $exclude_ids             = wp_parse_id_list( $params['exclude'] );
-            $params['custom_where'] .= empty( $exclude_ids ) ? '' : ' AND mo.wpid NOT IN (' . implode( ',', $exclude_ids ) . ')';
+            $params['custom_where'] .= empty( $exclude_ids ) ? '' : ' AND mo.monitor_id NOT IN (' . implode( ',', $exclude_ids ) . ')';
         }
 
         // Handel include.
         if ( isset( $params['include'] ) && ! empty( $params['include'] ) ) {
             $include_ids             = wp_parse_id_list( $params['include'] );
-            $params['custom_where'] .= empty( $include_ids ) ? '' : ' AND mo.wpid IN (' . implode( ',', $include_ids ) . ')';
+            $params['custom_where'] .= empty( $include_ids ) ? '' : ' AND mo.monitor_id  IN (' . implode( ',', $include_ids ) . ')';
         }
 
         // Handel status.
-        if ( isset( $params['status'] ) && ! empty( $params['status'] ) ) {
-            $status_values = array_filter( array_map( 'intval', wp_parse_list( $params['status'] ) ) );
+        if ( isset( $params['status'] ) ) {
+            $status_values = '';
+            if ( is_array( $params['status'] ) ) {
+                $status_values = array_filter( array_map( 'intval', wp_parse_list( $params['status'] ) ) );
+            } elseif ( is_numeric( $params['status'] ) ) {
+                $status_values = array( $params['status'] );
+            }
+
             if ( ! empty( $status_values ) ) {
                 $params['custom_where'] .= ' AND mo.last_status IN (' . implode( ',', $status_values ) . ')';
             }
@@ -1511,7 +1517,7 @@ KEY idx_wpid (wpid)";
         $where_conditions[] = $this->wpdb->prepare( 'time >= %s', $date_range['start'] );
         $where_conditions[] = $this->wpdb->prepare( 'time <= %s', $date_range['end'] );
 
-        if ( ! empty( $status ) ) {
+        if ( is_numeric( $status ) ) {
             $where_conditions[] = $this->wpdb->prepare( 'status = %d', $status );
         }
 
@@ -1542,12 +1548,16 @@ KEY idx_wpid (wpid)";
         $where_conditions[] = $this->wpdb->prepare( 'time >= %s', $date_range['start'] );
         $where_conditions[] = $this->wpdb->prepare( 'time <= %s', $date_range['end'] );
 
-        if ( ! empty( $status ) ) {
+        if ( is_numeric( $status ) ) {
             $where_conditions[] = $this->wpdb->prepare( 'status = %d', $status );
         }
 
         $where_clause = 'WHERE ' . implode( ' AND ', $where_conditions );
-        $limit_clause = $this->wpdb->prepare( 'LIMIT %d OFFSET %d', $per_page, $offset );
+        // Limit item.
+        $limit_clause = '';
+        if ( $per_page > 0 ) {
+            $limit_clause = $this->wpdb->prepare( 'LIMIT %d OFFSET %d', $per_page, $offset );
+        }
 
         $sql = "SELECT * FROM {$table_name} {$where_clause} ORDER BY time DESC {$limit_clause}";
 

@@ -385,7 +385,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
             $args['type'] = $request['type'];
         }
 
-        if ( ! empty( $request['status'] ) ) {
+        if ( isset( $request['status'] ) ) {
             $args['status'] = $request['status'];
         }
 

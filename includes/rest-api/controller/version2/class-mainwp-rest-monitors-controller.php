@@ -292,7 +292,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             '/' . $this->rest_base . '/settings',
             array(
                 array(
-                    'methods'             => WP_REST_Server::CREATABLE,
+                    'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_global_monitoring_settings' ),
                     'permission_callback' => array( $this, 'get_rest_permissions_check' ),
                     'args'                => $this->get_monitoring_settings_allowed_fields(),
@@ -318,7 +318,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         $params = array(
             'exclude'  => ! empty( $args['exclude'] ) ? $args['exclude'] : '',
             'include'  => ! empty( $args['include'] ) ? $args['include'] : '',
-            'status'   => ! empty( $args['status'] ) ? $args['status'] : '',
+            'status'   => isset( $args['status'] ) ? $args['status'] : '',
             'search'   => ! empty( $args['s'] ) ? $args['s'] : '',
             'page'     => ! empty( $args['paged'] ) ? (int) $args['paged'] : 1,
             'per_page' => ! empty( $args['items_per_page'] ) ? (int) $args['items_per_page'] : 20,
@@ -365,7 +365,6 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
 
             $record = array(
                 'id'                   => $monitor_id,
-                'name'                 => $monitor->name ?? '',
                 'url'                  => $monitor->url ?? '',
                 'uptime_ratio_7d'      => (float) ( $reports_data['uptime_ratios_data']['uptimeratios7'] ?? 0 ),
                 'uptime_ratio_30d'     => (float) ( $reports_data['uptime_ratios_data']['uptimeratios30'] ?? 0 ),
@@ -408,7 +407,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         $params = array(
             'exclude'  => ! empty( $args['exclude'] ) ? $args['exclude'] : '',
             'include'  => ! empty( $args['include'] ) ? $args['include'] : '',
-            'status'   => ! empty( $args['status'] ) ? $args['status'] : '',
+            'status'   => isset( $args['status'] ) ? $args['status'] : '',
             'search'   => ! empty( $args['s'] ) ? $args['s'] : '',
             'page'     => ! empty( $args['paged'] ) ? (int) $args['paged'] : 1,
             'per_page' => ! empty( $args['items_per_page'] ) ? (int) $args['items_per_page'] : 20,
@@ -462,7 +461,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         $params = array(
             'exclude' => ! empty( $args['exclude'] ) ? $args['exclude'] : '',
             'include' => ! empty( $args['include'] ) ? $args['include'] : '',
-            'status'  => ! empty( $args['status'] ) ? $args['status'] : '',
+            'status'  => isset( $args['status'] ) ? $args['status'] : '',
             'search'  => ! empty( $args['s'] ) ? $args['s'] : '',
         );
 
@@ -614,15 +613,15 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         // Get params.
         $args   = $this->prepare_objects_query( $request, 'heartbeat_monitor' );
         $params = array(
-            'limit'  => ! empty( $args['limit'] ) ? (int) $args['limit'] : 50,
-            'period' => ! empty( $args['period'] ) ? $args['period'] : '24h',
-            'status' => ! empty( $args['status'] ) ? $args['status'] : '',
+            'limit'  => ! empty( $args['limit'] ) ? (int) $args['limit'] : 0,
+            'period' => ! empty( $args['period'] ) ? $args['period'] : '',
+            'status' => isset( $args['status'] ) ? $args['status'] : '',
             'since'  => ! empty( $args['since'] ) ? $args['since'] : '',
             'page'   => ! empty( $args['page'] ) ? (int) $args['page'] : 1,
         );
 
         // Parse period to date range.
-        $date_range = $this->parse_period( $params['period'] );
+        $date_range = $this->parse_period( $params['period'], $params['since'] );
         if ( is_wp_error( $date_range ) ) {
             return rest_ensure_response(
                 array(
@@ -873,7 +872,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      */
     public function update_global_monitoring_settings( $request ) {
         // Get request body.
-        $body = $request->get_body_params();
+        $body = $request->get_json_params();
         if ( empty( $body ) ) {
             return new WP_Error(
                 'empty_body',
@@ -1367,39 +1366,53 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      * Parse period to date range.
      *
      * @param string $period Period.
+     * @param string $date Date.
      *
      * @return array|WP_Error Date range or WP_Error.
      */
-    private function parse_period( $period ) {
-        $now = time();
+    private function parse_period( $period, $date ) { // phpcs:ignore -- NOSONAR - long method.
+        $now       = time();
+        $day_start = '';
+
+        // Format UTC time.
+        $format_date = static function ( $day ) {
+            return gmdate( 'Y-m-d H:i:s', (int) $day );
+        };
+
+        if ( ! empty( $date ) ) {
+            $day_start = strtotime( $date );
+        }
 
         switch ( $period ) {
             case '24h':
+                $start = ! empty( $day_start ) ? $day_start : $now - DAY_IN_SECONDS;
                 return array(
-                    'start' => gmdate( 'Y-m-d H:i:s', $now - DAY_IN_SECONDS ),
-                    'end'   => gmdate( 'Y-m-d H:i:s', $now ),
+                    'start' => $format_date( $start ),
+                    'end'   => $format_date( $now ),
                 );
             case '7d':
+                $start = ! empty( $day_start ) ? $day_start : $now - 7 * DAY_IN_SECONDS;
                 return array(
-                    'start' => gmdate( 'Y-m-d H:i:s', $now - 7 * DAY_IN_SECONDS ),
-                    'end'   => gmdate( 'Y-m-d H:i:s', $now ),
+                    'start' => $format_date( $start ),
+                    'end'   => $format_date( $now ),
                 );
             case '30d':
+                $start = ! empty( $day_start ) ? $day_start : $now - 30 * DAY_IN_SECONDS;
                 return array(
-                    'start' => gmdate( 'Y-m-d H:i:s', $now - 30 * DAY_IN_SECONDS ),
-                    'end'   => gmdate( 'Y-m-d H:i:s', $now ),
+                    'start' => $format_date( $start ),
+                    'end'   => $format_date( $now ),
                 );
             default:
                 // Try to parse as ISO8601 range (start/end).
                 if ( strpos( $period, '/' ) !== false ) {
                     $parts = explode( '/', $period );
                     if ( count( $parts ) === 2 ) {
-                        $start = strtotime( $parts[0] );
+                        $start = empty( $day_start ) ? $day_start : strtotime( $parts[0] );
                         $end   = strtotime( $parts[1] );
                         if ( $start && $end && $start < $end ) {
                             return array(
-                                'start' => gmdate( 'Y-m-d H:i:s', $start ),
-                                'end'   => gmdate( 'Y-m-d H:i:s', $end ),
+                                'start' => $format_date( $start ),
+                                'end'   => $format_date( $end ),
                             );
                         }
                     }
@@ -1627,7 +1640,6 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 'required'          => false,
                 'type'              => 'integer',
                 'sanitize_callback' => 'absint',
-                'default'           => 50,
                 'description'       => __( 'Limit number of heartbeats.', 'mainwp' ),
             ),
             'period' => array(
@@ -1635,7 +1647,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
                 'validate_callback' => array( $this, 'validate_period_param' ),
-                'default'           => '24h',
+                'default'           => '30d',
                 'description'       => __( 'Time period (24h, 7d, 30d, or ISO8601 range like 2024-01-01T00:00:00Z/2024-01-02T00:00:00Z).', 'mainwp' ),
             ),
             'since'  => array(
@@ -2131,7 +2143,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 'name'                 => array(
                     'type'        => 'string',
                     'description' => __( 'Website name.', 'mainwp' ),
-                    'context'     => array( 'view', 'monitor_view' ),
+                    'context'     => array( 'monitor_view' ),
                 ),
                 'url'                  => array(
                     'type'        => 'string',

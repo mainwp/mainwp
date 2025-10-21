@@ -97,6 +97,12 @@
 }
 /* end */
 
+/* Text */
+
+.mainwp-ui.mainwp-custom-theme .ui.grey.text {
+  color: var(--mainwp-text-secondary) !important;
+}
+
 /* Buttons */
 
 .mainwp-ui.mainwp-custom-theme .ui.button {
@@ -530,6 +536,11 @@
   box-shadow: none;
   border-radius: var(--area-radius);
   -webkit-border-radius: var(--area-radius);
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.cards .secondary.card {
+  background-color: var(--mainwp-bg-base-alt);
+  border-color: var(--mainwp-green) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-sites-previews .ui.cards .image,

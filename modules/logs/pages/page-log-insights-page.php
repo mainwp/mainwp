@@ -943,9 +943,9 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
             </div>
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'insights-widgets' ) ) : ?>
             <div class="ui segment">
-                <div class="ui info message">
+                <div class="ui message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="insights-widgets"></i>
-                    <?php printf( esc_html__( 'To hide or show a widget, click the Cog (%1$s) icon.', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
+                    <?php printf( esc_html__( '%1$s Tip: You can drag and drop widgets to reorder your dashboard or use the Page Settings (%2$s) to show/hide widgets.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<i class="cog fitted icon"></i>' ); ?>
                 </div>
             </div>
             <?php endif; ?>

@@ -193,10 +193,12 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     }
                 } );
 
-                jQuery('#mainwp-sites-previews .image img').visibility({
-                    type       : 'image',
-                    transition : 'fade in',
-                    duration   : 1000
+                jQuery(document).ready(function(){
+                    jQuery('#mainwp-sites-previews .image img').visibility({
+                        type       : 'image',
+                        transition : 'fade in',
+                        duration   : 1000
+                    });
                 });
 
         </script>
@@ -417,10 +419,12 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
             </div>
         </div>
         <script type="text/javascript">
-            jQuery('#mainwp-sites-previews .image img').visibility( {
-                type       : 'image',
-                transition : 'fade in',
-                duration   : 1000
+            jQuery(document).ready(function(){
+                jQuery('#mainwp-sites-previews .image img').visibility( {
+                    type       : 'image',
+                    transition : 'fade in',
+                    duration   : 1000
+                });
             });
 
             mainwp_manage_sites_screen_options = function () {

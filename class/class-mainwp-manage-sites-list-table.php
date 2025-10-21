@@ -246,6 +246,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             'notes'          => array( 'notes', false ),
             'ip'             => array( 'ip', false ),
             'phpversion'     => array( 'phpversion', false ),
+            'wpcore_version' => array( 'wpcore_version', false ),
             'update'         => array( 'update', false ),
             'added_datetime' => array( 'added_datetime', false ),
             'backup'         => array( 'backup', false ),
@@ -781,7 +782,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                             END ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'phpversion' === $req_orderby ) {
                     $orderby = ' INET_ATON( SUBSTRING_INDEX( CONCAT( SUBSTRING_INDEX(wp_optionview.phpversion, "-", 1), ".0.0.0.0" ), ".", 4) ) ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
-                } elseif ( 'ip' === $req_orderby ) {
+                } elseif ( 'wpcore_version' === $req_orderby ) {
+                    $orderby = "CAST( JSON_UNQUOTE( JSON_EXTRACT( wp_optionview.site_info, '$.wpversion' ) ) AS CHAR ) " . ( 'asc' === $req_order ? 'ASC' : 'DESC' );
+                 } elseif ( 'ip' === $req_orderby ) {
                     // Sort by Server IP (string sort covers both IPv4 and IPv6).
                     $orderby = ' wp.ip ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'status' === $req_orderby ) {

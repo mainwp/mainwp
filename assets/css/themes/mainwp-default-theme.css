@@ -561,6 +561,14 @@
   background-color: var(--mainwp-light);
 }
 
+.mainwp-ui.mainwp-custom-theme .ui.cards .extension.card.green {
+  box-shadow: 0 2px 0 0 var(--mainwp-green);
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.cards .extension.card.grey {
+  box-shadow: 0 2px 0 0 var(--mainwp-border);
+}
+
 /* Tables */
 
 .mainwp-ui.mainwp-custom-theme .ui.table {

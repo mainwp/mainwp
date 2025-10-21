@@ -1807,23 +1807,22 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <div class="mainwp-main-content">
                 <div class="mainwp-actions-bar">
                     <div class="ui stackable two column grid">
-
                         <div class="column">
-                                    <div class="ui mini buttons">
-                                        <a href="#" class="ui basic button browse-themes" ><?php esc_html_e( 'Install from WordPress.org', 'mainwp' ); ?></a>
-                                        <a href="#" class="ui basic button upload" ><?php esc_html_e( 'Upload .zip file', 'mainwp' ); ?></a>
-                                        <?php do_action( 'mainwp_install_plugin_theme_tabs_header_top', 'theme' ); ?>
-                                    </div>
-                                <?php
-                                /**
-                                 * Install Themes actions bar (right)
-                                 *
-                                 * Fires at the right side of the actions bar on the Install Themes screen.
-                                 *
-                                 * @since 4.0
-                                 */
-                                do_action( 'mainwp_install_themes_actions_bar_right' );
-                                ?>
+                            <div class="ui mini buttons">
+                                <a href="#" class="ui basic green button browse-themes" ><?php esc_html_e( 'Install from WordPress.org', 'mainwp' ); ?></a>
+                                <a href="#" class="ui basic button upload" ><?php esc_html_e( 'Upload .zip file', 'mainwp' ); ?></a>
+                                <?php do_action( 'mainwp_install_plugin_theme_tabs_header_top', 'theme' ); ?>
+                            </div>
+                            <?php
+                            /**
+                             * Install Themes actions bar (right)
+                             *
+                             * Fires at the right side of the actions bar on the Install Themes screen.
+                             *
+                             * @since 4.0
+                             */
+                            do_action( 'mainwp_install_themes_actions_bar_right' );
+                            ?>
                             </div>
                             <div class="right aligned column">
                                 <div class="ui search focus">
@@ -1849,14 +1848,16 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-install-themes-info-message' ) ) : ?>
                         <div class="ui info message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-install-themes-info-message"></i>
-                            <?php printf( esc_html__( 'Install themes on your child sites.  You can install themes from the WordPress.org repository or by uploading a ZIP file.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-themes/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                            <?php printf( esc_html__( 'Install themes on your child sites. You can install themes from the WordPress.org repository or by uploading a ZIP file. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/managing-themes-with-mainwp/#install-themes" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
                         </div>
                     <?php endif; ?>
                     <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
                     <div class="mainwp-upload-theme mainwp-bulk-install-showhide-content">
                         <?php MainWP_Install_Bulk::render_upload( 'theme' ); ?>
                     </div>
-                    <div id="themes-loading" class="ui double page text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
+                    <div id="themes-loading" class="ui double text loader" style="margin-top: 250px;">
+                        <?php esc_html_e( 'Loading...', 'mainwp' ); ?>
+                    </div>
                     <form id="theme-filter" method="post" class="mainwp-bulk-install-showhide-content">
                         <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                         <div class="mainwp-browse-themes content-filterable"></div>
@@ -1903,9 +1904,12 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <div class="content active">
                     <div class="ui form">
                         <div class="field">
-                            <div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled and the theme already installed on the sites, the already installed version will be overwritten.', 'mainwp' ); ?>" data-position="center left" data-inverted="">
+                            <label><?php esc_html_e( 'Overwrite existing version', 'mainwp' ); ?></label>
+                            <div class="ui toggle checkbox">
                                 <input type="checkbox" value="2" checked="checked" id="chk_overwrite" />
-                                <label for="chk_overwrite"><?php esc_html_e( 'Overwrite existing version', 'mainwp' ); ?></label>
+                                <label for="chk_overwrite"></label>
+                                <br />
+                                <span class="ui small grey text"><?php esc_html_e( 'If enabled and the theme already installed on the sites, the already installed version will be overwritten.', 'mainwp' ); ?></span>
                             </div>
                         </div>
                     </div>
@@ -1925,14 +1929,9 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                  */
                 $allow_install = apply_filters( 'file_mod_allowed', true, 'mainwp_install_theme' );
                 if ( $allow_install ) {
-                    $is_demo = MainWP_Demo_Handle::is_demo_mode();
-                    if ( $is_demo ) {
-                        MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" disabled="disabled" class="ui green big fluid button disabled" value="' . esc_attr__( 'Complete Installation', 'mainwp' ) . '" />' );
-                    } else {
-                        ?>
-                        <input type="button" value="<?php esc_attr_e( 'Complete Installation', 'mainwp' ); ?>" class="ui green big fluid button" bulk-action="install" id="mainwp_theme_bulk_install_btn" name="bulk-install">
-                        <?php
-                    }
+                    ?>
+                    <input type="button" value="<?php esc_attr_e( 'Complete Installation', 'mainwp' ); ?>" class="ui green big fluid button" bulk-action="install" id="mainwp_theme_bulk_install_btn" name="bulk-install">
+                    <?php
                 }
                 ?>
                 <?php do_action( 'mainwp_manage_themes_after_submit_button' ); ?>
@@ -1961,28 +1960,18 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 <# } #>
                 <div class="content">
                     <div class="header">{{ data.name }}</div>
-                    <div class="meta">
-                        <a><?php printf( esc_html__( 'By %s', 'mainwp' ), '{{ data.author }}' ); ?></a>
-                    </div>
-                </div>
-                <div class="extra content">
-                    <span class="right floated"><?php printf( esc_html__( 'Version: %s', 'mainwp' ), '{{ data.version }}' ); ?></span>
-                    <# if ( data.rating ) { #>
-                        <div class="star-rating rating-{{ Math.round( data.rating / 10 ) * 10 }}">
-                            <span class="one"></span><span class="two"></span><span class="three"></span><span class="four"></span><span class="five"></span>
-                            <small class="ratings">{{ data.num_ratings }}</small>
-                        </div>
-                    <# } else { #>
-                        <div class="star-rating">
-                            <small class="ratings"><?php esc_html_e( 'This theme has not been rated yet.', 'mainwp' ); ?></small>
-                        </div>
-                    <# } #>
                 </div>
                 <div class="extra content mainwp-theme-lnks">
-                    <a href="#" id="mainwp-{{data.slug}}-preview" class="ui mini button mainwp-theme-preview"><?php esc_html_e( 'Preview', 'mainwp' ); ?></a>
-                    <div class="ui radio checkbox right floated">
-                        <input name="install-theme" type="radio" id="install-theme-{{data.slug}}" title="Install {{data.name}}" theme-name="{{data.name}}" theme-version="{{data.version}}">
-                        <label for="install-theme-{{data.slug}}"><?php esc_html_e( 'Install Theme', 'mainwp' ); ?></label>
+                    <div class="ui two column grid">
+                        <div class="left aligned middle aligned column">
+                            <a href="#" id="mainwp-{{data.slug}}-preview" class="ui mini button mainwp-theme-preview"><?php esc_html_e( 'Preview', 'mainwp' ); ?></a>
+                        </div>
+                        <div class="right aligned middle aligned column">
+                            <div class="ui radio checkbox">
+                                <input name="install-theme" type="radio" id="install-theme-{{data.slug}}" title="Install {{data.name}}" theme-name="{{data.name}}" theme-version="{{data.version}}">
+                                <label for="install-theme-{{data.slug}}"><?php esc_html_e( 'Install Theme', 'mainwp' ); ?></label>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <?php do_action( 'mainwp_install_theme_card_template_bottom' ); ?>
@@ -2032,6 +2021,8 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 setTimeout( function () {
                     jQuery('#wp-filter-search-input').val( jQuery('#mainwp-search-themes-input-container').attr('skeyword') );
                 }, 1000 );
+
+                mainwp_init_button_site_selection_dependency( 'mainwp_theme_bulk_install_btn' );
             });
         </script>
         <?php

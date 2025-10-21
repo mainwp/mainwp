@@ -1189,9 +1189,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         do_action( 'mainwp_before_manage_sites_table' );
         ?>
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-columns-notice' ) ) : ?>
-            <div class="ui info message">
+            <div class="ui message">
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-columns-notice"></i>
-                <?php printf( esc_html__( 'To hide or show a column, click the Cog (%s) icon and select options from "Show columns"', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
+                <?php printf( esc_html__( '%s Tip: To hide or show a column, click the Page Settings (%s) button and select options from "Show columns"', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<i class="cog fitted icon"></i>' ); ?>
             </div>
         <?php endif; ?>
         <div id="mainwp-loading-sites">

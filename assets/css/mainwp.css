@@ -1229,10 +1229,6 @@ table.mainwp-manage-wpsites-table .error a {
     margin-top: 0 !important;
 }
 
-.mainwp-browse-plugins>form {
-    float: left;
-}
-
 body.show-upload-plugin .hide-if-upload,
 body.show-upload-theme .hide-if-upload {
     display: none !important;

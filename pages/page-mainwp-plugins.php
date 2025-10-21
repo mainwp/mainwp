@@ -1900,7 +1900,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
                     <div class="middle aligned column">
                         <div class="ui mini stackable buttons">
-                            <a href="#" id="MainWPInstallBulkNavSearch" class="ui basic button mainwp-bulk-install-tabs-header-btn" ><?php esc_html_e( 'Install from WordPress.org', 'mainwp' ); ?></a>
+                            <a href="#" id="MainWPInstallBulkNavSearch" class="ui basic green button mainwp-bulk-install-tabs-header-btn" ><?php esc_html_e( 'Install from WordPress.org', 'mainwp' ); ?></a>
                             <a href="#" id="MainWPInstallBulkNavUpload" class="ui basic button mainwp-bulk-install-tabs-header-btn" ><?php esc_html_e( 'Upload .zip file', 'mainwp' ); ?></a>
                             <?php do_action( 'mainwp_install_plugin_theme_tabs_header_top', 'plugin' ); ?>
                         </div>
@@ -1919,8 +1919,9 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     <div class="right aligned column">
                         <div id="mainwp-search-plugins-form" class="ui search focus mainwp-bulk-install-showhide-content">
                             <div class="ui icon mini input">
-                                <input id="mainwp-search-plugins-form-field" class="fluid prompt" type="text" placeholder="<?php esc_attr_e( 'Search plugins...', 'mainwp' ); ?>" value="<?php echo isset( $_GET['s'] ) ? esc_html( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>">
+                                <input id="mainwp-search-plugins-form-field" class="prompt" type="text" placeholder="<?php esc_attr_e( 'Search plugins...', 'mainwp' ); ?>" value="<?php echo isset( $_GET['s'] ) ? esc_html( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>">
                                 <i class="search icon"></i>
+                                <i class="remove icon"></i>
                             </div>
                             <div class="results"></div>
                         </div>
@@ -1931,10 +1932,12 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                     let sel_ids = jQuery( '#plugin_install_selected_sites' ).val();
                                     if ( '' != sel_ids )
                                         sel_ids = '&selected_sites=' + sel_ids;
-                                    let origin   = '<?php echo esc_url( get_admin_url() ); ?>';
                                     if ( 13 === e.which ) {
-                                        location.href = origin + 'admin.php?page=PluginsInstall&tab=search&s=' + encodeURIComponent(search) + sel_ids;
+                                        location.href = 'admin.php?page=PluginsInstall&tab=search&s=' + encodeURIComponent(search) + sel_ids;
                                     }
+                                } );
+                                jQuery( '#mainwp-search-plugins-form .remove.icon' ).on( 'click', function(e) {
+                                    location.href = 'admin.php?page=PluginsInstall';
                                 } );
                             } );
                         </script>
@@ -1954,13 +1957,14 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             </div>
 
 
-                <div class="ui segment">
-            <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-install-plugins-info-message' ) ) : ?>
+            <div class="ui segment">
+                <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-install-plugins-info-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-install-plugins-info-message"></i>
-                    <?php printf( esc_html__( 'Install plugins on your child sites.  You can install plugins from the WordPress.org repository or by uploading a ZIP file.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/install-plugins/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                    <div class="header"><?php esc_html_e( 'Install plugins on your child sites', 'mainwp' ); ?></div>
+                    <?php printf( esc_html__( 'You can install plugins from the WordPress.org repository or by uploading a ZIP file. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/install-plugins/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
                 </div>
-            <?php endif; ?>
+                <?php endif; ?>
             <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
             <div class="mainwp-upload-plugin mainwp-bulk-install-showhide-content" style="display:none;">
                 <?php MainWP_Install_Bulk::render_upload( 'plugin' ); ?>
@@ -2014,16 +2018,22 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <div class="content active">
             <div class="ui form">
                 <div class="field">
-                    <div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the plugin will be automatically activated after the installation.', 'mainwp' ); ?>" data-position="center left" data-inverted="">
+                    <label><?php esc_html_e( 'Activate after installation', 'mainwp' ); ?></label>
+                    <div class="ui toggle checkbox">
                         <input type="checkbox" value="1" checked="checked" id="chk_activate_plugin" />
-                        <label for="chk_activate_plugin"><?php esc_html_e( 'Activate after installation', 'mainwp' ); ?></label>
+                        <label for="chk_activate_plugin"></label>
                     </div>
+                    <br />
+                    <span class="ui small grey text"><?php esc_html_e( 'If enabled, the plugin will be automatically activated after the installation.', 'mainwp' ); ?></span>
                 </div>
                 <div class="field">
-                    <div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled and the plugin already installed on the sites, the already installed version will be overwritten.', 'mainwp' ); ?>" data-position="center left" data-inverted="">
+                    <label><?php esc_html_e( 'Overwrite existing version', 'mainwp' ); ?></label>
+                    <div class="ui toggle checkbox">
                         <input type="checkbox" value="2" checked="checked" id="chk_overwrite" />
-                        <label for="chk_overwrite"><?php esc_html_e( 'Overwrite existing version', 'mainwp' ); ?></label>
+                        <label for="chk_overwrite"></label>
                     </div>
+                    <br />
+                    <span class="ui small grey text"><?php esc_html_e( 'If enabled and the plugin already installed on the sites, the already installed version will be overwritten.', 'mainwp' ); ?></span>
                 </div>
             </div>
             </div>
@@ -2042,27 +2052,27 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          */
         $allow_install = apply_filters( 'file_mod_allowed', true, 'mainwp_install_plugin' );
         if ( $allow_install ) {
-            $is_demo = MainWP_Demo_Handle::is_demo_mode();
-            if ( $is_demo ) {
-                MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" disabled="disabled" class="ui green big fluid button disabled" value="' . esc_html__( 'Complete Installation', 'mainwp' ) . '">' );
-            } else {
-                ?>
-                <input type="button" value="<?php esc_attr_e( 'Complete Installation', 'mainwp' ); ?>" class="ui green big fluid button" id="mainwp_plugin_bulk_install_btn" bulk-action="install" name="bulk-install">
-                <?php
-            }
+            ?>
+           <input type="button" value="<?php esc_attr_e( 'Complete Installation', 'mainwp' ); ?>" class="ui green big fluid button" id="mainwp_plugin_bulk_install_btn" bulk-action="install" name="bulk-install">
+            <?php
         }
         ?>
-            <?php do_action( 'mainwp_manage_plugins_before_submit_button' ); ?>
-            <?php
-            // @since 5.4.
-            do_action( 'mainwp_bulk_install_sidebar_submit_bottom', 'plugin' );
-            ?>
+        <?php do_action( 'mainwp_manage_plugins_before_submit_button' ); ?>
+        <?php
+        // @since 5.4.
+        do_action( 'mainwp_bulk_install_sidebar_submit_bottom', 'plugin' );
+        ?>
         </div>
         <?php do_action( 'mainwp_manage_plugins_sidebar_bottom', 'install' ); ?>
     </div>
     <div class="ui clearing hidden divider"></div>
     </div>
-        <?php
+    <script>
+        jQuery( document ).ready( function () {
+            mainwp_init_button_site_selection_dependency( 'mainwp_plugin_bulk_install_btn' );
+        } );
+    </script>
+    <?php
     }
 
     /**

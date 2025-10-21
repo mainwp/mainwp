@@ -493,7 +493,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             <?php if ( is_array( $cachedResult ) && isset( $cachedResult['result'] ) ) : ?>
                                 <?php echo $cachedResult['result']; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                             <?php else : ?>
-                                <?php MainWP_UI::render_empty_page_placeholder( __( 'No plugins loaded yet.', 'mainwp' ), __( 'Select one or more Child Sites and click the Show Plugins button to view installed plugins.', 'mainwp' ), '<i class="massive grey search icon"></i>' ); ?>
+                                <?php MainWP_UI::render_empty_page_placeholder( __( 'No plugins loaded yet.', 'mainwp' ), __( 'Select one or more Child Sites and click the Show Plugins button to view installed plugins.', 'mainwp' ), '<em data-emoji=":compass:" class="big"></em>' ); ?>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -2159,7 +2159,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         if ( isset( $_SESSION['MainWP_PluginsActive'] ) ) {
                             static::render_all_active_table( $_SESSION['MainWP_PluginsActive'] ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                         } else {
-                            MainWP_UI::render_empty_page_placeholder( __( 'No plugins loaded yet.', 'mainwp' ), __( 'Click Show Plugins button to view your installed plugins and manage their trust settings.', 'mainwp' ), '<i class="massive grey search icon"></i>' );
+                            MainWP_UI::render_empty_page_placeholder( __( 'No plugins loaded yet.', 'mainwp' ), __( 'Click Show Plugins button to view your installed plugins and manage their trust settings.', 'mainwp' ), '<em data-emoji=":compass:" class="big"></em>' );
                         }
                         ?>
                     </div>

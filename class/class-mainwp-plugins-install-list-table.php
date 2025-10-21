@@ -204,7 +204,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table { // phpcs:ignore
      */
     public function no_items() {
         echo '<div class="ui center aligned segment">';
-        MainWP_UI::render_empty_page_placeholder( __( 'No plugins found.', 'mainwp' ), __( 'Please try a different search.', 'mainwp' ), '<i class="massive grey search icon"></i>' );
+        MainWP_UI::render_empty_page_placeholder( __( 'No plugins found.', 'mainwp' ), __( 'Please try a different search.', 'mainwp' ), '<em data-emoji=":mag:" class="big"></em>' );
         echo '</div>';
     }
 

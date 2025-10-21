@@ -482,7 +482,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         <?php if ( is_array( $cachedResult ) && isset( $cachedResult['result'] ) ) : ?>
                                 <?php echo $cachedResult['result']; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                         <?php else : ?>
-                            <?php MainWP_UI::render_empty_page_placeholder( __( 'No themes loaded yet.', 'mainwp' ), __( 'Select one or more Child Sites and click the Show Themes button to view installed plugins.', 'mainwp' ), '<i class="massive grey search icon"></i>' ); ?>
+                            <?php MainWP_UI::render_empty_page_placeholder( __( 'No themes loaded yet.', 'mainwp' ), __( 'Select one or more Child Sites and click the Show Themes button to view installed plugins.', 'mainwp' ), '<em data-emoji=":compass:" class="big"></em>' ); ?>
                         <?php endif; ?>
                         </div>
                     </div>
@@ -2116,7 +2116,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                             if ( isset( $_SESSION['SNThemesAll'] ) ) {
                                 static::render_all_themes_table( $_SESSION['SNThemesAll'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                             } else {
-                                MainWP_UI::render_empty_page_placeholder( __( 'No themes loaded yet.', 'mainwp' ), __( 'Click Show Themes button to view your installed themes and manage their trust settings.', 'mainwp' ), '<i class="massive grey search icon"></i>' );
+                                MainWP_UI::render_empty_page_placeholder( __( 'No themes loaded yet.', 'mainwp' ), __( 'Click Show Themes button to view your installed themes and manage their trust settings.', 'mainwp' ), '<em data-emoji=":compass:" class="big"></em>' );
                             }
                             ?>
                         </div>

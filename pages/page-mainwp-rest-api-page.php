@@ -689,6 +689,19 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         }
         ?>
         <div id="mainwp-rest-api-keys" class="ui segment">
+            <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-api-welcome-message' ) ) : ?>
+                <div class="ui icon message mainwp-welcome-message" style="margin-bottom:0;">
+                    <em data-emoji=":wave:" class="big"></em>
+                    <div class="content">
+                        <div class="ui massive header"><?php esc_html_e( 'Welcome to MainWP REST API', 'mainwp' ); ?></div>
+                        <p><?php esc_html_e( 'Integrate MainWP with your custom tools, automations, and external platforms through the REST API.', 'mainwp' ); ?></p>
+                        <p><?php printf( esc_html__( 'Start by %1$screating an API key%2$s and %3$sexploring available routes%4$s.', 'mainwp' ), '<a href="admin.php?page=AddApiKeys">', '</a>', '<a href="https://www.postman.com/mainwp/workspace/mainwp/collection/25047126-5ed97ddf-1d45-4bd1-bede-1a1f3b7584ef" target="_blank">', '</a>' ); ?></p>
+                    </div>
+                    <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-api-welcome-message"></i>
+                </div>
+            <?php endif; ?>
+
+
             <div class="ui message" id="mainwp-message-zone-apikeys" style="display:none;"></div>
             <?php static::show_messages(); ?>
             <h2 class="ui dividing header">
@@ -960,27 +973,34 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             </form>
         </div>
     </div>
-            <script type="text/javascript">
-                jQuery(function($) {
-                    //we are going to inject the values into the copy buttons to make things easier for people
-                    $('#mainwp_consumer_key_clipboard_button').attr('data-clipboard-text', '<?php echo esc_html( $consumer_key ); ?>');
-                    $('#mainwp_consumer_secret_clipboard_button').attr('data-clipboard-text', '<?php echo esc_html( $consumer_secret ); ?>');
-                    $('#mainwp_rest_token_clipboard_button').attr('data-clipboard-text', '<?php echo esc_html( $token ); ?>'); //phpcs:ignore -- NOSONAR - token value ok.
-                    //initiate clipboard
-                    new ClipboardJS('.copy-to-clipboard');
-                    //show copy to clipboard buttons
-                    $('.copy-to-clipboard').show();
+    <div id="mainwp-api-key-copied-confirm-modal" class="ui mini modal">
+        <i class="close icon"></i>
+        <div class="header">
+            <?php esc_html_e( 'API Key Copied', 'mainwp' ); ?>
+        </div>
+        <div class="content">
+            <p><?php esc_html_e( 'Your API key has been copied to your clipboard.', 'mainwp' ); ?></p>
+        </div>
+    </div>
+    <script type="text/javascript">
+        jQuery(function($) {
+            //we are going to inject the values into the copy buttons to make things easier for people
+            $('#mainwp_consumer_key_clipboard_button').attr('data-clipboard-text', '<?php echo esc_html( $consumer_key ); ?>');
+            $('#mainwp_consumer_secret_clipboard_button').attr('data-clipboard-text', '<?php echo esc_html( $consumer_secret ); ?>');
+            $('#mainwp_rest_token_clipboard_button').attr('data-clipboard-text', '<?php echo esc_html( $token ); ?>'); //phpcs:ignore -- NOSONAR - token value ok.
+            //initiate clipboard
+            new ClipboardJS('.copy-to-clipboard');
+            //show copy to clipboard buttons
+            $('.copy-to-clipboard').show();
 
-                    $('#mainwp_rest_api_keys_compatible_v1').on('change', function() {
-                        $('#mainwp-legacy-api-credentials').toggle();
-                    });
-                });
+            $('#mainwp_rest_api_keys_compatible_v1').on('change', function() {
+                $('#mainwp-legacy-api-credentials').toggle();
+            });
+        });
+    </script>
+    <?php
 
-
-            </script>
-        <?php
-
-        static::render_footer( 'Settings' );
+    static::render_footer( 'Settings' );
     }
 
     /**

@@ -393,7 +393,7 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
                 'minimum'           => 1,
                 'default'           => 20,
                 'maximum'           => 200,
-                'description'       => __( 'Number of monitors per page.', 'mainwp' ),
+                'description'       => __( 'Number of keys per page.', 'mainwp' ),
             ),
         );
     }
@@ -419,7 +419,7 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
             ),
             'permissions'   => array(
                 'required'          => true,
-                'type'              => 'array',
+                'type'              => 'string',
                 'description'       => __( 'API key permissions.', 'mainwp' ),
                 'sanitize_callback' => 'sanitize_text_field',
                 'validate_callback' => array( $this, 'rest_api_validate_permissions_param' ),
@@ -456,7 +456,7 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
                 ),
                 'permissions' => array(
                     'required'          => false,
-                    'type'              => 'array',
+                    'type'              => 'string',
                     'description'       => __( 'API key permissions.', 'mainwp' ),
                     'sanitize_callback' => 'sanitize_text_field',
                     'validate_callback' => array( $this, 'rest_api_validate_permissions_param' ),

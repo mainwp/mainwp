@@ -1323,7 +1323,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 if ( strpos( $period, '/' ) !== false ) {
                     $parts = explode( '/', $period );
                     if ( count( $parts ) === 2 ) {
-                        $start = empty( $day_start ) ? $day_start : strtotime( $parts[0] );
+                        $start = ! empty( $day_start ) ? $day_start : strtotime( $parts[0] );
                         $end   = strtotime( $parts[1] );
                         if ( $start && $end && $start < $end ) {
                             return array(

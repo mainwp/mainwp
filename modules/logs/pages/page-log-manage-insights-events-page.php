@@ -481,22 +481,22 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
         }
 
         ?>
-    <div class="mainwp-sub-header" id="mainwp-module-log-overview-sub-header">
-        <div class="ui message" style="display: none;" id="mainwp-message-zone-top"></div>
-        <div class="ui stackable grid">
-            <div class="eight wide middle aligned column">
-                <a href="javascript:void(0)" id="mainwp_sites_changes_bulk_dismiss_selected_btn" class="ui mini green button"><?php esc_html_e( 'Dismiss Selected Changes', 'mainwp' ); ?></a>
-                <a href="javascript:void(0)" id="mainwp_sites_changes_bulk_dismiss_all_btn" class="ui mini basic button"><?php esc_html_e( 'Dismiss All Changes', 'mainwp' ); ?></a>
+        <div class="mainwp-sub-header" id="mainwp-module-log-overview-sub-header">
+            <div class="ui message" style="display: none;" id="mainwp-message-zone-top"></div>
+            <div class="ui stackable grid">
+                <div class="eight wide middle aligned column">
+                    <a href="javascript:void(0)" id="mainwp_sites_changes_bulk_dismiss_selected_btn" class="ui mini green button"><?php esc_html_e( 'Dismiss Selected Changes', 'mainwp' ); ?></a>
+                    <a href="javascript:void(0)" id="mainwp_sites_changes_bulk_dismiss_all_btn" class="ui mini basic button"><?php esc_html_e( 'Dismiss All Changes', 'mainwp' ); ?></a>
+                </div>
+                <div class="eight wide right aligned middle aligned column">
+                    <span id="mainwp-module-log-segment-buttons">
+                        <?php Log_Events_Filter_Segment::get_instance()->render_filters_segment( 'module_log_manage' ); ?>
+                    </span>
+                    <a href="#" class="ui mini basic button" id="mainwp-sites-changes-filter-toggle-button">
+                        <i class="filter icon"></i> <?php esc_html_e( 'Show Filters', 'mainwp' ); ?>
+                    </a>
+                </div>
             </div>
-            <div class="eight wide right aligned middle aligned column">
-                <span id="mainwp-module-log-segment-buttons" style="display:none">
-                    <?php Log_Events_Filter_Segment::get_instance()->render_filters_segment( 'module_log_manage' ); ?>
-                </span>
-                <a href="#" class="ui mini icon basic button" id="mainwp-sites-changes-filter-toggle-button" data-tooltip="<?php esc_attr_e( 'Click to Filter Logs', 'mainwp' ); ?>" data-position="bottom right" data-inverted="">
-                    <i class="filter icon"></i>
-                </a>
-            </div>
-        </div>
 
         <div id="mainwp-module-log-filters-row" style="display:none">
             <div class="ui divider"></div>

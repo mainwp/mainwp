@@ -362,6 +362,19 @@ class Cost_Tracker_Summary {
             <?php if ( 0 == $costs_count ) : ?>
             <?php MainWP_Overview::render_layout_selection(); ?>
             <?php endif; ?>
+            <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-cost-summany-welcome-message' ) && 0 == $costs_count ) : ?>
+            <div class="ui segment" style="margin-bottom:0px;">
+                <div class="ui icon message mainwp-welcome-message" style="margin-bottom:0px;">
+                    <em data-emoji=":wave:" class="big"></em>
+                    <div class="content">
+                        <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-cost-summany-welcome-message" style="float:right;cursor:pointer;"></i>
+                        <div class="ui massive header"><?php esc_html_e( 'Welcome to Cost Tracker', 'mainwp' ); ?></div>
+                        <p><?php esc_html_e( 'Track and forecast your agency\'s expenses across all sites and subscriptions.', 'mainwp' ); ?></p>
+                        <p><?php printf( esc_html__( 'Start by %1$sadding your first cost%2$s or %3$screating custom cost categories%4$s.', 'mainwp' ), '<a href="admin.php?page=CostTrackerAdd">', '</a>', '<a href="admin.php?page=CostTrackerSettings">', '</a>' ); ?></p>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'cost-summany-widgets' ) ) : ?>
             <div class="ui segment" style="margin-bottom:0px;">
                 <div class="ui message" style="margin-bottom:0px;">
@@ -380,21 +393,7 @@ class Cost_Tracker_Summary {
                 </div>
                 <?php endif; ?>
             <?php endif; ?>
-            <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-cost-summany-welcome-message' ) && 0 == $costs_count ) : ?>
-            <div class="ui segment" style="margin-bottom:0px;">
-                <div class="ui icon message mainwp-welcome-message" style="margin-bottom:0px;">
-                    <em data-emoji=":wave:" class="big"></em>
-                    <div class="content">
-                        <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-cost-summany-welcome-message" style="float:right;cursor:pointer;"></i>
-                        <div class="ui massive header"><?php esc_html_e( 'Welcome to Cost Tracker', 'mainwp' ); ?></div>
-                        <p><?php esc_html_e( 'Track and forecast your agency\'s expenses across all sites and subscriptions.', 'mainwp' ); ?></p>
-                        <p><?php printf( esc_html__( 'Start by %1$sadding your first cost%2$s or %3$screating custom cost categories%4$s.', 'mainwp' ), '<a href="admin.php?page=CostTrackerAdd">', '</a>', '<a href="admin.php?page=CostTrackerSettings">', '</a>' ); ?></p>
-                    </div>
-                </div>
-            </div>
-            <?php endif; ?>
             <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
-            
         </div>
             <?php
             /**

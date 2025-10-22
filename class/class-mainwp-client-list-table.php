@@ -266,8 +266,8 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                             <div class="item" data-value="nogroups"><?php esc_html_e( 'No Tags', 'mainwp' ); ?></div>
                         </div>
                     </div>
-                    <button onclick="mainwp_manage_clients_filter()" class="ui mini basic button"><i class="filter icon"></i><?php esc_html_e( 'Filter Clients', 'mainwp' ); ?></button>
-                    <a href="admin.php?page=ManageClients" class="ui mini button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></a>
+                    <button onclick="mainwp_manage_clients_filter()" class="ui mini basic green button"><i class="filter icon"></i> <?php esc_html_e( 'Filter', 'mainwp' ); ?></button>
+                    <a href="admin.php?page=ManageClients" class="ui mini button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><i class="times icon"></i> <?php esc_html_e( 'Reset', 'mainwp' ); ?></a>
                 </div>
             </div>
         </div>

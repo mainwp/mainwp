@@ -5320,9 +5320,15 @@ jQuery(function ($) {
 
 jQuery(document).on('click', '#mainwp-sites-changes-filter-toggle-button', function () {
     jQuery('#mainwp-module-log-filters-row').toggle(300);
-    jQuery('#mainwp-module-log-segment-buttons').toggle(300);
     return false;
 });
+
+jQuery(document).on('click', '#mainwp-insights-filter-toggle-button', function () {
+    jQuery('#mainwp-module-log-overview-sub-header').toggle(300);
+    return false;
+});
+
+
 
 let logs_update_db_cancelled = false;
 let mainwp_module_logs_start_update_dismissed_db = function () {

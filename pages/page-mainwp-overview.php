@@ -433,8 +433,17 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
     public static function render_layout_selection() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
         $screen = get_current_screen();
         ?>
-        <div class="mainwp-sub-header ui right aligned segment" id="mainwp-manage-widgets-layout-row">
-            <?php MainWP_Ui_Manage_Widgets_Layout::render_edit_layout( $screen->id ); ?>
+        <div class="mainwp-sub-header" id="mainwp-manage-widgets-layout-row">
+            <div class="ui stackable two column grid">
+                <div class="column">
+                    <?php if ( isset( $_GET['page'] ) && 'CostSummary' === $_GET['page'] ) : ?>
+                    <a href="admin.php?page=CostTrackerAdd" class="ui mini green button"><?php esc_html_e( 'Add New Cost', 'mainwp' ); ?></a>
+                    <?php endif; ?>
+                </div>
+                <div class="right aligned column">
+                    <?php MainWP_Ui_Manage_Widgets_Layout::render_edit_layout( $screen->id ); ?>
+                </div>
+            </div>
         </div>
         <?php
         MainWP_Ui_Manage_Widgets_Layout::render_modal_save_layout();

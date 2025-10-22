@@ -344,22 +344,22 @@ class Cost_Tracker_Settings {
         <div class="ui divider"></div>
         <input type="submit" value="<?php esc_html_e( 'Save Settings', 'mainwp' ); ?>" class="ui green big button" id="mainwp-module-cost-tracker-manager-save-settings-button" <?php echo apply_filters( 'mainwp_module_cost_tracker_manager_check_status', false ) ? 'disabled' : ''; ?>>
         <script type="text/javascript">
-                    jQuery( document ).ready( function() {
-                        jQuery( '.mainwp-module-cost-tracker-select-default-icons' ).dropdown( {
-                            onChange: function( val ) {
-                                let parent = jQuery( this ).closest('.cost_tracker_settings_product_categories_icon_wrapper');
-                                jQuery(parent).find('input[name="cost_tracker_default_product_types[icon][]"]' ).val('deficon:' + val);
-                            }
-                        } );
+            jQuery( document ).ready( function() {
+                jQuery( '.mainwp-module-cost-tracker-select-default-icons' ).dropdown( {
+                    onChange: function( val ) {
+                        let parent = jQuery( this ).closest('.cost_tracker_settings_product_categories_icon_wrapper');
+                        jQuery(parent).find('input[name="cost_tracker_default_product_types[icon][]"]' ).val('deficon:' + val);
+                    }
+                } );
 
-                        jQuery( '.mainwp-module-cost-tracker-select-custom-product-types-icons' ).dropdown( {
-                            onChange: function( val ) {
-                                let parent = jQuery( this ).closest('.cost_tracker_settings_product_categories_icon_wrapper');
-                                jQuery(parent).find('input[name="cost_tracker_custom_product_types[icon][]"]' ).val('deficon:' + val);
-                            }
-                        } );
-                    } );
-                </script>
+                jQuery( '.mainwp-module-cost-tracker-select-custom-product-types-icons' ).dropdown( {
+                    onChange: function( val ) {
+                        let parent = jQuery( this ).closest('.cost_tracker_settings_product_categories_icon_wrapper');
+                        jQuery(parent).find('input[name="cost_tracker_custom_product_types[icon][]"]' ).val('deficon:' + val);
+                    }
+                } );
+            } );
+        </script>
         <?php
     }
 

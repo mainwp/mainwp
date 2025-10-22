@@ -169,7 +169,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CostTrackerSettings' ) ) {
             add_submenu_page(
                 'mainwp_tab',
-                esc_html__( 'Cost Tracker', 'mainwp' ),
+                esc_html__( 'Cost Tracker Settings', 'mainwp' ),
                 '<div class="mainwp-hidden">' . esc_html__( 'Cost Tracker', 'mainwp' ) . '</div>',
                 'read',
                 'CostTrackerSettings',
@@ -247,7 +247,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=SettingsEmail' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Email Settings', 'mainwp' ); ?></a>
                     <?php } ?>
                     <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CostTrackerSettings' ) ) { ?>
-                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=CostTrackerSettings' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Cost Tracker', 'mainwp' ); ?></a>
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=CostTrackerSettings' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Cost Tracker Settings', 'mainwp' ); ?></a>
                     <?php } ?>
                     <?php
                     if ( isset( static::$subPages ) && is_array( static::$subPages ) && ! empty( static::$subPages ) ) {
@@ -261,9 +261,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         }
                     }
                     ?>
-                    <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) { ?>
-                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=MainWPTools' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Tools', 'mainwp' ); ?></a>
-                    <?php } ?>
                 </div>
             </div>
         </div>
@@ -323,7 +320,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 'right'      => '',
             ),
             array(
-                'title'      => esc_html__( 'Cost Tracker', 'mainwp' ),
+                'title'      => esc_html__( 'Cost Tracker Settings', 'mainwp' ),
                 'parent_key' => 'Settings',
                 'href'       => 'admin.php?page=CostTrackerSettings',
                 'slug'       => 'CostTrackerSettings',
@@ -384,7 +381,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
         if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CostTrackerSettings' ) ) {
             $renderItems[] = array(
-                'title'  => esc_html__( 'Cost Tracker', 'mainwp' ),
+                'title'  => esc_html__( 'Cost Tracker Settings', 'mainwp' ),
                 'href'   => 'admin.php?page=CostTrackerSettings',
                 'active' => ( 'CostTrackerSettings' === $shownPage ) ? true : false,
             );

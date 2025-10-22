@@ -194,7 +194,7 @@ class Cost_Tracker_Add_Edit {
                     <?php endif; ?>
                 <?php endif; ?>
                 
-                <div class="ui red message" id="mainwp-module-cost-tracker-error-zone" style="display:none">
+                <div class="ui yellow message" id="mainwp-module-cost-tracker-error-zone" style="display:none">
                     <div class="error-message"></div>
                     <i class="ui close icon"></i>
                 </div>
@@ -214,7 +214,7 @@ class Cost_Tracker_Add_Edit {
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $edit_cost ? $edit_cost->name : '' );
                     esc_html_e( 'Name', 'mainwp' );
-                    ?>
+                    ?> <span class="ui small red text">(<?php esc_html_e( 'Required', 'mainwp' ); ?>)</span>
                     </label>
                     <div class="five wide column">
                         <input type="text" class="settings-field-value-change-handler" aria-label="<?php esc_attr_e( 'Enter the Company (Product) name.', 'mainwp' ); ?>" name="mainwp_module_cost_tracker_edit_name" id="mainwp_module_cost_tracker_edit_name" value="<?php echo $edit_cost ? esc_html( $edit_cost->name ) : ''; ?>">
@@ -620,6 +620,8 @@ class Cost_Tracker_Add_Edit {
                             return false;
                     });
                 });
+
+                mainwp_init_button_site_selection_dependency( 'mainwp-module-cost-tracker-save-tracker-button' );
             });
         </script>
         <?php

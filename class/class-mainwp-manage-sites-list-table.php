@@ -657,9 +657,10 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                     </div>
                 </div>
                 <?php } ?>
-                <button onclick="mainwp_manage_sites_filter()" class="ui mini green button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
-                <button onclick="mainwp_manage_sites_reset_filters(this)" id="mainwp_manage_sites_reset_filters" class="ui mini button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
+                <button onclick="mainwp_manage_sites_filter()" class="ui mini green basic button"><i class="filter icon"></i><?php esc_html_e( 'Filter', 'mainwp' ); ?></button>
+                <button onclick="mainwp_manage_sites_reset_filters(this)" id="mainwp_manage_sites_reset_filters" class="ui mini button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><i class="times icon"></i><?php esc_html_e( 'Reset', 'mainwp' ); ?></button>
             </div>
+
             <?php MainWP_Manage_Sites_Filter_Segment::get_instance()->render_filters_segment(); ?>
 
         </div>
@@ -687,11 +688,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 </a>
             </div>
         </span>
-        <span data-tooltip="<?php esc_html_e( 'Click to filter sites.', 'mainwp' ); ?>" data-position="bottom right" data-inverted="">
-            <a href="#" class="ui mini icon basic button" id="mainwp-manage-sites-filter-toggle-button">
-                <i class="filter icon"></i> <?php esc_html_e( 'Filter Sites', 'mainwp' ); ?>
-            </a>
-        </span>
+        <a href="#" class="ui mini icon basic button" id="mainwp-manage-sites-filter-toggle-button">
+            <i class="filter icon"></i> <?php esc_html_e( 'Show Filters', 'mainwp' ); ?>
+        </a>
         <?php
     }
 

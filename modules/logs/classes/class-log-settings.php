@@ -135,7 +135,7 @@ class Log_Settings {
      */
     public function add_subpage_menu_settings( $subpages = array() ) {
         $subpages[] = array(
-            'title'    => esc_html__( 'Dashboard Insights', 'mainwp' ),
+            'title'    => esc_html__( 'Network Activity Settings', 'mainwp' ),
             'slug'     => 'Insights',
             'callback' => array( $this, 'render_settings_page' ),
             'class'    => '',
@@ -244,31 +244,41 @@ class Log_Settings {
 
         ?>
         <div id="mainwp-module-log-settings-wrapper" class="ui segment">
+            <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-network-activity-settings-info-message' ) ) : ?>
             <div class="ui info message">
-                <div><?php esc_html_e( 'Dashboard Insights is a feature that will provide you with analytics data about your MainWP Dashboard usage. This version of the MainWP Dashboard contains only the logging part of this feature, which only logs actions performed in the MainWP Dashboard. Once the feature is fully completed, a new version will be released, and the logged data will be available.', 'mainwp' ); ?></div>
-                <div><?php esc_html_e( 'Important Note: Collected data stays on your server, and it will never be sent to MainWP servers or 3rd party. Logged data will only be used by you for informative purposes.', 'mainwp' ); ?></div>
+                <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-network-activity-settings-info-message"></i>
+                <div class="ui header"><?php esc_html_e( 'Network Activity and Insights Data Logging', 'mainwp' ); ?></div>
+                <p><?php esc_html_e( 'The Network Activity system records actions performed through your MainWP Dashboard or directly on your child sites. This data powers both the Network Activity feature which displays a detailed timeline of changes and events and Dashboard Insights, which summarizes the same information to help you analyze usage trends and overall activity.', 'mainwp' ); ?></p>
+                <p><?php esc_html_e( 'All collected data is stored locally on your server. It is never sent to MainWP servers or shared with any third parties.', 'mainwp' ); ?></p>
             </div>
+            <?php else : ?>
+            <div class="ui info message">
+                <div><?php esc_html_e( 'All collected data is stored locally on your server. It is never sent to MainWP servers or shared with any third parties.', 'mainwp' ); ?></div>
+            </div>
+            <?php endif; ?>
             <div class="ui form">
                 <form method="post" class="mainwp-table-container">
                     <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
                         <h3 class="ui dividing header">
-                        <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-insights' ); ?>
-                        <?php esc_html_e( 'Dashboard Insights Settings', 'mainwp' ); ?></h3>
+                            <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-insights' ); ?>
+                            <?php esc_html_e( 'Dashboard Insights Settings', 'mainwp' ); ?>
+                            <div class="sub header"><?php esc_html_e( 'Manage how MainWP records, stores, and displays Dashboard activity data used by Network Activity and Insights.', 'mainwp' ); ?></div>
+                        </h3>
                         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-insights" default-indi-value="1">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_module_log_enabled', (int) $enabled );
-                            esc_html_e( 'Enable insights logging', 'mainwp' );
+                            esc_html_e( 'Enable Network Activity logging', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will enable logging.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_module_log_enabled" id="mainwp_module_log_enabled" <?php echo $enabled ? 'checked="true"' : ''; ?> /><label><?php esc_html_e( 'Default: Enabled', 'mainwp' ); ?></label>
+                            <div class="ten wide column ui toggle checkbox">
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_module_log_enabled" id="mainwp_module_log_enabled" <?php echo $enabled ? 'checked="true"' : ''; ?> /><label></label>
                             </div>
                         </div>
                         <div class="ui grid field">
-                            <label class="six wide column middle aligned"><?php esc_html_e( 'Auto-archive logs', 'mainwp' ); ?></label>
+                            <label class="six wide column middle aligned"><?php esc_html_e( 'Automatically archive logs', 'mainwp' ); ?></label>
                             <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements"  hide-parent="auto-archive" data-tooltip="<?php esc_attr_e( 'Automatically move older logs to the archive after a specified period of time. This helps keep your active logs organized while maintaining a searchable history.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <input type="checkbox" name="mainwp_module_log_enable_auto_archive" id="mainwp_module_log_enable_auto_archive" <?php echo $enabled_auto_archive ? 'checked="true"' : ''; ?> /><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
+                                <input type="checkbox" name="mainwp_module_log_enable_auto_archive" id="mainwp_module_log_enable_auto_archive" <?php echo $enabled_auto_archive ? 'checked="true"' : ''; ?> /><label></label>
                             </div>
                         </div>
                         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-general"  <?php echo ( $enabled && $enabled_auto_archive ) ? '' : 'style="display:none"'; ?> hide-element="auto-archive" default-indi-value="<?php echo (int) 3 * YEAR_IN_SECONDS; ?>">
@@ -276,7 +286,7 @@ class Log_Settings {
                                 <?php
                                 $records_ttl = $this->options['records_logs_ttl'];
                                 MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_module_log_records_ttl', $records_ttl, true, 3 * YEAR_IN_SECONDS );
-                                esc_html_e( 'Insights data retention period', 'mainwp' );
+                                esc_html_e( 'Data retention period', 'mainwp' );
                                 ?>
                                 </label>
                                 <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Define how long logs should remain active before being automatically moved to the archive.', 'mainwp' ); ?>" data-inverted="" data-position="top left" >
@@ -416,7 +426,7 @@ class Log_Settings {
             <label class="six wide column top aligned">
             <?php
             MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-logs-data' );
-            esc_html_e( 'Events to log', 'mainwp' );
+            esc_html_e( 'Select events to log', 'mainwp' );
             ?>
             </label>
             <div class="ten wide column" <?php echo $setting_page ? 'data-tooltip="' . esc_attr__( 'Select which types of site changes should be recorded in the logs. Only checked items will generate log entries, helping you focus on the most relevant activity.', 'mainwp' ) . '"' : ''; ?> data-inverted="" data-position="top left">

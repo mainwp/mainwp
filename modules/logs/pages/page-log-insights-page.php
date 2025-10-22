@@ -593,114 +593,116 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
         static::render_layout_selection();
 
         ?>
-    <div class="mainwp-sub-header" id="mainwp-module-log-overview-sub-header">
-        <div class="ui stackable grid" id="mainwp-module-log-filters-row">
-            <div class="twelve wide column">
-                <div class="ui compact stackable grid">
-                    <div class="two wide middle aligned column">
-                        <div id="mainwp-module-log-filter-ranges" class="ui selection fluid mini dropdown seg_ranges not-auto-init">
-                            <input type="hidden" value="<?php echo esc_html( $filter_ranges ); ?>">
-                            <i class="dropdown icon"></i>
-                            <div class="default text"><?php esc_html_e( 'Select range', 'mainwp' ); ?></div>
-                            <div class="menu">
-                                <?php
-                                $date_ranges = array(
-                                    'today'     => esc_html__( 'Today', 'mainwp' ),
-                                    'yesterday' => esc_html__( 'Yesterday', 'mainwp' ),
-                                    'thisweek'  => esc_html__( 'This week', 'mainwp' ),
-                                    'thismonth' => esc_html__( 'This month', 'mainwp' ),
-                                    'lastmonth' => esc_html__( 'Last month', 'mainwp' ),
-                                    'thisyear'  => esc_html__( 'This year', 'mainwp' ),
-                                    'lastyear'  => esc_html__( 'Last year', 'mainwp' ),
-                                );
-                                foreach ( $date_ranges as $val => $title ) {
-                                    ?>
-                                    <div class="item" data-value="<?php echo esc_html( $val ); ?>"><?php echo esc_html( $title ); ?></div>
+        <div class="mainwp-sub-header" id="mainwp-module-log-overview-sub-header" style="display:none;">
+            <div class="ui stackable grid" id="mainwp-module-log-filters-row">
+                <div class="twelve wide column">
+                    <div class="ui compact stackable grid">
+                        <div class="two wide middle aligned column">
+                            <div id="mainwp-module-log-filter-ranges" class="ui selection fluid mini dropdown seg_ranges not-auto-init">
+                                <input type="hidden" value="<?php echo esc_html( $filter_ranges ); ?>">
+                                <i class="dropdown icon"></i>
+                                <div class="default text"><?php esc_html_e( 'Select range', 'mainwp' ); ?></div>
+                                <div class="menu">
                                     <?php
-                                }
-                                ?>
-                                <div class="item" data-value="custom"><?php esc_html_e( 'Custom', 'mainwp' ); ?></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="two wide middle aligned column">
-                        <div class="ui mini calendar mainwp_datepicker seg_dtsstart" id="mainwp-module-log-filter-dtsstart" >
-                            <div class="ui input left fluid icon">
-                                <i class="calendar icon"></i>
-                                <input type="text" <?php echo $disable_dt ? 'disabled="disabled"' : ''; ?> autocomplete="off" placeholder="<?php esc_attr_e( 'Start date', 'mainwp' ); ?>" value="<?php echo ! empty( $filter_dtsstart ) ? esc_attr( $filter_dtsstart ) : ''; ?>"/>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="two wide middle aligned column">
-                        <div class="ui mini calendar mainwp_datepicker seg_dtsstop" id="mainwp-module-log-filter-dtsstop" >
-                            <div class="ui input left icon">
-                                <i class="calendar icon"></i>
-                                <input type="text" <?php echo $disable_dt ? 'disabled="disabled"' : ''; ?> autocomplete="off" placeholder="<?php esc_attr_e( 'End date', 'mainwp' ); ?>" value="<?php echo ! empty( $filter_dtsstop ) ? esc_attr( $filter_dtsstop ) : ''; ?>"/>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="two wide middle aligned column">
-                        <div id="mainwp-module-log-filter-groups" class="ui selection multiple fluid mini dropdown seg_groups">
-                            <input type="hidden" value="<?php echo esc_html( $filter_groups_ids ); ?>">
-                            <i class="dropdown icon"></i>
-                            <div class="default text"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
-                            <div class="menu">
-                                <?php
-                                foreach ( $groups as $group ) {
+                                    $date_ranges = array(
+                                        'today'     => esc_html__( 'Today', 'mainwp' ),
+                                        'yesterday' => esc_html__( 'Yesterday', 'mainwp' ),
+                                        'thisweek'  => esc_html__( 'This week', 'mainwp' ),
+                                        'thismonth' => esc_html__( 'This month', 'mainwp' ),
+                                        'lastmonth' => esc_html__( 'Last month', 'mainwp' ),
+                                        'thisyear'  => esc_html__( 'This year', 'mainwp' ),
+                                        'lastyear'  => esc_html__( 'Last year', 'mainwp' ),
+                                    );
+                                    foreach ( $date_ranges as $val => $title ) {
+                                        ?>
+                                        <div class="item" data-value="<?php echo esc_html( $val ); ?>"><?php echo esc_html( $title ); ?></div>
+                                        <?php
+                                    }
                                     ?>
-                                    <div class="item" data-value="<?php echo esc_attr( $group->id ); ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
-                                    <?php
-                                }
-                                ?>
-                                <div class="item" data-value="alltags"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
+                                    <div class="item" data-value="custom"><?php esc_html_e( 'Custom', 'mainwp' ); ?></div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="two wide middle aligned column">
-                        <div id="mainwp-module-log-filter-clients" class="ui selection multiple fluid mini dropdown seg_clients">
-                            <input type="hidden" value="<?php echo esc_html( $filter_client_ids ); ?>">
-                            <i class="dropdown icon"></i>
-                            <div class="default text"><?php esc_html_e( 'All clients', 'mainwp' ); ?></div>
-                            <div class="menu">
-                                <?php
-                                $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
-                                foreach ( $clients as $client ) {
+                        <div class="two wide middle aligned column">
+                            <div class="ui mini calendar mainwp_datepicker seg_dtsstart" id="mainwp-module-log-filter-dtsstart" >
+                                <div class="ui input left fluid icon">
+                                    <i class="calendar icon"></i>
+                                    <input type="text" <?php echo $disable_dt ? 'disabled="disabled"' : ''; ?> autocomplete="off" placeholder="<?php esc_attr_e( 'Start date', 'mainwp' ); ?>" value="<?php echo ! empty( $filter_dtsstart ) ? esc_attr( $filter_dtsstart ) : ''; ?>"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="two wide middle aligned column">
+                            <div class="ui mini calendar mainwp_datepicker seg_dtsstop" id="mainwp-module-log-filter-dtsstop" >
+                                <div class="ui input left icon">
+                                    <i class="calendar icon"></i>
+                                    <input type="text" <?php echo $disable_dt ? 'disabled="disabled"' : ''; ?> autocomplete="off" placeholder="<?php esc_attr_e( 'End date', 'mainwp' ); ?>" value="<?php echo ! empty( $filter_dtsstop ) ? esc_attr( $filter_dtsstop ) : ''; ?>"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="two wide middle aligned column">
+                            <div id="mainwp-module-log-filter-groups" class="ui selection multiple fluid mini dropdown seg_groups">
+                                <input type="hidden" value="<?php echo esc_html( $filter_groups_ids ); ?>">
+                                <i class="dropdown icon"></i>
+                                <div class="default text"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
+                                <div class="menu">
+                                    <?php
+                                    foreach ( $groups as $group ) {
+                                        ?>
+                                        <div class="item" data-value="<?php echo esc_attr( $group->id ); ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
+                                        <?php
+                                    }
                                     ?>
-                                    <div class="item" data-value="<?php echo intval( $client->client_id ); ?>"><?php echo esc_html( stripslashes( $client->name ) ); ?></div>
-                                    <?php
-                                }
-                                ?>
-                                <div class="item" data-value="allclients"><?php esc_html_e( 'All Clients', 'mainwp' ); ?></div>
+                                    <div class="item" data-value="alltags"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="two wide middle aligned column">
-                        <div id="mainwp-module-log-filter-users" class="ui selection multiple fluid mini dropdown seg_users">
-                            <input type="hidden" value="<?php echo esc_html( $filter_user_ids ); ?>">
-                            <i class="dropdown icon"></i>
-                            <div class="default text"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
-                            <div class="menu">
-                                <?php
-                                $users = $manager->admin->get_all_users();
-                                foreach ( $users as $user ) {
+                        <div class="two wide middle aligned column">
+                            <div id="mainwp-module-log-filter-clients" class="ui selection multiple fluid mini dropdown seg_clients">
+                                <input type="hidden" value="<?php echo esc_html( $filter_client_ids ); ?>">
+                                <i class="dropdown icon"></i>
+                                <div class="default text"><?php esc_html_e( 'All clients', 'mainwp' ); ?></div>
+                                <div class="menu">
+                                    <?php
+                                    $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
+                                    foreach ( $clients as $client ) {
+                                        ?>
+                                        <div class="item" data-value="<?php echo intval( $client->client_id ); ?>"><?php echo esc_html( stripslashes( $client->name ) ); ?></div>
+                                        <?php
+                                    }
                                     ?>
-                                    <div class="item" data-value="<?php echo intval( $user['id'] ); ?>"><?php echo esc_html( $user['login'] ); ?></div>
-                                    <?php
-                                }
-                                ?>
-                                <div class="item" data-value="allusers"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
+                                    <div class="item" data-value="allclients"><?php esc_html_e( 'All Clients', 'mainwp' ); ?></div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="three wide middle aligned left aligned column">
-                        <button onclick="mainwp_module_log_overview_content_filter()" class="ui mini green button"><?php esc_html_e( 'Filter Data', 'mainwp' ); ?></button>
-                        <button onclick="mainwp_module_log_overview_content_reset_filters(this)" class="ui mini button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
+                        <div class="two wide middle aligned column">
+                            <div id="mainwp-module-log-filter-users" class="ui selection multiple fluid mini dropdown seg_users">
+                                <input type="hidden" value="<?php echo esc_html( $filter_user_ids ); ?>">
+                                <i class="dropdown icon"></i>
+                                <div class="default text"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
+                                <div class="menu">
+                                    <?php
+                                    $users = $manager->admin->get_all_users();
+                                    foreach ( $users as $user ) {
+                                        ?>
+                                        <div class="item" data-value="<?php echo intval( $user['id'] ); ?>"><?php echo esc_html( $user['login'] ); ?></div>
+                                        <?php
+                                    }
+                                    ?>
+                                    <div class="item" data-value="allusers"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="three wide middle aligned left aligned column">
+                            <button onclick="mainwp_module_log_overview_content_filter()" class="ui mini green basic button"><i class="filter icon"></i> <?php esc_html_e( 'Filter', 'mainwp' ); ?></button>
+                            <button onclick="mainwp_module_log_overview_content_reset_filters(this)" class="ui mini button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><i class="times icon"></i> <?php esc_html_e( 'Reset', 'mainwp' ); ?></button>
+                        </div>
                     </div>
                 </div>
+                <div class="four wide column right aligned">
+                    <?php Log_Events_Filter_Segment::get_instance()->render_filters_segment(); ?>
+                </div>
             </div>
-            <?php Log_Events_Filter_Segment::get_instance()->render_filters_segment(); ?>
         </div>
-    </div>
         <?php
         MainWP_UI::render_modal_save_segment();
 
@@ -789,8 +791,16 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
     public static function render_layout_selection() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
         $screen = get_current_screen();
         ?>
-        <div class="mainwp-sub-header ui right aligned segment" id="module-logs-widgets-layout-row">
-            <?php MainWP_Ui_Manage_Widgets_Layout::render_edit_layout( $screen->id ); ?>
+        <div class="mainwp-sub-header" id="module-logs-widgets-layout-row">
+            <div class="ui two column grid">
+                <div class="column">
+                    <a href="admin.php?page=SettingsInsights" class="ui mini green button"><?php esc_html_e( 'Manage Insights Settings', 'mainwp' ); ?></a>
+                </div>
+                <div class="right aligned column">
+                    <?php MainWP_Ui_Manage_Widgets_Layout::render_edit_layout( $screen->id ); ?>
+                    <a href="#" class="ui mini button" id="mainwp-insights-filter-toggle-button"><i class="filter icon"></i> <?php esc_html_e( 'Show Filters', 'mainwp' ); ?></a>
+                </div>
+            </div>
         </div>
         <?php
         MainWP_Ui_Manage_Widgets_Layout::render_modal_save_layout();
@@ -933,22 +943,37 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
 
         $size = Log_DB_Helper::instance()->get_db_size();
         MainWP_Logger::instance()->debug( 'Network Activity DB Size: ' . $size . ' MB' );
+
         ?>
         <div class="mainwp-primary-content-wrap">
-            <div class="ui segment">
-            <?php
-            do_action( 'mainwp_module_log_render_db_update_notice' );
-            do_action( 'mainwp_module_log_render_db_size_notice' );
-            ?>
+            <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-insights-welcome-message' ) ) : ?>
+            <div class="ui segment" style="margin-bottom:0px;padding-bottom:0px;">
+                <div class="ui icon message mainwp-welcome-message" style="margin-bottom:0px;">
+                    <em data-emoji=":wave:" class="big"></em>
+                    <div class="content">
+                        <i class="close icon mainwp-notice-dismiss" notice-id="insights" style="float:right;cursor:pointer;"></i>
+                        <div class="ui massive header"><?php esc_html_e( 'Welcome to Dashboard Insights', 'mainwp' ); ?></div>
+                        <p><?php esc_html_e( 'Track how you and your team use the MainWP Dashboard, view trends, activity summaries, and key usage metrics.', 'mainwp' ); ?></p>
+                        <p><?php printf( esc_html__( 'Start by configuring your %1$sNetwork Activity Settings%2$s to begin collecting data.', 'mainwp' ), '<a href="admin.php?page=SettingsInsights">', '</a>' ); ?></p>
+                    </div>
+                </div>
             </div>
+            <?php endif; ?>
+            
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'insights-widgets' ) ) : ?>
-            <div class="ui segment">
-                <div class="ui message">
+            <div class="ui segment" style="padding-bottom:0;margin-bottom:0;">
+                <div class="ui message" style="margin-bottom:0">
                     <i class="close icon mainwp-notice-dismiss" notice-id="insights-widgets"></i>
                     <?php printf( esc_html__( '%1$s Tip: You can drag and drop widgets to reorder your dashboard or use the Page Settings (%2$s) to show/hide widgets.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<i class="cog fitted icon"></i>' ); ?>
                 </div>
             </div>
             <?php endif; ?>
+            <div class="ui segment" style="margin-bottom:0;padding-top:0;padding-bottom:0;">
+            <?php
+            do_action( 'mainwp_module_log_render_db_update_notice' );
+            do_action( 'mainwp_module_log_render_db_size_notice' );
+            ?>
+            </div>
             <?php
             /**
              * Action: mainwp_before_overview_widgets
@@ -959,6 +984,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
              */
             do_action( 'mainwp_before_overview_widgets', 'insights' );
             ?>
+
             <div id="mainwp-grid-wrapper" class="gridster">
                 <div id="mainwp-widgets-placeholder" class="ui page dimmer">
                     <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>

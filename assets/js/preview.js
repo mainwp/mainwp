@@ -102,7 +102,7 @@ jQuery(function($) {
 	 */
 	function mainwp_preview_mshot_url(linkUrl, retry) {
 		let normalizedLink = linkUrl.replace(/\/+$/, '');
-		let mshotUrl = '//s0.wp.com/mshots/v1/' + encodeURIComponent(normalizedLink) + '?w=900';
+		let mshotUrl = '//s0.wp.com/mshots/v1/' + normalizedLink + '?w=900';
 
 		if (retry) {
 			mshotUrl += '&r=' + encodeURIComponent(retry);

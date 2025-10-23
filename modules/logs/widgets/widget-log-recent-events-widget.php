@@ -12,6 +12,7 @@ namespace MainWP\Dashboard\Module\Log;
 
 use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_UI;
+use MainWP\Dashboard\MainWP_DB;
 
 /**
  * Class Log_Recent_Events_Widget
@@ -69,12 +70,13 @@ class Log_Recent_Events_Widget {
      * Render client overview Info.
      */
     public function render_recent_events() {
-        $manager    = Log_Manager::instance();
-        $list_table = new Log_Events_List_Table( $manager, $this->table_id_prefix );
+        $manager     = Log_Manager::instance();
+        $list_table  = new Log_Events_List_Table( $manager, $this->table_id_prefix );
+        $sites_count = MainWP_DB::instance()->get_websites_count();
         ?>
         <div class="mainwp-widget-header">
             <h2 class="ui header handle-drag">
-                <?php esc_html_e( 'Recent Activity Log', 'mainwp' ); ?>
+                <?php esc_html_e( 'Recent Activity', 'mainwp' ); ?>
                 <div class="sub header">
                 <?php esc_html_e( 'Chronological log of the latest activities performed on the system.', 'mainwp' ); ?>
                 </div>
@@ -92,11 +94,15 @@ class Log_Recent_Events_Widget {
                  */
                 do_action( 'mainwp_logs_widget_top', 'recent_events' );
                 ?>
-                    <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
-                    <?php
-                    MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
+                <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
+                <?php
+                MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
+                if ( 0 < intval( $sites_count ) ) {
                     $list_table->display();
-                    ?>
+                } else {
+                    MainWP_UI::render_empty_element_placeholder( __( 'No Avtivity Data Yet', 'mainwp' ), '<a href="admin.php?page=managesites&do=new">' . __( 'Start connecting your sites now', 'mainwp' ) . '</a>', '<em data-emoji=":bar_chart:" class="medium"></em>' );
+                }
+                ?>
                 <?php
                 /**
                  * Action: mainwp_logs_widget_bottom

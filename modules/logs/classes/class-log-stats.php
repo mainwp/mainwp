@@ -98,17 +98,14 @@ class Log_Stats {
         $count      = static::get_stats_count( $data, $action );
         $prev_count = static::get_stats_count( $data_prev, $action );
         ?>
-        <div class="center aligned middle aligned column">
-            <div class="ui mini vertical statistic">
-                <div class="value">
-                    <?php static::render_stats_compare( $count, $prev_count ); ?> <?php echo intval( $count ); ?>
-                </div>
-                <div class="label">
+        <div class="column">
+            <div class="ui small header">
+                <?php static::render_stats_compare( $count, $prev_count ); ?> <?php echo intval( $count ); ?> 
+                <div class="sub header">
                     <?php echo esc_html( $title ); ?>
+                    <br />
+                    <span class="ui small text"><?php static::render_stats_duration_time( $data, $action ); ?></span>
                 </div>
-                <span class="ui small text">
-                    <?php static::render_stats_duration_time( $data, $action ); ?>
-                </span>
             </div>
         </div>
         <?php
@@ -124,7 +121,7 @@ class Log_Stats {
         echo '<span data-tooltip="' . intval( $count ) . ' actions this period, ' . intval( $prev_count ) . ' actions previous period, showing growth or decline." data-position="top left" data-inverted="">';
         if ( $count === $prev_count ) {
             ?>
-            <i class="angle right icon"></i>
+            <i class="angle right icon" style="float:none;"></i>
             <?php
         } elseif ( $count > $prev_count ) {
             ?>

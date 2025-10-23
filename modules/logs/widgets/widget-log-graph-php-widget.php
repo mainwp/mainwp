@@ -62,6 +62,7 @@ class Log_Graph_Php_Widget {
      * Render client overview Info.
      */
     public function render_widget() {
+        $sites_count = MainWP_DB::instance()->get_websites_count();
         ?>
         <div class="mainwp-widget-header">
             <h2 class="ui header handle-drag">
@@ -72,33 +73,37 @@ class Log_Graph_Php_Widget {
             </h2>
         </div>
 
-        <div class="mainwp-widget-insights-card">
-                <?php
-                /**
-                 * Action: mainwp_logs_widget_top
-                 *
-                 * Fires at the top of the widget.
-                 *
-                 * @since 4.6
-                 */
-                do_action( 'mainwp_logs_widget_top', 'php' );
-                ?>
-                <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
-                <?php
-                MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
+        <div class="mainwp-widget-insights-card mainwp-scrolly-overflow">
+            <?php
+            /**
+             * Action: mainwp_logs_widget_top
+             *
+             * Fires at the top of the widget.
+             *
+             * @since 4.6
+             */
+            do_action( 'mainwp_logs_widget_top', 'php' );
+            ?>
+            <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
+            <?php
+            MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
+            if ( 0 < intval( $sites_count ) ) {
                 $this->render_widget_content();
-                ?>
-                <?php
-                /**
-                 * Action: mainwp_logs_widget_bottom
-                 *
-                 * Fires at the bottom of the widget.
-                 *
-                 * @since 4.6
-                 */
-                do_action( 'mainwp_logs_widget_bottom', 'php' );
-                ?>
-            </div>
+            } else {
+                MainWP_UI::render_empty_element_placeholder( __( 'No PHP Version Data', 'mainwp' ), '<a href="admin.php?page=managesites&do=new">' . __( 'Start connecting your sites now', 'mainwp' ) . '</a>', '<em data-emoji=":bar_chart:" class="medium"></em>' );
+            }
+            ?>
+            <?php
+            /**
+             * Action: mainwp_logs_widget_bottom
+             *
+             * Fires at the bottom of the widget.
+             *
+             * @since 4.6
+             */
+            do_action( 'mainwp_logs_widget_bottom', 'php' );
+            ?>
+        </div>
         <div class="mainwp-widget-footer ui four columns stackable grid">
             <div class="column">
             </div>
@@ -134,7 +139,19 @@ class Log_Graph_Php_Widget {
             jQuery( document ).ready( function() {
                 let options = {
                     chart: {
-                        type: 'bar'
+                        type: 'pie',
+                        height: 290,
+                    },
+                    tooltip: {
+                        theme: 'dark'
+                    },
+                    legend: {
+                        labels: {
+                            colors: '#999'
+                        }
+                    },
+                    stroke: {
+                        width: 0
                     },
                     series: [ {
                         name: 'Sites',
@@ -148,23 +165,6 @@ class Log_Graph_Php_Widget {
                             <?php endforeach; ?>
                         ]
                     } ],
-                    xaxis: {
-                        labels: {
-                            style: {
-                                colors: '#999999',
-                            }
-                        }
-                    },
-                    yaxis: {
-                        labels: {
-                            style: {
-                                colors: '#999999',
-                            }
-                        }
-                    },
-                    tooltip: {
-                        theme: 'dark'
-                    },
                 }
                 let php = new ApexCharts(document.querySelector("#mainwp-module-log-chart-php-wrapper"), options);
                 setTimeout(() => {

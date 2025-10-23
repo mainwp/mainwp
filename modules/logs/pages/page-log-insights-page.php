@@ -294,80 +294,82 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
         $values                 = apply_filters( 'mainwp_module_log_overview_enabled_widgets', static::$enable_widgets, null );
         static::$enable_widgets = array_merge( static::$enable_widgets, $values );
 
-        // Load the widget.
+        // 1. Load the Sites Connection Status widget.
+        if ( ! empty( static::$enable_widgets['log_graph_status'] ) ) {
+            MainWP_UI::add_widget_box( 'log_graph_status', array( Log_Graph_Status_Widget::instance(), 'render' ), $page, array( -1, -1, 3, 32 ) );
+        }
+
+        // 2. Load the Clients graph widget.
+        if ( ! empty( static::$enable_widgets['log_graph_clients'] ) ) {
+            MainWP_UI::add_widget_box( 'log_graph_clients', array( Log_Graph_Clients_Widget::instance(), 'render' ), $page, array( -1, -1, 3, 32 ) );
+        }
+
+        // 3. Load the WP versoin graph widget.
+        if ( ! empty( static::$enable_widgets['log_graph_wp'] ) ) {
+            MainWP_UI::add_widget_box( 'log_graph_wp', array( Log_Graph_WP_Widget::instance(), 'render' ), $page, array( -1, -1, 3, 32 ) );
+        }
+
+        // 4. Load the PHP versoion graph widget.
+        if ( ! empty( static::$enable_widgets['log_graph_php'] ) ) {
+            MainWP_UI::add_widget_box( 'log_graph_php', array( Log_Graph_Php_Widget::instance(), 'render' ), $page, array( -1, -1, 3, 32 ) );
+        }
+
+        // 5. Load the Recent Activity widget.
+        if ( ! empty( static::$enable_widgets['recent_events'] ) ) {
+            MainWP_UI::add_widget_box( 'recent_events', array( Log_Recent_Events_Widget::instance(), 'render' ), $page, array( -1, -1, 12, 40 ) );
+        }
+
+        // 6. Load the Sites Actions widget.
         if ( ! empty( static::$enable_widgets['log_sites'] ) ) {
             MainWP_UI::add_widget_box( 'log_sites', array( Log_Sites_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
         }
 
-        // Load the widget.
+        // 7. Load the Clients Actions widget.
         if ( ! empty( static::$enable_widgets['log_clients'] ) ) {
             MainWP_UI::add_widget_box( 'log_clients', array( Log_Clients_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
         }
 
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_pages'] ) ) {
-            MainWP_UI::add_widget_box( 'log_pages', array( Log_Pages_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_posts'] ) ) {
-            MainWP_UI::add_widget_box( 'log_posts', array( Log_Posts_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_themes'] ) ) {
-            MainWP_UI::add_widget_box( 'log_themes', array( Log_Themes_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
-        }
-
-        // Load the widget.
+        // 8. Load the Plugin Actions widget.
         if ( ! empty( static::$enable_widgets['log_plugins'] ) ) {
             MainWP_UI::add_widget_box( 'log_plugins', array( Log_Plugins_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
         }
 
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_graph_clients'] ) ) {
-            MainWP_UI::add_widget_box( 'log_graph_clients', array( Log_Graph_Clients_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        // 9. Load the Theme Actions widget.
+        if ( ! empty( static::$enable_widgets['log_themes'] ) ) {
+            MainWP_UI::add_widget_box( 'log_themes', array( Log_Themes_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
         }
 
-        // Load the widget.
+        // 10. Load the Plugins Status Breakdown widget.
+        if ( ! empty( static::$enable_widgets['log_graph_plugins'] ) ) {
+            MainWP_UI::add_widget_box( 'log_graph_plugins', array( Log_Graph_Plugins_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 80 ) );
+        }
+
+        // 11. Load the widget.
+        if ( ! empty( static::$enable_widgets['log_posts'] ) ) {
+            MainWP_UI::add_widget_box( 'log_posts', array( Log_Posts_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+
+        // 12. Load the widget.
+        if ( ! empty( static::$enable_widgets['log_pages'] ) ) {
+            MainWP_UI::add_widget_box( 'log_pages', array( Log_Pages_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+
+        // 13. Load the widget.
         if ( ! empty( static::$enable_widgets['log_graph_tags'] ) ) {
             MainWP_UI::add_widget_box( 'log_graph_tags', array( Log_Graph_Tags_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
         }
 
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_graph_status'] ) ) {
-            MainWP_UI::add_widget_box( 'log_graph_status', array( Log_Graph_Status_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_graph_themes'] ) ) {
-            MainWP_UI::add_widget_box( 'log_graph_themes', array( Log_Graph_Themes_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_graph_wp'] ) ) {
-            MainWP_UI::add_widget_box( 'log_graph_wp', array( Log_Graph_WP_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_graph_php'] ) ) {
-            MainWP_UI::add_widget_box( 'log_graph_php', array( Log_Graph_Php_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
-        }
-
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['log_graph_plugins'] ) ) {
-            MainWP_UI::add_widget_box( 'log_graph_plugins', array( Log_Graph_Plugins_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
-        }
-
-        // Load the widget.
+        // 14. Load the widget.
         if ( ! empty( static::$enable_widgets['log_users'] ) ) {
             MainWP_UI::add_widget_box( 'log_users', array( Log_Users_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
         }
 
-        // Load the widget.
-        if ( ! empty( static::$enable_widgets['recent_events'] ) ) {
-            MainWP_UI::add_widget_box( 'recent_events', array( Log_Recent_Events_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        // 15. Load the widget.
+        if ( ! empty( static::$enable_widgets['log_graph_themes'] ) ) {
+            MainWP_UI::add_widget_box( 'log_graph_themes', array( Log_Graph_Themes_Widget::instance(), 'render' ), $page, array( -1, -1, 12, 36 ) );
         }
+
+        
 
         $i = 1;
         foreach ( $extMetaBoxs as $metaBox ) {
@@ -951,7 +953,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
                 <div class="ui icon message mainwp-welcome-message" style="margin-bottom:0px;">
                     <em data-emoji=":wave:" class="big"></em>
                     <div class="content">
-                        <i class="close icon mainwp-notice-dismiss" notice-id="insights" style="float:right;cursor:pointer;"></i>
+                        <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-insights-welcome-message" style="float:right;cursor:pointer;"></i>
                         <div class="ui massive header"><?php esc_html_e( 'Welcome to Dashboard Insights', 'mainwp' ); ?></div>
                         <p><?php esc_html_e( 'Track how you and your team use the MainWP Dashboard, view trends, activity summaries, and key usage metrics.', 'mainwp' ); ?></p>
                         <p><?php printf( esc_html__( 'Start by configuring your %1$sNetwork Activity Settings%2$s to begin collecting data.', 'mainwp' ), '<a href="admin.php?page=SettingsInsights">', '</a>' ); ?></p>
@@ -1029,7 +1031,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
                         return false;
                     };
                     jQuery('#reset-log-overview-widgets-settings').on('click', function () {
-                        mainwp_confirm(__('Are you sure?'), function(){
+                        mainwp_confirm(__('This will reset all widget positions and sizes to their original defaults. Your data and settings will not be affected. Are you sure you want to proceed?'), function(){
                             jQuery('.mainwp_hide_wpmenu_checkboxes input[name="mainwp_show_widgets[]"]').prop('checked', true);
                             jQuery('input[name=reset_module_log_overview_widgets_settings]').attr('value', 1);
                             jQuery('#submit-log-overview-widgets-settings').click();

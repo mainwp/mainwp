@@ -87,33 +87,37 @@ class Log_Clients_Widget {
             </h2>
         </div>
 
-        <div class="mainwp-widget-insights-card">
-                <?php
-                /**
-                 * Action: mainwp_logs_widget_top
-                 *
-                 * Fires at the top of the widget.
-                 *
-                 * @since 4.6
-                 */
-                do_action( 'mainwp_logs_widget_top', 'clients' );
-                ?>
-                <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
-                <?php
-                MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
+        <div class="mainwp-widget-insights-card mainwp-scrolly-overflow">
+            <?php
+            /**
+             * Action: mainwp_logs_widget_top
+             *
+             * Fires at the top of the widget.
+             *
+             * @since 4.6
+             */
+            do_action( 'mainwp_logs_widget_top', 'clients' );
+            ?>
+            <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
+            <?php
+            MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
+            if ( ! empty( $data ) ) {
                 $this->render_widget_content( $stats_data, $stats_prev_data );
-                ?>
-                <?php
-                /**
-                 * Action: mainwp_logs_widget_bottom
-                 *
-                 * Fires at the bottom of the widget.
-                 *
-                 * @since 4.6
-                 */
-                do_action( 'mainwp_logs_widget_bottom', 'clients' );
-                ?>
-            </div>
+            } else { 
+                MainWP_UI::render_empty_element_placeholder( __( 'No activity recorded', 'mainwp' ), __( 'Data will appear here once actions are tracked.', 'mainwp' ), '<em data-emoji=":bar_chart:" class="medium"></em>' );
+            }
+            ?>
+            <?php
+            /**
+             * Action: mainwp_logs_widget_bottom
+             *
+             * Fires at the bottom of the widget.
+             *
+             * @since 4.6
+             */
+            do_action( 'mainwp_logs_widget_bottom', 'clients' );
+            ?>
+        </div>
         <div class="mainwp-widget-footer ui four columns stackable grid">
             <div class="column">
             </div>
@@ -140,8 +144,8 @@ class Log_Clients_Widget {
             'total_events' => esc_html__( 'Total', 'mainwp' ),
         );
         ?>
-        <div class="ui one column grid">
-            <div class="left aligned middle aligned column">
+        <div class="ui grid">
+            <div class="sixteen wide column">
                 <div class="ui equal width grid">
                     <?php
                     foreach ( $columns as $act => $title ) {
@@ -150,7 +154,7 @@ class Log_Clients_Widget {
                     ?>
                 </div>
             </div>
-            <div class="left aligned middle aligned column">
+            <div class="sixteen wide column">
                 <div id="mainwp-module-log-chart-clients-management-wrapper" ></div>
                 <script type="text/javascript">
                     jQuery( document ).ready( function() {

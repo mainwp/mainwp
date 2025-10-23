@@ -87,7 +87,7 @@ class Log_Posts_Widget {
             </h2>
         </div>
 
-        <div class="mainwp-widget-insights-card">
+        <div class="mainwp-widget-insights-card mainwp-scrolly-overflow">
                 <?php
                 /**
                  * Action: mainwp_logs_widget_top
@@ -101,7 +101,11 @@ class Log_Posts_Widget {
                 <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
                 <?php
                 MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
-                $this->render_widget_content( $stats_data, $stats_prev_data );
+                if ( ! empty( $data ) ) {
+                    $this->render_widget_content( $stats_data, $stats_prev_data );
+                } else { 
+                    MainWP_UI::render_empty_element_placeholder( __( 'No activity recorded', 'mainwp' ), __( 'Data will appear here once actions are tracked.', 'mainwp' ), '<em data-emoji=":bar_chart:" class="medium"></em>' );
+                }
                 ?>
                 <?php
                 /**
@@ -158,8 +162,8 @@ class Log_Posts_Widget {
         );
 
         ?>
-        <div class="ui one column grid">
-            <div class="left aligned middle aligned column">
+        <div class="ui grid">
+            <div class="sixteen wide column">
                 <div class="ui equal width grid">
                     <?php
                     foreach ( $columns as $act => $title ) {
@@ -168,7 +172,7 @@ class Log_Posts_Widget {
                     ?>
                 </div>
             </div>
-            <div class="left aligned middle aligned column">
+            <div class="sixteen wide column">
                 <div id="mainwp-module-log-chart-posts-management-wrapper" ></div>
                 <script type="text/javascript">
                     jQuery( document ).ready( function() {

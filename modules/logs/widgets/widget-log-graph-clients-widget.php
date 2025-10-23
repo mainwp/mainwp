@@ -62,6 +62,8 @@ class Log_Graph_Clients_Widget {
      * Render client overview Info.
      */
     public function render_widget() {
+        $clients       = MainWP_DB_Client::instance()->get_wp_clients();
+        $clients_count = count( $clients );
         ?>
         <div class="mainwp-widget-header">
             <h2 class="ui header handle-drag">
@@ -72,7 +74,7 @@ class Log_Graph_Clients_Widget {
             </h2>
         </div>
 
-        <div class="mainwp-widget-insights-card">
+        <div class="mainwp-widget-insights-card mainwp-scrolly-overflow">
                 <?php
                 /**
                  * Action: mainwp_logs_widget_top
@@ -86,7 +88,11 @@ class Log_Graph_Clients_Widget {
                 <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
                 <?php
                 MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
-                $this->render_widget_content();
+                if ( 0 < intval( $clients_count ) ) {
+                    $this->render_widget_content();
+                } else {
+                    MainWP_UI::render_empty_element_placeholder( __( 'No Clients Data Yet', 'mainwp' ), '<a href="admin.php?page=ClientAddNew">' . __( 'Start adding your clients now', 'mainwp' ) . '</a>', '<em data-emoji=":bar_chart:" class="medium"></em>' );
+                }
                 ?>
                 <?php
                 /**
@@ -119,24 +125,19 @@ class Log_Graph_Clients_Widget {
             jQuery( document ).ready( function() {
                 let options = {
                     chart: {
-                        type: 'bar',
-                    },
-                    xaxis: {
-                        labels: {
-                            style: {
-                                colors: '#999999',
-                            }
-                        }
-                    },
-                    yaxis: {
-                        labels: {
-                            style: {
-                                colors: '#999999',
-                            }
-                        }
+                        type: 'pie',
+                        height: 350,
                     },
                     tooltip: {
                         theme: 'dark'
+                    },
+                    legend: {
+                        labels: {
+                            colors: '#999'
+                        }
+                    },
+                    stroke: {
+                        width: 0
                     },
                     series: [ {
                         name: 'Sites',

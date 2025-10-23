@@ -286,6 +286,18 @@
   max-width: 500px;
 }
 
+#mainwp-sites-previews .mainwp-cards.cards {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin: 0 !important;
+}
+
+#mainwp-sites-previews .mainwp-cards.cards > .card {
+  margin: 0 !important;
+  width: auto !important;
+}
+
 /* classic theme */
 .mainwp-ui .dt-scroll-body tbody tr.selected .ui.red.button {
   color: #fff !important;

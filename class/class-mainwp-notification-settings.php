@@ -112,6 +112,8 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
 
             MainWP_Utility::update_option( 'mainwp_settings_notification_emails', $emails_settings );
 
+            MainWP_Settings_Helper::sync_section_to_global( 'notifications' );
+
             /**
             * Action: mainwp_after_save_email_settings
             *

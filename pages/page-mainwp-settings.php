@@ -428,6 +428,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         echo '</div>';
     }
 
+
     /**
      * Method handle_settings_post().
      *
@@ -586,6 +587,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 //phpcs:enable
 
                 MainWP_Utility::update_option( 'mainwp_use_favicon', 1 );
+
+                MainWP_Settings_Helper::sync_individual_to_global();
 
                 /**
                 * Action: mainwp_after_save_general_settings
@@ -1366,6 +1369,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 $openssl_loc = ! empty( $_POST['mainwp_openssl_lib_location'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_openssl_lib_location'] ) ) : '';
                 MainWP_Utility::update_option( 'mainwp_opensslLibLocation', $openssl_loc );
             }
+
+            MainWP_Settings_Helper::sync_section_to_global( 'advanced' );
 
             /**
             * Action: mainwp_after_save_advanced_settings

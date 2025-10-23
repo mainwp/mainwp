@@ -10,6 +10,7 @@ namespace MainWP\Dashboard\Module\Log;
 
 use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_Settings_Indicator;
+use MainWP\Dashboard\MainWP_Settings_Helper;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -123,6 +124,7 @@ class Log_Settings {
             }
             MainWP_Utility::update_option( 'mainwp_module_log_settings_logs_selection_data', wp_json_encode( $logs_data ) );
 
+            MainWP_Settings_Helper::sync_section_to_global( 'insights' );
         }
     }
 

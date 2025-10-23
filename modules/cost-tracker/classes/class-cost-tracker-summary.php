@@ -124,6 +124,7 @@ class Cost_Tracker_Summary {
                     update_user_option( $current_user->ID, 'mainwp_module_cost_tracker_summary_show_widgets', false, true );
                     update_user_option( $current_user->ID, 'mainwp_widgets_sorted_' . strtolower( 'mainwp_page_CostSummary' ), false, true );
                 }
+                MainWP_Settings_Helper::sync_section_to_global( '__user_meta_values' );
             }
         }
     }
@@ -394,7 +395,7 @@ class Cost_Tracker_Summary {
             </div>
             <?php endif; ?>
             <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
-            
+
         </div>
             <?php
             /**

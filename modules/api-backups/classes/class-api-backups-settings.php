@@ -11,6 +11,9 @@
 namespace MainWP\Dashboard\Module\ApiBackups;
 
 use MainWP\Dashboard\MainWP_Settings_Indicator;
+use MainWP\Dashboard\MainWP_UI;
+use MainWP\Dashboard\MainWP_Settings_Helper;
+
 
 
 /**
@@ -182,6 +185,7 @@ class Api_Backups_Settings {
                         <?php endif; ?>
 
                         <?php
+                        $updated = false;
                         // Save CloudWays Data.
                         //phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                         ?>
@@ -191,6 +195,7 @@ class Api_Backups_Settings {
                             <?php Api_Backups_Utility::get_instance()->update_api_key( 'cloudways', ( isset( $_POST['mainwp_cloudways_api_key'] ) ? wp_unslash( $_POST['mainwp_cloudways_api_key'] ) : '' ) ); ?>
                             <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'API credentials have been successfully saved.', 'mainwp' ); ?></div>
                             <?php Api_Backups_3rd_Party::cloudways_action_update_ids(); ?>
+                            <?php $updated = true; ?>
                         <?php endif; ?>
                         <?php // END Save CloudWays Data. ?>
                         <?php // Save GridPane Data. ?>
@@ -199,13 +204,15 @@ class Api_Backups_Settings {
                             <?php Api_Backups_Utility::get_instance()->update_api_key( 'gridpane', ( isset( $_POST['mainwp_gridpane_api_key'] ) ? wp_unslash( $_POST['mainwp_gridpane_api_key'] ) : '' ) ); ?>
                             <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'API credentials have been successfully saved.', 'mainwp' ); ?></div>
                             <?php Api_Backups_3rd_Party::gridpane_action_update_ids(); ?>
-                        <?php endif; ?>
+                            <?php $updated = true; ?>
+                            <?php endif; ?>
                         <?php // END Save GridPane Data. ?>
                         <?php // Save Vultr Data. ?>
                         <?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce_vultr'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_vultr'] ), 'cloudways_api_form_general' ) ) : ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_enable_vultr_api', ( ! isset( $_POST['mainwp_enable_vultr_api'] ) ? 0 : 1 ) ); ?>
                             <?php Api_Backups_Utility::get_instance()->update_api_key( 'vultr', ( isset( $_POST['mainwp_vultr_api_key'] ) ? wp_unslash( $_POST['mainwp_vultr_api_key'] ) : '' ) ); ?>
                             <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'API credentials have been successfully saved.', 'mainwp' ); ?></div>
+                            <?php $updated = true; ?>
                         <?php endif; ?>
                         <?php // END Save Vultr Data. ?>
                         <?php // Save Linode Data. ?>
@@ -213,6 +220,7 @@ class Api_Backups_Settings {
                             <?php Api_Backups_Utility::update_option( 'mainwp_enable_linode_api', ( ! isset( $_POST['mainwp_enable_linode_api'] ) ? 0 : 1 ) ); ?>
                             <?php Api_Backups_Utility::get_instance()->update_api_key( 'linode', ( isset( $_POST['mainwp_linode_api_key'] ) ? wp_unslash( $_POST['mainwp_linode_api_key'] ) : '' ) ); ?>
                             <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'API credentials have been successfully saved.', 'mainwp' ); ?></div>
+                            <?php $updated = true; ?>
                         <?php endif; ?>
                         <?php // END Save Linode Data. ?>
                         <?php // Save DigitalOcean Data. ?>
@@ -220,6 +228,7 @@ class Api_Backups_Settings {
                             <?php Api_Backups_Utility::update_option( 'mainwp_enable_digitalocean_api', ( ! isset( $_POST['mainwp_enable_digitalocean_api'] ) ? 0 : 1 ) ); ?>
                             <?php Api_Backups_Utility::get_instance()->update_api_key( 'digitalocean', ( isset( $_POST['mainwp_digitalocean_api_key'] ) ? wp_unslash( $_POST['mainwp_digitalocean_api_key'] ) : '' ) ); ?>
                             <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'API credentials have been successfully saved.', 'mainwp' ); ?></div>
+                            <?php $updated = true; ?>
                         <?php endif; ?>
                         <?php // END Save Linode Data. ?>
                         <?php // Save cPanel Data. ?>
@@ -230,6 +239,7 @@ class Api_Backups_Settings {
                             <?php Api_Backups_Utility::update_option( 'mainwp_cpanel_account_username', ( isset( $_POST['mainwp_cpanel_account_username'] ) ? wp_unslash( $_POST['mainwp_cpanel_account_username'] ) : '' ) ); ?>
                             <?php Api_Backups_Utility::get_instance()->update_api_key( 'cpanel', ( isset( $_POST['mainwp_cpanel_account_password'] ) ? wp_unslash( $_POST['mainwp_cpanel_account_password'] ) : '' ) ); ?>
                             <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'API credentials have been successfully saved.', 'mainwp' ); ?></div>
+                            <?php $updated = true; ?>
                         <?php endif; ?>
                         <?php // END Save cPanel Data. ?>
                         <?php // Save Plesk Data. ?>
@@ -243,6 +253,7 @@ class Api_Backups_Settings {
                             }
                             ?>
                             <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'API credentials have been successfully saved.', 'mainwp' ); ?></div>
+                            <?php $updated = true; ?>
                         <?php endif; ?>
                         <?php // END Save Plesk Data. ?>
                         <?php // Save Kinsta Data. ?>
@@ -252,8 +263,15 @@ class Api_Backups_Settings {
                             <?php Api_Backups_Utility::update_option( 'mainwp_kinsta_api_account_email', ( isset( $_POST['mainwp_kinsta_api_account_email'] ) ? wp_unslash( $_POST['mainwp_kinsta_api_account_email'] ) : '' ) ); ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_kinsta_company_id', ( isset( $_POST['mainwp_kinsta_company_id'] ) ? wp_unslash( $_POST['mainwp_kinsta_company_id'] ) : '' ) ); ?>
                             <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'API credentials have been successfully saved.', 'mainwp' ); ?></div>
+                            <?php $updated = true; ?>
                         <?php endif; ?>
-                        <?php // END Save Kinsta Data. ?>
+                        <?php
+                        // END Save Kinsta Data.
+
+                        if ( $updated ) {
+                            MainWP_Settings_Helper::sync_section_to_global( 'api_backups' );
+                        }
+                        ?>
 
                         <?php // Build Cloudways API Form. ?>
                         <div class="ui tab segment active" data-tab="cloudways">

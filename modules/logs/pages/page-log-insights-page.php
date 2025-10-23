@@ -147,6 +147,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
                     update_user_option( $current_user->ID, 'mainwp_module_log_overview_show_widgets', false, true );
                     update_user_option( $current_user->ID, 'mainwp_widgets_sorted_' . strtolower( 'mainwp_page_InsightsOverview' ), false, true );
                 }
+                MainWP_Settings_Helper::sync_section_to_global( '__user_meta_values' );
             }
         }
     }

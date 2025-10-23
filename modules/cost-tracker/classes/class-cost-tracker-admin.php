@@ -17,6 +17,7 @@ use MainWP\Dashboard\MainWP_Logger;
 use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_Settings_Indicator;
 use MainWP\Dashboard\MainWP_Exception;
+use MainWP\Dashboard\MainWP_Settings_Helper;
 
 /**
  * Class Cost_Tracker_Admin
@@ -602,6 +603,8 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
         $all_opts = apply_filters( 'mainwp_module_cost_tracker_before_save_settings', $all_opts );
 
         Cost_Tracker_Utility::get_instance()->save_options( $all_opts );
+
+        MainWP_Settings_Helper::sync_section_to_global( 'notifications' );
 
         wp_safe_redirect( admin_url( 'admin.php?page=CostTrackerSettings&message=1' ) );
         exit();

@@ -446,6 +446,8 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $enabled2 = ! isset( $_POST['mainwp-guided-video-option'] ) ? 0 : 1;
             MainWP_Utility::update_option( 'mainwp_enable_guided_video', $enabled2 );
 
+            MainWP_Settings_Helper::sync_section_to_global( 'tools' );
+
             if ( isset( $_POST['mainwp_settings_custom_theme'] ) ) {
                 $update_selected_mainwp_themes = true;
             }
@@ -525,6 +527,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 update_user_option( $user->ID, 'mainwp_widgets_sorted_mainwp_page_managesites', false, true );
                 MainWP_Cache_Warm_Helper::invalidate_manage_pages( array( 'mainwp_tab' ) );
             }
+            MainWP_Settings_Helper::sync_section_to_global( '__user_meta_values' );
         }
 
         $update_clients_screen_options = false;
@@ -557,6 +560,8 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             if ( isset( $_POST['reset_client_overview_settings'] ) && ! empty( $_POST['reset_client_overview_settings'] ) ) {
                 update_user_option( $user->ID, 'mainwp_widgets_sorted_mainwp_page_manageclients', false, true );
             }
+
+            MainWP_Settings_Helper::sync_section_to_global( '__user_meta_values' );
         }
     }
 

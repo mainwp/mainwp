@@ -801,6 +801,9 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         add_action( 'mainwp_activate_extension', array( MainWP_System_Handler::instance(), 'activate_extension' ), 10, 2 );
         add_action( 'mainwp_deactivate_extension', array( MainWP_System_Handler::instance(), 'deactivate_extension' ), 10, 3 );
 
+        if ( MainWP_Settings_Helper::backup_file_is_newer_fs() ) {
+            MainWP_Settings_Helper::import_file_to_global_if_newer_fs();
+        }
         /**
          * MainWP use external primary backup method.
          *

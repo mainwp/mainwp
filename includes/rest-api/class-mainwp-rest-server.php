@@ -114,6 +114,7 @@ class MainWP_Rest_Server {
             'batch'         => 'MainWP_Rest_Global_Batch_Controller',
             'monitors'      => 'MainWP_Rest_Monitors_Controller',
             'rest_api_keys' => 'MainWP_Rest_API_Keys_Controller',
+            'settings'      => 'MainWP_Rest_Settings_Controller',
         );
     }
 

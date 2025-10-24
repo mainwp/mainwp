@@ -11,8 +11,7 @@ namespace MainWP\Dashboard;
  * MainWP Settings JSON Synchronization Helper.
  *
  * - Global settings stored in one JSON option (mainwp_main_settings)
- * - Each field also has its own WordPress option
- * - You manually call sync methods when updating
+ * - Each field also may have its own WordPress option
  */
 class MainWP_Settings_Helper {  // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
@@ -329,6 +328,8 @@ class MainWP_Settings_Helper {  // phpcs:ignore Generic.Classes.OpeningBraceSame
         update_option( static::$global_option_name, $json );
 
         static::$is_syncing = false;
+
+        static::export_global_to_file_fs(); // export to json settings file after sync.
     }
 
     /**
@@ -616,6 +617,10 @@ class MainWP_Settings_Helper {  // phpcs:ignore Generic.Classes.OpeningBraceSame
             $global['__meta'] = array();
         }
         $global['__meta']['saved_at'] = gmdate( 'Y-m-d H:i:s' );
+
+        if ( isset( $global['__meta']['force'] ) ) {
+            unset( $global['__meta']['force'] ); // to prevent always true force on import.
+        }
 
         $json = wp_json_encode( $global, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
         if ( false === $json ) {

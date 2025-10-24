@@ -108,6 +108,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     margin-bottom: 0.5rem;
     margin-top: 0.15rem;
 }
+
 /* QSW */
 .mainwp-ui-setup::before {
   content: '';

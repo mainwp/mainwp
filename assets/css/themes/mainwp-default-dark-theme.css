@@ -1591,6 +1591,11 @@ body.mainwp-ui.mainwp-custom-theme,
   background: var(--mainwp-element-background) !important;
 }
 
+.mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-blank-accordion .title,
+.mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-blank-accordion .content {
+    background: none !important;
+}
+
 .mainwp-ui.mainwp-custom-theme .ui.accordion .title:hover {
   color: var(--mainwp-text) !important;
 }

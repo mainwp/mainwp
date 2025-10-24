@@ -1070,16 +1070,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             $updated_settings['timeout'] = $settings['timeout']; // Convert to seconds.
         }
 
-        // Process retries setting.
-        if ( isset( $settings['retries'] ) ) {
-            $validation_result = $this->validate_retries( $settings['retries'] );
-            if ( is_wp_error( $validation_result ) ) {
-                return $validation_result;
-            }
-            $updated_settings['retries'] = (int) $settings['retries'];
-        }
-
-        // Process retries setting.
+        // Process maxretries setting.
         if ( isset( $settings['maxretries'] ) ) {
             $validation_result = $this->validate_retries( $settings['maxretries'] );
             if ( is_wp_error( $validation_result ) ) {
@@ -1140,7 +1131,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
 
         // Process active setting.
         if ( isset( $settings['active'] ) ) {
-            $update_data['active'] = $settings['active'] ? 1 : 0;
+            $update_data['active'] = $settings['active'] ? $settings['active'] : 0;
         }
 
         // Process check_frequency setting.
@@ -1151,15 +1142,6 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         // Process timeout setting.
         if ( isset( $settings['timeout'] ) ) {
             $update_data['timeout'] = $settings['timeout'];
-        }
-
-        // Process retries setting.
-        if ( isset( $settings['retries'] ) ) {
-            $validation_result = $this->validate_retries( $settings['retries'] );
-            if ( is_wp_error( $validation_result ) ) {
-                return $validation_result;
-            }
-            $update_data['retries'] = (int) $settings['retries'];
         }
 
         // Process maxretries setting.
@@ -1173,7 +1155,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
 
         // Process HTTP-specific settings.
         if ( isset( $settings['expected_status'] ) ) {
-            $update_data['expected_status'] = $settings['expected_status'];
+            $update_data['up_status_codes'] = $settings['expected_status'];
         }
 
         // Process port settings.
@@ -1492,14 +1474,6 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 'sanitize_callback' => array( $this, 'sanitize_timeout_text_field' ),
                 'validate_callback' => array( $this, 'settings_validate_timeout_param' ),
             ),
-            'retries'         => array(
-                'required'          => false,
-                'type'              => 'integer',
-                'description'       => __( 'Number of retries on failure.', 'mainwp' ),
-                'sanitize_callback' => 'sanitize_text_field',
-                'minimum'           => -1,
-                'maximum'           => 10,
-            ),
             'maxretries'      => array(
                 'required'          => false,
                 'type'              => 'integer',
@@ -1545,7 +1519,26 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
     private function get_individual_monitor_settings_allowed_fields() {
         return array_merge(
             $this->get_monitor_allowed_id_domain_field(),
-            $this->get_global_monitor_settings_allowed_fields()
+            $this->get_global_monitor_settings_allowed_fields(),
+            array(
+                'active' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'description'       => __( 'Active or disable monitoring globally.', 'mainwp' ),
+                    'sanitize_callback' => function ( $value ) {
+                        if ( 'useglobal' === $value ) {
+                            return -1;
+                        }
+                        return $value;
+                    },
+                    'validate_callback' => function ( $value ) {
+                        if ( in_array( $value, array( '0', '1', 'useglobal' ), true ) ) {
+                            return true;
+                        }
+                        return new WP_Error( 'invalid_active', __( 'Invalid active value. Must be 0,1 or useglobal', 'mainwp' ) );
+                    },
+                ),
+            )
         );
     }
 
@@ -2195,7 +2188,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             'type'                 => 'object',
             'additionalProperties' => false,
             'properties'           => array(
-                'active'          => array( 'type' => 'boolean' ),
+                'active'          => array( 'type' => 'integer' ),
                 'type'            => array(
                     'type' => 'string',
                     'enum' => array_keys( self::TYPE_MAP ),
@@ -2204,7 +2197,6 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                     'type' => 'string',
                     'enum' => array_keys( self::METHOD_MAP ),
                 ),
-                'retries'         => array( 'type' => 'integer' ),
                 'maxretries'      => array( 'type' => 'integer' ),
                 'timeout'         => array( 'type' => 'integer' ),
                 'interval'        => array( 'type' => 'string' ),

@@ -738,14 +738,13 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      */
 	public function client_fields( $request ) {  // phpcs:ignore -- NOSONAR - complex.
         // Prepare query args.
-        $args   = $this->prepare_objects_query( $request, 'client_fields' );
-        $params = array(
-            'exclude'   => ! empty( $args['exclude'] ) ? $args['exclude'] : '',
-            'include'   => ! empty( $args['include'] ) ? $args['include'] : '',
-            'client_id' => ! empty( $args['client_id'] ) ? $args['client_id'] : '',
-            'search'    => ! empty( $args['s'] ) ? $args['s'] : '',
-            'page'      => ! empty( $args['paged'] ) ? (int) $args['paged'] : 1,
-            'per_page'  => ! empty( $args['items_per_page'] ) ? (int) $args['items_per_page'] : 20,
+        $args     = $this->prepare_objects_query( $request, 'client_fields' );
+        $page     = ! empty( $args['paged'] ) ? (int) $args['paged'] : 1;
+        $per_page = ! empty( $args['items_per_page'] ) ? (int) $args['items_per_page'] : 20;
+        $params   = array(
+            'exclude' => ! empty( $args['exclude'] ) ? $args['exclude'] : '',
+            'include' => ! empty( $args['include'] ) ? $args['include'] : '',
+            'search'  => ! empty( $args['s'] ) ? $args['s'] : '',
         );
 
         // Get client fields.
@@ -765,15 +764,25 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
                 'field_id'    => (int) $field->field_id ? $field->field_id : 0,
                 'name'        => $field->field_name ? $field->field_name : '',
                 'description' => $field->field_desc ? $field->field_desc : '',
-                'client_id'   => (int) $field->client_id ? $field->client_id : 0,
             );
             $data[] = $this->filter_response_data_by_allowed_fields( $record, 'field_view' );
         }
 
+        // Page navigation.
+        $total = count( $data );
+        $pages = (int) max( 1, ceil( $total / max( 1, $per_page ) ) );
+        if ( $page > $pages ) {
+            $page = $pages;
+        }
+
+        $offset = ( $page - 1 ) * $per_page;
+        $data   = array_slice( $data, $offset, $per_page );
+
         return rest_ensure_response(
             array(
                 'success' => 1,
-                'total'   => count( $data ),
+                'total'   => $total,
+                'pages'   => $pages,
                 'data'    => $data,
             )
         );
@@ -807,20 +816,9 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             );
         }
 
-        // Check client id.
         $client_id = 0;
-        if ( ! empty( $body['client_id'] ) ) {
-            $client_id = absint( $body['client_id'] );
-            if ( ! MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id ) ) {
-                return new WP_Error(
-                    'invalid_client_id',
-                    __( 'Invalid client ID.', 'mainwp' ),
-                );
-            }
-        }
-
-        $name = sanitize_text_field( wp_unslash( $body['name'] ) );
-        $desc = sanitize_text_field( wp_unslash( $body['description'] ) );
+        $name      = sanitize_text_field( wp_unslash( $body['name'] ) );
+        $desc      = sanitize_text_field( wp_unslash( $body['description'] ) );
 
         $field = MainWP_DB_Client::instance()->add_client_field(
             array(
@@ -842,7 +840,6 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             'field_id'    => (int) $field->field_id ? $field->field_id : 0,
             'name'        => $field->field_name ? $field->field_name : '',
             'description' => $field->field_desc ? $field->field_desc : '',
-            'client_id'   => (int) $field->client_id ? $field->client_id : 0,
         );
 
         return rest_ensure_response(
@@ -895,7 +892,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
         if ( ! $updated ) {
             return new WP_Error(
                 'update_field_failed',
-                __( 'Update client field failed.', 'mainwp' ),
+                __( 'Field already exists, try different field name.', 'mainwp' ),
             );
         }
 
@@ -987,12 +984,6 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
                 'sanitize_callback' => 'sanitize_text_field',
                 'description'       => __( 'Field description.', 'mainwp' ),
             ),
-            'client_id'   => array(
-                'required'          => false,
-                'type'              => 'integer',
-                'sanitize_callback' => 'absint',
-                'description'       => __( 'Client ID.', 'mainwp' ),
-            ),
         );
     }
 
@@ -1003,38 +994,32 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      */
     public function get_client_fields_allowed_fields() {
         return array(
-            'search'    => array(
+            'search'   => array(
                 'required'          => false,
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
                 'description'       => __( 'Search client field name.', 'mainwp' ),
             ),
-            'include'   => array(
+            'include'  => array(
                 'required'          => false,
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
                 'description'       => __( 'Include client field IDs.', 'mainwp' ),
             ),
-            'exclude'   => array(
+            'exclude'  => array(
                 'required'          => false,
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
                 'description'       => __( 'Exclude client field IDs.', 'mainwp' ),
             ),
-            'client_id' => array(
-                'required'          => false,
-                'type'              => 'integer',
-                'sanitize_callback' => 'absint',
-                'description'       => __( 'Client ID.', 'mainwp' ),
-            ),
-            'page'      => array(
+            'page'     => array(
                 'required'          => false,
                 'type'              => 'integer',
                 'minimum'           => 1,
                 'sanitize_callback' => 'absint',
                 'description'       => __( 'Page number.', 'mainwp' ),
             ),
-            'pre_page'  => array(
+            'pre_page' => array(
                 'required'          => false,
                 'type'              => 'integer',
                 'sanitize_callback' => 'absint',
@@ -1091,7 +1076,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
                 'client_id'          => array(
                     'type'        => 'integer',
                     'description' => __( 'Client ID.', 'mainwp' ),
-                    'context'     => array( 'view', 'edit', 'simple_view', 'field_view', 'field_edit' ),
+                    'context'     => array( 'view', 'edit', 'simple_view' ),
                 ),
                 'name'               => array(
                     'type'        => 'string',

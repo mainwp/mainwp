@@ -193,6 +193,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         add_filter( 'pre_set_site_transient_update_plugins', array( $systemHandler, 'pre_check_update_custom' ) );
         add_filter( 'plugins_api', array( $systemHandler, 'plugins_api_extension_info' ), 10, 3 );
         add_filter( 'plugins_api_result', array( $systemHandler, 'plugins_api_wp_plugins_api_result' ), 10, 3 );
+        add_action( 'plugins_loaded', array( &$this, 'hook_plugins_loaded' ), 1 );
 
         $this->metaboxes = new MainWP_Meta_Boxes();
 
@@ -420,6 +421,26 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         if ( $load ) {
             load_plugin_textdomain( 'mainwp', false, dirname( dirname( plugin_basename( __FILE__ ) ) ) . '/languages/' );
         }
+    }
+
+    /**
+     * Method hook_plugins_loaded().
+     */
+    public function hook_plugins_loaded() {
+        require_once MAINWP_PLUGIN_DIR . 'includes/updater.php'; //phpcs:ignore -- NOSONAR - compatible.
+
+        $updater_config = array(
+            'plugin_file'      => plugin_basename( MAINWP_PLUGIN_FILE ),
+            'slug'             => 'mainwp',
+            'name'             => 'MainWP',
+            'version'          => static::$version,
+            //'key'              => 'YourSecretKeyHere',             // optional if using GitHub
+            'server'           => 'https://github.com/git-username/mainwp',  // GitHub or private server.
+            'github_token'     => 'github_pat_xxxx', // optional.
+            'allow_prerelease' => true, // Optional � default is false. Set to true to allow beta/RC updates.
+        );
+
+        \UUPD\V1\UUPD_Updater_V1::register( $updater_config );
     }
 
     /**

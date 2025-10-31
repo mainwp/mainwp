@@ -427,20 +427,38 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * Method hook_plugins_loaded().
      */
     public function hook_plugins_loaded() {
-        require_once MAINWP_PLUGIN_DIR . 'includes/updater.php'; //phpcs:ignore -- NOSONAR - compatible.
+        if ( 1 === (int) get_option( 'mainwp_enableCustomUpdater' ) ) {
+            $this->init_custom_updater();
 
-        $updater_config = array(
-            'plugin_file'      => plugin_basename( MAINWP_PLUGIN_FILE ),
-            'slug'             => 'mainwp',
-            'name'             => 'MainWP',
-            'version'          => static::$version,
-            //'key'              => 'YourSecretKeyHere',             // optional if using GitHub
-            'server'           => 'https://github.com/git-username/mainwp',  // GitHub or private server.
-            'github_token'     => 'github_pat_xxxx', // optional.
-            'allow_prerelease' => true, // Optional � default is false. Set to true to allow beta/RC updates.
-        );
+            // Add "Reinstall" action link.
+            add_filter( 'plugin_action_links_' . plugin_basename( MAINWP_PLUGIN_FILE ), array( MainWP_Custom_Reinstaller::instance(), 'reinstall_actions_link' ) );
+            // Handle reinstall.
+            add_action( 'admin_init', array( MainWP_Custom_Reinstaller::instance(), 'handle_reinstall_request' ) );
+            add_action( 'admin_notices', array( MainWP_Custom_Reinstaller::instance(), 'reinstall_admin_notices' ) );
+        }
+    }
 
-        \UUPD\V1\UUPD_Updater_V1::register( $updater_config );
+    /**
+     * Method init_custom_updater().
+     */
+    public function init_custom_updater() {
+        if ( file_exists( MAINWP_PLUGIN_DIR . 'includes/updater.php' ) ) {
+            require_once MAINWP_PLUGIN_DIR . 'includes/updater.php'; //phpcs:ignore -- NOSONAR - compatible.
+        }
+
+        if ( function_exists( '\MainWP\Dashboard\UUPD\V1\UUPD_Updater_V1::register' ) ) {
+            $updater_config = array(
+                'plugin_file'      => plugin_basename( MAINWP_PLUGIN_FILE ),
+                'slug'             => 'mainwp',
+                'name'             => 'MainWP',
+                'version'          => static::$version,
+                // 'key'              => 'YourSecretKeyHere',             // optional if using GitHub
+                'server'           => 'https://github.com/github-username/mainwp-child',  // GitHub or private server.
+                'github_token'     => 'github_pat_xxxxxx', // optional.
+                'allow_prerelease' => true, // Optional � default is false. Set to true to allow beta/RC updates.
+            );
+            \MainWP\Dashboard\UUPD\V1\UUPD_Updater_V1::register( $updater_config );
+        }
     }
 
     /**

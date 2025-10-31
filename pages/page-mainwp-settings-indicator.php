@@ -169,6 +169,7 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'mainwp_verify_connection_method'            => 1,
             'mainwp_connect_signature_algo'              => defined( 'OPENSSL_ALGO_SHA256' ) ? (int) OPENSSL_ALGO_SHA256 : 1,
             'mainwp_forceUseIPv4'                        => 0,
+            'mainwp_enableCustomUpdater'                 => 0,
             'mainwp_module_log_enabled'                  => 1,
             'mainwp_selected_theme'                      => 'default',
             'mainwp_enable_guided_tours'                 => 0,

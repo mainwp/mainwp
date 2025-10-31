@@ -135,7 +135,7 @@
  *
  */
 
-namespace UUPD\V1;
+namespace MainWP\Dashboard\UUPD\V1;
 
 if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
 
@@ -323,6 +323,7 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
                     case 'preview': $tag = 'beta';  break;
                     case 'rc':      $tag = 'rc';    break; // PHP is case-insensitive
                     case 'dev':     $tag = 'dev';   break;
+                    case 'er':      $tag = 'er';    break;
                     // alpha/beta already work correctly
                 }
 
@@ -820,7 +821,7 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
 
         /** Optional debug logger. */
         private function log( $msg ) {
-            if ( apply_filters( 'updater_enable_debug', true ) ) {
+            if ( apply_filters( 'updater_enable_debug', false ) ) {
                 error_log( "[Updater] {$msg}" );
                 do_action( 'uupd/log', $msg, $this->config['slug'] ?? '' );
             }

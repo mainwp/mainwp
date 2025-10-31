@@ -1357,6 +1357,17 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             MainWP_Utility::update_option( 'mainwp_connect_signature_algo', isset( $_POST['mainwp_settings_openssl_alg'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_settings_openssl_alg'] ) ) : 0 );
             MainWP_Utility::update_option( 'mainwp_verify_connection_method', isset( $_POST['mainwp_settings_verify_connection_method'] ) ? intval( $_POST['mainwp_settings_verify_connection_method'] ) : 0 );
             MainWP_Utility::update_option( 'mainwp_forceUseIPv4', isset( $_POST['mainwp_forceUseIPv4'] ) ? 1 : 0 );
+
+            $old_val = get_option( 'mainwp_enableCustomUpdater' );
+            $new_val = isset( $_POST['mainwp_enableCustomUpdater'] ) ? 1 : 0;
+            if ( $old_val && empty( $new_val ) ) {
+                delete_site_transient( 'update_plugins' );
+                delete_transient( 'wp_update_plugins' );
+                wp_clean_update_cache();
+            }
+
+            MainWP_Utility::update_option( 'mainwp_enableCustomUpdater', $new_val );
+
             $use_wpcron = ! isset( $_POST['mainwp_options_wp_cron'] ) ? 0 : 1;
             MainWP_Utility::update_option( 'mainwp_wp_cron', $use_wpcron );
             MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
@@ -1695,6 +1706,17 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             </label>
                             <div class="ten wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'Enable if you want to force your MainWP Dashboard to use IPv4 while trying to connect child sites.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                                 <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_forceUseIPv4" id="mainwp_forceUseIPv4" value="checked" <?php echo ( 1 === (int) get_option( 'mainwp_forceUseIPv4' ) ) ? 'checked="checked"' : ''; ?>/><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
+                            </div>
+                        </div>
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-miscellaneous">
+                            <label class="six wide column middle aligned">
+                            <?php
+                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_enableCustomUpdater', (int) get_option( 'mainwp_enableCustomUpdater' ) );
+                            esc_html_e( 'Enable Custom Updater', 'mainwp' );
+                            ?>
+                            </label>
+                            <div class="ten wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'Enable if you want to enable custom updater.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_enableCustomUpdater" id="mainwp_enableCustomUpdater" value="checked" <?php echo ( 1 === (int) get_option( 'mainwp_enableCustomUpdater' ) ) ? 'checked="checked"' : ''; ?>/><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
                             </div>
                         </div>
                         <?php

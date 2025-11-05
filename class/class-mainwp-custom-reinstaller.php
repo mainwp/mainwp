@@ -69,7 +69,7 @@ class MainWP_Custom_Reinstaller { // phpcs:ignore Generic.Classes.OpeningBraceSa
             ),
             'reinstall_stable'
         );
-        $links['reinstall'] = '<a href="' . esc_url( $url ) . '">' . esc_html__( 'Reinstall', 'mainwp' ) . '</a>';
+        $links['reinstall'] = '<a href="' . esc_url( $url ) . '">' . esc_html__( 'Roll Back to the Last Stable Release', 'mainwp' ) . '</a>';
         return $links;
     }
 
@@ -89,7 +89,7 @@ class MainWP_Custom_Reinstaller { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $plugin = sanitize_text_field( wp_unslash( $_GET['plugin'] ?? '' ) );
 
         if ( empty( $plugin ) ) {
-            wp_safe_redirect( admin_url( 'plugins.php?reinstall=error' ) );
+            wp_safe_redirect( admin_url( 'admin.php?page=EarlyUpdates&reinstall=error' ) );
             exit;
         }
 
@@ -192,7 +192,7 @@ class MainWP_Custom_Reinstaller { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     // Could not backup; abort and report error.
                     $msg = "Reinstall: failed to move or copy plugin directory to backup for {$plugin}";
                     self::plugin_reinstall_log( $plugin, 'backup_failed', $msg );
-                    wp_safe_redirect( admin_url( 'plugins.php?reinstall=backup_failed' ) );
+                    wp_safe_redirect( admin_url( 'admin.php?page=EarlyUpdates?reinstall=backup_failed' ) );
                     exit;
                 }
             }
@@ -302,7 +302,7 @@ class MainWP_Custom_Reinstaller { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 }
             }
 
-            wp_safe_redirect( admin_url( 'plugins.php?reinstall=install_failed' ) );
+            wp_safe_redirect( admin_url( 'admin.php?page=EarlyUpdates&reinstall=install_failed' ) );
             exit;
         }
 
@@ -334,7 +334,7 @@ class MainWP_Custom_Reinstaller { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $msg = "Reinstall: install completed but unable to locate main plugin file for expected {$plugin}. Backup kept at {$backup_path}.";
             self::plugin_reinstall_log( $plugin, 'installed_missing_main_but_backup', $msg, array( 'backup_path' => $backup_path ) );
             // return backup path in URL so admin can inspect.
-            wp_safe_redirect( admin_url( 'plugins.php?reinstall=installed_missing_main&backup=' . rawurlencode( $backup_path ) ) );
+            wp_safe_redirect( admin_url( 'admin.php?page=EarlyUpdates&reinstall=installed_missing_main&backup=' . rawurlencode( $backup_path ) ) );
             exit;
         }
 
@@ -353,7 +353,7 @@ class MainWP_Custom_Reinstaller { // phpcs:ignore Generic.Classes.OpeningBraceSa
                         'activate_error' => $act->get_error_messages(),
                     )
                 );
-                wp_safe_redirect( admin_url( 'plugins.php?reinstall=installed_but_activate_failed&plugin=' . rawurlencode( $found ) . '&backup=' . rawurlencode( $backup_path ) ) );
+                wp_safe_redirect( admin_url( 'admin.php?page=EarlyUpdates&reinstall=installed_but_activate_failed&plugin=' . rawurlencode( $found ) . '&backup=' . rawurlencode( $backup_path ) ) );
                 exit;
             }
         }
@@ -370,7 +370,7 @@ class MainWP_Custom_Reinstaller { // phpcs:ignore Generic.Classes.OpeningBraceSa
         }
 
         // then final redirect.
-        wp_safe_redirect( admin_url( 'plugins.php?reinstall=success' ) );
+        wp_safe_redirect( admin_url( 'admin.php?page=EarlyUpdates&reinstall=success' ) );
         exit;
     }
 
@@ -653,24 +653,49 @@ class MainWP_Custom_Reinstaller { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
 
     /**
-     * Method reinstall_admin_notices()
+     * Method plugin_information_link.
+     *
+     * @param  mixed $res Information response.
+     * @param  mixed $action Action type.
+     * @param  mixed $args  Arguments.
+     * @return void
      */
-    public function reinstall_admin_notices() {
-        if ( empty( $_GET['reinstall'] ) ) { //phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            return;
+    public function plugin_information_link( $res, $action, $args ) {
+
+        // Only handle plugin information requests.
+        if ( 'plugin_information' !== $action ) {
+            return $res;
         }
-        $code  = sanitize_text_field( wp_unslash( $_GET['reinstall'] ) ); //phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        $msgs  = array(
-            'success'                       => __( 'Plugin reinstalled successfully.', 'mainwp' ),
-            'delete_failed'                 => __( 'Failed to remove old plugin files.', 'mainwp' ),
-            'install_failed'                => __( 'Failed to install plugin from WordPress.org.', 'mainwp' ),
-            'installed_but_activate_failed' => __( 'Installed but activation failed.', 'mainwp' ),
-            'error'                         => __( 'Reinstall failed (invalid plugin).', 'mainwp' ),
+
+        // The plugin slug to match — change this to your plugin folder slug.
+        $expected_slug = 'mainwp';
+
+        if ( empty( $args->slug ) || $args->slug !== $expected_slug ) {
+            return $res;
+        }
+
+        // Build the response object.
+        $response = new \stdClass();
+
+        // Basic metadata.
+        $response->name     = 'MainWP';                // plugin display name.
+        $response->slug     = $expected_slug;             // plugin folder slug.
+        $response->author   = '<a href="https://mainwp.com">MainWP</a>';
+        $response->requires = '6.2';
+        $response->tested   = '6.8.3';
+        $response->homepage = 'https://mainwp.com';
+
+        // Long HTML sections shown in the modal. Use HTML safely (WP outputs this directly).
+        $response->sections = array(
+            'Changelog' => '
+                <a href="https://mainwp.com/mainwp-early-release/" target="_blank">https://mainwp.com/mainwp-early-release/</a>
+            ',
         );
-        $class = strpos( $code, 'success' ) === 0 ? 'infor' : 'red';
-        $text  = $msgs[ $code ] ?? __( 'Unknown status.', 'mainwp' );
-        echo '<div class="ui message ' . esc_attr( $class ) . '"><p>' . esc_html( $text ) . '</p></div>';
+
+        return $response;
     }
+
+
 
     /**
      * Simple logger helper that records into an option (capped) and also supports message context.

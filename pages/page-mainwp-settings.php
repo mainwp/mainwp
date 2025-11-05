@@ -152,6 +152,20 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             )
         );
 
+        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'EarlyUpdates' ) ) {
+            add_submenu_page(
+                'mainwp_tab',
+                __( 'Early Access Updates', 'mainwp' ),
+                ' <div class="mainwp-hidden">' . esc_html__( 'Early Access Updates', 'mainwp' ) . '</div>',
+                'read',
+                'EarlyUpdates',
+                array(
+                    static::get_class_name(),
+                    'render_early_updates',
+                )
+            );
+        }
+
         if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) {
             add_submenu_page(
                 'mainwp_tab',
@@ -261,6 +275,9 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         }
                     }
                     ?>
+                    <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'EarlyUpdates' ) ) { ?>
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=EarlyUpdates' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Tools', 'mainwp' ); ?></a>
+                    <?php } ?>
                     <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) { ?>
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=MainWPTools' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Tools', 'mainwp' ); ?></a>
                     <?php } ?>
@@ -408,6 +425,14 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 }
                 $renderItems[] = $item;
             }
+        }
+
+        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'EarlyUpdates' ) ) {
+            $renderItems[] = array(
+                'title'  => esc_html__( 'Early Access Updates', 'mainwp' ),
+                'href'   => 'admin.php?page=EarlyUpdates',
+                'active' => ( 'EarlyUpdates' === $shownPage ) ? true : false,
+            );
         }
 
         if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) {
@@ -1357,17 +1382,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             MainWP_Utility::update_option( 'mainwp_connect_signature_algo', isset( $_POST['mainwp_settings_openssl_alg'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_settings_openssl_alg'] ) ) : 0 );
             MainWP_Utility::update_option( 'mainwp_verify_connection_method', isset( $_POST['mainwp_settings_verify_connection_method'] ) ? intval( $_POST['mainwp_settings_verify_connection_method'] ) : 0 );
             MainWP_Utility::update_option( 'mainwp_forceUseIPv4', isset( $_POST['mainwp_forceUseIPv4'] ) ? 1 : 0 );
-
-            $old_val = get_option( 'mainwp_enableCustomUpdater' );
-            $new_val = isset( $_POST['mainwp_enableCustomUpdater'] ) ? 1 : 0;
-            if ( $old_val && empty( $new_val ) ) {
-                delete_site_transient( 'update_plugins' );
-                delete_transient( 'wp_update_plugins' );
-                wp_clean_update_cache();
-            }
-
-            MainWP_Utility::update_option( 'mainwp_enableCustomUpdater', $new_val );
-
             $use_wpcron = ! isset( $_POST['mainwp_options_wp_cron'] ) ? 0 : 1;
             MainWP_Utility::update_option( 'mainwp_wp_cron', $use_wpcron );
             MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
@@ -1706,17 +1720,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             </label>
                             <div class="ten wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'Enable if you want to force your MainWP Dashboard to use IPv4 while trying to connect child sites.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                                 <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_forceUseIPv4" id="mainwp_forceUseIPv4" value="checked" <?php echo ( 1 === (int) get_option( 'mainwp_forceUseIPv4' ) ) ? 'checked="checked"' : ''; ?>/><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
-                            </div>
-                        </div>
-                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-miscellaneous">
-                            <label class="six wide column middle aligned">
-                            <?php
-                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_enableCustomUpdater', (int) get_option( 'mainwp_enableCustomUpdater' ) );
-                            esc_html_e( 'Enable Custom Updater', 'mainwp' );
-                            ?>
-                            </label>
-                            <div class="ten wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'Enable if you want to enable custom updater.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_enableCustomUpdater" id="mainwp_enableCustomUpdater" value="checked" <?php echo ( 1 === (int) get_option( 'mainwp_enableCustomUpdater' ) ) ? 'checked="checked"' : ''; ?>/><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
                             </div>
                         </div>
                         <?php
@@ -2194,6 +2197,164 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         <?php
         static::render_footer( 'MainWPTools' );
         MainWP_Connect_Helper::render_renew_connections_modal();
+    }
+
+    /**
+     * Render Early Updates settings.
+     */
+    public static function render_early_updates() { // phpcs:ignore -- NOSONAR - complex.
+
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
+            return;
+        }
+
+        static::render_header( 'EarlyUpdates' );
+        ?>
+        <div id="mainwp-tools-settings" class="ui segment">
+
+            <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
+
+            <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-early-updates-info-message' ) ) : ?>
+            <div class="ui info message">
+                <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-early-updates-info-message"></i>
+                <?php esc_html_e( 'Get early access to upcoming MainWP releases before they are public available on WordPress.org. There versions may include new features, performance improvements, and bug fixes, it is hightly recommended to use early access builds only on test or stagging environments.', 'mainwp' ); ?>
+            </div>
+        <?php endif; ?>
+
+        <?php static::render_reinstall_notices(); ?>
+
+            <?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'EarlyUpdates' ) ) : ?>
+                    <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
+            <?php endif; ?>
+
+                <div class="ui form">
+                    <form method="POST" action="">
+                    <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+                    <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'EarlyUpdates' ) ); ?>" />
+                    <h3 class="ui dividing header">
+                    <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-early' ); ?>
+                    <?php esc_html_e( 'Early Access Updates', 'mainwp' ); ?></h3>
+                    <?php
+                    /**
+                     * Action: mainwp_early_updates_form_top
+                     *
+                     * Fires at the top of MainWP early updates form.
+                     *
+                     * @since 6.0
+                     */
+                    do_action( 'mainwp_early_updates_form_top' );
+                    ?>
+
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-early">
+                        <label class="six wide column middle aligned">
+                            <?php
+                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_enable_early_access_updates', (int) get_option( 'mainwp_settings_enable_early_updates', 0 ) );
+                            esc_html_e( 'Enable Early Access for MainWP Dashboard', 'mainwp' );
+                            ?>
+                        </label>
+                        <div class="ten wide column " data-tooltip="<?php esc_attr_e( 'When enabled, the Dashboard will automatically detect available beta or RC versions and offer them as updates in your WordPress Admin.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                            <div class="ui toggle checkbox">
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_enable_early_access_updates" id="mainwp_enable_early_access_updates" <?php echo 1 === (int) get_option( 'mainwp_settings_enable_early_updates', 0 ) ? 'checked="true"' : ''; ?> />
+                                <label><?php esc_html_e( 'Allow your MainWP Dashboard to check for pre-release versions (beta, RC, etc.) directly from the official GitHub repository.', 'mainwp' ); ?></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <?php
+                    $url_reinstall = wp_nonce_url(
+                        add_query_arg(
+                            array(
+                                'action' => 'reinstall_stable',
+                                'plugin' => plugin_basename( MAINWP_PLUGIN_FILE ),
+                            ),
+                            admin_url( 'admin.php?page=EarlyUpdates' )
+                        ),
+                        'reinstall_stable'
+                    );
+                    ?>
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-early">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Roll Back to Latest Stable Release', 'mainwp' ); ?></label>
+                        <div class="ten wide column" id="mainwp-roll-back-to-stable"  data-content="<?php esc_attr_e( 'Use this option if you experience issues with a pre-release build.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+                            <a href="<?php echo esc_url( $url_reinstall ); ?>" onclick="mainwp_tool_reinstall_to_stable_release_version(this); return false;" class="ui button basic"><?php esc_html_e( 'Roll Back to Stable Version', 'mainwp' ); ?></a>
+                            <?php printf( esc_html__( 'Revert your MainWP Dashboard to the latest stable version from %sWordPress.org%s.', 'mainwp' ), '<a href="https://wordpress.org/" target="_blank">', '</a>' ); ?>
+                        </div>
+                    </div>
+                    <?php
+
+                    $enable_child_early_updates = get_option( 'mainwp_settings_enable_child_early_updates', 0 );
+
+                    $url_enable_child = wp_nonce_url(
+                        add_query_arg(
+                            array(
+                                'action'               => 'child_early_updates',
+                                'enable_early_updates' => $enable_child_early_updates ? 0 : 1, // to switch setting value.
+                            ),
+                            admin_url( 'admin.php?page=EarlyUpdates' )
+                        ),
+                        'child_early_updates'
+                    );
+
+                    if ( $enable_child_early_updates ) {
+                        ?>
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-early">
+                            <label class="six wide column middle aligned"><?php esc_html_e( 'Disable Early Access for Child Plugins', 'mainwp' ); ?></label>
+                            <div class="ten wide column" id="mainwp-disable-access-for-child-plugins"  data-content="<?php esc_attr_e( 'If disabled, you’ll need to enable early access manually on each child site that you want to include in beta testing.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+                                <a href="<?php echo esc_url( $url_enable_child ); ?>" class="ui button basic"><?php esc_html_e( 'Disable Early Access for Child Plugins', 'mainwp' ); ?></a>
+                                <?php esc_html_e( 'Automatically disallow connected child sites to receive pre-release updates for the MainWP Child plugin.', 'mainwp' ); ?>
+                            </div>
+                        </div>
+                        <?php
+                    } else {
+                        ?>
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-early">
+                            <label class="six wide column middle aligned"><?php esc_html_e( 'Enable Early Access for Child Plugins', 'mainwp' ); ?></label>
+                            <div class="ten wide column" id="mainwp-enable-access-for-child-plugins"  data-content="<?php esc_attr_e( 'If disabled, you’ll need to enable early access manually on each child site that you want to include in beta testing.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+                                <a href="<?php echo esc_url( $url_enable_child ); ?>" class="ui button basic"><?php esc_html_e( 'Enable Early Access for Child Plugins', 'mainwp' ); ?></a>
+                                <?php esc_html_e( 'Automatically allow connected child sites to receive pre-release updates for the MainWP Child plugin.', 'mainwp' ); ?>
+                            </div>
+                        </div>
+                        <?php } ?>
+
+                    <?php
+
+                    /**
+                     * Action: mainwp_tools_form_bottom
+                     *
+                     * Fires at the bottom of mainwp tools form.
+                     *
+                     * @since 6.0
+                     */
+                    do_action( 'mainwp_early_updates_form_bottom' );
+                    ?>
+                    <div class="ui divider"></div>
+                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                    </form>
+                </div>
+            </div>
+        <?php
+        static::render_footer( 'EarlyUpdates' );
+    }
+
+
+    /**
+     * Method render_reinstall_notices()
+     */
+    private static function render_reinstall_notices() {
+        if ( empty( $_GET['reinstall'] ) ) { //phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            return;
+        }
+        $code  = sanitize_text_field( wp_unslash( $_GET['reinstall'] ) ); //phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $msgs  = array(
+            'success'                       => __( 'Plugin reinstalled successfully.', 'mainwp' ),
+            'delete_failed'                 => __( 'Failed to remove old plugin files.', 'mainwp' ),
+            'install_failed'                => __( 'Failed to install plugin from WordPress.org.', 'mainwp' ),
+            'installed_but_activate_failed' => __( 'Installed but activation failed.', 'mainwp' ),
+            'error'                         => __( 'Reinstall failed (invalid plugin).', 'mainwp' ),
+        );
+        $class = strpos( $code, 'success' ) === 0 ? 'green' : 'red';
+        $text  = $msgs[ $code ] ?? __( 'Unknown status.', 'mainwp' );
+        echo '<div class="ui message ' . esc_attr( $class ) . '">' . esc_html( $text ) . '</div>';
     }
 
     /**

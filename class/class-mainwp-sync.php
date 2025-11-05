@@ -183,6 +183,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 'siteId'                          => $pWebsite->id,
                 'child_actions_saved_days_number' => intval( $saved_days_number ),
                 'pingnonce'                       => MainWP_Utility::instance()->create_site_nonce( 'pingnonce', $pWebsite->id ),
+                'early_access_updates_enabled'     => get_option( 'mainwp_settings_enable_child_early_updates', 0 ),
             );
 
             $reg_verify = MainWP_DB::instance()->get_website_option( $pWebsite, 'register_verify_key', '' );

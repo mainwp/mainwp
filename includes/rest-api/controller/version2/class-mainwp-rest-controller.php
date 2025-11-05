@@ -1126,7 +1126,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
         $properties = isset( $schema['properties'] ) ? $schema['properties'] : array();
 
         // Exclude fields that specify a different context than the request context.
-        $context = $request['context'];
+        $context = isset( $request['context'] ) ? $request['context'] : 'view';
         if ( $context ) {
             foreach ( $properties as $name => $options ) {
                 if ( ! empty( $options['context'] ) && ! in_array( $context, $options['context'], true ) ) {

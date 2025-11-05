@@ -9,6 +9,7 @@
 
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Utility;
+use MainWP\Dashboard\MainWP_Settings;
 use MainWP\Dashboard\MainWP_Notification_Settings;
 use MainWP\Dashboard\MainWP_Settings_Indicator;
 use MainWP\Dashboard\MainWP_System_Utility;
@@ -16,6 +17,9 @@ use MainWP\Dashboard\Module\CostTracker\Cost_Tracker_Utility;
 use MainWP\Dashboard\Module\CostTracker\Cost_Tracker_Admin;
 use MainWP\Dashboard\Module\ApiBackups\Api_Backups_3rd_Party;
 use MainWP\Dashboard\Module\ApiBackups\Api_Backups_Utility;
+use MainWP\Dashboard\MainWP_Keys_Manager;
+use MainWP\Dashboard\MainWP_Api_Manager;
+use MainWP\Dashboard\MainWP_Connect;
 
 /**
  * Class MainWP_Rest_Settings_Controller
@@ -302,6 +306,68 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 ),
             )
         );
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/tools/edit',
+            array(
+                array(
+                    'methods'             => 'PUT, PATCH',
+                    'callback'            => array( $this, 'update_tools_settings' ),
+                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'args'                => $this->get_edit_tools_allowed_fields(),
+                ),
+            )
+        );
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/tools/disconnect-all-sites',
+            array(
+                array(
+                    'methods'             => WP_REST_Server::CREATABLE,
+                    'callback'            => array( $this, 'disconnect_all_sites' ),
+                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                ),
+            )
+        );
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/tools/disconnect-status/(?P<disconnect_id>[a-zA-Z0-9_.\-]+)',
+            array(
+                array(
+                    'methods'             => WP_REST_Server::READABLE,
+                    'callback'            => array( $this, 'get_disconnect_status' ),
+                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'args'                => array(
+                        'disconnect_id' => array(
+                            'required' => true,
+                            'type'     => 'string',
+                        ),
+                    ),
+                ),
+            )
+        );
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/tools/clear-activation-data',
+            array(
+                array(
+                    'methods'             => WP_REST_Server::CREATABLE,
+                    'callback'            => array( $this, 'clear_activation_data' ),
+                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                ),
+            )
+        );
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/tools/restore-info-messages',
+            array(
+                array(
+                    'methods'             => WP_REST_Server::CREATABLE,
+                    'callback'            => array( $this, 'restore_info_messages' ),
+                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                ),
+            )
+        );
 
         // Individual general settings.
         register_rest_route(
@@ -362,7 +428,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         }
 
         // Get current user id.
-        $user_id = get_current_user_id();
+        $user_id = $this->get_user_id();
+        if ( is_wp_error( $user_id ) ) {
+            return $user_id;
+        }
 
         try {
             // Hepper function to update if present.
@@ -1236,7 +1305,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         };
 
         // Update secrets if present.
-        $update_secrets_api = function ( $slug, $name = 'api_key', $value ) use ( &$updated ) {
+        $update_secrets_api = function ( $slug, $name = 'api_key', $value ) use ( &$updated ) { //  phpcs:ignore -- NOSONAR - complex.
             if ( ! empty( $slug ) && ! empty( $value ) ) {
                 Api_Backups_Utility::get_instance()->update_api_key( $slug, $value );
                 $updated[ $name ] = $value;
@@ -1252,8 +1321,8 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         $update_if_present( 'company_id', $api['options']['company_id'] ?? '' );
 
         // Update api key or password.
-        $update_secrets_api( $api['slug'] ?? '', 'api_key',$body['secrets']['api_key'] ?? '' );
-        $update_secrets_api( $api['slug'] ?? '', 'password',$body['password'] ?? '' );
+        $update_secrets_api( $api['slug'] ?? '', 'api_key', $body['secrets']['api_key'] ?? '' );
+        $update_secrets_api( $api['slug'] ?? '', 'password', $body['password'] ?? '' );
 
         return rest_ensure_response(
             array(
@@ -1273,17 +1342,306 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      */
     public function get_tool_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
         // Get tool settings.
-        $settings = array(
-            'mainwp_theme' => get_option( 'mainwp_selected_theme', 'default' ),
-            'guided_tours' => get_option( 'mainwp_enable_guided_tours', 0 ),
-            'chatbase'     => get_option( 'mainwp_enable_guided_chatbase', 0 ),
-            'guided_video' => get_option( 'mainwp_enable_guided_video', 0 ),
-        );
+        $settings = $this->get_tool_settings_data();
 
         return rest_ensure_response(
             array(
                 'success' => 1,
                 'data'    => $this->filter_response_data_by_allowed_fields( $settings, 'tool_view' ),
+            )
+        );
+    }
+
+    /**
+     * Update tool settings.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     *
+     * @return WP_Error|WP_REST_Response
+     */
+    public function update_tools_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        // Check content type.
+        $content_type = $this->validate_content_type( $request );
+        if ( is_wp_error( $content_type ) ) {
+            return $content_type;
+        }
+
+        // Get request body.
+        $body = $this->get_request_body( $request );
+        if ( is_wp_error( $body ) ) {
+            return $body;
+        }
+
+        $user_id = $this->get_user_id();
+        if ( is_wp_error( $user_id ) ) {
+            return $user_id;
+        }
+
+        // update theme option.
+        if ( isset( $body['mainwp_theme'] ) && ! empty( $body['mainwp_theme'] ) ) {
+            update_user_option( $user_id, 'mainwp_selected_theme', $body['mainwp_theme'] );
+        }
+
+        // Update option.
+        $this->update_option_if_present( $body, 'mainwp_theme', 'mainwp_selected_theme', 'string' );
+        $this->update_option_if_present( $body, 'guided_tours', 'mainwp_enable_guided_tours', 'bool' );
+        $this->update_option_if_present( $body, 'chatbase', 'mainwp_enable_guided_chatbase', 'bool' );
+        $this->update_option_if_present( $body, 'guided_video', 'mainwp_enable_guided_video', 'bool' );
+
+        return rest_ensure_response(
+            array(
+                'success' => 1,
+                'message' => __( 'Tools settings updated successfully.', 'mainwp' ),
+                'data'    => $this->filter_response_data_by_allowed_fields( $this->get_tool_settings_data(), 'tool_view' ),
+            )
+        );
+    }
+
+    /**
+     * Disconnect all sites.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     *
+     * @return WP_Error|WP_REST_Response
+     */
+    public function disconnect_all_sites( $request ) {
+
+        $websites = MainWP_DB::instance()->get_sites();
+        if ( empty( $websites ) ) {
+            return new WP_Error(
+                'no_website_found',
+                __( 'No website found.', 'mainwp' )
+            );
+        }
+
+        $disconnect_id = uniqid( 'disconnect_', true );
+
+        set_transient(
+            "mainwp_tool_disconnect_job_{$disconnect_id}",
+            array(
+                'status'     => 'pending',
+                'total'      => count( $websites ),
+                'processed'  => 0,
+                'failed'     => 0,
+                'created_at' => time(),
+                'websites'   => array_column( $websites, 'id' ),
+            ),
+            DAY_IN_SECONDS
+        );
+
+        // Schedule background task.
+        if ( function_exists( 'as_schedule_single_action' ) ) {
+            as_schedule_single_action(
+                time(),
+                'mainwp_cron_disconnect_batch',
+                array( $disconnect_id )
+            );
+        } else {
+            wp_schedule_single_event( time(), 'mainwp_cron_disconnect_batch', array( $disconnect_id ) );
+            spawn_cron(); // Run cron now.
+        }
+
+        // Return status url.
+        $status_url = $this->namespace . '/' . $this->rest_base . '/tools/disconnect-status/' . $disconnect_id;
+        return rest_ensure_response(
+            array(
+                'success'       => 1,
+                'message'       => __( 'Disconnect process started in background.', 'mainwp' ),
+                'disconnect_id' => $disconnect_id,
+                'status_url'    => rest_url( $status_url ),
+            )
+        );
+    }
+
+    /**
+     * Process disconnect batch.
+     *
+     * @param string $disconnect_id  Disconnect ID.
+     *
+     * @return void
+     */
+    public function process_disconnect_batch( $disconnect_id ) {  // phpcs:ignore -- NOSONAR
+        $disconnect_data = get_transient( "mainwp_tool_disconnect_job_{$disconnect_id}" );
+        if ( ! $disconnect_data || 'completed' === $disconnect_data['status'] ) {
+            return;
+        }
+
+        // Check if websites are available.
+        if ( empty( $disconnect_data['websites'] ) || ! is_array( $disconnect_data['websites'] ) ) {
+            return;
+        }
+
+        $batch_size  = 5; // process 5 websites at a time.
+        $website_ids = $disconnect_data['websites'];
+        $start_index = $disconnect_data['processed'];
+        $batch       = array_slice( $website_ids, $start_index, $batch_size );
+
+        foreach ( $batch as $website_id ) {
+            try {
+                $site = MainWP_DB::instance()->get_website_by_id( $website_id );
+                if ( ! $site ) {
+                    ++$disconnect_data['failed'];
+                    ++$disconnect_data['processed'];
+                    continue;
+                }
+
+                $result = MainWP_Connect::fetch_url_authed( $site, 'disconnect' );
+                if ( is_array( $result ) && isset( $result['result'] ) && 'success' === $result['result'] ) {
+                    ++$disconnect_data['processed'];
+                } else {
+                    ++$disconnect_data['failed'];
+                    ++$disconnect_data['processed'];
+                    $disconnect_data['errors'][] = array(
+                        'site_id' => $website_id,
+                        'error'   => $result['error'] ?? __( 'Unknown error', 'mainwp' ),
+                    );
+                }
+            } catch ( \Exception $e ) {
+                ++$disconnect_data['failed'];
+                ++$disconnect_data['processed'];
+            }
+        }
+
+        if ( $disconnect_data['processed'] >= $disconnect_data['total'] ) {
+            $disconnect_data['status']       = 'completed';
+            $disconnect_data['completed_at'] = time();
+        } elseif ( function_exists( 'as_schedule_single_action' ) ) {
+            as_schedule_single_action(
+                time() + 3,
+                'mainwp_cron_disconnect_batch',
+                array( $disconnect_id )
+            );
+        } else {
+            wp_schedule_single_event( time() + 3, 'mainwp_disconnect_site_batch', array( $disconnect_id ) );
+            spawn_cron(); // Run Cron now.
+        }
+
+        set_transient( "mainwp_tool_disconnect_job_{$disconnect_id}", $disconnect_data, DAY_IN_SECONDS );
+    }
+
+    /**
+     * Get disconnect job status.
+     *
+     * @param WP_REST_Request $request REST request.
+     *
+     * @return WP_REST_Response|WP_Error Response or error.
+     */
+    public function get_disconnect_status( $request ) {
+        $disconnect_id = $request->get_param( 'disconnect_id' ); // Get id from url.
+
+        if ( empty( $disconnect_id ) ) {
+            return new WP_Error(
+                'missing_disconnect_id',
+                __( 'Disconnect ID is required.', 'mainwp' )
+            );
+        }
+
+        // Get disconnect data.
+        $disconnect_data = get_transient( "mainwp_tool_disconnect_job_{$disconnect_id}" );
+
+        if ( ! $disconnect_data ) {
+            return new WP_Error(
+                'disconnect_job_not_found',
+                __( 'Job not found.', 'mainwp' )
+            );
+        }
+
+        return rest_ensure_response(
+            array(
+                'success'      => 'completed' === $disconnect_data['status'] && 0 === $disconnect_data['failed'],
+                'status'       => $disconnect_data['status'],
+                'total'        => $disconnect_data['total'],
+                'processed'    => $disconnect_data['processed'],
+                'failed'       => $disconnect_data['failed'],
+                'progress'     => round( ( $disconnect_data['processed'] / $disconnect_data['total'] ) * 100, 2 ),
+                'errors'       => ! empty( $disconnect_data['errors'] ) ? array_slice( $disconnect_data['errors'], 0, 10 ) : array(),
+                'started_at'   => $disconnect_data['started_at'],
+                'completed_at' => $disconnect_data['completed_at'] ?? null,
+            )
+        );
+    }
+
+    /**
+     * Clear activation data.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     *
+     * @return WP_Error|WP_REST_Response
+     */
+    public function clear_activation_data( $request ) {  // phpcs:ignore -- NOSONAR - complex.
+        // Clear activation data.
+        delete_option( 'mainwp_extensions_api_username' );
+        delete_option( 'mainwp_extensions_api_password' );
+        delete_option( 'mainwp_extensions_api_save_login' );
+        delete_option( 'mainwp_extensions_plan_info' );
+
+        // Clear master api key.
+        MainWP_Keys_Manager::instance()->update_key_value( 'mainwp_extensions_master_api_key', false );
+
+        // Clear extension api key.
+        $new_extensions = array();
+        $extensions     = get_option( 'mainwp_extensions', array() );
+
+        if ( is_array( $extensions ) ) {
+            foreach ( $extensions as $ext ) {
+                if ( isset( $ext['api'] ) && isset( $ext['apiManager'] ) && ! empty( $ext['apiManager'] ) ) {
+                    if ( isset( $ext['api_key'] ) ) {
+                        $ext['api_key'] = '';
+                    }
+                    if ( isset( $ext['activation_email'] ) ) {
+                        $ext['activation_email'] = '';
+                    }
+                    if ( isset( $ext['activated_key'] ) ) {
+                        $ext['activated_key'] = 'Deactivated';
+                    }
+
+                    $act_info = MainWP_Api_Manager::instance()->get_activation_info( $ext['api'] );
+                    if ( isset( $act_info['api_key'] ) ) {
+                        $act_info['api_key'] = '';
+                    }
+                    if ( isset( $act_info['activation_email'] ) ) {
+                        $act_info['activation_email'] = '';
+                    }
+                    if ( isset( $act_info['activated_key'] ) ) {
+                        $act_info['activated_key'] = 'Deactivated';
+                    }
+                    MainWP_Api_Manager::instance()->set_activation_info( $ext['api'], $act_info );
+                }
+                $new_extensions[] = $ext;
+            }
+        }
+
+        MainWP_Utility::update_option( 'mainwp_extensions', $new_extensions );
+        update_option( 'mainwp_extensions_all_activation_cached', '' );
+
+        return rest_ensure_response(
+            array(
+                'success' => 1,
+                'message' => __( 'Activation data cleared successfully.', 'mainwp' ),
+            )
+        );
+    }
+
+    /**
+     * Restore info messages by clearing the saved notice status.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     *
+     * @return WP_Error|WP_REST_Response
+     */
+    public function restore_info_messages( $request ) {
+        $user_id = $this->get_user_id();
+        if ( is_wp_error( $user_id ) ) {
+            return $user_id;
+        }
+
+        // Delete user option.
+        delete_user_option( $user_id, 'mainwp_notice_saved_status' );
+
+        return rest_ensure_response(
+            array(
+                'success' => 1,
+                'message' => __( 'Info messages restored successfully.', 'mainwp' ),
             )
         );
     }
@@ -1972,7 +2330,6 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'description'       => __( 'Account email (for Cloudways).', 'mainwp' ),
                 'sanitize_callback' => 'sanitize_email',
                 'validate_callback' => 'is_email',
-
             ),
             'company_id'    => array(
                 'type'              => 'string',
@@ -1992,6 +2349,45 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                         'sanitize_callback' => 'sanitize_text_field',
                     ),
                 ),
+            ),
+        );
+    }
+
+    /**
+     * Get edit tools allowed fields.
+     *
+     * @return array
+     */
+    public function get_edit_tools_allowed_fields() { // phpcs:ignore -- NOSONAR - long method.
+        $themes = array( 'default', 'default-2024', 'classic', 'dark', 'wpadmin', 'minimalistic' );
+        return array(
+            'mainwp_theme' => array(
+                'required'          => false,
+                'description'       => __( 'MainWP theme.', 'mainwp' ),
+                'type'              => 'string',
+                'sanitize_callback' => $this->make_enum_sanitizer( $themes, 'string' ),
+                'validate_callback' => $this->make_enum_validator( $themes, 'string' ),
+            ),
+            'guided_tours' => array(
+                'required'          => false,
+                'description'       => __( 'Enable guided tours.', 'mainwp' ),
+                'type'              => 'boolean',
+                'sanitize_callback' => 'rest_sanitize_boolean',
+                'validate_callback' => 'rest_is_boolean',
+            ),
+            'chatbase'     => array(
+                'required'          => false,
+                'description'       => __( 'Enable chatbase.', 'mainwp' ),
+                'type'              => 'boolean',
+                'sanitize_callback' => 'rest_sanitize_boolean',
+                'validate_callback' => 'rest_is_boolean',
+            ),
+            'guided_video' => array(
+                'required'          => false,
+                'description'       => __( 'Enable youtube embeds.', 'mainwp' ),
+                'type'              => 'boolean',
+                'sanitize_callback' => 'rest_sanitize_boolean',
+                'validate_callback' => 'rest_is_boolean',
             ),
         );
     }
@@ -2808,6 +3204,24 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
+     * Get user ID.
+     *
+     * @return int|WP_Error
+     */
+    protected function get_user_id() {
+        $user_id = get_current_user_id();
+
+        // Validate user ID
+        if ( empty( $user_id ) ) {
+            return new WP_Error(
+                'invalid_user',
+                __( 'User not authenticated.', 'mainwp' ),
+            );
+        }
+        return $user_id;
+    }
+
+    /**
      * Cast field value to type.
      *
      * @param mixed  $val  Value to cast.
@@ -2993,6 +3407,22 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                     'api_key' => array( Api_Backups_3rd_Party::class, 'get_kinsta_api_key' ),
                 ),
             ),
+        );
+    }
+
+    /**
+     * Get tool settings data.
+     *
+     * @return array<string,mixed> Tool settings data.
+     *
+     * @uses MainWP_Settings::get_instance()->get_current_user_theme()
+     */
+    protected function get_tool_settings_data() {
+        return array(
+            'mainwp_theme' => MainWP_Settings::get_instance()->get_current_user_theme(),
+            'guided_tours' => get_option( 'mainwp_enable_guided_tours', 0 ),
+            'chatbase'     => get_option( 'mainwp_enable_guided_chatbase', 0 ),
+            'guided_video' => get_option( 'mainwp_enable_guided_video', 0 ),
         );
     }
 

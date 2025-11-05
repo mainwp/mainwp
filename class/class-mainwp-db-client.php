@@ -1228,16 +1228,49 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $limit   = '';
         $orderby = 'clients_fields.field_id DESC';
 
+        // Parse exclude and include lists.
+        $parse_lists = static function ( $lists ) {
+            // Convert string to array.
+            if ( is_string( $lists ) ) {
+                $lists = array_map( 'trim', explode( ',', $lists ) );
+            }
+
+            // Out default.
+            $out = array(
+                'ids'   => array(),
+                'names' => array(),
+            );
+
+            foreach ( (array) $lists as $v ) {
+                if ( '' === $v || null === $v ) {
+                    continue;
+                }
+
+                if ( is_int( $v ) || ( is_string( $v ) && ctype_digit( $v ) ) ) {
+                    $out['ids'][] = (int) $v;
+                } else {
+                    $out['names'][] = (string) $v;
+                }
+            }
+            return $out;
+        };
+
         // Handle exclude.
         if ( isset( $params['exclude'] ) && ! empty( $params['exclude'] ) ) {
-            $exclude_ids = wp_parse_id_list( $params['exclude'] );
-            $where      .= empty( $exclude_ids ) ? '' : ' AND clients_fields.field_id NOT IN (' . implode( ',', $exclude_ids ) . ')';
+            ['ids' => $ids, 'names' => $names] = $parse_lists( $params['exclude'] );
+            $sub_conditions                    = array();
+            $sub_conditions[]                  = empty( $ids ) ? '' : $this->wpdb->prepare( 'clients_fields.field_id NOT IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', ...$ids );
+            $sub_conditions[]                  = empty( $names ) ? '' : $this->wpdb->prepare( 'clients_fields.field_name NOT IN (' . implode( ',', array_fill( 0, count( $names ), '%s' ) ) . ')', ...$names );
+            $where                            .= empty( $sub_conditions ) ? '' : ' AND (' . implode( ' OR ', $sub_conditions ) . ')';
         }
 
         // Handle include.
         if ( isset( $params['include'] ) && ! empty( $params['include'] ) ) {
-            $include_ids = wp_parse_id_list( $params['include'] );
-            $where      .= empty( $include_ids ) ? '' : ' AND clients_fields.field_id IN (' . implode( ',', $include_ids ) . ')';
+            ['ids' => $ids, 'names' => $names] = $parse_lists( $params['include'] );
+            $sub_conditions                    = array();
+            $sub_conditions[]                  = empty( $ids ) ? '' : $this->wpdb->prepare( 'clients_fields.field_id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', ...$ids );
+            $sub_conditions[]                  = empty( $names ) ? '' : $this->wpdb->prepare( 'clients_fields.field_name IN (' . implode( ',', array_fill( 0, count( $names ), '%s' ) ) . ')', ...$names );
+            $where                            .= empty( $sub_conditions ) ? '' : ' AND (' . implode( ' OR ', $sub_conditions ) . ')';
         }
 
         // Handle search.

@@ -77,6 +77,9 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         add_action( 'mainwp_cronuptimemonitoringcheck_action', array( MainWP_Uptime_Monitoring_Schedule::instance(), 'cron_uptime_check' ) );
         add_action( 'mainwp_cron_perform_general_process', array( $this, 'cron_perform_general_process' ) );
 
+        // Disconnect all sites API tool.
+        add_action( 'mainwp_cron_disconnect_batch', array( \MainWP_Rest_Settings_Controller::instance(), 'process_disconnect_batch' ) );
+
         // phpcs:ignore -- required for dashboard's minutely scheduled jobs.
         add_filter( 'cron_schedules', array( $this, 'get_cron_schedules' ), 9 );
 

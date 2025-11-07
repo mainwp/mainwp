@@ -20,7 +20,9 @@ use MainWP\Dashboard\Module\ApiBackups\Api_Backups_Utility;
 use MainWP\Dashboard\MainWP_Keys_Manager;
 use MainWP\Dashboard\MainWP_Api_Manager;
 use MainWP\Dashboard\MainWP_Connect;
-
+use MainWP\Dashboard\MainWP_Logger;
+use MainWP\Dashboard\MainWP_Sync;
+use MainWP\Dashboard\MainWP_Manage_Sites_View;
 /**
  * Class MainWP_Rest_Settings_Controller
  *
@@ -43,6 +45,13 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @var string
      */
     protected $rest_base = 'settings';
+
+    /**
+     * Batch size.
+     *
+     * @var int
+     */
+    private static $batch_size = 5;
 
     /**
      * Constructor.
@@ -320,6 +329,62 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         );
         register_rest_route(
             $this->namespace,
+            '/' . $this->rest_base . '/tools/destroy-sessions',
+            array(
+                array(
+                    'methods'             => WP_REST_Server::CREATABLE,
+                    'callback'            => array( $this, 'destroy_sessions' ),
+                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                ),
+            )
+        );
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/tools/destroy-sessions-status/(?P<destroy_id>[a-zA-Z0-9_.\-]+)',
+            array(
+                array(
+                    'methods'             => WP_REST_Server::READABLE,
+                    'callback'            => array( $this, 'get_destroy_sessions_status' ),
+                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'args'                => array(
+                        'destroy_id' => array(
+                            'required' => true,
+                            'type'     => 'string',
+                        ),
+                    ),
+                ),
+            )
+        );
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/tools/renew-connections',
+            array(
+                array(
+                    'methods'             => WP_REST_Server::CREATABLE,
+                    'callback'            => array( $this, 'renew_connections' ),
+                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                ),
+            )
+        );
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/tools/renew-connections-status/(?P<renew_id>[a-zA-Z0-9_.\-]+)',
+            array(
+                array(
+                    'methods'             => WP_REST_Server::READABLE,
+                    'callback'            => array( $this, 'get_renew_connection_status' ),
+                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'args'                => array(
+                        'renew_id' => array(
+                            'required' => true,
+                            'type'     => 'string',
+                        ),
+                    ),
+                ),
+            )
+        );
+        register_rest_route(
+            $this->namespace,
             '/' . $this->rest_base . '/tools/disconnect-all-sites',
             array(
                 array(
@@ -331,7 +396,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         );
         register_rest_route(
             $this->namespace,
-            '/' . $this->rest_base . '/tools/disconnect-status/(?P<disconnect_id>[a-zA-Z0-9_.\-]+)',
+            '/' . $this->rest_base . '/tools/disconnect-all-sites-status/(?P<disconnect_id>[a-zA-Z0-9_.\-]+)',
             array(
                 array(
                     'methods'             => WP_REST_Server::READABLE,
@@ -365,20 +430,6 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                     'methods'             => WP_REST_Server::CREATABLE,
                     'callback'            => array( $this, 'restore_info_messages' ),
                     'permission_callback' => array( $this, 'get_rest_permissions_check' ),
-                ),
-            )
-        );
-
-        // Individual general settings.
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base . '/(?P<id_domain>(\d+|[A-Za-z0-9-\.]+\.[A-Za-z]{2,6}))/general',
-            array(
-                array(
-                    'methods'             => WP_REST_Server::READABLE,
-                    'callback'            => array( $this, 'get_individual_general_settings' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
-                    'args'                => $this->get_allowed_id_domain_field(),
                 ),
             )
         );
@@ -1398,6 +1449,341 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
+     * Destroy sessions.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     *
+     * @return WP_Error|WP_REST_Response
+     */
+    public function destroy_sessions( $request ) {
+        $websites = $this->get_websites();
+        if ( is_wp_error( $websites ) ) {
+            return $websites;
+        }
+
+        $destroy_id = uniqid( 'destroy_', true );
+        $websites   = array_column( $websites, 'id' );
+        set_transient(
+            "mainwp_tool_destroy_job_{$destroy_id}",
+            array(
+                'status'     => 'pending',
+                'total'      => count( $websites ),
+                'processed'  => 0,
+                'failed'     => 0,
+                'created_at' => time(),
+                'websites'   => $websites,
+            ),
+            DAY_IN_SECONDS
+        );
+
+        // Schedule background task.
+        if ( function_exists( 'as_schedule_single_action' ) ) {
+            as_schedule_single_action(
+                time(),
+                'mainwp_cron_destroy_session_batch',
+                array( $destroy_id )
+            );
+        } else {
+            wp_schedule_single_event( time(), 'mainwp_cron_destroy_session_batch', array( $destroy_id ) );
+            spawn_cron(); // Run cron now.
+        }
+
+        // Return status url.
+        $status_url = $this->namespace . '/' . $this->rest_base . '/tools/destroy-sessions-status/' . $destroy_id;
+        return rest_ensure_response(
+            array(
+                'success'    => 1,
+                'message'    => __( 'Destroy sessions process started in background.', 'mainwp' ),
+                'destroy_id' => $destroy_id,
+                'status_url' => rest_url( $status_url ),
+            )
+        );
+    }
+
+    /**
+     * Get destroy sessions status.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     *
+     * @return WP_Error|WP_REST_Response
+     */
+    public function get_destroy_sessions_status( $request ) {  // phpcs:ignore -- NOSONAR - complex.
+
+        $destroy_id = $request->get_param( 'destroy_id' ); // Get id from url.
+        if ( empty( $destroy_id ) ) {
+            return new WP_Error(
+                'missing_destroy_id',
+                __( 'Destroy ID is required.', 'mainwp' )
+            );
+        }
+
+        $destroy_data = get_transient( "mainwp_tool_destroy_job_{$destroy_id}" );
+        if ( ! $destroy_data ) {
+            return new WP_Error(
+                'destroy_session_job_not_found',
+                __( 'Destroy session job not found.', 'mainwp' )
+            );
+        }
+
+        return rest_ensure_response(
+            array(
+                'success'      => 'completed' === $destroy_data['status'] && 0 === $destroy_data['failed'],
+                'status'       => $destroy_data['status'],
+                'total'        => $destroy_data['total'],
+                'processed'    => $destroy_data['processed'],
+                'failed'       => $destroy_data['failed'],
+                'progress'     => round( ( $destroy_data['processed'] / $destroy_data['total'] ) * 100, 2 ),
+                'errors'       => ! empty( $destroy_data['errors'] ) ? array_slice( $destroy_data['errors'], 0, 10 ) : array(),
+                'started_at'   => $destroy_data['started_at'] ?? '',
+                'completed_at' => $destroy_data['completed_at'] ?? '',
+            )
+        );
+    }
+
+    /**
+     * Process destroy session batch.
+     *
+     * @param string $destroy_id Destroy ID.
+     *
+     * @uses MainWP_System_Utility::can_edit_website()
+     *
+     * @return void
+     */
+    public function process_destroy_session_batch( $destroy_id ) {  // phpcs:ignore -- NOSONAR - complex.
+        $destroy_data = get_transient( "mainwp_tool_destroy_job_{$destroy_id}" );
+        if ( ! $destroy_data || 'completed' === $destroy_data['status'] ) {
+            return;
+        }
+        $website_ids = $destroy_data['websites'];
+        $start_index = $destroy_data['processed'];
+        $batch       = array_slice( $website_ids, $start_index, $this->batch_size );
+
+        foreach ( $batch as $website_id ) {
+            try {
+                $website = $this->get_website_by_id( $website_id, $destroy_data );
+                if ( empty( $website ) ) {
+                    continue;
+                }
+
+                if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+                    ++$destroy_data['processed'];
+                } else {
+                    ++$destroy_data['failed'];
+                    ++$destroy_data['processed'];
+                    $destroy_data['errors'][] = array(
+                        'site_id' => $website_id,
+                        'error'   => __( 'You cannot edit this website.', 'mainwp' ),
+                    );
+                }
+            } catch ( \Exception $e ) {
+                ++$destroy_data['failed'];
+                ++$destroy_data['processed'];
+                $destroy_data['errors'][] = array(
+                    'site_id' => $website_id,
+                    'error'   => $e->getMessage(),
+                );
+            }
+        }
+
+        // Reschedule or completed.
+        if ( $destroy_data['processed'] >= $destroy_data['total'] ) {
+            $destroy_data['status']       = 'completed';
+            $destroy_data['completed_at'] = time();
+            delete_transient( "mainwp_tool_destroy_job_{$destroy_id}" ); // Delete transient when completed.
+        } elseif ( function_exists( 'as_schedule_single_action' ) ) {
+            as_schedule_single_action(
+                time() + 3,
+                'mainwp_cron_destroy_session_batch',
+                array( $destroy_id )
+            );
+        } else {
+            wp_schedule_single_event( time() + 3, 'mainwp_cron_destroy_session_batch', array( $destroy_id ) );
+            spawn_cron(); // Run Cron now.
+        }
+
+        // Update transient.
+        set_transient( "mainwp_tool_destroy_job_{$destroy_id}", $destroy_data, DAY_IN_SECONDS );
+    }
+
+    /**
+     * Renew connections.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     *
+     * @return WP_Error|WP_REST_Response
+     */
+    public function renew_connections( $request ) {
+        $websites = $this->get_websites();
+        if ( is_wp_error( $websites ) ) {
+            return $websites;
+        }
+
+        $renew_id = uniqid( 'renew_', true );
+        $websites = array_column( $websites, 'id' );
+        set_transient(
+            "mainwp_tool_renew_job_{$renew_id}",
+            array(
+                'status'     => 'pending',
+                'total'      => count( $websites ),
+                'processed'  => 0,
+                'failed'     => 0,
+                'created_at' => time(),
+                'websites'   => $websites,
+            ),
+            DAY_IN_SECONDS
+        );
+
+        // Schedule background task.
+        if ( function_exists( 'as_schedule_single_action' ) ) {
+            as_schedule_single_action(
+                time(),
+                'mainwp_cron_renew_connection_batch',
+                array( $renew_id )
+            );
+        } else {
+            wp_schedule_single_event( time(), 'mainwp_cron_renew_connection_batch', array( $renew_id ) );
+            spawn_cron(); // Run cron now.
+        }
+
+        // Return status url.
+        $status_url = $this->namespace . '/' . $this->rest_base . '/tools/renew-connections-status/' . $renew_id;
+        return rest_ensure_response(
+            array(
+                'success'    => 1,
+                'message'    => __( 'Renew connection process started in background.', 'mainwp' ),
+                'renew_id'   => $renew_id,
+                'status_url' => rest_url( $status_url ),
+            )
+        );
+    }
+
+    /**
+     * Get renew connection status.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     *
+     * @return WP_Error|WP_REST_Response
+     */
+    public function get_renew_connection_status( $request ) {
+        $renew_id = $request->get_param( 'renew_id' ); // Get id from url.
+
+        if ( empty( $renew_id ) ) {
+            return new WP_Error(
+                'missing_renew_id',
+                __( 'Renew ID is required.', 'mainwp' )
+            );
+        }
+
+        // Get disconnect data.
+        $renew_data = get_transient( "mainwp_tool_renew_job_{$renew_id}" );
+
+        if ( ! $renew_data ) {
+            return new WP_Error(
+                'renew_connection_job_not_found',
+                __( 'Renew connection job not found.', 'mainwp' )
+            );
+        }
+
+        return rest_ensure_response(
+            array(
+                'success'      => 'completed' === $renew_data['status'] && 0 === $renew_data['failed'],
+                'status'       => $renew_data['status'],
+                'total'        => $renew_data['total'],
+                'processed'    => $renew_data['processed'],
+                'failed'       => $renew_data['failed'],
+                'progress'     => round( ( $renew_data['processed'] / $renew_data['total'] ) * 100, 2 ),
+                'errors'       => ! empty( $renew_data['errors'] ) ? array_slice( $renew_data['errors'], 0, 10 ) : array(),
+                'started_at'   => $renew_data['started_at'] ?? '',
+                'completed_at' => $renew_data['completed_at'] ?? '',
+            )
+        );
+    }
+
+    /**
+     * Process renew connection batch.
+     *
+     * @param string $renew_id Renew ID.
+     *
+     * @uses MainWP_Sync::sync_site()
+     * @uses MainWP_Connect::fetch_url_authed()
+     * @uses MainWP_Manage_Sites_View::m_reconnect_site()
+     * @uses MainWP_Logger::instance()->info_for_website()
+     */
+    public function process_renew_connection_batch( $renew_id ) { // phpcs:ignore -- NOSONAR - complex.
+        $renew_data = get_transient( "mainwp_tool_renew_job_{$renew_id}" );
+        if ( ! $renew_data || 'completed' === $renew_data['status'] ) {
+            return;
+        }
+        $website_ids = $renew_data['websites'];
+        $start_index = $renew_data['processed'];
+        $batch       = array_slice( $website_ids, $start_index, $this->batch_size );
+
+        foreach ( $batch as $website_id ) {
+            try {
+                $website = $this->get_website_by_id( $website_id, $renew_data );
+                if ( empty( $website ) ) {
+                    continue;
+                }
+
+                if ( '' !== $website->sync_errors ) {
+                    // try reconnect, if failed.
+                    MainWP_Sync::sync_site( $website, true );
+                }
+
+                $result = MainWP_Connect::fetch_url_authed( $website, 'renew' );
+                if ( is_array( $result ) && isset( $result['result'] ) && 'success' === $result['result'] ) {
+                    // reconnect immediately, to renew.
+                    if ( MainWP_Manage_Sites_View::m_reconnect_site( $website, false ) ) {
+                        MainWP_Logger::instance()->info_for_website( $website, 'renew', 'Renew connection successfully.' );
+                        ++$renew_data['processed'];
+                    } else {
+                        ++$renew_data['failed'];
+                        ++$renew_data['processed'];
+                        $renew_data['errors'][] = array(
+                            'site_id' => $website_id,
+                            'error'   => $result['error'] ?? __( 'Try to reconnect site failed', 'mainwp' ),
+                        );
+                    }
+                } else {
+                    ++$renew_data['failed'];
+                    ++$renew_data['processed'];
+                    $renew_data['errors'][] = array(
+                        'site_id' => $website_id,
+                        'error'   => $result['error'] ?? __( 'Try to disconnect site failed', 'mainwp' ),
+                    );
+                    MainWP_Logger::instance()->info_for_website( $website, 'renew', 'Try to disconnect site failed.' );
+                }
+            } catch ( \Exception $e ) {
+                ++$renew_data['failed'];
+                ++$renew_data['processed'];
+                $renew_data['errors'][] = array(
+                    'site_id' => $website_id,
+                    'error'   => $e->getMessage(),
+                );
+            }
+        }
+
+        // Reschedule or completed.
+        if ( $renew_data['processed'] >= $renew_data['total'] ) {
+            $renew_data['status']       = 'completed';
+            $renew_data['completed_at'] = time();
+            delete_transient( "mainwp_tool_renew_job_{$renew_id}" ); // Delete transient when completed.
+        } elseif ( function_exists( 'as_schedule_single_action' ) ) {
+            as_schedule_single_action(
+                time() + 3,
+                'mainwp_cron_renew_connection_batch',
+                array( $renew_id )
+            );
+        } else {
+            wp_schedule_single_event( time() + 3, 'mainwp_cron_renew_connection_batch', array( $renew_id ) );
+            spawn_cron(); // Run Cron now.
+        }
+
+        // Update transient.
+        set_transient( "mainwp_tool_renew_job_{$renew_id}", $renew_data, DAY_IN_SECONDS );
+    }
+
+    /**
      * Disconnect all sites.
      *
      * @param WP_REST_Request $request Full details about the request.
@@ -1405,17 +1791,12 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function disconnect_all_sites( $request ) {
-
-        $websites = MainWP_DB::instance()->get_sites();
-        if ( empty( $websites ) ) {
-            return new WP_Error(
-                'no_website_found',
-                __( 'No website found.', 'mainwp' )
-            );
+        $websites = $this->get_websites();
+        if ( is_wp_error( $websites ) ) {
+            return $websites;
         }
 
         $disconnect_id = uniqid( 'disconnect_', true );
-
         set_transient(
             "mainwp_tool_disconnect_job_{$disconnect_id}",
             array(
@@ -1458,6 +1839,8 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      *
      * @param string $disconnect_id  Disconnect ID.
      *
+     * @uses MainWP_Connect::fetch_url_authed()
+     *
      * @return void
      */
     public function process_disconnect_batch( $disconnect_id ) {  // phpcs:ignore -- NOSONAR
@@ -1471,21 +1854,18 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return;
         }
 
-        $batch_size  = 5; // process 5 websites at a time.
         $website_ids = $disconnect_data['websites'];
         $start_index = $disconnect_data['processed'];
-        $batch       = array_slice( $website_ids, $start_index, $batch_size );
+        $batch       = array_slice( $website_ids, $start_index, $this->batch_size );
 
         foreach ( $batch as $website_id ) {
             try {
-                $site = MainWP_DB::instance()->get_website_by_id( $website_id );
-                if ( ! $site ) {
-                    ++$disconnect_data['failed'];
-                    ++$disconnect_data['processed'];
+                $website = $this->get_website_by_id( $website_id, $disconnect_data );
+                if ( empty( $website ) ) {
                     continue;
                 }
 
-                $result = MainWP_Connect::fetch_url_authed( $site, 'disconnect' );
+                $result = MainWP_Connect::fetch_url_authed( $website, 'disconnect' );
                 if ( is_array( $result ) && isset( $result['result'] ) && 'success' === $result['result'] ) {
                     ++$disconnect_data['processed'];
                 } else {
@@ -1499,12 +1879,17 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             } catch ( \Exception $e ) {
                 ++$disconnect_data['failed'];
                 ++$disconnect_data['processed'];
+                $disconnect_data['errors'][] = array(
+                    'site_id' => $website_id,
+                    'error'   => $e->getMessage(),
+                );
             }
         }
 
         if ( $disconnect_data['processed'] >= $disconnect_data['total'] ) {
             $disconnect_data['status']       = 'completed';
             $disconnect_data['completed_at'] = time();
+            delete_transient( "mainwp_tool_disconnect_job_{$disconnect_id}" ); // Delete transient when completed.
         } elseif ( function_exists( 'as_schedule_single_action' ) ) {
             as_schedule_single_action(
                 time() + 3,
@@ -1566,6 +1951,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      *
      * @param WP_REST_Request $request Full details about the request.
      *
+     * @uses MainWP_Keys_Manager::instance()->update_key_value()
+     * @uses MainWP_Api_Manager::instance()->get_activation_info()
+     * @uses MainWP_Api_Manager::instance()->set_activation_info()
+     *
      * @return WP_Error|WP_REST_Response
      */
     public function clear_activation_data( $request ) {  // phpcs:ignore -- NOSONAR - complex.
@@ -1612,7 +2001,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         }
 
         MainWP_Utility::update_option( 'mainwp_extensions', $new_extensions );
-        update_option( 'mainwp_extensions_all_activation_cached', '' );
+        MainWP_Utility::update_option( 'mainwp_extensions_all_activation_cached', '' );
 
         return rest_ensure_response(
             array(
@@ -1642,58 +2031,6 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             array(
                 'success' => 1,
                 'message' => __( 'Info messages restored successfully.', 'mainwp' ),
-            )
-        );
-    }
-
-    /**
-     * Get individual general settings.
-     *
-     * @param WP_REST_Request $request Full details about the request.
-     *
-     * @uses MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by()
-     *
-     * @return WP_Error|WP_REST_Response
-     */
-    public function get_individual_general_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
-        $website = $this->get_request_item( $request );
-
-        if ( empty( $website ) || is_wp_error( $website ) ) {
-            return rest_ensure_response(
-                array(
-                    'success' => 0,
-                    'message' => __( 'Website not found.', 'mainwp' ),
-                )
-            );
-        }
-
-        // Map settings.
-        $settings = array(
-            'name'                       => isset( $website->name ) ? $website->name : '',
-            'admin_name'                 => isset( $website->adminname ) ? $website->adminname : '',
-            'unique_id'                  => isset( $website->uniqueId ) ? $website->uniqueId : '',
-            'verify_certificate'         => isset( $website->verify_certificate ) ? $website->verify_certificate : 0,
-            'ssl_version'                => isset( $website->ssl_version ) ? $website->ssl_version : 0,
-            'verify_connection_method'   => isset( $website->verify_method ) ? $website->verify_method : 0,
-            'openssl_signature'          => isset( $website->signature_algo ) ? $website->signature_algo : 0,
-            'force_use_ipv4'             => isset( $website->force_use_ipv4 ) ? $website->force_use_ipv4 : 0,
-            'http_user'                  => isset( $website->http_user ) ? $website->http_user : '',
-            'http_pass'                  => isset( $website->http_pass ) ? $website->http_pass : '',
-            'suspended'                  => isset( $website->suspended ) ? $website->suspended : 0,
-            'backup_before_upgrade'      => isset( $website->backup_before_upgrade ) ? $website->backup_before_upgrade : 0,
-            'backup_before_upgrade_days' => isset( $website->backup_before_upgrade_days ) ? $website->backup_before_upgrade_days : 0,
-            'automatic_update'           => isset( $website->automatic_update ) ? $website->automatic_update : 0,
-            'ignore_core_updates'        => isset( $website->is_ignoreCoreUpdates ) ? $website->is_ignoreCoreUpdates : 0,
-            'ignore_plugin_updates'      => isset( $website->is_ignorePluginUpdates ) ? $website->is_ignorePluginUpdates : 0,
-            'ignore_theme_updates'       => isset( $website->is_ignoreThemeUpdates ) ? $website->is_ignoreThemeUpdates : 0,
-            'connected'                  => isset( $website->added_timestamp ) ? $this->format_date( $website->added_timestamp ) : 0,
-            'client_id'                  => isset( $website->client_id ) ? $website->client_id : 0,
-        );
-
-        return rest_ensure_response(
-            array(
-                'success' => 1,
-                'data'    => $this->filter_response_data_by_allowed_fields( $settings, 'individual_view' ),
             )
         );
     }
@@ -2678,11 +3015,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * Validate time format.
      *
      * @param string          $value Time format.
-     * @param WP_REST_Request $request Request object.
      *
      * @return bool|WP_Error
      */
-    public function validate_time_format( $value, $request ) {
+    public function validate_time_format( $value ) {
         if ( empty( $value ) ) {
             return true;
         }
@@ -3033,22 +3369,6 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
-     * Get allowed fields for settings.
-     *
-     * @return array
-     */
-    private function get_allowed_id_domain_field() {
-        return array(
-            'id_domain' => array(
-                'required'          => true,
-                'description'       => __( 'Site ID (number) or domain (string).', 'mainwp' ),
-                'type'              => 'string',
-                'sanitize_callback' => 'sanitize_text_field',
-            ),
-        );
-    }
-
-    /**
      * Get request body.
      *
      * @param WP_REST_Request $request Full details about the request.
@@ -3204,6 +3524,48 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
+     * Get all websites.
+     *
+     * @uses MainWP_DB::instance()->get_sites()
+     *
+     * @return array|WP_Error
+     */
+    private function get_websites() {
+        $websites = MainWP_DB::instance()->get_sites();
+        if ( empty( $websites ) ) {
+            return new WP_Error(
+                'no_website_found',
+                __( 'No website found.', 'mainwp' )
+            );
+        }
+        return $websites;
+    }
+
+    /**
+     * Get website by id.
+     *
+     * @param int   $website_id Website ID.
+     * @param array $process_data Process data.
+     *
+     * @uses MainWP_DB::instance()->get_website_by_id()
+     *
+     * @return object|null
+     */
+    private function get_website_by_id( $website_id, &$process_data ) {
+        $website = MainWP_DB::instance()->get_website_by_id( $website_id );
+        if ( empty( $website ) ) {
+            ++$process_data['failed'];
+            ++$process_data['processed'];
+            $process_data['errors'][] = array(
+                'site_id' => $website_id,
+                'error'   => __( 'Website not found.', 'mainwp' ),
+            );
+            return null;
+        }
+        return $website;
+    }
+
+    /**
      * Get user ID.
      *
      * @return int|WP_Error
@@ -3211,7 +3573,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     protected function get_user_id() {
         $user_id = get_current_user_id();
 
-        // Validate user ID
+        // Validate user ID.
         if ( empty( $user_id ) ) {
             return new WP_Error(
                 'invalid_user',
@@ -3413,9 +3775,9 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     /**
      * Get tool settings data.
      *
-     * @return array<string,mixed> Tool settings data.
-     *
      * @uses MainWP_Settings::get_instance()->get_current_user_theme()
+     *
+     * @return array<string,mixed> Tool settings data.
      */
     protected function get_tool_settings_data() {
         return array(
@@ -3518,92 +3880,6 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             'title'      => 'settings',
             'type'       => 'object',
             'properties' => array(
-                'name'                                   => array(
-                    'type'        => 'string',
-                    'description' => __( 'Website name.', 'mainwp' ),
-                    'context'     => array( 'individual_view' ),
-                ),
-                'admin_name'                             => array(
-                    'type'        => 'string',
-                    'description' => __( 'Website admin name.', 'mainwp' ),
-                    'context'     => array( 'individual_view' ),
-                ),
-                'unique_id'                              => array(
-                    'type'        => 'string',
-                    'description' => __( 'Website unique ID.', 'mainwp' ),
-                    'context'     => array( 'individual_view' ),
-                ),
-                'ssl_version'                            => array(
-                    'type'        => 'integer',
-                    'description' => __( 'SSL version.', 'mainwp' ),
-                    'context'     => array( 'individual_view' ),
-                ),
-                'verify_connection_method'               => array(
-                    'type'        => 'integer',
-                    'description' => __( 'Verify connection method.', 'mainwp' ),
-                    'context'     => array( 'individual_view' ),
-                ),
-                'openssl_signature'                      => array(
-                    'type'        => 'integer',
-                    'description' => __( 'OpenSSL signature.', 'mainwp' ),
-                    'context'     => array( 'individual_view' ),
-                ),
-                'force_use_ipv4'                         => array(
-                    'type'        => 'integer',
-                    'description' => __( 'Force use IPv4.', 'mainwp' ),
-                    'context'     => array( 'individual_view' ),
-                ),
-                'http_user'                              => array(
-                    'type'        => 'string',
-                    'description' => __( 'HTTP user.', 'mainwp' ),
-                    'context'     => array( 'individual_view' ),
-                ),
-                'http_pass'                              => array(
-                    'type'        => 'string',
-                    'description' => __( 'HTTP password.', 'mainwp' ),
-                    'context'     => array( 'individual_view' ),
-                ),
-                'suspended'                              => array(
-                    'type'        => 'integer',
-                    'description' => __( 'Suspended.', 'mainwp' ),
-                    'context'     => array( 'individual_view' ),
-                ),
-                'verify_certificate'                     => array(
-                    'type'        => 'integer',
-                    'description' => __( 'Verify certificate.', 'mainwp' ),
-                    'context'     => array( 'individual_view' ),
-                ),
-                'automatic_update'                       => array(
-                    'type'        => 'integer',
-                    'description' => __( 'Automatic update enabled.', 'mainwp' ),
-                    'context'     => array( 'individual_view' ),
-                ),
-                'ignore_core_updates'                    => array(
-                    'type'        => 'integer',
-                    'description' => __( 'Ignore core updates.', 'mainwp' ),
-                    'context'     => array( 'individual_view' ),
-                ),
-                'ignore_plugin_updates'                  => array(
-                    'type'        => 'integer',
-                    'description' => __( 'Ignore plugin updates.', 'mainwp' ),
-                    'context'     => array( 'individual_view' ),
-                ),
-                'ignore_theme_updates'                   => array(
-                    'type'        => 'integer',
-                    'description' => __( 'Ignore theme updates.', 'mainwp' ),
-                    'context'     => array( 'individual_view' ),
-                ),
-                'connected'                              => array(
-                    'type'        => 'integer',
-                    'format'      => 'date-time',
-                    'description' => __( 'Connected.', 'mainwp' ),
-                    'context'     => array( 'individual_view' ),
-                ),
-                'client_id'                              => array(
-                    'type'        => 'integer',
-                    'description' => __( 'Client ID.', 'mainwp' ),
-                    'context'     => array( 'individual_view' ),
-                ),
                 'time_daily_update'                      => array(
                     'type'        => 'string',
                     'description' => __( 'Time for daily updates.', 'mainwp' ),
@@ -3700,12 +3976,12 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'backup_before_upgrade'                  => array(
                     'type'        => 'integer',
                     'description' => __( 'Backup before upgrade enabled.', 'mainwp' ),
-                    'context'     => array( 'view', 'individual_view' ),
+                    'context'     => array( 'view' ),
                 ),
                 'backup_before_upgrade_days'             => array(
                     'type'        => 'integer',
                     'description' => __( 'Days to check for backup before upgrade.', 'mainwp' ),
-                    'context'     => array( 'view', 'edit', 'individual_view' ),
+                    'context'     => array( 'view', 'edit' ),
                 ),
                 'numberdays_outdate_plugin_theme'        => array(
                     'type'        => 'integer',

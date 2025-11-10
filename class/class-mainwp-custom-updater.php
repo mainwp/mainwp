@@ -8,11 +8,11 @@
 namespace MainWP\Dashboard;
 
 /**
- * Class MainWP_Custom_Reinstaller
+ * Class MainWP_Custom_Updater
  *
  * @package MainWP\Dashboard
  */
-class MainWP_Custom_Reinstaller { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
+class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     // phpcs:disable WordPress.WP.AlternativeFunctions -- use system functions
 
@@ -42,7 +42,7 @@ class MainWP_Custom_Reinstaller { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
-     * MainWP_Custom_Reinstaller constructor.
+     * MainWP_Custom_Updater constructor.
      *
      * Run each time the class is called.
      *
@@ -53,24 +53,49 @@ class MainWP_Custom_Reinstaller { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
-     * Add a "Reinstall" action link to the plugin action links.
-     *
-     * @param array $links Array of existing action links for the plugin.
-     * @return array Modified array of action links including the reinstall link.
+     * Method hook_plugins_loaded().
      */
-    public function reinstall_actions_link( $links ) {
-        $url                = wp_nonce_url(
-            add_query_arg(
+    public function hook_plugins_loaded() {
+        if ( 1 === (int) get_option( 'mainwp_settings_enable_early_updates' ) ) {
+            $this->init_custom_updater();
+            /**
+             * Provide custom content for the plugin details modal.
+             */
+            add_filter( 'plugins_api', array( &$this, 'plugin_information_link' ), 10, 3 );
+        }
+        // Handle reinstall.
+        add_action( 'admin_init', array( &$this, 'handle_reinstall_request' ) );
+    }
+
+    /**
+     * Method init_custom_updater().
+     */
+    public function init_custom_updater() {
+        if ( file_exists( MAINWP_PLUGIN_DIR . 'includes/updater.php' ) ) {
+            require_once MAINWP_PLUGIN_DIR . 'includes/updater.php'; //phpcs:ignore -- NOSONAR - compatible.
+        }
+
+        if ( class_exists( '\MainWP\Dashboard\UUPD\V1\UUPD_Updater_V1' ) ) {
+            /**
+             * Filter: mainwp_custom_updater_register_info
+             *
+             * @since 6.0
+             */
+            $updater_config = apply_filters(
+                'mainwp_custom_updater_register_info',
                 array(
-                    'action' => 'reinstall_stable',
-                    'plugin' => plugin_basename( MAINWP_PLUGIN_FILE ),
-                ),
-                admin_url( 'plugins.php' )
-            ),
-            'reinstall_stable'
-        );
-        $links['reinstall'] = '<a href="' . esc_url( $url ) . '">' . esc_html__( 'Roll Back to the Last Stable Release', 'mainwp' ) . '</a>';
-        return $links;
+                    'plugin_file'      => plugin_basename( MAINWP_PLUGIN_FILE ),
+                    'slug'             => 'mainwp',
+                    'name'             => 'MainWP',
+                    'version'          => MainWP_System::$version,
+                    // Optional: provide a 'key' entry with your secret when using a private GitHub release server.
+                    'server'           => 'https://github.com/github-username/mainwp',  // GitHub or private server.
+                    // 'github_token'     => 'github_pat_xxxxxx', // optional.
+                    'allow_prerelease' => true, // Optional � default is false. Set to true to allow beta/RC updates.
+                )
+            );
+            \MainWP\Dashboard\UUPD\V1\UUPD_Updater_V1::register( $updater_config );
+        }
     }
 
     /**
@@ -86,16 +111,9 @@ class MainWP_Custom_Reinstaller { // phpcs:ignore Generic.Classes.OpeningBraceSa
             wp_die( 'No permission.' );
         }
 
-        $plugin = sanitize_text_field( wp_unslash( $_GET['plugin'] ?? '' ) );
-
-        if ( empty( $plugin ) ) {
-            wp_safe_redirect( admin_url( 'admin.php?page=EarlyUpdates&reinstall=error' ) );
-            exit;
-        }
+        $plugin = 'mainwp/mainwp.php';
 
         // --- safer reinstall: move to backup, install, restore on fail, then activate ---
-
-        // $plugin expected like "mainwp/mainwp.php" and $was_active boolean available.
 
         require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php'; //phpcs:ignore -- NOSONAR - ok.
         require_once ABSPATH . 'wp-admin/includes/plugin.php'; //phpcs:ignore -- NOSONAR - ok.
@@ -127,7 +145,7 @@ class MainWP_Custom_Reinstaller { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 $moved_to_backup = true;
                 self::plugin_reinstall_log( $plugin, 'moved_to_backup', 'Renamed to backup', array( 'backup_path' => $backup_path ) );
             } else {
-                // Try recursive copy then we'll delete original (best-effort)
+                // Try recursive copy then we'll delete original (best-effort).
                 $rcopy = function ( $src, $dst ) use ( &$rcopy ) {
                     if ( is_file( $src ) ) {
                         $dstdir = dirname( $dst );

@@ -205,7 +205,8 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'mainwp_edit_monitor_maxretries_global'      => 1,
             'mainwp_edit_monitor_monitoring_emails'      => '',
             'mainwp_check_http_response_method'          => 'head',
-            'mainwp_enable_early_access_updates'                => 0,
+            'mainwp_enable_early_access_updates'         => 0,
+            'mainwp_disable_child_early_updates'         => 1,
         );
 
         if ( 'all' === $field ) {

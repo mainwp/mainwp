@@ -193,7 +193,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         add_filter( 'pre_set_site_transient_update_plugins', array( $systemHandler, 'pre_check_update_custom' ) );
         add_filter( 'plugins_api', array( $systemHandler, 'plugins_api_extension_info' ), 10, 3 );
         add_filter( 'plugins_api_result', array( $systemHandler, 'plugins_api_wp_plugins_api_result' ), 10, 3 );
-        add_action( 'plugins_loaded', array( &$this, 'hook_plugins_loaded' ), 1 );
+        add_action( 'plugins_loaded', array( MainWP_Custom_Updater::instance(), 'hook_plugins_loaded' ), 1 );
 
         $this->metaboxes = new MainWP_Meta_Boxes();
 
@@ -423,55 +423,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
     }
 
-    /**
-     * Method hook_plugins_loaded().
-     */
-    public function hook_plugins_loaded() {
-        if ( 1 === (int) get_option( 'mainwp_settings_enable_early_updates' ) ) {
-            $this->init_custom_updater();
-
-            // Add "Reinstall" action link.
-            add_filter( 'plugin_action_links_' . plugin_basename( MAINWP_PLUGIN_FILE ), array( MainWP_Custom_Reinstaller::instance(), 'reinstall_actions_link' ) );
-            // Handle reinstall.
-            add_action( 'admin_init', array( MainWP_Custom_Reinstaller::instance(), 'handle_reinstall_request' ) );
-
-            /**
-             * Provide custom content for the plugin details modal.
-             */
-            add_filter( 'plugins_api', array( MainWP_Custom_Reinstaller::instance(), 'plugin_information_link' ), 10, 3 );
-        }
-    }
-
-    /**
-     * Method init_custom_updater().
-     */
-    public function init_custom_updater() {
-        if ( file_exists( MAINWP_PLUGIN_DIR . 'includes/updater.php' ) ) {
-            require_once MAINWP_PLUGIN_DIR . 'includes/updater.php'; //phpcs:ignore -- NOSONAR - compatible.
-        }
-
-        if ( class_exists( '\MainWP\Dashboard\UUPD\V1\UUPD_Updater_V1' ) ) {
-            /**
-             * Filter: mainwp_custom_updater_register_info
-             *
-             * @since 6.0
-             */
-            $updater_config = apply_filters(
-                'mainwp_custom_updater_register_info',
-                array(
-                    'plugin_file'      => plugin_basename( MAINWP_PLUGIN_FILE ),
-                    'slug'             => 'mainwp',
-                    'name'             => 'MainWP',
-                    'version'          => static::$version,
-                    // Optional: provide a 'key' entry with your secret when using a private GitHub release server.
-                    'server'           => 'https://github.com/github-username/mainwp',  // GitHub or private server.
-                    // 'github_token'     => 'github_pat_xxxxxx', // optional.
-                    'allow_prerelease' => true, // Optional � default is false. Set to true to allow beta/RC updates.
-                )
-            );
-            \MainWP\Dashboard\UUPD\V1\UUPD_Updater_V1::register( $updater_config );
-        }
-    }
 
     /**
      * Method wp_mail_failed()

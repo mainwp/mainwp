@@ -2261,12 +2261,27 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         </div>
                     </div>
 
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-early">
+                        <label class="six wide column middle aligned">
+                            <?php
+                            $disable_child_setting = 1 === (int) get_option( 'mainwp_settings_disable_child_early_updates', 1 );
+                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_disable_child_early_updates', (int) get_option( 'mainwp_settings_disable_child_early_updates', 1 ) );
+                            esc_html_e( 'Disable Early Access for Child Plugins', 'mainwp' );
+                            ?>
+                        </label>
+                        <div class="ten wide column " data-tooltip="<?php esc_attr_e( 'If disabled, you\'ll need to enable early access manually on each child site that you want to include in beta testing.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                            <div class="ui toggle checkbox">
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_disable_child_early_updates" id="mainwp_disable_child_early_updates" <?php echo $disable_child_setting ? 'checked="true"' : ''; ?> />
+                                <label><?php esc_html_e( 'Automatically disallow connected child sites to receive pre-release updates for the MainWP Child plugin.', 'mainwp' ); ?></label>
+                            </div>
+                        </div>
+                    </div>
+
                     <?php
                     $url_reinstall = wp_nonce_url(
                         add_query_arg(
                             array(
                                 'action' => 'reinstall_stable',
-                                'plugin' => plugin_basename( MAINWP_PLUGIN_FILE ),
                             ),
                             admin_url( 'admin.php?page=EarlyUpdates' )
                         ),
@@ -2275,47 +2290,11 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     ?>
                     <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-early">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Roll Back to Latest Stable Release', 'mainwp' ); ?></label>
-                        <div class="ten wide column" id="mainwp-roll-back-to-stable"  data-content="<?php esc_attr_e( 'Use this option if you experience issues with a pre-release build.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+                        <div class="ten wide column" id="mainwp-roll-back-to-stable"  data-tooltip="<?php esc_attr_e( 'Use this option if you experience issues with a pre-release build.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                             <a href="<?php echo esc_url( $url_reinstall ); ?>" onclick="mainwp_tool_reinstall_to_stable_release_version(this); return false;" class="ui button basic"><?php esc_html_e( 'Roll Back to Stable Version', 'mainwp' ); ?></a>
                             <?php printf( esc_html__( 'Revert your MainWP Dashboard to the latest stable version from %sWordPress.org%s.', 'mainwp' ), '<a href="https://wordpress.org/" target="_blank">', '</a>' ); ?>
                         </div>
                     </div>
-                    <?php
-
-                    $enable_child_early_updates = get_option( 'mainwp_settings_enable_child_early_updates', 0 );
-
-                    $url_enable_child = wp_nonce_url(
-                        add_query_arg(
-                            array(
-                                'action'               => 'child_early_updates',
-                                'enable_early_updates' => $enable_child_early_updates ? 0 : 1, // to switch setting value.
-                            ),
-                            admin_url( 'admin.php?page=EarlyUpdates' )
-                        ),
-                        'child_early_updates'
-                    );
-
-                    if ( $enable_child_early_updates ) {
-                        ?>
-                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-early">
-                            <label class="six wide column middle aligned"><?php esc_html_e( 'Disable Early Access for Child Plugins', 'mainwp' ); ?></label>
-                            <div class="ten wide column" id="mainwp-disable-access-for-child-plugins"  data-content="<?php esc_attr_e( 'If disabled, you’ll need to enable early access manually on each child site that you want to include in beta testing.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
-                                <a href="<?php echo esc_url( $url_enable_child ); ?>" class="ui button basic"><?php esc_html_e( 'Disable Early Access for Child Plugins', 'mainwp' ); ?></a>
-                                <?php esc_html_e( 'Automatically disallow connected child sites to receive pre-release updates for the MainWP Child plugin.', 'mainwp' ); ?>
-                            </div>
-                        </div>
-                        <?php
-                    } else {
-                        ?>
-                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-early">
-                            <label class="six wide column middle aligned"><?php esc_html_e( 'Enable Early Access for Child Plugins', 'mainwp' ); ?></label>
-                            <div class="ten wide column" id="mainwp-enable-access-for-child-plugins"  data-content="<?php esc_attr_e( 'If disabled, you’ll need to enable early access manually on each child site that you want to include in beta testing.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
-                                <a href="<?php echo esc_url( $url_enable_child ); ?>" class="ui button basic"><?php esc_html_e( 'Enable Early Access for Child Plugins', 'mainwp' ); ?></a>
-                                <?php esc_html_e( 'Automatically allow connected child sites to receive pre-release updates for the MainWP Child plugin.', 'mainwp' ); ?>
-                            </div>
-                        </div>
-                        <?php } ?>
-
                     <?php
 
                     /**

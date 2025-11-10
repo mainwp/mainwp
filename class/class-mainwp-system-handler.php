@@ -575,13 +575,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 wp_clean_update_cache();
             }
             MainWP_Utility::update_option( 'mainwp_settings_enable_early_updates', $new_val );
-            wp_safe_redirect( admin_url( 'admin.php?page=EarlyUpdates&message=saved' ) );
-        }
-
-        if ( isset( $_GET['action'] ) && isset( $_GET['page'] ) && 'EarlyUpdates' === $_GET['page'] && 'child_early_updates' === $_GET['action'] ) {
-            check_admin_referer( 'child_early_updates' );
-            $enabled = ! empty( $_GET['enable_early_updates'] ) ? 1 : 0;
-            MainWP_Utility::update_option( 'mainwp_settings_enable_child_early_updates', $enabled );
+            MainWP_Utility::update_option( 'mainwp_settings_disable_child_early_updates', ! empty( $_POST['mainwp_disable_child_early_updates'] ) ? 1 : 0 );
             wp_safe_redirect( admin_url( 'admin.php?page=EarlyUpdates&message=saved' ) );
         }
     }

@@ -141,7 +141,7 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         // 1) move plugin dir to backup (atomic rename preferred)
         $moved_to_backup = false;
         if ( is_dir( $plugin_dir ) ) {
-            if ( @rename( $plugin_dir, $backup_path ) ) {
+            if ( rename( $plugin_dir, $backup_path ) ) {
                 $moved_to_backup = true;
                 self::plugin_reinstall_log( $plugin, 'moved_to_backup', 'Renamed to backup', array( 'backup_path' => $backup_path ) );
             } else {
@@ -152,7 +152,7 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         if ( ! file_exists( $dstdir ) ) {
                             wp_mkdir_p( $dstdir );
                         }
-                        return @copy( $src, $dst );
+                        return copy( $src, $dst );
                     }
                     if ( ! is_dir( $dst ) ) {
                         wp_mkdir_p( $dst );
@@ -175,7 +175,7 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                             if ( ! file_exists( $dstdir ) ) {
                                 wp_mkdir_p( $dstdir );
                             }
-                            $ok = $ok && @copy( $s, $d );
+                            $ok = $ok && copy( $s, $d );
                         }
                     }
                     closedir( $dh );
@@ -195,10 +195,10 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         if ( is_dir( $path ) ) {
                             $rrmdir( $path );
                         } else {
-                            @unlink( $path );
+                            unlink( $path );
                         }
                     }
-                    return @rmdir( $dir );
+                    return rmdir( $dir );
                 };
 
                 if ( $rcopy( $plugin_dir, $backup_path ) ) {
@@ -220,7 +220,7 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         // 2) Log a snapshot of plugin dir before install (for debugging)
-        $before = @scandir( WP_PLUGIN_DIR );
+        $before = scandir( WP_PLUGIN_DIR );
         self::plugin_reinstall_log( $plugin, 'snapshot_before', 'plugins dir before install', array( 'snapshot' => $before ) );
 
         // 3) Install package
@@ -241,11 +241,11 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         );
 
         // 4) Snapshot after install
-        $after = @scandir( WP_PLUGIN_DIR );
+        $after = scandir( WP_PLUGIN_DIR );
         self::plugin_reinstall_log( $plugin, 'snapshot_after', 'plugins dir after install', array( 'snapshot' => $after ) );
 
         // 5) If install failed, restore backup and report
-        if ( is_wp_error( $res ) || $res === false ) {
+        if ( is_wp_error( $res ) || false === $res ) {
             // attempt restore if we backed up.
             if ( $moved_to_backup && is_dir( $backup_path ) ) {
                 // if an install created a (possibly empty) directory at $plugin_dir, remove it first,
@@ -264,10 +264,10 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                             if ( is_dir( $path ) ) {
                                 $rrmdir( $path );
                             } else {
-                                @unlink( $path );
+                                unlink( $path );
                             }
                         }
-                        return @rmdir( $dir );
+                        return rmdir( $dir );
                     };
                     $rrmdir( $plugin_dir );
                 }
@@ -283,7 +283,7 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                             if ( ! file_exists( $dstdir ) ) {
                                 wp_mkdir_p( $dstdir );
                             }
-                            return @copy( $src, $dst );
+                            return copy( $src, $dst );
                         }
                         if ( ! is_dir( $dst ) ) {
                             wp_mkdir_p( $dst );
@@ -306,7 +306,7 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                                 if ( ! file_exists( $dstdir ) ) {
                                     wp_mkdir_p( $dstdir );
                                 }
-                                $ok = $ok && @copy( $s, $d );
+                                $ok = $ok && copy( $s, $d );
                             }
                         }
                         closedir( $dh );
@@ -339,7 +339,7 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $all_plugins = get_plugins();
             foreach ( $all_plugins as $basename => $data ) {
                 $full  = WP_PLUGIN_DIR . '/' . $basename;
-                $mtime = @filemtime( $full );
+                $mtime = filemtime( $full );
                 if ( $mtime !== false && ( $now - $mtime ) <= 600 ) {
                     $found = $basename;
                     break;
@@ -406,7 +406,7 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $plugins = get_plugins();
 
         foreach ( $plugins as $basename => $data ) {
-            // Extract folder from basename: "mainwp/mainwp.php" → "mainwp"
+            // Extract folder from basename: "mainwp/mainwp.php" → "mainwp".
             $folder = dirname( $basename );
             if ( $folder === $slug || strpos( $basename, $slug . '/' ) === 0 ) {
                 return $basename;
@@ -460,7 +460,7 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             if ( ! is_dir( $dir ) ) {
                 return false;
             }
-            $dh = @opendir( $dir );
+            $dh = opendir( $dir );
             if ( ! $dh ) {
                 return false;
             }
@@ -504,7 +504,7 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         // 2) Look for recently modified directories and scan each recursively
-        $dirs = @scandir( WP_PLUGIN_DIR );
+        $dirs = scandir( WP_PLUGIN_DIR );
         if ( $dirs && is_array( $dirs ) ) {
             foreach ( $dirs as $d ) {
                 if ( '.' === $d || '..' === $d ) {
@@ -514,13 +514,13 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 if ( ! is_dir( $path ) ) {
                     continue;
                 }
-                $mtime = @filemtime( $path );
-                if ( $mtime === false ) {
+                $mtime = filemtime( $path );
+                if ( false === $mtime ) {
                     $mtime = 0;
                 }
-                // only consider directories modified recently (or the slug which we already checked)
+                // only consider directories modified recently (or the slug which we already checked).
                 if ( ( $now - $mtime ) <= $new_install_window_secs ) {
-                    // avoid rescanning slug if already done
+                    // avoid rescanning slug if already done.
                     if ( in_array( $d, $candidates_checked, true ) ) {
                         continue;
                     }
@@ -547,7 +547,7 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         // 3) Fallback: scan whole plugins dir (heavy) but limited by depth and only for directories we haven't checked
         // Use this as last resort because it can be slow on large sites.
-        $dirs = @scandir( WP_PLUGIN_DIR );
+        $dirs = scandir( WP_PLUGIN_DIR );
         if ( $dirs && is_array( $dirs ) ) {
             foreach ( $dirs as $d ) {
                 if ( '.' === $d || '..' === $d ) {
@@ -584,15 +584,15 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         foreach ( $all_plugins as $basename => $data ) {
             if ( strpos( $basename, '/' ) === false ) {
                 $full  = WP_PLUGIN_DIR . '/' . $basename;
-                $mtime = @filemtime( $full );
-                if ( $mtime !== false && ( $now - $mtime ) <= $new_install_window_secs ) {
+                $mtime = filemtime( $full );
+                if ( false !== $mtime && ( $now - $mtime ) <= $new_install_window_secs ) {
                     self::plugin_reinstall_log( $expected_basename, 'locate_found', 'Found root-level file', array( 'found' => $basename ) );
                     return $basename;
                 }
             }
         }
 
-        // Nothing found — log diagnostics
+        // Nothing found — log diagnostics.
         self::plugin_reinstall_log( $expected_basename, 'locate_not_found', 'Could not locate installed plugin file', array( 'checked_dirs' => $candidates_checked ) );
 
         return false;
@@ -652,10 +652,10 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 if ( is_dir( $path ) ) {
                     $rrmdir( $path );
                 } else {
-                    @unlink( $path );
+                    unlink( $path );
                 }
             }
-            return @rmdir( $dir );
+            return rmdir( $dir );
         };
 
         $ok = $rrmdir( $backup_path );

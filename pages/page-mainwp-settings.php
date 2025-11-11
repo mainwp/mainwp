@@ -2218,7 +2218,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-early-updates-info-message' ) ) : ?>
             <div class="ui info message">
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-early-updates-info-message"></i>
-                <?php esc_html_e( 'Get early access to upcoming MainWP releases before they are public available on WordPress.org. There versions may include new features, performance improvements, and bug fixes, it is hightly recommended to use early access builds only on test or stagging environments.', 'mainwp' ); ?>
+                <?php esc_html_e( 'Get early access to upcoming MainWP releases before they are publicly available on WordPress.org. These versions may include new features, performance improvements, and bug fixes. It is highly recommended to use early access builds only on test or staging environments.', 'mainwp' ); ?>
             </div>
         <?php endif; ?>
 
@@ -2272,7 +2272,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         <div class="ten wide column " data-tooltip="<?php esc_attr_e( 'If disabled, you\'ll need to enable early access manually on each child site that you want to include in beta testing.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                             <div class="ui toggle checkbox">
                                 <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_disable_child_early_updates" id="mainwp_disable_child_early_updates" <?php echo $disable_child_setting ? 'checked="true"' : ''; ?> />
-                                <label><?php esc_html_e( 'Automatically disallow connected child sites to receive pre-release updates for the MainWP Child plugin.', 'mainwp' ); ?></label>
+                                <label><?php esc_html_e( 'Disallow connected child sites to receive pre-release updates for the MainWP Child plugin.', 'mainwp' ); ?></label>
                             </div>
                         </div>
                     </div>

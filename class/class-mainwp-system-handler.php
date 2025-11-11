@@ -569,7 +569,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( isset( $_GET['page'] ) && 'EarlyUpdates' === $_GET['page'] && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'EarlyUpdates' ) ) {
             $old_val = get_option( 'mainwp_settings_enable_early_updates' );
             $new_val = ! isset( $_POST['mainwp_enable_early_access_updates'] ) ? 0 : 1;
-            if ( $old_val && empty( $new_val ) ) {
+            if ( (int) $old_val !== $new_val ) {
                 delete_site_transient( 'update_plugins' );
                 delete_transient( 'wp_update_plugins' );
                 wp_clean_update_cache();

@@ -281,6 +281,14 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         if ( defined( 'DOING_CRON' ) && DOING_CRON && isset( $_GET['mainwp_run'] ) && 'test' === $_GET['mainwp_run'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             add_action( 'init', array( MainWP_System_Cron_Jobs::instance(), 'cron_active' ), PHP_INT_MAX );
         }
+
+        /**
+         * Signal that MainWP finished bootstrapping.
+         */
+        do_action( 'mainwp_ready' );
+
+        // Execute any deferred callbacks that were registered before MainWP was ready.
+        $this->execute_deferred_callbacks();
     }
 
     /**
@@ -1432,5 +1440,50 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public function get_plugin_slug() {
         return $this->plugin_slug;
+    }
+
+    /**
+     * Execute deferred callbacks that were registered before MainWP was ready.
+     *
+     * This method is called after the mainwp_ready action to execute any
+     * callbacks that were deferred via mainwp_defer_until_ready().
+     *
+     * @uses MainWP_Logger::instance()->log_action()
+     * @return void
+     */
+    private function execute_deferred_callbacks() { // phpcs:ignore -- NOSONAR - complex.
+        if ( ! isset( $GLOBALS['mainwp_deferred_callbacks'] ) || ! is_array( $GLOBALS['mainwp_deferred_callbacks'] ) ) {
+            return;
+        }
+
+        // Make a copy of the array to prevent issues if a callback modifies the global.
+        $callbacks = $GLOBALS['mainwp_deferred_callbacks'];
+        // Return if there are no callbacks.
+        if ( empty( $callbacks ) ) {
+            return;
+        }
+
+        // Clear the registry to prevent re-execution.
+        $GLOBALS['mainwp_deferred_callbacks'] = array();
+
+        foreach ( $callbacks as $item ) {
+            if ( ! isset( $item['callback'] ) ) {
+                continue;
+            }
+
+            // Get the callback and arguments.
+            $callback = $item['callback'];
+            $args     = isset( $item['args'] ) ? $item['args'] : array();
+
+            // Execute the callback if it's still valid.
+            if ( is_callable( $callback ) ) {
+                $callback_name = is_array( $callback ) && isset( $callback[0], $callback[1] ) ? ( is_object( $callback[0] ) ? get_class( $callback[0] ) : $callback[0] ) . '::' . $callback[1] : ( is_string( $callback ) ? $callback : 'anonymous' );
+                try {
+                    call_user_func_array( $callback, $args );
+                } catch ( \Throwable $e ) {
+                    MainWP_Logger::instance()->log_action( 'MainWP deferred callback error in ' . $callback_name . ': ' . $e->getMessage(), MainWP_Logger::EXECUTION_TIME_LOG_PRIORITY );
+                }
+            }
+        }
     }
 }

@@ -154,6 +154,9 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
         /** @var array Configuration settings */
         private $config;
 
+         /** @var bool Fetch success */
+        private $fetch_success = false;
+
         /**
          * Constructor.
          *
@@ -355,20 +358,32 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
             $current = $trans->checked[ $file ] ?? $c['version'];
             $meta    = get_transient( $cache_id );
 
+
+            /**
+             * Hook for testing.
+             *
+             * @since 6.0             *
+             */
+            $testing_fetch = apply_filters( 'mainwp_uupd_testing_fetch_release', false, $slug );
+
             // Skip if last fetch failed
-            if ( false === $meta && get_transient( $error_key ) ) {
+            if ( ! $testing_fetch && ( false === $meta && get_transient( $error_key ) ) ) {
                 $this->log( " Skipping plugin update check for '{$slug}' — previous error cached" );
                 //return $trans;
             }
 
             // Fetch metadata if missing
-            if ( false === $meta ) {
+            if ( $testing_fetch || false === $meta ) {
                 if ( isset( $c['server'] ) && strpos( $c['server'], 'github.com' ) !== false ) {
                     $repo_url  = rtrim( $c['server'], '/' );
                     $cache_key = 'uupd_github_release_' . md5( $repo_url );
                     $release   = get_transient( $cache_key );
 
-                    if ( false === $release ) {
+                    if ( $testing_fetch || false === $release ) {
+
+                        if ( $this->fetch_success ){
+                            return $trans;
+                        }
 
                         // $api_url = str_replace( 'github.com', 'api.github.com/repos', $repo_url ) . '/releases/latest';
                         // $token   = self::apply_filters_per_slug( 'uupd/github_token_override', $c['github_token'] ?? '', $slug );
@@ -394,6 +409,10 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
                             do_action( 'uupd_metadata_fetch_failed', [ 'slug' => $slug, 'server' => $repo_url, 'message' => $msg ] );
                             do_action( "uupd_metadata_fetch_failed/{$slug}", [ 'slug' => $slug, 'server' => $repo_url, 'message' => $msg ] );
                             return $trans; // or continue depending on surrounding code
+                        } else {
+                            $ttl = self::apply_filters_per_slug( 'uupd_success_cache_ttl', 6 * HOUR_IN_SECONDS, $slug );
+                            set_transient( $cache_key, $release, $ttl );
+                            $this->fetch_success = true;
                         }
 
 
@@ -529,6 +548,9 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
         $api_base = str_replace( 'github.com', 'api.github.com/repos', $repo_url );
         $token    = self::apply_filters_per_slug( 'uupd/github_token_override', $this->config['github_token'] ?? '', $slug );
         $headers  = [ 'Accept' => 'application/vnd.github.v3+json' ];
+
+        $headers['User-Agent'] = 'MainWP/' . \MainWP\Dashboard\MainWP_System::$version;
+
         if ( $token ) {
             $headers['Authorization'] = 'token ' . $token;
         }

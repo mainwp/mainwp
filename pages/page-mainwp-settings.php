@@ -2277,6 +2277,21 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         </div>
                     </div>
 
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-early">
+                        <label class="six wide column middle aligned">
+                            <?php
+                            $pat_key = MainWP_Keys_Manager::instance()->get_keys_value( 'mainwp_settings_custom_updater_git_pat' );
+                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_custom_updater_git_pat', get_option( 'mainwp_settings_custom_updater_git_pat', '' ) );
+                            esc_html_e( 'GitHub PAT', 'mainwp' );
+                            ?>
+                        </label>
+                        <div class="ten wide column">
+                            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enter GitHub Personal Access Token.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <input type="password" class="settings-field-value-change-handler" name="mainwp_custom_updater_git_pat" id="mainwp_custom_updater_git_pat" value="<?php echo esc_attr( $pat_key ); ?>"/>
+                            </div>
+                        </div>
+                    </div>
+
                     <?php
                     $url_reinstall = wp_nonce_url(
                         add_query_arg(

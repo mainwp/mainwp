@@ -207,6 +207,7 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'mainwp_check_http_response_method'          => 'head',
             'mainwp_enable_early_access_updates'         => 0,
             'mainwp_disable_child_early_updates'         => 1,
+            'mainwp_custom_updater_git_pat'              => '',
         );
 
         if ( 'all' === $field ) {

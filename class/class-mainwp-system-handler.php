@@ -576,6 +576,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             }
             MainWP_Utility::update_option( 'mainwp_settings_enable_early_updates', $new_val );
             MainWP_Utility::update_option( 'mainwp_settings_disable_child_early_updates', ! empty( $_POST['mainwp_disable_child_early_updates'] ) ? 1 : 0 );
+            MainWP_Keys_Manager::instance()->update_key_value( 'mainwp_settings_custom_updater_git_pat', $_POST['mainwp_custom_updater_git_pat'] );
             wp_safe_redirect( admin_url( 'admin.php?page=EarlyUpdates&message=saved' ) );
         }
     }

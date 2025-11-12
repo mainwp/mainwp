@@ -76,6 +76,9 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         if ( class_exists( '\MainWP\Dashboard\UUPD\V1\UUPD_Updater_V1' ) ) {
+
+            $pat_key = MainWP_Keys_Manager::instance()->get_keys_value( 'mainwp_settings_custom_updater_git_pat' );
+
             /**
              * Filter: mainwp_custom_updater_register_info
              *
@@ -90,7 +93,7 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     'version'          => MainWP_System::$version,
                     // Optional: provide a 'key' entry with your secret when using a private GitHub release server.
                     'server'           => 'https://github.com/github-username/mainwp',  // GitHub or private server.
-                    // 'github_token'     => 'github_pat_xxxxxx', // optional.
+                    'github_token'     => ! empty( $pat_key ) ? $pat_key : '', // optional.
                     'allow_prerelease' => true, // Optional � default is false. Set to true to allow beta/RC updates.
                 )
             );

@@ -1356,7 +1356,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         };
 
         // Update secrets if present.
-        $update_secrets_api = function ( $slug, $name = 'api_key', $value ) use ( &$updated ) { //  phpcs:ignore -- NOSONAR - complex.
+        $update_secrets_api = function ( $slug, $value, $name = 'api_key' ) use ( &$updated ) { //  phpcs:ignore -- NOSONAR - complex.
             if ( ! empty( $slug ) && ! empty( $value ) ) {
                 Api_Backups_Utility::get_instance()->update_api_key( $slug, $value );
                 $updated[ $name ] = $value;
@@ -1372,8 +1372,8 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         $update_if_present( 'company_id', $api['options']['company_id'] ?? '' );
 
         // Update api key or password.
-        $update_secrets_api( $api['slug'] ?? '', 'api_key', $body['secrets']['api_key'] ?? '' );
-        $update_secrets_api( $api['slug'] ?? '', 'password', $body['password'] ?? '' );
+        $update_secrets_api( $api['slug'] ?? '', $body['secrets']['api_key'] ?? '', 'api_key' );
+        $update_secrets_api( $api['slug'] ?? '', $body['password'] ?? '', 'password' );
 
         return rest_ensure_response(
             array(
@@ -3014,7 +3014,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     /**
      * Validate time format.
      *
-     * @param string          $value Time format.
+     * @param string $value Time format.
      *
      * @return bool|WP_Error
      */

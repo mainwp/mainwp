@@ -413,6 +413,9 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
                             $ttl = self::apply_filters_per_slug( 'uupd_success_cache_ttl', 6 * HOUR_IN_SECONDS, $slug );
                             set_transient( $cache_key, $release, $ttl );
                             $this->fetch_success = true;
+
+                            $unauth_key = 'uupd_' . $slug . '_unauth_error';
+                            delete_transient( $unauth_key );
                         }
 
 
@@ -555,11 +558,14 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
             $headers['Authorization'] = 'token ' . $token;
         }
 
+
         // 1) Try /releases/latest
         $this->log( " GitHub fetch (latest): {$api_base}/releases/latest" );
         $resp = wp_remote_get( $api_base . '/releases/latest', [ 'headers' => $headers, 'timeout' => 15 ] );
 
-        if ( ! is_wp_error( $resp ) && wp_remote_retrieve_response_code( $resp ) === 200 ) {
+        $resp_code = wp_remote_retrieve_response_code( $resp );
+
+        if ( ! is_wp_error( $resp ) && $resp_code === 200 ) {
             $release = json_decode( wp_remote_retrieve_body( $resp ) );
             if ( $release ) {
                 return $release;
@@ -570,7 +576,10 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
         // This will include prereleases. We'll respect allow_prerelease flag below.
         $this->log( " GitHub fetch (list): {$api_base}/releases?per_page=10" );
         $resp = wp_remote_get( $api_base . '/releases?per_page=10', [ 'headers' => $headers, 'timeout' => 15 ] );
-        if ( ! is_wp_error( $resp ) && wp_remote_retrieve_response_code( $resp ) === 200 ) {
+
+        $resp_code = wp_remote_retrieve_response_code( $resp );
+
+        if ( ! is_wp_error( $resp ) && $resp_code === 200 ) {
             $releases = json_decode( wp_remote_retrieve_body( $resp ) );
             if ( is_array( $releases ) && count( $releases ) ) {
                 // If allow_prerelease is false, prefer first non-prerelease. Otherwise take the first release.
@@ -591,7 +600,10 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
         // 3) If there are no releases at all, try tags and synthesize a minimal "release"
         $this->log( " GitHub fetch (tags): {$api_base}/tags?per_page=5" );
         $resp = wp_remote_get( $api_base . '/tags?per_page=5', [ 'headers' => $headers, 'timeout' => 15 ] );
-        if ( ! is_wp_error( $resp ) && wp_remote_retrieve_response_code( $resp ) === 200 ) {
+
+        $resp_code = wp_remote_retrieve_response_code( $resp );
+
+        if ( ! is_wp_error( $resp ) && $resp_code === 200 ) {
             $tags = json_decode( wp_remote_retrieve_body( $resp ) );
             if ( is_array( $tags ) && ! empty( $tags[0]->name ) ) {
                 $tag = $tags[0]->name;
@@ -605,6 +617,15 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
                 $release->prerelease    = preg_match( '/(alpha|beta|rc|preview|pre|dev)/i', $tag ) ? true : false;
                 return $release;
             }
+        }
+
+        if ( 401 === $resp_code && ! empty( $this->config['github_token'] ) ) {
+            $unauth_key = 'uupd_' . $slug . '_unauth_error';
+            set_transient(
+                $unauth_key,
+                time(),
+                self::apply_filters_per_slug( 'uupd_fetch_unauth_error_ttl', 6 * HOUR_IN_SECONDS, $slug )
+            );
         }
 
         // Failure: return false
@@ -843,7 +864,7 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
 
         /** Optional debug logger. */
         private function log( $msg ) {
-            if ( apply_filters( 'updater_enable_debug', false ) ) {
+            if ( apply_filters( 'updater_enable_debug', true ) ) {
                 error_log( "[Updater] {$msg}" );
                 do_action( 'uupd/log', $msg, $this->config['slug'] ?? '' );
             }
@@ -929,11 +950,17 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
             // 5) It’s our plugin’s “manual check,” so clear the transient and force WP to fetch again.
             delete_transient( 'upd_' . $slug );
 
+
+
+
             //ALSO clear GitHub release cache if using GitHub
             if ( isset( $config['server'] ) && strpos( $config['server'], 'github.com' ) !== false ) {
                 $repo_url  = rtrim( $config['server'], '/' );
                 $gh_key    = 'uupd_github_release_' . md5( $repo_url );
                 delete_transient( $gh_key );
+
+                $unauth_key = 'uupd_' . $slug . '_unauth_error';
+                delete_transient( $unauth_key );
             }
 
             if ( ! empty( $config['plugin_file'] ) ) {

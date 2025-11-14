@@ -62,6 +62,7 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
              * Provide custom content for the plugin details modal.
              */
             add_filter( 'plugins_api', array( &$this, 'plugin_information_link' ), 10, 3 );
+            add_action( 'after_plugin_row_' . plugin_basename( MAINWP_PLUGIN_FILE ), array( &$this, 'plugin_show_error_row' ), 10, 3 );
         }
         // Handle reinstall.
         add_action( 'admin_init', array( &$this, 'handle_reinstall_request' ) );
@@ -716,7 +717,32 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         return $response;
     }
 
+    /**
+     * Method plugin_show_error_row.
+     *
+     * @param  mixed $plugin_file Plugin file.
+     * @return void
+     */
+    public function plugin_show_error_row( $plugin_file ) {
 
+        $slug = dirname( $plugin_file );
+
+        $unauth_key = 'uupd_' . $slug . '_unauth_error';
+
+        if ( ! get_transient( $unauth_key ) ) {
+            return;
+        }
+
+        $unauth_error = esc_html__( 'An unauthorized error occurred when checking for updates.', 'mainwp' );
+
+        echo '<tr class="plugin-update-tr">
+            <td colspan="3" class="plugin-update colspanchange">
+                <div class="notice notice-error inline">
+                    <p>' . esc_html( $unauth_error ) . '</p>
+                </div>
+            </td>
+          </tr>';
+    }
 
     /**
      * Simple logger helper that records into an option (capped) and also supports message context.

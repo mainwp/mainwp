@@ -369,7 +369,7 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
             // Skip if last fetch failed
             if ( ! $testing_fetch && ( false === $meta && get_transient( $error_key ) ) ) {
                 $this->log( " Skipping plugin update check for '{$slug}' — previous error cached" );
-                //return $trans;
+                return $trans;
             }
 
             // Fetch metadata if missing

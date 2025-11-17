@@ -83,7 +83,7 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             /**
              * Filter: mainwp_custom_updater_register_info
              *
-             * @since 6.0
+             * @since 5.4.1
              */
             $updater_config = apply_filters(
                 'mainwp_custom_updater_register_info',
@@ -96,6 +96,7 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     'server'           => 'https://github.com/github-username/mainwp',  // GitHub or private server.
                     'github_token'     => ! empty( $pat_key ) ? $pat_key : '', // optional.
                     'allow_prerelease' => true, // Optional � default is false. Set to true to allow beta/RC updates.
+                    'user_agent'       => 'MainWP/' . MainWP_System::$version,
                 )
             );
             \MainWP\Dashboard\UUPD\V1\UUPD_Updater_V1::register( $updater_config );
@@ -733,13 +734,12 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return;
         }
 
-        $unauth_error = esc_html__( 'An unauthorized error occurred when checking for updates.', 'mainwp' );
-
+        $unauth_error = sprintf( esc_html__( 'Unable to check for updates with your GitHub token. Make sure your PAT is valid and has the right permissions. See %here% for more info.', 'mainwp' ), '<a href="https://mainwp.com/docs/github-personal-access-token/" target="_blank">', '</a>' );
         echo '<tr class="plugin-update-tr">
             <td colspan="3" class="plugin-update colspanchange">
                 <div class="notice notice-error inline">
-                    <p>' . esc_html( $unauth_error ) . '</p>
-                </div>
+                    <p>' . $unauth_error . '</p>' . //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
+                '</div>
             </td>
           </tr>';
     }

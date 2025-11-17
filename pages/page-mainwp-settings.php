@@ -2241,7 +2241,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                      *
                      * Fires at the top of MainWP early updates form.
                      *
-                     * @since 6.0
+                     * @since 5.4.1
                      */
                     do_action( 'mainwp_early_updates_form_top' );
                     ?>
@@ -2317,7 +2317,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                      *
                      * Fires at the bottom of mainwp tools form.
                      *
-                     * @since 6.0
+                     * @since 5.4.1
                      */
                     do_action( 'mainwp_early_updates_form_bottom' );
                     ?>

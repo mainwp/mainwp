@@ -155,7 +155,7 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
         private $config;
 
          /** @var bool Fetch success */
-        private $fetch_success = false;
+        private $fetch_state = null;
 
         /**
          * Constructor.
@@ -362,17 +362,17 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
             /**
              * Hook for testing.
              *
-             * @since 6.0             *
+             * @since 5.4.1
              */
             $testing_fetch = apply_filters( 'mainwp_uupd_testing_fetch_release', false, $slug );
 
-            // Skip if last fetch failed
+            // Skip if last fetch failed.
             if ( ! $testing_fetch && ( false === $meta && get_transient( $error_key ) ) ) {
                 $this->log( " Skipping plugin update check for '{$slug}' — previous error cached" );
                 return $trans;
             }
 
-            // Fetch metadata if missing
+            // Fetch metadata if missing.
             if ( $testing_fetch || false === $meta ) {
                 if ( isset( $c['server'] ) && strpos( $c['server'], 'github.com' ) !== false ) {
                     $repo_url  = rtrim( $c['server'], '/' );
@@ -381,7 +381,8 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
 
                     if ( $testing_fetch || false === $release ) {
 
-                        if ( $this->fetch_success ){
+                        // fetch one time.
+                        if ( null !== $this->fetch_state ) {
                             return $trans;
                         }
 
@@ -398,7 +399,10 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
 
                         $release = $this->fetch_github_release( $repo_url, $slug );
 
-                        if ( false === $release ) {
+                        if ( 'not_modified' === $release ) {
+                            $this->log( "GitHub API fetch — etag not modified - slug '{$slug}'" );
+                            return $trans;
+                        } elseif ( false === $release ) {
                             $msg = 'GitHub fetch failed or no releases/tags found';
                             $this->log( "✗ GitHub API failed — $msg — caching error state" );
                             set_transient(
@@ -408,11 +412,12 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
                             );
                             do_action( 'uupd_metadata_fetch_failed', [ 'slug' => $slug, 'server' => $repo_url, 'message' => $msg ] );
                             do_action( "uupd_metadata_fetch_failed/{$slug}", [ 'slug' => $slug, 'server' => $repo_url, 'message' => $msg ] );
-                            return $trans; // or continue depending on surrounding code
+                            $this->fetch_state = false;
+                            return $trans; // or continue depending on surrounding code.
                         } else {
                             $ttl = self::apply_filters_per_slug( 'uupd_success_cache_ttl', 6 * HOUR_IN_SECONDS, $slug );
                             set_transient( $cache_key, $release, $ttl );
-                            $this->fetch_success = true;
+                            $this->fetch_state = true;
 
                             $unauth_key = 'uupd_' . $slug . '_unauth_error';
                             delete_transient( $unauth_key );
@@ -465,9 +470,6 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
 
                     // Success: clear the error flag for this slug (if any)
                     delete_transient( $error_key );
-
-
-
                 } else {
                     $this->fetch_remote(); // Handles error logging + failure cache internally
                     $meta = get_transient( $cache_id );
@@ -538,7 +540,7 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
         }
 
 
-        /**
+    /**
      * Fetch a GitHub "release" object with fallback logic:
      *  - Try /releases/latest
      *  - If 404 or empty and $allow_prerelease allows, try /releases (list)
@@ -552,30 +554,31 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
         $token    = self::apply_filters_per_slug( 'uupd/github_token_override', $this->config['github_token'] ?? '', $slug );
         $headers  = [ 'Accept' => 'application/vnd.github.v3+json' ];
 
-        $headers['User-Agent'] = 'MainWP/' . \MainWP\Dashboard\MainWP_System::$version;
+        if( !empty( $this->config['user_agent'] ) ) {
+            $headers['User-Agent'] = $this->config['user_agent'];
+        }
 
         if ( $token ) {
             $headers['Authorization'] = 'token ' . $token;
         }
 
+        // Implement ETag caching to avoid using rate-limits.
+        $cached_etag = get_option("github_etag_$slug");
 
-        // 1) Try /releases/latest
-        $this->log( " GitHub fetch (latest): {$api_base}/releases/latest" );
-        $resp = wp_remote_get( $api_base . '/releases/latest', [ 'headers' => $headers, 'timeout' => 15 ] );
-
-        $resp_code = wp_remote_retrieve_response_code( $resp );
-
-        if ( ! is_wp_error( $resp ) && $resp_code === 200 ) {
-            $release = json_decode( wp_remote_retrieve_body( $resp ) );
-            if ( $release ) {
-                return $release;
-            }
+        if ($cached_etag) {
+            $headers['If-None-Match'] = $cached_etag;
         }
 
-        // If /releases/latest returned 404 or otherwise, try listing releases.
+        // Try listing releases.
         // This will include prereleases. We'll respect allow_prerelease flag below.
-        $this->log( " GitHub fetch (list): {$api_base}/releases?per_page=10" );
-        $resp = wp_remote_get( $api_base . '/releases?per_page=10', [ 'headers' => $headers, 'timeout' => 15 ] );
+        // Fastest response.
+        $this->log( " GitHub fetch (list): {$api_base}/releases?per_page=1" );
+        $resp = wp_remote_get( $api_base . '/releases?per_page=1', [ 'headers' => $headers, 'timeout' => 15 ] );
+
+        $etag = wp_remote_retrieve_header( $resp, 'etag' );
+        if ($etag) {
+            update_option("github_etag_$slug", $etag);
+        }
 
         $resp_code = wp_remote_retrieve_response_code( $resp );
 
@@ -598,8 +601,8 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
         }
 
         // 3) If there are no releases at all, try tags and synthesize a minimal "release"
-        $this->log( " GitHub fetch (tags): {$api_base}/tags?per_page=5" );
-        $resp = wp_remote_get( $api_base . '/tags?per_page=5', [ 'headers' => $headers, 'timeout' => 15 ] );
+        $this->log( " GitHub fetch (tags): {$api_base}/tags?per_page=1" );
+        $resp = wp_remote_get( $api_base . '/tags?per_page=1', [ 'headers' => $headers, 'timeout' => 15 ] );
 
         $resp_code = wp_remote_retrieve_response_code( $resp );
 
@@ -626,6 +629,11 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
                 time(),
                 self::apply_filters_per_slug( 'uupd_fetch_unauth_error_ttl', 6 * HOUR_IN_SECONDS, $slug )
             );
+        }
+
+        // Handle 304 (no changes).
+        if ( 304 === $resp_code ) {
+            return 'not_modified';
         }
 
         // Failure: return false
@@ -864,7 +872,7 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
 
         /** Optional debug logger. */
         private function log( $msg ) {
-            if ( apply_filters( 'updater_enable_debug', true ) ) {
+            if ( apply_filters( 'updater_enable_debug', false ) ) {
                 error_log( "[Updater] {$msg}" );
                 do_action( 'uupd/log', $msg, $this->config['slug'] ?? '' );
             }
@@ -947,11 +955,12 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
                 wp_die( __( 'Security check failed.' ) );
             }
 
+            $cache_id  = 'upd_' . $slug;
+            $error_key = $cache_id . '_error';
+
             // 5) It’s our plugin’s “manual check,” so clear the transient and force WP to fetch again.
-            delete_transient( 'upd_' . $slug );
-
-
-
+            delete_transient( $cache_id );
+            delete_transient( $error_key );
 
             //ALSO clear GitHub release cache if using GitHub
             if ( isset( $config['server'] ) && strpos( $config['server'], 'github.com' ) !== false ) {

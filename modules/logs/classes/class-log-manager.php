@@ -209,7 +209,9 @@ class Log_Manager {
      * @uses \MainWP\Dashboard\Module\Log\Log_Connectors
      */
     public function init() {
-        $this->connectors = new Log_Connectors( $this );
+        if ( class_exists( '\MainWP\Dashboard\Module\Log\Log_Connectors' ) ) { // to fix fatal error in case class not found.
+            $this->connectors = new Log_Connectors( $this );
+        }
     }
 
     /**

@@ -183,6 +183,9 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 'siteId'                          => $pWebsite->id,
                 'child_actions_saved_days_number' => intval( $saved_days_number ),
                 'pingnonce'                       => MainWP_Utility::instance()->create_site_nonce( 'pingnonce', $pWebsite->id ),
+                'early_access_updates_disabled'   => get_option( 'mainwp_settings_disable_child_early_updates', 1 ),
+                'git_pat'                         => MainWP_Keys_Manager::instance()->get_keys_value( 'mainwp_settings_custom_updater_git_pat', '' ),
+
             );
 
             $reg_verify = MainWP_DB::instance()->get_website_option( $pWebsite, 'register_verify_key', '' );

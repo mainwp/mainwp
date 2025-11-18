@@ -734,7 +734,7 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return;
         }
 
-        $unauth_error = sprintf( esc_html__( 'Unable to check for updates with your GitHub token. Make sure your PAT is valid and has the right permissions. See %here% for more info.', 'mainwp' ), '<a href="https://mainwp.com/docs/github-personal-access-token/" target="_blank">', '</a>' );
+        $unauth_error = sprintf( esc_html__( 'Unable to check for updates with your GitHub token. Make sure your PAT is valid and has the right permissions. See %shere%s for more info.', 'mainwp' ), '<a href="https://mainwp.com/docs/github-personal-access-token/" target="_blank">', '</a>' );
         echo '<tr class="plugin-update-tr">
             <td colspan="3" class="plugin-update colspanchange">
                 <div class="notice notice-error inline">

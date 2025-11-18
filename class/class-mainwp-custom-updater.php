@@ -432,7 +432,7 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param int    $max_depth recursion depth when scanning directories
      * @return string|false
      */
-    public static function locate_installed_plugin_basename_recursive( $expected_basename, $new_install_window_secs = 600, $max_depth = 6 ) {
+    public static function locate_installed_plugin_basename_recursive( $expected_basename, $new_install_window_secs = 600, $max_depth = 6 ) { //phpcs:ignore -- NOSONAR.
         $expected_basename = trim( (string) $expected_basename );
         if ( empty( $expected_basename ) ) {
             return false;

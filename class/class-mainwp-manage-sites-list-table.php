@@ -819,7 +819,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
 
         $search               = isset( $_REQUEST['search']['value'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['search']['value'] ) ) : '';
         $request_group_logic  = isset( $_REQUEST['group_logic'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['group_logic'] ) ) : '';
-        $request_group_logic  = ( 'and' === $request_group_logic ) ? 'and' : ( 'or' === $request_group_logic ? 'or' : '' );
+        $request_group_logic  = in_array( $request_group_logic, array('and', 'or') ) ? $request_group_logic : '';
         $get_saved_state      = empty( $search ) && ! isset( $_REQUEST['g'] ) && ! isset( $_REQUEST['status'] ) && ! isset( $_REQUEST['client'] ) && 'and' !== $request_group_logic;
         $get_all              = ( '' === $search ) && ( isset( $_REQUEST['status'] ) && 'all' === $_REQUEST['status'] ) && empty( $_REQUEST['g'] ) && empty( $_REQUEST['client'] ) && 'and' !== $request_group_logic ? true : false;
         $is_not               = ( isset( $_REQUEST['isnot'] ) && 'yes' === $_REQUEST['isnot'] ) ? true : false;

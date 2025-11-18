@@ -788,9 +788,13 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             case 'POST':
             case 'PUT':
             case 'PATCH':
-            case 'DELETE':
                 if ( 'write' !== $permissions && 'read_write' !== $permissions ) {
                     $msg = __( 'The API key provided does not have write permissions.', 'mainwp' );
+                }
+                break;
+            case 'DELETE':
+                if ( 'write' !== $permissions && 'read_write' !== $permissions && 'delete' !== $permissions ) {
+                    $msg = __( 'The API key provided does not have delete permissions.', 'mainwp' );
                 }
                 break;
             case 'OPTIONS':

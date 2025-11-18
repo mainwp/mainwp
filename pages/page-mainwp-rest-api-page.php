@@ -262,6 +262,8 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     $scope = 'read_write';
                 } elseif ( in_array( 'w', $pers_list ) ) {
                     $scope = 'write';
+                } elseif ( in_array( 'd', $pers_list ) ) {
+                    $scope = 'delete';
                 }
             }
             MainWP_DB::instance()->insert_rest_api_key( $consumer_key, $consumer_secret, $scope, $desc, $enabled );
@@ -298,6 +300,8 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             $scope = 'read_write';
                         } elseif ( in_array( 'w', $pers_list ) ) {
                             $scope = 'write';
+                        } elseif ( in_array( 'd', $pers_list ) ) {
+                            $scope = 'delete';
                         }
                     }
 
@@ -596,9 +600,13 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             if ( 'write' === $per ) {
                                 $pers_title[] = esc_html__( 'Write', 'mainwp' );
                             }
+                            if ( 'delete' === $per ) {
+                                $pers_title[] = esc_html__( 'Delete', 'mainwp' );
+                            }
                             if ( 'read_write' === $per ) {
                                 $pers_title[] = esc_html__( 'Read', 'mainwp' );
                                 $pers_title[] = esc_html__( 'Write', 'mainwp' );
+                                $pers_title[] = esc_html__( 'Delete', 'mainwp' );
                             }
                             ?>
                             <tr key-ck-id="<?php echo intval( $key_id ); ?>">
@@ -1006,8 +1014,11 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         if ( 'write' === $perms ) {
             $init_pers = 'w';
         }
+        if ( 'delete' === $perms ) {
+            $init_pers = 'd';
+        }
         if ( 'read_write' === $perms ) {
-            $init_pers = 'r,w';
+            $init_pers = 'r,w,d';
         }
         static::render_header( 'Edit' );
         ?>
@@ -1074,6 +1085,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                                     <div class="menu">
                                         <div class="item" data-value="r"><?php esc_html_e( 'Read', 'mainwp' ); ?></div>
                                         <div class="item" data-value="w"><?php esc_html_e( 'Write', 'mainwp' ); ?></div>
+                                        <div class="item" data-value="d"><?php esc_html_e( 'Delete', 'mainwp' ); ?></div>
                                     </div>
                                 </div>
                             </div>
@@ -1131,7 +1143,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                                 <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" value="1" <?php echo $enabled ? 'checked="true"' : ''; ?> aria-label="<?php esc_attr_e( 'Enable REST API key', 'mainwp' ); ?>" />
                             </div>
                         </div>
-                        <div class="ui grid field settings-field-indicator-wrapper <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>"">
+                        <div class="ui grid field settings-field-indicator-wrapper <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>">
                             <label class="six wide column middle aligned">
                             <?php
                             if ( $item ) {
@@ -1143,7 +1155,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                                 <input type="text" class="settings-field-value-change-handler" name="mainwp_rest_api_key_desc" id="mainwp_rest_api_key_desc" value="<?php echo esc_html( $edit_desc ); ?>" aria-label="<?php esc_attr_e( 'Key description', 'mainwp' ); ?>"/>
                             </div>
                         </div>
-                        <div class="ui grid field settings-field-indicator-wrapper <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>"">
+                        <div class="ui grid field settings-field-indicator-wrapper <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>">
                             <label class="six wide column middle aligned">
                             <?php
                             if ( $item ) {

@@ -3162,7 +3162,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $type = isset( $others['key_type'] ) ? intval( $others['key_type'] ) : 0;
 
         // Created API keys.
-        $permissions = in_array( $scope, array( 'read', 'write', 'read_write' ), true ) ? sanitize_text_field( $scope ) : 'read';
+        $permissions = in_array( $scope, array( 'read', 'write', 'delete', 'read_write' ), true ) ? sanitize_text_field( $scope ) : 'read';
         $this->wpdb->insert(
             $this->table_name( 'api_keys' ),
             array(
@@ -3209,7 +3209,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @return array
      */
     public function update_rest_api_key( $key_id, $scope, $description, $enabled = 1 ) {
-        $permissions = in_array( $scope, array( 'read', 'write', 'read_write' ), true ) ? sanitize_text_field( $scope ) : 'read';
+        $permissions = in_array( $scope, array( 'read', 'write', 'delete', 'read_write' ), true ) ? sanitize_text_field( $scope ) : 'read';
         return $this->wpdb->update(
             $this->table_name( 'api_keys' ),
             array(

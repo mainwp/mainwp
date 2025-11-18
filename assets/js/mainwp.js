@@ -1346,7 +1346,7 @@ let mainwp_tool_clear_activation_data = function (pObj) {
 let mainwp_tool_reinstall_to_stable_release_version = function (elm) {
   let url = jQuery(elm).attr('href');
   mainwp_confirm('Are you sure you want to roll back to the latest stable release from WordPress.org?<br/>This will overwrite your current version and reinstall the stable build', function () {
-    window.location = url;
+    globalThis.location = url;
   });
 };
 

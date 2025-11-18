@@ -313,7 +313,7 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
             // Insert a hyphen before pre-release if someone wrote 1.3.0alpha2 / 1.3.0rc
             // Also capture shorthands and synonyms: a,b,pre,preview
             // Capture optional numeric like alpha2 / alpha-2 / alpha.2
-            if (preg_match('/^(\d+\.\d+\.\d+)[\.\-]?((?:alpha|a|beta|b|rc|dev|pre|preview))(?:(?:[\.\-]?)(\d+))?$/i', $v, $m)) {
+            if ( preg_match( '/^(\d+\.\d+\.\d+)[.-]?((?:alpha|a|beta|b|rc|dev|pre|preview))[.-]?(\d+)?$/i', $v, $m ) ) {
                 $core = $m[1];
                 $tag  = strtolower($m[2]);
                 $num  = isset($m[3]) && $m[3] !== '' ? $m[3] : '0';
@@ -523,7 +523,7 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
      *
      * Returns release object on success, or false on failure.
      */
-    private function fetch_github_release( $repo_url, $slug ) {
+    private function fetch_github_release( $repo_url, $slug ) { // phpcs:ignore -- NOSONAR -complexity.
         $repo_url = rtrim( $repo_url, '/' );
         $api_base = str_replace( 'github.com', 'api.github.com/repos', $repo_url );
         $token    = self::apply_filters_per_slug( 'uupd/github_token_override', $this->config['github_token'] ?? '', $slug );

@@ -2212,9 +2212,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         static::render_header( 'EarlyUpdates' );
         ?>
         <div id="mainwp-early-updates-settings" class="ui segment">
-
-            <div id="mainwp-message-zone" style="display:none;" class="ui message"></div> <?php //phpcs:ignore --NOSONAR --ok. ?>
-
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-early-updates-info-message' ) ) : ?>
             <div class="ui info message">
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-early-updates-info-message"></i>
@@ -2322,7 +2319,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     do_action( 'mainwp_early_updates_form_bottom' );
                     ?>
                     <div class="ui divider"></div>
-                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/> <?php //phpcs:ignore --NOSONAR -ok. ?>
+                    <input type="submit" name="submit" id="submit-early-updates" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/> <?php //phpcs:ignore --NOSONAR -ok. ?>
                     </form>
                 </div>
             </div>

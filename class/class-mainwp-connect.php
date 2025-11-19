@@ -1610,24 +1610,24 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $output['http_status'] = (int) $http_status;
 
-        MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'http status: [' . $http_status . '] err: [' . $err . ']' );
+        MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', '[UPDATE_DEBUG] http status: [' . $http_status . '] err: [' . $err . ']' );
 
-        MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'DETAILED METRICS - Function: [' . ( isset( $others['function'] ) ? $others['function'] : 'unknown' ) . '] Duration: [' . $curl_duration . 's] Data Size: [' . size_format( $data_size ) . '] Memory: [' . size_format( $memory_usage ) . ' / Peak: ' . size_format( $memory_peak ) . '] Status: [' . $http_status . ']' );
+        MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', '[UPDATE_DEBUG] DETAILED METRICS - Function: [' . ( isset( $others['function'] ) ? $others['function'] : 'unknown' ) . '] Duration: [' . $curl_duration . 's] Data Size: [' . size_format( $data_size ) . '] Memory: [' . size_format( $memory_usage ) . ' / Peak: ' . size_format( $memory_peak ) . '] Status: [' . $http_status . ']' );
 
         if ( '400' === $http_status ) {
-            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'post data: [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
+            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', '[UPDATE_DEBUG] post data: [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
         }
 
         if ( ! empty( $err ) || ( false === $data ) || empty( $http_status ) ) {
-            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'ERROR DETAILS - URL: [' . $url . '] Error: [' . $err . '] Data Empty: [' . ( false === $data ? 'YES' : 'NO' ) . '] Status: [' . $http_status . '] Duration: [' . $curl_duration . 's]' );
+            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', '[UPDATE_DEBUG] ERROR DETAILS - URL: [' . $url . '] Error: [' . $err . '] Data Empty: [' . ( false === $data ? 'YES' : 'NO' ) . '] Status: [' . $http_status . '] Duration: [' . $curl_duration . 's]' );
         }
 
-        MainWP_Logger::instance()->log_execution_time( 'fetch_url_site :: [url=' . $url . '] [duration=' . $curl_duration . 's] [status=' . $http_status . ']' );
+        MainWP_Logger::instance()->log_execution_time( '[UPDATE_DEBUG] fetch_url_site :: [url=' . $url . '] [duration=' . $curl_duration . 's] [status=' . $http_status . ']' );
 
         $thr_error = null;
 
         if ( ( false === $data ) && empty( $http_status ) ) {
-            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] HTTP Error: [status=0][' . $err . ']' );
+            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[UPDATE_DEBUG] [' . $url . '] HTTP Error: [status=0][' . $err . ']' );
             $thr_error = new MainWP_Exception( 'HTTPERROR', $err ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         } elseif ( empty( $data ) && ! empty( $err ) ) {
             MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] HTTP Error: [status=' . $http_status . '][' . $err . ']' );

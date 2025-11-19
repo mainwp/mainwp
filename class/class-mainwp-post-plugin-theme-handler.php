@@ -521,7 +521,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
 
         try {
             $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            MainWP_Logger::instance()->debug( 'DEBUG mainwp_upgradewp: Starting upgrade for site ID: ' . $id );
+            MainWP_Logger::instance()->debug( '[UPDATE_DEBUG] mainwp_upgradewp: Starting upgrade for site ID: ' . $id );
             die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::upgrade_site( $id ) ) ) ); // ok.
         } catch ( MainWP_Exception $e ) {
             die(
@@ -570,7 +570,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         do_action( 'mainwp_log_action', 'Start Upgrade::' . $_POST['type'], MainWP_Logger::UPDATE_CHECK_LOG_PRIORITY, 0 );
         $this->secure_request( 'mainwp_upgradeplugintheme' );
 
-        MainWP_Logger::instance()->debug( 'AJAX mainwp_upgrade_plugintheme: Type=[' . sanitize_text_field( wp_unslash( $_POST['type'] ) ) . '] Dashboard Memory=[' . size_format( memory_get_usage( true ) ) . '] Memory Peak=[' . size_format( memory_get_peak_usage( true ) ) . ']' );
+        MainWP_Logger::instance()->debug( '[UPDATE_DEBUG] AJAX mainwp_upgrade_plugintheme: Type=[' . sanitize_text_field( wp_unslash( $_POST['type'] ) ) . '] Dashboard Memory=[' . size_format( memory_get_usage( true ) ) . '] Memory Peak=[' . size_format( memory_get_peak_usage( true ) ) . ']' );
 
         // support chunk update for manage sites page only.
         $chunk_support = ! empty( $_POST['chunk_support'] ) ? true : false;
@@ -580,7 +580,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
 
         if ( isset( $_POST['websiteId'] ) ) {
             $websiteId = intval( $_POST['websiteId'] );
-            MainWP_Logger::instance()->debug( 'AJAX mainwp_upgrade_plugintheme: WebsiteId=[' . $websiteId . '] Starting plugin/theme update' );
+            MainWP_Logger::instance()->debug( '[UPDATE_DEBUG] AJAX mainwp_upgrade_plugintheme: WebsiteId=[' . $websiteId . '] Starting plugin/theme update' );
             do_action( 'mainwp_log_action', 'Start Upgrade:: websiteId:' . $websiteId, MainWP_Logger::UPDATE_CHECK_LOG_PRIORITY, 0 );
 
             if ( $chunk_support ) {

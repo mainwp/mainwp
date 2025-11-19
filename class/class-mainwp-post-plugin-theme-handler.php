@@ -521,6 +521,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
 
         try {
             $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            MainWP_Logger::instance()->debug( 'DEBUG mainwp_upgradewp: Starting upgrade for site ID: ' . $id );
             die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::upgrade_site( $id ) ) ) ); // ok.
         } catch ( MainWP_Exception $e ) {
             die(
@@ -566,7 +567,10 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
             die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'update translations', 'mainwp' ), false ) ) ) );
         }
 
+        do_action( 'mainwp_log_action', 'Start Upgrade::' . $_POST['type'], MainWP_Logger::UPDATE_CHECK_LOG_PRIORITY, 0 );
         $this->secure_request( 'mainwp_upgradeplugintheme' );
+
+        MainWP_Logger::instance()->debug( 'AJAX mainwp_upgrade_plugintheme: Type=[' . sanitize_text_field( wp_unslash( $_POST['type'] ) ) . '] Dashboard Memory=[' . size_format( memory_get_usage( true ) ) . '] Memory Peak=[' . size_format( memory_get_peak_usage( true ) ) . ']' );
 
         // support chunk update for manage sites page only.
         $chunk_support = ! empty( $_POST['chunk_support'] ) ? true : false;
@@ -576,6 +580,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
 
         if ( isset( $_POST['websiteId'] ) ) {
             $websiteId = intval( $_POST['websiteId'] );
+            MainWP_Logger::instance()->debug( 'AJAX mainwp_upgrade_plugintheme: WebsiteId=[' . $websiteId . '] Starting plugin/theme update' );
+            do_action( 'mainwp_log_action', 'Start Upgrade:: websiteId:' . $websiteId, MainWP_Logger::UPDATE_CHECK_LOG_PRIORITY, 0 );
 
             if ( $chunk_support ) {
                 /**
@@ -603,6 +609,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
             } else {
                 $slugs = MainWP_Updates_Handler::get_plugin_theme_slugs( $websiteId, sanitize_text_field( wp_unslash( $_POST['type'] ) ) );
             }
+
+            do_action( 'mainwp_log_action', 'Start Upgrade:: websiteId:' . $websiteId . ' :: slugs:' . wp_json_encode( $slugs, true ), MainWP_Logger::UPDATE_CHECK_LOG_PRIORITY, 0 );
         }
         // phpcs:enable
 
@@ -656,6 +664,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
 
             wp_send_json( $info );
         } catch ( MainWP_Exception $e ) {
+            MainWP_Logger::instance()->debug( 'AJAX mainwp_upgrade_plugintheme ERROR: WebsiteId=[' . ( isset( $websiteId ) ? $websiteId : 'N/A' ) . '] Type=[' . $e->getMessage() . '] Extra=[' . $e->get_message_extra() . '] ErrorCode=[' . $e->get_message_error_code() . ']' );
             die(
                 wp_json_encode(
                     array(

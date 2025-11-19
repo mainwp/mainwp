@@ -1579,10 +1579,16 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 @curl_multi_close( $mh );
             }
         } else {
-            $data        = @curl_exec( $ch );
-            $http_status = @curl_getinfo( $ch, CURLINFO_HTTP_CODE );
-            $err         = @curl_error( $ch );
-            $real_url    = @curl_getinfo( $ch, CURLINFO_EFFECTIVE_URL );
+            $curl_start_time = microtime( true );
+            $data            = @curl_exec( $ch );
+            $curl_end_time   = microtime( true );
+            $curl_duration   = round( ( $curl_end_time - $curl_start_time ), 2 );
+            $http_status     = @curl_getinfo( $ch, CURLINFO_HTTP_CODE );
+            $err             = @curl_error( $ch );
+            $real_url        = @curl_getinfo( $ch, CURLINFO_EFFECTIVE_URL );
+            $data_size       = strlen( $data );
+            $memory_usage    = memory_get_usage( true );
+            $memory_peak     = memory_get_peak_usage( true );
         }
 
         $host = wp_parse_url( $real_url, PHP_URL_HOST );
@@ -1605,11 +1611,18 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $output['http_status'] = (int) $http_status;
 
         MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'http status: [' . $http_status . '] err: [' . $err . ']' );
+
+        MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'DETAILED METRICS - Function: [' . ( isset( $others['function'] ) ? $others['function'] : 'unknown' ) . '] Duration: [' . $curl_duration . 's] Data Size: [' . size_format( $data_size ) . '] Memory: [' . size_format( $memory_usage ) . ' / Peak: ' . size_format( $memory_peak ) . '] Status: [' . $http_status . ']' );
+
         if ( '400' === $http_status ) {
             MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'post data: [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
         }
 
-        MainWP_Logger::instance()->log_execution_time( 'fetch_url_site :: [url=' . $url . ']' );
+        if ( ! empty( $err ) || ( false === $data ) || empty( $http_status ) ) {
+            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'ERROR DETAILS - URL: [' . $url . '] Error: [' . $err . '] Data Empty: [' . ( false === $data ? 'YES' : 'NO' ) . '] Status: [' . $http_status . '] Duration: [' . $curl_duration . 's]' );
+        }
+
+        MainWP_Logger::instance()->log_execution_time( 'fetch_url_site :: [url=' . $url . '] [duration=' . $curl_duration . 's] [status=' . $http_status . ']' );
 
         $thr_error = null;
 

@@ -1411,6 +1411,8 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
                 $error = \mainwp_do_not_have_permissions( esc_html__( 'update themes', 'mainwp' ), false );
             }
 
+            do_action( 'mainwp_log_action', 'Start Upgrade::' . $type . '::' . implode( ',', $slugs ), MainWP_Logger::UPDATE_CHECK_LOG_PRIORITY, 0 );
+
             $website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 
             if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
@@ -1419,6 +1421,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
             }
 
             if ( ! empty( $error ) ) {
+                do_action( 'mainwp_log_action', ' Upgrade Plugin Theme:: errorCode:' . $erCode . ':::' . $error, MainWP_Logger::UPDATE_CHECK_LOG_PRIORITY, 0 );
                 wp_send_json(
                     array(
                         'error'     => $error,
@@ -1454,6 +1457,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
                 * @since 4.1
                 */
                 do_action( 'mainwp_after_plugin_theme_translation_update', $information, $type, implode( ',', $slugs ), $website );
+                do_action( 'mainwp_log_action', 'Upgrade Plugin Theme:: information:' . wp_json_encode( $information, true ), MainWP_Logger::UPDATE_CHECK_LOG_PRIORITY, 0 );
 
                 if ( isset( $information['sync'] ) ) {
                     unset( $information['sync'] );
@@ -1461,6 +1465,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
                 wp_send_json( $information );
             }
         } catch ( MainWP_Exception $e ) {
+            do_action( 'mainwp_log_action', 'Upgrade Error::' . wp_json_encode( $e, true ), MainWP_Logger::UPDATE_CHECK_LOG_PRIORITY, 0 );
             die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
         }
 

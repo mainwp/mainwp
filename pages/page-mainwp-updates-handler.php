@@ -1152,7 +1152,11 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             */
             do_action( 'mainwp_before_plugin_theme_translation_update', $type, $list_items, $website );
 
-            $information = MainWP_Connect::fetch_url_authed(
+            MainWP_Logger::instance()->debug_for_website( $website, 'update_plugin_theme_translation', 'Starting ' . $type . ' update. Items: [' . $list_items . ']' );
+            MainWP_Logger::instance()->debug_for_website( $website, 'update_plugin_theme_translation', 'PHP Memory Limit: [' . ini_get( 'memory_limit' ) . '] Max Execution Time: [' . ini_get( 'max_execution_time' ) . 's]' );
+
+            $update_start    = microtime( true );
+            $information     = MainWP_Connect::fetch_url_authed(
                 $website,
                 ( 'translation' === $type ? 'upgradetranslation' : 'upgradeplugintheme' ),
                 array(
@@ -1161,6 +1165,24 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 ),
                 true
             );
+            $update_duration = microtime( true ) - $update_start;
+
+            MainWP_Logger::instance()->debug_for_website( $website, 'update_plugin_theme_translation', 'Update completed in [' . round( $update_duration, 2 ) . 's]. Response type: [' . gettype( $information ) . ']' );
+
+            if ( is_array( $information ) ) {
+                if ( isset( $information['upgrades'] ) ) {
+                    MainWP_Logger::instance()->debug_for_website( $website, 'update_plugin_theme_translation', 'Successful updates: [' . count( $information['upgrades'] ) . ']' );
+                }
+                if ( isset( $information['upgrades_error'] ) ) {
+                    MainWP_Logger::instance()->debug_for_website( $website, 'update_plugin_theme_translation', 'Failed updates: [' . count( $information['upgrades_error'] ) . '] - Details: [' . wp_json_encode( $information['upgrades_error'] ) . ']' );
+                }
+                if ( isset( $information['error'] ) ) {
+                    MainWP_Logger::instance()->debug_for_website( $website, 'update_plugin_theme_translation', 'Response Error: [' . $information['error'] . ']' );
+                }
+            } else {
+                MainWP_Logger::instance()->debug_for_website( $website, 'update_plugin_theme_translation', 'Invalid response format: [' . gettype( $information ) . ']' );
+            }
+
             /**
             * Action: mainwp_after_plugin_theme_translation_update
             *

@@ -670,7 +670,9 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         }
         static::render_header();
         static::render_table_top();
-        if ( ! static::check_rest_api_enabled() ) {
+        $rest_status = static::check_rest_api_status();
+
+        if ( empty( $rest_status ) || ( empty( $rest_status['guest'] ) && empty( $rest_status['current_user'] ) ) ) {
             ?>
             <div class="ui message yellow"><?php printf( esc_html__( 'It seems the WordPress REST API is currently disabled on your site. MainWP REST API requires the WordPress REST API to function properly. Please enable it to ensure smooth operation. Need help? %sClick here for a guide%s.', 'mainwp' ), '<a href="https://mainwp.com/kb/wordpress-rest-api-does-not-respond/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
             <?php
@@ -1192,53 +1194,84 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
     }
 
     /**
-     * Method check_rest_api_enabled().
+     * Check if the WordPress REST API is enabled for a specific user.
      *
-     * @param bool $check_logged_in check for logged in user or not.
+     * This function makes an internal REST request to the root endpoint (/wp-json)
+     * and determines if the REST API is available. It can check for a guest (not
+     * logged in) or a specific logged-in user.
      *
-     * @return bool check result.
+     * @param int|null $user_id Optional. User ID to check REST API access for.
+     *                          If null, the check is performed as a guest.
+     *
+     * @return bool True if the REST API is enabled for the given user context,
+     *              false otherwise.
      */
-    public static function check_rest_api_enabled( $check_logged_in = false ) { // phpcs:ignore -- NOSONAR - complex.
-        $cookies = array();
-        if ( $check_logged_in && is_user_logged_in() && defined( 'LOGGED_IN_COOKIE' ) ) {
-            $cookies      = array();
-            $auth_cookies = wp_parse_auth_cookie( $_COOKIE[ LOGGED_IN_COOKIE ], 'logged_in' ); // phpcs:ignore -- ok.
-            if ( is_array( $auth_cookies ) ) {
-                foreach ( $auth_cookies as $name => $value ) {
-                    $cookies[] = new \WP_Http_Cookie(
-                        array(
-                            'name'  => $name,
-                            'value' => $value,
-                        )
-                    );
-                }
+    public static function check_rest_api_enabled( $user_id = null ) {
+        // If a user ID is provided, temporarily switch to that user.
+        if ( $user_id ) {
+            $user = get_userdata( $user_id );
+            if ( ! $user ) {
+                return false; // Invalid user ID.
             }
+            wp_set_current_user( $user_id );
         }
 
-        $args = array(
-            'method'    => 'GET',
-            'timeout'   => 45,
-            'headers'   => array(
-                'content-type' => 'application/json',
-            ),
-            'sslverify' => (bool) get_option( 'mainwp_sslVerifyCertificate', true ),
+        // Make an internal REST request to the root ( /wp-json ).
+        $request  = new \WP_REST_Request( 'GET', '/' );
+        $response = rest_get_server()->dispatch( $request );
+
+        // Restore to original user if switched.
+        if ( $user_id ) {
+            wp_set_current_user( 0 ); // back to guest.
+        }
+
+        // If REST returns an error, it's not enabled for this user.
+        if ( is_wp_error( $response ) ) {
+            return false;
+        }
+
+        // Get the decoded response data.
+        $data = $response instanceof \WP_REST_Response
+            ? $response->get_data()
+            : $response;
+
+        // REST enabled if routes array exists and not empty.
+        return (
+            is_array( $data )
+            && isset( $data['routes'] )
+            && ! empty( $data['routes'] )
+        );
+    }
+
+    /**
+     * Check the WordPress REST API status for both guests and the current user.
+     *
+     * This function performs two checks:
+     *   1. Checks if the REST API is accessible to non-logged-in users (guests).
+     *   2. Checks if the REST API is accessible to the currently logged-in user, if any.
+     *
+     * @return array{
+     *     guest: bool,              // True if REST API is enabled for guests, false otherwise.
+     *     current_user: bool|null    // True if REST API is enabled for current user,
+     *                                // false if disabled, null if no user is logged in.
+     * }
+     */
+    public static function check_rest_api_status() {
+        $status = array(
+            'guest'        => false,
+            'current_user' => null, // null if no logged-in user.
         );
 
-        if ( $check_logged_in && ! empty( $cookies ) ) {
-            $args['cookies'] = $cookies;
+        // 1️⃣ Check for guest (not logged in)
+        $status['guest'] = self::check_rest_api_enabled();
+
+        // 2️⃣ Check for current logged-in user (if any)
+        $current_user_id = get_current_user_id();
+        if ( $current_user_id ) {
+            $status['current_user'] = self::check_rest_api_enabled( $current_user_id );
         }
 
-        $site_url = get_option( 'home' );
-        $response = wp_remote_post( $site_url . '/wp-json', $args );
-        $body     = wp_remote_retrieve_body( $response );
-        $data     = is_string( $body ) ? json_decode( $body, true ) : false;
-
-        if ( is_array( $data ) & isset( $data['routes'] ) && ! empty( $data['routes'] ) ) {
-            return true;
-        } elseif ( ! $check_logged_in ) {
-            return static::check_rest_api_enabled( true );
-        }
-        return false;
+        return $status;
     }
 
     /**

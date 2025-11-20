@@ -251,7 +251,7 @@ class Log_Query {
                 if ( empty( $sql_and ) ) {
                     $sql_and = ' AND ';
                 }
-                $where_actions .= $sql_and . ' lg.object_id = "' . $object_id . '" ';
+                $where_actions .= $sql_and . ' lg.object_id = "' . esc_sql( $object_id ) . '" ';
             }
         }
 
@@ -324,9 +324,22 @@ class Log_Query {
         {$join}
         WHERE `lg`.`connector` != 'compact' {$where} {$recent_where} {$where_users_filter}";
 
+        // Generate cache key for count query.
+        $cache_key = 'mainwp_logs_count_' . md5( serialize( $args ) ); // NOSONAR - MD5 used for cache key generation only, not cryptographic purposes.
+
         if ( $count_only ) {
+            $cached_count = wp_cache_get( $cache_key, 'mainwp_logs' );
+            if ( false !== $cached_count ) {
+                return array(
+                    'count' => $cached_count,
+                );
+            }
+
+            $count = absint( $wpdb->get_var( $count_query ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Count query is built with properly escaped and validated SQL fragments (WHERE clauses use escape(), intval(), and sanitize_text_field(); JOIN and recent_where are static or int-cast).
+            wp_cache_set( $cache_key, $count, 'mainwp_logs', HOUR_IN_SECONDS );
+
             return array(
-                'count' => absint( $wpdb->get_var( $count_query ) ),  // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+                'count' => $count,
             );
         }
 
@@ -346,7 +359,14 @@ class Log_Query {
             'items' => $wpdb->get_results( $query ), // phpcs:ignore -- ok.
         );
         if ( ! $not_count ) {
-            $results['count'] = absint( $wpdb->get_var( $count_query ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+            $cached_count = wp_cache_get( $cache_key, 'mainwp_logs' );
+            if ( false !== $cached_count ) {
+                $results['count'] = $cached_count;
+            } else {
+                $count = absint( $wpdb->get_var( $count_query ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Count query is built with properly escaped and validated SQL fragments (WHERE clauses use escape(), intval(), and sanitize_text_field(); JOIN and recent_where are static or int-cast).
+                wp_cache_set( $cache_key, $count, 'mainwp_logs', HOUR_IN_SECONDS );
+                $results['count'] = $count;
+            }
         }
         return $results;
     }

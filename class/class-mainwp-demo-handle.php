@@ -414,21 +414,35 @@ class MainWP_Demo_Handle { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      */
     public function is_new_instance() {
         global $wpdb;
-        $count = $wpdb->get_var( 'SELECT count(id) FROM ' . MainWP_DB::instance()->get_table_name( 'wp' ) ); //phpcs:ignore WordPress.DB.PreparedSQL -- ok.
+        $cache_key = 'mainwp_is_new_instance';
+        $cached    = wp_cache_get( $cache_key );
+
+        if ( false !== $cached ) {
+            return $cached;
+        }
+
+        $table_wp = esc_sql( MainWP_DB::instance()->get_table_name( 'wp' ) );
+        $count    = $wpdb->get_var( "SELECT count(id) FROM {$table_wp}" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name cannot be parameterized.
         if ( $count ) {
+            wp_cache_set( $cache_key, false );
             return false;
         }
-        $count = $wpdb->get_var( 'SELECT count(client_id) FROM ' . MainWP_DB::instance()->get_table_name( 'wp_clients' ) ); //phpcs:ignore WordPress.DB.PreparedSQL -- ok.
+
+        $table_clients = esc_sql( MainWP_DB::instance()->get_table_name( 'wp_clients' ) );
+        $count         = $wpdb->get_var( "SELECT count(client_id) FROM {$table_clients}" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name cannot be parameterized.
         if ( $count ) {
+            wp_cache_set( $cache_key, false );
             return false;
         }
 
         $extensions_disabled = MainWP_Extensions_Handler::get_extensions_disabled();
         $extensions          = MainWP_Extensions_Handler::get_extensions();
         if ( ! empty( $extensions ) && $extensions !== $extensions_disabled ) {
+            wp_cache_set( $cache_key, false );
             return false;
         }
 
+        wp_cache_set( $cache_key, true );
         return true;
     }
 

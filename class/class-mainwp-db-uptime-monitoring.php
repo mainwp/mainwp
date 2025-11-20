@@ -429,8 +429,8 @@ KEY idx_wpid (wpid)";
         $local_timestamp  = mainwp_get_timestamp();
         $lasttime_counter = isset( $params['main_counter_lasttime'] ) ? intval( $params['main_counter_lasttime'] ) : 0;
         $glo_settings     = isset( $params['global_settings'] ) && is_array( $params['global_settings'] ) ? $params['global_settings'] : array();
+        $limit            = isset( $params['limit'] ) ? intval( $params['limit'] ) : 10;
 
-        $limit        = isset( $glo_settings['limit'] ) ? intval( $glo_settings['limit'] ) : 10;
         $glo_interval = isset( $glo_settings['interval'] ) ? intval( $glo_settings['interval'] ) : 60; // mins.
 
         if ( empty( $glo_interval ) ) {

@@ -1363,7 +1363,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
                 $uptime_status = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_monitor_stat_hourly_by( $website['monitor_id'], 'last24', $last24_time );
 
-                $disabled = ( ! $glo_active && ( -1 === (int) $website['active'] ) ) || 0 === (int) $website['active'] ? true : false;
+                $disabled = ( ! $glo_active && ( ! isset( $website['active'] ) || -1 === (int) $website['active'] ) ) || 0 === (int) $website['active'];
 
                 foreach ( $columns as $column_name => $column_display_name ) {
                     ob_start();

@@ -95,6 +95,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
             'main_counter_lasttime' => $lasttimeAutomaticMainCounterLastTime,
             'global_settings'       => $global_settings,
             'limit'                 => $limit,
+            'dev_log_query'         => 0,
         );
 
         $checkuptime_monitors = MainWP_DB_Uptime_Monitoring::instance()->get_monitors_to_check_uptime( $params ); // to sync sites data.

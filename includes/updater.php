@@ -834,14 +834,14 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
 
                     // 3) Only users who can update plugins/themes should proceed.
                     if ( ! current_user_can( 'update_plugins' ) && ! current_user_can( 'update_themes' ) ) {
-                        wp_die( __( 'Cheatin’ uh?' ) );
+                        wp_die( esc_html__( 'Cheatin’ uh?', 'mainwp' ) );
                     }
 
                     // 4) Verify the nonce for this slug.
                     $nonce     = isset( $_REQUEST['_wpnonce'] ) ? wp_unslash( $_REQUEST['_wpnonce'] ) : '';
                     $checkname = 'uupd_manual_check_' . $slug;
                     if ( ! wp_verify_nonce( $nonce, $checkname ) ) {
-                        wp_die( __( 'Security check failed.' ) );
+                        wp_die( esc_html__( 'Security check failed.', 'mainwp' ) );
                     }
 
                     $cache_id  = 'upd_' . $slug;

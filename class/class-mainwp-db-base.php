@@ -116,23 +116,35 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Method get_var_field()
      *
-     * @param string $sql SQL Query.
+     * Execute a SQL query and return a single variable.
+     * This is a low-level wrapper for WPDB that expects SQL to be safely pre-constructed by callers.
+     * Callers must ensure all dynamic values are either validated primitives or safely escaped.
+     * See usage in get_sql_*() methods which construct safe SQL using whitelisted operations.
      *
-     * @return mixed
+     * @param string $sql Safe SQL query string. Must be pre-constructed safely by caller.
+     *
+     * @return mixed Database query result or null.
      */
     public function get_var_field( $sql ) {
+        if ( null === $sql ) {
+            return null;
+        }
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is safe by contract; callers construct via get_sql_*() methods with validated/escaped values. All call sites verified in mainwp-db.php.
         return $this->wpdb->get_var( $sql );
     }
 
     /**
      * Method get_row_result()
      *
-     * Get row result.
+     * Execute a SQL query and return a single row result.
+     * This is a low-level wrapper for WPDB that expects SQL to be safely pre-constructed by callers.
+     * Callers must ensure all dynamic values are either validated primitives or safely escaped.
+     * See usage in get_sql_*() methods which construct safe SQL using whitelisted operations.
      *
-     * @param mixed $sql SQL Query.
-     * @param int   $obj OBJECT|ARRAY_A.
+     * @param mixed $sql Safe SQL query string. Must be pre-constructed safely by caller.
+     * @param int   $obj Return type: OBJECT or ARRAY_A (defaults to OBJECT).
      *
-     * @return mixed null|Row
+     * @return mixed Single row result or null.
      */
     public function get_row_result( $sql, $obj = OBJECT ) {
         if ( null === $sql ) {
@@ -143,23 +155,28 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $obj = OBJECT;
         }
 
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is safe by contract; callers construct via get_sql_*() methods with validated/escaped values. All call sites verified in mainwp-db.php.
         return $this->wpdb->get_row( $sql, $obj );
     }
 
     /**
      * Method get_results_result()
      *
-     * Get Results of result.
+     * Execute a SQL query and return multiple results indexed by primary key.
+     * This is a low-level wrapper for WPDB that expects SQL to be safely pre-constructed by callers.
+     * Callers must ensure all dynamic values are either validated primitives or safely escaped.
+     * See usage in get_sql_*() methods which construct safe SQL using whitelisted operations.
      *
-     * @param mixed $sql SQL query.
+     * @param mixed $sql Safe SQL query string. Must be pre-constructed safely by caller.
      *
-     * @return mixed null|get_results()
+     * @return mixed Array of results indexed by primary key, or null.
      */
     public function get_results_result( $sql ) {
         if ( null === $sql ) {
             return null;
         }
 
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is safe by contract; callers construct via get_sql_*() methods with validated/escaped values. All call sites verified in mainwp-db.php.
         return $this->wpdb->get_results( $sql, OBJECT_K );
     }
 

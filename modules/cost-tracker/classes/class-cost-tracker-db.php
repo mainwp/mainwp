@@ -128,10 +128,12 @@ PRIMARY KEY  (`id`)  ';
     public function update_db_cost( $current_version ) { //phpcs:ignore -- NOSONAR - complex.
         if ( ! empty( $current_version ) ) {
             if ( version_compare( $current_version, '1.0.8', '<' ) ) {
-                $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'cost_tracker' ) . ' MODIFY COLUMN price decimal(26,8)' ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+                $table = esc_sql( $this->table_name( 'cost_tracker' ) );
+                $this->wpdb->query( "ALTER TABLE {$table} MODIFY COLUMN price decimal(26,8)" ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
             }
             if ( version_compare( $current_version, '1.0.9', '<' ) ) {
-                $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'cost_tracker' ) . ' DROP COLUMN author' ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+                $table = esc_sql( $this->table_name( 'cost_tracker' ) );
+                $this->wpdb->query( "ALTER TABLE {$table} DROP COLUMN author" ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
             }
 
             if ( version_compare( $current_version, '1.0.13', '<' ) ) {
@@ -230,8 +232,9 @@ PRIMARY KEY  (`id`)  ';
         }
 
         if ( ! empty( $id ) ) {
-
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- write operation; caching not applicable for UPDATE.
             $wpdb->update( $this->table_name( 'cost_tracker' ), $update, array( 'id' => intval( $id ) ) );
+            $this->invalidate_cost_tracker_caches( $id );
             return $this->get_cost_tracker_by( 'id', $id );
         } else {
             if ( isset( $update['id'] ) ) {
@@ -239,6 +242,7 @@ PRIMARY KEY  (`id`)  ';
             }
 
             if ( $wpdb->insert( $this->table_name( 'cost_tracker' ), $update ) ) {
+                $this->invalidate_cost_tracker_caches();
                 return $this->get_cost_tracker_by( 'id', $wpdb->insert_id );
             }
         }
@@ -434,7 +438,9 @@ PRIMARY KEY  (`id`)  ';
             if ( ! empty( $selected_ids ) ) {
                 $where .= ' AND ct.id IN (' . implode( ',', $selected_ids ) . ') ';
             }
-            return $wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'cost_tracker' ) . ' ct WHERE 1 ' . $where . $limit ); //phpcs:ignore -- good.
+            $table = esc_sql( $this->table_name( 'cost_tracker' ) );
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $table is escaped with esc_sql(); $where and $limit are from internal arrays only
+            return $wpdb->get_results( "SELECT * FROM {$table} ct WHERE 1 {$where}{$limit}" );
         }
 
         $where = '';
@@ -442,35 +448,75 @@ PRIMARY KEY  (`id`)  ';
 
         $sql = '';
         if ( 'id' === $by && is_numeric( $value ) ) {
-            $sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'cost_tracker' ) . ' WHERE `id`=%d ', $value ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-            return $wpdb->get_row( $sql, OBJECT ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+            $cache_key = $this->get_cache_key_for_cost_tracker( $by, $value, $params );
+            $cached    = wp_cache_get( $cache_key, 'mainwp_cost_tracker' );
+            if ( false !== $cached ) {
+                return $cached;
+            }
+
+            $table = esc_sql( $this->table_name( 'cost_tracker' ) );
+            $sql = $wpdb->prepare( "SELECT * FROM {$table} WHERE `id`=%d ", $value );
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is safely constructed with $wpdb->prepare() above; table name is escaped with esc_sql().
+            $result = $wpdb->get_row( $sql, OBJECT );
+            wp_cache_set( $cache_key, $result, 'mainwp_cost_tracker' );
+            return $result;
         } elseif ( 'count' === $by ) {
-            $sql = 'SELECT count(*) FROM ' . $this->table_name( 'cost_tracker' ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-            return $wpdb->get_var( $sql ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+            $cache_key = 'mainwp_cost_tracker_' . md5( wp_json_encode( array( 'method' => 'get_cost_tracker_by', 'by' => 'count' ) ) ); // NOSONAR - MD5 used for cache key generation only, not cryptographic (security) purposes.
+            $cached    = wp_cache_get( $cache_key, 'mainwp_cost_tracker' );
+            if ( false !== $cached ) {
+                return $cached;
+            }
+
+            $table = esc_sql( $this->table_name( 'cost_tracker' ) );
+            $sql = "SELECT count(*) FROM {$table}";
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is safely constructed with static table name that is escaped with esc_sql(); no dynamic input.
+            $result = $wpdb->get_var( $sql );
+            wp_cache_set( $cache_key, $result, 'mainwp_cost_tracker' );
+            return $result;
         } elseif ( 'id' === $by && false !== strpos( $value, ',' ) ) {
             $cost_ids = explode( ',', $value );
             $cost_ids = MainWP_Utility::array_numeric_filter( $cost_ids );
             if ( ! empty( $cost_ids ) ) {
-                $sql = 'SELECT * FROM ' . $this->table_name( 'cost_tracker' ) . ' WHERE `id` IN (' . implode( ',', $cost_ids ) . ' )';
+                $table = esc_sql( $this->table_name( 'cost_tracker' ) );
+                $sql = "SELECT * FROM {$table} WHERE `id` IN (" . implode( ',', $cost_ids ) . ' )';
             }
         } elseif ( 'site_id' === $by || 'client_id' === $by ) {
-            $sql = 'SELECT * FROM ' . $this->table_name( 'cost_tracker' );
+            $table = esc_sql( $this->table_name( 'cost_tracker' ) );
+            $sql = "SELECT * FROM {$table}";
         } elseif ( 'slug' === $by && is_string( $value ) ) {
             if ( in_array( $product_type, array( 'plugin', 'theme' ), true ) ) {
-                $sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'cost_tracker' ) . ' WHERE `slug`=%s AND product_type = %s ', $value, $product_type ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-                return $wpdb->get_row( $sql, OBJECT ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+                $cache_key = $this->get_cache_key_for_cost_tracker( $by, $value, array( 'product_type' => $product_type ) );
+                $cached    = wp_cache_get( $cache_key, 'mainwp_cost_tracker' );
+                if ( false !== $cached ) {
+                    return $cached;
+                }
+
+                $table = esc_sql( $this->table_name( 'cost_tracker' ) );
+                $sql = $wpdb->prepare( "SELECT * FROM {$table} WHERE `slug`=%s AND product_type = %s ", $value, $product_type );
+                $result = $wpdb->get_row( $sql, OBJECT );
+                wp_cache_set( $cache_key, $result, 'mainwp_cost_tracker' );
+                return $result;
             } else {
                 $where = '';
                 if ( ! empty( $product_type ) ) {
                     $where = $wpdb->prepare( ' AND product_type = %s ', $product_type );
                 }
-                $sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'cost_tracker' ) . ' WHERE `slug`=%s ' . $where, $value ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+                $table = esc_sql( $this->table_name( 'cost_tracker' ) );
+                $sql = $wpdb->prepare( "SELECT * FROM {$table} WHERE `slug`=%s " . $where, $value );
             }
         }
 
         $data = array();
         if ( ! empty( $sql ) ) {
-            $result = $wpdb->get_results( $sql, OBJECT ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+            $cache_key = $this->get_cache_key_for_cost_tracker( $by, $value, $params );
+            $cached    = wp_cache_get( $cache_key, 'mainwp_cost_tracker' );
+            if ( false !== $cached ) {
+                return $cached;
+            }
+
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is safely constructed from escaped table names and prepared statements above
+            $result = $wpdb->get_results( $sql, OBJECT );
+            wp_cache_set( $cache_key, $result, 'mainwp_cost_tracker' );
             if ( $result ) {
                 if ( 'site_id' === $by ) {
                     $site_id = intval( $value );
@@ -543,15 +589,21 @@ PRIMARY KEY  (`id`)  ';
         $deleted = false;
 
         if ( 'id' === $by ) {
-            if ( $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'cost_tracker' ) . ' WHERE id=%d ', $value ) ) ) { //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+            $table = esc_sql( $this->table_name( 'cost_tracker' ) );
+            if ( $wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE id=%d ", $value ) ) ) { //phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- delete operation that invalidates caches below.
                 $deleted = true;
             }
-        } elseif ( $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'cost_tracker' ) . ' WHERE site_id=%d ', $value ) ) ) { //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-            $deleted = true;
+        } else {
+            $table = esc_sql( $this->table_name( 'cost_tracker' ) );
+            if ( $wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE site_id=%d ", $value ) ) ) { //phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- delete operation that invalidates caches below.
+                $deleted = true;
+            }
         }
 
         if ( $deleted ) {
-            $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'lookup_item_objects' ) . ' WHERE item_id=%d AND item_name = "cost"', $value ) ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+            $lookup_table = esc_sql( $this->table_name( 'lookup_item_objects' ) );
+            $wpdb->query( $wpdb->prepare( "DELETE FROM {$lookup_table} WHERE item_id=%d AND item_name = \"cost\"", $value ) ); //phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- delete operation; caching is not applicable for write operations.
+            $this->invalidate_cost_tracker_caches( 'id' === $by ? $value : null );
         }
 
         return $deleted;
@@ -599,8 +651,18 @@ PRIMARY KEY  (`id`)  ';
 
         $clients_costs     = array();
         $clients_costs_ids = array();
-        $sql               = 'SELECT * FROM ' . $this->table_name( 'cost_tracker' );
-        $result            = $wpdb->get_results( $sql, OBJECT ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- get all cost trackers.
+
+        $cache_key = 'mainwp_cost_tracker_all';
+        $result    = wp_cache_get( $cache_key, 'mainwp_cost_tracker' );
+
+        if ( false === $result ) {
+            $table  = esc_sql( $this->table_name( 'cost_tracker' ) );
+            $sql    = "SELECT * FROM {$table}";
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql uses esc_sql() for table name; results cached immediately after retrieval
+            $result = $wpdb->get_results( $sql, OBJECT );
+            wp_cache_set( $cache_key, $result, 'mainwp_cost_tracker' );
+        }
+
         if ( $result ) {
             foreach ( $result as $cost ) {
                 $sites   = ! empty( $cost->sites ) ? json_decode( $cost->sites, true ) : array();
@@ -762,8 +824,18 @@ PRIMARY KEY  (`id`)  ';
 
         $sites_costs     = array();
         $sites_costs_ids = array();
-        $sql             = 'SELECT * FROM ' . $this->table_name( 'cost_tracker' );
-        $result          = $wpdb->get_results( $sql, OBJECT ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+
+        $cache_key = 'mainwp_cost_tracker_all';
+        $result    = wp_cache_get( $cache_key, 'mainwp_cost_tracker' );
+
+        if ( false === $result ) {
+            $table  = esc_sql( $this->table_name( 'cost_tracker' ) );
+            $sql    = "SELECT * FROM {$table}";
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql uses esc_sql() for table name; results cached immediately after retrieval
+            $result = $wpdb->get_results( $sql, OBJECT );
+            wp_cache_set( $cache_key, $result, 'mainwp_cost_tracker' );
+        }
+
         if ( $result ) {
             foreach ( $result as $cost ) {
                 $sites   = ! empty( $cost->sites ) ? json_decode( $cost->sites, true ) : array();
@@ -859,12 +931,22 @@ PRIMARY KEY  (`id`)  ';
         $where    = '';
         $sql      = '';
         if ( 'all' === $sum_data ) {
+            $cache_key = 'mainwp_cost_tracker_' . md5( wp_json_encode( array( 'method' => 'get_summary_data', 'sum_data' => 'all' ) ) ); // NOSONAR - MD5 used for cache key generation only, not cryptographic (security) purposes.
+            $cached    = wp_cache_get( $cache_key, 'mainwp_cost_tracker' );
+            if ( false !== $cached ) {
+                return $cached;
+            }
+
             $where .= ' AND co.cost_status = "active" AND co.type = "subscription" ';
-            $sql   .= 'SELECT * FROM ' . $this->table_name( 'cost_tracker' ) . ' co WHERE 1 ' . $where . ' ORDER BY co.next_renewal ASC ';
+            $table = esc_sql( $this->table_name( 'cost_tracker' ) );
+            $sql = "SELECT * FROM {$table} co WHERE 1 {$where} ORDER BY co.next_renewal ASC ";
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is safely constructed with esc_sql() table name and static WHERE clause
+            $result = $wpdb->get_results( $sql );
+            wp_cache_set( $cache_key, $result, 'mainwp_cost_tracker' );
+            return $result;
         } else {
             return false;
         }
-        return $wpdb->get_results( $sql ); //phpcs:ignore -- good.
     }
 
     /**
@@ -889,5 +971,44 @@ PRIMARY KEY  (`id`)  ';
             }
         }
         update_option( 'module_cost_tracker_calc_today_next_renewal', gmdate( 'Y-m-d' ) );
+    }
+
+    /**
+     * Generate cache key for get_cost_tracker_by queries.
+     *
+     * @param string $by Query type.
+     * @param mixed  $value Query value.
+     * @param array  $params Additional parameters.
+     *
+     * @return string Cache key.
+     */
+    private function get_cache_key_for_cost_tracker( $by, $value, $params = array() ) {
+        $identifier = wp_json_encode(
+            array(
+                'method'   => 'get_cost_tracker_by',
+                'by'       => $by,
+                'value'    => $value,
+                'params'   => $params,
+            )
+        );
+        return 'mainwp_cost_tracker_' . md5( $identifier ); // NOSONAR - MD5 used for cache key generation only, not cryptographic (security) purposes.
+    }
+
+    /**
+     * Invalidate cost tracker caches.
+     *
+     * @param int|null $cost_id Cost ID to invalidate specific caches, or null for all caches.
+     *
+     * @return void
+     */
+    private function invalidate_cost_tracker_caches( $cost_id = null ) {
+        wp_cache_delete( 'mainwp_cost_tracker_' . md5( wp_json_encode( array( 'method' => 'get_cost_tracker_by', 'by' => 'count' ) ) ), 'mainwp_cost_tracker' ); // NOSONAR - MD5 used for cache key generation only, not cryptographic (security) purposes.
+        wp_cache_delete( 'mainwp_cost_tracker_all', 'mainwp_cost_tracker' );
+        wp_cache_delete( 'mainwp_cost_tracker_' . md5( wp_json_encode( array( 'method' => 'get_summary_data', 'sum_data' => 'all' ) ) ), 'mainwp_cost_tracker' ); // NOSONAR - MD5 used for cache key generation only, not cryptographic (security) purposes.
+
+        if ( $cost_id ) {
+            $cost_id = absint( $cost_id );
+            wp_cache_delete( 'mainwp_cost_tracker_' . md5( wp_json_encode( array( 'method' => 'get_cost_tracker_by', 'by' => 'id', 'value' => $cost_id ) ) ), 'mainwp_cost_tracker' ); // NOSONAR - MD5 used for cache key generation only, not cryptographic (security) purposes.
+        }
     }
 }

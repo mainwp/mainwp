@@ -451,10 +451,7 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
 
                         $release = $this->fetch_github_pre_release( $repo_url, $slug );
 
-                        if ( 'not_modified' === $release ) {
-                            $this->log( "GitHub API fetch — etag not modified - slug '{$slug}'" );
-                            return $trans;
-                        } elseif ( false === $release ) {
+                        if ( false === $release ) {
                             $msg = 'GitHub fetch failed or no pre-releases/tags found';
                             $this->log( "✗ GitHub API failed — $msg — caching error state" );
                             set_transient(
@@ -594,11 +591,11 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
          *  - Then, try /releases (list) and return the first prerelease.
          *  - Handles ETag caching to avoid hitting rate limits.
          *
-         * Returns release object on success, 'not_modified' if 304, or false on failure.
+         * Returns release object on success, or false on failure.
          */
     private function fetch_github_pre_release( string $repo_url, string $slug ) { // phpcs:ignore -- NOSONAR -complexity.
 
-            // Only proceed if prereleases are allowed
+            // Only proceed if prereleases are allowed.
             if ( empty( $this->config['allow_prerelease'] ) ) {
                 return false;
             }
@@ -617,15 +614,58 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
                 $headers['Authorization'] = 'token ' . $token;
             }
 
+            // Check release first to fix tags are not updated issue.
+            /**
+             * 2) Try listing releases from GitHub API
+             */
+            $this->log( " GitHub fetch (list): {$api_base}/releases?per_page=10" );
+
             // ETag caching
-            $cached_etag = get_option( "github_etag_$slug" );
+            $cached_etag = get_option( "github_etag_release_$slug" );
             if ( $cached_etag ) {
                 $headers['If-None-Match'] = $cached_etag;
+            } elseif ( isset( $headers['If-None-Match'] ) ) {
+                unset( $headers['If-None-Match'] );
+            }
+
+            $resp = wp_remote_get(
+                $api_base . '/releases?per_page=10',
+                array(
+                    'headers' => $headers,
+                    'timeout' => 15,
+                )
+            );
+
+            // Update releases ETag if present
+            $etag = wp_remote_retrieve_header( $resp, 'etag' );
+            if ( $etag ) {
+                update_option( "github_etag_release_$slug", $etag );
+            }
+
+            $resp_code = wp_remote_retrieve_response_code( $resp );
+
+            if ( ! is_wp_error( $resp ) && $resp_code === 200 ) {
+                $releases = json_decode( wp_remote_retrieve_body( $resp ) );
+                if ( is_array( $releases ) && count( $releases ) ) {
+                    foreach ( $releases as $r ) {
+                        // Only return prerelease
+                        if ( ! empty( $r->prerelease ) ) {
+                            return $r;
+                        }
+                    }
+                }
             }
 
             /**
              * 1) Try tags first and synthesize prerelease objects
              */
+
+            // ETag caching.
+            $cached_etag = get_option( "github_etag_tags_$slug" );
+            if ( $cached_etag ) {
+                $headers['If-None-Match'] = $cached_etag;
+            }
+
             $this->log( " GitHub fetch (tags): {$api_base}/tags?per_page=10" );
             $resp = wp_remote_get(
                 $api_base . '/tags?per_page=10',
@@ -634,6 +674,12 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
                     'timeout' => 15,
                 )
             );
+
+            // Update tags ETag if present
+            $etag = wp_remote_retrieve_header( $resp, 'etag' );
+            if ( $etag ) {
+                update_option( "github_etag_tags_$slug", $etag );
+            }
 
             $resp_code = wp_remote_retrieve_response_code( $resp );
 
@@ -660,39 +706,7 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
                         }
                     }
                 }
-                }
-
-            /**
-             * 2) Try listing releases from GitHub API
-             */
-            $this->log( " GitHub fetch (list): {$api_base}/releases?per_page=10" );
-            $resp = wp_remote_get(
-                $api_base . '/releases?per_page=10',
-                array(
-                    'headers' => $headers,
-                    'timeout' => 15,
-                )
-            );
-
-            // Update ETag if present
-            $etag = wp_remote_retrieve_header( $resp, 'etag' );
-            if ( $etag ) {
-                update_option( "github_etag_$slug", $etag );
             }
-
-            $resp_code = wp_remote_retrieve_response_code( $resp );
-
-            if ( ! is_wp_error( $resp ) && $resp_code === 200 ) {
-                $releases = json_decode( wp_remote_retrieve_body( $resp ) );
-                if ( is_array( $releases ) && count( $releases ) ) {
-                    foreach ( $releases as $r ) {
-                        // Only return prerelease
-                        if ( ! empty( $r->prerelease ) ) {
-                            return $r;
-                        }
-                    }
-                }
-                }
 
             // Handle 401 (unauthorized) with token
             if ( 401 === $resp_code && ! empty( $this->config['github_token'] ) ) {
@@ -706,7 +720,14 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
 
             // Handle 304 Not Modified
             if ( 304 === $resp_code ) {
-                return 'not_modified';
+                $this->log( "GitHub API fetch — etag not modified - slug '{$slug}'" );
+            } elseif ( 403 === $resp_code ) { // Forbidden.
+                $message = '';
+                $body    = json_decode( wp_remote_retrieve_body( $resp ), true );
+                if ( is_array( $body ) && isset( $body['message'] ) ) {
+                    $message = ' - message: ' . $body['message'];
+                }
+                $this->log( "GitHub API fetch — error - slug '{$slug}'{$message}" );
             }
 
             // Failure
@@ -859,6 +880,9 @@ if ( ! class_exists( __NAMESPACE__ . '\UUPD_Updater_V1' ) ) {
 
                         $unauth_key = 'uupd_' . $slug . '_unauth_error';
                         delete_transient( $unauth_key );
+
+                        delete_option( "github_etag_release_$slug" );
+                        delete_option( "github_etag_tags_$slug" );
                     }
 
                     if ( ! empty( $config['plugin_file'] ) ) {

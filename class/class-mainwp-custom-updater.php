@@ -93,7 +93,7 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     'name'             => 'MainWP',
                     'version'          => MainWP_System::$version,
                     // Optional: provide a 'key' entry with your secret when using a private GitHub release server.
-                    'server'           => 'https://github.com/github-username/mainwp',  // GitHub or private server.
+                    'server'           => 'https://github.com/mainwp/mainwp',  // GitHub or private server.
                     'github_token'     => ! empty( $pat_key ) ? $pat_key : '', // optional.
                     'allow_prerelease' => true, // Optional � default is false. Set to true to allow beta/RC updates.
                     'user_agent'       => 'MainWP/' . MainWP_System::$version,
@@ -734,7 +734,7 @@ class MainWP_Custom_Updater { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return;
         }
 
-        $unauth_error = sprintf( esc_html__( 'Unable to check for updates with your GitHub token. Make sure your PAT is valid and has the right permissions. See %shere%s for more info.', 'mainwp' ), '<a href="https://mainwp.com/docs/github-personal-access-token/" target="_blank">', '</a>' );
+        $unauth_error = sprintf( esc_html__( 'Unable to check for updates with your GitHub token. Make sure your PAT is valid and has the right permissions. See %shere%s for more info.', 'mainwp' ), '<a href="https://mainwp.com/kb/early-access-updater/#how-to-create-a-pat-key" target="_blank">', '</a>' );
         echo '<tr class="plugin-update-tr">
             <td colspan="3" class="plugin-update colspanchange">
                 <div class="notice notice-error inline">

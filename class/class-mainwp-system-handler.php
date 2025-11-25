@@ -560,6 +560,28 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
     }
 
+
+    /**
+     * Method handle_early_updates_access_settings()
+     *
+     * Handle mainwp early updates access settings.
+     */
+    public function handle_early_updates_access_settings() { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+        if ( isset( $_GET['page'] ) && 'EarlyUpdates' === $_GET['page'] && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'EarlyUpdates' ) ) {
+            $old_val = get_option( 'mainwp_settings_enable_early_updates' );
+            $new_val = ! isset( $_POST['mainwp_enable_early_access_updates'] ) ? 0 : 1;
+            if ( (int) $old_val !== $new_val ) {
+                delete_site_transient( 'update_plugins' );
+                delete_transient( 'wp_update_plugins' );
+                wp_clean_update_cache();
+            }
+            MainWP_Utility::update_option( 'mainwp_settings_enable_early_updates', $new_val );
+            MainWP_Utility::update_option( 'mainwp_settings_disable_child_early_updates', ! empty( $_POST['mainwp_disable_child_early_updates'] ) ? 1 : 0 );
+            MainWP_Keys_Manager::instance()->update_key_value( 'mainwp_settings_custom_updater_git_pat', $_POST['mainwp_custom_updater_git_pat'] );
+            wp_safe_redirect( admin_url( 'admin.php?page=EarlyUpdates&message=saved' ) );
+        }
+    }
+
     /**
      * Method handle_settings_post()
      *

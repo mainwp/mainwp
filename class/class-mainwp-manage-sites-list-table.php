@@ -539,6 +539,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         // phpcs:disable WordPress.Security.NonceVerification,Missing,Missing,Missing,Missing,Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $selected_status           = isset( $_REQUEST['status'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) : '';
         $selected_group            = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
+        $selected_group_logic      = isset( $_REQUEST['group_logic'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['group_logic'] ) ) : '';
         $selected_client           = isset( $_REQUEST['client'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) : '';
         $is_not                    = isset( $_REQUEST['isnot'] ) && ( 'yes' === $_REQUEST['isnot'] ) ? true : false;
         $selected_one_time_siteids = isset( $_REQUEST['selected_sites'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['selected_sites'] ) ) : '';
@@ -549,15 +550,17 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             MainWP_Utility::update_user_option( 'mainwp_managesites_filter_onetime_selected_siteids', $selected_one_time_siteids );
         }
 
-        if ( ! $reset_filter && empty( $selected_status ) && empty( $selected_group ) && empty( $selected_client ) && empty( $selected_one_time_siteids ) ) {
-            $selected_status = get_user_option( 'mainwp_managesites_filter_status' );
-            $selected_group  = get_user_option( 'mainwp_managesites_filter_group' );
-            $selected_client = get_user_option( 'mainwp_managesites_filter_client' );
-            $is_not          = get_user_option( 'mainwp_managesites_filter_is_not' );
+        if ( ! $reset_filter && empty( $selected_status ) && empty( $selected_group ) && empty( $selected_client ) && empty( $selected_one_time_siteids ) && '' === $selected_group_logic ) {
+            $selected_status      = get_user_option( 'mainwp_managesites_filter_status' );
+            $selected_group       = get_user_option( 'mainwp_managesites_filter_group' );
+            $selected_client      = get_user_option( 'mainwp_managesites_filter_client' );
+            $is_not               = get_user_option( 'mainwp_managesites_filter_is_not' );
+            $selected_group_logic = get_user_option( 'mainwp_managesites_filter_group_logic' );
         }
+        $selected_group_logic = ( 'and' === $selected_group_logic ) ? 'and' : 'or';
 
         $default_filter = true;
-        if ( ! empty( $is_not ) || ( ! empty( $selected_status ) && 'all' !== $selected_status ) || ! empty( $selected_group ) || ! empty( $selected_client ) ) {
+        if ( ! empty( $is_not ) || ( ! empty( $selected_status ) && 'all' !== $selected_status ) || ! empty( $selected_group ) || ! empty( $selected_client ) || 'and' === $selected_group_logic ) {
             $filters_row_style = 'display:flex';
             $default_filter    = false;
         }
@@ -593,20 +596,31 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         <div class="item" data-value="yes"><?php esc_html_e( 'Is not', 'mainwp' ); ?></div>
                     </div>
                 </div>
-                <div id="mainwp-filter-sites-group" class="ui selection multiple mini dropdown seg_site_tags">
-                    <input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
-                    <i class="dropdown icon"></i>
-                    <div class="default text"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
-                    <div class="menu">
-                        <?php
-                        $groups = MainWP_DB_Common::instance()->get_groups_for_manage_sites();
-                        foreach ( $groups as $group ) {
-                            ?>
-                            <div class="item" data-value="<?php echo intval( $group->id ); ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
+                <div class="ui mini action input mainwp-tags-filter-action">
+                    <div id="mainwp-filter-sites-group" class="ui selection multiple mini dropdown seg_site_tags">
+                        <input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
+                        <i class="dropdown icon"></i>
+                        <div class="default text"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
+                        <div class="menu">
                             <?php
-                        }
-                        ?>
-                        <div class="item" data-value="nogroups"><?php esc_html_e( 'No Tags', 'mainwp' ); ?></div>
+                            $groups = MainWP_DB_Common::instance()->get_groups_for_manage_sites();
+                            foreach ( $groups as $group ) {
+                                ?>
+                                <div class="item" data-value="<?php echo intval( $group->id ); ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
+                                <?php
+                            }
+                            ?>
+                            <div class="item" data-value="nogroups"><?php esc_html_e( 'No Tags', 'mainwp' ); ?></div>
+                        </div>
+                    </div>
+                    <div id="mainwp-filter-sites-group-logic" class="ui basic mini dropdown button seg_site_tags_logic">
+                        <input type="hidden" value="<?php echo esc_html( $selected_group_logic ); ?>">
+                        <div class="text"><?php echo 'and' === $selected_group_logic ? esc_html__( 'Match all (AND)', 'mainwp' ) : esc_html__( 'Match any (OR)', 'mainwp' ); ?></div>
+                        <i class="dropdown icon"></i>
+                        <div class="menu">
+                            <div class="item" data-value="or"><?php esc_html_e( 'Match any (OR)', 'mainwp' ); ?></div>
+                            <div class="item" data-value="and"><?php esc_html_e( 'Match all (AND)', 'mainwp' ); ?></div>
+                        </div>
                     </div>
                 </div>
                 <div class="ui selection mini dropdown seg_site_status" id="mainwp-filter-sites-status">
@@ -818,10 +832,12 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
 
         $reset_filter = isset( $_REQUEST['reset'] ) && ( 'yes' === $_REQUEST['reset'] ) ? true : false;
 
-        $search          = isset( $_REQUEST['search']['value'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['search']['value'] ) ) : '';
-        $get_saved_state = empty( $search ) && ! isset( $_REQUEST['g'] ) && ! isset( $_REQUEST['status'] ) && ! isset( $_REQUEST['client'] );
-        $get_all         = ( '' === $search ) && ( isset( $_REQUEST['status'] ) && 'all' === $_REQUEST['status'] ) && empty( $_REQUEST['g'] ) && empty( $_REQUEST['client'] ) ? true : false;
-        $is_not          = ( isset( $_REQUEST['isnot'] ) && 'yes' === $_REQUEST['isnot'] ) ? true : false;
+        $search               = isset( $_REQUEST['search']['value'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['search']['value'] ) ) : '';
+        $request_group_logic  = isset( $_REQUEST['group_logic'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['group_logic'] ) ) : '';
+        $request_group_logic  = in_array( $request_group_logic, array('and', 'or') ) ? $request_group_logic : '';
+        $get_saved_state      = empty( $search ) && ! isset( $_REQUEST['g'] ) && ! isset( $_REQUEST['status'] ) && ! isset( $_REQUEST['client'] ) && 'and' !== $request_group_logic;
+        $get_all              = ( '' === $search ) && ( isset( $_REQUEST['status'] ) && 'all' === $_REQUEST['status'] ) && empty( $_REQUEST['g'] ) && empty( $_REQUEST['client'] ) && 'and' !== $request_group_logic ? true : false;
+        $is_not               = ( isset( $_REQUEST['isnot'] ) && 'yes' === $_REQUEST['isnot'] ) ? true : false;
 
         if ( $reset_filter ) {
             $get_all         = false;
@@ -843,6 +859,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         $group_ids   = false;
         $client_ids  = false;
         $site_status = '';
+        $group_logic = 'or';
 
         if ( ! isset( $_REQUEST['status'] ) ) {
             if ( $get_saved_state ) {
@@ -859,6 +876,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         if ( $get_all && ! $selected_one_time_siteids ) {
             MainWP_Utility::update_user_option( 'mainwp_managesites_filter_group', '' );
             MainWP_Utility::update_user_option( 'mainwp_managesites_filter_client', '' );
+            MainWP_Utility::update_user_option( 'mainwp_managesites_filter_group_logic', 'or' );
         }
 
         if ( ! $get_all ) {
@@ -873,6 +891,17 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 $group_ids = sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ); // may be multi groups.
             }
 
+            if ( '' === $request_group_logic ) {
+                if ( $get_saved_state ) {
+                    $group_logic = get_user_option( 'mainwp_managesites_filter_group_logic' );
+                } else {
+                    MainWP_Utility::update_user_option( 'mainwp_managesites_filter_group_logic', 'or' );
+                }
+            } else {
+                $group_logic = ( 'and' === $request_group_logic ) ? 'and' : 'or';
+                MainWP_Utility::update_user_option( 'mainwp_managesites_filter_group_logic', $group_logic );
+            }
+
             if ( ! isset( $_REQUEST['client'] ) ) {
                 if ( $get_saved_state ) {
                     $client_ids = get_user_option( 'mainwp_managesites_filter_client' );
@@ -884,6 +913,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 $client_ids = sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ); // may be multi groups.
             }
         }
+        $group_logic = ( 'and' === $group_logic ) ? 'and' : 'or';
         // phpcs:enable
 
         $where = null;
@@ -1006,6 +1036,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 $params['extra_where']       = $where;
             }
         }
+
+        $total_params['group_logic'] = $group_logic;
+        $params['group_logic']       = $group_logic;
 
         if ( empty( $selected_one_time_siteids ) ) {
             $selected_one_time_siteids = isset( $_REQUEST['selected_sites'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['selected_sites'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -1333,6 +1366,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                             action: 'mainwp_manage_sites_display_rows',
                                             status: jQuery("#mainwp-filter-sites-status").dropdown("get value"),
                                             g: jQuery("#mainwp-filter-sites-group").dropdown("get value"),
+                                            group_logic: jQuery("#mainwp-filter-sites-group-logic").dropdown("get value"),
                                             client: jQuery("#mainwp-filter-clients").length ? jQuery("#mainwp-filter-clients").dropdown("get value") : '',
                                             isnot: jQuery("#mainwp_is_not_site").dropdown("get value"),
                                         } )
@@ -1473,11 +1507,13 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 mainwp_manage_sites_filter = function() {
                     <?php if ( ! $optimize ) { ?>
                         let group = jQuery( "#mainwp-filter-sites-group" ).dropdown( "get value" );
+                        let groupLogic = jQuery( "#mainwp-filter-sites-group-logic" ).dropdown( "get value" ) || 'or';
                         let status = jQuery( "#mainwp-filter-sites-status" ).dropdown( "get value" );
                         let isNot = jQuery("#mainwp_is_not_site").dropdown("get value");
                         let client = jQuery("#mainwp-filter-clients").dropdown("get value");
                         let params = '';
                         params += '&g=' + group;
+                        params += '&group_logic=' + groupLogic;
                         params += '&client=' + client;
                         if ( status != '' ) {
                             params += '&status=' + status;
@@ -1489,10 +1525,12 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         return false;
                     <?php } else { ?>
                         try {
+                            let tagLogic = jQuery("#mainwp-filter-sites-group-logic").dropdown('get value') || 'or';
                             let defaultFilter = (jQuery( "#mainwp-filter-sites-group" ).dropdown('get value') ==  ''
                             && jQuery("#mainwp-filter-clients").dropdown('get value') == ''
                             && jQuery("#mainwp-filter-sites-status").dropdown('get value') == 'all'
-                            && jQuery("#mainwp_is_not_site").dropdown('get value') == '');
+                            && jQuery("#mainwp_is_not_site").dropdown('get value') == ''
+                            && tagLogic == 'or');
 
                             if(defaultFilter){
                                 jQuery('#mainwp_manage_sites_reset_filters').attr('disabled', 'disabled');
@@ -1513,6 +1551,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                     <?php } else { ?>
                         try {
                             jQuery( "#mainwp-filter-sites-group" ).dropdown('clear');
+                            jQuery("#mainwp-filter-sites-group-logic").dropdown('set selected', 'or');
                             jQuery("#mainwp-filter-clients").dropdown('clear');
                             jQuery( "#mainwp-filter-sites-status" ).dropdown('set selected', 'all');
                             jQuery("#mainwp_is_not_site").dropdown('set selected', '');

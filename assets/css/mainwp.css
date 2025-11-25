@@ -125,6 +125,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
 .mainwp-ui.mainwp_page_SettingsAdvanced .mainwp-content-wrap,
 .mainwp-ui.mainwp_page_SettingsEmail .mainwp-content-wrap,
 .mainwp-ui.mainwp_page_MainWPTools .mainwp-content-wrap,
+.mainwp-ui.mainwp_page_EarlyUpdates .mainwp-content-wrap,
 .mainwp-ui.mainwp_page_SettingsInsights .mainwp-content-wrap,
 .mainwp-ui.mainwp_page_SettingsApiBackups .mainwp-content-wrap,
 .mainwp-ui.mainwp_page_ServerInformation .mainwp-content-wrap,
@@ -468,6 +469,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
 .mainwp-ui.mainwp_page_SettingsAdvanced #mainwp-main-navigation-container,
 .mainwp-ui.mainwp_page_SettingsEmail #mainwp-main-navigation-container,
 .mainwp-ui.mainwp_page_MainWPTools #mainwp-main-navigation-container,
+.mainwp-ui.mainwp_page_EarlyUpdates #mainwp-main-navigation-container,
 .mainwp-ui.mainwp_page_SettingsInsights #mainwp-main-navigation-container,
 .mainwp-ui.mainwp_page_SettingsApiBackups #mainwp-main-navigation-container,
 .mainwp-ui.mainwp_page_ServerInformation #mainwp-main-navigation-container,
@@ -486,6 +488,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
 .mainwp-ui.mainwp_page_SettingsAdvanced #mainwp-second-level-navigation,
 .mainwp-ui.mainwp_page_SettingsEmail #mainwp-second-level-navigation,
 .mainwp-ui.mainwp_page_MainWPTools #mainwp-second-level-navigation,
+.mainwp-ui.mainwp_page_EarlyUpdates #mainwp-second-level-navigation,
 .mainwp-ui.mainwp_page_SettingsInsights #mainwp-second-level-navigation,
 .mainwp-ui.mainwp_page_SettingsApiBackups #mainwp-second-level-navigation,
 .mainwp-ui.mainwp_page_ServerInformation #mainwp-second-level-navigation,
@@ -503,6 +506,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
 .mainwp-ui.mainwp_page_SettingsAdvanced #mainwp-collapse-second-level-navigation,
 .mainwp-ui.mainwp_page_SettingsEmail #mainwp-collapse-second-level-navigation,
 .mainwp-ui.mainwp_page_MainWPTools #mainwp-collapse-second-level-navigation,
+.mainwp-ui.mainwp_page_EarlyUpdates #mainwp-collapse-second-level-navigation,
 .mainwp-ui.mainwp_page_SettingsInsights #mainwp-collapse-second-level-navigation,
 .mainwp-ui.mainwp_page_SettingsApiBackups #mainwp-collapse-second-level-navigation,
 .mainwp-ui.mainwp_page_ServerInformation #mainwp-collapse-second-level-navigation,
@@ -652,6 +656,29 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
 .mainwp-sub-header #mainwp-filter-sites-group .default.text,
 .mainwp-sub-header #mainwp-filter-clients .default.text {
     overflow: visible !important;
+}
+
+#mainwp-sites-filters-row .mainwp-tags-filter-action {
+    display: inline-flex;
+    align-items: stretch;
+    flex: 0 1 auto;
+    margin: 0;
+}
+
+#mainwp-sites-filters-row .mainwp-tags-filter-action .ui.selection.dropdown {
+    min-width: 120px;
+    max-width: 260px;
+    width: auto !important;
+    margin: 0;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+#mainwp-sites-filters-row .mainwp-tags-filter-action .ui.dropdown.button {
+    margin: 0;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-left: none !important;
 }
 
 /* Tables */

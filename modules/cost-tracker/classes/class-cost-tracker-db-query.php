@@ -137,8 +137,9 @@ class Cost_Tracker_DB_Query extends Cost_Tracker_DB {
         $where_search = array();
         if ( ! empty( $args['search'] ) ) {
             // Sanitize field.
+            $search_term = '%' . esc_sql( $args['search'] ) . '%';
             foreach ( $allowed_search_fields as $field ) {
-                $where_search[] = $this->wpdb->prepare( " {$field} LIKE %s ", "%{$args['search']}%" ); //phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+                $where_search[] = $this->wpdb->prepare( " {$field} LIKE %s ", $search_term );
             }
         }
 
@@ -149,12 +150,14 @@ class Cost_Tracker_DB_Query extends Cost_Tracker_DB {
         $filter_lookup = ! empty( $filter_site_ids ) || ! empty( $filter_client_ids ) ? true : false;
 
         if ( $filter_lookup ) {
-            $join_lookup = ' JOIN ' . $this->table_name( 'lookup_item_objects' ) . ' lco ON co.id = lco.item_id AND lco.item_name = "cost" ';
+            $lookup_table = '`' . esc_sql( $this->table_name( 'lookup_item_objects' ) ) . '`';
+            $join_lookup  = " JOIN {$lookup_table} lco ON co.id = lco.item_id AND lco.item_name = 'cost' ";
             $join_and    = array();
 
             $clients_sites_ids = array();
             if ( $filter_client_ids ) {
-                $join_and[] = ' lco.object_name = "client" AND lco.object_id IN (' . implode( ',', $filter_client_ids ) . ') ';
+                $safe_client_ids = array_map( 'intval', $filter_client_ids );
+                $join_and[] = ' lco.object_name = "client" AND lco.object_id IN (' . implode( ',', $safe_client_ids ) . ') ';
 
                 // if filter by clients need to get sites of the clients to search in lookup table.
                 $cli_sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( $filter_client_ids );
@@ -168,7 +171,8 @@ class Cost_Tracker_DB_Query extends Cost_Tracker_DB {
             $filter_site_ids = array_unique( array_merge( $filter_site_ids, $clients_sites_ids ) );
 
             if ( $filter_site_ids ) {
-                $join_and[] = ' lco.object_name = "site" AND lco.object_id IN (' . implode( ',', $filter_site_ids ) . ') ';
+                $safe_site_ids = array_map( 'intval', $filter_site_ids );
+                $join_and[] = ' lco.object_name = "site" AND lco.object_id IN (' . implode( ',', $safe_site_ids ) . ') ';
             }
 
             if ( ! empty( $join_and ) ) {
@@ -187,14 +191,16 @@ class Cost_Tracker_DB_Query extends Cost_Tracker_DB {
         if ( ! empty( $filter_prod_type_slugs ) && is_array( $filter_prod_type_slugs ) ) {
             $filter_prod_type_slugs = MainWP_DB::instance()->escape_array( $filter_prod_type_slugs );
             if ( ! empty( $filter_prod_type_slugs ) ) {
-                $where .= ' AND co.product_type IN ("' . implode( '","', $filter_prod_type_slugs ) . '") ';
+                $safe_prod_types = array_map( 'esc_sql', $filter_prod_type_slugs );
+                $where .= ' AND co.product_type IN ("' . implode( '","', $safe_prod_types ) . '") ';
             }
         }
 
         if ( ! empty( $filter_cost_state ) && is_array( $filter_cost_state ) ) {
             $filter_cost_state = MainWP_DB::instance()->escape_array( $filter_cost_state );
             if ( ! empty( $filter_cost_state ) ) {
-                $where .= ' AND co.cost_status IN ("' . implode( '","', $filter_cost_state ) . '") ';
+                $safe_cost_states = array_map( 'esc_sql', $filter_cost_state );
+                $where .= ' AND co.cost_status IN ("' . implode( '","', $safe_cost_states ) . '") ';
             }
         }
 
@@ -216,19 +222,22 @@ class Cost_Tracker_DB_Query extends Cost_Tracker_DB {
         if ( ! empty( $filter_license_type ) && is_array( $filter_license_type ) ) {
             $filter_license_type = MainWP_DB::instance()->escape_array( $filter_license_type );
             if ( ! empty( $filter_license_type ) ) {
-                $where .= ' AND co.license_type IN ("' . implode( '","', $filter_license_type ) . '") ';
+                $safe_license_types = array_map( 'esc_sql', $filter_license_type );
+                $where .= ' AND co.license_type IN ("' . implode( '","', $safe_license_types ) . '") ';
             }
         }
         if ( ! empty( $filter_payment_method ) && is_array( $filter_payment_method ) ) {
             $filter_payment_method = MainWP_DB::instance()->escape_array( $filter_payment_method );
             if ( ! empty( $filter_payment_method ) ) {
-                $where .= ' AND co.payment_method IN ("' . implode( '","', $filter_payment_method ) . '") ';
+                $safe_payment_methods = array_map( 'esc_sql', $filter_payment_method );
+                $where .= ' AND co.payment_method IN ("' . implode( '","', $safe_payment_methods ) . '") ';
             }
         }
         if ( ! empty( $filter_renewal_type ) && is_array( $filter_renewal_type ) ) {
             $filter_renewal_type = MainWP_DB::instance()->escape_array( $filter_renewal_type );
             if ( ! empty( $filter_renewal_type ) ) {
-                $where .= ' AND co.renewal_type IN ("' . implode( '","', $filter_renewal_type ) . '") ';
+                $safe_renewal_types = array_map( 'esc_sql', $filter_renewal_type );
+                $where .= ' AND co.renewal_type IN ("' . implode( '","', $safe_renewal_types ) . '") ';
             }
         }
 
@@ -269,21 +278,17 @@ class Cost_Tracker_DB_Query extends Cost_Tracker_DB {
         /**
          * BUILD THE FINAL QUERY
          */
-        $query = "SELECT {$select}
-        FROM " . $this->table_name( 'cost_tracker' ) . ' as co ' .
+        $cost_table = '`' . esc_sql( $this->table_name( 'cost_tracker' ) ) . '`';
+        $query      = "SELECT {$select}
+        FROM {$cost_table} as co " .
         $join_lookup .
         " WHERE 1 {$where}
         {$orderby}
         {$limits}";
 
-        //phpcs:disable Squiz.PHP.CommentedOutCode.Found
-        // error_log( print_r( $args, true ) ); //.
-        // error_log( $query ); //.
-        //phpcs:enable Squiz.PHP.CommentedOutCode.Found
-
         // Build result count query.
-        $count_query = 'SELECT COUNT(DISTINCT(co.id)) as found
-        FROM ' . $this->table_name( 'cost_tracker' ) . ' as co ' .
+        $count_query = "SELECT COUNT(DISTINCT(co.id)) as found
+        FROM {$cost_table} as co " .
         $join_lookup .
         " WHERE 1 {$where}";
 
@@ -291,7 +296,7 @@ class Cost_Tracker_DB_Query extends Cost_Tracker_DB {
          * QUERY THE DATABASE FOR RESULTS
          */
         $items = $this->wpdb->get_results( $query );  // phpcs:ignore -- ok.
-        $total = absint( $this->wpdb->get_var( $count_query ) );  // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        $total = absint( $this->wpdb->get_var( $count_query ) );  // phpcs:ignore -- ok.
 
         return array(
             'items' => $items,

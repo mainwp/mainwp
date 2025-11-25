@@ -123,7 +123,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return (array|null) Backup Progress or null on failer.
      */
     public function get_backup_task_progress( $task_id, $wp_id ) {
-        $progress = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_backup_progress' ) . ' WHERE task_id= %d AND wp_id = %d ', $task_id, $wp_id ) );
+        $progress = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup_progress' ) ) . ' WHERE task_id= %d AND wp_id = %d ', $task_id, $wp_id ) );
 
         if ( $progress && '' !== $progress->fetchResult ) {
             $progress->fetchResult = json_decode( $progress->fetchResult, true );
@@ -147,7 +147,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             return false;
         }
 
-        $progresses = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_backup_progress' ) . ' WHERE wp_id = %d AND dtsFetched > %d ', $wp_id, time() - ( 30 * 60 ) ) );
+        $progresses = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup_progress' ) ) . ' WHERE wp_id = %d AND dtsFetched > %d ', $wp_id, time() - ( 30 * 60 ) ) );
         if ( is_array( $progresses ) ) {
             foreach ( $progresses as $progress ) {
                 if ( empty( $progress->downloadedDBComplete ) && empty( $progress->downloadedFULLComplete ) ) {
@@ -171,7 +171,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return void
      */
     public function remove_backup_task( $id ) {
-        $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_backup' ) . ' WHERE id = %d', $id ) );
+        $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE id = %d', $id ) );
     }
 
     /**
@@ -184,7 +184,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return (object|null) Database query result for Backup Task or null on failure
      */
     public function get_backup_task_by_id( $id ) {
-        return $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_backup' ) . ' WHERE id= %d ', $id ) );
+        return $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE id= %d ', $id ) );
     }
 
     /**
@@ -224,7 +224,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return (object|null) Database query result for backup tasks for current user or null on failer.
      */
     public function get_backup_tasks( $userid = null, $orderBy = null ) {
-        return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp_backup' ) . ' WHERE ' . ( null === $userid ? '' : 'userid= ' . $userid . ' AND ' ) . ' template = 0 ' . ( null !== $orderBy ? 'ORDER BY ' . $orderBy : '' ), OBJECT );
+        return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE ' . ( null === $userid ? '' : 'userid= ' . absint( $userid ) . ' AND ' ) . ' template = 0 ' . ( null !== $orderBy ? 'ORDER BY ' . esc_sql( $orderBy ) : '' ), OBJECT );
     }
 
     /**
@@ -541,7 +541,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return object Backup tasks.
      */
     public function get_backup_tasks_to_complete() {
-        return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp_backup' ) . ' WHERE paused = 0 AND completed < last_run', OBJECT );
+        return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE paused = 0 AND completed < last_run', OBJECT );
     }
 
     /**
@@ -552,7 +552,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return object Backup tasks.
      */
     public function get_backup_tasks_todo_daily() {
-        return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp_backup' ) . ' WHERE paused = 0 AND schedule="daily" AND ' . time() . ' - last_run >= ' . ( 60 * 60 * 24 ), OBJECT );
+        return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE paused = 0 AND schedule="daily" AND ' . absint( time() ) . ' - last_run >= ' . ( 60 * 60 * 24 ), OBJECT );
     }
 
     /**
@@ -563,7 +563,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return object Backup tasks.
      */
     public function get_backup_tasks_todo_weekly() {
-        return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp_backup' ) . ' WHERE paused = 0 AND schedule="weekly" AND ' . time() . ' - last_run >= ' . ( 60 * 60 * 24 * 7 ), OBJECT );
+        return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE paused = 0 AND schedule="weekly" AND ' . absint( time() ) . ' - last_run >= ' . ( 60 * 60 * 24 * 7 ), OBJECT );
     }
 
     /**
@@ -574,6 +574,6 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return object Backup tasks.
      */
     public function get_backup_tasks_todo_monthly() {
-        return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp_backup' ) . ' WHERE paused = 0 AND schedule="monthly" AND ' . time() . ' - last_run >= ' . ( 60 * 60 * 24 * 30 ), OBJECT );
+        return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE paused = 0 AND schedule="monthly" AND ' . absint( time() ) . ' - last_run >= ' . ( 60 * 60 * 24 * 30 ), OBJECT );
     }
 }

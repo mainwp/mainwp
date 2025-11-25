@@ -314,7 +314,7 @@ class Log_DB extends MainWP_DB {
 
         $where = $wpdb->prepare( ' AND `logs`.`created` >= %d AND `logs`.`created` <= %d', $start_time, $end_time );
 
-        return $wpdb->query( //phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+        return $wpdb->query( //phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Destructive operation; caching DELETE is inappropriate.
             "DELETE `logs`, `meta`
             FROM {$wpdb->mainwp_tbl_logs} AS `logs`
             LEFT JOIN {$wpdb->mainwp_tbl_logs_meta} AS `meta`

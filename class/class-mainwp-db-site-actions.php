@@ -134,12 +134,13 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
         if ( empty( $value ) ) {
             return false;
         }
+        $table_actions = esc_sql( $this->table_name( 'wp_actions' ) );
         if ( 'action_id' === $by ) {
-            if ( $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_actions' ) . ' WHERE action_id=%d ', $value ) ) ) {
+            if ( $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_actions} WHERE action_id=%d ", $value ) ) ) {
                 return true;
             }
         } elseif ( 'wpid' === $by ) {
-            if ( $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_actions' ) . ' WHERE wpid=%d ', $value ) ) ) {
+            if ( $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_actions} WHERE wpid=%d ", $value ) ) ) {
                 return true;
             }
         }
@@ -154,7 +155,8 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
      * @return bool Results.
      */
     public function delete_all_actions() {
-        return $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_actions' ) ) );
+        $table_actions = esc_sql( $this->table_name( 'wp_actions' ) );
+        return $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_actions}" ) );
     }
 
     /**

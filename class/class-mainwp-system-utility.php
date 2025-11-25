@@ -256,8 +256,20 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         global $wp_filesystem;
 
         $upload_dir = wp_upload_dir();
-        $dir        = $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'mainwp' . DIRECTORY_SEPARATOR;
-        $url        = $upload_dir['baseurl'] . '/mainwp/';
+
+        /**
+         * Allow filtering the upload directory array used by MainWP.
+         *
+         * @since 5.4.1.
+         *
+         * @param array  $upload_dir Array of upload directory info (from wp_upload_dir()).
+         * @param string $subdir      Optional. Sub Directory requested.
+         * @param bool $direct_access Optional. Direct access.
+         */
+        $upload_dir = apply_filters( 'mainwp_get_wp_upload_dir', $upload_dir, $subdir, $direct_access );
+
+        $dir = $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'mainwp' . DIRECTORY_SEPARATOR;
+        $url = $upload_dir['baseurl'] . '/mainwp/';
         if ( ! $wp_filesystem->exists( $dir ) ) {
             $wp_filesystem->mkdir( $dir, 0777 );
         }

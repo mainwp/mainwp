@@ -336,3 +336,9 @@
 .mainwp-ui-page [data-tooltip][data-inverted]::before {
     background: #1c1d1b !important;
 }
+
+
+.mainwp-ui .ui.accordion.mainwp-blank-accordion .title,
+.mainwp-ui .ui.accordion.mainwp-blank-accordion .content {
+    background: none !important;
+}

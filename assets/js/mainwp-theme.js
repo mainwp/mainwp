@@ -858,7 +858,7 @@ window.wp = window.wp || {};
     // a wrapper that will hold all the theme elements
     themes.view.Themes = wp.Backbone.View.extend({
 
-        className: 'themes ui four cards',
+        className: 'themes ui three cards',
         $overlay: $('div.theme-overlay'),
 
         // Number to keep track of scroll position
@@ -1567,8 +1567,8 @@ window.wp = window.wp || {};
                 $('.mainwp-bulk-install-showhide-content').hide();
                 $('.mainwp-upload-theme').show();
                 themes.router.navigate(themes.router.baseUrl('&upload'), { replace: true });
-                $(this).addClass('mainwp_action_down');
-                $('a.browse-themes').removeClass('mainwp_action_down');
+                $(this).addClass('green');
+                $('a.browse-themes').removeClass('green');
                 $('#mainwp_theme_bulk_install_btn').attr('bulk-action', 'upload');
             });
             $('a.browse-themes').on('click', function (event) {
@@ -1577,8 +1577,8 @@ window.wp = window.wp || {};
                 $('#mainwp-search-themes-input-container').show();
                 $('#theme-filter').show();
                 themes.router.navigate(themes.router.baseUrl(''), { replace: true });
-                $(this).addClass('mainwp_action_down');
-                $('a.upload').removeClass('mainwp_action_down');
+                $(this).addClass('green');
+                $('a.upload').removeClass('green');
                 $('#mainwp_theme_bulk_install_btn').attr('bulk-action', 'install');
             });
         },

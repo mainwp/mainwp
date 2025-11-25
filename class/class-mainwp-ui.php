@@ -2386,12 +2386,12 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <div class="scrolling center aligned content" id="mainwp-help-modal-content">
                 <div class="ui two cards" id="mainwp-help-modal-options">
 
-                    <div class="ui card">
+                    <div class="ui secondary card">
                         <div class="content">
                             <a id="mainwp-start-chat-card" class="<?php echo $enable_guided_chatbase ? '' : 'mainwp-disabled-link'; ?>" onclick="jQuery('#mainwp-update-permissions-button').fadeOut(200);jQuery('#mainwp-help-back-button').fadeIn(200);mainwp_help_modal_start_content_onclick( false, false, true );return false;">
                                 <div class="header"><?php esc_html_e( 'Support Assistant', 'mainwp' ); ?></div>
                                 <div class="ui hidden divider"></div>
-                                <i class="robot big grey icon" style="opacity:0.3"></i>
+                                <i class="robot big grey icon" style="opacity:0.5"></i>
                                 <div class="ui fitted hidden divider"></div><br/>
                                 <span class="ui grey small text"><?php esc_html_e( 'Chat with our AI Support Assistant for quick guidance and troubleshooting. It\'s trained on MainWP documentation to help you find answers faster.', 'mainwp' ); ?> <span class="ui mini green label">BETA</span></span>
                             </a>
@@ -2412,7 +2412,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         <div class="left aligned extra content">
                             <div class="ui toggle checkbox" id="mainwp-guided-chatbase-check">
                                 <input type="checkbox" class="settings-field-value-change-handler" name="mainwp-guided-chatbase-option" id="mainwp-guided-chatbase-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_chatbase', 0 ) ? 'checked="true"' : ''; ?> />
-                                <label><?php esc_html_e( 'Enable or Disable the feature', 'mainwp' ); ?></label>
+                                <label><?php esc_html_e( 'Turn On / Turn Off', 'mainwp' ); ?></label>
                             </div>
                         </div>
                     </div>
@@ -2422,11 +2422,11 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             <a id="mainwp-start-tour-card" class="<?php echo $enable_guided_tours ? '' : 'mainwp-disabled-link'; ?>" onclick="jQuery('#mainwp-help-modal').modal('hide');mainwp_help_modal_start_content_onclick( <?php echo (int) $tour_id; ?> );" >
                                 <div class="header"><?php esc_html_e( 'Take a Quick Tour', 'mainwp' ); ?></div>
                                 <div class="ui hidden divider"></div>
-                                <i class="map marked alternate big grey icon" style="opacity:0.3"></i>
+                                <i class="map marked alternate big grey icon" style="opacity:0.5"></i>
                                 <div class="ui fitted hidden divider"></div><br/>
-                                <span class="ui grey small text"><?php esc_html_e( 'New here? Learn how to navigate and use key features with an interactive step-by-step tour.', 'mainwp' ); ?></span>
-
+                                <span class="ui grey small text"><?php esc_html_e( 'Learn how to navigate and use key features with an interactive step-by-step tour.', 'mainwp' ); ?></span>
                             </a>
+                            <div class="ui mini green label"><?php esc_html_e( 'Recommended for first-time users.', 'mainwp' ); ?></div>
                         </div>
                         <div class="content">
                             <div class="ui tiny left aligned list">
@@ -2444,7 +2444,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         <div class="left aligned extra content">
                             <div class="ui toggle checkbox" id="mainwp-guided-tours-check" data-tooltip="<?php esc_attr_e( 'Changes apply after page reload', 'mainwp' ); ?>" data-position="top left" data-inverted="">
                                 <input type="checkbox" class="settings-field-value-change-handler" name="mainwp-guided-tours-option" id="mainwp-guided-tours-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ? 'checked="true"' : ''; ?> />
-                                <label><?php esc_html_e( 'Enable or Disable the feature', 'mainwp' ); ?></label>
+                                <label><?php esc_html_e( 'Turn On / Turn Off', 'mainwp' ); ?></label>
                             </div>
                         </div>
                     </div>
@@ -2454,10 +2454,9 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             <a id="mainwp-start-video-card" class="<?php echo $enable_guided_video ? '' : 'mainwp-disabled-link'; ?>" <?php echo '' !== $video_id ? '' : 'style="display:none"'; ?> onclick="jQuery('#mainwp-update-permissions-button').fadeOut(200);jQuery('#mainwp-help-back-button').fadeIn(200);mainwp_help_modal_start_content_onclick( false, '<?php echo esc_js( $video_id ); ?>', false );return false;" >
                                 <div class="header"><?php esc_html_e( 'MainWP 101 Video Tour', 'mainwp' ); ?></div>
                                 <div class="ui hidden divider"></div>
-                                <i class="youtube big grey icon" style="opacity:0.3"></i>
+                                <i class="youtube big grey icon" style="opacity:0.5"></i>
                                 <div class="ui fitted hidden divider"></div><br/>
                                 <span class="ui grey small text"><?php esc_html_e( 'Discover the essential features of this page in our quick, step-by-step video guide.', 'mainwp' ); ?></span>
-
                             </a>
                         </div>
                         <div class="content">
@@ -2476,7 +2475,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         <div class="left aligned extra content">
                             <div class="ui toggle checkbox" id="mainwp-guided-video-check">
                                 <input type="checkbox" class="settings-field-value-change-handler" name="mainwp-guided-video-option" id="mainwp-guided-video-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_video', 0 ) ? 'checked="true"' : ''; ?> />
-                                <label><?php esc_html_e( 'Enable or Disable the feature', 'mainwp' ); ?></label>
+                                <label><?php esc_html_e( 'Turn On / Turn Off', 'mainwp' ); ?></label>
                             </div>
                         </div>
                     </div>
@@ -2486,7 +2485,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             <a id="mainwp-ticket-form-card" target="_blank" href="https://community.mainwp.com/">
                             <div class="header"><?php esc_html_e( 'Contact MainWP Support', 'mainwp' ); ?></div>
                             <div class="ui hidden divider"></div>
-                            <i class="ticket big grey icon" style="opacity:0.3"></i>
+                            <i class="ticket big grey icon" style="opacity:0.5"></i>
                             <div class="ui fitted hidden divider"></div><br/>
                             <span class="ui grey small text"><?php esc_html_e( 'Get in touch with our team for any inquiries or support ? we\'re here to help you.', 'mainwp' ); ?></span>
 
@@ -2508,7 +2507,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         <div class="left aligned extra content">
                             <div class="ui toggle disabled checked checkbox" onclick="event.stopPropagation()">
                                 <input type="checkbox" class="" name="" id="" checked="true" />
-                                <label><?php esc_html_e( 'Always Enabled', 'mainwp' ); ?></label>
+                                <label><?php esc_html_e( 'Always On', 'mainwp' ); ?></label>
                             </div>
                         </div>
                     </div>
@@ -2524,11 +2523,10 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <div class="actions">
                 <div class="ui grid">
                     <div class="eight wide left aligned middle aligned column">
-                        <a class="ui mini basic button" id="mainwp-update-permissions-button" onclick="mainwp_help_modal_content_onclick();return false;"><?php esc_html_e( 'Update Permissions', 'mainwp' ); ?></a>
-                        <a href="#" style="display:none" id="mainwp-help-back-button" class="ui mini basic button" onclick="jQuery('#mainwp-help-modal-options').fadeIn(200);jQuery('#mainwp-chatbase-video-screen').fadeOut(200);jQuery('#mainwp-chatbase-chat-screen').fadeOut(200);jQuery('#mainwp-help-back-button').fadeOut(200);jQuery('#mainwp-update-permissions-button').fadeIn(200);return false;"><?php esc_html_e( 'Back to Support options', 'mainwp' ); ?></a>
+                        <a href="#" style="display:none" id="mainwp-help-back-button" class="ui mini basic button" onclick="jQuery('#mainwp-help-modal-options').fadeIn(200);jQuery('#mainwp-chatbase-video-screen').fadeOut(200);jQuery('#mainwp-chatbase-chat-screen').fadeOut(200);jQuery('#mainwp-help-back-button').fadeOut(200);jQuery('#mainwp-update-permissions-button').fadeIn(200);return false;"><i class="angle left icon"></i> <?php esc_html_e( 'Back to Support Options', 'mainwp' ); ?></a>
                     </div>
                     <div class="eight wide right aligned middle aligned column">
-
+                        <a class="ui mini basic button" id="mainwp-update-permissions-button" onclick="mainwp_help_modal_content_onclick();return false;"><?php esc_html_e( 'Update Permissions', 'mainwp' ); ?></a>
                     </div>
                 </div>
             </div>

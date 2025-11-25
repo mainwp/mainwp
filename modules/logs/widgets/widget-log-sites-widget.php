@@ -66,7 +66,6 @@ class Log_Sites_Widget {
      * @param array $args Args data.
      */
     public function render_widget( $args ) {
-
         $data       = is_array( $args ) && ! empty( $args[1][0] ) && is_array( $args[1][0] ) ? $args[1][0] : array();
         $stats_data = is_array( $data ) && ! empty( $data['stats_data']['site']['sites'] ) ? $data['stats_data']['site']['sites'] : array();
         if ( ! is_array( $stats_data ) ) {
@@ -78,6 +77,8 @@ class Log_Sites_Widget {
             $stats_prev_data = array();
         }
 
+
+
         ?>
         <div class="mainwp-widget-header">
             <h2 class="ui header handle-drag">
@@ -88,33 +89,38 @@ class Log_Sites_Widget {
             </h2>
         </div>
 
-        <div class="mainwp-widget-insights-card">
-                <?php
-                /**
-                 * Action: mainwp_logs_widget_top
-                 *
-                 * Fires at the top of the widget.
-                 *
-                 * @since 4.6
-                 */
-                do_action( 'mainwp_logs_widget_top', 'core' );
-                ?>
-                <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
-                <?php
-                MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
+        <div class="mainwp-widget-insights-card mainwp-scrolly-overflow">
+            <?php
+            /**
+             * Action: mainwp_logs_widget_top
+             *
+             * Fires at the top of the widget.
+             *
+             * @since 4.6
+             */
+            do_action( 'mainwp_logs_widget_top', 'core' );
+            ?>
+            <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
+            <?php
+            MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
+
+            if ( ! empty( $data ) ) {
                 $this->render_widget_content( $stats_data, $stats_prev_data );
-                ?>
-                <?php
-                /**
-                 * Action: mainwp_logs_widget_bottom
-                 *
-                 * Fires at the bottom of the widget.
-                 *
-                 * @since 4.6
-                 */
-                do_action( 'mainwp_logs_widget_bottom', 'core' );
-                ?>
-            </div>
+            } else { 
+                MainWP_UI::render_empty_element_placeholder( __( 'No activity recorded', 'mainwp' ), __( 'Data will appear here once actions are tracked.', 'mainwp' ), '<em data-emoji=":bar_chart:" class="medium"></em>' );
+             }
+            ?>
+            <?php
+            /**
+             * Action: mainwp_logs_widget_bottom
+             *
+             * Fires at the bottom of the widget.
+             *
+             * @since 4.6
+             */
+            do_action( 'mainwp_logs_widget_bottom', 'core' );
+            ?>
+        </div>
         <div class="mainwp-widget-footer ui four columns stackable grid">
             <div class="column">
             </div>
@@ -142,8 +148,8 @@ class Log_Sites_Widget {
         );
 
         ?>
-        <div class="ui one column grid">
-            <div class="left aligned middle aligned column">
+        <div class="ui grid">
+            <div class="sixteen wide column">
                 <div class="ui equal width grid">
                     <?php
                     foreach ( $columns as $act => $title ) {
@@ -152,8 +158,8 @@ class Log_Sites_Widget {
                     ?>
                 </div>
             </div>
-            <div class="left aligned middle aligned column">
-                <div id="mainwp-module-log-chart-sites-management-wrapper" ></div>
+            <div class="sixteen wide column">
+                <div id="mainwp-module-log-chart-sites-management-wrapper"></div>
                 <script type="text/javascript">
                     jQuery( document ).ready( function() {
                         let options = {

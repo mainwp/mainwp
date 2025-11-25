@@ -7,7 +7,7 @@ let bulk_RestAPITaskRunning = false;
 
 jQuery(function($) {
     $('body').on('click', '.copy-to-clipboard', function () {
-        alert('Copied!');
+        $('#mainwp-api-key-copied-confirm-modal').modal('show');
     });
     // Trigger Manage Bulk Actions
     jQuery(document).on('click', '#mainwp-do-rest-api-bulk-actions', function () {

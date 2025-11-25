@@ -989,41 +989,41 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         </div>
                     </div>
                 <?php endif; ?>
-        <?php if ( isset( $extensions ) && is_array( $extensions ) ) { ?>
 
-            <?php foreach ( $extensions as $extension ) { ?>
-                    <?php
-                    if ( ! \mainwp_current_user_can( 'extension', dirname( $extension['slug'] ) ) ) {
-                        continue;
-                    }
+                <?php if ( isset( $extensions ) && is_array( $extensions ) ) { ?>
+                    <?php foreach ( $extensions as $extension ) { ?>
+                            <?php
+                            if ( ! \mainwp_current_user_can( 'extension', dirname( $extension['slug'] ) ) ) {
+                                continue;
+                            }
 
-                    if ( ! isset( $group_available_extensions[ dirname( $extension['slug'] ) ] ) ) {
-                        continue;
-                    }
+                            if ( ! isset( $group_available_extensions[ dirname( $extension['slug'] ) ] ) ) {
+                                continue;
+                            }
 
-                    if ( in_array( dirname( $extension['slug'] ), $excluded_extensions ) ) {
-                        continue;
-                    }
+                            if ( in_array( dirname( $extension['slug'] ), $excluded_extensions ) ) {
+                                continue;
+                            }
 
-                    $extensions_data = isset( $group_available_extensions[ dirname( $extension['slug'] ) ] ) ? $group_available_extensions[ dirname( $extension['slug'] ) ] : array();
+                            $extensions_data = isset( $group_available_extensions[ dirname( $extension['slug'] ) ] ) ? $group_available_extensions[ dirname( $extension['slug'] ) ] : array();
 
-                    if ( isset( $extensions_data['img'] ) && ! empty( $extensions_data['img'] ) ) {
-                        $img_url = $extensions_data['img'];
-                    } elseif ( isset( $extension['icon'] ) && ! empty( $extension['icon'] ) ) {
-                        $img_url = $extension['icon'];
-                    } elseif ( isset( $extension['iconURI'] ) && '' !== $extension['iconURI'] ) {
-                        $img_url = MainWP_Utility::remove_http_prefix( $extension['iconURI'] );
-                    } else {
-                        $img_url = MAINWP_PLUGIN_URL . 'assets/images/extensions/placeholder.png';
-                    }
+                            if ( isset( $extensions_data['img'] ) && ! empty( $extensions_data['img'] ) ) {
+                                $img_url = $extensions_data['img'];
+                            } elseif ( isset( $extension['icon'] ) && ! empty( $extension['icon'] ) ) {
+                                $img_url = $extension['icon'];
+                            } elseif ( isset( $extension['iconURI'] ) && '' !== $extension['iconURI'] ) {
+                                $img_url = MainWP_Utility::remove_http_prefix( $extension['iconURI'] );
+                            } else {
+                                $img_url = MAINWP_PLUGIN_URL . 'assets/images/extensions/placeholder.png';
+                            }
 
-                    MainWP_Extensions_View::render_extension_card( $extension, $extension_update, $img_url, false, true );
-                    ?>
+                            MainWP_Extensions_View::render_extension_card( $extension, $extension_update, $img_url, false, true );
+                            ?>
 
-            <?php } ?>
-        <?php } ?>
+                    <?php } ?>
+                <?php } ?>
 
-            <?php if ( is_array( $extensions_disabled ) ) { ?>
+                <?php if ( is_array( $extensions_disabled ) ) { ?>
                     <?php foreach ( $extensions_disabled as $extension ) { ?>
                         <?php
                         $slug = dirname( $extension['slug'] );
@@ -1051,11 +1051,10 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         MainWP_Extensions_View::render_inactive_extension_card( $extension, $img_url, true );
                         ?>
 
-            <?php } ?>
+                    <?php } ?>
+                <?php } ?>
 
-        <?php } ?>
-
-        <?php if ( is_array( $extensions_not_installed ) ) { ?>
+                <?php if ( is_array( $extensions_not_installed ) ) { ?>
                     <?php foreach ( $extensions_not_installed as $slug => $extension ) { ?>
                         <?php
 
@@ -1075,14 +1074,11 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                         MainWP_Extensions_View::render_inactive_extension_card( $extension, $img_url );
                         ?>
-
-            <?php } ?>
-
-        <?php } ?>
-
-            </div>
+                    <?php } ?>
+                <?php } ?>
+        </div>
     </div>
-        <?php
-        do_action( 'mainwp_pagefooter_extensions' );
+    <?php
+    do_action( 'mainwp_pagefooter_extensions' );
     }
 }

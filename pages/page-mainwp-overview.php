@@ -374,9 +374,9 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             ?>
             <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'widgets' ) ) : ?>
-                <div class="ui info message">
+                <div class="ui message" style="margin-bottom: 0px;">
                     <i class="close icon mainwp-notice-dismiss" notice-id="widgets"></i>
-                        <?php printf( esc_html__( 'To hide or show a widget, click the Cog (%1$s) icon.', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
+                    <?php printf( esc_html__( '%1$s Tip: You can drag and drop widgets to reorder your dashboard or use the Page Settings (%2$s) to show/hide widgets.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<i class="cog fitted icon"></i>' ); ?>
                 </div>
             <?php endif; ?>
             <?php
@@ -433,8 +433,17 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
     public static function render_layout_selection() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
         $screen = get_current_screen();
         ?>
-        <div class="mainwp-sub-header ui right aligned segment" id="mainwp-manage-widgets-layout-row">
-            <?php MainWP_Ui_Manage_Widgets_Layout::render_edit_layout( $screen->id ); ?>
+        <div class="mainwp-sub-header" id="mainwp-manage-widgets-layout-row">
+            <div class="ui stackable two column grid">
+                <div class="column">
+                    <?php if ( isset( $_GET['page'] ) && 'CostSummary' === $_GET['page'] ) : ?>
+                    <a href="admin.php?page=CostTrackerAdd" class="ui mini green button"><?php esc_html_e( 'Add New Cost', 'mainwp' ); ?></a>
+                    <?php endif; ?>
+                </div>
+                <div class="right aligned column">
+                    <?php MainWP_Ui_Manage_Widgets_Layout::render_edit_layout( $screen->id ); ?>
+                </div>
+            </div>
         </div>
         <?php
         MainWP_Ui_Manage_Widgets_Layout::render_modal_save_layout();

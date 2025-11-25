@@ -362,24 +362,6 @@ class Cost_Tracker_Summary {
             <?php if ( 0 == $costs_count ) : ?>
             <?php MainWP_Overview::render_layout_selection(); ?>
             <?php endif; ?>
-            <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'cost-summany-widgets' ) ) : ?>
-            <div class="ui segment" style="margin-bottom:0px;">
-                <div class="ui info message" style="margin-bottom:0px;">
-                    <i class="close icon mainwp-notice-dismiss" notice-id="cost-summany-widgets"></i>
-                    <?php printf( esc_html__( 'You can drag and drop widgets to reorder your dashboard or use %1$s to show/hide widgets.', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
-                </div>
-            </div>
-            <?php endif; ?>
-            <?php if ( 0 < $costs_count && 3 >= $costs_count ) : ?>
-                <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'cost-summany-low-data-info' ) ) : ?>
-                <div class="ui segment" style="margin-bottom:0px;">
-                    <div class="ui info message" style="margin-bottom:0px;">
-                        <i class="close icon mainwp-notice-dismiss" notice-id="cost-summany-low-data-info"></i>
-                        <?php esc_html_e( 'Keep building your cost history. Add more expenses to unlock trend insights.', 'mainwp' ); ?>
-                    </div>
-                </div>
-                <?php endif; ?>
-            <?php endif; ?>
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-cost-summany-welcome-message' ) && 0 == $costs_count ) : ?>
             <div class="ui segment" style="margin-bottom:0px;">
                 <div class="ui icon message mainwp-welcome-message" style="margin-bottom:0px;">
@@ -393,8 +375,25 @@ class Cost_Tracker_Summary {
                 </div>
             </div>
             <?php endif; ?>
+            <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'cost-summany-widgets' ) ) : ?>
+            <div class="ui segment" style="margin-bottom:0px;">
+                <div class="ui message" style="margin-bottom:0px;">
+                    <i class="close icon mainwp-notice-dismiss" notice-id="cost-summany-widgets"></i>
+                    <?php printf( esc_html__( '%1$s Tip: You can drag and drop widgets to reorder your dashboard or use the Page Settings (%2$s) to show/hide widgets.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<i class="cog fitted icon"></i>' ); ?>
+                </div>
+            </div>
+            <?php endif; ?>
+            <?php if ( 0 < $costs_count && 3 >= $costs_count ) : ?>
+                <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'cost-summany-low-data-info' ) ) : ?>
+                <div class="ui segment" style="margin-bottom:0px;">
+                    <div class="ui info message" style="margin-bottom:0px;">
+                        <i class="close icon mainwp-notice-dismiss" notice-id="cost-summany-low-data-info"></i>
+                        <?php esc_html_e( 'Keep building your cost history. Add more expenses to unlock trend insights.', 'mainwp' ); ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+            <?php endif; ?>
             <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
-            
         </div>
             <?php
             /**

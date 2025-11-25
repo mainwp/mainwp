@@ -72,7 +72,6 @@ class Log_Events_Filter_Segment {
         <?php if ( ! empty( $saved_segments ) ) : ?>
             <button class="ui mini button mainwp_module_log_filter_choose_segment"><?php esc_html_e( 'Load Segment', 'mainwp' ); ?></button>
         <?php endif; ?>
-        <input type="hidden" name="mainwp-common-filter-option-name" id="mainwp-common-filter-option-name"  value="<?php echo esc_attr( $filter_name ); ?>"/>
 
         <script type="text/javascript">
             jQuery( document ).ready( function( $ ) {

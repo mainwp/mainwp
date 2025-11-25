@@ -246,6 +246,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             'notes'          => array( 'notes', false ),
             'ip'             => array( 'ip', false ),
             'phpversion'     => array( 'phpversion', false ),
+            'wpcore_version' => array( 'wpcore_version', false ),
             'update'         => array( 'update', false ),
             'added_datetime' => array( 'added_datetime', false ),
             'backup'         => array( 'backup', false ),
@@ -656,9 +657,10 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                     </div>
                 </div>
                 <?php } ?>
-                <button onclick="mainwp_manage_sites_filter()" class="ui mini green button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
-                <button onclick="mainwp_manage_sites_reset_filters(this)" id="mainwp_manage_sites_reset_filters" class="ui mini button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
+                <button onclick="mainwp_manage_sites_filter()" class="ui mini green basic button"><i class="filter icon"></i><?php esc_html_e( 'Filter', 'mainwp' ); ?></button>
+                <button onclick="mainwp_manage_sites_reset_filters(this)" id="mainwp_manage_sites_reset_filters" class="ui mini button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><i class="times icon"></i><?php esc_html_e( 'Reset', 'mainwp' ); ?></button>
             </div>
+
             <?php MainWP_Manage_Sites_Filter_Segment::get_instance()->render_filters_segment(); ?>
 
         </div>
@@ -686,11 +688,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 </a>
             </div>
         </span>
-        <span data-tooltip="<?php esc_html_e( 'Click to filter sites.', 'mainwp' ); ?>" data-position="bottom right" data-inverted="">
-            <a href="#" class="ui mini icon basic button" id="mainwp-manage-sites-filter-toggle-button">
-                <i class="filter icon"></i> <?php esc_html_e( 'Filter Sites', 'mainwp' ); ?>
-            </a>
-        </span>
+        <a href="#" class="ui mini icon basic button" id="mainwp-manage-sites-filter-toggle-button">
+            <i class="filter icon"></i> <?php esc_html_e( 'Show Filters', 'mainwp' ); ?>
+        </a>
         <?php
     }
 
@@ -781,7 +781,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                             END ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'phpversion' === $req_orderby ) {
                     $orderby = ' INET_ATON( SUBSTRING_INDEX( CONCAT( SUBSTRING_INDEX(wp_optionview.phpversion, "-", 1), ".0.0.0.0" ), ".", 4) ) ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
-                } elseif ( 'ip' === $req_orderby ) {
+                } elseif ( 'wpcore_version' === $req_orderby ) {
+                    $orderby = "CAST( JSON_UNQUOTE( JSON_EXTRACT( wp_optionview.site_info, '$.wpversion' ) ) AS CHAR ) " . ( 'asc' === $req_order ? 'ASC' : 'DESC' );
+                 } elseif ( 'ip' === $req_orderby ) {
                     // Sort by Server IP (string sort covers both IPv4 and IPv6).
                     $orderby = ' wp.ip ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'status' === $req_orderby ) {
@@ -1189,9 +1191,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         do_action( 'mainwp_before_manage_sites_table' );
         ?>
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-columns-notice' ) ) : ?>
-            <div class="ui info message">
+            <div class="ui message">
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-columns-notice"></i>
-                <?php printf( esc_html__( 'To hide or show a column, click the Cog (%s) icon and select options from "Show columns"', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
+                <?php printf( esc_html__( '%s Tip: To hide or show a column, click the Page Settings (%s) button and select options from "Show columns"', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<i class="cog fitted icon"></i>' ); ?>
             </div>
         <?php endif; ?>
         <div id="mainwp-loading-sites">

@@ -147,18 +147,13 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 <?php if ( empty( $extensions ) && empty( $extensions_disabled ) ) { ?>
                     <?php static::render_intro_notice(); ?>
                 <?php } else { ?>
-                    <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-extensions-info-message' ) ) { ?>
-                        <div class="ui info message">
-                            <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-extensions-info-message"></i>
-                            <?php printf( esc_html__( 'Quickly access, install, and activate your MainWP add-ons.  If you need additional help with managing your MainWP Add-ons, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/category/getting-started/first-steps-with-extensions/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
-                        </div>
-                    <?php } ?>
+                    
 
                     <div class="mainwp-sub-header">
                         <div class="ui stackable grid">
                             <div class="eight wide column" data-tooltip="<?php esc_attr_e( 'Extensions are purpose-built add-ons that expand your Dashboard\'s functionality without relying on external services. Integrations are add-ons that connect MainWP with third-party tools, bringing their power directly into your Dashboard.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                                 <div class="ui mini stackable buttons">
-                                    <button class="ui basic disabled button" id="mainwp-extensions-show-all"><i class="box icon"></i><?php esc_html_e( 'Show All Add-ons', 'mainwp' ); ?></button>
+                                    <button class="ui basic green button" id="mainwp-extensions-show-all"><i class="box icon"></i><?php esc_html_e( 'Show All Add-ons', 'mainwp' ); ?></button>
                                     <button class="ui basic button" id="mainwp-extensions-show-extensions"><i class="puzzle piece icon"></i><?php esc_html_e( 'Show Extensions', 'mainwp' ); ?></button>
                                     <button class="ui basic button" id="mainwp-extensions-show-integrations"><i class="plug icon"></i><?php esc_html_e( 'Show Integrations', 'mainwp' ); ?></button>
                                 </div>
@@ -166,13 +161,29 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             <div class="eight wide right aligned column">
                                 <div id="mainwp-search-extensions" class="ui mini search">
                                     <div class="ui icon input">
-                                        <input class="prompt" id="mainwp-search-extensions-input" autocomplete="one-time-code" type="text" placeholder="<?php esc_attr_e( 'Find add-on...', 'mainwp' ); ?>">
+                                        <input class="prompt" type="text" id="mainwp-search-extensions-input" autocomplete="one-time-code" placeholder="<?php esc_attr_e( 'Find add-on...', 'mainwp' ); ?>">
                                         <i class="search icon"></i>
+                                        <i class="remove icon"></i>
                                     </div>
+                                    <div class="results"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-extensions-info-message' ) ) : ?>
+                        <div class="ui segment" style="margin-bottom:0;padding-bottom:0;">
+                            <div class="ui icon message mainwp-welcome-message" style="margin-bottom:0;">
+                                <em data-emoji=":jigsaw:" class="big"></em>
+                                <div class="content">
+                                    <div class="ui massive header"><?php esc_html_e( 'Manage Your Installed Add-ons', 'mainwp' ); ?></div>
+                                    <p><?php esc_html_e( 'Activate, deactivate, or explore new tools for your MainWP Dashboard.', 'mainwp' ); ?></p>
+                                    <div><?php esc_html_e( 'Missing something?', 'mainwp' ); ?> <a href="#" class="ui mini green button" id="mainwp-extensions-message-bulkinstall"><?php esc_html_e( 'Install Free Add-ons', 'mainwp' ); ?></a> or <a href="https://mainwp.com/signup/" class="ui mini green basic button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'mainwp' ); ?></a></div>
+                                </div>
+                                <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-extensions-info-message"></i>
+                            </div>
+                        </div>
+                    <?php endif; ?>
 
                     <div class="ui segment" id="mainwp-extensions-search-no-results" style="display:none">
                         <div class="ui info message"><?php esc_html_e( 'Your search returned no results. The add-on may need to be installed or does not exist.', 'mainwp' ); ?></div>
@@ -183,7 +194,14 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                                 <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
                             </div>
                         </div>
-                        <div class="ui four cards" id="mainwp-extensions-list">
+                        <div id="mainwp-extensions-list">
+                        <h2 class="ui dividing header">
+                            <div class="content">
+                                <?php esc_html_e( 'Active Add-ons', 'mainwp' ); ?>
+                                <div class="sub header"><?php esc_html_e( 'The add-ons you’re currently using to power up your MainWP Dashboard.', 'mainwp' ); ?></div>
+                            </div>
+                        </h2>
+                        <div class="ui four cards" id="mainwp-active-add-ons-cards">
                             <?php if ( isset( $extensions ) && is_array( $extensions ) ) { ?>
                                 <?php foreach ( $extensions as $extension ) { ?>
                                     <?php
@@ -209,7 +227,14 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                                 <?php } ?>
                                 <?php $extensions_count = count( $extensions ); ?>
                             <?php } ?>
-
+                        </div>
+                        <h2 class="ui dividing header">
+                            <div class="content">
+                                <?php esc_html_e( 'Inactive Add-ons', 'mainwp' ); ?>
+                                <div class="sub header"><?php esc_html_e( 'These add-ons are installed but turned off. Activate them anytime to unlock more features.', 'mainwp' ); ?></div>
+                            </div>
+                        </h2>
+                        <div class="ui four cards" id="mainwp-inactive-add-ons-cards">  
                             <?php if ( is_array( $extensions_disabled ) ) { ?>
                                 <?php foreach ( $extensions_disabled as $extension ) { ?>
                                     <?php
@@ -252,6 +277,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                         </div>
                     </div>
+                </div>
                 <?php } ?>
 
                 <?php static::render_purchase_notice(); ?>
@@ -338,10 +364,17 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         jQuery( '#mainwp-extensions-search-no-results' ).show();
                     } else {
                         jQuery( '#mainwp-extensions-search-no-results' ).hide();
-                }
-            }
+                    }
+                }            
+            } );
+            jQuery( '#mainwp-search-extensions .remove.icon' ).on( 'click', function () {
+                jQuery( '#mainwp-search-extensions-input' ).val('');
+                jQuery( '#mainwp-search-extensions-input' ).trigger('keyup');
+            } );
         } );
-        } );
+            
+   
+
         </script>
 
         <?php
@@ -494,14 +527,14 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         <div class="extra content">
             <div class="">
                 <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) { ?>
-                <a class="ui mini basic icon button extension-the-plugin-action" data-tooltip="<?php echo esc_html__( 'Disable/Enable Add-on', 'mainwp' ); ?>" data-position="top left" data-inverted="" plugin-action="<?php echo $disabled ? 'active' : 'disable'; ?>"><?php echo $disabled ? '<i class="toggle off icon"></i> ' : '<i class="toggle green on icon"></i> '; ?></a>
+                <a class="ui mini basic button extension-the-plugin-action" plugin-action="<?php echo $disabled ? 'active' : 'disable'; ?>"><?php echo $disabled ? '<i class="toggle off icon"></i> ' . __( 'Enable', 'mainwp' ) : '<i class="toggle on icon"></i> ' . __( 'Disable', 'mainwp' ); ?></a>
                 <?php } ?>
-                <a class="ui mini extension-privacy-info-link icon basic button" base-slug="<?php echo esc_attr( $item_slug ); ?>" data-tooltip="<?php echo esc_html__( 'Privacy info.', 'mainwp' ); ?>" data-position="top left" data-inverted=""><?php echo $privacy_class; ?></a> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                <a class="ui mini extension-privacy-info-link basic button" base-slug="<?php echo esc_attr( $item_slug ); ?>"><?php echo $privacy_class; ?> <?php esc_html_e( 'Privacy', 'mainwp' ); ?></a> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
                 <?php if ( $disabled && \mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) { ?>
-                <a class="ui mini basic icon right floated button extension-the-plugin-action" plugin-action="remove" data-tooltip="<?php echo esc_html__( 'Delete Add-on', 'mainwp' ); ?>" data-position="top right" data-inverted=""><i class="trash icon"></i></a>
+                <a class="ui mini basic right floated button extension-the-plugin-action" plugin-action="remove"><?php esc_html_e( 'Remove', 'mainwp' ); ?></a>
                 <?php } ?>
                 <?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] && \mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) { ?>
-                <a class="ui mini activate-api-status mainwp-manage-extension-license icon basic right floated button" data-tooltip="<?php echo $active ? esc_html__( 'License activated.', 'mainwp' ) : esc_html__( 'License not activated. Click activate.', 'mainwp' ); ?>" api-actived="<?php echo $active ? '1' : '0'; ?>" data-position="top right" data-inverted=""><?php echo $license_class; ?></a> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                <a class="ui mini activate-api-status mainwp-manage-extension-license basic right floated button" data-tooltip="<?php echo $active ? esc_html__( 'License activated.', 'mainwp' ) : esc_html__( 'License not activated. Click activate.', 'mainwp' ); ?>" api-actived="<?php echo $active ? '1' : '0'; ?>" data-position="top right" data-inverted=""><?php echo $license_class; ?> <?php esc_html_e( 'License', 'mainwp' ); ?></a> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
                 <?php } ?>
             </div>
         </div>

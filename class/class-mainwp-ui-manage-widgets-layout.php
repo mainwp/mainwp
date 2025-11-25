@@ -65,7 +65,7 @@ class MainWP_Ui_Manage_Widgets_Layout { // phpcs:ignore Generic.Classes.OpeningB
         $saved_segments = static::set_get_widgets_layout( false, array(), $screen_slug );
         ?>
 
-        <a class="ui mini button" id="mainwp-manage-widgets-load-saved-layout-button" selected-layout-id="" settings-slug="<?php echo esc_attr( $screen_slug ); ?>"><?php esc_html_e( 'Save Layout', 'mainwp' ); ?></a>
+        <a class="ui mini green button" id="mainwp-manage-widgets-load-saved-layout-button" selected-layout-id="" settings-slug="<?php echo esc_attr( $screen_slug ); ?>"><?php esc_html_e( 'Save Layout', 'mainwp' ); ?></a>
         <?php if ( ! empty( $saved_segments ) ) : ?>
             <a class="ui mini button mainwp_manage_widgets_ui_choose_layout"><?php esc_html_e( 'Load Layout', 'mainwp' ); ?></a>
         <?php else : ?>

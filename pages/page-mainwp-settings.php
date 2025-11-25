@@ -183,7 +183,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CostTrackerSettings' ) ) {
             add_submenu_page(
                 'mainwp_tab',
-                esc_html__( 'Cost Tracker', 'mainwp' ),
+                esc_html__( 'Cost Tracker Settings', 'mainwp' ),
                 '<div class="mainwp-hidden">' . esc_html__( 'Cost Tracker', 'mainwp' ) . '</div>',
                 'read',
                 'CostTrackerSettings',
@@ -261,7 +261,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=SettingsEmail' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Email Settings', 'mainwp' ); ?></a>
                     <?php } ?>
                     <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CostTrackerSettings' ) ) { ?>
-                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=CostTrackerSettings' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Cost Tracker', 'mainwp' ); ?></a>
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=CostTrackerSettings' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Cost Tracker Settings', 'mainwp' ); ?></a>
                     <?php } ?>
                     <?php
                     if ( isset( static::$subPages ) && is_array( static::$subPages ) && ! empty( static::$subPages ) ) {
@@ -340,7 +340,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 'right'      => '',
             ),
             array(
-                'title'      => esc_html__( 'Cost Tracker', 'mainwp' ),
+                'title'      => esc_html__( 'Cost Tracker Settings', 'mainwp' ),
                 'parent_key' => 'Settings',
                 'href'       => 'admin.php?page=CostTrackerSettings',
                 'slug'       => 'CostTrackerSettings',
@@ -401,7 +401,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
         if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CostTrackerSettings' ) ) {
             $renderItems[] = array(
-                'title'  => esc_html__( 'Cost Tracker', 'mainwp' ),
+                'title'  => esc_html__( 'Cost Tracker Settings', 'mainwp' ),
                 'href'   => 'admin.php?page=CostTrackerSettings',
                 'active' => ( 'CostTrackerSettings' === $shownPage ) ? true : false,
             );
@@ -2280,7 +2280,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enter GitHub Personal Access Token.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                                 <input type="password" class="settings-field-value-change-handler" name="mainwp_custom_updater_git_pat" id="mainwp_custom_updater_git_pat" value="<?php echo esc_attr( $pat_key ); ?>"/>
                             <?php
-                                esc_html_e( 'Adding your GitHub Personal Access Token raises your API limit from 60 to 5,000 requests per hour, preventing delays when checking for updates, especially if you manage over ~30â€“40 sites. ', 'mainwp' );
+                                esc_html_e( 'Adding your GitHub Personal Access Token raises your API limit from 60 to 5,000 requests per hour, preventing delays when checking for updates, especially if you manage over ~30–40 sites. ', 'mainwp' );
                             ?>
                             <a href="https://mainwp.com/kb/early-access-updater"><?php esc_html_e( 'Learn how to create a PAT', 'mainwp' ); ?></a>
                             </div>

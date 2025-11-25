@@ -870,7 +870,8 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     </a>
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_support_popup' ) ) : ?>
                     <span class="ui mainwp-help-popup popup" style="width: 200px !important;">
-                        <h4 class="ui header"><?php esc_html_e( 'Feeling stuck?', 'mainwp' ); ?></h4>
+                        <em data-emoji=":ring_buoy:" class="large"></em>
+                        <h4 class="ui large header"><?php esc_html_e( 'Feeling stuck?', 'mainwp' ); ?></h4>
                         <p><?php esc_html_e( 'Help is just a click away.', 'mainwp' ); ?></p>
                         <a class="ui mini green button mainwp-notice-dismiss" notice-id="mainwp_support_popup" href="#"><?php esc_html_e( 'Thanks!', 'mainwp' ); ?></a>
                     </span>

@@ -2350,12 +2350,16 @@ jQuery(function () {
         jQuery('.mainwp-bulk-install-showhide-content').hide();
         jQuery('.mainwp-browse-plugins').show();
         jQuery('#mainwp-search-plugins-form').show();
+        jQuery(this).addClass('green');
+        jQuery('#MainWPInstallBulkNavUpload').removeClass('green');
     });
     jQuery('#MainWPInstallBulkNavUpload').on('click', function (event) {
         event.preventDefault();
         jQuery('#mainwp_plugin_bulk_install_btn').attr('bulk-action', 'upload');
         jQuery('.mainwp-bulk-install-showhide-content').hide();
         jQuery('.mainwp-upload-plugin').show();
+        jQuery(this).addClass('green');
+        jQuery('#MainWPInstallBulkNavSearch').removeClass('green');
     });
 
     // not used?
@@ -5323,9 +5327,15 @@ jQuery(function ($) {
 
 jQuery(document).on('click', '#mainwp-sites-changes-filter-toggle-button', function () {
     jQuery('#mainwp-module-log-filters-row').toggle(300);
-    jQuery('#mainwp-module-log-segment-buttons').toggle(300);
     return false;
 });
+
+jQuery(document).on('click', '#mainwp-insights-filter-toggle-button', function () {
+    jQuery('#mainwp-module-log-overview-sub-header').toggle(300);
+    return false;
+});
+
+
 
 let logs_update_db_cancelled = false;
 let mainwp_module_logs_start_update_dismissed_db = function () {

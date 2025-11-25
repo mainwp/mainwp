@@ -1501,7 +1501,8 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-user-info-message' ) ) : ?>
                     <div class="ui info message">
                         <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-user-info-message"></i>
-                        <?php printf( esc_html__( 'Use the provided form to create a new user on your child site.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://mainwp.com/kb/create-a-new-user/" target="_blank">', '</a>' ); ?>
+                        <div class="header"><?php esc_html_e( 'Create users on all selected Child Sites.', 'mainwp' ); ?></div>
+                        <?php esc_html_e( 'Select one or more sites, tags or clients before submitting.', 'mainwp' ); ?>
                     </div>
                 <?php endif; ?>
                     <?php if ( isset( $_GET['success'] ) && 1 === (int) $_GET['success'] ) : ?>
@@ -1524,7 +1525,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         ?>
                         <div class="ui form">
                             <div class="ui grid field">
-                                <label class="six wide column middle aligned"><?php esc_html_e( 'Username', 'mainwp' ); ?></label>
+                                <label class="six wide column middle aligned"><?php esc_html_e( 'Username', 'mainwp' ); ?> <span class="ui small red text"><?php esc_html_e( '(Required)', 'mainwp' ); ?></span></label>
                                 <div class="ui six wide column">
                                     <div class="ui input">
                                         <input type="text" id="user_login" name="user_login" value="<?php echo ( isset( $_POST['user_login'] ) ) ? esc_html( sanitize_text_field( wp_unslash( $_POST['user_login'] ) ) ) : ''; ?>">
@@ -1532,7 +1533,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                 </div>
                             </div>
                             <div class="ui grid field">
-                                <label class="six wide column middle aligned"><?php esc_html_e( 'E-mail', 'mainwp' ); ?></label>
+                                <label class="six wide column middle aligned"><?php esc_html_e( 'E-mail', 'mainwp' ); ?> <span class="ui small red text"><?php esc_html_e( '(Required)', 'mainwp' ); ?></span></label>
                                 <div class="ui six wide column">
                                     <div class="ui input">
                                         <input type="text" id="email" name="email" value="<?php echo ( isset( $_POST['email'] ) ) ? esc_html( sanitize_text_field( wp_unslash( $_POST['email'] ) ) ) : ''; ?>">
@@ -1564,7 +1565,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                 </div>
                             </div>
                             <div class="ui grid field">
-                                <label class="six wide column middle aligned"><?php esc_html_e( 'Password', 'mainwp' ); ?></label>
+                                <label class="six wide column middle aligned"><?php esc_html_e( 'Password', 'mainwp' ); ?> <span class="ui small red text"><?php esc_html_e( '(Required)', 'mainwp' ); ?></span></label>
                                 <div class="ui six wide column">
                                     <input class="hidden" value=" "/>
                                     <div class="ui icon input">
@@ -1576,8 +1577,11 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
                             <div class="ui grid field">
                                 <label class="six wide column middle aligned"><?php esc_html_e( 'Send Password?', 'mainwp' ); ?></label>
-                                <div class="six wide column ui toggle checkbox">
+                                <div class="one wide column ui toggle checkbox">
                                     <input type="checkbox" name="send_password" id="send_password" <?php echo ( isset( $_POST['send_password'] ) ) ? esc_html( 'checked' ) : ''; ?> >
+                                </div>
+                                <div class="nine wide column">
+                                    <span class="ui small text"><?php esc_html_e( 'If enabled, the new user will receive their login credentials via email.', 'mainwp' ); ?></span>
                                 </div>
                             </div>
 
@@ -1677,15 +1681,9 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                          * @since 4.1
                          */
                         do_action( 'mainwp_add_new_user_before_submit_button' );
-
-                        $is_demo = MainWP_Demo_Handle::is_demo_mode();
-                        if ( $is_demo ) {
-                            MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" class="ui green big button disabled" disabled="disabled" value="' . esc_attr__( 'Add New User', 'mainwp' ) . '"/>' );
-                        } else {
-                            ?>
-                            <input type="button" name="createuser" id="bulk_add_createuser" class="ui big green fluid button" value="<?php esc_attr_e( 'Add New User', 'mainwp' ); ?> "/>
-                            <?php
-                        }
+                        ?>
+                        <input type="button" name="createuser" id="bulk_add_createuser" class="ui big green fluid button" value="<?php esc_attr_e( 'Add New User', 'mainwp' ); ?> "/>
+                        <?php
                         /**
                          * Action: mainwp_add_new_user_after_submit_button
                          *
@@ -1709,6 +1707,12 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 </div>
                 <div style="clear:both"></div>
             </form>
+            <script type="text/javascript">
+                jQuery( document ).ready( function () {
+                    // Initialize button state based on site selection
+                    mainwp_init_button_site_selection_dependency( 'bulk_add_createuser' );
+                } );
+            </script>
             <?php
             /**
              * Action: mainwp_after_new_user_form

@@ -108,6 +108,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button {
     margin-bottom: 0.5rem;
     margin-top: 0.15rem;
 }
+
 /* QSW */
 .mainwp-ui-setup::before {
   content: '';
@@ -1231,10 +1232,6 @@ table.mainwp-manage-wpsites-table .error a {
 /* ACTION TABS */
 .mainwp-browse-plugins .wp-filter {
     margin-top: 0 !important;
-}
-
-.mainwp-browse-plugins>form {
-    float: left;
 }
 
 body.show-upload-plugin .hide-if-upload,

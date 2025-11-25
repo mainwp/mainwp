@@ -213,6 +213,9 @@ class Cost_Tracker_Category_Totals {
                                 }
                             }
                         },
+                        stroke: {
+                                width: 0
+                            },
                     };
 
                     let cost_chart = new ApexCharts(document.querySelector("#mainwp-module-cost-tracker-category-totals-wrapper"), options);

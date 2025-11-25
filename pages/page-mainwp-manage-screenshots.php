@@ -146,8 +146,8 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                                 <div class="item" data-value="noclients"><?php esc_html_e( 'No Client', 'mainwp' ); ?></div>
                             </div>
                         </div>
-                        <button onclick="mainwp_screenshots_sites_filter()" class="ui tiny green button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
-                        <button onclick="mainwp_screenshots_sites_reset_filters()" class="ui tiny button"><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
+                        <button onclick="mainwp_screenshots_sites_filter()" class="ui mini green basic button"><i class="filter icon"></i> <?php esc_html_e( 'Filter', 'mainwp' ); ?></button>
+                        <button onclick="mainwp_screenshots_sites_reset_filters()" class="ui mini button"><i class="times icon"></i> <?php esc_html_e( 'Reset', 'mainwp' ); ?></button>
                 </div>
                 <?php
                 MainWP_Manage_Sites_Filter_Segment::get_instance()->render_filters_segment();
@@ -193,10 +193,12 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     }
                 } );
 
-                jQuery('#mainwp-sites-previews .image img').visibility({
-                    type       : 'image',
-                    transition : 'fade in',
-                    duration   : 1000
+                jQuery(document).ready(function(){
+                    jQuery('#mainwp-sites-previews .image img').visibility({
+                        type       : 'image',
+                        transition : 'fade in',
+                        duration   : 1000
+                    });
                 });
 
         </script>
@@ -417,10 +419,12 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
             </div>
         </div>
         <script type="text/javascript">
-            jQuery('#mainwp-sites-previews .image img').visibility( {
-                type       : 'image',
-                transition : 'fade in',
-                duration   : 1000
+            jQuery(document).ready(function(){
+                jQuery('#mainwp-sites-previews .image img').visibility( {
+                    type       : 'image',
+                    transition : 'fade in',
+                    duration   : 1000
+                });
             });
 
             mainwp_manage_sites_screen_options = function () {

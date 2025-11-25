@@ -5,25 +5,25 @@ jQuery(document).on('click', '.item.extension-inactive', function () {
 });
 
 jQuery(document).on( 'click', '#mainwp-extensions-show-all', function () {
-    jQuery(this).addClass('disabled');
-    jQuery('#mainwp-extensions-show-extensions').removeClass('disabled');
-    jQuery('#mainwp-extensions-show-integrations').removeClass('disabled');
+    jQuery(this).addClass('green');
+    jQuery('#mainwp-extensions-show-extensions').removeClass('green');
+    jQuery('#mainwp-extensions-show-integrations').removeClass('green');
     jQuery('#mainwp-extensions-list').find('.card[extension-model="integration"]').fadeIn(200);
     jQuery('#mainwp-extensions-list').find('.card[extension-model="extension"]').fadeIn(200);
 });
 
 jQuery(document).on( 'click', '#mainwp-extensions-show-extensions', function () {
-    jQuery(this).addClass('disabled');
-    jQuery('#mainwp-extensions-show-all').removeClass('disabled');
-    jQuery('#mainwp-extensions-show-integrations').removeClass('disabled');
+    jQuery(this).addClass('green');
+    jQuery('#mainwp-extensions-show-all').removeClass('green');
+    jQuery('#mainwp-extensions-show-integrations').removeClass('green');
     jQuery('#mainwp-extensions-list').find('.card[extension-model="integration"]').fadeOut(200);
     jQuery('#mainwp-extensions-list').find('.card[extension-model="extension"]').fadeIn(200);
 });
 
 jQuery(document).on( 'click', '#mainwp-extensions-show-integrations', function () {
-    jQuery(this).addClass('disabled');
-    jQuery('#mainwp-extensions-show-extensions').removeClass('disabled');
-    jQuery('#mainwp-extensions-show-all').removeClass('disabled');
+    jQuery(this).addClass('green');
+    jQuery('#mainwp-extensions-show-extensions').removeClass('green');
+    jQuery('#mainwp-extensions-show-all').removeClass('green');
     jQuery('#mainwp-extensions-list').find('.card[extension-model="integration"]').fadeIn(200);
     jQuery('#mainwp-extensions-list').find('.card[extension-model="extension"]').fadeOut(200);
 });
@@ -573,7 +573,7 @@ let extensions_activate_next = function (pObj, bulkAct) {
     }, 'json');
 };
 
-jQuery(document).on('click', '#mainwp-extensions-bulkinstall', function () {
+jQuery(document).on('click', '#mainwp-extensions-bulkinstall, #mainwp-extensions-message-bulkinstall', function () {
     let grabingEl = jQuery("#mainwp-extensions-api-fields");
     let api_key = grabingEl.find('#mainwp_com_api_key').val().trim();
     if (api_key == '') {

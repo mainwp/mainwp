@@ -282,13 +282,13 @@
 
 .mainwp-ui .mainwp-cards .ui.card {
   flex: 1 1 100px;
-  min-width: 240px;
+  min-width: 300px;
   max-width: 500px;
 }
 
 #mainwp-sites-previews .mainwp-cards.cards {
   display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1.5rem;
   margin: 0 !important;
 }
@@ -296,6 +296,49 @@
 #mainwp-sites-previews .mainwp-cards.cards > .card {
   margin: 0 !important;
   width: auto !important;
+}
+
+#mainwp-extensions-list.ui.four.cards {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+  gap: 1.5rem !important;
+  margin: 0 !important;
+}
+
+#mainwp-extensions-list.ui.four.cards > .card {
+  margin: 0 !important;
+  width: auto !important;
+  max-width: none !important;
+}
+
+.mainwp-browse-plugins > form {
+  float: none !important;
+}
+
+#mainwp-install-plugins-container.ui.three.cards {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+  gap: 1.5rem !important;
+  margin: 0 !important;
+}
+
+#mainwp-install-plugins-container.ui.three.cards > .card {
+  margin: 0 !important;
+  width: auto !important;
+  max-width: none !important;
+}
+
+.mainwp-browse-themes .themes.ui.four.cards {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+  gap: 1.5rem !important;
+  margin: 0 !important;
+}
+
+.mainwp-browse-themes .themes.ui.four.cards > .theme {
+  margin: 0 !important;
+  width: auto !important;
+  max-width: none !important;
 }
 
 /* classic theme */

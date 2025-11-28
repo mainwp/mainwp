@@ -311,10 +311,6 @@
   max-width: none !important;
 }
 
-.mainwp-browse-plugins > form {
-  float: none !important;
-}
-
 #mainwp-install-plugins-container.ui.three.cards {
   display: grid !important;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;

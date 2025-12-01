@@ -202,7 +202,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         add_filter( 'pre_set_site_transient_update_plugins', array( $systemHandler, 'pre_check_update_custom' ) );
         add_filter( 'plugins_api', array( $systemHandler, 'plugins_api_extension_info' ), 10, 3 );
         add_filter( 'plugins_api_result', array( $systemHandler, 'plugins_api_wp_plugins_api_result' ), 10, 3 );
-        add_action( 'plugins_loaded', array( MainWP_Custom_Updater::instance(), 'hook_plugins_loaded' ), 1 );
 
         $this->metaboxes = new MainWP_Meta_Boxes();
 
@@ -664,7 +663,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
 
         MainWP_System_Handler::instance()->handle_settings_post();
-        MainWP_System_Handler::instance()->handle_early_updates_access_settings();
     }
 
     /**

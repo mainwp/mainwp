@@ -418,7 +418,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             );
         }
 
-        MainWP_UI::render_page_navigation( $renderItems );
+        MainWP_UI::render_page_navigation( $renderItems, 'nav_mainwp_settings' );
     }
 
     /**

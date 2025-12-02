@@ -261,9 +261,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         }
                     }
                     ?>
-                    <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'EarlyUpdates' ) ) { ?>
-                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=EarlyUpdates' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Tools', 'mainwp' ); ?></a>
-                    <?php } ?>
                     <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) { ?>
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=MainWPTools' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Tools', 'mainwp' ); ?></a>
                     <?php } ?>
@@ -411,14 +408,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 }
                 $renderItems[] = $item;
             }
-        }
-
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'EarlyUpdates' ) ) {
-            $renderItems[] = array(
-                'title'  => esc_html__( 'Early Access Updates', 'mainwp' ),
-                'href'   => 'admin.php?page=EarlyUpdates',
-                'active' => ( 'EarlyUpdates' === $shownPage ) ? true : false,
-            );
         }
 
         if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) {

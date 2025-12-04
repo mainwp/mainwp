@@ -690,7 +690,6 @@ KEY idx_wpid (wpid)";
             'wp.pubkey',
             'wp.wpe',
             'wp.is_staging',
-            'wp.pubkey',
             'wp.force_use_ipv4',
             'wp.siteurl',
             'wp.suspended',

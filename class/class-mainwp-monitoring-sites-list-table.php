@@ -613,10 +613,12 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             MainWP_DB::free_result( $total_websites );
         }
 
-        $extra_view           = apply_filters( 'mainwp_monitoring_sitestable_prepare_extra_view', array( 'favi_icon', 'health_site_status' ) );
-        $extra_view           = array_unique( $extra_view );
-        $params['extra_view'] = $extra_view;
-        $websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
+        $extra_view              = apply_filters( 'mainwp_monitoring_sitestable_prepare_extra_view', array( 'favi_icon', 'health_site_status' ) );
+        $extra_view              = array_unique( $extra_view );
+        $params['extra_view']    = $extra_view;
+        $params['dev_log_query'] = 0;
+
+        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
 
         $site_ids = array();
         while ( $websites && ( $site = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -1363,7 +1365,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
                 $uptime_status = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_monitor_stat_hourly_by( $website['monitor_id'], 'last24', $last24_time );
 
-                $disabled = ( ! $glo_active && ( ! isset( $website['active'] ) || -1 === (int) $website['active'] ) ) || 0 === (int) $website['active'];
+                $disabled = ( ! $glo_active && ( ! isset( $website['active'] ) || -1 === (int) $website['active'] ) ) || ! isset( $website['active'] ) || 0 === (int) $website['active'];
 
                 foreach ( $columns as $column_name => $column_display_name ) {
                     ob_start();

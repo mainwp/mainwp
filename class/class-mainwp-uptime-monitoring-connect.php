@@ -406,6 +406,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         foreach ( $websites as $website ) {
 
+            MainWP_Logger::instance()->log_uptime_check( 'Schedule uptime checks: [siteid=' . $website->id . '] :: [url=' . $website->url . ' :: [monitorid=' . $website->monitor_id . '] :: [monitor-active=' . $website->active . ']' );
+
             $mo_url = static::get_apply_monitor_url( $website );
 
             if ( property_exists( $website, 'http_user' ) ) {

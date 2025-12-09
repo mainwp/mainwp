@@ -112,6 +112,7 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
                         name: seg_name,
                         seg_is_not: $( '#mainwp-sites-filters-row #mainwp_is_not_site').dropdown('get value'),
                         seg_site_tags: $( '#mainwp-sites-filters-row #mainwp-filter-sites-group').dropdown('get value'),
+                        seg_site_tags_logic: $( '#mainwp-sites-filters-row #mainwp-filter-sites-group-logic').dropdown('get value'),
                         seg_site_status: $( '#mainwp-sites-filters-row #mainwp-filter-sites-status').dropdown('get value'),
                         seg_site_clients: $( '#mainwp-sites-filters-row #mainwp-filter-clients').dropdown('get value'),
                         seg_id:$('#mainwp-manage-sites-filter-save-segment-button').attr('selected-segment-id'),
@@ -147,6 +148,7 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
                     let fieldsAllows = [
                         'seg_is_not',
                         'seg_site_tags',
+                        'seg_site_tags_logic',
                         'seg_site_status',
                         'seg_site_clients',
                     ];
@@ -271,6 +273,7 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
 
         $not_filters = array(
             'seg_site_tags'    => 'nogroups',
+            'seg_site_tags_logic' => 'or',
             'seg_site_status'  => 'all',
             'seg_site_clients' => 'noclients',
         );
@@ -279,6 +282,7 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
             'name',
             'seg_is_not',
             'seg_site_tags',
+            'seg_site_tags_logic',
             'seg_site_status',
             'seg_site_clients',
         );

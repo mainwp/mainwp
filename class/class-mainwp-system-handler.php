@@ -953,6 +953,10 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return $transient;
         }
 
+        if ( defined( 'MAINWP_PLUGIN_UPGRADING' ) && true === MAINWP_PLUGIN_UPGRADING ) {
+            return $transient;
+        }
+
         if ( ( null === $this->upgradeVersionInfo ) || ! property_exists( $this->upgradeVersionInfo, 'updated' ) || ( ( time() - $this->upgradeVersionInfo->updated ) > 60 ) ) {
             $this->check_upgrade();
         }

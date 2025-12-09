@@ -58,6 +58,20 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
      * @return object|null Database query result or null on failure.
      */
     public function get_websites_check_updates( $limit, $lasttime_start, $connected = false, $not_suspended = false ) {
+        global $wpdb;
+        
+        $cache_identifier = array(
+            'limit'         => absint( $limit ),
+            'lasttime_start' => absint( $lasttime_start ),
+            'connected'     => (bool) $connected,
+            'not_suspended' => (bool) $not_suspended,
+        );
+        $cache_key = 'mainwp_auto_updates_check_' . md5( wp_json_encode( $cache_identifier ) ); // NOSONAR - MD5 for cache key only.
+        $cached    = wp_cache_get( $cache_key );
+        if ( false !== $cached ) {
+            return $cached;
+        }
+        
         $where = '';
         if ( true === $connected ) {
             $where .= ' wp_sync.sync_errors = "" AND';
@@ -65,8 +79,18 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
         if ( true === $not_suspended ) {
             $where .= ' wp.suspended = 0 AND';
         }
-        $sql = 'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid JOIN ' . $this->get_option_view( array( 'favi_icon' ) ) . ' wp_optionview ON wp.id = wp_optionview.wpid WHERE ' . $where . ' ( wp_sync.dtsAutomaticSyncStart = 0 OR  wp_sync.dtsAutomaticSyncStart < ' . intval( $lasttime_start ) . ' ) ORDER BY wp_sync.dtsAutomaticSyncStart ASC LIMIT ' . $limit;
-        return $this->wpdb->get_results( $sql, OBJECT );
+        
+        $sql = $wpdb->prepare(
+            'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid JOIN ' . $this->get_option_view( array( 'favi_icon' ) ) . ' wp_optionview ON wp.id = wp_optionview.wpid WHERE ' . $where . ' ( wp_sync.dtsAutomaticSyncStart = 0 OR  wp_sync.dtsAutomaticSyncStart < %d ) ORDER BY wp_sync.dtsAutomaticSyncStart ASC LIMIT %d',
+            $lasttime_start,
+            $limit
+        );
+        
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery -- $sql is prepared by $wpdb->prepare() with parameterized values; direct query required for complex joins.
+        $result = $wpdb->get_results( $sql, OBJECT );
+        wp_cache_set( $cache_key, $result, '', HOUR_IN_SECONDS );
+        
+        return $result;
     }
 
 
@@ -196,9 +220,27 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
      * @return int Child sites update count.
      */
     public function get_websites_check_updates_count( $lasttime_start ) {
+        global $wpdb;
+        
+        $cache_identifier = array( 'lasttime_start' => absint( $lasttime_start ) );
+        $cache_key        = 'mainwp_auto_updates_count_' . md5( wp_json_encode( $cache_identifier ) ); // NOSONAR - MD5 for cache key only.
+        $cached           = wp_cache_get( $cache_key );
+        if ( false !== $cached ) {
+            return $cached;
+        }
+        
         $where = $this->get_sql_where_allow_access_sites( 'wp' );
 
-        return $this->wpdb->get_var( 'SELECT count(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid WHERE ( wp_sync.dtsAutomaticSyncStart = 0 OR wp_sync.dtsAutomaticSyncStart < ' . intval( $lasttime_start ) . ')' . $where );
+        $sql = $wpdb->prepare(
+            'SELECT count(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid WHERE ( wp_sync.dtsAutomaticSyncStart = 0 OR wp_sync.dtsAutomaticSyncStart < %d)' . $where,
+            $lasttime_start
+        );
+        
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery -- $sql is prepared by $wpdb->prepare() with parameterized values; direct query required for complex joins.
+        $result = $wpdb->get_var( $sql );
+        wp_cache_set( $cache_key, $result, '', HOUR_IN_SECONDS );
+        
+        return $result;
     }
 
     /**
@@ -209,7 +251,25 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
      * @return int Returned child site count.
      */
     public function get_websites_count_where_dts_automatic_sync_smaller_then_start( $lasttime_start ) {
-        return $this->wpdb->get_var( 'SELECT count(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid WHERE wp.suspended = 0 AND ( ( wp_sync.dtsAutomaticSync < wp_sync.dtsAutomaticSyncStart AND wp_sync.dtsAutomaticSyncStart > ' . intval( $lasttime_start ) . ') OR (wp_sync.dtsAutomaticSyncStart = 0) ) ' );
+        global $wpdb;
+        
+        $cache_identifier = array( 'lasttime_start' => absint( $lasttime_start ) );
+        $cache_key        = 'mainwp_auto_updates_sync_smaller_' . md5( wp_json_encode( $cache_identifier ) ); // NOSONAR - MD5 for cache key only.
+        $cached           = wp_cache_get( $cache_key );
+        if ( false !== $cached ) {
+            return $cached;
+        }
+        
+        $sql = $wpdb->prepare(
+            'SELECT count(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid WHERE wp.suspended = 0 AND ( ( wp_sync.dtsAutomaticSync < wp_sync.dtsAutomaticSyncStart AND wp_sync.dtsAutomaticSyncStart > %d) OR (wp_sync.dtsAutomaticSyncStart = 0) ) ',
+            $lasttime_start
+        );
+        
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery -- $sql is prepared by $wpdb->prepare() with parameterized values; direct query required for complex joins.
+        $result = $wpdb->get_var( $sql );
+        wp_cache_set( $cache_key, $result, '', HOUR_IN_SECONDS );
+        
+        return $result;
     }
 
     /**
@@ -218,6 +278,20 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
      * @return string Date and time of last automatic sync.
      */
     public function get_websites_last_automatic_sync() {
-        return $this->wpdb->get_var( 'SELECT MAX(wp_sync.dtsAutomaticSync) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid' );
+        global $wpdb;
+        
+        $cache_key = 'mainwp_auto_updates_last_sync';
+        $cached    = wp_cache_get( $cache_key );
+        if ( false !== $cached ) {
+            return $cached;
+        }
+        
+        $sql = 'SELECT MAX(wp_sync.dtsAutomaticSync) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid';
+        
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery -- Table names come from safe $this->table_name() methods only, no user input in this query; direct query required for complex joins.
+        $result = $wpdb->get_var( $sql );
+        wp_cache_set( $cache_key, $result, '', HOUR_IN_SECONDS );
+        
+        return $result;
     }
 }

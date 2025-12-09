@@ -284,7 +284,7 @@ class Log_DB extends MainWP_DB {
 
         $where = $wpdb->prepare( ' AND `logs`.`created` >= %d AND `logs`.`created` <= %d', $start_time, $end_time );
 
-        return $wpdb->query( //phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+        return $wpdb->query( //phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Destructive operation; caching DELETE is inappropriate.
             "DELETE `logs`, `meta`
             FROM {$wpdb->mainwp_tbl_logs} AS `logs`
             LEFT JOIN {$wpdb->mainwp_tbl_logs_meta} AS `meta`
@@ -303,7 +303,15 @@ class Log_DB extends MainWP_DB {
      */
     public function is_site_action_log_existed( $site_id, $object_id ) {
         global $wpdb;
-        return $wpdb->query( //phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+
+        $cache_key = 'mainwp_log_exists_' . md5( $site_id . '_' . $object_id ); // NOSONAR - MD5 used for cache key generation only, not cryptographic purposes.
+        $cached    = wp_cache_get( $cache_key );
+
+        if ( false !== $cached ) {
+            return $cached;
+        }
+
+        $result = $wpdb->query( //phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
             $wpdb->prepare(
                 "SELECT `log_id`
                 FROM {$wpdb->mainwp_tbl_logs}
@@ -312,5 +320,9 @@ class Log_DB extends MainWP_DB {
                 $object_id
             )
         );
+
+        wp_cache_set( $cache_key, $result, '', HOUR_IN_SECONDS );
+
+        return $result;
     }
 }

@@ -489,7 +489,12 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         global $wpdb;
 
         $sql_mode  = '';
-        $mysqlinfo = $wpdb->get_results( "SHOW VARIABLES LIKE 'sql_mode'" ); //phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- ok.
+        $cache_key = 'mainwp_sql_mode';
+        $mysqlinfo = wp_cache_get( $cache_key );
+        if ( false === $mysqlinfo ) {
+            $mysqlinfo = $wpdb->get_results( "SHOW VARIABLES LIKE 'sql_mode'" ); //phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- ok.
+            wp_cache_set( $cache_key, $mysqlinfo, '', DAY_IN_SECONDS );
+        }
         if ( is_array( $mysqlinfo ) ) {
             $sql_mode = $mysqlinfo[0]->Value;
         }

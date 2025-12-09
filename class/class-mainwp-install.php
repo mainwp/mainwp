@@ -85,7 +85,9 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             MainWP_Utility::update_option( 'mainwp_selected_theme', 'default' );
         }
 
-        $rslt = static::instance()->query( "SHOW TABLES LIKE '" . $this->table_name( 'wp' ) . "'" );
+        $wp_table = esc_sql( $this->table_name( 'wp' ) );
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name escaped via esc_sql.
+        $rslt = static::instance()->query( "SHOW TABLES LIKE '{$wp_table}'" );
         if ( empty( static::num_rows( $rslt ) ) ) {
             $currentVersion = false;
         }
@@ -482,8 +484,11 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 'nossl',
                 'nosslkey',
             );
+            $wp_table = esc_sql( $this->table_name( 'wp' ) );
             foreach ( $sslColumns as $col ) {
-                $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $col );
+                $col = esc_sql( $col );
+                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
+                $this->wpdb->query( "ALTER TABLE {$wp_table} DROP COLUMN {$col}" );
             }
         }
 
@@ -500,12 +505,17 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             );
 
             foreach ( $rankColumns as $rankColumn ) {
-                $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $rankColumn );
+                $rankColumn = esc_sql( $rankColumn );
+                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
+                $this->wpdb->query( "ALTER TABLE {$wp_table} DROP COLUMN {$rankColumn}" );
             }
 
             $syncColumns = array( 'uptodate' );
+            $wp_sync_table = esc_sql( $this->table_name( 'wp_sync' ) );
             foreach ( $syncColumns as $column ) {
-                $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_sync' ) . ' DROP COLUMN ' . $column );
+                $column = esc_sql( $column );
+                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
+                $this->wpdb->query( "ALTER TABLE {$wp_sync_table} DROP COLUMN {$column}" );
             }
         }
 
@@ -513,11 +523,16 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         if ( version_compare( $currentVersion, '8.35', '<' ) ) {
             $delColumns = array( 'offline_checks' );
             foreach ( $delColumns as $column ) {
-                $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $column );
+                $column = esc_sql( $column );
+                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
+                $this->wpdb->query( "ALTER TABLE {$wp_table} DROP COLUMN {$column}" );
             }
             $delColumns = array( 'heatMap' );
+            $users_table = esc_sql( $this->table_name( 'users' ) );
             foreach ( $delColumns as $column ) {
-                $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'users' ) . ' DROP COLUMN ' . $column );
+                $column = esc_sql( $column );
+                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
+                $this->wpdb->query( "ALTER TABLE {$users_table} DROP COLUMN {$column}" );
             }
         }
 
@@ -525,15 +540,22 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         if ( version_compare( $currentVersion, '8.42', '<' ) ) {
             $delColumns = array( 'offlineChecksOnlineNotification' );
             foreach ( $delColumns as $column ) {
-                $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'users' ) . ' DROP COLUMN ' . $column );
+                $column = esc_sql( $column );
+                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
+                $this->wpdb->query( "ALTER TABLE {$users_table} DROP COLUMN {$column}" );
             }
         }
 
         // fix missing PRIMARY keys.
         if ( version_compare( $currentVersion, '8.53', '<=' ) ) {
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_options' ) . ' ADD opt_id int NOT NULL AUTO_INCREMENT PRIMARY KEY' );
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_settings_backup' ) . ' ADD set_id int NOT NULL AUTO_INCREMENT PRIMARY KEY' );
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_sync' ) . ' ADD sync_id int NOT NULL AUTO_INCREMENT PRIMARY KEY' );
+            $wp_options_table = esc_sql( $this->table_name( 'wp_options' ) );
+            $wp_settings_backup_table = esc_sql( $this->table_name( 'wp_settings_backup' ) );
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name escaped via esc_sql.
+            $this->wpdb->query( "ALTER TABLE {$wp_options_table} ADD opt_id int NOT NULL AUTO_INCREMENT PRIMARY KEY" );
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name escaped via esc_sql.
+            $this->wpdb->query( "ALTER TABLE {$wp_settings_backup_table} ADD set_id int NOT NULL AUTO_INCREMENT PRIMARY KEY" );
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name escaped via esc_sql.
+            $this->wpdb->query( "ALTER TABLE {$wp_sync_table} ADD sync_id int NOT NULL AUTO_INCREMENT PRIMARY KEY" );
         }
 
         $this->wpdb->suppress_errors( $suppress );
@@ -558,9 +580,13 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $suppress = $this->wpdb->suppress_errors();
 
         if ( version_compare( $currentVersion, '8.98', '<=' ) ) {
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN backups' );
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN note_lastupdate' );
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN pages' );
+            $wp_table = esc_sql( $this->table_name( 'wp' ) );
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name escaped via esc_sql.
+            $this->wpdb->query( "ALTER TABLE {$wp_table} DROP COLUMN backups" );
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name escaped via esc_sql.
+            $this->wpdb->query( "ALTER TABLE {$wp_table} DROP COLUMN note_lastupdate" );
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name escaped via esc_sql.
+            $this->wpdb->query( "ALTER TABLE {$wp_table} DROP COLUMN pages" );
         }
 
         $this->wpdb->suppress_errors( $suppress );
@@ -592,14 +618,19 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 'dtsAutomaticSync',
                 'dtsAutomaticSyncStart',
             );
+            $wp_table = esc_sql( $this->table_name( 'wp' ) );
+            $wp_sync_table = esc_sql( $this->table_name( 'wp_sync' ) );
             foreach ( $wpSyncColumns as $wpSyncColumn ) {
-                $rslts = $this->wpdb->get_results( 'SELECT id,' . $wpSyncColumn . ' FROM ' . $this->table_name( 'wp' ), ARRAY_A );
+                $wpSyncColumn = esc_sql( $wpSyncColumn );
+                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
+                $rslts = $this->wpdb->get_results( "SELECT id,{$wpSyncColumn} FROM {$wp_table}", ARRAY_A );
                 if ( empty( $rslts ) ) {
                     continue;
                 }
 
                 foreach ( $rslts as $rslt ) {
-                    $exists = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT wpid FROM ' . $this->table_name( 'wp_sync' ) . ' WHERE wpid = %d', $rslt['id'] ), ARRAY_A );
+                    // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name escaped via esc_sql and query uses proper prepare.
+                    $exists = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT wpid FROM {$wp_sync_table} WHERE wpid = %d", $rslt['id'] ), ARRAY_A );
                     if ( empty( $exists ) ) {
                         $this->wpdb->insert(
                             $this->table_name( 'wp_sync' ),
@@ -614,7 +645,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 }
 
                 $suppress = $this->wpdb->suppress_errors();
-                $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $wpSyncColumn );
+                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
+                $this->wpdb->query( "ALTER TABLE {$wp_table} DROP COLUMN {$wpSyncColumn}" );
                 $this->wpdb->suppress_errors( $suppress );
             }
 
@@ -628,7 +660,9 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 'recent_pages',
             );
             foreach ( $optionColumns as $optionColumn ) {
-                $rslts = $this->wpdb->get_results( 'SELECT id,' . $optionColumn . ' FROM ' . $this->table_name( 'wp' ), ARRAY_A );
+                $optionColumn = esc_sql( $optionColumn );
+                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
+                $rslts = $this->wpdb->get_results( "SELECT id,{$optionColumn} FROM {$wp_table}", ARRAY_A );
                 if ( empty( $rslts ) ) {
                     continue;
                 }
@@ -638,7 +672,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 }
 
                 $suppress = $this->wpdb->suppress_errors();
-                $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $optionColumn );
+                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
+                $this->wpdb->query( "ALTER TABLE {$wp_table} DROP COLUMN {$optionColumn}" );
                 $this->wpdb->suppress_errors( $suppress );
             }
         }

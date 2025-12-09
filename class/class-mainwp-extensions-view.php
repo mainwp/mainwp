@@ -1055,6 +1055,26 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'integration_owner'    => '',
                 'integration_owner_pp' => '',
             ),
+            'mainwp-early-access-extension'         =>
+            array(
+                'type'                 => 'free',
+                'model'                => 'extension',
+                'slug'                 => 'mainwp-early-access-extension',
+                'title'                => 'MainWP Early Access Extension',
+                'desc'                 => 'The MainWP Early Access Extension lets you safely opt into pre-release versions of MainWP plugins and add-ons, so you can test new features early, provide feedback, and stay ahead.',
+                'link'                 => 'https://mainwp.com/add-on/early-access/',
+                'changelog_url'        => 'https://mainwp.com/changelog/mainwp-early-access-extension/',
+                'img'                  => $folder_url . 'early-access.png',
+                'product_id'           => 'MainWP Early Access Extension',
+                'product_item_id'      => 0,
+                'catalog_id'           => '1318737',
+                'group'                => array( 'development' ),
+                'privacy'              => 0,
+                'integration'          => '',
+                'integration_url'      => '',
+                'integration_owner'    => '',
+                'integration_owner_pp' => '',
+            ),
             'mainwp-favorites-extension'              =>
             array(
                 'type'                 => 'pro',

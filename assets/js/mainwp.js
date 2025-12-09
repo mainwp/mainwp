@@ -9,7 +9,7 @@ jQuery(function ($) {
     jQuery('.mainwp-popup-tooltip').popup()
   }
 
-  jQuery(document).on('click', '#mainwp-help-menu-item', function () {
+  jQuery(document).on('click', '#mainwp-help-menu-item, #mainwp-help-menu-item2', function () {
     jQuery('#mainwp-help-modal').modal({
       inverted: true,
       blurring: false,

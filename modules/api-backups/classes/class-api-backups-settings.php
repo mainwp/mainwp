@@ -131,7 +131,7 @@ class Api_Backups_Settings {
         ?>
         <div id="3rd-party-api-manager">
             <div class="ui segment">
-                
+
                 <div class="ui grid">
                     <div class="three wide column">
                         <div class="ui vertical fluid pointing menu">
@@ -324,7 +324,7 @@ class Api_Backups_Settings {
                                     do_action( 'cloudways_api_form_bottom' );
                                     ?>
                                     <div class="ui divider"></div>
-                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); // NOSONAR -id ok. ?>"/>
                                     <div style="clear:both"></div>
                                 </form>
                             </div>
@@ -390,7 +390,7 @@ class Api_Backups_Settings {
                                     do_action( 'gridpane_api_form_bottom' );
                                     ?>
                                     <div class="ui divider"></div>
-                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); // NOSONAR -id ok. ?>"/>
                                     <div style="clear:both"></div>
                                 </form>
                             </div>
@@ -457,7 +457,7 @@ class Api_Backups_Settings {
                                         do_action( 'vultr_api_form_bottom' );
                                     ?>
                                     <div class="ui divider"></div>
-                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/> <?php // NOSONAR -id ok. ?>
                                     <div style="clear:both"></div>
                                 </form>
                             </div>
@@ -525,7 +525,7 @@ class Api_Backups_Settings {
                                         do_action( 'linode_api_form_bottom' );
                                     ?>
                                     <div class="ui divider"></div>
-                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/> <?php // NOSONAR -id ok. ?>
                                     <div style="clear:both"></div>
                                 </form>
                             </div>
@@ -593,7 +593,7 @@ class Api_Backups_Settings {
                                         do_action( 'digitalocean_api_form_bottom' );
                                     ?>
                                     <div class="ui divider"></div>
-                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/> <?php // NOSONAR -id ok. ?>
                                     <div style="clear:both"></div>
                                 </form>
                             </div>
@@ -692,7 +692,7 @@ class Api_Backups_Settings {
                                         do_action( 'cpanel_api_form_bottom' );
                                     ?>
                                     <div class="ui divider"></div>
-                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/> <?php // NOSONAR -id ok. ?>
                                     <div style="clear:both"></div>
                                 </form>
                             </div>
@@ -769,7 +769,7 @@ class Api_Backups_Settings {
                                     do_action( 'plesk_api_form_bottom' );
                                     ?>
                                     <div class="ui divider"></div>
-                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/> <?php // NOSONAR -id ok. ?>
                                     <div style="clear:both"></div>
                                 </form>
                             </div>
@@ -858,7 +858,7 @@ class Api_Backups_Settings {
                                         do_action( 'kinsta_api_form_bottom' );
                                     ?>
                                     <div class="ui divider"></div>
-                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/> <?php // NOSONAR -id ok. ?>
                                     <div style="clear:both"></div>
                                 </form>
                             </div>
@@ -1094,7 +1094,7 @@ class Api_Backups_Settings {
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Username', 'mainwp' ); ?></label>
                         <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the cPanel Account Username.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <div class="ui left labeled input">
-                                <input type="text" name="mainwp_cpanel_account_username" id="mainwp_cpanel_account_username" value="<?php echo empty( $mainwp_cpanel_account_username ) ? '' : esc_attr( $mainwp_cpanel_account_username ); ?>"  />
+                                <input type="text" name="mainwp_cpanel_account_username" id="mainwp_cpanel_account_username" value="<?php echo empty( $mainwp_cpanel_account_username ) ? '' : esc_attr( $mainwp_cpanel_account_username ); ?>"  /> <?php // NOSONAR -id ok. ?>
                             </div>
                         </div>
                     </div>
@@ -1130,7 +1130,7 @@ class Api_Backups_Settings {
                 </div>
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Overwrite Global Settings', 'mainwp' ); ?></label>
-                    <div id="individual_settings_check" class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the Plesk (WP Toolkit) Individual Settings will be used.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                    <div id="individual_settings_check" class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the Plesk (WP Toolkit) Individual Settings will be used.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left"> <?php // NOSONAR -id ok. ?>
                         <input type="checkbox" name="mainwp_enable_plesk_individual" id="mainwp_enable_plesk_individual" <?php echo 'on' === $mainwp_enable_plesk_individual ? 'checked="true"' : 'off'; ?> />
                     </div>
                 </div>
@@ -1167,7 +1167,7 @@ class Api_Backups_Settings {
                 </div>
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Overwrite Global Settings', 'mainwp' ); ?></label>
-                    <div id="individual_settings_check" class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the Kinsta Individual Settings will be used.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                    <div id="individual_settings_check" class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the Kinsta Individual Settings will be used.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left"> <?php // NOSONAR -id ok. ?>
                         <input type="checkbox" name="mainwp_enable_kinsta_individual" id="mainwp_enable_kinsta_individual" <?php echo ( 'on' === $mainwp_enable_kinsta_individual ) ? 'checked="true"' : 'off'; ?> />
                     </div>
                 </div>
@@ -1210,7 +1210,7 @@ class Api_Backups_Settings {
                 ?>
                 <?php esc_html_e( 'Choose a provider', 'mainwp' ); ?></label>
                 <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Detected provider', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                    <select class="ui dropdown settings-field-value-change-handler" id="mainwp_managesites_edit_module_api_backups_provider" name="mainwp_managesites_edit_module_api_backups_provider">
+                    <select class="ui dropdown settings-field-value-change-handler" id="mainwp_managesites_edit_module_api_backups_provider" name="mainwp_managesites_edit_module_api_backups_provider"> <?php // NOSONAR -id ok. ?>
                         <option <?php echo ( '' === $mainwp_3rd_party_api ) ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'None', 'mainwp' ); ?></option>
                         <option <?php echo ( 'DigitalOcean' === $mainwp_3rd_party_api ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'DigitalOcean', 'mainwp' ); ?></option>
                         <option <?php echo ( 'Linode' === $mainwp_3rd_party_api ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'Akamai (Linode)', 'mainwp' ); ?></option>

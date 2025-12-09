@@ -1789,7 +1789,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                     <?php } elseif ( 'favicon' === $column_name ) { ?>
                         <?php echo $site_icon; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                     <?php } elseif ( 'site_combo' === $column_name ) { ?>
-                        <i class="ui active inline loader tiny" style="display:none"></i> <span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span> <!-- NOSONAR -->
+                        <!-- NOSONAR -->
+                        <i class="ui active inline loader tiny" style="display:none"></i> <span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span>
                         <?php if ( \mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
                             <a href="<?php MainWP_Site_Open::get_open_site_url( $website['id'] ); ?>" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
                         <?php endif; ?>
@@ -1804,7 +1805,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                             </span>
                         </div>
                     <?php } elseif ( 'site' === $column_name ) { ?>
-                        <a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $website['id'] ); ?>"><?php echo esc_attr( stripslashes( $website['name'] ) ); ?></a><i class="ui active inline loader tiny" style="display:none"></i><span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span> <!-- NOSONAR -->
+                        <!-- NOSONAR -->
+                        <a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $website['id'] ); ?>"><?php echo esc_attr( stripslashes( $website['name'] ) ); ?></a><i class="ui active inline loader tiny" style="display:none"></i><span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span>
                     <?php } elseif ( 'login' === $column_name ) { ?>
                         <?php if ( ! \mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
                             <i class="sign in icon"></i>
@@ -1886,11 +1888,14 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         ?>
                     <?php } elseif ( 'notes' === $column_name ) { ?>
                         <?php if ( empty( $website['note'] ) ) : ?>
-                            <a href="javascript:void(0)" class="mainwp-edit-site-note ui mini grey icon basic button" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>"><i class="sticky note outline grey icon"></i></a> <!-- NOSONAR -->
+                            <!-- NOSONAR -->
+                            <a href="javascript:void(0)" class="mainwp-edit-site-note ui mini grey icon basic button" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>"><i class="sticky note outline grey icon"></i></a>
                         <?php else : ?>
-                            <a href="javascript:void(0)" class="mainwp-edit-site-note ui mini icon basic button" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a> <!-- NOSONAR -->
+                            <!-- NOSONAR -->
+                            <a href="javascript:void(0)" class="mainwp-edit-site-note ui mini icon basic button" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
                         <?php endif; ?>
-                            <span style="display: none" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span> <!-- NOSONAR -->
+                            <!-- NOSONAR -->
+                            <span style="display: none" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
                     <?php } elseif ( 'phpversion' === $column_name ) { ?>
                         <?php echo ! empty( $website['phpversion'] ) ? '<i class="php icon"></i> ' . esc_html( substr( $website['phpversion'], 0, 6 ) ) : ''; ?>
                     <?php } elseif ( 'language' === $column_name ) { ?>
@@ -2247,7 +2252,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                     $cls_site = 'site-sync-error';
                 }
                 ?>
-                <td class="column-site-bulk mainwp-site-cell collapsing all <?php echo esc_attr( $cls_site ); ?>"><a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $website['id'] ); ?>"><?php echo esc_html( stripslashes( $website['name'] ) ); ?></a><i class="ui active inline loader tiny" style="display:none"></i><span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span></td> <!-- NOSONAR -->
+                <!-- NOSONAR -->
+                <td class="column-site-bulk mainwp-site-cell collapsing all <?php echo esc_attr( $cls_site ); ?>"><a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $website['id'] ); ?>"><?php echo esc_html( stripslashes( $website['name'] ) ); ?></a><i class="ui active inline loader tiny" style="display:none"></i><span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span></td>
             <?php } elseif ( 'login' === $column_name ) { ?>
                 <td class="collapsing mainwp-wp-admin-cell">
                 <?php if ( ! \mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
@@ -2301,11 +2307,14 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             <?php } elseif ( 'notes' === $column_name ) { ?>
                 <td class="collapsing center aligned mainwp-notes-cell">
                     <?php if ( '' === $website['note'] ) : ?>
-                        <a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>"><i class="sticky note outline icon"></i></a> <!-- NOSONAR -->
+                        <!-- NOSONAR -->
+                        <a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>"><i class="sticky note outline icon"></i></a>
                     <?php else : ?>
-                        <a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a> <!-- NOSONAR -->
+                         <!-- NOSONAR -->
+                        <a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
                     <?php endif; ?>
-                        <span style="display: none" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span> <!-- NOSONAR -->
+                        <!-- NOSONAR -->
+                        <span style="display: none" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
                 </td>
         <?php } elseif ( 'phpversion' === $column_name ) { ?>
                 <td class="collapsing center aligned mainwp-php-cell"><?php echo esc_html( substr( $website['phpversion'], 0, 6 ) ); ?></td>

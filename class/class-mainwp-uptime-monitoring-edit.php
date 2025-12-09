@@ -398,7 +398,8 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 } else {
                     ?>
                     <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="uptime-monitoring">
-                        <input type="checkbox" value="1" class="settings-field-value-change-handler" name="mainwp_edit_monitor_active" id="mainwp_edit_monitor_active" <?php echo 1 === (int) $mo_settings['active'] ? 'checked="true"' : ''; ?>/> <!-- NOSONAR -->
+                    <!-- NOSONAR -->
+                    <input type="checkbox" value="1" class="settings-field-value-change-handler" name="mainwp_edit_monitor_active" id="mainwp_edit_monitor_active" <?php echo 1 === (int) $mo_settings['active'] ? 'checked="true"' : ''; ?>/>
                     </div>
                     <?php
                 }
@@ -577,7 +578,8 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
 
                 if ( ! $show_in_modal && $is_editing_monitor_or_sub_monitor ) {
                     ?>
-                    <input type="button" name="delete_uptime_monitor_btn" id="delete_uptime_monitor_btn" class="ui button basic big" value="<?php esc_html_e( 'Disable Monitor', 'mainwp' ); ?>"> <!-- NOSONAR -->
+                    <!-- NOSONAR -->
+                    <input type="button" name="delete_uptime_monitor_btn" id="delete_uptime_monitor_btn" class="ui button basic big" value="<?php esc_html_e( 'Disable Monitor', 'mainwp' ); ?>">
                     <?php
                 }
                 ?>
@@ -842,7 +844,8 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                                 <?php
                                 if ( $is_editing ) {
                                     ?>
-                                    <input type="button" name="delete_uptime_monitor_btn" id="delete_uptime_monitor_btn" class="ui basic button" value="<?php esc_html_e( 'Delete', 'mainwp' ); ?>"> <!-- NOSONAR -->
+                                    <!-- NOSONAR -->
+                                    <input type="button" name="delete_uptime_monitor_btn" id="delete_uptime_monitor_btn" class="ui basic button" value="<?php esc_html_e( 'Delete', 'mainwp' ); ?>">
                                     <?php
                                 }
                                 ?>

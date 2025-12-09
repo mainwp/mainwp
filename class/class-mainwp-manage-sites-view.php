@@ -478,12 +478,14 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                     ?>
                     <input type="hidden" id="mainwp_managesites_do_import" value="1"/> <!-- NOSONAR -->
-                    <input type="hidden" id="mainwp_managesites_total_import" value="<?php echo esc_attr( $row ); ?>"/> <!-- NOSONAR -->
+                    <!-- NOSONAR -->
+                    <input type="hidden" id="mainwp_managesites_total_import" value="<?php echo esc_attr( $row ); ?>"/>
 
                     <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_logging"> <!-- NOSONAR -->
                         <span class="log ui medium text"><?php echo esc_html( $header_line ) . '<br/>'; ?></span>
                     </div>
-                    <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_fail_logging" style="display: none;"> <!-- NOSONAR -->
+                    <!-- NOSONAR -->
+                    <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_fail_logging" style="display: none;">
                     <?php
                         echo esc_html( $header_line );
                     ?>

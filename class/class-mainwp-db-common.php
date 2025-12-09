@@ -373,7 +373,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * @uses \MainWP\Dashboard\MainWP_System::is_multi_user()
      */
-    public function get_not_empty_groups( $userid = null, $enableOfflineSites = true ) {
+    public function get_not_empty_groups( $userid = null, $enableOfflineSites = true ) { //phpcs:ignore --NOSONAR -- complex.
         if ( ( null === $userid ) && MainWP_System::instance()->is_multi_user() ) {
 
             /**

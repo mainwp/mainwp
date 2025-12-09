@@ -570,7 +570,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         <table id="mainwp-rest-api-keys-v2-table" class="ui unstackable table">
             <thead>
                 <tr>
-                    <th scope="col" class="no-sort collapsing check-column"><span class="ui checkbox"><input aria-label="<?php esc_attr_e( 'Select all REST API keys', 'mainwp' ); ?>" id="cb-select-all-top" type="checkbox" /></span></th> <?php // NOSONAR -id ok. ?>
+                    <th scope="col" class="no-sort collapsing check-column"><span class="ui checkbox"><input aria-label="<?php esc_attr_e( 'Select all REST API keys', 'mainwp' ); ?>" id="cb-select-all-top" type="checkbox" /></span></th> <!-- NOSONAR -->
                     <th scope="col" class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
                     <th scope="col" ><?php esc_html_e( 'API Key (v2)', 'mainwp' ); ?></th>
                     <th scope="col" class="collapsing"><?php esc_html_e( 'Permissions', 'mainwp' ); ?></th>
@@ -1011,7 +1011,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         }
         static::render_header( 'Edit' );
         ?>
-        <div id="rest-api-settings" class="ui segment"> <?php // NOSONAR -id ok. ?>
+        <div id="rest-api-settings" class="ui segment"> <!-- NOSONAR -->
             <div class="ui form">
                     <form method="POST" action="">
                         <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
@@ -1027,7 +1027,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             ?>
                             <?php esc_html_e( 'Enable REST API Key', 'mainwp' ); ?></label>
                             <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the REST API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" value="1" <?php echo $enabled ? 'checked="true"' : ''; ?> aria-label="<?php esc_attr_e( 'Enable REST API key', 'mainwp' ); ?>" /> <?php // NOSONAR -id ok. ?>
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" value="1" <?php echo $enabled ? 'checked="true"' : ''; ?> aria-label="<?php esc_attr_e( 'Enable REST API key', 'mainwp' ); ?>" /> <!-- NOSONAR -->
                             </div>
                         </div>
                         <div class="ui grid field settings-field-indicator-wrapper <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>"">
@@ -1113,7 +1113,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
 
         static::render_header( 'Edit' );
         ?>
-        <div id="rest-api-settings" class="ui segment"> <?php // NOSONAR -id ok. ?>
+        <div id="rest-api-settings" class="ui segment"> <!-- NOSONAR -->
             <div class="ui form">
                     <form method="POST" action="">
                         <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
@@ -1128,7 +1128,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             ?>
                             <?php esc_html_e( 'Enable API key', 'mainwp' ); ?></label>
                             <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the REST API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" value="1" <?php echo $enabled ? 'checked="true"' : ''; ?> aria-label="<?php esc_attr_e( 'Enable REST API key', 'mainwp' ); ?>" /> <?php // NOSONAR -id ok. ?>
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" value="1" <?php echo $enabled ? 'checked="true"' : ''; ?> aria-label="<?php esc_attr_e( 'Enable REST API key', 'mainwp' ); ?>" /> <!-- NOSONAR -->
                             </div>
                         </div>
                         <div class="ui grid field settings-field-indicator-wrapper <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>"">
@@ -1181,7 +1181,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             </div>
                         </div>
                         <div class="ui divider"></div>
-                        <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save API Key', 'mainwp' ); ?>"/> <?php // NOSONAR -id ok. ?>
+                        <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save API Key', 'mainwp' ); ?>"/> <!-- NOSONAR -->
                         <div style="clear:both"></div>
                     </form>
                 </div>

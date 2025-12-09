@@ -435,7 +435,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                         </div>
                         <div class="field">
                             <label><?php esc_html_e( 'Select tag color', 'mainwp' ); ?></label>
-                            <input type="color" name="mainwp-new-tag-color mainwp-color-picker-input" class="mainwp-color-picker-input" id="mainwp-new-tag-color" value="" /> <?php // NOSONAR -id ok. ?>
+                            <input type="color" name="mainwp-new-tag-color mainwp-color-picker-input" class="mainwp-color-picker-input" id="mainwp-new-tag-color" value="" /> <!-- NOSONAR -->
                         </div>
                     </div>
                 </div>

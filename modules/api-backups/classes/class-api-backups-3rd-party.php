@@ -739,7 +739,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                 <div><?php esc_html_e( 'You can create up to 5 manual backups. Each manual backup will be stored for 14 days.', 'mainwp' ); ?></div>
                             </div>
                         <?php endif; ?>
-                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%"> <?php // NOSONAR -id ok. ?>
+                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%"> <!-- NOSONAR -->
                             <thead>
                             <tr>
                                 <th  scope="col"><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>

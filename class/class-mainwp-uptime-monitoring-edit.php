@@ -398,7 +398,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 } else {
                     ?>
                     <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="uptime-monitoring">
-                        <input type="checkbox" value="1" class="settings-field-value-change-handler" name="mainwp_edit_monitor_active" id="mainwp_edit_monitor_active" <?php echo 1 === (int) $mo_settings['active'] ? 'checked="true"' : ''; // NOSONAR -id ok. ?>/>
+                        <input type="checkbox" value="1" class="settings-field-value-change-handler" name="mainwp_edit_monitor_active" id="mainwp_edit_monitor_active" <?php echo 1 === (int) $mo_settings['active'] ? 'checked="true"' : ''; ?>/> <!-- NOSONAR -->
                     </div>
                     <?php
                 }

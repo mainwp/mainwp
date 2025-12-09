@@ -1012,7 +1012,8 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         }
         static::render_header( 'Edit' );
         ?>
-        <div id="rest-api-settings" class="ui segment"> <!-- NOSONAR -->
+        <!-- NOSONAR -->
+        <div id="rest-api-settings" class="ui segment">
             <div class="ui form">
                     <form method="POST" action="">
                         <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
@@ -1115,7 +1116,8 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
 
         static::render_header( 'Edit' );
         ?>
-        <div id="rest-api-settings" class="ui segment"> <!-- NOSONAR -->
+        <!-- NOSONAR -->
+        <div id="rest-api-settings" class="ui segment">
             <div class="ui form">
                     <form method="POST" action="">
                         <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>

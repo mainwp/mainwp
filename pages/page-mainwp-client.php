@@ -973,7 +973,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     </div>
                     <form method="POST" action="" enctype="multipart/form-data" id="mainwp_client_import_form" class="ui form">
                         <div class="ui bottom attached tab segment active" data-tab="mainwp-import-csv">
-                            <div id="mainwp-message-zone" class="ui message" style="display:none"></div> <!-- NOSONAR -->
+                            <!-- NOSONAR -->
+                            <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
                             <h3 class="ui dividing header">
                                 <?php echo esc_html( $title_page ); ?>
                                 <div class="sub header"><?php esc_html_e( 'Import multiple clients to your MainWP Dashboard.', 'mainwp' ); ?></div>

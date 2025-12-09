@@ -324,7 +324,7 @@ class Api_Backups_Settings {
                                     do_action( 'cloudways_api_form_bottom' );
                                     ?>
                                     <div class="ui divider"></div>
-                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); // NOSONAR -id ok. ?>"/>
+                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/> <!-- NOSONAR -->
                                     <div style="clear:both"></div>
                                 </form>
                             </div>
@@ -390,7 +390,7 @@ class Api_Backups_Settings {
                                     do_action( 'gridpane_api_form_bottom' );
                                     ?>
                                     <div class="ui divider"></div>
-                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); // NOSONAR -id ok. ?>"/>
+                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/> <!-- NOSONAR -->
                                     <div style="clear:both"></div>
                                 </form>
                             </div>

@@ -1063,7 +1063,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                                 <?php esc_html_e( 'Manual Account Backups', 'mainwp' ); ?>
                                             </div>
                                             <div class="right aligned middle aligned column">
-                                                <button id="mainwp_3rd_party_api_<?php echo esc_attr( $backup_api ); // NOSONAR -id ok. ?>_action_individual_create_backup" website_id="<?php echo intval( $website['id'] ); ?>" class="ui primary elastic green button"><?php esc_html_e( 'Backup', 'mainwp' ); ?></button>
+                                                <button id="mainwp_3rd_party_api_<?php echo esc_attr( $backup_api ); ?>_action_individual_create_backup" website_id="<?php echo intval( $website['id'] ); ?>" class="ui primary elastic green button"><?php esc_html_e( 'Backup', 'mainwp' ); ?></button> <!-- NOSONAR -->
                                             </div>
                                         </div>
                                     </th>

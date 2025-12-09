@@ -620,8 +620,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <div id="mainwp-qsw-connect-site-form" style="display:none">
                     <div class="ui hidden divider"></div>
                     <div class="ui hidden divider"></div>
-                    <!-- NOSONAR -->
-                    <div class="ui message" id="mainwp-message-zone" style="display:none"></div>
+    <!-- NOSONAR --><div class="ui message" id="mainwp-message-zone" style="display:none"></div>
                     <div class="ui red message" id="mainwp-error-zone" style="display:none"></div>
                     <div class="ui green message" id="mainwp-success-zone" style="display:none"></div>
                     <div class="ui info message" id="mainwp-info-zone" style="display:none"></div>
@@ -795,8 +794,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <?php $first_site_id = get_transient( 'mainwp_transient_just_connected_site_id' ); ?>
             <h1><?php esc_html_e( 'Create a Client', 'mainwp' ); ?></h1>
             <form action="" method="post" enctype="multipart/form-data" name="createclient_form" id="createclient_form" class="add:clients: validate">
-            <!-- NOSONAR -->
-            <div class="ui red message" id="mainwp-message-zone" style="display:none"></div>
+<!-- NOSONAR --><div class="ui red message" id="mainwp-message-zone" style="display:none"></div>
                 <div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
                 <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                 <div class="ui top attached tabular menu mainwp-qsw-add-client">

@@ -1467,8 +1467,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
         <?php endif; ?>
         <?php if ( empty( $website['issub'] ) ) { // primary monitor. ?>
             <a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $website['id'] ); ?>"><?php echo esc_html( stripslashes( $website['name'] ) ); ?></a><i class="ui active inline loader tiny" style="display:none"></i>
-            <!-- NOSONAR -->
-             <span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span>
+            <!-- NOSONAR --><span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span>
             <br/>
             <span class="ui small text"><a href="<?php echo esc_url( $website['url'] ); ?>" class="mainwp-may-hide-referrer open_site_url" target="_blank"><?php echo esc_html( MainWP_Utility::get_nice_url( $website['url'] ) ); ?></a></span>
             <?php
@@ -1476,8 +1475,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             $subpage = $website['url'] . $website['suburl'];
             ?>
             <a href="admin.php?page=managesites&monitor_wpid=<?php echo intval( $website['id'] ); ?>&monitor_id=<?php echo intval( $website['monitor_id'] ); ?>"><?php echo esc_html( $subpage ); ?></a><i class="ui active inline loader tiny" style="display:none"></i>
-            <!-- NOSONAR -->
-             <span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span>
+            <!-- NOSONAR --><span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span>
             <br/>
             <span class="ui small text"><a href="<?php echo esc_url( $subpage ); ?>" class="mainwp-may-hide-referrer open_site_url" target="_blank"><?php echo esc_html( MainWP_Utility::get_nice_url( $subpage ) ); ?></a></span>
         <?php } ?>

@@ -739,8 +739,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                 <div><?php esc_html_e( 'You can create up to 5 manual backups. Each manual backup will be stored for 14 days.', 'mainwp' ); ?></div>
                             </div>
                         <?php endif; ?>
-                        <!-- NOSONAR -->
-                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
+                        <!-- NOSONAR --><table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
                             <thead>
                             <tr>
                                 <th  scope="col"><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
@@ -1064,8 +1063,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                                 <?php esc_html_e( 'Manual Account Backups', 'mainwp' ); ?>
                                             </div>
                                             <div class="right aligned middle aligned column">
-                                                <!-- NOSONAR -->
-                                                <button id="mainwp_3rd_party_api_<?php echo esc_attr( $backup_api ); ?>_action_individual_create_backup" website_id="<?php echo intval( $website['id'] ); ?>" class="ui primary elastic green button"><?php esc_html_e( 'Backup', 'mainwp' ); ?></button>
+                                                <!-- NOSONAR --><button id="mainwp_3rd_party_api_<?php echo esc_attr( $backup_api ); ?>_action_individual_create_backup" website_id="<?php echo intval( $website['id'] ); ?>" class="ui primary elastic green button"><?php esc_html_e( 'Backup', 'mainwp' ); ?></button>
                                             </div>
                                         </div>
                                     </th>

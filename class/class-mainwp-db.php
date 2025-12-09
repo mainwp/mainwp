@@ -2031,7 +2031,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $join_group = ' LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
             }
 
-            $qry = 'SELECT ' . $select . ', wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors, wpclient.name as client_name ' .
+            $qry = 'SELECT ' . $select . ', wp_optionview.*, GROUP_CONCAT(DISTINCT gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(DISTINCT gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(DISTINCT gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors, wpclient.name as client_name ' .
             $select_groups_belong . ' FROM ' . $this->table_name( 'wp' ) . ' wp ' .
             $join_client . ' ' .
             $join_group .

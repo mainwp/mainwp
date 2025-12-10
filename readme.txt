@@ -147,7 +147,7 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
-= 5.4.1 - Maintenance Release - 12-9-2025 =
+= 5.4.1 - Maintenance Release - 12-10-2025 =
 
 * Fixed: Resolved an issue where the OpenSSL Key encryption information banner was incorrectly displayed to all MainWP Dashboard administrators.
 * Fixed: Addressed a problem that caused delayed Downtime notifications from the Monitoring system on specific hosting setups.

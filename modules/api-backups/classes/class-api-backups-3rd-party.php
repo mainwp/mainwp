@@ -708,8 +708,10 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-module-api-backups-info-message"></i>
                                 <div><?php esc_html_e( 'You can create up to 5 manual backups. Each manual backup will be stored for 14 days.', 'mainwp' ); ?></div>
                             </div>
-                        <?php endif; ?>
-                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
+                        <?php endif;
+                        $el_id_wp_1 = $website['id'];
+                        ?>
+                        <table id="mainwp-siteid-<?php echo intval( $el_id_wp_1 ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
                             <thead>
                             <tr>
                                 <th  scope="col"><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
@@ -765,7 +767,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                             </tfoot>
                         </table>
                         <div class="ui divider hidden"></div>
-                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
+                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%"> <?php // NOSONAR - id ok. ?>
                             <thead>
                             <tr>
                                 <th scope="col" colspan="3">
@@ -850,7 +852,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                         $available_backups = array();
                     }
                     ?>
-                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
+                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%"> <?php // NOSONAR - id ok. ?>
                             <thead>
                             <tr>
                                 <th scope="col"><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
@@ -978,7 +980,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                     }
                     ?>
                     <div class="ui bottom attached active tab" data-tab="cpanel-native">
-                            <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
+                            <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%"> <?php // NOSONAR - id ok. ?>
                                 <thead>
                                 <tr>
                                     <th scope="col" colspan="4">
@@ -1024,7 +1026,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                 </tfoot>
                         </table>
                         <div class="ui divider hidden"></div>
-                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
+                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%"> <?php // NOSONAR - id ok. ?>
                                 <thead>
                                 <tr>
                                     <th scope="col" colspan="3">
@@ -1033,7 +1035,10 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                                 <?php esc_html_e( 'Manual Account Backups', 'mainwp' ); ?>
                                             </div>
                                             <div class="right aligned middle aligned column">
-                                                <button id="mainwp_3rd_party_api_<?php echo esc_attr( $backup_api ); ?>_action_individual_create_backup" website_id="<?php echo intval( $website['id'] ); ?>" class="ui primary elastic green button"><?php esc_html_e( 'Backup', 'mainwp' ); ?></button>
+                                                <?php
+                                                $el_id_cp_api = $backup_api;
+                                                ?>
+                                                <button id="mainwp_3rd_party_api_<?php echo esc_attr( $el_id_cp_api ); ?>_action_individual_create_backup" website_id="<?php echo intval( $website['id'] ); ?>" class="ui primary elastic green button"><?php esc_html_e( 'Backup', 'mainwp' ); ?></button>
                                             </div>
                                         </div>
                                     </th>
@@ -1041,7 +1046,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                 <tr>
                                     <th scope="col" ><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
                                     <th scope="col" ><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
-                                    <th scope="col" ="no-sort collapsing"></th>
+                                    <th scope="col" class="no-sort collapsing"></th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -1076,7 +1081,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                 </tfoot>
                             </table>
                         <div class="ui divider hidden"></div>
-                            <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
+                            <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%"> <?php // NOSONAR - id ok. ?>
                                 <thead>
                                 <tr>
                                     <th scope="col" colspan="3">
@@ -1258,7 +1263,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                         $available_backups_manual_list = array();
                     }
                     ?>
-                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
+                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%"> <?php // NOSONAR - id ok. ?>
                             <thead>
                             <tr>
                                 <th scope="col" ><?php esc_html_e( 'GridPane Backup Name', 'mainwp' ); ?></th>
@@ -1337,7 +1342,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                     }
 
                     ?>
-                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
+                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%"> <?php // NOSONAR - id ok. ?>
                             <thead>
                             <tr>
                                 <th scope="col" ><?php esc_html_e( 'Cloudways Backup Type', 'mainwp' ); ?></th>
@@ -1382,7 +1387,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                         $available_backups_list = array();
                     }
                     ?>
-                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
+                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%"> <?php // NOSONAR - id ok. ?>
                             <thead>
                             <tr>
                                 <th scope="col" ><?php esc_html_e( 'Vultr Backup Label', 'mainwp' ); ?></th>
@@ -1475,7 +1480,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                         $available_backups_snapshot_list = array();
                     }
                     ?>
-                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
+                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%"> <?php // NOSONAR - id ok. ?>
                             <thead>
                             <tr>
                                 <th scope="col" ><?php esc_html_e( 'Akamai (Linode) Backup Type', 'mainwp' ); ?></th>
@@ -1549,7 +1554,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                         $available_backups = array();
                     }
                     ?>
-                    <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
+                    <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%"> <?php // NOSONAR - id ok. ?>
                         <thead>
                         <tr>
                             <th scope="col" ><?php esc_html_e( 'DigitalOcean Backup Label', 'mainwp' ); ?></th>

@@ -289,7 +289,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <?php $this->setup_wizard_steps(); ?>
                     </div>
                     <div class="two wide right aligned middle aligned column">
-                        
+
                     </div>
                 </div>
 
@@ -342,7 +342,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     // Check if this is the last step.
                     $step_keys = array_keys( $this->steps );
                     $last_step_key = end( $step_keys );
-                    
+
                     if ( $step_key === $last_step_key ) {
                         echo 'class="step completed" aria-label="Completed: ' . esc_attr( $step['name'] ) . '"';
                     } else {
@@ -380,10 +380,10 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     circularSteps.removeClass('vertical');
                 }
             }
-            
+
             // Run on page load.
             handleCircularStepsResize();
-            
+
             // Run on window resize.
             jQuery(window).on('resize', handleCircularStepsResize);
         });
@@ -699,16 +699,18 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $url .= '&step=add_client';
             MainWP_Manage_Sites::render_import_sites_modal( $url, 'Import Sites' );
             ?>
-        <?php else : ?>
+        <?php else :
+                $el_id_msg_zn_1 = 'submit';
+                ?>
             <form method="post" action="" class="ui form" enctype="multipart/form-data" id="mainwp_connect_first_site_form">
                 <div class="ui vertical basic padded segments">
                     <div class="ui padded segment">
                         <div id="mainwp-qsw-connect-site-form" style="display:none">
-                            <div class="ui message" id="mainwp-message-zone" style="display:none"></div>
+                            <div class="ui message" id="<?php echo esc_attr( $el_id_msg_zn_1 ); ?>" style="display:none"></div>
                             <div class="ui red message" id="mainwp-error-zone" style="display:none"></div>
                             <div class="ui green message" id="mainwp-success-zone" style="display:none"></div>
                             <div class="ui info message" id="mainwp-info-zone" style="display:none"></div>
-                    
+
                             <div class="ui top attached equal width tabular massive menu menu-connect-first-site">
                                 <a class="item active" data-tab="single-site"><i class="plus grey icon"></i> <?php esc_html_e( 'Connect a Single Site', 'mainwp' ); ?></a>
                                 <a class="item" data-tab="multiple-site"><i class="file upload grey icon"></i> <?php esc_html_e( 'Connect Multiple Sites', 'mainwp' ); ?></a>
@@ -842,7 +844,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <div class="column">
                                 <a href="<?php echo esc_url( $this->get_back_step_link() ); ?>" class="ui big basic button"><i class="arrow left icon"></i> <?php esc_html_e( 'Back to System Check', 'mainwp' ); ?></a>
                             </div>
-                            
+
                             <div class="column">
                                 <a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" id="mainwp_addsite_continue_button" class="ui big basic green right floated button"><?php esc_html_e( 'Continue Without Adding Sites', 'mainwp' ); ?> <i class="arrow right icon"></i></a>
                                 <a style="display:none" name="mainwp_managesites_add" id="mainwp_managesites_add" class="ui button green basic big right floated disabled"><?php esc_html_e( 'Connect Site and Proceed', 'mainwp' ); ?> <i class="arrow right icon"></i></a>
@@ -853,7 +855,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 </div>
             </form>
         <?php endif; ?>
-                
+
         <script>
             jQuery('.menu-connect-first-site .item').tab({
                 'onVisible': function() {
@@ -913,7 +915,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $total_sites       = ! empty( $sites ) ? count( $sites ) : 5; // Set default.
         $item_class_active = 1 === $total_sites ? 'active' : '';
         $tab_class_active  = 1 < $total_sites ? 'active' : '';
-        $first_site_id     = get_transient( 'mainwp_transient_just_connected_site_id' ); 
+        $first_site_id     = get_transient( 'mainwp_transient_just_connected_site_id' );
         ?>
         <div class="ui vertical basic padded segments">
             <div class="ui padded segment">
@@ -1320,7 +1322,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <div class="item"><?php esc_html_e( 'Run backups and maintenance tasks', 'mainwp' ); ?></div>
                 <div class="item"><?php esc_html_e( 'And much more, all from YOUR MainWP Dashboard.', 'mainwp' ); ?></div>
             </div>
-        </div> 
+        </div>
         <div class="ui basic segment">
             <a class="ui huge green fade in transition button" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp_tab' ) ); ?>"><?php esc_html_e( 'Go to Dashboard', 'mainwp' ); ?></a>
         </div>

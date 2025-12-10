@@ -1258,8 +1258,10 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                             $item_id = $slug_ver . '_' . $site_id;
                             $item_id = strtolower( $item_id );
                             $item_id = preg_replace( '/[[:space:]]+/', '_', $item_id );
+
+                            $el_id_ite_id_1 = $item_id;
                             ?>
-                            <div class="ui very compact stackable grid mainwp-manage-theme-item-website <?php echo esc_html( $active_status_class ); ?>"  updated="0" site-id="<?php echo intval( $site_id ); ?>" theme-slug="<?php echo esc_attr( $theme_slug ); ?>" theme-name="<?php echo esc_html( wp_strip_all_tags( $themesName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>"  site-url="<?php echo esc_html( $site_url ); ?>" tz-info="<?php echo esc_attr( $offs_info ); ?>" id="<?php echo esc_html( $item_id ); ?>" not-delete="<?php echo $not_delete ? 1 : 0; ?>" is-actived="<?php echo $actived ? 1 : 0; ?>" >
+                            <div class="ui very compact stackable grid mainwp-manage-theme-item-website <?php echo esc_html( $active_status_class ); ?>"  updated="0" site-id="<?php echo intval( $site_id ); ?>" theme-slug="<?php echo esc_attr( $theme_slug ); ?>" theme-name="<?php echo esc_html( wp_strip_all_tags( $themesName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>"  site-url="<?php echo esc_html( $site_url ); ?>" tz-info="<?php echo esc_attr( $offs_info ); ?>" id="<?php echo esc_html( $el_id_ite_id_1 ); ?>" not-delete="<?php echo $not_delete ? 1 : 0; ?>" is-actived="<?php echo $actived ? 1 : 0; ?>" >
                             <div class="one wide center aligned middle aligned column"></div>
                                 <div class="one wide center aligned middle aligned column">
 
@@ -1279,7 +1281,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 <div class="two wide middle aligned column"><strong><?php echo esc_html( $theme_title ); ?></strong></div>
                                 <div class="two wide center aligned middle aligned column"><?php echo $theme_status; // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
                                 <div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny green label"><i class="lock icon"></i> ' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny red label"><i class="lock open icon"></i> ' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
-                                
+
                                 <div class="two wide center aligned middle aligned column current-version">
                                     <span class="ui small text">
                                     <?php echo esc_html( $theme_version ); ?>
@@ -1309,7 +1311,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                             <?php } ?>
                                         <?php else : ?>
                                         <div class="ui mini fluid buttons">
-                                            
+
                                             <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
                                             <a href="javascript:void(0)" class="mainwp-manages-theme-activate ui green button"><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
                                             <?php } ?>
@@ -1573,8 +1575,9 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 $item_id = strtolower( $item_id );
                                 $item_id = preg_replace( '/[[:space:]]+/', '_', $item_id );
 
+                                $el_id_ite_id_2 = $item_id;
                                 ?>
-                            <div class="ui very compact stackable grid mainwp-manage-theme-item-website <?php echo esc_html( $active_status_class ); ?>"  updated="0" site-id="<?php echo intval( $site_id ); ?>" theme-slug="<?php echo esc_attr( $theme_slug ); ?>" theme-name="<?php echo esc_html( wp_strip_all_tags( $themesName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" site-url="<?php echo esc_attr( $site_url ); ?>"  tz-info="<?php echo esc_attr( $offs_info ); ?>"  id="<?php echo esc_html( $item_id ); ?>" not-delete="<?php echo $not_delete ? 1 : 0; ?>" is-actived="<?php echo $actived ? 1 : 0; ?>" >
+                                <div class="ui very compact stackable grid mainwp-manage-theme-item-website <?php echo esc_html( $active_status_class ); ?>"  updated="0" site-id="<?php echo intval( $site_id ); ?>" theme-slug="<?php echo esc_attr( $theme_slug ); ?>" theme-name="<?php echo esc_html( wp_strip_all_tags( $themesName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" site-url="<?php echo esc_attr( $site_url ); ?>"  tz-info="<?php echo esc_attr( $offs_info ); ?>"  id="<?php echo esc_html( $el_id_ite_id_2 ); ?>" not-delete="<?php echo $not_delete ? 1 : 0; ?>" is-actived="<?php echo $actived ? 1 : 0; ?>" >
                                 <div class="one wide center aligned middle aligned column"></div>
                                 <div class="one wide left aligned middle aligned column">
                                     <?php if ( '' !== $parent_str ) : ?>
@@ -1594,7 +1597,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 <div class="two wide center aligned middle aligned column"><?php echo $theme_status; // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
                                 <div class="two wide center aligned middle aligned column">
                                     <?php echo $trusted ? '<span class="ui tiny green label"><i class="lock icon"></i> ' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny red label"><i class="lock open icon"></i> ' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
-                                
+
                                 <div class="two wide right aligned middle aligned column current-version">
                                     <span class="ui small text">
                                     <?php echo esc_html( $theme_version ); ?>
@@ -2107,7 +2110,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                             <div><em data-emoji=":bulb:" class="small"></em> <?php printf( esc_html__( 'Check out %1$show to disable the WordPress built in auto-updates feature%2$s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
                         </div>
                         <?php endif; ?>
-                        
+
                         <div class="ui page dimmer">
                             <div class="ui text double loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
                         </div>

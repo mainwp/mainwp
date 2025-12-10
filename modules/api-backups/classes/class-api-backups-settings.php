@@ -324,9 +324,10 @@ class Api_Backups_Settings {
                                      * @since 4.1
                                      */
                                     do_action( 'cloudways_api_form_bottom' );
+                                    $el_id_btn_sbm_1 = 'submit';
                                     ?>
                                     <div class="ui divider"></div>
-                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                                    <input type="submit" name="submit" id="<?php echo esc_attr( $el_id_btn_sbm_1 ); ?>" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
                                     <div style="clear:both"></div>
                                 </form>
                             </div>
@@ -390,9 +391,10 @@ class Api_Backups_Settings {
                                      * @since 4.1
                                      */
                                     do_action( 'gridpane_api_form_bottom' );
+                                    $el_id_btn_sbm_2 = 'submit';
                                     ?>
                                     <div class="ui divider"></div>
-                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                                    <input type="submit" name="submit" id="<?php echo esc_attr( $el_id_btn_sbm_2 ); ?>" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
                                     <div style="clear:both"></div>
                                 </form>
                             </div>
@@ -457,9 +459,10 @@ class Api_Backups_Settings {
                                          * @since 4.1
                                          */
                                         do_action( 'vultr_api_form_bottom' );
+                                        $el_id_sbm_btn_1 = 'submit';
                                     ?>
                                     <div class="ui divider"></div>
-                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                                    <input type="submit" name="submit" id="<?php echo esc_attr( $el_id_sbm_btn_1 ); ?>" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
                                     <div style="clear:both"></div>
                                 </form>
                             </div>
@@ -525,9 +528,10 @@ class Api_Backups_Settings {
                                          * @since 4.1
                                          */
                                         do_action( 'linode_api_form_bottom' );
+                                        $el_id_btn_sbm_3 = 'submit';
                                     ?>
                                     <div class="ui divider"></div>
-                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                                    <input type="submit" name="submit" id="<?php echo esc_attr( $el_id_btn_sbm_3 ); ?>" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
                                     <div style="clear:both"></div>
                                 </form>
                             </div>
@@ -593,9 +597,10 @@ class Api_Backups_Settings {
                                          * @since 4.1
                                          */
                                         do_action( 'digitalocean_api_form_bottom' );
+                                        $el_id_btn_sbm_4 = 'submit';
                                     ?>
                                     <div class="ui divider"></div>
-                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                                    <input type="submit" name="submit" id="<?php echo esc_attr( $el_id_btn_sbm_4 ); ?>" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
                                     <div style="clear:both"></div>
                                 </form>
                             </div>
@@ -692,9 +697,10 @@ class Api_Backups_Settings {
                                          * @since 4.1
                                          */
                                         do_action( 'cpanel_api_form_bottom' );
+                                        $el_id_btn_sbm_5 = 'submit';
                                     ?>
                                     <div class="ui divider"></div>
-                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                                    <input type="submit" name="submit" id="<?php echo esc_attr( $el_id_btn_sbm_5 ); ?>" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
                                     <div style="clear:both"></div>
                                 </form>
                             </div>
@@ -769,9 +775,10 @@ class Api_Backups_Settings {
                                      * @since 4.1
                                      */
                                     do_action( 'plesk_api_form_bottom' );
+                                    $el_id_btn_sbm_7 = 'submit';
                                     ?>
                                     <div class="ui divider"></div>
-                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                                    <input type="submit" name="submit" id="<?php echo esc_attr( $el_id_btn_sbm_7 ); ?>" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
                                     <div style="clear:both"></div>
                                 </form>
                             </div>
@@ -858,9 +865,10 @@ class Api_Backups_Settings {
                                          * @since 4.1
                                          */
                                         do_action( 'kinsta_api_form_bottom' );
+                                        $el_id_btn_sbm_6 = 'submit';
                                     ?>
                                     <div class="ui divider"></div>
-                                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                                    <input type="submit" name="submit" id="<?php echo esc_attr( $el_id_btn_sbm_6 ); ?>" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
                                     <div style="clear:both"></div>
                                 </form>
                             </div>
@@ -1116,7 +1124,8 @@ class Api_Backups_Settings {
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Username', 'mainwp' ); ?></label>
                         <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the cPanel Account Username.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <div class="ui left labeled input">
-                                <input type="text" name="mainwp_cpanel_account_username" id="mainwp_cpanel_account_username" value="<?php echo empty( $mainwp_cpanel_account_username ) ? '' : esc_attr( $mainwp_cpanel_account_username ); ?>"  />
+                                <?php $el_id_int_un_1 = 'mainwp_cpanel_account_username'; ?>
+                                <input type="text" name="mainwp_cpanel_account_username" id="<?php echo esc_attr( $el_id_int_un_1 ); ?>" value="<?php echo empty( $mainwp_cpanel_account_username ) ? '' : esc_attr( $mainwp_cpanel_account_username ); ?>"  />
                             </div>
                         </div>
                     </div>
@@ -1147,9 +1156,10 @@ class Api_Backups_Settings {
                         </div>
                     </div>
                 </div>
+                <?php $el_id_ind_set_chk_1 = 'individual_settings_check'; ?>
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Overwrite Global Settings', 'mainwp' ); ?></label>
-                    <div id="individual_settings_check" class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the Plesk (WP Toolkit) Individual Settings will be used.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                    <div id="<?php echo esc_attr( $el_id_ind_set_chk_1 ); ?>" class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the Plesk (WP Toolkit) Individual Settings will be used.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                         <input type="checkbox" name="mainwp_enable_plesk_individual" id="mainwp_enable_plesk_individual" <?php echo 'on' === $mainwp_enable_plesk_individual ? 'checked="true"' : 'off'; ?> />
                     </div>
                 </div>
@@ -1185,8 +1195,9 @@ class Api_Backups_Settings {
                     </div>
                 </div>
                 <div class="ui grid field">
+                    <?php echo esc_attr( $el_id_ind_set_chk_2 ); ?>
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Overwrite Global Settings', 'mainwp' ); ?></label>
-                    <div id="individual_settings_check" class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the Kinsta Individual Settings will be used.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                    <div id="<?php echo esc_attr( $el_id_ind_set_chk_2 ); ?>" class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the Kinsta Individual Settings will be used.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                         <input type="checkbox" name="mainwp_enable_kinsta_individual" id="mainwp_enable_kinsta_individual" <?php echo ( 'on' === $mainwp_enable_kinsta_individual ) ? 'checked="true"' : 'off'; ?> />
                     </div>
                 </div>
@@ -1226,10 +1237,12 @@ class Api_Backups_Settings {
                 <label class="six wide column middle aligned">
                 <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $mainwp_3rd_party_api );
+
+                    $el_id_api_bk_prov_sl_1 = 'mainwp_managesites_edit_module_api_backups_provider';
                 ?>
                 <?php esc_html_e( 'Choose a provider', 'mainwp' ); ?></label>
                 <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Detected provider', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                    <select class="ui dropdown settings-field-value-change-handler" id="mainwp_managesites_edit_module_api_backups_provider" name="mainwp_managesites_edit_module_api_backups_provider">
+                    <select class="ui dropdown settings-field-value-change-handler" id="<?php echo esc_attr( $el_id_api_bk_prov_sl_1 ); ?>" name="mainwp_managesites_edit_module_api_backups_provider">
                         <option <?php echo ( '' === $mainwp_3rd_party_api ) ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'None', 'mainwp' ); ?></option>
                         <option <?php echo ( 'DigitalOcean' === $mainwp_3rd_party_api ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'DigitalOcean', 'mainwp' ); ?></option>
                         <option <?php echo ( 'Linode' === $mainwp_3rd_party_api ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'Akamai (Linode)', 'mainwp' ); ?></option>

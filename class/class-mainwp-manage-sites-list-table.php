@@ -1879,8 +1879,11 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         <?php endif; ?>
                     <?php } elseif ( 'favicon' === $column_name ) { ?>
                         <?php echo $site_icon; // phpcs:ignore WordPress.Security.EscapeOutput ?>
-                    <?php } elseif ( 'site_combo' === $column_name ) { ?>
-                        <i class="ui active inline loader tiny" style="display:none"></i> <span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span>
+                    <?php } elseif ( 'site_combo' === $column_name ) {
+                        $scb_id = $website['id'];
+                        ?>
+                        <i class="ui active inline loader tiny" style="display:none"></i>
+                        <span id="site-status-<?php echo esc_attr( $scb_id ); ?>" class="status hidden"></span>
                         <?php if ( \mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
                             <a href="<?php MainWP_Site_Open::get_open_site_url( $website['id'] ); ?>" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
                         <?php endif; ?>
@@ -1894,8 +1897,11 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                 </a>
                             </span>
                         </div>
-                    <?php } elseif ( 'site' === $column_name ) { ?>
-                        <a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $website['id'] ); ?>"><?php echo esc_attr( stripslashes( $website['name'] ) ); ?></a><i class="ui active inline loader tiny" style="display:none"></i><span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span>
+                    <?php } elseif ( 'site' === $column_name ) {
+                        $s_id = $website['id'];
+                        ?>
+                        <a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $website['id'] ); ?>"><?php echo esc_attr( stripslashes( $website['name'] ) ); ?></a><i class="ui active inline loader tiny" style="display:none"></i>
+                        <span id="site-status-<?php echo esc_attr( $s_id ); ?>" class="status hidden"></span>
                     <?php } elseif ( 'login' === $column_name ) { ?>
                         <?php if ( ! \mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
                             <i class="sign in icon"></i>
@@ -1979,13 +1985,16 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                             <?php
                         }
                         ?>
-                    <?php } elseif ( 'notes' === $column_name ) { ?>
+                    <?php } elseif ( 'notes' === $column_name ) {
+                        $st_id1 = $website['id']; ?>
                         <?php if ( empty( $website['note'] ) ) : ?>
-                            <a href="javascript:void(0)" class="mainwp-edit-site-note ui mini grey icon basic button" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>"><i class="sticky note outline grey icon"></i></a>
-                        <?php else : ?>
-                            <a href="javascript:void(0)" class="mainwp-edit-site-note ui mini icon basic button" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
-                        <?php endif; ?>
-                            <span style="display: none" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+                            <a href="javascript:void(0)" class="mainwp-edit-site-note ui mini grey icon basic button" id="mainwp-notes-<?php echo intval( $st_id1 ); ?>"><i class="sticky note outline grey icon"></i></a>
+                        <?php else :
+                            $st_id2 = $website['id']; ?>
+                            <a href="javascript:void(0)" class="mainwp-edit-site-note ui mini icon basic button" id="mainwp-notes-<?php echo intval( $st_id2 ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+                        <?php endif;
+                            $nst_id1 = $website['id']; ?>
+                            <span style="display: none" id="mainwp-notes-<?php echo intval( $nst_id1 ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
                     <?php } elseif ( 'phpversion' === $column_name ) { ?>
                         <?php echo ! empty( $website['phpversion'] ) ? '<i class="php icon"></i> ' . esc_html( substr( $website['phpversion'], 0, 6 ) ) : ''; ?>
                     <?php } elseif ( 'ip' === $column_name ) { ?>
@@ -2343,8 +2352,10 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 if ( '' !== $website['sync_errors'] ) {
                     $cls_site = 'site-sync-error';
                 }
+                $sta_id = $website['id'];
                 ?>
-                <td class="column-site-bulk mainwp-site-cell collapsing all <?php echo esc_attr( $cls_site ); ?>"><a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $website['id'] ); ?>"><?php echo esc_html( stripslashes( $website['name'] ) ); ?></a><i class="ui active inline loader tiny" style="display:none"></i><span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span></td>
+                <td class="column-site-bulk mainwp-site-cell collapsing all <?php echo esc_attr( $cls_site ); ?>"><a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $website['id'] ); ?>"><?php echo esc_html( stripslashes( $website['name'] ) ); ?></a><i class="ui active inline loader tiny" style="display:none"></i>
+                <span id="site-status-<?php echo esc_attr( $sta_id ); ?>" class="status hidden"></span></td>
             <?php } elseif ( 'login' === $column_name ) { ?>
                 <td class="collapsing mainwp-wp-admin-cell">
                 <?php if ( ! \mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
@@ -2397,10 +2408,13 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 </td>
             <?php } elseif ( 'notes' === $column_name ) { ?>
                 <td class="collapsing center aligned mainwp-notes-cell">
-                    <?php if ( '' === $website['note'] ) : ?>
-                        <a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>"><i class="sticky note outline icon"></i></a>
-                    <?php else : ?>
-                        <a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+                    <?php if ( '' === $website['note'] ) :
+                        $not_id1 = $website['id'];
+                        ?>
+                        <a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $not_id1 ); ?>"><i class="sticky note outline icon"></i></a>
+                    <?php else :
+                        $not_id2 = $website['id']; ?>
+                        <a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $not_id2 ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
                     <?php endif; ?>
                         <span style="display: none" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
                 </td>

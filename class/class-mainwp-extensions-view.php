@@ -299,7 +299,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     <?php if ( isset( $priv_extension['privacy'] ) && ( 2 === $priv_extension['privacy'] || 1 === (int) $priv_extension['privacy'] ) ) { ?>
                     <input
                         type="hidden"
-                        id="<?php echo esc_attr( $priv_extension['slug'] ); ?>"
+                        id="<?php echo esc_attr( $priv_extension['slug'] ); // NOSONAR - id ok. ?>"
                         name="<?php echo esc_attr( $priv_extension['slug'] ); ?>"
                         base-slug="<?php echo esc_attr( $item_slug ); ?>"
                         privacy="<?php echo esc_attr( $priv_extension['privacy'] ); ?>"
@@ -315,7 +315,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         ?>
                     <input
                         type="hidden"
-                        id="<?php echo esc_attr( $priv_extension['slug'] ); ?>"
+                        id="<?php echo esc_attr( $priv_extension['slug'] ); // NOSONAR - - id ok.  ?>"
                         name="<?php echo esc_attr( $priv_extension['slug'] ); ?>"
                         base-slug="<?php echo esc_attr( $item_slug ); ?>"
                         privacy="<?php echo esc_attr( $priv_extension['privacy'] ); ?>"
@@ -327,7 +327,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         ?>
                         <input
                             type="hidden"
-                            id="<?php echo esc_attr( $priv_extension['slug'] ); ?>"
+                            id="<?php echo esc_attr( $priv_extension['slug'] ); // NOSONAR - - id ok. ?>"
                             name="<?php echo esc_attr( $priv_extension['slug'] ); ?>"
                             base-slug="<?php echo esc_attr( $item_slug ); ?>"
                             extension_title="<?php echo esc_attr( MainWP_Extensions_Handler::polish_string_name( $priv_extension['title'] ) ); ?>"

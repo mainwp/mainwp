@@ -475,14 +475,13 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         ++$row;
                     }
                     $header_line = trim( $header_line );
-
                     ?>
-                    <!-- NOSONAR --><input type="hidden" id="mainwp_managesites_do_import" value="1"/>
-                    <!-- NOSONAR --><input type="hidden" id="mainwp_managesites_total_import" value="<?php echo esc_attr( $row ); ?>"/>
-                    <!-- NOSONAR --><div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_logging">
+                    <input type="hidden" id="mainwp_managesites_do_import" value="1"/>
+                    <input type="hidden" id="mainwp_managesites_total_import" value="<?php echo esc_attr( $row ); ?>"/>
+                    <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_logging">
                         <span class="log ui medium text"><?php echo esc_html( $header_line ) . '<br/>'; ?></span>
                     </div>
-                    <!-- NOSONAR --><div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_fail_logging" style="display: none;">
+                    <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_fail_logging" style="display: none;">
                     <?php
                         echo esc_html( $header_line );
                     ?>
@@ -529,17 +528,22 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         $line = trim( implode( ',', $val_import ) )
                         ?>
                         <input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo esc_attr( $key_import + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $val_import ) ); ?>" original="<?php echo esc_attr( $line ); ?>" />
-                    <?php } ?>
+                    <?php }
+                    $hd_id1       = 'mainwp_managesites_do_import';
+                    $hd_id2       = 'mainwp_managesites_total_import';
+                    $list_id      = 'mainwp_managesites_import_logging';
+                    $fail_list_id = 'mainwp_managesites_import_fail_logging';
+                    ?>
                     <input type="hidden" id="mainwp_managesites_do_managesites_import" value="1"/>
-                    <input type="hidden" id="mainwp_managesites_do_import" value="1"/>
-                    <input type="hidden" id="mainwp_managesites_total_import" value="<?php echo esc_attr( count( $import_data ) ); ?>"/>
+                    <input type="hidden" id="<?php esc_attr( $hd_id1 ); ?>" value="1"/>
+                    <input type="hidden" id="<?php esc_attr( $hd_id2 ); ?>" value="<?php echo esc_attr( count( $import_data ) ); ?>"/>
 
-                    <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_logging">
+                    <div class="mainwp_managesites_import_listing" id="<?php esc_attr( $list_id ); ?>">
                         <span class="log ui small text">
                             <?php echo esc_html( $header_line ) . '<br/>'; ?>
                         </span>
                     </div>
-                    <div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_fail_logging" style="display: none;">
+                    <div class="mainwp_managesites_import_listing" id="<?php esc_attr( $fail_list_id ); ?>" style="display: none;">
                         <?php echo esc_html( $header_line ); ?>
                     </div>
                     <?php

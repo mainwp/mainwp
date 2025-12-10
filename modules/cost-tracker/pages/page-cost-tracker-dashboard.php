@@ -478,8 +478,10 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                     <?php if ( $filtered ) : ?>
                         <th id="per_site_price-bottom" class="no-sort collapsing column-site-price"><?php esc_html_e( 'Per Site Price', 'mainwp' ); ?></th>
                         <th id="price-bottom" class="collapsing column-price"><?php esc_html_e( 'Total Price', 'mainwp' ); ?></th>
-                    <?php else : ?>
-                    <!-- NOSONAR --><th id="price-bottom" class="collapsing column-price"><?php esc_html_e( 'Price', 'mainwp' ); ?></th>
+                    <?php else :
+                        $el_id_prc_bt_1 = 'price-bottom';
+                        ?>
+                    <th id="<?php echo esc_attr( $el_id_prc_bt_1 ); ?>" class="collapsing column-price"><?php esc_html_e( 'Price', 'mainwp' ); ?></th>
                     <?php endif; ?>
                     <th id="license_type-bottom" class="collapsing column-license-type"><?php esc_html_e( 'License', 'mainwp' ); ?></th>
                     <th id="product_type-bottom" class="collapsing column-product-type"><?php esc_html_e( 'Category', 'mainwp' ); ?></th>

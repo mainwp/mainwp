@@ -773,10 +773,10 @@ class Api_Backups_Settings {
                                      * @since 4.1
                                      */
                                     do_action( 'plesk_api_form_bottom' );
-                                    $el_id_btn_sbm_6 = 'submit';
+                                    $el_id_btn_sbm_7 = 'submit';
                                     ?>
                                     <div class="ui divider"></div>
-                                    <input type="submit" name="submit" id="<?php echo esc_attr( $el_id_btn_sbm_6 ); ?>" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                                    <input type="submit" name="submit" id="<?php echo esc_attr( $el_id_btn_sbm_7 ); ?>" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
                                     <div style="clear:both"></div>
                                 </form>
                             </div>

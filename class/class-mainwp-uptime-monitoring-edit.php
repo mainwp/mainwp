@@ -424,9 +424,10 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                     </div>
                     <?php
                 } else {
+                    $el_id_act_1 = 'mainwp_edit_monitor_active';
                     ?>
                     <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="uptime-monitoring" <?php echo ! $individual ? 'fire-event-parent="on-showhide-up-http-codes-element"' : ''; ?>>
-                        <input type="checkbox" value="1" class="settings-field-value-change-handler" name="mainwp_edit_monitor_active" id="mainwp_edit_monitor_active" <?php echo 1 === (int) $mo_settings['active'] ? 'checked="true"' : ''; ?>/>
+                    <input type="checkbox" value="1" class="settings-field-value-change-handler" name="mainwp_edit_monitor_active" id="<?php echo esc_attr( $el_id_act_1 ); ?>" <?php echo 1 === (int) $mo_settings['active'] ? 'checked="true"' : ''; ?>/>
                     </div>
                     <?php
                 }
@@ -604,8 +605,9 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 }
 
                 if ( ! $show_in_modal && $is_editing_monitor_or_sub_monitor ) {
+                    $el_id_del_mo_1 = 'delete_uptime_monitor_btn';
                     ?>
-                    <input type="button" name="delete_uptime_monitor_btn" id="delete_uptime_monitor_btn" class="ui button basic big" value="<?php esc_html_e( 'Disable Monitor', 'mainwp' ); ?>">
+                    <input type="button" name="delete_uptime_monitor_btn" id="<?php echo esc_attr( $el_id_del_mo_1 ); ?>" class="ui button basic big" value="<?php esc_html_e( 'Disable Monitor', 'mainwp' ); ?>">
                     <?php
                 }
                 ?>
@@ -882,8 +884,9 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                             <input type="submit" name="submit" id="submit" class="ui green button" value="<?php esc_html_e( 'Save', 'mainwp' ); ?>">
                                 <?php
                                 if ( $is_editing ) {
+                                    $el_id_del_mo_2 = 'delete_uptime_monitor_btn';
                                     ?>
-                                    <input type="button" name="delete_uptime_monitor_btn" id="delete_uptime_monitor_btn" class="ui basic button" value="<?php esc_html_e( 'Delete', 'mainwp' ); ?>">
+                                    <input type="button" name="delete_uptime_monitor_btn" id="<?php echo esc_attr( $el_id_del_mo_2 ); ?>" class="ui basic button" value="<?php esc_html_e( 'Delete', 'mainwp' ); ?>">
                                     <?php
                                 }
                                 ?>

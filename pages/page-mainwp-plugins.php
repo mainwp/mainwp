@@ -1382,8 +1382,10 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
                             $plugin_directory = MainWP_Utility::get_dir_slug( $plugin_slug );
                             $details_link     = self_admin_url( 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $site_id ) . '&plugin=' . rawurlencode( $plugin_directory ) . '&section=changelog' );
+
+                            $el_id_ite_1 = $item_id;
                             ?>
-                            <div class="ui very compact stackable grid mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( $plugin_title ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
+                            <div class="ui very compact stackable grid mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( $plugin_title ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $el_id_ite_1 ); ?>">
                             <div class="one wide center aligned middle aligned column"></div>
                                 <div class="one wide left aligned middle aligned column">
                                     <div class="ui checkbox child <?php echo 'mainwp-child' === $plugin_directory ? 'disabled' : ''; ?>">
@@ -1679,8 +1681,9 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 $item_id = strtolower( $item_id );
                                 $item_id = preg_replace( '/[[:space:]]+/', '_', $item_id );
 
+                                $el_id_ite_2 = $item_id;
                                 ?>
-                        <div class="ui stackable grid very compact mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $pluginsName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
+                            <div class="ui stackable grid very compact mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $pluginsName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $el_id_ite_2 ); ?>">
                             <div class="one wide left aligned middle aligned column"></div>
                                 <div class="one wide center aligned middle aligned column">
                                         <?php if ( $child_plugin ) { ?>

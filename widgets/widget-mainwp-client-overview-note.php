@@ -113,8 +113,10 @@ class MainWP_Client_Overview_Note { // phpcs:ignore Generic.Classes.OpeningBrace
                 <div class="column">
                 <?php if ( empty( $note ) ) : ?>
                     <a href="javascript:void(0)" class="mainwp-edit-client-note ui button mini" id="mainwp-notes-<?php echo esc_attr( $client_info['client_id'] ); ?>"><?php esc_attr_e( 'Add Notes', 'mainwp' ); ?></a>
-                <?php else : ?>
-                    <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini button" id="mainwp-notes-<?php echo esc_attr( $client_info['client_id'] ); ?>"><?php esc_attr_e( 'Edit Notes', 'mainwp' ); ?></a>
+                <?php else :
+                    $el_id_cl_id_1 = $client_info['client_id'];
+                    ?>
+                    <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini button" id="mainwp-notes-<?php echo esc_attr( $el_id_cl_id_1 ); ?>"><?php esc_attr_e( 'Edit Notes', 'mainwp' ); ?></a>
                 <?php endif; ?>
                 </div>
                 <div class="column"></div>

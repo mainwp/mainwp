@@ -2153,9 +2153,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                      * @since 4.1
                      */
                     do_action( 'mainwp_tools_form_bottom' );
+                    $el_id_sbm_btn_1 = 'submit';
                     ?>
                     <div class="ui divider"></div>
-                    <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+                    <input type="submit" name="submit" id="<?php echo esc_attr( $el_id_sbm_btn_1 ); ?>" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
                     </form>
                 </div>
             </div>

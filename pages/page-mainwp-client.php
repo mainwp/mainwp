@@ -960,7 +960,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         <div class="ui segment"  id="mainwp-import-clients">
             <form method="POST" action="" enctype="multipart/form-data" id="mainwp_client_import_form" class="ui form">
                 <div>
-                    <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
+                            <?php $el_id_mes_zn_1 = 'mainwp-message-zone'; ?>
+                    <div id="<?php echo esc_attr( $el_id_mes_zn_1 ); ?>" class="ui message" style="display:none"></div>
                     <h3 class="ui dividing header">
                         <?php echo esc_html( $title_page ); ?>
                         <div class="sub header"><?php esc_html_e( 'Import multiple clients to your MainWP Dashboard.', 'mainwp' ); ?></div>
@@ -1678,14 +1679,16 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         <div class="ui left labeled input">
                     <?php
                     if ( 'client.note' === $field_name ) {
+                        $el_id_fln_1 = $field_name;
                         ?>
                             <div class="editor">
-                                <textarea class="code settings-field-value-change-handler" cols="80" rows="10" id="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]"><?php echo esc_html( $val ); ?></textarea>
+                            <textarea class="code settings-field-value-change-handler" cols="80" rows="10" id="client_fields[default_field][<?php echo esc_attr( $el_id_fln_1 ); ?>]" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]"><?php echo esc_html( $val ); ?></textarea>
                             </div>
                             <?php
                     } elseif ( 'client.suspended' === $field_name ) {
+                        $el_id_fln_2 = $field_name;
                         ?>
-                            <select class="ui dropdown settings-field-value-change-handler" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]" id="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]" >
+                            <select class="ui dropdown settings-field-value-change-handler" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]" id="client_fields[default_field][<?php echo esc_attr( $el_id_fln_2 ); ?>]" >
                                 <option value="0" <?php echo '0' === $val ? 'selected' : ''; ?>><?php esc_html_e( 'Active', 'mainwp' ); ?></option>
                                 <option value="1" <?php echo '1' === $val ? 'selected' : ''; ?>><?php esc_html_e( 'Suspended', 'mainwp' ); ?></option>
                                 <option value="2" <?php echo '2' === $val ? 'selected' : ''; ?>><?php esc_html_e( 'Lead', 'mainwp' ); ?></option>

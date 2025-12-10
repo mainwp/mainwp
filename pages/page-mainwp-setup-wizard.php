@@ -615,12 +615,14 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     $url .= '&step=add_client';
                     MainWP_Manage_Sites::render_import_sites_modal( $url, 'Import Sites' );
                 ?>
-            <?php else : ?>
+            <?php else :
+                $el_id_msg_zn_1 = 'submit';
+                ?>
                 <form method="post" action="" class="ui form" enctype="multipart/form-data" id="mainwp_connect_first_site_form">
                 <div id="mainwp-qsw-connect-site-form" style="display:none">
                     <div class="ui hidden divider"></div>
                     <div class="ui hidden divider"></div>
-                    <div class="ui message" id="mainwp-message-zone" style="display:none"></div>
+                    <div class="ui message" id="<?php echo esc_attr( $el_id_msg_zn_1 ); ?>" style="display:none"></div>
                     <div class="ui red message" id="mainwp-error-zone" style="display:none"></div>
                     <div class="ui green message" id="mainwp-success-zone" style="display:none"></div>
                     <div class="ui info message" id="mainwp-info-zone" style="display:none"></div>
@@ -790,11 +792,13 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             ?>
             <h1 class="ui header"><?php esc_html_e( 'Congratulations!', 'mainwp' ); ?></h1>
             <p><?php esc_html_e( 'You have successfully created your first Client.', 'mainwp' ); ?></p>
-        <?php else : ?>
+        <?php else :
+            $el_id_msg_zn_2 = 'mainwp-message-zone';
+            ?>
             <?php $first_site_id = get_transient( 'mainwp_transient_just_connected_site_id' ); ?>
             <h1><?php esc_html_e( 'Create a Client', 'mainwp' ); ?></h1>
             <form action="" method="post" enctype="multipart/form-data" name="createclient_form" id="createclient_form" class="add:clients: validate">
-                <div class="ui red message" id="mainwp-message-zone" style="display:none"></div>
+            <div class="ui red message" id="<?php echo esc_attr( $el_id_msg_zn_2 ); ?>" style="display:none"></div>
                 <div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
                 <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                 <div class="ui top attached tabular menu mainwp-qsw-add-client">

@@ -2209,7 +2209,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         $sql .= ' ' . $where;
 
-        return $this->wpdb->get_results( $sql, OBJECT ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $where fragment is from validated get_sql_where_access_sites() with numeric IDs
+        return $this->wpdb->get_results( $this->wpdb->prepare( $sql, ...$params ), OBJECT ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $where fragment is from validated get_sql_where_access_sites() with numeric IDs
     }
 
     /**

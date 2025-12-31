@@ -2935,7 +2935,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return array
      */
     public function get_edit_tools_allowed_fields() { // phpcs:ignore -- NOSONAR - long method.
-        $themes = array( 'default', 'default-2024', 'classic', 'dark', 'wpadmin', 'minimalistic' );
+        $themes = array( 'default','default-dark', 'default-2024', 'classic', 'dark', 'wpadmin', 'minimalistic' );
         return array(
             'mainwp_theme' => array(
                 'required'          => false,

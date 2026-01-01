@@ -1278,6 +1278,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         <div class="content menu">
                             <a class="item" href="admin.php?page=RESTAPI"><?php esc_html_e( 'Manage API Keys', 'mainwp' ); ?></a>
                             <a class="item" href="admin.php?page=AddApiKeys"><?php esc_html_e( 'Add API Keys', 'mainwp' ); ?></a>
+                            <a class="item" href="admin.php?page=ApplicationPasswords"><?php esc_html_e( 'Application Passwords', 'mainwp' ); ?></a>
                         </div>
                     </div>
 

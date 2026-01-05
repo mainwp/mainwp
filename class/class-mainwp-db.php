@@ -2196,20 +2196,20 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             }
         );
 
-        $where       = $this->get_sql_where_allow_access_sites();
-        $table_name  = esc_sql( $this->table_name( 'wp' ) );
+        $where        = $this->get_sql_where_allow_access_sites( '', 'nocheckstaging' );
+        $table_name   = esc_sql( $this->table_name( 'wp' ) );
         $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-        $sql         = "SELECT * FROM {$table_name} WHERE id IN ({$placeholders})";
-        $params      = $ids;
+        $sql          = "SELECT * FROM {$table_name} WHERE id IN ({$placeholders})";
+        $params       = $ids;
 
         if ( null !== $userId ) {
-            $sql    .= ' AND userid = %d';
+            $sql     .= ' AND userid = %d';
             $params[] = intval( $userId );
         }
 
         $sql .= ' ' . $where;
 
-        return $this->wpdb->get_results( $sql, OBJECT ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $where fragment is from validated get_sql_where_access_sites() with numeric IDs
+        return $this->wpdb->get_results( $this->wpdb->prepare( $sql, ...$params ), OBJECT ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $where fragment is from validated get_sql_where_access_sites() with numeric IDs
     }
 
     /**

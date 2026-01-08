@@ -266,7 +266,7 @@ KEY idx_wpid_issub (wpid, issub)";
             $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites() );
             while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
                 $table_monitors = esc_sql( $this->table_name( 'monitors' ) );
-                $sql = $this->wpdb->prepare(
+                $sql            = $this->wpdb->prepare(
                     'SELECT mo.* FROM ' . $table_monitors . ' mo WHERE mo.wpid = %d AND mo.issub = 0 ORDER BY mo.monitor_id ASC',
                     intval( $website->id )
                 );
@@ -572,7 +572,7 @@ KEY idx_wpid_issub (wpid, issub)";
      * @return mixed
      */
     public function get_uptime_notification_to_start_send( $limit = 50, $global_active = 1 ) {
-        $table_monitors          = esc_sql( $this->table_name( 'monitors' ) );
+        $table_monitors           = esc_sql( $this->table_name( 'monitors' ) );
         $table_schedule_processes = esc_sql( $this->table_name( 'schedule_processes' ) );
 
         $sql = $this->wpdb->prepare(
@@ -625,7 +625,7 @@ KEY idx_wpid_issub (wpid, issub)";
         }
 
         $table_monitor_heartbeat = esc_sql( $this->table_name( 'monitor_heartbeat' ) );
-        $hb_time = gmdate( 'Y-m-d H:i:S', $hb_timestamp );
+        $hb_time                 = gmdate( 'Y-m-d H:i:S', $hb_timestamp );
 
         $sql = $this->wpdb->prepare(
             'SELECT he.* FROM ' . $table_monitor_heartbeat . ' he ' .
@@ -657,9 +657,21 @@ KEY idx_wpid_issub (wpid, issub)";
             }
         }
 
+        if ( ! isset( $data['monitor_id'] ) && ! empty( $data['wpid'] ) ) {
+            $check = $this->get_monitor_by( $data['wpid'], 'issub', 0 );
+            if ( ! empty( $check ) ) {
+                $data['monitor_id'] = $check->monitor_id;
+            }
+        }
+
         if ( isset( $data['monitor_id'] ) ) {
             $id = $data['monitor_id'];
             unset( $data['monitor_id'] );
+
+            if ( isset( $data['wpid'] ) ) { // Do not update or change this field.
+                unset( $data['wpid'] );
+            }
+
             $this->wpdb->update(
                 $this->table_name( 'monitors' ),
                 $data,
@@ -882,7 +894,7 @@ KEY idx_wpid_issub (wpid, issub)";
         }
 
         $table_monitors = esc_sql( $this->table_name( 'monitors' ) );
-        $sql = '';
+        $sql            = '';
 
         if ( ! empty( $params['monitor_id'] ) ) {
             $sql = $this->wpdb->prepare( 'SELECT monitor_id, wpid FROM ' . $table_monitors . ' WHERE monitor_id=%d', $params['monitor_id'] );
@@ -985,7 +997,7 @@ KEY idx_wpid_issub (wpid, issub)";
      */
     public function get_previous_monitor_heartbeat( $monitor_id ) {
         $table_monitor_heartbeat = esc_sql( $this->table_name( 'monitor_heartbeat' ) );
-        $sql = $this->wpdb->prepare( 'SELECT * FROM ' . $table_monitor_heartbeat . ' WHERE monitor_id = %d ORDER BY time DESC LIMIT 1', $monitor_id );
+        $sql                     = $this->wpdb->prepare( 'SELECT * FROM ' . $table_monitor_heartbeat . ' WHERE monitor_id = %d ORDER BY time DESC LIMIT 1', $monitor_id );
         return $this->wpdb->get_row( $sql );
     }
 
@@ -1025,7 +1037,7 @@ KEY idx_wpid_issub (wpid, issub)";
      */
     public function get_count_up_down_monitors() {
         $table_monitors = esc_sql( $this->table_name( 'monitors' ) );
-        $sql = ' SELECT ' .
+        $sql            = ' SELECT ' .
         ' ( SELECT count(*) FROM ' . $table_monitors . ' up WHERE  up.last_status = 1 ) AS count_up, ' .
         ' ( SELECT count(*) FROM ' . $table_monitors . ' down WHERE  down.last_status = 0 ) AS count_down ' .
         ' FROM ' . $table_monitors . ' mo LIMIT 1';
@@ -1427,7 +1439,7 @@ KEY idx_wpid_issub (wpid, issub)";
      */
     public function remove_outdated_hourly_uptime_stats( $days = 30 ) {
         $table_monitor_stat_hourly = esc_sql( $this->table_name( 'monitor_stat_hourly' ) );
-        $time = time() - $days * DAY_IN_SECONDS;
+        $time                      = time() - $days * DAY_IN_SECONDS;
         $this->wpdb->query( $this->wpdb->prepare( 'DELETE  FROM ' . $table_monitor_stat_hourly . ' WHERE timestamp < %d', $time ) );
     }
 

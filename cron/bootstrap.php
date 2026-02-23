@@ -14,7 +14,7 @@
 /**
  * This file must execute before WordPress loads to locate wp-load.php,
  * so the standard ABSPATH check would break functionality.
- * 
+ *
  * Do not prevent direct access ! defined( 'ABSPATH' ) exit
  * to support custom wp-config.php file location, but do prevent direct access if WP is not loaded.
  */

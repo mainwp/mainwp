@@ -579,8 +579,9 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             // We re-fetch from DB to apply REST-specific options (with_tags, fields) that
             // the ability schema does not support. This ensures consistent response format
             // between ability and legacy paths.
-            // See: .mwpdev/plans/abilities-api/phase-3-rest-integration-notes.md
-            $site_data = isset( $result['site'] ) ? $result['site'] : array();
+            // See: .mwpdev/plans/abilities-api/phase-3-rest-integration-notes.md.
+
+            $site_data = ! empty( $result ) && is_array( $result ) ? $result : array();
             $site_id   = isset( $site_data['id'] ) ? (int) $site_data['id'] : 0;
 
             if ( $site_id > 0 ) {
@@ -624,8 +625,6 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         }
         return rest_ensure_response( array( 'data' => $data ) );
     }
-
-
 
     /**
      * Get all sites.

@@ -47,12 +47,14 @@ window.mainwp_init_html_popup = function (popupSelector, content) {
 };
 
 // Decode slug safely.
-window.mainwp_decode_slug = function (value) { // NOSONAR.
-    if (typeof value !== 'string') return value;
-    if (value.indexOf('%') === -1) return value;
+window.mainwp_decode_slug = function (value) { // NOSONAR
+    if (typeof value !== 'string' || !value.includes('%')) {
+        return value;
+    }
+
     try {
         return decodeURIComponent(value);
-    } catch (e) {
+    } catch {
         return value;
     }
 };
@@ -63,7 +65,7 @@ window.mainwp_slug_list_to_array = function (value) { // NOSONAR.
         return value.filter(function (v) { return v !== null && v !== undefined && String(v).trim() !== ''; });
     }
     if (typeof value !== 'string') {
-        value = (value === null || typeof value === 'undefined') ? '' : String(value);
+        value = (value === null || value === undefined) ? '' : String(value);
     }
     if (value === '') return [];
     return value.split(',').map(function (v) { return v.trim(); }).filter(function (v) { return v !== ''; });
@@ -622,7 +624,7 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
         let pWebsiteId = websiteId;
         let pBulkMode = bulkMode;
 
-        let slugList = window.mainwp_slug_list_to_array(pSlug);
+        let slugList = globalThis.mainwp_slug_list_to_array(pSlug);
         let currentSlug = slugList.shift();
         let remainingSlugs = slugList;
         let slugParts = [currentSlug];
@@ -1063,7 +1065,7 @@ let updatesoverview_plugins_upgrade_all_update_done = function () {
 
 let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsiteId, pBulkMode, pLastResult) { // NOSONAR - nest functions.
     return function () {
-        let slugList = window.mainwp_slug_list_to_array(pSlug); // NOSONAR -- window is ok.
+        let slugList = globalThis.mainwp_slug_list_to_array(pSlug); // NOSONAR -- window is ok.
         let currentSlug = slugList.shift();
         let remainingSlugs = slugList;
         let slugParts = [currentSlug];
@@ -1517,7 +1519,7 @@ let updatesoverview_themes_upgrade_all_update_done = function () {
     updatesoverview_themes_upgrade_all_loop_next();
 };
 let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode, lastResult) {
-    let slugList = window.mainwp_slug_list_to_array(slug); // NOSONAR -- window is ok.
+    let slugList = globalThis.mainwp_slug_list_to_array(slug); // NOSONAR -- window is ok.
     let currentSlug = slugList.shift();
     let remainingSlugs = slugList;
     let slugParts = [currentSlug];
@@ -2019,7 +2021,6 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
     if (!pThemeDone) {
         let themeSlugList = window.mainwp_slug_list_to_array(pThemeSlugToUpgrade);
         let currentThemeSlug = themeSlugList.shift();
-        let remainingThemeSlugs = themeSlugList;
         let data = mainwp_secure_data({
             action: 'mainwp_upgradeplugintheme',
             websiteId: pWebsiteId,
@@ -2147,7 +2148,6 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
     } else if (!pPluginDone) {
         let pluginSlugList = window.mainwp_slug_list_to_array(pPluginSlugToUpgrade);
         let currentPluginSlug = pluginSlugList.shift();
-        let remainingPluginSlugs = pluginSlugList;
         let data = mainwp_secure_data({
             action: 'mainwp_upgradeplugintheme',
             websiteId: pWebsiteId,
@@ -2374,7 +2374,6 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
     } else if (!pTransDone) {
         let transSlugList = window.mainwp_slug_list_to_array(pTransSlugToUpgrade);
         let currentTransSlug = transSlugList.shift();
-        let remainingTransSlugs = transSlugList;
         let data = mainwp_secure_data({
             action: 'mainwp_upgradeplugintheme',
             websiteId: pWebsiteId,

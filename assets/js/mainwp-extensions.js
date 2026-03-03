@@ -263,13 +263,15 @@ jQuery(function () { // NOSONAR - levels deep ok.
         let loadingEl = parent.find(".action-feedback");
         let whatAct = jQuery(this).attr("plugin-action");
 
-        let _callback = function () { // eslint-disable-line unicorn/no-nested-ternary
+        let _callback = function () {
+            let $btn = jQuery(this); // ✅ store correct context
+
             loadingEl.show();
 
             let msg = __('Disabling add-on...');
-            if (whatAct == 'active') {
+            if (whatAct === 'active') {
                 msg = __('Enabling add-on...');
-            } else if (whatAct == 'remove') {
+            } else if (whatAct === 'remove') {
                 msg = __('Removing add-on...');
             }
 
@@ -281,57 +283,54 @@ jQuery(function () { // NOSONAR - levels deep ok.
                 what: whatAct,
             });
 
-            jQuery(this).attr('disabled', true);
-            jQuery.post(ajaxurl, data, function (response) { // eslint-disable-line unicorn/no-nested-ternary
-                jQuery(this).attr('disabled', false);
-                function handleAddonResponse(response) {
-                    jQuery(this).attr('disabled', false);
+            function handleAddonResponse(response) {
+                $btn.attr('disabled', false); // ✅ correct button
 
-                    if (!response) {
-                        showError(__('Undefined error'));
-                        return;
-                    }
-
-                    if (response.result === 'SUCCESS') {
-                        handleSuccess();
-                        return;
-                    }
-
-                    if (response.error) {
-                        showError(response.error);
-                        return;
-                    }
-
+                if (!response) {
                     showError(__('Undefined error'));
+                    return;
                 }
 
-                function handleSuccess() {
-                    let msg = __('Add-on disabled');
-
-                    if (whatAct === 'active') {
-                        msg = __('Add-on enabled');
-                    } else if (whatAct === 'remove') {
-                        msg = __('Add-on removed');
-                    }
-
-                    loadingEl.find('.ui.text.loader').html(msg);
-
-                    run_after_delay(function () {
-                        mainwp_forceReload('admin.php?page=Extensions');
-                    }, 2000);
+                if (response.result === 'SUCCESS') {
+                    handleSuccess();
+                    return;
                 }
 
-                function showError(message) {
-                    loadingEl.find('.ui.text.loader').html(message);
-
-                    run_after_delay(function () {
-                        loadingEl.hide();
-                    });
+                if (response.error) {
+                    showError(response.error);
+                    return;
                 }
 
-                jQuery.post(ajaxurl, data, handleAddonResponse, 'json');
+                showError(__('Undefined error'));
+            }
 
-            }, 'json');
+            function handleSuccess() {
+                let msg = __('Add-on disabled');
+
+                if (whatAct === 'active') {
+                    msg = __('Add-on enabled');
+                } else if (whatAct === 'remove') {
+                    msg = __('Add-on removed');
+                }
+
+                loadingEl.find('.ui.text.loader').html(msg);
+
+                run_after_delay(() => {
+                    mainwp_forceReload('admin.php?page=Extensions');
+                }, 2000);
+            }
+
+            function showError(message) {
+                loadingEl.find('.ui.text.loader').html(message);
+
+                run_after_delay(() => {
+                    loadingEl.hide();
+                });
+            }
+
+            $btn.attr('disabled', true);
+
+            jQuery.post(ajaxurl, data, handleAddonResponse, 'json');
         };
 
         if ('remove' === whatAct) {

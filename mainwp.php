@@ -9,6 +9,8 @@
  * Plugin URI: https://mainwp.com/
  * Text Domain: mainwp
  * Version:  6.0.1
+ * License: GPLv3 or later
+ * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  *
  * @package MainWP/Dashboard
  *
@@ -25,10 +27,13 @@ if ( ! defined( 'ABSPATH' ) ) {
  * This file must execute before WordPress loads to locate wp-load.php,
  * so the standard ABSPATH check would break functionality.
  */
-add_filter( 'wp_plugin_check_ignore_files', function( $ignored_files ) {
-    $ignored_files[] = 'cron/bootstrap.php';
-    return $ignored_files;
-} );
+add_filter(
+    'wp_plugin_check_ignore_files',
+    function ( $ignored_files ) {
+        $ignored_files[] = 'cron/bootstrap.php';
+        return $ignored_files;
+    }
+);
 
 if ( ! defined( 'MAINWP_PLUGIN_FILE' ) ) {
 

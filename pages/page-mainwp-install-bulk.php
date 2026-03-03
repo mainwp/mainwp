@@ -162,7 +162,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                     <div class="middle aligned column ">
                                         <div class="dz-error-message"><span data-dz-errormessage=""></span></div>
                                         <span class="qq-upload-processing">
-                                            <span data-tooltip="<?php esc_attr_e( 'Uploading. Please wait...'); ?>" data-inverted="" data-position="left center"><i class="notched circle loading icon"></i></span>
+                                            <span data-tooltip="<?php esc_attr_e( 'Uploading. Please wait...', 'mainwp' ); ?>" data-inverted="" data-position="left center"><i class="notched circle loading icon"></i></span>
                                         </span>
                                     </div>
                                     <div class="right aligned middle aligned column">

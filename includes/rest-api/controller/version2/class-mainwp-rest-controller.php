@@ -348,7 +348,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
                     if ( empty( $filtered_values ) && ! empty( $list_values ) ) {
                         return new WP_Error(
                             'mainwp_rest_invalid_param',
-                            sprintf( __( 'The %s argument should be: %s', 'mainwp' ), $name, implode( ',', $valid_values ) ),
+                            /* translators: 1: argument name, 2: list of valid values */ sprintf( __( 'The %1$s argument should be: %2$s', 'mainwp' ), $name, implode( ',', $valid_values ) ),
                             array( 'status' => 400 )
                         );
                     }
@@ -1545,6 +1545,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
                         return new WP_Error(
                             "invalid_{$param}",
                             sprintf(
+                                /* translators: 1: field name, 2: allowed list */
                                 __( 'Invalid %1$s. Allowed values: %2$s.', 'mainwp' ), // NOSONAR.
                                 esc_html( $param ),
                                 esc_html( implode( ', ', $allowed ) )
@@ -1566,6 +1567,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
             return new WP_Error(
                 "invalid_{$param}",
                 sprintf(
+                    /* translators: 1: field name, 2: allowed list */
                     __( 'Invalid %1$s. Allowed values: %2$s.', 'mainwp' ),
                     esc_html( $param ),
                     esc_html( implode( ', ', $allowed_norm ) )
@@ -1760,6 +1762,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
                 return new WP_Error(
                     'invalid_site',
                     sprintf(
+                        /* translators: %s: site ID */
                         __( 'Invalid site ID: %s.', 'mainwp' ),
                         esc_html( $site_id )
                     ),
@@ -1805,6 +1808,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
                 return new WP_Error(
                     'invalid_client',
                     sprintf(
+                        /* translators: %s: client ID */
                         __( 'Invalid client ID: %s.', 'mainwp' ),
                         esc_html( $client )
                     ),
@@ -1833,6 +1837,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
                 return new WP_Error(
                     'invalid_group',
                     sprintf(
+                        /* translators: %s: group name */
                         __( 'Invalid Group: %s.', 'mainwp' ),
                         esc_html( $group )
                     ),
@@ -1862,6 +1867,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
                 return new WP_Error(
                     'invalid_group',
                     sprintf(
+                        /* translators: %s: group name */
                         __( 'Invalid Group: %s.', 'mainwp' ),
                         esc_html( $group )
                     ),

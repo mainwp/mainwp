@@ -91,11 +91,7 @@ class Connector_Site extends Log_Connector {
         }
         $state = 1;
         $this->log(
-            esc_html_x(
-                '%1$s',
-                '1. item',
-                'mainwp'
-            ),
+            '%1$s',
             array(
                 'item' => esc_html__( 'Added', 'mainwp' ),
             ),
@@ -126,18 +122,10 @@ class Connector_Site extends Log_Connector {
         $action = 'sync';
         $state  = null;
         if ( $success ) {
-            $message = esc_html_x(
-                '%1$s',
-                '1. Item',
-                'mainwp'
-            );
+            $message = '%1$s';
             $state   = 1;
         } else {
-            $message = esc_html_x(
-                '%1$s',
-                '1. Item',
-                'mainwp'
-            );
+            $message = '%1$s';
             $state   = 0;
         }
 
@@ -177,11 +165,7 @@ class Connector_Site extends Log_Connector {
     public function callback_mainwp_site_deleted( $website ) {
         $state = 1;
         $this->log(
-            esc_html_x(
-                '%1$s',
-                '1. Item',
-                'mainwp'
-            ),
+            '%1$s',
             array(
                 'item' => esc_html__( 'Deleted', 'mainwp' ),
             ),
@@ -205,11 +189,7 @@ class Connector_Site extends Log_Connector {
      * @return bool Return TRUE.
      */
     public function callback_mainwp_site_reconnected( $website, $success = true, $error = '' ) {
-        $message = esc_html_x(
-            '%1$s',
-            '1. Item',
-            'mainwp'
-        );
+        $message = '%1$s';
 
         $args = array(
             'item' => esc_html__( 'Reconnect', 'mainwp' ),
@@ -247,11 +227,7 @@ class Connector_Site extends Log_Connector {
     public function callback_mainwp_site_updated( $website ) {
         $state = 1;
         $this->log(
-            esc_html_x(
-                '%1$s',
-                '1. item',
-                'mainwp'
-            ),
+            '%1$s',
             array(
                 'item' => esc_html__( 'Updated', 'mainwp' ),
             ),
@@ -278,20 +254,12 @@ class Connector_Site extends Log_Connector {
         $action = $suspended ? 'suspend' : 'unsuspend';
 
         if ( $suspended ) {
-            $message = esc_html_x(
-                '%1$s',
-                '1. item',
-                'mainwp'
-            );
+            $message = '%1$s';
             $args    = array(
                 'item' => esc_html__( 'Suspend', 'mainwp' ),
             );
         } else {
-            $message = esc_html_x(
-                '%1$s',
-                '1. item',
-                'mainwp'
-            );
+            $message = '%1$s';
             $args    = array(
                 'item' => esc_html__( 'Unsuspend', 'mainwp' ),
             );
@@ -335,17 +303,9 @@ class Connector_Site extends Log_Connector {
         );
 
         if ( 'created' === $action || 'deleted' === $action ) {
-            $message = esc_html_x(
-                '%1$s',
-                '1. Tag name',
-                'mainwp'
-            );
+            $message = '%1$s';
         } elseif ( 'updated' === $action ) {
-            $message = esc_html_x(
-                '%1$s',
-                '1. Tag name',
-                'mainwp'
-            );
+            $message = '%1$s';
             $args    = array(
                 'name'     => $tag->name,
                 'old_name' => is_array( $data ) && isset( $data['old_name'] ) ? $data['old_name'] : '',
@@ -392,11 +352,7 @@ class Connector_Site extends Log_Connector {
             $params = array();
         }
 
-        $message = esc_html_x(
-            '%1$s',
-            '1. Item',
-            'mainwp'
-        );
+        $message = '%1$s';
 
         $args = array(
             'item' => esc_html__( 'Go to WP Admin', 'mainwp' ),

@@ -244,6 +244,7 @@ class MainWP_Format { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                         'Friend us on Facebook: https://www.facebook.com/mainwp' . "\r\n\r\n" .
                                         "Copyright {$current_year} MainWP, All rights reserved.";
         } else {
+            // phpcs:disable PluginCheck.CodeAnalysis.Heredoc.NotAllowed -- Email HTML templates; refactoring 250+ lines of HTML to string concatenation carries high regression risk with no security benefit as content is not browser-rendered.
             $mail_send['header'] = <<<EOT
             <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
@@ -580,6 +581,7 @@ EOT;
     </body>
 </html>
 EOT;
+            // phpcs:enable PluginCheck.CodeAnalysis.Heredoc.NotAllowed
         }
         $mail_send = apply_filters( 'mainwp_format_email', $mail_send );
         return $mail_send['header'] . $mail_send['body'] . $mail_send['footer'];

@@ -1002,7 +1002,10 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         if ( ! static::check_rest_api_enabled() ) {
             ?>
             <div class="ui message yellow">
-                <?php printf( esc_html__( 'It seems the WordPress REST API is currently disabled on your site. MainWP REST API requires the WordPress REST API to function properly. Please enable it to ensure smooth operation. Need help? %sClick here for a guide%s.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/wordpress-rest-api-does-not-respond" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                <?php
+                // translators: 1: Opening anchor tag. 2: Closing anchor tag.
+                printf( esc_html__( 'It seems the WordPress REST API is currently disabled on your site. MainWP REST API requires the WordPress REST API to function properly. Please enable it to ensure smooth operation. Need help? %1$sClick here for a guide%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/wordpress-rest-api-does-not-respond" target="_blank">', '</a> <i class="external alternate icon"></i>' );
+                ?>
             </div>
             <?php
         }
@@ -1015,7 +1018,10 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                         <div class="ui massive header"><?php esc_html_e( 'Welcome to MainWP REST API', 'mainwp' ); ?></div>
                         <p><?php esc_html_e( 'Integrate MainWP with your custom tools, automations, and external platforms through the REST API.', 'mainwp' ); ?>
                         </p>
-                        <p><?php printf( esc_html__( 'Start by %1$screating an API key%2$s and %3$sexploring available routes%4$s.', 'mainwp' ), '<a href="admin.php?page=AddApiKeys">', '</a>', '<a href="https://www.postman.com/mainwp/workspace/mainwp/collection/25047126-5ed97ddf-1d45-4bd1-bede-1a1f3b7584ef" target="_blank">', '</a>' ); ?>
+                        <p><?php
+                        // translators: 1: Opening anchor tag for API key link. 2: Closing anchor tag. 3: Opening anchor tag for routes link. 4: Closing anchor tag.
+                        printf( esc_html__( 'Start by %1$screating an API key%2$s and %3$sexploring available routes%4$s.', 'mainwp' ), '<a href="admin.php?page=AddApiKeys">', '</a>', '<a href="https://www.postman.com/mainwp/workspace/mainwp/collection/25047126-5ed97ddf-1d45-4bd1-bede-1a1f3b7584ef" target="_blank">', '</a>' );
+                        ?>
                         </p>
                     </div>
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-api-welcome-message"></i>
@@ -2306,11 +2312,8 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             <div class="ui info message">
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-app-passwords-info-message"></i>
                 <?php
-                printf(
-                    esc_html__( '%sMainWP Abilities API%s / MCP uses WordPress Application Passwords so you can grant tool access without sharing your account password. Create a dedicated Application Password (for example "MCP Client") and revoke it whenever you no longer need it. This does not affect your regular login password.', 'mainwp' ),
-                    '<a href="' . esc_url( 'https://docs.mainwp.com/api-reference/abilities-api/overview' ) . '" target="_blank">',
-                    '</a>'
-                );
+                /* translators: 1: Opening anchor tag for Abilities API link. 2: Closing anchor tag. */
+                printf( esc_html__( '%1$sMainWP Abilities API%2$s / MCP uses WordPress Application Passwords so you can grant tool access without sharing your account password. Create a dedicated Application Password (for example "MCP Client") and revoke it whenever you no longer need it. This does not affect your regular login password.', 'mainwp' ), '<a href="' . esc_url( 'https://docs.mainwp.com/api-reference/abilities-api/overview' ) . '" target="_blank">', '</a>' );
                 ?>
             </div>
             <?php
@@ -2373,6 +2376,12 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * @param bool  $can_revoke    Whether the current user can revoke application passwords.
      */
     protected static function render_application_password_row( $item, $show_user_col, $can_revoke ) {
+        // translators: %s is the application password name.
+        $aria_select = esc_attr( sprintf( __( 'Select %s', 'mainwp' ), $item['name'] ) );
+        // translators: %s is the application password name.
+        $aria_rename = esc_attr( sprintf( __( 'Rename "%s"', 'mainwp' ), $item['name'] ) );
+        // translators: %s is the application password name.
+        $aria_revoke = esc_attr( sprintf( __( 'Revoke "%s"', 'mainwp' ), $item['name'] ) );
         ?>
         <tr data-uuid="<?php echo esc_attr( $item['uuid'] ); ?>" data-user-id="<?php echo esc_attr( $item['user_id'] ); ?>"
             class="mainwp-application-password-row">
@@ -2380,7 +2389,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 <div class="ui checkbox">
                     <input type="checkbox" <?php echo $can_revoke ? '' : 'disabled'; ?>
                         class="mainwp-application-password-checkbox"
-                        aria-label="<?php echo esc_attr( sprintf( __( 'Select %s', 'mainwp' ), $item['name'] ) ); ?>"
+                        aria-label="<?php echo $aria_select; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>"
                         value="<?php echo esc_attr( $item['uuid'] ); ?>"
                         data-user-id="<?php echo esc_attr( $item['user_id'] ); ?>" />
                 </div>
@@ -2424,7 +2433,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                         data-uuid="<?php echo esc_attr( $item['uuid'] ); ?>"
                         data-user-id="<?php echo esc_attr( $item['user_id'] ); ?>"
                         data-name="<?php echo esc_attr( $item['name'] ); ?>"
-                        aria-label="<?php echo esc_attr( sprintf( __( 'Rename "%s"', 'mainwp' ), $item['name'] ) ); ?>">
+                        aria-label="<?php echo $aria_rename; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>">
                         <?php esc_html_e( 'Edit', 'mainwp' ); ?>
                     </button>
                 <?php endif; ?>
@@ -2432,7 +2441,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     <button type="button" class="ui mini button mainwp-revoke-application-password"
                         data-uuid="<?php echo esc_attr( $item['uuid'] ); ?>"
                         data-user-id="<?php echo esc_attr( $item['user_id'] ); ?>"
-                        aria-label="<?php echo esc_attr( sprintf( __( 'Revoke "%s"', 'mainwp' ), $item['name'] ) ); ?>">
+                        aria-label="<?php echo $aria_revoke; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>">
                         <?php esc_html_e( 'Revoke', 'mainwp' ); ?>
                     </button>
                 <?php endif; ?>

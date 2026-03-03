@@ -439,6 +439,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         <div class="ui padded segment">
         <?php
         if ( function_exists( 'curl_version' ) && ! MainWP_Server_Information_Handler::curlssl_compare( 'OpenSSL/1.1.0', '>=' ) ) {
+            /* translators: 1: line break tag, 2: opening anchor tag, 3: closing anchor tag */
             echo "<div class='ui yellow message'>" . sprintf( esc_html__( 'Your host needs to update OpenSSL to at least version 1.1.0 which is already over 4 years old and contains patches for over 60 vulnerabilities.%1$sThese range from Denial of Service to Remote Code Execution. %2$sClick here for more information.%3$s', 'mainwp' ), '<br/>', '<a href="https://community.letsencrypt.org/t/openssl-client-compatibility-changes-for-let-s-encrypt-certificates/143816" target="_blank">', '</a>' ) . '</div>';
         }
         ?>
@@ -958,8 +959,10 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                                 <i class='attention icon'></i>
                                 <?php
                                 if ( false !== strpos( $ssl_version, 'LibreSSL' ) ) {
+                                    /* translators: 1: line break tag, 2: opening anchor tag, 3: closing anchor tag */
                                     printf( esc_html__( 'Your host needs to update LibreSSL to at least version 2.5.0 which is already over 4 years old and contains patches for over 60 vulnerabilities.%1$sThese range from Denial of Service to Remote Code Execution. %2$sClick here for more information.%3$s', 'mainwp' ), '<br/>', '<a href="https://www.libressl.org/" target="_blank">', '</a>' );
                                 } else {
+                                    /* translators: 1: line break tag, 2: opening anchor tag, 3: closing anchor tag */
                                     printf( esc_html__( 'Your host needs to update OpenSSL to at least version 1.1.0 which is already over 4 years old and contains patches for over 60 vulnerabilities.%1$sThese range from Denial of Service to Remote Code Execution. %2$sClick here for more information.%3$s', 'mainwp' ), '<br/>', '<a href="https://community.letsencrypt.org/t/openssl-client-compatibility-changes-for-let-s-encrypt-certificates/143816" target="_blank">', '</a>' );
                                 }
                                 ?>
@@ -1056,7 +1059,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-cron-info-message' ) ) : ?>
             <div class="ui info message">
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-cron-info-message"></i>
-                <?php printf( esc_html__( 'Make sure scheduled actions are working correctly. If scheduled actions do not run normally, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/customization/disable-wp-cron" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                <?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'Make sure scheduled actions are working correctly. If scheduled actions do not run normally, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/customization/disable-wp-cron" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
             </div>
         <?php endif; ?>
         <table class="ui single line unstackable table" id="mainwp-cron-jobs-table">
@@ -1495,7 +1498,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     "stateDuration": 0,
                     "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
                     "language": {
-                        "emptyTable": '<?php esc_html_e( 'Error logging disabled.', 'mainwp' ); ?><?php echo '<br/>' . sprintf( esc_html__( 'To enable error logging, please check this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://codex.wordpress.org/Debugging_in_WordPress" target="_blank">', '</a>' ); ?>'
+                        "emptyTable": '<?php esc_html_e( 'Error logging disabled.', 'mainwp' ); ?><?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ echo '<br/>' . sprintf( esc_html__( 'To enable error logging, please check this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://codex.wordpress.org/Debugging_in_WordPress" target="_blank">', '</a>' ); ?>'
                     },
                     columnDefs: [{
                         "defaultContent": "-",

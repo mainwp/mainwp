@@ -1630,8 +1630,8 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $input               = is_array( $input ) ? $input : array();
         $site_ids_or_domains = $input['site_ids_or_domains'] ?? array();
         $types               = $input['types'] ?? array();
-        $page                = $input['page'] ?? 1;
-        $per_page            = $input['per_page'] ?? 50;
+        $page                = (int) ( $input['page'] ?? 1 );
+        $per_page            = (int) ( $input['per_page'] ?? 50 );
 
         // If empty types, include all.
         if ( empty( $types ) ) {
@@ -2117,7 +2117,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         foreach ( $sites as $site ) {
             $site_id   = (int) $site->id;
             $site_url  = $site->url;
-            $site_name = $site->name;
+            $site_name = MainWP_Utility::remove_http_prefix( (string) $site->name, true );
 
             // Get per-site ignored lists.
             $site_ignored_plugins = ! empty( $site->ignored_plugins ) ? json_decode( $site->ignored_plugins, true ) : array();
@@ -2371,7 +2371,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         return array(
             'site_id'        => (int) $site->id,
             'site_url'       => $site->url,
-            'site_name'      => $site->name,
+            'site_name'      => MainWP_Utility::remove_http_prefix( (string) $site->name, true ),
             'updates'        => $updates,
             'rollback_items' => $rollback_data,
             'summary'        => $summary,
@@ -3026,7 +3026,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 $all_errors[] = array(
                     'site_id'   => (int) $site->id,
                     'site_url'  => $site->url,
-                    'site_name' => $site->name,
+                    'site_name' => MainWP_Utility::remove_http_prefix( (string) $site->name, true ),
                     'type'      => 'site',
                     'slug'      => '',
                     'code'      => 'mainwp_site_offline',
@@ -3047,7 +3047,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                     $all_errors[] = array(
                         'site_id'   => (int) $site->id,
                         'site_url'  => $site->url,
-                        'site_name' => $site->name,
+                        'site_name' => MainWP_Utility::remove_http_prefix( (string) $site->name, true ),
                         'type'      => $update['type'],
                         'slug'      => $update['slug'],
                         'code'      => $child_version_check->get_error_code(),
@@ -3081,7 +3081,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                     $all_errors[] = array(
                         'site_id'   => (int) $site->id,
                         'site_url'  => $site->url,
-                        'site_name' => $site->name,
+                        'site_name' => MainWP_Utility::remove_http_prefix( (string) $site->name, true ),
                         'type'      => 'core',
                         'slug'      => 'wordpress',
                         'code'      => $result->get_error_code(),
@@ -3245,7 +3245,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
 
         $site_id   = (int) $site->id;
         $site_url  = $site->url;
-        $site_name = $site->name;
+        $site_name = MainWP_Utility::remove_http_prefix( (string) $site->name, true );
 
         // Get per-site ignored lists (with fallback to database query).
         $raw_ignored_plugins  = self::get_site_column_value( $site, 'ignored_plugins' );
@@ -3445,7 +3445,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 return array(
                     'site_id'     => (int) $site->id,
                     'site_url'    => $site->url,
-                    'site_name'   => $site->name,
+                    'site_name'   => MainWP_Utility::remove_http_prefix( (string) $site->name, true ),
                     'type'        => 'core',
                     'slug'        => 'wordpress',
                     'name'        => 'WordPress',
@@ -3537,7 +3537,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                         $updated[] = array(
                             'site_id'     => (int) $site->id,
                             'site_url'    => $site->url,
-                            'site_name'   => $site->name,
+                            'site_name'   => MainWP_Utility::remove_http_prefix( (string) $site->name, true ),
                             'type'        => 'plugin',
                             'slug'        => $slug,
                             'name'        => $update_map[ $slug ]['name'],
@@ -3553,7 +3553,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                     $errors[] = array(
                         'site_id'   => (int) $site->id,
                         'site_url'  => $site->url,
-                        'site_name' => $site->name,
+                        'site_name' => MainWP_Utility::remove_http_prefix( (string) $site->name, true ),
                         'type'      => 'plugin',
                         'slug'      => $slug,
                         'code'      => 'mainwp_update_failed',
@@ -3577,7 +3577,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 $errors[] = array(
                     'site_id'   => (int) $site->id,
                     'site_url'  => $site->url,
-                    'site_name' => $site->name,
+                    'site_name' => MainWP_Utility::remove_http_prefix( (string) $site->name, true ),
                     'type'      => 'plugin',
                     'slug'      => $slug,
                     'code'      => 'mainwp_update_exception',
@@ -3637,7 +3637,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                         $updated[] = array(
                             'site_id'     => (int) $site->id,
                             'site_url'    => $site->url,
-                            'site_name'   => $site->name,
+                            'site_name'   => MainWP_Utility::remove_http_prefix( (string) $site->name, true ),
                             'type'        => 'theme',
                             'slug'        => $slug,
                             'name'        => $update_map[ $slug ]['name'],
@@ -3653,7 +3653,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                     $errors[] = array(
                         'site_id'   => (int) $site->id,
                         'site_url'  => $site->url,
-                        'site_name' => $site->name,
+                        'site_name' => MainWP_Utility::remove_http_prefix( (string) $site->name, true ),
                         'type'      => 'theme',
                         'slug'      => $slug,
                         'code'      => 'mainwp_update_failed',
@@ -3677,7 +3677,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 $errors[] = array(
                     'site_id'   => (int) $site->id,
                     'site_url'  => $site->url,
-                    'site_name' => $site->name,
+                    'site_name' => MainWP_Utility::remove_http_prefix( (string) $site->name, true ),
                     'type'      => 'theme',
                     'slug'      => $slug,
                     'code'      => 'mainwp_update_exception',
@@ -3737,7 +3737,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                         $updated[] = array(
                             'site_id'     => (int) $site->id,
                             'site_url'    => $site->url,
-                            'site_name'   => $site->name,
+                            'site_name'   => MainWP_Utility::remove_http_prefix( (string) $site->name, true ),
                             'type'        => 'translation',
                             'slug'        => $slug,
                             'name'        => $update_map[ $slug ]['name'],
@@ -3753,7 +3753,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                     $errors[] = array(
                         'site_id'   => (int) $site->id,
                         'site_url'  => $site->url,
-                        'site_name' => $site->name,
+                        'site_name' => MainWP_Utility::remove_http_prefix( (string) $site->name, true ),
                         'type'      => 'translation',
                         'slug'      => $slug,
                         'code'      => 'mainwp_update_failed',
@@ -3790,7 +3790,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 $errors[] = array(
                     'site_id'   => (int) $site->id,
                     'site_url'  => $site->url,
-                    'site_name' => $site->name,
+                    'site_name' => MainWP_Utility::remove_http_prefix( (string) $site->name, true ),
                     'type'      => 'translation',
                     'slug'      => $slug,
                     'code'      => 'mainwp_update_exception',

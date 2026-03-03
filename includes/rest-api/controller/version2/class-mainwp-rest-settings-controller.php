@@ -582,7 +582,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             do_action( 'mainwp_debug_log', 'Update general settings error: ' . $e->getMessage() );
             return new WP_Error(
                 'rest_invalid_param',
-                sprintf( __( 'Update general settings error: %s', 'mainwp' ), $e->getMessage() ),
+                /* translators: %s: Error message */ sprintf( __( 'Update general settings error: %s', 'mainwp' ), $e->getMessage() ),
             );
         }
 
@@ -683,7 +683,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             do_action( 'mainwp_debug_log', 'Update advanced settings error: ' . $e->getMessage() );
             return new WP_Error(
                 'rest_invalid_param',
-                sprintf( __( 'Update advanced settings error: %s', 'mainwp' ), $e->getMessage() ),
+                /* translators: %s: Error message */ sprintf( __( 'Update advanced settings error: %s', 'mainwp' ), $e->getMessage() ),
             );
         }
 
@@ -1040,7 +1040,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
 
         // Check if product type duplicated.
         if ( isset( $custom_product_types[ $slug ] ) ) {
-            return new WP_Error( 'duplicate_title', __( 'Duplicate product type. Please choose another one.' ) );
+            return new WP_Error( 'duplicate_title', __( 'Duplicate product type. Please choose another one.', 'mainwp' ) );
         }
         // Map product type.
         $custom_product_types[ $slug ]    = $title;
@@ -1229,7 +1229,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         $payment_methods = $this->safe_json_decode( $all_opts['custom_payment_methods'] ?? '' );
 
         if ( isset( $payment_methods[ $slug ] ) ) {
-            return new WP_Error( 'duplicate_title', __( 'Duplicate payment method. Please choose another one.' ) );
+            return new WP_Error( 'duplicate_title', __( 'Duplicate payment method. Please choose another one.', 'mainwp' ) );
         }
 
         // Save payment method.
@@ -2664,7 +2664,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                     if ( ! is_email( $value ) ) {
                         return new WP_Error(
                             'invalid_email',
-                            sprintf( __( 'Invalid email address: %s.', 'text-domain' ), $value ),
+                            /* translators: %s: Email address */ sprintf( __( 'Invalid email address: %s.', 'mainwp' ), $value ),
                         );
                     }
                     return true;
@@ -3461,14 +3461,14 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             if ( is_array( $v ) || is_object( $v ) ) {
                 return new WP_Error(
                     'invalid_mainwp_widgets_value_type',
-                    sprintf( __( 'Value for "%s" must be 0 or 1.', 'mainwp' ), esc_html( $k ) ),
+                    /* translators: %s: Widget key name */ sprintf( __( 'Value for "%s" must be 0 or 1.', 'mainwp' ), esc_html( $k ) ),
                 );
             }
             $int = (int) $v;
             if ( 0 !== $int && 1 !== $int ) {
                 return new WP_Error(
                     'invalid_mainwp_widgets_value',
-                    sprintf( __( 'Invalid value for "%s". Allowed: 0 or 1.', 'mainwp' ), esc_html( $k ) ),
+                    /* translators: %s: Widget key name */ sprintf( __( 'Invalid value for "%s". Allowed: 0 or 1.', 'mainwp' ), esc_html( $k ) ),
                 );
             }
         }
@@ -3626,14 +3626,14 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             if ( is_array( $v ) || is_object( $v ) ) {
                 return new WP_Error(
                     'invalid_sync_data_type',
-                    sprintf( __( 'Value for "%s" must be 0 or 1.', 'mainwp' ), esc_html( $k ) ),
+                    /* translators: %s: Sync data key name */ sprintf( __( 'Value for "%s" must be 0 or 1.', 'mainwp' ), esc_html( $k ) ),
                 );
             }
             $int = (int) $v;
             if ( 0 !== $int && 1 !== $int ) {
                 return new WP_Error(
                     'invalid_sync_data_type',
-                    sprintf( __( 'Invalid value for "%s". Allowed: 0 or 1.', 'mainwp' ), esc_html( $k ) ),
+                    /* translators: %s: Sync data key name */ sprintf( __( 'Invalid value for "%s". Allowed: 0 or 1.', 'mainwp' ), esc_html( $k ) ),
                 );
             }
         }
@@ -3909,13 +3909,8 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             MainWP_Utility::update_option( $option_name, $val );
             return true;
         }
-        return new WP_Error(
-            'missing_key',
-            sprintf(
-                __( 'Missing key %s.', 'mainwp' ),
-                esc_html( $key )
-            ),
-        );
+        // translators: %s: Missing key.
+        return new WP_Error( 'missing_key', sprintf( __( 'Missing key %s.', 'mainwp' ), esc_html( $key ) ), );
     }
 
     /**

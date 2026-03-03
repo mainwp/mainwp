@@ -114,9 +114,9 @@ class Connector_Posts extends Log_Connector {
             return;
         }
 
-        // translators: Placeholders refer to a post title.
+        // translators: %1$s: Post title.
         $message = esc_html_x(
-            '%1$s',
+            'Post: %1$s',
             '1: Post title',
             'mainwp'
         );
@@ -163,9 +163,9 @@ class Connector_Posts extends Log_Connector {
         }
 
         $action = '';
-        // translators: Placeholders refer to a post title, and a post type singular name (e.g. "Hello World", "Post").
+        // translators: %1$s: Post title, %2$s: Post type singular name (e.g. "Hello World", "Post").
         $message = esc_html_x(
-            '%1$s',
+            'Post: %1$s (%2$s)',
             '1: Post title 2: singular name',
             'mainwp'
         );

@@ -741,7 +741,7 @@ window.mainwp_managesites_bulk_check_abandoned = function (siteIds, which) {
     }
 
     let selectedIds = [], excludeIds = [];
-    if (siteIds instanceof Array) {
+    if (Array.isArray(siteIds)) {
         jQuery.grep(allWebsiteIds, function (el) {
             if (jQuery.inArray(el, siteIds) !== -1) {
                 selectedIds.push(el);
@@ -889,7 +889,7 @@ window.mainwp_sync_sites_data = function (syncSiteIds, pAction) {
     });
     let globalSync = true;
     let selectedIds = [], excludeIds = [];
-    if (syncSiteIds instanceof Array) {
+    if (Array.isArray(syncSiteIds)) {
         jQuery.grep(allWebsiteIds, function (el) {
             if (jQuery.inArray(el, syncSiteIds) !== -1) {
                 selectedIds.push(el);

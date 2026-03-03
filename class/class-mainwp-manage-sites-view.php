@@ -616,12 +616,14 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 $html .= '<h4>' . $ext_name . '</h4>';
                 if ( isset( $sync_info['plugin_slug'] ) && ! empty( $sync_info['plugin_slug'] ) ) {
                     $html .= '<div class="sync-install-plugin" slug="' . esc_attr( dirname( $sync_info['plugin_slug'] ) ) . '" plugin_name="' . esc_attr( $sync_info['plugin_name'] ) . '">';
+                    /* translators: 1: Plugin name. */
                     $html .= '<div class="ui checkbox"><input type="checkbox" class="chk-sync-install-plugin" /> <label>' . esc_html( sprintf( esc_html__( 'Install %1$s plugin', 'mainwp' ), esc_html( $sync_info['plugin_name'] ) ) ) . '</label></div> ';
                     $html .= $loader;
                     $html .= '</div>';
                     if ( ! isset( $sync_info['no_setting'] ) || empty( $sync_info['no_setting'] ) ) {
                         $html .= '<div class="sync-options options-row">';
                         $html .= '<div class="ui checkbox"><input type="checkbox" /><label> ';
+                        /* translators: 1: Plugin name, 2: Opening anchor tag, 3: Closing anchor tag. */
                         $html .= sprintf( esc_html__( 'Apply %1$s %2$ssettings%3$s', 'mainwp' ), esc_html( $sync_info['plugin_name'] ), '<a href="admin.php?page=' . $data['page'] . '">', '</a>' );
                         $html .= '</label>';
                         $html .= '</div> ';
@@ -639,6 +641,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     }
                 } else {
                     $html .= '<div class="sync-global-options options-row">';
+                    /* translators: 1: Extension name. */
                     $html .= '<div class="ui checkbox"><input type="checkbox" /> <label>' . esc_html( sprintf( esc_html__( 'Apply global %1$s options', 'mainwp' ), trim( $ext_name ) ) ) . '</label></div> ';
                     $html .= '<i class="ui active inline loader tiny"  style="display: none"></i> <span class="status"></span>';
                     $html .= '</div>';
@@ -892,7 +895,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-edit-site-info-message' ) ) { ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-edit-site-info-message"></i>
-                    <?php printf( esc_html__( 'Edit the %1$s (%2$s) child site settings.  For additional help, please check this %3$shelp documentation%4$s.', 'mainwp' ), esc_html( stripslashes( $website->name ) ), '<a href="' . esc_url( $website->url ) . '" target="_blank">' . esc_url( $website->url ) . '</a>', '<a href="https://docs.mainwp.com/sites/management/manage-child-sites#edit-child-site-settings" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // phpcs:ignore WordPress.Security.EscapeOutput -- NOSONAR - noopener - open safe. ?>
+                    <?php /* translators: 1: Site name, 2: Site URL with anchor tag, 3: Opening anchor tag for documentation link, 4: Closing anchor tag. */ printf( esc_html__( 'Edit the %1$s (%2$s) child site settings.  For additional help, please check this %3$shelp documentation%4$s.', 'mainwp' ), esc_html( stripslashes( $website->name ) ), '<a href="' . esc_url( $website->url ) . '" target="_blank">' . esc_url( $website->url ) . '</a>', '<a href="https://docs.mainwp.com/sites/management/manage-child-sites#edit-child-site-settings" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // phpcs:ignore WordPress.Security.EscapeOutput -- NOSONAR - noopener - open safe. ?>
                 </div>
             <?php } ?>
             <?php
@@ -2294,8 +2297,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                         if ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {
                             set_transient( 'mainwp_transient_just_connected_site_id', $id, HOUR_IN_SECONDS );
+                            /* translators: 1: Opening div tag, 2: Site name wrapped in strong tag, 3: Closing div tag, 4: Continue button anchor tag. */
                             $message = sprintf( esc_html__( '%4$s%1$sCongratulations you have connected %2$s.%3$s After finishing the Quick Setup Wizard, you can add additional sites from the Add New Sites page. Proceeding to the next step in 3 seconds...', 'mainwp' ), '<div class="ui header">', '<strong>' . esc_html( $params['name'] ) . '</strong>', '</div>', '<a href="admin.php?page=mainwp-setup&step=monitoring" class="ui mini basic green right floated button">Continue</a>' );
                         } else {
+                            /* translators: 1: Opening anchor tag for dashboard link, 2: Closing anchor tag, 3: Line break HTML tag. */
                             $message = sprintf( esc_html__( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.%3$s', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . esc_html__( 'Dashboard', 'mainwp' ) . '">', '</a>', '<br/>' );
                         }
 

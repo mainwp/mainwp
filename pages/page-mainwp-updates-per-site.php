@@ -700,6 +700,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
      */
     public static function render_abandoned_plugins( $websites, $allPluginsOutdate, $decodedDismissedPlugins ) {  //phpcs:ignore -- NOSONAR - complex.
+        /* translators: %s: number of days */
         $str_format      = esc_html__( 'Updated %s days ago', 'mainwp' );
         $count_abandoned = count( $allPluginsOutdate );
         ?>
@@ -818,6 +819,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
      */
     public static function render_abandoned_themes( $websites, $allThemesOutdate, $decodedDismissedThemes ) { //phpcs:ignore -- NOSONAR - complex.
+        /* translators: %s: number of days */
         $str_format      = esc_html__( 'Updated %s days ago', 'mainwp' );
         $count_abandoned = count( $allThemesOutdate );
         ?>

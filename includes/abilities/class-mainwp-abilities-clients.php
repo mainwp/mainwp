@@ -173,8 +173,8 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
         );
 
         $args = array(
-            'page'     => $input['page'],
-            'per_page' => $input['per_page'],
+            'page'     => (int) $input['page'],
+            'per_page' => (int) $input['per_page'],
         );
 
         if ( 'active' === $input['status'] ) {
@@ -208,8 +208,8 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
 
         return array(
             'items'    => $items,
-            'page'     => $input['page'],
-            'per_page' => $input['per_page'],
+            'page'     => (int) $input['page'],
+            'per_page' => (int) $input['per_page'],
             'total'    => (int) $total,
         );
     }

@@ -9,23 +9,23 @@ let import_total = 0;
 let import_count_success = 0;
 let import_count_fails = 0;
 
-window.mainwpVars = window.mainwpVars || {};
+globalThis.mainwpVars = globalThis.mainwpVars || {};
 
 jQuery(function () {
     import_total = jQuery('#mainwp_managesites_total_import').val();
 
     jQuery(document).on('click', '#mainwp_managesites_btn_import', function () {
-        if (!import_stop_by_user) {
-            import_stop_by_user = true;
-            jQuery('#mainwp_managesites_import_logging .log').append(__('Paused import by user.') + "\n");
-            jQuery('#mainwp_managesites_btn_import').val(__('Continue'));
-            jQuery('#mainwp_managesites_btn_save_csv').prop("disabled", false); //Enable
-        } else {
+        if (import_stop_by_user) {
             import_stop_by_user = false;
             jQuery('#mainwp_managesites_import_logging .log').append(__('Continue import.') + "\n");
             jQuery('#mainwp_managesites_btn_import').val(__('Pause'));
             jQuery('#mainwp_managesites_btn_save_csv').attr('disabled', 'true'); // Disable
             mainwp_managesites_import_sites();
+        } else {
+            import_stop_by_user = true;
+            jQuery('#mainwp_managesites_import_logging .log').append(__('Paused import by user.') + "\n");
+            jQuery('#mainwp_managesites_btn_import').val(__('Continue'));
+            jQuery('#mainwp_managesites_btn_save_csv').prop("disabled", false); //Enable
         }
     });
 
@@ -105,17 +105,18 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
     let import_http_password = decodedVal.http_pass;
     let import_verify_certificate = decodedVal.verify_certificate;
 
-    if (typeof (import_wpname) == "undefined")
+    if (import_wpname === undefined)
         import_wpname = '';
-    if (typeof (import_wpurl) == "undefined")
+    if (import_wpurl === undefined)
         import_wpurl = '';
-    if (typeof (import_wpadmin) == "undefined")
+    if (import_wpadmin === undefined)
         import_wpadmin = '';
-    if (typeof (import_wpgroups) == "undefined")
+    if (import_wpgroups === undefined   )
         import_wpgroups = '';
-    if (typeof (import_uniqueId) == "undefined")
+    if (import_uniqueId === undefined || import_uniqueId == null) {
         import_uniqueId = '';
-    if (typeof (import_wpadmin_pwd) == "undefined") {
+    }
+    if (import_wpadmin_pwd === undefined || import_wpadmin_pwd == null) {
         import_wpadmin_pwd = '';
     }
 
@@ -167,7 +168,9 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
         if (!url.endsWith('/')) {
             url += '/';
         }
-        url = url.replace(/"/g, '&quot;');
+
+        url = url.replaceAll('"', '&quot;');
+
         if (response == 'HTTPERROR') {
             errors.push(check_result + __('HTTP error: website does not exist!'));
         } else if (response == 'NOMAINWP') {
@@ -252,8 +255,9 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
 const mainwp_managesites_import_client = function (index, siteid) {
     let import_client_data = jQuery('#mainwp_managesites_import_client_line_' + index).attr('encoded-data');
 
-    if (typeof (import_client_data) == "undefined")
+    if (import_client_data === undefined || import_client_data == null) {
         import_client_data = '';
+    }
 
     if (import_client_data !== '') {
         const data = mainwp_secure_data({

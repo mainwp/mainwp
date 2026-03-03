@@ -958,7 +958,10 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
                         <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-insights-welcome-message" style="float:right;cursor:pointer;"></i>
                         <div class="ui massive header"><?php esc_html_e( 'Welcome to Dashboard Insights', 'mainwp' ); ?></div>
                         <p><?php esc_html_e( 'Track how you and your team use the MainWP Dashboard, view trends, activity summaries, and key usage metrics.', 'mainwp' ); ?></p>
-                        <p><?php printf( esc_html__( 'Start by configuring your %1$sNetwork Activity Settings%2$s to begin collecting data.', 'mainwp' ), '<a href="admin.php?page=SettingsInsights">', '</a>' ); ?></p>
+                        <p><?php
+								/* translators: %1$s: Opening anchor tag, %2$s: Closing anchor tag */
+								printf( esc_html__( 'Start by configuring your %1$sNetwork Activity Settings%2$s to begin collecting data.', 'mainwp' ), '<a href="admin.php?page=SettingsInsights">', '</a>' );
+								?></p>
                     </div>
                 </div>
             </div>
@@ -968,7 +971,10 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
             <div class="ui segment" style="padding-bottom:0;margin-bottom:0;">
                 <div class="ui message" style="margin-bottom:0">
                     <i class="close icon mainwp-notice-dismiss" notice-id="insights-widgets"></i>
-                    <?php printf( esc_html__( '%1$s Tip: You can drag and drop widgets to reorder your dashboard, use Page Settings (%2$s) to show or hide widgets, and use Layout (%3$s) in the header to save and load your widget layouts.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<i class="cog fitted icon"></i>', '<i class="all border fitted icon"></i>' ); ?>
+                    <?php
+					/* translators: %1$s: Bulb emoji, %2$s: Cog icon, %3$s: Layout icon */
+					printf( esc_html__( '%1$s Tip: You can drag and drop widgets to reorder your dashboard, use Page Settings (%2$s) to show or hide widgets, and use Layout (%3$s) in the header to save and load your widget layouts.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<i class="cog fitted icon"></i>', '<i class="all border fitted icon"></i>' );
+					?>
                 </div>
             </div>
             <?php endif; ?>

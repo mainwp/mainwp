@@ -251,7 +251,8 @@ class Test_Get_Batch_Job_Status_Ability extends MainWP_Abilities_Test_Case {
 		);
 
 		$this->assertWPError( $result, 'Result should be a WP_Error' );
-		$this->assertEquals( 'mainwp_invalid_job_id', $result->get_error_code(), 'Error code should be mainwp_invalid_job_id' );
+		// Schema pattern constraint rejects invalid prefixes before runtime validation.
+		$this->assertEquals( 'ability_invalid_input', $result->get_error_code(), 'Error code should be ability_invalid_input' );
 	}
 
 	/**

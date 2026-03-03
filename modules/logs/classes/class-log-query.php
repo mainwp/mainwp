@@ -385,7 +385,7 @@ class Log_Query {
                 );
             }
 
-            $count = absint( $wpdb->get_var( $count_query ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Count query is built with properly escaped and validated SQL fragments (WHERE clauses use escape(), intval(), and sanitize_text_field(); JOIN and recent_where are static or int-cast).
+            $count = absint( $wpdb->get_var( $count_query ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.NotPrepared -- Count query is built with properly escaped and validated SQL fragments (WHERE clauses use escape(), intval(), and sanitize_text_field(); JOIN and recent_where are static or int-cast).
             wp_cache_set( $cache_key, $count, 'mainwp_logs', HOUR_IN_SECONDS );
 
             return array(
@@ -489,7 +489,7 @@ class Log_Query {
             if ( false !== $cached_count ) {
                 $results['count'] = $cached_count;
             } else {
-                $count = absint( $wpdb->get_var( $count_query ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter -- NOSONAR Count query is built with properly escaped and validated SQL fragments (WHERE clauses use escape(), intval(), and sanitize_text_field(); JOIN and recent_where are static or int-cast).
+                $count = absint( $wpdb->get_var( $count_query ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.NotPrepared -- NOSONAR Count query is built with properly escaped and validated SQL fragments (WHERE clauses use escape(), intval(), and sanitize_text_field(); JOIN and recent_where are static or int-cast).
                 wp_cache_set( $cache_key, $count, 'mainwp_logs', HOUR_IN_SECONDS );
                 $results['count'] = $count;
             }

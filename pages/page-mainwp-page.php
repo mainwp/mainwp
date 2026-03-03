@@ -161,7 +161,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         }
 
         if ( ! $post_id ) {
-            wp_die( esc_html__( 'Invalid post.' ) );
+            wp_die( esc_html__( 'Invalid post.', 'mainwp' ) );
         }
 
         MainWP_Post::on_load_bulkpost( $post_id );
@@ -491,7 +491,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-pages-info-message' ) ) : ?>
                         <div class="ui info message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-pages-info-message"></i>
-                            <?php printf( esc_html__( 'Monitor and manage the lifecycle of content across all connected sites. Perform safe, bulk operations without editing layouts or page design. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/content/manage-pages" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                            <?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'Monitor and manage the lifecycle of content across all connected sites. Perform safe, bulk operations without editing layouts or page design. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/content/manage-pages" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
                         </div>
                     <?php endif; ?>
                     <?php static::render_table( true ); ?>

@@ -79,8 +79,8 @@ class Connector_Compact extends Log_Connector {
                 return;
             }
 
-            // translators: Placeholder refers log item.
-            $message = esc_html__( '%s', 'mainwp' );
+            // translators: %s: Compact log item name.
+            $message = esc_html__( 'Compact log: %s', 'mainwp' );
 
             $context = $year;
 

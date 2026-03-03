@@ -373,6 +373,7 @@ class Cost_Tracker_Summary {
                         <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-cost-summany-welcome-message" style="float:right;cursor:pointer;"></i>
                         <div class="ui massive header"><?php esc_html_e( 'Welcome to Cost Tracker', 'mainwp' ); ?></div>
                         <p><?php esc_html_e( 'Track and forecast your agency\'s expenses across all sites and subscriptions.', 'mainwp' ); ?></p>
+                        <?php /* translators: 1: Opening link tag, 2: Closing link tag, 3: Opening link tag, 4: Closing link tag */ ?>
                         <p><?php printf( esc_html__( 'Start by %1$sadding your first cost%2$s or %3$screating custom cost categories%4$s.', 'mainwp' ), '<a href="admin.php?page=CostTrackerAdd">', '</a>', '<a href="admin.php?page=CostTrackerSettings">', '</a>' ); ?></p>
                     </div>
                 </div>
@@ -382,6 +383,7 @@ class Cost_Tracker_Summary {
             <div class="ui segment" style="margin-bottom:0px;">
                 <div class="ui message" style="margin-bottom:0px;">
                     <i class="close icon mainwp-notice-dismiss" notice-id="cost-summany-widgets"></i>
+                    <?php /* translators: 1: Tip emoji icon, 2: Cog icon, 3: Layout icon */ ?>
                     <?php printf( esc_html__( '%1$s Tip: You can drag and drop widgets to reorder your dashboard, use Page Settings (%2$s) to show or hide widgets, and use Layout (%3$s) in the header to save and load your widget layouts.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<i class="cog fitted icon"></i>', '<i class="all border fitted icon"></i>' ); ?>
                 </div>
             </div>

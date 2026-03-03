@@ -382,6 +382,17 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
             if ( in_array( 'allevents', $array_events_list, true ) ) {
                 $filter_events     = '';
                 $array_events_list = false;
+            } else {
+                if ( in_array( 'updated', $array_events_list, true ) && ! in_array( 'update', $array_events_list, true ) ) {
+                    $array_events_list[] = 'update';
+                } elseif ( in_array( 'update', $array_events_list, true ) && ! in_array( 'updated', $array_events_list, true ) ) {
+                    $array_events_list[] = 'updated';
+                }
+                if ( in_array( 'deleted', $array_events_list, true ) && ! in_array( 'delete', $array_events_list, true ) ) {
+                    $array_events_list[] = 'delete';
+                } elseif ( in_array( 'delete', $array_events_list, true ) && ! in_array( 'deleted', $array_events_list, true ) ) {
+                    $array_events_list[] = 'deleted';
+                }
             }
         }
 
@@ -604,9 +615,15 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                                         $events = array();
                                     }
 
+                                    $seen_event_labels = array();
                                     foreach ( $events as $eve_name => $eve_title ) {
+                                        $clean_title = stripslashes( $eve_title );
+                                        if ( isset( $seen_event_labels[ $clean_title ] ) ) {
+                                            continue;
+                                        }
+                                        $seen_event_labels[ $clean_title ] = true;
                                         ?>
-                                        <div class="item" data-value="<?php echo esc_attr( $eve_name ); ?>"><?php echo esc_html( stripslashes( $eve_title ) ); ?></div>
+                                        <div class="item" data-value="<?php echo esc_attr( $eve_name ); ?>"><?php echo esc_html( $clean_title ); ?></div>
                                         <?php
                                     }
                                     ?>

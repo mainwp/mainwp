@@ -485,7 +485,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-users-info-message' ) ) : ?>
                         <div class="ui info message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-users-info-message"></i>
-                            <?php printf( esc_html__( 'Manage existing users on your child sites.  Here you can Delete, Edit or Change Role for existing users.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/users/manage-users/" target="_blank">', '</a>' ); ?>
+                            <?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'Manage existing users on your child sites.  Here you can Delete, Edit or Change Role for existing users.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/users/manage-users/" target="_blank">', '</a>' ); ?>
                         </div>
                     <?php endif; ?>
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-password-policy-feature-info-message' ) ) : ?>
@@ -1873,7 +1873,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-users-info-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-users-info-message"></i>
-                    <?php printf( esc_html__( 'Use the form to bulk import users.  You can download the sample CSV file to see how to fomat the import file properly.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/users/manage-users#import-users-via-csv/" target="_blank">', '</a>' ); ?>
+                    <?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'Use the form to bulk import users.  You can download the sample CSV file to see how to fomat the import file properly.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/users/manage-users#import-users-via-csv/" target="_blank">', '</a>' ); ?>
                 </div>
             <?php endif; ?>
 

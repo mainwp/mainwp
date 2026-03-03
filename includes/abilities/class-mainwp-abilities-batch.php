@@ -58,7 +58,7 @@ class MainWP_Abilities_Batch { //phpcs:ignore -- NOSONAR - multi methods.
                     'show_in_rest' => true,
                     'annotations'  => array(
                         'instructions' => '',
-                        'readonly'     => false, // Uses POST because job_id is required.
+                        'readonly'     => true,
                         'destructive'  => false,
                         'idempotent'   => true,
                     ),
@@ -78,6 +78,7 @@ class MainWP_Abilities_Batch { //phpcs:ignore -- NOSONAR - multi methods.
             'properties'           => array(
                 'job_id' => array(
                     'type'        => 'string',
+                    'pattern'     => '^(sync|update|reconnect|disconnect|check|suspend)_',
                     'description' => __( 'Batch job ID returned from queued operation (e.g., sync_abc123, update_xyz789)', 'mainwp' ),
                 ),
             ),

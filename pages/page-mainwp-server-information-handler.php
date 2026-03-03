@@ -717,14 +717,17 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         $response    = wp_remote_post( $url, $args );
         $test_result = '';
         if ( is_wp_error( $response ) ) {
+            /* translators: %s: error message */
             $test_result .= sprintf( esc_html__( 'The HTTP response test get an error "%s"', 'mainwp' ), $response->get_error_message() );
         }
         $response_code = wp_remote_retrieve_response_code( $response );
         if ( 200 > $response_code && 204 < $response_code ) {
+            /* translators: %s: HTTP status code */
             $test_result .= sprintf( esc_html__( 'The HTTP response test get a false http status (%s)', 'mainwp' ), wp_remote_retrieve_response_code( $response ) );
         } else {
             $response_body = wp_remote_retrieve_body( $response );
             if ( false === strstr( $response_body, 'MainWP Test' ) ) {
+                /* translators: %s: response body */
                 $test_result .= sprintf( esc_html__( 'Not expected HTTP response body: %s', 'mainwp' ), esc_attr( wp_strip_all_tags( $response_body ) ) );
             }
         }

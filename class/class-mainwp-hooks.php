@@ -558,7 +558,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
                 return false;
             }
         }
-
+        // translators: 1: Opening anchor tag, 2: Closing anchor tag.
         return sprintf( esc_html__( 'You have a MainWP extension that does not have an active API entered. This means you will not receive updates or support. Please visit the %1$sExtensions%2$s page and enter your API key.', 'mainwp' ), '<a href="admin.php?page=Extensions">', '</a>' );
     }
 
@@ -1534,7 +1534,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      */
     public function hook_atarim_default_sitestable_column( $columns ) {
         if ( ! is_plugin_active( 'mainwp-atarim-extension/mainwp-atarim-extension.php' ) ) {
-            $columns['atarim_tasks'] = esc_html__( 'Atarim', 'mainwp-atarim-extension' );
+            $columns['atarim_tasks'] = esc_html__( 'Atarim', 'mainwp' );
         }
         return $columns;
     }

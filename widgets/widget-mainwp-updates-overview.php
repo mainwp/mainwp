@@ -300,7 +300,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                             $all_translations_updates[] = array(
                                 'id'               => $website->id,
                                 'name'             => $website->name,
-                                'translation_slug' => $slug,
+                                'translation_slug' => rawurlencode( $slug ),
                             );
                         }
                     }

@@ -72,7 +72,7 @@ class MainWP_WP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-cores-info-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-cores-info-message"></i>
-                    <?php printf( esc_html__( 'Manage WordPress you have told your MainWP Dashboard to ignore updates on global or per site level. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/updates/manage-updates/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                    <?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'Manage WordPress you have told your MainWP Dashboard to ignore updates on global or per site level. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/updates/manage-updates/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
                 </div>
             <?php endif; ?>
             <?php

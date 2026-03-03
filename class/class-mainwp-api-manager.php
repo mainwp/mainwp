@@ -569,6 +569,7 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 $return = esc_html__( 'Your membership has expired. Reactivate your membership to install MainWP extensions.', 'mainwp' );
                 break;
             default: // download_revoked.
+                /* translators: 1: Extension/software title, 2: URL to account dashboard */
                 $return = sprintf( esc_html__( 'Download permission for %1$s has been revoked possibly due to a license key or membership expiring. You can reactivate or purchase a license key from your account <a href="%2$s" target="_blank">dashboard</a>.', 'mainwp' ), $software_title, $this->renew_license_url );
                 break;
         }

@@ -2,7 +2,7 @@
 /**
  * MainWP Themes Page
  *
- * This page is used to Manage Themes on Child Sites
+ * This page is used to Manage Themes on Child Sites.
  *
  * @package MainWP/Themes
  */
@@ -475,7 +475,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                             <div class="ui bulleted list">
                                 <div class="item"><?php echo esc_html__( 'To Activate or Delete a specific theme, you must search only for Inactive themes on your child sites. If you search for Active or both Active and Inactive, the Activate and Delete actions will be disabled.', 'mainwp' ); ?></div>
                             </div>
-                            <div><?php printf( esc_html__( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/themes/managing-themes-with-mainwp" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
+                            <div><?php /* translators: 1: Opening link tag, 2: Closing link tag with icon */ printf( esc_html__( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/themes/managing-themes-with-mainwp" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
                         </div>
                     <?php endif; ?>
                     <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -1239,6 +1239,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         $not_delete = false;
                         $parent_str = '';
                         if ( isset( $siteThemes[ $site_id ][ $slug_ver ]['parent_active'] ) && 1 === (int) $siteThemes[ $site_id ][ $slug_ver ]['parent_active'] ) {
+                            /* translators: %s: Child theme name */
                             $parent_str = '<span data-tooltip="' . sprintf( esc_html__( 'Parent theme of the active theme (%s) on the site can not be deleted.', 'mainwp' ), isset( $siteThemes[ $site_id ][ $slug_ver ]['child_theme'] ) ? $siteThemes[ $site_id ][ $slug_ver ]['child_theme'] : '' ) . '" data-position="right center" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>';
                             $not_delete = true;
                         }
@@ -1541,6 +1542,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                             $not_delete = false;
                             $parent_str = '';
                             if ( isset( $siteThemes[ $site_id ][ $slug_ver ]['parent_active'] ) && 1 === (int) $siteThemes[ $site_id ][ $slug_ver ]['parent_active'] ) {
+                                /* translators: %s: Child theme name */
                                 $parent_str = '<span data-tooltip="' . sprintf( esc_html__( 'Parent theme of the active theme (%s) on the site can not be deleted.', 'mainwp' ), isset( $siteThemes[ $site_id ][ $slug_ver ]['child_theme'] ) ? $siteThemes[ $site_id ][ $slug_ver ]['child_theme'] : '' ) . '" data-position="right center" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>';
                                 $not_delete = true;
                             }
@@ -1773,6 +1775,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     'upload'            => esc_html__( 'Upload theme', 'mainwp' ),
                     'back'              => esc_html__( 'Back', 'mainwp' ),
                     'error'             => __( 'An unexpected error occurred. Something may be wrong with WordPress.org or this server&#8217;s configuration. If you continue to have problems, please try the <a href="https://wordpress.org/support/">support forums</a>.', 'mainwp' ),
+                    /* translators: %d: number of themes */
                     'themesFound'       => esc_html__( 'Number of themes found: %d', 'mainwp' ),
                     'noThemesFound'     => esc_html__( 'No themes found. Try a different search.', 'mainwp' ),
                     'collapseSidebar'   => esc_html__( 'Collapse sidebar', 'mainwp' ),
@@ -1844,7 +1847,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-install-themes-info-message' ) ) : ?>
                         <div class="ui info message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-install-themes-info-message"></i>
-                            <?php printf( esc_html__( 'Install themes on your child sites. You can install themes from the WordPress.org repository or by uploading a ZIP file. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/themes/managing-themes-with-mainwp#install-themes" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                            <?php /* translators: 1: Opening link tag, 2: Closing link tag with icon */ printf( esc_html__( 'Install themes on your child sites. You can install themes from the WordPress.org repository or by uploading a ZIP file. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/themes/managing-themes-with-mainwp#install-themes" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
                         </div>
                     <?php endif; ?>
                     <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
@@ -1983,7 +1986,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 <div class="wp-full-overlay-sidebar-content">
                     <div class="install-theme-info">
                         <h3 class="theme-name">{{ data.name }}</h3>
-                        <span class="theme-by"><?php printf( esc_html__( 'By %s', 'mainwp' ), '{{ data.author }}' ); ?></span>
+                        <span class="theme-by"><?php /* translators: %s: Theme author name */ printf( esc_html__( 'By %s', 'mainwp' ), '{{ data.author }}' ); ?></span>
                         <img class="theme-screenshot" src="{{ data.screenshot_url }}" alt="{{ data.name }}" />
                         <div class="theme-details">
                             <# if ( data.rating ) { #>
@@ -1996,7 +1999,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                     <small class="ratings"><?php esc_html_e( 'This theme has not been rated yet.', 'mainwp' ); ?></small>
                                 </div>
                             <# } #>
-                            <div class="theme-version"><?php printf( esc_html__( 'Version: %s', 'mainwp' ), '{{ data.version }}' ); ?></div>
+                            <div class="theme-version"><?php /* translators: %s: Theme version number */ printf( esc_html__( 'Version: %s', 'mainwp' ), '{{ data.version }}' ); ?></div>
                             <div class="theme-description">{{{ data.description }}}</div>
                         </div>
                     </div>
@@ -2100,7 +2103,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-disable-auto-updates-info-message' ) ) : ?>
                         <div class="ui message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-disable-auto-updates-info-message"></i>
-                            <div><em data-emoji=":bulb:" class="small"></em> <?php printf( esc_html__( 'Tip: Check out %1$show to disable the WordPress built in auto-updates feature%2$s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
+                            <div><em data-emoji=":bulb:" class="small"></em> <?php /* translators: 1: Opening link tag, 2: Closing link tag */ printf( esc_html__( 'Tip: Check out %1$show to disable the WordPress built in auto-updates feature%2$s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
                         </div>
                         <?php endif; ?>
 
@@ -2488,7 +2491,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-themes-info-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-themes-info-message"></i>
-                    <?php printf( esc_html__( 'Manage themes you have told your MainWP Dashboard to ignore updates on global or per site level. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/updates/manage-updates#ignore-theme-updates" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                    <?php /* translators: 1: Opening link tag, 2: Closing link tag with icon */ printf( esc_html__( 'Manage themes you have told your MainWP Dashboard to ignore updates on global or per site level. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/updates/manage-updates#ignore-theme-updates" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
                 </div>
             <?php endif; ?>
             <?php
@@ -2763,7 +2766,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-abandoned-themes-info-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-abandoned-themes-info-message"></i>
-                    <?php printf( esc_html__( 'Manage abandoned themes you have told your MainWP Dashboard to ignore on global or per site level. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/themes/managing-themes-with-mainwp#abandoned-themes" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                    <?php /* translators: 1: Opening link tag, 2: Closing link tag with icon */ printf( esc_html__( 'Manage abandoned themes you have told your MainWP Dashboard to ignore on global or per site level. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/themes/managing-themes-with-mainwp#abandoned-themes" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
                 </div>
             <?php endif; ?>
             <?php

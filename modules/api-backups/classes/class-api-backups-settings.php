@@ -174,6 +174,7 @@ class Api_Backups_Settings {
                                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-module-api-backups-manager-info-message"></i>
                                 <?php
                                 printf(
+                                    /* translators: %1$s: Opening HTML anchor tag, %2$s: Closing HTML anchor tag with icon */
                                     esc_html__(
                                         'This feature allows you to trigger and restore backups only for sites hosted on supported providers via their API. Backups cannot be created for sites hosted elsewhere or stored on these services if your site is not hosted with them. Check this %1$shelp document%2$s to see all available services & the endpoints that MainWP currently supports.',
                                         'mainwp'
@@ -317,8 +318,8 @@ class Api_Backups_Settings {
                             <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-cloudways-settings' ); ?>
                             <?php esc_html_e( 'Cloudways API Settings', 'mainwp' ); ?></h3>
                             <ul>
-                                <li><?php printf( esc_html__( "1. If you don't already have one, get a %s", 'mainwp' ), '<a target="_blank" href="https://mainwp.com/go/cloudways-mainwp/">Cloudways account</a>' ); // NOSONAR - noopener - open safe. ?></li>
-                                <li><?php printf( esc_html__( '2. Get your API Key from here: %s', 'mainwp' ), '<a target="_blank" href="https://platform.cloudways.com/api">https://platform.cloudways.com/api</a>' ); // NOSONAR - noopener - open safe. ?></li>
+                                <li><?php /* translators: %s: HTML anchor link */ printf( esc_html__( "1. If you don't already have one, get a %s", 'mainwp' ), '<a target="_blank" href="https://mainwp.com/go/cloudways-mainwp/">Cloudways account</a>' ); // NOSONAR - noopener - open safe. ?></li>
+                                <li><?php /* translators: %s: HTML anchor link */ printf( esc_html__( '2. Get your API Key from here: %s', 'mainwp' ), '<a target="_blank" href="https://platform.cloudways.com/api">https://platform.cloudways.com/api</a>' ); // NOSONAR - noopener - open safe. ?></li>
                                 <li><?php esc_html_e( '3. Enter in your account email address and API Key below.', 'mainwp' ); ?></li>
                             </ul>
                             <div class="ui hidden divider"></div>
@@ -393,12 +394,12 @@ class Api_Backups_Settings {
                             <h3 class="ui dividing header">
                             <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-gridpane-settings' ); ?>
                             <?php esc_html_e( 'GridPane API Settings', 'mainwp' ); ?></h3>
-                            <div class="ui info message"><?php printf( esc_html__( 'Must be the %1$sGridPane Owners Account%2$s &amp; have a %1$sDeveloper Plan or above%2$s in order to use this feature.', 'mainwp' ), '<b>', '</b>' ); ?></div>
+                            <div class="ui info message"><?php /* translators: 1: Opening bold tag, 2: Closing bold tag */ printf( esc_html__( 'Must be the %1$sGridPane Owners Account%2$s &amp; have a %1$sDeveloper Plan or above%2$s in order to use this feature.', 'mainwp' ), '<b>', '</b>' ); ?></div>
                             <ul>
-                                <li><?php printf( esc_html__( "1. If you don't already have one, get a %s", 'mainwp' ), '<a target="_blank" href="https://mainwp.com/go/gridpane/">GridPane account</a>' ); // NOSONAR - noopener - open safe. ?></li>
-                                <li><?php printf( esc_html__( '2. Get your %1$sAPI Personal Access Token%2$s here: %3$s', 'mainwp' ), '<b>', '</b>', '<a target="_blank" href="https://my.gridpane.com/settings">https://my.gridpane.com/settings</a>' ); ?></li>
-                                <li><?php printf( esc_html__( '3. %1$sClick GridPare API%2$s in the left hand menu &amp; %1$sCreate your Personal Access Token%2$s', 'mainwp' ), '<b>', '</b>' ); ?></li>
-                                <li><?php printf( esc_html__( '4. Copy &amp; Paste your %1$sAPI Personal Access Token%2$s below', 'mainwp' ), '<b>', '</b>' ); ?></li>
+                                <li><?php /* translators: %s: HTML anchor link */ printf( esc_html__( "1. If you don't already have one, get a %s", 'mainwp' ), '<a target="_blank" href="https://mainwp.com/go/gridpane/">GridPane account</a>' ); // NOSONAR - noopener - open safe. ?></li>
+                                <li><?php /* translators: 1: Opening bold tag, 2: Closing bold tag, 3: HTML anchor link */ printf( esc_html__( '2. Get your %1$sAPI Personal Access Token%2$s here: %3$s', 'mainwp' ), '<b>', '</b>', '<a target="_blank" href="https://my.gridpane.com/settings">https://my.gridpane.com/settings</a>' ); ?></li>
+                                <li><?php /* translators: 1: Opening bold tag, 2: Closing bold tag */ printf( esc_html__( '3. %1$sClick GridPare API%2$s in the left hand menu &amp; %1$sCreate your Personal Access Token%2$s', 'mainwp' ), '<b>', '</b>' ); ?></li>
+                                <li><?php /* translators: 1: Opening bold tag, 2: Closing bold tag */ printf( esc_html__( '4. Copy &amp; Paste your %1$sAPI Personal Access Token%2$s below', 'mainwp' ), '<b>', '</b>' ); ?></li>
                             </ul>
                             <div class="ui hidden divider settings-field-indicator-wrapper settings-field-indicator-gridpane-settings"></div>
                             <div class="ui form">
@@ -462,9 +463,9 @@ class Api_Backups_Settings {
                                 <?php esc_html_e( 'Vultr API Settings', 'mainwp' ); ?>
                             </h3>
                             <ul>
-                                <li><?php printf( esc_html__( "1. If you don't already have one, get a %s", 'mainwp' ), '<a target="_blank" href="https://mainwp.com/go/vultr/">Vultr account</a>' ); // NOSONAR - noopener - open safe. ?></li>
-                                <li><?php printf( esc_html__( '2. Use this %3$s to find your MainWP Dashboard IP Address %1$s"Mask Bits"%2$s', 'mainwp' ), '<b>', '</b>', '<a target="_blank" href="https://www.vultr.com/resources/subnet-calculator/">Subnet Calculator Tool</a>' ); ?></b></li>
-                                <li><?php printf( esc_html__( '3. Navigate to %3$s and Whitelist your MainWP Dashboard %1$sIP/Mask Bits%2$s and %1$sActivate/Copy%2$s your %1$sAPI Key%2$s', 'mainwp' ), '<b>', '</b>', '<a target="_blank" href="https://my.vultr.com/settings/#settingsapi">Vultr API Settings</a>' ); ?></li>
+                                <li><?php /* translators: %s: HTML anchor link */ printf( esc_html__( "1. If you don't already have one, get a %s", 'mainwp' ), '<a target="_blank" href="https://mainwp.com/go/vultr/">Vultr account</a>' ); // NOSONAR - noopener - open safe. ?></li>
+                                <li><?php /* translators: 1: Opening bold tag, 2: Closing bold tag, 3: HTML anchor link */ printf( esc_html__( '2. Use this %3$s to find your MainWP Dashboard IP Address %1$s"Mask Bits"%2$s', 'mainwp' ), '<b>', '</b>', '<a target="_blank" href="https://www.vultr.com/resources/subnet-calculator/">Subnet Calculator Tool</a>' ); ?></b></li>
+                                <li><?php /* translators: 1: Opening bold tag, 2: Closing bold tag, 3: HTML anchor link */ printf( esc_html__( '3. Navigate to %3$s and Whitelist your MainWP Dashboard %1$sIP/Mask Bits%2$s and %1$sActivate/Copy%2$s your %1$sAPI Key%2$s', 'mainwp' ), '<b>', '</b>', '<a target="_blank" href="https://my.vultr.com/settings/#settingsapi">Vultr API Settings</a>' ); ?></li>
                                 <li><?php esc_html_e( '4. Paste in your account API Key below and click the Save Settings button.', 'mainwp' ); ?></li>
                                 <li><?php esc_html_e( '5. Once the API is connected, go to the Site Edit page (for all sites on this host) and set the correct Provider and Instance ID.', 'mainwp' ); ?></li>
                             </ul>
@@ -530,9 +531,9 @@ class Api_Backups_Settings {
                                 <?php esc_html_e( 'Akamai (Linode) API Settings', 'mainwp' ); ?>
                             </h3>
                             <ul>
-                                <li><?php printf( esc_html__( "1. If you don't already have one, get a %s", 'mainwp' ), '<a target="_blank" href="https://mainwp.com/go/akamai-linode/">Akamai (Linode) account</a>' ); // NOSONAR - noopener - open safe. ?></li>
-                                <li><?php printf( esc_html__( '2. You may create a %1$sPersonal Access Token%2$s by navigating here: %3$s', 'mainwp' ), '<b>', '</b>', '<a target="_blank" href="https://cloud.linode.com/profile/tokens">https://cloud.linode.com/profile/tokens</a>' ); ?></b></li>
-                                <li><?php printf( esc_html__( '3. Paste in your account %1$sPersonal Access Token%2$s below and click the Save Settings button.', 'mainwp' ), '<b>', '</b>' ); ?></li>
+                                <li><?php /* translators: %s: HTML anchor link */ printf( esc_html__( "1. If you don't already have one, get a %s", 'mainwp' ), '<a target="_blank" href="https://mainwp.com/go/akamai-linode/">Akamai (Linode) account</a>' ); // NOSONAR - noopener - open safe. ?></li>
+                                <li><?php /* translators: 1: Opening bold tag, 2: Closing bold tag, 3: HTML anchor link */ printf( esc_html__( '2. You may create a %1$sPersonal Access Token%2$s by navigating here: %3$s', 'mainwp' ), '<b>', '</b>', '<a target="_blank" href="https://cloud.linode.com/profile/tokens">https://cloud.linode.com/profile/tokens</a>' ); ?></b></li>
+                                <li><?php /* translators: 1: Opening bold tag, 2: Closing bold tag */ printf( esc_html__( '3. Paste in your account %1$sPersonal Access Token%2$s below and click the Save Settings button.', 'mainwp' ), '<b>', '</b>' ); ?></li>
                                 <li><?php esc_html_e( '4. Once the API is connected, go to the Site Edit page (for all sites on this host) and set the correct Provider and Instance ID.', 'mainwp' ); ?></li>
                             </ul>
                             <div class="ui hidden divider"></div>
@@ -599,9 +600,9 @@ class Api_Backups_Settings {
                                 <?php esc_html_e( 'DigitalOcean', 'mainwp' ); ?>
                             </h3>
                             <ul>
-                                <li><?php printf( esc_html__( "1. If you don't already have one, get a %s", 'mainwp' ), '<a target="_blank" href="https://mainwp.com/go/digital-ocean/">DigitalOcean account</a>' ); // NOSONAR - noopener - open safe. ?></li>
-				<li><?php printf( esc_html__( '2. You can generate a %1$sPersonal Access Token%2$s by visiting the %3$s section of the DigitalOcean control panel for your account.', 'mainwp' ), '<b>', '</b>', '<a target="_blank" href="https://cloud.digitalocean.com/account/api/tokens">Apps & API</a>' ); ?></b></li>
-                                <li><?php printf( esc_html__( '3. Paste in your %1$sPersonal Access Token%2$s below and click the Save Settings button.', 'mainwp' ), '<b>', '</b>' ); ?></li>
+                                <li><?php /* translators: %s: HTML anchor link */ printf( esc_html__( "1. If you don't already have one, get a %s", 'mainwp' ), '<a target="_blank" href="https://mainwp.com/go/digital-ocean/">DigitalOcean account</a>' ); // NOSONAR - noopener - open safe. ?></li>
+				<li><?php /* translators: 1: Opening bold tag, 2: Closing bold tag, 3: HTML anchor link */ printf( esc_html__( '2. You can generate a %1$sPersonal Access Token%2$s by visiting the %3$s section of the DigitalOcean control panel for your account.', 'mainwp' ), '<b>', '</b>', '<a target="_blank" href="https://cloud.digitalocean.com/account/api/tokens">Apps & API</a>' ); ?></b></li>
+                                <li><?php /* translators: 1: Opening bold tag, 2: Closing bold tag */ printf( esc_html__( '3. Paste in your %1$sPersonal Access Token%2$s below and click the Save Settings button.', 'mainwp' ), '<b>', '</b>' ); ?></li>
                                 <li><?php esc_html_e( '4. Once the API is connected, go to the Site Edit page (for all sites on this host) and set the correct Provider and Instance ID.', 'mainwp' ); ?></li>
                             </ul>
                             <div class="ui hidden divider"></div>
@@ -846,9 +847,9 @@ class Api_Backups_Settings {
                                 <?php esc_html_e( 'Kinsta', 'mainwp' ); ?>
                             </h3>
                             <ul>
-                                <li><?php printf( esc_html__( "1. If you don't already have one, get a %s", 'mainwp' ), '<a target="_blank" href="https://my.kinsta.com/">Kinsta account</a>' ); ?></li>
-                                <li><?php printf( esc_html__( '2. You can generate an API Key by visiting the %1$s tab of the Company Settings Page.', 'mainwp' ), '<a target="_blank" href="https://my.kinsta.com/company/apiKeys">API Keys</a>' ); ?></b></li>
-                                <li><?php printf( esc_html__( '3. Paste in your %1$sCredentials%2$s below and click the Save Settings button.', 'mainwp' ), '<b>', '</b>' ); ?></li>
+                                <li><?php /* translators: %s: HTML anchor link */ printf( esc_html__( "1. If you don't already have one, get a %s", 'mainwp' ), '<a target="_blank" href="https://my.kinsta.com/">Kinsta account</a>' ); ?></li>
+                                <li><?php /* translators: %1$s: HTML anchor link */ printf( esc_html__( '2. You can generate an API Key by visiting the %1$s tab of the Company Settings Page.', 'mainwp' ), '<a target="_blank" href="https://my.kinsta.com/company/apiKeys">API Keys</a>' ); ?></b></li>
+                                <li><?php /* translators: 1: Opening bold tag, 2: Closing bold tag */ printf( esc_html__( '3. Paste in your %1$sCredentials%2$s below and click the Save Settings button.', 'mainwp' ), '<b>', '</b>' ); ?></li>
                                 <li><?php esc_html_e( '4. Once the API is connected, go to the Site Edit page (for all sites on this host) and set the correct Provider and Environment ID.', 'mainwp' ); ?></li>
                             </ul>
                             <div class="ui hidden divider"></div>

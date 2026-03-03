@@ -315,7 +315,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     <div class="ui message info" style="margin-top:0">
                         <i class="close icon mainwp-notice-dismiss" notice-id="mainwp_groups_info"></i>
                         <div><?php esc_html_e( 'Use tags to organize and quickly filter your connected sites. You can apply multiple tags to one site.', 'mainwp' ); ?></div>
-                        <div><?php printf( esc_html__( 'for more information check the %1$sKnowledgebase %2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/management/manage-child-sites#manage-child-site-tags" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
+                        <div><?php /* translators: 1: opening anchor tag, 2: closing anchor tag with icon */ printf( esc_html__( 'for more information check the %1$sKnowledgebase %2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/management/manage-child-sites#manage-child-site-tags" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
                     </div>
                 <?php } ?>
                 <div id="mainwp-message-zone" style="display: none;">

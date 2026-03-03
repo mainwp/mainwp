@@ -15,6 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
+// phpcs:disable plugin_updater_detected -- not a self-updater; injects update data exclusively for licensed MainWP premium extensions hosted on mainwp.com.
 
 const MAINWP_VIEW_PER_SITE         = 1;
 const MAINWP_VIEW_PER_PLUGIN_THEME = 0;
@@ -203,8 +204,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $systemHandler = MainWP_System_Handler::instance();
 
         add_action( 'init', array( &$this, 'localization' ) );
-        add_filter( 'site_transient_update_plugins', array( $systemHandler, 'check_update_custom' ) );
-        add_filter( 'pre_set_site_transient_update_plugins', array( $systemHandler, 'pre_check_update_custom' ) );
+        add_filter( 'site_transient_update_plugins', array( $systemHandler, 'check_update_custom' ) ); // phpcs:ignore PluginCheck.CodeAnalysis.Sniffs.UpdatingPluginTransientFound -- not a self-updater; injects update data exclusively for licensed MainWP premium extensions (hosted on mainwp.com), not for the Dashboard plugin itself.
+        add_filter( 'pre_set_site_transient_update_plugins', array( $systemHandler, 'pre_check_update_custom' ) ); // phpcs:ignore PluginCheck.CodeAnalysis.Sniffs.UpdatingPluginTransientFound -- same as above; pre-populates update info for MainWP premium extensions before WordPress saves the transient.
         add_filter( 'plugins_api', array( $systemHandler, 'plugins_api_extension_info' ), 10, 3 );
         add_filter( 'plugins_api_result', array( $systemHandler, 'plugins_api_wp_plugins_api_result' ), 10, 3 );
 
@@ -436,7 +437,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public function localization() {
         $load = apply_filters( 'mainwp_load_text_domain', true );
         if ( $load ) {
-            load_plugin_textdomain( 'mainwp', false, dirname( dirname( plugin_basename( __FILE__ ) ) ) . '/languages/' );
+            load_plugin_textdomain( 'mainwp', false, dirname( dirname( plugin_basename( __FILE__ ) ) ) . '/languages/' ); // phpcs:ignore PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound -- kept for older WP versions (<4.6) and to support local/custom translation files loaded from the plugin's languages directory.
         }
     }
 
@@ -860,11 +861,9 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $en_params[] = 'jquery-ui-datepicker';
         }
 
-        static::$defer_js_handle = array_merge( static::$defer_js_handle, array( 'mainwp', 'mainwp-uptime' ) );
+        static::$defer_js_handle = array_merge( static::$defer_js_handle, array( 'mainwp' ) );
 
         wp_enqueue_script( 'mainwp', MAINWP_PLUGIN_URL . 'assets/js/mainwp.js', $en_params, $this->current_version, true );
-
-        wp_enqueue_script( 'mainwp-uptime', MAINWP_PLUGIN_URL . 'assets/js/mainwp-uptime.js', $en_params, $this->current_version, true );
         wp_enqueue_script( 'mainwp-cache-warm', MAINWP_PLUGIN_URL . 'assets/js/mainwp-cache-warm.js', array(), $this->current_version, true );
 
         $disable_backup_checking = true; // removed option.
@@ -1127,7 +1126,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             wp_enqueue_script( 'mainwp-users', MAINWP_PLUGIN_URL . 'assets/js/mainwp-users.js', array(), $this->current_version, true );
             wp_enqueue_script( 'mainwp-clients', MAINWP_PLUGIN_URL . 'assets/js/mainwp-clients.js', array(), $this->current_version, true );
             wp_enqueue_script( 'mainwp-extensions', MAINWP_PLUGIN_URL . 'assets/js/mainwp-extensions.js', array(), $this->current_version, true );
-            wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'assets/js/moment/moment.min.js', array(), $this->current_version, true );
+            wp_enqueue_script( 'moment' );
             wp_enqueue_script( 'fomantic-ui', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.js', array( 'jquery' ), $this->current_version, false );
 
             wp_enqueue_script( 'datatables', MAINWP_PLUGIN_URL . 'assets/js/datatables/datatables.min.js', array( 'jquery' ), $this->current_version, false );
@@ -1137,7 +1136,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
             wp_enqueue_script( 'datatables-natural-sorting', MAINWP_PLUGIN_URL . 'assets/js/sorting/natural.min.js', array( 'jquery', 'datatables' ), $this->current_version, true );
 
-            wp_enqueue_script( 'mainwp-clipboard', MAINWP_PLUGIN_URL . 'assets/js/clipboard/clipboard.min.js', array( 'jquery' ), $this->current_version, true );
+            wp_enqueue_script( 'clipboard' );
             wp_enqueue_script( 'mainwp-rest-api', MAINWP_PLUGIN_URL . 'assets/js/mainwp-rest-api.js', array(), time(), true );
 
             if ( isset( $_GET['page'] ) && 'ManageGroups' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -1158,7 +1157,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 static::$defer_js_handle[] = 'mainwp-apexcharts';
             }
             wp_enqueue_script( 'mainwp-dropzone', MAINWP_PLUGIN_URL . 'assets/js/dropzone/dropzone.min.js', array(), $this->current_version, true );
-            static::$defer_js_handle = array_merge( static::$defer_js_handle, array( 'mainwp-updates', 'mainwp-managesites-action', 'mainwp-managesites-update', 'mainwp-managesites-import', 'mainwp-plugins-themes', 'mainwp-managesites-import', 'mainwp-plugins-themes', 'mainwp-backups', 'mainwp-posts', 'mainwp-users', 'mainwp-clients', 'fomantic-ui', 'datatables', 'datatables-semanticui', 'datatables-select', 'datatables-add-ons', 'mainwp-dropzone' ) );
+            wp_enqueue_script( 'mainwp-uptime', MAINWP_PLUGIN_URL . 'assets/js/mainwp-uptime.js', array( 'jquery', 'fomantic-ui' ), $this->current_version, true );
+            static::$defer_js_handle = array_merge( static::$defer_js_handle, array( 'mainwp-updates', 'mainwp-managesites-action', 'mainwp-managesites-update', 'mainwp-managesites-import', 'mainwp-plugins-themes', 'mainwp-managesites-import', 'mainwp-plugins-themes', 'mainwp-backups', 'mainwp-posts', 'mainwp-users', 'mainwp-clients', 'fomantic-ui', 'datatables', 'datatables-semanticui', 'datatables-select', 'datatables-add-ons', 'mainwp-dropzone', 'mainwp-uptime' ) );
 
         }
 

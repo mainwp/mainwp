@@ -2,7 +2,7 @@
 /**
  * MainWP Updates Per Group.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -903,6 +903,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
      */
     public static function render_abandoned_plugins( $websites, $allPluginsOutdate, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedPlugins ) { // phpcs:ignore -- NOSONAR - complex.
+        /* translators: %s: number of days */
         $str_format      = esc_html__( 'Updated %s days ago', 'mainwp' );
         $count_abandoned = count( $allPluginsOutdate );
         ?>
@@ -1061,6 +1062,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
      */
     public static function render_abandoned_themes( $websites, $allThemesOutdate, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedThemes ) { // phpcs:ignore -- NOSONAR - complex.
+        /* translators: %s: number of days */
         $str_format      = esc_html__( 'Updated %s days ago', 'mainwp' );
         $count_abandoned = count( $allThemesOutdate );
         ?>

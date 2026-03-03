@@ -245,9 +245,13 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
      * @param mixed $input               The ability input (unused but required by signature).
      * @return array Array with 'allowed' (accessible sites) and 'denied' (access errors).
      */
-    public static function check_batch_site_access( array $site_ids_or_domains, $input = null ): array {
-        $allowed = array();
-        $denied  = array();
+    public static function check_batch_site_access( array $site_ids_or_domains, $input = null ): array {  // phpcs:ignore -- NOSONAR
+        $allowed     = array();
+        $denied      = array();
+        $exclude_ids = ( is_array( $input ) && ! empty( $input['exclude_ids'] ) && is_array( $input['exclude_ids'] ) )
+            ? array_map( 'absint', $input['exclude_ids'] )
+            : array();
+        $exclude_set = $exclude_ids ? array_fill_keys( $exclude_ids, true ) : array();
 
         foreach ( $site_ids_or_domains as $identifier ) {
             $site = self::resolve_site( $identifier );
@@ -276,6 +280,27 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
             }
 
             $allowed[] = $site;
+        }
+
+        if ( ! empty( $exclude_set ) ) {
+            $filtered = array();
+            foreach ( $allowed as $entry ) {
+                $id = null;
+                if ( is_object( $entry ) && isset( $entry->id ) ) {
+                    $id = (int) $entry->id;
+                } elseif ( is_array( $entry ) && isset( $entry['id'] ) ) {
+                    $id = (int) $entry['id'];
+                } elseif ( is_numeric( $entry ) ) {
+                    $id = (int) $entry;
+                }
+
+                if ( null !== $id && isset( $exclude_set[ $id ] ) ) {
+                    continue;
+                }
+
+                $filtered[] = $entry;
+            }
+            $allowed = array_values( $filtered );
         }
 
         return array(
@@ -720,7 +745,7 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         $output = array(
             'id'        => (int) $site->id,
             'url'       => (string) $site->url,
-            'name'      => (string) $site->name,
+            'name'      => MainWP_Utility::remove_http_prefix( (string) $site->name, true ),
             'status'    => self::get_site_status( $site ),
             'client_id' => isset( $site->client_id ) && $site->client_id > 0
                 ? (int) $site->client_id

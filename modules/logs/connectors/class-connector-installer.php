@@ -145,11 +145,7 @@ class Connector_Installer extends Log_Connector {
                 return false;
             }
 
-            $message = esc_html_x(
-                '%1$s',
-                'Plugin/theme installation. 1: Plugins/themes namess, 2: vesion',
-                'mainwp'
-            );
+            $message = '%1$s';
 
         } elseif ( 'updated' === $action && ( in_array( $type, array( 'plugin', 'theme', 'trans' ) ) ) ) {
 
@@ -184,16 +180,12 @@ class Connector_Installer extends Log_Connector {
             }
 
             if ( 'plugin' === $type || 'theme' === $type || 'trans' === $type ) {
-                $message = esc_html_x(
-                    '%1$s',
-                    'Update. 1: name',
-                    'mainwp'
-                );
+                $message = '%1$s';
             } else {
                 return;
             }
         } elseif ( 'updated' === $action && 'core' === $type ) {
-            $message     = esc_html__( '%1$s', 'mainwp' );
+            $message     = '%1$s';
             $args        = array(
                 'name'        => 'WordPress', // label.
                 'version'     => isset( $data['version'] ) ? $data['version'] : '',
@@ -278,11 +270,7 @@ class Connector_Installer extends Log_Connector {
         $action  = $plugin_act;
         $context = 'plugin';
 
-        $message = esc_html_x(
-            '%1$s',
-            '1: Plugin name, 2: plugin version',
-            'mainwp'
-        );
+        $message = '%1$s';
 
         $state = 1;
 
@@ -343,11 +331,7 @@ class Connector_Installer extends Log_Connector {
         $action  = $theme_act;
         $context = 'theme';
 
-        $message = esc_html_x(
-            '%1$s',
-            '1: Theme name, 2: Theme version',
-            'mainwp'
-        );
+        $message = '%1$s';
 
         $state = 1;
 

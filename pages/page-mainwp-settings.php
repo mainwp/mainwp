@@ -1184,21 +1184,31 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             }
         }
 
-        $timezone_format = _x( 'Y-m-d H:i:s', 'timezone date format' );
+        $timezone_format = _x( 'Y-m-d H:i:s', 'timezone date format', 'mainwp' );
 
         ?>
         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-general">
             <label class="six wide column middle aligned"><?php esc_html_e( 'Timezone', 'mainwp' ); ?></label>
-            <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Choose either a city in the same timezone as you or a %s (Coordinated Universal Time) time offset.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+            <?php
+            // translators: %s is the abbreviation "UTC".
+            $timezone_tooltip = esc_attr__( 'Choose either a city in the same timezone as you or a %s (Coordinated Universal Time) time offset.', 'mainwp' );
+            ?>
+            <div class="ten wide column" data-tooltip="<?php echo $timezone_tooltip; // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-inverted="" data-position="top left">
                 <select id="timezone_string" class="ui dropdown" name="timezone_string" aria-describedby="timezone-description">
                 <?php echo wp_timezone_choice( $tzstring, get_user_locale() ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
                 </select>
                 <div class="ui hidden fitted divider"></div>
                 <div class="ui secondary segment">
-                    <?php printf( esc_html__( 'Universal time is %s.' ), '<code>' . esc_html( date_i18n( $timezone_format, false, true ) ) . '</code>' ); ?>
+                    <?php
+                    // translators: %s is the current UTC date and time.
+                    printf( esc_html__( 'Universal time is %s.', 'mainwp' ), '<code>' . esc_html( date_i18n( $timezone_format, false, true ) ) . '</code>' );
+                    ?>
                     <div class="ui hidden fitted divider"></div>
                 <?php if ( get_option( 'timezone_string' ) || ! empty( $current_offset ) ) : ?>
-                        <?php printf( esc_html__( 'Local time is %s.' ), '<code>' . esc_html( date_i18n( $timezone_format ) ) . '</code>' ); ?>
+                        <?php
+                        // translators: %s is the current local date and time.
+                        printf( esc_html__( 'Local time is %s.', 'mainwp' ), '<code>' . esc_html( date_i18n( $timezone_format ) ) . '</code>' );
+                        ?>
                         <div class="ui hidden fitted divider"></div>
                 <?php endif; ?>
                 <?php if ( $check_zone_info && $tzstring ) : ?>
@@ -1219,8 +1229,9 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
                             if ( ! empty( $transitions[1] ) ) {
                                 echo ' ';
+                                // translators: %s is the date and time when the timezone transition occurs.
                                 $message = $transitions[1]['isdst'] ? esc_html__( 'Daylight saving time begins on: %s.', 'mainwp' ) : esc_html__( 'Standard time begins on: %s.', 'mainwp' );
-                                printf( $message, '<code>' . wp_date( esc_html__( 'F j, Y' ) . ' ' . esc_html__( 'g:i a' ), esc_html( $transitions[1]['ts'] ) ) . '</code>' ); // phpcs:ignore WordPress.Security.EscapeOutput
+                                printf( $message, '<code>' . wp_date( esc_html__( 'F j, Y', 'mainwp' ) . ' ' . esc_html__( 'g:i a', 'mainwp' ), esc_html( $transitions[1]['ts'] ) ) . '</code>' ); // phpcs:ignore WordPress.Security.EscapeOutput
                             } else {
                                 esc_html_e( 'This timezone does not observe daylight saving time.', 'mainwp' );
                             }
@@ -1255,7 +1266,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                  *
                  * @param string[] $default_date_formats Array of default date formats.
                  */
-                $date_formats = array_unique( apply_filters( 'date_formats', array( esc_html__( 'F j, Y' ), 'Y-m-d', 'm/d/Y', 'd/m/Y' ) ) );
+                $date_formats = array_unique( apply_filters( 'date_formats', array( esc_html__( 'F j, Y', 'mainwp' ), 'Y-m-d', 'm/d/Y', 'd/m/Y' ) ) );
 
                 $custom = true;
 
@@ -1269,11 +1280,11 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             }
                 echo '<label><input type="radio" name="date_format" id="date_format_custom_radio" value="\c\u\s\t\o\m"';
                 checked( $custom );
-                echo '/> <span class="date-time-text date-time-custom-text">' . esc_html__( 'Custom:' ) . '<span class="screen-reader-text"> ' . esc_html__( 'enter a custom date format in the following field' ) . '</span></span></label>' .
-                    '<label for="date_format_custom" class="screen-reader-text">' . esc_html__( 'Custom date format:' ) . '</label>' .
+                echo '/> <span class="date-time-text date-time-custom-text">' . esc_html__( 'Custom:', 'mainwp' ) . '<span class="screen-reader-text"> ' . esc_html__( 'enter a custom date format in the following field', 'mainwp' ) . '</span></span></label>' .
+                    '<label for="date_format_custom" class="screen-reader-text">' . esc_html__( 'Custom date format:', 'mainwp' ) . '</label>' .
                     '<input type="text" name="date_format_custom" id="date_format_custom" value="' . esc_attr( get_option( 'date_format' ) ) . '" class="small-text settings-field-value-change-handler" />' .
                     '<br />' .
-                    '<em><strong>' . esc_html__( 'Preview:' ) . '</strong> <span class="example">' . esc_html( date_i18n( get_option( 'date_format' ) ) ) . '</span>' .
+                    '<em><strong>' . esc_html__( 'Preview:', 'mainwp' ) . '</strong> <span class="example">' . esc_html( date_i18n( get_option( 'date_format' ) ) ) . '</span>' .
                     "<span class='spinner'></span>\n" . '</em>';
             ?>
         </div>
@@ -1295,7 +1306,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                  *
                  * @param string[] $default_time_formats Array of default time formats.
                  */
-                $time_formats = array_unique( apply_filters( 'time_formats', array( esc_html__( 'g:i a' ), 'g:i A', 'H:i' ) ) );
+                $time_formats = array_unique( apply_filters( 'time_formats', array( esc_html__( 'g:i a', 'mainwp' ), 'g:i A', 'H:i' ) ) );
 
                 $custom = true;
 
@@ -1309,11 +1320,11 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         }
             echo '<label><input type="radio" name="time_format" id="time_format_custom_radio" value="\c\u\s\t\o\m"';
             checked( $custom );
-            echo '/> <span class="date-time-text date-time-custom-text">' . esc_html__( 'Custom:' ) . '<span class="screen-reader-text"> ' . esc_html__( 'enter a custom time format in the following field' ) . '</span></span></label>' .
-                '<label for="time_format_custom" class="screen-reader-text">' . esc_html__( 'Custom time format:' ) . '</label>' .
+            echo '/> <span class="date-time-text date-time-custom-text">' . esc_html__( 'Custom:', 'mainwp' ) . '<span class="screen-reader-text"> ' . esc_html__( 'enter a custom time format in the following field', 'mainwp' ) . '</span></span></label>' .
+                '<label for="time_format_custom" class="screen-reader-text">' . esc_html__( 'Custom time format:', 'mainwp' ) . '</label>' .
                 '<input type="text" class="small-text settings-field-value-change-handler" name="time_format_custom" id="time_format_custom" value="' . esc_attr( get_option( 'time_format' ) ) . '" />' .
                 '<br />' .
-            '<em><strong>' . esc_html__( 'Preview:' ) . '</strong> <span class="example">' . esc_html( date_i18n( get_option( 'time_format' ) ) ) . '</span>' .
+            '<em><strong>' . esc_html__( 'Preview:', 'mainwp' ) . '</strong> <span class="example">' . esc_html( date_i18n( get_option( 'time_format' ) ) ) . '</span>' .
             "<span class='spinner'></span>\n" . '</em>';
         ?>
         </div>
@@ -1555,7 +1566,11 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                     <label class="six wide column middle aligned"><?php esc_html_e( 'OpenSSL.cnf location', 'mainwp' ); ?></label>
                                     <div class="ten wide column ui field">
                                         <input type="text" name="mainwp_openssl_lib_location" value="<?php echo esc_html( $openssl_loc ); ?>">
-                                        <em><?php esc_html_e( 'If your openssl.cnf file is saved to a different path from what is entered please enter your exact path.', 'mainwp' ); ?> <?php printf( esc_html__( 'If you are not sure how to find the openssl.cnf location, please %1$scheck this help document%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/potential-issues#openssl-library-error-invalid-request" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></em>
+                                        <em><?php esc_html_e( 'If your openssl.cnf file is saved to a different path from what is entered please enter your exact path.', 'mainwp' ); ?>
+                                        <?php
+                                        // translators: 1: Opening anchor tag. 2: Closing anchor tag.
+                                        printf( esc_html__( 'If you are not sure how to find the openssl.cnf location, please %1$scheck this help document%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/potential-issues#openssl-library-error-invalid-request" target="_blank">', '</a> <i class="external alternate icon"></i>' );
+                                        ?></em>
                                         <em><?php esc_html_e( 'If you have confirmed the placement of your openssl.cnf and are still receiving an error banner, click the "Error Fixed" button to dismiss it.', 'mainwp' ); ?></em>
                                     </div>
                                 </div>
@@ -2117,7 +2132,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-tools-info-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-tools-info-message"></i>
-                    <?php printf( esc_html__( 'Use MainWP tools to adjust your MainWP Dashboard to your needs and perform specific actions when needed.  For additional help, review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/management/mainwp-dashboard-settings#mainwp-dashboard-settings" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                    <?php
+                    // translators: 1: Opening anchor tag. 2: Closing anchor tag.
+                    printf( esc_html__( 'Use MainWP tools to adjust your MainWP Dashboard to your needs and perform specific actions when needed.  For additional help, review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/management/mainwp-dashboard-settings#mainwp-dashboard-settings" target="_blank">', '</a> <i class="external alternate icon"></i>' );
+                    ?>
                 </div>
             <?php endif; ?>
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-tools-info-custom-theme' ) ) : ?>

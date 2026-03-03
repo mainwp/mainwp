@@ -586,7 +586,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-posts-info-message' ) ) : ?>
                         <div class="ui info message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-posts-info-message"></i>
-                            <?php printf( esc_html__( 'Monitor and manage the lifecycle of content across all connected sites. Perform safe, bulk operations without editing layouts or page design. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/content/manage-posts" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                            <?php /* translators: 1: opening anchor tag, 2: closing anchor tag with icon */ printf( esc_html__( 'Monitor and manage the lifecycle of content across all connected sites. Perform safe, bulk operations without editing layouts or page design. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/content/manage-posts" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
                         </div>
                     <?php endif; ?>
                     <?php static::render_table( true ); ?>
@@ -1814,6 +1814,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $monthnum  = zeroise( $i, 2 );
             $monthtext = $wp_locale->get_month_abbrev( $wp_locale->get_month( $i ) );
             $month    .= "\t\t\t" . '<option value="' . $monthnum . '" data-text="' . $monthtext . '" ' . selected( $monthnum, $mm, false ) . '>';
+            /* translators: 1: month number, 2: month abbreviation */
             $month    .= sprintf( esc_html__( '%1$s-%2$s', 'mainwp' ), $monthnum, $monthtext ) . "</option>\n";
         }
 
@@ -1825,6 +1826,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $minute = '<label><span class="screen-reader-text">' . esc_html__( 'Minute', 'mainwp' ) . '</span><input type="text" ' . ( $multi ? '' : 'id="mn" ' ) . 'name="mn" value="' . $mn . '" size="2" maxlength="2"' . $tab_index_attribute . ' autocomplete="off" /></label>';
 
         echo '<div class="timestamp-wrap">';
+        /* translators: 1: month dropdown, 2: day input, 3: year input, 4: hour input, 5: minute input */
         printf( esc_html__( '%1$s %2$s, %3$s @ %4$s:%5$s', 'mainwp' ), $month, $day, $year, $hour, $minute ); // phpcs:ignore WordPress.Security.EscapeOutput
 
         echo '</div><input type="hidden" id="ss" name="ss" value="' . esc_attr( $ss ) . '" />';
@@ -1959,6 +1961,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                     <div class="error inline">
                                         <p>
                                         <?php
+                                            /* translators: %s: plugin name wrapped in strong tag */
                                             printf( esc_html__( 'This meta box, from the %s plugin, is not compatible with the block editor.', 'mainwp' ), '<strong>{' . esc_html( $plugin['Name'] ) . '}</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput
                                         ?>
                                         </p>
@@ -2159,7 +2162,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
                         ?>
                             <table id="post-status-info"><tbody><tr>
-                                <td id="wp-word-count" class="hide-if-no-js"><?php printf( esc_html__( 'Word count: %s', 'mainwp' ), '<span class="word-count">0</span>' ); ?></td>
+                                <td id="wp-word-count" class="hide-if-no-js"><?php /* translators: %s: word count span element */ printf( esc_html__( 'Word count: %s', 'mainwp' ), '<span class="word-count">0</span>' ); ?></td>
                                 <td class="autosave-info">
                                 <span class="autosave-message">&nbsp;</span>
                             <?php
@@ -2167,9 +2170,11 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                 echo '<span id="last-edit">';
                                 $last_user = get_userdata( get_post_meta( $post_ID, '_edit_last', true ) );
                                 if ( $last_user ) {
-                                    printf( esc_html__( 'Last edited by %1$s on %2$s at %3$s', 'mainwp' ), esc_html( $last_user->display_name ), mysql2date( esc_html__( 'F j, Y' ), $post->post_modified ), mysql2date( esc_html__( 'g:i a' ), $post->post_modified ) ); // phpcs:ignore WordPress.Security.EscapeOutput
+                                    /* translators: 1: user display name, 2: date, 3: time */
+                                    printf( esc_html__( 'Last edited by %1$s on %2$s at %3$s', 'mainwp' ), esc_html( $last_user->display_name ), mysql2date( esc_html__( 'F j, Y', 'mainwp' ), $post->post_modified ), mysql2date( esc_html__( 'g:i a', 'mainwp' ), $post->post_modified ) ); // phpcs:ignore WordPress.Security.EscapeOutput
                                 } else {
-                                    printf( esc_html__( 'Last edited on %1$s at %2$s', 'mainwp' ), mysql2date( esc_html__( 'F j, Y' ), $post->post_modified ), mysql2date( esc_html__( 'g:i a' ), $post->post_modified ) ); // phpcs:ignore WordPress.Security.EscapeOutput
+                                    /* translators: 1: date, 2: time */
+                                    printf( esc_html__( 'Last edited on %1$s at %2$s', 'mainwp' ), mysql2date( esc_html__( 'F j, Y', 'mainwp' ), $post->post_modified ), mysql2date( esc_html__( 'g:i a', 'mainwp' ), $post->post_modified ) ); // phpcs:ignore WordPress.Security.EscapeOutput
                                 }
                                 echo '</span>';
                             }

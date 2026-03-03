@@ -1,6 +1,6 @@
 /* eslint-disable complexity */
 
-window.mainwpVars = window.mainwpVars || {};
+globalThis.mainwpVars = globalThis.mainwpVars || {};
 
 //Ignore plugin
 jQuery(function () {
@@ -78,7 +78,7 @@ jQuery(function () {
 
 
 // Manage Plugins -- Fetch plugins
-window.mainwp_fetch_plugins = function (notFetchContent) {
+globalThis.mainwp_fetch_plugins = function (notFetchContent) {
     let errors = [];
     let selected_sites = [];
     let selected_groups = [];
@@ -177,7 +177,7 @@ jQuery(function () {
         }).get();
 
         let selectedIds = [];
-        if (checkedVals instanceof Array) {
+        if (Array.isArray(checkedVals)) {
             jQuery.grep(checkedVals, function (val) {
                 if (jQuery.inArray(val, selectedIds) == -1) {
                     selectedIds.push(val);
@@ -529,7 +529,7 @@ jQuery(function () {
         }).get();
 
         let selectedIds = [];
-        if (checkedVals instanceof Array) {
+        if (Array.isArray(checkedVals)) {
             jQuery.grep(checkedVals, function (val) {
                 if (jQuery.inArray(val, selectedIds) == -1) {
                     selectedIds.push(val);

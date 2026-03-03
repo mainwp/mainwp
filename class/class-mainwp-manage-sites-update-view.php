@@ -98,8 +98,14 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-updates-site-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-site-message"></i>
-                    <div><?php printf( esc_html__( 'Manage available updates for the child site. From here, you can update update %1$splugins%2$s, %3$sthemes%4$s, and %5$sWordPress core%6$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/updates/manage-updates#plugin-updates" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://docs.mainwp.com/sites/updates/manage-updates#theme-updates" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://docs.mainwp.com/sites/updates/manage-updates#wordpress-core-updates" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
-                    <div><?php printf( esc_html__( 'Also, from here, you can ignore updates for %1$sWordPress core%2$s, %3$splugins%4$s, and %5$sthemes%6$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/updates/manage-updates#ignore-theme-updates" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://docs.mainwp.com/sites/updates/manage-updates#ignore-plugin-updates" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://docs.mainwp.com/sites/updates/manage-updates#ignore-theme-updates" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
+                    <div><?php
+					/* translators: 1: Opening anchor tag for plugins, 2: Closing anchor tag, 3: Opening anchor tag for themes, 4: Closing anchor tag, 5: Opening anchor tag for WordPress core, 6: Closing anchor tag */
+					printf( esc_html__( 'Manage available updates for the child site. From here, you can update update %1$splugins%2$s, %3$sthemes%4$s, and %5$sWordPress core%6$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/updates/manage-updates#plugin-updates" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://docs.mainwp.com/sites/updates/manage-updates#theme-updates" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://docs.mainwp.com/sites/updates/manage-updates#wordpress-core-updates" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
+					?></div>
+                    <div><?php
+					/* translators: 1: Opening anchor tag for WordPress core, 2: Closing anchor tag, 3: Opening anchor tag for plugins, 4: Closing anchor tag, 5: Opening anchor tag for themes, 6: Closing anchor tag */
+					printf( esc_html__( 'Also, from here, you can ignore updates for %1$sWordPress core%2$s, %3$splugins%4$s, and %5$sthemes%6$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/updates/manage-updates#ignore-theme-updates" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://docs.mainwp.com/sites/updates/manage-updates#ignore-plugin-updates" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://docs.mainwp.com/sites/updates/manage-updates#ignore-theme-updates" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
+					?></div>
                 </div>
             <?php endif; ?>
             <?php
@@ -904,6 +910,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
         if ( is_array( $decodedDismissedPlugins ) ) {
             $plugins_outdate = array_diff_key( $plugins_outdate, $decodedDismissedPlugins );
         }
+        /* translators: %s: Number of days since last update */
         $str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
         ?>
 
@@ -993,6 +1000,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
             }
         }
 
+        /* translators: %s: Number of days since last update */
         $str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
 
         ?>

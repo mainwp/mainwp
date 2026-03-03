@@ -734,13 +734,12 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         //phpcs:enable WordPress.Security.NonceVerification.Missing
 
         if ( ! empty( $groupId ) ) {
-            $color_update = '';
-            if ( null !== $newColor ) {
-                $color_update = ", color='" . $this->escape( $newColor ) . "' ";
-            }
             $table_group = esc_sql( $this->table_name( 'group' ) );
-            $color_update = esc_sql( $color_update );
-            $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_group}` SET name=%s {$color_update} WHERE id=%d", $this->escape( $newName ), $groupId ) );
+            if ( null !== $newColor ) {
+                $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_group}` SET name=%s, color=%s WHERE id=%d", $newName, $newColor, $groupId ) );
+            } else {
+                $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_group}` SET name=%s WHERE id=%d", $newName, $groupId ) );
+            }
             return $this->get_group_by_id( $groupId );
         } elseif ( ! empty( $newName ) ) {
             $groupId = $this->add_group( $current_user->ID, MainWP_Manage_Groups::check_group_name( $newName ), $newColor );
@@ -1075,7 +1074,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         if ( ! empty( $sql_set ) ) {
             $sql_set = rtrim( $sql_set, ',' );
             $table_wp = esc_sql( $this->table_name( 'wp' ) );
-            $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_wp}` SET " . esc_sql( $sql_set ) . " WHERE id=%d", $websiteid ) );
+            $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_wp}` SET " . $sql_set . " WHERE id=%d", $websiteid ) );
             $success = true;
         }
 

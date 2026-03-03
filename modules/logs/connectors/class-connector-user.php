@@ -101,9 +101,9 @@ class Connector_User extends Log_Connector {
                 'user_id'      => $userId,
             );
 
-            // translators: 1: User display name, 2: Roles.
+            // translators: %1$s: User display name.
             $message = esc_html_x(
-                '%1$s',
+                'User: %1$s',
                 '1: User display name',
                 'mainwp'
             );

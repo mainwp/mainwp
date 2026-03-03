@@ -83,8 +83,7 @@ class Connector_Client extends Log_Connector {
      */
     public function callback_mainwp_client_updated( $client, $created = false ) {
         $action = $created ? 'created' : 'updated';
-        // translators: Placeholder refers to a client (e.g. "Jane Doe").
-        $message = esc_html__( '%s', 'mainwp' );
+        $message = '%s';
 
         $state = 1;
         $this->log(
@@ -108,8 +107,7 @@ class Connector_Client extends Log_Connector {
      * @param object $client Client deleted.
      */
     public function callback_mainwp_client_deleted( $client ) {
-        // translators: Placeholder refers to a user display name (e.g. "Jane Doe").
-        $message = esc_html__( '%s', 'mainwp' );
+        $message = '%s';
         $state   = 1;
         $this->log(
             $message,
@@ -152,8 +150,7 @@ class Connector_Client extends Log_Connector {
             $action = 'lost';
         }
 
-        // translators: Placeholder refers to a client name (e.g. "Jane Doe").
-        $message = esc_html__( '%s', 'mainwp' );
+        $message = '%s';
 
         $state = 1;
         $this->log(

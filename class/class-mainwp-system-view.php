@@ -78,6 +78,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'DISCONNECTED', esc_html__( 'DISCONNECTED', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'TIMEOUT', esc_html__( 'TIMEOUT', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Ignored', esc_html__( 'Ignored', 'mainwp' ) );
+        /* translators: %1s: Item type (e.g. plugins, themes) */
         mainwp_add_translation( $mainwpTranslations, 'No ignored %1s', esc_html__( 'No ignored %1s', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'No ignored %1 conflicts', esc_html__( 'No ignored %1 conflicts', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'No ignored plugins', esc_html__( 'No ignored plugins', 'mainwp' ) );
@@ -210,7 +211,9 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'Please enter a valid name for your backup task', esc_html__( 'Please enter a valid name for your backup task', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'The backup task was added successfully', esc_html__( 'The backup task was added successfully', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Bulk test connection finished', esc_html__( 'Bulk test connection finished', 'mainwp' ) );
+        /* translators: %1: Opening anchor tag, %2: Closing anchor tag, %3: HTTP status code number */
         mainwp_add_translation( $mainwpTranslations, 'To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', esc_html__( 'To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', 'mainwp' ) );
+        /* translators: %1: Opening anchor tag, %2: Closing anchor tag */
         mainwp_add_translation( $mainwpTranslations, 'Refreshing the page for Step 3 "Grab API Keys" in 5 seconds... if refresh fails please %1click here%2.', esc_html__( 'Refreshing the page for Step 3 "Grab API Keys" in 5 seconds... if refresh fails please %1click here%2.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'No ignored abandoned plugins', esc_html__( 'No ignored abandoned plugins', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Please upload plugins to install.', esc_html__( 'Please upload plugins to install.', 'mainwp' ) );
@@ -266,7 +269,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             }
         </style>
         <tr class="plugin-update-tr active" slug="<?php echo esc_attr( $slug ); ?>"><td colspan="4" class="plugin-update colspanchange"><div class="update-message api-deactivate">
-                <?php printf( esc_html__( 'You have a MainWP Extension that does not have an active API entered.  This means you will not receive updates or support.  Please visit the %1$sExtensions%2$s page and enter your API.', 'mainwp' ), '<a href="admin.php?page=Extensions">', '</a>' ); ?>
+                <?php /* translators: 1: Opening link tag, 2: Closing link tag */ printf( esc_html__( 'You have a MainWP Extension that does not have an active API entered.  This means you will not receive updates or support.  Please visit the %1$sExtensions%2$s page and enter your API.', 'mainwp' ), '<a href="admin.php?page=Extensions">', '</a>' ); ?>
                     <span class="mainwp-right"><a href="#" class="mainwp-activate-notice-dismiss" ><i class="times circle icon"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span>
                 </div></td></tr>
         <?php
@@ -282,7 +285,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             ?>
             <div class="ui icon message yellow">
                 <i class="exclamation circle icon"></i>
-                <strong><?php echo esc_html__( 'Important Notice: ', 'mainwp' ); ?></strong>&nbsp;<?php printf( esc_html__( 'MainWP Version 4 is a major upgrade from MainWP Version 3. Please, read this&nbsp; %1$supdating FAQ%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
+                <strong><?php echo esc_html__( 'Important Notice: ', 'mainwp' ); ?></strong>&nbsp;<?php /* translators: 1: Opening link tag, 2: Closing link tag with icon */ printf( esc_html__( 'MainWP Version 4 is a major upgrade from MainWP Version 3. Please, read this&nbsp; %1$supdating FAQ%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
                 <i class="close icon mainwp-notice-dismiss" notice-id="upgrade_4"></i>
             </div>
             <?php
@@ -473,11 +476,8 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 <div class="header"><?php esc_html_e( 'MainWP Dashboard Theme Support Notice', 'mainwp' ); ?></div>
                 <div>
                     <?php
-                    printf(
-                        esc_html__( 'You\'re currently using a legacy or custom MainWP theme. With MainWP v6, only Light and Dark themes are actively maintained. Your current theme will keep working for now, but it may not receive updates and could have visual issues in future releases. Switch anytime in %1$sMainWP → Tools%2$s.', 'mainwp' ),
-                        '<a href="' . esc_url( admin_url( 'admin.php?page=MainWPTools' ) ) . '">',
-                        '</a>'
-                    );
+                    /* translators: 1: Opening anchor tag, 2: Closing anchor tag */
+                    printf( esc_html__( 'You\'re currently using a legacy or custom MainWP theme. With MainWP v6, only Light and Dark themes are actively maintained. Your current theme will keep working for now, but it may not receive updates and could have visual issues in future releases. Switch anytime in %1$sMainWP → Tools%2$s.', 'mainwp' ), '<a href="' . esc_url( admin_url( 'admin.php?page=MainWPTools' ) ) . '">', '</a>' );
                     ?>
                 </div>
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp_themes_deprecation_notice"></i>
@@ -612,7 +612,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 <div class="ui attention message">
                     <div class="header"><?php esc_html_e( 'Upcoming PHP requirement (Dashboard)', 'mainwp' ); ?></div>
                     <?php esc_html_e( 'In the coming months, MainWP Dashboard will require PHP 8.1+. To avoid issues and stay secure, please update your Dashboard site to a supported version (for example PHP 8.3).', 'mainwp' ); ?>
-                    <?php printf( esc_html__( 'You can check the list of actively maintained PHP versions %shere%s.', 'mainwp' ), '<a href="https://www.php.net/supported-versions.php" target="_blank">', '</a>' ); ?>
+                    <?php /* translators: 1: Opening link tag, 2: Closing link tag */ printf( esc_html__( 'You can check the list of actively maintained PHP versions %1$shere%2$s.', 'mainwp' ), '<a href="https://www.php.net/supported-versions.php" target="_blank">', '</a>' ); ?>
                     <br/><br/>
                     <strong><?php esc_html_e( 'This change affects only your MainWP Dashboard site, not your connected child sites.', 'mainwp' ); ?></strong>
                     <i class="close icon mainwp-notice-dismiss" notice-id="phpver_8_0"></i>
@@ -919,7 +919,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         ?>
         <div class="ui blue message">
             <h4><?php esc_html_e( 'This appears to be a production site', 'mainwp' ); ?></h4>
-            <?php esc_html_e( 'We HIGHLY recommend a NEW WordPress install for your MainWP Dashboard.', 'mainwp' ); ?> <?php printf( esc_html__( 'Using a new WordPress install will help to cut down on plugin conflicts and other issues that can be caused by trying to run your MainWP Dashboard off an active site. Most hosting companies provide free subdomains %s and we recommend creating one if you do not have a specific dedicated domain to run your MainWP Dashboard.', 'mainwp' ), '("<strong>demo.yourdomain.com</strong>")' ); ?>
+            <?php esc_html_e( 'We HIGHLY recommend a NEW WordPress install for your MainWP Dashboard.', 'mainwp' ); ?> <?php /* translators: %s: Example subdomain string */ printf( esc_html__( 'Using a new WordPress install will help to cut down on plugin conflicts and other issues that can be caused by trying to run your MainWP Dashboard off an active site. Most hosting companies provide free subdomains %s and we recommend creating one if you do not have a specific dedicated domain to run your MainWP Dashboard.', 'mainwp' ), '("<strong>demo.yourdomain.com</strong>")' ); ?>
             <br /><br />
             <a href="#" class="ui green mini button" id="remove-mainwp-installation-warning"><?php esc_html_e( 'I have read the warning and I want to proceed', 'mainwp' ); ?></a>
         </div>
@@ -1118,7 +1118,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             <div class="header"><?php esc_html_e( 'Confirmation', 'mainwp' ); ?></div>
             <div class="scrolling content">
                 <div class="content-massage"></div>
-                <div class="ui mini yellow message hidden update-confirm-notice" ><?php printf( esc_html__( 'To disable update confirmations, go to the %1$sSettings%2$s page and disable the "Disable update confirmations" option', 'mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?></div>
+                <div class="ui mini yellow message hidden update-confirm-notice" ><?php /* translators: 1: Opening link tag, 2: Closing link tag */ printf( esc_html__( 'To disable update confirmations, go to the %1$sSettings%2$s page and disable the "Disable update confirmations" option', 'mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?></div>
                 <div class="ui form hidden" id="mainwp-confirm-form" style="display:none;">
                     <div class="ui divider"></div>
                     <div class="field">
@@ -1289,7 +1289,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             <div class="header"><?php esc_html_e( 'Plugin Install Check', 'mainwp' ); ?></div>
             <div class="scrolling content mainwp-modal-content">
                 <div class="ui message" id="mainwp-message-zone-install" style="display:none;"></div>
-                <div class="ui message blue"><?php printf( esc_html__( 'We have detected the following sites do not have the %s plugin installed. This plugin is required to be installed on your Child Sites for the Extension to work on those sites. Please select sites where you want to install it and click the Install Plugin button. Uncheck any site you don\'t want to add the plugin to or cancel to skip this step. After the installation process, resync your sites to see sites with the newly installed plugin.', 'mainwp' ), esc_html( $plugin_name ) ); ?></div>
+                <div class="ui message blue"><?php /* translators: %s: Plugin name */ printf( esc_html__( 'We have detected the following sites do not have the %s plugin installed. This plugin is required to be installed on your Child Sites for the Extension to work on those sites. Please select sites where you want to install it and click the Install Plugin button. Uncheck any site you don\'t want to add the plugin to or cancel to skip this step. After the installation process, resync your sites to see sites with the newly installed plugin.', 'mainwp' ), esc_html( $plugin_name ) ); ?></div>
                 <div class="ui middle aligned divided list" id="<?php echo esc_attr( $items_list_id ); ?>">
                     <?php foreach ( $missing_installed as $siteid => $site_name ) : ?>
                         <div class="item siteBulkInstall" siteid="<?php echo intval( $siteid ); ?>" status="">

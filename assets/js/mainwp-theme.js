@@ -2,7 +2,7 @@
 // current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 /* global _mainwpThemeSettings, confirm */
-window.wp = window.wp || {};
+globalThis.wp = globalThis.wp || {};
 
 (function ($) {
 
@@ -53,7 +53,7 @@ window.wp = window.wp || {};
 
         el: '#wpbody-content .mainwp-browse-themes',
 
-        window: $(window),
+        window: $(globalThis.window),
         // Pagination instance
         page: 0,
 
@@ -115,11 +115,8 @@ window.wp = window.wp || {};
         // Checks when the user gets close to the bottom
         // of the mage and triggers a theme:scroll event
         scroller: function () {
-            let self = this,
-                bottom, threshold;
-
-            bottom = this.window.scrollTop() + self.window.height();
-            threshold = self.$el.offset().top + self.$el.outerHeight(false) - self.window.height();
+            const bottom = this.window.scrollTop() + this.window.height();
+            let threshold = this.$el.offset().top + this.$el.outerHeight(false) - this.window.height();
             threshold = Math.round(threshold * 0.9);
 
             if (bottom > threshold) {
@@ -209,15 +206,13 @@ window.wp = window.wp || {};
 
         // Paginates the collection with a helper method
         // that slices the collection
-        paginate: function (instance) {
-            let collection = this;
-            instance = instance || 0;
-
-            // Themes per instance are set at 20
-            collection = _(collection.rest(20 * instance));
+        paginate: function (instance = 0) {
+             // Themes per instance are set at 20
+            let collection = _(this.rest(20 * instance));
             collection = _(collection.first(20));
 
             return collection;
+
         },
 
         count: false,
@@ -1763,8 +1758,11 @@ jQuery(function($) {
             tbWindow.width(W - 50).height(H - 45 - adminbar_height);
             $('#TB_iframeContent').width(W - 50).height(H - 75 - adminbar_height);
             tbWindow.css({ 'margin-left': '-' +  Number.parseInt(((W - 50) / 2), 10) + 'px' });
-            if (typeof document.body.style.maxWidth !== 'undefined') {
-                tbWindow.css({ 'top': 20 + adminbar_height + 'px', 'margin-top': '0' });
+            if ('maxWidth' in document.body.style) {
+                tbWindow.css({
+                    top: `${20 + adminbar_height}px`,
+                    marginTop: 0
+                });
             }
         }
     };

@@ -542,10 +542,8 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         if ( $timestamp ) {
             $formatted = static::format_timestamp( static::get_timestamp( $timestamp ) );
-            $message   = sprintf(
-                esc_html__( 'Last synchronization completed on: %s', 'mainwp' ),
-                $formatted
-            );
+            /* translators: %s: formatted date/time */
+            $message   = sprintf( esc_html__( 'Last synchronization completed on: %s', 'mainwp' ), $formatted );
         } else {
             $message = esc_html__( 'Not yet synchronized', 'mainwp' );
         }

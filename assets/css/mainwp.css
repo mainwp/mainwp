@@ -191,7 +191,6 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
 /* Header */
 
 #mainwp-top-header {
-    z-index: 1001;
     padding: 10px;
     height: 58px;
     background: #1c1d1b;
@@ -291,6 +290,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
 }
 
 .mainwp-individual-site-view #mainwp-site-mode-wrap,
+.mainwp-individual-site-view #mainwp-admin-notices-segment,
 .mainwp-individual-site-view #mainwp-module-cost-tracker-settings-tab {
     width: calc(100% - 200px);
     float: right;

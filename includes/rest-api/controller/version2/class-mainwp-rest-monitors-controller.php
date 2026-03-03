@@ -1786,7 +1786,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             if ( ! in_array( $code, $http_error_codes ) ) {
                 return new WP_Error(
                     'invalid_status_code',
-                    sprintf( __( 'Invalid HTTP status code: %d', 'mainwp' ), $code ),
+                    /* translators: %d: HTTP status code */ sprintf( __( 'Invalid HTTP status code: %d', 'mainwp' ), $code ),
                     array( 'status' => 400 )
                 );
             }
@@ -1824,7 +1824,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             if ( ! in_array( $code, $http_error_codes ) ) {
                 return new WP_Error(
                     'invalid_status_code',
-                    sprintf( __( 'Invalid HTTP status code: %d', 'mainwp' ), $code ),
+                    /* translators: %d: HTTP status code */ sprintf( __( 'Invalid HTTP status code: %d', 'mainwp' ), $code ),
                     array( 'status' => 400 )
                 );
             }
@@ -1957,6 +1957,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         return new WP_Error(
             'invalid_period',
             sprintf(
+                /* translators: %s: Comma-separated list of allowed period values */
                 __( 'Invalid period format. Allowed values: %s or ISO8601 range (start/end)', 'mainwp' ),
                 implode( ', ', $allowed_periods )
             )

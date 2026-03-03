@@ -579,7 +579,10 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         <div class="ui massive header"><?php esc_html_e( 'Welcome to MainWP Clients', 'mainwp' ); ?></div>
                         <p><?php esc_html_e( 'Organize and manage your customers with client profiles, contact information, and site associations.', 'mainwp' ); ?>
                         </p>
-                        <p><?php printf( esc_html__( 'Start by %1$sadding your first client%2$s or %3$simporting existing clients%4$s from a CSV file.', 'mainwp' ), '<a href="admin.php?page=ClientAddNew">', '</a>', '<a href="admin.php?page=ClientImport">', '</a>' ); ?>
+                        <p><?php
+                        // translators: 1: Opening anchor tag for Add Client. 2: Closing anchor tag. 3: Opening anchor tag for Import Clients. 4: Closing anchor tag.
+                        printf( esc_html__( 'Start by %1$sadding your first client%2$s or %3$simporting existing clients%4$s from a CSV file.', 'mainwp' ), '<a href="admin.php?page=ClientAddNew">', '</a>', '<a href="admin.php?page=ClientImport">', '</a>' );
+                        ?>
                         </p>
                     </div>
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-clients-welcome-message"></i>
@@ -589,13 +592,19 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 <?php if ( static::$itemsTable->total_items > 0 && static::$itemsTable->total_items <= 5 && MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-clients-add-more-clients-tip' ) ) : ?>
                     <div class="ui message">
                         <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-clients-add-more-clients-tip"></i>
-                        <?php printf( esc_html__( '%s Tip: Add more Clients. Use %2$sAdd Client%3$s to continue organizing your network.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<a href="admin.php?page=ClientAddNew">', '</a>' ); ?>
+                        <?php
+                        // translators: 1: Bulb emoji element. 2: Opening anchor tag. 3: Closing anchor tag.
+                        printf( esc_html__( '%1$s Tip: Add more Clients. Use %2$sAdd Client%3$s to continue organizing your network.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<a href="admin.php?page=ClientAddNew">', '</a>' );
+                        ?>
                     </div>
                 <?php endif; ?>
                 <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-clients-columns-order-tip' ) ) : ?>
                     <div class="ui message">
                         <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-clients-columns-order-tip"></i>
-                        <?php printf( esc_html__( '%s Tip: Drag columns to reorder or use (%2$s) Page Settings to show/hide columns. Your column layout is saved automatically.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<i class="cog fitted icon"></i>' ); ?>
+                        <?php
+                        // translators: 1: Bulb emoji element. 2: Cog icon element.
+                        printf( esc_html__( '%1$s Tip: Drag columns to reorder or use (%2$s) Page Settings to show/hide columns. Your column layout is saved automatically.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<i class="cog fitted icon"></i>' );
+                        ?>
                     </div>
                 <?php endif; ?>
                 <form method="post" class="mainwp-table-container">
@@ -1237,7 +1246,10 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 <?php if ( count( $fields ) < 5 && MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-client-fields-tip' ) ) : ?>
                     <div class="ui message">
                         <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-client-fields-tip"></i>
-                        <?php printf( esc_html__( '%s Tip: Custom Client Fields let you store extra details unique to your workflow, such as billing info, project type, or renewal dates. Once added, these fields will appear when adding or editing a client. %2$sLearn more%3$s about how custom fields work.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<a href="https://docs.mainwp.com/clients/manage-clients#client-fields" target="_blank">', '</a>' ); ?>
+                        <?php
+                        // translators: 1: Bulb emoji element. 2: Opening anchor tag. 3: Closing anchor tag.
+                        printf( esc_html__( '%1$s Tip: Custom Client Fields let you store extra details unique to your workflow, such as billing info, project type, or renewal dates. Once added, these fields will appear when adding or editing a client. %2$sLearn more%3$s about how custom fields work.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<a href="https://docs.mainwp.com/clients/manage-clients#client-fields" target="_blank">', '</a>' );
+                        ?>
                     </div>
                 <?php endif; ?>
                 <table id="mainwp-clients-custom-fields-table" class="ui table" style="width:100%">

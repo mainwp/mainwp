@@ -4,7 +4,7 @@
  *
  * Handles propagation of password policy settings to child sites.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -506,9 +506,9 @@ class MainWP_Password_Policy_Settings {
             <div id="individual-password-policy-status" class="ui message" style="display:none;"></div>
 
             <h2 class="ui header">
-                <?php printf( esc_html__( 'Password Policy Settings for %s', 'mainwp' ), '<span class="ui green text">' . esc_html( stripslashes( $website->name ) ) . '</span>' ); ?>
+                <?php /* translators: %s: site name wrapped in HTML span */ printf( esc_html__( 'Password Policy Settings for %s', 'mainwp' ), '<span class="ui green text">' . esc_html( stripslashes( $website->name ) ) . '</span>' ); ?>
                 <div class="sub header">
-                    <?php esc_html_e( 'Configure password policy settings specific to this site. When disabled, this site will use the global password policy settings.', 'mainwp' ); ?> <?php printf( esc_html__( 'Current global setting: Require password change every %s', 'mainwp' ), '<strong>' . ( 0 === intval( $global_settings['max_age_days'] ) ? esc_html__( 'Never', 'mainwp' ) : intval( $global_settings['max_age_days'] ) . ' ' . esc_html__( 'days', 'mainwp' ) ) . '</strong>' ); ?>
+                    <?php esc_html_e( 'Configure password policy settings specific to this site. When disabled, this site will use the global password policy settings.', 'mainwp' ); ?> <?php /* translators: %s: number of days wrapped in HTML strong tag */ printf( esc_html__( 'Current global setting: Require password change every %s', 'mainwp' ), '<strong>' . ( 0 === intval( $global_settings['max_age_days'] ) ? esc_html__( 'Never', 'mainwp' ) : intval( $global_settings['max_age_days'] ) . ' ' . esc_html__( 'days', 'mainwp' ) ) . '</strong>' ); ?>
                 </div>
             </h2>
 

@@ -405,7 +405,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                 <a href="<?php MainWP_Site_Open::get_open_site_admin_link( $website->id, true ); //phpcs:ignore -- ok. ?>" target="_blank">
                                     <i class="sign in alternate icon"></i>
                                 </a>
-                                <a href="admin.php?page=ManageSitesApiBackups&id=<?php echo intval( $website->id ); ?>"><?php esc_html_e( $website->name, 'mainwp' ); ?></a> <span class="running"></span>
+                                <a href="admin.php?page=ManageSitesApiBackups&id=<?php echo intval( $website->id ); ?>"><?php echo esc_html( $website->name ); ?></a> <span class="running"></span>
                             </div>
                             <span class="ui small text">
                                 <a href="<?php echo esc_url( $website->url ); ?>" target="_blank" class="ui grey text"><?php echo esc_url( $website->url ); ?></a>
@@ -419,12 +419,12 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                 <a href="javascript:void(0)"><i class="ellipsis vertical icon"></i></a>
                                 <div class="menu">
                                     <?php if ( 'cPanel' === $api_provider ) : ?>
-                                        <a class="mainwp_3rd_party_api_<?php esc_attr_e( $api_provider_options, 'mainwp' ); ?>_action_full_backup item"
+                                        <a class="mainwp_3rd_party_api_<?php echo esc_attr( $api_provider_options ); ?>_action_full_backup item"
                                             website_id="<?php echo intval( $website->id ); ?>" href="javascript:void(0)">
                                             <?php esc_html_e( 'Backup', 'mainwp' ); ?>
                                         </a>
                                     <?php elseif ( 'None' !== $api_provider && 'cPanel' !== $api_provider ) : ?>
-                                        <a class="mainwp_3rd_party_api_<?php esc_attr_e( $api_provider_options, 'mainwp' ); ?>_action_backup item"
+                                        <a class="mainwp_3rd_party_api_<?php echo esc_attr( $api_provider_options ); ?>_action_backup item"
                                             website_id="<?php echo intval( $website->id ); ?>" href="javascript:void(0)">
                                             <?php esc_html_e( 'Backup', 'mainwp' ); ?>
                                         </a>
@@ -535,8 +535,10 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
 
         if ( empty( $backup_api ) ) {
             $title   = esc_html__( 'No API Backup Solution has been chosen.', 'mainwp' );
-            $message = sprintf(
-                __( 'Please double check that you have set the API Key on the %1$s page and have set the Instance ID on the %2$s page.', 'mainwp' ),
+            /* translators: %1$s: Link to API Backups Settings page, %2$s: Link to Child Site Settings page */
+            $msg_format = __( 'Please double check that you have set the API Key on the %1$s page and have set the Instance ID on the %2$s page.', 'mainwp' );
+            $message    = sprintf(
+                $msg_format,
                 '<a href="' . esc_url( admin_url( 'admin.php?page=SettingsApiBackups' ) ) . '">' . esc_html__( 'API Backups Settings', 'mainwp' ) . '</a>',
                 '<a href="' . esc_url( admin_url( 'admin.php?page=managesites&id=' . intval( $website_id ) ) ) . '">' . esc_html__( 'Child Site &rarr; Settings page', 'mainwp' ) . '</a>'
             );
@@ -1008,7 +1010,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                 <?php foreach ( $available_backups_automatic_list as $backup ) { ?>
                                     <tr>
                                         <td><?php echo esc_html( $backup->backupID ); ?></td>
-                                        <td><?php esc_html_e( ucfirst( $backup->backupType ), 'mainwp' ); ?></td>
+                                        <td><?php echo esc_html( ucfirst( $backup->backupType ) ); ?></td>
                                         <td><?php echo esc_html( $backup->path ); ?></td>
                                         <td>
                                             <a id="cpanel_automatic_backup_button" class="mainwp_3rd_party_api_<?php echo esc_attr( $backup_api ); ?>_action_restore_backup item"
@@ -2751,7 +2753,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
             $current_time = $local_time->getTimestamp() + $local_time->getOffset();
             Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_gridpane_last_backup', $current_time );
         } else {
-            $error = new WP_Error( $backup_status->error->code, __( $backup_status->error->message, 'mainwp' ) );
+            $error = new WP_Error( $backup_status->error->code, $backup_status->error->message );
         }
 
         if ( $ret_val ) {
@@ -3022,7 +3024,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
 
         // Handle response.
         if ( isset( $linode_response->errors ) ) {
-            $error = new WP_Error( '400', __( $linode_response->errors['0']->reason, 'mainwp' ) );
+            $error = new WP_Error( '400', $linode_response->errors['0']->reason );
             // Return AJAX.
             if ( is_admin() && defined( 'DOING_AJAX' ) && DOING_AJAX ) {
                 wp_send_json_error( $error );

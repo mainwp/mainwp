@@ -826,7 +826,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <div class="ui header"><?php esc_html_e( 'MainWP Guided Tours', 'mainwp' ); ?> <span class="ui blue mini label"><?php esc_html_e( 'BETA', 'mainwp' ); ?></span></div>
             <div class="ui hidden divider"></div>
             <div class="ui info message" style="display:block!important;">
-                <?php printf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
+                <?php /* translators: 1: Opening anchor tag for privacy policy link, 2: Closing anchor tag. */ printf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
             </div>
             <div class="ui hidden divider"></div>
             <?php if ( 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ) : ?>
@@ -1184,7 +1184,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             $after_header_content = ob_get_clean();
             if ( ! empty( trim( $after_header_content ) ) ) {
                 ?>
-                <div class="ui padded segment">
+                <div class="ui padded segment" id="mainwp-admin-notices-segment">
                     <?php echo $after_header_content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                 </div>
                 <?php
@@ -1448,21 +1448,14 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
 
                     if ( ! empty( $site_sync_info['timestamp'] ) && ( $current_time - $site_sync_info['timestamp'] ) > $twenty_four_h ) {
                         $site_sync_outdated = true;
-                        $site_sync_tooltip  = sprintf(
-                            esc_attr__( 'Data not synced for more than 24h. Click here to sync %s.', 'mainwp' ),
-                            stripslashes( $website->name )
-                        );
+                        /* translators: 1: Site name. */
+                        $site_sync_tooltip  = sprintf( esc_attr__( 'Data not synced for more than 24h. Click here to sync %1$s.', 'mainwp' ), stripslashes( $website->name ) );
                     } elseif ( ! empty( $site_sync_info['formatted'] ) ) {
-                        $site_sync_tooltip = sprintf(
-                            esc_attr__( 'Last sync: %s. Click here to sync %s.', 'mainwp' ),
-                            $site_sync_info['formatted'],
-                            stripslashes( $website->name )
-                        );
+                        /* translators: 1: Last sync date/time, 2: Site name. */
+                        $site_sync_tooltip = sprintf( esc_attr__( 'Last sync: %1$s. Click here to sync %2$s.', 'mainwp' ), $site_sync_info['formatted'], stripslashes( $website->name ) );
                     } else {
-                        $site_sync_tooltip = sprintf(
-                            esc_attr__( 'Get fresh data from %s.', 'mainwp' ),
-                            stripslashes( $website->name )
-                        );
+                        /* translators: 1: Site name. */
+                        $site_sync_tooltip = sprintf( esc_attr__( 'Get fresh data from %1$s.', 'mainwp' ), stripslashes( $website->name ) );
                     }
                     ?>
                 <a class="ui green <?php echo 0 < $sites_count ? '' : 'disabled'; ?> button" id="mainwp-sync-sites" data-tooltip="<?php echo esc_attr( $site_sync_tooltip ); ?>" data-inverted="" data-position="left center" aria-label="<?php echo esc_attr( $site_sync_tooltip ); ?>" style="position: relative;">
@@ -1485,10 +1478,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         $sync_outdated = true;
                         $sync_tooltip  = esc_attr__( 'Data not synced for more than 24h. Click here to sync all sites.', 'mainwp' );
                     } elseif ( ! empty( $sync_info['formatted'] ) ) {
-                        $sync_tooltip = sprintf(
-                            esc_attr__( 'Last sync: %s. Click here to sync all sites.', 'mainwp' ),
-                            $sync_info['formatted']
-                        );
+                        /* translators: 1: Last sync date/time. */
+                        $sync_tooltip = sprintf( esc_attr__( 'Last sync: %1$s. Click here to sync all sites.', 'mainwp' ), $sync_info['formatted'] );
                     } else {
                         $sync_tooltip = esc_attr__( 'Click here to sync all sites.', 'mainwp' );
                     }
@@ -2314,7 +2305,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 <div class="ui hidden divider"></div>
                 <a href="admin.php?page=managesites&do=new" class="ui big green button"><?php esc_html_e( 'Connect Your WordPress Site', 'mainwp' ); ?></a>
                 <div class="ui hidden fitted divider"></div>
-                <small><?php printf( esc_html__( 'or you can %1$sbulk import%2$s your sites.', 'mainwp' ), '<a href="admin.php?page=managesites&do=bulknew">', '</a>' ); ?></small>
+                <small><?php /* translators: 1: Opening anchor tag for bulk import link, 2: Closing anchor tag. */ printf( esc_html__( 'or you can %1$sbulk import%2$s your sites.', 'mainwp' ), '<a href="admin.php?page=managesites&do=bulknew">', '</a>' ); ?></small>
             </div>
             <div class="actions">
                 <div class="ui grid">
@@ -2913,7 +2904,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         <div class="header"><?php esc_html_e( 'Select MainWP Theme', 'mainwp' ); ?></div>
         <div class="content ui form">
             <div class="ui blue message">
-                <div class=""><?php printf( esc_html__( 'Did you know you can create your custom theme? %1$sSee here how to do it%2$s!', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/management/mainwp-dashboard-settings#select-mainwp-theme" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
+                <div class=""><?php /* translators: 1: Opening anchor tag for documentation link, 2: Closing anchor tag. */ printf( esc_html__( 'Did you know you can create your custom theme? %1$sSee here how to do it%2$s!', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/management/mainwp-dashboard-settings#select-mainwp-theme" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
             </div>
             <form method="POST" action="" name="mainwp_select_mainwp_themes_form" id="mainwp_select_mainwp_themes_form">
             <?php self::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>

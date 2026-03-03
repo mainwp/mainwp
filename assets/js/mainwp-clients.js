@@ -56,42 +56,53 @@ jQuery(function () {
   });
 
   jQuery(document).on('click', '.client-suspend-unsuspend-sites', function () {
-    let new_status = jQuery(this).attr('suspend-status') == '0' ? 1 : 0;
-    let clientid = jQuery(this).closest('.mainwp-widget-footer').attr('client-id');
-    let bt = this;
+    const $button = jQuery(this);
 
-    let data = mainwp_secure_data({
-      action: 'mainwp_clients_suspend_client',
-      clientid: clientid,
-      suspend_status: new_status
+    const new_status = $button.attr('suspend-status') === '0' ? 1 : 0;
+    const clientid = $button.closest('.mainwp-widget-footer').attr('client-id');
+
+    const data = mainwp_secure_data({
+        action: 'mainwp_clients_suspend_client',
+        clientid: clientid,
+        suspend_status: new_status
     });
-    jQuery(bt).attr('disabled', true);
+
+    $button.prop('disabled', true);
+
     jQuery.post(ajaxurl, data, function (response) {
-      jQuery(bt).attr('disabled', false);
-      if (response == 'success') {
-        jQuery(bt).text(new_status == 0 ? __('Suspend Sites') : __('Unsuspend Sites'));
-        jQuery(bt).attr('suspend-status', new_status);
-      }
+        $button.prop('disabled', false);
+
+        if (response === 'success') {
+            $button.text(new_status === 0 ? __('Suspend Sites') : __('Unsuspend Sites'));
+            $button.attr('suspend-status', new_status);
+        }
     });
-  });
+});
 
   jQuery('#mainwp_edit_clients_icon_select').dropdown({
     onChange: function (val) {
-      jQuery('#client_fields\\[default_field\\]\\[selected_icon\\]').val(val);
-      jQuery('#client_fields\\[default_field\\]\\[selected_icon\\]').trigger('change');
+        const $field = jQuery('[id="client_fields[default_field][selected_icon]"]');
+        $field.val(val);
+        $field.trigger('change');
     }
-  });
+});
+
 
   jQuery('.mainwp-edit-clients-select-contact-icon').dropdown({
     onChange: function (val) {
-      let parent = jQuery(this).closest('.mainwp_edit_clients_contact_icon_wrapper');
-      let inname = parent.attr('input-name');
-      if (undefined !== inname) {
-        jQuery(parent).find('#client_fields\\[' + inname + '\\]\\[selected_icon\\]\\[\\]').val(val);
-        jQuery(parent).find('#client_fields\\[' + inname + '\\]\\[selected_icon\\]\\[\\]').trigger('change');
-      }
+        const $parent = jQuery(this).closest('.mainwp_edit_clients_contact_icon_wrapper');
+        const inname = $parent.attr('input-name');
+
+        if (inname !== undefined) {
+            const selector = `[id="client_fields[${inname}][selected_icon][]"]`;
+            const $field = $parent.find(selector);
+
+            $field.val(val);
+            $field.trigger('change');
+        }
     }
-  });
+});
+
 
   jQuery(document).on('click', '.mainwp-client-add-contact', function () {
     let templ = jQuery(this).attr('add-contact-temp');
@@ -102,8 +113,10 @@ jQuery(function () {
         let parent = jQuery(this).closest('.mainwp_edit_clients_contact_icon_wrapper');
         let inname = parent.attr('input-name');
         if (undefined !== inname) {
-          jQuery(parent).find('#client_fields\\[' + inname + '\\]\\[selected_icon\\]\\[\\]').val(val);
-          jQuery(parent).find('#client_fields\\[' + inname + '\\]\\[selected_icon\\]\\[\\]').trigger('change');
+            const selector = `[id="client_fields[${inname}][selected_icon][]"]`;
+            const $field = $parent.find(selector);
+            $field.val(val);
+            $field.trigger('change');
         }
       }
     });
@@ -138,15 +151,15 @@ jQuery(function () {
   }
 
   jQuery(document).on('click', '#mainwp_manageclients_btn_import', function () {
-    if (!import_client_stop_by_user) {
-      import_client_stop_by_user = true;
-      jQuery('#mainwp_manageclients_import_logging .log').append(__('Paused import by user.') + "\n");
-      jQuery('#mainwp_manageclients_btn_import').val(__('Continue'));
+    if (import_client_stop_by_user) {
+        import_client_stop_by_user = false;
+        jQuery('#mainwp_manageclients_import_logging .log').append(__('Continue import.') + "\n");
+        jQuery('#mainwp_manageclients_btn_import').val(__('Pause'));
+        mainwp_manageclient_import_client();
     } else {
-      import_client_stop_by_user = false;
-      jQuery('#mainwp_manageclients_import_logging .log').append(__('Continue import.') + "\n");
-      jQuery('#mainwp_manageclients_btn_import').val(__('Pause'));
-      mainwp_manageclient_import_client();
+        import_client_stop_by_user = true;
+        jQuery('#mainwp_manageclients_import_logging .log').append(__('Paused import by user.') + "\n");
+        jQuery('#mainwp_manageclients_btn_import').val(__('Continue'));
     }
   });
 
@@ -235,11 +248,12 @@ let mainwp_manageclients_bulk_remove_specific = function (pCheckedBox) {
       result = __('The client has been removed.');
     }
 
-    if (error != '') {
-      rowObj.html('<td colspan="999"><i class="red times icon"></i> ' + error + '</td>');
+    if (error == '') {
+        rowObj.html('<td colspan="999"><i class="green check icon"></i> ' + result + '</td>');
     } else {
-      rowObj.html('<td colspan="999"><i class="green check icon"></i> ' + result + '</td>');
+        rowObj.html('<td colspan="999"><i class="red times icon"></i> ' + error + '</td>');
     }
+
     setTimeout(function () {
       jQuery('tr[clientid=' + id + ']').fadeOut(1000);
     }, 3000);
@@ -411,19 +425,19 @@ jQuery(document).on('click', '#bulk_add_multi_create_client', function (e) {
     if (client_name !== '' || client_email !== '') {
       if (site_url === '' || client_name === '' || client_email === '') {
         all_rows_valid = false;
-        errors.push(`The data in row ${(parseInt(row_index) + 1)} is incomplete!`);
+        errors.push(`The data in row ${(Number.parseInt(row_index) + 1)} is incomplete!`);
       }
 
       if (contact_name !== '' || contact_email !== '') {
         if (contact_name === '' || contact_email === '') {
           all_rows_valid = false;
-          errors.push(`The data in row ${(parseInt(row_index) + 1)} is incomplete!`);
+          errors.push(`The data in row ${(Number.parseInt(row_index) + 1)} is incomplete!`);
         }
       }
 
       if ((!mainwp_validate_email(client_email) && client_email !== '') || (contact_email !== '' && !mainwp_validate_email(contact_email))) {
         all_rows_valid = false;
-        errors.push(`Field email in row ${(parseInt(row_index) + 1)} is invalid!`);
+        errors.push(`Field email in row ${(Number.parseInt(row_index) + 1)} is invalid!`);
       }
 
       // If All rows valid then add data to form_data
@@ -444,11 +458,7 @@ jQuery(document).on('click', '#bulk_add_multi_create_client', function (e) {
   });
 
   // If there is a column with missing data, prevent submission and display a message.
-  if (!all_rows_valid) {
-    e.preventDefault(); //Prevent form submission or further processing.
-    mainwp_set_message_zone('#mainwp-message-zone', errors.join('<br />'), 'red');
-    return false;
-  } else {
+  if (all_rows_valid) {
     let msg = __('Creating the client. Please wait...');
     jQuery('#mainwp-message-zone').html('').hide(); // Hide message error
     mainwp_set_message_zone('#mainwp-message-zone-client', '<i class="notched circle loading icon"></i> ' + msg); // show message creating.
@@ -470,6 +480,11 @@ jQuery(document).on('click', '#bulk_add_multi_create_client', function (e) {
     });
     return true;
   }
+
+    e.preventDefault(); //Prevent form submission or further processing.
+    mainwp_set_message_zone('#mainwp-message-zone', errors.join('<br />'), 'red');
+    return false;
+
 });
 
 jQuery(document).on('click', '#bulk_add_createclient', function () {
@@ -740,7 +755,7 @@ jQuery(document).on('click', '.mainwp-edit-client-note', function () {
 let mainwp_notes_client_save = function () {
   let normalid = jQuery('#mainwp-notes-itemid').val();
   let newnote = jQuery('#mainwp-notes-note').val();
-  newnote = newnote.replace(/(?:\r\n|\r|\n)/g, '<br>');
+  newnote = newnote.replaceAll(/(?:\r\n|\r|\n)/g, '<br>');
   let data = mainwp_secure_data({
     action: 'mainwp_clients_notes_save',
     clientid: normalid,
@@ -821,29 +836,29 @@ const mainwp_manageclient_import_client = function () { // NOSONAR
   let import_zip = decoded_client_val['client.zip'];
   let import_url = decoded_client_val['client.url'];
 
-  if (typeof (import_city) == "undefined")
+  if (import_city === undefined)
     import_city = '';
-  if (typeof (import_address_1) == "undefined")
+  if (import_address_1 === undefined)
     import_address_1 = '';
-  if (typeof (import_address_2) == "undefined")
+  if (import_address_2 === undefined)
     import_address_2 = '';
-  if (typeof (import_country) == "undefined")
+  if (import_country === undefined)
     import_country = '';
-  if (typeof (import_email) == "undefined")
+  if (import_email === undefined)
     import_email = '';
-  if (typeof (import_name) == "undefined") {
+  if (import_name === undefined) {
     import_name = '';
   }
-  if (typeof (import_state) == "undefined") {
+  if (import_state === undefined) {
     import_state = '';
   }
-  if (typeof (import_suspended) == "undefined") {
+  if (import_suspended === undefined) {
     import_suspended = '';
   }
-  if (typeof (import_zip) == "undefined") {
+  if (import_zip === undefined) {
     import_zip = '';
   }
-  if (typeof (import_url) == "undefined") {
+  if (import_url === undefined) {
     import_url = [];
   }
 

@@ -505,7 +505,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <h2 class="ui big header"><?php esc_html_e( 'MainWP Guided Tours', 'mainwp' ); ?> <span class="ui blue mini label"><?php esc_html_e( 'BETA', 'mainwp' ); ?></span></h2>
                     <p><?php esc_html_e( 'MainWP guided tours are designed to provide information about all essential features on each MainWP Dashboard page.', 'mainwp' ); ?></p>
                     <div class="ui blue message">
-                        <?php printf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
+                        <?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
                     </div>
                     <div class="ui form">
                         <div class="field">
@@ -543,11 +543,8 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <h1 class="ui massive header"><?php esc_html_e( 'System Requirements Check', 'mainwp' ); ?></h1>
                 <p>
                     <?php
-                    printf(
-                        esc_html__( 'These checks ensure MainWP can connect to your child sites. If any check fails, %1$slearn how to resolve the issue%2$s.', 'mainwp' ),
-                        '<a href="https://docs.mainwp.com/advanced/miscellaneous/mainwp-system-requirements" target="_blank">',
-                        '</a>'
-                    );
+                    /* translators: 1: opening anchor tag, 2: closing anchor tag */
+                    printf( esc_html__( 'These checks ensure MainWP can connect to your child sites. If any check fails, %1$slearn how to resolve the issue%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/advanced/miscellaneous/mainwp-system-requirements" target="_blank">', '</a>' );
                     ?>
                 </p>
                 <?php MainWP_System_View::mainwp_warning_notice(); ?>
@@ -568,7 +565,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                 <div class="ui fluid input">
                                     <input type="text" name="mwp_setup_openssl_lib_location" value="<?php echo esc_attr( $openssl_loc ); ?>">
                                 </div>
-                                <div><em><?php esc_html_e( 'Due to bug with PHP on some servers, enter the openssl.cnf file location so MainWP Dashboard can connect to your child sites. If your openssl.cnf file is saved to a different path from what is entered above please enter your exact path. ', 'mainwp' ); ?><?php printf( esc_html__( '%1$sClick here%2$s to see how to find the OpenSSL.cnf file.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/potential-issues#openssl-library-error-invalid-request" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></em></div>
+                                <div><em><?php esc_html_e( 'Due to bug with PHP on some servers, enter the openssl.cnf file location so MainWP Dashboard can connect to your child sites. If your openssl.cnf file is saved to a different path from what is entered above please enter your exact path. ', 'mainwp' ); ?><?php /* translators: 1: opening anchor tag, 2: closing anchor tag with icon */ printf( esc_html__( '%1$sClick here%2$s to see how to find the OpenSSL.cnf file.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/potential-issues#openssl-library-error-invalid-request" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></em></div>
                             </div>
                         </div>
                     </div>

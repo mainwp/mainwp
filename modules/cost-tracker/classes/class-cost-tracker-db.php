@@ -461,7 +461,7 @@ PRIMARY KEY  (`id`)  ';
 
             $table = esc_sql( $this->table_name( 'cost_tracker' ) );
             $sql = $wpdb->prepare( "SELECT * FROM {$table} WHERE `id`=%d ", $value );
-            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is safely constructed with $wpdb->prepare() above; table name is escaped with esc_sql().
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is safely constructed with $wpdb->prepare() above; table name is escaped with esc_sql().
             $result = $wpdb->get_row( $sql, OBJECT );
             wp_cache_set( $cache_key, $result, 'mainwp_cost_tracker' );
             return $result;
@@ -474,7 +474,7 @@ PRIMARY KEY  (`id`)  ';
 
             $table = esc_sql( $this->table_name( 'cost_tracker' ) );
             $sql = "SELECT count(*) FROM {$table}";
-            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is safely constructed with static table name that is escaped with esc_sql(); no dynamic input.
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is safely constructed with static table name that is escaped with esc_sql(); no dynamic input.
             $result = $wpdb->get_var( $sql );
             wp_cache_set( $cache_key, $result, 'mainwp_cost_tracker' );
             return $result;
@@ -498,6 +498,7 @@ PRIMARY KEY  (`id`)  ';
 
                 $table = esc_sql( $this->table_name( 'cost_tracker' ) );
                 $sql = $wpdb->prepare( "SELECT * FROM {$table} WHERE `slug`=%s AND product_type = %s ", $value, $product_type );
+                // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is safely constructed with $wpdb->prepare() above; table name is escaped with esc_sql().
                 $result = $wpdb->get_row( $sql, OBJECT );
                 wp_cache_set( $cache_key, $result, 'mainwp_cost_tracker' );
                 return $result;
@@ -507,6 +508,7 @@ PRIMARY KEY  (`id`)  ';
                     $where = $wpdb->prepare( ' AND product_type = %s ', $product_type );
                 }
                 $table = esc_sql( $this->table_name( 'cost_tracker' ) );
+                // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $where is itself from $wpdb->prepare(); concatenation into prepare is safe here.
                 $sql = $wpdb->prepare( "SELECT * FROM {$table} WHERE `slug`=%s " . $where, $value );
             }
         }
@@ -519,7 +521,7 @@ PRIMARY KEY  (`id`)  ';
                 return $cached;
             }
 
-            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is safely constructed from escaped table names and prepared statements above
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is safely constructed with $wpdb->prepare() above; table name is escaped with esc_sql().
             $result = $wpdb->get_results( $sql, OBJECT );
             wp_cache_set( $cache_key, $result, 'mainwp_cost_tracker' );
             if ( $result ) {
@@ -678,7 +680,7 @@ PRIMARY KEY  (`id`)  ';
         if ( false === $result ) {
             $table  = esc_sql( $this->table_name( 'cost_tracker' ) );
             $sql    = "SELECT * FROM {$table}";
-            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql uses esc_sql() for table name; results cached immediately after retrieval
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is safely constructed with $wpdb->prepare() above; table name is escaped with esc_sql(); results cached immediately after retrieval
             $result = $wpdb->get_results( $sql, OBJECT );
             wp_cache_set( $cache_key, $result, 'mainwp_cost_tracker' );
         }
@@ -851,7 +853,7 @@ PRIMARY KEY  (`id`)  ';
         if ( false === $result ) {
             $table  = esc_sql( $this->table_name( 'cost_tracker' ) );
             $sql    = "SELECT * FROM {$table}";
-            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql uses esc_sql() for table name; results cached immediately after retrieval
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is safely constructed with $wpdb->prepare() above; table name is escaped with esc_sql(); results cached immediately after retrieval
             $result = $wpdb->get_results( $sql, OBJECT );
             wp_cache_set( $cache_key, $result, 'mainwp_cost_tracker' );
         }
@@ -960,7 +962,7 @@ PRIMARY KEY  (`id`)  ';
             $where .= ' AND co.cost_status = "active" AND co.type = "subscription" ';
             $table = esc_sql( $this->table_name( 'cost_tracker' ) );
             $sql = "SELECT * FROM {$table} co WHERE 1 {$where} ORDER BY co.next_renewal ASC ";
-            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is safely constructed with esc_sql() table name and static WHERE clause
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is safely constructed with $wpdb->prepare() above; table name is escaped with esc_sql().
             $result = $wpdb->get_results( $sql );
             wp_cache_set( $cache_key, $result, 'mainwp_cost_tracker' );
             return $result;

@@ -486,7 +486,10 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 <div class="item"><?php echo esc_html__( 'To Activate or Delete a specific plugin, you must search only for Inactive plugin on your child sites. If you search for Active or both Active and Inactive, the Activate and Delete actions will be disabled.', 'mainwp' ); ?></div>
                                 <div class="item"><?php echo esc_html__( 'To Deactivate a specific plugin, you must search only for Active plugins on your child sites. If you search for Inactive or both Active and Inactive, the Deactivate action will be disabled.', 'mainwp' ); ?></div>
                             </div>
-                            <div><?php printf( esc_html__( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/plugins/managing-plugins-with-mainwp" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
+                            <div><?php
+                            // translators: 1: Opening anchor tag. 2: Closing anchor tag.
+                            printf( esc_html__( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/plugins/managing-plugins-with-mainwp" target="_blank">', '</a> <i class="external alternate icon"></i>' );
+                            ?></div>
                         </div>
                     <?php endif; ?>
                     <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -2027,7 +2030,10 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-install-plugins-info-message"></i>
                     <div class="header"><?php esc_html_e( 'Install plugins on your child sites', 'mainwp' ); ?></div>
-                    <?php printf( esc_html__( 'You can install plugins from the WordPress.org repository or by uploading a ZIP file. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/plugins/managing-plugins-with-mainwp#install-plugins" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                    <?php
+                    // translators: 1: Opening anchor tag. 2: Closing anchor tag.
+                    printf( esc_html__( 'You can install plugins from the WordPress.org repository or by uploading a ZIP file. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/plugins/managing-plugins-with-mainwp#install-plugins" target="_blank">', '</a> <i class="external alternate icon"></i>' );
+                    ?>
                 </div>
                 <?php endif; ?>
             <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
@@ -2213,7 +2219,10 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-disable-auto-updates-info-message' ) ) : ?>
                         <div class="ui message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-disable-auto-updates-info-message"></i>
-                            <div><em data-emoji=":bulb:" class="small"></em> <?php printf( esc_html__( 'Tip: Check out %1$show to disable the WordPress built in auto-updates feature%2$s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
+                            <div><em data-emoji=":bulb:" class="small"></em> <?php
+                            // translators: 1: Opening anchor tag. 2: Closing anchor tag.
+                            printf( esc_html__( 'Tip: Check out %1$show to disable the WordPress built in auto-updates feature%2$s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe.
+                            ?></div>
                         </div>
                     <?php endif; ?>
                     <div class="ui page dimmer">
@@ -2630,7 +2639,10 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-plugins-info-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-plugins-info-message"></i>
-                    <?php printf( esc_html__( 'Manage plugins you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/updates/manage-updates#ignore-plugin-updates" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                    <?php
+                    // translators: 1: Opening anchor tag. 2: Closing anchor tag.
+                    printf( esc_html__( 'Manage plugins you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/updates/manage-updates#ignore-plugin-updates" target="_blank">', '</a> <i class="external alternate icon"></i>' );
+                    ?>
                 </div>
             <?php endif; ?>
             <?php
@@ -2923,7 +2935,10 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-abandoned-plugins-info-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-abandoned-plugins-info-message"></i>
-                    <?php printf( esc_html__( 'Manage abandoned plugins you have told your MainWP Dashboard to ignore on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/plugins/managing-plugins-with-mainwp" target="_blank">', '</a> <i class="external alternate icon"></i> ' ); ?>
+                    <?php
+                    // translators: 1: Opening anchor tag. 2: Closing anchor tag.
+                    printf( esc_html__( 'Manage abandoned plugins you have told your MainWP Dashboard to ignore on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/plugins/managing-plugins-with-mainwp" target="_blank">', '</a> <i class="external alternate icon"></i> ' );
+                    ?>
                 </div>
             <?php endif; ?>
             <?php
@@ -2982,7 +2997,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         <table id="mainwp-globally-ignored-abandoned-plugins" class="ui compact selectable table unstackable">
             <thead>
                 <tr>
-                    <th scope="col" class="no-sort"><?php esc_html_e( ' ', 'mainwp' ); ?></th>
+                    <th scope="col" class="no-sort">&nbsp;</th>
                     <th scope="col" ><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
                     <th scope="col" ><?php esc_html_e( 'Plugin slug', 'mainwp' ); ?></th>
                     <th scope="col" ></th>
@@ -3068,7 +3083,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <thead>
                 <tr>
                     <th scope="col" ><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
-                    <th scope="col" class="no-sort"><?php esc_html_e( ' ', 'mainwp' ); ?></th>
+                    <th scope="col" class="no-sort">&nbsp;</th>
                     <th scope="col" ><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
                     <th scope="col" ><?php esc_html_e( 'Plugin slug', 'mainwp' ); ?></th>
                     <th scope="col" ></th>

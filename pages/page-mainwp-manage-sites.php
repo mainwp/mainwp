@@ -667,9 +667,9 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-site-info-message' ) ) : ?>
                             <div class="ui info message">
                                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-site-info-message"></i>
-                                <div><?php printf( esc_html__( 'Use the provided form to connect your websites to your MainWP Dashboard. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/getting-started/get-started-with-mainwp" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
-                                <div><?php printf( esc_html__( 'If you are experiencing issues with adding a website to your MainWP Dashboard, use the %1$sTest Connection%2$s feature to ensure that your MainWP Dashboard can communicate with your website.', 'mainwp' ), '<a href="https://docs.mainwp.com/getting-started/get-started-with-mainwp#test-connection" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
-                                <div><?php printf( esc_html__( 'If you still can not connect the site, see the list of %1$spotential issues%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/potential-issues" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
+                                <div><?php /* translators: 1: Opening link tag, 2: Closing link tag with icon */ printf( esc_html__( 'Use the provided form to connect your websites to your MainWP Dashboard. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/getting-started/get-started-with-mainwp" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
+                                <div><?php /* translators: 1: Opening link tag, 2: Closing link tag with icon */ printf( esc_html__( 'If you are experiencing issues with adding a website to your MainWP Dashboard, use the %1$sTest Connection%2$s feature to ensure that your MainWP Dashboard can communicate with your website.', 'mainwp' ), '<a href="https://docs.mainwp.com/getting-started/get-started-with-mainwp#test-connection" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
+                                <div><?php /* translators: 1: Opening link tag, 2: Closing link tag */ printf( esc_html__( 'If you still can not connect the site, see the list of %1$spotential issues%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/potential-issues" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
                             </div>
                         <?php endif; ?>
 
@@ -682,17 +682,17 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <?php esc_html_e( 'MainWP requires the MainWP Child plugin to be installed and activated on the WordPress site that you want to connect to your MainWP Dashboard. ', 'mainwp' ); ?>
                             <?php esc_html_e( 'To install the MainWP Child plugin, please follow these steps:', 'mainwp' ); ?>
                             <ol>
-                                <li><?php printf( esc_html__( 'Login to the WordPress site you want to connect %1$s(open it in a new browser tab)%2$s', 'mainwp' ), '<em>', '</em>' ); ?></li>
-                                <li><?php printf( esc_html__( 'Go to the %1$sWP > Plugins%2$s page', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
-                                <li><?php printf( esc_html__( 'Click %1$sAdd New%2$s to install a new plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
-                                <li><?php printf( esc_html__( 'In the %1$sSearch Field%2$s, enter "MainWP Child" and once the plugin shows, click the Install button', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
-                                <li><?php printf( esc_html__( '%1$sActivate%2$s the plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+                                <li><?php /* translators: 1: Opening em tag, 2: Closing em tag */ printf( esc_html__( 'Login to the WordPress site you want to connect %1$s(open it in a new browser tab)%2$s', 'mainwp' ), '<em>', '</em>' ); ?></li>
+                                <li><?php /* translators: 1: Opening strong tag, 2: Closing strong tag */ printf( esc_html__( 'Go to the %1$sWP > Plugins%2$s page', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+                                <li><?php /* translators: 1: Opening strong tag, 2: Closing strong tag */ printf( esc_html__( 'Click %1$sAdd New%2$s to install a new plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+                                <li><?php /* translators: 1: Opening strong tag, 2: Closing strong tag */ printf( esc_html__( 'In the %1$sSearch Field%2$s, enter "MainWP Child" and once the plugin shows, click the Install button', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+                                <li><?php /* translators: 1: Opening strong tag, 2: Closing strong tag */ printf( esc_html__( '%1$sActivate%2$s the plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
                             </ol>
                         </div>
                         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-site-trust-message' ) ) : ?>
                             <div class="ui message">
                                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-site-trust-message"></i>
-                                <?php printf( esc_html__( '%1$s Your credentials are never sent to MainWP.com. Communication occurs only between your Dashboard and your sites.', 'mainwp' ), '<em data-emoji=":lock:" class="small"></em>' ); ?>
+                                <?php /* translators: %1$s: Lock emoji element */ printf( esc_html__( '%1$s Your credentials are never sent to MainWP.com. Communication occurs only between your Dashboard and your sites.', 'mainwp' ), '<em data-emoji=":lock:" class="small"></em>' ); ?>
                             </div>
                         <?php endif; ?>
                         <h2 class="ui dividing header">
@@ -1406,13 +1406,13 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-new-sites-info-message' ) ) : ?>
                     <div class="ui message">
                         <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-new-sites-info-message"></i>
-                        <?php printf( esc_html__( '%1$s Tip: If you\'re importing 10 or fewer sites, we recommend using the %2$sAdd Multiple Sites%3$s screen instead , it\'s faster and doesn\'t require a CSV file.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<a href="admin.php?page=managesites&do=new&data-tab=multiple-site">', '</a>' ); ?>
+                        <?php /* translators: 1: Bulb emoji element, 2: Opening link tag, 3: Closing link tag */ printf( esc_html__( '%1$s Tip: If you\'re importing 10 or fewer sites, we recommend using the %2$sAdd Multiple Sites%3$s screen instead , it\'s faster and doesn\'t require a CSV file.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<a href="admin.php?page=managesites&do=new&data-tab=multiple-site">', '</a>' ); ?>
                     </div>
                 <?php endif; ?>
                 <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-sites-info-message' ) ) : ?>
                     <div class="ui info message">
                         <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-sites-info-message"></i>
-                        <?php printf( esc_html__( 'You can download the sample CSV file to see how to format the import file properly. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/management/manage-child-sites?search=Test+Connection#import-sites-csv-import" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
+                        <?php /* translators: 1: Opening link tag, 2: Closing link tag with icon */ printf( esc_html__( 'You can download the sample CSV file to see how to format the import file properly. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/management/manage-child-sites?search=Test+Connection#import-sites-csv-import" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
                     </div>
                 <?php endif; ?>
                 <form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form" class="ui form">

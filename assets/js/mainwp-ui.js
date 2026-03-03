@@ -1,7 +1,7 @@
 /* eslint-disable complexity */
 
-window.wp = window.wp || {};
-window.mainwpVars = window.mainwpVars || {};
+globalThis.wp = globalThis.wp || {};
+globalThis.mainwpVars = globalThis.mainwpVars || {};
 
 let executingUpdateCategories = false;
 let queueUpdateCategories = 0;
@@ -32,8 +32,10 @@ function load_url(href, obj, e) { // NOSONAR - complex.
         if (!jQuery('body').hasClass('mainwp-ui-page')) {
             return;
         }
-        if (typeof e !== 'undefined')
+
+        if (e !== undefined)
             e.preventDefault();
+
         jQuery('#wpbody-content').html('<div class="mainwp-loading"><img src="images/loading.gif" /> ' + __('Please wait...') + '</div>');
         if (jQuery(obj).hasClass('menu-top')) {
             let top = jQuery(obj).closest('li.menu-top');
@@ -98,7 +100,7 @@ function load_url(href, obj, e) { // NOSONAR - complex.
     }
 }
 
-window.onpopstate = function (e) {
+globalThis.onpopstate = function (e) {
     read_current_url();
     if (e.state)
         load_url(mainwp_current_url, e.state.anchor);
@@ -141,12 +143,12 @@ function stick_element_reset() {
     scroll_element();
 }
 jQuery(function () {
-    jQuery(window).trigger('scroll', scroll_element).trigger('resize', stick_element_reset);
+    jQuery(globalThis).trigger('scroll', scroll_element).trigger('resize', stick_element_reset);
     stick_element_init();
 });
 
 // eslint-disable-next-line complexity
-window.mainwp_confirm = function (msg, confirmed_callback, cancelled_callback, updateType, multiple, extra) {    // updateType: 1 single update, 2 multi update
+globalThis.mainwp_confirm = function (msg, confirmed_callback, cancelled_callback, updateType, multiple, extra) {    // updateType: 1 single update, 2 multi update
     let confVal;
     if (jQuery('#mainwp-disable-update-confirmations').length > 0) {
         confVal = jQuery('#mainwp-disable-update-confirmations').val();
@@ -159,14 +161,14 @@ window.mainwp_confirm = function (msg, confirmed_callback, cancelled_callback, u
 
     jQuery('#mainwp-modal-confirm .content-massage').html(msg);
 
-    if (typeof extra !== 'undefined' && extra !== false) {
+    if (extra !== undefined && extra !== false) {
         jQuery('#mainwp-confirm-form').show();
         jQuery('#mainwp-confirm-form').find('label').html('Type ' + extra + ' to confirm');
     }
 
     let opts = {
         onApprove: function () {
-            if (typeof extra !== 'undefined' && extra !== false) {
+            if (extra !== undefined && extra !== false) {
                 let extraValue = jQuery('#mainwp-confirm-input').val();
                 if (confirmed_callback && typeof confirmed_callback == 'function') {
                     if (extraValue === extra) {
@@ -375,7 +377,7 @@ let mainwp_ss_select_disconnected = function (me, val) {
     return false;
 };
 
-window.mainwp_sites_selection_onvisible_callback = function (me) {
+globalThis.mainwp_sites_selection_onvisible_callback = function (me) {
     let selected_tab = jQuery(me).attr('select-by');
     let select_by = 'site';
     let parent = jQuery(me).closest('.mainwp_select_sites_wrapper');
@@ -507,7 +509,7 @@ jQuery(function () {
     mainwp_sidebar_accordion_init();
 });
 
-window.mainwp_sidebar_accordion_init = function () {
+globalThis.mainwp_sidebar_accordion_init = function () {
     if (jQuery('.mainwp-sidebar-accordion').length > 0) {
         console.log('sidebar accordion init');
         jQuery('.mainwp-sidebar-accordion').accordion({
@@ -550,20 +552,20 @@ let mainwp_accordion_init_collapse = function () {
     });
 };
 
-window.mainwp_ui_state_save = function (ident, val) {
+globalThis.mainwp_ui_state_save = function (ident, val) {
     if (typeof (Storage) !== 'undefined') {
         localStorage.setItem('mainwp-dashboard[' + ident + ']', val);
     }
 };
 
-window.mainwp_ui_state_load = function (ident) {
+globalThis.mainwp_ui_state_load = function (ident) {
     if (typeof (Storage) !== 'undefined') {
         return localStorage.getItem('mainwp-dashboard[' + ident + ']');
     }
     return '1'; // show if Storage undefined.
 };
 
-window.mainwp_ui_state_init = function (ident, callback) {
+globalThis.mainwp_ui_state_init = function (ident, callback) {
     if (typeof (Storage) !== 'undefined') {
         let state = mainwp_ui_state_load(ident);
         if (typeof callback === 'function') {
@@ -572,7 +574,7 @@ window.mainwp_ui_state_init = function (ident, callback) {
     }
 };
 
-window.mainwp_sites_filter_select = function (objInput) {
+globalThis.mainwp_sites_filter_select = function (objInput) {
     let filter = jQuery(objInput).val().toLowerCase();
     let parent = jQuery(objInput).closest('.mainwp_select_sites_wrapper');
     let tab = jQuery('input[name="select_sites_tab"]').val();
@@ -636,7 +638,7 @@ jQuery(function () {
     }
 });
 
-window.mainwp_get_icon_start = function () {
+globalThis.mainwp_get_icon_start = function () {
     jQuery('.cached-icon-expired').attr('queue', 1);
     mainwpVars.bulkInstallTotal = jQuery('.cached-icon-expired[queue="1"]').length;
     if (0 === mainwpVars.bulkInstallTotal) {
@@ -868,9 +870,9 @@ let mainwp_upload_custom_types_icon = function (iconObj, uploadAct, iconItemId, 
     mainwp_set_message_zone('#mainwp-message-zone-upload', '<i class="notched circle loading icon"></i> ' + msg, '');
     jQuery('#update_custom_icon_btn').attr('disabled', 'disabled');
 
-    let upload_act = typeof uploadAct !== "undefined" && '' != uploadAct ? uploadAct : 'mainwp_upload_custom_types_icon';
-    let elemid = undefined !== jQuery(iconObj).attr('data-element-id') ? jQuery(iconObj).attr('data-element-id') : '';
-    let delNonce = undefined !== jQuery(iconObj).attr('del-icon-nonce') ? jQuery(iconObj).attr('del-icon-nonce') : '';
+    let upload_act = uploadAct !== undefined && uploadAct !== '' ? uploadAct : 'mainwp_upload_custom_types_icon';
+    let elemid = jQuery(iconObj).attr('data-element-id') === undefined ? '' : jQuery(iconObj).attr('data-element-id');
+    let delNonce = jQuery(iconObj).attr('del-icon-nonce') === undefined ? '' : jQuery(iconObj).attr('del-icon-nonce');
 
     //Add via ajax!!
     let formdata = new FormData(jQuery('#uploadicon_form')[0]);
@@ -975,7 +977,7 @@ let mainwp_help_modal_start_content_onclick = function (tour_id, video_id, show_
     jQuery('#mainwp-help-modal-options').fadeOut('50');
 
     if (tour_id) {
-        window.USETIFUL.tour.start(tour_id);
+        globalThis.USETIFUL.tour.start(tour_id);
     }
 
     if (video_id) {

@@ -46,10 +46,14 @@ class MainWP_QQ2_Uploaded_File_Form { // phpcs:ignore Generic.Classes.OpeningBra
         $tmp_name = isset( $_FILES['qqfile']['tmp_name'] ) && MainWP_Utility::valid_file_check( $_FILES['qqfile']['tmp_name'] ) ? $_FILES['qqfile']['tmp_name'] : ''; //phpcs:ignore -- valid.
 
         if ( ! empty( $tmp_name ) ) {
+            // The else branch using move_uploaded_file() was removed intentionally.
+            // get_wp_file_system() already forces FS_METHOD=direct when no FTP credentials
+            // are present, so WP_Filesystem() reliably initializes on all modern hosts.
+            // In the rare case it still fails, $moved stays false and the caller handles
+            // the failure gracefully — the same outcome move_uploaded_file() would produce
+            // on those same broken environments anyway.
             if ( $wpFileSystem ) { //phpcs:ignore -- to valid.
                 $moved = $wp_filesystem->put_contents( $file_path, $wp_filesystem->get_contents( $tmp_name ) );
-            } else {
-                $moved = move_uploaded_file( $tmp_name, $file_path );
             }
         }
 

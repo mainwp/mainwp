@@ -289,7 +289,7 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-grid-view-mode-info-message' ) ) : ?>
             <div class="ui info message">
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-grid-view-mode-info-message"></i>
-                <div><?php printf( esc_html__( 'In the Grid mode, sites options are limited in comparison to the %sTable mode%s.', 'mainwp' ), '<a href="admin.php?page=managesites&viewmode=table&modenonce=' . esc_html( $nonce ) . '">', '</a>' ); ?></div>
+                <div><?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'In the Grid mode, sites options are limited in comparison to the %1$sTable mode%2$s.', 'mainwp' ), '<a href="admin.php?page=managesites&viewmode=table&modenonce=' . esc_html( $nonce ) . '">', '</a>' ); ?></div>
             </div>
             <?php endif; ?>
             <?php

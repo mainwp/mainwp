@@ -146,7 +146,7 @@ class Api_Backups_Handler {
                     if ( is_object( $linode_response ) ) {
                         // Handle response.
                         if ( isset( $linode_response->errors ) ) {
-                            $error = new WP_Error( '400', __( $linode_response->errors['0']->reason, 'mainwp' ), 'Some information' );
+                            $error = new WP_Error( '400', $linode_response->errors['0']->reason, 'Some information' );
                             static::send_backups_response( false, $error );
                         } else {
                             static::send_backups_response();
@@ -160,7 +160,7 @@ class Api_Backups_Handler {
                 if ( $die_output ) {
                     $backup_status = (array) $result;
                     if ( array_key_exists( 'error', $backup_status ) ) {
-                        $error = new WP_Error( $backup_status['error']->code, __( $backup_status['error']->message, 'mainwp' ) );
+                        $error = new WP_Error( $backup_status['error']->code, $backup_status['error']->message );
                         if ( is_wp_error( $error ) ) {
                             static::send_backups_response( false, $error->get_error_message() );
                         }

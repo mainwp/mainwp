@@ -27,7 +27,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:ignore -- NOSONAR - multi methods.
 
-	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
+    // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
     /**
      * Protected static variable to hold the single instance of the class.
@@ -79,7 +79,7 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
      * Creates the necessary endpoints for the api.
      * Note, for a request to be successful the URL query parameters consumer_key and consumer_secret need to be set and correct.
      */
-	public function register_routes() { // phpcs:ignore -- NOSONAR - complex.
+    public function register_routes() { // phpcs:ignore -- NOSONAR - complex.
         register_rest_route(
             $this->namespace,
             '/' . $this->rest_base,
@@ -163,7 +163,7 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
      *
      * @return array
      */
-	public function pages_fields_custom_query_args( $args, $request ) { // phpcs:ignore -- NOSONAR - complex.
+    public function pages_fields_custom_query_args( $args, $request ) { // phpcs:ignore -- NOSONAR - complex.
         if ( ! empty( $request['clients'] ) ) {
             $args['clients'] = $request['clients'];
         }
@@ -237,7 +237,7 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
      *
      * @return WP_Error|WP_REST_Response
      */
-	public function list_pages( $request ) { // phpcs:ignore -- NOSONAR - complex.
+    public function list_pages( $request ) { // phpcs:ignore -- NOSONAR - complex.
         $page_data = array();
         $utility   = MainWP_Utility::instance();
         // Get params.
@@ -320,7 +320,7 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
      *
      * @return WP_Error|WP_REST_Response
      */
-	public function get_page( $request ) { // phpcs:ignore -- NOSONAR - complex.
+    public function get_page( $request ) { // phpcs:ignore -- NOSONAR - complex.
         $website = $this->get_request_item( $request );
 
         if ( empty( $website ) ) {
@@ -372,7 +372,7 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
      *
      * @return WP_Error|WP_REST_Response
      */
-	public function update_status_page( $request ) { // phpcs:ignore -- NOSONAR - complex.
+    public function update_status_page( $request ) { // phpcs:ignore -- NOSONAR - complex.
         // Get website exist.
         $website = $this->get_request_item( $request );
         if ( empty( $website ) ) {
@@ -440,7 +440,7 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
      *
      * @return WP_Error|WP_REST_Response
      */
-	public function edit_page( $request ) { // phpcs:ignore -- NOSONAR - complex.
+    public function edit_page( $request ) { // phpcs:ignore -- NOSONAR - complex.
         // Get website exist.
         $website = $this->get_request_item( $request );
         if ( empty( $website ) ) {
@@ -521,7 +521,7 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
      *
      * @return WP_Error|WP_REST_Response
      */
-	public function create_page( $request ) { // phpcs:ignore -- NOSONAR - complex.
+    public function create_page( $request ) { // phpcs:ignore -- NOSONAR - complex.
         // Get website exist.
         $website = $this->get_request_item( $request );
         if ( empty( $website ) ) {
@@ -978,7 +978,7 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
      *
      * @return bool|WP_Error
      */
-	public function validate_datetime_format( $value, $request, $param = '' ) { // phpcs:ignore -- NOSONAR - callback signature required by WordPress.
+    public function validate_datetime_format( $value, $request, $param = '' ) { // phpcs:ignore -- NOSONAR - callback signature required by WordPress.
         if ( empty( $value ) ) {
             return true; // Allow empty values.
         }
@@ -1023,7 +1023,7 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @since  5.2
      * @return array
      */
-	public function get_item_schema() {  // phpcs:ignore -- NOSONAR - long schema.
+    public function get_item_schema() {  // phpcs:ignore -- NOSONAR - long schema.
         return array(
             '$schema'    => 'http://json-schema.org/draft-04/schema#',
             'title'      => 'api_keys',

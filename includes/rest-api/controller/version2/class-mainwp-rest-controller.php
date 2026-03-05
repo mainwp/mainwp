@@ -1521,7 +1521,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
     public function make_enum_sanitizer( array $allowed, string $type = 'int' ) { // phpcs:ignore -- NOSONAR - complex.
         $allowed_norm = array_map( fn( $v ) => $this->coerce_type( $v, $type ), $allowed );
 
-		return function ( $value, $request, $param ) use ( $allowed_norm, $type, $allowed ) {  // phpcs:ignore -- NOSONAR
+        return function ( $value, $request, $param ) use ( $allowed_norm, $type, $allowed ) {  // phpcs:ignore -- NOSONAR
             if ( null === $value || '' === $value ) {
                 return $value;
             }
@@ -1609,7 +1609,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
     public function make_enum_validator( array $allowed, string $type = 'int' ) { // phpcs:ignore -- NOSONAR
         $allowed_norm = array_map( fn( $v ) => $this->coerce_type( $v, $type ), $allowed );
 
-		return function ( $value, $request, $param ) use ( $allowed_norm, $type, $allowed ) {  // phpcs:ignore -- NOSONAR
+        return function ( $value, $request, $param ) use ( $allowed_norm, $type, $allowed ) {  // phpcs:ignore -- NOSONAR
             if ( null === $value || '' === $value ) {
                 return true;
             }

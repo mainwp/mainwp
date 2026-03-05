@@ -288,9 +288,9 @@ class Log_Admin {
                 <div class="ui yellow message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="logs-db-size-large"></i>
                     <?php
-					/* translators: 1: Database size in MB, 2: Opening anchor tag, 3: Closing anchor tag */
-					printf( esc_html__( 'Your Network Activity logs are using a lot of database space (%1$s MB). Go to %2$sMainWP > Settings > Network Activity Settings%3$s and enable Automatically archive logs, then set a Data retention period to keep the table size under control.', 'mainwp' ), esc_html( $size ), '<a href="admin.php?page=MainWPTools#mainwp-clear-archived-sites-changes-data">', '</a>' ); // NOSONAR - noopener - open safe.
-					?>
+                    /* translators: 1: Database size in MB, 2: Opening anchor tag, 3: Closing anchor tag */
+                    printf( esc_html__( 'Your Network Activity logs are using a lot of database space (%1$s MB). Go to %2$sMainWP > Settings > Network Activity Settings%3$s and enable Automatically archive logs, then set a Data retention period to keep the table size under control.', 'mainwp' ), esc_html( $size ), '<a href="admin.php?page=MainWPTools#mainwp-clear-archived-sites-changes-data">', '</a>' ); // NOSONAR - noopener - open safe.
+                    ?>
                 </div>
                 <?php
             }
@@ -315,9 +315,9 @@ class Log_Admin {
             <div class="ui yellow message">
                 <i class="close icon mainwp-notice-dismiss" notice-id="logs-db-update-required"></i>
                 <?php
-				/* translators: 1: Opening anchor tag, 2: Closing anchor tag */
-				printf( esc_html__( 'Your \'Network Activity\' database needs to be updated. Click %1$shere%2$s to start the update.', 'mainwp' ), '<a href="javascript:void(0);" id="module-update-logs-db-requirement">', '</a>' );
-				?>
+                /* translators: 1: Opening anchor tag, 2: Closing anchor tag */
+                printf( esc_html__( 'Your \'Network Activity\' database needs to be updated. Click %1$shere%2$s to start the update.', 'mainwp' ), '<a href="javascript:void(0);" id="module-update-logs-db-requirement">', '</a>' );
+                ?>
             </div>
             <?php
         } elseif ( 'running' === $status ) {

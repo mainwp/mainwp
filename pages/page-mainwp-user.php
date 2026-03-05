@@ -1887,7 +1887,6 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
              * @since 4.1
              */
             do_action( 'mainwp_before_import_users' );
-            $is_demo = MainWP_Demo_Handle::is_demo_mode();
             ?>
             <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
             <div class="ui form">

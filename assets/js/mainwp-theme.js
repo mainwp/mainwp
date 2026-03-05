@@ -92,16 +92,13 @@ globalThis.wp = globalThis.wp || {};
         // Search input and view
         // for current theme collection
         search: function () {
-            let view,
-                self = this;
-
             // Don't render the search if there is only one theme
             if (themes.data.themes.length === 1) {
                 return;
             }
 
-            view = new this.SearchView({
-                collection: self.collection,
+            const view = new this.SearchView({
+                collection: this.collection,
                 parent: this
             });
 
@@ -172,11 +169,11 @@ globalThis.wp = globalThis.wp || {};
             this.reset(themes.data.themes, { silent: true });
 
             // Escape the term string for RegExp meta characters
-            term = term.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+            term = term.replaceAll(/[-/\\^$*+?.()|[\]{}]/g, '\\$&'); // NOSONAR - safe pattern.
 
             // Consider spaces as word delimiters and match the whole string
             // so matching terms can be combined
-            term = term.replace(/ /g, ')(?=.*');
+            term = term.replaceAll(' ', ')(?=.*');
             match = new RegExp('^(?=.*' + term + ').+', 'i');
 
             // Find results
@@ -223,86 +220,81 @@ globalThis.wp = globalThis.wp || {};
         // When we are missing a cache object we fire an apiCall()
         // which triggers events of `query:success` or `query:fail`
         query: function (request) {
-            /**
-             * @static
-             * @type Array
-             */
-            let queries = this.queries,
-                self = this,
-                query, isPaginated, count;
+
+            let queries = this.queries;
+            let query, isPaginated, count;
 
             // Store current query request args
-            // for later use with the event `theme:end`
             this.currentQuery.request = request;
 
             // Search the query cache for matches.
-            query = _.find(queries, function (query) {
+            query = _.find(queries, (query) => {
                 return _.isEqual(query.request, request);
             });
 
-            // If the request matches the stored currentQuery.request
-            // it means we have a paginated request.
             isPaginated = _.has(request, 'page');
 
-            // Reset the internal api page counter for non paginated queries.
             if (!isPaginated) {
                 this.currentQuery.page = 1;
             }
 
-            // Otherwise, send a new API call and add it to the cache.
             if (!query && !isPaginated) {
-                this.apiCall(request).done(function (data) {
 
-                    // Update the collection with the queried data.
-                    if (data.themes) {
-                        self.reset(data.themes);
-                        count = data.info.results;
-                        // Store the results and the query request
-                        queries.push({ themes: data.themes, request: request, total: count });
-                    }
+                this.apiCall(request)
+                    .done((data) => {
 
-                    // Trigger a collection refresh event
-                    // and a `query:success` event with a `count` argument.
-                    self.trigger('update');
-                    self.trigger('query:success', count);
+                        if (data.themes) {
+                            this.reset(data.themes);
+                            count = data.info.results;
 
-                    if (data.themes && data.themes.length === 0) {
-                        self.trigger('query:empty');
-                    }
+                            queries.push({
+                                themes: data.themes,
+                                request: request,
+                                total: count
+                            });
+                        }
 
-                }).fail(function () {
-                    self.trigger('query:fail');
-                });
-            } else {
-                // If it's a paginated request we need to fetch more themes...
-                if (isPaginated) {
-                    return this.apiCall(request, isPaginated).done(function (data) {
-                        // Add the new themes to the current collection
-                        // @devtodo update counter
-                        self.add(data.themes);
-                        self.trigger('query:success');
+                        this.trigger('update');
+                        this.trigger('query:success', count);
 
-                        // We are done loading themes for now.
-                        self.loadingThemes = false;
+                        if (data?.themes?.length === 0) {
+                            this.trigger('query:empty');
+                        }
 
-                    }).fail(function () {
-                        self.trigger('query:fail');
+                    })
+                    .fail(() => {
+                        this.trigger('query:fail');
                     });
+
+            } else {
+
+                if (isPaginated) {
+                    return this.apiCall(request, isPaginated)
+                        .done((data) => {
+
+                            this.add(data.themes);
+                            this.trigger('query:success');
+
+                            this.loadingThemes = false;
+
+                        })
+                        .fail(() => {
+                            this.trigger('query:fail');
+                        });
                 }
 
                 if (query.themes.length === 0) {
-                    self.trigger('query:empty');
+                    this.trigger('query:empty');
                 } else {
                     $('body').removeClass('no-results');
                 }
 
-                // Only trigger an update event since we already have the themes
-                // on our cached object
                 if (_.isNumber(query.total)) {
                     this.count = query.total;
                 }
 
                 this.reset(query.themes);
+
                 if (!query.total) {
                     this.count = this.length;
                 }
@@ -361,7 +353,7 @@ globalThis.wp = globalThis.wp || {};
                                     this[index].added_fav = 0;
                                 }
                             }, response.themes); // use second param as this.
-                        } catch (e) {
+                        } catch {
                             console.log('Invalid favorites themes data.');
                         }
                     }
@@ -436,7 +428,6 @@ globalThis.wp = globalThis.wp || {};
         // Single theme overlay screen
         // It's shown when clicking a theme
         expand: function (event) {
-            let self = this;
 
             event = event || window.event; // NOSONAR - compatible.
 
@@ -460,7 +451,7 @@ globalThis.wp = globalThis.wp || {};
             // Set focused theme to current element
             themes.focusedTheme = this.$el;
 
-            this.trigger('theme:expand', self.model.cid);
+            this.trigger('theme:expand', this.model.cid);
         },
 
         preventExpand: function () {
@@ -468,8 +459,7 @@ globalThis.wp = globalThis.wp || {};
         },
 
         preview: function (event) {
-            let self = this,
-                current, preview;
+            let current, preview;
 
             // Bail if the user scrolled on a touch device
             if (this.touchDrag === true) {
@@ -527,57 +517,57 @@ globalThis.wp = globalThis.wp || {};
 
             // Listen to our preview object
             // for `theme:next` and `theme:previous` events.
-            this.listenTo(preview, 'theme:next', function () {
+            this.listenTo(preview, 'theme:next', () => {
 
                 // Keep local track of current theme model.
-                current = self.model;
+                current = this.model;
 
                 // If we have ventured away from current model update the current model position.
-                if (!_.isUndefined(self.current)) {
-                    current = self.current;
+                if (!_.isUndefined(this.current)) {
+                    current = this.current;
                 }
 
                 // Get next theme model.
-                self.current = self.model.collection.at(self.model.collection.indexOf(current) + 1);
+                this.current = this.model.collection.at(this.model.collection.indexOf(current) + 1);
 
                 // If we have no more themes, bail.
-                if (_.isUndefined(self.current)) {
-                    self.options.parent.parent.trigger('theme:end');
-                    self.current = current;
-                    return self.current;
+                if (_.isUndefined(this.current)) {
+                    this.options.parent.parent.trigger('theme:end');
+                    this.current = current;
+                    return this.current;
                 }
 
-                preview.model = self.current;
+                preview.model = this.current;
 
                 // Render and append.
                 preview.render();
                 this.setNavButtonsState();
                 $('.next-theme').trigger('focus');
             })
-                .listenTo(preview, 'theme:previous', function () {
+                .listenTo(preview, 'theme:previous', () => {
 
                     // Keep track of current theme model.
-                    current = self.model;
+                    current = this.model;
 
                     // Bail early if we are at the beginning of the collection
-                    if (self.model.collection.indexOf(self.current) === 0) {
+                    if (this.model.collection.indexOf(this.current) === 0) {
                         return;
                     }
 
                     // If we have ventured away from current model update the current model position.
-                    if (!_.isUndefined(self.current)) {
-                        current = self.current;
+                    if (!_.isUndefined(this.current)) {
+                        current = this.current;
                     }
 
                     // Get previous theme model.
-                    self.current = self.model.collection.at(self.model.collection.indexOf(current) - 1);
+                    this.current = this.model.collection.at(this.model.collection.indexOf(current) - 1);
 
                     // If we have no more themes, bail.
-                    if (_.isUndefined(self.current)) {
+                    if (_.isUndefined(this.current)) {
                         return;
                     }
 
-                    preview.model = self.current;
+                    preview.model = this.current;
 
                     // Render and append.
                     preview.render();
@@ -585,8 +575,8 @@ globalThis.wp = globalThis.wp || {};
                     $('.previous-theme').trigger('focus');
                 });
 
-            this.listenTo(preview, 'preview:close', function () {
-                self.current = self.model;
+            this.listenTo(preview, 'preview:close',  () => {
+                this.current = this.model;
             });
         },
 
@@ -675,9 +665,7 @@ globalThis.wp = globalThis.wp || {};
         // Single theme overlay screen
         // It's shown when clicking a theme
         collapse: function (event) {
-            let self = this,
-                scroll;
-
+            let scroll;
             event = event || window.event; // NOSONAR - compatible.
 
             // Prevent collapsing detailed view when there is only one theme available
@@ -694,11 +682,11 @@ globalThis.wp = globalThis.wp || {};
                 $('body').addClass('closing-overlay');
 
                 // With a quick fade out animation
-                this.$el.fadeOut(130, function () {
+                this.$el.fadeOut(130, () => {
                     // Clicking outside the modal box closes the overlay
                     $('body').removeClass('closing-overlay');
                     // Handle event cleanup
-                    self.closeOverlay();
+                    this.closeOverlay();
 
                     // Get scroll position to avoid jumping to the top
                     scroll = document.body.scrollTop;
@@ -724,7 +712,7 @@ globalThis.wp = globalThis.wp || {};
             if (this.model.cid === this.model.collection.at(0).cid) {
                 this.$el.find('.left').addClass('disabled');
             }
-            if (this.model.cid === this.model.collection.at(this.model.collection.length - 1).cid) {
+            if (this.model.cid === this.model.collection.at(-1).cid) {
                 this.$el.find('.right').addClass('disabled');
             }
         },
@@ -744,14 +732,12 @@ globalThis.wp = globalThis.wp || {};
         },
 
         nextTheme: function () {
-            let self = this;
-            self.trigger('theme:next', self.model.cid);
+            this.trigger('theme:next', this.model.cid);
             return false;
         },
 
         previousTheme: function () {
-            let self = this;
-            self.trigger('theme:previous', self.model.cid);
+            this.trigger('theme:previous', this.model.cid);
             return false;
         },
 
@@ -867,7 +853,6 @@ globalThis.wp = globalThis.wp || {};
         liveThemeCount: 0,
 
         initialize: function (options) {
-            let self = this;
 
             // Set up parent
             this.parent = options.parent;
@@ -876,59 +861,59 @@ globalThis.wp = globalThis.wp || {};
             this.setView('grid');
 
             // Move the active theme to the beginning of the collection
-            self.currentTheme();
+            this.currentTheme();
 
             // When the collection is updated by user input...
-            this.listenTo(self.collection, 'update', function () {
-                self.parent.page = 0;
-                self.currentTheme();
-                self.render(this);
+            this.listenTo(this.collection, 'update',  () => {
+                this.parent.page = 0;
+                this.currentTheme();
+                this.render(this);
             });
 
             // Update theme count to full result set when available.
-            this.listenTo(self.collection, 'query:success', function (count) {
+            this.listenTo(this.collection, 'query:success', (count) => {
                 if (_.isNumber(count)) {
-                    self.count.text(count);
-                    self.announceSearchResults(count);
+                    this.count.text(count);
+                    this.announceSearchResults(count);
                 } else {
-                    self.count.text(self.collection.length);
-                    self.announceSearchResults(self.collection.length);
+                    this.count.text(this.collection.length);
+                    this.announceSearchResults(this.collection.length);
                 }
             });
 
-            this.listenTo(self.collection, 'query:empty', function () {
+            this.listenTo(this.collection, 'query:empty', () => {
                 $('body').addClass('no-results');
             });
 
-            this.listenTo(this.parent, 'theme:scroll', function () {
-                self.renderThemes(self.parent.page);
+            this.listenTo(this.parent, 'theme:scroll', () => {
+                this.renderThemes(this.parent.page);
             });
 
-            this.listenTo(this.parent, 'theme:close', function () {
-                if (self.overlay) {
-                    self.overlay.closeOverlay();
+            this.listenTo(this.parent, 'theme:close', () => {
+                if (this.overlay) {
+                    this.overlay.closeOverlay();
                 }
             });
 
             // Bind keyboard events.
-            $('body').on('keyup', function (event) {
-                if (!self.overlay) {
+            $('body').on('keyup', (event) => {
+                if (!this.overlay) {
                     return;
                 }
 
                 // Pressing the right arrow key fires a theme:next event
                 if (event.keyCode === 39) {
-                    self.overlay.nextTheme();
+                    this.overlay.nextTheme();
                 }
 
                 // Pressing the left arrow key fires a theme:previous event
                 if (event.keyCode === 37) {
-                    self.overlay.previousTheme();
+                    this.overlay.previousTheme();
                 }
 
                 // Pressing the escape key fires a theme:collapse event
                 if (event.keyCode === 27) {
-                    self.overlay.collapse(event);
+                    this.overlay.collapse(event);
                 }
             });
         },
@@ -972,13 +957,11 @@ globalThis.wp = globalThis.wp || {};
         // Iterates through each instance of the collection
         // and renders each theme module
         renderThemes: function (page) {
-            let self = this;
 
-            self.instance = self.collection.paginate(page);
+            this.instance = this.collection.paginate(page);
 
             // If we have no more themes bail
-            if (self.instance.length === 0) {
-                // Fire a no-more-themes event.
+            if (this.instance.length === 0) {
                 this.parent.trigger('theme:end');
                 return;
             }
@@ -989,25 +972,33 @@ globalThis.wp = globalThis.wp || {};
             }
 
             // Loop through the themes and setup each theme view
-            self.instance.each(function (theme) {
-                self.theme = new themes.view.Theme({
+            this.instance.each((theme) => {
+
+                this.theme = new themes.view.Theme({
                     model: theme,
-                    parent: self
+                    parent: this
                 });
 
-                // Render the views...
-                self.theme.render();
-                // and append them to div.themes
-                self.$el.append(self.theme.el);
+                // Render the view
+                this.theme.render();
 
-                // Binds to theme:expand to show the modal box
-                // with the theme details
-                self.listenTo(self.theme, 'theme:expand', self.expand, self);
+                // Append to container
+                this.$el.append(this.theme.el);
+
+                // Bind expand event
+                this.listenTo(this.theme, 'theme:expand', this.expand);
             });
 
             // 'Add new theme' element shown at the end of the grid
             if (themes.data.settings.canInstall) {
-                this.$el.append('<div class="theme add-new-theme"><a href="' + themes.data.settings.installURI + '"><div class="theme-screenshot"><span></span></div><h3 class="theme-name">' + l10n.addNew + '</h3></a></div>');
+                this.$el.append(
+                    '<div class="theme add-new-theme">' +
+                        '<a href="' + themes.data.settings.installURI + '">' +
+                            '<div class="theme-screenshot"><span></span></div>' +
+                            '<h3 class="theme-name">' + l10n.addNew + '</h3>' +
+                        '</a>' +
+                    '</div>'
+                );
             }
 
             this.parent.page++;
@@ -1015,15 +1006,12 @@ globalThis.wp = globalThis.wp || {};
 
         // Grabs current theme and puts it at the beginning of the collection
         currentTheme: function () {
-            let self = this,
-                current;
-
-            current = self.collection.findWhere({ active: true });
+            const current = this.collection.findWhere({ active: true });
 
             // Move the active theme to the beginning of the collection
             if (current) {
-                self.collection.remove(current);
-                self.collection.add(current, { at: 0 });
+                this.collection.remove(current);
+                this.collection.add(current, { at: 0 });
             }
         },
 
@@ -1035,10 +1023,8 @@ globalThis.wp = globalThis.wp || {};
         // Renders the overlay with the ThemeDetails view
         // Uses the current model data
         expand: function (id) {
-            let self = this;
-
             // Set the current theme model
-            this.model = self.collection.get(id);
+            this.model = this.collection.get(id);
 
             // Trigger a route update for the current model
             themes.router.navigate(themes.router.baseUrl(themes.router.themePath + this.model.id));
@@ -1049,7 +1035,7 @@ globalThis.wp = globalThis.wp || {};
 
             // Set up the theme details view
             this.overlay = new themes.view.Details({
-                model: self.model
+                model: this.model
             });
 
             this.overlay.render();
@@ -1060,14 +1046,13 @@ globalThis.wp = globalThis.wp || {};
             //
             // Keep track of the current model so we
             // can infer an index position
-            this.listenTo(this.overlay, 'theme:next', function () {
+            this.listenTo(this.overlay, 'theme:next', () => {
                 // Renders the next theme on the overlay
-                self.next([self.model.cid]);
-
+                this.next([this.model.cid]);
             })
-                .listenTo(this.overlay, 'theme:previous', function () {
+                .listenTo(this.overlay, 'theme:previous', () => {
                     // Renders the previous theme on the overlay
-                    self.previous([self.model.cid]);
+                    this.previous([this.model.cid]);
                 });
         },
 
@@ -1075,13 +1060,12 @@ globalThis.wp = globalThis.wp || {};
         // based on the current position in the collection
         // @params [model cid]
         next: function (args) {
-            let self = this,
-                model, nextModel;
+            let model, nextModel;
 
             // Get the current theme
-            model = self.collection.get(args[0]);
+            model = this.collection.get(args[0]);
             // Find the next model within the collection
-            nextModel = self.collection.at(self.collection.indexOf(model) + 1);
+            nextModel = this.collection.at(this.collection.indexOf(model) + 1);
 
             // Sanity check which also serves as a boundary test
             if (nextModel !== undefined) {
@@ -1091,7 +1075,7 @@ globalThis.wp = globalThis.wp || {};
                 this.overlay.closeOverlay();
 
                 // Trigger a route update for the current model
-                self.theme.trigger('theme:expand', nextModel.cid);
+                this.theme.trigger('theme:expand', nextModel.cid);
 
             }
         },
@@ -1100,13 +1084,12 @@ globalThis.wp = globalThis.wp || {};
         // based on the current position in the collection
         // @params [model cid]
         previous: function (args) {
-            let self = this,
-                model, previousModel;
+            let model, previousModel;
 
             // Get the current theme
-            model = self.collection.get(args[0]);
+            model = this.collection.get(args[0]);
             // Find the previous model within the collection
-            previousModel = self.collection.at(self.collection.indexOf(model) - 1);
+            previousModel = this.collection.at(this.collection.indexOf(model) - 1);
 
             if (previousModel !== undefined) {
 
@@ -1115,7 +1098,7 @@ globalThis.wp = globalThis.wp || {};
                 this.overlay.closeOverlay();
 
                 // Trigger a route update for the current model
-                self.theme.trigger('theme:expand', previousModel.cid);
+                this.theme.trigger('theme:expand', previousModel.cid);
 
             }
         },
@@ -1132,7 +1115,6 @@ globalThis.wp = globalThis.wp || {};
 
     // Search input view controller.
     themes.view.Search = wp.Backbone.View.extend({
-
         tagName: 'input',
         className: 'wp-filter-search fluid prompt',
         id: 'wp-filter-search-input',
@@ -1269,30 +1251,29 @@ globalThis.wp = globalThis.wp || {};
                 hashChange: false
             });
         },
-
         routes: function () {
-            let self = this;
-            // Bind to our global thx object
-            // so that the object is available to sub-views
+
+            // Bind to our global themes object
             themes.router = new themes.Router();
 
             // Handles theme details route event
-            themes.router.on('route:theme', function (slug) {
-                self.view.view.expand(slug);
+            themes.router.on('route:theme', (slug) => {
+                this.view.view.expand(slug);
             });
 
-            themes.router.on('route:themes', function () {
-                self.themes.doSearch('');
-                self.view.trigger('theme:close');
+            themes.router.on('route:themes', () => {
+                this.themes.doSearch('');
+                this.view.trigger('theme:close');
             });
 
             // Handles search route event
-            themes.router.on('route:search', function () {
+            themes.router.on('route:search', () => {
                 $('.wp-filter-search').trigger('keyup');
             });
 
             this.extraRoutes();
         },
+
 
         extraRoutes: function () {
             return false;
@@ -1377,7 +1358,6 @@ globalThis.wp = globalThis.wp || {};
 
         // Initial render method
         render: function () {
-            let self = this;
 
             this.search();
             this.uploader();
@@ -1385,20 +1365,20 @@ globalThis.wp = globalThis.wp || {};
             this.collection = new themes.Collection();
 
             // Bump `collection.currentQuery.page` and request more themes if we hit the end of the page.
-            this.listenTo(this, 'theme:end', function () {
+            this.listenTo(this, 'theme:end',  () => {
 
                 // Make sure we are not already loading
-                if (self.collection.loadingThemes) {
+                if (this.collection.loadingThemes) {
                     return;
                 }
 
                 // Set loadingThemes to true and bump page instance of currentQuery.
-                self.collection.loadingThemes = true;
-                self.collection.currentQuery.page++;
+                this.collection.loadingThemes = true;
+                this.collection.currentQuery.page++;
 
                 // Use currentQuery.page to build the themes request.
-                _.extend(self.collection.currentQuery.request, { page: self.collection.currentQuery.page });
-                self.collection.query(self.collection.currentQuery.request);
+                _.extend(this.collection.currentQuery.request, { page: this.collection.currentQuery.page });
+                this.collection.query(this.collection.currentQuery.request);
             });
 
             this.listenTo(this.collection, 'query:success', function () {
@@ -1601,14 +1581,12 @@ globalThis.wp = globalThis.wp || {};
         // Clears all the checked filters
         // @uses filtersChecked()
         clearFilters: function (event) {
-            let items = $('.filter-group').find(':checkbox'),
-                self = this;
-
+            let items = $('.filter-group').find(':checkbox')
             event.preventDefault();
 
-            _.each(items.filter(':checked'), function (item) {
+            _.each(items.filter(':checked'), (item) => {
                 $(item).prop('checked', false);
-                return self.filtersChecked();
+                return this.filtersChecked();
             });
         },
 
@@ -1683,8 +1661,7 @@ globalThis.wp = globalThis.wp || {};
         },
 
         routes: function () {
-            let self = this,
-                request = {};
+            let request = {};
 
             // Bind to our global `wp.themes` object
             // so that the router is available to sub-views
@@ -1692,9 +1669,9 @@ globalThis.wp = globalThis.wp || {};
 
             // Handles `theme` route event
             // Queries the API for the passed theme slug
-            themes.router.on('route:preview', function (slug) {
+            themes.router.on('route:preview',  (slug)  => {
                 request.theme = slug;
-                self.view.collection.query(request);
+                this.view.collection.query(request);
             });
 
             // Handles sorting / browsing routes
@@ -1704,8 +1681,8 @@ globalThis.wp = globalThis.wp || {};
                 if (!sort) {
                     sort = 'featured';
                 }
-                self.view.sort(sort);
-                self.view.trigger('theme:close');
+                this.view.sort(sort);
+                this.view.trigger('theme:close');
             });
 
             // Support the `upload` route by going straight to upload section
@@ -1743,11 +1720,12 @@ globalThis.wp = globalThis.wp || {};
 
 // Align theme browser thickbox
 jQuery(function($) {
-    window.tb_position = function () {
+
+    globalThis.tb_position = function () {
         let tbWindow = $('#TB_window'),
-            width = $(window).width(),
-            H = $(window).height(),
-            W = (1040 < width) ? 1040 : width,
+            width = $(globalThis).width(),
+            H = $(globalThis).height(),
+            W = Math.min(1040, width),
             adminbar_height = 0;
 
         if ($('#wpadminbar').length) {
@@ -1767,7 +1745,7 @@ jQuery(function($) {
         }
     };
 
-    $(window).on('resize', function () {
-        window.tb_position();
+    $(globalThis).on('resize', function () {
+        globalThis.tb_position();
     });
 });

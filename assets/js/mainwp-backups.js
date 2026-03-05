@@ -597,7 +597,7 @@ jQuery(function () {
 });
 managebackups_exclude_folder = function (pElement) {
     let folder = pElement.parent().attr('rel') + "\n";
-    if (jQuery('#excluded_folders_list').val().indexOf(folder) !== -1)
+    if (jQuery('#excluded_folders_list').val().includes(folder))
         return;
 
     jQuery('#excluded_folders_list').val(jQuery('#excluded_folders_list').val() + folder);

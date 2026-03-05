@@ -834,7 +834,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <p><?php esc_html_e( 'Click the Start Page Tour button to start the guided tour for the current page.', 'mainwp' ); ?></p>
             <div class="ui hidden divider"></div>
             <button id="mainwp-start-page-tour-button" class="ui big green fluid basic button" tour-id="<?php echo esc_attr( $tour_id ); ?>"><?php esc_html_e( 'Start Page Tour', 'mainwp' ); ?></button>
-                
+
             <?php endif; ?>
             <div class="ui header"><?php esc_html_e( 'MainWP Knowledge Base', 'mainwp' ); ?></div>
             <div class="ui hidden divider"></div>
@@ -1449,7 +1449,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     if ( ! empty( $site_sync_info['timestamp'] ) && ( $current_time - $site_sync_info['timestamp'] ) > $twenty_four_h ) {
                         $site_sync_outdated = true;
                         /* translators: 1: Site name. */
-                        $site_sync_tooltip  = sprintf( esc_attr__( 'Data not synced for more than 24h. Click here to sync %1$s.', 'mainwp' ), stripslashes( $website->name ) );
+                        $site_sync_tooltip = sprintf( esc_attr__( 'Data not synced for more than 24h. Click here to sync %1$s.', 'mainwp' ), stripslashes( $website->name ) );
                     } elseif ( ! empty( $site_sync_info['formatted'] ) ) {
                         /* translators: 1: Last sync date/time, 2: Site name. */
                         $site_sync_tooltip = sprintf( esc_attr__( 'Last sync: %1$s. Click here to sync %2$s.', 'mainwp' ), $site_sync_info['formatted'], stripslashes( $website->name ) );
@@ -1462,7 +1462,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     <?php if ( $site_sync_outdated ) : ?>
                         <span class="ui red empty circular looping pulsating transition label" style="position: absolute; top: -4px; right: -4px;"></span>
                     <?php endif; ?>
-                    <i class="sync alternate icon"></i> <span class="mainwp-768-hide"><?php echo esc_html__( 'Sync', 'mainwp'); ?></span>
+                    <i class="sync alternate icon"></i> <span class="mainwp-768-hide"><?php echo esc_html__( 'Sync', 'mainwp' ); ?></span>
                 </a>
             <?php endif; ?>
             <?php
@@ -1488,7 +1488,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     <?php if ( $sync_outdated ) : ?>
                     <span class="ui red empty circular looping pulsating transition label" style="position: absolute; top: -4px; right: -4px;"></span>
                 <?php endif; ?>
-                <i class="sync alternate icon"></i> <span class="mainwp-768-hide"><?php echo esc_html__( 'Sync', 'mainwp'); ?></span>
+                <i class="sync alternate icon"></i> <span class="mainwp-768-hide"><?php echo esc_html__( 'Sync', 'mainwp' ); ?></span>
             </a>
         <?php endif; ?>
 
@@ -1914,12 +1914,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     );
                 }
 
-                // default settings.
-                // if ( ! isset( $layout['x'] ) && ! isset( $layout['w'] ) ) {
-                // $layout['w'] = 4;
-                // $layout['h'] = 4;
-                // }
-
                 $layout_attrs_escaped = '';
                 if ( isset( $layout['x'] ) && (int) $layout['x'] >= 0 ) {
                     $layout_attrs_escaped .= ' gs-x="' . esc_attr( $layout['x'] ) . '"';
@@ -2340,7 +2334,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $siteViewMode = MainWP_Utility::get_siteview_mode();
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized.Recommended
-        $page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
+        $page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
 
         $tour_id  = '';
         $video_id = '';
@@ -2384,7 +2378,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             $tour_id = '27275';
         } elseif ( 'UpdatesManage' === $page ) {
             $video_id = 'igOn8wOBcAQ';
-            $tab      = isset( $_GET['tab'] ) ? wp_unslash( $_GET['tab'] ) : '';
+            $tab      = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : '';
             if ( 'plugins-updates' === $tab ) {
                 $tour_id = '28259';
             } elseif ( 'themes-updates' === $tab ) {
@@ -2530,8 +2524,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $enable_guided_tours    = get_option( 'mainwp_enable_guided_tours', 0 );
         $enable_guided_chatbase = get_option( 'mainwp_enable_guided_chatbase', 0 );
         $enable_guided_video    = get_option( 'mainwp_enable_guided_video', 0 );
-
-        $enabled_at_least_one = $enable_guided_tours || $enable_guided_chatbase || $enable_guided_video;
 
         ?>
         <div id="mainwp-help-modal" class="ui modal">
@@ -2983,7 +2975,9 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      *
      * Renders the content for empty elements.
      *
-     * @param string $placeholder Placelolder text.
+     * @param string $title Title text.
+     * @param string $message Message text.
+     * @param string $icon Icon HTML markup.
      */
     public static function render_empty_element_placeholder( $title = '', $message = '', $icon = '' ) {
         ?>

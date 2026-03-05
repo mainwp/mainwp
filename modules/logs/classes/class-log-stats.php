@@ -100,7 +100,7 @@ class Log_Stats {
         ?>
         <div class="column">
             <div class="ui small header">
-                <?php static::render_stats_compare( $count, $prev_count ); ?> <?php echo intval( $count ); ?> 
+                <?php static::render_stats_compare( $count, $prev_count ); ?> <?php echo intval( $count ); ?>
                 <div class="sub header">
                     <?php echo esc_html( $title ); ?>
                     <br />

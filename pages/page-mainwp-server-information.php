@@ -1715,6 +1715,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             MainWP_Logger::CACHE_METRICS_LOG_PRIORITY   => esc_html__( 'Cache Metrics', 'mainwp' ),
             MainWP_Logger::DB_QUERIES_LOG_PRIORITY      => esc_html__( 'DB Queries', 'mainwp' ),
             MainWP_Logger::WARM_CACHE_LOG_PRIORITY      => esc_html__( 'Warm Cache', 'mainwp' ),
+            MainWP_Logger::EXTENSION_UPDATES_CHECK_LOG_PRIORITY => esc_html__( 'Extension Updates Check', 'mainwp' ),
         );
         $specific_logs    = apply_filters( 'mainwp_specific_action_logs', $specific_default ); // deprecated since 4.3.1, use 'mainwp_log_specific_actions' instead.
         $specific_logs    = apply_filters( 'mainwp_log_specific_actions', $specific_logs );
@@ -1742,6 +1743,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                         <?php
                         // phpcs:enable
                         if ( is_array( $specific_logs ) && ! empty( $specific_logs ) ) {
+                            asort($specific_logs);
                             foreach ( $specific_logs as $spec_log => $spec_title ) {
                                 ?>
                             <option value="specific_<?php echo intval( $spec_log ); ?>" <?php echo (int) $spec_log === (int) $enabled ? 'selected' : ''; ?>>

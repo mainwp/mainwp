@@ -201,12 +201,12 @@ class MainWP_Common_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 if ( is_array( $plugin_db_upgrades ) && ! $website->is_ignorePluginUpdates ) {
                     $_ignored_plugins = ! empty( $website->ignored_plugins ) ? json_decode( $website->ignored_plugins, true ) : array();
                     if ( is_array( $_ignored_plugins ) ) {
-                        $plugin_db_upgrades = array_diff_key( $plugin_db_upgrades, $_ignored_plugins );
+                        $plugin_db_upgrades = $this->get_not_ignored_updates_plugins_db( $plugin_db_upgrades, $_ignored_plugins );
                     }
 
                     $_ignored_plugins = ! empty( $userExtension->ignored_plugins ) ? json_decode( $userExtension->ignored_plugins, true ) : array();
                     if ( is_array( $_ignored_plugins ) ) {
-                        $plugin_db_upgrades = array_diff_key( $plugin_db_upgrades, $_ignored_plugins );
+                        $plugin_db_upgrades = $this->get_not_ignored_updates_plugins_db( $plugin_db_upgrades, $_ignored_plugins );
                     }
 
                     // supported the WC plugin.
@@ -254,6 +254,43 @@ class MainWP_Common_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         MainWP_Cache_Helper::add_cache( $cache_key, $cache_group, $data );
 
         return $data;
+    }
+
+
+    /**
+     * Method get_not_ignored_updates_plugins_db().
+     *
+     * To compatible with new ignored update info.
+     *
+     * @param array $updates Update info.
+     * @param array $ignored Ignored update info.
+     * @param int   $count_ignored Count ignored updates.
+     *
+     * @return array $updates Not ignored updates info.
+     */
+    public function get_not_ignored_updates_plugins_db( $updates, $ignored, &$count_ignored = 0 ) { //phpcs:ignore -- NOSONAR - complexity.
+        if ( ! is_array( $updates ) || ! is_array( $ignored ) ) {
+            return $updates;
+        }
+        $new_updates = array();
+        foreach ( $updates as $slug => $dbup_info ) {
+            if ( isset( $ignored[ $slug ] ) ) {
+                if ( is_string( $ignored[ $slug ] ) ) {
+                    ++$count_ignored;
+                    // old ignored info.
+                    continue; // ignored update.
+                } elseif ( is_array( $ignored[ $slug ] ) && ! empty( $ignored[ $slug ]['ignored_versions'] ) ) {
+                    $ignored_vers = is_array( $ignored[ $slug ]['ignored_versions'] ) ? $ignored[ $slug ]['ignored_versions'] : array();
+                    $cur_version  = is_array( $dbup_info ) && isset( $dbup_info['version'] ) ? $dbup_info['version'] : '';
+                    if ( in_array( 'all_versions', $ignored_vers ) || ( ! empty( $cur_version ) && in_array( $cur_version, $ignored_vers ) ) ) {
+                        ++$count_ignored;
+                        continue; // ignored update.
+                    }
+                }
+            }
+            $new_updates[ $slug ] = $dbup_info;
+        }
+        return $new_updates;
     }
 }
 

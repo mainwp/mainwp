@@ -437,7 +437,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             wp_die( esc_html__( 'Security check failed', 'mainwp' ) );
         }
 
-        $user  = wp_get_current_user();
+        $user = wp_get_current_user();
 
         if ( ! $user || ! $user->ID || $user->ID <= 0 ) {
             wp_die( esc_html__( 'Authentication required', 'mainwp' ) );
@@ -1049,6 +1049,8 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return $transient;
         }
 
+        MainWP_Logger::instance()->log_events( 'extension-updates-check', 'pre_set_site_transient_update_plugins' );
+
         if ( ( null === $this->upgradeVersionInfo ) || ! property_exists( $this->upgradeVersionInfo, 'updated' ) || ( ( time() - $this->upgradeVersionInfo->updated ) > 60 ) ) {
             $this->check_upgrade();
         }
@@ -1069,6 +1071,31 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         return $transient;
     }
+
+    /**
+     * Method hook_refresh_trusted_extension_package_url
+     *
+     * @param  mixed $reply The reply from the upgrader.
+     * @param  mixed $package The package URL.
+     * @param  mixed $upgrader  The upgrader instance.
+     * @param  mixed $hook_extra Extra information about the upgrade, including the plugin being updated.
+     * @return void
+     */
+    public function hook_refresh_trusted_extension_package_url( $reply, $package, $upgrader, $hook_extra ) {
+        if ( isset( $hook_extra['plugin'] ) ) { // && isset( $_POST['mainwpsignature'] ) && isset( $_POST['function'] ) && 'upgradeplugintheme' === $_POST['function'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- NOSONAR - hook for plugin update action, it is safe to use $_POST here.
+            $ext_api_slug = dirname( $hook_extra['plugin'] );
+            if ( ! empty( $ext_api_slug ) ) {
+                $rslt_info = MainWP_API_Handler::get_upgrade_information( $ext_api_slug );
+                if ( ! empty( $rslt_info ) && is_object( $rslt_info ) && property_exists( $rslt_info, 'package' ) && ! empty( $rslt_info->package ) ) {
+                    // Replace package URL.
+                    $upgrader->skin->options['package'] = $rslt_info->package;
+                    unset( $package );
+                }
+            }
+        }
+        return $reply;
+    }
+
 
     /**
      * Method upload_file()

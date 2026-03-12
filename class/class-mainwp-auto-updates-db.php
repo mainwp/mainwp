@@ -65,17 +65,7 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
     public function get_websites_check_updates( $limit, $lasttime_start, $connected = false, $not_suspended = false ) {
         global $wpdb;
 
-        $cache_identifier = array(
-            'limit'          => absint( $limit ),
-            'lasttime_start' => absint( $lasttime_start ),
-            'connected'      => (bool) $connected,
-            'not_suspended'  => (bool) $not_suspended,
-        );
-        $cache_key        = 'mainwp_auto_updates_check_' . md5( wp_json_encode( $cache_identifier ) ); // NOSONAR - MD5 for cache key only.
-        $cached           = wp_cache_get( $cache_key );
-        if ( false !== $cached ) {
-            return $cached;
-        }
+        // do not use cache for this function because it is used for automatic updates and it needs to be accurate, and the result is not used in other places, so it will not cause performance issues.
 
         $where = '';
         if ( true === $connected ) {
@@ -93,7 +83,6 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
 
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery -- $sql is prepared by $wpdb->prepare() with parameterized values; direct query required for complex joins.
         $result = $wpdb->get_results( $sql, OBJECT );
-        wp_cache_set( $cache_key, $result, '', HOUR_IN_SECONDS );
 
         return $result;
     }

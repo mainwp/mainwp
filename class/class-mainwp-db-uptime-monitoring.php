@@ -349,7 +349,7 @@ KEY idx_wpid_issub (wpid, issub)";
     public function get_legacy_sql_websites_enabled_check_status( $enabled ) {
         $table_wp = esc_sql( $this->table_name( 'wp' ) );
         return $this->wpdb->prepare(
-            'SELECT wp.id FROM ' . $table_wp . ' wp WHERE wp.disable_status_check = %d',
+            'SELECT wp.id FROM ' . $table_wp . ' wp WHERE 2 = %d', // to fix error with wp.disable_status_check column not exist, it will return 0 for all, then we can get all enabled or disabled monitors based on $enabled value.
             $enabled ? 0 : 1
         );
     }
@@ -547,7 +547,7 @@ KEY idx_wpid_issub (wpid, issub)";
         $and_main_round_run = ' ( mo.dts_auto_monitoring_start = 0  OR (  mo.dts_auto_monitoring_start < ' . intval( $lasttime_counter ) . ' ) ) '; // To ensure the check request is not completed.
 
         $and_retry_run  = '  ( ( mo.maxretries != 0 AND mo.maxretries != -1 AND mo.retries < mo.maxretries ) OR ( mo.maxretries = -1 AND 0 != ' . intval( $glo_maxretries ) . ' AND mo.retries < ' . intval( $glo_maxretries ) . ' ) ) AND '; // in case maxretries >= 1, validate the maximum allowed retries.
-        $and_retry_run .= ' ( mo.dts_auto_monitoring_retry_time != 0 AND ( mo.dts_auto_monitoring_retry_time + mo.retry_interval * 60 <= ' . intval( $local_timestamp ) . ' ) ) '; // if retry is set, do it after retry_interval mins.
+        $and_retry_run .= ' ( mo.dts_auto_monitoring_retry_time + mo.retry_interval * 60 <= ' . intval( $local_timestamp ) . ' ) '; // if retry is set, do it after retry_interval mins.
         $and_retry_run  = ' ( ' . $and_retry_run . ' )';
 
         $where .= $and_active . ' AND ( ' . $and_interval_run . ' OR ' . $and_main_round_run . ' OR ' . $and_retry_run . ' ) ';

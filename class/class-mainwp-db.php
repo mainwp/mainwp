@@ -2224,7 +2224,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         }
 
         if ( ( false !== $offset ) && ( false !== $rowcount ) ) {
-            $qry .= ' LIMIT ' . $offset . ', ' . $rowcount;
+            // When cache IDs are provided, they already represent the page-specific subset,
+            // so the effective offset within that subset is always 0.
+            $effective_offset = ! empty( $_included_cache_ids ) ? 0 : $offset;
+            $qry             .= ' LIMIT ' . $effective_offset . ', ' . $rowcount;
         } elseif ( false !== $rowcount ) {
             $qry .= ' LIMIT ' . $rowcount;
         }
@@ -3286,7 +3289,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         return $this->wpdb->get_results( // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $option_view is a validated SQL subquery from get_option_view() with escaped fields
             "SELECT wp.*,wp_optionview.* FROM {$wp_table} wp
             JOIN {$option_view} wp_optionview ON wp.id = wp_optionview.wpid
-            WHERE wp.suspended = 0 AND wp.http_code_noticed = 0  AND  wp.disable_status_check <> 1 AND wp.offline_check_result = -1 " .
+            WHERE wp.suspended = 0 AND wp.http_code_noticed = 0  AND wp.offline_check_result = -1 " .
             $where,
             OBJECT
         );

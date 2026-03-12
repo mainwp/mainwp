@@ -56,7 +56,6 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
      */
     public function __construct() {
         parent::__construct();
-        add_action( 'mainwp_delete_site', array( $this, 'hook_delete_site' ), 10, 3 );
     }
 
     /**
@@ -140,6 +139,9 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
             return false;
         }
         $table_actions = esc_sql( $this->table_name( 'wp_actions' ) );
+        if ( ! $this->wpdb->get_var( 'SHOW TABLES LIKE ' . $this->wpdb->prepare( '%s', $this->table_name( 'wp_actions' ) ) ) ) {
+            return false;
+        }
         if ( 'action_id' === $by ) {
             if ( $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_actions} WHERE action_id=%d ", $value ) ) ) {
                 return true;

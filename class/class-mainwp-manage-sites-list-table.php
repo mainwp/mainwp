@@ -1127,8 +1127,23 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             $site_ids[] = $site->id;
         }
 
-        // Set manage sites ids cache.
-        MainWP_Cache_Helper::add_cache( $cache_key, $cache_group, $site_ids );
+        // If cached IDs were used but the query returned nothing, the cache entry is corrupt
+        // (e.g. written before a previous LIMIT-offset bug). Self-heal: delete stale cache
+        // and re-run the full query so this request still returns correct results.
+        $used_cache_ids = ! empty( $params['_included_cache_ids'] );
+        if ( $used_cache_ids && empty( $site_ids ) ) {
+            MainWP_Cache_Helper::instance()->delete_cache( $cache_key, $cache_group );
+            unset( $params['_included_cache_ids'] );
+            $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
+            $site_ids = array();
+            while ( $websites && ( $site = MainWP_DB::fetch_object( $websites ) ) ) {
+                $site_ids[] = $site->id;
+            }
+            MainWP_Cache_Helper::add_cache( $cache_key, $cache_group, $site_ids );
+        } else {
+            // Set manage sites ids cache.
+            MainWP_Cache_Helper::add_cache( $cache_key, $cache_group, $site_ids );
+        }
 
         /**
          * Action is being replaced with mainwp_sitestable_prepared_items

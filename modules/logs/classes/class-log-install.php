@@ -109,7 +109,7 @@ class Log_Install extends MainWP_Install {
     KEY connector (connector),
     KEY action (action),
     KEY state (state),
-    KEY idx_site_created(site_id, created),
+    KEY `idx_site_created` (`site_id`, `created`),
     KEY item (item(191))";
 
         if ( empty( $currentVersion ) ) {

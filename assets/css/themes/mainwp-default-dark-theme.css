@@ -1323,7 +1323,7 @@
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-main-mobile-navigation-container .item {
-  background-color: var(--mainwp-base-background-secondary) !important;
+  background-color: var(--mainwp-element-background) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-main-mobile-navigation-container .item a {
@@ -1675,10 +1675,41 @@ body.mainwp-ui.mainwp-custom-theme,
 
 /* Accordion */
 
+.mainwp-ui.mainwp-custom-theme .ui.accordion {
+  background: var(--mainwp-base-background) !important;
+  border-radius: var(--area-radius) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.styled.accordion {
+  background: var(--mainwp-element-background) !important;
+}
+
 .mainwp-ui.mainwp-custom-theme .ui.accordion .title,
 .mainwp-ui.mainwp-custom-theme .ui.accordion .content {
   color: var(--mainwp-text);
   border-color: var(--mainwp-border) !important;
+  background: var(--mainwp-element-background) !important;
+  border-radius: var(--area-radius) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme #mainwp-main-navigation-container .ui.accordion .title,
+.mainwp-ui.mainwp-custom-theme #mainwp-main-navigation-container .ui.accordion .content {
+  border-radius: 0 !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-sidebar-accordion,
+.mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-sidebar-accordion .title,
+.mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-sidebar-accordion .content {
+  border-radius: 0px !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-plugin-accordion,
+.mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-plugin-accordion .title,
+.mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-plugin-accordion .content,
+.mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-theme-accordion,
+.mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-theme-accordion .title,
+.mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-theme-accordion .content {
+  border-radius: 0px !important;
   background: var(--mainwp-element-background) !important;
 }
 

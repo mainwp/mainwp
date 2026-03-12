@@ -376,7 +376,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         }
         $time = time();
         // do not logging much in short time.
-        if ( $this->last_auto_logging + 15 * MINUTE_IN_SECONDS < $time ) {
+        if ( $this->last_auto_logging + 5 * MINUTE_IN_SECONDS < $time ) {
             MainWP_Utility::update_option( 'mainwp_log_wait_lasttime', $time ); //phpcs:ignore -- local time.
             return true;
         }

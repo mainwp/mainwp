@@ -825,6 +825,8 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             }
         }
 
+        $cost_data['sites'] = ! empty( $selected_sites ) ? wp_json_encode( array_values( array_unique( array_map( 'intval', $selected_sites ) ) ) ) : '';
+
         try {
             $inserted = Cost_Tracker_DB::get_instance()->update_cost_tracker( $cost_data );
         } catch ( \MainWP_Exception $e ) {

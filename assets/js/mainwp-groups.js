@@ -73,6 +73,14 @@ jQuery(function () {
         }
     });
 
+    // Enable update button when color changes in rename modal
+    jQuery(document).on('input change', '#mainwp-rename-group-modal input#mainwp-new-tag-color', function () {
+        let groupName = jQuery('#mainwp-rename-group-modal').find('input[name="mainwp-group-name"]').val().trim();
+        if (groupName.length > 0) {
+            jQuery('#mainwp-update-new-group-button').removeClass('disabled');
+        }
+    });
+
     // Trigger the edit group modal
     jQuery(document).on('click', '#mainwp-rename-group-button', function () {
         jQuery('#mainwp-rename-group-modal').modal({

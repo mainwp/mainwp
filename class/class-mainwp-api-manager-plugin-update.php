@@ -171,6 +171,19 @@ class MainWP_Api_Manager_Plugin_Update { // phpcs:ignore Generic.Classes.Opening
 
         $params = apply_filters( 'mainwp_plugin_information_sslverify', $default, $args );
 
+        $log_args = $args;
+        if ( isset( $log_args['api_key'] ) ) {
+            $log_args['api_key'] = '***';
+        }
+
+        if ( ! empty( $log_args['extensions'] ) ) {
+            $log_exts                        = json_decode( base64_decode( $log_args['extensions'] ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- NOSONAR base64_decode used for http encoding compatible.
+            $log_args['_decoded_extensions'] = is_array( $log_exts ) ? $log_exts : array();
+            unset( $log_args['extensions'] );
+        }
+
+        MainWP_Logger::instance()->log_events( 'extension-updates-check', sprintf( '[target_url=%s] :: [params=%s] :: [bulk_check=%s]', $target_url, print_r( $log_args, true ), $bulk_check ? 'true' : 'false' ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions -- print_r used for debugging.
+
         $request = wp_remote_get(
             $target_url,
             $params
@@ -181,6 +194,8 @@ class MainWP_Api_Manager_Plugin_Update { // phpcs:ignore Generic.Classes.Opening
         }
 
         $response = wp_remote_retrieve_body( $request );
+
+        MainWP_Logger::instance()->log_events( 'extension-updates-check', sprintf( '[response=%s]', $response ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions -- print_r used for debugging.
 
         if ( isset( $args['json'] ) ) { // bulkupdatecheck: json.
             $response = json_decode( $response, true );

@@ -100,7 +100,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
             'main_counter_lasttime' => $lasttimeAutomaticMainCounterLastTime,
             'global_settings'       => $global_settings,
             'limit'                 => $limit,
-            'dev_log_query'         => 0,
+            'dev_log_query'         => 0, // 1 for dev logs.
         );
 
         $checkuptime_monitors = MainWP_DB_Uptime_Monitoring::instance()->get_monitors_to_check_uptime( $params ); // to sync sites data.
@@ -153,7 +153,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
         $time   = mainwp_get_timestamp();
         $values = array(
             'monitor_id'                     => $monitor->monitor_id,
-            'retries'                        => $set_retry ? $monitor->retries++ : 0,
+            'retries'                        => $set_retry ? ( $monitor->retries + 1 ) : 0,
             'dts_auto_monitoring_time'       => $time + 1, // prevent equal start time.
             'dts_auto_monitoring_retry_time' => $set_retry ? $time : 0,
             'dts_interval_lasttime'          => $time,

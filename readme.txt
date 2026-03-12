@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 6.0.2
+Stable tag: 6.0.4-er.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -147,6 +147,22 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.0.3 - 3-10-2026 =
+
+* Fixed: Resolved an issue where the "Update Tag" button remained disabled when only the tag color was changed.
+* Fixed: Prevented a PHP warning caused by attempts to read a non-existent property.
+* Fixed: Restored the broken hamburger menu button to ensure mobile navigation works correctly.
+* Fixed: Corrected child site assignment during Cost Tracker imports.
+* Fixed: Improved pagination handling when cached results are used to ensure accurate offsets and result display.
+* Fixed: Removed caching from auto-update detection to provide accurate real-time results.
+* Updated: Improved icon alignment in the mobile menu for a cleaner layout.
+* Updated: Added border radius to accordion elements and refreshed background colors for better visual consistency.
+* Updated: Slightly reduced padding for second-level navigation items to improve spacing.
+* Updated: Renamed the "API Access" menu item label for improved clarity.
+* Updated: Enhanced extension package handling and verification during updates for improved reliability.
+* Updated: Increased auto-update logging frequency from 15 minutes to 5 minutes for more timely monitoring.
+* Dev: Applied minor SQL syntax formatting adjustments for improved consistency and code standardization.
 
 = 6.0.2 - 3-3-2026 =
 

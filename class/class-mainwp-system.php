@@ -35,7 +35,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '6.0.2'; // NOSONAR.
+    public static $version = '6.0.4-er.2'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -208,6 +208,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         add_filter( 'pre_set_site_transient_update_plugins', array( $systemHandler, 'pre_check_update_custom' ) ); // phpcs:ignore PluginCheck.CodeAnalysis.Sniffs.UpdatingPluginTransientFound -- same as above; pre-populates update info for MainWP premium extensions before WordPress saves the transient.
         add_filter( 'plugins_api', array( $systemHandler, 'plugins_api_extension_info' ), 10, 3 );
         add_filter( 'plugins_api_result', array( $systemHandler, 'plugins_api_wp_plugins_api_result' ), 10, 3 );
+        add_filter( 'upgrader_pre_download', array( $systemHandler, 'hook_refresh_trusted_extension_package_url' ), 10, 4 );
 
         $this->metaboxes = new MainWP_Meta_Boxes();
 

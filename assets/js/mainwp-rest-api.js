@@ -367,6 +367,17 @@ const init_application_passwords = ($) => {
      */
     create_button.on("click", () => {
         app_pass_name_input.val("");
+        const submit_btn = $("#mainwp-create-app-password-submit");
+        submit_btn.addClass("disabled");
+
+        app_pass_name_input.off("input.create_modal").on("input.create_modal", () => {
+            if (app_pass_name_input.val().trim().length > 0) {
+                submit_btn.removeClass("disabled");
+            } else {
+                submit_btn.addClass("disabled");
+            }
+        });
+
         create_modal
             .modal({
                 onApprove: () => { // NOSONAR - noopener - prevent close.
@@ -420,7 +431,7 @@ const init_application_passwords = ($) => {
                         .modal({
                             closable: false,
                             onHidden: () => {
-                                add_password_row(response.data.item);
+                                location.reload();
                             },
                         })
                         .modal("show");

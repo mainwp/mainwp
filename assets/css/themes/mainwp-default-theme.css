@@ -749,8 +749,8 @@
 
 .mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu .item {
   font-weight: 400;
-  font-size: 0.9rem !important;
-  padding: 0.9rem !important;
+  font-size: 0.85rem !important;
+  padding: 0.85rem !important;
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu .item .dropdown.icon {

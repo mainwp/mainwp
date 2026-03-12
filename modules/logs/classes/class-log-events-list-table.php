@@ -901,7 +901,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         }
 
         $args['records_per_page'] = $perPage;
-        $args['dev_log_query']    = 1; // 1 for dev logs.
+        $args['dev_log_query']    = 0; // 1 for dev logs.
 
         $args['with_all_logs_meta'] = 1; // so it will enable optimize_with_meta too.
 

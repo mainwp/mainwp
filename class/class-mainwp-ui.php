@@ -1417,9 +1417,9 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
-        ob_start();
-        if ( isset( $_GET['dashboard'] ) || ( isset( $_GET['id'] ) && 'CostTrackerAdd' !== $page ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) ) :
-            $id = 0;
+        $id      = 0;
+        $website = null;
+        if ( isset( $_GET['dashboard'] ) || ( isset( $_GET['id'] ) && 'CostTrackerAdd' !== $page ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) ) {
             if ( isset( $_GET['dashboard'] ) ) {
                 $id = intval( $_GET['dashboard'] );
             } elseif ( isset( $_GET['id'] ) ) {
@@ -1433,8 +1433,12 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             } elseif ( isset( $_GET['monitor_wpid'] ) ) {
                 $id = intval( $_GET['monitor_wpid'] );
             }
-
-            $website = MainWP_DB::instance()->get_website_by_id( $id );
+            if ( $id ) {
+                $website = MainWP_DB::instance()->get_website_by_id( $id );
+            }
+        }
+        ob_start();
+        if ( $website ) :
             ?>
             <?php if ( $id && $website && '' !== $website->sync_errors ) : ?>
                 <a href="#" class="mainwp-updates-overview-reconnect-site ui green button" adminuser="<?php echo esc_attr( $website->adminname ); ?>" siteid="<?php echo intval( $website->id ); ?>" data-position="bottom right" aria-label="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted=""><i class="undo alternate icon"></i> <?php echo esc_html__( 'Reconnect', 'mainwp' ); ?></a>
@@ -1446,16 +1450,17 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     $current_time       = time();
                     $twenty_four_h      = 24 * HOUR_IN_SECONDS;
 
+                    $site_name = stripslashes( $website->name );
                     if ( ! empty( $site_sync_info['timestamp'] ) && ( $current_time - $site_sync_info['timestamp'] ) > $twenty_four_h ) {
                         $site_sync_outdated = true;
                         /* translators: 1: Site name. */
-                        $site_sync_tooltip = sprintf( esc_attr__( 'Data not synced for more than 24h. Click here to sync %1$s.', 'mainwp' ), stripslashes( $website->name ) );
+                        $site_sync_tooltip  = sprintf( esc_attr__( 'Data not synced for more than 24h. Click here to sync %1$s.', 'mainwp' ), $site_name );
                     } elseif ( ! empty( $site_sync_info['formatted'] ) ) {
                         /* translators: 1: Last sync date/time, 2: Site name. */
-                        $site_sync_tooltip = sprintf( esc_attr__( 'Last sync: %1$s. Click here to sync %2$s.', 'mainwp' ), $site_sync_info['formatted'], stripslashes( $website->name ) );
+                        $site_sync_tooltip = sprintf( esc_attr__( 'Last sync: %1$s. Click here to sync %2$s.', 'mainwp' ), $site_sync_info['formatted'], $site_name );
                     } else {
                         /* translators: 1: Site name. */
-                        $site_sync_tooltip = sprintf( esc_attr__( 'Get fresh data from %1$s.', 'mainwp' ), stripslashes( $website->name ) );
+                        $site_sync_tooltip = sprintf( esc_attr__( 'Get fresh data from %1$s.', 'mainwp' ), $site_name );
                     }
                     ?>
                 <a class="ui green <?php echo 0 < $sites_count ? '' : 'disabled'; ?> button" id="mainwp-sync-sites" data-tooltip="<?php echo esc_attr( $site_sync_tooltip ); ?>" data-inverted="" data-position="left center" aria-label="<?php echo esc_attr( $site_sync_tooltip ); ?>" style="position: relative;">

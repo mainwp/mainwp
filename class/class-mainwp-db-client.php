@@ -142,7 +142,7 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     twitter varchar(255) NOT NULL default "",
     instagram varchar(255) NOT NULL default "",
     linkedin varchar(255) NOT NULL default "",
-    UNIQUE KEY contact_email(contact_email)';
+    UNIQUE KEY contact_email (contact_email)';
 
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.69', '<=' ) ) {
             $tbl .= ',

@@ -1082,7 +1082,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
     public static function render_mobile_menu() { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
         ?>
-        <div class="mainwp-main-mobile-navigation-container ui top fullscreen flyout">
+        <div id="mainwp-main-mobile-navigation-container" class="mainwp-main-mobile-navigation-container ui top fullscreen flyout">
             <div class="mainwp-nav-menu scrolling content">
                 <?php
                 /**
@@ -1096,10 +1096,10 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 ?>
 
                 <div id="mainwp-main-menu-mobile"  class="mainwp-main-navigation-menu test-menu ui inverted vertical accordion menu">
-                    <div class="item"><i class="th left floated icon"></i><a href="admin.php?page=mainwp_tab"><?php esc_html_e( 'Overview', 'mainwp' ); ?></a></div>
+                    <div class="item"><a href="admin.php?page=mainwp_tab"><i class="th icon"></i> <?php esc_html_e( 'Operations', 'mainwp' ); ?></a></div>
 
-                    <div class="item"><i class="globe left floated icon"></i>
-                        <div class="title"><a href="admin.php?page=managesites" class=" with-sub"><?php esc_html_e( 'Sites', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
+                    <div class="item">
+                        <div class="title"><a href="admin.php?page=managesites" class="with-sub"><i class="globe left floated icon"></i> <?php esc_html_e( 'Sites', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
                         <div class="content menu" id="mainwp-sites-mobile-menu-item">
                             <div class="item">
                                 <div class="title"><a href="admin.php?page=managesites"><?php esc_html_e( 'Sites', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
@@ -1181,8 +1181,8 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         </div>
                     </div>
 
-                    <div class="item"><i class="users left floated icon"></i>
-                        <div class="title"><a href="admin.php?page=ManageClients" class="with-sub"><?php esc_html_e( 'Clients', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
+                    <div class="item">
+                        <div class="title"><a href="admin.php?page=ManageClients" class="with-sub"><i class="users icon"></i> <?php esc_html_e( 'Clients', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
                         <div class="content menu">
                             <a class="item" href="admin.php?page=ManageClients"><?php esc_html_e( 'Clients', 'mainwp' ); ?></a>
                             <a class="item" href="admin.php?page=ClientAddNew"><?php esc_html_e( 'Add Client', 'mainwp' ); ?></a>
@@ -1190,8 +1190,8 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         </div>
                     </div>
 
-                    <div class="item"><i class="dollar sign left floated icon"></i>
-                        <div class="title"><a href="admin.php?page=ManageCostTracker" class="with-sub"><?php esc_html_e( 'Cost Tracker', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
+                    <div class="item">
+                        <div class="title"><a href="admin.php?page=ManageCostTracker" class="with-sub"><i class="dollar sign icon"></i> <?php esc_html_e( 'Cost Tracker', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
                         <div class="content menu">
                             <a class="item" href="admin.php?page=CostSummary"><?php esc_html_e( 'Cost Summary', 'mainwp' ); ?></a>
                             <a class="item" href="admin.php?page=ManageCostTracker"><?php esc_html_e( 'Manage Costs', 'mainwp' ); ?></a>
@@ -1199,22 +1199,22 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         </div>
                     </div>
 
-                    <div class="item"><i class="chart pie left floated icon"></i>
-                        <div class="title"><a href="admin.php?page=InsightsOverview" class="with-sub"><?php esc_html_e( 'Insights', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
+                    <div class="item">
+                        <div class="title"><a href="admin.php?page=InsightsOverview" class="with-sub"><i class="chart pie icon"></i> <?php esc_html_e( 'Insights', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
                         <div class="content menu">
                             <a class="item" href="admin.php?page=InsightsOverview"><?php esc_html_e( 'Insights', 'mainwp' ); ?></a>
                         </div>
                     </div>
 
-                    <div class="item"><i class="box left floated icon"></i>
-                        <div class="title"><a href="admin.php?page=Extensions" class=""><?php esc_html_e( 'Add-ons', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
+                    <div class="item">
+                        <div class="title"><a href="admin.php?page=Extensions" class=""><i class="box icon"></i> <?php esc_html_e( 'Add-ons', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
                         <div class="content menu">
                             <a class="item" href="admin.php?page=Extensions"><?php esc_html_e( 'Manage Add-ons', 'mainwp' ); ?></a>
                         </div>
                     </div>
 
-                    <div class="item"><i class="key left floated icon"></i>
-                        <div class="title"><a href="admin.php?page=RESTAPI" class="with-sub"><?php esc_html_e( 'REST API', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
+                    <div class="item">
+                        <div class="title"><a href="admin.php?page=RESTAPI" class="with-sub"><i class="key icon"></i> <?php esc_html_e( 'REST API', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
                         <div class="content menu">
                             <a class="item" href="admin.php?page=RESTAPI"><?php esc_html_e( 'Manage API Keys', 'mainwp' ); ?></a>
                             <a class="item" href="admin.php?page=AddApiKeys"><?php esc_html_e( 'Add API Keys', 'mainwp' ); ?></a>
@@ -1222,8 +1222,8 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         </div>
                     </div>
 
-                    <div class="item"><i class="cog left floated icon"></i>
-                        <div class="title"><a href="admin.php?page=Settings" class="with-sub"><?php esc_html_e( 'Settings', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
+                    <div class="item">
+                        <div class="title"><a href="admin.php?page=Settings" class="with-sub"><i class="cog icon"></i> <?php esc_html_e( 'Settings', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
                         <div class="content menu">
                             <a class="item" href="admin.php?page=Settings"><?php esc_html_e( 'General Settings', 'mainwp' ); ?></a>
                             <a class="item" href="admin.php?page=SettingsAdvanced"><?php esc_html_e( 'Advanced Settings', 'mainwp' ); ?></a>
@@ -1233,8 +1233,8 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         </div>
                     </div>
 
-                    <div class="item"><i class="info circle left floated icon"></i>
-                        <div class="title"><a href="admin.php?page=ServerInformation" class="with-sub"><?php esc_html_e( 'Info', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
+                    <div class="item">
+                        <div class="title"><a href="admin.php?page=ServerInformation" class="with-sub"><i class="info circle icon"></i> <?php esc_html_e( 'Info', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
                         <div class="content menu">
                             <a class="item" href="admin.php?page=ServerInformation"><?php esc_html_e( 'Server', 'mainwp' ); ?></a>
                             <a class="item" href="admin.php?page=ServerInformationCron"><?php esc_html_e( 'Cron Schedules', 'mainwp' ); ?></a>

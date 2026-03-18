@@ -1129,6 +1129,10 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             $newValues['is_ignoreThemeUpdates'] = $data['ignore_theme_updates'] ? 1 : 0;
         }
 
+        if ( isset( $data['client_id'] ) ) {
+            $newValues['client_id'] = max( 0, intval( $data['client_id'] ) );
+        }
+
         if ( ! empty( $newValues ) ) {
             MainWP_DB::instance()->update_website_values( $website->id, $newValues );
             $success = true;

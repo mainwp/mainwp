@@ -23,33 +23,36 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
     // phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write logging file.
 
-    const UPDATE_CHECK_LOG_PRIORITY                   = 10;
-    const EXECUTION_TIME_LOG_PRIORITY                 = 15;
-    const LOGS_AUTO_PURGE_LOG_PRIORITY                = 16;
-    const LOGS_REGULAR_SCHEDULE                       = 18;
-    const DEBUG_UPDATES_SCHEDULE                      = 19;
-    const COST_TRACKER_LOG_PRIORITY                   = 20230112;
-    const API_BACKUPS_LOG_PRIORITY                    = 20240130;
-    const CONNECT_LOG_PRIORITY                        = 20241001;
-    const UPTIME_CHECK_LOG_PRIORITY                   = 20241017;
-    const UPTIME_NOTICE_LOG_PRIORITY                  = 20241106;
-    const SITES_CHANGES_LOG_PRIORITY                  = 20250417;
-    const CACHE_METRICS_LOG_PRIORITY                  = 20250814;
-    const DB_QUERIES_LOG_PRIORITY                     = 20250827;
-    const UNHOOKS_LOG_PRIORITY                        = 20250901;
-    const WARM_CACHE_LOG_PRIORITY                     = 20250915;
-    const EXTENSION_UPDATES_CHECK_LOG_PRIORITY = 2026306;
+    const UPDATE_CHECK_LOG_PRIORITY            = 10;
+    const EXECUTION_TIME_LOG_PRIORITY          = 15;
+    const LOGS_AUTO_PURGE_LOG_PRIORITY         = 16;
+    const LOGS_REGULAR_SCHEDULE                = 18;
+    const DEBUG_UPDATES_SCHEDULE               = 19;
+    const COST_TRACKER_LOG_PRIORITY            = 20230112;
+    const API_BACKUPS_LOG_PRIORITY             = 20240130;
+    const CONNECT_LOG_PRIORITY                 = 20241001;
+    const UPTIME_CHECK_LOG_PRIORITY            = 20241017;
+    const UPTIME_NOTICE_LOG_PRIORITY           = 20241106;
+    const SITES_CHANGES_LOG_PRIORITY           = 20250417;
+    const CACHE_METRICS_LOG_PRIORITY           = 20250814;
+    const DB_QUERIES_LOG_PRIORITY              = 20250827;
+    const UNHOOKS_LOG_PRIORITY                 = 20250901;
+    const WARM_CACHE_LOG_PRIORITY              = 20250915;
+    const EXTENSION_UPDATES_CHECK_LOG_PRIORITY = 20260306;
+    const EXECUTION_SYNC_LOG_PRIORITY          = 20260316;
 
     const DISABLED = - 1;
     const LOG      = 0;
     const WARNING  = 1;
     const INFO     = 2;
     const DEBUG    = 3;
+    const NOTICE   = 4;
 
     const LOG_COLOR     = '#999999';
     const DEBUG_COLOR   = '#666666';
     const INFO_COLOR    = '#276f86';
-    const WARNING_COLOR = '#9f3a38;';
+    const NOTICE_COLOR  = '#eb7609';
+    const WARNING_COLOR = '#9f3a38';
 
     /**
      * Private variable to hold time start.
@@ -266,6 +269,9 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         } elseif ( static::LOG === $type || static::LOG === $logcolor ) {
             $currentColor = static::LOG_COLOR;
             $prefix       = '[LOG]';
+        } elseif ( static::NOTICE === $type || static::NOTICE === $logcolor ) {
+            $currentColor = static::NOTICE_COLOR;
+            $prefix       = '[NOTICE]';
         }
         return array(
             'log_color'  => $currentColor,
@@ -321,11 +327,12 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param int    $priority priority message.
      * @param int    $log_color Set color: 0 - LOG, 1 - WARNING, 2 - INFO, 3- DEBUG.
      * @param bool   $forced forced logging.
+     * @param int    $log_type Log type.
      *
      * @return string Log warning message.
      */
-    public function log_action( $text, $priority, $log_color = 0, $forced = false ) {
-        return $this->log( $text, $priority, $log_color, $forced );
+    public function log_action( $text, $priority, $log_color = 0, $forced = false, $log_type = 0 ) {
+        return $this->log( $text, $priority, $log_color, $forced, false, $log_type );
     }
 
 
@@ -335,8 +342,9 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param string $event_name Event name.
      * @param string $text Log update check.
      * @param mixed  $color Log color.
+     * @param int    $log_type Log type.
      */
-    public function log_events( $event_name, $text = '', $color = false ) {
+    public function log_events( $event_name, $text = '', $color = false, $log_type = false ) {
         $events = is_array( $event_name ) ? $event_name : explode( '|', $event_name );
         if ( is_array( $events ) ) {
             foreach ( $events as $event ) {
@@ -364,6 +372,9 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         break;
                     case 'execution-time':
                         $this->log_action( '[Execution time] :: ' . $text, static::EXECUTION_TIME_LOG_PRIORITY, $color );
+                        break;
+                    case 'execution-sync':
+                        $this->log_action( '[Execution Sync] :: ' . $text, static::EXECUTION_SYNC_LOG_PRIORITY, $color, false, $log_type );
                         break;
                     case 'warm-cache':
                         $this->log_action( '[Warm cache] :: ' . $text, static::WARM_CACHE_LOG_PRIORITY, $color );
@@ -484,10 +495,11 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param int    $log_color Set color.
      * @param bool   $forced forced logging.
      * @param mixed  $website website object.
+     * @param int    $log_type Log type.
      *
      * @return bool true|false Default is False.
      */
-    private function log_to_db( $text, $priority, $log_color = 0, $forced = false, $website = false ) {
+    private function log_to_db( $text, $priority, $log_color = 0, $forced = false, $website = false, $log_type = false ) {
 
         if ( static::DISABLED === $this->logPriority ) {
             return false;
@@ -537,10 +549,19 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $data = array();
 
-        $data['log_content']   = $text;
-        $data['log_user']      = $user;
-        $data['log_type']      = $priority;
-        $data['log_color']     = intval( $log_color );
+        $type = false !== $log_type ? (int) $log_type : (int) $priority;
+
+        $data['log_content'] = $text;
+        $data['log_user']    = $user;
+        $data['log_type']    = $type;
+
+        if ( is_int( $log_color ) || ctype_digit( (string) $log_color ) ) {
+            $data['log_color'] = (int) $log_color;
+        } else {
+            $hex               = sanitize_hex_color( $log_color );
+            $data['log_color'] = $hex ? $hex : '';
+        }
+
         $data['log_timestamp'] = time();
 
         $data = apply_filters( 'mainwp_log_to_db_data', $data );
@@ -596,10 +617,11 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param int    $log_color Set color.
      * @param bool   $forced forced logging.
      * @param mixed  $website Site object.
+     * @param int    $log_type Log type.
      *
      * @return bool true|false Default is False.
      */
-    private function log( $text, $priority,  $log_color = 0, $forced = false, $website = false ) { // phpcs:ignore -- NOSONAR - complex function.
+    private function log( $text, $priority,  $log_color = 0, $forced = false, $website = false, $log_type = false ) { // phpcs:ignore -- NOSONAR - complex function.
 
         if ( in_array( $priority, $this->autoEnableLoggingActions ) && (int) $this->logPriority !== (int) $priority ) {
             $this->enable_log_priority( $priority, 1 );
@@ -612,7 +634,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $log_to_db = apply_filters( 'mainwp_logger_to_db', true, $website );
 
         if ( $log_to_db ) {
-            return $this->log_to_db( $text, $priority, $log_color, $forced, $website );
+            return $this->log_to_db( $text, $priority, $log_color, $forced, $website, $log_type );
         }
 
         $text = $this->prepare_log_info( $text );
@@ -761,6 +783,44 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public function log_execution_time( $text = '' ) {
         $exec_time = $this->get_execution_time();
         $this->log_action( 'execution time :: ' . ( ! empty( $text ) ? (string) $text . ' :: ' : '' ) . ' [time=' . round( $exec_time, 4 ) . '](seconds)', static::EXECUTION_TIME_LOG_PRIORITY );
+    }
+
+    /**
+     * Method log_execution_sync().
+     *
+     * @param string $progress Log progress value.
+     * @param string $text Log record text.
+     *
+     * Log the execution sync time value.
+     */
+    public function log_execution_sync( $progress = '', $text = '' ) {
+
+        static $initialized = false;
+
+        if ( 'init' === $progress && ! $initialized ) {
+            $initialized = true;
+        }
+
+        // If the process has ended and the sync event log is not initialized, do not log.
+        if ( 'end' === $progress && ! $initialized ) {
+            return;
+        }
+
+        $text = 'init' === $progress && empty( $text ) ? 'Init' : $text;
+        $text = 'end' === $progress && empty( $text ) ? 'End' : $text;
+
+        $exec_time = $this->get_execution_time();
+        $exec_time = round( $exec_time, 4 );
+
+        if ( ! empty( $text ) ) {
+            $text = $text . ' :: ';
+        }
+        $log = $text . '[runtime=' . $exec_time . '](seconds)';
+
+        $lg_type = (int) $exec_time >= 10 ? static::NOTICE : static::LOG;
+        $lg_type = (int) $exec_time >= 20 ? static::WARNING : $lg_type;
+
+        $this->log_events( 'execution-sync', $log, false, $lg_type );
     }
 
     /**
@@ -945,7 +1005,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
             $time = gmdate( $this->logDateFormat, MainWP_Utility::get_timestamp( $row->log_timestamp ) );
 
-            $showInfo = $this->get_log_type_info( $row->log_type, $row->log_color );
+            $showInfo = $this->get_log_type_info( (int) $row->log_type, $row->log_color );
 
             $currentColor = $showInfo['log_color'];
 
@@ -958,7 +1018,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 $line = str_replace( '[data-end]', $end_wrapper, $line );
             }
 
-            echo '<div class="item" style="color:' . esc_html( $currentColor ) . '"><div class="mainwpactionlogsline">';
+            echo '<div class="item" style="color:' . esc_attr( $currentColor ) . '"><div class="mainwpactionlogsline">';
 
             echo $prefix . ' ' . $line; // phpcs:ignore WordPress.Security.EscapeOutput
 

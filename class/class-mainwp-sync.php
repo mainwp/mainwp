@@ -102,6 +102,8 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         try {
 
+            MainWP_Logger::instance()->log_execution_sync( 'init' );
+
             if ( null === static::$clone_enabled ) {
 
                 /**
@@ -199,7 +201,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             );
 
             $individual_settings_json = MainWP_DB::instance()->get_website_option( $pWebsite, 'password_policy_individual_settings' );
-            $individual_settings = array();
+            $individual_settings      = array();
 
             if ( ! empty( $individual_settings_json ) ) {
                 $individual_settings = json_decode( $individual_settings_json, true );

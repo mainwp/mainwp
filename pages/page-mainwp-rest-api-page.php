@@ -1011,21 +1011,20 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         }
         ?>
         <div id="mainwp-rest-api-keys" class="ui padded segment">
-            <?php if ( $has_no_api_keys && MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-api-welcome-message' ) ) : ?>
-                <div class="ui icon message mainwp-welcome-message">
-                    <em data-emoji=":wave:" class="big"></em>
-                    <div class="content">
-                        <div class="ui massive header"><?php esc_html_e( 'Welcome to MainWP REST API', 'mainwp' ); ?></div>
-                        <p><?php esc_html_e( 'Integrate MainWP with your custom tools, automations, and external platforms through the REST API.', 'mainwp' ); ?>
-                        </p>
-                        <p><?php
-                        // translators: 1: Opening anchor tag for API key link. 2: Closing anchor tag. 3: Opening anchor tag for routes link. 4: Closing anchor tag.
-                        printf( esc_html__( 'Start by %1$screating an API key%2$s and %3$sexploring available routes%4$s.', 'mainwp' ), '<a href="admin.php?page=AddApiKeys">', '</a>', '<a href="https://www.postman.com/mainwp/workspace/mainwp/collection/25047126-5ed97ddf-1d45-4bd1-bede-1a1f3b7584ef" target="_blank">', '</a>' );
-                        ?>
-                        </p>
+            <?php if ( $has_no_api_keys ) : ?>
+                <?php
+                MainWP_UI::render_empty_page_placeholder(
+                    esc_html__( 'No API Keys yet', 'mainwp' ),
+                    esc_html__( 'Create an API key to integrate MainWP with your custom tools, automations, and external platforms through the REST API.', 'mainwp' ),
+                    '<em data-emoji=":key:" class="big"></em>'
+                );
+                ?>
+                <?php if ( static::can_create_rest_api_keys() ) : ?>
+                    <div class="ui center aligned basic segment">
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=AddApiKeys' ) ); ?>"
+                            class="ui green button"><?php esc_html_e( 'Create New API Key', 'mainwp' ); ?></a>
                     </div>
-                    <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-api-welcome-message"></i>
-                </div>
+                <?php endif; ?>
             <?php endif; ?>
 
 
@@ -1075,6 +1074,9 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * @param bool $has_no_api_keys Whether there are no API keys.
      */
     public static function render_table_top( $has_no_api_keys = false ) {
+        if ( $has_no_api_keys ) {
+            return;
+        }
         ?>
         <div class="mainwp-sub-header">
             <div class="ui grid">
@@ -1761,13 +1763,19 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
 
     /**
      * Render application password table top.
+     *
+     * @param bool $has_rows Whether there are rows to display.
      */
-    public static function render_application_passwords_table_top() {
+    public static function render_application_passwords_table_top( $has_rows = true ) {
         // Align with Team Control caps: create_application_passwords, delete_application_passwords.
         $can_add    = static::$application_passwords->can_create_application_passwords();
         $can_revoke = static::$application_passwords->can_delete_application_passwords();
 
         if ( ! $can_add && ! $can_revoke ) {
+            return;
+        }
+
+        if ( ! $has_rows ) {
             return;
         }
         ?>
@@ -1812,7 +1820,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         $rows       = static::get_application_password_rows( $context );
 
         static::render_header( $page_title );
-        static::render_application_passwords_table_top();
+        static::render_application_passwords_table_top( ! empty( $rows ) );
 
         $current_user_name = ( $context['current_user'] instanceof \WP_User ) ? (string) $context['user_login'] : '';
         $user_id           = (int) $context['user_id'];
@@ -1866,6 +1874,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
     public static function create_application_password_modal() {
         ?>
         <div class="ui small modal" id="mainwp-create-application-password-modal">
+            <i class="ui close icon"></i>
             <div class="header"><?php esc_html_e( 'Add Application Password', 'mainwp' ); ?></div>
             <div class="content">
                 <div class="ui form">
@@ -1883,7 +1892,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 <button class="ui green ok button" id="mainwp-create-app-password-submit">
                     <?php esc_html_e( 'Create', 'mainwp' ); ?>
                 </button>
-                <button class="ui cancel button"><?php esc_html_e( 'Cancel', 'mainwp' ); ?></button>
+                
             </div>
         </div>
         <?php
@@ -2327,6 +2336,22 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * @param bool  $show_user_col Whether to show the username column.
      */
     protected static function render_application_passwords_table( $rows, $show_user_col ) {
+        if ( empty( $rows ) ) {
+            MainWP_UI::render_empty_page_placeholder(
+                esc_html__( 'No Application Passwords yet', 'mainwp' ),
+                esc_html__( 'Create your first application password to allow external applications to authenticate with MainWP.', 'mainwp' ),
+                '<em data-emoji=":key:" class="big"></em>'
+            );
+            if ( static::$application_passwords->can_create_application_passwords() ) {
+                ?>
+                <div class="ui center aligned segment">
+                    <button type="button" class="ui green button" id="mainwp-create-application-password-button"><?php esc_html_e( 'Add Application Password', 'mainwp' ); ?></button>
+                </div>
+                <?php
+            }
+            return;
+        }
+
         // Align revoke (delete) permission with delete_application_passwords capability.
         $can_revoke = static::$application_passwords->can_delete_application_passwords();
         $can_edit   = static::$application_passwords->can_edit_application_passwords();

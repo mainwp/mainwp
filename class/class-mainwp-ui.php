@@ -834,7 +834,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <p><?php esc_html_e( 'Click the Start Page Tour button to start the guided tour for the current page.', 'mainwp' ); ?></p>
             <div class="ui hidden divider"></div>
             <button id="mainwp-start-page-tour-button" class="ui big green fluid basic button" tour-id="<?php echo esc_attr( $tour_id ); ?>"><?php esc_html_e( 'Start Page Tour', 'mainwp' ); ?></button>
-                
+
             <?php endif; ?>
             <div class="ui header"><?php esc_html_e( 'MainWP Knowledge Base', 'mainwp' ); ?></div>
             <div class="ui hidden divider"></div>
@@ -1416,7 +1416,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         }
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        $page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
+        $page    = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
         $id      = 0;
         $website = null;
         if ( isset( $_GET['dashboard'] ) || ( isset( $_GET['id'] ) && 'CostTrackerAdd' !== $page ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) ) {
@@ -1454,7 +1454,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     if ( ! empty( $site_sync_info['timestamp'] ) && ( $current_time - $site_sync_info['timestamp'] ) > $twenty_four_h ) {
                         $site_sync_outdated = true;
                         /* translators: 1: Site name. */
-                        $site_sync_tooltip  = sprintf( esc_attr__( 'Data not synced for more than 24h. Click here to sync %1$s.', 'mainwp' ), $site_name );
+                        $site_sync_tooltip = sprintf( esc_attr__( 'Data not synced for more than 24h. Click here to sync %1$s.', 'mainwp' ), $site_name );
                     } elseif ( ! empty( $site_sync_info['formatted'] ) ) {
                         /* translators: 1: Last sync date/time, 2: Site name. */
                         $site_sync_tooltip = sprintf( esc_attr__( 'Last sync: %1$s. Click here to sync %2$s.', 'mainwp' ), $site_sync_info['formatted'], $site_name );
@@ -1467,7 +1467,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     <?php if ( $site_sync_outdated ) : ?>
                         <span class="ui red empty circular looping pulsating transition label" style="position: absolute; top: -4px; right: -4px;"></span>
                     <?php endif; ?>
-                    <i class="sync alternate icon"></i> <span class="mainwp-768-hide"><?php echo esc_html__( 'Sync', 'mainwp'); ?></span>
+                    <i class="sync alternate icon"></i> <span class="mainwp-768-hide"><?php echo esc_html__( 'Sync', 'mainwp' ); ?></span>
                 </a>
             <?php endif; ?>
             <?php
@@ -1493,7 +1493,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     <?php if ( $sync_outdated ) : ?>
                     <span class="ui red empty circular looping pulsating transition label" style="position: absolute; top: -4px; right: -4px;"></span>
                 <?php endif; ?>
-                <i class="sync alternate icon"></i> <span class="mainwp-768-hide"><?php echo esc_html__( 'Sync', 'mainwp'); ?></span>
+                <i class="sync alternate icon"></i> <span class="mainwp-768-hide"><?php echo esc_html__( 'Sync', 'mainwp' ); ?></span>
             </a>
         <?php endif; ?>
 
@@ -1678,10 +1678,15 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 }
                 // phpcs:enable
                 $website = MainWP_DB::instance()->get_website_by_id( $id );
-                ?>
-                <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" src="//s0.wp.com/mshots/v1/<?php echo esc_html( rawurlencode( $website->url ) ); ?>?w=170" id="mainwp-site-preview-image">
-            <?php endif; ?>
 
+                // To avoid error in case of direct access to page with wrong id.
+                if ( ! empty( $website ) && ! empty( $website->url ) ) {
+                    ?>
+                    <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" src="//s0.wp.com/mshots/v1/<?php echo esc_html( rawurlencode( $website->url ) ); ?>?w=170" id="mainwp-site-preview-image">
+                    <?php
+                }
+                ?>
+                <?php endif; ?>
             <div class="ui vertical menu mainwp-page-navigation">
 
                 <?php

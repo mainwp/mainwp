@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 6.0.3
+Stable tag: 6.0.4
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -147,6 +147,23 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.0.4 - 3-17-2026 =
+
+* Fixed: Resolved a WordPress database error caused by a call to a legacy database table.
+* Fixed: Display consistency for WordPress core updates.
+* Fixed: Client assignment when updating sites via the REST API.
+* Fixed: Adjusted logic for website preview image rendering to improve consistency in the interface.
+* Added: Added an empty page placeholder to the "Application Passwords" page for a clearer experience when no items are available.
+* Added "Execution Sync" log category with a NOTICE level (orange) and automatic start/end sync entries to surface runtime-based sync progress.
+* Updated: Removed the unwanted border radius from accordion elements in "Manage Plugins" and "Manage Themes."
+* Updated: Removed the "Close" button and added a close (X) icon to the "Add Application Password" modal for a cleaner interface.
+* Updated: Added a page reload after successfully creating an application password so the new entry appears immediately.
+* Updated: Improved update visibility handling to display appropriate empty-state messages when no updates are available for WordPress core, plugins, themes, and translations.
+* Updated: Enhanced tab navigation and activation logic for the updates interface.
+* Updated: Enhanced plugin update filtering logic to more reliably handle ignored updates with improved support for both legacy and new formats of ignore indicators.
+* Updated: Removed the `mainwp_delete_site` action hook registration from the constructor of the MainWP database site actions class.
+* Updated: Email footer link label changed from "Extensions" to "Add-ons" and the developer documentation link.
 
 = 6.0.3 - 3-10-2026 =
 

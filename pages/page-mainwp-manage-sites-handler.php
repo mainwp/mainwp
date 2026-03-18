@@ -56,6 +56,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             $ret['response'] = esc_html__( 'ERROR Site is already connected to your MainWP Dashboard.', 'mainwp' );
         } else {
             try {
+                MainWP_Logger::instance()->log_execution_sync( 'init' );
                 $verify_cert    = empty( $_POST['verify_certificate'] ) ? false : intval( $_POST['verify_certificate'] );
                 $ssl_version    = empty( $_POST['ssl_version'] ) ? 0 : intval( $_POST['ssl_version'] );
                 $force_use_ipv4 = apply_filters( 'mainwp_manage_sites_force_use_ipv4', null, $url );

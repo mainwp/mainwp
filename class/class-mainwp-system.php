@@ -35,7 +35,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '6.0.3'; // NOSONAR.
+    public static $version = '6.0.4'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -974,6 +974,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $exctime = MainWP_Execution_Helper::get_run_time();
         MainWP_Logger::instance()->log_events( 'execution-time', 'Shutdown :: ' . $exctime );
+        MainWP_Logger::instance()->log_execution_sync( 'end' );
     }
 
     /**

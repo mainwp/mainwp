@@ -2215,7 +2215,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     'type'        => 'integer',
                     'default'     => 0,
                     'description' => __( 'Client id', 'mainwp' ),
-                    'context'     => array( 'view', 'simple_view' ),
+                    'context'     => array( 'view', 'edit', 'simple_view' ),
                 ),
                 'is_staging'             => array(
                     'type'        => 'integer',
@@ -2496,6 +2496,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $item_fields['http_user']      = isset( $request['http_user'] ) ? sanitize_text_field( wp_unslash( $request['http_user'] ) ) : '';
         $item_fields['http_pass']      = isset( $request['http_pass'] ) ? wp_unslash( $request['http_pass'] ) : '';
         $item_fields['groupids']       = isset( $request['groupids'] ) && ! empty( $request['groupids'] ) ? explode( ',', sanitize_text_field( wp_unslash( $request['groupids'] ) ) ) : array();
+        $item_fields['clientid']       = isset( $request['client_id'] ) && ! empty( $request['client_id'] ) ? intval( $request['client_id'] ) : 0;
 
         /**
          * Filters an object before it is inserted via the REST API.
@@ -2543,6 +2544,8 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 $data[ $field ] = $request[ $field ];
             }
         }
+
+        $data['client_id'] = isset( $request['client_id'] ) && ! empty( $request['client_id'] ) ? intval( $request['client_id'] ) : 0;
 
         /**
          * Filters an object before it is inserted via the REST API.

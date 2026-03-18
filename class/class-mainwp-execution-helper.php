@@ -68,7 +68,7 @@ class MainWP_Execution_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * Init execution time start value.
      */
     public function init_exec_time() {
-        MainWP_Logger::instance()->init_execution_time(); // compatible.
+        MainWP_Logger::instance()->init_execution_time();
         return static::$exec_start;
     }
 

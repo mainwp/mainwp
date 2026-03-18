@@ -1703,6 +1703,16 @@ body.mainwp-ui.mainwp-custom-theme,
   border-radius: 0px !important;
 }
 
+.mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-plugin-accordion,
+.mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-plugin-accordion .title,
+.mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-plugin-accordion .content,
+.mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-theme-accordion,
+.mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-theme-accordion .title,
+.mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-theme-accordion .content {
+  border-radius: 0px !important;
+  background: var(--mainwp-element-background) !important;
+}
+
 .mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-blank-accordion .title,
 .mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-blank-accordion .content {
     background: none !important;

@@ -420,7 +420,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                                 <div class="ui form" id="mainwp-extensions-api-fields">
                                     <div class="field">
                                         <div class="ui fluid input">
-                                            <input type="password" id="mainwp_com_api_key" autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="<?php esc_attr_e( 'Enter your MainWP Main API Key', 'mainwp' ); ?>" value="<?php echo esc_attr( $mainwp_api_key ); ?>"/>
+                                            <input type="password" id="mainwp_com_api_key" autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="<?php esc_attr_e( 'Enter your MainWP License Key', 'mainwp' ); ?>" value="<?php echo esc_attr( $mainwp_api_key ); ?>"/>
                                         </div>
                                     </div>
                                     <div class="field">
@@ -974,7 +974,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         <a href="javascript:void(0);" class="ui green basic tiny button" id="mainwp-extensions-manage-toggle-on"><i class="key icon"></i> <?php echo empty( $mainwp_api_key ) ? esc_html__( 'Add License Key', 'mainwp' ) : esc_html__( 'Manage License', 'mainwp' ); ?></a>
                     </div>
                     <div id="mainwp-manage-license-buttons" class="hidden">
-                        <span class="ui left icon tiny input"><i class="key icon"></i><input type="password" id="mainwp_com_api_key" autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="<?php esc_attr_e( 'Enter your MainWP Main API Key', 'mainwp' ); ?>" value="<?php echo esc_attr( $mainwp_api_key ); ?>"/></span>&nbsp;&nbsp;
+                        <span class="ui left icon tiny input"><i class="key icon"></i><input type="password" id="mainwp_com_api_key" autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="<?php esc_attr_e( 'Enter your MainWP License Key', 'mainwp' ); ?>" value="<?php echo esc_attr( $mainwp_api_key ); ?>"/></span>&nbsp;&nbsp;
                         <div class="ui checkbox">
                             <input type="checkbox" <?php echo '' !== $mainwp_api_key ? 'checked="checked"' : ''; ?> name="extensions_api_savemylogin_chk" id="extensions_api_savemylogin_chk">
                             <label for="extensions_api_savemylogin_chk"><small><?php esc_html_e( 'Remember Key', 'mainwp' ); ?></small></label>

@@ -239,15 +239,16 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
     display: inline-flex !important;
     align-items: center;
     justify-content: center;
-    min-height: 38px;
+    min-height: 0;
+    height: auto;
     margin: 0 !important;
-    padding: 0 14px !important;
+    padding: 0.78571429em 14px !important;
     background: transparent !important;
     border: 1px solid rgba(255, 255, 255, 0.25) !important;
     border-radius: 999px !important;
     box-shadow: none !important;
     color: inherit !important;
-    line-height: 1 !important;
+    line-height: 1.28571429em !important;
     vertical-align: middle;
 }
 
@@ -267,6 +268,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
     font-size: 0.92857143rem;
     font-weight: 600;
     line-height: 1;
+    display: inline-block;
     vertical-align: middle;
 }
 

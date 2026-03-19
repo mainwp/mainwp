@@ -1663,6 +1663,10 @@ body.mainwp-ui.mainwp-custom-theme,
   border-left: 1px solid var(--mainwp-border) !important;
 }
 
+.mainwp-ui.mainwp-custom-theme #mainwp-header-command-palette-actions {
+  border-right-color: var(--mainwp-border) !important;
+}
+
 .mainwp-ui.mainwp-custom-theme #mainwp-header-secondary-actions {
   padding: 7px 10px;
   margin: 0 10px;
@@ -1672,6 +1676,16 @@ body.mainwp-ui.mainwp-custom-theme,
 
 .mainwp-ui.mainwp-custom-theme #mainwp-top-header .ui.button {
   font-size: 0.85714286rem !important;
+}
+
+.mainwp-ui.mainwp-custom-theme #mainwp-command-palette-trigger {
+  background: transparent !important;
+  border-color: var(--mainwp-border) !important;
+  color: var(--mainwp-text) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme #mainwp-command-palette-trigger kbd {
+  color: inherit !important;
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-top-header .ui.icon.button:not(.red, .green) {

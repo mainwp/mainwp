@@ -1226,6 +1226,437 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 }
             }
         }
+
+        $this->enqueue_command_palette_script();
+    }
+
+    /**
+     * Enqueue the MainWP command palette integration.
+     */
+    private function enqueue_command_palette_script() {
+
+        if ( ! wp_script_is( 'wp-core-commands', 'enqueued' ) ) {
+            return;
+        }
+
+        $palette_data = $this->get_command_palette_data();
+
+        if ( empty( $palette_data['commands'] ) && empty( $palette_data['unregister'] ) ) {
+            return;
+        }
+
+        wp_enqueue_script(
+            'mainwp-command-palette',
+            MAINWP_PLUGIN_URL . 'assets/js/mainwp-command-palette.js',
+            array( 'wp-core-commands', 'wp-data' ),
+            $this->current_version,
+            true
+        );
+
+        wp_add_inline_script(
+            'mainwp-command-palette',
+            'window.mainwpCommandPalette = ' . wp_json_encode( $palette_data, JSON_HEX_TAG | JSON_UNESCAPED_SLASHES ) . ';',
+            'before'
+        );
+    }
+
+    /**
+     * Build the MainWP command palette configuration.
+     *
+     * @return array<string, array<int, mixed>> Command palette configuration.
+     */
+    private function get_command_palette_data() {
+        $registered_pages    = $this->get_command_palette_registered_pages();
+        $registered_page_urls = array();
+
+        foreach ( $registered_pages as $slug => $page_data ) {
+            $registered_page_urls[ $slug ] = $page_data['url'];
+        }
+
+        $commands = $this->get_command_palette_menu_commands( $registered_pages );
+
+        if ( empty( $commands ) ) {
+            return array(
+                'commands'   => array(),
+                'unregister' => array(),
+            );
+        }
+
+        $commands = apply_filters( 'mainwp_command_palette_commands', $commands, $registered_page_urls );
+
+        $unregister = array( 'mainwp_tab' );
+        foreach ( array_keys( $registered_pages ) as $slug ) {
+            $unregister[] = 'mainwp_tab-' . $slug;
+        }
+
+        $unregister = apply_filters( 'mainwp_command_palette_unregister', array_values( array_unique( $unregister ) ), $registered_page_urls );
+
+        return array(
+            'commands'   => array_values( array_filter( $commands ) ),
+            'unregister' => array_values( array_filter( $unregister ) ),
+        );
+    }
+
+    /**
+     * Get registered MainWP submenu pages that can be opened from the palette.
+     *
+     * @return array<string, array<string, mixed>> Registered page map.
+     */
+    private function get_command_palette_registered_pages() {
+        global $submenu;
+
+        if ( empty( $submenu['mainwp_tab'] ) || ! is_array( $submenu['mainwp_tab'] ) ) {
+            return array();
+        }
+
+        $registered_pages = array();
+
+        foreach ( $submenu['mainwp_tab'] as $submenu_item ) {
+            if ( empty( $submenu_item[2] ) || ( ! empty( $submenu_item[1] ) && ! current_user_can( $submenu_item[1] ) ) ) {
+                continue;
+            }
+
+            $menu_slug = (string) $submenu_item[2];
+            $menu_url  = '';
+
+            if ( preg_match( '/\.php($|\?)/', $menu_slug ) || wp_http_validate_url( $menu_slug ) ) {
+                $menu_url = $menu_slug;
+            } elseif ( ! empty( menu_page_url( $menu_slug, false ) ) ) {
+                $menu_url = wp_specialchars_decode( menu_page_url( $menu_slug, false ), ENT_QUOTES );
+            }
+
+            if ( empty( $menu_url ) ) {
+                continue;
+            }
+
+            $raw_label = isset( $submenu_item[0] ) ? (string) $submenu_item[0] : '';
+
+            $registered_pages[ $menu_slug ] = array(
+                'label'  => $this->clean_command_palette_label( $raw_label ),
+                'url'    => $menu_url,
+                'hidden' => false !== strpos( $raw_label, 'mainwp-hidden' ),
+            );
+        }
+
+        return $registered_pages;
+    }
+
+    /**
+     * Build MainWP command-palette commands from runtime menu data.
+     *
+     * @param array<string, array<string, mixed>> $registered_pages Registered MainWP pages.
+     *
+     * @return array<int, array<string, mixed>> Command list.
+     */
+    private function get_command_palette_menu_commands( $registered_pages ) {
+        $menu_nodes = $this->get_command_palette_menu_nodes();
+
+        if ( empty( $menu_nodes ) ) {
+            return array();
+        }
+
+        $nodes_by_id   = array();
+        $nodes_by_slug = array();
+
+        foreach ( $menu_nodes as $node ) {
+            $nodes_by_id[ $node['id'] ] = $node;
+
+            if ( ! empty( $node['slug_key'] ) && ! isset( $nodes_by_slug[ $node['slug_key'] ] ) ) {
+                $nodes_by_slug[ $node['slug_key'] ] = $node['id'];
+            }
+        }
+
+        $commands_by_url    = array();
+        $command_page_slugs = array();
+
+        foreach ( $menu_nodes as $node ) {
+            $path_titles = $this->get_command_palette_menu_path_titles( $node, $nodes_by_id, $nodes_by_slug );
+
+            if ( empty( $path_titles ) ) {
+                continue;
+            }
+
+            $label = sprintf( __( 'Go to: MainWP > %s', 'mainwp' ), implode( ' > ', $path_titles ) );
+
+            $command_name = ! empty( $node['page_slug'] ) && isset( $registered_pages[ $node['page_slug'] ] )
+                ? 'mainwp_tab-' . $node['page_slug']
+                : 'mainwp-command-' . sanitize_key( ! empty( $node['page_slug'] ) ? $node['page_slug'] : md5( $node['url'] ) );
+
+            $command = array(
+                'name'        => $command_name,
+                'label'       => $label,
+                'url'         => $node['url'],
+                'keywords'    => $this->get_command_palette_keywords( $path_titles, $node['page_slug'] ),
+                'searchLabel' => $label,
+                '_depth'      => count( $path_titles ),
+            );
+
+            if ( ! isset( $commands_by_url[ $node['url'] ] ) || $command['_depth'] > $commands_by_url[ $node['url'] ]['_depth'] ) {
+                $commands_by_url[ $node['url'] ] = $command;
+            }
+
+            if ( ! empty( $node['page_slug'] ) ) {
+                $command_page_slugs[ $node['page_slug'] ] = true;
+            }
+        }
+
+        foreach ( $registered_pages as $page_slug => $page_data ) {
+            if (
+                isset( $command_page_slugs[ $page_slug ] ) ||
+                empty( $page_data['label'] ) ||
+                empty( $page_data['url'] ) ||
+                ! empty( $page_data['hidden'] )
+            ) {
+                continue;
+            }
+
+            if ( isset( $commands_by_url[ $page_data['url'] ] ) ) {
+                continue;
+            }
+
+            $label = sprintf( __( 'Go to: MainWP > %s', 'mainwp' ), $page_data['label'] );
+
+            $commands_by_url[ $page_data['url'] ] = array(
+                'name'        => 'mainwp_tab-' . $page_slug,
+                'label'       => $label,
+                'url'         => $page_data['url'],
+                'keywords'    => $this->get_command_palette_keywords( array( $page_data['label'] ), $page_slug ),
+                'searchLabel' => $label,
+                '_depth'      => 1,
+            );
+        }
+
+        foreach ( $commands_by_url as &$command ) {
+            unset( $command['_depth'] );
+        }
+        unset( $command );
+
+        return array_values( $commands_by_url );
+    }
+
+    /**
+     * Collect MainWP menu nodes from the runtime left-menu structures.
+     *
+     * @return array<int, array<string, string>> Menu nodes.
+     */
+    private function get_command_palette_menu_nodes() {
+        global $mainwp_leftmenu, $mainwp_sub_leftmenu;
+
+        $left_menu     = apply_filters( 'mainwp_main_menu', is_array( $mainwp_leftmenu ) ? $mainwp_leftmenu : array() );
+        $sub_left_menu = apply_filters( 'mainwp_main_menu_submenu', is_array( $mainwp_sub_leftmenu ) ? $mainwp_sub_leftmenu : array() );
+        $menu_nodes    = array();
+
+        if ( ! empty( $left_menu['leftbar'] ) && is_array( $left_menu['leftbar'] ) ) {
+            foreach ( $left_menu['leftbar'] as $item ) {
+                $this->add_command_palette_menu_node(
+                    $menu_nodes,
+                    isset( $item[0] ) ? $item[0] : '',
+                    isset( $item[2] ) ? $item[2] : '',
+                    isset( $item[1] ) ? $item[1] : '',
+                    'mainwp_tab'
+                );
+            }
+        }
+
+        foreach ( $left_menu as $parent_key => $items ) {
+            if ( 'leftbar' === $parent_key || ! is_array( $items ) ) {
+                continue;
+            }
+
+            foreach ( $items as $item ) {
+                $this->add_command_palette_menu_node(
+                    $menu_nodes,
+                    isset( $item[0] ) ? $item[0] : '',
+                    isset( $item[2] ) ? $item[2] : '',
+                    isset( $item[1] ) ? $item[1] : '',
+                    $parent_key
+                );
+            }
+        }
+
+        if ( ! empty( $sub_left_menu['leftbar'] ) && is_array( $sub_left_menu['leftbar'] ) ) {
+            foreach ( $sub_left_menu['leftbar'] as $parent_key => $items ) {
+                if ( ! is_array( $items ) ) {
+                    continue;
+                }
+
+                foreach ( $items as $item ) {
+                    $this->add_command_palette_menu_node(
+                        $menu_nodes,
+                        isset( $item[0] ) ? $item[0] : '',
+                        isset( $item[2] ) ? $item[2] : '',
+                        isset( $item[1] ) ? $item[1] : '',
+                        $parent_key
+                    );
+                }
+            }
+        }
+
+        foreach ( $sub_left_menu as $parent_key => $items ) {
+            if ( 'leftbar' === $parent_key || ! is_array( $items ) ) {
+                continue;
+            }
+
+            foreach ( $items as $item ) {
+                $this->add_command_palette_menu_node(
+                    $menu_nodes,
+                    isset( $item[0] ) ? $item[0] : '',
+                    isset( $item[1] ) ? $item[1] : '',
+                    isset( $item[4] ) ? $item[4] : '',
+                    $parent_key
+                );
+            }
+        }
+
+        return $menu_nodes;
+    }
+
+    /**
+     * Add a single node to the command palette source list.
+     *
+     * @param array<int, array<string, string>> $menu_nodes Menu nodes.
+     * @param string                            $title      Menu title.
+     * @param string                            $href       Menu href.
+     * @param string                            $slug       Menu slug.
+     * @param string                            $parent_key Parent menu slug.
+     */
+    private function add_command_palette_menu_node( &$menu_nodes, $title, $href, $slug, $parent_key ) {
+        $title = $this->clean_command_palette_label( $title );
+        $url   = $this->normalize_command_palette_url( $href, $slug );
+
+        if ( empty( $title ) || empty( $url ) ) {
+            return;
+        }
+
+        $page_slug = $this->get_command_palette_page_slug_from_url( $url );
+        $slug_key  = ! empty( $slug ) ? (string) $slug : $page_slug;
+
+        $menu_nodes[] = array(
+            'id'        => md5( $parent_key . '|' . $slug_key . '|' . $url . '|' . $title ),
+            'parent'    => (string) $parent_key,
+            'page_slug' => $page_slug,
+            'slug_key'  => $slug_key,
+            'title'     => $title,
+            'url'       => $url,
+        );
+    }
+
+    /**
+     * Build a node breadcrumb from the MainWP menu tree.
+     *
+     * @param array<string, string>                $node          Menu node.
+     * @param array<string, array<string, string>> $nodes_by_id   Menu nodes indexed by id.
+     * @param array<string, string>                $nodes_by_slug Menu nodes indexed by slug.
+     *
+     * @return array<int, string> Path titles.
+     */
+    private function get_command_palette_menu_path_titles( $node, $nodes_by_id, $nodes_by_slug ) {
+        $titles     = array();
+        $current    = $node;
+        $seen_nodes = array();
+
+        while ( is_array( $current ) && ! empty( $current['id'] ) && ! isset( $seen_nodes[ $current['id'] ] ) ) {
+            $seen_nodes[ $current['id'] ] = true;
+
+            if ( ! empty( $current['title'] ) ) {
+                array_unshift( $titles, $current['title'] );
+            }
+
+            if ( empty( $current['parent'] ) || 'mainwp_tab' === $current['parent'] || ! isset( $nodes_by_slug[ $current['parent'] ] ) ) {
+                break;
+            }
+
+            $parent_id = $nodes_by_slug[ $current['parent'] ];
+            $current   = isset( $nodes_by_id[ $parent_id ] ) ? $nodes_by_id[ $parent_id ] : array();
+        }
+
+        return $titles;
+    }
+
+    /**
+     * Build search keywords for a MainWP command.
+     *
+     * @param array<int, string> $path_titles Path titles.
+     * @param string             $page_slug   Page slug.
+     *
+     * @return array<int, string> Search keywords.
+     */
+    private function get_command_palette_keywords( $path_titles, $page_slug = '' ) {
+        $keywords = array( 'mainwp' );
+
+        foreach ( $path_titles as $title ) {
+            $keywords[] = strtolower( $title );
+        }
+
+        if ( ! empty( $page_slug ) ) {
+            $keywords[] = strtolower( str_replace( array( '-', '_' ), ' ', $page_slug ) );
+        }
+
+        return array_values( array_unique( array_filter( $keywords ) ) );
+    }
+
+    /**
+     * Normalize menu text into readable plain text.
+     *
+     * @param string $label Raw menu label.
+     *
+     * @return string Plain-text label.
+     */
+    private function clean_command_palette_label( $label ) {
+        $label = wp_specialchars_decode( wp_strip_all_tags( (string) $label ), ENT_QUOTES );
+        $label = preg_replace( '/\s+/', ' ', $label );
+
+        return trim( (string) $label );
+    }
+
+    /**
+     * Normalize a MainWP menu href into a usable URL.
+     *
+     * @param string $href Menu href.
+     * @param string $slug Menu slug.
+     *
+     * @return string Normalized URL.
+     */
+    private function normalize_command_palette_url( $href, $slug = '' ) {
+        $href = trim( wp_specialchars_decode( (string) $href, ENT_QUOTES ) );
+        $slug = trim( (string) $slug );
+
+        if ( empty( $href ) || '#' === $href || 0 === strpos( $href, 'javascript:' ) ) {
+            if ( empty( $slug ) || preg_match( '/\.php($|\?)/', $slug ) || wp_http_validate_url( $slug ) ) {
+                return '';
+            }
+
+            return admin_url( 'admin.php?page=' . $slug );
+        }
+
+        if ( wp_http_validate_url( $href ) ) {
+            return $href;
+        }
+
+        return admin_url( ltrim( $href, '/' ) );
+    }
+
+    /**
+     * Extract a page slug from a menu URL when one exists.
+     *
+     * @param string $url Menu URL.
+     *
+     * @return string Page slug.
+     */
+    private function get_command_palette_page_slug_from_url( $url ) {
+        $query = wp_parse_url( $url, PHP_URL_QUERY );
+
+        if ( empty( $query ) ) {
+            return '';
+        }
+
+        parse_str( $query, $query_args );
+
+        if ( ! isset( $query_args['page'] ) ) {
+            return '';
+        }
+
+        return preg_replace( '/[^A-Za-z0-9_-]/', '', (string) $query_args['page'] );
     }
 
     /**

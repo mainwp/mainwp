@@ -42,108 +42,13 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
-     * Method init_menu()
+     * Get the registered Info subpages.
      *
-     * Initiate Info subPage menu.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
-     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::is_apache_server_software()
+     * @return array<int, array<string, mixed>> Info subpages.
      */
-    public static function init_menu() { // phpcs:ignore -- NOSONAR - complex.
-
-        add_action( 'mainwp_pageheader_infor', array( static::get_class_name(), 'render_header' ) );
-        add_action( 'mainwp_pagefooter_infor', array( static::get_class_name(), 'render_footer' ) );
-
-        add_submenu_page(
-            'mainwp_tab',
-            __( 'Info', 'mainwp' ),
-            ' <span id="mainwp-ServerInformation">' . esc_html__( 'Info', 'mainwp' ) . '</span>',
-            'read',
-            'ServerInformation',
-            array(
-                static::get_class_name(),
-                'render',
-            )
-        );
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ServerInformationCron' ) ) {
-            add_submenu_page(
-                'mainwp_tab',
-                __( 'Cron Schedules', 'mainwp' ),
-                '<div class="mainwp-hidden">' . esc_html__( 'Cron Schedules', 'mainwp' ) . '</div>',
-                'read',
-                'ServerInformationCron',
-                array(
-                    static::get_class_name(),
-                    'render_cron',
-                )
-            );
-        }
-
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ErrorLog' ) ) {
-            add_submenu_page(
-                'mainwp_tab',
-                __( 'Error Log', 'mainwp' ),
-                '<div class="mainwp-hidden">' . esc_html__( 'Error Log', 'mainwp' ) . '</div>',
-                'read',
-                'ErrorLog',
-                array(
-                    static::get_class_name(),
-                    'render_error_log_page',
-                )
-            );
-        }
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'WPConfig' ) ) {
-            add_submenu_page(
-                'mainwp_tab',
-                __( 'WP-Config File', 'mainwp' ),
-                '<div class="mainwp-hidden">' . esc_html__( 'WP-Config File', 'mainwp' ) . '</div>',
-                'read',
-                'WPConfig',
-                array(
-                    static::get_class_name(),
-                    'render_wp_config',
-                )
-            );
-        }
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, '.htaccess' ) && MainWP_Server_Information_Handler::is_apache_server_software() ) {
-            add_submenu_page(
-                'mainwp_tab',
-                __( '.htaccess File', 'mainwp' ),
-                '<div class="mainwp-hidden">' . esc_html__( '.htaccess File', 'mainwp' ) . '</div>',
-                'read',
-                '.htaccess',
-                array(
-                    static::get_class_name(),
-                    'render_htaccess',
-                )
-            );
-        }
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ActionLogs' ) ) {
-            add_submenu_page(
-                'mainwp_tab',
-                __( 'Custom Event Monitor', 'mainwp' ),
-                '<div class="mainwp-hidden">' . esc_html__( 'Custom Event Monitor', 'mainwp' ) . '</div>',
-                'read',
-                'ActionLogs',
-                array(
-                    static::get_class_name(),
-                    'render_action_logs',
-                )
-            );
-        }
-
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PluginPrivacy' ) ) {
-            add_submenu_page(
-                'mainwp_tab',
-                __( 'Plugin Privacy', 'mainwp' ),
-                '<div class="mainwp-hidden">' . esc_html__( 'Plugin Privacy', 'mainwp' ) . '</div>',
-                'read',
-                'PluginPrivacy',
-                array(
-                    static::get_class_name(),
-                    'render_plugin_privacy_page',
-                )
-            );
+    private static function get_subpages() {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            return static::$subPages;
         }
 
         /**
@@ -156,16 +61,236 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-server', array( array() ), '4.0.7.2', 'mainwp_getsubpages_server' ); // NOSONAR - not IP.
         static::$subPages = apply_filters( 'mainwp_getsubpages_server', $sub_pages );
 
-        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
-            foreach ( static::$subPages as $subPage ) {
-                if ( ! isset( $subPage['slug'] ) ) {
-                    continue;
-                }
-                if ( MainWP_Menu::is_disable_menu_item( 3, 'Server' . $subPage['slug'] ) ) {
-                    continue;
-                }
-                add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Server' . $subPage['slug'], $subPage['callback'] );
+        return is_array( static::$subPages ) ? static::$subPages : array();
+    }
+
+    /**
+     * Get the built-in Info pages used across menu registration and navigation rendering.
+     *
+     * @return array<int, array<string, mixed>> Info page definitions.
+     */
+    private static function get_core_pages() {
+        $pages = array(
+            array(
+                'slug'                  => 'ServerInformation',
+                'page_title'            => __( 'Info', 'mainwp' ),
+                'menu_title'            => ' <span id="mainwp-ServerInformation">' . esc_html__( 'Info', 'mainwp' ) . '</span>',
+                'nav_title'             => esc_html__( 'Server', 'mainwp' ),
+                'callback'              => array( static::get_class_name(), 'render' ),
+                'active_keys'           => array( '', 'ServerInformation' ),
+                'show_in_header_nav'    => true,
+                'show_in_subpages_menu' => true,
+                'show_in_left_menu'     => true,
+                'show_in_palette'       => true,
+                'left_menu_parent'      => 'ServerInformation',
+                'palette_titles'        => array( esc_html__( 'System Info', 'mainwp' ) ),
+            ),
+            array(
+                'slug'                  => 'ServerInformationCron',
+                'page_title'            => __( 'Cron Schedules', 'mainwp' ),
+                'menu_title'            => '<div class="mainwp-hidden">' . esc_html__( 'Cron Schedules', 'mainwp' ) . '</div>',
+                'nav_title'             => esc_html__( 'Cron Schedules', 'mainwp' ),
+                'callback'              => array( static::get_class_name(), 'render_cron' ),
+                'active_keys'           => array( 'ServerInformationCron' ),
+                'show_in_header_nav'    => true,
+                'show_in_subpages_menu' => true,
+                'show_in_left_menu'     => true,
+                'show_in_palette'       => true,
+                'left_menu_parent'      => 'ServerInformation',
+                'palette_titles'        => array( esc_html__( 'System Info', 'mainwp' ), esc_html__( 'Cron Schedules', 'mainwp' ) ),
+            ),
+            array(
+                'slug'                  => 'ErrorLog',
+                'page_title'            => __( 'Error Log', 'mainwp' ),
+                'menu_title'            => '<div class="mainwp-hidden">' . esc_html__( 'Error Log', 'mainwp' ) . '</div>',
+                'nav_title'             => esc_html__( 'Error Log', 'mainwp' ),
+                'callback'              => array( static::get_class_name(), 'render_error_log_page' ),
+                'active_keys'           => array( 'ErrorLog' ),
+                'show_in_header_nav'    => true,
+                'show_in_subpages_menu' => true,
+                'show_in_left_menu'     => true,
+                'show_in_palette'       => true,
+                'left_menu_parent'      => 'ServerInformation',
+                'palette_titles'        => array( esc_html__( 'System Info', 'mainwp' ), esc_html__( 'Error Log', 'mainwp' ) ),
+            ),
+            array(
+                'slug'                  => 'WPConfig',
+                'page_title'            => __( 'WP-Config File', 'mainwp' ),
+                'menu_title'            => '<div class="mainwp-hidden">' . esc_html__( 'WP-Config File', 'mainwp' ) . '</div>',
+                'nav_title'             => esc_html__( 'WP-Config File', 'mainwp' ),
+                'callback'              => array( static::get_class_name(), 'render_wp_config' ),
+                'active_keys'           => array( 'WPConfig' ),
+                'show_in_header_nav'    => false,
+                'show_in_subpages_menu' => true,
+                'show_in_left_menu'     => false,
+                'show_in_palette'       => true,
+                'left_menu_parent'      => 'ServerInformation',
+                'palette_titles'        => array( esc_html__( 'System Info', 'mainwp' ), esc_html__( 'WP-Config File', 'mainwp' ) ),
+            ),
+            array(
+                'slug'                  => '.htaccess',
+                'page_title'            => __( '.htaccess File', 'mainwp' ),
+                'menu_title'            => '<div class="mainwp-hidden">' . esc_html__( '.htaccess File', 'mainwp' ) . '</div>',
+                'nav_title'             => esc_html__( '.htaccess File', 'mainwp' ),
+                'callback'              => array( static::get_class_name(), 'render_htaccess' ),
+                'active_keys'           => array( '.htaccess' ),
+                'show_in_header_nav'    => false,
+                'show_in_subpages_menu' => true,
+                'show_in_left_menu'     => false,
+                'show_in_palette'       => true,
+                'left_menu_parent'      => 'ServerInformation',
+                'palette_titles'        => array( esc_html__( 'System Info', 'mainwp' ), esc_html__( '.htaccess File', 'mainwp' ) ),
+                'condition'             => static function() {
+                    return MainWP_Server_Information_Handler::is_apache_server_software();
+                },
+            ),
+            array(
+                'slug'                  => 'ActionLogs',
+                'page_title'            => __( 'Custom Event Monitor', 'mainwp' ),
+                'menu_title'            => '<div class="mainwp-hidden">' . esc_html__( 'Custom Event Monitor', 'mainwp' ) . '</div>',
+                'nav_title'             => esc_html__( 'Custom Event Monitor', 'mainwp' ),
+                'callback'              => array( static::get_class_name(), 'render_action_logs' ),
+                'active_keys'           => array( 'ActionLogs' ),
+                'show_in_header_nav'    => true,
+                'show_in_subpages_menu' => false,
+                'show_in_left_menu'     => true,
+                'show_in_palette'       => true,
+                'left_menu_parent'      => 'ServerInformation',
+                'palette_titles'        => array( esc_html__( 'System Info', 'mainwp' ), esc_html__( 'Custom Event Monitor', 'mainwp' ) ),
+            ),
+            array(
+                'slug'                  => 'PluginPrivacy',
+                'page_title'            => __( 'Plugin Privacy', 'mainwp' ),
+                'menu_title'            => '<div class="mainwp-hidden">' . esc_html__( 'Plugin Privacy', 'mainwp' ) . '</div>',
+                'nav_title'             => esc_html__( 'Plugin Privacy', 'mainwp' ),
+                'callback'              => array( static::get_class_name(), 'render_plugin_privacy_page' ),
+                'active_keys'           => array( 'PluginPrivacy' ),
+                'show_in_header_nav'    => false,
+                'show_in_subpages_menu' => false,
+                'show_in_left_menu'     => true,
+                'show_in_palette'       => true,
+                'left_menu_parent'      => 'mainwp_tab',
+                'palette_titles'        => array( esc_html__( 'Privacy Policy', 'mainwp' ) ),
+            ),
+        );
+
+        $visible_pages = array();
+
+        foreach ( $pages as $page ) {
+            if ( 'ServerInformation' !== $page['slug'] && MainWP_Menu::is_disable_menu_item( 3, $page['slug'] ) ) {
+                continue;
             }
+
+            if ( isset( $page['condition'] ) && is_callable( $page['condition'] ) && ! call_user_func( $page['condition'] ) ) {
+                continue;
+            }
+
+            $visible_pages[] = $page;
+        }
+
+        return $visible_pages;
+    }
+
+    /**
+     * Get the Info navigation items.
+     *
+     * @return array<int, array<string, mixed>> Info navigation items.
+     */
+    public static function get_navigation_items() {
+        $items = array();
+
+        foreach ( static::get_core_pages() as $page ) {
+            $items[] = array(
+                'slug'                  => $page['slug'],
+                'title'                 => $page['nav_title'],
+                'href'                  => 'admin.php?page=' . $page['slug'],
+                'active_keys'           => $page['active_keys'],
+                'show_in_header_nav'    => $page['show_in_header_nav'],
+                'show_in_subpages_menu' => $page['show_in_subpages_menu'],
+                'show_in_left_menu'     => $page['show_in_left_menu'],
+                'show_in_palette'       => $page['show_in_palette'],
+                'left_menu_parent'      => $page['left_menu_parent'],
+                'palette_titles'        => $page['palette_titles'],
+                'menu_hidden'           => false,
+            );
+        }
+
+        foreach ( static::get_subpages() as $subPage ) {
+            if ( empty( $subPage['slug'] ) || MainWP_Menu::is_disable_menu_item( 3, 'Server' . $subPage['slug'] ) ) {
+                continue;
+            }
+
+            $items[] = array(
+                'slug'                  => 'Server' . $subPage['slug'],
+                'title'                 => $subPage['title'],
+                'href'                  => 'admin.php?page=Server' . $subPage['slug'],
+                'active_keys'           => array( $subPage['slug'], 'Server' . $subPage['slug'] ),
+                'show_in_header_nav'    => false,
+                'show_in_subpages_menu' => empty( $subPage['menu_hidden'] ),
+                'show_in_left_menu'     => empty( $subPage['menu_hidden'] ),
+                'show_in_palette'       => empty( $subPage['menu_hidden'] ),
+                'left_menu_parent'      => 'ServerInformation',
+                'palette_titles'        => array( esc_html__( 'System Info', 'mainwp' ), $subPage['title'] ),
+                'menu_hidden'           => ! empty( $subPage['menu_hidden'] ),
+            );
+        }
+
+        return $items;
+    }
+
+    /**
+     * Get the Info command palette items.
+     *
+     * @return array<int, array<string, mixed>> Command palette item definitions.
+     */
+    public static function get_command_palette_items() {
+        $items = array();
+
+        foreach ( static::get_navigation_items() as $item ) {
+            if ( empty( $item['show_in_palette'] ) ) {
+                continue;
+            }
+
+            $items[] = array(
+                'slug'        => $item['slug'],
+                'href'        => $item['href'],
+                'path_titles' => $item['palette_titles'],
+            );
+        }
+
+        return $items;
+    }
+
+    /**
+     * Method init_menu()
+     *
+     * Initiate Info subPage menu.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::is_apache_server_software()
+     */
+    public static function init_menu() { // phpcs:ignore -- NOSONAR - complex.
+
+        add_action( 'mainwp_pageheader_infor', array( static::get_class_name(), 'render_header' ) );
+        add_action( 'mainwp_pagefooter_infor', array( static::get_class_name(), 'render_footer' ) );
+
+        foreach ( static::get_core_pages() as $page ) {
+            add_submenu_page(
+                'mainwp_tab',
+                $page['page_title'],
+                $page['menu_title'],
+                'read',
+                $page['slug'],
+                $page['callback']
+            );
+        }
+
+        foreach ( static::get_subpages() as $subPage ) {
+            if ( empty( $subPage['slug'] ) || MainWP_Menu::is_disable_menu_item( 3, 'Server' . $subPage['slug'] ) ) {
+                continue;
+            }
+
+            add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Server' . $subPage['slug'], $subPage['callback'] );
         }
     }
 
@@ -181,37 +306,10 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             <div class="wp-submenu sub-open">
                 <div class="mainwp_boxout">
                     <div class="mainwp_boxoutin"></div>
-                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=ServerInformation' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Server', 'mainwp' ); ?></a>
-                    <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ServerInformationCron' ) ) { ?>
-                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=ServerInformationCron' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Cron Schedules', 'mainwp' ); ?></a>
+                    <?php foreach ( static::get_navigation_items() as $item ) { ?>
+                        <?php if ( empty( $item['show_in_subpages_menu'] ) ) { continue; } ?>
+                        <a href="<?php echo esc_url( admin_url( $item['href'] ) ); ?>" class="mainwp-submenu"><?php echo esc_html( $item['title'] ); ?></a>
                     <?php } ?>
-                    <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ErrorLog' ) ) { ?>
-                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=ErrorLog' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Error Log', 'mainwp' ); ?></a>
-                    <?php } ?>
-                    <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'WPConfig' ) ) { ?>
-                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=WPConfig' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'WP-Config File', 'mainwp' ); ?></a>
-                    <?php } ?>
-                    <?php
-                    if ( ! MainWP_Menu::is_disable_menu_item( 3, '.htaccess' ) && MainWP_Server_Information_Handler::is_apache_server_software() ) {
-                        ?>
-                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=.htaccess' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( '.htaccess File', 'mainwp' ); ?></a>
-                        <?php
-                    }
-                    ?>
-                    <?php
-                    if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
-                        foreach ( static::$subPages as $subPage ) {
-                            if ( ! isset( $subPage['menu_hidden'] ) || ( isset( $subPage['menu_hidden'] ) && true !== $subPage['menu_hidden'] ) ) {
-                                if ( MainWP_Menu::is_disable_menu_item( 3, 'Server' . $subPage['slug'] ) ) {
-                                    continue;
-                                }
-                                ?>
-                                <a href="<?php echo esc_url( admin_url( 'admin.php?page=Server' . $subPage['slug'] ) ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
-                                <?php
-                            }
-                        }
-                    }
-                    ?>
                 </div>
             </div>
         </div>
@@ -247,52 +345,29 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
          */
         global $_mainwp_menu_active_slugs;
 
-        $_mainwp_menu_active_slugs['ActionLogs'] = 'ServerInformation';
-
-        $init_sub_subleftmenu = array(
-            array(
-                'title'      => esc_html__( 'Server', 'mainwp' ),
-                'parent_key' => 'ServerInformation',
-                'href'       => 'admin.php?page=ServerInformation',
-                'slug'       => 'ServerInformation',
-                'right'      => '',
-            ),
-            array(
-                'title'      => esc_html__( 'Cron Schedules', 'mainwp' ),
-                'parent_key' => 'ServerInformation',
-                'href'       => 'admin.php?page=ServerInformationCron',
-                'slug'       => 'ServerInformationCron',
-                'right'      => '',
-            ),
-            array(
-                'title'      => esc_html__( 'Error Log', 'mainwp' ),
-                'parent_key' => 'ServerInformation',
-                'href'       => 'admin.php?page=ErrorLog',
-                'slug'       => 'ErrorLog',
-                'right'      => '',
-            ),
-            array(
-                'title'      => esc_html__( 'Custom Event Monitor', 'mainwp' ),
-                'parent_key' => 'ServerInformation',
-                'href'       => 'admin.php?page=ActionLogs',
-                'slug'       => 'ActionLogs',
-                'right'      => '',
-            ),
-            array(
-                'title'      => esc_html__( 'Plugin Privacy', 'mainwp' ),
-                'parent_key' => 'mainwp_tab',
-                'href'       => 'admin.php?page=PluginPrivacy',
-                'slug'       => 'PluginPrivacy',
-                'right'      => '',
-            ),
-        );
-
-        MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'ServerInformation', 'Server' );
-        foreach ( $init_sub_subleftmenu as $item ) {
-            if ( MainWP_Menu::is_disable_menu_item( 3, $item['slug'] ) ) {
+        foreach ( static::get_navigation_items() as $item ) {
+            if ( ! empty( $item['menu_hidden'] ) ) {
+                if ( ! is_array( $_mainwp_menu_active_slugs ) ) {
+                    $_mainwp_menu_active_slugs = array();
+                }
+                $_mainwp_menu_active_slugs[ $item['slug'] ] = 'ServerInformation';
                 continue;
             }
-            MainWP_Menu::add_left_menu( $item, 2 );
+
+            if ( empty( $item['show_in_left_menu'] ) ) {
+                continue;
+            }
+
+            MainWP_Menu::add_left_menu(
+                array(
+                    'title'      => $item['title'],
+                    'parent_key' => $item['left_menu_parent'],
+                    'href'       => $item['href'],
+                    'slug'       => $item['slug'],
+                    'right'      => '',
+                ),
+                2
+            );
         }
     }
 
@@ -315,33 +390,15 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
             $renderItems = array();
 
-            $renderItems[] = array(
-                'title'  => esc_html__( 'Server', 'mainwp' ),
-                'href'   => 'admin.php?page=ServerInformation',
-                'active' => ( '' === $shownPage ) ? true : false,
-            );
+            foreach ( static::get_navigation_items() as $item ) {
+                if ( empty( $item['show_in_header_nav'] ) ) {
+                    continue;
+                }
 
-            if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ServerInformationCron' ) ) {
                 $renderItems[] = array(
-                    'title'  => esc_html__( 'Cron Schedules', 'mainwp' ),
-                    'href'   => 'admin.php?page=ServerInformationCron',
-                    'active' => ( 'ServerInformationCron' === $shownPage ) ? true : false,
-                );
-            }
-
-            if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ErrorLog' ) ) {
-                $renderItems[] = array(
-                    'title'  => esc_html__( 'Error Log', 'mainwp' ),
-                    'href'   => 'admin.php?page=ErrorLog',
-                    'active' => ( 'ErrorLog' === $shownPage ) ? true : false,
-                );
-            }
-
-            if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ActionLogs' ) ) {
-                $renderItems[] = array(
-                    'title'  => esc_html__( 'Custom Event Monitor', 'mainwp' ),
-                    'href'   => 'admin.php?page=ActionLogs',
-                    'active' => ( 'ActionLogs' === $shownPage ) ? true : false,
+                    'title'  => $item['title'],
+                    'href'   => $item['href'],
+                    'active' => in_array( $shownPage, $item['active_keys'], true ),
                 );
             }
 

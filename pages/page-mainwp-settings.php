@@ -90,6 +90,202 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         add_action( 'mainwp_help_sidebar_content', array( static::get_class_name(), 'mainwp_help_content' ) );
     }
 
+    /**
+     * Get the registered Settings subpages.
+     *
+     * @return array<int, array<string, mixed>> Settings subpages.
+     */
+    private static function get_subpages() {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            return static::$subPages;
+        }
+
+        /**
+         * Settings Subpages
+         *
+         * Filters subpages for the Settings page.
+         *
+         * @since Unknown
+         */
+        $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-settings', array( array() ), '4.0.7.2', 'mainwp_getsubpages_settings' );  // @deprecated Use 'mainwp_getsubpages_settings' instead. NOSONAR - not IP.
+        static::$subPages = apply_filters( 'mainwp_getsubpages_settings', $sub_pages );
+
+        return is_array( static::$subPages ) ? static::$subPages : array();
+    }
+
+    /**
+     * Get the built-in Settings pages used across menu registration and navigation rendering.
+     *
+     * @return array<int, array<string, mixed>> Settings page definitions.
+     */
+    private static function get_core_pages() {
+        $pages = array(
+            array(
+                'slug'        => 'Settings',
+                'page_title'  => __( 'Settings Global options', 'mainwp' ),
+                'menu_title'  => ' <span id="mainwp-Settings">' . esc_html__( 'Settings', 'mainwp' ) . '</span>',
+                'nav_title'   => esc_html__( 'General Settings', 'mainwp' ),
+                'callback'    => array( static::get_class_name(), 'render' ),
+                'active_keys' => array( '', 'Settings' ),
+            ),
+            array(
+                'slug'        => 'MainWPTools',
+                'page_title'  => __( 'Tools', 'mainwp' ),
+                'menu_title'  => ' <div class="mainwp-hidden">' . esc_html__( 'Tools', 'mainwp' ) . '</div>',
+                'nav_title'   => esc_html__( 'Tools', 'mainwp' ),
+                'callback'    => array( static::get_class_name(), 'render_mainwp_tools' ),
+                'active_keys' => array( 'MainWPTools' ),
+            ),
+            array(
+                'slug'        => 'CostTrackerSettings',
+                'page_title'  => esc_html__( 'Cost Tracker Settings', 'mainwp' ),
+                'menu_title'  => '<div class="mainwp-hidden">' . esc_html__( 'Cost Tracker', 'mainwp' ) . '</div>',
+                'nav_title'   => esc_html__( 'Cost Tracker Settings', 'mainwp' ),
+                'callback'    => array( Cost_Tracker_Settings::get_instance(), 'render_settings_page' ),
+                'active_keys' => array( 'CostTrackerSettings' ),
+            ),
+            array(
+                'slug'        => 'SettingsAdvanced',
+                'page_title'  => __( 'Advanced Options', 'mainwp' ),
+                'menu_title'  => ' <div class="mainwp-hidden">' . esc_html__( 'Advanced Options', 'mainwp' ) . '</div>',
+                'nav_title'   => esc_html__( 'Advanced Settings', 'mainwp' ),
+                'callback'    => array( static::get_class_name(), 'render_advanced' ),
+                'active_keys' => array( 'Advanced', 'SettingsAdvanced' ),
+            ),
+            array(
+                'slug'        => 'MonitoringSettings',
+                'page_title'  => __( 'Monitoring Options', 'mainwp' ),
+                'menu_title'  => ' <div class="mainwp-hidden">' . esc_html__( 'Monitoring Options', 'mainwp' ) . '</div>',
+                'nav_title'   => esc_html__( 'Monitoring Settings', 'mainwp' ),
+                'callback'    => array( static::get_class_name(), 'render_monitoring' ),
+                'active_keys' => array( 'Monitoring', 'MonitoringSettings' ),
+            ),
+            array(
+                'slug'        => 'SettingsEmail',
+                'page_title'  => __( 'Email Settings', 'mainwp' ),
+                'menu_title'  => ' <div class="mainwp-hidden">' . esc_html__( 'Email Settings', 'mainwp' ) . '</div>',
+                'nav_title'   => esc_html__( 'Email Settings', 'mainwp' ),
+                'callback'    => array( static::get_class_name(), 'render_email_settings' ),
+                'active_keys' => array( 'Emails', 'SettingsEmail' ),
+            ),
+        );
+
+        $visible_pages = array();
+
+        foreach ( $pages as $page ) {
+            if ( 'Settings' !== $page['slug'] && MainWP_Menu::is_disable_menu_item( 3, $page['slug'] ) ) {
+                continue;
+            }
+
+            $visible_pages[] = $page;
+        }
+
+        return $visible_pages;
+    }
+
+    /**
+     * Get the Settings navigation items.
+     *
+     * @return array<int, array<string, mixed>> Settings navigation items.
+     */
+    public static function get_navigation_items( $context = 'default' ) {
+        $core_items    = array();
+        $dynamic_items = array();
+        $items         = array();
+
+        foreach ( static::get_core_pages() as $page ) {
+            $core_items[ $page['slug'] ] = array(
+                'slug'        => $page['slug'],
+                'title'       => $page['nav_title'],
+                'href'        => 'admin.php?page=' . $page['slug'],
+                'active_keys' => $page['active_keys'],
+                'menu_hidden' => false,
+            );
+        }
+
+        foreach ( static::get_subpages() as $subPage ) {
+            if ( empty( $subPage['slug'] ) || MainWP_Menu::is_disable_menu_item( 3, 'Settings' . $subPage['slug'] ) ) {
+                continue;
+            }
+
+            $item = array(
+                'slug'        => 'Settings' . $subPage['slug'],
+                'title'       => $subPage['title'],
+                'href'        => 'admin.php?page=Settings' . $subPage['slug'],
+                'active_keys' => array( $subPage['slug'], 'Settings' . $subPage['slug'] ),
+                'menu_hidden' => ! empty( $subPage['menu_hidden'] ),
+            );
+
+            if ( ! empty( $subPage['before_title'] ) ) {
+                $item['before_title'] = $subPage['before_title'];
+            }
+
+            if ( isset( $subPage['class'] ) ) {
+                $item['class'] = $subPage['class'];
+            }
+
+            $dynamic_items[] = $item;
+        }
+
+        $base_order = array( 'Settings', 'SettingsAdvanced', 'MonitoringSettings', 'SettingsEmail' );
+
+        if ( 'left_menu' === $context ) {
+            $base_order[] = 'MainWPTools';
+            $base_order[] = 'CostTrackerSettings';
+        } else {
+            $base_order[] = 'CostTrackerSettings';
+        }
+
+        foreach ( $base_order as $slug ) {
+            if ( isset( $core_items[ $slug ] ) ) {
+                $items[] = $core_items[ $slug ];
+            }
+        }
+
+        $items = array_merge( $items, $dynamic_items );
+
+        if ( 'left_menu' !== $context && isset( $core_items['MainWPTools'] ) ) {
+            $items[] = $core_items['MainWPTools'];
+        }
+
+        return $items;
+    }
+
+    /**
+     * Get the Settings command palette items.
+     *
+     * @return array<int, array<string, mixed>> Command palette item definitions.
+     */
+    public static function get_command_palette_items() {
+        $items = array();
+
+        foreach ( static::get_navigation_items() as $item ) {
+            if ( ! empty( $item['menu_hidden'] ) ) {
+                continue;
+            }
+
+            $path_title  = $item['title'];
+            $path_titles = array( esc_html__( 'Settings', 'mainwp' ), $path_title );
+
+            if ( ! empty( $item['before_title'] ) ) {
+                $path_title     = trim( wp_strip_all_tags( $item['before_title'] ) . ' ' . $item['title'] );
+                $path_titles[1] = $path_title;
+            }
+
+            if ( 'Settings' === $item['slug'] ) {
+                $path_titles[1] = esc_html__( 'General Settings', 'mainwp' );
+            }
+
+            $items[] = array(
+                'slug'        => $item['slug'],
+                'href'        => $item['href'],
+                'path_titles' => $path_titles,
+            );
+        }
+
+        return $items;
+    }
+
     /** Run the export_sites method that exports the Child Sites .csv file */
     public static function admin_init() { // phpcs:ignore -- NOSONAR - complex.
         static::export_sites();
@@ -145,105 +341,23 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
      */
     public static function init_menu() {
-        add_submenu_page(
-            'mainwp_tab',
-            __( 'Settings Global options', 'mainwp' ),
-            ' <span id="mainwp-Settings">' . esc_html__( 'Settings', 'mainwp' ) . '</span>',
-            'read',
-            'Settings',
-            array(
-                static::get_class_name(),
-                'render',
-            )
-        );
-
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) {
+        foreach ( static::get_core_pages() as $page ) {
             add_submenu_page(
                 'mainwp_tab',
-                __( 'Tools', 'mainwp' ),
-                ' <div class="mainwp-hidden">' . esc_html__( 'Tools', 'mainwp' ) . '</div>',
+                $page['page_title'],
+                $page['menu_title'],
                 'read',
-                'MainWPTools',
-                array(
-                    static::get_class_name(),
-                    'render_mainwp_tools',
-                )
+                $page['slug'],
+                $page['callback']
             );
         }
 
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CostTrackerSettings' ) ) {
-            add_submenu_page(
-                'mainwp_tab',
-                esc_html__( 'Cost Tracker Settings', 'mainwp' ),
-                '<div class="mainwp-hidden">' . esc_html__( 'Cost Tracker', 'mainwp' ) . '</div>',
-                'read',
-                'CostTrackerSettings',
-                array(
-                    Cost_Tracker_Settings::get_instance(),
-                    'render_settings_page',
-                )
-            );
-        }
-
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsAdvanced' ) ) {
-            add_submenu_page(
-                'mainwp_tab',
-                __( 'Advanced Options', 'mainwp' ),
-                ' <div class="mainwp-hidden">' . esc_html__( 'Advanced Options', 'mainwp' ) . '</div>',
-                'read',
-                'SettingsAdvanced',
-                array(
-                    static::get_class_name(),
-                    'render_advanced',
-                )
-            );
-        }
-
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MonitoringSettings' ) ) {
-            add_submenu_page(
-                'mainwp_tab',
-                __( 'Monitoring Options', 'mainwp' ),
-                ' <div class="mainwp-hidden">' . esc_html__( 'Monitoring Options', 'mainwp' ) . '</div>',
-                'read',
-                'MonitoringSettings',
-                array(
-                    static::get_class_name(),
-                    'render_monitoring',
-                )
-            );
-        }
-
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsEmail' ) ) {
-            add_submenu_page(
-                'mainwp_tab',
-                __( 'Email Settings', 'mainwp' ),
-                ' <div class="mainwp-hidden">' . esc_html__( 'Email Settings', 'mainwp' ) . '</div>',
-                'read',
-                'SettingsEmail',
-                array(
-                    static::get_class_name(),
-                    'render_email_settings',
-                )
-            );
-        }
-
-        /**
-         * Settings Subpages
-         *
-         * Filters subpages for the Settings page.
-         *
-         * @since Unknown
-         */
-        $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-settings', array( array() ), '4.0.7.2', 'mainwp_getsubpages_settings' );  // @deprecated Use 'mainwp_getsubpages_settings' instead. NOSONAR - not IP.
-        static::$subPages = apply_filters( 'mainwp_getsubpages_settings', $sub_pages );
-
-        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
-            foreach ( static::$subPages as $subPage ) {
-                if ( MainWP_Menu::is_disable_menu_item( 3, 'Settings' . $subPage['slug'] ) ) {
-                    continue;
-                }
-                add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Settings' . $subPage['slug'], $subPage['callback'] );
+        foreach ( static::get_subpages() as $subPage ) {
+            if ( empty( $subPage['slug'] ) || MainWP_Menu::is_disable_menu_item( 3, 'Settings' . $subPage['slug'] ) ) {
+                continue;
             }
+
+            add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Settings' . $subPage['slug'], $subPage['callback'] );
         }
     }
 
@@ -258,33 +372,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             <div class="wp-submenu sub-open" style="">
                 <div class="mainwp_boxout">
                     <div class="mainwp_boxoutin"></div>
-                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=Settings' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'General Settings', 'mainwp' ); ?></a>
-                    <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsAdvanced' ) ) { ?>
-                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=SettingsAdvanced' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Advanced Settings', 'mainwp' ); ?></a>
-                    <?php } ?>
-                    <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MonitoringSettings' ) ) { ?>
-                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=MonitoringSettings' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Monitoring Settings', 'mainwp' ); ?></a>
-                    <?php } ?>
-                    <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsEmail' ) ) { ?>
-                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=SettingsEmail' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Email Settings', 'mainwp' ); ?></a>
-                    <?php } ?>
-                    <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CostTrackerSettings' ) ) { ?>
-                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=CostTrackerSettings' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Cost Tracker Settings', 'mainwp' ); ?></a>
-                    <?php } ?>
-                    <?php
-                    if ( isset( static::$subPages ) && is_array( static::$subPages ) && ! empty( static::$subPages ) ) {
-                        foreach ( static::$subPages as $subPage ) {
-                            if ( MainWP_Menu::is_disable_menu_item( 3, 'Settings' . $subPage['slug'] ) ) {
-                                continue;
-                            }
-                            ?>
-                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=Settings' . $subPage['slug'] ) ); ?>" class="mainwp-submenu"><?php echo isset( $subPage['before_title'] ) ? $subPage['before_title'] : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?> <?php echo esc_html( $subPage['title'] ); ?></a>
-                            <?php
-                        }
-                    }
-                    ?>
-                    <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) { ?>
-                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=MainWPTools' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Tools', 'mainwp' ); ?></a>
+                    <?php foreach ( static::get_navigation_items() as $item ) { ?>
+                        <a href="<?php echo esc_url( admin_url( $item['href'] ) ); ?>" class="mainwp-submenu"><?php echo isset( $item['before_title'] ) ? $item['before_title'] . ' ' : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?><?php echo esc_html( $item['title'] ); ?></a>
                     <?php } ?>
                 </div>
             </div>
@@ -315,58 +404,28 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             0
         );
 
-        $init_sub_subleftmenu = array(
-            array(
-                'title'      => esc_html__( 'General Settings', 'mainwp' ),
-                'parent_key' => 'Settings',
-                'href'       => 'admin.php?page=Settings',
-                'slug'       => 'Settings',
-                'right'      => '',
-            ),
-            array(
-                'title'      => esc_html__( 'Advanced Settings', 'mainwp' ),
-                'parent_key' => 'Settings',
-                'href'       => 'admin.php?page=SettingsAdvanced',
-                'slug'       => 'SettingsAdvanced',
-                'right'      => '',
-            ),
-            array(
-                'title'      => esc_html__( 'Monitoring Settings', 'mainwp' ),
-                'parent_key' => 'Settings',
-                'href'       => 'admin.php?page=MonitoringSettings',
-                'slug'       => 'MonitoringSettings',
-                'right'      => '',
-            ),
-            array(
-                'title'      => esc_html__( 'Email Settings', 'mainwp' ),
-                'parent_key' => 'Settings',
-                'href'       => 'admin.php?page=SettingsEmail',
-                'slug'       => 'SettingsEmail',
-                'right'      => '',
-            ),
-            array(
-                'title'      => esc_html__( 'Tools', 'mainwp' ),
-                'parent_key' => 'Settings',
-                'href'       => 'admin.php?page=MainWPTools',
-                'slug'       => 'MainWPTools',
-                'right'      => '',
-            ),
-            array(
-                'title'      => esc_html__( 'Cost Tracker Settings', 'mainwp' ),
-                'parent_key' => 'Settings',
-                'href'       => 'admin.php?page=CostTrackerSettings',
-                'slug'       => 'CostTrackerSettings',
-                'right'      => '',
-            ),
-        );
+        global $_mainwp_menu_active_slugs;
 
-        MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'Settings', 'Settings' );
-        foreach ( $init_sub_subleftmenu as $item ) {
-            if ( MainWP_Menu::is_disable_menu_item( 3, $item['slug'] ) ) {
+        foreach ( static::get_navigation_items( 'left_menu' ) as $item ) {
+            if ( ! empty( $item['menu_hidden'] ) ) {
+                if ( ! is_array( $_mainwp_menu_active_slugs ) ) {
+                    $_mainwp_menu_active_slugs = array();
+                }
+                $_mainwp_menu_active_slugs[ $item['slug'] ] = 'Settings';
                 continue;
             }
 
-            MainWP_Menu::add_left_menu( $item, 2 );
+            MainWP_Menu::add_left_menu(
+                array(
+                    'title'        => $item['title'],
+                    'parent_key'   => 'Settings',
+                    'href'         => $item['href'],
+                    'slug'         => $item['slug'],
+                    'right'        => '',
+                    'before_title' => isset( $item['before_title'] ) ? $item['before_title'] : '',
+                ),
+                2
+            );
         }
     }
 
@@ -389,70 +448,22 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
         $renderItems = array();
 
-        $renderItems[] = array(
-            'title'  => esc_html__( 'General Settings', 'mainwp' ),
-            'href'   => 'admin.php?page=Settings',
-            'active' => ( '' === $shownPage ) ? true : false,
-        );
-
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsAdvanced' ) ) {
-            $renderItems[] = array(
-                'title'  => esc_html__( 'Advanced Settings', 'mainwp' ),
-                'href'   => 'admin.php?page=SettingsAdvanced',
-                'active' => ( 'Advanced' === $shownPage ) ? true : false,
+        foreach ( static::get_navigation_items() as $item ) {
+            $render_item = array(
+                'title'  => $item['title'],
+                'href'   => $item['href'],
+                'active' => in_array( $shownPage, $item['active_keys'], true ),
             );
-        }
 
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MonitoringSettings' ) ) {
-            $renderItems[] = array(
-                'title'  => esc_html__( 'Monitoring Settings', 'mainwp' ),
-                'href'   => 'admin.php?page=MonitoringSettings',
-                'active' => ( 'Monitoring' === $shownPage ) ? true : false,
-            );
-        }
-
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsEmail' ) ) {
-            $renderItems[] = array(
-                'title'  => esc_html__( 'Email Settings', 'mainwp' ),
-                'href'   => 'admin.php?page=SettingsEmail',
-                'active' => ( 'Emails' === $shownPage ) ? true : false,
-            );
-        }
-
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CostTrackerSettings' ) ) {
-            $renderItems[] = array(
-                'title'  => esc_html__( 'Cost Tracker Settings', 'mainwp' ),
-                'href'   => 'admin.php?page=CostTrackerSettings',
-                'active' => ( 'CostTrackerSettings' === $shownPage ) ? true : false,
-            );
-        }
-
-        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
-            foreach ( static::$subPages as $subPage ) {
-                if ( MainWP_Menu::is_disable_menu_item( 3, 'Settings' . $subPage['slug'] ) ) {
-                    continue;
-                }
-                $item           = array();
-                $item['title']  = $subPage['title'];
-                $item['href']   = 'admin.php?page=Settings' . $subPage['slug'];
-                $item['active'] = ( $subPage['slug'] === $shownPage ) ? true : false;
-                if ( ! empty( $subPage['before_title'] ) ) {
-                    $item['before_title'] = $subPage['before_title'];
-                }
-
-                if ( isset( $subPage['class'] ) ) {
-                    $item['class'] = $subPage['class'];
-                }
-                $renderItems[] = $item;
+            if ( ! empty( $item['before_title'] ) ) {
+                $render_item['before_title'] = $item['before_title'];
             }
-        }
 
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) {
-            $renderItems[] = array(
-                'title'  => esc_html__( 'Tools', 'mainwp' ),
-                'href'   => 'admin.php?page=MainWPTools',
-                'active' => ( 'MainWPTools' === $shownPage ) ? true : false,
-            );
+            if ( isset( $item['class'] ) ) {
+                $render_item['class'] = $item['class'];
+            }
+
+            $renderItems[] = $render_item;
         }
 
         MainWP_UI::render_page_navigation( $renderItems, 'nav_mainwp_settings' );

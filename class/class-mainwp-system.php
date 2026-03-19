@@ -1352,7 +1352,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $menu_nodes = $this->get_command_palette_menu_nodes();
 
         if ( empty( $menu_nodes ) ) {
-            return array();
+            $menu_nodes = array();
         }
 
         $nodes_by_id   = array();
@@ -1400,6 +1400,25 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             }
         }
 
+        foreach ( $this->get_command_palette_utility_commands( $registered_pages ) as $command ) {
+            if ( empty( $command['url'] ) || empty( $command['label'] ) ) {
+                continue;
+            }
+
+            $command['_depth'] = isset( $command['_depth'] ) ? (int) $command['_depth'] : 1;
+
+            if (
+                ! isset( $commands_by_url[ $command['url'] ] ) ||
+                $command['_depth'] >= $commands_by_url[ $command['url'] ]['_depth']
+            ) {
+                $commands_by_url[ $command['url'] ] = $command;
+            }
+
+            if ( ! empty( $command['_page_slug'] ) ) {
+                $command_page_slugs[ $command['_page_slug'] ] = true;
+            }
+        }
+
         foreach ( $registered_pages as $page_slug => $page_data ) {
             if (
                 isset( $command_page_slugs[ $page_slug ] ) ||
@@ -1427,11 +1446,128 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
 
         foreach ( $commands_by_url as &$command ) {
-            unset( $command['_depth'] );
+            unset( $command['_depth'], $command['_page_slug'] );
         }
         unset( $command );
 
         return array_values( $commands_by_url );
+    }
+
+    /**
+     * Build command-palette commands for MainWP pages that do not reliably exist in the global sidebar tree.
+     *
+     * @param array<string, array<string, mixed>> $registered_pages Registered MainWP pages.
+     *
+     * @return array<int, array<string, mixed>> Command list.
+     */
+    private function get_command_palette_utility_commands( $registered_pages ) {
+        return array_merge(
+            $this->get_command_palette_settings_commands( $registered_pages ),
+            $this->get_command_palette_info_commands( $registered_pages )
+        );
+    }
+
+    /**
+     * Build Settings-section command palette commands.
+     *
+     * @param array<string, array<string, mixed>> $registered_pages Registered MainWP pages.
+     *
+     * @return array<int, array<string, mixed>> Command list.
+     */
+    private function get_command_palette_settings_commands( $registered_pages ) {
+        $commands = array();
+
+        foreach ( MainWP_Settings::get_command_palette_items() as $item ) {
+            if ( empty( $item['slug'] ) || empty( $item['path_titles'] ) ) {
+                continue;
+            }
+
+            $commands[] = $this->build_command_palette_registered_command(
+                $registered_pages,
+                $item['slug'],
+                $item['path_titles'],
+                array( 'mainwp settings' )
+            );
+        }
+
+        return array_values( array_filter( $commands ) );
+    }
+
+    /**
+     * Build System Info and profile utility command palette commands.
+     *
+     * @param array<string, array<string, mixed>> $registered_pages Registered MainWP pages.
+     *
+     * @return array<int, array<string, mixed>> Command list.
+     */
+    private function get_command_palette_info_commands( $registered_pages ) {
+        $commands = array();
+
+        foreach ( MainWP_Server_Information::get_command_palette_items() as $item ) {
+            if ( empty( $item['slug'] ) || empty( $item['path_titles'] ) ) {
+                continue;
+            }
+
+            $commands[] = $this->build_command_palette_registered_command(
+                $registered_pages,
+                $item['slug'],
+                $item['path_titles'],
+                array( 'system info', 'server info' )
+            );
+        }
+
+        return array_values( array_filter( $commands ) );
+    }
+
+    /**
+     * Build a command palette command for a registered page.
+     *
+     * @param array<string, array<string, mixed>> $registered_pages Registered MainWP pages.
+     * @param string                              $page_slug        Registered page slug.
+     * @param array<int, string>                  $path_titles      Breadcrumb path labels.
+     * @param array<int, string>                  $extra_keywords   Additional search keywords.
+     *
+     * @return array<string, mixed>|null Command configuration.
+     */
+    private function build_command_palette_registered_command( $registered_pages, $page_slug, $path_titles, $extra_keywords = array() ) {
+        if ( empty( $registered_pages[ $page_slug ]['url'] ) ) {
+            return null;
+        }
+
+        $path_titles = array_values(
+            array_filter(
+                array_map(
+                    array( $this, 'clean_command_palette_label' ),
+                    is_array( $path_titles ) ? $path_titles : array()
+                )
+            )
+        );
+
+        if ( empty( $path_titles ) ) {
+            return null;
+        }
+
+        $keywords = $this->get_command_palette_keywords( $path_titles, $page_slug );
+
+        foreach ( $extra_keywords as $keyword ) {
+            $keyword = strtolower( $this->clean_command_palette_label( $keyword ) );
+
+            if ( ! empty( $keyword ) ) {
+                $keywords[] = $keyword;
+            }
+        }
+
+        $label = sprintf( __( 'Go to: MainWP > %s', 'mainwp' ), implode( ' > ', $path_titles ) );
+
+        return array(
+            'name'        => 'mainwp_tab-' . $page_slug,
+            'label'       => $label,
+            'url'         => $registered_pages[ $page_slug ]['url'],
+            'keywords'    => array_values( array_unique( array_filter( $keywords ) ) ),
+            'searchLabel' => $label,
+            '_depth'      => count( $path_titles ),
+            '_page_slug'  => $page_slug,
+        );
     }
 
     /**

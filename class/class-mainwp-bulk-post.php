@@ -7,11 +7,6 @@
 
 namespace MainWP\Dashboard;
 
-// Exit if accessed directly.
-if ( ! defined( 'ABSPATH' ) ) {
-    exit;
-}
-
 /**
  * Class MainWP_Bulk_Post
  *

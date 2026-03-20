@@ -29,11 +29,19 @@ class MainWP_Execution_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSame
     private static $exec_start = null;
 
     /**
-     * Private static varibale to hold the instance.
+     * Static varibale to hold the instance.
      *
      * @var mixed Default null
      */
     public static $instance = null;
+
+    /**
+     * Static varibale to hold the remote call total time.
+     *
+     * @var mixed Default 0
+     */
+
+    public static $exec_stats = array();
 
     /**
      * Method instance()
@@ -120,5 +128,140 @@ class MainWP_Execution_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSame
             return round( $rtime * 1000000, 4 );
         }
         return round( $rtime, 4 );
+    }
+
+
+    /**
+     * Method init_http_call_track.
+     *
+     * @return void
+     */
+    public static function init_http_call_track() {
+        add_action( 'http_api_debug', array( __CLASS__, 'http_call_track' ), 10, 5 );
+    }
+
+    /**
+     * Track HTTP API request/response timing.
+     *
+     * Hooked into `http_api_debug` to measure remote call duration.
+     *
+     * @param mixed  $response HTTP response or WP_Error.
+     * @param string $context  Execution context: 'request', 'response', 'transport', etc.
+     * @param string $class    HTTP transport class name.
+     * @param array  $args     Request arguments passed to the HTTP API.
+     * @param string $url      Request URL.
+     *
+     * @return void
+     */
+    public static function http_call_track( $response, $context, $class, $args, $url ) { //phpcs:ignore -- NOSONAR - not use some params.
+        $check_context = '';
+        if ( 'request' === $context ) {
+            $check_context = 'start_exec';
+        } elseif ( 'response' === $context ) {
+            $check_context = 'end_exec';
+        }
+        static::run_call_track( $check_context, $url, $args );
+    }
+
+
+    /**
+     * Method execute_call_track.
+     *
+     * @param  mixed  $context Curl request context.
+     * @param  mixed  $website Curl website.
+     * @param  array  $args Request args.
+     * @param  string $request_id Request id.
+     * @param  string $msg Exec msg.
+     *
+     * @return mixed Track id for 'request' or null.
+     */
+    public static function execute_call_track( $context, $website = false, $args = array(), $request_id = '', $msg = '' ) {
+        $url = '_na_url';
+        if ( is_string( $website ) ) {
+            $url = $website;
+        } elseif ( is_array( $website ) && isset( $website['url'] ) ) {
+            $url = $website['url'];
+        } elseif ( is_object( $website ) && property_exists( $website, 'url' ) ) {
+            $url = $website->url;
+        }
+        return static::run_call_track( $context, $url, $args, $request_id, $msg );
+    }
+
+    /**
+     * Track running timing.
+     *
+     * @param string $check_context  Execution check context.
+     * @param string $url      Request URL.
+     * @param  array  $args Request args.
+     * @param  string $request_id Request ID.
+     * @param  string $msg Exec msg.
+     *
+     * @return mixed void|string
+     */
+    private static function run_call_track( $check_context, $url, $args, $request_id = '', $msg = '' ) {
+        static $start = array();
+
+        if ( ! isset( static::$exec_stats['exec_time'] ) ) {
+            static::$exec_stats['exec_time'] = array();
+        }
+
+        if ( ! isset( static::$exec_stats['check_count'] ) ) {
+            static::$exec_stats['check_count'] = 0;
+        }
+
+        if ( ! isset( static::$exec_stats['check_url'] ) ) {
+            static::$exec_stats['check_url'] = array();
+        }
+
+        // include microtime to avoid overwrite.
+        if ( 'start_exec' === $check_context ) {
+            $key = md5( $url . serialize( $args ) . microtime( true ) ); //phpcs:ignore -- NOSONAR - good for key.
+            $start[ $key ] = microtime( true );
+            // store request_id (required!).
+            return $key;
+        }
+
+        if ( empty( $request_id ) ) {
+            $request_id = $url;
+        }
+
+        if ( 'end_exec' === $check_context && ! empty( $request_id ) ) {
+            $key = (string) $request_id;
+
+            if ( isset( $start[ $key ] ) ) {
+                $time = microtime( true ) - $start[ $key ];
+                ++static::$exec_stats['check_count'];
+                static::$exec_stats['exec_time'][] = $time;
+                static::$exec_stats['check_url'][] = $url;
+                static::$exec_stats['check_msg'][] = $msg;
+                unset( $start[ $key ] );
+            }
+        }
+    }
+
+    /**
+     * Method get_exec_call_stats.
+     *
+     * @return array Http stats.
+     */
+    public static function get_exec_call_stats() {
+        return self::$exec_stats;
+    }
+
+    /**
+     * Method get db stats.
+     *
+     * @return array Array db queries usage stats.
+     */
+    public static function get_queries_stats() {
+        global $wpdb;
+        if ( empty( $wpdb->queries ) ) {
+            return array();
+        }
+        $queries = $wpdb->queries;
+        return array(
+            'total_queries' => is_array( $queries ) ? count( $queries ) : 0,
+            'total_runtime' => is_array( $queries ) ? array_sum( array_column( $queries, 1 ) ) : 0,
+        );
     }
 }

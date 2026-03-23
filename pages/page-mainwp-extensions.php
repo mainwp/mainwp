@@ -652,7 +652,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             $html .= '<div class="eight wide right aligned middle aligned column">';
             $html .= '<div id="mainwp-search-extensions-install" class="ui fluid search">
                         <div class="ui icon mini input">
-                            <input class="prompt" id="mainwp-search-extensions-install-input" type="text" placeholder="Find add-on...">
+                            <input class="prompt" id="mainwp-search-extensions-install-input" type="text" placeholder="' . esc_attr__( 'Find add-on...', 'mainwp' ) . '">
                             <i class="search icon"></i>
                         </div>
                     </div>';
@@ -702,15 +702,36 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
         $html .= '<script>jQuery( "#mainwp-install-extensions-menu .item" ).tab();</script>';
         $html .= '<script type="text/javascript">
         jQuery( document ).ready( function () {
-            let $menu        = jQuery( "#mainwp-install-extensions-menu" );
-            let $modal       = jQuery( "#mainwp-get-purchased-extensions-modal" );
-            let $searchInput = jQuery( "#mainwp-search-extensions-install-input" );
+            let $menu          = jQuery( "#mainwp-install-extensions-menu" );
+            let $modal         = jQuery( "#mainwp-get-purchased-extensions-modal" );
+            let $searchInput   = jQuery( "#mainwp-search-extensions-install-input" );
             let $searchResults = jQuery( "#mainwp-extensions-search-results" );
+            let $tabsContainer = $modal.find( ".ui.tab[data-tab]" );
+
+            $searchResults.find( "input[type=\"checkbox\"]" ).removeAttr( "status" );
+
+            function syncToTabs( productId, checked ) {
+                $tabsContainer.find( ".extension-to-install[product-id=\"" + productId + "\"] input[type=\"checkbox\"]" ).prop( "checked", checked );
+            }
+
+            function syncToSearch( productId, checked ) {
+                $searchResults.find( ".extension-to-install[product-id=\"" + productId + "\"] input[type=\"checkbox\"]" ).prop( "checked", checked );
+            }
+
+            $searchResults.on( "change", "input[type=\"checkbox\"]", function () {
+                let productId = jQuery( this ).closest( ".extension-to-install" ).attr( "product-id" );
+                syncToTabs( productId, jQuery( this ).prop( "checked" ) );
+            } );
+
+            $tabsContainer.on( "change", "input[type=\"checkbox\"]", function () {
+                let productId = jQuery( this ).closest( ".extension-to-install" ).attr( "product-id" );
+                syncToSearch( productId, jQuery( this ).prop( "checked" ) );
+            } );
 
             function exitSearchMode() {
                 $searchResults.hide();
                 $searchResults.find( ".item.extension" ).show();
-                $modal.find( ".ui.tab[data-tab]" ).css( "display", "" );
+                $tabsContainer.css( "display", "" );
                 $menu.find( ".item" ).first().trigger( "click" );
             }
 
@@ -719,7 +740,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
 
                 if ( searchQuery.length > 0 ) {
                     $menu.find( ".item.active" ).removeClass( "active" );
-                    $modal.find( ".ui.tab[data-tab]" ).css( "display", "none" );
+                    $tabsContainer.css( "display", "none" );
                     $searchResults.show();
                     $searchResults.find( ".item.extension" ).each( function () {
                         let extensionTitle = jQuery( this ).attr( "software-title" ).toLowerCase();
@@ -735,7 +756,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                     $searchInput.val( "" );
                     $searchResults.hide();
                     $searchResults.find( ".item.extension" ).show();
-                    $modal.find( ".ui.tab[data-tab]" ).css( "display", "" );
+                    $tabsContainer.css( "display", "" );
                 }
             } );
             jQuery( "#mainwp-standalone-extensions-filer" ).on( "change", function () {

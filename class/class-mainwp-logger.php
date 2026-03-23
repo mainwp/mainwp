@@ -40,6 +40,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     const WARM_CACHE_LOG_PRIORITY              = 20250915;
     const EXTENSION_UPDATES_CHECK_LOG_PRIORITY = 20260306;
     const EXECUTION_SYNC_LOG_PRIORITY          = 20260316;
+    const EXECUTION_SYNC_DETAILS_LOG_PRIORITY  = 20260323;
 
     const DISABLED = - 1;
     const LOG      = 0;
@@ -375,6 +376,9 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         break;
                     case 'execution-sync':
                         $this->log_action( '[Execution Sync] :: ' . $text, static::EXECUTION_SYNC_LOG_PRIORITY, $color, false, $log_type );
+                        break;
+                    case 'execution-sync-details':
+                        $this->log_action( '[Execution Sync] :: ' . $text, static::EXECUTION_SYNC_DETAILS_LOG_PRIORITY, $color, false, $log_type );
                         break;
                     case 'warm-cache':
                         $this->log_action( '[Warm cache] :: ' . $text, static::WARM_CACHE_LOG_PRIORITY, $color );
@@ -796,7 +800,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public function log_execution_sync( $progress = '', $text = '', $website = false ) { // phpcs:ignore -- NOSONAR -complex.
 
-        if ( 1 !== $this->logSpecific || static::EXECUTION_SYNC_LOG_PRIORITY !== $this->logPriority ) { // 1 - specific log, 0 - not specific log.
+        if ( 1 !== $this->logSpecific || ( static::EXECUTION_SYNC_LOG_PRIORITY !== $this->logPriority && static::EXECUTION_SYNC_DETAILS_LOG_PRIORITY !== $this->logPriority ) ) { // 1 - specific log, 0 - not specific log.
             return;
         }
 
@@ -841,7 +845,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $text .= '[siteid=' . $id . '] :: ';
         }
 
-        $log = $text . '[runtime=' . $exec_time . '](sec)';
+        $log = $text . '[total runtime=' . $exec_time . '](sec)';
 
         $mem = '';
 
@@ -868,25 +872,18 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
             $callstats = MainWP_Execution_Helper::get_exec_call_stats();
 
+            $rows_details = array();
+
             if ( is_array( $callstats ) ) {
                 if ( isset( $callstats['check_count'] ) ) {
-                    $log .= ' :: [check count=' . (int) $callstats['check_count'] . ']';
+                    $log .= ' :: [total run check=' . (int) $callstats['check_count'] . ']';
                 }
                 if ( isset( $callstats['exec_time'] ) && is_array( $callstats['exec_time'] ) ) {
-                    $formatted = array();
-                    if ( isset( $callstats['check_msg'] ) && is_array( $callstats['check_msg'] ) ) {
-                        foreach ( $callstats['exec_time'] as $idx => $t ) {
-                            $formatted[] = sprintf( '%.3f', $t ) . ( ! empty( $callstats['check_msg'][ $idx ] ) ? ' - ' . (string) $callstats['check_msg'][ $idx ] : '' );
+                    foreach ( $callstats['exec_time'] as $idx => $t ) {
+                        $rows_details[] = '[check runtime=' . sprintf( '%.3f', $t ) . '](sec) :: [run desc=' . ( ! empty( $callstats['check_desc'][ $idx ] ) ? (string) $callstats['check_desc'][ $idx ] : '' ) . ']';
+                        if ( static::EXECUTION_SYNC_DETAILS_LOG_PRIORITY === $this->logPriority ) {
+                            $rows_details[] = '[run data=' . ( ! empty( $callstats['check_data'][ $idx ] ) && is_array( $callstats['check_data'][ $idx ] ) ? wp_json_encode( $callstats['check_data'][ $idx ] ) : '' ) . ']';
                         }
-                    }
-                    if ( ! empty( $formatted ) ) {
-                        $log .= ' :: [check runtime=' . sprintf( '%s', implode( ' | ', $formatted ) ) . '](sec)';
-                    }
-                }
-                if ( isset( $callstats['check_msg'] ) ) {
-                    $masages = is_array( $callstats['check_msg'] ) ? array_filter( $callstats['check_msg'] ) : array();
-                    if ( ! empty( $masages ) ) {
-                        $log .= ' :: [check message=' . sprintf( '%s', implode( ' | ', $masages ) ) . ']';
                     }
                 }
             }
@@ -894,10 +891,17 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $log .= ' :: [ver=' . MainWP_System::get_mainwp_version() . ']';
 
-        $lg_type = (int) $exec_time >= 50 ? static::NOTICE : static::LOG;
+        $lg_type = (int) $exec_time >= 50 ? static::NOTICE : static::INFO;
         $lg_type = (int) $exec_time >= 80 ? static::WARNING : $lg_type;
 
-        $this->log_events( 'execution-sync', $log, false, $lg_type );
+        $event_name = static::EXECUTION_SYNC_DETAILS_LOG_PRIORITY === $this->logPriority ? 'execution-sync-details' : 'execution-sync';
+        $this->log_events( $event_name, $log, false, $lg_type );
+
+        if ( ! empty( $rows_details ) ) {
+            foreach ( $rows_details as $log_detail ) {
+                $this->log_events( $event_name, $log_detail, false, static::LOG );
+            }
+        }
     }
 
     /**

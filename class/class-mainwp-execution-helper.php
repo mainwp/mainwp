@@ -156,9 +156,9 @@ class MainWP_Execution_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSame
     public static function http_call_track( $response, $context, $class, $args, $url ) { //phpcs:ignore -- NOSONAR - not use some params.
         $check_context = '';
         if ( 'request' === $context ) {
-            $check_context = 'start_exec';
+            $check_context = 'start_point';
         } elseif ( 'response' === $context ) {
-            $check_context = 'end_exec';
+            $check_context = 'end_point';
         }
         static::run_call_track( $check_context, $url, $args );
     }
@@ -171,11 +171,11 @@ class MainWP_Execution_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @param  mixed  $website Curl website.
      * @param  array  $args Request args.
      * @param  string $request_id Request id.
-     * @param  string $msg Exec msg.
+     * @param  string $desc Exec msg.
      *
      * @return mixed Track id for 'request' or null.
      */
-    public static function execute_call_track( $context, $website = false, $args = array(), $request_id = '', $msg = '' ) {
+    public static function execute_call_track( $context, $website = false, $args = array(), $request_id = '', $desc = '' ) {
         $url = '_na_url';
         if ( is_string( $website ) ) {
             $url = $website;
@@ -184,7 +184,7 @@ class MainWP_Execution_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSame
         } elseif ( is_object( $website ) && property_exists( $website, 'url' ) ) {
             $url = $website->url;
         }
-        return static::run_call_track( $context, $url, $args, $request_id, $msg );
+        return static::run_call_track( $context, $url, $args, $request_id, $desc );
     }
 
     /**
@@ -194,11 +194,11 @@ class MainWP_Execution_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @param string $url      Request URL.
      * @param  array  $args Request args.
      * @param  string $request_id Request ID.
-     * @param  string $msg Exec msg.
+     * @param  string $desc Exec desc.
      *
      * @return mixed void|string
      */
-    private static function run_call_track( $check_context, $url, $args, $request_id = '', $msg = '' ) {
+    private static function run_call_track( $check_context, $url, $args, $request_id = '', $desc = '' ) {
         static $start = array();
 
         if ( ! isset( static::$exec_stats['exec_time'] ) ) {
@@ -209,12 +209,12 @@ class MainWP_Execution_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSame
             static::$exec_stats['check_count'] = 0;
         }
 
-        if ( ! isset( static::$exec_stats['check_url'] ) ) {
-            static::$exec_stats['check_url'] = array();
+        if ( ! isset( static::$exec_stats['check_data'] ) ) {
+            static::$exec_stats['check_data'] = array();
         }
 
         // include microtime to avoid overwrite.
-        if ( 'start_exec' === $check_context ) {
+        if ( 'start_point' === $check_context ) {
             $key = md5( $url . serialize( $args ) . microtime( true ) ); //phpcs:ignore -- NOSONAR - good for key.
             $start[ $key ] = microtime( true );
             // store request_id (required!).
@@ -225,15 +225,23 @@ class MainWP_Execution_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $request_id = $url;
         }
 
-        if ( 'end_exec' === $check_context && ! empty( $request_id ) ) {
+        if ( 'end_point' === $check_context && ! empty( $request_id ) ) {
             $key = (string) $request_id;
 
             if ( isset( $start[ $key ] ) ) {
                 $time = microtime( true ) - $start[ $key ];
                 ++static::$exec_stats['check_count'];
-                static::$exec_stats['exec_time'][] = $time;
-                static::$exec_stats['check_url'][] = $url;
-                static::$exec_stats['check_msg'][] = $msg;
+                static::$exec_stats['exec_time'][]  = $time;
+                static::$exec_stats['check_desc'][] = $desc;
+
+                $data = array(
+                    'url' => $url,
+                );
+                if ( ! empty( $args ) ) {
+                    $data['args'] = $args;
+                }
+
+                static::$exec_stats['check_data'][] = $data;
                 unset( $start[ $key ] );
             }
         }

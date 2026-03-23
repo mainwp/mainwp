@@ -74,7 +74,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
                 $output = array();
 
-                $visit_track_id = MainWP_Execution_Helper::execute_call_track( 'start_exec', $website );
+                $visit_track_id = MainWP_Execution_Helper::execute_call_track( 'start_point', $website );
 
                 $information = MainWP_Connect::fetch_url_not_authed(
                     $url,
@@ -92,7 +92,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
                     $output
                 ); // Fetch the stats with the given admin name.
 
-                MainWP_Execution_Helper::execute_call_track( 'end_exec', $website, $visit_track_id, 'visit site' );
+                MainWP_Execution_Helper::execute_call_track( 'end_point', $website, $visit_track_id, 'visit site' );
 
                 if ( isset( $information['wpversion'] ) ) {
                     $ret['response'] = 'OK';

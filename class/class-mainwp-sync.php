@@ -106,7 +106,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         }
 
         MainWP_Logger::instance()->log_execution_sync( 'init', '', $pWebsite );
-        $stats_track_id = MainWP_Execution_Helper::execute_call_track( 'start_exec', $pWebsite );
+        $stats_track_id = MainWP_Execution_Helper::execute_call_track( 'start_point', $pWebsite );
 
         try {
 
@@ -265,10 +265,10 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
             $return = static::sync_information_array( $pWebsite, $information, '', false, false, $pAllowDisconnect );
             MainWP_Logger::instance()->log_execution_time( 'sync :: [siteid=' . $pWebsite->id . ']' );
-            MainWP_Execution_Helper::execute_call_track( 'end_exec', $pWebsite, array(), $stats_track_id, 'stats site' );
+            MainWP_Execution_Helper::execute_call_track( 'end_point', $pWebsite, array(), $stats_track_id, 'stats site' );
             return $return;
         } catch ( MainWP_Exception $e ) {
-            MainWP_Execution_Helper::execute_call_track( 'end_exec', $pWebsite, array(), $stats_track_id, 'stats site' );
+            MainWP_Execution_Helper::execute_call_track( 'end_point', $pWebsite, array(), $stats_track_id, 'stats site' );
             $sync_errors = '';
 
             if ( $e->getMessage() === 'HTTPERROR' ) {

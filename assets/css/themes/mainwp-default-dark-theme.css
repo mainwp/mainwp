@@ -848,6 +848,10 @@
   background-color: var(--mainwp-element-background-secondary);
 }
 
+.mainwp-ui.mainwp-custom-theme .ui.cards .extension.card .extra.content {
+  border-radius: 0 !important;
+}
+
 .mainwp-ui.mainwp-custom-theme .ui.cards .extension.card.green {
   box-shadow: 0 2px 0 0 var(--mainwp-green);
 }
@@ -1677,7 +1681,6 @@ body.mainwp-ui.mainwp-custom-theme,
 
 .mainwp-ui.mainwp-custom-theme .ui.accordion {
   background: var(--mainwp-base-background) !important;
-  border-radius: var(--area-radius) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.styled.accordion {
@@ -1689,18 +1692,6 @@ body.mainwp-ui.mainwp-custom-theme,
   color: var(--mainwp-text);
   border-color: var(--mainwp-border) !important;
   background: var(--mainwp-element-background) !important;
-  border-radius: var(--area-radius) !important;
-}
-
-.mainwp-ui.mainwp-custom-theme #mainwp-main-navigation-container .ui.accordion .title,
-.mainwp-ui.mainwp-custom-theme #mainwp-main-navigation-container .ui.accordion .content {
-  border-radius: 0 !important;
-}
-
-.mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-sidebar-accordion,
-.mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-sidebar-accordion .title,
-.mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-sidebar-accordion .content {
-  border-radius: 0px !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-plugin-accordion,
@@ -1709,7 +1700,6 @@ body.mainwp-ui.mainwp-custom-theme,
 .mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-theme-accordion,
 .mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-theme-accordion .title,
 .mainwp-ui.mainwp-custom-theme .ui.accordion.mainwp-manage-theme-accordion .content {
-  border-radius: 0px !important;
   background: var(--mainwp-element-background) !important;
 }
 

@@ -148,6 +148,14 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
+= 6.0.6 - 3-24-2026 =
+
+* Fixed: Corrected a typo in the "Add Site" step of the Quick Start Wizard.
+* Fixed: Prevented a redundant confirmation modal from appearing when running updates immediately after removing a child site from the "Manage Sites" screen.
+* Updated: Improved informational messaging on the Add-ons page for better clarity.
+* Updated: Moved the search field in the "Install Add-ons" modal so it remains available across all tabs.
+* Updated: Refined accordion element border radius styling for better visual consistency.
+
 = 6.0.5 - 3-20-2026 =
 
 * Security: Updated the `phpseclib` library to address a recently [disclosed vulnerability](https://nvd.nist.gov/vuln/detail/CVE-2026-32935). The issue does not affect MainWP in normal usage.

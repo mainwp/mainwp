@@ -114,6 +114,26 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
+     * Check if any installed extension (enabled or disabled) is a Pro type.
+     *
+     * @param array $extensions          Enabled extensions.
+     * @param array $extensions_disabled Disabled extensions.
+     * @param array $all_available       All available extensions data keyed by slug.
+     *
+     * @return bool True if at least one installed extension is Pro, false otherwise.
+     */
+    private static function has_pro_extension_installed( $extensions, $extensions_disabled, $all_available ) {
+        $all_installed = array_merge( (array) $extensions, (array) $extensions_disabled );
+        foreach ( $all_installed as $extension ) {
+            $slug = dirname( $extension['slug'] );
+            if ( isset( $all_available[ $slug ]['type'] ) && 'pro' === $all_available[ $slug ]['type'] ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Render the extensions page.
      *
      * Displays the main extensions management interface including enabled/disabled add-ons,
@@ -188,7 +208,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             <div class="content">
                                 <div class="ui massive header"><?php esc_html_e( 'Manage Your Installed Add-ons', 'mainwp' ); ?></div>
                                 <p><?php esc_html_e( 'Activate, deactivate, or explore new tools for your MainWP Dashboard.', 'mainwp' ); ?></p>
-                                <?php if ( ! MainWP_Hooks::is_pro_member() ) : ?>
+                                <?php if ( ! MainWP_Hooks::is_pro_member() && ! static::has_pro_extension_installed( $extensions, $extensions_disabled, $all_available_extensions ) ) : ?>
                                     <div><?php esc_html_e( 'Missing something?', 'mainwp' ); ?> <a href="#" class="ui mini green button" id="mainwp-extensions-message-bulkinstall"><?php esc_html_e( 'Install Free Add-ons', 'mainwp' ); ?></a> or <a href="https://mainwp.com/signup/" class="ui mini green basic button" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Upgrade to Pro', 'mainwp' ); ?></a></div>
                                 <?php endif; ?>
                             </div>

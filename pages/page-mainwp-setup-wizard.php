@@ -768,7 +768,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                         </div>
                                     </div>
                                     <div class="field" id="mainwp-administrator-password-field">
-                                        <label for="mainwp_managesites_add_admin_pwd"><?php esc_html_e( 'What is your administrator password on that site?', 'mainwp' ); ?> <span class="ui red small text"><?php esc_html_e( '(Reqruired if enabled)', 'mainwp' ); ?></span></label>
+                                        <label for="mainwp_managesites_add_admin_pwd"><?php esc_html_e( 'What is your administrator password on that site?', 'mainwp' ); ?> <span class="ui red small text"><?php esc_html_e( '(Required if enabled)', 'mainwp' ); ?></span></label>
                                         <input type="password" id="mainwp_managesites_add_admin_pwd" name="mainwp_managesites_add_admin_pwd" value="" />
                                         <div class="ui up pointing basic grey label" style="line-height:1.5em"><?php esc_html_e( 'Your password is never stored by your Dashboard and never sent to MainWP.com. Once this initial connection is complete, your MainWP Dashboard generates a secure Public and Private key pair (2048 bits) using OpenSSL, allowing future connections without needing your password again. For added security, you can even change this admin password once connected, just be sure not to delete the admin account, as this would disrupt the connection.', 'mainwp' ); ?></div>
                                     </div>

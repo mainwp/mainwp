@@ -1758,3 +1758,7 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
   border-bottom: 1px solid #ddd;
   display: flex;
 }
+
+#change-history-according-wrapper .ui.list {
+  margin-top: 0 !important;
+}

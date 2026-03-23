@@ -161,6 +161,9 @@ globalThis.mainwp_confirm = function (msg, confirmed_callback, cancelled_callbac
 
     jQuery('#mainwp-modal-confirm .content-massage').html(msg);
 
+    jQuery('#mainwp-confirm-form').hide();
+    jQuery('#mainwp-confirm-input').val('');
+
     if (extra !== undefined && extra !== false) {
         jQuery('#mainwp-confirm-form').show();
         jQuery('#mainwp-confirm-form').find('label').html('Type ' + extra + ' to confirm');
@@ -175,7 +178,7 @@ globalThis.mainwp_confirm = function (msg, confirmed_callback, cancelled_callbac
                         confirmed_callback();
                     } else {
                         jQuery('#mainwp-confirm-input').val('').trigger('focus').transition('shake');
-                        return;
+                        return false;
                     }
                 }
             } else if (confirmed_callback && typeof confirmed_callback == 'function') {

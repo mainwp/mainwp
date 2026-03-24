@@ -615,29 +615,15 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
         if ( empty( $installing_exts ) && count( $purchased_data ) === count( $all_free_pro_exts ) ) {
             $html .= '<div class="ui message">' . esc_html__( 'All purchased add-ons already installed.', 'mainwp' ) . '</div>';
         } else {
-            if ( isset( $not_purchased_exts ) && ! empty( $not_purchased_exts ) ) {
-                $html .= '<div class="ui icon message">';
-                $html .= '<em data-emoji=":bulb:" class="medium"></em>';
-                $html .= '<div class="content">';
-                $html .= '<div class="header">' . esc_html__( 'Install the Add-ons you need, you can always add more later.', 'mainwp' ) . '</div>';
-                $html .= '<p>';
-                $html .= esc_html__( 'You already have access to all free Add-ons. For best performance, install only what you need now. ', 'mainwp' ) . '<br/>';
-                $html .= esc_html__( 'When you\'re done, activate your license to enable automatic updates.', 'mainwp' );
-                $html .= '</p>';
-                $html .= '</div>';
-                $html .= '</div>';
-            } else {
-                $html .= '<div class="ui icon message">';
-                $html .= '<em data-emoji=":bulb:" class="medium"></em>';
-                $html .= '<div class="content">';
-                $html .= '<div class="header">' . esc_html__( 'Install the Add-ons you need, you can always add more later.', 'mainwp' ) . '</div>';
-                $html .= '<p>';
-                $html .= esc_html__( 'You already have access to all free and pro Add-ons. For best performance, install only what you need now. ', 'mainwp' ) . '<br/>';
-                $html .= esc_html__( 'When you\'re done, activate your license to enable automatic updates.', 'mainwp' );
-                $html .= '</p>';
-                $html .= '</div>';
-                $html .= '</div>';
-            }
+            $html .= '<div class="ui icon message">';
+            $html .= '<em data-emoji=":bulb:" class="medium"></em>';
+            $html .= '<div class="content">';
+            $html .= '<div class="header">' . esc_html__( 'Install Only What You Need', 'mainwp' ) . '</div>';
+            $html .= '<p>';
+            $html .= esc_html__( 'For a cleaner dashboard and better focus, start with only the add-ons you need right now. You can always install more later.', 'mainwp' );
+            $html .= '</p>';
+            $html .= '</div>';
+            $html .= '</div>';
 
             $html .= '<div class="ui hidden divider"></div>';
 
@@ -654,20 +640,32 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                 $html .= '<a class="item" data-tab="other">' . esc_html__( 'Other', 'mainwp' ) . '</a>';
             }
 
-            $html .= '<a class="item" data-tab="search"><i class="search icon"></i></a>';
-
             $html .= '</div>';
 
             $html .= '<div class="ui grid">';
-            $html .= '<div class="sixteen wide left aligned middle aligned column">';
+            $html .= '<div class="eight wide left aligned middle aligned column">';
             $html .= esc_html__( 'Show: ', 'mainwp' );
             $html .= '<div class="ui checkbox"><input type="checkbox" checked="" id="mainwp-standalone-extensions-filer" name="mainwp-standalone-extensions-filer"><label><strong>' . esc_html__( 'Extensions', 'mainwp' ) . '</label></div>';
             $html .= '&nbsp;&nbsp; <div class="ui checkbox"><input type="checkbox" checked="" id="mainwp-api-extensions-filer" name="mainwp-api-extensions-filer"><label>' . esc_html__( 'Integrations', 'mainwp' ) . '</label></div>';
             $html .= '&nbsp;&nbsp;&nbsp;&nbsp;<span class="ui small grey text" data-tooltip="' . esc_attr__( 'Extensions add Dashboard features without third-party dependencies. Integrations connect your Dashboard to third-party tools you use.', 'mainwp' ) . '" data-position="right center" data-inverted=""><i class="question circle icon"></i> ' . esc_html__( 'What\'s the difference?', 'mainwp' ) . '</span>';
             $html .= '</div>';
+            $html .= '<div class="eight wide right aligned middle aligned column">';
+            $html .= '<div id="mainwp-search-extensions-install" class="ui fluid search">
+                        <div class="ui icon mini input">
+                            <input class="prompt" id="mainwp-search-extensions-install-input" type="text" placeholder="' . esc_attr__( 'Find add-on...', 'mainwp' ) . '">
+                            <i class="search icon"></i>
+                        </div>
+                    </div>';
+            $html .= '</div>';
             $html .= '</div>';
 
             $html .= '<div class="ui divider"></div>';
+
+            $html .= '<div id="mainwp-extensions-search-results" style="display:none;">';
+            $html .= '<div class="ui middle aligned divided list">';
+            $html .= $grouped_exts['all'];
+            $html .= '</div>';
+            $html .= '</div>';
 
             foreach ( $all_groups as $gr_id => $gr_name ) {
                 if ( isset( $grouped_exts[ $gr_id ] ) && 'all' !== $gr_id ) {
@@ -687,19 +685,6 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                 $html .= '</div>';
             }
 
-            $html .= '<div class="ui tab" data-tab="search">';
-            $html .= '<h3>Search Add-ons</h3>';
-            $html .= '<div id="mainwp-search-extensions-install" class="ui fluid search">
-                        <div class="ui icon fluid input">
-                            <input class="prompt" id="mainwp-search-extensions-install-input" type="text" placeholder="Find add-on...">
-                            <i class="search icon"></i>
-                        </div>
-                    </div>';
-            $html .= '<div class="ui selection list" id="mainwp-extensions-to-install-list">';
-            $html .= $grouped_exts['all'];
-            $html .= '</div>';
-            $html .= '</div>';
-
         }
 
         $html .= '<div class="ui hidden divider"></div>';
@@ -709,7 +694,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
         $html .= '<div class="item"><span class="ui mini green label">FREE</span> ' . esc_html__( 'Free add-on by MainWP', 'mainwp' ) . '</div>';
         $html .= '<div class="item"><span class="ui mini blue label">PRO</span> ' . esc_html__( 'Premium add-on by MainWP', 'mainwp' ) . '</div>';
         $html .= '<div class="item"><span class="ui mini grey label">.ORG</span> ' . esc_html__( 'Free add-on by a third party (WP.org)', 'mainwp' ) . '</div>';
-        $html .= '<div class="item"><i class="info circle icon"></i> ' . esc_html__( 'Requires the matching plugin on MainWP Dashboard too.', 'mainwp' ) . '</div>';
+        $html .= '<div class="item"><i class="info circle icon"></i> ' . esc_html__( 'Requires the matching plugin on too.', 'mainwp' ) . '</div>';
         $html .= '<div class="item"><i class="fingerprint icon"></i> ' . esc_html__( 'Add-on privacy info.', 'mainwp' ) . '</div>';
         $html .= '</div>';
         $html .= '</div>';
@@ -717,17 +702,61 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
         $html .= '<script>jQuery( "#mainwp-install-extensions-menu .item" ).tab();</script>';
         $html .= '<script type="text/javascript">
         jQuery( document ).ready( function () {
-            jQuery( "#mainwp-search-extensions-install-input" ).on( "keyup", function () {
+            let $menu          = jQuery( "#mainwp-install-extensions-menu" );
+            let $modal         = jQuery( "#mainwp-get-purchased-extensions-modal" );
+            let $searchInput   = jQuery( "#mainwp-search-extensions-install-input" );
+            let $searchResults = jQuery( "#mainwp-extensions-search-results" );
+            let $tabsContainer = $modal.find( ".ui.tab[data-tab]" );
+
+            $searchResults.find( "input[type=\"checkbox\"]" ).removeAttr( "status" );
+
+            function syncToTabs( productId, checked ) {
+                $tabsContainer.find( ".extension-to-install[product-id=\"" + productId + "\"] input[type=\"checkbox\"]" ).prop( "checked", checked );
+            }
+
+            function syncToSearch( productId, checked ) {
+                $searchResults.find( ".extension-to-install[product-id=\"" + productId + "\"] input[type=\"checkbox\"]" ).prop( "checked", checked );
+            }
+
+            $searchResults.on( "change", "input[type=\"checkbox\"]", function () {
+                let productId = jQuery( this ).closest( ".extension-to-install" ).attr( "product-id" );
+                syncToTabs( productId, jQuery( this ).prop( "checked" ) );
+            } );
+
+            $tabsContainer.on( "change", "input[type=\"checkbox\"]", function () {
+                let productId = jQuery( this ).closest( ".extension-to-install" ).attr( "product-id" );
+                syncToSearch( productId, jQuery( this ).prop( "checked" ) );
+            } );
+
+            function exitSearchMode() {
+                $searchResults.hide();
+                $searchResults.find( ".item.extension" ).show();
+                $tabsContainer.css( "display", "" );
+                $menu.find( ".item" ).first().trigger( "click" );
+            }
+
+            $searchInput.on( "keyup", function () {
                 let searchQuery = jQuery( this ).val().toLowerCase();
-                let extensions = jQuery( "#mainwp-extensions-to-install-list" ).find( ".item.extension" );
-                for ( let i = 0; i < extensions.length; i++ ) {
-                    let currentExtension = jQuery( extensions[i] );
-                    let extensionTitle = jQuery( currentExtension ).attr( "software-title" ).toLowerCase();
-                    if ( extensionTitle.indexOf( searchQuery ) > -1 ) {
-                        currentExtension.show();
-                    } else {
-                        currentExtension.hide();
-                    }
+
+                if ( searchQuery.length > 0 ) {
+                    $menu.find( ".item.active" ).removeClass( "active" );
+                    $tabsContainer.css( "display", "none" );
+                    $searchResults.show();
+                    $searchResults.find( ".item.extension" ).each( function () {
+                        let extensionTitle = jQuery( this ).attr( "software-title" ).toLowerCase();
+                        jQuery( this ).toggle( extensionTitle.indexOf( searchQuery ) > -1 );
+                    } );
+                } else {
+                    exitSearchMode();
+                }
+            } );
+
+            $menu.on( "click", ".item", function () {
+                if ( $searchResults.is( ":visible" ) ) {
+                    $searchInput.val( "" );
+                    $searchResults.hide();
+                    $searchResults.find( ".item.extension" ).show();
+                    $tabsContainer.css( "display", "" );
                 }
             } );
             jQuery( "#mainwp-standalone-extensions-filer" ).on( "change", function () {

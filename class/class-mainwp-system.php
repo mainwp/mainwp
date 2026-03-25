@@ -1500,4 +1500,55 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public function get_plugin_slug() {
         return $this->plugin_slug;
     }
+
+    /**
+     * Method get_selected_sites_with_allowed_sites.
+     *
+     * @param  array $selected_ids Selected sites IDs.
+     * @param  array $current_sites Current sites IDs.
+     * @return array Not selected but in not allowed sites in current sites ids, and selected sites ids.
+     */
+    public static function get_selected_sites_with_allowed_sites( $selected_ids, $current_sites_ids = array() ) {
+
+        $allowed_sites = apply_filters( 'mainwp_currentuserallowedaccesssites', 'all' );
+        if ( 'all' === $allowed_sites ) {
+            return $selected_ids;
+        }
+
+        if ( ! is_array( $selected_ids ) ) {
+            $selected_ids = array();
+        }
+
+        if ( ! is_array( $current_sites_ids ) ) {
+            $current_sites_ids = array();
+        }
+
+        $allowed_sites = MainWP_DB::instance()->get_websites_for_current_user();
+        if ( empty( $allowed_sites ) ) {
+            return array();
+        }
+
+        $allowed_ids = array_values(
+            array_map(
+                function ( $item ) {
+                    return $item->id;
+                },
+                $allowed_sites
+            )
+        );
+
+        $client_site_ids = array();
+        foreach ( $selected_ids as $id ) {
+            if ( in_array( $id, $allowed_ids ) ) {
+                $client_site_ids[] = $id;
+            }
+        }
+
+        foreach ( $current_sites_ids as $id ) {
+            if ( ! in_array( $id, $selected_ids ) && ! in_array( $id, $allowed_ids ) ) { // If it’s not in the allowed site IDs, the user is not permitted to change it.
+                $client_site_ids[] = $id; // keep this site ids.
+            }
+        }
+        return $client_site_ids;
+    }
 }

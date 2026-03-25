@@ -848,7 +848,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             return $arr_options; // all options.
         }
 
-        $table_name = esc_sql( $this->table_name( 'wp_options' ) );
+        $table_name   = esc_sql( $this->table_name( 'wp_options' ) );
         $placeholders = implode( ',', array_fill( 0, count( $get_options ), '%s' ) );
         $options_db   = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT name, value FROM {$table_name} WHERE wpid = %d AND name IN ({$placeholders})", array_merge( array( $site_id ), $get_options ) ) );
 
@@ -1589,7 +1589,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $clients      = isset( $params['client'] ) ? $params['client'] : '';
         $fields       = isset( $params['fields'] ) && is_array( $params['fields'] ) ? $params['fields'] : array();
 
-        $for_manager = false;
+        $for_manager = isset( $params['no_perm_check'] ) && true === $params['no_perm_check'];
 
         $urlsWhere = '';
 
@@ -1770,7 +1770,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *
      * @return int Count of sites matching the filters.
      */
-    public function get_websites_count_for_current_user( $params = array() ) { // NOSONAR - complex.
+    public function get_websites_count_for_current_user( $params = array() ) { //phpcs:ignore -- NOSONAR - complex.
+
         if ( ! is_array( $params ) ) {
             $params = array();
         }
@@ -2083,7 +2084,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         if ( ! empty( $having_group ) ) {
             $group_by .= ' HAVING ' . $having_group;
         }
-        $group_by     = ' GROUP BY wp.id, wp_sync.sync_id';
+        $group_by = ' GROUP BY wp.id, wp_sync.sync_id';
         if ( ! empty( $having_group ) ) {
             $group_by .= ' HAVING ' . $having_group;
         }
@@ -2529,14 +2530,14 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             }
         );
 
-        $where       = $this->get_sql_where_allow_access_sites();
-        $table_name  = esc_sql( $this->table_name( 'wp' ) );
+        $where        = $this->get_sql_where_allow_access_sites();
+        $table_name   = esc_sql( $this->table_name( 'wp' ) );
         $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-        $sql         = "SELECT * FROM {$table_name} WHERE id IN ({$placeholders})";
-        $params      = $ids;
+        $sql          = "SELECT * FROM {$table_name} WHERE id IN ({$placeholders})";
+        $params       = $ids;
 
         if ( null !== $userId ) {
-            $sql    .= ' AND userid = %d';
+            $sql     .= ' AND userid = %d';
             $params[] = intval( $userId );
         }
 
@@ -3087,19 +3088,19 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $this->wpdb->update(
                     $this->table_name( 'wp' ),
                     array(
-                        'url'                    => $url,
-                        'name'                   => wp_strip_all_tags( $name ),
-                        'adminname'              => $siteadmin,
-                        'pluginDir'              => $pluginDir,
-                        'verify_certificate'     => intval( $verifyCertificate ),
-                        'ssl_version'            => intval( $sslVersion ),
-                        'wpe'                    => intval( $wpe ),
-                        'uniqueId'               => $uniqueId,
-                        'http_user'              => $http_user,
-                        'http_pass'              => $http_pass,
-                        'disable_health_check'   => $disableHealthChecking,
-                        'health_threshold'       => $healthThreshold,
-                        'primary_backup_method'  => $backup_method,
+                        'url'                   => $url,
+                        'name'                  => wp_strip_all_tags( $name ),
+                        'adminname'             => $siteadmin,
+                        'pluginDir'             => $pluginDir,
+                        'verify_certificate'    => intval( $verifyCertificate ),
+                        'ssl_version'           => intval( $sslVersion ),
+                        'wpe'                   => intval( $wpe ),
+                        'uniqueId'              => $uniqueId,
+                        'http_user'             => $http_user,
+                        'http_pass'             => $http_pass,
+                        'disable_health_check'  => $disableHealthChecking,
+                        'health_threshold'      => $healthThreshold,
+                        'primary_backup_method' => $backup_method,
                     ),
                     array( 'id' => $websiteid )
                 );
@@ -3114,8 +3115,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                         $this->table_name( 'wp' ),
                         array(
                             'maximumFileDescriptorsOverride' => (int) $maximumFileDescriptorsOverride,
-                            'maximumFileDescriptorsAuto'     => (int) $maximumFileDescriptorsAuto,
-                            'maximumFileDescriptors'         => (int) $maximumFileDescriptors,
+                            'maximumFileDescriptorsAuto' => (int) $maximumFileDescriptorsAuto,
+                            'maximumFileDescriptors'     => (int) $maximumFileDescriptors,
                         ),
                         array( 'id' => $websiteid )
                     );
@@ -3260,10 +3261,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $where_site_threshold  = ' ( wp.health_threshold = 80 AND wp_sync.health_value < 80 ) '; // should-be-improved site health.
         $where_site_threshold .= ' OR ( wp.health_threshold = 100 AND wp_sync.health_value >= 80 ) '; // good site health.
 
-
-        $wp_table       = esc_sql( $this->table_name( 'wp' ) );
-        $wp_sync_table  = esc_sql( $this->table_name( 'wp_sync' ) );
-        $option_view    = $this->get_wp_options_view( $extra_view );
+        $wp_table      = esc_sql( $this->table_name( 'wp' ) );
+        $wp_sync_table = esc_sql( $this->table_name( 'wp_sync' ) );
+        $option_view   = $this->get_wp_options_view( $extra_view );
 
         return $this->wpdb->get_results( // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $option_view is a validated SQL subquery from get_wp_options_view() with escaped fields
             "SELECT wp.*,wp_sync.*,wp_optionview.* FROM {$wp_table} wp

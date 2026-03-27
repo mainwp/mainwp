@@ -43,6 +43,30 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      */
     public static $disallowed_clone_sites = null;
 
+    /**
+     * Get the current stack action if the helper is available.
+     *
+     * Some execution paths can reach sync handlers before the stack helper
+     * has been loaded, so telemetry must degrade safely instead of fatalling.
+     *
+     * @return string|null
+     */
+    protected static function get_current_stack_action() {
+        return class_exists( __NAMESPACE__ . '\MainWP_Stack_Helper' ) ? MainWP_Stack_Helper::stack_current() : null;
+    }
+
+    /**
+     * Push a stack action if the helper is available.
+     *
+     * @param string $action Stack action.
+     * @return void
+     */
+    protected static function push_stack_action( $action ) {
+        if ( class_exists( __NAMESPACE__ . '\MainWP_Stack_Helper' ) ) {
+            MainWP_Stack_Helper::stack_push( $action );
+        }
+    }
+
 
     /**
      * Method sync_website()
@@ -247,7 +271,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $synclist             = MainWP_Settings::get_instance()->get_data_list_to_sync();
             $postdata['syncdata'] = wp_json_encode( $synclist );
 
-            MainWP_Stack_Helper::stack_push( 'sync_stats' );
+            static::push_stack_action( 'sync_stats' );
 
             $information = MainWP_Connect::fetch_url_authed(
                 $pWebsite,
@@ -794,7 +818,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $trigger = 'cron';
         }
 
-        $curr_stack       = MainWP_Stack_Helper::stack_current();
+        $curr_stack       = static::get_current_stack_action();
         $prev_conn_status = in_array( $curr_stack, array( 'sync_before_reconnect', 'sync_reconnect' ) ) ? 'disconnected' : 'connected';
         $new_conn_status  = $sync_done ? 'disconnected' : 'connected';
 

@@ -292,19 +292,8 @@ class Log_Settings {
                             esc_html_e( 'Enable Network Activity logging', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column ui toggle checkbox">
+                            <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="auto-archive;child-logs-ttl">
                                 <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_module_log_enabled" id="mainwp_module_log_enabled" <?php echo $enabled ? 'checked="true"' : ''; ?> /><label></label>
-                            </div>
-                        </div>
-                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-insights" default-indi-value="7">
-                            <label class="six wide column middle aligned">
-                            <?php
-                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_module_log_child_activities_ttl', (int) get_option( 'mainwp_module_log_child_activities_ttl', 7 ) );
-                            esc_html_e( 'Retention Period for Network Activity Logs on Child Sites', 'mainwp' );
-                            ?>
-                            </label>
-                            <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Set retention period (days) for network activity logs on child sites', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="number" class="settings-field-value-change-handler small-text" name="mainwp_module_log_child_activities_ttl" id="mainwp_module_log_child_activities_ttl" placeholder="" min="1" max="9999" step="1" value="<?php echo intval( $child_logs_ttl ); ?>">
                             </div>
                         </div>
                         <div class="ui grid field">
@@ -333,6 +322,17 @@ class Log_Settings {
                                         <option value="0" <?php echo 0 === (int) $records_ttl ? 'selected' : ''; ?>><?php esc_html_e( 'Forever', 'mainwp' ); ?></option>
                                     </select>
                                 </div>
+                        </div>
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-insights" <?php echo ( $enabled ) ? '' : 'style="display:none"'; ?> hide-element="child-logs-ttl" default-indi-value="7">
+                            <label class="six wide column middle aligned">
+                            <?php
+                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_module_log_child_activities_ttl', (int) get_option( 'mainwp_module_log_child_activities_ttl', 7 ) );
+                            esc_html_e( 'Retention Period for Network Activity Logs on Child Sites', 'mainwp' );
+                            ?>
+                            </label>
+                            <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Set retention period (days) for network activity logs on child sites', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <input type="number" class="settings-field-value-change-handler small-text" name="mainwp_module_log_child_activities_ttl" id="mainwp_module_log_child_activities_ttl" placeholder="" min="1" max="9999" step="1" value="<?php echo intval( $child_logs_ttl ); ?>">
+                            </div>
                         </div>
 
                         <?php

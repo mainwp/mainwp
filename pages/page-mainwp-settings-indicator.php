@@ -212,6 +212,7 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'mainwp_edit_monitor_monitoring_emails'      => '',
             'mainwp_check_http_response_method'          => 'head',
             'mainwp_warm_cache_pages_ttl'                => 10,
+            'mainwp_module_log_child_activities_ttl'     => 7,
         );
 
         if ( 'all' === $field ) {

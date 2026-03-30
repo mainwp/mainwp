@@ -1134,6 +1134,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     $overlay.on('click', function () {
                         $body.removeClass('mainwp-overlay-open');
                         $flyout.removeClass('overlay visible');
+                        $overlay.removeClass('pusher dimmed');
 
                         $('#mainwp-mobile-menu-trigger i.icon')
                             .removeClass('times')

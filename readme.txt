@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.9.4
 Requires PHP: 7.4
-Stable tag: 6.0.6
+Stable tag: 6.0.7
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -147,6 +147,12 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.0.7 - 3-31-2026 =
+
+* Fixed: Resolved an issue causing unresponsive text editor elements in the Pro Reports add-on.
+* Fixed: Corrected an issue where an unwanted text string was displayed on the Media Library page.
+* Updated: Reorganized system initialization to improve menu configuration timing and better align with WordPress action hooks.
 
 = 6.0.6 - 3-24-2026 =
 

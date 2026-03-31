@@ -1094,6 +1094,67 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 </script>
                 <?php
                 endif;
+
+            $fix_dom_issue_for_wp_editor = isset( $_GET['page'] ) && 'Extensions-Mainwp-Pro-Reports-Extension' === $_GET['page'] && isset( $_GET['tab'] ) && 'report' === $_GET['tab'] ? true : false; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended --NOSONAR - ok.
+
+            if ( $fix_dom_issue_for_wp_editor ) {
+                ?>
+            <style type="text/css">
+                .mainwp-overlay-open #mainwp-main-mobile-navigation-container{
+                    top: 58px !important;
+                }
+            </style>
+            <script type="text/javascript">
+                jQuery(function ($) {
+                    const $body = $('body');
+                    const $flyout = $('#mainwp-main-mobile-navigation-container');
+                    const $overlay = $('#mainwp-overlay');
+
+                    // Ensure elements are in body (safe move).
+                    if ($flyout.parent()[0] !== document.body) {
+                        $flyout.appendTo('body');
+                        $body.addClass('pushable');
+                    }
+                    if ($overlay.parent()[0] !== document.body) {
+                        $overlay.appendTo('body');
+                        $body.addClass('pushable');
+                    }
+
+                    // Toggle
+                    $('#mainwp-mobile-menu-trigger').on('click', function () {
+                        $body.toggleClass('mainwp-overlay-open');
+
+                        $(this).find('i.icon')
+                            .toggleClass('bars times');
+                        $flyout.toggleClass('overlay visible');
+                        $overlay.toggleClass('pusher dimmed');
+                    });
+
+                    // Close on overlay click
+                    $overlay.on('click', function () {
+                        $body.removeClass('mainwp-overlay-open');
+                        $flyout.removeClass('overlay visible');
+                        $overlay.removeClass('pusher dimmed');
+
+                        $('#mainwp-mobile-menu-trigger i.icon')
+                            .removeClass('times')
+                            .addClass('bars');
+                    });
+
+                    $(document).on('keydown', function (e) {
+                        if (e.key === 'Escape') {
+                            $('body').removeClass('mainwp-overlay-open');
+                            $flyout.removeClass('overlay visible');
+                            $overlay.removeClass('pusher dimmed');
+                            $('#mainwp-mobile-menu-trigger i.icon')
+                                .removeClass('times')
+                                .addClass('bars');
+                        }
+                    });
+                });
+            </script>
+                <?php
+            }
             ?>
 
             <script type="text/javascript">
@@ -1137,33 +1198,36 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 } );
                 jQuery( '#mainwp-sites-sidebar-menu' ).accordion();
 
-                if( jQuery( '#mainwp-main-mobile-navigation-container' ).length ){
-                    jQuery('<div class="pusher"></div>')
-                    .append($('#wpwrap'))
-                    .prependTo('body');
-                    jQuery( '#mainwp-main-mobile-navigation-container' ).prependTo( 'body' );
-                    setTimeout(function () {
-                        //  Initialize flyout
-                        $('#mainwp-main-mobile-navigation-container.ui.flyout')
-                        .flyout({
-                            dimPage: true,
-                            onShow: function() {
-                                $(this).css({
-                                    'top': '58px',
-                                });
-                                $('#mainwp-mobile-menu-trigger').find('i.icon').removeClass('bars').addClass('times');
-                            },
-                            onHide: function() {
-                                $('#mainwp-mobile-menu-trigger').find('i.icon').removeClass('times').addClass('bars');
-                            }
-                        });
-                    }, 2000);
+                <?php if ( ! $fix_dom_issue_for_wp_editor ) { ?>
 
-                    // Trigger button
-                    $('#mainwp-mobile-menu-trigger').on('click', function() {
-                        $('#mainwp-main-mobile-navigation-container.ui.flyout').flyout('toggle');
-                    });
-                }
+                    if( jQuery( '#mainwp-main-mobile-navigation-container' ).length ){
+                        jQuery('<div class="pusher"></div>')
+                        .append($('#wpwrap'))
+                        .prependTo('body');
+                        jQuery( '#mainwp-main-mobile-navigation-container' ).prependTo( 'body' );
+                        setTimeout(function () {
+                            //  Initialize flyout
+                            $('#mainwp-main-mobile-navigation-container.ui.flyout')
+                            .flyout({
+                                dimPage: true,
+                                onShow: function() {
+                                    $(this).css({
+                                        'top': '58px',
+                                    });
+                                    $('#mainwp-mobile-menu-trigger').find('i.icon').removeClass('bars').addClass('times');
+                                },
+                                onHide: function() {
+                                    $('#mainwp-mobile-menu-trigger').find('i.icon').removeClass('times').addClass('bars');
+                                }
+                            });
+                        }, 2000);
+
+                        // Trigger button
+                        $('#mainwp-mobile-menu-trigger').on('click', function() {
+                            $('#mainwp-main-mobile-navigation-container.ui.flyout').flyout('toggle');
+                        });
+                    }
+                <?php } ?>
             } );
             </script>
 

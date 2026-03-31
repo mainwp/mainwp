@@ -1460,7 +1460,7 @@ div.http-response-ok span.http-notok-status {
     padding-left: 0;
 }
 
-#wpcontent h2 {
+.mainwp-ui-page #wpcontent h2 {
     display: block;
 }
 

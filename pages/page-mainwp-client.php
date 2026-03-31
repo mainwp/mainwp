@@ -579,7 +579,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         <div class="ui massive header"><?php esc_html_e( 'Welcome to MainWP Clients', 'mainwp' ); ?></div>
                         <p><?php esc_html_e( 'Organize and manage your customers with client profiles, contact information, and site associations.', 'mainwp' ); ?>
                         </p>
-                        <p><?php
+                        <p>
+                        <?php
                         // translators: 1: Opening anchor tag for Add Client. 2: Closing anchor tag. 3: Opening anchor tag for Import Clients. 4: Closing anchor tag.
                         printf( esc_html__( 'Start by %1$sadding your first client%2$s or %3$simporting existing clients%4$s from a CSV file.', 'mainwp' ), '<a href="admin.php?page=ClientAddNew">', '</a>', '<a href="admin.php?page=ClientImport">', '</a>' );
                         ?>
@@ -1206,8 +1207,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public static function render_client_fields() { // phpcs:ignore -- NOSONAR - Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-        $fields         = MainWP_DB_Client::instance()->get_client_fields();
-        $has_no_fields  = empty( $fields );
+        $fields        = MainWP_DB_Client::instance()->get_client_fields();
+        $has_no_fields = empty( $fields );
 
         static::render_header( 'AddField' );
 
@@ -1415,6 +1416,22 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 $client_to_add['created'] = strtotime( $client_to_add['created'] );
             }
             $add_new = false;
+
+            $current_sites_ids = array();
+            $current_sites     = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id, array( 'no_perm_check' => true ) );
+
+            if ( ! empty( $current_sites ) ) {
+                $current_sites_ids = array_values(
+                    array_map(
+                        function ( $item ) {
+                            return $item->id;
+                        },
+                        $current_sites
+                    )
+                );
+            }
+
+            $selected_sites = MainWP_System::get_selected_sites_with_allowed_sites( $selected_sites, $current_sites_ids );
         } else {
             $client_to_add['created'] = time();
         }
@@ -1746,10 +1763,10 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
 
         $field_groups = array(
-            'client_info'      => array( 'client.name', 'client.email', 'client.suspended' ),
-            'contact_details'  => array( 'client.phone', 'client.contact.address.1', 'client.contact.address.2', 'client.city', 'client.state', 'client.zip', 'client.country' ),
-            'social_links'     => array( 'client.facebook', 'client.twitter', 'client.instagram', 'client.linkedin' ),
-            'notes_meta'       => array( 'client.note', 'client.created' ),
+            'client_info'     => array( 'client.name', 'client.email', 'client.suspended' ),
+            'contact_details' => array( 'client.phone', 'client.contact.address.1', 'client.contact.address.2', 'client.city', 'client.state', 'client.zip', 'client.country' ),
+            'social_links'    => array( 'client.facebook', 'client.twitter', 'client.instagram', 'client.linkedin' ),
+            'notes_meta'      => array( 'client.note', 'client.created' ),
         );
 
         ?>

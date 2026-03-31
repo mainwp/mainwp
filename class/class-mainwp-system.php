@@ -315,6 +315,17 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     }
 
     /**
+     * Method get_mainwp_version()
+     *
+     * Get dashboard version.
+     *
+     * @return string $version Version.
+     */
+    public static function get_mainwp_version() { //phpcs:ignore -- NOSONAR same function body.
+        return static::$version;
+    }
+
+    /**
      * Method load_all_options()
      *
      * Load all wp_options data.

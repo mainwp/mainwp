@@ -1529,6 +1529,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         static::init_cookiesdir( $cookieDir );
 
+        $fetch_track_id = MainWP_Execution_Helper::execute_call_track( 'start_point', $website, $postdata );
+
         $ch = curl_init();
 
         $proxy = new \WP_HTTP_Proxy();
@@ -1704,6 +1706,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $host = wp_parse_url( $real_url, PHP_URL_HOST );
         $ip   = gethostbyname( $host );
+
+        MainWP_Execution_Helper::execute_call_track( 'end_point', $website, $postdata, $fetch_track_id, 'fetch site' );
 
         if ( null !== $website ) {
             MainWP_DB_Common::instance()->insert_or_update_request_log( $website->id, $ip, null, microtime( true ) );

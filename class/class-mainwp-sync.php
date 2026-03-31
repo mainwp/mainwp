@@ -124,9 +124,15 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             MainWP_Utility::end_session();
         }
 
-        try {
+        $cur_id = MainWP_System_Utility::get_current_wpid();
+        if ( empty( $cur_id ) ) {
+            MainWP_System_Utility::set_current_wpid( $pWebsite->id );
+        }
 
-            MainWP_Logger::instance()->log_execution_sync( 'init' );
+        MainWP_Logger::instance()->log_execution_sync( 'init', '', $pWebsite );
+        $stats_track_id = MainWP_Execution_Helper::execute_call_track( 'start_point', $pWebsite );
+
+        try {
 
             if ( null === static::$clone_enabled ) {
 
@@ -283,8 +289,10 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
             $return = static::sync_information_array( $pWebsite, $information, '', false, false, $pAllowDisconnect );
             MainWP_Logger::instance()->log_execution_time( 'sync :: [siteid=' . $pWebsite->id . ']' );
+            MainWP_Execution_Helper::execute_call_track( 'end_point', $pWebsite, array(), $stats_track_id, 'stats site' );
             return $return;
         } catch ( MainWP_Exception $e ) {
+            MainWP_Execution_Helper::execute_call_track( 'end_point', $pWebsite, array(), $stats_track_id, 'stats site' );
             $sync_errors = '';
 
             if ( $e->getMessage() === 'HTTPERROR' ) {

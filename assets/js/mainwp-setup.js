@@ -52,12 +52,19 @@ jQuery(function () {
   jQuery('.ui.dropdown:not(.not-auto-init)').dropdown();
 
   jQuery('.mainwp-checkbox-showhide-elements').on('click', function () {
-    let hiel = jQuery(this).attr('hide-parent');
-    // if semantic ui checkbox is checked.
-    if (jQuery(this).find('input').is(':checked')) {
-      jQuery('[hide-element=' + hiel + ']').fadeIn(500);
-    } else {
-      jQuery('[hide-element=' + hiel + ']').fadeOut(500);
+    let $el = jQuery(this);
+    let hiels = $el.attr('hide-parent');
+    if (hiels !== undefined && hiels !== '') {
+        let isChecked = $el.find('input').is(':checked');
+        let items = hiels.split(';');
+        items.forEach(function(hiel) {
+            // if semantic ui checkbox is checked.
+            if (isChecked) {
+                jQuery('[hide-element=' + hiel + ']').fadeIn(500);
+            } else {
+                jQuery('[hide-element=' + hiel + ']').fadeOut(500);
+            }
+        });
     }
   });
 

@@ -521,6 +521,11 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $done                        = true;
         }
 
+        if ( isset( $information['dbsize_activitylogs'] ) ) {
+            MainWP_DB::instance()->update_website_option( $pWebsite, 'dbsize_activitylogs', $information['dbsize_activitylogs'] );
+            $done = true;
+        }
+
         if ( isset( $information['extauth'] ) ) {
             $websiteSyncValues['extauth'] = $information['extauth'];
             $done                         = true;

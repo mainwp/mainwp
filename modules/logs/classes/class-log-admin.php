@@ -11,6 +11,8 @@ namespace MainWP\Dashboard\Module\Log;
 use MainWP\Dashboard\MainWP_Logger;
 use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_Utility;
+use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Connect;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -76,6 +78,7 @@ class Log_Admin {
         $log_page = Log_Insights_Page::instance();
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_delete_records', array( $this, 'ajax_delete_records' ) );
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_compact_records', array( $this, 'ajax_compact_records' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_clean_up_child_logs', array( $this, 'ajax_clean_up_child_logs' ) );
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_manage_events_display_rows', array( Log_Manage_Insights_Events_Page::instance(), 'ajax_manage_events_display_rows' ) );
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_widget_insights_display_rows', array( $log_page, 'ajax_events_display_rows' ) );
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_widget_events_overview_display_rows', array( $log_page, 'ajax_events_overview_display_rows' ) );
@@ -231,6 +234,43 @@ class Log_Admin {
     }
 
     /**
+     * Handle ajax clean up child logs.
+     */
+    public function ajax_clean_up_child_logs() {
+        MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_clean_up_child_logs' );
+
+        $siteid  = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $website = false;
+
+        if ( $siteid > 0 ) {
+            $website = MainWP_DB::instance()->get_website_by_id( $siteid );
+        }
+
+        if ( empty( $siteid ) || empty( $website ) ) {
+            die( wp_json_encode( array( 'error' => esc_html__( 'Invalid site id or website not found. Please try again.', 'mainwp' ) ) ) );
+        }
+
+        $information = MainWP_Connect::fetch_url_authed( $website, 'clean_up_child_logs' );
+
+        if ( ! is_array( $information ) ) {
+            die( wp_json_encode( array( 'error' => esc_html__( 'Invalid response from child site. Please try again.', 'mainwp' ) ) ) );
+        }
+
+        $rsult = array();
+        if ( isset( $information['success'] ) && 1 === intval( $information['success'] ) ) {
+            $rsult['success'] = 1;
+
+            if ( isset( $information['dbsize_activitylogs'] ) ) {
+                MainWP_DB::instance()->update_website_option( $website, 'dbsize_activitylogs', $information['dbsize_activitylogs'] );
+            }
+        } elseif ( isset( $information['error'] ) ) {
+            $rsult['error'] = $information['error'];
+        }
+
+        wp_send_json( $rsult );
+    }
+
+    /**
      * Schedules a purge of records.
      *
      * @compatible
@@ -288,9 +328,9 @@ class Log_Admin {
                 <div class="ui yellow message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="logs-db-size-large"></i>
                     <?php
-					/* translators: 1: Database size in MB, 2: Opening anchor tag, 3: Closing anchor tag */
-					printf( esc_html__( 'Your Network Activity logs are using a lot of database space (%1$s MB). Go to %2$sMainWP > Settings > Network Activity Settings%3$s and enable Automatically archive logs, then set a Data retention period to keep the table size under control.', 'mainwp' ), esc_html( $size ), '<a href="admin.php?page=MainWPTools#mainwp-clear-archived-sites-changes-data">', '</a>' ); // NOSONAR - noopener - open safe.
-					?>
+                    /* translators: 1: Database size in MB, 2: Opening anchor tag, 3: Closing anchor tag */
+                    printf( esc_html__( 'Your Network Activity logs are using a lot of database space (%1$s MB). Go to %2$sMainWP > Settings > Network Activity Settings%3$s and enable Automatically archive logs, then set a Data retention period to keep the table size under control.', 'mainwp' ), esc_html( $size ), '<a href="admin.php?page=MainWPTools#mainwp-clear-archived-sites-changes-data">', '</a>' ); // NOSONAR - noopener - open safe.
+                    ?>
                 </div>
                 <?php
             }
@@ -315,9 +355,9 @@ class Log_Admin {
             <div class="ui yellow message">
                 <i class="close icon mainwp-notice-dismiss" notice-id="logs-db-update-required"></i>
                 <?php
-				/* translators: 1: Opening anchor tag, 2: Closing anchor tag */
-				printf( esc_html__( 'Your \'Network Activity\' database needs to be updated. Click %1$shere%2$s to start the update.', 'mainwp' ), '<a href="javascript:void(0);" id="module-update-logs-db-requirement">', '</a>' );
-				?>
+                /* translators: 1: Opening anchor tag, 2: Closing anchor tag */
+                printf( esc_html__( 'Your \'Network Activity\' database needs to be updated. Click %1$shere%2$s to start the update.', 'mainwp' ), '<a href="javascript:void(0);" id="module-update-logs-db-requirement">', '</a>' );
+                ?>
             </div>
             <?php
         } elseif ( 'running' === $status ) {

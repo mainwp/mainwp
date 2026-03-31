@@ -205,6 +205,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
         <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
         <div id="mainwp-message-zone-top" style="display: none;" class="ui message"></div>
         <?php
+        $this->render_big_child_logs_db_notice();
         MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
         $this->list_events_table->display();
 
@@ -220,6 +221,61 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
         </div>
         <?php
         $this->render_screen_options();
+    }
+
+    /**
+     * Method render_big_child_logs_db_notice()
+     *
+     * @return void
+     */
+    public function render_big_child_logs_db_notice() {
+        $child_logs_db_size = Log_DB_Helper::instance()->get_child_logs_db_size();
+        $big_db_size        = array();
+
+        if ( is_array( $child_logs_db_size ) ) {
+            foreach ( $child_logs_db_size as $website ) {
+                if ( ! isset( $website->dbsize_activitylogs ) ) {
+                    continue;
+                }
+                // Convert to MB.
+                $total_mb = $website->dbsize_activitylogs / 1048576;
+                $total_mb = round( $total_mb, 2 ); // e.g. 12.34 MB.
+
+                if ( $total_mb >= 25 * 1024 * 1024 ) { // if child logs db size is bigger than 25MB but not more than 100MB, show notice.
+                    $big_db_size[ $website->id ] = $website; // store big db size for notice at the end of loop.
+                }
+            }
+        }
+
+        if ( ! empty( $big_db_size ) ) {
+            ?>
+            <div class="ui message info">
+                <div><strong><?php echo esc_html__( 'Network Activity tables need cleanup,', 'mainwp' ); ?></strong></div>
+                <div><?php echo esc_html__( 'This data has already been synced to your MainWP Dashboard and stored there safely. Running cleanup removes old local records from the child site only.', 'mainwp' ); ?></div>
+                <div class="ui list">
+            <?php
+
+            foreach ( $big_db_size as $site_id => $website ) {
+                $color = ( $website->dbsize_activitylogs >= 100 * 1024 * 1024 ) ? 'red' : 'yellow';
+                ?>
+                <div class="item">
+                    <a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $site_id ); ?>">
+                        <?php echo esc_attr( stripslashes( $website->name ) ); ?>
+                    </a>
+                    - <span class="ui small <?php echo esc_attr( $color ); ?> text"><?php echo esc_html( size_format( $website->dbsize_activitylogs ) ); ?></span>
+                    - <a href="javascript:void(0)" class="mainwp-acts-logs-big-child-db-cleanup-btn ui mini green button" data-siteid="<?php echo intval( $site_id ); ?>"><?php esc_html_e( 'Run cleanup now', 'mainwp' ); ?></a>
+                </div>
+                <?php
+            }
+            ?>
+            <div><?php echo esc_html__( 'To reduce future growth, lower the Network Activity retention period on affected sites.', 'mainwp' ); ?></div>
+            <div><strong><?php echo esc_html__( 'Recommended retention for high-activity sites: 1–3 days.', 'mainwp' ); ?></strong></div>
+            </div>
+            <i class="close icon mainwp-notice-dismiss" notice-id="acts_logs_big_db_cleanup"></i>
+        </div>
+            <?php
+
+        }
     }
 
     /**

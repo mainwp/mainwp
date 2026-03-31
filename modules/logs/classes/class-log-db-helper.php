@@ -645,4 +645,25 @@ class Log_DB_Helper extends MainWP_DB {
 
         return $dbsize_mb;
     }
+
+    /**
+     * Get child logs db synced size.
+     *
+     * @return string Return current db size.
+     */
+    public function get_child_logs_db_size() {
+
+        $wp_table     = esc_sql( $this->table_name( 'wp' ) );
+        $wp_opt_table = esc_sql( $this->table_name( 'wp_options' ) );
+
+        return $this->wpdb->get_results(
+            "
+            SELECT wp.id,wp.url,wp.name, COALESCE(o.value, 0) AS dbsize_activitylogs
+            FROM {$wp_table} wp
+            LEFT JOIN {$wp_opt_table} o
+            ON o.wpid = wp.id
+            AND o.name = 'dbsize_activitylogs'
+        "
+        );
+    }
 }

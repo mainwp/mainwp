@@ -77,4 +77,29 @@ jQuery(function ($) {
         return false;
     });
 
+
+
+    jQuery('.mainwp-acts-logs-big-child-db-cleanup-btn').on('click', function () {
+        let msg = __('Are you sure you want to clean up activity logs for the selected site?');
+        mainwp_confirm(msg, () => {
+            let data = mainwp_secure_data({
+                action: 'mainwp_module_log_clean_up_child_logs',
+                siteid: jQuery(this).data('siteid'),
+            });
+            mainwp_set_message_zone('#mainwp-message-zone', __('Running ...'), 'green');
+            jQuery.post(ajaxurl, data, function (response) {
+                mainwp_set_message_zone('#mainwp-message-zone');
+                if (response?.error) {
+                    mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + response.error, 'red');
+                } else if (response?.success) {
+                    mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + __('Logs records has been cleaned up successfully.'), 'green');
+                    $(this).closest('.item').fadeOut(3000);
+                } else {
+                    mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + __('Undefined error. Please try again.'), 'red');
+                }
+            }, 'json');
+        });
+        return false;
+    });
+
 });

@@ -28,7 +28,7 @@ class Log_Install extends MainWP_Install {
      *
      * @var string DB version info.
      */
-    public $log_db_version = '1.0.1.50'; // NOSONAR - no IP.
+    public $log_db_version = '1.0.1.51'; // NOSONAR - no IP.
 
     /**
      * Protected variable to hold the database option name.
@@ -152,9 +152,8 @@ class Log_Install extends MainWP_Install {
 
         $this->wpdb->suppress_errors( $suppress );
 
-        if ( empty( $currentVersion ) ) {
-            $this->create_archive_tables();
-        }
+        $this->create_archive_tables( $currentVersion );
+
         MainWP_Utility::update_option( $this->log_db_option_key, $this->log_db_version );
         $wpdb->suppress_errors( $suppress );
     }
@@ -173,7 +172,7 @@ class Log_Install extends MainWP_Install {
         }
 
         if ( ! empty( $currentVersion ) && $is_db_ver_with_archive && version_compare( $currentVersion, '1.0.1.10', '<' ) ) { // NOSONAR - non-ip.
-            $this->create_archive_tables();
+            $this->create_archive_tables( $currentVersion, true );
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD COLUMN archived_at int(11) NOT NULL DEFAULT 0' ); //phpcs:ignore -- ok.
         }
 
@@ -424,9 +423,34 @@ class Log_Install extends MainWP_Install {
 
     /**
      * Create archive_ logs tables.
+     *
+     * @param string $currentVersion Current db version.
+     * @param bool   $create_if_not_exist Whether to force creation of archive tables if they don't exist.
      */
-    public function create_archive_tables() {
-        $this->wpdb->query( 'CREATE TABLE IF NOT EXISTS ' . $this->table_name( 'wp_logs_archive' ) . ' LIKE ' . $this->table_name( 'wp_logs' ) ); //phpcs:ignore -- ok.
-        $this->wpdb->query( 'CREATE TABLE IF NOT EXISTS ' . $this->table_name( 'wp_logs_meta_archive' ) . ' LIKE ' . $this->table_name( 'wp_logs_meta' ) ); //phpcs:ignore -- ok.
+    public function create_archive_tables( $currentVersion = '', $create_if_not_exist = false ) {
+
+        $archive = $this->table_name( 'wp_logs_archive' );
+
+        if ( empty( $currentVersion ) || $create_if_not_exist ) {
+            $this->wpdb->query( 'CREATE TABLE IF NOT EXISTS ' . $archive . ' LIKE ' . $this->table_name( 'wp_logs' ) ); //phpcs:ignore -- ok.
+            $this->wpdb->query( 'CREATE TABLE IF NOT EXISTS ' . $this->table_name( 'wp_logs_meta_archive' ) . ' LIKE ' . $this->table_name( 'wp_logs_meta' ) ); //phpcs:ignore -- ok.
+        }
+
+        if ( empty( $currentVersion ) ) {
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD COLUMN archived_at int(11) NOT NULL DEFAULT 0' ); //phpcs:ignore -- ok.
+        } else {
+            $column = $this->wpdb->get_results(
+                $this->wpdb->prepare( // phpcs:ignore -- NOSONAR - custom query ok.
+                    "SHOW COLUMNS FROM {$archive} LIKE %s", //phpcs:ignore -- custom query ok.
+                    'archived_at'
+                )
+            );
+
+            if ( empty( $column ) ) {
+                $this->wpdb->query(
+                    "ALTER TABLE {$archive} ADD COLUMN archived_at INT(11) NOT NULL DEFAULT 0" //phpcs:ignore -- ok.
+                );
+            }
+        }
     }
 }

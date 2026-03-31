@@ -1011,18 +1011,17 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         ?>
         <div id="mainwp-rest-api-keys" class="ui padded segment">
             <?php if ( $has_no_api_keys && MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-api-welcome-message' ) ) : ?>
-                <div class="ui icon message mainwp-welcome-message">
-                    <em data-emoji=":wave:" class="big"></em>
-                    <div class="content">
-                        <div class="ui massive header"><?php esc_html_e( 'Welcome to MainWP REST API', 'mainwp' ); ?></div>
-                        <p><?php esc_html_e( 'Integrate MainWP with your custom tools, automations, and external platforms through the REST API.', 'mainwp' ); ?>
-                        </p>
-                        <p>
-                        <?php
-                        // translators: 1: Opening anchor tag for API key link. 2: Closing anchor tag. 3: Opening anchor tag for routes link. 4: Closing anchor tag.
-                        printf( esc_html__( 'Start by %1$screating an API key%2$s and %3$sexploring available routes%4$s.', 'mainwp' ), '<a href="admin.php?page=AddApiKeys">', '</a>', '<a href="https://www.postman.com/mainwp/workspace/mainwp/collection/25047126-5ed97ddf-1d45-4bd1-bede-1a1f3b7584ef" target="_blank">', '</a>' );
-                        ?>
-                        </p>
+                <?php
+                MainWP_UI::render_empty_page_placeholder(
+                    esc_html__( 'No API Keys yet', 'mainwp' ),
+                    esc_html__( 'Create an API key to integrate MainWP with your custom tools, automations, and external platforms through the REST API.', 'mainwp' ),
+                    '<em data-emoji=":key:" class="big"></em>'
+                );
+                ?>
+                <?php if ( static::can_create_rest_api_keys() ) : ?>
+                    <div class="ui center aligned basic segment">
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=AddApiKeys' ) ); ?>"
+                            class="ui green button"><?php esc_html_e( 'Create New API Key', 'mainwp' ); ?></a>
                     </div>
                 <?php endif; ?>
             <?php endif; ?>
@@ -1892,7 +1891,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 <button class="ui green ok button" id="mainwp-create-app-password-submit">
                     <?php esc_html_e( 'Create', 'mainwp' ); ?>
                 </button>
-                
+
             </div>
         </div>
         <?php

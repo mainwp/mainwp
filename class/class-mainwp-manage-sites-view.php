@@ -1939,7 +1939,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         if ( empty( $alg ) && is_object( $website ) ) {
                             MainWP_DB::instance()->update_website_option( $website, 'signature_algo', 9999 ); // use global.
                             $website = MainWP_DB::instance()->get_website_by_id( $website->id );
-                            MainWP_Stack_Helper::stack_push( 'sync_before_reconnect' );
+                            if ( class_exists( __NAMESPACE__ . '\MainWP_Stack_Helper' ) ) {
+                                MainWP_Stack_Helper::stack_push( 'sync_before_reconnect' );
+                            }
                             $success = MainWP_Sync::sync_site( $website, true );
                         }
                     }
@@ -2031,7 +2033,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         if ( ! empty( $information['regverify'] ) ) {
                             MainWP_DB::instance()->update_website_option( $website, 'register_verify_key', $information['regverify'] );
                         }
-                        MainWP_Stack_Helper::stack_push( 'sync_reconnect' );
+                        if ( class_exists( __NAMESPACE__ . '\MainWP_Stack_Helper' ) ) {
+                            MainWP_Stack_Helper::stack_push( 'sync_reconnect' );
+                        }
                         MainWP_Sync::sync_information_array( $website, $information );
                         $success = true;
                     } else {

@@ -251,9 +251,9 @@ jQuery(function () {
 
     // Keep update selected tag site ids.
     jQuery(document).on('change', '#mainwp-manage-groups-sites-table .mainwp-site-checkbox', function () {
-        if (typeof jQuery('#mainwp-save-sites-groups-selection-button').attr('selected-tag-siteids') !== "undefined") {
-            let tag_siteids = jQuery('#mainwp-save-sites-groups-selection-button').attr('selected-tag-siteids');
-            tag_siteids = '' != tag_siteids ? JSON.parse(tag_siteids) : [];
+        let tag_siteids = jQuery('#mainwp-save-sites-groups-selection-button').attr('selected-tag-siteids');
+        if (tag_siteids !== undefined) {
+            tag_siteids = '' == tag_siteids ? [] : JSON.parse(tag_siteids);
 
             const valSiteId = jQuery(this).val();
             if (jQuery(this).is(':checked')) {
@@ -286,7 +286,7 @@ jQuery(function () {
         let data = mainwp_secure_data({
             action: 'mainwp_group_updategroup',
             groupId: groupID,
-            websiteIds: tag_siteids != '' ? JSON.parse(tag_siteids) : [],
+            websiteIds: tag_siteids == '' ? [] : JSON.parse(tag_siteids),
         });
 
         jQuery(this).addClass('disabled');

@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ignore -- NOSONAR - multi methods.
 
-	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
+    // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
     /**
      * Protected static variable to hold the single instance of the class.
@@ -106,7 +106,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * Creates the necessary endpoints for the api.
      * Note, for a request to be successful the URL query parameters consumer_key and consumer_secret need to be set and correct.
      */
-	public function register_routes() { // phpcs:ignore -- NOSONAR - complex.
+    public function register_routes() { // phpcs:ignore -- NOSONAR - complex.
 
         // Retrieves all clients.
         register_rest_route(
@@ -415,7 +415,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @param WP_REST_Request $request Full details about the request.
      * @return WP_Error|WP_REST_Response
      */
-	public function get_items( $request ) { //phpcs:ignore -- NOSONAR - complex.
+    public function get_items( $request ) { //phpcs:ignore -- NOSONAR - complex.
 
         $args = $this->prepare_objects_query( $request );
 
@@ -741,7 +741,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      *
      * @return WP_Error|WP_REST_Response
      */
-	public function client_fields( $request ) {  // phpcs:ignore -- NOSONAR - complex.
+    public function client_fields( $request ) {  // phpcs:ignore -- NOSONAR - complex.
         // Prepare query args.
         $args     = $this->prepare_objects_query( $request, 'client_fields' );
         $page     = ! empty( $args['paged'] ) ? (int) $args['paged'] : 1;

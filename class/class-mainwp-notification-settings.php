@@ -165,9 +165,9 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
             <?php endif; ?>
             <div class="ui info message">
                 <?php
-				/* translators: 1: Opening anchor tag, 2: Closing anchor tag with external link icon */
-				printf( esc_html__( 'Email notifications sent from MainWP Dashboard are listed below.  Click on an email to configure it. For additional help, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/management/mainwp-dashboard-settings#manage-email-settings">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
-				?>
+                /* translators: 1: Opening anchor tag, 2: Closing anchor tag with external link icon */
+                printf( esc_html__( 'Email notifications sent from MainWP Dashboard are listed below.  Click on an email to configure it. For additional help, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/management/mainwp-dashboard-settings#manage-email-settings">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
+                ?>
             </div>
             <table class="ui unstackable table" id="mainwp-emails-settings-table">
                 <thead>
@@ -287,9 +287,9 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
                         <div class="ui info message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-message"></i>
                             <?php
-							/* translators: 1: Opening anchor tag for Boilerplate, 2: Closing anchor tag, 3: Opening anchor tag for Reports, 4: Closing anchor tag */
-							printf( esc_html__( '%1$sBoilerplate%2$s and %3$sReports%4$s extensions tokens are supported in the email settings and templates if Extensions are in use.', 'mainwp' ), '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://mainwp.com/extension/pro-reports/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
-							?>
+                            /* translators: 1: Opening anchor tag for Boilerplate, 2: Closing anchor tag, 3: Opening anchor tag for Reports, 4: Closing anchor tag */
+                            printf( esc_html__( '%1$sBoilerplate%2$s and %3$sReports%4$s extensions tokens are supported in the email settings and templates if Extensions are in use.', 'mainwp' ), '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://mainwp.com/extension/pro-reports/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
+                            ?>
                         </div>
                     <?php endif; ?>
                     <h3 class="ui header">

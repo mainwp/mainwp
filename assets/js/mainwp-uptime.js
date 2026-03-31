@@ -1,7 +1,7 @@
 /* eslint-disable complexity */
 // current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-window.mainwpVars = window.mainwpVars || {};
+globalThis.mainwpVars = globalThis.mainwpVars || {};
 
 mainwpVars.maxRunThreads = mainwpParams?.maximumUptimeMonitoringRequests ? mainwpParams.maximumUptimeMonitoringRequests : 10;
 
@@ -47,7 +47,7 @@ jQuery(document).on('click', '.managemonitors_uptime_checknow', function () {
   return false;
 });
 
-window.mainwp_uptime_monitor_check_now = function (itemsData) {
+globalThis.mainwp_uptime_monitor_check_now = function (itemsData) {
   let numOfItems = itemsData.length;
   jQuery('#mainwp-sync-sites-modal #sync-sites-status').html('');
   mainwpPopup('#mainwp-sync-sites-modal').init({
@@ -56,7 +56,7 @@ window.mainwp_uptime_monitor_check_now = function (itemsData) {
     statusText: 'checked',
     callback: function () {
       mainwpVars.bulkTaskRunning = false;
-      history.pushState("", document.title, window.location.pathname + window.location.search); // to fix issue for url with hash
+      history.pushState("", document.title, globalThis.location.pathname + globalThis.location.search); // to fix issue for url with hash
       mainwp_forceReload();
     }
   });
@@ -76,7 +76,7 @@ let uptime_monitoring_prepare_items_rows = function (itemsData) {
   });
 }
 
-window.mainwp_uptime_monitoring_check_uptime = function (itemsData) {
+globalThis.mainwp_uptime_monitoring_check_uptime = function (itemsData) {
   mainwpVars.itemsToCheck = [];
   mainwpVars.sitesIds = [];
 
@@ -100,10 +100,10 @@ window.mainwp_uptime_monitoring_check_uptime = function (itemsData) {
   }
 };
 
-window.mainwp_uptime_monitoring_check_set_item_status = function (itemId, newStatus, isSuccess) {
+globalThis.mainwp_uptime_monitoring_check_set_item_status = function (itemId, newStatus, isSuccess) {
   jQuery('.running-item-status[itemid="' + itemId + '"]').html(newStatus);
   // Move successfully synced site to the bottom of the sync list.
-  if (typeof isSuccess !== 'undefined' && isSuccess) {
+  if ( isSuccess !== undefined && isSuccess) {
     let row = jQuery('.running-item-status[itemid="' + itemId + '"]').closest('.item');
     jQuery(row).insertAfter(jQuery("#sync-sites-status .item").last());
   }

@@ -4,11 +4,11 @@
 let userCountSent = 0;
 let userCountReceived = 0;
 
-let updateUsersBulkActionsState = function() {
+let updateUsersBulkActionsState = function () {
     let checkedCount = jQuery('#mainwp-users-table input[name="user[]"]:checked').length;
     let dropdown = jQuery('#mainwp-manage-users #mainwp-bulk-actions');
     let applyButton = jQuery('#mainwp-do-users-bulk-actions');
-    
+
     if (checkedCount > 0) {
         dropdown.removeClass('disabled');
         dropdown.parent('.ui.dropdown').removeClass('disabled');
@@ -31,7 +31,7 @@ jQuery(function () {
 
     updateUsersBulkActionsState();
 
-    jQuery(document).on('change', '#mainwp-users-table .check-column INPUT:checkbox', function() {
+    jQuery(document).on('change', '#mainwp-users-table .check-column INPUT:checkbox', function () {
         updateUsersBulkActionsState();
     });
 
@@ -132,7 +132,7 @@ jQuery(function () {
     jQuery(document).on('click', '#bulk_updateadminpassword', function () {
         mainwp_confirm(
             'You are about to update administrator passwords on selected sites. This will overwrite the current password for the admin account used for connection.',
-            function() {
+            function () {
                 jQuery('#mainwp-update-admin-password-form').submit()
             }
         );
@@ -371,15 +371,7 @@ jQuery(function () {
     import_user_total_import = jQuery('#import_user_total_import').val();
 
     jQuery('#import_user_btn_import').on('click', function () {
-        if (!import_user_stop_by_user) {
-            import_user_stop_by_user = true;
-            jQuery('#import_user_import_logging .log').append(_('Paused import by user.') + "\n");
-            jQuery('#import_user_btn_import').val(__('Continue'));
-            jQuery('#MainWPBulkUploadUserLoading').hide();
-            if (import_user_count_create_fails > 0) {
-                jQuery('#import_user_btn_save_csv').attr("style", 'display:inline-block;'); //Enable
-            }
-        } else {
+        if (import_user_stop_by_user) {
             import_user_stop_by_user = false;
             jQuery('#import_user_import_logging .log').append(__('Continue import.') + "\n");
             jQuery('#import_user_btn_import').val(__('Pause'));
@@ -388,6 +380,14 @@ jQuery(function () {
                 jQuery('#import_user_btn_save_csv').attr("style", 'display:inline-block;'); //Enable
             }
             mainwp_import_users_next();
+        } else {
+            import_user_stop_by_user = true;
+            jQuery('#import_user_import_logging .log').append(_('Paused import by user.') + "\n");
+            jQuery('#import_user_btn_import').val(__('Continue'));
+            jQuery('#MainWPBulkUploadUserLoading').hide();
+            if (import_user_count_create_fails > 0) {
+                jQuery('#import_user_btn_save_csv').attr("style", 'display:inline-block;'); //Enable
+            }
         }
     });
 
@@ -408,7 +408,7 @@ jQuery(function () {
 });
 
 
-window.mainwp_bulkupload_users = function () {
+globalThis.mainwp_bulkupload_users = function () {
     if (jQuery('#import_user_file_bulkupload').val() == '') {
         feedback('mainwp-message-zone', __('Please enter CSV file for upload.'), 'yellow');
         jQuery('#import_user_file_bulkupload').parent().parent().addClass('form-invalid');
@@ -438,7 +438,7 @@ let mainwp_import_users_next = function () {
 
     try {
         decoded_data = JSON.parse(import_data);
-    } catch (e) {
+    } catch {
         decoded_data = false;
         errors.push(__('Invalid import data.'));
     }
@@ -511,21 +511,22 @@ let mainwp_import_users_valid_data = function (decoded_data) { // NOSONAR  - com
         errors.push(__('Please select a data role.'));
     }
 
-    if (val_data.select_sites != '') {
-        let selected_sites = val_data.select_sites.split(';');
-        if (selected_sites.length == 0) {
-            errors.push(__('Please select websites or groups to add a user.'));
-        } else {
-            val_data.select_sites = selected_sites;
-            val_data.select_by = 'site';
-        }
-    } else {
+    if (val_data.select_sites == '') {
+
         let selected_groups = val_data.select_groups.split(';');
         if (selected_groups.length == 0) {
             errors.push(__('Please select websites or groups to add a user.'));
         } else {
             val_data.select_groups = selected_groups;
             val_data.select_by = 'group';
+        }
+    } else {
+        let selected_sites = val_data.select_sites.split(';');
+        if (selected_sites.length == 0) {
+            errors.push(__('Please select websites or groups to add a user.'));
+        } else {
+            val_data.select_sites = selected_sites;
+            val_data.select_by = 'site';
         }
     }
     return {

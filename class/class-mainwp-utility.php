@@ -455,7 +455,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Method clean_wp_timezone_string().
      *
-     * @param  mixed $raw
+     * @param  mixed $raw Raw tz string to clean.
      * @return string Clean tz string.
      */
     public static function clean_wp_timezone_string( $raw ) {
@@ -543,7 +543,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( $timestamp ) {
             $formatted = static::format_timestamp( static::get_timestamp( $timestamp ) );
             /* translators: %s: formatted date/time */
-            $message   = sprintf( esc_html__( 'Last synchronization completed on: %s', 'mainwp' ), $formatted );
+            $message = sprintf( esc_html__( 'Last synchronization completed on: %s', 'mainwp' ), $formatted );
         } else {
             $message = esc_html__( 'Not yet synchronized', 'mainwp' );
         }
@@ -674,7 +674,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $tz_obj         = wp_timezone();
                 $local_timezone = $tz_obj->getName();
             } else {
-                $local_timezone = get_option( 'timezone_string' ) ?: 'UTC';
+                $local_timezone = get_option( 'timezone_string' ) ? get_option( 'timezone_string' ) : 'UTC';
             }
         }
 
@@ -2310,7 +2310,17 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param  bool   $more_entropy More entropy False if a robust prefix is required, default false.
      * @return string Random ID 8 characters.
      */
-    public static function gen_rand_id( $str = "", $more_entropy = false ) {
+    public static function gen_rand_id( $str = '', $more_entropy = false ) {
         return hash( 'crc32b', uniqid( $str, $more_entropy ? true : false ) );
+    }
+
+    /**
+     * Decode and validate JSON array.
+     *
+     * @param mixed $data Data to decode.
+     */
+    public static function get_decoded_array( $data ) {
+        $decoded = ! empty( $data ) ? json_decode( $data, true ) : array();
+        return is_array( $decoded ) ? $decoded : array();
     }
 }

@@ -86,13 +86,7 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
      * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
      */
     public static function render_issues( $websites, $total_securityIssues, $current_wpid ) { // phpcs:ignore -- NOSONAR - complex.
-        $is_demo        = MainWP_Demo_Handle::is_demo_mode();
-        $count_websites = MainWP_DB::instance()->get_websites_count();
-        $max_issues     = intval( $count_websites ) * 11;
-        if ( $current_wpid ) {
-            $max_issues = 11;
-        }
-        $resolved_issues = $max_issues - $total_securityIssues;
+        $is_demo = MainWP_Demo_Handle::is_demo_mode();
         ?>
         <div class="mainwp-widget-header">
             <div class="ui grid">

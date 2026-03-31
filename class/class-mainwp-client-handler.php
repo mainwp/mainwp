@@ -682,9 +682,9 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             ?>
             <div class="ui yellow message">
                 <?php
-				/* translators: %s: Line break followed by existing email addresses */
-				printf( esc_html__( 'Existed contact emails.%sPlease try again.', 'mainwp' ), '<br/>' . $existed_emails . '</br>' ); // phpcs:ignore WordPress.Security.EscapeOutput
-				?>
+                /* translators: %s: Line break followed by existing email addresses */
+                printf( esc_html__( 'Existed contact emails.%sPlease try again.', 'mainwp' ), '<br/>' . $existed_emails . '</br>' ); // phpcs:ignore WordPress.Security.EscapeOutput
+                ?>
             </div>
             <?php
         }

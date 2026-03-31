@@ -1082,6 +1082,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
     public static function render_mobile_menu() { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
         ?>
+        <div id="mainwp-overlay"></div>
         <div id="mainwp-main-mobile-navigation-container" class="mainwp-main-mobile-navigation-container ui top fullscreen flyout">
             <div class="mainwp-nav-menu scrolling content">
                 <?php

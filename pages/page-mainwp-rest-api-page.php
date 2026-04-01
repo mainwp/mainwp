@@ -1010,7 +1010,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         }
         ?>
         <div id="mainwp-rest-api-keys" class="ui padded segment">
-            <?php if ( $has_no_api_keys && MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-api-welcome-message' ) ) : ?>
+            <?php if ( $has_no_api_keys ) : ?>
                 <?php
                 MainWP_UI::render_empty_page_placeholder(
                     esc_html__( 'No API Keys yet', 'mainwp' ),

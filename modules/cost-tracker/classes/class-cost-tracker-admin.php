@@ -614,7 +614,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
         do_action( 'mainwp_cost_tracker_update_cost', $update, $saved_id, $err_msg, $snapshot_info );
 
         if ( empty( $err_msg ) && ! empty( $output ) ) { // success.
-            wp_safe_redirect( admin_url( 'admin.php?page=CostTrackerAdd&message=1&id=' . $output->id ) );
+            wp_safe_redirect( admin_url( 'admin.php?page=ManageCostTracker&message=1' ) );
         } elseif ( ! empty( $err_msg ) ) { // error.
             wp_safe_redirect( admin_url( 'admin.php?page=CostTrackerAdd&message=2&id=' . $msg_id ) );
         }
@@ -768,39 +768,45 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_cost_tracker_import_cost' );
 
         if ( ! isset( $_POST['encoded_data'] ) ) {
-            return wp_send_json_error( array(
-                'message' => esc_html__( 'No cost data provided', 'mainwp' ),
-            ) );
+            return wp_send_json_error(
+                array(
+                    'message' => esc_html__( 'No cost data provided', 'mainwp' ),
+                )
+            );
         }
 
-        $encoded_data = wp_unslash( $_POST['encoded_data'] );
+        $encoded_data  = wp_unslash( $_POST['encoded_data'] );
         $cost_data_raw = json_decode( $encoded_data, true );
 
         if ( null === $cost_data_raw || ! is_array( $cost_data_raw ) ) {
-            return wp_send_json_error( array(
-                'message' => esc_html__( 'Invalid cost data format', 'mainwp' ),
-            ) );
+            return wp_send_json_error(
+                array(
+                    'message' => esc_html__( 'Invalid cost data format', 'mainwp' ),
+                )
+            );
         }
 
         $cost_name = isset( $cost_data_raw['cost']['name'] ) ? sanitize_text_field( $cost_data_raw['cost']['name'] ) : '';
 
         if ( empty( $cost_name ) ) {
-            return wp_send_json_error( array(
-                'message' => esc_html__( 'Cost name is required', 'mainwp' ),
-            ) );
+            return wp_send_json_error(
+                array(
+                    'message' => esc_html__( 'Cost name is required', 'mainwp' ),
+                )
+            );
         }
 
         $cost_data = array(
-            'name'         => $cost_name,
-            'url'          => isset( $cost_data_raw['cost']['url'] ) ? esc_url( $cost_data_raw['cost']['url'] ) : '',
-            'type'         => isset( $cost_data_raw['cost']['type'] ) ? sanitize_text_field( $cost_data_raw['cost']['type'] ) : '',
-            'product_type' => isset( $cost_data_raw['cost']['product_type'] ) ? sanitize_text_field( $cost_data_raw['cost']['product_type'] ) : '',
-            'license_type' => isset( $cost_data_raw['cost']['license_type'] ) ? sanitize_text_field( $cost_data_raw['cost']['license_type'] ) : '',
-            'price'        => isset( $cost_data_raw['cost']['price'] ) ? floatval( $cost_data_raw['cost']['price'] ) : 0,
+            'name'           => $cost_name,
+            'url'            => isset( $cost_data_raw['cost']['url'] ) ? esc_url( $cost_data_raw['cost']['url'] ) : '',
+            'type'           => isset( $cost_data_raw['cost']['type'] ) ? sanitize_text_field( $cost_data_raw['cost']['type'] ) : '',
+            'product_type'   => isset( $cost_data_raw['cost']['product_type'] ) ? sanitize_text_field( $cost_data_raw['cost']['product_type'] ) : '',
+            'license_type'   => isset( $cost_data_raw['cost']['license_type'] ) ? sanitize_text_field( $cost_data_raw['cost']['license_type'] ) : '',
+            'price'          => isset( $cost_data_raw['cost']['price'] ) ? floatval( $cost_data_raw['cost']['price'] ) : 0,
             'payment_method' => isset( $cost_data_raw['cost']['payment_method'] ) ? sanitize_text_field( $cost_data_raw['cost']['payment_method'] ) : '',
-            'renewal_type' => isset( $cost_data_raw['cost']['renewal_type'] ) ? sanitize_text_field( $cost_data_raw['cost']['renewal_type'] ) : '',
-            'last_renewal' => isset( $cost_data_raw['cost']['last_renewal'] ) ? intval( $cost_data_raw['cost']['last_renewal'] ) : 0,
-            'cost_status'  => isset( $cost_data_raw['cost']['cost_status'] ) ? sanitize_text_field( $cost_data_raw['cost']['cost_status'] ) : '',
+            'renewal_type'   => isset( $cost_data_raw['cost']['renewal_type'] ) ? sanitize_text_field( $cost_data_raw['cost']['renewal_type'] ) : '',
+            'last_renewal'   => isset( $cost_data_raw['cost']['last_renewal'] ) ? intval( $cost_data_raw['cost']['last_renewal'] ) : 0,
+            'cost_status'    => isset( $cost_data_raw['cost']['cost_status'] ) ? sanitize_text_field( $cost_data_raw['cost']['cost_status'] ) : '',
         );
 
         $selected_sites = array();
@@ -830,15 +836,19 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
         try {
             $inserted = Cost_Tracker_DB::get_instance()->update_cost_tracker( $cost_data );
         } catch ( \MainWP_Exception $e ) {
-            return wp_send_json_error( array(
-                'message' => $e->getMessage(),
-            ) );
+            return wp_send_json_error(
+                array(
+                    'message' => $e->getMessage(),
+                )
+            );
         }
 
         if ( empty( $inserted ) || ! is_object( $inserted ) || ! isset( $inserted->id ) ) {
-            return wp_send_json_error( array(
-                'message' => esc_html__( 'Failed to create cost tracker entry', 'mainwp' ),
-            ) );
+            return wp_send_json_error(
+                array(
+                    'message' => esc_html__( 'Failed to create cost tracker entry', 'mainwp' ),
+                )
+            );
         }
 
         if ( ! empty( $selected_sites ) ) {
@@ -850,10 +860,12 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             );
         }
 
-        return wp_send_json_success( array(
-            'message' => esc_html__( 'Cost imported successfully.', 'mainwp' ),
-            'cost'    => $inserted,
-        ) );
+        return wp_send_json_success(
+            array(
+                'message' => esc_html__( 'Cost imported successfully.', 'mainwp' ),
+                'cost'    => $inserted,
+            )
+        );
     }
 
     /**
@@ -978,9 +990,12 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
      * @param string $type Product type.
      */
     public static function get_product_type_icons( $type = false ) {
+        $defaults      = static::get_default_product_types_icons();
         $product_icons = Cost_Tracker_Utility::get_instance()->get_option( 'product_types_icons', array(), true );
-        if ( ! is_array( $product_icons ) ) {
-            $product_icons = array();
+        if ( is_array( $product_icons ) && ! empty( $product_icons ) ) {
+            $product_icons = array_replace( $defaults, $product_icons );
+        } else {
+            $product_icons = $defaults;
         }
         if ( ! empty( $type ) && is_string( $type ) ) {
             return isset( $product_icons[ $type ] ) ? $product_icons[ $type ] : '';

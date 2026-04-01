@@ -238,8 +238,16 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                 </div>
             </div>
             <?php else : ?>
-            <?php $this->render_actions_bar(); ?>
-            <?php static::render_manage_tasks_table_top( $sel_ids ); ?>
+                <?php $this->render_actions_bar(); ?>
+                <?php if ( isset( $_GET['message'] ) && 1 === (int) $_GET['message'] ) : //phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
+                    <div class="ui segment">
+                        <div class="ui green message" id="mainwp-module-cost-tracker-message-zone">
+                            <?php esc_html_e( 'Cost saved successfully.', 'mainwp' ); ?>
+                            <i class="ui close icon"></i>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                <?php static::render_manage_tasks_table_top( $sel_ids ); ?>
             <div class="ui padded segment">
                 <?php $this->render_dashboard_body(); ?>
             </div>
@@ -916,7 +924,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                             break;
                         case 'product_type':
                             ?>
-                            <?php echo isset( $product_types[ $subscription->product_type ] ) ? '<div class="ui label" style="color:#ffffff;background-color:' . esc_attr( $product_colors[ $subscription->product_type ] ) . '"><i class="' . str_replace( 'deficon:', '', esc_attr( $product_types_icons[ $subscription->product_type ] ) ) . ' icon"></i>' . esc_html( $product_types[ $subscription->product_type ] ) . '</div>' : ''; //phpcs:ignore -- ok. ?>
+                            <?php echo isset( $product_types[ $subscription->product_type ] ) ? '<div class="ui label" style="color:#ffffff;background-color:' . esc_attr( Cost_Tracker_Admin::get_product_colors( $subscription->product_type ) ) . '"><i class="' . str_replace( 'deficon:', '', esc_attr( Cost_Tracker_Admin::get_product_type_icons( $subscription->product_type ) ) ) . ' icon"></i>' . esc_html( $product_types[ $subscription->product_type ] ) . '</div>' : ''; //phpcs:ignore -- ok. ?>
                             <?php
                             break;
                         case 'last_renewal':

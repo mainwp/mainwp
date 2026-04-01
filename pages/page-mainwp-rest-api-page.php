@@ -106,7 +106,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         // Add update handler for editing application password name.
         MainWP_Post_Handler::instance()->add_action( 'mainwp_application_password_update', array( &$this, 'ajax_application_password_update' ) );
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         // Redirect to Application Passwords page if user tries to access REST API page and doesn't have permission.
         if ( isset( $_GET['page'] ) && 'RESTAPI' === $_GET['page'] && ! static::can_access_rest_api() ) {
             // If cannot view REST API, try redirecting to Application Passwords if allowed, otherwise to dashboard.
@@ -126,7 +126,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             wp_safe_redirect( admin_url( $redirect ) );
             exit;
         }
-		// phpcs:enable
+        // phpcs:enable
 
         $this->handle_rest_api_add_new();
         $this->handle_rest_api_edit();
@@ -345,8 +345,8 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      *
      * Handle rest api settings
      */
-	public function handle_rest_api_add_new() { // phpcs:ignore -- NOSONAR - complex.
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+    public function handle_rest_api_add_new() { // phpcs:ignore -- NOSONAR - complex.
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $submit = false;
 
         if ( isset( $_POST['submit'] ) && isset( $_GET['page'] ) && 'AddApiKeys' === $_GET['page'] ) {
@@ -390,9 +390,9 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             // compatible with version 2.
             $scope = 'read';
             if ( ! empty( $pers ) ) {
-                $pers_list  = explode( ',', $pers );
-                $has_read   = in_array( 'r', $pers_list );
-                $has_write  = in_array( 'w', $pers_list ) || in_array( 'd', $pers_list );
+                $pers_list = explode( ',', $pers );
+                $has_read  = in_array( 'r', $pers_list );
+                $has_write = in_array( 'w', $pers_list ) || in_array( 'd', $pers_list );
 
                 if ( $has_read && $has_write ) {
                     $scope = 'read_write';
@@ -405,10 +405,10 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             $this->invalidate_warm_cache();
             MainWP_DB::instance()->insert_rest_api_key( $consumer_key, $consumer_secret, $scope, $desc, $enabled );
             // end.
-			wp_safe_redirect( admin_url( 'admin.php?page=RESTAPI&message=created' ) ); //phpcs:ignore -- ok.
+            wp_safe_redirect( admin_url( 'admin.php?page=RESTAPI&message=created' ) ); //phpcs:ignore -- ok.
             exit();
         }
-		// phpcs:enable
+        // phpcs:enable
     }
 
     /**
@@ -416,7 +416,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      *
      * Handle rest api settings
      */
-	public function handle_rest_api_edit() { // phpcs:ignore -- NOSONAR - complex.
+    public function handle_rest_api_edit() { // phpcs:ignore -- NOSONAR - complex.
 
         $edit_id = isset( $_POST['editkey_id'] ) ? sanitize_text_field( wp_unslash( $_POST['editkey_id'] ) ) : false;
 
@@ -437,9 +437,9 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     $pers    = ! empty( $_POST['mainwp_rest_api_key_edit_pers'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_rest_api_key_edit_pers'] ) ) : '';
                     $scope   = 'read';
                     if ( ! empty( $pers ) ) {
-                        $pers_list  = explode( ',', $pers );
-                        $has_read   = in_array( 'r', $pers_list );
-                        $has_write  = in_array( 'w', $pers_list ) || in_array( 'd', $pers_list );
+                        $pers_list = explode( ',', $pers );
+                        $has_read  = in_array( 'r', $pers_list );
+                        $has_write = in_array( 'w', $pers_list ) || in_array( 'd', $pers_list );
 
                         if ( $has_read && $has_write ) {
                             $scope = 'read_write';
@@ -486,7 +486,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
 
             $this->invalidate_warm_cache();
 
-			wp_safe_redirect( admin_url( 'admin.php?page=RESTAPI' . $msg ) ); //phpcs:ignore -- ok.
+            wp_safe_redirect( admin_url( 'admin.php?page=RESTAPI' . $msg ) ); //phpcs:ignore -- ok.
             exit();
         }
     }
@@ -503,7 +503,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      *
      * Remove API Key.
      */
-	public function ajax_rest_api_remove_keys() { //phpcs:ignore -- NOSONAR - complex.
+    public function ajax_rest_api_remove_keys() { //phpcs:ignore -- NOSONAR - complex.
         MainWP_Post_Handler::instance()->check_security( 'mainwp_rest_api_remove_keys' );
         // Require delete permission to remove API keys.
         if ( ! static::can_delete_rest_api_keys() ) {
@@ -556,7 +556,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
      * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
      */
-	public static function render_header( $shownPage = '' ) { // phpcs:ignore -- NOSONAR - complex.
+    public static function render_header( $shownPage = '' ) { // phpcs:ignore -- NOSONAR - complex.
 
         $params = array(
             'title' => esc_html__( 'API Access', 'mainwp' ),
@@ -578,7 +578,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         // Show Add API Keys tab if user can create or edit REST API keys or has manage permission.
         if ( ! MainWP_Menu::is_disable_menu_item( 3, 'AddApiKeys' ) && ( static::can_create_rest_api_keys() || static::can_edit_rest_api_keys() ) ) {
             if ( isset( $_GET['editkey'] ) && ! empty( $_GET['editkey'] ) && isset( $_GET['_opennonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_opennonce'] ), 'mainwp-admin-nonce' ) ) {
-				// phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+                // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                 $ver           = isset( $_GET['rest_ver'] ) && ! empty( $_GET['rest_ver'] ) ? '&rest_ver=' . intval( $_GET['rest_ver'] ) : '';
                 $renderItems[] = array(
                     'title'  => esc_html__( 'Edit API Keys', 'mainwp' ),
@@ -678,11 +678,10 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      *
      * @return void
      */
-	public static function render_api_keys_v1_table() { //phpcs:ignore -- NOSONAR - complex.
+    public static function render_api_keys_v1_table() { //phpcs:ignore -- NOSONAR - complex.
         $all_keys        = static::check_rest_api_updates();
         $can_edit_keys   = static::can_edit_rest_api_keys();
         $can_delete_keys = static::can_delete_rest_api_keys();
-
 
         if ( ! is_array( $all_keys ) ) {
             $all_keys = array();
@@ -838,7 +837,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
     }
 
     /** Render REST API SubPage */
-	public static function render_api_keys_v2_table() { // phpcs:ignore -- NOSONAR - complex.
+    public static function render_api_keys_v2_table() { // phpcs:ignore -- NOSONAR - complex.
         $all_keys_v2     = MainWP_DB::instance()->get_rest_api_keys();
         $can_edit_keys   = static::can_edit_rest_api_keys();
         $can_delete_keys = static::can_delete_rest_api_keys();
@@ -982,7 +981,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
     /**
      * Render All API Keys
      */
-	public static function render_all_api_keys() { // phpcs:ignore -- NOSONAR - complex.
+    public static function render_all_api_keys() { // phpcs:ignore -- NOSONAR - complex.
         // Allow page if user can view REST API (any of manage/create/edit/delete).
         if ( ! static::can_access_rest_api() ) {
             static::render_permission_denied_ui(
@@ -995,8 +994,8 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         if ( ! is_array( $all_keys ) ) {
             $all_keys = array();
         }
-        $all_keys_v2        = MainWP_DB::instance()->get_rest_api_keys();
-        $has_no_api_keys    = empty( $all_keys ) && empty( $all_keys_v2 );
+        $all_keys_v2     = MainWP_DB::instance()->get_rest_api_keys();
+        $has_no_api_keys = empty( $all_keys ) && empty( $all_keys_v2 );
         static::render_header();
         static::render_table_top( $has_no_api_keys );
         if ( ! static::check_rest_api_enabled() ) {
@@ -1158,7 +1157,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
     /**
      * Render REST API SubPage
      */
-	public static function render_rest_api_setings() { //phpcs:ignore -- NOSONAR - complex.
+    public static function render_rest_api_setings() { //phpcs:ignore -- NOSONAR - complex.
         // Allow access if user can create or edit REST API keys (manage alone cannot create/edit).
         if ( ! ( static::can_create_rest_api_keys() || static::can_edit_rest_api_keys() ) ) {
             static::render_permission_denied_ui(
@@ -1413,7 +1412,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             return sha1( wp_rand() ); // NOSONAR - safe for keys.
         }
 
-		return bin2hex( openssl_random_pseudo_bytes( 20 ) ); // @codingStandardsIgnoreLine
+        return bin2hex( openssl_random_pseudo_bytes( 20 ) ); // @codingStandardsIgnoreLine
     }
 
     /**
@@ -1423,7 +1422,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      *
      * @param mixed $item The Key edit.
      */
-	public static function render_rest_api_v2_edit( $item ) { //phpcs:ignore -- NOSONAR - complex.
+    public static function render_rest_api_v2_edit( $item ) { //phpcs:ignore -- NOSONAR - complex.
         $keyid     = $item->key_id;
         $edit_desc = $item->description;
         $enabled   = $item->enabled ? true : false;
@@ -1547,7 +1546,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * @param string $keyid Key ID edit.
      * @param array  $item The Key edit.
      */
-	public static function render_rest_api_edit( $keyid, $item ) { //phpcs:ignore -- NOSONAR - complex.
+    public static function render_rest_api_edit( $keyid, $item ) { //phpcs:ignore -- NOSONAR - complex.
 
         $edit_desc = is_array( $item ) && isset( $item['desc'] ) ? $item['desc'] : '';
         $enabled   = is_array( $item ) && isset( $item['enabled'] ) && ! empty( $item['enabled'] ) ? true : false;
@@ -1672,11 +1671,11 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      *
      * @return bool check result.
      */
-	public static function check_rest_api_enabled( $check_logged_in = false ) { // phpcs:ignore -- NOSONAR - complex.
+    public static function check_rest_api_enabled( $check_logged_in = false ) { // phpcs:ignore -- NOSONAR - complex.
         $cookies = array();
         if ( $check_logged_in && is_user_logged_in() && defined( 'LOGGED_IN_COOKIE' ) ) {
             $cookies      = array();
-			$auth_cookies = wp_parse_auth_cookie( $_COOKIE[ LOGGED_IN_COOKIE ], 'logged_in' ); // phpcs:ignore -- ok.
+            $auth_cookies = wp_parse_auth_cookie( $_COOKIE[ LOGGED_IN_COOKIE ], 'logged_in' ); // phpcs:ignore -- ok.
             if ( is_array( $auth_cookies ) ) {
                 foreach ( $auth_cookies as $name => $value ) {
                     $cookies[] = new \WP_Http_Cookie(
@@ -1892,7 +1891,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 <button class="ui green ok button" id="mainwp-create-app-password-submit">
                     <?php esc_html_e( 'Create', 'mainwp' ); ?>
                 </button>
-                
+
             </div>
         </div>
         <?php
@@ -1972,7 +1971,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             wp_send_json_error( array( 'message' => __( 'You are not allowed to create application passwords.', 'mainwp' ) ) );
         }
 
-		$name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : ''; // phpcs:ignore -- ok.
+        $name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : ''; // phpcs:ignore -- ok.
 
         if ( '' === $name ) {
             wp_send_json_error( array( 'message' => __( 'Application name is required.', 'mainwp' ) ) );
@@ -2008,8 +2007,8 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             wp_send_json_error( array( 'message' => __( 'You are not allowed to revoke application passwords.', 'mainwp' ) ) ); // NOSONAR.
         }
 
-		$uuid = isset( $_POST['uuid'] ) ? sanitize_text_field( wp_unslash( $_POST['uuid'] ) ) : ''; // phpcs:ignore -- ok.
-		$user_id = isset( $_POST['user_id'] ) ? (int) wp_unslash( $_POST['user_id'] ) : 0; // phpcs:ignore -- ok.
+        $uuid = isset( $_POST['uuid'] ) ? sanitize_text_field( wp_unslash( $_POST['uuid'] ) ) : ''; // phpcs:ignore -- ok.
+        $user_id = isset( $_POST['user_id'] ) ? (int) wp_unslash( $_POST['user_id'] ) : 0; // phpcs:ignore -- ok.
 
         if ( '' === $uuid ) {
             wp_send_json_error( array( 'message' => __( 'UUID is required.', 'mainwp' ) ) );
@@ -2032,7 +2031,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
     /**
      * AJAX handler for deleting multiple application passwords.
      */
-	public function ajax_application_password_delete_multiple() { // phpcs:ignore -- NOSONAR.
+    public function ajax_application_password_delete_multiple() { // phpcs:ignore -- NOSONAR.
         MainWP_Post_Handler::instance()->check_security( 'mainwp_application_password_delete_multiple' );
         // Must have delete capability to delete own passwords.
         $can_delete_self = static::$application_passwords->can_delete_application_passwords();
@@ -2043,10 +2042,10 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         // Only allow targeting others if can manage or can view all.
         $can_target_others = static::$application_passwords->can_manage_application_passwords() || static::$application_passwords->can_view_all_application_passwords();
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $items = isset( $_POST['items'] ) && is_array( $_POST['items'] ) ? wp_unslash( $_POST['items'] ) : array();
         $uuids = isset( $_POST['uuids'] ) && is_array( $_POST['uuids'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['uuids'] ) ) : array();
-		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         $current_id = get_current_user_id();
         $deleted    = 0;
@@ -2117,7 +2116,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
     /**
      * AJAX handler for updating (renaming) an application password.
      */
-	public function ajax_application_password_update() { // phpcs:ignore -- NOSONAR.
+    public function ajax_application_password_update() { // phpcs:ignore -- NOSONAR.
         MainWP_Post_Handler::instance()->check_security( 'mainwp_application_password_update' );
         // Must have edit capability to edit own passwords.
         $can_edit_self = static::$application_passwords->can_edit_application_passwords();
@@ -2125,22 +2124,22 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             wp_send_json_error( array( 'message' => __( 'You are not allowed to edit application passwords.', 'mainwp' ) ) );
         }
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $uuid    = isset( $_POST['uuid'] ) ? sanitize_text_field( wp_unslash( $_POST['uuid'] ) ) : '';
-		$user_id = isset( $_POST['user_id'] ) ? (int) wp_unslash( $_POST['user_id'] ) : 0; // phpcs:ignore -- ok.
+        $user_id = isset( $_POST['user_id'] ) ? (int) wp_unslash( $_POST['user_id'] ) : 0; // phpcs:ignore -- ok.
         $name    = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
 
-		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         if ( '' === $uuid || '' === $name ) {
             wp_send_json_error( array( 'message' => __( 'UUID and Name are required.', 'mainwp' ) ) );
         }
 
-        $current_id       = get_current_user_id();
+        $current_id = get_current_user_id();
         // Only allow targeting others if can manage or can view all.
-        $can_edit_others  = static::$application_passwords->can_manage_application_passwords() || static::$application_passwords->can_view_all_application_passwords();
-        $target_user      = ( $user_id > 0 && $can_edit_others ) ? $user_id : $current_id;
-        $result      = static::$application_passwords->update_application_password( $target_user, $uuid, array( 'name' => $name ) );
+        $can_edit_others = static::$application_passwords->can_manage_application_passwords() || static::$application_passwords->can_view_all_application_passwords();
+        $target_user     = ( $user_id > 0 && $can_edit_others ) ? $user_id : $current_id;
+        $result          = static::$application_passwords->update_application_password( $target_user, $uuid, array( 'name' => $name ) );
 
         if ( is_wp_error( $result ) ) {
             wp_send_json_error( array( 'message' => $result->get_error_message() ) );

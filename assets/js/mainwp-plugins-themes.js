@@ -232,7 +232,7 @@ jQuery(function () {
             let websiteId = jQuery(rowElement).attr('site-id');
             let pluginSlug = jQuery(rowElement).attr('plugin-slug');
             selectedSitePlugins.push({ 'siteid': websiteId, 'plugin': pluginSlug });
-            if (selectedSites.indexOf(websiteId) < 0) {
+            if (!selectedSites.includes(websiteId)) {
                 selectedSites.push(websiteId);
             }
         });
@@ -260,10 +260,10 @@ jQuery(function () {
         mainwp_notes_show();
     });
 
-    window.mainwp_notes_plugin_save = function () {
+    globalThis.mainwp_notes_plugin_save = function () {
         let slug = jQuery('#mainwp-notes-slug').val();
         let newnote = jQuery('#mainwp-notes-note').val();
-        newnote = newnote.replace(/(?:\r\n|\r|\n)/g, '<br>');
+        newnote = newnote.replaceAll(/\r?\n/, '<br>');
         let data = mainwp_secure_data({
             action: 'mainwp_trusted_plugin_notes_save',
             slug: slug,
@@ -286,10 +286,10 @@ jQuery(function () {
                         rowEl.find('.mainwp-edit-plugin-note').html('<i class="sticky green note icon"></i>');
                     }
 
-                } else if (response.error != undefined) {
-                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + __('Undefined error occured while saving your note') + ': ' + response.error);
-                } else {
+                } else if (response.error === undefined) {
                     jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + __('Undefined error occured while saving your note') + '.');
+                } else {
+                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + __('Undefined error occured while saving your note') + ': ' + response.error);
                 }
             }
         }(slug), 'json');
@@ -309,10 +309,11 @@ jQuery(function () {
         mainwp_notes_show();
     });
 
-    window.mainwp_notes_theme_save = function () {
+    globalThis.mainwp_notes_theme_save = function () {
         let slug = jQuery('#mainwp-notes-slug').val();
         let newnote = jQuery('#mainwp-notes-note').val();
-        newnote = newnote.replace(/(?:\r\n|\r|\n)/g, '<br>');
+        newnote = newnote.replaceAll(/\r?\n/, '<br>');
+
         let data = mainwp_secure_data({
             action: 'mainwp_trusted_theme_notes_save',
             slug: slug,
@@ -333,10 +334,10 @@ jQuery(function () {
                     } else {
                         rowEl.find('.mainwp-edit-theme-note').html('<i class="sticky green note icon"></i>');
                     }
-                } else if (response.error != undefined) {
-                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + __('Undefined error occured while saving your note!') + ': ' + response.error);
-                } else {
+                } else if (response.error === undefined) {
                     jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + __('Undefined error occured while saving your note!'));
+                } else {
+                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + __('Undefined error occured while saving your note!') + ': ' + response.error);
                 }
             }
         }(slug), 'json');
@@ -346,7 +347,7 @@ jQuery(function () {
 
 
 
-window.mainwp_show_hide_install_to_selected_sites = function (what) {
+globalThis.mainwp_show_hide_install_to_selected_sites = function (what) {
     if ('plugin' == what) {
         jQuery('#mainwp-plugins-content .checkbox').on('click', function () {
             if (jQuery('.mainwp-manage-plugin-item-website .checkbox.checked').length > 0) {
@@ -591,7 +592,7 @@ jQuery(function () {
                 return;
             }
             selectedSiteThemes.push({ 'siteid': websiteId, 'theme': theme });
-            if (selectedSites.indexOf(websiteId) < 0) {
+            if (!selectedSites.includes(websiteId)) {
                 selectedSites.push(websiteId);
             }
         });
@@ -664,7 +665,7 @@ jQuery(function () {
 
                 themeCountSent++;
                 jQuery.post(ajaxurl, data, function (response) {
-                    if (response.error != undefined && response.error == Object(response.error)) { // check if .error is object.
+                    if (response.error != undefined && response.error == new Object(response.error)) { // check if .error is object.
                         let entries = Object.entries(response.error);
                         for (let entry of entries) {
                             let warnings = __(entry[0], encodeURIComponent(entry[1])); // entry[0]:id message, entry[1] string value.

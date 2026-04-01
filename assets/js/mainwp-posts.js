@@ -95,7 +95,7 @@ let mainwppage_postAction = function (elem, what) {
     let pageId = rowElement.find('.pageId').val();
     let websiteId = rowElement.find('.websiteId').val();
 
-    if (rowElement.find('.allowedBulkActions').val().indexOf('|' + what + '|') == -1) {
+    if (!rowElement.find('.allowedBulkActions').val().includes('|' + what + '|')) {
         jQuery(elem).prop("checked", false);
         countReceived++;
 
@@ -378,7 +378,7 @@ let mainwppost_postAction = function (elem, what, postType) {
     let rowElement = jQuery(elem).closest('tr');
     let postId = rowElement.find('.postId').val();
     let websiteId = rowElement.find('.websiteId').val();
-    if (rowElement.find('.allowedBulkActions').val().indexOf('|' + what + '|') == -1) {
+    if (!rowElement.find('.allowedBulkActions').val().includes('|' + what + '|')) {
         jQuery(elem).prop("checked", false);
         countReceived++;
 
@@ -402,7 +402,7 @@ let mainwppost_postAction = function (elem, what, postType) {
         postId: postId,
         websiteId: websiteId
     };
-    if (typeof postType !== "undefined") {
+    if ( postType !== undefined) {
         data['postType'] = postType;
     }
     data = mainwp_secure_data(data);

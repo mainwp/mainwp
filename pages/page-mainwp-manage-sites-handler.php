@@ -49,14 +49,22 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             die( wp_json_encode( array( 'error' => esc_html__( 'Invalid URL! Please enter valid URL to the Site URL field.', 'mainwp' ) ) ) );
         }
 
-        $website = MainWP_DB::instance()->get_websites_by_url( $url );
-        $ret     = array();
+        $website    = MainWP_DB::instance()->get_websites_by_url( $url );
+        $ret        = array();
 
         if ( MainWP_System_Utility::can_edit_website( $website ) ) {
             $ret['response'] = esc_html__( 'ERROR Site is already connected to your MainWP Dashboard.', 'mainwp' );
         } else {
             try {
-                MainWP_Logger::instance()->log_execution_sync( 'init' );
+
+                $cur_id = MainWP_System_Utility::get_current_wpid();
+                if ( empty( $cur_id ) ) {
+                    MainWP_System_Utility::set_current_wpid( $website['id'] );
+                }
+
+                MainWP_Logger::instance()->log_execution_sync( 'init', '', $website );
+
+
                 $verify_cert    = empty( $_POST['verify_certificate'] ) ? false : intval( $_POST['verify_certificate'] );
                 $ssl_version    = empty( $_POST['ssl_version'] ) ? 0 : intval( $_POST['ssl_version'] );
                 $force_use_ipv4 = apply_filters( 'mainwp_manage_sites_force_use_ipv4', null, $url );
@@ -65,6 +73,8 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
                 $admin          = ( isset( $_POST['admin'] ) ? sanitize_text_field( wp_unslash( $_POST['admin'] ) ) : '' );
 
                 $output = array();
+
+                $visit_track_id = MainWP_Execution_Helper::execute_call_track( 'start_point', $website );
 
                 $information = MainWP_Connect::fetch_url_not_authed(
                     $url,
@@ -81,6 +91,8 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
                     ),
                     $output
                 ); // Fetch the stats with the given admin name.
+
+                MainWP_Execution_Helper::execute_call_track( 'end_point', $website, $visit_track_id, 'visit site' );
 
                 if ( isset( $information['wpversion'] ) ) {
                     $ret['response'] = 'OK';

@@ -35,7 +35,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '6.0.4'; // NOSONAR.
+    public static $version = '6.0.7'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -221,6 +221,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_Hooks::get_instance();
         MainWP_Menu::get_instance();
 
+        add_action( 'plugins_loaded', array( $this, 'plugins_loaded' ), 9 );
         add_action( 'admin_menu', array( MainWP_Menu::get_class_name(), 'init_mainwp_menus' ) );
         add_filter( 'admin_footer', array( &$this, 'admin_footer' ), 15 );
         add_action( 'admin_head', array( MainWP_System_View::get_class_name(), 'admin_head' ) );
@@ -310,6 +311,17 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @return string $version Version.
      */
     public function get_dashboard_version() {
+        return static::$version;
+    }
+
+    /**
+     * Method get_mainwp_version()
+     *
+     * Get dashboard version.
+     *
+     * @return string $version Version.
+     */
+    public static function get_mainwp_version() { //phpcs:ignore -- NOSONAR same function body.
         return static::$version;
     }
 
@@ -608,32 +620,22 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         return apply_filters( 'mainwp_is_mainwp_site_page', $is_page );
     }
 
+
     /**
-     * Method init()
+     * Method plugins_loaded()
      *
-     * Instantiate Plugin.
+     * Load plugin text domain.
      */
-    public function init() { //phpcs:ignore -- NOSONAR - complex.
-
+    public function plugins_loaded() { // phpcs:ignore -- NOSONAR - complex.
         /**
-         * MainWP disabled menu items array.
+         * Action: mainwp_system_plugins_loaded
          *
-         * @global object $_mainwp_disable_menus_items
+         * Fires after all plugins are loaded.
+         *
+         * @since 6.1.0
          */
-        global $_mainwp_disable_menus_items;
+        do_action( 'mainwp_system_plugins_loaded' );
 
-        $_mainwp_disable_menus_items = apply_filters( 'mainwp_disablemenuitems', $_mainwp_disable_menus_items );
-
-        /**
-         * Filter: mainwp_main_menu_disable_menu_items
-         *
-         * Filters disabled MainWP navigation items.
-         *
-         * @since Unknown
-         */
-        $_mainwp_disable_menus_items = apply_filters( 'mainwp_main_menu_disable_menu_items', $_mainwp_disable_menus_items );
-
-        // to compatible.
         if ( ! function_exists( 'MainWP\Dashboard\mainwp_current_user_have_right' ) ) {
 
             /**
@@ -676,6 +678,32 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 return apply_filters( 'mainwp_currentusercan', true, $cap_type, $cap );
             }
         }
+    }
+
+    /**
+     * Method init()
+     *
+     * Instantiate Plugin.
+     */
+    public function init() { //phpcs:ignore -- NOSONAR - complex.
+
+        /**
+         * MainWP disabled menu items array.
+         *
+         * @global object $_mainwp_disable_menus_items
+         */
+        global $_mainwp_disable_menus_items;
+
+        $_mainwp_disable_menus_items = apply_filters( 'mainwp_disablemenuitems', $_mainwp_disable_menus_items );
+
+        /**
+         * Filter: mainwp_main_menu_disable_menu_items
+         *
+         * Filters disabled MainWP navigation items.
+         *
+         * @since Unknown
+         */
+        $_mainwp_disable_menus_items = apply_filters( 'mainwp_main_menu_disable_menu_items', $_mainwp_disable_menus_items );
 
         MainWP_System_Handler::instance()->handle_settings_post();
     }
@@ -1499,5 +1527,56 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public function get_plugin_slug() {
         return $this->plugin_slug;
+    }
+
+    /**
+     * Method get_selected_sites_with_allowed_sites.
+     *
+     * @param  array $selected_ids Selected sites IDs.
+     * @param  array $current_sites Current sites IDs.
+     * @return array Not selected but in not allowed sites in current sites ids, and selected sites ids.
+     */
+    public static function get_selected_sites_with_allowed_sites( $selected_ids, $current_sites_ids = array() ) {
+
+        $allowed_sites = apply_filters( 'mainwp_currentuserallowedaccesssites', 'all' );
+        if ( 'all' === $allowed_sites ) {
+            return $selected_ids;
+        }
+
+        if ( ! is_array( $selected_ids ) ) {
+            $selected_ids = array();
+        }
+
+        if ( ! is_array( $current_sites_ids ) ) {
+            $current_sites_ids = array();
+        }
+
+        $allowed_sites = MainWP_DB::instance()->get_websites_for_current_user();
+        if ( empty( $allowed_sites ) ) {
+            return array();
+        }
+
+        $allowed_ids = array_values(
+            array_map(
+                function ( $item ) {
+                    return $item->id;
+                },
+                $allowed_sites
+            )
+        );
+
+        $client_site_ids = array();
+        foreach ( $selected_ids as $id ) {
+            if ( in_array( $id, $allowed_ids ) ) {
+                $client_site_ids[] = $id;
+            }
+        }
+
+        foreach ( $current_sites_ids as $id ) {
+            if ( ! in_array( $id, $selected_ids ) && ! in_array( $id, $allowed_ids ) ) { // If it’s not in the allowed site IDs, the user is not permitted to change it.
+                $client_site_ids[] = $id; // keep this site ids.
+            }
+        }
+        return $client_site_ids;
     }
 }

@@ -1094,6 +1094,67 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 </script>
                 <?php
                 endif;
+
+            $fix_dom_issue_for_wp_editor = isset( $_GET['page'] ) && 'Extensions-Mainwp-Pro-Reports-Extension' === $_GET['page'] && isset( $_GET['tab'] ) && 'report' === $_GET['tab'] ? true : false; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended --NOSONAR - ok.
+
+            if ( $fix_dom_issue_for_wp_editor ) {
+                ?>
+            <style type="text/css">
+                .mainwp-overlay-open #mainwp-main-mobile-navigation-container{
+                    top: 58px !important;
+                }
+            </style>
+            <script type="text/javascript">
+                jQuery(function ($) {
+                    const $body = $('body');
+                    const $flyout = $('#mainwp-main-mobile-navigation-container');
+                    const $overlay = $('#mainwp-overlay');
+
+                    // Ensure elements are in body (safe move).
+                    if ($flyout.parent()[0] !== document.body) {
+                        $flyout.appendTo('body');
+                        $body.addClass('pushable');
+                    }
+                    if ($overlay.parent()[0] !== document.body) {
+                        $overlay.appendTo('body');
+                        $body.addClass('pushable');
+                    }
+
+                    // Toggle
+                    $('#mainwp-mobile-menu-trigger').on('click', function () {
+                        $body.toggleClass('mainwp-overlay-open');
+
+                        $(this).find('i.icon')
+                            .toggleClass('bars times');
+                        $flyout.toggleClass('overlay visible');
+                        $overlay.toggleClass('pusher dimmed');
+                    });
+
+                    // Close on overlay click
+                    $overlay.on('click', function () {
+                        $body.removeClass('mainwp-overlay-open');
+                        $flyout.removeClass('overlay visible');
+                        $overlay.removeClass('pusher dimmed');
+
+                        $('#mainwp-mobile-menu-trigger i.icon')
+                            .removeClass('times')
+                            .addClass('bars');
+                    });
+
+                    $(document).on('keydown', function (e) {
+                        if (e.key === 'Escape') {
+                            $('body').removeClass('mainwp-overlay-open');
+                            $flyout.removeClass('overlay visible');
+                            $overlay.removeClass('pusher dimmed');
+                            $('#mainwp-mobile-menu-trigger i.icon')
+                                .removeClass('times')
+                                .addClass('bars');
+                        }
+                    });
+                });
+            </script>
+                <?php
+            }
             ?>
 
             <script type="text/javascript">
@@ -1137,33 +1198,36 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 } );
                 jQuery( '#mainwp-sites-sidebar-menu' ).accordion();
 
-                if( jQuery( '#mainwp-main-mobile-navigation-container' ).length ){
-                    jQuery('<div class="pusher"></div>')
-                    .append($('#wpwrap'))
-                    .prependTo('body');
-                    jQuery( '#mainwp-main-mobile-navigation-container' ).prependTo( 'body' );
-                    setTimeout(function () {
-                        //  Initialize flyout
-                        $('#mainwp-main-mobile-navigation-container.ui.flyout')
-                        .flyout({
-                            dimPage: true,
-                            onShow: function() {
-                                $(this).css({
-                                    'top': '58px',
-                                });
-                                $('#mainwp-mobile-menu-trigger').find('i.icon').removeClass('bars').addClass('times');
-                            },
-                            onHide: function() {
-                                $('#mainwp-mobile-menu-trigger').find('i.icon').removeClass('times').addClass('bars');
-                            }
-                        });
-                    }, 2000);
+                <?php if ( ! $fix_dom_issue_for_wp_editor ) { ?>
 
-                    // Trigger button
-                    $('#mainwp-mobile-menu-trigger').on('click', function() {
-                        $('#mainwp-main-mobile-navigation-container.ui.flyout').flyout('toggle');
-                    });
-                }
+                    if( jQuery( '#mainwp-main-mobile-navigation-container' ).length ){
+                        jQuery('<div class="pusher"></div>')
+                        .append($('#wpwrap'))
+                        .prependTo('body');
+                        jQuery( '#mainwp-main-mobile-navigation-container' ).prependTo( 'body' );
+                        setTimeout(function () {
+                            //  Initialize flyout
+                            $('#mainwp-main-mobile-navigation-container.ui.flyout')
+                            .flyout({
+                                dimPage: true,
+                                onShow: function() {
+                                    $(this).css({
+                                        'top': '58px',
+                                    });
+                                    $('#mainwp-mobile-menu-trigger').find('i.icon').removeClass('bars').addClass('times');
+                                },
+                                onHide: function() {
+                                    $('#mainwp-mobile-menu-trigger').find('i.icon').removeClass('times').addClass('bars');
+                                }
+                            });
+                        }, 2000);
+
+                        // Trigger button
+                        $('#mainwp-mobile-menu-trigger').on('click', function() {
+                            $('#mainwp-main-mobile-navigation-container.ui.flyout').flyout('toggle');
+                        });
+                    }
+                <?php } ?>
             } );
             </script>
 
@@ -1924,12 +1988,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     );
                 }
 
-                // default settings.
-                // if ( ! isset( $layout['x'] ) && ! isset( $layout['w'] ) ) {
-                // $layout['w'] = 4;
-                // $layout['h'] = 4;
-                // }
-
                 $layout_attrs_escaped = '';
                 if ( isset( $layout['x'] ) && (int) $layout['x'] >= 0 ) {
                     $layout_attrs_escaped .= ' gs-x="' . esc_attr( $layout['x'] ) . '"';
@@ -2350,7 +2408,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $siteViewMode = MainWP_Utility::get_siteview_mode();
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized.Recommended
-        $page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
+        $page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
 
         $tour_id  = '';
         $video_id = '';
@@ -2394,7 +2452,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             $tour_id = '27275';
         } elseif ( 'UpdatesManage' === $page ) {
             $video_id = 'igOn8wOBcAQ';
-            $tab      = isset( $_GET['tab'] ) ? wp_unslash( $_GET['tab'] ) : '';
+            $tab      = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : '';
             if ( 'plugins-updates' === $tab ) {
                 $tour_id = '28259';
             } elseif ( 'themes-updates' === $tab ) {
@@ -2540,8 +2598,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $enable_guided_tours    = get_option( 'mainwp_enable_guided_tours', 0 );
         $enable_guided_chatbase = get_option( 'mainwp_enable_guided_chatbase', 0 );
         $enable_guided_video    = get_option( 'mainwp_enable_guided_video', 0 );
-
-        $enabled_at_least_one = $enable_guided_tours || $enable_guided_chatbase || $enable_guided_video;
 
         ?>
         <div id="mainwp-help-modal" class="ui modal">
@@ -2993,7 +3049,9 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      *
      * Renders the content for empty elements.
      *
-     * @param string $placeholder Placelolder text.
+     * @param string $title Title text.
+     * @param string $message Message text.
+     * @param string $icon Icon HTML markup.
      */
     public static function render_empty_element_placeholder( $title = '', $message = '', $icon = '' ) {
         ?>

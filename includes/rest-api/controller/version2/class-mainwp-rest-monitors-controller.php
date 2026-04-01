@@ -27,7 +27,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:ignore -- NOSONAR - multi methods.
 
-	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
+    // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
     /**
      * Protected static variable to hold the single instance of the class.
@@ -164,7 +164,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      * Creates the necessary endpoints for the api.
      * Note, for a request to be successful the URL query parameters consumer_key and consumer_secret need to be set and correct.
      */
-	public function register_routes() { // phpcs:ignore -- NOSONAR - complex.
+    public function register_routes() { // phpcs:ignore -- NOSONAR - complex.
         register_rest_route(
             $this->namespace,
             '/' . $this->rest_base,
@@ -320,7 +320,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      *
      * @return WP_Error|WP_REST_Response
      */
-	public function get_monitors( $request ) { // phpcs:ignore -- NOSONAR - complex.
+    public function get_monitors( $request ) { // phpcs:ignore -- NOSONAR - complex.
         $args   = $this->prepare_objects_query( $request );
         $params = array(
             'exclude'  => ! empty( $args['exclude'] ) ? $args['exclude'] : '',
@@ -497,7 +497,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      *
      * @return WP_Error|WP_REST_Response
      */
-	public function get_monitor( $request ) { // phpcs:ignore -- NOSONAR - complex.
+    public function get_monitor( $request ) { // phpcs:ignore -- NOSONAR - complex.
         $monitor = $this->get_request_item( $request );
 
         if ( empty( $monitor ) ) {
@@ -568,7 +568,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      * @param mixed $request Full details about the request.
      * @return WP_Error|WP_REST_Response
      */
-	public function get_basic_monitor( $request ) { // phpcs:ignore -- NOSONAR - complex.
+    public function get_basic_monitor( $request ) { // phpcs:ignore -- NOSONAR - complex.
         $monitors = $this->get_request_item( $request );
 
         if ( empty( $monitors ) ) {
@@ -605,7 +605,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      *
      * @return WP_Error|WP_REST_Response
      */
-	public function get_heartbeat_monitor( $request ) { // phpcs:ignore -- NOSONAR - complex.
+    public function get_heartbeat_monitor( $request ) { // phpcs:ignore -- NOSONAR - complex.
         $monitor = $this->get_request_item( $request );
 
         if ( empty( $monitor ) ) {
@@ -712,7 +712,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      *
      * @return WP_Error|WP_REST_Response
      */
-	public function get_monitor_incidents( $request ) { // phpcs:ignore -- NOSONAR - complex.
+    public function get_monitor_incidents( $request ) { // phpcs:ignore -- NOSONAR - complex.
         $monitor = $this->get_request_item( $request );
 
         if ( empty( $monitor ) ) {
@@ -800,7 +800,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      *
      * @return WP_Error|WP_REST_Response
      */
-	public function get_monitor_incidents_count( $request ) { // phpcs:ignore -- NOSONAR - complex.
+    public function get_monitor_incidents_count( $request ) { // phpcs:ignore -- NOSONAR - complex.
         $monitor = $this->get_request_item( $request );
 
         if ( empty( $monitor ) ) {
@@ -1054,7 +1054,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      *
      * @return array|WP_Error Updated global settings or error.
      */
-	private function process_global_monitoring_settings_update( $settings ) {  // phpcs:ignore -- NOSONAR - complex.
+    private function process_global_monitoring_settings_update( $settings ) {  // phpcs:ignore -- NOSONAR - complex.
 
         // Get current settings.
         $current_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
@@ -1129,7 +1129,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      *
      * @return array|WP_Error Updated monitor settings or error.
      */
-	private function process_individual_monitor_settings_update( $monitor, $settings ) { // phpcs:ignore -- NOSONAR - complexity.
+    private function process_individual_monitor_settings_update( $monitor, $settings ) { // phpcs:ignore -- NOSONAR - complexity.
         $monitor_id = (int) ( $monitor->monitor_id ?? 0 );
 
         $update_data = array( 'monitor_id' => $monitor_id );
@@ -1273,7 +1273,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      *
      * @return array|WP_Error Date range or WP_Error.
      */
-	private function parse_period( $period, $date ) { // phpcs:ignore -- NOSONAR - long method.
+    private function parse_period( $period, $date ) { // phpcs:ignore -- NOSONAR - long method.
         $now       = time();
         $day_start = '';
 
@@ -2218,7 +2218,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      * @since  5.2
      * @return array
      */
-	public function get_item_schema() {  // phpcs:ignore -- NOSONAR - long schema.
+    public function get_item_schema() {  // phpcs:ignore -- NOSONAR - long schema.
         return array(
             '$schema'    => 'http://json-schema.org/draft-04/schema#',
             'title'      => 'monitors',

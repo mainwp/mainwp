@@ -721,9 +721,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             <a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>" class="ui big green button"><?php esc_html_e( 'Connect Your WordPress Sites', 'mainwp' ); ?></a>
             <div class="ui sub header">
                 <?php
-				/* translators: 1: Opening anchor tag, 2: Closing anchor tag with external link icon */
-				printf( esc_html__( 'If all your child sites are missing from your MainWP Dashboard, please check this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/potential-issues" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
-				?>
+                /* translators: 1: Opening anchor tag, 2: Closing anchor tag with external link icon */
+                printf( esc_html__( 'If all your child sites are missing from your MainWP Dashboard, please check this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/potential-issues" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
+                ?>
 
             </div>
         </div>
@@ -1002,7 +1002,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
 
         if ( $get_all ) {
             $total_params['search'] = $search;
-            $params = array(
+            $params                 = array(
                 'selectgroups' => true,
                 'orderby'      => $orderby,
                 'offset'       => $start,
@@ -1284,9 +1284,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             <div class="ui message">
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-columns-notice"></i>
                 <?php
-				/* translators: 1: Lightbulb emoji icon, 2: Cog icon */
-				printf( esc_html__( '%1$s Tip: To hide or show a column, click the Page Settings (%2$s) button and select options from "Show columns". You can also rearrange columns by dragging them, and the new order will be saved automatically.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<i class="cog fitted icon"></i>' );
-				?>
+                /* translators: 1: Lightbulb emoji icon, 2: Cog icon */
+                printf( esc_html__( '%1$s Tip: To hide or show a column, click the Page Settings (%2$s) button and select options from "Show columns". You can also rearrange columns by dragging them, and the new order will be saved automatically.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<i class="cog fitted icon"></i>' );
+                ?>
 
             </div>
         <?php endif; ?>

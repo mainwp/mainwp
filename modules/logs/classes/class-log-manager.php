@@ -517,11 +517,18 @@ class Log_Manager {
         $disabled_changeslogs       = Log_Settings::get_disabled_logs_type( 'changeslogs' );
         $disabled_nonmainwp_actions = Log_Settings::get_disabled_logs_type( 'nonmainwpchanges' );
 
+        $log_settings = get_option( 'mainwp_module_log_settings', array() );
+        if ( ! is_array( $log_settings ) ) {
+            $log_settings = array();
+        }
+
         return array(
             'newer_than'                    => $last_created,
             'events_count'                  => $events_count,
             'ignore_sync_changes_logs'      => ! empty( $disabled_changeslogs ) ? $disabled_changeslogs : -1, // -1 to prevent it removed nested empty array from http query builder.
             'ignore_sync_nonmainwp_actions' => ! empty( $disabled_nonmainwp_actions ) ? $disabled_nonmainwp_actions : -1,
+            'child_logs_ttl'                => ! empty( $log_settings['child_logs_ttl'] ) ? absint( $log_settings['child_logs_ttl'] ) : 7,
+            'child_logs_enabled'            => ! empty( $log_settings['enabled'] ) ? 1 : 0,
         );
     }
 

@@ -1460,7 +1460,7 @@ div.http-response-ok span.http-notok-status {
     padding-left: 0;
 }
 
-#wpcontent h2 {
+.mainwp-ui-page #wpcontent h2 {
     display: block;
 }
 
@@ -1757,4 +1757,8 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
 #change-history-according-wrapper .ui.accordion .title {
   border-bottom: 1px solid #ddd;
   display: flex;
+}
+
+#change-history-according-wrapper .ui.list {
+  margin-top: 0 !important;
 }

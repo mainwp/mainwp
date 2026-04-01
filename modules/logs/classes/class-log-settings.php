@@ -78,6 +78,7 @@ class Log_Settings {
 
             $this->options['enabled']          = isset( $_POST['mainwp_module_log_enabled'] ) && ! empty( $_POST['mainwp_module_log_enabled'] ) ? 1 : 0;
             $this->options['records_logs_ttl'] = isset( $_POST['mainwp_module_log_records_ttl'] ) ? intval( $_POST['mainwp_module_log_records_ttl'] ) : 3 * YEAR_IN_SECONDS;
+            $this->options['child_logs_ttl']   = isset( $_POST['mainwp_module_log_child_activities_ttl'] ) ? intval( $_POST['mainwp_module_log_child_activities_ttl'] ) : 7;
             $this->options['auto_archive']     = isset( $_POST['mainwp_module_log_enable_auto_archive'] ) && ! empty( $_POST['mainwp_module_log_enable_auto_archive'] ) ? 1 : 0;
             MainWP_Utility::update_option( 'mainwp_module_log_settings', $this->options );
 
@@ -236,6 +237,13 @@ class Log_Settings {
     }
 
     /**
+     * Method get_settings().
+     */
+    public function get_settings() {
+        return $this->options;
+    }
+
+    /**
      * Method on_load_page()
      *
      * Run on page load.
@@ -252,6 +260,8 @@ class Log_Settings {
         do_action( 'mainwp_pageheader_settings', 'Insights' );
         $enabled              = ! empty( $this->options['enabled'] ) ? true : false;
         $enabled_auto_archive = isset( $this->options['auto_archive'] ) && ! empty( $this->options['auto_archive'] ) ? true : false;
+
+        $child_logs_ttl = isset( $this->options['child_logs_ttl'] ) ? $this->options['child_logs_ttl'] : 7;
 
         ?>
         <div id="mainwp-module-log-settings-wrapper" class="ui padded segment">
@@ -282,7 +292,7 @@ class Log_Settings {
                             esc_html_e( 'Enable Network Activity logging', 'mainwp' );
                             ?>
                             </label>
-                            <div class="ten wide column ui toggle checkbox">
+                            <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="auto-archive;child-logs-ttl">
                                 <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_module_log_enabled" id="mainwp_module_log_enabled" <?php echo $enabled ? 'checked="true"' : ''; ?> /><label></label>
                             </div>
                         </div>
@@ -312,6 +322,17 @@ class Log_Settings {
                                         <option value="0" <?php echo 0 === (int) $records_ttl ? 'selected' : ''; ?>><?php esc_html_e( 'Forever', 'mainwp' ); ?></option>
                                     </select>
                                 </div>
+                        </div>
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-insights" <?php echo ( $enabled ) ? '' : 'style="display:none"'; ?> hide-element="child-logs-ttl" default-indi-value="7">
+                            <label class="six wide column middle aligned">
+                            <?php
+                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_module_log_child_activities_ttl', (int) get_option( 'mainwp_module_log_child_activities_ttl', 7 ) );
+                            esc_html_e( 'Retention Period for Network Activity Logs on Child Sites', 'mainwp' );
+                            ?>
+                            </label>
+                            <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Set retention period (days) for network activity logs on child sites', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <input type="number" class="settings-field-value-change-handler small-text" name="mainwp_module_log_child_activities_ttl" id="mainwp_module_log_child_activities_ttl" placeholder="" min="1" max="9999" step="1" value="<?php echo intval( $child_logs_ttl ); ?>">
+                            </div>
                         </div>
 
                         <?php

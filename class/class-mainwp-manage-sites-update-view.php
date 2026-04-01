@@ -98,14 +98,18 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-updates-site-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-site-message"></i>
-                    <div><?php
-					/* translators: 1: Opening anchor tag for plugins, 2: Closing anchor tag, 3: Opening anchor tag for themes, 4: Closing anchor tag, 5: Opening anchor tag for WordPress core, 6: Closing anchor tag */
-					printf( esc_html__( 'Manage available updates for the child site. From here, you can update update %1$splugins%2$s, %3$sthemes%4$s, and %5$sWordPress core%6$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/updates/manage-updates#plugin-updates" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://docs.mainwp.com/sites/updates/manage-updates#theme-updates" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://docs.mainwp.com/sites/updates/manage-updates#wordpress-core-updates" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
-					?></div>
-                    <div><?php
-					/* translators: 1: Opening anchor tag for WordPress core, 2: Closing anchor tag, 3: Opening anchor tag for plugins, 4: Closing anchor tag, 5: Opening anchor tag for themes, 6: Closing anchor tag */
-					printf( esc_html__( 'Also, from here, you can ignore updates for %1$sWordPress core%2$s, %3$splugins%4$s, and %5$sthemes%6$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/updates/manage-updates#ignore-theme-updates" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://docs.mainwp.com/sites/updates/manage-updates#ignore-plugin-updates" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://docs.mainwp.com/sites/updates/manage-updates#ignore-theme-updates" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
-					?></div>
+                    <div>
+                    <?php
+                    /* translators: 1: Opening anchor tag for plugins, 2: Closing anchor tag, 3: Opening anchor tag for themes, 4: Closing anchor tag, 5: Opening anchor tag for WordPress core, 6: Closing anchor tag */
+                    printf( esc_html__( 'Manage available updates for the child site. From here, you can update update %1$splugins%2$s, %3$sthemes%4$s, and %5$sWordPress core%6$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/updates/manage-updates#plugin-updates" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://docs.mainwp.com/sites/updates/manage-updates#theme-updates" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://docs.mainwp.com/sites/updates/manage-updates#wordpress-core-updates" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
+                    ?>
+                    </div>
+                    <div>
+                    <?php
+                    /* translators: 1: Opening anchor tag for WordPress core, 2: Closing anchor tag, 3: Opening anchor tag for plugins, 4: Closing anchor tag, 5: Opening anchor tag for themes, 6: Closing anchor tag */
+                    printf( esc_html__( 'Also, from here, you can ignore updates for %1$sWordPress core%2$s, %3$splugins%4$s, and %5$sthemes%6$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/updates/manage-updates#ignore-theme-updates" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://docs.mainwp.com/sites/updates/manage-updates#ignore-plugin-updates" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://docs.mainwp.com/sites/updates/manage-updates#ignore-theme-updates" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
+                    ?>
+                    </div>
                 </div>
             <?php endif; ?>
             <?php
@@ -773,17 +777,9 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      * @param mixed  $active_tab Current active tab.
      * @param object $userExtension User extension data.
      */
-    public static function render_language_updates( $website, $active_tab, $userExtension ) { // NOSONAR - complex.
-        $trustedPlugins = ! empty( $userExtension->trusted_plugins ) ? json_decode( $userExtension->trusted_plugins, true ) : array();
-        if ( ! is_array( $trustedPlugins ) ) {
-            $trustedPlugins = array();
-        }
-
-        $trustedThemes = json_decode( $userExtension->trusted_themes, true );
-        if ( ! is_array( $trustedThemes ) ) {
-            $trustedThemes = array();
-        }
-
+    public static function render_language_updates( $website, $active_tab, $userExtension ) {
+        $trustedPlugins              = MainWP_Utility::get_decoded_array( $userExtension->trusted_plugins );
+        $trustedThemes               = MainWP_Utility::get_decoded_array( $userExtension->trusted_themes );
         $user_can_update_translation = \mainwp_current_user_can( 'dashboard', 'update_translations' );
         if ( empty( $website->ignored_trans_updates ) ) {
             $translation_upgrades = json_decode( $website->translation_upgrades, true );

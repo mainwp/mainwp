@@ -29,7 +29,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:ignore -- NOSONAR - multi methods.
 
-	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
+    // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
     /**
      * Protected static variable to hold the single instance of the class.
@@ -81,7 +81,7 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
      * Creates the necessary endpoints for the api.
      * Note, for a request to be successful the URL query parameters consumer_key and consumer_secret need to be set and correct.
      */
-	public function register_routes() { // phpcs:ignore -- NOSONAR - complex.
+    public function register_routes() { // phpcs:ignore -- NOSONAR - complex.
         register_rest_route(
             $this->namespace,
             '/' . $this->rest_base,
@@ -194,7 +194,7 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
      *
      * @return WP_Error|WP_REST_Response
      */
-	public function get_users( $request ) { // phpcs:ignore -- NOSONAR - complex.
+    public function get_users( $request ) { // phpcs:ignore -- NOSONAR - complex.
         // Prepare query parameters.
         $args = $this->prepare_objects_query( $request, 'users_fields' );
 
@@ -234,7 +234,7 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
      *
      * @return WP_Error|WP_REST_Response
      */
-	public function create_user( $request ) { // phpcs:ignore -- NOSONAR - complex.
+    public function create_user( $request ) { // phpcs:ignore -- NOSONAR - complex.
         // Validate request.
         $validation_error = $this->validate_user_request( $request );
         if ( is_wp_error( $validation_error ) ) {
@@ -1915,7 +1915,7 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @since  5.2
      * @return array
      */
-	public function get_item_schema() {  // phpcs:ignore -- NOSONAR - long schema.
+    public function get_item_schema() {  // phpcs:ignore -- NOSONAR - long schema.
         return array(
             '$schema'    => 'http://json-schema.org/draft-04/schema#',
             'title'      => 'user',
@@ -1961,5 +1961,5 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
         );
     }
 
-	// phpcs:enable Generic.Metrics.CyclomaticComplexity
+    // phpcs:enable Generic.Metrics.CyclomaticComplexity
 }

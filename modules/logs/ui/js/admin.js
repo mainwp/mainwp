@@ -86,6 +86,11 @@ jQuery(function ($) {
                 action: 'mainwp_module_log_clean_up_child_logs',
                 siteid: jQuery(this).data('siteid'),
             });
+
+            $(this).attr('disabled', 'disabled');
+
+            let btn = $(this);
+
             mainwp_set_message_zone('#mainwp-message-zone', __('Running ...'), 'green');
             jQuery.post(ajaxurl, data, function (response) {
                 mainwp_set_message_zone('#mainwp-message-zone');
@@ -93,10 +98,12 @@ jQuery(function ($) {
                     mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + response.error, 'red');
                 } else if (response?.success) {
                     mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + __('Logs records has been cleaned up successfully.'), 'green');
-                    $(this).closest('.item').fadeOut(3000);
+                    $(btn).closest('.item').fadeOut(3000);
+                    return;
                 } else {
                     mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + __('Undefined error. Please try again.'), 'red');
                 }
+                $(btn).attr('disabled', false);
             }, 'json');
         });
         return false;

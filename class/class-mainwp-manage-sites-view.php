@@ -2111,6 +2111,50 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
     }
 
     /**
+     * Correct the entered URL when the only mismatch is the www prefix.
+     *
+     * This intentionally preserves the user-selected scheme and only flips the
+     * leading www on or off to match what the child site reports.
+     *
+     * @param string $entered_url Entered child site URL.
+     * @param string $reported_url Child-reported site URL.
+     *
+     * @return string Corrected URL or the original entered URL.
+     */
+    private static function maybe_correct_www_variant_url( $entered_url, $reported_url ) {
+        if ( ! is_string( $entered_url ) || ! is_string( $reported_url ) ) {
+            return $entered_url;
+        }
+
+        $entered_url  = trim( $entered_url );
+        $reported_url = trim( $reported_url );
+
+        $entered_compare  = strtolower( untrailingslashit( MainWP_Utility::remove_http_prefix( $entered_url, true ) ) );
+        $reported_compare = strtolower( untrailingslashit( MainWP_Utility::remove_http_prefix( $reported_url, true ) ) );
+
+        if ( empty( $entered_compare ) || empty( $reported_compare ) || $entered_compare === $reported_compare ) {
+            return $entered_url;
+        }
+
+        $entered_no_www  = strtolower( untrailingslashit( MainWP_Utility::remove_http_www_prefix( $entered_url ) ) );
+        $reported_no_www = strtolower( untrailingslashit( MainWP_Utility::remove_http_www_prefix( $reported_url ) ) );
+
+        if ( empty( $entered_no_www ) || $entered_no_www !== $reported_no_www ) {
+            return $entered_url;
+        }
+
+        $entered_scheme = wp_parse_url( $entered_url, PHP_URL_SCHEME );
+        if ( empty( $entered_scheme ) ) {
+            return $entered_url;
+        }
+
+        $reported_no_scheme = strtolower( MainWP_Utility::remove_http_prefix( $reported_url, true ) );
+        $reported_has_www   = MainWP_Utility::starts_with( $reported_no_scheme, 'www.' );
+
+        return strtolower( $entered_scheme ) . '://' . ( $reported_has_www ? 'www.' : '' ) . MainWP_Utility::remove_http_www_prefix( $entered_url );
+    }
+
+    /**
      * Medthod add_wp_site()
      *
      * Add new Child Site.
@@ -2220,6 +2264,14 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         }
                     }
                 } elseif ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
+                    $reported_site_url = isset( $information['siteurl'] ) ? trim( wp_unslash( $information['siteurl'] ) ) : '';
+
+                    $corrected_url = static::maybe_correct_www_variant_url( $params['url'], $reported_site_url );
+                    if ( $corrected_url !== $params['url'] ) {
+                        MainWP_Logger::instance()->debug( ' :: register site :: corrected www variant from ' . $params['url'] . ' to ' . $corrected_url );
+                        $params['url'] = $corrected_url;
+                    }
+
                     $connection_step = 'save_site';
                     $groupids        = array();
                     $groupnames      = array();
@@ -2265,101 +2317,101 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         $addUniqueId = '';
                     }
 
-                        $http_user = isset( $params['http_user'] ) ? $params['http_user'] : '';
-                        $http_pass = isset( $params['http_pass'] ) ? $params['http_pass'] : '';
+                    $http_user = isset( $params['http_user'] ) ? $params['http_user'] : '';
+                    $http_pass = isset( $params['http_pass'] ) ? $params['http_pass'] : '';
+
+                    /**
+                     * Current user global.
+                     *
+                     * @global string
+                     */
+                    global $current_user;
+
+                    $others = array(
+                        'groupids'          => $groupids,
+                        'groupnames'        => $groupnames,
+                        'verifyCertificate' => $verifyCertificate || false === $verifyCertificate ? 2 : 0, // 2 use global.
+                        'addUniqueId'       => $addUniqueId,
+                        'http_user'         => $http_user,
+                        'http_pass'         => $http_pass,
+                        'sslVersion'        => $sslVersion,
+                    );
+
+                    $id = MainWP_DB::instance()->add_website( $current_user->ID, $params['name'], $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $others ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.
+
+                    if ( $id && isset( $params['clientid'] ) ) {
+                        MainWP_DB::instance()->update_website_values( $id, array( 'client_id' => intval( $params['clientid'] ) ) );
+                    }
+
+                    if ( $id ) {
+                        $obj_site = (object) array( 'id' => $id );
+                        MainWP_DB::instance()->update_website_option( $obj_site, 'added_timestamp', time() );
+                        MainWP_DB::instance()->update_website_option( $obj_site, 'signature_algo', 9999 ); // use global.
+                        $icon_info = 'uploaded:' . $params['uploaded_site_icon'] . ';selected:' . $params['selected_site_icon'] . ';color:' . $params['cust_icon_color'];
+                        MainWP_DB::instance()->update_website_option( $obj_site, 'cust_site_icon_info', $icon_info );
+                    }
+
+                    if ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {
+                        set_transient( 'mainwp_transient_just_connected_site_id', $id, HOUR_IN_SECONDS );
+                        /* translators: 1: Opening div tag, 2: Site name wrapped in strong tag, 3: Closing div tag, 4: Continue button anchor tag. */
+                        $message = sprintf( esc_html__( '%4$s%1$sCongratulations you have connected %2$s.%3$s After finishing the Quick Setup Wizard, you can add additional sites from the Add New Sites page. Proceeding to the next step in 3 seconds...', 'mainwp' ), '<div class="ui header">', '<strong>' . esc_html( $params['name'] ) . '</strong>', '</div>', '<a href="admin.php?page=mainwp-setup&step=monitoring" class="ui mini basic green right floated button">Continue</a>' );
+                    } else {
+                        /* translators: 1: Opening anchor tag for dashboard link, 2: Closing anchor tag, 3: Line break HTML tag. */
+                        $message = sprintf( esc_html__( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.%3$s', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . esc_html__( 'Dashboard', 'mainwp' ) . '">', '</a>', '<br/>' );
+                    }
+
+                    $website = MainWP_DB::instance()->get_website_by_id( $id );
+
+                    if ( $website ) { // to fix.
+
+                        if ( ! empty( $information['regverify'] ) ) {
+                            MainWP_DB::instance()->update_website_option( $website, 'register_verify_key', $information['regverify'] );
+                        }
+
+                        $glo_settings          = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+                        $monitoring_glo_active = is_array( $glo_settings ) && isset( $glo_settings['active'] ) ? (int) $glo_settings['active'] : 1;
+                        if ( $monitoring_glo_active ) {
+                            MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor(
+                                array(
+                                    'wpid'            => $id,
+                                    'active'          => -1,
+                                    'interval'        => -1, // -1 - use global setting.
+                                    'timeout'         => -1,
+                                    'method'          => 'useglobal',
+                                    'type'            => 'useglobal',
+                                    'up_status_codes' => 'useglobal',
+                                    'issub'           => 0, // primary monitor.
+                                )
+                            );
+                        }
 
                         /**
-                         * Current user global.
+                         * Fires immediately after a new website is added.
                          *
-                         * @global string
+                         * @since 4.5.1.1
+                         *
+                         * @param object   $website  website data.
+                         * @param array $information The array of information data .
                          */
-                        global $current_user;
+                        do_action( 'mainwp_site_added', $website, $information );
 
-                        $others = array(
-                            'groupids'          => $groupids,
-                            'groupnames'        => $groupnames,
-                            'verifyCertificate' => $verifyCertificate || false === $verifyCertificate ? 2 : 0, // 2 use global.
-                            'addUniqueId'       => $addUniqueId,
-                            'http_user'         => $http_user,
-                            'http_pass'         => $http_pass,
-                            'sslVersion'        => $sslVersion,
-                        );
+                        /**
+                         * New site added
+                         *
+                         * Fires after adding a website to MainWP Dashboard.
+                         *
+                         * @param int $id Child site ID.
+                         *
+                         * @since 3.4
+                         */
+                        do_action( 'mainwp_added_new_site', $id, $website );
 
-                        $id = MainWP_DB::instance()->add_website( $current_user->ID, $params['name'], $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $others ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.
+                        MainWP_Sync::sync_init_empty_values( $website );
 
-                        if ( $id && isset( $params['clientid'] ) ) {
-                            MainWP_DB::instance()->update_website_values( $id, array( 'client_id' => intval( $params['clientid'] ) ) );
-                        }
+                        $connection_step = 'post_add_sync';
 
-                        if ( $id ) {
-                            $obj_site = (object) array( 'id' => $id );
-                            MainWP_DB::instance()->update_website_option( $obj_site, 'added_timestamp', time() );
-                            MainWP_DB::instance()->update_website_option( $obj_site, 'signature_algo', 9999 ); // use global.
-                            $icon_info = 'uploaded:' . $params['uploaded_site_icon'] . ';selected:' . $params['selected_site_icon'] . ';color:' . $params['cust_icon_color'];
-                            MainWP_DB::instance()->update_website_option( $obj_site, 'cust_site_icon_info', $icon_info );
-                        }
-
-                        if ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {
-                            set_transient( 'mainwp_transient_just_connected_site_id', $id, HOUR_IN_SECONDS );
-                            /* translators: 1: Opening div tag, 2: Site name wrapped in strong tag, 3: Closing div tag, 4: Continue button anchor tag. */
-                            $message = sprintf( esc_html__( '%4$s%1$sCongratulations you have connected %2$s.%3$s After finishing the Quick Setup Wizard, you can add additional sites from the Add New Sites page. Proceeding to the next step in 3 seconds...', 'mainwp' ), '<div class="ui header">', '<strong>' . esc_html( $params['name'] ) . '</strong>', '</div>', '<a href="admin.php?page=mainwp-setup&step=monitoring" class="ui mini basic green right floated button">Continue</a>' );
-                        } else {
-                            /* translators: 1: Opening anchor tag for dashboard link, 2: Closing anchor tag, 3: Line break HTML tag. */
-                            $message = sprintf( esc_html__( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.%3$s', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . esc_html__( 'Dashboard', 'mainwp' ) . '">', '</a>', '<br/>' );
-                        }
-
-                        $website = MainWP_DB::instance()->get_website_by_id( $id );
-
-                        if ( $website ) { // to fix.
-
-                            if ( ! empty( $information['regverify'] ) ) {
-                                MainWP_DB::instance()->update_website_option( $website, 'register_verify_key', $information['regverify'] );
-                            }
-
-                            $glo_settings          = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
-                            $monitoring_glo_active = is_array( $glo_settings ) && isset( $glo_settings['active'] ) ? (int) $glo_settings['active'] : 1;
-                            if ( $monitoring_glo_active ) {
-                                MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor(
-                                    array(
-                                        'wpid'            => $id,
-                                        'active'          => -1,
-                                        'interval'        => -1, // -1 - use global setting.
-                                        'timeout'         => -1,
-                                        'method'          => 'useglobal',
-                                        'type'            => 'useglobal',
-                                        'up_status_codes' => 'useglobal',
-                                        'issub'           => 0, // primary monitor.
-                                    )
-                                );
-                            }
-
-                            /**
-                             * Fires immediately after a new website is added.
-                             *
-                             * @since 4.5.1.1
-                             *
-                             * @param object   $website  website data.
-                             * @param array $information The array of information data .
-                             */
-                            do_action( 'mainwp_site_added', $website, $information );
-
-                            /**
-                             * New site added
-                             *
-                             * Fires after adding a website to MainWP Dashboard.
-                             *
-                             * @param int $id Child site ID.
-                             *
-                             * @since 3.4
-                             */
-                            do_action( 'mainwp_added_new_site', $id, $website );
-
-                            MainWP_Sync::sync_init_empty_values( $website );
-
-                            $connection_step = 'post_add_sync';
-
-                            MainWP_Sync::sync_information_array( $website, $information );
-                        }
+                        MainWP_Sync::sync_information_array( $website, $information );
+                    }
                 } else {
                     $error = sprintf( esc_html__( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/potential-issues" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
                 }

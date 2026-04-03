@@ -7,6 +7,7 @@ Refresh the MainWP Server Information page so that it:
 1. Reflects the real MainWP settings surface, not a small hand-picked subset.
 2. Includes support-oriented diagnostics that help triage the most common dashboard-side issues.
 3. Preserves a safe "Community System Report" export that omits or masks sensitive data so users can post it publicly.
+4. Helps users quickly see what is wrong without requiring them to interpret the entire report manually.
 
 This document is a planning artifact only. It does not propose implementation details beyond the level needed to guide the work.
 
@@ -35,6 +36,7 @@ There are also a few structural issues in the current page:
 - Supplement the REST settings controller with page-specific sources when the controller is incomplete.
 - Treat privacy as a first-class requirement, not an afterthought.
 - Keep the full report support-friendly and the community report forum-safe.
+- Keep the page useful to end users by surfacing actionable problems, not just raw values.
 
 ## Main Source Files
 
@@ -77,6 +79,52 @@ Instead of one long mixed report, split the page into these sections:
 6. Debug and Logs
 
 This is closer to how mature status pages such as WooCommerce's system status are organized, and it makes support triage faster.
+
+## User-Facing Diagnostics Requirement
+
+The refreshed page should remain useful for MainWP support, but it should also help end users identify obvious problems on their own.
+
+That means the page should not behave like a passive configuration dump. It should actively surface notable issues such as low memory limits, low timeout values, blocked REST access, failed self-connect checks, or other threshold-based problems.
+
+### Recommended UX Model
+
+Keep two layers of feedback:
+
+1. Section and row-level status indicators for individual checks.
+2. A top-of-page "Attention Needed" or "Detected Issues" summary that groups the most important warnings and failures.
+
+### Summary Block Behavior
+
+The top summary should:
+
+- Show only actionable warnings and failures, not informational rows
+- Prioritize problems that are known to break or degrade MainWP behavior
+- Use short labels and one-line explanations
+- Link or jump to the detailed row when possible
+- Prefer specific statements over generic "something may be wrong" language
+
+Examples of issues that belong in this summary:
+
+- Low WordPress memory limit
+- Low timeout values
+- REST API not reachable
+- Plain permalinks detected
+- Self-connect failed
+- SSL verification or connection-method settings likely to affect connectivity
+- Cron disabled or stale background processing
+
+### Row-Level Highlighting
+
+The current row-level pass and warning pattern should be preserved conceptually, even if the visual design changes.
+
+Each important check should support a severity state such as:
+
+- Pass
+- Warning
+- Critical
+- Info
+
+This makes the report useful both as a diagnostic tool and as a quick visual health summary.
 
 ## Phase 1: Settings-Page Parity
 
@@ -335,6 +383,19 @@ Consider lightweight support hints for:
 
 This should be a compact summary, not an opinionated health score.
 
+#### 9. Threshold-Based User Alerts
+
+For checks that already have meaningful thresholds, keep explicit evaluation and status output so users can immediately see that a value is below expectations.
+
+Examples:
+
+- WordPress memory limit below recommended threshold
+- cURL timeout below recommended threshold
+- PHP or WordPress versions below supported threshold
+- Monitoring or connectivity timeouts set too aggressively
+
+These checks should feed both the row-level status markers and the top-of-page issue summary.
+
 ## Phase 3: Presentation and Export
 
 ### Goal
@@ -345,10 +406,26 @@ Make the report easier to scan while preserving safe sharing behavior.
 
 - Group fields under the six recommended sections.
 - Keep pass, warning, and info states where meaningful.
+- Add a top-of-page issue summary for warnings and failures.
 - Use short labels and consistent value formatting.
 - Prefer compact summaries over very large raw dumps for long list-style values.
 - Allow export of the full report.
 - Keep the community-safe export path.
+
+### Highlighting Strategy
+
+The refreshed page should make it easy to answer two different questions:
+
+- "What is my environment?"
+- "What appears to be wrong?"
+
+To support that, the page should combine:
+
+- A structured report for complete context
+- Field-level status markers for individual checks
+- A condensed issue list for the most important detected problems
+
+The issue list should be derived from the same underlying checks as the detailed rows so that there is one source of truth for severity and thresholds.
 
 ### Community System Report Requirements
 
@@ -442,6 +519,8 @@ The refresh should be considered complete when all of the following are true:
 - The Server Information page covers the listed settings pages in a meaningful way.
 - The report includes the new support diagnostics.
 - The page is organized into clear sections.
+- The page clearly surfaces important warnings and failures to end users.
+- Critical or high-value warnings can be understood without scanning the full report.
 - The community report still works.
 - The community report does not reveal dashboard URL, IP, path, or other sensitive values.
 - API backup secrets are never exposed.
@@ -454,6 +533,8 @@ The refresh should be considered complete when all of the following are true:
 - Should the report include counts only for event logging groups, or a more explicit enabled/disabled summary?
 - Should the public dashboard IP be tested live on demand, cached, or omitted when lookup fails?
 - Should cron health use a generic WordPress summary, a MainWP-only event summary, or both?
+- Should the top-of-page issue summary include warnings only, or critical findings only by default?
+- Should the issue summary link to knowledgebase articles for common problems such as REST API failures or low memory limits?
 - Should the page eventually support two explicitly labeled exports:
   - Full Support Report
   - Community-Safe Report

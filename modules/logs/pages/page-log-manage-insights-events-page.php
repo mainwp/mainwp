@@ -241,7 +241,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                 $total_mb = $website->dbsize_activitylogs / 1048576;
                 $total_mb = round( $total_mb, 2 ); // e.g. 12.34 MB.
 
-                if ( $total_mb >= 25 * 1024 * 1024 ) { // if child logs db size is bigger than 25MB but not more than 100MB, show notice.
+                if ( $total_mb >= 25 ) { // if child logs db size is bigger than 25MB but not more than 100MB, show notice.
                     $big_db_size[ $website->id ] = $website; // store big db size for notice at the end of loop.
                 }
             }
@@ -263,7 +263,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                         <?php echo esc_attr( stripslashes( $website->name ) ); ?>
                     </a>
                     - <span class="ui small <?php echo esc_attr( $color ); ?> text"><?php echo esc_html( size_format( $website->dbsize_activitylogs ) ); ?></span>
-                    - <a href="javascript:void(0)" class="mainwp-acts-logs-big-child-db-cleanup-btn ui mini green button" data-siteid="<?php echo intval( $site_id ); ?>"><?php esc_html_e( 'Run cleanup now', 'mainwp' ); ?></a>
+                    - <a href="javascript:void(0)" class="mainwp-acts-logs-big-child-db-cleanup-btn ui mini green button" data-siteid="<?php echo intval( $site_id ); ?>"><?php esc_html_e( 'Run Cleanup Now', 'mainwp' ); ?></a>
                 </div>
                 <?php
             }

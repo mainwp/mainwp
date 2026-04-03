@@ -67,6 +67,11 @@ class MainWP_Site_Info { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
                 $code .= ' - ' . $code_string;
             }
             $website_info['last_status'] = $code;
+
+            $dbsize = MainWP_DB::instance()->get_website_option( $website, 'dbsize_activitylogs' );
+            if ( '' !== $dbsize && false !== $dbsize ) {
+                $website_info['dbsize_activitylogs'] = size_format( intval( $dbsize ) );
+            }
         }
 
         $child_site_info = array(
@@ -76,13 +81,14 @@ class MainWP_Site_Info { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
             'child_version'         => esc_html__( 'MainWP Child Version', 'mainwp' ),
             'memory_limit'          => esc_html__( 'PHP Memory Limit', 'mainwp' ),
             'mysql_version'         => esc_html__( 'MySQL Version', 'mainwp' ),
-            'child_curl_version'    => esc_html__( 'cURL version', 'mainwp' ),
-            'child_openssl_version' => esc_html__( 'OpenSSL version', 'mainwp' ),
+            'child_curl_version'    => esc_html__( 'cURL Cersion', 'mainwp' ),
+            'child_openssl_version' => esc_html__( 'OpenSSL Cersion', 'mainwp' ),
             'ip'                    => esc_html__( 'Server IP', 'mainwp' ),
             'site_lang'             => esc_html__( 'Site Language', 'mainwp' ),
-            'site_public'           => esc_html__( 'Search engine visibility', 'mainwp' ),
+            'site_public'           => esc_html__( 'Search Engine Visibility', 'mainwp' ),
             'group'                 => esc_html__( 'Tags', 'mainwp' ),
             'last_status'           => esc_html__( 'Last Check Status', 'mainwp' ),
+            'dbsize_activitylogs'   => esc_html__( 'Network Activity Table Size', 'mainwp' ),
         );
 
         /**

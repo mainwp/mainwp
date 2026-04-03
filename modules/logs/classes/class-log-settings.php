@@ -327,10 +327,10 @@ class Log_Settings {
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_module_log_child_activities_ttl', (int) get_option( 'mainwp_module_log_child_activities_ttl', 7 ) );
-                            esc_html_e( 'Retention Period for Network Activity Logs on Child Sites', 'mainwp' );
+                            esc_html_e( 'Retention period for Network Activity Logs on child sites', 'mainwp' );
                             ?>
                             </label>
-                            <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Set retention period (days) for network activity logs on child sites', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Controls how long network activity logs are stored on child sites before local cleanup. This does not affect log retention on the Dashboard.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                                 <input type="number" class="settings-field-value-change-handler small-text" name="mainwp_module_log_child_activities_ttl" id="mainwp_module_log_child_activities_ttl" placeholder="" min="1" max="9999" step="1" value="<?php echo intval( $child_logs_ttl ); ?>">
                             </div>
                         </div>

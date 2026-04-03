@@ -8,6 +8,9 @@ Refresh the MainWP Server Information page so that it:
 2. Includes support-oriented diagnostics that help triage the most common dashboard-side issues.
 3. Preserves a safe "Community System Report" export that omits or masks sensitive data so users can post it publicly.
 4. Helps users quickly see what is wrong without requiring them to interpret the entire report manually.
+5. Preserves the current dual purpose of the page:
+   - a readable in-app diagnostics table for users
+   - downloadable text exports for sharing
 
 This document is a planning artifact only. It does not propose implementation details beyond the level needed to guide the work.
 
@@ -37,6 +40,7 @@ There are also a few structural issues in the current page:
 - Treat privacy as a first-class requirement, not an afterthought.
 - Keep the full report support-friendly and the community report forum-safe.
 - Keep the page useful to end users by surfacing actionable problems, not just raw values.
+- Preserve the visual table experience. The page is not just a text-export generator.
 
 ## Main Source Files
 
@@ -93,6 +97,13 @@ Keep two layers of feedback:
 1. Section and row-level status indicators for individual checks.
 2. A top-of-page "Attention Needed" or "Detected Issues" summary that groups the most important warnings and failures.
 
+The main report view should remain a proper UI, not just a pre-export text block. The current table layout is worth preserving conceptually:
+
+- grouped rows in a readable table
+- a clear "required vs detected" comparison where it makes sense
+- visual status cues such as green checks, warnings, and failures
+- easy scanning without reading the downloaded text version
+
 ### Summary Block Behavior
 
 The top summary should:
@@ -125,6 +136,15 @@ Each important check should support a severity state such as:
 - Info
 
 This makes the report useful both as a diagnostic tool and as a quick visual health summary.
+
+### In-App Page vs Exported Text
+
+The page has two distinct responsibilities and both should remain first-class:
+
+1. An in-app diagnostics page with a good frontend presentation.
+2. Exportable plain-text reports for sharing outside the dashboard.
+
+The frontend presentation should not be designed around the limitations of the text export. The text export should be derived from the same underlying data, but the on-page UI should remain richer and easier to scan.
 
 ## Phase 1: Settings-Page Parity
 
@@ -412,6 +432,15 @@ Make the report easier to scan while preserving safe sharing behavior.
 - Allow export of the full report.
 - Keep the community-safe export path.
 
+### Export Model
+
+The refreshed page should expose exactly two user-facing text exports:
+
+- Full System Report
+- Community System Report
+
+Those are the only two report outputs users should need to think about.
+
 ### Highlighting Strategy
 
 The refreshed page should make it easy to answer two different questions:
@@ -454,11 +483,21 @@ This behavior must be retained during the refresh.
 
 ### Recommended Privacy Model
 
-Instead of relying only on table-row CSS classes, introduce explicit field metadata for export visibility. Each field should be marked as one of:
+Instead of relying only on table-row CSS classes, introduce explicit field metadata for export visibility. These are not three export types. They are three internal visibility rules used to generate the two exports above.
+
+Each field should be marked as one of:
 
 - `full_only`
 - `community_masked`
 - `community_safe`
+
+Meaning:
+
+- `full_only`: show in the in-app page and the full export, but omit from the community export
+- `community_masked`: show in the in-app page and the full export, and include in the community export only in masked or summarized form
+- `community_safe`: show in both exports unchanged
+
+This gives a safer and more explicit version of what the page already does informally with `mwp-not-generate-row`.
 
 This will make future additions safer and easier to review.
 
@@ -535,9 +574,6 @@ The refresh should be considered complete when all of the following are true:
 - Should cron health use a generic WordPress summary, a MainWP-only event summary, or both?
 - Should the top-of-page issue summary include warnings only, or critical findings only by default?
 - Should the issue summary link to knowledgebase articles for common problems such as REST API failures or low memory limits?
-- Should the page eventually support two explicitly labeled exports:
-  - Full Support Report
-  - Community-Safe Report
 
 ## Practical Recommendation
 

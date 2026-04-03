@@ -146,14 +146,21 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
      *
      * @param  object $monitor monitor.
      * @param  bool   $set_retry retry time if > 0.
+     * @param  int    $status Current status of the monitor.
      *
      * @return void
      */
-    public function update_monitoring_time( $monitor, $set_retry = false ) {
+    public function update_monitoring_time( $monitor, $set_retry = false, $status = 0 ) {
+        $retries = $set_retry ? ( $monitor->retries + 1 ) : $monitor->retries;
+
+        if ( MainWP_Uptime_Monitoring_Connect::UP === (int) $status ) {
+            $retries = 0; // reset retries if status is up.
+        }
+
         $time   = mainwp_get_timestamp();
         $values = array(
             'monitor_id'                     => $monitor->monitor_id,
-            'retries'                        => $set_retry ? ( $monitor->retries + 1 ) : 0,
+            'retries'                        => $retries,
             'dts_auto_monitoring_time'       => $time + 1, // prevent equal start time.
             'dts_auto_monitoring_retry_time' => $set_retry ? $time : 0,
             'dts_interval_lasttime'          => $time,

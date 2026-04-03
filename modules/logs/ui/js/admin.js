@@ -97,7 +97,7 @@ jQuery(function ($) {
                 if (response?.error) {
                     mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + response.error, 'red');
                 } else if (response?.success) {
-                    mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + __('Logs records has been cleaned up successfully.'), 'green');
+                    mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + __('Log records were cleaned up successfully.'), 'green');
                     $(btn).closest('.item').fadeOut(3000);
                     return;
                 } else {

@@ -4,6 +4,7 @@
 globalThis.mainwpVars = globalThis.mainwpVars || {};
 mainwpVars.errorCount = 0;
 mainwpVars.actionsErrors = {};
+mainwpVars.maxThreads = 3;
 
 globalThis.mainwp_put_actions_errors_msg = function (action, itemId, msgType, errorMsg) {
     mainwpVars.actionsErrors[action] = mainwpVars.actionsErrors?.[action] || {};
@@ -721,7 +722,7 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
             retryLimit: 3,
             endError: function (pSlug, pWebsiteId, pBulkMode) {
                 return function () {
-                    let slugParts = pSlug.split(',');
+                    let slugParts = [pSlug];
                     let done = false;
                     for (let sid of slugParts) {
                         let result;
@@ -1186,7 +1187,7 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
             retryLimit: 3,
             endError: function (pSlug, pWebsiteId, pBulkMode) {
                 return function () {
-                    let slugParts = pSlug.split(',');
+                    let slugParts = [pSlug];
                     let done = false;
                     for (let sid of slugParts) {
                         //Siteview
@@ -1551,7 +1552,7 @@ let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode, la
         action: 'mainwp_upgradeplugintheme',
         websiteId: websiteId,
         type: 'theme',
-        slug: slug
+        slug: currentSlug
     });
     jQuery.ajax({
         type: "POST",
@@ -1647,7 +1648,7 @@ let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode, la
         retryLimit: 3,
         endError: function (pSlug, pWebsiteId, pBulkMode) {
             return function () {
-                let slugParts = pSlug.split(',');
+                let slugParts = [pSlug];
                 let done = false;
                 for (let sid of slugParts) {
                     let websiteHolder = jQuery('div[theme_slug="' + sid + '"] div[site_id="' + pWebsiteId + '"]');
@@ -2029,11 +2030,12 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
     if (!pThemeDone) {
         let themeSlugList = globalThis.mainwp_slug_list_to_array(pThemeSlugToUpgrade);
         let currentThemeSlug = themeSlugList.shift();
+        let remainingThemeSlugs = themeSlugList.join(',');
         let data = mainwp_secure_data({
             action: 'mainwp_upgradeplugintheme',
             websiteId: pWebsiteId,
             type: 'theme',
-            slug: pThemeSlugToUpgrade,
+            slug: currentThemeSlug,
             bulkUpdate: mainwpVars.websitesTotal > 1 ? 1 : 0
         });
 
@@ -2092,10 +2094,10 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                         let fnc = function () {
                             let params = {
                                 'pWebsiteId': pWebsiteId,
-                                'pThemeSlugToUpgrade': pSlug,
+                                'pThemeSlugToUpgrade': remainingThemeSlugs,
                                 'pPluginSlugToUpgrade': pPluginSlugToUpgrade,
                                 'pWordpressUpgrade': pWordpressUpgrade,
-                                'pThemeDone': true,
+                                'pThemeDone': remainingThemeSlugs === '',
                                 'pPluginDone': pPluginDone,
                                 'pUpgradeDone': pUpgradeDone,
                                 'pErrorMessage': pErrorMessage,
@@ -2115,23 +2117,26 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
             }(pWebsiteId, currentThemeSlug, pPluginSlugToUpgrade, pWordpressUpgrade, pPluginDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone),
             tryCount: 0,
             retryLimit: 3,
-            endError: function (pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pTransSlugToUpgrade) {
+            endError: function (pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pPluginDone, pUpgradeDone, pTransSlugToUpgrade, pTransDone) {
                 return function () {
+                    let remainingThemeSlugs = globalThis.mainwp_slug_list_to_array(pThemeSlugToUpgrade);
+                    remainingThemeSlugs.shift();
+                    remainingThemeSlugs = remainingThemeSlugs.join(',');
                     let params = {
                         'pWebsiteId': pWebsiteId,
-                        'pThemeSlugToUpgrade': pThemeSlugToUpgrade,
+                        'pThemeSlugToUpgrade': remainingThemeSlugs,
                         'pPluginSlugToUpgrade': pPluginSlugToUpgrade,
                         'pWordpressUpgrade': pWordpressUpgrade,
-                        'pThemeDone': true,
-                        'pPluginDone': true,
-                        'pUpgradeDone': true,
+                        'pThemeDone': remainingThemeSlugs === '',
+                        'pPluginDone': pPluginDone,
+                        'pUpgradeDone': pUpgradeDone,
                         'pErrorMessage': 'Error processing request',
                         'pTransSlugToUpgrade': pTransSlugToUpgrade,
-                        'pTransDone': true
+                        'pTransDone': pTransDone
                     };
                     updatesoverview_upgrade_int_loop_flow(params);
                 }
-            }(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pTransSlugToUpgrade),
+            }(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pPluginDone, pUpgradeDone, pTransSlugToUpgrade, pTransDone),
             error: function (xhr) {
                 this.tryCount++;
                 if (this.tryCount >= this.retryLimit) {
@@ -2155,11 +2160,12 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
     } else if (!pPluginDone) {
         let pluginSlugList = globalThis.mainwp_slug_list_to_array(pPluginSlugToUpgrade);
         let currentPluginSlug = pluginSlugList.shift();
+        let remainingPluginSlugs = pluginSlugList.join(',');
         let data = mainwp_secure_data({
             action: 'mainwp_upgradeplugintheme',
             websiteId: pWebsiteId,
             type: 'plugin',
-            slug: pPluginSlugToUpgrade,
+            slug: currentPluginSlug,
             bulkUpdate: 1
         });
 
@@ -2215,10 +2221,10 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                             let params = {
                                 'pWebsiteId': pWebsiteId,
                                 'pThemeSlugToUpgrade': pThemeSlugToUpgrade,
-                                'pPluginSlugToUpgrade': pSlug,
+                                'pPluginSlugToUpgrade': remainingPluginSlugs,
                                 'pWordpressUpgrade': pWordpressUpgrade,
                                 'pThemeDone': pThemeDone,
-                                'pPluginDone': true,
+                                'pPluginDone': remainingPluginSlugs === '',
                                 'pUpgradeDone': pUpgradeDone,
                                 'pErrorMessage': pErrorMessage,
                                 'pTransSlugToUpgrade': pTransSlugToUpgrade,
@@ -2237,23 +2243,26 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
             }(pWebsiteId, pThemeSlugToUpgrade, currentPluginSlug, pWordpressUpgrade, pThemeDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone),
             tryCount: 0,
             retryLimit: 3,
-            endError: function (pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pTransSlugToUpgrade) {
+            endError: function (pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pUpgradeDone, pTransSlugToUpgrade, pTransDone) {
                 return function () {
+                    let remainingPluginSlugs = globalThis.mainwp_slug_list_to_array(pPluginSlugToUpgrade);
+                    remainingPluginSlugs.shift();
+                    remainingPluginSlugs = remainingPluginSlugs.join(',');
                     let params = {
                         'pWebsiteId': pWebsiteId,
                         'pThemeSlugToUpgrade': pThemeSlugToUpgrade,
-                        'pPluginSlugToUpgrade': pPluginSlugToUpgrade,
+                        'pPluginSlugToUpgrade': remainingPluginSlugs,
                         'pWordpressUpgrade': pWordpressUpgrade,
-                        'pThemeDone': true,
-                        'pPluginDone': true,
-                        'pUpgradeDone': true,
+                        'pThemeDone': pThemeDone,
+                        'pPluginDone': remainingPluginSlugs === '',
+                        'pUpgradeDone': pUpgradeDone,
                         'pErrorMessage': 'Error processing request',
                         'pTransSlugToUpgrade': pTransSlugToUpgrade,
-                        'pTransDone': true
+                        'pTransDone': pTransDone
                     };
                     updatesoverview_upgrade_int_loop_flow(params);
                 }
-            }(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pTransSlugToUpgrade),
+            }(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pUpgradeDone, pTransSlugToUpgrade, pTransDone),
             error: function (xhr) {
                 this.tryCount++;
                 if (this.tryCount >= this.retryLimit) {
@@ -2381,11 +2390,12 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
     } else if (!pTransDone) { // NOSONAR - condition ok.
         let transSlugList = globalThis.mainwp_slug_list_to_array(pTransSlugToUpgrade);
         let currentTransSlug = transSlugList.shift();
+        let remainingTransSlugs = transSlugList.join(',');
         let data = mainwp_secure_data({
             action: 'mainwp_upgradeplugintheme',
             websiteId: pWebsiteId,
             type: 'translation',
-            slug: pTransSlugToUpgrade,
+            slug: currentTransSlug,
             bulkUpdate: 1
         });
 
@@ -2435,15 +2445,15 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                         let fnc = function () {
                             let params = {
                                 'pWebsiteId': pWebsiteId,
-                                'pThemeSlugToUpgrade': pSlug,
+                                'pThemeSlugToUpgrade': pThemeSlugToUpgrade,
                                 'pPluginSlugToUpgrade': pPluginSlugToUpgrade,
                                 'pWordpressUpgrade': pWordpressUpgrade,
                                 'pThemeDone': pThemeDone,
                                 'pPluginDone': pPluginDone,
                                 'pUpgradeDone': pUpgradeDone,
                                 'pErrorMessage': pErrorMessage,
-                                'pTransSlugToUpgrade': pSlug,
-                                'pTransDone': true,
+                                'pTransSlugToUpgrade': remainingTransSlugs,
+                                'pTransDone': remainingTransSlugs === '',
                                 'bulkErrorCode': bulkErrorCode
                             };
                             updatesoverview_upgrade_int_loop_flow(params);
@@ -2458,23 +2468,26 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
             }(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pUpgradeDone, pErrorMessage, currentTransSlug),
             tryCount: 0,
             retryLimit: 3,
-            endError: function (pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pTransSlugToUpgrade) {
+            endError: function (pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pUpgradeDone, pTransSlugToUpgrade) {
                 return function () {
+                    let remainingTransSlugs = globalThis.mainwp_slug_list_to_array(pTransSlugToUpgrade);
+                    remainingTransSlugs.shift();
+                    remainingTransSlugs = remainingTransSlugs.join(',');
                     let params = {
                         'pWebsiteId': pWebsiteId,
                         'pThemeSlugToUpgrade': pThemeSlugToUpgrade,
                         'pPluginSlugToUpgrade': pPluginSlugToUpgrade,
                         'pWordpressUpgrade': pWordpressUpgrade,
-                        'pThemeDone': true,
-                        'pPluginDone': true,
-                        'pUpgradeDone': true,
+                        'pThemeDone': pThemeDone,
+                        'pPluginDone': pPluginDone,
+                        'pUpgradeDone': pUpgradeDone,
                         'pErrorMessage': 'Error processing request',
-                        'pTransSlugToUpgrade': pTransSlugToUpgrade,
-                        'pTransDone': true
+                        'pTransSlugToUpgrade': remainingTransSlugs,
+                        'pTransDone': remainingTransSlugs === ''
                     };
                     updatesoverview_upgrade_int_loop_flow(params);
                 }
-            }(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pTransSlugToUpgrade),
+            }(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pUpgradeDone, pTransSlugToUpgrade),
             error: function (xhr) {
                 this.tryCount++;
                 if (this.tryCount >= this.retryLimit) {

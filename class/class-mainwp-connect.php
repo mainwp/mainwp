@@ -1871,7 +1871,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( $lastRequest > ( ( microtime( true ) ) - $minimumDelay ) ) {
             static::release( $identifier );
             $sleep = ( $minimumDelay - ( ( microtime( true ) ) - $lastRequest ) ) * 1000 * 1000;
-            $sleep = intval( $sleep );
+            $sleep = max( 0, intval( $sleep ) );
             usleep( $sleep );
             return true;
         }

@@ -3840,7 +3840,7 @@ globalThis.serverinfo_prepare_download_info = function (communi) {
             report = report + " ###\n\n";
         } else {
             jQuery('tr', jQuery(this)).each(function () {
-                if (communi && jQuery(this).hasClass('mwp-not-generate-row'))
+                if (communi && (jQuery(this).hasClass('mwp-not-generate-row') || jQuery(this).hasClass('mwp-community-unsafe-row')))
                     return;
                 i = 0;
                 jQuery(this).find('td:not(".mwp-not-generate-row")').each(function () {
@@ -3849,7 +3849,9 @@ globalThis.serverinfo_prepare_download_info = function (communi) {
                         i++;
                         return;
                     }
-                    report = report + jQuery.mwp_strCut(jQuery(this).text().trim(), td_len[i], ' ');
+                    let communityValue = jQuery(this).attr('data-community-value');
+                    let outputText = (communi && typeof communityValue !== 'undefined') ? communityValue : jQuery(this).text().trim();
+                    report = report + jQuery.mwp_strCut(outputText, td_len[i], ' ');
                     i++;
                 });
                 report = report + "\n";
@@ -3876,32 +3878,12 @@ jQuery(document).on('click', '#mainwp-download-system-report', function () {
     saveAs(blob, "mainwp-system-report.txt");
     return false;
 });
-
-// Copies a string to the clipboard. Must be called from within an
-// event handler such as click.
-let mainwp_copy_to_clipboard = function (text, event) {
-    let clipboardDT = event.clipboardData || globalThis.clipboardData || event.originalEvent.clipboardData; // NOSONAR - to compatible.
-    if (clipboardDT && clipboardDT.setData) {  // NOSONAR - to compatible.
-        console.warn("Copy to clipboard.");
-        return clipboardDT.setData("Text", text);
-    } else {
-        try {
-            if (document?.queryCommandSupported && document.queryCommandSupported("copy")) { // NOSONAR - to compatible.
-                console.warn("Copy to clipboard exec.");
-                return document.execCommand("copy");  // NOSONAR - to compatible, security exception may be thrown by some browsers.
-            }
-        } catch (ex) {
-            console.warn("Copy to clipboard failed.", ex);
-        }
-    }
-}
-
-jQuery(document).on('click', '#mainwp-copy-meta-system-report', function (event) {
-    event.preventDefault();
-    jQuery("#download-server-information").slideDown(); // to able to select and copy
+jQuery(document).on('click', '#mainwp-download-community-system-report', function () {
     serverinfo_prepare_download_info(true);
-    jQuery("#download-server-information").slideUp(); // to support 'copy' method.
-    mainwp_copy_to_clipboard(jQuery("#download-server-information").val(), event);
+    let server_info = jQuery('#download-server-information textarea').val();
+    let blob = new Blob([server_info], { type: "text/plain;charset=utf-8" });
+    saveAs(blob, "mainwp-community-system-report.txt");
+    return false;
 });
 
 

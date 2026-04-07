@@ -852,14 +852,13 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             $status = static::DOWN;
         }
 
-        if ( static::DOWN === $status && ! $set_retry ) {
-            $max_retries = static::get_apply_setting( 'maxretries', (int) $monitor->maxretries, $global_settings, -1, 0 );
-            if ( $max_retries > 0 && $monitor->retries < $max_retries ) {
-                $status = static::PENDING; // to retry.
-                ++$down_count;
-                $set_retry = true;
-                MainWP_Logger::instance()->log_uptime_check( 'Uptime Down status - set retry :: [site-id=' . (string) $monitor->wpid . ']' );
-            }
+        $max_retries = static::get_apply_setting( 'maxretries', (int) $monitor->maxretries, $global_settings, -1, 0 );
+
+        if ( static::DOWN === $status && ! $set_retry && $max_retries > 0 && $monitor->retries < $max_retries ) {
+            $status = static::PENDING; // to retry.
+            ++$down_count;
+            $set_retry = true;
+            MainWP_Logger::instance()->log_uptime_check( 'Uptime Down status - set retry :: [site-id=' . (string) $monitor->wpid . ']' );
         }
 
         if ( ! empty( $error ) ) {
@@ -867,15 +866,15 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         }
 
         $previous_heartbeat = MainWP_DB_Uptime_Monitoring::instance()->get_previous_monitor_heartbeat( $monitor->monitor_id );
-
-        $previous_status = static::FIRST;
-
-        if ( $previous_heartbeat ) {
-            $previous_status = $previous_heartbeat->status;
-        }
         $sec_since_last = $previous_heartbeat && ! empty( $previous_heartbeat->time ) ? (int) $end - strtotime( $previous_heartbeat->time ) : 1;
 
-        $importance = $this->is_importance_status( (int) $previous_status, (int) $status ) ? 1 : 0;
+        $previous_main_status = $monitor->last_main_status;
+
+        if ( 99 === (int)$previous_main_status ) { // initial status, to set as up, and not send notification for the first time.
+            $previous_main_status = static::UP;
+        }
+
+        $importance = $this->is_importance_status( (int) $previous_main_status, (int) $status ) ? 1 : 0;
 
         // get this time first.
         $uptime_init_time = mainwp_get_current_utc_datetime_db( false );
@@ -904,14 +903,18 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         $db_timestamp = strtotime( $db_datetime );
 
-        MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor(
-            array(
-                'monitor_id'     => $monitor->monitor_id,
-                'last_status'    => $status,
-                'last_http_code' => $http_code,
-                'lasttime_check' => $db_timestamp,
-            )
+        $up_mo = array(
+            'monitor_id'     => $monitor->monitor_id,
+            'last_status'    => $status,
+            'last_http_code' => $http_code,
+            'lasttime_check' => $db_timestamp,
         );
+
+        if ( static::UP === $status || static::DOWN === $status ) {
+            $up_mo['last_main_status'] = $status; // to save the last important status for notification.
+        }
+
+        MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor( $up_mo );
 
         if ( $importance ) {
             MainWP_Uptime_Monitoring_Handle::instance()->update_process_monitor_notification( $monitor->monitor_id, $uptime_init_time );
@@ -932,7 +935,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             );
         }
 
-        MainWP_Uptime_Monitoring_Schedule::instance()->update_monitoring_time( $monitor, $set_retry ); // update monitor check info, and retry or not.
+        MainWP_Uptime_Monitoring_Schedule::instance()->update_monitoring_time( $monitor, $set_retry, $status ); // update monitor check info, and retry or not.
 
         do_action( 'mainwp_uptime_monitoring_after_check_uptime', $heartbeat, $monitor, $previous_heartbeat );
 
@@ -954,6 +957,9 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $debug .= ' :: [monitor_timeout=' . $monitor->timeout . '] :: [apply_monitor_timeout=' . $use_mo_timeout . ']';
         $debug .= ' :: [ping_ms=' . $heartbeat['ping_ms'] . ']';
         $debug .= ' :: [duration_sec=' . $sec_since_last . ']';
+        $debug .= ' :: [retry=' . ( $set_retry ? 1 : 0 ) . ']';
+        $debug .= ' :: [retries=' . $monitor->retries . ']';
+        $debug .= ' :: [apply maxretries=' . $max_retries . ']';
         $debug .= ' :: [time=' . $db_datetime . ']';
 
         MainWP_Logger::instance()->log_uptime_check( $debug );
@@ -1104,6 +1110,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
      *
      * @param  int $previous previous.
      * @param  int $current current.
+     *
      * @return mixed
      */
     public function is_importance_status( $previous, $current ) {

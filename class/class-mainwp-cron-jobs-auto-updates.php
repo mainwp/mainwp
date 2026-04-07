@@ -162,6 +162,13 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
             // @since 5.4.0.2 +.
             $sync_before = apply_filters( 'mainwp_auto_updates_sync_data_before_run', true );
             foreach ( $autoupdates_websites as $website ) {
+
+                if ( empty( $website->autosync_start_run ) ) {
+                    MainWP_DB::instance()->update_website_option( $website->id, 'autosync_start_run', $local_timestamp ); // to sure the site is in process.
+                }
+                $log_start_run = empty( $website->autosync_start_run ) ? $local_timestamp : intval( $website->autosync_start_run );
+                MainWP_Logger::instance()->log_update_check( '[siteid: ' . $website->id . '] :: [autosync_start_run=' . gmdate( 'Y-m-d H:i:s', $log_start_run ) . ']' );
+
                 if ( ! empty( $website->sync_errors ) ) {
                     if ( ! MainWP_Sync::sync_site( $website, false, true ) ) {
                         $this->finished_site_auto_updates( $website );  // to skip sync error sites.
@@ -169,13 +176,6 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                 } elseif ( $sync_before && ! MainWP_Sync::sync_site( $website, false, true ) ) {
                     $this->finished_site_auto_updates( $website );  // to skip.
                 } else {
-                    if ( empty( $website->autosync_start_run ) ) {
-                        MainWP_DB::instance()->update_website_option( $website->id, 'autosync_start_run', $local_timestamp ); // to sure the site is in process.
-                    }
-
-                    $start_run = empty( $website->autosync_start_run ) ? $local_timestamp : intval( $website->autosync_start_run );
-                    MainWP_Logger::instance()->log_update_check( '[siteid: ' . $website->id . '] :: [autosync_start_run=' . gmdate( 'Y-m-d H:i:s', $start_run ) . ']' );
-
                     $websites[] = $website;
                 }
             }

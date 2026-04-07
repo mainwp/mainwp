@@ -671,7 +671,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      * Gets complete URL.
      */
     public static function get_complete_url() {
-        echo isset( $_SERVER['HTTP_REFERER'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['HTTP_REFERER'] ) ) ) : '';
+        echo isset( $_SERVER['HTTP_REFERER'] ) ? esc_url( sanitize_text_field( wp_unslash( $_SERVER['HTTP_REFERER'] ) ) ) : '';
     }
 
     /**

@@ -599,7 +599,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             jQuery( '.mainwp-system-info-table:not(#mainwp-system-report-extensions-table)' ).each( function() {
                 mainwpSystemReportTables.push( jQuery( this ).DataTable( {
                     responsive: responsive,
-                    colreorder: true,
+                    colReorder: true,
                     paging: false,
                     info: false,
                     autoWidth: false,
@@ -608,7 +608,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             } );
             mainwpSystemReportTables.push( jQuery( '#mainwp-system-report-extensions-table' ).DataTable( {
                 responsive: responsive,
-                colreorder: true,
+                colReorder: true,
                 paging: false,
                 info: false,
                 autoWidth: false,

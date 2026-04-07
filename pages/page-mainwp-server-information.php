@@ -436,7 +436,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
          */
         do_action( 'mainwp_before_server_info_table' );
         ?>
-        <div class="ui padded segment">
+        <div id="mainwp-system-report-page" class="ui padded segment">
         <?php
         if ( function_exists( 'curl_version' ) && ! MainWP_Server_Information_Handler::curlssl_compare( 'OpenSSL/1.1.0', '>=' ) ) {
             /* translators: 1: line break tag, 2: opening anchor tag, 3: closing anchor tag */
@@ -444,6 +444,30 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         }
         static::render_detected_issues_summary();
         ?>
+        <style type="text/css">
+            #mainwp-system-report-page .mainwp-system-report-table {
+                table-layout: fixed;
+                width: 100%;
+            }
+
+            #mainwp-system-report-page .mainwp-system-info-table {
+                margin: 0 0 1rem 0 !important;
+            }
+
+            #mainwp-system-report-page .dt-container,
+            #mainwp-system-report-page .dataTables_wrapper {
+                margin: 0 0 1rem 0;
+            }
+
+            #mainwp-system-report-page .dt-container .mainwp-system-info-table,
+            #mainwp-system-report-page .dataTables_wrapper .mainwp-system-info-table {
+                margin-bottom: 0 !important;
+            }
+        </style>
+        <div class="ui fluid icon input" style="margin:1rem 0 1.5rem 0;">
+            <input type="search" id="mainwp-system-report-global-search" placeholder="<?php esc_attr_e( 'Search all system report sections', 'mainwp' ); ?>" aria-label="<?php esc_attr_e( 'Search all system report sections', 'mainwp' ); ?>">
+            <i class="search icon"></i>
+        </div>
         <table id="mainwp-system-report-wordpress-table" class="ui unstackable table single line mainwp-system-report-table mainwp-system-info-table">
                 <thead>
                     <tr>
@@ -493,8 +517,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         <table id="mainwp-system-report-server-table" class="ui unstackable table mainwp-system-report-table mainwp-system-info-table">
             <thead>
                 <tr>
-                    <th scope="col" class="eight wide"><?php esc_html_e( 'Server Configuration', 'mainwp' ); ?></th>
-                    <th scope="col" class="eight wide"><?php esc_html_e( 'Detected Value', 'mainwp' ); ?></th>
+                    <th scope="col" class="seven wide"><?php esc_html_e( 'Server Configuration', 'mainwp' ); ?></th>
+                    <th scope="col" class="nine wide"><?php esc_html_e( 'Detected Value', 'mainwp' ); ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -561,20 +585,34 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             responsive = false;
         }
         jQuery( document ).ready( function() {
-            jQuery( '.mainwp-system-info-table:not(#mainwp-system-report-extensions-table)' ).DataTable( {
-                responsive: responsive,
-                colreorder: true,
-                paging: false,
-                info: false,
+            const mainwpSystemReportTables = [];
+            jQuery( '.mainwp-system-info-table:not(#mainwp-system-report-extensions-table)' ).each( function() {
+                mainwpSystemReportTables.push( jQuery( this ).DataTable( {
+                    responsive: responsive,
+                    colreorder: true,
+                    paging: false,
+                    info: false,
+                    autoWidth: false,
+                    dom: 't',
+                } ) );
             } );
-            jQuery( '#mainwp-system-report-extensions-table' ).DataTable( {
+            mainwpSystemReportTables.push( jQuery( '#mainwp-system-report-extensions-table' ).DataTable( {
                 responsive: responsive,
                 colreorder: true,
                 paging: false,
                 info: false,
+                autoWidth: false,
+                dom: 't',
                 "language": {
                     "emptyTable": "<?php esc_html_e( 'No installed extensions', 'mainwp' ); ?>"
                 },
+            } ) );
+
+            jQuery( '#mainwp-system-report-global-search' ).on( 'input', function() {
+                const searchValue = jQuery( this ).val();
+                mainwpSystemReportTables.forEach( function( table ) {
+                    table.search( searchValue ).draw();
+                } );
             } );
         } );
         </script>
@@ -2009,27 +2047,27 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         ?>
         <div class="ui <?php echo $has_error ? 'negative' : 'warning'; ?> message">
             <div class="header"><?php esc_html_e( 'Detected Issues', 'mainwp' ); ?></div>
-            <div class="ui relaxed list">
+            <div class="ui list">
                 <?php foreach ( $issues as $issue ) : ?>
                     <div class="item">
                         <div class="content">
-                            <div class="header">
+                            <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
                                 <?php echo static::get_report_status_html( isset( $issue['severity'] ) ? $issue['severity'] : '' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
                                 <?php if ( ! empty( $issue['anchor'] ) ) : ?>
-                                    <a href="#<?php echo esc_attr( $issue['anchor'] ); ?>"><?php echo esc_html( $issue['title'] ); ?></a>
+                                    <a href="#<?php echo esc_attr( $issue['anchor'] ); ?>"><span style="font-weight:600;"><?php echo esc_html( $issue['title'] ); ?></span></a>
                                 <?php else : ?>
-                                    <?php echo esc_html( $issue['title'] ); ?>
+                                    <span style="font-weight:600;"><?php echo esc_html( $issue['title'] ); ?></span>
                                 <?php endif; ?>
-                            </div>
-                            <?php if ( ! empty( $issue['detail'] ) ) : ?>
-                                <div class="description"><?php echo esc_html( $issue['detail'] ); ?></div>
-                            <?php endif; ?>
-                            <?php if ( ! empty( $issue['kb_url'] ) ) : ?>
-                                <div class="description">
+                                <?php if ( ! empty( $issue['detail_html'] ) ) : ?>
+                                    <span><?php echo wp_kses_post( $issue['detail_html'] ); ?></span>
+                                <?php elseif ( ! empty( $issue['detail'] ) ) : ?>
+                                    <span><?php echo esc_html( $issue['detail'] ); ?></span>
+                                <?php endif; ?>
+                                <?php if ( ! empty( $issue['kb_url'] ) ) : ?>
                                     <a href="<?php echo esc_url( $issue['kb_url'] ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Help document', 'mainwp' ); ?></a>
                                     <i class="external alternate icon"></i>
-                                </div>
-                            <?php endif; ?>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
                 <?php endforeach; ?>

@@ -1047,12 +1047,27 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
 
         $self_connect = static::get_server_self_connect_data();
         if ( 'pass' !== $self_connect['status'] ) {
+            $issue_title  = esc_html__( 'Dashboard self-connect check failed', 'mainwp' );
+            $issue_detail = $self_connect['value'];
+            $issue_html   = '';
+
+            if ( isset( $self_connect['code'] ) && 'unexpected_body' === $self_connect['code'] ) {
+                $issue_title  = esc_html__( 'Dashboard self-connect returned an unexpected body', 'mainwp' );
+                $issue_detail = esc_html__( 'Unexpected response body. Note: This is common and usually not a problem unless WP-Cron or loopback requests are failing.', 'mainwp' );
+                $issue_html   = sprintf(
+                    '%1$s <em>%2$s</em>',
+                    esc_html__( 'Unexpected response body.', 'mainwp' ),
+                    esc_html__( 'Note: This is common and usually not a problem unless WP-Cron or loopback requests are failing.', 'mainwp' )
+                );
+            }
+
             $issues[] = array(
-                'severity' => $self_connect['status'],
-                'title'    => esc_html__( 'Dashboard self-connect check failed', 'mainwp' ),
-                'detail'   => $self_connect['value'],
-                'anchor'   => 'mainwp-system-report-connectivity-table',
-                'kb_url'   => 'https://docs.mainwp.com/troubleshooting/potential-issues/',
+                'severity'    => $self_connect['status'],
+                'title'       => $issue_title,
+                'detail'      => $issue_detail,
+                'detail_html' => $issue_html,
+                'anchor'      => 'mainwp-system-report-connectivity-table',
+                'kb_url'      => ( isset( $self_connect['code'] ) && 'unexpected_body' === $self_connect['code'] ) ? '' : 'https://docs.mainwp.com/troubleshooting/potential-issues/',
             );
         }
 
@@ -2349,6 +2364,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                     $response->get_error_message()
                 ),
                 'status' => 'error',
+                'code'   => 'request_failed',
             );
             return $cached_data;
         }
@@ -2457,6 +2473,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             $cached_data = array(
                 'value'  => esc_html__( 'Auth challenge detected (HTTP 401)', 'mainwp' ),
                 'status' => 'error',
+                'code'   => 'auth_challenge',
             );
             return $cached_data;
         }
@@ -2464,6 +2481,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             $cached_data = array(
                 'value'  => esc_html__( 'Forbidden or blocked (HTTP 403)', 'mainwp' ),
                 'status' => 'error',
+                'code'   => 'forbidden',
             );
             return $cached_data;
         }
@@ -2475,6 +2493,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                     $response_code
                 ),
                 'status' => 'warning',
+                'code'   => 'unexpected_status',
             );
             return $cached_data;
         }
@@ -2482,8 +2501,9 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         $response_body = wp_remote_retrieve_body( $response );
         if ( false === strstr( $response_body, 'MainWP Test' ) ) {
             $cached_data = array(
-                'value'  => esc_html__( 'Unexpected response body', 'mainwp' ),
+                'value'  => esc_html__( 'Unexpected response body. Note: This is common and usually not a problem unless WP-Cron or loopback requests are failing.', 'mainwp' ),
                 'status' => 'warning',
+                'code'   => 'unexpected_body',
             );
             return $cached_data;
         }
@@ -2495,6 +2515,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 $response_code
             ),
             'status' => 'pass',
+            'code'   => 'pass',
         );
 
         return $cached_data;

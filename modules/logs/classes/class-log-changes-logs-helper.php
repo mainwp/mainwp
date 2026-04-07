@@ -309,8 +309,6 @@ class Log_Changes_Logs_Helper {
      */
     public static function get_changes_logs_types( $type_id = null ) { //phpcs:ignore -- NOSONAR - long function.
 
-    $tran_loc = 'mainwp'; //phpcs:ignore -- NOSONAR - used in default-logs.php.
-
         static $defaults;
         if ( null === $defaults ) {
             $defaults = include MAINWP_MODULES_DIR . 'logs/includes/default-logs.php'; //phpcs:ignore -- NOSONAR ok.

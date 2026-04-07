@@ -451,7 +451,7 @@ class Log_Settings {
      * @return void
      */
     private static function render_logs_data_selection() { //phpcs:ignore -- NOSONAR - ok.
-        $list_logs    = static::get_data_logs_default();
+        $list_logs    = static::get_data_logs_default_to_render();
         $setting_page = true;
         ?>
         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-miscellaneous">
@@ -463,52 +463,38 @@ class Log_Settings {
             </label>
             <div class="ten wide column" <?php echo $setting_page ? 'data-tooltip="' . esc_attr__( 'Select which types of site changes should be recorded in the logs. Only checked items will generate log entries, helping you focus on the most relevant activity.', 'mainwp' ) . '"' : ''; ?> data-inverted="" data-position="top left">
                 <?php
-                foreach ( $list_logs as $type => $items ) {
-                    if ( 'changeslogs' !== $type ) {
+                foreach ( $list_logs as $item ) {
+                    if ( ! is_array( $item ) ) {
+                        continue;
+                    }
+                    if ( isset( $item['name_id'] ) && '_separator_title' === $item['name_id'] ) {
                         ?>
-                        <div class="ui header"><?php echo 'dashboard' === $type ? esc_html__( 'Events triggered from MainWP Dashboard', 'mainwp' ) : esc_html__( 'Non-MainWP Changes - Events triggered on child sites', 'mainwp' ); ?></div>
+                        <div class="ui header"><?php echo esc_html( $item['label'] ); ?></div>
                         <?php
+                        continue;
                     }
                     ?>
                     <ul class="mainwp_hide_wpmenu_checkboxes">
                     <?php
-                    if ( in_array( $type, array( 'dashboard', 'nonmainwpchanges' ) ) ) {
-                        foreach ( $items as $name => $title ) {
-                            $_selected = '';
-                            if ( static::is_action_log_enabled( $name, $type ) ) {
-                                $_selected = 'checked';
-                            }
-                            ?>
-                            <li>
-                                <div class="ui checkbox">
-                                    <input type="checkbox" class="settings-field-value-change-handler" id="mainwp_select_logs_<?php echo esc_attr( $type ); ?>_<?php echo esc_attr( $name ); ?>" name="mainwp_settings_logs_data[<?php echo esc_attr( $type ); ?>][]" <?php echo esc_html( $_selected ); ?> value="<?php echo esc_attr( $name ); ?>">
-                                    <label for="mainwp_select_logs_<?php echo esc_attr( $type ); ?>_<?php echo esc_attr( $name ); ?>" ><?php echo esc_html( $title ); ?></label>
-                                </div>
-                                <input type="hidden" name="mainwp_settings_logs_name[<?php echo esc_attr( $type ); ?>][]" value="<?php echo esc_attr( $name ); ?>">
-                            </li>
-                            <?php
+
+                    $type  = isset( $item['log_group'] ) ? $item['log_group'] : '';
+                    $name  = isset( $item['name_id'] ) ? $item['name_id'] : '';
+                    $title = isset( $item['label'] ) ? $item['label'] : '';
+
+                    if ( in_array( $type, array( 'dashboard', 'nonmainwpchanges', 'changeslogs' ) ) ) {
+                        $_selected = '';
+                        if ( static::is_action_log_enabled( $name, $type ) ) {
+                            $_selected = 'checked';
                         }
-                    } elseif ( 'changeslogs' === $type ) {
-
-                        foreach ( $items as $item ) {
-                            $name  = $item['type_id'];
-                            $title = isset( $item['desc'] ) ? $item['desc'] : '';
-
-                            $_selected = '';
-                            if ( static::is_action_log_enabled( $name, $type ) ) {
-                                $_selected = 'checked';
-                            }
-
-                            ?>
-                            <li>
-                                <div class="ui checkbox">
-                                    <input type="checkbox" class="settings-field-value-change-handler" id="mainwp_select_logs_<?php echo esc_attr( $type ); ?>_<?php echo esc_attr( $name ); ?>" name="mainwp_settings_logs_data[<?php echo esc_attr( $type ); ?>][]" <?php echo esc_html( $_selected ); ?> value="<?php echo esc_attr( $name ); ?>">
-                                    <label for="mainwp_select_logs_<?php echo esc_attr( $type ); ?>_<?php echo esc_attr( $name ); ?>" ><?php echo esc_html( $title ); ?></label>
-                                </div>
-                                <input type="hidden" name="mainwp_settings_logs_name[<?php echo esc_attr( $type ); ?>][]" value="<?php echo esc_attr( $name ); ?>">
-                            </li>
-                            <?php
-                        }
+                        ?>
+                        <li>
+                            <div class="ui checkbox">
+                                <input type="checkbox" class="settings-field-value-change-handler" id="mainwp_select_logs_<?php echo esc_attr( $type ); ?>_<?php echo esc_attr( $name ); ?>" name="mainwp_settings_logs_data[<?php echo esc_attr( $type ); ?>][]" <?php echo esc_html( $_selected ); ?> value="<?php echo esc_attr( $name ); ?>">
+                                <label for="mainwp_select_logs_<?php echo esc_attr( $type ); ?>_<?php echo esc_attr( $name ); ?>" ><?php echo esc_html( $title ); ?></label>
+                            </div>
+                            <input type="hidden" name="mainwp_settings_logs_name[<?php echo esc_attr( $type ); ?>][]" value="<?php echo esc_attr( $name ); ?>">
+                        </li>
+                        <?php
                     }
                     ?>
                     </ul>
@@ -616,5 +602,345 @@ class Log_Settings {
         }
 
         return $logs;
+    }
+
+    /**
+     * Method get_data_logs_default_to_render().
+     *
+     * @return array data.
+     */
+    private static function get_data_logs_default_to_render() {
+
+        $list_compatible = array( 1960, 1965, 1970, 1975, 1980 );
+
+        // Convert
+        $list_to_render = array(
+
+            array(
+                'label'   => __( 'Events triggered from MainWP Dashboard', 'mainwp' ),
+                'name_id' => '_separator_title',
+            ),
+            array(
+                'label'     => __( 'Site Added', 'mainwp' ),
+                'name_id'   => 'sites_added',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Site Updated', 'mainwp' ),
+                'name_id'   => 'sites_updated',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Site Synchronized', 'mainwp' ),
+                'name_id'   => 'sites_sync',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Site Deleted', 'mainwp' ),
+                'name_id'   => 'sites_deleted',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Site Reconnected', 'mainwp' ),
+                'name_id'   => 'sites_reconnect',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Site Suspended', 'mainwp' ),
+                'name_id'   => 'sites_suspend',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Site Unsuspended', 'mainwp' ),
+                'name_id'   => 'sites_unsuspend',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Tag Created', 'mainwp' ),
+                'name_id'   => 'tags_created',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Tag Deleted', 'mainwp' ),
+                'name_id'   => 'tags_deleted',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Tag Updated', 'mainwp' ),
+                'name_id'   => 'tags_updated',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Theme Installed', 'mainwp' ),
+                'name_id'   => 'theme_install',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Theme Activated', 'mainwp' ),
+                'name_id'   => 'theme_activate',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Theme Deactivated', 'mainwp' ),
+                'name_id'   => 'theme_deactivate',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Theme Updated', 'mainwp' ),
+                'name_id'   => 'theme_update',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Theme Switched', 'mainwp' ),
+                'name_id'   => 'theme_switch',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Theme Deleted', 'mainwp' ),
+                'name_id'   => 'theme_delete',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Plugin Installed', 'mainwp' ),
+                'name_id'   => 'plugin_install',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Plugin Activated', 'mainwp' ),
+                'name_id'   => 'plugin_activate',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Plugin Deactivated', 'mainwp' ),
+                'name_id'   => 'plugin_deactivate',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Plugin Updated', 'mainwp' ),
+                'name_id'   => 'plugin_updated',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Plugin Deleted', 'mainwp' ),
+                'name_id'   => 'plugin_delete',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Translation Updated', 'mainwp' ),
+                'name_id'   => 'translation_updated',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'WordPress Core Updated', 'mainwp' ),
+                'name_id'   => 'core_updated',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Post Created', 'mainwp' ),
+                'name_id'   => 'post_created',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Post Published', 'mainwp' ),
+                'name_id'   => 'post_published',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Post Unpublished', 'mainwp' ),
+                'name_id'   => 'post_unpublished',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Post Updated', 'mainwp' ),
+                'name_id'   => 'post_updated',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Post Trashed', 'mainwp' ),
+                'name_id'   => 'post_trashed',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Post Deleted', 'mainwp' ),
+                'name_id'   => 'post_deleted',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Post Restored', 'mainwp' ),
+                'name_id'   => 'post_restored',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Page Created', 'mainwp' ),
+                'name_id'   => 'page_created',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Page Published', 'mainwp' ),
+                'name_id'   => 'page_published',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Page Unpublished', 'mainwp' ),
+                'name_id'   => 'page_unpublished',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Page Updated', 'mainwp' ),
+                'name_id'   => 'page_updated',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Page Trashed', 'mainwp' ),
+                'name_id'   => 'page_trashed',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Page Deleted', 'mainwp' ),
+                'name_id'   => 'page_deleted',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Page Restored', 'mainwp' ),
+                'name_id'   => 'page_restored',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Client Created', 'mainwp' ),
+                'name_id'   => 'clients_created',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Client Updated', 'mainwp' ),
+                'name_id'   => 'clients_updated',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Client Suspended', 'mainwp' ),
+                'name_id'   => 'clients_suspend',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Client Unsuspended', 'mainwp' ),
+                'name_id'   => 'clients_unsuspend',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Client Marked as Lead', 'mainwp' ),
+                'name_id'   => 'clients_lead',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Client Marked as Lost', 'mainwp' ),
+                'name_id'   => 'clients_lost',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'User Created', 'mainwp' ),
+                'name_id'   => 'users_created',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'User Updated', 'mainwp' ),
+                'name_id'   => 'users_update',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'User Deleted', 'mainwp' ),
+                'name_id'   => 'users_delete',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'User Role Changed', 'mainwp' ),
+                'name_id'   => 'users_change_role',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'     => __( 'Admin Password Updated', 'mainwp' ),
+                'name_id'   => 'users_update_password',
+                'log_group' => 'dashboard',
+            ),
+            array(
+                'label'   => __( 'Non-MainWP Changes - Events triggered on child sites', 'mainwp' ),
+                'name_id' => '_separator_title',
+            ),
+            array(
+                'label'     => __( 'Theme Installed', 'mainwp' ),
+                'name_id'   => 1975,
+                'log_group' => 'changeslogs',
+            ),
+            array(
+                'label'     => __( 'Theme Activated', 'mainwp' ),
+                'name_id'   => 'theme_activate',
+                'log_group' => 'nonmainwpchanges',
+            ),
+            array(
+                'label'     => __( 'Theme Deactivated', 'mainwp' ),
+                'name_id'   => 'theme_deactivate',
+                'log_group' => 'nonmainwpchanges',
+            ),
+            array(
+                'label'     => __( 'Theme Updated', 'mainwp' ),
+                'name_id'   => 1980,
+                'log_group' => 'changeslogs',
+            ),
+            array(
+                'label'     => __( 'Theme Switched', 'mainwp' ),
+                'name_id'   => 'theme_switch',
+                'log_group' => 'nonmainwpchanges',
+            ),
+            array(
+                'label'     => __( 'Theme Deleted', 'mainwp' ),
+                'name_id'   => 'theme_delete',
+                'log_group' => 'nonmainwpchanges',
+            ),
+            array(
+                'label'     => __( 'Plugin Installed', 'mainwp' ),
+                'name_id'   => 1965,
+                'log_group' => 'changeslogs',
+            ),
+            array(
+                'label'     => __( 'Plugin Activated', 'mainwp' ),
+                'name_id'   => 'plugin_activate',
+                'log_group' => 'nonmainwpchanges',
+            ),
+            array(
+                'label'     => __( 'Plugin Deactivated', 'mainwp' ),
+                'name_id'   => 'plugin_deactivate',
+                'log_group' => 'nonmainwpchanges',
+            ),
+            array(
+                'label'     => __( 'Plugin Updated', 'mainwp' ),
+                'name_id'   => 1970,
+                'log_group' => 'changeslogs',
+            ),
+            array(
+                'label'     => __( 'Plugin Deleted', 'mainwp' ),
+                'name_id'   => 'plugin_delete',
+                'log_group' => 'nonmainwpchanges',
+            ),
+            array(
+                'label'     => __( 'WordPress Core Updated', 'mainwp' ),
+                'name_id'   => 1960,
+                'log_group' => 'changeslogs',
+            ),
+        );
+
+        $raw_logs = Log_Changes_Logs_Helper::get_changes_logs_types();
+
+        foreach ( $raw_logs as $item ) {
+
+            if ( ! empty( $item['type_id'] ) && in_array( $item['type_id'], $list_compatible ) ) {
+                continue;
+            }
+
+            $list_to_render[] = array(
+                'label'     => $item['desc'],
+                'name_id'   => $item['type_id'],
+                'log_group' => 'changeslogs',
+            );
+        }
+
+        return $list_to_render;
     }
 }

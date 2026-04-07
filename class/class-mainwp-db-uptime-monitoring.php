@@ -847,7 +847,6 @@ KEY idx_wpid_issub (wpid, issub)";
         }
 
         $select_fields[] = 'mo.*';
-        $select_fields[] = 'wp_optionview.*';
 
         $select = implode( ',', $select_fields );
 
@@ -888,14 +887,24 @@ KEY idx_wpid_issub (wpid, issub)";
             $limit_str = $params['str_limit'];
         }
 
-        $qry = 'SELECT ' . $select . '
+        $view_selects = '';
+        $view_joins   = '';
+
+        $opts_view = $this->get_option_view_by_join( $view, $others_fields );
+
+        if ( is_array( $opts_view ) && ! empty( $opts_view['selects'] ) ) {
+            $view_selects = ',' . $opts_view['selects'];
+            $view_joins   = $opts_view['joins'];
+        }
+
+        $qry = 'SELECT ' . $select . $view_selects . '
             FROM ' . $table_wp . ' wp
             ' . $join_clients . '
             ' . $join_groups . '
             ' . $join_monitors . '
             ' . $join_process . '
             JOIN ' . $table_wp_sync . ' wp_sync ON wp.id = wp_sync.wpid
-            JOIN ' . $this->get_option_view_by( $view, $others_fields ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+            ' . $view_joins . '
             WHERE 1 ' . $where . $custom_where . '
             GROUP BY mo.monitor_id ORDER BY ' . $order_by . $limit_str;
 

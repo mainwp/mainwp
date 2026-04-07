@@ -628,7 +628,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
         if ( '_get_cache_false' !== $cache_ids ) {
             if ( empty( $cache_ids ) ) {
-                $params['_included_cache_ids'] = array( -1 ); // not found if get cached success but empty.
+                $params['_included_cache_ids'] = array( 0 ); // not found if get cached success but empty.
             } else {
                 $params['_included_cache_ids'] = $cache_ids;
             }

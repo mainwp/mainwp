@@ -2140,7 +2140,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         ?>
         <tr class="<?php echo esc_attr( implode( ' ', $row_classes ) ); ?>">
             <td><?php echo esc_html( isset( $row['label'] ) ? $row['label'] : '' ); ?></td>
-            <td<?php echo $value_attr; ?>><?php echo esc_html( isset( $row['value'] ) ? $row['value'] : '' ); ?></td>
+            <td<?php echo $value_attr; //phpcs:ignore  -- escaped. ?>><?php echo esc_html( isset( $row['value'] ) ? $row['value'] : '' ); ?></td>
             <td class="right aligned"><?php echo static::get_report_status_html( isset( $row['status'] ) ? $row['status'] : '' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
         </tr>
         <?php

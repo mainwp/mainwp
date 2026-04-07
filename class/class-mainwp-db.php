@@ -189,6 +189,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $fields[] = 'phpversion';
         }
 
+        $fields = array_values( array_unique( array_filter( $fields ) ) );
+
         $tbl_wp_options = $this->table_name( 'wp_options' );
 
         $selects = array();

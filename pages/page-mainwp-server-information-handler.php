@@ -1148,7 +1148,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             ),
             array(
                 'label'      => esc_html__( 'WordPress REST API endpoint', 'mainwp' ),
-                'value'      => home_url( '/wp-json/' ),
+                'value'      => rest_url(),
                 'visibility' => 'full_only',
             ),
             array(
@@ -2331,7 +2331,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             return $cached_data;
         }
 
-        $url      = home_url( '/wp-json/' );
+        $url      = rest_url();
         $response = wp_remote_get(
             esc_url_raw( $url ),
             array(
@@ -2354,8 +2354,10 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         }
 
         $response_code = (int) wp_remote_retrieve_response_code( $response );
+        $body          = wp_remote_retrieve_body( $response );
+        $data          = json_decode( $body, true );
 
-        if ( $response_code >= 200 && $response_code < 300 ) {
+        if ( $response_code >= 200 && $response_code < 300 && is_array( $data ) && isset( $data['namespaces'] ) ) {
             $cached_data = array(
                 'value'  => sprintf(
                     /* translators: %d: HTTP status code */
@@ -2363,6 +2365,18 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                     $response_code
                 ),
                 'status' => 'pass',
+            );
+            return $cached_data;
+        }
+
+        if ( $response_code >= 200 && $response_code < 300 ) {
+            $cached_data = array(
+                'value'  => sprintf(
+                    /* translators: %d: HTTP status code */
+                    esc_html__( 'Unexpected non-REST response (HTTP %d)', 'mainwp' ),
+                    $response_code
+                ),
+                'status' => 'warning',
             );
             return $cached_data;
         }
@@ -2495,7 +2509,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         $dirs = MainWP_System_Utility::get_mainwp_dir();
         $path = isset( $dirs[0] ) ? $dirs[0] : '';
 
-        if ( empty( $path ) || ! is_dir( dirname( $path ) ) ) {
+        if ( empty( $path ) || ! is_dir( dirname( $path ) ) || ! is_dir( $path ) ) {
             return array(
                 'value'  => esc_html__( 'Not found', 'mainwp' ),
                 'status' => 'error',

@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.9.4
 Requires PHP: 7.4
-Stable tag: 6.0.8-er.1
+Stable tag: 6.0.8
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -147,6 +147,18 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.0.8 - 4-7-2026 =
+
+* Fixed: Corrected a typo in the "Remove Site" button ID attribute that caused the button to malfunction.
+* Fixed: Improved the stability of the site synchronization process to prevent issues with the Regression Testing feature.
+* Fixed: Resolved an issue where the Network Activity feature continued logging events even when the feature was disabled.
+* Fixed: An issue during site registration where URLs with and without the `www` subdomain were handled inconsistently.
+* Added: Added detailed sync monitoring with per-call timing and execution data to the Custom Event Monitor.
+* Added: Added an option to set a custom Network Activity data retention period in child site databases.
+* Added: Added size monitoring and cleanup actions for Network Activity-related database tables on child sites.
+* Updated: Optimized the log archiving process with improved database operations to resolve performance issues related to the Network Activity feature.
+* Updated: Redirect URL and enhanced feedback handling in the Cost Tracker module.
 
 = 6.0.7 - 3-31-2026 =
 

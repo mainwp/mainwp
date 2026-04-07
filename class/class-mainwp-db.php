@@ -525,7 +525,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             }
             $qry = 'SELECT ' . $select . $view_selects . '
             FROM ' . $this->table_name( 'wp' ) . ' wp
-            ' . $join_sync . $view_joins . '
+            ' . $join_sync . ' ' . $view_joins . '
             WHERE 1 ' . $where . $connected_sql . '
             GROUP BY ' . $group_by . '
             ORDER BY ' . $orderBy;

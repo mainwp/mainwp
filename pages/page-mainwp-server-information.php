@@ -368,11 +368,16 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         if ( isset( $_GET['page'] ) && 'ServerInformation' === $_GET['page'] ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             ?>
         <div class="mainwp-actions-bar">
-            <div class="ui two column grid">
-                <div class="column"></div>
-                <div class="right aligned column">
-                    <a href="#" style="margin-left:5px" class="ui mini basic green button" id="mainwp-download-community-system-report"><?php esc_html_e( 'Download Community System Report', 'mainwp' ); ?></a>
+            <div class="ui stackable middle aligned two column grid">
+                <div class="column">
                     <a href="#" class="ui mini green button" id="mainwp-download-system-report"><?php esc_html_e( 'Download Full System Report', 'mainwp' ); ?></a>
+                    <a href="#" style="margin-left:5px" class="ui mini basic green button" id="mainwp-download-community-system-report"><?php esc_html_e( 'Download Community System Report', 'mainwp' ); ?></a>
+                </div>
+                <div class="right aligned column">
+                    <div class="ui icon input">
+                        <input type="search" id="mainwp-system-report-global-search" placeholder="<?php esc_attr_e( 'Search system report', 'mainwp' ); ?>" aria-label="<?php esc_attr_e( 'Search system report', 'mainwp' ); ?>">
+                        <i class="search icon"></i>
+                    </div>
                 </div>
             </div>
         </div>
@@ -445,9 +450,18 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         static::render_detected_issues_summary();
         ?>
         <style type="text/css">
+            #mainwp-system-report-page {
+                padding-top: 1rem !important;
+            }
+
             #mainwp-system-report-page .mainwp-system-report-table {
                 table-layout: fixed;
                 width: 100%;
+            }
+
+            #mainwp-system-report-page .mainwp-system-report-issues-message {
+                margin: 0 0 1rem 0;
+                border-radius: var(--area-radius, 0.28571429rem) !important;
             }
 
             #mainwp-system-report-page .mainwp-system-info-table {
@@ -464,10 +478,6 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 margin-bottom: 0 !important;
             }
         </style>
-        <div class="ui fluid icon input" style="margin:1rem 0 1.5rem 0;">
-            <input type="search" id="mainwp-system-report-global-search" placeholder="<?php esc_attr_e( 'Search all system report sections', 'mainwp' ); ?>" aria-label="<?php esc_attr_e( 'Search all system report sections', 'mainwp' ); ?>">
-            <i class="search icon"></i>
-        </div>
         <table id="mainwp-system-report-wordpress-table" class="ui unstackable table single line mainwp-system-report-table mainwp-system-info-table">
                 <thead>
                     <tr>
@@ -2029,7 +2039,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         if ( empty( $issues ) ) {
             ?>
-            <div class="ui positive message">
+            <div class="ui positive message mainwp-system-report-issues-message">
                 <div class="header"><?php esc_html_e( 'No high-priority issues detected', 'mainwp' ); ?></div>
                 <p><?php esc_html_e( 'This summary only highlights the most common problems. Review the tables below for full context.', 'mainwp' ); ?></p>
             </div>
@@ -2045,7 +2055,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             }
         }
         ?>
-        <div class="ui <?php echo $has_error ? 'negative' : 'warning'; ?> message">
+        <div class="ui <?php echo $has_error ? 'negative' : 'warning'; ?> message mainwp-system-report-issues-message">
             <div class="header"><?php esc_html_e( 'Detected Issues', 'mainwp' ); ?></div>
             <div class="ui list">
                 <?php foreach ( $issues as $issue ) : ?>

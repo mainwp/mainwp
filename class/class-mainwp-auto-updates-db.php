@@ -123,10 +123,11 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
      * @param int  $lasttime_start Lasttime start automatic update.
      * @param bool $connected Requires sites connected.
      * @param bool $not_suspended Requires sites unsuspended.
+     * @param int  $timeout Time in seconds to consider a site as timed out for updates.
      *
      * @return object|null Database query result or null on failure.
      */
-    public function get_websites_to_continue_updates( $limit, $lasttime_start, $connected = false, $not_suspended = false ) {
+    public function get_websites_to_continue_updates( $limit, $lasttime_start, $connected = false, $not_suspended = false, $timeout = 0 ) {
 
         if ( empty( $lasttime_start ) ) {
             return false;
@@ -140,13 +141,19 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
             $where .= ' wp.suspended = 0 AND';
         }
 
+        $orderby = ' wp_sync.dtsAutomaticSyncStart ASC ';
+        if ( ! empty( $timeout ) ) {
+            $where   .= ' AND ( COALESCE(CAST(autosync_start_run AS UNSIGNED), 0) = 0 OR (COALESCE(CAST(autosync_start_run AS UNSIGNED), 0) + ' . intval( $timeout ) . ') < UNIX_TIMESTAMP() ) AND';
+            $orderby .= ',CAST(autosync_start_run AS UNSIGNED) ASC ';
+        }
+
         $where = rtrim( $where, 'AND' );
 
         $params = array(
             'view'    => 'updates_view',
             'where'   => $where,
             'limit'   => $limit,
-            'orderby' => ' wp_sync.dtsAutomaticSync ASC ', // to fix.
+            'orderby' => $orderby, // to fix.
         );
 
         $sql = MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params );

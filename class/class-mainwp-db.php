@@ -517,6 +517,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 'wp_upgrades',
                 'ignored_wp_upgrades',
                 'ignored_trans_updates',
+                'autosync_start_run',
             );
         } elseif ( in_array( $view, array( 'simple_view', 'base_view', 'monitor_view', 'ping_view', 'uptime_notification' ) ) ) {
             $fields = array();

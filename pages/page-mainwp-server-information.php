@@ -522,6 +522,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         <?php static::render_report_section_table( 'mainwp-system-report-debug-settings-table', esc_html__( 'Debug & Logs', 'mainwp' ), MainWP_Server_Information_Handler::get_debug_report_rows() ); ?>
 
+        <?php static::render_report_section_table( 'mainwp-system-report-conflict-signals-table', esc_html__( 'Potential Conflicts', 'mainwp' ), MainWP_Server_Information_Handler::get_conflict_signal_report_rows() ); ?>
+
         <table id="mainwp-system-report-extensions-table" class="ui unstackable table single line mainwp-system-report-table mainwp-system-info-table">
             <thead>
                 <tr>
@@ -618,7 +620,6 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     public static function render_php_check_tbody() {
         static::render_row( 'PHP Version', '>=', '7.4', 'get_php_version', '', '', null, null, static::ERROR );
-        static::render_row( 'PHP Safe Mode Disabled', '=', true, 'get_php_safe_mode', '', '', null );
         static::render_row( 'PHP Max Execution Time', '>=', '30', 'get_max_execution_time', 'seconds', '=', '0' );
         static::render_row( 'PHP Max Input Time', '>=', '30', 'get_max_input_time', 'seconds', '=', '0' );
         static::render_row( 'PHP Memory Limit', '>=', '256M', 'get_php_memory_limit', '', '', null, 'filesize' );
@@ -2023,6 +2024,12 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                             <?php if ( ! empty( $issue['detail'] ) ) : ?>
                                 <div class="description"><?php echo esc_html( $issue['detail'] ); ?></div>
                             <?php endif; ?>
+                            <?php if ( ! empty( $issue['kb_url'] ) ) : ?>
+                                <div class="description">
+                                    <a href="<?php echo esc_url( $issue['kb_url'] ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Help document', 'mainwp' ); ?></a>
+                                    <i class="external alternate icon"></i>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -2075,7 +2082,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $row_classes     = array();
 
         if ( 'full_only' === $visibility ) {
-            $row_classes[] = 'mwp-community-unsafe-row';
+            $row_classes[] = 'mwp-not-generate-row';
         }
 
         $value_attr = '';

@@ -461,25 +461,6 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
-     * Method get_php_safe_mode()
-     *
-     * Get PHP Safe Mode.
-     *
-     * @return bool true|false.
-     */
-    public static function get_php_safe_mode() {
-        if ( version_compare( static::get_php_version(), '5.3.0' ) >= 0 ) {
-            return true;
-        }
-
-        if ( ini_get( 'safe_mode' ) ) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
      * Method get_sql_mode()
      *
      * Get SQL Mode.
@@ -1023,6 +1004,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                     '64M'
                 ),
                 'anchor'   => 'mainwp-system-report-wordpress-table',
+                'kb_url'   => 'https://docs.mainwp.com/troubleshooting/resolve-system-requirement-issues/',
             );
         }
 
@@ -1037,6 +1019,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                     '300'
                 ),
                 'anchor'   => 'mainwp-system-report-php-table',
+                'kb_url'   => 'https://docs.mainwp.com/troubleshooting/resolve-system-requirement-issues/',
             );
         }
 
@@ -1047,6 +1030,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 'title'    => esc_html__( 'WordPress REST API is not fully reachable', 'mainwp' ),
                 'detail'   => $rest_api['value'],
                 'anchor'   => 'mainwp-system-report-connectivity-table',
+                'kb_url'   => 'https://docs.mainwp.com/troubleshooting/wordpress-rest-api-does-not-respond/',
             );
         }
 
@@ -1057,6 +1041,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 'title'    => esc_html__( 'Plain permalinks detected', 'mainwp' ),
                 'detail'   => esc_html__( 'MainWP features that depend on the WordPress REST API may not work correctly with plain permalinks.', 'mainwp' ),
                 'anchor'   => 'mainwp-system-report-connectivity-table',
+                'kb_url'   => 'https://docs.mainwp.com/troubleshooting/wordpress-rest-api-does-not-respond/',
             );
         }
 
@@ -1067,6 +1052,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 'title'    => esc_html__( 'Dashboard self-connect check failed', 'mainwp' ),
                 'detail'   => $self_connect['value'],
                 'anchor'   => 'mainwp-system-report-connectivity-table',
+                'kb_url'   => 'https://docs.mainwp.com/troubleshooting/potential-issues/',
             );
         }
 
@@ -1128,6 +1114,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         $permalink    = static::get_permalink_structure_data();
         $rest_api     = static::get_rest_api_reachability_data();
         $self_connect = static::get_server_self_connect_data();
+        $public_ip    = static::get_public_dashboard_ip_data();
         $ssl_verify   = ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || 1 === (int) get_option( 'mainwp_sslVerifyCertificate', 1 );
         $verify_con   = (int) get_option( 'mainwp_verify_connection_method', 1 );
         $signature    = static::get_signature_algorithm_label();
@@ -1142,6 +1129,13 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 'label'      => esc_html__( 'Dashboard site URL', 'mainwp' ),
                 'value'      => site_url( '/' ),
                 'visibility' => 'full_only',
+            ),
+            array(
+                'label'           => esc_html__( 'Public Dashboard IP', 'mainwp' ),
+                'value'           => $public_ip['value'],
+                'status'          => $public_ip['status'],
+                'visibility'      => 'community_masked',
+                'community_value' => $public_ip['community_value'],
             ),
             array(
                 'label'  => esc_html__( 'HTTPS', 'mainwp' ),
@@ -1911,6 +1905,74 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
+     * Get conflict signal rows.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public static function get_conflict_signal_report_rows() {
+        $caching_plugins     = static::get_active_plugins_by_keyword_group(
+            array(
+                'cache',
+                'rocket',
+                'litespeed',
+                'autoptimize',
+                'wp-optimize',
+                'perfmatters',
+                'flyingpress',
+                'sg optimizer',
+                'breeze',
+                'nitropack',
+                'hummingbird',
+            )
+        );
+        $security_plugins    = static::get_active_plugins_by_keyword_group(
+            array(
+                'wordfence',
+                'sucuri',
+                'solid security',
+                'ithemes security',
+                'all-in-one wp security',
+                'shield security',
+                'disable rest api',
+                'rest api control',
+                'wp hide',
+                'cloudflare',
+                'limit login',
+            )
+        );
+        $maintenance_plugins = static::get_active_plugins_by_keyword_group(
+            array(
+                'maintenance',
+                'coming soon',
+                'seedprod',
+                'lightstart',
+            )
+        );
+        $maintenance_mode    = static::get_maintenance_mode_indicators();
+        $dropins             = static::get_dropin_conflict_indicators();
+
+        return array(
+            array(
+                'label' => esc_html__( 'Caching / performance plugins', 'mainwp' ),
+                'value' => static::format_conflict_items_label( $caching_plugins ),
+            ),
+            array(
+                'label' => esc_html__( 'Security / access-control plugins', 'mainwp' ),
+                'value' => static::format_conflict_items_label( $security_plugins ),
+            ),
+            array(
+                'label'  => esc_html__( 'Maintenance mode indicators', 'mainwp' ),
+                'value'  => static::format_conflict_items_label( $maintenance_mode ),
+                'status' => empty( $maintenance_mode ) ? '' : 'warning',
+            ),
+            array(
+                'label' => esc_html__( 'Drop-ins / object cache', 'mainwp' ),
+                'value' => static::format_conflict_items_label( $dropins ),
+            ),
+        );
+    }
+
+    /**
      * Format boolean label.
      *
      * @param mixed $value True-ish value.
@@ -2066,6 +2128,175 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         $emails = array_filter( (array) $emails );
 
         return count( $emails );
+    }
+
+    /**
+     * Get public dashboard IP data.
+     *
+     * @return array<string,string>
+     */
+    private static function get_public_dashboard_ip_data() {
+        $server_ip = static::get_server_ip_value();
+
+        if ( static::is_public_ip_address( $server_ip ) ) {
+            return array(
+                'value'           => $server_ip,
+                'status'          => 'pass',
+                'community_value' => esc_html__( 'Detected', 'mainwp' ),
+            );
+        }
+
+        $cached_data = get_transient( 'mainwp_public_dashboard_ip_data' );
+        if ( is_array( $cached_data ) && isset( $cached_data['value'], $cached_data['status'], $cached_data['community_value'] ) ) {
+            return $cached_data;
+        }
+
+        $response = wp_safe_remote_get(
+            'https://api.ipify.org?format=json',
+            array(
+                'timeout'   => 3,
+                'sslverify' => true,
+            )
+        );
+
+        if ( ! is_wp_error( $response ) ) {
+            $response_code = (int) wp_remote_retrieve_response_code( $response );
+            $body          = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+            $public_ip     = is_array( $body ) && isset( $body['ip'] ) ? trim( (string) $body['ip'] ) : '';
+
+            if ( $response_code >= 200 && $response_code < 300 && static::is_public_ip_address( $public_ip ) ) {
+                $data = array(
+                    'value'           => $public_ip,
+                    'status'          => 'pass',
+                    'community_value' => esc_html__( 'Detected', 'mainwp' ),
+                );
+                set_transient( 'mainwp_public_dashboard_ip_data', $data, 12 * HOUR_IN_SECONDS );
+
+                return $data;
+            }
+        }
+
+        $data = array(
+            'value'           => esc_html__( 'Unavailable. Contact your host if the Server IP is local or private.', 'mainwp' ),
+            'status'          => 'warning',
+            'community_value' => esc_html__( 'Unavailable', 'mainwp' ),
+        );
+        set_transient( 'mainwp_public_dashboard_ip_data', $data, HOUR_IN_SECONDS );
+
+        return $data;
+    }
+
+    /**
+     * Get server IP value.
+     *
+     * @return string
+     */
+    private static function get_server_ip_value() {
+        return isset( $_SERVER['SERVER_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_ADDR'] ) ) : '';
+    }
+
+    /**
+     * Check if IP address is public.
+     *
+     * @param string $ip_address IP address.
+     *
+     * @return bool
+     */
+    private static function is_public_ip_address( $ip_address ) {
+        return ! empty( $ip_address ) && false !== filter_var( $ip_address, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE );
+    }
+
+    /**
+     * Get active plugins matching a keyword group.
+     *
+     * @param array<int,string> $keywords Keywords.
+     *
+     * @return array<int,string>
+     */
+    private static function get_active_plugins_by_keyword_group( $keywords ) {
+        $matches = array();
+        $plugins = get_plugins();
+
+        foreach ( $plugins as $slug => $plugin ) {
+            if ( ! is_plugin_active( $slug ) ) {
+                continue;
+            }
+
+            $plugin_name = isset( $plugin['Name'] ) ? (string) $plugin['Name'] : '';
+            $haystack    = strtolower( $slug . ' ' . $plugin_name );
+
+            if ( false !== strpos( $haystack, 'mainwp' ) ) {
+                continue;
+            }
+
+            foreach ( $keywords as $keyword ) {
+                if ( false !== strpos( $haystack, strtolower( $keyword ) ) ) {
+                    $matches[] = ! empty( $plugin_name ) ? $plugin_name : $slug;
+                    break;
+                }
+            }
+        }
+
+        return array_values( array_unique( $matches ) );
+    }
+
+    /**
+     * Get maintenance mode indicators.
+     *
+     * @return array<int,string>
+     */
+    private static function get_maintenance_mode_indicators() {
+        $indicators = static::get_active_plugins_by_keyword_group(
+            array(
+                'maintenance',
+                'coming soon',
+                'seedprod',
+                'lightstart',
+            )
+        );
+
+        if ( file_exists( ABSPATH . '.maintenance' ) ) {
+            $indicators[] = esc_html__( '.maintenance file present', 'mainwp' );
+        }
+
+        return array_values( array_unique( $indicators ) );
+    }
+
+    /**
+     * Get drop-in conflict indicators.
+     *
+     * @return array<int,string>
+     */
+    private static function get_dropin_conflict_indicators() {
+        $dropins = array();
+
+        if ( function_exists( 'get_dropins' ) ) {
+            $dropin_files = get_dropins();
+            if ( is_array( $dropin_files ) ) {
+                $dropins = array_keys( $dropin_files );
+            }
+        }
+
+        if ( wp_using_ext_object_cache() && ! in_array( 'object-cache.php', $dropins, true ) ) {
+            $dropins[] = 'object-cache.php';
+        }
+
+        return array_values( array_unique( $dropins ) );
+    }
+
+    /**
+     * Format conflict items label.
+     *
+     * @param array<int,string> $items Items.
+     *
+     * @return string
+     */
+    private static function format_conflict_items_label( $items ) {
+        if ( empty( $items ) ) {
+            return esc_html__( 'None detected', 'mainwp' );
+        }
+
+        return implode( ', ', $items );
     }
 
     /**

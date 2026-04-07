@@ -3840,7 +3840,7 @@ globalThis.serverinfo_prepare_download_info = function (communi) {
             report = report + " ###\n\n";
         } else {
             jQuery('tr', jQuery(this)).each(function () {
-                if (communi && (jQuery(this).hasClass('mwp-not-generate-row') || jQuery(this).hasClass('mwp-community-unsafe-row')))
+                if (communi && jQuery(this).hasClass('mwp-not-generate-row'))
                     return;
                 i = 0;
                 jQuery(this).find('td:not(".mwp-not-generate-row")').each(function () {

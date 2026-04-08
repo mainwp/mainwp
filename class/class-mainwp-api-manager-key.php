@@ -164,7 +164,7 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api',
             array(
                 'body'      => $args,
-                'timeout'   => 50,
+                'timeout'   => 120,
                 'sslverify' => static::$apisslverify,
             )
         );

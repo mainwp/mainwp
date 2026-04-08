@@ -151,7 +151,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @param string $view_query view query.
      * @param int    $siteid Site id.
      *
-     * @return array wp_options view.
+     * @return string SQL subquery for wp_options view.
      */
     public function get_wp_options_view( $fields = array(), $view_query = 'default', $siteid = 0 ) {
 

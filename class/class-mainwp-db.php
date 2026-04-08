@@ -149,13 +149,20 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *
      * @param array  $fields Extra option fields.
      * @param string $view_query view query.
+     * @param int    $siteid Site id.
      *
-     * @return array wp_options view.
+     * @return string SQL subquery for wp_options view.
      */
-    public function get_wp_options_view( $fields = array(), $view_query = 'default' ) {
+    public function get_wp_options_view( $fields = array(), $view_query = 'default', $siteid = 0 ) {
 
         if ( ! is_array( $fields ) ) {
             $fields = array();
+        }
+
+        $where_site = '';
+
+        if ( ! empty( $siteid ) && is_numeric( $siteid ) ) {
+            $where_site = ' AND wpid = ' . intval( $siteid ) . ' ';
         }
 
         $view = '(SELECT wpid ';
@@ -201,7 +208,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         }
 
         $view .= ' FROM ' . $this->table_name( 'wp_options' ) .
-        " WHERE name IN ('" . implode( "','", $included_opts ) . "')
+        " WHERE 1 {$where_site} AND name IN ('" . implode( "','", $included_opts ) . "')
         GROUP BY wpid ) ";
 
         return $view;
@@ -2483,7 +2490,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
                 LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
                 JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-                JOIN ' . $this->get_wp_options_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+                JOIN ' . $this->get_wp_options_view( $extra_view, 'default', $id ) . ' wp_optionview ON wp.id = wp_optionview.wpid
                 WHERE wp.id = ' . $id . $where . '
                 GROUP BY wp.id, wp_sync.sync_id';
             }
@@ -2491,7 +2498,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             return 'SELECT wp.*,wp_sync.*,wp_optionview.*
                     FROM ' . $this->table_name( 'wp' ) . ' wp
                     JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-                    JOIN ' . $this->get_wp_options_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+                    JOIN ' . $this->get_wp_options_view( $extra_view, 'default', $id ) . ' wp_optionview ON wp.id = wp_optionview.wpid
                     WHERE id = ' . $id . $where;
         }
 

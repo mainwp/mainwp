@@ -1791,6 +1791,11 @@ body.mainwp-ui.mainwp-custom-theme,
   display: none !important;
 }
 
+.mainwp-ui.mainwp-custom-theme #mainwp-sites-sidebar-menu.ui.accordion .title,
+.mainwp-ui.mainwp-custom-theme #mainwp-sites-sidebar-menu.ui.accordion .content {
+  background: none !important;
+}
+
 /* Grids
   ========================================================================== */
 

@@ -1762,3 +1762,7 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
 #change-history-according-wrapper .ui.list {
   margin-top: 0 !important;
 }
+
+#mainwp-sites-sidebar-menu .mainwp-site-menu-item {
+    cursor: pointer;
+}

@@ -2494,7 +2494,7 @@ let mainwp_install_bulk = function (type, slug, name) {
                     '<span class="progress" data-inverted="" data-position="left center" data-tooltip="' + __('Installing...') + '" style="display:none"><i class="notched circle loading icon"></i></span>' +
                     '<span class="status"></span>' +
                     '</div>' +
-                    '<div class="content">' + mainwp_links_visit_site_and_admin('', siteId) + ' ' + '<a href="' + site['url'] + '">' + site.name.replace(/\\(.)/g, '$1'); + '</a></div>' + // NOSONAR - no safe replaceAll alternative.
+                    '<div class="content">' + mainwp_links_visit_site_and_admin('', siteId) + ' ' + '<a href="' + site['url'] + '">' + site.name.replace(/\\(.)/g, '$1') + '</a></div>' + // NOSONAR - no safe replaceAll alternative.
                     '</div>';
                 mainwpVars.bulkInstallTotal++;
             }

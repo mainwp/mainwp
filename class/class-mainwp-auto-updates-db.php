@@ -149,7 +149,7 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
                     OR autosync_start_run = ''
                     OR autosync_start_run = '0'
                     OR CAST(autosync_start_run AS UNSIGNED) > UNIX_TIMESTAMP() - " . intval( $timeout ) . '
-                ) AND ';
+                ) AND';
 
             $orderby .= ',CAST(autosync_start_run AS UNSIGNED) ASC ';
         }

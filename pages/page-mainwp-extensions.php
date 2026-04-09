@@ -912,7 +912,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             $data     = is_string( $response ) ? json_decode( $response, true ) : $response;
 
             if ( is_array( $data ) && ! isset( $data['error'] ) ) {
-                set_transient( $purchased_extensions_key, $data, 2 * DAY_IN_SECONDS );
+                set_transient( $purchased_extensions_key, $data, 7 * DAY_IN_SECONDS );
             }
 
             return $data;

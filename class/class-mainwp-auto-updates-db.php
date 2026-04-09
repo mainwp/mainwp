@@ -143,15 +143,8 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
 
         $orderby = ' wp_sync.dtsAutomaticSyncStart ASC ';
         if ( ! empty( $timeout ) ) {
-
-            $where .= " (
-                    autosync_start_run IS NULL
-                    OR autosync_start_run = ''
-                    OR autosync_start_run = '0'
-                    OR CAST(autosync_start_run AS UNSIGNED) > UNIX_TIMESTAMP() - " . intval( $timeout ) . '
-                ) AND';
-
-            $orderby .= ',CAST(autosync_start_run AS UNSIGNED) ASC ';
+            $where   .= ' COALESCE(CAST(autosync_run_counter AS UNSIGNED), 0) < 3 AND';
+            $orderby .= ',CAST(autosync_run_counter AS UNSIGNED) ASC ';
         }
 
         $where = rtrim( $where, 'AND' );

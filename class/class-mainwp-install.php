@@ -183,6 +183,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   dtsAutomaticSyncStart int(11) NOT NULL DEFAULT 0,
   dtsSync int(11) NOT NULL DEFAULT 0,
   dtsSyncStart int(11) NOT NULL DEFAULT 0,
+  dtsAutomaticUpdates int(11) NOT NULL DEFAULT 0,
+  dtsAutomaticUpdatesStart int(11) NOT NULL DEFAULT 0,
   totalsize int(11) NOT NULL DEFAULT 0,
   dbsize int(11) NOT NULL DEFAULT 0,
   extauth text NOT NULL DEFAULT '',

@@ -517,7 +517,6 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 'wp_upgrades',
                 'ignored_wp_upgrades',
                 'ignored_trans_updates',
-                'autosync_run_counter',
             );
         } elseif ( in_array( $view, array( 'simple_view', 'base_view', 'monitor_view', 'ping_view', 'uptime_notification' ) ) ) {
             $fields = array();
@@ -2911,13 +2910,13 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             );
 
             $syncValues = array(
-                'dtsSync'               => 0,
-                'dtsSyncStart'          => 0,
-                'dtsAutomaticSync'      => 0,
-                'dtsAutomaticSyncStart' => 0,
-                'totalsize'             => 0,
-                'extauth'               => '',
-                'sync_errors'           => '',
+                'dtsSync'                 => 0,
+                'dtsSyncStart'            => 0,
+                'dtsAutomaticSync'        => 0,
+                'dtsAutomaticSyncStart'   => 0,
+                'totalsize'               => 0,
+                'extauth'                 => '',
+                'sync_errors'             => '',
             );
             if ( $this->wpdb->insert( $this->table_name( 'wp' ), $values ) ) {
                 $websiteid = $this->wpdb->insert_id;

@@ -185,10 +185,6 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $fields[] = 'cust_site_icon_info';
         }
 
-        if ( is_array( $params ) && ! empty( $params['_where_php_ver'] ) && ! in_array( 'phpversion', $fields ) ) {
-            $fields[] = 'phpversion';
-        }
-
         $fields = array_values( array_unique( array_filter( $fields ) ) );
 
         $tbl_wp_options = $this->table_name( 'wp_options' );
@@ -216,8 +212,6 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
     /**
      * Method get_wp_options_view().
-     *
-     * Use new get_wp_options_join() method to improve the performance of wp_options view, and this method is used to generate the SQL with LEFT JOIN which will be much faster than subquery, but it will return the same result as get_option_view() method, and the alias of wp table must be 'wp' to make sure the LEFT JOIN works, and the alias of wp_options table will be 'owp' + key of field in fields array, and the join condition is owp.wpid = wp.id AND owp.name = field name, and the select field is owp.value AS field name.
      *
      * @param array  $fields Extra option fields.
      * @param string $view_query view query.
@@ -315,6 +309,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $others_fields = isset( $params['others_fields'] ) && is_array( $params['others_fields'] ) ? $params['others_fields'] : array( 'favi_icon' );
         $is_staging    = isset( $params['is_staging'] ) && in_array( $params['is_staging'], array( 'yes', 'no' ) ) ? $params['is_staging'] : 'no';
         $limit         = isset( $params['limit'] ) ? intval( $params['limit'] ) : '';
+
+        $use_comp_subquery = ! empty( $params['use_compatible_subquery'] ) ? true : false;
 
         $s        = isset( $params['s'] ) ? $params['s'] : '';
         $exclude  = isset( $params['exclude'] ) ? wp_parse_id_list( $params['exclude'] ) : array();
@@ -492,8 +488,11 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $view_selects = '';
         $view_joins   = '';
 
-        if ( ! empty( $view ) && ! empty( $others_fields ) ) {
-            $opts_view = $this->get_option_view_by_join( $view, $others_fields );
+        if ( $use_comp_subquery ) {
+            $view_selects = ',wp_optionview.* ';
+            $view_joins   = ' JOIN ' . $this->get_option_view_by( $view, $others_fields ) . ' wp_optionview ON wp.id = wp_optionview.wpid ';
+        } elseif ( ! empty( $view ) && ! empty( $others_fields ) ) {
+                $opts_view = $this->get_option_view_by_join( $view, $others_fields );
             if ( is_array( $opts_view ) && ! empty( $opts_view['selects'] ) ) {
                 $view_selects = ',' . $opts_view['selects'];
                 $view_joins   = $opts_view['joins'];
@@ -1412,6 +1411,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $connected_sql = '  AND wp_sync.sync_errors <> "" ';
         }
 
+        $use_comp_subquery = false;
+
         $limit = '';
         if ( $params && is_array( $params ) ) {
             $s        = isset( $params['s'] ) ? $params['s'] : '';
@@ -1491,6 +1492,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             if ( ! empty( $page ) && ! empty( $per_page ) ) {
                 $limit = ( $page - 1 ) * $per_page . ',' . $per_page;
             }
+            $use_comp_subquery = ! empty( $params['use_compatible_subquery'] ) ? true : false;
         }
 
         if ( 'wp.url' === $orderBy ) {
@@ -1500,11 +1502,16 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $view_selects = '';
         $view_joins   = '';
 
-        $opts_view = $this->get_wp_options_join( $extra_view );
+        if ( $use_comp_subquery ) {
+            $view_selects = ',wp_optionview.* ';
+            $view_joins   = ' JOIN ' . $this->get_wp_options_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid ';
+        } else {
+            $opts_view = $this->get_wp_options_join( $extra_view );
 
-        if ( is_array( $opts_view ) && ! empty( $opts_view['selects'] ) ) {
-            $view_selects = ',' . $opts_view['selects'];
-            $view_joins   = $opts_view['joins'];
+            if ( is_array( $opts_view ) && ! empty( $opts_view['selects'] ) ) {
+                $view_selects = ',' . $opts_view['selects'];
+                $view_joins   = $opts_view['joins'];
+            }
         }
 
         // wpgroups to fix issue for mysql 8.0, as groups will generate error syntax.
@@ -1557,7 +1564,6 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     }
 
 
-
     /**
      * Get SQL to get wp child sites for current user.
      *
@@ -1572,15 +1578,16 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $params = array();
         }
 
-        $selectgroups = ! empty( $params['select_groups'] ) ? true : false;
-        $search_site  = isset( $params['search_site'] ) && ! empty( $params['search_site'] ) ? $params['search_site'] : null;
-        $orderBy      = isset( $params['order_by'] ) && ! empty( $params['order_by'] ) ? $params['order_by'] : 'wp.url';
-        $offset       = isset( $params['offset'] ) ? $params['offset'] : false;
-        $rowcount     = isset( $params['row_count'] ) ? $params['row_count'] : false;
-        $for_manager  = isset( $params['for_manager'] ) ? $params['for_manager'] : false;
-        $extraWhere   = isset( $params['extra_where'] ) && ! empty( $params['extra_where'] ) ? $params['extra_where'] : null;
-        $extra_view   = isset( $params['extra_view'] ) && is_array( $params['extra_view'] ) && ! empty( $params['extra_view'] ) ? $params['extra_view'] : array( 'favi_icon' );
-        $extra_join   = isset( $params['extra_join'] ) ? $params['extra_join'] : '';
+        $selectgroups      = ! empty( $params['select_groups'] ) ? true : false;
+        $search_site       = isset( $params['search_site'] ) && ! empty( $params['search_site'] ) ? $params['search_site'] : null;
+        $orderBy           = isset( $params['order_by'] ) && ! empty( $params['order_by'] ) ? $params['order_by'] : 'wp.url';
+        $offset            = isset( $params['offset'] ) ? $params['offset'] : false;
+        $rowcount          = isset( $params['row_count'] ) ? $params['row_count'] : false;
+        $for_manager       = isset( $params['for_manager'] ) ? $params['for_manager'] : false;
+        $extraWhere        = isset( $params['extra_where'] ) && ! empty( $params['extra_where'] ) ? $params['extra_where'] : null;
+        $extra_view        = isset( $params['extra_view'] ) && is_array( $params['extra_view'] ) && ! empty( $params['extra_view'] ) ? $params['extra_view'] : array( 'favi_icon' );
+        $extra_join        = isset( $params['extra_join'] ) ? $params['extra_join'] : '';
+        $use_comp_subquery = ! empty( $params['use_compatible_subquery'] ) ? true : false;
 
         $extra_select_wp_fields  = isset( $params['extra_select_wp_fields'] ) && is_array( $params['extra_select_wp_fields'] ) && ! empty( $params['extra_select_wp_fields'] ) ? $params['extra_select_wp_fields'] : array();
         $extra_select_sql_fields = isset( $params['extra_select_sql_fields'] ) && ! empty( $params['extra_select_sql_fields'] ) ? $params['extra_select_sql_fields'] : '';
@@ -1622,11 +1629,15 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $view_selects = '';
         $view_joins   = '';
 
-        $opts_view = $this->get_wp_options_join( $extra_view );
-
-        if ( is_array( $opts_view ) && ! empty( $opts_view['selects'] ) ) {
-            $view_selects = ',' . $opts_view['selects'];
-            $view_joins   = $opts_view['joins'];
+        if ( $use_comp_subquery ) {
+            $view_selects = ',wp_optionview.* ';
+            $view_joins   = ' JOIN ' . $this->get_wp_options_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid ';
+        } else {
+            $opts_view = $this->get_wp_options_join( $extra_view );
+            if ( is_array( $opts_view ) && ! empty( $opts_view['selects'] ) ) {
+                $view_selects = ',' . $opts_view['selects'];
+                $view_joins   = $opts_view['joins'];
+            }
         }
 
         // wpgroups to fix issue for mysql 8.0, as groups will generate error syntax.
@@ -2070,14 +2081,6 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $params = array();
         }
 
-        /**
-         * Filter SQL query parameters for get_sql_search_websites_for_current_user.
-         * This filter allows modification of the parameters used to construct the SQL query for searching websites for the current user.
-         *
-         * @since 6.0.8 .
-         */
-        $params = apply_filters( 'mainwp_get_sql_search_websites_for_current_user_params', $params );
-
         $view           = isset( $params['view'] ) ? $params['view'] : 'default'; // must be default.
         $selectgroups   = isset( $params['selectgroups'] ) && $params['selectgroups'] ? true : false;
         $search_site    = isset( $params['search'] ) ? trim( $params['search'] ) : null;
@@ -2165,7 +2168,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $where .= ' AND wp.id IN (' . implode( ',', $selected_sites ) . ') ';
             }
 
-            if ( !empty( $extraWhere ) ) {
+            if ( ! empty( $extraWhere ) ) {
                 $where .= ' AND ' . $extraWhere;
             }
         }
@@ -2628,13 +2631,20 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         if ( MainWP_Utility::ctype_digit( $id ) ) {
 
+            $use_comp_subquery = ! empty( $params['use_compatible_subquery'] ) ? true : false;
+
             $view_selects = '';
             $view_joins   = '';
 
-            $opts_view = $this->get_option_view_by_join( $view, $view_fields );
-            if ( is_array( $opts_view ) && ! empty( $opts_view['selects'] ) ) {
-                $view_selects = ',' . $opts_view['selects'];
-                $view_joins   = $opts_view['joins'];
+            if ( $use_comp_subquery ) {
+                $view_selects = ',wp_optionview.* ';
+                $view_joins   = ' JOIN ' . $this->get_option_view_by( $view, $view_fields ) . ' wp_optionview ON wp.id = wp_optionview.wpid ';
+            } else {
+                $opts_view = $this->get_option_view_by_join( $view, $view_fields );
+                if ( is_array( $opts_view ) && ! empty( $opts_view['selects'] ) ) {
+                    $view_selects = ',' . $opts_view['selects'];
+                    $view_joins   = $opts_view['joins'];
+                }
             }
 
             $where = $this->get_sql_where_allow_access_sites( 'wp', 'nocheckstaging' );

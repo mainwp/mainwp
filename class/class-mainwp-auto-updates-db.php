@@ -192,7 +192,7 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
 
         $where  = ' wp_sync.sync_errors = "" AND ';
         $where .= ' wp.suspended = 0 AND ';
-        $where .= '  batch_individual_queue_time >= ' . intval( $lasttime_start ) . ' ';
+        $where .= '  owp_batch_individual_queue_time.value >= ' . intval( $lasttime_start ) . ' '; // owp_batch_individual_queue_time left join alias.
 
         $params = array(
             'view'          => 'updates_view',

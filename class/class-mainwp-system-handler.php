@@ -255,6 +255,14 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( ! MainWP_Extensions_Handler::hook_verify( $pluginFile, $key ) ) {
             return false;
         }
+
+        // Prevent conflicts in wp_options query conditions.
+        // If use_join_wp_options is not enabled,
+        // force the use of a compatible subquery approach to ensure the query remains correct.
+        if ( is_array( $params ) && empty( $params['use_join_wp_options'] ) ) {
+            $params['use_compatible_subquery'] = 1;
+        }
+
         return MainWP_DB::instance()->get_sql_wp_for_current_user( $params );
     }
     /**

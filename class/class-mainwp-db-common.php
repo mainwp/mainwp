@@ -190,7 +190,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
 
     /**
-     * Method get_sql_where_for_phpver().
+     * Method get_sql_where_wpopt_phpversion().
      *
      * @param string $coln Column compare.
      * @param string $operator Operator compare.
@@ -198,9 +198,9 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * @return string Sql version compare.
      */
-    public function get_sql_where_for_phpver( $coln, $operator, $ver_str ) {
+    public function get_sql_where_wpopt_phpversion( $coln, $operator, $ver_str ) {
         // It's safe since it's not user input, but the AI still suggests escaping it.
-        return ' ( ' . $this->escape( $coln ) . '.value IS NOT NULL AND INET_ATON( SUBSTRING_INDEX( CONCAT(SUBSTRING_INDEX(' . $this->escape( $coln ) . ".value, '-', 1), '.0.0.0.0'), '.', 4 ) ) " .
+        return ' ( owp_' . $this->escape( $coln ) . '.value IS NOT NULL AND INET_ATON( SUBSTRING_INDEX( CONCAT(SUBSTRING_INDEX( owp_' . $this->escape( $coln ) . ".value, '-', 1), '.0.0.0.0'), '.', 4 ) ) " .
         $this->escape( $operator ) . " INET_ATON('" . $this->escape( $ver_str ) . "') ) ";
     }
 

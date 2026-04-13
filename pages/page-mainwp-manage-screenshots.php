@@ -689,29 +689,29 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     $where = 'wp_sync.health_status = 0';
                 }
             } elseif ( 'phpver8' === $site_status ) {
-                $where = MainWP_DB_Common::instance()->get_sql_where_for_phpver( 'owp_phpversion', '<', '8.0.0.0' ); // NOSONAR - no IP.
+                $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '<', '8.0.0.0' ); // NOSONAR - no IP.
                 if ( $is_not ) {
-                    $where = MainWP_DB_Common::instance()->get_sql_where_for_phpver( 'owp_phpversion', '>=', '8.0.0.0' ); // NOSONAR - no IP.
+                    $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '>=', '8.0.0.0' ); // NOSONAR - no IP.
                 }
             } elseif ( 'phpver81' === $site_status ) {
-                $where = MainWP_DB_Common::instance()->get_sql_where_for_phpver( 'owp_phpversion', '<', '8.1.0.0' ); // NOSONAR - no IP.
+                $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '<', '8.1.0.0' ); // NOSONAR - no IP.
                 if ( $is_not ) {
-                    $where = MainWP_DB_Common::instance()->get_sql_where_for_phpver( 'owp_phpversion', '>=', '8.1.0.0' ); // NOSONAR - no IP.
+                    $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '>=', '8.1.0.0' ); // NOSONAR - no IP.
                 }
             } elseif ( 'phpver82' === $site_status ) {
-                $where = MainWP_DB_Common::instance()->get_sql_where_for_phpver( 'owp_phpversion', '<', '8.2.0.0' ); // NOSONAR - no IP.
+                $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '<', '8.2.0.0' ); // NOSONAR - no IP.
                 if ( $is_not ) {
-                    $where = MainWP_DB_Common::instance()->get_sql_where_for_phpver( 'owp_phpversion', '>=', '8.2.0.0' ); // NOSONAR - no IP.
+                    $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '>=', '8.2.0.0' ); // NOSONAR - no IP.
                 }
             } elseif ( 'phpver83' === $site_status ) {
-                $where = MainWP_DB_Common::instance()->get_sql_where_for_phpver( 'owp_phpversion', '<', '8.3.0.0' ); // NOSONAR - no IP.
+                $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '<', '8.3.0.0' ); // NOSONAR - no IP.
                 if ( $is_not ) {
-                    $where = MainWP_DB_Common::instance()->get_sql_where_for_phpver( 'owp_phpversion', '>=', '8.3.0.0' ); // NOSONAR - no IP.
+                    $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '>=', '8.3.0.0' ); // NOSONAR - no IP.
                 }
             } elseif ( 'phpver84' === $site_status ) {
-                $where = MainWP_DB_Common::instance()->get_sql_where_for_phpver( 'owp_phpversion', '<', '8.4.0.0' ); // NOSONAR - no IP.
+                $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '<', '8.4.0.0' ); // NOSONAR - no IP.
                 if ( $is_not ) {
-                    $where = MainWP_DB_Common::instance()->get_sql_where_for_phpver( 'owp_phpversion', '>=', '8.4.0.0' ); // NOSONAR - no IP.
+                    $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '>=', '8.4.0.0' ); // NOSONAR - no IP.
                 }
             } elseif ( 'suspended' === $site_status ) {
                 $where = 'wp.suspended = 1';
@@ -730,10 +730,6 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
         );
 
         $params['isnot'] = $is_not;
-
-        if ( in_array( $site_status, array( 'phpver8', 'phpver81', 'phpver82', 'phpver83', 'phpver84' ) ) ) {
-            $params['_where_php_ver'] = 1;
-        }
 
         $qry_group_ids = array();
         if ( ! empty( $group_ids ) ) {

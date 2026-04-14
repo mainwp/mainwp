@@ -491,8 +491,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         if ( $use_comp_subquery ) {
             $view_selects = ',wp_optionview.* ';
             $view_joins   = ' JOIN ' . $this->get_option_view_by( $view, $others_fields ) . ' wp_optionview ON wp.id = wp_optionview.wpid ';
-        } elseif ( ! empty( $view ) && ! empty( $others_fields ) ) {
-                $opts_view = $this->get_option_view_by_join( $view, $others_fields );
+        } else {
+            $opts_view = $this->get_option_view_by_join( $view, $others_fields );
             if ( is_array( $opts_view ) && ! empty( $opts_view['selects'] ) ) {
                 $view_selects = ',' . $opts_view['selects'];
                 $view_joins   = $opts_view['joins'];

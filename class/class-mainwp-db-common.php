@@ -199,9 +199,16 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return string Sql version compare.
      */
     public function get_sql_where_wpopt_phpversion( $coln, $operator, $ver_str ) {
-        // It's safe since it's not user input, but the AI still suggests escaping it.
-        return ' ( owp_' . $this->escape( $coln ) . '.value IS NOT NULL AND INET_ATON( SUBSTRING_INDEX( CONCAT(SUBSTRING_INDEX( owp_' . $this->escape( $coln ) . ".value, '-', 1), '.0.0.0.0'), '.', 4 ) ) " .
-        $this->escape( $operator ) . " INET_ATON('" . $this->escape( $ver_str ) . "') ) ";
+        $allowed_columns   = array( 'phpversion' );
+        $allowed_operators = array( '>', '>=', '<', '<=', '=', '!=' );
+        if ( ! in_array( $coln, $allowed_columns, true ) || ! in_array( $operator, $allowed_operators, true ) ) {
+            return ' 0 = 1 ';
+        }
+        $alias = 'owp_' . $coln;
+        return $this->wpdb->prepare(
+            " ( {$alias}.value IS NOT NULL AND INET_ATON( SUBSTRING_INDEX( CONCAT(SUBSTRING_INDEX( {$alias}.value, '-', 1), '.0.0.0.0'), '.', 4 ) ) {$operator} INET_ATON(%s) ) ", //phpcs:ignore -- NOSONAR escaped variables.
+            $ver_str
+        );
     }
 
     /**

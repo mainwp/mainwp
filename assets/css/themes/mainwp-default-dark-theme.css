@@ -277,6 +277,11 @@
   color: var(--mainwp-base-background);
 }
 
+.mainwp-ui.mainwp-custom-theme .ui.orange.label:not(.basic, .corner) {
+  background-color: var(--mainwp-orange) !important;
+  color: var(--mainwp-base-background) !important;
+}
+
 .mainwp-ui.mainwp-custom-theme .ui.blue.label:not(.basic, .corner) {
   background-color: var(--mainwp-blue) !important;
   color: var(--mainwp-text);

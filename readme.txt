@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.9.4
 Requires PHP: 7.4
-Stable tag: 6.0.9-er.1
+Stable tag: 6.0.9
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -147,6 +147,20 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.0.9 - 4-14-2026 =
+
+* Fixed: Improved uptime monitoring status tracking and retry behavior for failed health checks to provide more reliable monitoring results.
+* Fixed: String concatenation in `mainwp.js` that introduced an extra semicolon when rendering site links.
+* Fixed: Resolved an issue that could reduce sync concurrency during site synchronization.
+* Added: Global search for filtering all system report tables.
+* Added: A detected issues summary and report tables for each system report section.
+* Updated: Improved diagnostics for REST API reachability and dashboard self-connect checks, including safer handling of unexpected response body output.
+* Updated: Refreshed the "Server Information" page UX with cleaner issue summary rows and more consistent section spacing.
+* Updated: Expanded Network Activity tracking to monitor core, plugin, and theme updates handled by WordPress auto-updates.
+* Updated: Improved performance by better isolating data so settings and options are correctly scoped per child site.
+* Updated: Click handler to sidebar site items to toggle accordion when clicking outside title/content.
+* Updated: Adjusted dark theme CSS so sidebar accordion title/content use transparent background.
 
 = 6.0.8 - 4-7-2026 =
 

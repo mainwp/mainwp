@@ -2959,6 +2959,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $view_query = $others['view_query'];
         }
 
+        if ( empty( $view_query ) ) {
+            $view_query = $selectgroups ? 'default' : 'group'; // To compatible.
+        }
+
         $view_selects = '';
         $view_joins   = '';
 
@@ -2972,9 +2976,6 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         if ( MainWP_Utility::ctype_digit( $id ) ) {
             $where_allowed = $this->get_sql_where_allow_access_sites( 'wp', $is_staging );
             if ( $selectgroups ) {
-                if ( empty( $view_query ) ) {
-                    $view_query = 'default'; // To compatible.
-                }
                 $qry = 'SELECT wp.*,wp_sync.*' . $view_selects . ', GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors
                  FROM ' . $this->table_name( 'wp' ) . ' wp
                  JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid
@@ -2987,9 +2988,6 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                  GROUP BY wp.id, wp_sync.sync_id
                  ORDER BY ' . $orderBy;
             } else {
-                if ( empty( $view_query ) ) {
-                    $view_query = 'group'; // To compatible.
-                }
                 $qry = 'SELECT wp.*' . $view_selects . ', wp_sync.* FROM ' . $this->table_name( 'wp' ) . ' wp
                         JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid
                         JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid

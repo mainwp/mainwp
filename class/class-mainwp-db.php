@@ -215,13 +215,20 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *
      * @param array  $fields Extra option fields.
      * @param string $view_query view query.
+     * @param int    $siteid Site id.
      *
-     * @return array wp_options view.
+     * @return string SQL subquery for wp_options view.
      */
-    public function get_wp_options_view( $fields = array(), $view_query = 'default' ) {
+    public function get_wp_options_view( $fields = array(), $view_query = 'default', $siteid = 0 ) {
 
         if ( ! is_array( $fields ) ) {
             $fields = array();
+        }
+
+        $where_site = '';
+
+        if ( ! empty( $siteid ) && is_numeric( $siteid ) ) {
+            $where_site = ' AND wpid = ' . intval( $siteid ) . ' ';
         }
 
         $view = '(SELECT wpid ';
@@ -267,7 +274,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         }
 
         $view .= ' FROM ' . $this->table_name( 'wp_options' ) .
-        " WHERE name IN ('" . implode( "','", $included_opts ) . "')
+        " WHERE 1 {$where_site} AND name IN ('" . implode( "','", $included_opts ) . "')
         GROUP BY wpid ) ";
 
         return $view;

@@ -1197,6 +1197,11 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     return false;
                 } );
                 jQuery( '#mainwp-sites-sidebar-menu' ).accordion();
+				jQuery( '#mainwp-sites-sidebar-menu' ).on( 'click', '.mainwp-site-menu-item', function ( e ) {
+					if ( ! jQuery( e.target ).closest( '.content' ).length && ! jQuery( e.target ).closest( '.title' ).length ) {
+						jQuery( this ).find( '.title' ).first().trigger( 'click' );
+					}
+				} );
 
                 <?php if ( ! $fix_dom_issue_for_wp_editor ) { ?>
 

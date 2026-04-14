@@ -993,4 +993,36 @@ return array(
         'context'     => 'cron-job',
         'action_name' => 'deleted',
     ),
+    // New added.
+    // @since 6.0.8.
+    1960 => array(
+        'type_id'     => 1960,
+        'desc'        => esc_html__( 'WordPress Core Updated', 'mainwp' ),
+        'context'     => 'wordpress', //phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText -- No need for singular/plural here.
+        'action_name' => 'updated',
+    ),
+    1965 => array(
+        'type_id'     => 1965,
+        'desc'        => esc_html__( 'Plugin installed.', 'mainwp' ),
+        'context'     => 'plugin',
+        'action_name' => 'installed',
+    ),
+    1970 => array(
+        'type_id'     => 1970,
+        'desc'        => esc_html__( 'Plugin updated.', 'mainwp' ),
+        'context'     => 'plugin',
+        'action_name' => 'updated',
+    ),
+    1975 => array(
+        'type_id'     => 1975,
+        'desc'        => esc_html__( 'Theme installed.', 'mainwp' ),
+        'context'     => 'theme',
+        'action_name' => 'installed',
+    ),
+    1980 => array(
+        'type_id'     => 1980,
+        'desc'        => esc_html__( 'Theme updated.', 'mainwp' ),
+        'context'     => 'theme',
+        'action_name' => 'updated',
+    ),
 );

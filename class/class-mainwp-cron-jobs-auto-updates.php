@@ -98,6 +98,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                     );
                     MainWP_DB::instance()->update_website_sync_values( $website->id, $websiteValues );
                     MainWP_DB::instance()->update_website_option( $website, 'bulk_updates_info', wp_json_encode( array() ) );
+                    MainWP_DB::instance()->update_website_option( $website, 'autosync_start_run', 0 );
                 }
                 MainWP_DB::free_result( $websites );
                 return true;
@@ -130,7 +131,13 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
 
         $lasttime_start = get_option( 'mainwp_automatic_updates_start_lasttime' );
 
-        $autoupdates_websites = MainWP_Auto_Updates_DB::instance()->get_websites_to_continue_updates( $sites_limit, $lasttime_start, false, true ); // included disconnected sites.
+        /**
+         * Auto sync timeout to skip sites with recent automatic sync. Default is 1 hour (3600 seconds).
+         *
+         * @since 6.0.8
+         */
+        $autosync_timeout     = apply_filters( 'mainwp_autosync_timeout_to_skip', 3600 );
+        $autoupdates_websites = MainWP_Auto_Updates_DB::instance()->get_websites_to_continue_updates( $sites_limit, $lasttime_start, false, true, $autosync_timeout ); // included disconnected sites.
 
         MainWP_Logger::instance()->log_events( 'debug-updates-crons', 'Auto updates :: found :: ' . ( ! empty( $autoupdates_websites ) ? count( $autoupdates_websites ) : 0 ) );
 
@@ -155,6 +162,13 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
             // @since 5.4.0.2 +.
             $sync_before = apply_filters( 'mainwp_auto_updates_sync_data_before_run', true );
             foreach ( $autoupdates_websites as $website ) {
+
+                if ( empty( $website->autosync_start_run ) ) {
+                    MainWP_DB::instance()->update_website_option( $website->id, 'autosync_start_run', $local_timestamp ); // to sure the site is in process.
+                }
+                $log_start_run = empty( $website->autosync_start_run ) ? $local_timestamp : intval( $website->autosync_start_run );
+                MainWP_Logger::instance()->log_update_check( '[siteid: ' . $website->id . '] :: [autosync_start_run=' . gmdate( 'Y-m-d H:i:s', $log_start_run ) . ']' );
+
                 if ( ! empty( $website->sync_errors ) ) {
                     if ( ! MainWP_Sync::sync_site( $website, false, true ) ) {
                         $this->finished_site_auto_updates( $website );  // to skip sync error sites.

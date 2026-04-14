@@ -634,10 +634,15 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     public function get_nrof_open_requests( $ip = null ) {
         $table_request_log = esc_sql( $this->table_name( 'request_log' ) );
         if ( null === $ip ) {
-            return $this->wpdb->get_var( "select count(id) from `{$table_request_log}` where micro_timestamp_stop < micro_timestamp_start" );
+            return $this->wpdb->get_var( "select count(id) from `{$table_request_log}` where micro_timestamp_stop < micro_timestamp_start" ); // phpcs:ignore -- NOSONAR - table name escaped.
         }
 
-        return $this->wpdb->get_var( "select count(id) from `{$table_request_log}` where micro_timestamp_stop < micro_timestamp_start and ip = \"" . esc_sql( $ip ) . '"' );
+        return $this->wpdb->get_var(
+            $this->wpdb->prepare(
+                "SELECT COUNT(id) FROM `{$table_request_log}` WHERE micro_timestamp_stop < micro_timestamp_start AND ip = %s", // phpcs:ignore -- NOSONAR - table name escaped.
+                $ip
+            )
+        );
     }
 
     /**
@@ -1096,7 +1101,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         if ( ! empty( $sql_set ) ) {
             $sql_set  = rtrim( $sql_set, ',' );
             $table_wp = esc_sql( $this->table_name( 'wp' ) );
-            $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_wp}` SET " . $sql_set . ' WHERE id=%d', $websiteid ) );
+            $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_wp}` SET " . $sql_set . ' WHERE id=%d', $websiteid ) ); // phpcs:ignore -- NOSONAR -- $sql_set are escaped.
             $success = true;
         }
 

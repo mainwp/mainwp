@@ -1784,7 +1784,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     <div class="middle aligned column">
                         <?php if ( $can_add ) : ?>
                             <button type="button" class="ui mini green button"
-                                id="mainwp-create-application-password-button"><?php esc_html_e( 'Add Application Password', 'mainwp' ); ?></button>
+                                id="mainwp-create-application-password-button-top"><?php esc_html_e( 'Add Application Password', 'mainwp' ); ?></button>
                         <?php endif; ?>
                     </div>
                     <div class="right aligned middle aligned column">

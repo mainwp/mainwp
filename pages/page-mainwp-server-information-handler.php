@@ -2557,7 +2557,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      */
     private static function get_primary_backup_method_label() {
         $primary_backup = get_option( 'mainwp_primaryBackup' );
-        $primary_methods = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( array() ), '4.0.7.2', 'mainwp_getprimarybackup_methods' );
+        $primary_methods = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( array() ), '4.0.7.2', 'mainwp_getprimarybackup_methods' ); // NOSONAR - not IP.
         $primary_methods = apply_filters( 'mainwp_getprimarybackup_methods', $primary_methods );
 
         if ( is_array( $primary_methods ) ) {

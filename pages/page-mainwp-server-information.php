@@ -520,9 +520,9 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 </tbody>
         </table>
 
-        <?php self::render_report_section_table( 'mainwp-system-report-connectivity-table', esc_html__( 'Connectivity & Authentication', 'mainwp' ), MainWP_Server_Information_Handler::get_connectivity_report_rows(), 'Connectivity & Authentication' ); ?>
+        <?php self::render_report_section_table( 'mainwp-system-report-connectivity-table', __( 'Connectivity & Authentication', 'mainwp' ), MainWP_Server_Information_Handler::get_connectivity_report_rows(), 'Connectivity & Authentication' ); ?>
 
-        <?php self::render_report_section_table( 'mainwp-system-report-scheduler-table', esc_html__( 'Scheduler & Background Jobs', 'mainwp' ), MainWP_Server_Information_Handler::get_scheduler_report_rows(), 'Scheduler & Background Jobs' ); ?>
+        <?php self::render_report_section_table( 'mainwp-system-report-scheduler-table', __( 'Scheduler & Background Jobs', 'mainwp' ), MainWP_Server_Information_Handler::get_scheduler_report_rows(), 'Scheduler & Background Jobs' ); ?>
 
         <table id="mainwp-system-report-server-table" class="ui unstackable table mainwp-system-report-table mainwp-system-info-table">
             <thead>
@@ -536,27 +536,27 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             </tbody>
         </table>
 
-        <?php self::render_report_section_table( 'mainwp-system-report-overview-table', esc_html__( 'MainWP Overview', 'mainwp' ), MainWP_Server_Information_Handler::get_mainwp_overview_report_rows(), 'MainWP Overview' ); ?>
+        <?php self::render_report_section_table( 'mainwp-system-report-overview-table', __( 'MainWP Overview', 'mainwp' ), MainWP_Server_Information_Handler::get_mainwp_overview_report_rows(), 'MainWP Overview' ); ?>
 
-        <?php self::render_report_section_table( 'mainwp-system-report-general-settings-table', esc_html__( 'MainWP General Settings', 'mainwp' ), MainWP_Server_Information_Handler::get_general_settings_report_rows(), 'MainWP General Settings' ); ?>
+        <?php self::render_report_section_table( 'mainwp-system-report-general-settings-table', __( 'MainWP General Settings', 'mainwp' ), MainWP_Server_Information_Handler::get_general_settings_report_rows(), 'MainWP General Settings' ); ?>
 
-        <?php self::render_report_section_table( 'mainwp-system-report-advanced-settings-table', esc_html__( 'MainWP Advanced Settings', 'mainwp' ), MainWP_Server_Information_Handler::get_advanced_settings_report_rows(), 'MainWP Advanced Settings' ); ?>
+        <?php self::render_report_section_table( 'mainwp-system-report-advanced-settings-table', __( 'MainWP Advanced Settings', 'mainwp' ), MainWP_Server_Information_Handler::get_advanced_settings_report_rows(), 'MainWP Advanced Settings' ); ?>
 
-        <?php self::render_report_section_table( 'mainwp-system-report-monitoring-settings-table', esc_html__( 'MainWP Monitoring Settings', 'mainwp' ), MainWP_Server_Information_Handler::get_monitoring_settings_report_rows(), 'MainWP Monitoring Settings' ); ?>
+        <?php self::render_report_section_table( 'mainwp-system-report-monitoring-settings-table', __( 'MainWP Monitoring Settings', 'mainwp' ), MainWP_Server_Information_Handler::get_monitoring_settings_report_rows(), 'MainWP Monitoring Settings' ); ?>
 
-        <?php self::render_report_section_table( 'mainwp-system-report-email-settings-table', esc_html__( 'MainWP Email Settings', 'mainwp' ), MainWP_Server_Information_Handler::get_email_settings_report_rows(), 'MainWP Email Settings' ); ?>
+        <?php self::render_report_section_table( 'mainwp-system-report-email-settings-table', __( 'MainWP Email Settings', 'mainwp' ), MainWP_Server_Information_Handler::get_email_settings_report_rows(), 'MainWP Email Settings' ); ?>
 
-        <?php self::render_report_section_table( 'mainwp-system-report-cost-tracker-settings-table', esc_html__( 'MainWP Cost Tracker Settings', 'mainwp' ), MainWP_Server_Information_Handler::get_cost_tracker_report_rows(), 'MainWP Cost Tracker Settings' ); ?>
+        <?php self::render_report_section_table( 'mainwp-system-report-cost-tracker-settings-table', __( 'MainWP Cost Tracker Settings', 'mainwp' ), MainWP_Server_Information_Handler::get_cost_tracker_report_rows(), 'MainWP Cost Tracker Settings' ); ?>
 
-        <?php self::render_report_section_table( 'mainwp-system-report-network-activity-settings-table', esc_html__( 'MainWP Network Activity Settings', 'mainwp' ), MainWP_Server_Information_Handler::get_insights_report_rows(), 'MainWP Network Activity Settings' ); ?>
+        <?php self::render_report_section_table( 'mainwp-system-report-network-activity-settings-table', __( 'MainWP Network Activity Settings', 'mainwp' ), MainWP_Server_Information_Handler::get_insights_report_rows(), 'MainWP Network Activity Settings' ); ?>
 
-        <?php self::render_report_section_table( 'mainwp-system-report-api-backups-settings-table', esc_html__( 'MainWP API Backups Settings', 'mainwp' ), MainWP_Server_Information_Handler::get_api_backups_report_rows(), 'MainWP API Backups Settings' ); ?>
+        <?php self::render_report_section_table( 'mainwp-system-report-api-backups-settings-table', __( 'MainWP API Backups Settings', 'mainwp' ), MainWP_Server_Information_Handler::get_api_backups_report_rows(), 'MainWP API Backups Settings' ); ?>
 
-        <?php self::render_report_section_table( 'mainwp-system-report-tools-settings-table', esc_html__( 'MainWP Tools Settings', 'mainwp' ), MainWP_Server_Information_Handler::get_tools_report_rows(), 'MainWP Tools Settings' ); ?>
+        <?php self::render_report_section_table( 'mainwp-system-report-tools-settings-table', __( 'MainWP Tools Settings', 'mainwp' ), MainWP_Server_Information_Handler::get_tools_report_rows(), 'MainWP Tools Settings' ); ?>
 
-        <?php self::render_report_section_table( 'mainwp-system-report-debug-settings-table', esc_html__( 'Debug & Logs', 'mainwp' ), MainWP_Server_Information_Handler::get_debug_report_rows(), 'Debug & Logs' ); ?>
+        <?php self::render_report_section_table( 'mainwp-system-report-debug-settings-table', __( 'Debug & Logs', 'mainwp' ), MainWP_Server_Information_Handler::get_debug_report_rows(), 'Debug & Logs' ); ?>
 
-        <?php self::render_report_section_table( 'mainwp-system-report-conflict-signals-table', esc_html__( 'Potential Conflicts', 'mainwp' ), MainWP_Server_Information_Handler::get_conflict_signal_report_rows(), 'Potential Conflicts' ); ?>
+        <?php self::render_report_section_table( 'mainwp-system-report-conflict-signals-table', __( 'Potential Conflicts', 'mainwp' ), MainWP_Server_Information_Handler::get_conflict_signal_report_rows(), 'Potential Conflicts' ); ?>
 
         <table id="mainwp-system-report-extensions-table" class="ui unstackable table single line mainwp-system-report-table mainwp-system-info-table">
             <thead>

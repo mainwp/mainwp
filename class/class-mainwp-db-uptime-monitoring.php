@@ -1063,10 +1063,18 @@ KEY idx_wpid_issub (wpid, issub)";
      */
     public function get_count_up_down_monitors() {
         $table_monitors = esc_sql( $this->table_name( 'monitors' ) );
-        $sql            = ' SELECT ' .
-        ' ( SELECT count(*) FROM ' . $table_monitors . ' up WHERE  up.last_status = 1 ) AS count_up, ' .
-        ' ( SELECT count(*) FROM ' . $table_monitors . ' down WHERE  down.last_status = 0 ) AS count_down ' .
-        ' FROM ' . $table_monitors . ' mo LIMIT 1';
+        $table_wp       = esc_sql( $this->table_name( 'wp' ) );
+
+        $where_and_allow_sites = MainWP_DB::instance()->get_sql_where_allow_access_sites( 'wp' ); // Example: AND wp.is_staging = 0 or empty.
+
+        $sql = "
+            SELECT
+                SUM(mo.last_status = 1) AS count_up,
+                SUM(mo.last_status = 0) AS count_down
+            FROM {$table_monitors} mo
+            LEFT JOIN {$table_wp} wp ON wp.id = mo.wpid
+            WHERE 1 {$where_and_allow_sites}
+        ";
 
         return $this->wpdb->get_row( $sql, ARRAY_A ); //phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL from wpdb->prepare().
     }

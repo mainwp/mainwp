@@ -1051,7 +1051,15 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         if ( ! is_array( $extra_view ) ) {
             $extra_view = array( 'favi_icon' );
         }
-        return MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, $orderBy, false, false, null, false, $extra_view ) );
+
+        // Prevent conflicts in wp_options query conditions.
+        // If use_join_wp_options is not enabled,
+        // force the use of a compatible subquery approach to ensure the query remains correct.
+        if ( is_array( $params ) && empty( $params['use_join_wp_options'] ) ) {
+            $params['use_compatible_subquery'] = 1;
+        }
+
+        return MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, $orderBy, false, false, null, false, $extra_view, 'no', $params ) );
     }
 
     /**
@@ -1067,6 +1075,14 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         if ( ! is_array( $params ) ) {
             $params = array();
         }
+
+        // Prevent conflicts in wp_options query conditions.
+        // If use_join_wp_options is not enabled,
+        // force the use of a compatible subquery approach to ensure the query remains correct.
+        if ( is_array( $params ) && empty( $params['use_join_wp_options'] ) ) {
+            $params['use_compatible_subquery'] = 1;
+        }
+
         return MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params );
     }
 

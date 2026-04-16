@@ -796,9 +796,15 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                                 + (CASE theme_upgrades WHEN "[]" THEN 0 ELSE LENGTH(theme_upgrades) - LENGTH(REPLACE(theme_upgrades, "\"Name\":", "\"Name\"")) END)
                                             END ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'phpversion' === $req_orderby ) {
-                    $orderby = ' INET_ATON( SUBSTRING_INDEX( CONCAT( SUBSTRING_INDEX(wp_optionview.phpversion, "-", 1), ".0.0.0.0" ), ".", 4) ) ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+                    $orderby = " INET_ATON(
+                        SUBSTRING_INDEX(
+                            CONCAT(SUBSTRING_INDEX(owp_phpversion.value, '-', 1), '.0.0.0.0'),
+                            '.', 4
+                        )
+                    ) " . ( 'asc' === $req_order ? 'asc' : 'desc' );
+
                 } elseif ( 'wpcore_version' === $req_orderby ) {
-                    $orderby = ' wp_optionview.wpversion_order_num ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+                    $orderby = ' wpversion_order_num ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'ip' === $req_orderby ) {
                     // Sort by Server IP (string sort covers both IPv4 and IPv6).
                     $orderby = ' wp.ip ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
@@ -818,7 +824,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 } elseif ( 'status_code' === $req_orderby ) {
                     $orderby = 'wp.http_response_code ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'added_datetime' === $req_orderby ) {
-                    $orderby = 'wp_optionview.added_timestamp ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+                    $orderby = 'added_timestamp ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'site_health' === $req_orderby ) {
                     $orderby = 'wp_sync.health_value ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'client_name' === $req_orderby ) {
@@ -828,7 +834,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 } elseif ( 'security' === $req_orderby ) {
                     $orderby = 'wp.securityIssues ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'backup' === $req_orderby ) {
-                    $orderby = 'wp_optionview.primary_lasttime_backup ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+                    $orderby = 'primary_lasttime_backup ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                     if ( ! in_array( 'primary_lasttime_backup', $extra_view ) ) {
                         $extra_view[] = 'primary_lasttime_backup';
                     }
@@ -966,29 +972,29 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                     $where = 'wp_sync.health_status = 0';
                 }
             } elseif ( 'phpver8' === $site_status ) {
-                $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '<', '8.0.0.0' ); // NOSONAR - no IP.
+                $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '<', '8.0.0.0' ); // NOSONAR - no IP.
                 if ( $is_not ) {
-                    $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '>=', '8.0.0.0' ); // NOSONAR - no IP.
+                    $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '>=', '8.0.0.0' ); // NOSONAR - no IP.
                 }
             } elseif ( 'phpver81' === $site_status ) {
-                $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '<', '8.1.0.0' ); // NOSONAR - no IP.
+                $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '<', '8.1.0.0' ); // NOSONAR - no IP.
                 if ( $is_not ) {
-                    $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '>=', '8.1.0.0' ); // NOSONAR - no IP.
+                    $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '>=', '8.1.0.0' ); // NOSONAR - no IP.
                 }
             } elseif ( 'phpver82' === $site_status ) {
-                $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '<', '8.2.0.0' ); // NOSONAR - no IP.
+                $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '<', '8.2.0.0' ); // NOSONAR - no IP.
                 if ( $is_not ) {
-                    $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '>=', '8.2.0.0' ); // NOSONAR - no IP.
+                    $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '>=', '8.2.0.0' ); // NOSONAR - no IP.
                 }
             } elseif ( 'phpver83' === $site_status ) {
-                $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '<', '8.3.0.0' ); // NOSONAR - no IP.
+                $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '<', '8.3.0.0' ); // NOSONAR - no IP.
                 if ( $is_not ) {
-                    $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '>=', '8.3.0.0' ); // NOSONAR - no IP.
+                    $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '>=', '8.3.0.0' ); // NOSONAR - no IP.
                 }
             } elseif ( 'phpver84' === $site_status ) {
-                $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '<', '8.4.0.0' ); // NOSONAR - no IP.
+                $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '<', '8.4.0.0' ); // NOSONAR - no IP.
                 if ( $is_not ) {
-                    $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '>=', '8.4.0.0' ); // NOSONAR - no IP.
+                    $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '>=', '8.4.0.0' ); // NOSONAR - no IP.
                 }
             } elseif ( 'suspended' === $site_status ) {
                 $where = 'wp.suspended = 1'; // query for suspended sites.
@@ -1101,6 +1107,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
 
         $cache_key = MainWP_Cache_Helper::get_cache_key( 'sites_ids', $cache_group, $params );
 
+        $had_empty_cache = false;
         // IMPORTANT: Skip cache when searching to prevent cached site IDs from restricting results.
         // When $_included_cache_ids is set, the SQL query adds "WHERE wp.id IN (cached_ids)" which
         // limits results to previously cached sites. This breaks search functionality because we need
@@ -1113,7 +1120,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
 
             if ( '_get_cache_false' !== $cache_ids ) {
                 if ( empty( $cache_ids ) ) {
-                    $params['_included_cache_ids'] = array( -1 ); // not found if get cached success but empty.
+                    $params['_included_cache_ids'] = array( 0 ); // not found if get cached success but empty.
+                    $had_empty_cache               = true;
                 } else {
                     $params['_included_cache_ids'] = $cache_ids;
                 }
@@ -1131,7 +1139,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         // (e.g. written before a previous LIMIT-offset bug). Self-heal: delete stale cache
         // and re-run the full query so this request still returns correct results.
         $used_cache_ids = ! empty( $params['_included_cache_ids'] );
-        if ( $used_cache_ids && empty( $site_ids ) ) {
+        if ( $used_cache_ids && empty( $site_ids ) && ! $had_empty_cache ) {
             MainWP_Cache_Helper::instance()->delete_cache( $cache_key, $cache_group );
             unset( $params['_included_cache_ids'] );
             $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );

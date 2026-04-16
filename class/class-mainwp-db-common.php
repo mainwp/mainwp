@@ -130,7 +130,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $where .= $this->get_sql_where_allow_groups();
 
         $table_group = esc_sql( $this->table_name( 'group' ) );
-        return $this->wpdb->get_row( $this->wpdb->prepare( "SELECT * FROM `{$table_group}` WHERE 1 " . esc_sql( $where ) . " AND name= %s", $this->escape( $name ) ) );
+        return $this->wpdb->get_row( $this->wpdb->prepare( "SELECT * FROM `{$table_group}` WHERE 1 " . esc_sql( $where ) . ' AND name= %s', $this->escape( $name ) ) );
     }
 
     /**
@@ -185,9 +185,31 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $where .= $this->get_sql_where_allow_groups( '', $with_staging );
 
         $table_group = esc_sql( $this->table_name( 'group' ) );
-        return $this->wpdb->get_results( "SELECT * FROM `{$table_group}` WHERE " . esc_sql( $where ) . " ORDER BY name", OBJECT_K );
+        return $this->wpdb->get_results( "SELECT * FROM `{$table_group}` WHERE " . esc_sql( $where ) . ' ORDER BY name', OBJECT_K );
     }
 
+
+    /**
+     * Method get_sql_where_wpopt_phpversion().
+     *
+     * @param string $coln Column compare.
+     * @param string $operator Operator compare.
+     * @param string $ver_str Version compare.
+     *
+     * @return string Sql version compare.
+     */
+    public function get_sql_where_wpopt_phpversion( $coln, $operator, $ver_str ) {
+        $allowed_columns   = array( 'phpversion' );
+        $allowed_operators = array( '>', '>=', '<', '<=', '=', '!=' );
+        if ( ! in_array( $coln, $allowed_columns, true ) || ! in_array( $operator, $allowed_operators, true ) ) {
+            return ' 0 = 1 ';
+        }
+        $alias = 'owp_' . $coln;
+        return $this->wpdb->prepare(
+            " ( {$alias}.value IS NOT NULL AND INET_ATON( SUBSTRING_INDEX( CONCAT(SUBSTRING_INDEX( {$alias}.value, '-', 1), '.0.0.0.0'), '.', 4 ) ) {$operator} INET_ATON(%s) ) ", //phpcs:ignore -- NOSONAR escaped variables.
+            $ver_str
+        );
+    }
 
     /**
      * Method get_sql_version_compare().
@@ -229,7 +251,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $where .= $this->get_sql_where_allow_groups();
 
         $table_group = esc_sql( $this->table_name( 'group' ) );
-        return $this->wpdb->get_results( "SELECT * FROM `{$table_group}` WHERE " . esc_sql( $where ) . " ORDER BY name", OBJECT_K );
+        return $this->wpdb->get_results( "SELECT * FROM `{$table_group}` WHERE " . esc_sql( $where ) . ' ORDER BY name', OBJECT_K );
     }
 
     /**
@@ -245,7 +267,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      */
     public function get_groups_by_website_id( $websiteid ) {
         if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
-            $table_group = esc_sql( $this->table_name( 'group' ) );
+            $table_group    = esc_sql( $this->table_name( 'group' ) );
             $table_wp_group = esc_sql( $this->table_name( 'wp_group' ) );
             return $this->wpdb->get_results(
                 $this->wpdb->prepare(
@@ -294,9 +316,9 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             $where .= $this->get_sql_where_allow_groups( 'gr' );
         }
 
-        $table_group = esc_sql( $this->table_name( 'group' ) );
+        $table_group    = esc_sql( $this->table_name( 'group' ) );
         $table_wp_group = esc_sql( $this->table_name( 'wp_group' ) );
-        $where = esc_sql( $where );
+        $where          = esc_sql( $where );
         return $this->wpdb->get_results( "SELECT gr.*, COUNT(DISTINCT(wpgr.wpid)) as nrsites FROM `{$table_group}` gr LEFT JOIN `{$table_wp_group}` wpgr ON gr.id = wpgr.groupid WHERE 1 {$where} GROUP BY gr.id ORDER BY gr.name", OBJECT_K );
     }
 
@@ -394,9 +416,9 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return string tag view.
      */
     public function get_tag_view() {
-        $view  = "( SELECT intgr.id, ( SELECT GROUP_CONCAT(wp.id ORDER BY wp.id SEPARATOR ',') FROM `" . $this->table_name( 'wp' ) . "` wp ";
-        $view .= " LEFT JOIN `" . $this->table_name( 'wp_group' ) . "` wpgr ON wp.id = wpgr.wpid WHERE wpgr.groupid = intgr.id ) as sites_ids ";
-        $view .= " FROM `" . $this->table_name( 'group' ) . "` intgr )";
+        $view  = "( SELECT intgr.id, ( SELECT GROUP_CONCAT(wp.id ORDER BY wp.id SEPARATOR ',') FROM `" . $this->table_name( 'wp' ) . '` wp ';
+        $view .= ' LEFT JOIN `' . $this->table_name( 'wp_group' ) . '` wpgr ON wp.id = wpgr.wpid WHERE wpgr.groupid = intgr.id ) as sites_ids ';
+        $view .= ' FROM `' . $this->table_name( 'group' ) . '` intgr )';
         return $view;
     }
 
@@ -426,17 +448,17 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             $userid = $current_user->ID;
         }
 
-        $table_group = esc_sql( $this->table_name( 'group' ) );
+        $table_group    = esc_sql( $this->table_name( 'group' ) );
         $table_wp_group = esc_sql( $this->table_name( 'wp_group' ) );
-        $table_wp = esc_sql( $this->table_name( 'wp' ) );
-        $table_wp_sync = esc_sql( $this->table_name( 'wp_sync' ) );
+        $table_wp       = esc_sql( $this->table_name( 'wp' ) );
+        $table_wp_sync  = esc_sql( $this->table_name( 'wp_sync' ) );
 
-        $sql = "SELECT DISTINCT(g.id), g.name, count(wp.wpid) FROM `{$table_group}` g JOIN `{$table_wp_group}` wp ON g.id = wp.groupid JOIN `{$table_wp}` wpsite ON wp.wpid = wpsite.id JOIN `{$table_wp_sync}` wp_sync ON wp.wpid = wp_sync.wpid WHERE 1 = 1";
+        $sql    = "SELECT DISTINCT(g.id), g.name, count(wp.wpid) FROM `{$table_group}` g JOIN `{$table_wp_group}` wp ON g.id = wp.groupid JOIN `{$table_wp}` wpsite ON wp.wpid = wpsite.id JOIN `{$table_wp_sync}` wp_sync ON wp.wpid = wp_sync.wpid WHERE 1 = 1";
         $params = array();
 
         $staging_group = get_option( 'mainwp_stagingsites_group_id' );
         if ( $staging_group ) {
-            $sql .= ' AND g.id <> %d';
+            $sql     .= ' AND g.id <> %d';
             $params[] = absint( $staging_group );
         }
 
@@ -452,8 +474,8 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
                 if ( ! empty( $allowed_groups ) ) {
                     $placeholders = implode( ',', array_fill( 0, count( $allowed_groups ), '%d' ) );
-                    $sql .= ' AND g.id IN (' . $placeholders . ')';
-                    $params = array_merge( $params, array_map( 'intval', $allowed_groups ) );
+                    $sql         .= ' AND g.id IN (' . $placeholders . ')';
+                    $params       = array_merge( $params, array_map( 'intval', $allowed_groups ) );
                 }
             } else {
                 $sql .= ' AND 0';
@@ -461,7 +483,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
 
         if ( null !== $userid ) {
-            $sql .= ' AND g.userid = %d';
+            $sql     .= ' AND g.userid = %d';
             $params[] = intval( $userid );
         }
 
@@ -549,7 +571,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             $where .= ' AND log_timestamp < ' . ( time() - $days * DAY_IN_SECONDS );
         }
         $table_action_log = esc_sql( $this->table_name( 'action_log' ) );
-        $where = esc_sql( $where );
+        $where            = esc_sql( $where );
         $this->wpdb->query( "DELETE FROM `{$table_action_log}` WHERE 1 {$where}" );
     }
 
@@ -578,7 +600,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
 
         $table_request_log = esc_sql( $this->table_name( 'request_log' ) );
-        $var = $this->wpdb->get_var( $this->wpdb->prepare( "SELECT id FROM `{$table_request_log}` WHERE wpid = %d ", $wpid ) );
+        $var               = $this->wpdb->get_var( $this->wpdb->prepare( "SELECT id FROM `{$table_request_log}` WHERE wpid = %d ", $wpid ) );
         if ( null !== $var ) {
             $this->wpdb->update( $this->table_name( 'request_log' ), $updateValues, array( 'wpid' => $wpid ) );
         } else {
@@ -596,7 +618,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      */
     public function close_open_requests() {
         $table_request_log = esc_sql( $this->table_name( 'request_log' ) );
-        $microtime_value = esc_sql( microtime( true ) );
+        $microtime_value   = esc_sql( microtime( true ) );
         $this->wpdb->query( "UPDATE `{$table_request_log}` SET micro_timestamp_stop = micro_timestamp_start WHERE micro_timestamp_stop < micro_timestamp_start and {$microtime_value} - micro_timestamp_start > 7" );
     }
 
@@ -612,10 +634,15 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     public function get_nrof_open_requests( $ip = null ) {
         $table_request_log = esc_sql( $this->table_name( 'request_log' ) );
         if ( null === $ip ) {
-            return $this->wpdb->get_var( "select count(id) from `{$table_request_log}` where micro_timestamp_stop < micro_timestamp_start" );
+            return $this->wpdb->get_var( "select count(id) from `{$table_request_log}` where micro_timestamp_stop < micro_timestamp_start" ); // phpcs:ignore -- NOSONAR - table name escaped.
         }
 
-        return $this->wpdb->get_var( "select count(id) from `{$table_request_log}` where micro_timestamp_stop < micro_timestamp_start and ip = \"" . esc_sql( $ip ) . "\"" );
+        return $this->wpdb->get_var(
+            $this->wpdb->prepare(
+                "SELECT COUNT(id) FROM `{$table_request_log}` WHERE micro_timestamp_stop < micro_timestamp_start AND ip = %s", // phpcs:ignore -- NOSONAR - table name escaped.
+                $ip
+            )
+        );
     }
 
     /**
@@ -770,10 +797,10 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      */
     public function remove_group( $groupid ) {
         if ( MainWP_Utility::ctype_digit( $groupid ) ) {
-            $group = $this->get_group_by_id( $groupid );
-            $table_group = esc_sql( $this->table_name( 'group' ) );
+            $group          = $this->get_group_by_id( $groupid );
+            $table_group    = esc_sql( $this->table_name( 'group' ) );
             $table_wp_group = esc_sql( $this->table_name( 'wp_group' ) );
-            $nr    = $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM `{$table_group}` WHERE id=%d", $groupid ) );
+            $nr             = $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM `{$table_group}` WHERE id=%d", $groupid ) );
             $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM `{$table_wp_group}` WHERE groupid=%d", $groupid ) );
             if ( $nr ) {
                 /**
@@ -846,7 +873,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             $theUserId = 0;
         }
         $table_users = esc_sql( $this->table_name( 'users' ) );
-        $user_email = $this->wpdb->get_var( $this->wpdb->prepare( "SELECT user_email FROM `{$table_users}` WHERE userid = %d", $theUserId ) );
+        $user_email  = $this->wpdb->get_var( $this->wpdb->prepare( "SELECT user_email FROM `{$table_users}` WHERE userid = %d", $theUserId ) );
 
         if ( null === $user_email || empty( $user_email ) ) {
             $user_email = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT user_email FROM `' . $this->wpdb->prefix . 'users` WHERE id = %d', $userid ) );
@@ -903,7 +930,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
 
         $table_users = esc_sql( $this->table_name( 'users' ) );
-        $row = $this->wpdb->get_row( "SELECT * FROM `{$table_users}` WHERE userid= " . intval( $userid ), OBJECT );
+        $row         = $this->wpdb->get_row( "SELECT * FROM `{$table_users}` WHERE userid= " . intval( $userid ), OBJECT );
         if ( null === $row ) {
             $this->create_user_extension( $userid );
             $row = $this->wpdb->get_row( "SELECT * FROM `{$table_users}` WHERE userid= " . intval( $userid ), OBJECT );
@@ -975,7 +1002,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             }
         }
         $table_users = esc_sql( $this->table_name( 'users' ) );
-        $row = $this->wpdb->get_row( "SELECT * FROM `{$table_users}` WHERE userid= " . intval( $userid ), OBJECT );
+        $row         = $this->wpdb->get_row( "SELECT * FROM `{$table_users}` WHERE userid= " . intval( $userid ), OBJECT );
         if ( null === $row ) {
             $this->create_user_extension( $userid );
         }
@@ -1072,9 +1099,9 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
 
         if ( ! empty( $sql_set ) ) {
-            $sql_set = rtrim( $sql_set, ',' );
+            $sql_set  = rtrim( $sql_set, ',' );
             $table_wp = esc_sql( $this->table_name( 'wp' ) );
-            $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_wp}` SET " . $sql_set . " WHERE id=%d", $websiteid ) );
+            $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_wp}` SET " . $sql_set . ' WHERE id=%d', $websiteid ) ); // phpcs:ignore -- NOSONAR -- $sql_set are escaped.
             $success = true;
         }
 

@@ -441,6 +441,7 @@ final class MainWP_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         if ( false !== $data ) {
             self::record_metrics( 'hit', $key, $group );
+            MainWP_Logger::instance()->log_events( 'cache-metrics', sprintf( 'Get Cache :: wp :: hit :: [key=%s] :: [group=%s]', $key, $group ) );
             return $data;
         }
 
@@ -449,10 +450,12 @@ final class MainWP_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSa
         if ( false !== $data ) {
             self::record_metrics( 'hit', $key, $group );
             wp_cache_set( $key, $data, $group, $object_cache_ttl );
+            MainWP_Logger::instance()->log_events( 'cache-metrics', sprintf( 'Get Cache :: transient :: hit :: [key=%s] :: [group=%s]', $key, $group ) );
             return $data;
         }
 
         self::record_metrics( 'miss', $key, $group );
+        MainWP_Logger::instance()->log_events( 'cache-metrics', sprintf( 'Get Cache :: miss :: [key=%s] :: [group=%s]', $key, $group ) );
 
         if ( $generator && is_callable( $generator ) ) {
             // Pass args to the generator.
@@ -460,6 +463,7 @@ final class MainWP_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::record_metrics( 'set', $key, $group );
             wp_cache_set( $key, $data, $group, $object_cache_ttl );
             set_transient( $transient_key, $data, $ttl );
+            MainWP_Logger::instance()->log_events( 'cache-metrics', sprintf( 'Get Cache :: set :: [key=%s] :: [group=%s]', $key, $group ) );
             return $data;
         }
 

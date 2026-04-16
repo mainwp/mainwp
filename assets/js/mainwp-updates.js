@@ -4,7 +4,6 @@
 globalThis.mainwpVars = globalThis.mainwpVars || {};
 mainwpVars.errorCount = 0;
 mainwpVars.actionsErrors = {};
-mainwpVars.maxThreadsAll = 3;
 
 globalThis.mainwp_put_actions_errors_msg = function (action, itemId, msgType, errorMsg) {
     mainwpVars.actionsErrors[action] = mainwpVars.actionsErrors?.[action] || {};
@@ -1930,7 +1929,7 @@ let updatesoverview_upgrade_all_int = function (pSitesToUpdate, pSitesToUpgrade,
 };
 
 let updatesoverview_upgrade_all_loop_next = function () {
-    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxThreadsAll) && (mainwpVars.websitesLeft > 0)) {
+    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxThreads) && (mainwpVars.websitesLeft > 0)) {
         updatesoverview_upgrade_all_upgrade_next();
     }
 };

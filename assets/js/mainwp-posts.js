@@ -394,10 +394,6 @@ jQuery(function () {
         }
 
         mainwp_copyTextToClipboard(value).then(function () {
-            console.log('---------------');
-            console.log('mainwp_copyTextToClipboard_3333', value);
-            console.log('---------------');
-
             jQuery('#mainwp-copy-confirm-modal').modal('show');
         }).catch(function () {
             alert(__('Unable to copy to clipboard.'));

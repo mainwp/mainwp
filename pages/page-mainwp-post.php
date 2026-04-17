@@ -884,15 +884,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         ?>
 
         <div id="mainwp-message-zone"></div>
-        <div id="mainwp-copy-confirm-modal" class="ui tiny modal">
-            <i class="close icon"></i>
-            <div class="header">
-                <?php esc_html_e( 'Copied', 'mainwp' ); ?>
-            </div>
-            <div class="content">
-                <p><?php esc_html_e( 'The requested value has been copied to your clipboard.', 'mainwp' ); ?></p>
-            </div>
-        </div>
+
         <div id="mainwp-loading-posts-row" style="display: none;">
             <div class="ui active page dimmer">
                 <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>

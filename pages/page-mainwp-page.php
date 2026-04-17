@@ -764,15 +764,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
             </div>
         </div>
-        <div id="mainwp-copy-confirm-modal" class="ui tiny modal">
-            <i class="close icon"></i>
-            <div class="header">
-                <?php esc_html_e( 'Copied', 'mainwp' ); ?>
-            </div>
-            <div class="content">
-                <p><?php esc_html_e( 'The requested value has been copied to your clipboard.', 'mainwp' ); ?></p>
-            </div>
-        </div>
+
         <?php
         /**
          * Action: mainwp_before_pages_table

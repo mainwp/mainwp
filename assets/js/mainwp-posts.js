@@ -393,9 +393,7 @@ jQuery(function () {
             value = rowElement.find(target).val() || '';
         }
 
-        mainwp_copyTextToClipboard(value).then(function () {
-            jQuery('#mainwp-copy-confirm-modal').modal('show');
-        }).catch(function () {
+        mainwp_copyTextToClipboard(value).catch(function () {
             alert(__('Unable to copy to clipboard.'));
         });
 

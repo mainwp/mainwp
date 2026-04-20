@@ -145,6 +145,10 @@ class Cost_Tracker_Add_Edit {
                 $slug = '';
             }
 
+            if ( ! empty( $source_cost->name ) ) {
+                $source_cost->name = $source_cost->name . esc_html__( ' - (Copy)', 'mainwp' );
+            }
+
             // Do not reuse the same uploaded icon file between two cost entries.
             if ( ! empty( $selected_prod_icon ) && false === strpos( $selected_prod_icon, 'deficon:' ) ) {
                 $selected_prod_icon              = '';

@@ -146,7 +146,7 @@ class Cost_Tracker_Add_Edit {
             }
 
             if ( ! empty( $source_cost->name ) ) {
-                $source_cost->name = $source_cost->name . esc_html__( ' - (Copy)', 'mainwp' );
+                $source_cost->name = $source_cost->name . __( ' - (Copy)', 'mainwp' );
             }
 
             // Do not reuse the same uploaded icon file between two cost entries.

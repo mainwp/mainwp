@@ -113,6 +113,7 @@ class Cost_Tracker_Add_Edit {
         $selected_default_icon        = '';
         $selected_prod_icon           = '';
         $selected_prod_color          = '';
+        $duplicate_uploaded_icon_cleared = false;
         $is_plugintheme               = true;
 
         if ( $edit_id ) {
@@ -146,7 +147,8 @@ class Cost_Tracker_Add_Edit {
 
             // Do not reuse the same uploaded icon file between two cost entries.
             if ( ! empty( $selected_prod_icon ) && false === strpos( $selected_prod_icon, 'deficon:' ) ) {
-                $selected_prod_icon = '';
+                $selected_prod_icon              = '';
+                $duplicate_uploaded_icon_cleared = true;
             }
         }
 
@@ -178,12 +180,18 @@ class Cost_Tracker_Add_Edit {
             }
         }
 
-        // new cost.
-        if ( ! $edit_id ) {
+        // New cost only. Duplicates keep the copied default icon/color unless the uploaded icon was cleared.
+        if ( ! $edit_id && ! $is_duplicate ) {
             $selected_default_icon = 'archive';
             $selected_prod_icon    = 'deficon:' . $selected_default_icon;
             $selected_prod_color   = '#34424D';
             $cust_prod_src         = '';
+        } elseif ( $is_duplicate && $duplicate_uploaded_icon_cleared && empty( $selected_prod_icon ) ) {
+            $selected_default_icon = 'archive';
+            $selected_prod_icon    = 'deficon:' . $selected_default_icon;
+            if ( empty( $selected_prod_color ) ) {
+                $selected_prod_color = '#34424D';
+            }
         }
 
         ?>

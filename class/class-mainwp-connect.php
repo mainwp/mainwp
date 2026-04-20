@@ -1734,10 +1734,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         if ( isset( $others['function'] ) ) {
             $what = $others['function'];
-            if ( in_array( $what, array( 'installplugintheme', 'upgradeplugintheme', 'upgradetranslation', 'upgrade', 'stats', 'renew', 'reconnect' ) ) ) {
+            if ( in_array( $what, array( 'installplugintheme', 'upgradeplugintheme', 'upgradetranslation', 'upgrade', 'stats', 'renew', 'reconnect' ), true ) ) {
                 MainWP_Cache_Helper::invalidate_cache_group( MainWP_Cache_Helper::CGR_UPDATES );
+                MainWP_Cache_Warm_Helper::invalidate_pages_by_site_actions( $what );
             }
-            MainWP_Cache_Warm_Helper::invalidate_pages_by_site_actions( $what );
         }
 
         if ( ( false === $data ) && empty( $http_status ) ) {

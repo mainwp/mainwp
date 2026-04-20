@@ -1211,7 +1211,6 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         $invalidates = array(
             MainWP_Cache_Helper::CGR_SITES,
             MainWP_Cache_Helper::CGR_UPDATES,
-            MainWP_Cache_Helper::CGR_SYNC_DATA,
         );
         foreach ( $invalidates as $value ) {
             MainWP_Cache_Helper::invalidate_cache_group( $value );

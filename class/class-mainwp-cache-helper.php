@@ -148,7 +148,7 @@ final class MainWP_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         if ( false === $prefix ) {
             $prefix = microtime( true );
-            set_transient( $key_group, $prefix );
+            set_transient( $key_group, $prefix, DAY_IN_SECONDS );
             wp_cache_set( $key_group, $prefix, $group );
         }
 
@@ -196,7 +196,7 @@ final class MainWP_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $key_group = self::get_key_group( $group );
         MainWP_Logger::instance()->log_events( 'cache-metrics', sprintf( 'Invalidate cache group :: [group=%s] :: [key_group=%s]', $group, $key_group ) );
         wp_cache_set( $key_group, $mctime, $group );
-        set_transient( $key_group, $mctime );
+        set_transient( $key_group, $mctime, DAY_IN_SECONDS );
     }
 
     /**

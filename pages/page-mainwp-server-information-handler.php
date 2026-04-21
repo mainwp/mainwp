@@ -1075,6 +1075,73 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
+     * Add English export labels to localized report rows.
+     *
+     * @param array<int,array<string,mixed>> $rows           Report rows.
+     * @param array<int,string>              $english_labels English labels to map.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    private static function add_export_labels_to_rows( $rows, $english_labels ) {
+        if ( empty( $rows ) || empty( $english_labels ) ) {
+            return $rows;
+        }
+
+        $localized_map = array();
+        foreach ( $english_labels as $english_label ) {
+            $localized_map[ esc_html__( $english_label, 'mainwp' ) ] = $english_label;
+        }
+
+        foreach ( $rows as $index => $row ) {
+            if ( ! is_array( $row ) || empty( $row['label'] ) || ! empty( $row['export_label'] ) ) {
+                continue;
+            }
+
+            if ( isset( $localized_map[ $row['label'] ] ) ) {
+                $rows[ $index ]['export_label'] = $localized_map[ $row['label'] ];
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Get English export label for notification type.
+     *
+     * @param string $type           Notification type.
+     * @param string $fallback_label Fallback localized label.
+     *
+     * @return string
+     */
+    private static function get_notification_type_export_label( $type, $fallback_label ) {
+        $labels = array(
+            'daily_digest'              => 'Daily Digest Email',
+            'uptime'                    => 'Uptime Monitoring Email',
+            'site_health'               => 'Site Health Monitoring Email',
+            'deactivated_license_alert' => 'Extension License Deactivation Notification Email',
+            'http_check'                => 'After Updates HTTP Check Email',
+        );
+
+        /**
+         * Filter: mainwp_notification_type_export_labels
+         *
+         * Filters English export labels for notification types used in the Server Information report export.
+         *
+         * @since 6.1
+         *
+         * @param array  $labels         Notification type => English export label map.
+         * @param string $type           Notification type currently being resolved.
+         * @param string $fallback_label Localized fallback label.
+         */
+        $labels = apply_filters( 'mainwp_notification_type_export_labels', $labels, $type, $fallback_label );
+        if ( ! is_array( $labels ) ) {
+            $labels = array();
+        }
+
+        return isset( $labels[ $type ] ) ? $labels[ $type ] : $fallback_label;
+    }
+
+    /**
      * Get MainWP overview rows.
      *
      * @return array<int,array<string,mixed>>
@@ -1097,7 +1164,8 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
 
         $upload_directory = static::get_mainwp_upload_directory_data();
 
-        return array(
+        return self::add_export_labels_to_rows(
+            array(
             array(
                 'label'  => esc_html__( 'MainWP Dashboard Version', 'mainwp' ),
                 'value'  => $version_value,
@@ -1117,6 +1185,13 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 'value' => static::format_boolean_label( Rest_Api_V1::instance()->is_rest_api_enabled() ),
                 'status' => Rest_Api_V1::instance()->is_rest_api_enabled() ? 'pass' : 'warning',
             ),
+            ),
+            array(
+                'MainWP Dashboard Version',
+                'Number of connected sites',
+                'MainWP upload directory',
+                'MainWP REST API enabled',
+            )
         );
     }
 
@@ -1134,7 +1209,8 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         $verify_con   = (int) get_option( 'mainwp_verify_connection_method', 1 );
         $signature    = static::get_signature_algorithm_label();
 
-        return array(
+        return self::add_export_labels_to_rows(
+            array(
             array(
                 'label'      => esc_html__( 'Dashboard home URL', 'mainwp' ),
                 'value'      => home_url( '/' ),
@@ -1192,6 +1268,21 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 'label' => esc_html__( 'Force IPv4', 'mainwp' ),
                 'value' => static::format_boolean_label( (int) get_option( 'mainwp_forceUseIPv4', 0 ) ),
             ),
+            ),
+            array(
+                'Dashboard home URL',
+                'Dashboard site URL',
+                'Public Dashboard IP',
+                'HTTPS',
+                'Permalink structure',
+                'WordPress REST API endpoint',
+                'WordPress REST API reachability',
+                'Server self connect',
+                'Verify SSL certificate',
+                'Verify connection method',
+                'OpenSSL signature algorithm',
+                'Force IPv4',
+            )
         );
     }
 
@@ -1252,7 +1343,18 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             $rows[] = $monitoring;
         }
 
-        return $rows;
+        return self::add_export_labels_to_rows(
+            $rows,
+            array(
+                'Use WP Cron',
+                'Daily update frequency',
+                'Daily update time',
+                'Advanced automatic updates schedule',
+                'Check for available updates',
+                'Reconnect sites',
+                'Uptime monitoring schedule',
+            )
+        );
     }
 
     /**
@@ -1281,7 +1383,8 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             $show_widgets = array();
         }
 
-        return array(
+        return self::add_export_labels_to_rows(
+            array(
             array(
                 'label' => esc_html__( 'Timezone', 'mainwp' ),
                 'value' => static::get_timezone_label(),
@@ -1422,6 +1525,41 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 'label' => esc_html__( 'Execute backup tasks in chunks', 'mainwp' ),
                 'value' => static::format_boolean_label( (int) get_option( 'mainwp_chunkedBackupTasks', 1 ) ),
             ),
+            ),
+            array(
+                'Timezone',
+                'Date format',
+                'Time format',
+                'Sidebar position',
+                'Hide Update Everything',
+                'Dashboard widgets shown',
+                'WP Core advanced automatic updates',
+                'Plugin advanced automatic updates',
+                'Theme advanced automatic updates',
+                'Translation advanced automatic updates',
+                'Automatic updates frequency',
+                'Automatic updates time',
+                'Automatic updates day',
+                'Advanced automatic updates delay',
+                'Show language updates',
+                'Disable update confirmations',
+                'After updates HTTP response check',
+                'After updates HTTP response method',
+                'Backup before update',
+                'Full backup tolerance before update',
+                'Abandoned plugins/themes tolerance',
+                'Primary backup system',
+                'MainWP legacy backups enabled',
+                'Backups kept on server',
+                'Backup to external sources',
+                'Archive format',
+                'Auto detect maximum file descriptors on child sites',
+                'Maximum file descriptors fallback value',
+                'Load files in memory before zipping',
+                'Send email when backup fails',
+                'Send email when backup starts',
+                'Execute backup tasks in chunks',
+            )
         );
     }
 
@@ -1448,7 +1586,8 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             }
         }
 
-        return array(
+        return self::add_export_labels_to_rows(
+            array(
             array(
                 'label' => esc_html__( 'Maximum simultaneous requests', 'mainwp' ),
                 'value' => (string) ( false === get_option( 'mainwp_maximumRequests' ) ? 4 : intval( get_option( 'mainwp_maximumRequests' ) ) ),
@@ -1534,6 +1673,25 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                     count( $sync_defaults )
                 ),
             ),
+            ),
+            array(
+                'Maximum simultaneous requests',
+                'Minimum delay between requests',
+                'Maximum simultaneous requests per IP',
+                'Minimum delay between requests to the same IP',
+                'Maximum simultaneous sync requests',
+                'Maximum simultaneous install and update requests',
+                'Maximum simultaneous uptime monitoring requests',
+                'Sites processed per sync batch',
+                'Sync batch sleep interval',
+                'Optimize data loading',
+                'Browser cache expiration time',
+                'Verify SSL certificate',
+                'Verify connection method',
+                'OpenSSL signature algorithm',
+                'Force IPv4',
+                'Selected data to sync',
+            )
         );
     }
 
@@ -1559,7 +1717,8 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         $site_health     = empty( get_option( 'mainwp_disableSitesHealthMonitoring', 1 ) );
         $threshold       = (int) get_option( 'mainwp_sitehealthThreshold', 80 );
 
-        return array(
+        return self::add_export_labels_to_rows(
+            array(
             array(
                 'label' => esc_html__( 'Enable uptime monitoring', 'mainwp' ),
                 'value' => static::format_boolean_label( ! empty( $monitoring_settings['active'] ) ),
@@ -1604,6 +1763,20 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 'label' => esc_html__( 'Site Health threshold', 'mainwp' ),
                 'value' => 100 === $threshold ? esc_html__( 'Good', 'mainwp' ) : esc_html__( 'Should be improved', 'mainwp' ),
             ),
+            ),
+            array(
+                'Enable uptime monitoring',
+                'Monitor type',
+                'Method',
+                'Interval',
+                'Timeout',
+                'Up HTTP codes',
+                'Down confirmation check',
+                'Keyword monitoring value',
+                'Monitoring data retention',
+                'Enable site health monitoring',
+                'Site Health threshold',
+            )
         );
     }
 
@@ -1634,8 +1807,9 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             );
 
             $rows[] = array(
-                'label' => $label,
-                'value' => $value,
+                'label'        => $label,
+                'export_label' => self::get_notification_type_export_label( $type, $label ),
+                'value'        => $value,
             );
         }
 
@@ -1665,7 +1839,8 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             $product_types = array();
         }
 
-        return array(
+        return self::add_export_labels_to_rows(
+            array(
             array(
                 'label' => esc_html__( 'Currency', 'mainwp' ),
                 'value' => (string) $selected_currency,
@@ -1702,6 +1877,16 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                     count( $custom_payment_methods )
                 ),
             ),
+            ),
+            array(
+                'Currency',
+                'Currency position',
+                'Thousand separator',
+                'Decimal separator',
+                'Decimals',
+                'Product categories',
+                'Payment methods',
+            )
         );
     }
 
@@ -1726,7 +1911,8 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             $changes_disabled   = count( \MainWP\Dashboard\Module\Log\Log_Settings::get_disabled_logs_type( 'changeslogs' ) );
         }
 
-        return array(
+        return self::add_export_labels_to_rows(
+            array(
             array(
                 'label' => esc_html__( 'Enable Network Activity logging', 'mainwp' ),
                 'value' => static::format_boolean_label( ! empty( $options['enabled'] ) ),
@@ -1755,6 +1941,16 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 'label' => esc_html__( 'Disabled change-log event types', 'mainwp' ),
                 'value' => (string) $changes_disabled,
             ),
+            ),
+            array(
+                'Enable Network Activity logging',
+                'Automatically archive logs',
+                'Data retention period',
+                'Child-site Network Activity retention',
+                'Disabled dashboard event types',
+                'Disabled child-site event types',
+                'Disabled change-log event types',
+            )
         );
     }
 
@@ -1860,7 +2056,8 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      * @return array<int,array<string,mixed>>
      */
     public static function get_tools_report_rows() {
-        return array(
+        return self::add_export_labels_to_rows(
+            array(
             array(
                 'label' => esc_html__( 'Current MainWP theme', 'mainwp' ),
                 'value' => MainWP_Settings::get_instance()->get_current_user_theme(),
@@ -1877,6 +2074,13 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 'label' => esc_html__( 'Guided video', 'mainwp' ),
                 'value' => static::format_boolean_label( (int) get_option( 'mainwp_enable_guided_video', 0 ) ),
             ),
+            ),
+            array(
+                'Current MainWP theme',
+                'Guided tours',
+                'Chatbase',
+                'Guided video',
+            )
         );
     }
 
@@ -1889,7 +2093,8 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         $error_log_path = ini_get( 'error_log' );
         $log_readable   = ! empty( $error_log_path ) && file_exists( $error_log_path ) ? is_readable( $error_log_path ) : false;
 
-        return array(
+        return self::add_export_labels_to_rows(
+            array(
             array(
                 'label' => esc_html__( 'WP_DEBUG', 'mainwp' ),
                 'value' => static::format_boolean_label( defined( 'WP_DEBUG' ) && WP_DEBUG ),
@@ -1916,6 +2121,15 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 'label' => esc_html__( 'PHP error_log readable', 'mainwp' ),
                 'value' => static::format_boolean_label( $log_readable ),
             ),
+            ),
+            array(
+                'WP_DEBUG',
+                'WP_DEBUG_LOG',
+                'WP_DEBUG_DISPLAY',
+                'PHP log_errors',
+                'PHP error_log path',
+                'PHP error_log readable',
+            )
         );
     }
 
@@ -1966,7 +2180,8 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         $maintenance_mode    = static::get_maintenance_mode_indicators();
         $dropins             = static::get_dropin_conflict_indicators();
 
-        return array(
+        return self::add_export_labels_to_rows(
+            array(
             array(
                 'label' => esc_html__( 'Caching / performance plugins', 'mainwp' ),
                 'value' => static::format_conflict_items_label( $caching_plugins ),
@@ -1984,6 +2199,13 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 'label' => esc_html__( 'Drop-ins / object cache', 'mainwp' ),
                 'value' => static::format_conflict_items_label( $dropins ),
             ),
+            ),
+            array(
+                'Caching / performance plugins',
+                'Security / access-control plugins',
+                'Maintenance mode indicators',
+                'Drop-ins / object cache',
+            )
         );
     }
 

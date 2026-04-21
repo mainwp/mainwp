@@ -2049,7 +2049,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * Method hook_get_primary_backup_method.
      *
      * @param mixed $inpval Hook input value.
-     * @param int   $siteid Optional Site id.
+     * @param int|false $siteid Optional Site ID; false for global method.
      *
      * @since 6.0.10.
      *

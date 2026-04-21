@@ -143,7 +143,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             }
             // end support.
 
-            $sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'ignored_trans_updates', 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ), $is_staging );
+            $sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'ignored_trans_updates', 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ), $is_staging, array( 'connected' => 'yes' ) );
         }
 
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();

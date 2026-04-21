@@ -228,6 +228,8 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         add_action( 'mainwp_general_process_update', array( MainWP_DB::instance(), 'update_regular_process' ), 10, 1 );
         add_action( 'mainwp_general_process_delete', array( MainWP_DB::instance(), 'delete_regular_process' ), 10, 4 );
         add_filter( 'mainwp_general_process_get_process_by', array( &$this, 'hook_get_regular_process_by' ), 10, 4 );
+
+        add_filter( 'mainwp_get_primary_backup_method', array( $this, 'hook_get_primary_backup_method' ), 10, 2 );
     }
 
     /**
@@ -2042,4 +2044,32 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         unset( $input_value );
         return MainWP_DB::instance()->get_regular_process_by_item_id_type_slug( $item_id, $pro_type, $pro_slug );
     }
+
+    /**
+     * Method hook_get_primary_backup_method.
+     *
+     * @param mixed $inpval Hook input value.
+     * @param int|false $siteid Optional Site ID; false for global method.
+     *
+     * @since 6.0.10.
+     *
+     * @return string Global or site primary backup method.
+     */
+    public function hook_get_primary_backup_method( $inpval, $siteid = false ) {
+        unset( $inpval );
+        $primaryBackup = get_option( 'mainwp_primaryBackup' );
+        if ( false !== $siteid ) {
+            $website = MainWP_DB::instance()->get_website_by_id( $siteid );
+            if ( is_object( $website ) && property_exists( $website, 'primary_backup_method' ) ) {
+                if ( '' === $website->primary_backup_method || 'global' === $website->primary_backup_method ) {
+                    $backup_method = $primaryBackup;
+                } else {
+                    $backup_method = $website->primary_backup_method;
+                }
+                return $backup_method;
+            }
+        }
+        return $primaryBackup;
+    }
+
 }

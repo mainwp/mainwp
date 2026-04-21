@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.9.4
 Requires PHP: 7.4
-Stable tag: 6.0.10.er.1
+Stable tag: 6.0.10
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -147,6 +147,13 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.0.10 - 4-21-2026 =
+
+* Fixed: Resolved an issue that could reduce concurrency during plugin and theme installation and update processes.
+* Fixed: Improved site selection for continued updates to reduce missed or duplicate update runs.
+* Fixed: Restricted monitor widget data to authorized sites only and improved monitor status query performance.
+* Updated: Improved site loading performance by optimizing site queries and refining filtering, sorting, and cache handling.
 
 = 6.0.9 - 4-14-2026 =
 

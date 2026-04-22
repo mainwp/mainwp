@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.9.4
 Requires PHP: 7.4
-Stable tag: 6.0.10
+Stable tag: 6.0.11-er.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -147,6 +147,15 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.0.11-er.1 - 4-22-2026 =
+
+* Fixed: The "Updates Overview" widget now includes only connected child sites in its overview counts.
+* Added: A duplicate cost action to create a prefilled copy of an operational cost. ([Request by Stéphane])[https://voice.mainwp.com/p/cost-tracker-duplication]
+* Added: "Copy Permalink" and "Copy ID" actions to the pages and posts table dropdown menus.
+* Updated: Server Information report exports now always use English to make support requests easier to review.
+* Updated: Cache invalidation is now limited to fewer scenarios to reduce unnecessary cache clearing.
+* Updated: Changed the default value of the `mainwp_module_log_disable_cron_log` filter to `false` so cron logging remains enabled by default.
 
 = 6.0.10 - 4-21-2026 =
 

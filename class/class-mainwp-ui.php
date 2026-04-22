@@ -1817,7 +1817,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 if ( ! empty( $website ) && ! empty( $website->url ) ) {
                     $overview_mshot = static::get_mshots_image_sources( $website->url, 170 );
                     ?>
-                    <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" src="<?php echo esc_attr( $overview_mshot['src'] ); ?>" data-mainwp-mshot-src="<?php echo esc_attr( $overview_mshot['src'] ); ?>" data-mainwp-mshot-requeue-src="<?php echo esc_attr( $overview_mshot['requeue_src'] ); ?>" id="mainwp-site-preview-image">
+                    <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" src="<?php echo esc_url( $overview_mshot['src'] ); ?>" data-mainwp-mshot-src="<?php echo esc_url( $overview_mshot['src'] ); ?>" data-mainwp-mshot-requeue-src="<?php echo esc_url( $overview_mshot['requeue_src'] ); ?>" id="mainwp-site-preview-image">
                     <?php
                 }
                 ?>

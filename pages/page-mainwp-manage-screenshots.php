@@ -429,7 +429,7 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
                             <div class="card" site-url="<?php echo esc_url( $website->url ); ?>">
                                 <div class="image" data-tooltip="<?php echo esc_attr( $status_tooltip ); ?>" data-position="top center" data-inverted="">
-                                    <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" data-src="<?php echo esc_attr( $site_mshot['src'] ); ?>" data-mainwp-mshot-src="<?php echo esc_attr( $site_mshot['src'] ); ?>" data-mainwp-mshot-requeue-src="<?php echo esc_attr( $site_mshot['requeue_src'] ); ?>">
+                                    <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" data-src="<?php echo esc_url( $site_mshot['src'] ); ?>" data-mainwp-mshot-src="<?php echo esc_url( $site_mshot['src'] ); ?>" data-mainwp-mshot-requeue-src="<?php echo esc_url( $site_mshot['requeue_src'] ); ?>">
                                 </div>
                                 <div class="ui <?php echo esc_attr( $status_color ); ?> corner label">
                                     <i class="<?php echo esc_attr( $status_icon ); ?> icon"></i>

@@ -2053,6 +2053,17 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             || ( 'translations-updates' === $current_tab && 0 < $total_translation_upgrades )
             || ( 'abandoned-plugins' === $current_tab && 0 < $total_plugins_outdate )
             || ( 'abandoned-themes' === $current_tab && 0 < $total_themes_outdate );
+        $current_tab_updates_count = 0;
+
+        if ( 'plugins-updates' === $current_tab ) {
+            $current_tab_updates_count = $total_plugin_upgrades;
+        } elseif ( 'themes-updates' === $current_tab ) {
+            $current_tab_updates_count = $total_theme_upgrades;
+        } elseif ( 'wordpress-updates' === $current_tab ) {
+            $current_tab_updates_count = $total_wp_upgrades;
+        } elseif ( 'translations-updates' === $current_tab ) {
+            $current_tab_updates_count = $total_translation_upgrades;
+        }
 
         /**
          * Action: mainwp_updates_after_nav_tabs
@@ -2097,7 +2108,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                              */
                             do_action( 'mainwp_widget_updates_actions_top', $current_tab );
                             ?>
-                            <?php static::render_updates_actions_buttons( $current_tab ); ?>
+                            <?php static::render_updates_actions_buttons( $current_tab, $current_tab_updates_count ); ?>
                             <?php static::render_button_view_ignored_updates( $current_tab ); ?>
                             <?php static::render_abandoned_plugins_themes_buttons( $current_tab ); ?>
                         </div>
@@ -2300,33 +2311,56 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          * Method render_updates_actions_buttons().
          *
          * @param  mixed $current_tab Current tab.
+         * @param  int   $updates_count Available updates count.
          * @return void
          */
-    public static function render_updates_actions_buttons( $current_tab ) {
-        // dev-to-do: add checks if number of updates is higher than 0 to hide buttons when not needed.
+    public static function render_updates_actions_buttons( $current_tab, $updates_count = 0 ) {
+        $has_updates = 0 < intval( $updates_count );
+
         if ( 'plugins-updates' === $current_tab ) {
             if ( static::user_can_update_plugins() ) {
-                static::set_continue_update_html_selector( 'plugins_global_upgrade_all' );
-                ?>
-                <a href="javascript:void(0)" onClick="updatesoverview_plugins_global_upgrade_all( false, true ); return false;" class="mainwp-update-selected-button ui mini green basic button"><?php esc_html_e( 'Update Selected Plugins', 'mainwp' ); ?></a>
-                <a href="javascript:void(0)" onClick="updatesoverview_plugins_global_upgrade_all(); return false;" class="mainwp-update-all-button ui mini green button"><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
+                if ( $has_updates ) {
+                    static::set_continue_update_html_selector( 'plugins_global_upgrade_all' );
+                    ?>
+                    <a href="javascript:void(0)" onClick="updatesoverview_plugins_global_upgrade_all( false, true ); return false;" class="mainwp-update-selected-button ui mini green basic button"><?php esc_html_e( 'Update Selected Plugins', 'mainwp' ); ?></a>
+                    <a href="javascript:void(0)" onClick="updatesoverview_plugins_global_upgrade_all(); return false;" class="mainwp-update-all-button ui mini green button"><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
                     <?php
+                } else {
+                    ?>
+                    <a href="javascript:void(0)" class="mainwp-update-selected-button ui mini green basic disabled button" aria-disabled="true" tabindex="-1"><?php esc_html_e( 'Update Selected Plugins', 'mainwp' ); ?></a>
+                    <a href="javascript:void(0)" class="mainwp-update-all-button ui mini green disabled button" aria-disabled="true" tabindex="-1"><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
+                    <?php
+                }
             }
         } elseif ( 'themes-updates' === $current_tab ) {
             if ( static::user_can_update_themes() ) {
-                static::set_continue_update_html_selector( 'themes_global_upgrade_all' );
-                ?>
-                <a href="javascript:void(0)" onClick="updatesoverview_themes_global_upgrade_all( false, true ); return false;" class="mainwp-update-selected-button ui mini green basic button"><?php esc_html_e( 'Update Selected Themes', 'mainwp' ); ?></a>
-                <a href="javascript:void(0)" onClick="updatesoverview_themes_global_upgrade_all(); return false;" class="mainwp-update-all-button ui mini green button"><?php esc_html_e( 'Update All Themes', 'mainwp' ); ?></a>
+                if ( $has_updates ) {
+                    static::set_continue_update_html_selector( 'themes_global_upgrade_all' );
+                    ?>
+                    <a href="javascript:void(0)" onClick="updatesoverview_themes_global_upgrade_all( false, true ); return false;" class="mainwp-update-selected-button ui mini green basic button"><?php esc_html_e( 'Update Selected Themes', 'mainwp' ); ?></a>
+                    <a href="javascript:void(0)" onClick="updatesoverview_themes_global_upgrade_all(); return false;" class="mainwp-update-all-button ui mini green button"><?php esc_html_e( 'Update All Themes', 'mainwp' ); ?></a>
                     <?php
+                } else {
+                    ?>
+                    <a href="javascript:void(0)" class="mainwp-update-selected-button ui mini green basic disabled button" aria-disabled="true" tabindex="-1"><?php esc_html_e( 'Update Selected Themes', 'mainwp' ); ?></a>
+                    <a href="javascript:void(0)" class="mainwp-update-all-button ui mini green disabled button" aria-disabled="true" tabindex="-1"><?php esc_html_e( 'Update All Themes', 'mainwp' ); ?></a>
+                    <?php
+                }
             }
         } elseif ( 'wordpress-updates' === $current_tab ) {
             if ( static::user_can_update_wp() ) {
-                static::set_continue_update_html_selector( 'wpcore_global_upgrade_all' );
-                ?>
-                <a href="javascript:void(0)" class="mainwp-update-selected-button ui green mini basic button" onclick="event.stopPropagation(); updatesoverview_wordpress_global_upgrade_all( false, true ); return false;"><?php esc_html_e( 'Update Selected WP Cores', 'mainwp' ); ?></a>
-                <a href="javascript:void(0)" class="mainwp-update-all-button ui green mini button" onclick="updatesoverview_wordpress_global_upgrade_all(); return false;"><?php esc_html_e( 'Update All WP Cores', 'mainwp' ); ?></a>
+                if ( $has_updates ) {
+                    static::set_continue_update_html_selector( 'wpcore_global_upgrade_all' );
+                    ?>
+                    <a href="javascript:void(0)" class="mainwp-update-selected-button ui green mini basic button" onclick="event.stopPropagation(); updatesoverview_wordpress_global_upgrade_all( false, true ); return false;"><?php esc_html_e( 'Update Selected WP Cores', 'mainwp' ); ?></a>
+                    <a href="javascript:void(0)" class="mainwp-update-all-button ui green mini button" onclick="updatesoverview_wordpress_global_upgrade_all(); return false;"><?php esc_html_e( 'Update All WP Cores', 'mainwp' ); ?></a>
                     <?php
+                } else {
+                    ?>
+                    <a href="javascript:void(0)" class="mainwp-update-selected-button ui green mini basic disabled button" aria-disabled="true" tabindex="-1"><?php esc_html_e( 'Update Selected WP Cores', 'mainwp' ); ?></a>
+                    <a href="javascript:void(0)" class="mainwp-update-all-button ui green mini disabled button" aria-disabled="true" tabindex="-1"><?php esc_html_e( 'Update All WP Cores', 'mainwp' ); ?></a>
+                    <?php
+                }
             }
         } elseif ( 'translations-updates' === $current_tab ) {
             if ( static::user_can_update_trans() ) {

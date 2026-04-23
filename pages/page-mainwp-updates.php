@@ -292,10 +292,18 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
      */
-    public static function render_header() {
+    public static function render_header( $current_tab = '' ) {
+
+        $title = esc_html__( 'Available Updates', 'mainwp' );
+
+        if ( 'abandoned-plugins' === $current_tab ) {
+            $title = esc_html__( 'Abandoned Plugins', 'mainwp' );
+        } elseif ( 'abandoned-themes' === $current_tab ) {
+            $title = esc_html__( 'Abandoned Themes', 'mainwp' );
+        }
 
         $params = array(
-            'title' => esc_html__( 'Available Updates', 'mainwp' ),
+            'title' => $title,
         );
 
         MainWP_UI::render_top_header( $params );
@@ -789,7 +797,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         // phpcs:enable
-        static::render_header( 'UpdatesManage' );
+        static::render_header( $current_tab );
 
         static::render_header_tabs( $mainwp_show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view );
 

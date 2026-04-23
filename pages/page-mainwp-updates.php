@@ -2054,8 +2054,15 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         do_action( 'mainwp_updates_before_actions_bar' );
         ?>
 
+        <?php
+        $show_actions_bar = ( 'plugins-updates' === $current_tab && 0 < $total_plugin_upgrades )
+            || ( 'themes-updates' === $current_tab && 0 < $total_theme_upgrades )
+            || ( 'wordpress-updates' === $current_tab && 0 < $total_wp_upgrades )
+            || ( 'translations-updates' === $current_tab && 0 < $total_translation_upgrades )
+            || in_array( $current_tab, array( 'abandoned-plugins', 'abandoned-themes' ), true );
+        ?>
         <?php if ( ! $hide_show_updates_per || $show_select_staging_sites ) : ?>
-            <?php if ( ( 'plugins-updates' === $current_tab && 0 < $total_plugin_upgrades ) || ( 'themes-updates' === $current_tab && 0 < $total_theme_upgrades ) || ( 'wordpress-updates' === $current_tab && 0 < $total_wp_upgrades ) || ( 'translations-updates' === $current_tab && 0 < $total_translation_upgrades ) || ( 'abandoned-plugins' === $current_tab && 0 < $total_plugins_outdate ) || ( 'abandoned-themes' === $current_tab && 0 < $total_themes_outdate ) ) : ?>
+            <?php if ( $show_actions_bar ) : ?>
                 <div class="mainwp-sub-header">
                     <div class="ui three column grid">
                         <div class="left aligned middle aligned column">

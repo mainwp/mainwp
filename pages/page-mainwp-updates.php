@@ -2256,13 +2256,13 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();
 
         if ( 'plugins-updates' === $current_tab ) {
-            $decodedIgnoredPlugins = ! empty( $userExtension->ignored_plugins ) ? json_decode( $userExtension->ignored_plugins, true ) : array();
+            $decodedIgnoredPlugins = is_object( $userExtension ) && ! empty( $userExtension->ignored_plugins ) ? json_decode( $userExtension->ignored_plugins, true ) : array();
             $count                 = is_array( $decodedIgnoredPlugins ) ? count( $decodedIgnoredPlugins ) : 0;
         } elseif ( 'themes-updates' === $current_tab ) {
-            $decodedIgnoredThemes = ! empty( $userExtension->ignored_themes ) ? json_decode( $userExtension->ignored_themes, true ) : array();
+            $decodedIgnoredThemes = is_object( $userExtension ) && ! empty( $userExtension->ignored_themes ) ? json_decode( $userExtension->ignored_themes, true ) : array();
             $count                = is_array( $decodedIgnoredThemes ) ? count( $decodedIgnoredThemes ) : 0;
         } elseif ( 'wordpress-updates' === $current_tab ) {
-            $decodedIgnoredCores = ! empty( $userExtension->ignored_wp_upgrades ) ? json_decode( $userExtension->ignored_wp_upgrades, true ) : array();
+            $decodedIgnoredCores = is_object( $userExtension ) && ! empty( $userExtension->ignored_wp_upgrades ) ? json_decode( $userExtension->ignored_wp_upgrades, true ) : array();
             $count               = count( static::get_ignored_core_versions( $decodedIgnoredCores ) );
         }
 
@@ -2389,13 +2389,32 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return;
         }
             $count_ignored_updates = static::get_ignored_updates_count( $current_tab );
+            $ignored_core_url      = add_query_arg(
+                array(
+                    'page' => 'UpdatesManage',
+                    'tab'  => 'updates-ignore',
+                ),
+                admin_url( 'admin.php' )
+            );
+            $ignored_plugins_url   = add_query_arg(
+                array(
+                    'page' => 'PluginsIgnore',
+                ),
+                admin_url( 'admin.php' )
+            );
+            $ignored_themes_url    = add_query_arg(
+                array(
+                    'page' => 'ThemesIgnore',
+                ),
+                admin_url( 'admin.php' )
+            );
         ?>
             <?php if ( 'wordpress-updates' === $current_tab && 0 < $count_ignored_updates ) : ?>
-            <a class="ui mini basic button" href="admin.php?page=UpdatesManage&tab=updates-ignore" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Click here to see the list of ignored WordPress core updates.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'View Ignored Updates', 'mainwp' ); ?></a>
+            <a class="ui mini basic button" href="<?php echo esc_url( $ignored_core_url ); ?>" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Click here to see the list of ignored WordPress core updates.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'View Ignored Updates', 'mainwp' ); ?></a>
         <?php elseif ( 'plugins-updates' === $current_tab && 0 < $count_ignored_updates ) : ?>
-            <a class="ui mini basic button" href="admin.php?page=PluginsIgnore"><?php esc_html_e( 'View Ignored Updates', 'mainwp' ); ?></a>
+            <a class="ui mini basic button" href="<?php echo esc_url( $ignored_plugins_url ); ?>"><?php esc_html_e( 'View Ignored Updates', 'mainwp' ); ?></a>
         <?php elseif ( 'themes-updates' === $current_tab && 0 < $count_ignored_updates ) : ?>
-            <a class="ui mini basic button" href="admin.php?page=ThemesIgnore" ><?php esc_html_e( 'View Ignored Updates', 'mainwp' ); ?></a>
+            <a class="ui mini basic button" href="<?php echo esc_url( $ignored_themes_url ); ?>" ><?php esc_html_e( 'View Ignored Updates', 'mainwp' ); ?></a>
         <?php endif; ?>
             <?php
     }

@@ -620,12 +620,19 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             return $item;
         }
 
-        $params   = array(
+        $params = array(
             'full_data'    => true,
             'selectgroups' => $with_tags,
             'include'      => array( $item->id ),
-            'fields'       => array_merge( $fields, $custom_fields ),
+            'extra_view'   => $custom_fields, // Pass custom fields to prepare_item_for_response() via params for abilities path since ability schema does not support fields parameter.
+            'fields'       => $this->get_fields_for_response( $request ),
         );
+
+        // Required to ensure custom fields are included in the DB query for abilities path since ability schema does not support fields parameter, but legacy path does.
+        if ( ! empty( $custom_fields ) ) {
+            $params['fields'] = array_merge( $params['fields'], $custom_fields );
+        }
+
         $websites = MainWP_DB::instance()->get_websites_for_current_user( $params );
         $data     = $websites ? current( $websites ) : array();
         if ( ! empty( $data ) ) {

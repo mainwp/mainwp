@@ -423,12 +423,13 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
                             $website_info = MainWP_DB::instance()->get_website_option( $website, 'site_info' );
                             $website_info = ! empty( $website_info ) ? json_decode( $website_info, true ) : array();
+                            $site_mshot   = MainWP_UI::get_mshots_image_sources( $website->url, 900 );
 
                             ?>
 
                             <div class="card" site-url="<?php echo esc_url( $website->url ); ?>">
                                 <div class="image" data-tooltip="<?php echo esc_attr( $status_tooltip ); ?>" data-position="top center" data-inverted="">
-                                    <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" data-src="<?php echo esc_attr( '//s0.wp.com/mshots/v1/' . rawurlencode( esc_url_raw( $website->url ) ) . '?w=900' ); ?>">
+                                    <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" data-src="<?php echo esc_url( $site_mshot['src'] ); ?>" data-mainwp-mshot-src="<?php echo esc_url( $site_mshot['src'] ); ?>" data-mainwp-mshot-requeue-src="<?php echo esc_url( $site_mshot['requeue_src'] ); ?>">
                                 </div>
                                 <div class="ui <?php echo esc_attr( $status_color ); ?> corner label">
                                     <i class="<?php echo esc_attr( $status_icon ); ?> icon"></i>

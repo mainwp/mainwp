@@ -299,10 +299,18 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
      */
-    public static function render_header() {
+    public static function render_header( $current_tab = '' ) {
+
+        $title = esc_html__( 'Available Updates', 'mainwp' );
+
+        if ( 'abandoned-plugins' === $current_tab ) {
+            $title = esc_html__( 'Abandoned Plugins', 'mainwp' );
+        } elseif ( 'abandoned-themes' === $current_tab ) {
+            $title = esc_html__( 'Abandoned Themes', 'mainwp' );
+        }
 
         $params = array(
-            'title' => esc_html__( 'Available Updates', 'mainwp' ),
+            'title' => $title,
         );
 
         MainWP_UI::render_top_header( $params );
@@ -796,7 +804,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         // phpcs:enable
-        static::render_header( 'UpdatesManage' );
+        static::render_header( $current_tab );
 
         static::render_header_tabs( $mainwp_show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view );
 
@@ -2084,6 +2092,13 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         do_action( 'mainwp_updates_before_actions_bar' );
         ?>
 
+        <?php
+        $show_actions_bar = ( 'plugins-updates' === $current_tab && 0 < $total_plugin_upgrades )
+            || ( 'themes-updates' === $current_tab && 0 < $total_theme_upgrades )
+            || ( 'wordpress-updates' === $current_tab && 0 < $total_wp_upgrades )
+            || ( 'translations-updates' === $current_tab && 0 < $total_translation_upgrades )
+            || in_array( $current_tab, array( 'abandoned-plugins', 'abandoned-themes' ), true );
+        ?>
         <?php if ( ! $hide_show_updates_per || $show_select_staging_sites ) : ?>
             <?php if ( $show_updates_actions_bar ) : ?>
                 <div class="mainwp-sub-header">

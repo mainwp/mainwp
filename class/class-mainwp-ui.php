@@ -31,6 +31,71 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
     }
 
     /**
+     * Normalize a site URL before building an mShots request.
+     *
+     * @param string $url Child site URL.
+     *
+     * @return string Normalized site URL.
+     */
+    public static function get_normalized_mshots_target_url( $url ) {
+        if ( ! is_string( $url ) ) {
+            return '';
+        }
+
+        return esc_url_raw( trim( $url ) );
+    }
+
+    /**
+     * Build an mShots image URL for a site.
+     *
+     * @param string $url     Child site URL.
+     * @param int    $width   Requested thumbnail width.
+     * @param bool   $requeue Whether to force a requeue request.
+     *
+     * @return string mShots URL.
+     */
+    public static function get_mshots_image_url( $url, $width = 0, $requeue = false ) {
+        $site_url = static::get_normalized_mshots_target_url( $url );
+
+        if ( empty( $site_url ) ) {
+            return '';
+        }
+
+        $mshots_url = '//s0.wp.com/mshots/v1/' . rawurlencode( $site_url );
+        $query_args = array();
+        $width      = intval( $width );
+
+        if ( 0 < $width ) {
+            $query_args['w'] = $width;
+        }
+
+        if ( $requeue ) {
+            $query_args['requeue'] = 'true';
+        }
+
+        if ( ! empty( $query_args ) ) {
+            $mshots_url .= '?' . http_build_query( $query_args, '', '&', PHP_QUERY_RFC3986 );
+        }
+
+        return $mshots_url;
+    }
+
+    /**
+     * Build the primary and requeue mShots URLs for a site.
+     *
+     * @param string $url   Child site URL.
+     * @param int    $width Requested thumbnail width.
+     *
+     * @return array mShots source URLs.
+     */
+    public static function get_mshots_image_sources( $url, $width = 0 ) {
+        return array(
+            'src'         => static::get_mshots_image_url( $url, $width ),
+            'requeue_src' => static::get_mshots_image_url( $url, $width, true ),
+        );
+    }
+
+    /**
      * Method select_sites_box()
      *
      * Select sites box.
@@ -1750,8 +1815,9 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
 
                 // To avoid error in case of direct access to page with wrong id.
                 if ( ! empty( $website ) && ! empty( $website->url ) ) {
+                    $overview_mshot = static::get_mshots_image_sources( $website->url, 170 );
                     ?>
-                    <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" src="//s0.wp.com/mshots/v1/<?php echo esc_html( rawurlencode( $website->url ) ); ?>?w=170" id="mainwp-site-preview-image">
+                    <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" src="<?php echo esc_url( $overview_mshot['src'] ); ?>" data-mainwp-mshot-src="<?php echo esc_url( $overview_mshot['src'] ); ?>" data-mainwp-mshot-requeue-src="<?php echo esc_url( $overview_mshot['requeue_src'] ); ?>" id="mainwp-site-preview-image">
                     <?php
                 }
                 ?>

@@ -552,7 +552,8 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
 
         // Extract with_tags flag early so both paths use the same value.
         // Default to true for consistency with get_items() endpoint.
-        $with_tags = isset( $request['with_tags'] ) ? mainwp_string_to_bool( $request['with_tags'] ) : true;
+        $with_tags     = isset( $request['with_tags'] ) ? mainwp_string_to_bool( $request['with_tags'] ) : true;
+        $custom_fields = isset( $request['custom_fields'] ) ? array_map( 'trim', wp_parse_list( $request['custom_fields'] ) ) : array();
 
         // Try abilities-first approach (with fallback to legacy logic).
         $ability = function_exists( 'wp_get_ability' ) ? wp_get_ability( 'mainwp/get-site-v1' ) : null;
@@ -585,16 +586,23 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $site_id   = isset( $site_data['id'] ) ? (int) $site_data['id'] : 0;
 
             if ( $site_id > 0 ) {
-                $params   = array(
+                $params = array(
                     'full_data'    => true,
                     'selectgroups' => $with_tags,
                     'include'      => array( $site_id ),
+                    'extra_view'   => $custom_fields, // Pass custom fields to prepare_item_for_response() via params for abilities path since ability schema does not support fields parameter.
                     'fields'       => $this->get_fields_for_response( $request ),
                 );
+
+                // Required to ensure custom fields are included in the DB query for abilities path since ability schema does not support fields parameter, but legacy path does.
+                if ( ! empty( $custom_fields ) ) {
+                    $params['fields'] = array_merge( $params['fields'], $custom_fields );
+                }
+
                 $websites = MainWP_DB::instance()->get_websites_for_current_user( $params );
                 $data     = $websites ? current( $websites ) : array();
                 if ( ! empty( $data ) ) {
-                    $site_data = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $data, $request ), 'view' );
+                    $site_data = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $data, $request ), 'view', $custom_fields );
                 }
             }
 
@@ -612,16 +620,23 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             return $item;
         }
 
-        $params   = array(
+        $params = array(
             'full_data'    => true,
             'selectgroups' => $with_tags,
             'include'      => array( $item->id ),
+            'extra_view'   => $custom_fields, // Pass custom fields to prepare_item_for_response() via params for abilities path since ability schema does not support fields parameter.
             'fields'       => $this->get_fields_for_response( $request ),
         );
+
+        // Required to ensure custom fields are included in the DB query for abilities path since ability schema does not support fields parameter, but legacy path does.
+        if ( ! empty( $custom_fields ) ) {
+            $params['fields'] = array_merge( $params['fields'], $custom_fields );
+        }
+
         $websites = MainWP_DB::instance()->get_websites_for_current_user( $params );
         $data     = $websites ? current( $websites ) : array();
         if ( ! empty( $data ) ) {
-            $data = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $data, $request ), 'view' );
+            $data = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $data, $request ), 'view', $custom_fields );
         }
         return rest_ensure_response( array( 'data' => $data ) );
     }
@@ -644,8 +659,9 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
 
         // Check REST-specific flags that affect response format.
         // These are processed in the legacy path but not in the ability schema.
-        $with_tags = isset( $request['with_tags'] ) ? mainwp_string_to_bool( $request['with_tags'] ) : true;
-        $full_data = isset( $request['full_data'] ) ? mainwp_string_to_bool( $request['full_data'] ) : true;
+        $with_tags     = isset( $request['with_tags'] ) ? mainwp_string_to_bool( $request['with_tags'] ) : true;
+        $full_data     = isset( $request['full_data'] ) ? mainwp_string_to_bool( $request['full_data'] ) : true;
+        $custom_fields = isset( $request['custom_fields'] ) ? array_map( 'trim', wp_parse_list( $request['custom_fields'] ) ) : array();
 
         // Try abilities-first approach (with fallback to legacy logic).
         // Skip abilities when with_tags=false, full_data=false, or include/exclude
@@ -696,17 +712,24 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
 
                 if ( ! empty( $site_ids ) ) {
                     // Fetch full site data to normalize through REST filters.
-                    $params   = array(
+                    $params = array(
                         'full_data'    => true,
                         'selectgroups' => true,
                         'include'      => $site_ids,
+                        'extra_view'   => $custom_fields, // Pass custom fields to prepare_item_for_response() via params for abilities path since ability schema does not support fields parameter.
                         'fields'       => $this->get_fields_for_response( $request ),
                     );
+
+                    // Required to ensure custom fields are included in the DB query for abilities path since ability schema does not support fields parameter, but legacy path does.
+                    if ( ! empty( $custom_fields ) ) {
+                        $params['fields'] = array_merge( $params['fields'], $custom_fields );
+                    }
+
                     $websites = MainWP_DB::instance()->get_websites_for_current_user( $params );
 
                     if ( $websites ) {
                         foreach ( $websites as $site ) {
-                            $normalized_items[] = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $site, $request ), 'view' );
+                            $normalized_items[] = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $site, $request ), 'view', $custom_fields );
                         }
                     }
                 }
@@ -732,7 +755,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
 
         if ( $websites ) {
             foreach ( $websites as $site ) {
-                $data[] = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $site, $request ), 'view' );
+                $data[] = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $site, $request ), 'view', $custom_fields );
             }
         }
         return rest_ensure_response(
@@ -2770,6 +2793,16 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
 
         if ( isset( $data['last_sync'] ) ) {
             $data['last_sync'] = mainwp_rest_prepare_date_response( $data['last_sync'] );
+        }
+
+        $custom_fields = isset( $request['custom_fields'] ) ? array_map( 'trim', wp_parse_list( $request['custom_fields'] ) ) : array();
+
+        if ( is_array( $custom_fields ) && ! empty( $custom_fields ) ) {
+            foreach ( $custom_fields as $field ) {
+                if ( property_exists( $item, $field ) && ! isset( $data[ $field ] ) ) {
+                    $data[ $field ] = $item->{$field};
+                }
+            }
         }
 
         /**

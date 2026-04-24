@@ -670,7 +670,13 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
             data: data,
             success: function (pSlug, pWebsiteId, pBulkMode) { //NOSONAR
                 return function (response) { //NOSONAR
-                    let slugParts = [pSlug];
+                    let slugParts = [];
+                    if (pSlug.includes(',')) {
+                        slugParts = pSlug.split(',');
+                    } else {
+                        slugParts = [pSlug];
+                    }
+
                     let done = false;
                     for (let sid of slugParts) {
                         let _error = '';
@@ -736,7 +742,12 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
             retryLimit: 3,
             endError: function (pSlug, pWebsiteId, pBulkMode) {
                 return function () {
-                    let slugParts = [pSlug];
+                    let slugParts = [];
+                    if (pSlug.includes(',')) {
+                        slugParts = pSlug.split(',');
+                    } else {
+                        slugParts = [pSlug];
+                    }
                     let done = false;
                     for (let sid of slugParts) {
                         let result;
@@ -1133,7 +1144,12 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
             data: data,
             success: function (pSlug, pWebsiteId, pBulkMode) {
                 return function (response) { //NOSONAR
-                    let slugParts = [pSlug];
+                    let slugParts = [];
+                    if (pSlug.includes(',')) {
+                        slugParts = pSlug.split(',');
+                    } else {
+                        slugParts = [pSlug];
+                    }
                     let done = false;
                     let bulk_errors = [];
                     let _icon = '<i class="red times icon"></i>';
@@ -1216,7 +1232,12 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
             retryLimit: 3,
             endError: function (pSlug, pWebsiteId, pBulkMode) {
                 return function () {
-                    let slugParts = [pSlug];
+                    let slugParts = [];
+                    if (pSlug.includes(',')) {
+                        slugParts = pSlug.split(',');
+                    } else {
+                        slugParts = [pSlug];
+                    }
                     let done = false;
                     for (let sid of slugParts) {
                         //Siteview
@@ -1604,7 +1625,12 @@ let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode, la
         data: data,
         success: function (pSlug, pWebsiteId, pBulkMode) {
             return function (response) { // NOSONAR - complex.
-                let slugParts = [pSlug];
+                let slugParts = [];
+                if (pSlug.includes(',')) {
+                    slugParts = pSlug.split(',');
+                } else {
+                    slugParts = [pSlug];
+                }
                 let done = false;
 
                 let bulk_errors = [];
@@ -1692,7 +1718,12 @@ let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode, la
         retryLimit: 3,
         endError: function (pSlug, pWebsiteId, pBulkMode) {
             return function () {
-                let slugParts = [pSlug];
+                let slugParts = [];
+                if (pSlug.includes(',')) {
+                    slugParts = pSlug.split(',');
+                } else {
+                    slugParts = [pSlug];
+                }
                 let done = false;
                 for (let sid of slugParts) {
                     let websiteHolder = jQuery('div[theme_slug="' + sid + '"] div[site_id="' + pWebsiteId + '"]');
@@ -2176,7 +2207,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                 return function () {
                     let remainingThemeSlugs = globalThis.mainwp_slug_list_to_array(pThemeSlugToUpgrade);
 
-                    const yithSlugList = themeSlugList.filter(slg => slg.startsWith('yith-'));
+                    const yithSlugList = remainingThemeSlugs.filter(slg => slg.startsWith('yith-'));
 
                     if (yithSlugList.length > 0) {
                         remainingThemeSlugs.shift();
@@ -2260,7 +2291,12 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                         mainwpVars.errorCount++;
 
                     } else {
-                        let slugParts = [pSlug];
+                        let slugParts = [];
+                        if (pSlug.includes(',')) {
+                            slugParts = pSlug.split(',');
+                        } else {
+                            slugParts = [pSlug];
+                        }
                         for (let sid of slugParts) {
                             let result;
                             let websiteHolder = jQuery('div[plugin_slug="' + sid + '"] div[site_id="' + pWebsiteId + '"]');
@@ -2470,7 +2506,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
     } else if (!pTransDone) { // NOSONAR - condition ok.
         let transSlugList = globalThis.mainwp_slug_list_to_array(pTransSlugToUpgrade);
 
-        const yithSlugList = pTransSlugToUpgrade.filter(slg => slg.startsWith('yith-'));
+        const yithSlugList = transSlugList.filter(slg => slg.startsWith('yith-'));
 
         let currentTransSlug = '';
         let remainingTransSlugs = '';
@@ -2509,7 +2545,12 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                         mainwpVars.errorCount++;
 
                     } else {
-                        let slugParts = [pSlug];
+                        let slugParts = [];
+                        if (pSlug.includes(',')) {
+                            slugParts = pSlug.split(',');
+                        } else {
+                            slugParts = [pSlug];
+                        }
                         for (let sid of slugParts) {
                             let result;
                             let websiteHolder = jQuery('div[translation_slug="' + sid + '"] div[site_id="' + pWebsiteId + '"]');

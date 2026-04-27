@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.9.4
 Requires PHP: 7.4
-Stable tag: 6.0.11-er.1
+Stable tag: 6.0.11-er.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -147,6 +147,14 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.0.11-er.2 - 4-24-2026 =
+
+* Fixed: Improved performance when performing bulk updates.
+* Added: A WordPress tab path to access ignored core updates through the existing "View Ignored Updates" button.
+* Added: Support for the `custom_fields` parameter in the `sites` REST API endpoint.
+* Updated: Kept abandoned check actions visible in empty states for easier access.
+* Updated: Centralized screenshot URL generation and thumbnail metadata across pages for more consistent and maintainable preview behavior.
 
 = 6.0.11-er.1 - 4-22-2026 =
 

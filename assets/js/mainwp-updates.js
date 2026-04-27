@@ -2209,18 +2209,23 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
 
                     const yithSlugList = remainingThemeSlugs.filter(slg => slg.startsWith('yith-'));
 
+                    let pThemeDone = true;
+
                     if (yithSlugList.length > 0) {
                         remainingThemeSlugs.shift();
                         remainingThemeSlugs = remainingThemeSlugs.join(',');
+                        pThemeDone = remainingThemeSlugs === '';
                     } else {
                         remainingThemeSlugs = pThemeSlugToUpgrade;
                     }
+
+
                     let params = {
                         'pWebsiteId': pWebsiteId,
                         'pThemeSlugToUpgrade': remainingThemeSlugs,
                         'pPluginSlugToUpgrade': pPluginSlugToUpgrade,
                         'pWordpressUpgrade': pWordpressUpgrade,
-                        'pThemeDone': remainingThemeSlugs === '',
+                        'pThemeDone': pThemeDone,
                         'pPluginDone': pPluginDone,
                         'pUpgradeDone': pUpgradeDone,
                         'pErrorMessage': 'Error processing request',
@@ -2357,9 +2362,12 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                     let remainingPluginSlugs = globalThis.mainwp_slug_list_to_array(pPluginSlugToUpgrade);
                     const yithSlugList = remainingPluginSlugs.filter(slg => slg.startsWith('yith-'));
 
+                    let pPluginDone = true;
+
                     if (yithSlugList.length > 0) {
                         remainingPluginSlugs.shift();
                         remainingPluginSlugs = remainingPluginSlugs.join(',');
+                        pPluginDone = remainingPluginSlugs === '';
                     } else {
                         remainingPluginSlugs = pPluginSlugToUpgrade;
                     }
@@ -2370,7 +2378,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                         'pPluginSlugToUpgrade': remainingPluginSlugs,
                         'pWordpressUpgrade': pWordpressUpgrade,
                         'pThemeDone': pThemeDone,
-                        'pPluginDone': remainingPluginSlugs === '',
+                        'pPluginDone': pPluginDone,
                         'pUpgradeDone': pUpgradeDone,
                         'pErrorMessage': 'Error processing request',
                         'pTransSlugToUpgrade': pTransSlugToUpgrade,
@@ -2607,9 +2615,12 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
 
                     const yithSlugList = remainingTransSlugs.filter(slg => slg.startsWith('yith-'));
 
+                    let pTransDone = true;
+
                     if (yithSlugList.length > 0) {
                         remainingTransSlugs.shift();
                         remainingTransSlugs = remainingTransSlugs.join(',');
+                        pTransDone = remainingTransSlugs === '';
                     } else {
                         remainingTransSlugs = pTransSlugToUpgrade;
                     }
@@ -2624,7 +2635,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                         'pUpgradeDone': pUpgradeDone,
                         'pErrorMessage': 'Error processing request',
                         'pTransSlugToUpgrade': remainingTransSlugs,
-                        'pTransDone': remainingTransSlugs === ''
+                        'pTransDone': pTransDone
                     };
                     updatesoverview_upgrade_int_loop_flow(params);
                 }

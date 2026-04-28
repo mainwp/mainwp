@@ -61,6 +61,7 @@
                     if (0 == this.totalSites) {
                         this.totalSites = this.progressMax;
                     }
+                    this.initElements();
                     this.initProgress();
                     this.render();
                     this.bindEvents();
@@ -100,8 +101,6 @@
                 },
                 render: function () {
                     if (!this.$overlayElementId) return;
-
-                    this.initElements();
 
                     this.initProgressBatch();
 

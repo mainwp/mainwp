@@ -957,6 +957,7 @@ globalThis.dashboard_update = function (websiteIds, isGlobalSync, pAction) {
     mainwpVars.websitesToUpdate = websiteIds;
     mainwpVars.currentWebsite = 0;
     mainwpVars.websitesDone = 0;
+    mainwpVars.successCount = 0;
     mainwpVars.websitesTotal = mainwpVars.websitesLeft = mainwpVars.websitesToUpdate.length;
     globalSync = isGlobalSync;
 
@@ -1118,11 +1119,7 @@ let dashboard_update_done = function (pAction) {
         mainwpVars._popup = mainwpPopup('#mainwp-sync-sites-modal')
     );
 
-    // ✅ Throttle progress updates (reduce DOM work)
-    if (!mainwpVars._lastProgressUpdate || performance.now() - mainwpVars._lastProgressUpdate > 50) {
-        popup.setProgressSite(mainwpVars.websitesDone);
-        mainwpVars._lastProgressUpdate = performance.now();
-    }
+    popup.setProgressSite(mainwpVars.websitesDone);
 
     // ✅ Avoid DOM query for success count → track in JS
     if (mainwpVars.websitesDone === mainwpVars.websitesTotal) {

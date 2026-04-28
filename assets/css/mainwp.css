@@ -1773,11 +1773,11 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
 }
 
 #sync-sites-status .item {
-    order: 2;
+    order: 1;
 }
 
 #sync-sites-status .item.is-success {
-    order: 1;
+    order: 2;
 }
 
 #sync-sites-status .item.disconnected-site {

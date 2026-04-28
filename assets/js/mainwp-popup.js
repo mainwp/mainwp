@@ -103,11 +103,13 @@
 
                     this.initElements();
 
+                    this.initProgressBatch();
+
                     if (this.title) {
                         this.$header.html(this.title);
                     }
 
-                    this.$progress.toggle(!!this.progressMax);
+                    this.$progress.show();
 
                     this.$overlayElementId
                         .modal({
@@ -148,15 +150,41 @@
                         typeof this.actionsCloseCallback === 'function' && this.actionsCloseCallback();
                     }
                 },
+                initProgressBatch: function () {
+                    this._pendingCount = 0;
+                    this._lastValue = 0;
+                    this._flushTimer = null;
+                },
                 setProgressSite: function (value) {
                     if (!this.$progress) return;
 
-                    // update label
-                    this.setStatusText(`${value} / ${this.totalSites} ${this.statusText}`);
+                    this._pendingCount = (this._pendingCount || 0) + 1;
+                    this._lastValue = value;
 
-                    // increment progress safely
+                    if (this._rafScheduled) return;
+
+                    this._rafScheduled = true;
+
+                    requestAnimationFrame(() => {
+                        this.flushProgress();
+                        this._rafScheduled = false;
+                    });
+                },
+                flushProgress: function () {
+                    if (!this.$progress) return;
+
+                    // update label once
+                    this.setStatusText(
+                        `${this._lastValue} / ${this.totalSites} ${this.statusText}`
+                    );
+
+                    // batch increment
                     const current = this.$progress.progress('get value') || 0;
-                    this.$progress.progress('set progress', current + 1);
+                    this.$progress.progress('set progress', current + this._pendingCount);
+
+                    // reset
+                    this._pendingCount = 0;
+                    this._flushTimer = null;
                 },
                 getProgressValue: function () {
                     return this.$progress

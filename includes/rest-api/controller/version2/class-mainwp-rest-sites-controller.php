@@ -65,6 +65,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
     public function __construct() {
         add_filter( 'mainwp_rest_routes_sites_controller_filter_allowed_fields_by_context', array( $this, 'hook_filter_allowed_fields_by_context' ), 10, 3 );
         add_filter( 'mainwp_rest_routes_sites_controller_get_allowed_fields_by_context', array( $this, 'hook_get_allowed_fields_by_context' ), 10, 1 );
+        add_filter( 'rest_request_after_callbacks', array( $this, 'hook_preserve_enveloped_fields_response' ), 10, 3 );
     }
 
     /**
@@ -93,7 +94,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return object item in context.
      */
     public function hook_filter_allowed_fields_by_context( $item, $context = 'view', $request = array() ) {
-        return $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $item, $request ), $context );
+        return $this->prepare_site_item_for_response_context( $item, $request, $context );
     }
 
     /**
@@ -105,6 +106,69 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      */
     public function hook_get_allowed_fields_by_context( $context = 'view' ) {
         return $this->get_allowed_fields_by_context( $context );
+    }
+
+    /**
+     * Prepare a site response item while preserving `_fields` projections.
+     *
+     * `prepare_item_for_response()` already narrows the payload when `_fields`
+     * is present. Running the result back through
+     * `filter_response_data_by_allowed_fields()` expands it again to all schema
+     * fields with empty-string placeholders. This helper avoids that behavior.
+     *
+     * @param object          $item    Site item.
+     * @param WP_REST_Request $request Request object.
+     * @param string          $context Response context.
+     *
+     * @return array
+     */
+    protected function prepare_site_item_for_response_context( $item, $request, $context = 'view', $addition_fields = array() ) {
+        $prepared = $this->prepare_item_for_response( $item, $request );
+
+        if ( $request instanceof WP_REST_Request && ! empty( $request['_fields'] ) ) {
+            return $prepared;
+        }
+
+        return $this->filter_response_data_by_allowed_fields( $prepared, $context, $addition_fields );
+    }
+
+    /**
+     * Preserve MainWP's custom response envelopes when `_fields` is used.
+     *
+     * WordPress core applies `_fields` to the top-level response object. MainWP's
+     * sites routes return custom envelopes such as {success,total,data}, so core
+     * would otherwise strip the envelope and serialize an empty array for requests
+     * like `_fields=id`. The controller already applies `_fields` to each site
+     * item via prepare_item_for_response(), so we clear the request parameter after
+     * callbacks for enveloped sites responses only.
+     *
+     * @param mixed           $response Response to replace the requested version with.
+     * @param array           $handler  Route handler used for the request.
+     * @param WP_REST_Request $request  Request used to generate the response.
+     *
+     * @return mixed
+     */
+    public function hook_preserve_enveloped_fields_response( $response, $handler, $request ) { // phpcs:ignore -- NOSONAR - hook signature.
+        if ( empty( $request['_fields'] ) ) {
+            return $response;
+        }
+
+        $route_prefix = '/' . $this->namespace . '/' . $this->rest_base;
+        $route        = $request->get_route();
+        if ( 0 !== strpos( $route, $route_prefix ) || is_wp_error( $response ) ) {
+            return $response;
+        }
+
+        $response = rest_ensure_response( $response );
+        $data     = $response->get_data();
+
+        if ( ! is_array( $data ) || ( ! array_key_exists( 'data', $data ) && ! array_key_exists( 'site', $data ) ) ) {
+            return $response;
+        }
+
+        $request->set_param( '_fields', null );
+
+        return $response;
     }
 
     /**
@@ -602,7 +666,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 $websites = MainWP_DB::instance()->get_websites_for_current_user( $params );
                 $data     = $websites ? current( $websites ) : array();
                 if ( ! empty( $data ) ) {
-                    $site_data = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $data, $request ), 'view', $custom_fields );
+                    $site_data = $this->prepare_site_item_for_response_context( $data, $request, 'view', $custom_fields );
                 }
             }
 
@@ -636,7 +700,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $websites = MainWP_DB::instance()->get_websites_for_current_user( $params );
         $data     = $websites ? current( $websites ) : array();
         if ( ! empty( $data ) ) {
-            $data = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $data, $request ), 'view', $custom_fields );
+            $data = $this->prepare_site_item_for_response_context( $data, $request, 'view', $custom_fields );
         }
         return rest_ensure_response( array( 'data' => $data ) );
     }
@@ -729,7 +793,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
 
                     if ( $websites ) {
                         foreach ( $websites as $site ) {
-                            $normalized_items[] = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $site, $request ), 'view', $custom_fields );
+                            $normalized_items[] = $this->prepare_site_item_for_response_context( $site, $request, 'view', $custom_fields );
                         }
                     }
                 }
@@ -755,7 +819,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
 
         if ( $websites ) {
             foreach ( $websites as $site ) {
-                $data[] = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $site, $request ), 'view', $custom_fields );
+                $data[] = $this->prepare_site_item_for_response_context( $site, $request, 'view', $custom_fields );
             }
         }
         return rest_ensure_response(
@@ -792,7 +856,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
 
         if ( $websites ) {
             foreach ( $websites as $site ) {
-                $data[] = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $site, $request ), 'simple_view' );
+                $data[] = $this->prepare_site_item_for_response_context( $site, $request, 'simple_view' );
             }
         }
         return rest_ensure_response(
@@ -896,7 +960,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 $websites = MainWP_DB::instance()->get_websites_for_current_user( $params );
                 $data     = $websites ? current( $websites ) : array();
                 if ( ! empty( $data ) ) {
-                    $site_data = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $data, $request ), 'view' );
+                    $site_data = $this->prepare_site_item_for_response_context( $data, $request, 'view' );
                 }
             }
 
@@ -926,7 +990,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             );
             $websites = MainWP_DB::instance()->get_websites_for_current_user( $params );
             $data     = $websites ? current( $websites ) : array();
-            $data     = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $data, $request ), 'view' );
+            $data     = $this->prepare_site_item_for_response_context( $data, $request, 'view' );
         }
 
         return rest_ensure_response(
@@ -1755,7 +1819,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             } catch ( \Exception $e ) {
                 $ret = false;
             }
-            $item                 = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $website, $request ), 'view' );
+            $item                 = $this->prepare_site_item_for_response_context( $website, $request, 'view' );
             $data[ $website->id ] = array_merge( array( 'result' => $ret ? 'success' : 'failed' ), $item );
         }
         MainWP_DB::free_result( $websites );
@@ -2049,7 +2113,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             } catch ( \Exception $e ) {
                 $ret = false;
             }
-            $item                 = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $website, $request ), 'view' );
+            $item                 = $this->prepare_site_item_for_response_context( $website, $request, 'view' );
             $data[ $website->id ] = array_merge( array( 'result' => $ret ? 'success' : 'failed' ), $item );
         }
         MainWP_DB::free_result( $websites );
@@ -2919,7 +2983,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     );
                     $websites             = MainWP_DB::instance()->get_websites_for_current_user( $params );
                     $data                 = $websites ? current( $websites ) : array();
-                    $resp_data['data']    = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $data, $request ), 'view' );
+                    $resp_data['data']    = $this->prepare_site_item_for_response_context( $data, $request, 'view' );
             } else {
                 $resp_data['error'] = esc_html__( 'Update site failed. Please try again.', 'mainwp' );
             }

@@ -1327,12 +1327,6 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
         }
 
-        if ( $updating_website || in_array( $what, array( 'installplugintheme', 'stats' ) ) ) { // Invalidate cache for installation and synchronization actions.
-            MainWP_Cache_Helper::invalidate_cache_group( MainWP_Cache_Helper::CGR_UPDATES );
-            MainWP_Cache_Helper::invalidate_cache_group( MainWP_Cache_Helper::CGR_SYNC_DATA );
-        }
-        MainWP_Cache_Warm_Helper::invalidate_pages_by_site_actions( $what );
-
         return $information;
     }
 
@@ -1737,6 +1731,14 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         MainWP_Logger::instance()->log_execution_time( 'fetch_url_site :: [url=' . $url . ']' );
 
         $thr_error = null;
+
+        if ( isset( $others['function'] ) ) {
+            $what = $others['function'];
+            if ( in_array( $what, array( 'installplugintheme', 'upgradeplugintheme', 'upgradetranslation', 'upgrade', 'stats', 'renew', 'reconnect' ), true ) ) {
+                MainWP_Cache_Helper::invalidate_cache_group( MainWP_Cache_Helper::CGR_UPDATES );
+                MainWP_Cache_Warm_Helper::invalidate_pages_by_site_actions( $what );
+            }
+        }
 
         if ( ( false === $data ) && empty( $http_status ) ) {
             MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] HTTP Error: [status=0][' . $err . ']' );

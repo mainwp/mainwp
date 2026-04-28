@@ -3834,7 +3834,7 @@ globalThis.serverinfo_prepare_download_info = function (communi) {
                 let len = td_len[i];
                 if (i == 0 || i == th_count - 1)
                     len = len - 4;
-                report = report + jQuery.mwp_strCut(jQuery(this).text().trim(), len, ' ');
+                report = report + jQuery.mwp_strCut(jQuery.mwp_get_serverinfo_export_text(jQuery(this), communi), len, ' ');
                 i++;
             });
             report = report + " ###\n\n";
@@ -3849,8 +3849,7 @@ globalThis.serverinfo_prepare_download_info = function (communi) {
                         i++;
                         return;
                     }
-                    let communityValue = jQuery(this).attr('data-community-value');
-                    let outputText = (communi && typeof communityValue !== 'undefined') ? communityValue : jQuery(this).text().trim();
+                    let outputText = jQuery.mwp_get_serverinfo_export_text(jQuery(this), communi);
                     report = report + jQuery.mwp_strCut(outputText, td_len[i], ' ');
                     i++;
                 });
@@ -3869,6 +3868,28 @@ globalThis.serverinfo_prepare_download_info = function (communi) {
         console.log('Error:');
     }
     return false;
+}
+
+jQuery.mwp_get_serverinfo_export_text = function (element, communi) {
+    let cellExportText = element.attr('data-export-text');
+    if (typeof cellExportText !== 'undefined' && cellExportText !== '') {
+        return cellExportText.trim();
+    }
+
+    let descendantExportElement = element.find('[data-export-text]').first();
+    if (descendantExportElement.length > 0) {
+        let descendantExportText = descendantExportElement.attr('data-export-text');
+        if (typeof descendantExportText !== 'undefined' && descendantExportText !== '') {
+            return descendantExportText.trim();
+        }
+    }
+
+    let communityValue = element.attr('data-community-value');
+    if (communi && typeof communityValue !== 'undefined') {
+        return communityValue;
+    }
+
+    return element.text().trim();
 }
 
 jQuery(document).on('click', '#mainwp-download-system-report', function () {

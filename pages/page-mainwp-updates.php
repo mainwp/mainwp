@@ -76,6 +76,13 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     public static $continue_update_slug = '';
 
     /**
+     * Cached ignored updates counts.
+     *
+     * @var array $ignored_updates_counts Cached ignored updates counts.
+     */
+    public static $ignored_updates_counts = array();
+
+    /**
      * Public static varable to hold Subpages information.
      *
      * @var array $subPages
@@ -292,10 +299,18 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
      */
-    public static function render_header() {
+    public static function render_header( $current_tab = '' ) {
+
+        $title = esc_html__( 'Available Updates', 'mainwp' );
+
+        if ( 'abandoned-plugins' === $current_tab ) {
+            $title = esc_html__( 'Abandoned Plugins', 'mainwp' );
+        } elseif ( 'abandoned-themes' === $current_tab ) {
+            $title = esc_html__( 'Abandoned Themes', 'mainwp' );
+        }
 
         $params = array(
-            'title' => esc_html__( 'Available Updates', 'mainwp' ),
+            'title' => $title,
         );
 
         MainWP_UI::render_top_header( $params );
@@ -789,7 +804,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         // phpcs:enable
-        static::render_header( 'UpdatesManage' );
+        static::render_header( $current_tab );
 
         static::render_header_tabs( $mainwp_show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view );
 
@@ -2034,6 +2049,29 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $hide_show_updates_per = apply_filters( 'mainwp_updates_hide_show_updates_per', $hide_show_updates_per, $current_tab );
 
         $show_select_staging_sites = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php' );
+        $has_ignored_updates       = in_array(
+            $current_tab,
+            array( 'wordpress-updates', 'plugins-updates', 'themes-updates' ),
+            true
+        ) && 0 < static::get_ignored_updates_count( $current_tab );
+        $show_updates_actions_bar  = $has_ignored_updates
+            || ( 'plugins-updates' === $current_tab && 0 < $total_plugin_upgrades )
+            || ( 'themes-updates' === $current_tab && 0 < $total_theme_upgrades )
+            || ( 'wordpress-updates' === $current_tab && 0 < $total_wp_upgrades )
+            || ( 'translations-updates' === $current_tab && 0 < $total_translation_upgrades )
+            || ( 'abandoned-plugins' === $current_tab && 0 < $total_plugins_outdate )
+            || ( 'abandoned-themes' === $current_tab && 0 < $total_themes_outdate );
+        $current_tab_updates_count = 0;
+
+        if ( 'plugins-updates' === $current_tab ) {
+            $current_tab_updates_count = $total_plugin_upgrades;
+        } elseif ( 'themes-updates' === $current_tab ) {
+            $current_tab_updates_count = $total_theme_upgrades;
+        } elseif ( 'wordpress-updates' === $current_tab ) {
+            $current_tab_updates_count = $total_wp_upgrades;
+        } elseif ( 'translations-updates' === $current_tab ) {
+            $current_tab_updates_count = $total_translation_upgrades;
+        }
 
         /**
          * Action: mainwp_updates_after_nav_tabs
@@ -2054,8 +2092,15 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         do_action( 'mainwp_updates_before_actions_bar' );
         ?>
 
+        <?php
+        $show_actions_bar = ( 'plugins-updates' === $current_tab && 0 < $total_plugin_upgrades )
+            || ( 'themes-updates' === $current_tab && 0 < $total_theme_upgrades )
+            || ( 'wordpress-updates' === $current_tab && 0 < $total_wp_upgrades )
+            || ( 'translations-updates' === $current_tab && 0 < $total_translation_upgrades )
+            || in_array( $current_tab, array( 'abandoned-plugins', 'abandoned-themes' ), true );
+        ?>
         <?php if ( ! $hide_show_updates_per || $show_select_staging_sites ) : ?>
-            <?php if ( ( 'plugins-updates' === $current_tab && 0 < $total_plugin_upgrades ) || ( 'themes-updates' === $current_tab && 0 < $total_theme_upgrades ) || ( 'wordpress-updates' === $current_tab && 0 < $total_wp_upgrades ) || ( 'translations-updates' === $current_tab && 0 < $total_translation_upgrades ) || ( 'abandoned-plugins' === $current_tab && 0 < $total_plugins_outdate ) || ( 'abandoned-themes' === $current_tab && 0 < $total_themes_outdate ) ) : ?>
+            <?php if ( $show_updates_actions_bar ) : ?>
                 <div class="mainwp-sub-header">
                     <div class="ui three column grid">
                         <div class="left aligned middle aligned column">
@@ -2078,7 +2123,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                              */
                             do_action( 'mainwp_widget_updates_actions_top', $current_tab );
                             ?>
-                            <?php static::render_updates_actions_buttons( $current_tab ); ?>
+                            <?php static::render_updates_actions_buttons( $current_tab, $current_tab_updates_count ); ?>
                             <?php static::render_button_view_ignored_updates( $current_tab ); ?>
                             <?php static::render_abandoned_plugins_themes_buttons( $current_tab ); ?>
                         </div>
@@ -2188,36 +2233,149 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
         /**
+         * Method get_ignored_core_versions().
+         *
+         * @param array $decodedIgnoredCores Decoded ignored cores.
+         *
+         * @return array Ignored core versions.
+         */
+    public static function get_ignored_core_versions( $decodedIgnoredCores ) {
+        if (
+            ! is_array( $decodedIgnoredCores )
+            || empty( $decodedIgnoredCores['ignored_versions'] )
+            || ! is_array( $decodedIgnoredCores['ignored_versions'] )
+        ) {
+            return array();
+        }
+
+        return array_filter( $decodedIgnoredCores['ignored_versions'] );
+    }
+
+        /**
+         * Method get_ignored_updates_count().
+         *
+         * @param string $current_tab Current tab.
+         *
+         * @return int Ignored updates count.
+         */
+    public static function get_ignored_updates_count( $current_tab = '' ) { //phpcs:ignore -- NOSONAR - complex.
+        if ( ! in_array( $current_tab, array( 'wordpress-updates', 'plugins-updates', 'themes-updates' ), true ) ) {
+            return 0;
+        }
+
+        if ( isset( static::$ignored_updates_counts[ $current_tab ] ) ) {
+            return static::$ignored_updates_counts[ $current_tab ];
+        }
+
+        $count         = 0;
+        $userExtension = MainWP_DB_Common::instance()->get_user_extension();
+
+        if ( 'plugins-updates' === $current_tab ) {
+            $decodedIgnoredPlugins = is_object( $userExtension ) && ! empty( $userExtension->ignored_plugins ) ? json_decode( $userExtension->ignored_plugins, true ) : array();
+            $count                 = is_array( $decodedIgnoredPlugins ) ? count( $decodedIgnoredPlugins ) : 0;
+        } elseif ( 'themes-updates' === $current_tab ) {
+            $decodedIgnoredThemes = is_object( $userExtension ) && ! empty( $userExtension->ignored_themes ) ? json_decode( $userExtension->ignored_themes, true ) : array();
+            $count                = is_array( $decodedIgnoredThemes ) ? count( $decodedIgnoredThemes ) : 0;
+        } elseif ( 'wordpress-updates' === $current_tab ) {
+            $decodedIgnoredCores = is_object( $userExtension ) && ! empty( $userExtension->ignored_wp_upgrades ) ? json_decode( $userExtension->ignored_wp_upgrades, true ) : array();
+            $count               = count( static::get_ignored_core_versions( $decodedIgnoredCores ) );
+        }
+
+        $websites = MainWP_DB::instance()->query(
+            MainWP_DB::instance()->get_sql_websites_for_current_user(
+                false,
+                null,
+                'wp.url',
+                false,
+                false,
+                null,
+                false,
+                array( 'ignored_wp_upgrades' )
+            )
+        );
+
+        while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+            if ( 'plugins-updates' === $current_tab ) {
+                $decodedIgnoredPlugins = ! empty( $website->ignored_plugins ) ? json_decode( $website->ignored_plugins, true ) : array();
+                if ( ! empty( $decodedIgnoredPlugins ) && is_array( $decodedIgnoredPlugins ) ) {
+                    ++$count;
+                }
+            } elseif ( 'themes-updates' === $current_tab ) {
+                $decodedIgnoredThemes = ! empty( $website->ignored_themes ) ? json_decode( $website->ignored_themes, true ) : array();
+                if ( ! empty( $decodedIgnoredThemes ) && is_array( $decodedIgnoredThemes ) ) {
+                    ++$count;
+                }
+            } elseif ( 'wordpress-updates' === $current_tab && empty( $website->is_ignoreCoreUpdates ) ) {
+                $decodedIgnoredCores = ! empty( $website->ignored_wp_upgrades ) ? json_decode( $website->ignored_wp_upgrades, true ) : array();
+                if ( ! empty( static::get_ignored_core_versions( $decodedIgnoredCores ) ) ) {
+                    ++$count;
+                }
+            }
+        }
+
+        if ( $websites ) {
+            MainWP_DB::free_result( $websites );
+        }
+
+        static::$ignored_updates_counts[ $current_tab ] = $count;
+
+        return $count;
+    }
+
+        /**
          * Method render_updates_actions_buttons().
          *
          * @param  mixed $current_tab Current tab.
+         * @param  int   $updates_count Available updates count.
          * @return void
          */
-    public static function render_updates_actions_buttons( $current_tab ) {
-        // dev-to-do: add checks if number of updates is higher than 0 to hide buttons when not needed.
+    public static function render_updates_actions_buttons( $current_tab, $updates_count = 0 ) {
+        $has_updates = 0 < intval( $updates_count );
+
         if ( 'plugins-updates' === $current_tab ) {
             if ( static::user_can_update_plugins() ) {
-                static::set_continue_update_html_selector( 'plugins_global_upgrade_all' );
-                ?>
-                <a href="javascript:void(0)" onClick="updatesoverview_plugins_global_upgrade_all( false, true ); return false;" class="mainwp-update-selected-button ui mini green basic button"><?php esc_html_e( 'Update Selected Plugins', 'mainwp' ); ?></a>
-                <a href="javascript:void(0)" onClick="updatesoverview_plugins_global_upgrade_all(); return false;" class="mainwp-update-all-button ui mini green button"><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
+                if ( $has_updates ) {
+                    static::set_continue_update_html_selector( 'plugins_global_upgrade_all' );
+                    ?>
+                    <a href="javascript:void(0)" onClick="updatesoverview_plugins_global_upgrade_all( false, true ); return false;" class="mainwp-update-selected-button ui mini green basic button"><?php esc_html_e( 'Update Selected Plugins', 'mainwp' ); ?></a>
+                    <a href="javascript:void(0)" onClick="updatesoverview_plugins_global_upgrade_all(); return false;" class="mainwp-update-all-button ui mini green button"><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
                     <?php
+                } else {
+                    ?>
+                    <a href="javascript:void(0)" class="mainwp-update-selected-button ui mini green basic disabled button" aria-disabled="true" tabindex="-1"><?php esc_html_e( 'Update Selected Plugins', 'mainwp' ); ?></a>
+                    <a href="javascript:void(0)" class="mainwp-update-all-button ui mini green disabled button" aria-disabled="true" tabindex="-1"><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
+                    <?php
+                }
             }
         } elseif ( 'themes-updates' === $current_tab ) {
             if ( static::user_can_update_themes() ) {
-                static::set_continue_update_html_selector( 'themes_global_upgrade_all' );
-                ?>
-                <a href="javascript:void(0)" onClick="updatesoverview_themes_global_upgrade_all( false, true ); return false;" class="mainwp-update-selected-button ui mini green basic button"><?php esc_html_e( 'Update Selected Themes', 'mainwp' ); ?></a>
-                <a href="javascript:void(0)" onClick="updatesoverview_themes_global_upgrade_all(); return false;" class="mainwp-update-all-button ui mini green button"><?php esc_html_e( 'Update All Themes', 'mainwp' ); ?></a>
+                if ( $has_updates ) {
+                    static::set_continue_update_html_selector( 'themes_global_upgrade_all' );
+                    ?>
+                    <a href="javascript:void(0)" onClick="updatesoverview_themes_global_upgrade_all( false, true ); return false;" class="mainwp-update-selected-button ui mini green basic button"><?php esc_html_e( 'Update Selected Themes', 'mainwp' ); ?></a>
+                    <a href="javascript:void(0)" onClick="updatesoverview_themes_global_upgrade_all(); return false;" class="mainwp-update-all-button ui mini green button"><?php esc_html_e( 'Update All Themes', 'mainwp' ); ?></a>
                     <?php
+                } else {
+                    ?>
+                    <a href="javascript:void(0)" class="mainwp-update-selected-button ui mini green basic disabled button" aria-disabled="true" tabindex="-1"><?php esc_html_e( 'Update Selected Themes', 'mainwp' ); ?></a>
+                    <a href="javascript:void(0)" class="mainwp-update-all-button ui mini green disabled button" aria-disabled="true" tabindex="-1"><?php esc_html_e( 'Update All Themes', 'mainwp' ); ?></a>
+                    <?php
+                }
             }
         } elseif ( 'wordpress-updates' === $current_tab ) {
             if ( static::user_can_update_wp() ) {
-                static::set_continue_update_html_selector( 'wpcore_global_upgrade_all' );
-                ?>
-                <a href="javascript:void(0)" class="mainwp-update-selected-button ui green mini basic button" onclick="event.stopPropagation(); updatesoverview_wordpress_global_upgrade_all( false, true ); return false;"><?php esc_html_e( 'Update Selected WP Cores', 'mainwp' ); ?></a>
-                <a href="javascript:void(0)" class="mainwp-update-all-button ui green mini button" onclick="updatesoverview_wordpress_global_upgrade_all(); return false;"><?php esc_html_e( 'Update All WP Cores', 'mainwp' ); ?></a>
+                if ( $has_updates ) {
+                    static::set_continue_update_html_selector( 'wpcore_global_upgrade_all' );
+                    ?>
+                    <a href="javascript:void(0)" class="mainwp-update-selected-button ui green mini basic button" onclick="event.stopPropagation(); updatesoverview_wordpress_global_upgrade_all( false, true ); return false;"><?php esc_html_e( 'Update Selected WP Cores', 'mainwp' ); ?></a>
+                    <a href="javascript:void(0)" class="mainwp-update-all-button ui green mini button" onclick="updatesoverview_wordpress_global_upgrade_all(); return false;"><?php esc_html_e( 'Update All WP Cores', 'mainwp' ); ?></a>
                     <?php
+                } else {
+                    ?>
+                    <a href="javascript:void(0)" class="mainwp-update-selected-button ui green mini basic disabled button" aria-disabled="true" tabindex="-1"><?php esc_html_e( 'Update Selected WP Cores', 'mainwp' ); ?></a>
+                    <a href="javascript:void(0)" class="mainwp-update-all-button ui green mini disabled button" aria-disabled="true" tabindex="-1"><?php esc_html_e( 'Update All WP Cores', 'mainwp' ); ?></a>
+                    <?php
+                }
             }
         } elseif ( 'translations-updates' === $current_tab ) {
             if ( static::user_can_update_trans() ) {
@@ -2245,37 +2403,33 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( ! in_array( $current_tab, array( 'wordpress-updates', 'plugins-updates', 'themes-updates' ) ) ) {
             return;
         }
-            $websites              = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
-            $userExtension         = MainWP_DB_Common::instance()->get_user_extension();
-            $decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
-            $decodedIgnoredThemes  = json_decode( $userExtension->ignored_themes, true );
-            $decodedIgnoredCores   = ! empty( $userExtension->ignored_wp_upgrades ) ? json_decode( $userExtension->ignored_wp_upgrades, true ) : array();
-
-            $cntp = 0;
-            $cntt = 0;
-
-        while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-
-            $tmpDecodedIgnoredPlugins = json_decode( $website->ignored_plugins, true );
-            $tmpDecodedIgnoredThemes  = json_decode( $website->ignored_themes, true );
-            if ( ! empty( $tmpDecodedIgnoredPlugins ) && is_array( $tmpDecodedIgnoredPlugins ) ) {
-                ++$cntp;
-            }
-            if ( ! empty( $tmpDecodedIgnoredThemes ) && is_array( $tmpDecodedIgnoredThemes ) ) {
-                ++$cntt;
-            }
-        }
-
-            $count_ignored_plugins = is_array( $decodedIgnoredPlugins ) ? count( $decodedIgnoredPlugins ) + $cntp : $cntp;
-            $count_ignored_themes  = is_array( $decodedIgnoredThemes ) ? count( $decodedIgnoredThemes ) + $cntt : $cntt;
-            $count_ignored_cores   = is_array( $decodedIgnoredCores ) ? count( $decodedIgnoredCores ) : 0;
+            $count_ignored_updates = static::get_ignored_updates_count( $current_tab );
+            $ignored_core_url      = add_query_arg(
+                array(
+                    'page' => 'UpdatesManage',
+                    'tab'  => 'updates-ignore',
+                ),
+                admin_url( 'admin.php' )
+            );
+            $ignored_plugins_url   = add_query_arg(
+                array(
+                    'page' => 'PluginsIgnore',
+                ),
+                admin_url( 'admin.php' )
+            );
+            $ignored_themes_url    = add_query_arg(
+                array(
+                    'page' => 'ThemesIgnore',
+                ),
+                admin_url( 'admin.php' )
+            );
         ?>
-            <?php if ( 'wordpress-updates' === $current_tab && 0 < $count_ignored_cores ) : ?>
-            <a class="ui mini basic button" href="admin.php?page=UpdatesManage&tab=updates-ignore" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Click here to see the list of ignored WordPress core updates.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'View Ignored Updates', 'mainwp' ); ?></a>
-        <?php elseif ( 'plugins-updates' === $current_tab && 0 < $count_ignored_plugins ) : ?>
-            <a class="ui mini basic button" href="admin.php?page=PluginsIgnore"><?php esc_html_e( 'View Ignored Updates', 'mainwp' ); ?></a>
-        <?php elseif ( 'themes-updates' === $current_tab && 0 < $count_ignored_themes ) : ?>
-            <a class="ui mini basic button" href="admin.php?page=ThemesIgnore" ><?php esc_html_e( 'View Ignored Updates', 'mainwp' ); ?></a>
+            <?php if ( 'wordpress-updates' === $current_tab && 0 < $count_ignored_updates ) : ?>
+            <a class="ui mini basic button" href="<?php echo esc_url( $ignored_core_url ); ?>" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Click here to see the list of ignored WordPress core updates.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'View Ignored Updates', 'mainwp' ); ?></a>
+        <?php elseif ( 'plugins-updates' === $current_tab && 0 < $count_ignored_updates ) : ?>
+            <a class="ui mini basic button" href="<?php echo esc_url( $ignored_plugins_url ); ?>"><?php esc_html_e( 'View Ignored Updates', 'mainwp' ); ?></a>
+        <?php elseif ( 'themes-updates' === $current_tab && 0 < $count_ignored_updates ) : ?>
+            <a class="ui mini basic button" href="<?php echo esc_url( $ignored_themes_url ); ?>" ><?php esc_html_e( 'View Ignored Updates', 'mainwp' ); ?></a>
         <?php endif; ?>
             <?php
     }

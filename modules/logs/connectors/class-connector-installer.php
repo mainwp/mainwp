@@ -33,7 +33,6 @@ class Connector_Installer extends Log_Connector {
         'mainwp_install_update_actions',
         'mainwp_install_plugin_action', // call child function: plugin_action.
         'mainwp_install_theme_action', // call child function: theme_action.
-        'mainwp_after_plugin_theme_translation_update',
     );
 
 
@@ -347,61 +346,6 @@ class Connector_Installer extends Log_Connector {
                 $action,
                 $state
             );
-        }
-    }
-
-    /**
-     * Log plugin|theme|translation|core updates.
-     *
-     * @action mainwp_after_plugin_theme_translation_update.
-     *
-     * @param array  $information Updates data.
-     * @param string $type Updates type.
-     * @param string $slugs Updates slugs.
-     * @param object $website Updates website.
-     */
-    public function callback_mainwp_after_plugin_theme_translation_update( $information, $type, $slugs, $website ) { //phpcs:ignore -- NOSONAR - complex method.
-
-        if ( ! is_array( $information ) || empty( $type ) || ! is_string( $type ) || ! is_object( $website ) || empty( $website->id ) ) {
-            return;
-        }
-
-        if ( 'plugin' === $type || 'theme' === $type || 'translation' === $type ) {
-            if ( isset( $information['other_data'] ) && is_array( $information['other_data'] ) ) {
-                $updated_data = $information['other_data'];
-                $_type        = $type;
-                if ( 'translation' === $type ) {
-                    $_type = 'trans';
-                }
-                $this->callback_mainwp_install_update_actions( $website, 'updated', $updated_data, $_type );
-            }
-        } elseif ( 'core' === $type ) {
-            $error   = '';
-            $success = false;
-
-            if ( is_array( $information ) ) {
-                if ( isset( $information['upgrade'] ) && ( 'SUCCESS' === $information['upgrade'] ) ) {
-                    $success = true;
-                } elseif ( isset( $information['upgrade'] ) ) {
-                    if ( 'LOCALIZATION' === $information['upgrade'] ) {
-                        $error = esc_html__( 'No update found for the set locale.', 'mainwp' );
-                    } elseif ( 'NORESPONSE' === $information['upgrade'] ) {
-                        $error = esc_html__( 'No response from the child site server.', 'mainwp' );
-                    }
-                } elseif ( isset( $information['error'] ) ) {
-                    $error = esc_html( $information['error'] );
-                } else {
-                    $error = esc_html__( 'Invalid response from child site.', 'mainwp' );
-                }
-            }
-
-            $output_array = array(
-                'old_version' => isset( $information['old_version'] ) ? $information['old_version'] : '',
-                'version'     => isset( $information['version'] ) ? $information['version'] : '',
-                'success'     => $success ? 1 : 0,
-                'error'       => $error,
-            );
-            $this->callback_mainwp_install_update_actions( $website, 'updated', $output_array, $type );
         }
     }
 }

@@ -33,6 +33,7 @@ class Connector_Installer extends Log_Connector {
         'mainwp_install_update_actions',
         'mainwp_install_plugin_action', // call child function: plugin_action.
         'mainwp_install_theme_action', // call child function: theme_action.
+        'mainwp_after_plugin_theme_translation_update',
     );
 
 
@@ -147,7 +148,7 @@ class Connector_Installer extends Log_Connector {
 
             $message = '%1$s';
 
-        } elseif ( 'updated' === $action && ( in_array( $type, array( 'plugin', 'theme', 'trans' ) ) ) ) {
+        } elseif ( 'updated' === $action && ( in_array( $type, array( 'plugin', 'theme', 'trans', 'translation' ) ) ) ) {
 
             $updated_data = isset( $data['updated_data'] ) ? $data['updated_data'] : array();
 
@@ -179,7 +180,7 @@ class Connector_Installer extends Log_Connector {
                 return false;
             }
 
-            if ( 'plugin' === $type || 'theme' === $type || 'trans' === $type ) {
+            if ( 'plugin' === $type || 'theme' === $type || 'trans' === $type || 'translation' === $type ) {
                 $message = '%1$s';
             } else {
                 return;
@@ -347,5 +348,19 @@ class Connector_Installer extends Log_Connector {
                 $state
             );
         }
+    }
+
+    /**
+     * Log plugin|theme|translation|core updates.
+     *
+     * @action mainwp_after_plugin_theme_translation_update.
+     *
+     * @param array  $data Updates data.
+     * @param string $type Updates type.
+     * @param string $slugs Updates slugs.
+     * @param object $website Updates website.
+     */
+    public function callback_mainwp_after_plugin_theme_translation_update( $data, $type, $slugs, $website ) { //phpcs:ignore -- NOSONAR - complex method.
+        do_action( 'mainwp_install_update_actions', $website, 'updated', $data, $type );
     }
 }

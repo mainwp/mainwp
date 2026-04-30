@@ -1766,3 +1766,20 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
 #mainwp-sites-sidebar-menu .mainwp-site-menu-item {
     cursor: pointer;
 }
+
+#sync-sites-status {
+    display: flex;
+    flex-direction: column;
+}
+
+#sync-sites-status .item {
+    order: 1;
+}
+
+#sync-sites-status .item.is-success {
+    order: 2;
+}
+
+#sync-sites-status .item.disconnected-site {
+    order: 3;
+}

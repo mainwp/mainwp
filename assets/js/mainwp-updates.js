@@ -307,7 +307,7 @@ let updatesoverview_wordpress_upgrade_all_int = function (websiteIds) {
     updatesoverview_wordpress_upgrade_all_loop_next();
 };
 let updatesoverview_wordpress_upgrade_all_loop_next = function () {
-    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxThreads) && (mainwpVars.websitesLeft > 0)) {
+    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxUpdateThreads) && (mainwpVars.websitesLeft > 0)) {
         updatesoverview_wordpress_upgrade_all_upgrade_next();
     }
 };
@@ -574,7 +574,7 @@ let updatesoverview_translations_upgrade_all_int = function (slug, websiteIds, s
     updatesoverview_translations_upgrade_all_loop_next();
 };
 let updatesoverview_translations_upgrade_all_loop_next = function () {
-    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxThreads) && (mainwpVars.websitesLeft > 0)) {
+    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxUpdateThreads) && (mainwpVars.websitesLeft > 0)) {
         updatesoverview_translations_upgrade_all_upgrade_next();
     }
 };
@@ -1033,7 +1033,7 @@ let updatesoverview_plugins_upgrade_all_int = function (slug, websiteIds, sitesP
     updatesoverview_plugins_upgrade_all_loop_next();
 };
 let updatesoverview_plugins_upgrade_all_loop_next = function () {
-    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxThreads) && (mainwpVars.websitesLeft > 0)) {
+    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxUpdateThreads) && (mainwpVars.websitesLeft > 0)) {
         updatesoverview_plugins_upgrade_all_upgrade_next();
     }
 };
@@ -1539,7 +1539,7 @@ let updatesoverview_themes_upgrade_all_int = function (slug, websiteIds, sitesTh
     updatesoverview_themes_upgrade_all_loop_next();
 };
 let updatesoverview_themes_upgrade_all_loop_next = function () {
-    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxThreads) && (mainwpVars.websitesLeft > 0)) {
+    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxUpdateThreads) && (mainwpVars.websitesLeft > 0)) {
         updatesoverview_themes_upgrade_all_upgrade_next();
     }
 };
@@ -2005,7 +2005,7 @@ let updatesoverview_upgrade_all_int = function (pSitesToUpdate, pSitesToUpgrade,
 };
 
 let updatesoverview_upgrade_all_loop_next = function () {
-    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxThreads) && (mainwpVars.websitesLeft > 0)) {
+    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxUpdateThreads) && (mainwpVars.websitesLeft > 0)) {
         updatesoverview_upgrade_all_upgrade_next();
     }
 };

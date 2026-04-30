@@ -178,8 +178,8 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         $output_array = array(
-            'old_version' => isset( $information['old_version'] ) ? $information['old_version'] : '',
-            'version'     => isset( $information['version'] ) ? $information['version'] : '',
+            'old_version' => is_array( $information ) && isset( $information['old_version'] ) ? $information['old_version'] : '',
+            'version'     => is_array( $information ) && isset( $information['version'] ) ? $information['version'] : '',
             'success'     => $success ? 1 : 0,
             'error'       => $error,
         );

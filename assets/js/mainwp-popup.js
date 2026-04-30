@@ -6,6 +6,7 @@
             if (popup === null) {
                 popup = new Mainwp_InstancePopup();
                 popup.initWrapper(selector);
+                popup.initElements();
                 mainwpListPopups.pushItem(popup);
             }
             return popup;
@@ -61,7 +62,6 @@
                     if (0 == this.totalSites) {
                         this.totalSites = this.progressMax;
                     }
-                    this.initElements();
                     this.initProgress();
                     this.render();
                     this.bindEvents();

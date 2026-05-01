@@ -194,8 +194,21 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                 if ( $is_cached ) {
                     $options = isset( $activations_cached[ $api_slug ] ) ? $activations_cached[ $api_slug ] : array();
                 } else {
-                    $options                         = MainWP_Api_Manager::instance()->get_activation_info( $api_slug );
-                    $activations_cached[ $api_slug ] = $options;
+                    $options = MainWP_Api_Manager::instance()->get_activation_info( $api_slug );
+                    if ( ! is_array( $options ) ) {
+                        $options = array();
+                    }
+                    // MWP-1546: the activations_cached option is persisted via
+                    // update_option(). Storing the decrypted api_key here would
+                    // re-leak the plaintext into another database row,
+                    // defeating the at-rest encryption added to set_activation_info().
+                    // Cache only the non-credential fields plus a has_api_key
+                    // boolean so the cache-hit path knows whether a key is
+                    // configured without ever holding the plaintext.
+                    $cached_options = $options;
+                    unset( $cached_options['api_key'] );
+                    $cached_options['has_api_key']   = ! empty( $options['api_key'] );
+                    $activations_cached[ $api_slug ] = $cached_options;
                 }
 
                 if ( ! is_array( $options ) ) {
@@ -211,7 +224,10 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                 // path (see MainWP_Post_Extension_Handler::deactivate_extension)
                 // that fetches the real key from the per-slug option at the
                 // moment of use, never via the aggregate.
-                $extension['has_api_key']         = ! empty( $options['api_key'] );
+                //
+                // The cache-hit path stores has_api_key directly (see above);
+                // the fresh-load path infers it from the decrypted plaintext.
+                $extension['has_api_key']         = isset( $options['has_api_key'] ) ? (bool) $options['has_api_key'] : ! empty( $options['api_key'] );
                 $extension['activated_key']       = isset( $options['activated_key'] ) ? $options['activated_key'] : 'Deactivated';
                 $extension['deactivate_checkbox'] = isset( $options['deactivate_checkbox'] ) ? $options['deactivate_checkbox'] : 'off';
                 $extension['product_id']          = isset( $options['product_id'] ) ? $options['product_id'] : '';

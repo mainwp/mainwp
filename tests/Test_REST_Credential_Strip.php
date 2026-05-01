@@ -216,4 +216,63 @@ class Test_REST_Credential_Strip extends \WP_UnitTestCase {
 		$this->assertArrayHasKey( 'http_user', $filtered );
 		$this->assertArrayHasKey( 'uniqueId', $filtered );
 	}
+
+	// ---------------------------------------------------------------------
+	// Defense-in-depth: strip_never_in_response_fields (private helper)
+	// ---------------------------------------------------------------------
+
+	/**
+	 * The schema filter alone is bypassable via _fields and ?context=edit.
+	 * The controller's strip_never_in_response_fields helper runs on every
+	 * response regardless of context, so a read-only caller cannot recover
+	 * credentials via either bypass. Verified directly against the helper.
+	 */
+	public function test_v2_response_strip_removes_credentials_from_array(): void {
+		$controller = new \MainWP_Rest_Sites_Controller();
+
+		$prepared = array(
+			'id'        => 1,
+			'url'       => 'https://child.example.com',
+			'privkey'   => 'PRIV',
+			'pubkey'    => 'PUB',
+			'http_user' => 'basic-user',
+			'http_pass' => 'basic-pass',
+			'adminname' => 'admin',
+			'securekey' => 'secure',
+			'uniqueId'  => 'uuid',
+		);
+
+		$ref = new \ReflectionMethod( $controller, 'strip_never_in_response_fields' );
+		$ref->setAccessible( true );
+		$stripped = $ref->invokeArgs( $controller, array( $prepared ) );
+
+		$this->assertArrayHasKey( 'id', $stripped );
+		$this->assertArrayHasKey( 'url', $stripped );
+		foreach ( array( 'privkey', 'pubkey', 'http_user', 'http_pass', 'adminname', 'securekey', 'uniqueId' ) as $field ) {
+			$this->assertArrayNotHasKey( $field, $stripped, "{$field} must be stripped unconditionally" );
+		}
+	}
+
+	public function test_v2_response_strip_removes_credentials_from_object(): void {
+		$controller = new \MainWP_Rest_Sites_Controller();
+
+		$prepared             = new \stdClass();
+		$prepared->id         = 1;
+		$prepared->url        = 'https://child.example.com';
+		$prepared->privkey    = 'PRIV';
+		$prepared->http_user  = 'basic-user';
+		$prepared->http_pass  = 'basic-pass';
+		$prepared->adminname  = 'admin';
+		$prepared->uniqueId   = 'uuid';
+
+		$ref = new \ReflectionMethod( $controller, 'strip_never_in_response_fields' );
+		$ref->setAccessible( true );
+		$stripped = $ref->invokeArgs( $controller, array( $prepared ) );
+
+		$this->assertSame( 1, $stripped->id );
+		$this->assertSame( 'https://child.example.com', $stripped->url );
+		foreach ( array( 'privkey', 'http_user', 'http_pass', 'adminname', 'uniqueId' ) as $field ) {
+			$this->assertFalse( property_exists( $stripped, $field ), "{$field} must be stripped unconditionally" );
+		}
+	}
 }

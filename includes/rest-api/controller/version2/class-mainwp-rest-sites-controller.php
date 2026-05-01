@@ -122,14 +122,61 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      *
      * @return array
      */
+    /**
+     * Site fields that must never appear in any v2 response, regardless of
+     * context or _fields. The schema declares http_pass / http_user / uniqueId
+     * as edit-only (MWP-1541), but check_permissions() in the auth layer only
+     * distinguishes GET vs write methods, so a read-only key can still request
+     * `?context=edit`. The _fields short-circuit below also skips the schema
+     * filter entirely. This list provides belt-and-suspenders defence so a
+     * read-only caller cannot recover credential fields via either bypass.
+     *
+     * @var string[]
+     */
+    protected static $never_in_response_fields = array(
+        'privkey',
+        'pubkey',
+        'http_user',
+        'http_pass',
+        'adminname',
+        'securekey',
+        'uniqueId',
+    );
+
+    /**
+     * Strip credential-shaped fields from a prepared response item in place.
+     * Operates on either an associative array or an object.
+     *
+     * @param mixed $prepared Prepared item (array or object).
+     * @return mixed The same item with credential fields removed.
+     */
+    private function strip_never_in_response_fields( $prepared ) {
+        if ( is_array( $prepared ) ) {
+            foreach ( static::$never_in_response_fields as $field ) {
+                unset( $prepared[ $field ] );
+            }
+        } elseif ( is_object( $prepared ) ) {
+            foreach ( static::$never_in_response_fields as $field ) {
+                unset( $prepared->{$field} );
+            }
+        }
+        return $prepared;
+    }
+
     protected function prepare_site_item_for_response_context( $item, $request, $context = 'view', $addition_fields = array() ) {
         $prepared = $this->prepare_item_for_response( $item, $request );
 
-        if ( $request instanceof WP_REST_Request && ! empty( $request['_fields'] ) ) {
-            return $prepared;
+        if ( ! ( $request instanceof WP_REST_Request && ! empty( $request['_fields'] ) ) ) {
+            $prepared = $this->filter_response_data_by_allowed_fields( $prepared, $context, $addition_fields );
         }
 
-        return $this->filter_response_data_by_allowed_fields( $prepared, $context, $addition_fields );
+        // MWP-1541 defense-in-depth: the schema filter alone is bypassable via
+        // `_fields` (handled by the short-circuit above) AND via `?context=edit`
+        // because check_permissions() does not gate context=edit to actual
+        // edit-permission keys. Strip credentials here so neither bypass can
+        // recover them on read. Writes still accept these fields via the
+        // request body — only the read response is affected.
+        return $this->strip_never_in_response_fields( $prepared );
     }
 
     /**

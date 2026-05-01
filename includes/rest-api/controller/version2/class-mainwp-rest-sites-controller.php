@@ -2481,10 +2481,16 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                         'sanitize_callback' => 'absint',
                     ),
                 ),
+                // MWP-1541: Basic Auth credentials were exposed in the default
+                // 'view' context, leaking http_pass to any v2 read-key holder.
+                // Narrowed to 'edit' only so the schema-driven response filter
+                // (class-mainwp-rest-controller.php:1267) strips them from
+                // /v2/sites unless the caller explicitly requests context=edit
+                // (which is gated by edit-permission checks).
                 'http_user'              => array(
                     'type'        => 'string',
                     'description' => __( 'HTTP user', 'mainwp' ),
-                    'context'     => array( 'view', 'edit' ),
+                    'context'     => array( 'edit' ),
                     'arg_options' => array(
                         'sanitize_callback' => 'sanitize_text_field',
                     ),
@@ -2492,12 +2498,16 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 'http_pass'              => array(
                     'type'        => 'string',
                     'description' => __( 'HTTP password', 'mainwp' ),
-                    'context'     => array( 'view', 'edit' ), // no need to sanitize pass.
+                    'context'     => array( 'edit' ),
                 ),
+                // uniqueId is the per-site secure-mode signing identifier; same
+                // narrowing as http_pass / http_user. Unlike them, it was already
+                // view-only (never accepted as input) so this change strictly
+                // tightens the surface.
                 'uniqueId'               => array(
                     'type'    => 'string',
                     'default' => '',
-                    'context' => array( 'view' ),
+                    'context' => array( 'edit' ),
                 ),
                 'disable_health_check'   => array(
                     'type'        => 'integer',

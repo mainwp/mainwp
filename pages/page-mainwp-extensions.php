@@ -193,6 +193,22 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
 
                 if ( $is_cached ) {
                     $options = isset( $activations_cached[ $api_slug ] ) ? $activations_cached[ $api_slug ] : array();
+                    // MWP-1546 (Codex follow-up): pre-MWP-1546 builds persisted
+                    // the full decrypted activation array (including plaintext
+                    // 'api_key') into mainwp_extensions_all_activation_cached.
+                    // On upgrade those rows survive as long as the cache stays
+                    // populated. Treat any cache-hit entry that still carries
+                    // 'api_key' as untrusted legacy data: strip it, derive
+                    // has_api_key, and rewrite the sanitized entry in the
+                    // cache so the plaintext never sees another disk write.
+                    if ( is_array( $options ) && array_key_exists( 'api_key', $options ) ) {
+                        $had_key = ! empty( $options['api_key'] );
+                        unset( $options['api_key'] );
+                        $options['has_api_key']          = $had_key;
+                        $activations_cached[ $api_slug ] = $options;
+                        // Force the post-loop update_option write below to fire.
+                        $is_cached = false;
+                    }
                 } else {
                     $options = MainWP_Api_Manager::instance()->get_activation_info( $api_slug );
                     if ( ! is_array( $options ) ) {

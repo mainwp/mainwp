@@ -171,18 +171,37 @@ class MainWP_Api_Manager_Plugin_Update { // phpcs:ignore Generic.Classes.Opening
 
         $params = apply_filters( 'mainwp_plugin_information_sslverify', $default, $args );
 
+        // MWP-1546 (Codex follow-up): redact api_key everywhere it appears
+        // before handing data to the logger. The previous code only masked
+        // the top-level api_key; the per-extension api_keys nested inside
+        // the bulk-check `extensions` payload (and the api_key= param baked
+        // into target_url itself) were both written to the log in plaintext.
+        // For installs running the file logger that turned every cron
+        // update-check tick into a persistence path for credentials.
         $log_args = $args;
         if ( isset( $log_args['api_key'] ) ) {
             $log_args['api_key'] = '***';
         }
 
         if ( ! empty( $log_args['extensions'] ) ) {
-            $log_exts                        = json_decode( base64_decode( $log_args['extensions'] ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- NOSONAR base64_decode used for http encoding compatible.
-            $log_args['_decoded_extensions'] = is_array( $log_exts ) ? $log_exts : array();
+            $log_exts = json_decode( base64_decode( $log_args['extensions'] ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- NOSONAR base64_decode used for http encoding compatible.
+            if ( is_array( $log_exts ) ) {
+                foreach ( $log_exts as $log_ext_key => $log_ext ) {
+                    if ( is_array( $log_ext ) && isset( $log_ext['api_key'] ) ) {
+                        $log_exts[ $log_ext_key ]['api_key'] = '***';
+                    }
+                }
+            } else {
+                $log_exts = array();
+            }
+            $log_args['_decoded_extensions'] = $log_exts;
             unset( $log_args['extensions'] );
         }
 
-        MainWP_Logger::instance()->log_events( 'extension-updates-check', sprintf( '[target_url=%s] :: [params=%s] :: [bulk_check=%s]', $target_url, print_r( $log_args, true ), $bulk_check ? 'true' : 'false' ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions -- print_r used for debugging.
+        // Strip api_key from the URL query string before logging.
+        $log_target_url = preg_replace( '/(\?|&)api_key=[^&]*/', '$1api_key=***', $target_url );
+
+        MainWP_Logger::instance()->log_events( 'extension-updates-check', sprintf( '[target_url=%s] :: [params=%s] :: [bulk_check=%s]', $log_target_url, print_r( $log_args, true ), $bulk_check ? 'true' : 'false' ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions -- print_r used for debugging.
 
         $request = wp_remote_get(
             $target_url,

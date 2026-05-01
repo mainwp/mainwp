@@ -3918,6 +3918,12 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         unset( $others ); // Parameter retained for signature compatibility; key_pass/key_type fields are vestigial after MWP-1544 cleanup.
 
+        // Hash the consumer_secret with WordPress's password hasher so the
+        // value at rest is no longer reversible by a DB-read primitive.
+        // The plaintext is returned to the caller below so it can be shown
+        // to the admin once at creation time. See MWP-1540.
+        $hashed_secret = wp_hash_password( $consumer_secret );
+
         // Created API keys.
         $permissions = in_array( $scope, array( 'read', 'write', 'delete', 'read_write' ), true ) ? sanitize_text_field( $scope ) : 'read';
         $this->wpdb->insert(
@@ -3927,7 +3933,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 'description'     => $description,
                 'permissions'     => $permissions,
                 'consumer_key'    => mainwp_api_hash( $consumer_key ),
-                'consumer_secret' => $consumer_secret,
+                'consumer_secret' => $hashed_secret,
                 'truncated_key'   => substr( $consumer_key, -7 ),
                 'enabled'         => $enabled,
             ),

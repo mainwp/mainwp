@@ -306,6 +306,39 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
     }
 
     /**
+     * Detect whether a stored consumer_secret value is still in legacy plaintext format.
+     *
+     * Legacy v2 keys were stored as `cs_` + 40 hex chars (43 chars total). New keys
+     * created after MWP-1540 are hashed via wp_hash_password (typically `$P$...` or
+     * `$wp$...` formats). This helper distinguishes the two so the auth paths can
+     * verify each correctly without auto-rehashing existing keys.
+     *
+     * @param string $value Stored consumer_secret value.
+     * @return bool True when the value is legacy plaintext.
+     */
+    private function is_legacy_plaintext_secret( $value ) {
+        return is_string( $value ) && (bool) preg_match( '/^cs_[a-f0-9]{40}$/', $value );
+    }
+
+    /**
+     * Verify a submitted consumer_secret against the stored value.
+     *
+     * Handles both legacy plaintext (constant-time compare via hash_equals) and
+     * hashed (wp_check_password) formats. Does NOT auto-rehash legacy rows;
+     * existing plaintext keys stay plaintext until the admin reissues them.
+     *
+     * @param string $stored    Stored consumer_secret from the database.
+     * @param string $submitted Consumer_secret submitted in the request.
+     * @return bool True if the submitted secret matches the stored value.
+     */
+    private function verify_consumer_secret( $stored, $submitted ) {
+        if ( $this->is_legacy_plaintext_secret( $stored ) ) {
+            return hash_equals( $stored, $submitted ); // @codingStandardsIgnoreLine
+        }
+        return wp_check_password( $submitted, $stored );
+    }
+
+    /**
      * Basic Authentication.
      *
      * SSL-encrypted requests are not subject to sniffing or man-in-the-middle
@@ -346,8 +379,8 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             return false;
         }
 
-        // Validate user secret.
-        if ( ! hash_equals( $this->user->consumer_secret, $consumer_secret ) ) { // @codingStandardsIgnoreLine
+        // Validate user secret. Handles both legacy plaintext rows and hashed rows.
+        if ( ! $this->verify_consumer_secret( $this->user->consumer_secret, $consumer_secret ) ) {
             $this->set_error( new WP_Error( 'mainwp_rest_authentication_error', __( 'Consumer secret is invalid.', 'mainwp' ), array( 'status' => 401 ) ) );
 
             return false;
@@ -584,8 +617,8 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         if ( empty( $this->user ) ) {
             return false;
         }
-        // Validate user secret.
-        if ( ! hash_equals( $this->user->consumer_secret, $consumer_secret ) ) { // @codingStandardsIgnoreLine
+        // Validate user secret. Handles both legacy plaintext rows and hashed rows.
+        if ( ! $this->verify_consumer_secret( $this->user->consumer_secret, $consumer_secret ) ) {
             $this->set_error( new WP_Error( 'mainwp_rest_authentication_error', __( 'Consumer secret is invalid.', 'mainwp' ), array( 'status' => 401 ) ) );
 
             return false;
@@ -684,6 +717,15 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
 
         if ( 'HMAC-SHA1' !== $params['oauth_signature_method'] && 'HMAC-SHA256' !== $params['oauth_signature_method'] ) {
             return new WP_Error( 'mainwp_rest_authentication_error', __( 'Invalid signature - signature method is invalid.', 'mainwp' ), array( 'status' => 401 ) );
+        }
+
+        // OAuth 1.0a HMAC verification requires the plaintext secret as the HMAC
+        // key. Keys created after MWP-1540 store the secret hashed at rest and
+        // therefore cannot be used with this auth method. Direct the caller to
+        // Basic Auth over HTTPS or to reissue (and use the new key only via
+        // Basic Auth).
+        if ( ! $this->is_legacy_plaintext_secret( $user->consumer_secret ) ) {
+            return new WP_Error( 'mainwp_rest_authentication_oauth1_unsupported', __( 'OAuth 1.0a is not supported for this API key. Use Basic Auth over HTTPS or reissue the key.', 'mainwp' ), array( 'status' => 401 ) );
         }
 
         $hash_algorithm = strtolower( str_replace( 'HMAC-', '', $params['oauth_signature_method'] ) );

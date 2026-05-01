@@ -375,8 +375,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     key_type tinyint(1) NOT NULL DEFAULT 0,
     `enabled` tinyint(1) DEFAULT 0,
     last_access datetime NULL default null,
-    KEY consumer_key (consumer_key),
-    KEY consumer_secret (consumer_secret)';
+    KEY consumer_key (consumer_key)';
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.0.9', '<=' ) ) { // NOSONAR - none IP.
             $tbl .= ',
     PRIMARY KEY  (key_id)  ';
@@ -591,6 +590,20 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' ADD INDEX idx_userid (userid)' ); //phpcs:ignore -- ok.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' ADD INDEX idx_client_id (client_id)' ); //phpcs:ignore -- ok.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' ADD INDEX idx_url (url(191))' ); //phpcs:ignore -- ok.
+        }
+        // MWP-1540: widen consumer_secret so wp_hash_password output (variable length,
+        // typically 34 chars for $P$ but up to ~150 for argon2) fits without truncation,
+        // and drop the unused KEY consumer_secret index (lookups are by HMAC'd consumer_key,
+        // never by consumer_secret). dbDelta does not reliably MODIFY existing column types
+        // or DROP indexes, so both changes are applied explicitly here.
+        if ( ! empty( $current_ver ) && version_compare( $current_ver, '9.0.1.5', '<' ) ) { // NOSONAR - no ip.
+            $api_keys_table = $this->table_name( 'api_keys' );
+            // Drop the unused index FIRST so the column type change is unambiguous.
+            $existing_indexes = $this->wpdb->get_col( "SHOW INDEX FROM {$api_keys_table} WHERE Key_name = 'consumer_secret'", 2 ); // phpcs:ignore -- table name is internal.
+            if ( ! empty( $existing_indexes ) ) {
+                $this->wpdb->query( "ALTER TABLE {$api_keys_table} DROP INDEX consumer_secret" ); // phpcs:ignore -- table name is internal.
+            }
+            $this->wpdb->query( "ALTER TABLE {$api_keys_table} MODIFY COLUMN consumer_secret varchar(255) NOT NULL" ); // phpcs:ignore -- table name is internal.
         }
     }
 

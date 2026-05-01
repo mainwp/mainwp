@@ -109,20 +109,6 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
     }
 
     /**
-     * Prepare a site response item while preserving `_fields` projections.
-     *
-     * `prepare_item_for_response()` already narrows the payload when `_fields`
-     * is present. Running the result back through
-     * `filter_response_data_by_allowed_fields()` expands it again to all schema
-     * fields with empty-string placeholders. This helper avoids that behavior.
-     *
-     * @param object          $item    Site item.
-     * @param WP_REST_Request $request Request object.
-     * @param string          $context Response context.
-     *
-     * @return array
-     */
-    /**
      * Site fields that must never appear in any v2 response, regardless of
      * context or _fields. The schema declares http_pass / http_user / uniqueId
      * as edit-only (MWP-1541), but check_permissions() in the auth layer only
@@ -163,6 +149,20 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         return $prepared;
     }
 
+    /**
+     * Prepare a site response item while preserving `_fields` projections.
+     *
+     * `prepare_item_for_response()` already narrows the payload when `_fields`
+     * is present. Running the result back through
+     * `filter_response_data_by_allowed_fields()` expands it again to all schema
+     * fields with empty-string placeholders. This helper avoids that behavior.
+     *
+     * @param object          $item    Site item.
+     * @param WP_REST_Request $request Request object.
+     * @param string          $context Response context.
+     *
+     * @return array
+     */
     protected function prepare_site_item_for_response_context( $item, $request, $context = 'view', $addition_fields = array() ) {
         $prepared = $this->prepare_item_for_response( $item, $request );
 
@@ -2540,10 +2540,15 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 ),
                 // MWP-1541: Basic Auth credentials were exposed in the default
                 // 'view' context, leaking http_pass to any v2 read-key holder.
-                // Narrowed to 'edit' only so the schema-driven response filter
-                // (class-mainwp-rest-controller.php:1267) strips them from
-                // /v2/sites unless the caller explicitly requests context=edit
-                // (which is gated by edit-permission checks).
+                // Narrowed to 'edit'-only as the formal contract; the actual
+                // protection on read responses is provided by
+                // strip_never_in_response_fields() in
+                // prepare_site_item_for_response_context(), which strips these
+                // fields from every site response regardless of context or
+                // _fields. (check_permissions() in the auth layer does not
+                // currently gate ?context=edit to actual edit-permission keys,
+                // and no caller forwards request context to the schema-filter
+                // step, so the schema label alone is not the effective guard.)
                 'http_user'              => array(
                     'type'        => 'string',
                     'description' => __( 'HTTP user', 'mainwp' ),

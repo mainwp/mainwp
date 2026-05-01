@@ -42,12 +42,13 @@ class Test_REST_Credential_Strip extends \WP_UnitTestCase {
 		$site->http_pass     = 'basic-pass';
 		$site->adminname     = 'admin';
 		$site->securekey     = 'secure-uuid';
+		$site->uniqueId      = 'unique-id-12345';
 		$site->suspended     = 0;
 		return $site;
 	}
 
 	private function assert_no_sensitive_fields( $obj_or_array, string $msg = '' ): void {
-		$sensitive = array( 'privkey', 'pubkey', 'http_user', 'http_pass', 'adminname', 'securekey' );
+		$sensitive = array( 'privkey', 'pubkey', 'http_user', 'http_pass', 'adminname', 'securekey', 'uniqueId' );
 		foreach ( $sensitive as $field ) {
 			if ( is_object( $obj_or_array ) ) {
 				$this->assertFalse( property_exists( $obj_or_array, $field ), "Field '{$field}' must be stripped from object. {$msg}" );

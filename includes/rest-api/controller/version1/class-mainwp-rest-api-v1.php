@@ -551,6 +551,11 @@ class Rest_Api_V1 { //phpcs:ignore -- NOSONAR - multi methods.
         'http_pass',
         'adminname',
         'securekey',
+        // uniqueId is the per-site secure-mode signing identifier; the v2 schema
+        // narrows it to edit context only (MWP-1541) and the single-site v1
+        // callback uses get_website_by_id (SELECT wp.*) which carries it
+        // through. Strip it here too so v1 stays consistent.
+        'uniqueId',
     );
 
     /**

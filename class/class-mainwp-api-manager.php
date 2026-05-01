@@ -123,7 +123,52 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             return array();
         }
 
-        return get_option( $ext_key . '_APIManAdder' );
+        $info = get_option( $ext_key . '_APIManAdder' );
+
+        // MWP-1546: per-extension license keys were historically stored as
+        // plaintext inside the option array's 'api_key' field. New writes
+        // (set_activation_info below) replace that field with a
+        // {encrypted_val, file_key} envelope produced by the
+        // mainwp_encrypt_key_value filter (MainWP_Keys_Manager). On read,
+        // the matching mainwp_decrypt_key_value filter reverses the
+        // envelope. Legacy plaintext rows (string api_key) pass through
+        // unchanged so existing installs continue to work until the
+        // option is next written (encrypt-on-first-write).
+        return static::decrypt_activation_info( $info );
+    }
+
+    /**
+     * Reverse the api_key encryption applied by set_activation_info().
+     *
+     * Returns the input unchanged when api_key is missing, empty, or a
+     * plaintext string (legacy format). Falls back to the original value
+     * if the mainwp_decrypt_key_value filter cannot recover a string, so
+     * a missing keyfile cannot orphan a license activation.
+     *
+     * @param mixed $info Raw option value as returned by get_option().
+     * @return mixed Same shape as $info, with 'api_key' decrypted to plaintext.
+     */
+    public static function decrypt_activation_info( $info ) {
+        if ( ! is_array( $info ) || empty( $info['api_key'] ) ) {
+            return $info;
+        }
+        if ( ! is_array( $info['api_key'] ) ) {
+            return $info; // Legacy plaintext string, no envelope to reverse.
+        }
+        if ( empty( $info['api_key']['encrypted_val'] ) ) {
+            return $info; // Array but not in the encrypted-envelope shape.
+        }
+        $decrypted = apply_filters( 'mainwp_decrypt_key_value', false, $info['api_key'], '' );
+        if ( is_string( $decrypted ) && '' !== $decrypted ) {
+            $info['api_key'] = $decrypted;
+        } else {
+            // Decrypt failed (e.g. missing keyfile). Drop the unreadable
+            // ciphertext so callers see an empty string rather than the
+            // raw envelope array, which they would treat as truthy and
+            // forward to the licensing API as garbage.
+            $info['api_key'] = '';
+        }
+        return $info;
     }
 
     /**
@@ -144,7 +189,40 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         // Clear cached of all activations to reload for next loading.
         update_option( 'mainwp_extensions_all_activation_cached', '' );
 
+        // MWP-1546: encrypt the 'api_key' field at rest using the same
+        // mainwp_encrypt_key_value filter that 3rd-party API keys use. Other
+        // array members (activated_key, deactivate_checkbox, product_id,
+        // instance_id, software_version, mainwp_version, product_item_id)
+        // are not credentials and stay plaintext for backwards compatibility
+        // with any reader that consumes them directly.
+        $info = static::encrypt_activation_info( $ext_key, $info );
+
         return MainWP_Utility::update_option( $ext_key . '_APIManAdder', $info );
+    }
+
+    /**
+     * Encrypt the api_key field of an activation-info array via the
+     * mainwp_encrypt_key_value filter (MainWP_Keys_Manager). Replaces the
+     * plaintext string with the {encrypted_val, file_key} envelope.
+     *
+     * @param string $ext_key Extension slug; included in the keyfile prefix.
+     * @param mixed  $info    Activation info as supplied by callers.
+     * @return mixed Same shape as $info, with 'api_key' replaced by the
+     *               encryption envelope (or unchanged if encryption fails).
+     */
+    public static function encrypt_activation_info( $ext_key, $info ) {
+        if ( ! is_array( $info ) ) {
+            return $info;
+        }
+        if ( empty( $info['api_key'] ) || ! is_string( $info['api_key'] ) ) {
+            return $info;
+        }
+        $prefix   = 'extension_' . sanitize_key( $ext_key ) . '_';
+        $envelope = apply_filters( 'mainwp_encrypt_key_value', false, $info['api_key'], $prefix, false );
+        if ( is_array( $envelope ) && ! empty( $envelope['encrypted_val'] ) ) {
+            $info['api_key'] = $envelope;
+        }
+        return $info;
     }
 
     /**

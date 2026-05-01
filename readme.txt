@@ -1,4 +1,4 @@
-=== MainWP Dashboard: Self-hosted WordPress Management for Agencies  ===
+=== MainWP Dashboard: Self-hosted WordPress Management for Agencies ===
 Contributors: mainwp
 Tags: manage multiple WordPress sites, WordPress maintenance, update, backups, security
 Author: mainwp
@@ -41,7 +41,7 @@ All of this makes MainWP the best non-SaaS alternative to ManageWP, InfiniteWP, 
 
 MainWP is designed to be user-friendly and intuitive, even for those new to WordPress management plugins. With a straightforward setup process and a clean, organized dashboard, you'll be able to start managing your WordPress sites efficiently in no time.
 
-* Setting up MainWP is straightforward—install the dashboard on a private WordPress site, add the MainWP Child plugin to your other WordPress sites, and take control.
+* Setting up MainWP is straightforward, install the dashboard on a private WordPress site, add the MainWP Child plugin to your other WordPress sites, and take control.
 
 **Your Guarantee of Privacy**
 
@@ -54,10 +54,10 @@ MainWP Dashboard is [100% FREE](https://mainwp.com/mainwp-free-features/) and al
 We make money by offering [MainWP Pro](https://mainwp.com/signup/), which provides access to a wide range of premium add-ons. These premium add-ons are organized into two clear categories:
 
 - **Integrations:**
-  Add-ons in this category enable seamless connections with popular third-party services and plugins, allowing you to integrate the tools you already use directly into your MainWP Dashboard.
+ Add-ons in this category enable seamless connections with popular third-party services and plugins, allowing you to integrate the tools you already use directly into your MainWP Dashboard.
 
 - **Extensions:**
-  These are custom-built, standalone add-ons developed exclusively for the MainWP Dashboard, designed to add unique and specialized functionality to enhance your WordPress management experience.
+ These are custom-built, standalone add-ons developed exclusively for the MainWP Dashboard, designed to add unique and specialized functionality to enhance your WordPress management experience.
 
 For more details, visit our [Premium Add-ons](https://mainwp.com/mainwp-add-ons/) page and see how our free and pro features compare at [Free vs. Pro: Know the Difference](https://mainwp.com/free-vs-pro/).
 
@@ -147,6 +147,10 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.0.12 - TBD =
+
+* Security: Per-extension license keys are now encrypted at rest. The `api_key` field inside each `<slug>_APIManAdder` option is wrapped in MainWP's standard `{encrypted_val, file_key}` envelope on save and decrypted on read; legacy plaintext rows continue to work via a backwards-compatible passthrough until the option is next written. The aggregated `mainwp_extensions` option no longer caches license keys (replaced with a `has_api_key` boolean), so the per-extension hidden input on the Extensions card renders the `••••••••` sentinel placeholder instead of the plaintext key. The deactivation flow resolves the sentinel server-side using the slug. See MWP-1546.
 
 = 6.0.11 - 4-28-2026 =
 

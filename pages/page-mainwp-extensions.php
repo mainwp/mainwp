@@ -202,7 +202,16 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                     $options = array();
                 }
 
-                $extension['api_key']             = isset( $options['api_key'] ) ? $options['api_key'] : '';
+                // MWP-1546: stop persisting the per-extension license key
+                // into the aggregated mainwp_extensions option. The original
+                // 'api_key' field on $extension was a plaintext string sourced
+                // from get_activation_info(); render code that needs to know
+                // "is a key configured?" should consult 'has_api_key' instead.
+                // The deactivate flow uses a server-side sentinel-resolution
+                // path (see MainWP_Post_Extension_Handler::deactivate_extension)
+                // that fetches the real key from the per-slug option at the
+                // moment of use, never via the aggregate.
+                $extension['has_api_key']         = ! empty( $options['api_key'] );
                 $extension['activated_key']       = isset( $options['activated_key'] ) ? $options['activated_key'] : 'Deactivated';
                 $extension['deactivate_checkbox'] = isset( $options['deactivate_checkbox'] ) ? $options['deactivate_checkbox'] : 'off';
                 $extension['product_id']          = isset( $options['product_id'] ) ? $options['product_id'] : '';
@@ -684,7 +693,6 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                 $html .= '</div>';
                 $html .= '</div>';
             }
-
         }
 
         $html .= '<div class="ui hidden divider"></div>';

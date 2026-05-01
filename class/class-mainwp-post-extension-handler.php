@@ -151,7 +151,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
      * Method invalidate_warm_cache()
      */
     public function invalidate_warm_cache() {
-        MainWP_Cache_Warm_Helper::invalidate_manage_pages( array( 'Extensions' )  );
+        MainWP_Cache_Warm_Helper::invalidate_manage_pages( array( 'Extensions' ) );
     }
 
     /**
@@ -210,7 +210,16 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
         $this->check_security( 'mainwp_extension_deactivate' );
         $api_slug = isset( $_POST['slug'] ) ? dirname( wp_unslash( $_POST['slug'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $api_key  = isset( $_POST['api_key'] ) ? wp_unslash( $_POST['api_key'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        $result   = MainWP_Api_Manager::instance()->license_key_deactivation( $api_slug, $api_key );
+        // MWP-1546: the hidden input on the Extensions card now renders the
+        // sentinel placeholder instead of the plaintext per-extension license
+        // key. Resolve the sentinel server-side using the slug so the
+        // deactivation request gets the real key from the (now-encrypted)
+        // per-slug option rather than forwarding the placeholder.
+        if ( MainWP_Credential_Render::is_sentinel( $api_key ) ) {
+            $info    = MainWP_Api_Manager::instance()->get_activation_info( $api_slug );
+            $api_key = is_array( $info ) && ! empty( $info['api_key'] ) && is_string( $info['api_key'] ) ? $info['api_key'] : '';
+        }
+        $result = MainWP_Api_Manager::instance()->license_key_deactivation( $api_slug, $api_key );
         wp_send_json( $result );
     }
 

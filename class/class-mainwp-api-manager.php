@@ -131,9 +131,26 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         // {encrypted_val, file_key} envelope produced by the
         // mainwp_encrypt_key_value filter (MainWP_Keys_Manager). On read,
         // the matching mainwp_decrypt_key_value filter reverses the
-        // envelope. Legacy plaintext rows (string api_key) pass through
-        // unchanged so existing installs continue to work until the
-        // option is next written (encrypt-on-first-write).
+        // envelope.
+        //
+        // Encrypt-on-first-read migration: if the stored row still carries
+        // a plaintext api_key string (legacy installs upgraded from before
+        // this change), rewrite it as the encrypted envelope right now.
+        // Existing dashboards migrate transparently as each extension's
+        // option is touched, without waiting for an unrelated activation
+        // event. We persist via update_option directly rather than calling
+        // set_activation_info to avoid churning the activations_cached
+        // option on every legacy read.
+        if ( is_array( $info ) && ! empty( $info['api_key'] ) && is_string( $info['api_key'] ) ) {
+            $rewritten = static::encrypt_activation_info( $ext_key, $info );
+            if ( is_array( $rewritten )
+                && isset( $rewritten['api_key'] )
+                && is_array( $rewritten['api_key'] )
+                && ! empty( $rewritten['api_key']['encrypted_val'] ) ) {
+                MainWP_Utility::update_option( $ext_key . '_APIManAdder', $rewritten );
+            }
+        }
+
         return static::decrypt_activation_info( $info );
     }
 
@@ -196,6 +213,20 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         // are not credentials and stay plaintext for backwards compatibility
         // with any reader that consumes them directly.
         $info = static::encrypt_activation_info( $ext_key, $info );
+
+        // Codex follow-up: fail closed when encryption did not produce an
+        // envelope. encrypt_activation_info() returns the input unchanged
+        // when the mainwp_encrypt_key_value filter fails (missing keyfile,
+        // un-writable uploads dir, etc.), which would leave api_key as a
+        // plaintext string and silently downgrade this write back to the
+        // pre-MWP-1546 leak path. Refuse the write and let the caller
+        // surface the error rather than persisting plaintext credentials.
+        if ( is_array( $info )
+            && isset( $info['api_key'] )
+            && is_string( $info['api_key'] )
+            && '' !== $info['api_key'] ) {
+            return false;
+        }
 
         return MainWP_Utility::update_option( $ext_key . '_APIManAdder', $info );
     }

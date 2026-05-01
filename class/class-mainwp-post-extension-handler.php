@@ -268,7 +268,22 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
         // "leave the existing key alone" -- short-circuit before contacting
         // mainwp.com for verification (the sentinel is not a real key, so
         // the verify call would otherwise produce a misleading error).
+        //
+        // CR follow-up: the unchecked-"Remember API Key" flow normally
+        // reaches the trailing block at the end of this method which clears
+        // mainwp_extensions_api_save_login + mainwp_extensions_plan_info.
+        // The sentinel short-circuit must mirror that behaviour so a user
+        // who unchecks the box (without changing the input) still has the
+        // flag cleared. The trailing block deliberately does NOT clear the
+        // master key itself, so the sentinel branch matches that semantic
+        // -- the only way to delete the stored master key is to submit an
+        // empty input, which the next branch handles.
         if ( MainWP_Credential_Render::is_sentinel( $api_key ) ) {
+            $save_login = ( isset( $_POST['saveLogin'] ) && ( 1 === (int) $_POST['saveLogin'] ) ) ? true : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            if ( ! $save_login ) {
+                MainWP_Utility::update_option( 'mainwp_extensions_api_save_login', '' );
+                MainWP_Utility::update_option( 'mainwp_extensions_plan_info', '' );
+            }
             die(
                 wp_json_encode(
                     array(

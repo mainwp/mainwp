@@ -858,7 +858,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
 
         if ( false === $user ) {
             $table_name = esc_sql( MainWP_DB::instance()->get_table_name( 'api_keys' ) );
-            $user = $wpdb->get_row(
+            $user       = $wpdb->get_row(
                 $wpdb->prepare(
                     'SELECT * FROM ' . $table_name . ' WHERE consumer_key = %s',
                     $consumer_key

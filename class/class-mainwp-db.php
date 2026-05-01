@@ -3926,7 +3926,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         // Created API keys.
         $permissions = in_array( $scope, array( 'read', 'write', 'delete', 'read_write' ), true ) ? sanitize_text_field( $scope ) : 'read';
-        $this->wpdb->insert(
+        $inserted    = $this->wpdb->insert(
             $this->table_name( 'api_keys' ),
             array(
                 'user_id'         => $user_id,
@@ -3948,13 +3948,24 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             ),
         );
 
-            return array(
-                'key_id'          => $this->wpdb->insert_id,
-                'user_id'         => $user_id,
-                'consumer_key'    => $consumer_key,
-                'consumer_secret' => $consumer_secret,
-                'key_permissions' => $permissions,
-            );
+        // wpdb->insert() returns false on failure. Without this guard the
+        // function would still hand back the plaintext consumer_secret plus
+        // $wpdb->insert_id, but that insert_id is the LAST successful insert
+        // on the connection (typically from earlier in the same request),
+        // not this row. The caller's empty-key_id check would pass and the
+        // operator would receive a credential that was never persisted.
+        // See MWP-1540 PR review feedback.
+        if ( false === $inserted ) {
+            return false;
+        }
+
+        return array(
+            'key_id'          => $this->wpdb->insert_id,
+            'user_id'         => $user_id,
+            'consumer_key'    => $consumer_key,
+            'consumer_secret' => $consumer_secret,
+            'key_permissions' => $permissions,
+        );
     }
 
     /**

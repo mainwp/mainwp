@@ -3916,12 +3916,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             return false;
         }
 
-        if ( ! is_array( $others ) ) {
-            $others = array();
-        }
-
-        $pass = isset( $others['key_pass'] ) ? $others['key_pass'] : '';
-        $type = isset( $others['key_type'] ) ? intval( $others['key_type'] ) : 0;
+        unset( $others ); // Parameter retained for signature compatibility; key_pass/key_type fields are vestigial after MWP-1544 cleanup.
 
         // Created API keys.
         $permissions = in_array( $scope, array( 'read', 'write', 'delete', 'read_write' ), true ) ? sanitize_text_field( $scope ) : 'read';
@@ -3935,8 +3930,6 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 'consumer_secret' => $consumer_secret,
                 'truncated_key'   => substr( $consumer_key, -7 ),
                 'enabled'         => $enabled,
-                'key_pass'        => $pass,
-                'key_type'        => $type,
             ),
             array(
                 '%d',
@@ -3944,8 +3937,6 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 '%s',
                 '%s',
                 '%s',
-                '%s',
-                '%d',
                 '%s',
                 '%d',
             ),

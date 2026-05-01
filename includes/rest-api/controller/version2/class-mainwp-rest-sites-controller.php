@@ -170,20 +170,23 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $prepared = $this->filter_response_data_by_allowed_fields( $prepared, $context, $addition_fields );
         }
 
-        // MWP-1541 defense-in-depth for the view-context leak. The schema
-        // narrows http_pass / http_user / uniqueId to edit-only, but
-        // _fields short-circuits the schema filter above, so a request like
-        // `?_fields=http_pass` would otherwise carry the value through.
-        // Strip in view context only; edit-context callers (per the
-        // documented schema contract) continue to receive the fields.
-        // The residual concern that check_permissions() does not gate
-        // context=edit to actual edit-permission keys is a separate issue
-        // tracked outside this ticket.
-        if ( 'edit' !== $context ) {
-            $prepared = $this->strip_never_in_response_fields( $prepared );
-        }
-
-        return $prepared;
+        // MWP-1541: strip credential fields unconditionally on read.
+        //
+        // The v2 schema labels http_pass / http_user / uniqueId as edit-only,
+        // but every site-response code path in this controller passes the
+        // context arg as 'view' (or 'simple_view') -- there is no caller that
+        // forwards the request's `?context=edit` query through to the
+        // schema-filter step, so the edit-context response shape is
+        // effectively unreachable from the v2 sites routes today. That
+        // makes this strip equivalent to "strip on every read response",
+        // which is what we want for the security fix anyway: REST consumers
+        // never need to read these fields back, and writes accept them via
+        // the request body regardless.
+        //
+        // Re-enabling edit-context reads in the future would mean plumbing
+        // the requested context through the existing call sites and then
+        // narrowing this strip to view only. Out of scope for MWP-1541.
+        return $this->strip_never_in_response_fields( $prepared );
     }
 
     /**

@@ -150,7 +150,7 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 = 6.0.12 - TBD =
 
-* Security: v2 REST API responses no longer expose Basic Auth HTTP credentials. The schema for `http_pass`, `http_user`, and `uniqueId` was narrowed to the `edit` context only, so the default GET /v2/sites and GET /v2/sites/{id} (which run in `view` context) no longer return these fields. Callers with edit permission can still read them via `?context=edit`. See MWP-1541.
+* Security: v2 REST API site responses no longer expose Basic Auth HTTP credentials. GET /v2/sites and GET /v2/sites/{id} no longer return `http_pass`, `http_user`, or `uniqueId`, even when the response is built via the `_fields=` short-circuit or the `?context=edit` query. The fields remain settable via POST/PUT request bodies for site updates; only the read response is stripped. See MWP-1541.
 * Security: Four v1 REST callbacks (`all-sites`, `get-sites-by-url`, `get-sites-by-client`, `site/site`) now strip `privkey`, `pubkey`, `http_user`, `http_pass`, `adminname`, and `securekey` from the response. The data layer projection at `MainWP_DB::get_websites_for_current_user` is unchanged so internal callers (cron jobs, MainWP_Connect) continue to receive full data; the strip is applied at the REST callback boundary. See MWP-1542.
 
 = 6.0.11 - 4-28-2026 =

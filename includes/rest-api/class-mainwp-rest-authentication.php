@@ -873,6 +873,25 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             $this->set_error( new \WP_Error( 'mainwp_rest_authentication_disabled_key', __( 'The REST API Key are disabled.', 'mainwp' ), array( 'status' => 401 ) ) );
             return false;
         }
+
+        // Legacy: passphrase enforcement for any rows where key_type=1.
+        // No current code path creates such rows (see MWP-1544) and no caller
+        // of insert_rest_api_key sets key_type to 1, so this branch is dormant
+        // on every install we have visibility into. It is preserved to avoid
+        // silently weakening hypothetical pre-existing rows where someone
+        // wired key_type=1 by hand or via removed migration code. The compare
+        // is timing-safe (was a vanilla !== before MWP-1540).
+        if ( 1 === (int) $user->key_type ) {
+            // phpcs:disable WordPress.Security.NonceVerification
+            $pass = ! empty( $_REQUEST['key_pass'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['key_pass'] ) ) : '';
+            // phpcs:enable WordPress.Security.NonceVerification
+            $expected = isset( $user->key_pass ) ? (string) $user->key_pass : '';
+            if ( '' === $expected || ! hash_equals( $expected, $pass ) ) {
+                $this->set_error( new \WP_Error( 'mainwp_rest_authentication_invalid_key_pass', __( 'The REST API passphrase is invalid.', 'mainwp' ), array( 'status' => 401 ) ) );
+                return false;
+            }
+        }
+
         return $user;
     }
 

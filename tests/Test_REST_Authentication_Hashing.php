@@ -213,4 +213,74 @@ class Test_REST_Authentication_Hashing extends \WP_UnitTestCase {
 		// The stored value should NOT match the legacy 'cs_<40hex>' format.
 		$this->assertDoesNotMatchRegularExpression( '/^cs_[a-f0-9]{40}$/', $stored );
 	}
+
+	// ---------------------------------------------------------------------
+	// Legacy key_type=1 passphrase enforcement (preserved per Codex finding 2)
+	// ---------------------------------------------------------------------
+
+	/**
+	 * Seed an api_keys row with key_type=1 and a passphrase via direct DB
+	 * insert. The public insert_rest_api_key() no longer writes these fields,
+	 * so the test exercises a hypothetical pre-existing legacy row.
+	 *
+	 * @param string $key_pass Stored passphrase (plaintext, matches legacy schema).
+	 * @return string The HMAC'd consumer_key suitable for get_user_data_by_consumer_key().
+	 */
+	private function seed_legacy_keytype1_row( string $key_pass ): string {
+		global $wpdb;
+		$user_id   = $this->factory()->user->create( array( 'role' => 'administrator' ) );
+		$plain_ck  = 'ck_' . str_repeat( 'a', 40 );
+		$hashed_ck = mainwp_api_hash( $plain_ck );
+		$wpdb->insert(
+			$wpdb->prefix . 'mainwp_api_keys',
+			array(
+				'user_id'         => $user_id,
+				'description'     => 'legacy key_type=1 fixture',
+				'permissions'     => 'read',
+				'consumer_key'    => $hashed_ck,
+				'consumer_secret' => 'cs_' . str_repeat( 'b', 40 ),
+				'truncated_key'   => substr( $plain_ck, -7 ),
+				'enabled'         => 1,
+				'key_pass'        => $key_pass,
+				'key_type'        => 1,
+			),
+			array( '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%d' )
+		);
+		return $plain_ck;
+	}
+
+	public function test_legacy_keytype1_accepts_matching_passphrase(): void {
+		$plain_ck = $this->seed_legacy_keytype1_row( 'correct-pass' );
+		$_REQUEST['key_pass'] = 'correct-pass';
+		$result = $this->invoke_auth_method( 'get_user_data_by_consumer_key', array( $plain_ck ) );
+		$this->assertNotEmpty( $result );
+		$this->assertNotFalse( $result );
+		unset( $_REQUEST['key_pass'] );
+	}
+
+	public function test_legacy_keytype1_rejects_wrong_passphrase(): void {
+		$plain_ck = $this->seed_legacy_keytype1_row( 'correct-pass' );
+		$_REQUEST['key_pass'] = 'wrong-pass';
+		$result = $this->invoke_auth_method( 'get_user_data_by_consumer_key', array( $plain_ck ) );
+		$this->assertFalse( $result, 'Wrong passphrase must fail authentication' );
+		unset( $_REQUEST['key_pass'] );
+	}
+
+	public function test_legacy_keytype1_rejects_missing_passphrase(): void {
+		$plain_ck = $this->seed_legacy_keytype1_row( 'correct-pass' );
+		// $_REQUEST['key_pass'] intentionally not set.
+		$result = $this->invoke_auth_method( 'get_user_data_by_consumer_key', array( $plain_ck ) );
+		$this->assertFalse( $result, 'Missing passphrase must fail authentication' );
+	}
+
+	public function test_legacy_keytype1_rejects_when_stored_passphrase_is_empty(): void {
+		// Defensive: if a row somehow has key_type=1 with an empty key_pass,
+		// auth must NOT succeed regardless of what the caller submits (no
+		// hash_equals('','')==true bypass).
+		$plain_ck = $this->seed_legacy_keytype1_row( '' );
+		$_REQUEST['key_pass'] = '';
+		$result = $this->invoke_auth_method( 'get_user_data_by_consumer_key', array( $plain_ck ) );
+		$this->assertFalse( $result, 'Empty stored passphrase must not allow empty submission' );
+		unset( $_REQUEST['key_pass'] );
+	}
 }

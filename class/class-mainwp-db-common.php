@@ -1072,7 +1072,18 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
         foreach ( $map_fields as $field => $name ) {
             if ( isset( $data[ $name ] ) && empty( ! $data[ $name ] ) ) {
-                $sql_set .= ' `' . $this->escape( $field ) . '` = "' . $this->escape( $data[ $name ] ) . '",';
+                $value = $data[ $name ];
+                // MWP-1548: encrypt http_user / http_pass at rest before
+                // they hit the raw SQL UPDATE. Same fail-closed contract
+                // as the other write paths in MainWP_DB.
+                if ( 'http_user' === $field || 'http_pass' === $field ) {
+                    $encrypted = MainWP_Credential_Storage::encrypt_credential( $value, $field );
+                    if ( false === $encrypted ) {
+                        return false;
+                    }
+                    $value = $encrypted;
+                }
+                $sql_set .= ' `' . $this->escape( $field ) . '` = "' . $this->escape( $value ) . '",';
             }
         }
 

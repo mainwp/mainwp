@@ -372,9 +372,12 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $url               = $website->url;
             $verifyCertificate = isset( $website->verify_certificate ) ? (int) $website->verify_certificate : null;
             $forceUseIPv4      = $website->force_use_ipv4;
-            $http_user         = $website->http_user;
-            $http_pass         = $website->http_pass;
-            $sslVersion        = $website->ssl_version;
+            // MWP-1548: decrypt at the boundary so HTTP Basic Auth gets
+            // the plaintext credentials. Legacy plaintext rows pass
+            // through unchanged via the helper's fallback.
+            $http_user  = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
+            $http_pass  = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
+            $sslVersion = $website->ssl_version;
         } else {
             $url = $website;
         }
@@ -813,10 +816,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
 
             if ( property_exists( $website, 'http_user' ) ) {
-                $http_user = $website->http_user;
+                $http_user = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
             }
             if ( property_exists( $website, 'http_pass' ) ) {
-                $http_pass = $website->http_pass;
+                $http_pass = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
             }
 
             if ( isset( $params ) && isset( $params['new_post'] ) ) {
@@ -1279,7 +1282,12 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $output      = array();
 
         if ( ! $request_update ) {
-            $information = static::fetch_url( $website, $website->url, $postdata, $checkConstraints, $website->verify_certificate, $pRetryFailed, $website->http_user, $website->http_pass, $website->ssl_version, $others, $output );
+            // MWP-1548: decrypt http_user / http_pass before they hit the
+            // outbound HTTP Basic Auth header. Legacy plaintext rows pass
+            // through unchanged.
+            $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
+            $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
+            $information     = static::fetch_url( $website, $website->url, $postdata, $checkConstraints, $website->verify_certificate, $pRetryFailed, $http_user_plain, $http_pass_plain, $website->ssl_version, $others, $output );
             if ( ! empty( $output ) ) {
                 if ( ! is_array( $information ) ) {
                     $information = array();
@@ -1668,7 +1676,6 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 do {
                     $mrc = curl_multi_exec( $mh, $running );
                 } while ( CURLM_CALL_MULTI_PERFORM === $mrc );
-
 
                 $rc = curl_multi_select( $mh, 1.0 );
                 if ( -1 === $rc ) {

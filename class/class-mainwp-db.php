@@ -3126,6 +3126,18 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $wpe               = isset( $params['wpe'] ) ? $params['wpe'] : 0;
         $isStaging         = isset( $params['isStaging'] ) ? $params['isStaging'] : 0;
 
+        // MWP-1548: encrypt http_user / http_pass at rest. Empty / null
+        // values pass through unchanged (encrypt_credential is a no-op
+        // for those). A non-empty value that fails to encrypt produces
+        // false here, which we treat as a hard failure -- refuse to
+        // persist plaintext credentials when the encryption layer is
+        // unhealthy (missing keyfile, un-writable uploads dir).
+        $encrypted_http_user = MainWP_Credential_Storage::encrypt_credential( $http_user, 'http_user' );
+        $encrypted_http_pass = MainWP_Credential_Storage::encrypt_credential( $http_pass, 'http_pass' );
+        if ( false === $encrypted_http_user || false === $encrypted_http_pass ) {
+            return false;
+        }
+
         if ( MainWP_Utility::ctype_digit( $userid ) ) {
             if ( '/' !== substr( $url, - 1 ) ) {
                 $url .= '/';
@@ -3167,20 +3179,20 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 'ssl_version'           => $sslVersion,
                 'uniqueId'              => $uniqueId,
                 'mainwpdir'             => 0,
-                'http_user'             => $http_user,
-                'http_pass'             => $http_pass,
+                'http_user'             => $encrypted_http_user,
+                'http_pass'             => $encrypted_http_pass,
                 'wpe'                   => $wpe,
                 'is_staging'            => $isStaging,
             );
 
             $syncValues = array(
-                'dtsSync'                 => 0,
-                'dtsSyncStart'            => 0,
-                'dtsAutomaticSync'        => 0,
-                'dtsAutomaticSyncStart'   => 0,
-                'totalsize'               => 0,
-                'extauth'                 => '',
-                'sync_errors'             => '',
+                'dtsSync'               => 0,
+                'dtsSyncStart'          => 0,
+                'dtsAutomaticSync'      => 0,
+                'dtsAutomaticSyncStart' => 0,
+                'totalsize'             => 0,
+                'extauth'               => '',
+                'sync_errors'           => '',
             );
             if ( $this->wpdb->insert( $this->table_name( 'wp' ), $values ) ) {
                 $websiteid = $this->wpdb->insert_id;
@@ -3261,6 +3273,25 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     public function update_website_values( $websiteid, $fields ) {
         if ( ! empty( $fields ) ) {
+            // MWP-1548: encrypt http_user / http_pass at rest if either
+            // is present in $fields. Generic-fields updaters (clone
+            // flow in extensions-handler, callers that pass arbitrary
+            // column subsets) must go through the same fail-closed
+            // contract as add_website / update_website.
+            if ( array_key_exists( 'http_user', $fields ) ) {
+                $encrypted = MainWP_Credential_Storage::encrypt_credential( $fields['http_user'], 'http_user' );
+                if ( false === $encrypted ) {
+                    return false;
+                }
+                $fields['http_user'] = $encrypted;
+            }
+            if ( array_key_exists( 'http_pass', $fields ) ) {
+                $encrypted = MainWP_Credential_Storage::encrypt_credential( $fields['http_pass'], 'http_pass' );
+                if ( false === $encrypted ) {
+                    return false;
+                }
+                $fields['http_pass'] = $encrypted;
+            }
             // Lock the data stream to prevent other processes from updating at the same time.
             $table_name = esc_sql( $this->table_name( 'wp' ) );
             $sql        = $this->wpdb->prepare(
@@ -3348,6 +3379,16 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         if ( MainWP_Utility::ctype_digit( $websiteid ) && MainWP_Utility::ctype_digit( $userid ) ) {
             $website = $this->get_website_by_id( $websiteid );
             if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+                // MWP-1548: encrypt http_user / http_pass at rest. Same
+                // fail-closed contract as add_website -- a non-empty
+                // value that fails to encrypt aborts the update so we
+                // never overwrite an existing encrypted row with
+                // plaintext when the encryption layer is unhealthy.
+                $encrypted_http_user = MainWP_Credential_Storage::encrypt_credential( $http_user, 'http_user' );
+                $encrypted_http_pass = MainWP_Credential_Storage::encrypt_credential( $http_pass, 'http_pass' );
+                if ( false === $encrypted_http_user || false === $encrypted_http_pass ) {
+                    return false;
+                }
                 // update admin.
                 $this->wpdb->update(
                     $this->table_name( 'wp' ),
@@ -3360,8 +3401,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                         'ssl_version'           => intval( $sslVersion ),
                         'wpe'                   => intval( $wpe ),
                         'uniqueId'              => $uniqueId,
-                        'http_user'             => $http_user,
-                        'http_pass'             => $http_pass,
+                        'http_user'             => $encrypted_http_user,
+                        'http_pass'             => $encrypted_http_pass,
                         'disable_health_check'  => $disableHealthChecking,
                         'health_threshold'      => $healthThreshold,
                         'primary_backup_method' => $backup_method,

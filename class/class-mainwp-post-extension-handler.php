@@ -225,7 +225,16 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
         $this->check_security( 'mainwp_extension_grabapikey' );
         $api_slug       = isset( $_POST['slug'] ) ? dirname( wp_unslash( $_POST['slug'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $master_api_key = isset( $_POST['master_api_key'] ) ? wp_unslash( $_POST['master_api_key'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        $result         = MainWP_Api_Manager::instance()->grab_license_key( $api_slug, $master_api_key );
+        // MWP-1547: the Extensions page renders the sentinel placeholder
+        // when a master key is already stored. The browser-side AJAX call
+        // reads #mainwp_com_api_key and submits whatever is there, so a
+        // remembered-license dashboard sends the sentinel here. Resolve to
+        // the stored decrypted master key server-side instead of forwarding
+        // the placeholder to mainwp.com.
+        if ( MainWP_Credential_Render::is_sentinel( $master_api_key ) ) {
+            $master_api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
+        }
+        $result = MainWP_Api_Manager::instance()->grab_license_key( $api_slug, $master_api_key );
         wp_send_json( $result );
     }
 

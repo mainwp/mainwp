@@ -697,7 +697,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         $active = MainWP_Extensions_Handler::is_extension_activated( $extension['slug'] );
-        if ( empty( $extension['api_key'] ) ) {
+        if ( empty( $extension['has_api_key'] ) ) {
             $active = false;
         }
 
@@ -920,7 +920,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $count_not_activated = 0;
         if ( $has_api_key && is_array( $extensions ) ) {
             foreach ( $extensions as $extension ) {
-                if ( isset( $extension['apiManager'] ) && $extension['apiManager'] && empty( $extension['api_key'] ) ) {
+                if ( isset( $extension['apiManager'] ) && $extension['apiManager'] && empty( $extension['has_api_key'] ) ) {
                     ++$count_not_activated;
                 }
             }

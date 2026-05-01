@@ -215,9 +215,24 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
         // key. Resolve the sentinel server-side using the slug so the
         // deactivation request gets the real key from the (now-encrypted)
         // per-slug option rather than forwarding the placeholder.
+        //
+        // CR follow-up: if the stored key cannot be recovered (option
+        // missing, decrypt failed, etc.), bail with an error rather
+        // than forwarding an empty key. license_key_deactivation()
+        // takes its local-clear fast path on empty $api_key and
+        // returns SUCCESS without ever calling the licensing API,
+        // which would silently leave the activation slot allocated
+        // upstream while telling the operator everything is fine.
         if ( MainWP_Credential_Render::is_sentinel( $api_key ) ) {
-            $info    = MainWP_Api_Manager::instance()->get_activation_info( $api_slug );
-            $api_key = is_array( $info ) && ! empty( $info['api_key'] ) && is_string( $info['api_key'] ) ? $info['api_key'] : '';
+            $info = MainWP_Api_Manager::instance()->get_activation_info( $api_slug );
+            if ( ! is_array( $info ) || empty( $info['api_key'] ) || ! is_string( $info['api_key'] ) ) {
+                wp_send_json(
+                    array(
+                        'error' => esc_html__( 'The stored license key could not be recovered. Please re-enter it before deactivating.', 'mainwp' ),
+                    )
+                );
+            }
+            $api_key = $info['api_key'];
         }
         $result = MainWP_Api_Manager::instance()->license_key_deactivation( $api_slug, $api_key );
         wp_send_json( $result );

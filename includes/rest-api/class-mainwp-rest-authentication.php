@@ -308,16 +308,17 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
     /**
      * Detect whether a stored consumer_secret value is still in legacy plaintext format.
      *
-     * Legacy v2 keys were stored as `cs_` + 40 hex chars (43 chars total). New keys
-     * created after MWP-1540 are hashed via wp_hash_password (typically `$P$...` or
-     * `$wp$...` formats). This helper distinguishes the two so the auth paths can
-     * verify each correctly without auto-rehashing existing keys.
+     * Legacy v2 keys were stored as `cs_` followed by hex digits (production uses
+     * 40 hex chars; some older fixtures use 32). New keys created after MWP-1540
+     * are hashed via wp_hash_password and always begin with `$` (`$P$`, `$wp$`,
+     * `$argon2id$`, etc.). The presence of the `cs_` + hex prefix is sufficient
+     * to distinguish a plaintext token from any password-hash output.
      *
      * @param string $value Stored consumer_secret value.
      * @return bool True when the value is legacy plaintext.
      */
     private function is_legacy_plaintext_secret( $value ) {
-        return is_string( $value ) && (bool) preg_match( '/^cs_[a-f0-9]{40}$/', $value );
+        return is_string( $value ) && (bool) preg_match( '/^cs_[a-f0-9]+$/', $value );
     }
 
     /**

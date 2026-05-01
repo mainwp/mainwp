@@ -151,7 +151,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
      * Method invalidate_warm_cache()
      */
     public function invalidate_warm_cache() {
-        MainWP_Cache_Warm_Helper::invalidate_manage_pages( array( 'Extensions' )  );
+        MainWP_Cache_Warm_Helper::invalidate_manage_pages( array( 'Extensions' ) );
     }
 
     /**
@@ -261,6 +261,23 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
         }
 
         $api_key = isset( $_POST['api_key'] ) ? trim( wp_unslash( $_POST['api_key'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+        // MWP-1547: the Extensions page now renders the sentinel placeholder
+        // ('••••••••') in the license-key input when a value is already
+        // stored. A submission that returns the sentinel unchanged means
+        // "leave the existing key alone" -- short-circuit before contacting
+        // mainwp.com for verification (the sentinel is not a real key, so
+        // the verify call would otherwise produce a misleading error).
+        if ( MainWP_Credential_Render::is_sentinel( $api_key ) ) {
+            die(
+                wp_json_encode(
+                    array(
+                        'saved'  => 1,
+                        'result' => 'SUCCESS',
+                    )
+                )
+            );
+        }
 
         if ( '' === $api_key && false !== $api_key ) {
             MainWP_Keys_Manager::instance()->update_key_value( 'mainwp_extensions_master_api_key', false );

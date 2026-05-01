@@ -170,13 +170,20 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $prepared = $this->filter_response_data_by_allowed_fields( $prepared, $context, $addition_fields );
         }
 
-        // MWP-1541 defense-in-depth: the schema filter alone is bypassable via
-        // `_fields` (handled by the short-circuit above) AND via `?context=edit`
-        // because check_permissions() does not gate context=edit to actual
-        // edit-permission keys. Strip credentials here so neither bypass can
-        // recover them on read. Writes still accept these fields via the
-        // request body — only the read response is affected.
-        return $this->strip_never_in_response_fields( $prepared );
+        // MWP-1541 defense-in-depth for the view-context leak. The schema
+        // narrows http_pass / http_user / uniqueId to edit-only, but
+        // _fields short-circuits the schema filter above, so a request like
+        // `?_fields=http_pass` would otherwise carry the value through.
+        // Strip in view context only; edit-context callers (per the
+        // documented schema contract) continue to receive the fields.
+        // The residual concern that check_permissions() does not gate
+        // context=edit to actual edit-permission keys is a separate issue
+        // tracked outside this ticket.
+        if ( 'edit' !== $context ) {
+            $prepared = $this->strip_never_in_response_fields( $prepared );
+        }
+
+        return $prepared;
     }
 
     /**

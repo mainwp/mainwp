@@ -4,7 +4,7 @@
  *
  * Two layers exercised here:
  *
- *  - The static helper Mainwp_Rest_Api_V1::strip_sensitive_site_fields()
+ *  - The static helper MainWP\Dashboard\Rest_Api_V1::strip_sensitive_site_fields()
  *    that v1 callbacks now call before returning site data; covers single
  *    object, array, list, and edge cases.
  *
@@ -23,6 +23,9 @@ namespace MainWP\Dashboard\Tests;
 
 /**
  * Class Test_REST_Credential_Strip
+ *
+ * @group abilities
+ * @group security
  */
 class Test_REST_Credential_Strip extends \WP_UnitTestCase {
 
@@ -165,6 +168,36 @@ class Test_REST_Credential_Strip extends \WP_UnitTestCase {
 		$fields = $this->get_v2_sites_schema_subset();
 		$this->assertNotNull( $fields['uniqueId'] );
 		$this->assertSame( array( 'edit' ), $fields['uniqueId']['context'] );
+	}
+
+	/**
+	 * Locks the schema contract that the simple_view response paths depend on.
+	 *
+	 * The site-response sites in MainWP_Rest_Sites_Controller that call
+	 * filter_response_data_by_allowed_fields($website, 'simple_view') directly
+	 * (e.g. at :1085, :1159, :1215, :1295 and ~13 others) do not have the
+	 * unconditional strip backstop that prepare_site_item_for_response_context()
+	 * provides. They rely entirely on http_pass / http_user / uniqueId being
+	 * 'edit'-context only. If a future maintainer adds 'view' or 'simple_view'
+	 * to one of those schema entries, those endpoints leak credentials with
+	 * no runtime defense. This test catches the drift before merge.
+	 *
+	 * If you intentionally widen one of these contexts, audit every site-response
+	 * site in MainWP_Rest_Sites_Controller for credential leak risk first, then
+	 * either extend the unconditional strip to the simple_view paths or update
+	 * this assertion with a short note explaining the new contract.
+	 */
+	public function test_v2_schema_credential_fields_locked_to_edit_context_only(): void {
+		$fields = $this->get_v2_sites_schema_subset();
+		foreach ( array( 'http_pass', 'http_user', 'uniqueId' ) as $field ) {
+			$this->assertNotNull( $fields[ $field ], "{$field} must still be declared in the schema" );
+			$this->assertSame(
+				array( 'edit' ),
+				$fields[ $field ]['context'],
+				"{$field} schema context drift would un-protect simple_view endpoints. " .
+				'See test docblock for the audit checklist before changing this.'
+			);
+		}
 	}
 
 	/**

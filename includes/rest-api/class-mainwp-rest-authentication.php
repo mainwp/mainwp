@@ -314,6 +314,11 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
      * `$argon2id$`, etc.). The presence of the `cs_` + hex prefix is sufficient
      * to distinguish a plaintext token from any password-hash output.
      *
+     * @todo MWP-1540 sunset (~v6.3): once the migration has shipped for a couple
+     *       of minor versions and release notes have given customers time to
+     *       rotate their keys, this helper and the legacy branch inside
+     *       verify_consumer_secret() can both be removed.
+     *
      * @param string $value Stored consumer_secret value.
      * @return bool True when the value is legacy plaintext.
      */
@@ -725,6 +730,10 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         // therefore cannot be used with this auth method. Direct the caller to
         // Basic Auth over HTTPS or to reissue (and use the new key only via
         // Basic Auth).
+        //
+        // TODO MWP-1540 sunset (~v6.3): drop this branch. By the sunset target
+        // any plaintext keys still in the wild will already be failing through
+        // Basic Auth as well, so reissue is the only path forward anyway.
         if ( ! $this->is_legacy_plaintext_secret( $user->consumer_secret ) ) {
             return new WP_Error( 'mainwp_rest_authentication_oauth1_unsupported', __( 'OAuth 1.0a is not supported for this API key. Use Basic Auth over HTTPS or reissue the key.', 'mainwp' ), array( 'status' => 401 ) );
         }
@@ -880,11 +889,23 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         // on every install we have visibility into. It is preserved to avoid
         // silently weakening hypothetical pre-existing rows where someone
         // wired key_type=1 by hand or via removed migration code. The compare
-        // is timing-safe (was a vanilla !== before MWP-1540).
+        // is timing-safe (was a vanilla !== before MWP-1540) and we leave the
+        // submitted value unsanitized so that a passphrase containing
+        // whitespace or HTML-like content still matches a legitimately
+        // stored value.
+        //
+        // TODO MWP-1544 sunset (~v6.3): remove this entire block. Nothing in
+        // the dashboard creates key_type=1 rows anymore, and the column
+        // itself can be dropped at the same time.
         if ( 1 === (int) $user->key_type ) {
-            // phpcs:disable WordPress.Security.NonceVerification
-            $pass = ! empty( $_REQUEST['key_pass'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['key_pass'] ) ) : '';
-            // phpcs:enable WordPress.Security.NonceVerification
+            // The submitted value is only fed into hash_equals against the
+            // stored passphrase; it is never echoed, stored, or used in a
+            // query, so sanitization is intentionally skipped to preserve
+            // an exact match against legacy plaintext values that may
+            // contain whitespace or HTML-like characters.
+            // phpcs:disable WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            $pass = ! empty( $_REQUEST['key_pass'] ) ? wp_unslash( $_REQUEST['key_pass'] ) : '';
+            // phpcs:enable WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $expected = isset( $user->key_pass ) ? (string) $user->key_pass : '';
             if ( '' === $expected || ! hash_equals( $expected, $pass ) ) {
                 $this->set_error( new \WP_Error( 'mainwp_rest_authentication_invalid_key_pass', __( 'The REST API passphrase is invalid.', 'mainwp' ), array( 'status' => 401 ) ) );

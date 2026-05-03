@@ -3894,7 +3894,13 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
 
     /**
-     * Return the user data for the given consumer_key.
+     * Insert a new REST API key row and return the credential payload.
+     *
+     * Returns an array with key_id, user_id, plaintext consumer_key,
+     * plaintext consumer_secret, and key_permissions on success. Returns
+     * false when the wpdb->insert() call fails (no current user, missing
+     * table, schema mismatch, etc.). Callers must check the return type
+     * before treating it as an array.
      *
      * @param string $consumer_key Consumer key.
      * @param string $consumer_secret Secret key.
@@ -3903,7 +3909,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @param int    $enabled 1 or 0.
      * @param array  $others others.
      *
-     * @return array
+     * @return array|false Credential payload on success, false on failure.
      */
     public function insert_rest_api_key( $consumer_key, $consumer_secret, $scope, $description, $enabled, $others = array() ) {
         global $current_user;

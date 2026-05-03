@@ -443,6 +443,8 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
 
         static::render_wp_mail_warning();
 
+        static::render_consumer_secret_migration_failed_notice();
+
         static::render_secure_priv_key_connection();
 
         static::render_notice_php_version8();
@@ -596,6 +598,31 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             </div>
             <?php
         }
+    }
+
+    /**
+     * Renders a notice when the consumer_secret schema migration did not complete.
+     *
+     * The migration in MainWP_Install::update_optimize_indexes_55() widens
+     * wp_mainwp_api_keys.consumer_secret to varchar(255) so that hashed
+     * secrets fit. If the ALTER TABLE silently fails on the host, modern
+     * bcrypt hashes get truncated and authentication breaks for any newly
+     * created API key. The flag option is set when the post-migration
+     * SHOW COLUMNS check finds the column still narrower than expected.
+     */
+    public static function render_consumer_secret_migration_failed_notice() {
+        $failed_at = get_option( 'mainwp_notice_consumer_secret_migration_failed' );
+        if ( empty( $failed_at ) ) {
+            return;
+        }
+        ?>
+        <div class="ui red message">
+            <div class="header"><?php esc_html_e( 'REST API keys table upgrade did not complete', 'mainwp' ); ?></div>
+            <div>
+                <?php esc_html_e( 'A database upgrade for the REST API keys table did not complete on this site. New API keys created on this version may not authenticate correctly until the upgrade runs successfully. Existing API keys are unaffected. Please contact MainWP support so we can help diagnose the underlying database error.', 'mainwp' ); ?>
+            </div>
+        </div>
+        <?php
     }
 
     /**

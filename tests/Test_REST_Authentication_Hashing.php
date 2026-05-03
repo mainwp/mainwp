@@ -144,6 +144,35 @@ class Test_REST_Authentication_Hashing extends \WP_UnitTestCase {
 	}
 
 	// ---------------------------------------------------------------------
+	// check_oauth_signature() OAuth 1.0a rejection for hashed keys
+	// ---------------------------------------------------------------------
+
+	/**
+	 * A user row whose consumer_secret is hashed at rest must not be allowed to
+	 * authenticate via OAuth 1.0a, since HMAC verification needs the plaintext
+	 * secret on the server side. The auth code returns a specific error code so
+	 * callers can distinguish this case from a generic signature failure.
+	 */
+	public function test_oauth_signature_rejects_hashed_secret(): void {
+		$hashed_user = (object) array(
+			'consumer_secret' => wp_hash_password( 'cs_' . str_repeat( 'a', 40 ) ),
+		);
+		$params      = array(
+			'oauth_signature_method' => 'HMAC-SHA256',
+			'oauth_signature'        => 'placeholder',
+		);
+		$_SERVER['REQUEST_METHOD'] = 'GET';
+		$_SERVER['REQUEST_URI']    = '/wp-json/mainwp/v2/sites';
+
+		$result = $this->invoke_auth_method( 'check_oauth_signature', array( $hashed_user, $params ) );
+
+		$this->assertInstanceOf( \WP_Error::class, $result );
+		$this->assertSame( 'mainwp_rest_authentication_oauth1_unsupported', $result->get_error_code() );
+
+		unset( $_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI'] );
+	}
+
+	// ---------------------------------------------------------------------
 	// insert_rest_api_key writes hashed values
 	// ---------------------------------------------------------------------
 

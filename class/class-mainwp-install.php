@@ -604,6 +604,20 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 $this->wpdb->query( "ALTER TABLE {$api_keys_table} DROP INDEX consumer_secret" ); // phpcs:ignore -- table name is internal.
             }
             $this->wpdb->query( "ALTER TABLE {$api_keys_table} MODIFY COLUMN consumer_secret varchar(255) NOT NULL" ); // phpcs:ignore -- table name is internal.
+
+            // Confirm the MODIFY actually took effect before we trust this migration.
+            // WP 6.5+ produces bcrypt hashes around 60 characters, so a silent failure
+            // would leave the column at char(43) and truncate every freshly hashed
+            // secret on insert, quietly breaking auth on any newly created key. On a
+            // width mismatch we set a flag option that the dashboard surfaces as an
+            // admin notice; mainwp_notice_wp_mail_failed in class-mainwp-system.php
+            // uses the same shape.
+            $col_def = $this->wpdb->get_row( "SHOW COLUMNS FROM {$api_keys_table} LIKE 'consumer_secret'" ); // phpcs:ignore -- table name is internal.
+            if ( empty( $col_def ) || false === stripos( (string) $col_def->Type, 'varchar(255)' ) ) {
+                update_option( 'mainwp_notice_consumer_secret_migration_failed', current_time( 'mysql' ) );
+            } else {
+                delete_option( 'mainwp_notice_consumer_secret_migration_failed' );
+            }
         }
     }
 

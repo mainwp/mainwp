@@ -173,7 +173,14 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             return $info; // Legacy plaintext string, no envelope to reverse.
         }
         if ( empty( $info['api_key']['encrypted_val'] ) ) {
-            return $info; // Array but not in the encrypted-envelope shape.
+            // Malformed envelope (array but missing encrypted_val). Drop the
+            // unreadable value rather than returning the raw array; callers
+            // (api-handler.php readers, the hooks filter) do not is_string-
+            // guard the result and would forward the array to the licensing
+            // API as http_build_query garbage. Mirrors the decrypt-failure
+            // branch below.
+            $info['api_key'] = '';
+            return $info;
         }
         $decrypted = apply_filters( 'mainwp_decrypt_key_value', false, $info['api_key'], '' );
         if ( is_string( $decrypted ) && '' !== $decrypted ) {
@@ -365,7 +372,16 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 $return['error'] = $error;
             }
 
-            $this->set_activation_info( $api_slug, $options );
+            // MWP-1546 follow-up: surface the fail-closed write so the user is not
+            // told the activation succeeded when only the upstream half landed.
+            // The license slot was already consumed at mainwp.com; without the
+            // local persist the dashboard will offer to re-activate and burn a
+            // second slot. The encrypt filter only fails on broken installs
+            // (missing keyfile, un-writable uploads/mainwp/pk/), but when it
+            // does the operator needs to know.
+            if ( false === $this->set_activation_info( $api_slug, $options ) ) {
+                $return['error'] = esc_html__( 'License activated upstream but local state could not be saved. Check uploads/mainwp/pk/ permissions and try the activation again.', 'mainwp' );
+            }
 
             return $return;
         } else {
@@ -444,7 +460,12 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 $options['activated_key'] = 'Deactivated';
             }
 
-            $this->set_activation_info( $api_slug, $options );
+            // MWP-1546 follow-up: surface the fail-closed write. The slot was
+            // already released at mainwp.com; without the local persist the
+            // dashboard would still display the extension as Activated.
+            if ( false === $this->set_activation_info( $api_slug, $options ) ) {
+                $return['error'] = esc_html__( 'License deactivated upstream but local state could not be cleared. Check uploads/mainwp/pk/ permissions.', 'mainwp' );
+            }
 
             return $return;
         }
@@ -590,7 +611,13 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     $return['error'] = $error;
                 }
 
-                $this->set_activation_info( $api_slug, $options );
+                // MWP-1546 follow-up: surface the fail-closed write. The grab
+                // call may have produced a fresh license key upstream; if the
+                // local persist fails the dashboard would lose track of it
+                // entirely.
+                if ( false === $this->set_activation_info( $api_slug, $options ) ) {
+                    $return['error'] = esc_html__( 'License retrieved upstream but local state could not be saved. Check uploads/mainwp/pk/ permissions and try again.', 'mainwp' );
+                }
 
                 return $return;
             } else {

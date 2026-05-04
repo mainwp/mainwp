@@ -150,7 +150,7 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 = 6.0.12 - TBD =
 
-* Security: Per-extension license keys are now encrypted at rest. The `api_key` field inside each `<slug>_APIManAdder` option is wrapped in MainWP's standard `{encrypted_val, file_key}` envelope on save and decrypted on read; legacy plaintext rows continue to work via a backwards-compatible passthrough until the option is next written. The aggregated `mainwp_extensions` option no longer caches license keys (replaced with a `has_api_key` boolean), so the per-extension hidden input on the Extensions card renders the `••••••••` sentinel placeholder instead of the plaintext key. The deactivation flow resolves the sentinel server-side using the slug. See MWP-1546.
+* Security: Per-extension license keys are now encrypted at rest. The `api_key` field inside each `<slug>_APIManAdder` option is wrapped in MainWP's standard `{encrypted_val, file_key}` envelope on save and decrypted on read; legacy plaintext rows continue to work via a backwards-compatible passthrough until the option is next written. The aggregated `mainwp_extensions` option no longer caches license keys (replaced with a `has_api_key` boolean), so the per-extension hidden input on the Extensions card renders the `••••••••` sentinel placeholder instead of the plaintext key. The deactivation flow resolves the sentinel server-side using the slug. Extensions that read `<slug>_APIManAdder` via `get_option()` directly should switch to the documented `mainwp_extension_get_activation_info` filter, which transparently decrypts the license key. See MWP-1546.
 
 = 6.0.11 - 4-28-2026 =
 

@@ -231,8 +231,24 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
                         'error' => esc_html__( 'The stored license key could not be recovered. Please re-enter it before deactivating.', 'mainwp' ),
                     )
                 );
+                return;
             }
             $api_key = $info['api_key'];
+        }
+        // MWP-1546 follow-up: reject empty / non-string submissions outside
+        // the sentinel path. Without this guard a direct API hit with an
+        // empty api_key would fall through to license_key_deactivation, which
+        // takes its local-clear fast path and returns SUCCESS without ever
+        // contacting the licensing API -- silently leaving the activation
+        // slot allocated upstream. Same failure mode the sentinel-recovery
+        // branch above closes; close it here too.
+        if ( ! is_string( $api_key ) || '' === $api_key ) {
+            wp_send_json(
+                array(
+                    'error' => esc_html__( 'A license key is required to deactivate.', 'mainwp' ),
+                )
+            );
+            return;
         }
         $result = MainWP_Api_Manager::instance()->license_key_deactivation( $api_slug, $api_key );
         wp_send_json( $result );

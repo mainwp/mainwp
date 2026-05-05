@@ -148,7 +148,7 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
-= 6.0.12 - 4-28-2026 =
+= 6.0.12 - 5-5-2026 =
 
 * Fixed: Improved site management stability with enhanced handling of site data to prevent errors in edge cases.
 * Fixed: An issue with logging auto-updates in the Network Activity logs.

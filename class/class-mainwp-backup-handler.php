@@ -344,7 +344,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
             $dir = MainWP_System_Utility::get_mainwp_specific_dir( $website->id );
 
-            $wp_filesystem->mkdir( $dir, 0777 );
+            $wp_filesystem->mkdir( $dir, 0750 ); // MWP-1558: tightened from 0777; per-site backup dumps.
 
             if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
                 $wp_filesystem->touch( $dir . 'index.php' );
@@ -557,7 +557,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         global $wp_filesystem;
 
         $dir = dirname( $pFile ) . '/';
-        $wp_filesystem->mkdir( $dir, 0777 );
+        $wp_filesystem->mkdir( $dir, 0750 ); // MWP-1558: tightened from 0777; backup download destination.
         if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
             $wp_filesystem->touch( $dir . 'index.php' );
         }

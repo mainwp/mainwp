@@ -139,6 +139,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $includer->includes();
 
         MainWP_Keys_Manager::auto_load_files();
+        MainWP_Keys_Manager::register_migration_hooks();
 
         $this->load_all_options();
 

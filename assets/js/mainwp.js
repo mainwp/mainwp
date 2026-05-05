@@ -949,12 +949,15 @@ mainwpVars.currentWebsite = 0;
 mainwpVars.bulkTaskRunning = false;
 mainwpVars.currentThreads = 0;
 mainwpVars.maxThreads = mainwpParams['maximumSyncRequests'] == undefined ? 8 : mainwpParams['maximumSyncRequests'];
+mainwpVars.maxUpdateThreads = mainwpParams['maximumInstallUpdateRequests'] == undefined ? 3 : mainwpParams['maximumInstallUpdateRequests'];
+
 let globalSync = true;
 
 globalThis.dashboard_update = function (websiteIds, isGlobalSync, pAction) {
     mainwpVars.websitesToUpdate = websiteIds;
     mainwpVars.currentWebsite = 0;
     mainwpVars.websitesDone = 0;
+    mainwpVars.successCount = 0;
     mainwpVars.websitesTotal = mainwpVars.websitesLeft = mainwpVars.websitesToUpdate.length;
     globalSync = isGlobalSync;
 
@@ -967,7 +970,122 @@ globalThis.dashboard_update = function (websiteIds, isGlobalSync, pAction) {
     }
 };
 
-globalThis.dashboard_update_site_status = function (siteId, newStatus, isSuccess) {
+(function () {
+    // Create global namespace
+    const sync = globalThis.dashboardSync = globalThis.dashboardSync || {
+        container: null,
+        statusMap: new Map(),
+        rowMap: new Map(),
+
+        data: new Map(),
+        queue: [],
+
+        scheduled: false,
+        initialized: false,
+
+        BATCH_SIZE: 50
+    };
+
+    // -----------------------------
+    // INIT CACHE
+    // -----------------------------
+    function init() {
+        if (sync.initialized) return;
+
+        sync.container = document.getElementById('sync-sites-status');
+        if (!sync.container) return;
+
+        const nodes = sync.container.querySelectorAll('.sync-site-status');
+
+        for (const el of nodes) {
+            const siteId = el.getAttribute('siteid');
+            sync.statusMap.set(siteId, el);
+            sync.rowMap.set(siteId, el.closest('.item'));
+        }
+
+        sync.initialized = true;
+    }
+
+    // Ensure DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    // -----------------------------
+    // PUBLIC API
+    // -----------------------------
+    globalThis.dashboard_update_site_status = function (siteId, newStatus, isSuccess) {
+        if (!sync.initialized) return;
+
+        sync.data.set(siteId, {
+            status: newStatus,
+            success: isSuccess
+        });
+
+        sync.queue.push(siteId);
+
+        // ✅ increment success count ONCE
+        if (isSuccess) {
+            mainwpVars.successCount = (mainwpVars.successCount || 0) + 1;
+        }
+
+        if (!sync.scheduled) {
+            sync.scheduled = true;
+            requestAnimationFrame(processQueue);
+        }
+    };
+
+    globalThis.dashboard_update_site_hide = function (siteId) {
+        const sync = globalThis.dashboardSync;
+        if (!sync?.initialized) return;
+
+        const rowEl = sync.rowMap.get(siteId);
+        if (!rowEl) return;
+
+        rowEl.style.display = 'none';
+    };
+
+    // -----------------------------
+    // PROCESS QUEUE (BATCHED)
+    // -----------------------------
+    function processQueue() {
+        sync.scheduled = false;
+
+        let count = 0;
+
+        while (sync.queue.length && count < sync.BATCH_SIZE) {
+            const siteId = sync.queue.shift();
+            const data = sync.data.get(siteId);
+
+            const statusEl = sync.statusMap.get(siteId);
+            const rowEl = sync.rowMap.get(siteId);
+
+            if (!statusEl || !rowEl) continue;
+
+            // Avoid DOM read → use dataset cache
+            if (statusEl.dataset.last !== data.status) {
+                statusEl.innerHTML = data.status;
+                statusEl.dataset.last = data.status;
+            }
+
+            // No DOM move → just class toggle
+            if (data.success) {
+                rowEl.classList.add('is-success');
+            }
+
+            count++;
+        }
+
+        // Continue next frame if still pending
+        if (sync.queue.length) {
+            requestAnimationFrame(processQueue);
+        }
+    }
+})();
+
+globalThis.dashboard_update_site_status_legacy = function (siteId, newStatus, isSuccess) {
     jQuery('.sync-site-status[siteid="' + siteId + '"]').html(newStatus);
     // Move successfully synced site to the bottom of the sync list
     if ( isSuccess !== undefined && isSuccess) {
@@ -976,7 +1094,7 @@ globalThis.dashboard_update_site_status = function (siteId, newStatus, isSuccess
     }
 };
 
-globalThis.dashboard_update_site_hide = function (siteId) {
+globalThis.dashboard_update_site_hide_legacy = function (siteId) {
     jQuery('.sync-site-status[siteid="' + siteId + '"]').closest('.item').hide();
 };
 
@@ -987,6 +1105,40 @@ let dashboard_loop_next = function (pAction) {
 };
 
 let dashboard_update_done = function (pAction) {
+    mainwpVars.currentThreads--;
+
+    if (!mainwpVars.bulkTaskRunning) return;
+
+    mainwpVars.websitesDone++;
+    if (mainwpVars.websitesDone > mainwpVars.websitesTotal) {
+        mainwpVars.websitesDone = mainwpVars.websitesTotal;
+    }
+
+    // ✅ Cache popup instance (avoid re-query)
+    const popup = mainwpVars._popup || (
+        mainwpVars._popup = mainwpPopup('#mainwp-sync-sites-modal')
+    );
+
+    popup.setProgressSite(mainwpVars.websitesDone);
+
+    // ✅ Avoid DOM query for success count → track in JS
+    if (mainwpVars.websitesDone === mainwpVars.websitesTotal) {
+
+        const successSites = mainwpVars.successCount || 0;
+
+        mainwpVars.bulkTaskRunning = false;
+
+        if (mainwpVars.websitesDone === successSites) {
+            setTimeout(() => popup.close(true), 3000);
+        }
+
+        return;
+    }
+
+    dashboard_loop_next(pAction);
+};
+
+let dashboard_update_done_legacy = function (pAction) {
     mainwpVars.currentThreads--;
     if (!mainwpVars.bulkTaskRunning)
         return;

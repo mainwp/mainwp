@@ -678,6 +678,11 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                             )
                         );
 
+                        if ( is_array( $information ) && isset( $information['other_data'] ) ) { // ok.
+                            $output_array = $information['other_data']; // updated_data: plugins,themes,trans.
+                            mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $website, 'updated', $output_array, 'plugin' );
+                        }
+
                         $upgrades = '';
                         if ( is_array( $information ) && isset( $information['upgrades'] ) && is_array( $information['upgrades'] ) ) {
                             $upgrades = wp_json_encode( $information['upgrades'] ); // phpcs:ignore -- logging.
@@ -761,6 +766,11 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                                 'list' => urldecode( implode( ',', $slugs ) ),
                             )
                         );
+
+                        if ( is_array( $information ) && isset( $information['other_data'] ) ) { // ok.
+                            $output_array = $information['other_data']; // updated_data: plugins,themes,trans.
+                            mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $website, 'updated', $output_array, 'theme' );
+                        }
                     } catch ( \Exception $e ) {
                         // ok.
                     }
@@ -839,6 +849,11 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                                 'list' => urldecode( implode( ',', $slugs ) ),
                             )
                         );
+
+                        if ( is_array( $information ) && isset( $information['other_data'] ) ) { // ok.
+                            $output_array = $information['other_data']; // updated_data: plugins,themes,trans.
+                            mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $website, 'updated', $output_array, 'trans' );
+                        }
                     } catch ( \Exception $e ) {
                         // ok.
                     }
@@ -888,7 +903,9 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                 $website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 
                 try {
-                    MainWP_Connect::fetch_url_authed( $website, 'upgrade' );
+                    $upgrade_information = MainWP_Connect::fetch_url_authed( $website, 'upgrade' );
+                    MainWP_Updates_Handler::activity_log_upgrade( $website, $upgrade_information );
+
                 } catch ( \Exception $e ) {
                     $updated_status['wp']['error'] = $e->getMessage();
                     MainWP_DB::instance()->update_website_option( $website, 'bulk_updates_info', wp_json_encode( $updated_status ) );

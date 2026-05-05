@@ -367,7 +367,10 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
 
             if ( ! $wp_filesystem->is_dir( $keysDir ) ) {
-                $wp_filesystem->mkdir( $keysDir, 0750 ); // MWP-1557: tightened from 0777; pk/ holds AES keys, owner+group only.
+                // MWP-1557: 0700 preferred (owner only), 0750 fallback for shared-hosting umask edge cases. Mirrors migrate_private_filenames().
+                if ( ! $wp_filesystem->mkdir( $keysDir, 0700 ) ) {
+                    $wp_filesystem->mkdir( $keysDir, 0750 );
+                }
             }
 
             if ( ! file_exists( $keysDir . '.htaccess' ) ) {
@@ -383,7 +386,10 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
             //phpcs:disable
             if ( ! file_exists( $keysDir ) ) {
-                mkdir( $keysDir, 0750, true ); // MWP-1557: tightened from 0777; pk/ holds AES keys, owner+group only.
+                // MWP-1557: 0700 preferred (owner only), 0750 fallback for shared-hosting umask edge cases. Mirrors migrate_private_filenames().
+                if ( ! mkdir( $keysDir, 0700, true ) ) {
+                    mkdir( $keysDir, 0750, true );
+                }
             }
 
             if ( ! file_exists( $keysDir . '.htaccess' ) ) {

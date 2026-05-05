@@ -526,9 +526,17 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         // Use site-option storage so the secret is network-wide on multisite (consistent across blogs)
         // and falls through to get_option() on single-site. Matches MainWP_Install's pattern for network state.
         $secret = get_site_option( 'mainwp_private_filename_secret' );
-        if ( empty( $secret ) || ! is_string( $secret ) ) {
-            $secret = bin2hex( random_bytes( 32 ) );
-            update_site_option( 'mainwp_private_filename_secret', $secret );
+        if ( ! is_string( $secret ) || ! preg_match( '/^[a-f0-9]{64}$/', $secret ) ) {
+            $candidate = bin2hex( random_bytes( 32 ) );
+            // add_site_option is atomic at the DB layer: only one concurrent writer wins.
+            // Losing requests re-read so all callers see the same secret. Prevents a race where
+            // two concurrent first-upgrade requests would both generate (and write) different
+            // secrets, breaking subsequent filename derivations done by the losing request.
+            if ( add_site_option( 'mainwp_private_filename_secret', $candidate ) ) {
+                $secret = $candidate;
+            } else {
+                $secret = get_site_option( 'mainwp_private_filename_secret' );
+            }
         }
         return $secret;
     }

@@ -148,6 +148,13 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
+= 6.0.13 - TBD =
+
+* Security: Hardened storage of v2 REST API consumer secrets. New keys are stored hashed at rest using `wp_hash_password`; existing keys continue to authenticate via a backwards-compatible verification path until they are rotated. A DB-read primitive can no longer recover a v2 secret created on or after this release. See MWP-1540.
+* Security: The `consumer_secret` column on `wp_mainwp_api_keys` was widened from `char(43)` to `varchar(255)` to fit hashed values; the unused `KEY consumer_secret` index was dropped (lookups are by HMAC'd `consumer_key`). The migration runs automatically on upgrade.
+* Security: Removed the unreachable Dashboard Connect handler and the unreachable `key_type=1` write path from `insert_rest_api_key`. Pre-existing rows with `key_type=1` (none observed in any current install but possible from custom code) retain their passphrase enforcement, and the comparison is now timing-safe. See MWP-1544.
+* Potentially breaking: API keys created on or after this release do not support OAuth 1.0a one-legged signature authentication. OAuth 1.0a HMAC signing requires the plaintext secret on the server side, which is incompatible with at-rest hashing. Customers using OAuth 1.0a should keep their existing keys (which remain plaintext) or migrate to Basic Auth over HTTPS. The error code returned to OAuth 1.0a callers using a hashed key is `mainwp_rest_authentication_oauth1_unsupported`.
+
 = 6.0.12 - 5-5-2026 =
 
 * Fixed: Improved site management stability with enhanced handling of site data to prevent errors in edge cases.

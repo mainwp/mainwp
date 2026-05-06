@@ -1489,6 +1489,15 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         /**
          * Enables data to be returned prior to connecting to the site.
          *
+         * Dev/test override only. Gated behind the MAINWP_DEV_FILTERS_ENABLED
+         * constant so the filter does not dispatch in production. The filter
+         * receives plaintext HTTP Basic Auth credentials and the full $website
+         * DB row (including privkey); enabling it in production would expose
+         * those values to any 3rd-party plugin hooking the filter.
+         *
+         * To enable in a dev/test environment, add to wp-config.php:
+         *     define( 'MAINWP_DEV_FILTERS_ENABLED', true );
+         *
          * @since 5.5
          *
          * @param  mixed false
@@ -1503,9 +1512,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          * @param  mixed $others
          * @param  mixed $output
          */
-        $dev_data = apply_filters( 'mainwp_dev_return_data_before_connect_site', false, $website, $url, $postdata, $checkConstraints, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others, $output );
-        if ( false !== $dev_data ) {
-            return $dev_data;
+        if ( defined( 'MAINWP_DEV_FILTERS_ENABLED' ) && MAINWP_DEV_FILTERS_ENABLED ) {
+            $dev_data = apply_filters( 'mainwp_dev_return_data_before_connect_site', false, $website, $url, $postdata, $checkConstraints, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others, $output );
+            if ( false !== $dev_data ) {
+                return $dev_data;
+            }
         }
 
         $agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
@@ -2105,7 +2116,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Method is_valid_curl_handle
      *
-     * @param  mixed $ch
+     * @param  mixed $ch cURL handle to validate.
      * @return bool Valid curl handle.
      */
     public static function is_valid_curl_handle( $ch ) {

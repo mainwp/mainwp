@@ -884,7 +884,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 if ( defined( 'LOGGED_IN_SALT' ) && defined( 'NONCE_SALT' ) ) {
                     $cookie_salt = sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' ); // NOSONAR - safe for salt file name.
                 } else {
-                    $cookie_salt = sha1( sha1( 'mainwp' . $website->id ) . 'WP_Cookie' ); // NOSONAR - safe for salt file name.
+                    // MWP-1558: misconfigured WP installs (no salts) previously used unsalted SHA1, which is enumerable. Fall back to the per-install MainWP filename secret instead.
+                    $cookie_salt = MainWP_System_Utility::get_private_filename( 'cookies', $website->id, 'WP_Cookie' );
                 }
                 $cookieFile = $cookieDir . '/' . $cookie_salt;
                 if ( ! file_exists( $cookieFile ) ) {
@@ -1552,7 +1553,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( defined( 'LOGGED_IN_SALT' ) && defined( 'NONCE_SALT' ) ) {
                 $cookie_salt = sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' ); // NOSONAR - safe for salt file name.
             } else {
-                $cookie_salt = sha1( sha1( 'mainwp' . $website->id ) . 'WP_Cookie' ); // NOSONAR - safe for salt file name.
+                // MWP-1558: misconfigured WP installs (no salts) previously used unsalted SHA1, which is enumerable. Fall back to the per-install MainWP filename secret instead.
+                $cookie_salt = MainWP_System_Utility::get_private_filename( 'cookies', $website->id, 'WP_Cookie' );
             }
             $cookieFile = $cookieDir . '/' . $cookie_salt;
             if ( ! file_exists( $cookieFile ) ) {
@@ -1945,7 +1947,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         if ( ! $wp_filesystem->exists( dirname( $file ) ) ) {
-            $wp_filesystem->mkdir( dirname( $file ), 0777 );
+            $wp_filesystem->mkdir( dirname( $file ), 0750 ); // MWP-1558: tightened from 0777; downloaded files may contain backup data.
         }
 
         if ( ! $wp_filesystem->exists( dirname( $file ) ) ) {
@@ -2024,7 +2026,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
 
             if ( ! $wp_filesystem->is_dir( $cookieDir ) ) {
-                $wp_filesystem->mkdir( $cookieDir, 0777 );
+                $wp_filesystem->mkdir( $cookieDir, 0750 ); // MWP-1558: tightened from 0777; cookies/ holds child wp-admin session cookies.
             }
 
             if ( ! file_exists( $cookieDir . '/.htaccess' ) ) {
@@ -2039,7 +2041,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         } else {
 
             if ( ! file_exists( $cookieDir ) ) {
-                @mkdir( $cookieDir, 0777, true );
+                @mkdir( $cookieDir, 0750, true ); // MWP-1558: tightened from 0777; cookies/ holds child wp-admin session cookies.
             }
 
             if ( ! file_exists( $cookieDir . '/.htaccess' ) ) {

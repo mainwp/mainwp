@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.1.5'; // NOSONAR - no IP.
+    protected $mainwp_db_version = '9.0.2.0'; // NOSONAR - no IP. Bumped for MWP-1557/1558 private-dir-relocation migration; fires mainwp_db_after_update hook so MainWP_Keys_Manager::migrate_private_filenames() runs once.
 
     /**
      * Protected variable to hold the database option name.

@@ -3935,7 +3935,13 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
 
     /**
-     * Return the user data for the given consumer_key.
+     * Insert a new REST API key row and return the credential payload.
+     *
+     * Returns an array with key_id, user_id, plaintext consumer_key,
+     * plaintext consumer_secret, and key_permissions on success. Returns
+     * false when the wpdb->insert() call fails (no current user, missing
+     * table, schema mismatch, etc.). Callers must check the return type
+     * before treating it as an array.
      *
      * @param string $consumer_key Consumer key.
      * @param string $consumer_secret Secret key.
@@ -3944,7 +3950,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @param int    $enabled 1 or 0.
      * @param array  $others others.
      *
-     * @return array
+     * @return array|false Credential payload on success, false on failure.
      */
     public function insert_rest_api_key( $consumer_key, $consumer_secret, $scope, $description, $enabled, $others = array() ) {
         global $current_user;
@@ -3957,27 +3963,26 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             return false;
         }
 
-        if ( ! is_array( $others ) ) {
-            $others = array();
-        }
+        unset( $others ); // Parameter retained for signature compatibility; key_pass/key_type fields are vestigial after MWP-1544 cleanup.
 
-        $pass = isset( $others['key_pass'] ) ? $others['key_pass'] : '';
-        $type = isset( $others['key_type'] ) ? intval( $others['key_type'] ) : 0;
+        // Hash the consumer_secret with WordPress's password hasher so the
+        // value at rest is no longer reversible by a DB-read primitive.
+        // The plaintext is returned to the caller below so it can be shown
+        // to the admin once at creation time. See MWP-1540.
+        $hashed_secret = wp_hash_password( $consumer_secret );
 
         // Created API keys.
         $permissions = in_array( $scope, array( 'read', 'write', 'delete', 'read_write' ), true ) ? sanitize_text_field( $scope ) : 'read';
-        $this->wpdb->insert(
+        $inserted    = $this->wpdb->insert(
             $this->table_name( 'api_keys' ),
             array(
                 'user_id'         => $user_id,
                 'description'     => $description,
                 'permissions'     => $permissions,
                 'consumer_key'    => mainwp_api_hash( $consumer_key ),
-                'consumer_secret' => $consumer_secret,
+                'consumer_secret' => $hashed_secret,
                 'truncated_key'   => substr( $consumer_key, -7 ),
                 'enabled'         => $enabled,
-                'key_pass'        => $pass,
-                'key_type'        => $type,
             ),
             array(
                 '%d',
@@ -3987,18 +3992,27 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 '%s',
                 '%s',
                 '%d',
-                '%s',
-                '%d',
             ),
         );
 
-            return array(
-                'key_id'          => $this->wpdb->insert_id,
-                'user_id'         => $user_id,
-                'consumer_key'    => $consumer_key,
-                'consumer_secret' => $consumer_secret,
-                'key_permissions' => $permissions,
-            );
+        // wpdb->insert() returns false on failure. Without this guard the
+        // function would still hand back the plaintext consumer_secret plus
+        // $wpdb->insert_id, but that insert_id is the LAST successful insert
+        // on the connection (typically from earlier in the same request),
+        // not this row. The caller's empty-key_id check would pass and the
+        // operator would receive a credential that was never persisted.
+        // See MWP-1540 PR review feedback.
+        if ( false === $inserted ) {
+            return false;
+        }
+
+        return array(
+            'key_id'          => $this->wpdb->insert_id,
+            'user_id'         => $user_id,
+            'consumer_key'    => $consumer_key,
+            'consumer_secret' => $consumer_secret,
+            'key_permissions' => $permissions,
+        );
     }
 
     /**

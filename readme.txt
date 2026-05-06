@@ -1,4 +1,4 @@
-=== MainWP Dashboard: Self-hosted WordPress Management for Agencies  ===
+=== MainWP Dashboard: Self-hosted WordPress Management for Agencies ===
 Contributors: mainwp
 Tags: manage multiple WordPress sites, WordPress maintenance, update, backups, security
 Author: mainwp
@@ -41,7 +41,7 @@ All of this makes MainWP the best non-SaaS alternative to ManageWP, InfiniteWP, 
 
 MainWP is designed to be user-friendly and intuitive, even for those new to WordPress management plugins. With a straightforward setup process and a clean, organized dashboard, you'll be able to start managing your WordPress sites efficiently in no time.
 
-* Setting up MainWP is straightforward—install the dashboard on a private WordPress site, add the MainWP Child plugin to your other WordPress sites, and take control.
+* Setting up MainWP is straightforward, install the dashboard on a private WordPress site, add the MainWP Child plugin to your other WordPress sites, and take control.
 
 **Your Guarantee of Privacy**
 
@@ -54,10 +54,10 @@ MainWP Dashboard is [100% FREE](https://mainwp.com/mainwp-free-features/) and al
 We make money by offering [MainWP Pro](https://mainwp.com/signup/), which provides access to a wide range of premium add-ons. These premium add-ons are organized into two clear categories:
 
 - **Integrations:**
-  Add-ons in this category enable seamless connections with popular third-party services and plugins, allowing you to integrate the tools you already use directly into your MainWP Dashboard.
+ Add-ons in this category enable seamless connections with popular third-party services and plugins, allowing you to integrate the tools you already use directly into your MainWP Dashboard.
 
 - **Extensions:**
-  These are custom-built, standalone add-ons developed exclusively for the MainWP Dashboard, designed to add unique and specialized functionality to enhance your WordPress management experience.
+ These are custom-built, standalone add-ons developed exclusively for the MainWP Dashboard, designed to add unique and specialized functionality to enhance your WordPress management experience.
 
 For more details, visit our [Premium Add-ons](https://mainwp.com/mainwp-add-ons/) page and see how our free and pro features compare at [Free vs. Pro: Know the Difference](https://mainwp.com/free-vs-pro/).
 
@@ -148,6 +148,10 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
+= 6.0.12 - TBD =
+
+* Security: v2 REST API site responses no longer expose Basic Auth HTTP credentials. GET /v2/sites and GET /v2/sites/{id} no longer return `http_pass`, `http_user`, or `uniqueId`, even when the response is built via the `_fields=` short-circuit or the `?context=edit` query. The fields remain settable via POST/PUT request bodies for site updates; only the read response is stripped. See MWP-1541.
+* Security: Four v1 REST callbacks (`all-sites`, `get-sites-by-url`, `get-sites-by-client`, `site/site`) now strip `privkey`, `pubkey`, `http_user`, `http_pass`, `adminname`, and `securekey` from the response. The data layer projection at `MainWP_DB::get_websites_for_current_user` is unchanged so internal callers (cron jobs, MainWP_Connect) continue to receive full data; the strip is applied at the REST callback boundary. See MWP-1542.
 = 6.0.13 - TBD =
 
 * Security: Hardened storage of v2 REST API consumer secrets. New keys are stored hashed at rest using `wp_hash_password`; existing keys continue to authenticate via a backwards-compatible verification path until they are rotated. A DB-read primitive can no longer recover a v2 secret created on or after this release. See MWP-1540.

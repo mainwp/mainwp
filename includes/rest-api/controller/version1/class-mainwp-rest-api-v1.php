@@ -531,6 +531,77 @@ class Rest_Api_V1 { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
+     * Sensitive site fields that must never appear in v1 REST responses.
+     *
+     * The data layer projection at MainWP_DB::get_websites_for_current_user
+     * returns these when full_data=true so that internal callers (cron jobs,
+     * MainWP_Connect) can sign requests to child sites. v1 REST callbacks
+     * pass through that projection directly, which is the leak path
+     * MWP-1542 addresses. Centralizing the strip list here keeps every
+     * callback in sync; copying the safe template at mainwp_rest_api_site_callback
+     * previously inherited only ['privkey', 'adminname'] which let
+     * http_pass / http_user / pubkey / securekey leak.
+     *
+     * @var string[]
+     */
+    protected static $sensitive_site_fields = array(
+        'privkey',
+        'pubkey',
+        'http_user',
+        'http_pass',
+        'adminname',
+        'securekey',
+        // uniqueId is the per-site secure-mode signing identifier; the v2 schema
+        // narrows it to edit context only (MWP-1541) and the single-site v1
+        // callback uses get_website_by_id (SELECT wp.*) which carries it
+        // through. Strip it here too so v1 stays consistent.
+        'uniqueId',
+    );
+
+    /**
+     * Strip credential-shaped fields from a site object or array of sites
+     * before returning it from a v1 REST callback. Operates in place on
+     * each item; safe to call on a single site object, a list of objects,
+     * or a list of associative arrays.
+     *
+     * @param mixed $data Either a site stdClass / array, or a list of either.
+     * @return mixed The same $data with sensitive fields removed.
+     */
+    public static function strip_sensitive_site_fields( $data ) {
+        if ( empty( $data ) ) {
+            return $data;
+        }
+
+        // Detect single-item vs list. A list either has integer 0 as its
+        // first key (sequential array) or the first element is itself an
+        // array/object representing a site.
+        $is_list = false;
+        if ( is_array( $data ) ) {
+            $first_key = array_key_first( $data );
+            if ( null !== $first_key && is_int( $first_key ) ) {
+                $is_list = true;
+            }
+        }
+
+        if ( $is_list ) {
+            foreach ( $data as $idx => $item ) {
+                $data[ $idx ] = static::strip_sensitive_site_fields( $item );
+            }
+            return $data;
+        }
+
+        foreach ( static::$sensitive_site_fields as $field ) {
+            if ( is_object( $data ) && property_exists( $data, $field ) ) {
+                unset( $data->{$field} );
+            } elseif ( is_array( $data ) && array_key_exists( $field, $data ) ) {
+                unset( $data[ $field ] );
+            }
+        }
+
+        return $data;
+    }
+
+    /**
      * Method mainwp_rest_api_init()
      *
      * Makes sure the correct consumer key and secret are entered.
@@ -805,6 +876,12 @@ class Rest_Api_V1 { //phpcs:ignore -- NOSONAR - multi methods.
 
             // get data.
             $data = MainWP_DB::instance()->get_websites_for_current_user( $params );
+
+            // MWP-1542: strip credential fields before returning. The data
+            // layer's full_data projection includes privkey / http_pass / etc.
+            // for internal callers (cron, MainWP_Connect); REST consumers
+            // must never see them.
+            $data = static::strip_sensitive_site_fields( $data );
 
             $result = $data;
 
@@ -1331,6 +1408,12 @@ class Rest_Api_V1 { //phpcs:ignore -- NOSONAR - multi methods.
             // get data.
             $data = MainWP_DB::instance()->get_websites_for_current_user( $params );
 
+            // MWP-1542: strip credential fields before returning. The data
+            // layer's full_data projection includes privkey / http_pass / etc.
+            // for internal callers (cron, MainWP_Connect); REST consumers
+            // must never see them.
+            $data = static::strip_sensitive_site_fields( $data );
+
             $result = $data;
 
             if ( 'array' === $format && is_array( $data ) ) {
@@ -1388,6 +1471,12 @@ class Rest_Api_V1 { //phpcs:ignore -- NOSONAR - multi methods.
             // get data.
             $data = MainWP_DB::instance()->get_websites_for_current_user( $params );
 
+            // MWP-1542: strip credential fields before returning. The data
+            // layer's full_data projection includes privkey / http_pass / etc.
+            // for internal callers (cron, MainWP_Connect); REST consumers
+            // must never see them.
+            $data = static::strip_sensitive_site_fields( $data );
+
             $result = $data;
 
             if ( 'array' === $format && is_array( $data ) ) {
@@ -1442,13 +1531,10 @@ class Rest_Api_V1 { //phpcs:ignore -- NOSONAR - multi methods.
                     // get data.
                     $data = MainWP_DB::instance()->get_website_by_id( $site_id, $selectGroups );
 
-                    if ( ! empty( $data ) && property_exists( $data, 'privkey' ) ) {
-                        unset( $data->privkey );
-                    }
-
-                    if ( ! empty( $data ) && property_exists( $data, 'adminname' ) ) {
-                        unset( $data->adminname );
-                    }
+                    // MWP-1542: strip every credential field, not just privkey/adminname.
+                    // The pre-MWP-1542 partial strip let http_pass/http_user/pubkey/securekey
+                    // pass through whenever the underlying row had them populated.
+                    $data = static::strip_sensitive_site_fields( $data );
 
                     if ( $with_tags && ! empty( $data ) && property_exists( $data, 'wpgroups' ) && property_exists( $data, 'wpgroupids' ) ) {
                         $wpgroupids = explode( ',', $data->wpgroupids );

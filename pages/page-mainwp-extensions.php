@@ -422,6 +422,16 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
 
         $api_key = isset( $_POST['api_key'] ) ? trim( wp_unslash( $_POST['api_key'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
+        // MWP-1547: the Extensions page renders the sentinel placeholder
+        // when a master key is already stored. The browser submits whatever
+        // value is in #mainwp_com_api_key, which is the sentinel for
+        // remembered-license dashboards. Resolve to the stored decrypted
+        // master key server-side rather than sending the placeholder
+        // upstream.
+        if ( MainWP_Credential_Render::is_sentinel( $api_key ) ) {
+            $api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
+        }
+
         $all_available_extensions_compatible_api_response = array();
         $all_free_pro_exts                                = array();
         $all_org_exts                                     = array();

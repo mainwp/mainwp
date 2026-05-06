@@ -58,6 +58,12 @@ class MainWP_Credential_Render {
      * Save handlers that get true here MUST short-circuit and leave the
      * existing storage untouched.
      *
+     * Callers MUST pass the raw `wp_unslash()`-ed value. Do not chain
+     * `sanitize_text_field()`, `wp_kses*()`, `mb_convert_encoding()`, or
+     * any other byte-altering filter before the check, or the multi-byte
+     * bullet bytes get stripped/normalized and the comparison fails open
+     * (the sentinel becomes a real submission and overwrites storage).
+     *
      * @param mixed  $submitted Submitted form value (typically from $_POST).
      * @param string $sentinel  Override the placeholder (rare; mostly for tests).
      * @return bool True if the submitted value equals the sentinel.

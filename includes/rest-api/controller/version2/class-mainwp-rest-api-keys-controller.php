@@ -247,9 +247,13 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
         $scope           = $this->determine_scope( $permission );
 
         try {
-            // Save api key v2.
+            // Save api key v2. insert_rest_api_key() returns false when the
+            // underlying wpdb->insert() fails, so we guard against the bool
+            // case before treating $api_key as an array; PHP 8+ otherwise
+            // raises a deprecation notice on array-offset access against a
+            // bool, and the empty() check would silently pass.
             $api_key = $this->db->insert_rest_api_key( $consumer_key, $consumer_secret, $scope, $desc, $active );
-            if ( empty( $api_key['key_id'] ) ) {
+            if ( ! is_array( $api_key ) || empty( $api_key['key_id'] ) ) {
                 return new WP_Error(
                     'create_key_failed',
                     __( 'Create API key failed.', 'mainwp' ),

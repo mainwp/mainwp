@@ -306,6 +306,45 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
     }
 
     /**
+     * Detect whether a stored consumer_secret value is still in legacy plaintext format.
+     *
+     * Legacy v2 keys were stored as `cs_` followed by hex digits (production uses
+     * 40 hex chars; some older fixtures use 32). New keys created after MWP-1540
+     * are hashed via wp_hash_password and always begin with `$` (`$P$`, `$wp$`,
+     * `$argon2id$`, etc.). The presence of the `cs_` + hex prefix is sufficient
+     * to distinguish a plaintext token from any password-hash output.
+     *
+     * @todo MWP-1540 sunset (~v6.3): once the migration has shipped for a couple
+     *       of minor versions and release notes have given customers time to
+     *       rotate their keys, this helper and the legacy branch inside
+     *       verify_consumer_secret() can both be removed.
+     *
+     * @param string $value Stored consumer_secret value.
+     * @return bool True when the value is legacy plaintext.
+     */
+    private function is_legacy_plaintext_secret( $value ) {
+        return is_string( $value ) && (bool) preg_match( '/^cs_[a-f0-9]+$/', $value );
+    }
+
+    /**
+     * Verify a submitted consumer_secret against the stored value.
+     *
+     * Handles both legacy plaintext (constant-time compare via hash_equals) and
+     * hashed (wp_check_password) formats. Does NOT auto-rehash legacy rows;
+     * existing plaintext keys stay plaintext until the admin reissues them.
+     *
+     * @param string $stored    Stored consumer_secret from the database.
+     * @param string $submitted Consumer_secret submitted in the request.
+     * @return bool True if the submitted secret matches the stored value.
+     */
+    private function verify_consumer_secret( $stored, $submitted ) {
+        if ( $this->is_legacy_plaintext_secret( $stored ) ) {
+            return hash_equals( $stored, $submitted ); // @codingStandardsIgnoreLine
+        }
+        return wp_check_password( $submitted, $stored );
+    }
+
+    /**
      * Basic Authentication.
      *
      * SSL-encrypted requests are not subject to sniffing or man-in-the-middle
@@ -346,8 +385,8 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             return false;
         }
 
-        // Validate user secret.
-        if ( ! hash_equals( $this->user->consumer_secret, $consumer_secret ) ) { // @codingStandardsIgnoreLine
+        // Validate user secret. Handles both legacy plaintext rows and hashed rows.
+        if ( ! $this->verify_consumer_secret( $this->user->consumer_secret, $consumer_secret ) ) {
             $this->set_error( new WP_Error( 'mainwp_rest_authentication_error', __( 'Consumer secret is invalid.', 'mainwp' ), array( 'status' => 401 ) ) );
 
             return false;
@@ -584,8 +623,8 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         if ( empty( $this->user ) ) {
             return false;
         }
-        // Validate user secret.
-        if ( ! hash_equals( $this->user->consumer_secret, $consumer_secret ) ) { // @codingStandardsIgnoreLine
+        // Validate user secret. Handles both legacy plaintext rows and hashed rows.
+        if ( ! $this->verify_consumer_secret( $this->user->consumer_secret, $consumer_secret ) ) {
             $this->set_error( new WP_Error( 'mainwp_rest_authentication_error', __( 'Consumer secret is invalid.', 'mainwp' ), array( 'status' => 401 ) ) );
 
             return false;
@@ -684,6 +723,19 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
 
         if ( 'HMAC-SHA1' !== $params['oauth_signature_method'] && 'HMAC-SHA256' !== $params['oauth_signature_method'] ) {
             return new WP_Error( 'mainwp_rest_authentication_error', __( 'Invalid signature - signature method is invalid.', 'mainwp' ), array( 'status' => 401 ) );
+        }
+
+        // OAuth 1.0a HMAC verification requires the plaintext secret as the HMAC
+        // key. Keys created after MWP-1540 store the secret hashed at rest and
+        // therefore cannot be used with this auth method. Direct the caller to
+        // Basic Auth over HTTPS or to reissue (and use the new key only via
+        // Basic Auth).
+        //
+        // TODO MWP-1540 sunset (~v6.3): drop this branch. By the sunset target
+        // any plaintext keys still in the wild will already be failing through
+        // Basic Auth as well, so reissue is the only path forward anyway.
+        if ( ! $this->is_legacy_plaintext_secret( $user->consumer_secret ) ) {
+            return new WP_Error( 'mainwp_rest_authentication_oauth1_unsupported', __( 'OAuth 1.0a is not supported for this API key. Use Basic Auth over HTTPS or reissue the key.', 'mainwp' ), array( 'status' => 401 ) );
         }
 
         $hash_algorithm = strtolower( str_replace( 'HMAC-', '', $params['oauth_signature_method'] ) );
@@ -815,7 +867,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
 
         if ( false === $user ) {
             $table_name = esc_sql( MainWP_DB::instance()->get_table_name( 'api_keys' ) );
-            $user = $wpdb->get_row(
+            $user       = $wpdb->get_row(
                 $wpdb->prepare(
                     'SELECT * FROM ' . $table_name . ' WHERE consumer_key = %s',
                     $consumer_key
@@ -830,13 +882,37 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             $this->set_error( new \WP_Error( 'mainwp_rest_authentication_disabled_key', __( 'The REST API Key are disabled.', 'mainwp' ), array( 'status' => 401 ) ) );
             return false;
         }
-        // phpcs:disable WordPress.Security.NonceVerification
-        $pass = ! empty( $_REQUEST['key_pass'] ) ? wp_unslash( $_REQUEST['key_pass'] ) : '';
-        // phpcs:enable WordPress.Security.NonceVerification
-        if ( 1 === (int) $user->key_type && $pass !== $user->key_pass ) {
-            $this->set_error( new \WP_Error( 'mainwp_rest_authentication_invalid_key_pass', __( 'The REST API passphrase is invalid.', 'mainwp' ), array( 'status' => 401 ) ) );
-            return false;
+
+        // Legacy: passphrase enforcement for any rows where key_type=1.
+        // No current code path creates such rows (see MWP-1544) and no caller
+        // of insert_rest_api_key sets key_type to 1, so this branch is dormant
+        // on every install we have visibility into. It is preserved to avoid
+        // silently weakening hypothetical pre-existing rows where someone
+        // wired key_type=1 by hand or via removed migration code. The compare
+        // is timing-safe (was a vanilla !== before MWP-1540) and we leave the
+        // submitted value unsanitized so that a passphrase containing
+        // whitespace or HTML-like content still matches a legitimately
+        // stored value.
+        //
+        // TODO MWP-1544 sunset (~v6.3): remove this entire block. Nothing in
+        // the dashboard creates key_type=1 rows anymore, and the column
+        // itself can be dropped at the same time.
+        if ( 1 === (int) $user->key_type ) {
+            // The submitted value is only fed into hash_equals against the
+            // stored passphrase; it is never echoed, stored, or used in a
+            // query, so sanitization is intentionally skipped to preserve
+            // an exact match against legacy plaintext values that may
+            // contain whitespace or HTML-like characters.
+            // phpcs:disable WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            $pass = ! empty( $_REQUEST['key_pass'] ) ? wp_unslash( $_REQUEST['key_pass'] ) : '';
+            // phpcs:enable WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            $expected = isset( $user->key_pass ) ? (string) $user->key_pass : '';
+            if ( '' === $expected || ! hash_equals( $expected, $pass ) ) {
+                $this->set_error( new \WP_Error( 'mainwp_rest_authentication_invalid_key_pass', __( 'The REST API passphrase is invalid.', 'mainwp' ), array( 'status' => 401 ) ) );
+                return false;
+            }
         }
+
         return $user;
     }
 

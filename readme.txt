@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.9.4
 Requires PHP: 7.4
-Stable tag: 6.0.12-er.1
+Stable tag: 6.0.12
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -149,8 +149,14 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 == Changelog ==
 
 = 6.0.12 - TBD =
-
 * Security: Settings pages no longer render stored API credentials into HTML input value attributes. The 8 global API Backups provider keys (Cloudways, GridPane, Vultr, Linode, DigitalOcean, cPanel, Plesk, Kinsta), the 3 per-site overrides, and the master MainWP license key now display a fixed `••••••••` placeholder when a value is stored. Form submissions that return the placeholder unchanged short-circuit at the storage layer, preserving the existing value rather than overwriting it. All affected inputs also set `autocomplete="new-password"` so a password manager cannot silently autofill over the stored credential. See MWP-1543 and MWP-1547.
+
+= 6.0.12 - 5-5-2026 =
+
+* Fixed: Improved site management stability with enhanced handling of site data to prevent errors in edge cases.
+* Fixed: An issue with logging auto-updates in the Network Activity logs.
+* Updated: Improved performance when performing bulk syncing.
+* Dev: Preserve response envelope for `_fields` REST API v2 requests in sites controller.
 
 = 6.0.11 - 4-28-2026 =
 

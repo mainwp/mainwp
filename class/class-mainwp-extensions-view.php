@@ -697,7 +697,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         $active = MainWP_Extensions_Handler::is_extension_activated( $extension['slug'] );
-        if ( empty( $extension['api_key'] ) ) {
+        if ( empty( $extension['has_api_key'] ) ) {
             $active = false;
         }
 
@@ -800,7 +800,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         <?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) { ?>
             <?php if ( $active ) { ?>
                 <div class="ui active dimmer" id="mainwp-extensions-api-form" style="display: none;">
-                    <input type="hidden" class="extension-api-key" value="<?php echo esc_attr( $extension['api_key'] ); ?>"/>
+                    <input type="hidden" class="extension-api-key" value="<?php echo esc_attr( MainWP_Credential_Render::value_for_input( ! empty( $extension['has_api_key'] ) ) ); ?>"/>
                     <div class="ui center aligned secondary segment">
                         <p><?php esc_html_e( 'Deactivate license for this add-on?', 'mainwp' ); ?></p>
                         <button class="ui red mini button mainwp-extensions-deactivate"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></button>
@@ -920,7 +920,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $count_not_activated = 0;
         if ( $has_api_key && is_array( $extensions ) ) {
             foreach ( $extensions as $extension ) {
-                if ( isset( $extension['apiManager'] ) && $extension['apiManager'] && empty( $extension['api_key'] ) ) {
+                if ( isset( $extension['apiManager'] ) && $extension['apiManager'] && empty( $extension['has_api_key'] ) ) {
                     ++$count_not_activated;
                 }
             }

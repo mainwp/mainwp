@@ -123,7 +123,76 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             return array();
         }
 
-        return get_option( $ext_key . '_APIManAdder' );
+        $info = get_option( $ext_key . '_APIManAdder' );
+
+        // MWP-1546: per-extension license keys were historically stored as
+        // plaintext inside the option array's 'api_key' field. New writes
+        // (set_activation_info below) replace that field with a
+        // {encrypted_val, file_key} envelope produced by the
+        // mainwp_encrypt_key_value filter (MainWP_Keys_Manager). On read,
+        // the matching mainwp_decrypt_key_value filter reverses the
+        // envelope.
+        //
+        // Encrypt-on-first-read migration: if the stored row still carries
+        // a plaintext api_key string (legacy installs upgraded from before
+        // this change), rewrite it as the encrypted envelope right now.
+        // Existing dashboards migrate transparently as each extension's
+        // option is touched, without waiting for an unrelated activation
+        // event. We persist via update_option directly rather than calling
+        // set_activation_info to avoid churning the activations_cached
+        // option on every legacy read.
+        if ( is_array( $info ) && ! empty( $info['api_key'] ) && is_string( $info['api_key'] ) ) {
+            $rewritten = static::encrypt_activation_info( $ext_key, $info );
+            if ( is_array( $rewritten )
+                && isset( $rewritten['api_key'] )
+                && is_array( $rewritten['api_key'] )
+                && ! empty( $rewritten['api_key']['encrypted_val'] ) ) {
+                MainWP_Utility::update_option( $ext_key . '_APIManAdder', $rewritten );
+            }
+        }
+
+        return static::decrypt_activation_info( $info );
+    }
+
+    /**
+     * Reverse the api_key encryption applied by set_activation_info().
+     *
+     * Returns the input unchanged when api_key is missing, empty, or a
+     * plaintext string (legacy format). Falls back to the original value
+     * if the mainwp_decrypt_key_value filter cannot recover a string, so
+     * a missing keyfile cannot orphan a license activation.
+     *
+     * @param mixed $info Raw option value as returned by get_option().
+     * @return mixed Same shape as $info, with 'api_key' decrypted to plaintext.
+     */
+    public static function decrypt_activation_info( $info ) {
+        if ( ! is_array( $info ) || empty( $info['api_key'] ) ) {
+            return $info;
+        }
+        if ( ! is_array( $info['api_key'] ) ) {
+            return $info; // Legacy plaintext string, no envelope to reverse.
+        }
+        if ( empty( $info['api_key']['encrypted_val'] ) ) {
+            // Malformed envelope (array but missing encrypted_val). Drop the
+            // unreadable value rather than returning the raw array; callers
+            // (api-handler.php readers, the hooks filter) do not is_string-
+            // guard the result and would forward the array to the licensing
+            // API as http_build_query garbage. Mirrors the decrypt-failure
+            // branch below.
+            $info['api_key'] = '';
+            return $info;
+        }
+        $decrypted = apply_filters( 'mainwp_decrypt_key_value', false, $info['api_key'], '' );
+        if ( is_string( $decrypted ) && '' !== $decrypted ) {
+            $info['api_key'] = $decrypted;
+        } else {
+            // Decrypt failed (e.g. missing keyfile). Drop the unreadable
+            // ciphertext so callers see an empty string rather than the
+            // raw envelope array, which they would treat as truthy and
+            // forward to the licensing API as garbage.
+            $info['api_key'] = '';
+        }
+        return $info;
     }
 
     /**
@@ -144,7 +213,54 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         // Clear cached of all activations to reload for next loading.
         update_option( 'mainwp_extensions_all_activation_cached', '' );
 
+        // MWP-1546: encrypt the 'api_key' field at rest using the same
+        // mainwp_encrypt_key_value filter that 3rd-party API keys use. Other
+        // array members (activated_key, deactivate_checkbox, product_id,
+        // instance_id, software_version, mainwp_version, product_item_id)
+        // are not credentials and stay plaintext for backwards compatibility
+        // with any reader that consumes them directly.
+        $info = static::encrypt_activation_info( $ext_key, $info );
+
+        // Codex follow-up: fail closed when encryption did not produce an
+        // envelope. encrypt_activation_info() returns the input unchanged
+        // when the mainwp_encrypt_key_value filter fails (missing keyfile,
+        // un-writable uploads dir, etc.), which would leave api_key as a
+        // plaintext string and silently downgrade this write back to the
+        // pre-MWP-1546 leak path. Refuse the write and let the caller
+        // surface the error rather than persisting plaintext credentials.
+        if ( is_array( $info )
+            && isset( $info['api_key'] )
+            && is_string( $info['api_key'] )
+            && '' !== $info['api_key'] ) {
+            return false;
+        }
+
         return MainWP_Utility::update_option( $ext_key . '_APIManAdder', $info );
+    }
+
+    /**
+     * Encrypt the api_key field of an activation-info array via the
+     * mainwp_encrypt_key_value filter (MainWP_Keys_Manager). Replaces the
+     * plaintext string with the {encrypted_val, file_key} envelope.
+     *
+     * @param string $ext_key Extension slug; included in the keyfile prefix.
+     * @param mixed  $info    Activation info as supplied by callers.
+     * @return mixed Same shape as $info, with 'api_key' replaced by the
+     *               encryption envelope (or unchanged if encryption fails).
+     */
+    public static function encrypt_activation_info( $ext_key, $info ) {
+        if ( ! is_array( $info ) ) {
+            return $info;
+        }
+        if ( empty( $info['api_key'] ) || ! is_string( $info['api_key'] ) ) {
+            return $info;
+        }
+        $prefix   = 'extension_' . sanitize_key( $ext_key ) . '_';
+        $envelope = apply_filters( 'mainwp_encrypt_key_value', false, $info['api_key'], $prefix, false );
+        if ( is_array( $envelope ) && ! empty( $envelope['encrypted_val'] ) ) {
+            $info['api_key'] = $envelope;
+        }
+        return $info;
     }
 
     /**
@@ -256,7 +372,16 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 $return['error'] = $error;
             }
 
-            $this->set_activation_info( $api_slug, $options );
+            // MWP-1546 follow-up: surface the fail-closed write so the user is not
+            // told the activation succeeded when only the upstream half landed.
+            // The license slot was already consumed at mainwp.com; without the
+            // local persist the dashboard will offer to re-activate and burn a
+            // second slot. The encrypt filter only fails on broken installs
+            // (missing keyfile, un-writable uploads/mainwp/pk/), but when it
+            // does the operator needs to know.
+            if ( false === $this->set_activation_info( $api_slug, $options ) ) {
+                $return['error'] = esc_html__( 'License activated upstream but local state could not be saved. Check uploads/mainwp/pk/ permissions and try the activation again.', 'mainwp' );
+            }
 
             return $return;
         } else {
@@ -335,7 +460,12 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 $options['activated_key'] = 'Deactivated';
             }
 
-            $this->set_activation_info( $api_slug, $options );
+            // MWP-1546 follow-up: surface the fail-closed write. The slot was
+            // already released at mainwp.com; without the local persist the
+            // dashboard would still display the extension as Activated.
+            if ( false === $this->set_activation_info( $api_slug, $options ) ) {
+                $return['error'] = esc_html__( 'License deactivated upstream but local state could not be cleared. Check uploads/mainwp/pk/ permissions.', 'mainwp' );
+            }
 
             return $return;
         }
@@ -481,7 +611,13 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     $return['error'] = $error;
                 }
 
-                $this->set_activation_info( $api_slug, $options );
+                // MWP-1546 follow-up: surface the fail-closed write. The grab
+                // call may have produced a fresh license key upstream; if the
+                // local persist fails the dashboard would lose track of it
+                // entirely.
+                if ( false === $this->set_activation_info( $api_slug, $options ) ) {
+                    $return['error'] = esc_html__( 'License retrieved upstream but local state could not be saved. Check uploads/mainwp/pk/ permissions and try again.', 'mainwp' );
+                }
 
                 return $return;
             } else {

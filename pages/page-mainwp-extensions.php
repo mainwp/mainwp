@@ -193,16 +193,57 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
 
                 if ( $is_cached ) {
                     $options = isset( $activations_cached[ $api_slug ] ) ? $activations_cached[ $api_slug ] : array();
+                    // MWP-1546 (Codex follow-up): pre-MWP-1546 builds persisted
+                    // the full decrypted activation array (including plaintext
+                    // 'api_key') into mainwp_extensions_all_activation_cached.
+                    // On upgrade those rows survive as long as the cache stays
+                    // populated. Treat any cache-hit entry that still carries
+                    // 'api_key' as untrusted legacy data: strip it, derive
+                    // has_api_key, and rewrite the sanitized entry in the
+                    // cache so the plaintext never sees another disk write.
+                    if ( is_array( $options ) && array_key_exists( 'api_key', $options ) ) {
+                        $had_key = ! empty( $options['api_key'] );
+                        unset( $options['api_key'] );
+                        $options['has_api_key']          = $had_key;
+                        $activations_cached[ $api_slug ] = $options;
+                        // Force the post-loop update_option write below to fire.
+                        $is_cached = false;
+                    }
                 } else {
-                    $options                         = MainWP_Api_Manager::instance()->get_activation_info( $api_slug );
-                    $activations_cached[ $api_slug ] = $options;
+                    $options = MainWP_Api_Manager::instance()->get_activation_info( $api_slug );
+                    if ( ! is_array( $options ) ) {
+                        $options = array();
+                    }
+                    // MWP-1546: the activations_cached option is persisted via
+                    // update_option(). Storing the decrypted api_key here would
+                    // re-leak the plaintext into another database row,
+                    // defeating the at-rest encryption added to set_activation_info().
+                    // Cache only the non-credential fields plus a has_api_key
+                    // boolean so the cache-hit path knows whether a key is
+                    // configured without ever holding the plaintext.
+                    $cached_options = $options;
+                    unset( $cached_options['api_key'] );
+                    $cached_options['has_api_key']   = ! empty( $options['api_key'] );
+                    $activations_cached[ $api_slug ] = $cached_options;
                 }
 
                 if ( ! is_array( $options ) ) {
                     $options = array();
                 }
 
-                $extension['api_key']             = isset( $options['api_key'] ) ? $options['api_key'] : '';
+                // MWP-1546: stop persisting the per-extension license key
+                // into the aggregated mainwp_extensions option. The original
+                // 'api_key' field on $extension was a plaintext string sourced
+                // from get_activation_info(); render code that needs to know
+                // "is a key configured?" should consult 'has_api_key' instead.
+                // The deactivate flow uses a server-side sentinel-resolution
+                // path (see MainWP_Post_Extension_Handler::deactivate_extension)
+                // that fetches the real key from the per-slug option at the
+                // moment of use, never via the aggregate.
+                //
+                // The cache-hit path stores has_api_key directly (see above);
+                // the fresh-load path infers it from the decrypted plaintext.
+                $extension['has_api_key']         = isset( $options['has_api_key'] ) ? (bool) $options['has_api_key'] : ! empty( $options['api_key'] );
                 $extension['activated_key']       = isset( $options['activated_key'] ) ? $options['activated_key'] : 'Deactivated';
                 $extension['deactivate_checkbox'] = isset( $options['deactivate_checkbox'] ) ? $options['deactivate_checkbox'] : 'off';
                 $extension['product_id']          = isset( $options['product_id'] ) ? $options['product_id'] : '';
@@ -380,6 +421,16 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_getpurchased' );
 
         $api_key = isset( $_POST['api_key'] ) ? trim( wp_unslash( $_POST['api_key'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+        // MWP-1547: the Extensions page renders the sentinel placeholder
+        // when a master key is already stored. The browser submits whatever
+        // value is in #mainwp_com_api_key, which is the sentinel for
+        // remembered-license dashboards. Resolve to the stored decrypted
+        // master key server-side rather than sending the placeholder
+        // upstream.
+        if ( MainWP_Credential_Render::is_sentinel( $api_key ) ) {
+            $api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
+        }
 
         $all_available_extensions_compatible_api_response = array();
         $all_free_pro_exts                                = array();
@@ -684,7 +735,6 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                 $html .= '</div>';
                 $html .= '</div>';
             }
-
         }
 
         $html .= '<div class="ui hidden divider"></div>';

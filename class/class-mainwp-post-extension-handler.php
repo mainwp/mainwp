@@ -151,7 +151,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
      * Method invalidate_warm_cache()
      */
     public function invalidate_warm_cache() {
-        MainWP_Cache_Warm_Helper::invalidate_manage_pages( array( 'Extensions' )  );
+        MainWP_Cache_Warm_Helper::invalidate_manage_pages( array( 'Extensions' ) );
     }
 
     /**
@@ -210,7 +210,47 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
         $this->check_security( 'mainwp_extension_deactivate' );
         $api_slug = isset( $_POST['slug'] ) ? dirname( wp_unslash( $_POST['slug'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $api_key  = isset( $_POST['api_key'] ) ? wp_unslash( $_POST['api_key'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        $result   = MainWP_Api_Manager::instance()->license_key_deactivation( $api_slug, $api_key );
+        // MWP-1546: the hidden input on the Extensions card now renders the
+        // sentinel placeholder instead of the plaintext per-extension license
+        // key. Resolve the sentinel server-side using the slug so the
+        // deactivation request gets the real key from the (now-encrypted)
+        // per-slug option rather than forwarding the placeholder.
+        //
+        // CR follow-up: if the stored key cannot be recovered (option
+        // missing, decrypt failed, etc.), bail with an error rather
+        // than forwarding an empty key. license_key_deactivation()
+        // takes its local-clear fast path on empty $api_key and
+        // returns SUCCESS without ever calling the licensing API,
+        // which would silently leave the activation slot allocated
+        // upstream while telling the operator everything is fine.
+        if ( MainWP_Credential_Render::is_sentinel( $api_key ) ) {
+            $info = MainWP_Api_Manager::instance()->get_activation_info( $api_slug );
+            if ( ! is_array( $info ) || empty( $info['api_key'] ) || ! is_string( $info['api_key'] ) ) {
+                wp_send_json(
+                    array(
+                        'error' => esc_html__( 'The stored license key could not be recovered. Please re-enter it before deactivating.', 'mainwp' ),
+                    )
+                );
+                return;
+            }
+            $api_key = $info['api_key'];
+        }
+        // MWP-1546 follow-up: reject empty / non-string submissions outside
+        // the sentinel path. Without this guard a direct API hit with an
+        // empty api_key would fall through to license_key_deactivation, which
+        // takes its local-clear fast path and returns SUCCESS without ever
+        // contacting the licensing API -- silently leaving the activation
+        // slot allocated upstream. Same failure mode the sentinel-recovery
+        // branch above closes; close it here too.
+        if ( ! is_string( $api_key ) || '' === $api_key ) {
+            wp_send_json(
+                array(
+                    'error' => esc_html__( 'A license key is required to deactivate.', 'mainwp' ),
+                )
+            );
+            return;
+        }
+        $result = MainWP_Api_Manager::instance()->license_key_deactivation( $api_slug, $api_key );
         wp_send_json( $result );
     }
 
@@ -225,7 +265,16 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
         $this->check_security( 'mainwp_extension_grabapikey' );
         $api_slug       = isset( $_POST['slug'] ) ? dirname( wp_unslash( $_POST['slug'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $master_api_key = isset( $_POST['master_api_key'] ) ? wp_unslash( $_POST['master_api_key'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        $result         = MainWP_Api_Manager::instance()->grab_license_key( $api_slug, $master_api_key );
+        // MWP-1547: the Extensions page renders the sentinel placeholder
+        // when a master key is already stored. The browser-side AJAX call
+        // reads #mainwp_com_api_key and submits whatever is there, so a
+        // remembered-license dashboard sends the sentinel here. Resolve to
+        // the stored decrypted master key server-side instead of forwarding
+        // the placeholder to mainwp.com.
+        if ( MainWP_Credential_Render::is_sentinel( $master_api_key ) ) {
+            $master_api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
+        }
+        $result = MainWP_Api_Manager::instance()->grab_license_key( $api_slug, $master_api_key );
         wp_send_json( $result );
     }
 
@@ -261,6 +310,38 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
         }
 
         $api_key = isset( $_POST['api_key'] ) ? trim( wp_unslash( $_POST['api_key'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+        // MWP-1547: the Extensions page now renders the sentinel placeholder
+        // ('••••••••') in the license-key input when a value is already
+        // stored. A submission that returns the sentinel unchanged means
+        // "leave the existing key alone" -- short-circuit before contacting
+        // mainwp.com for verification (the sentinel is not a real key, so
+        // the verify call would otherwise produce a misleading error).
+        //
+        // CR follow-up: the unchecked-"Remember API Key" flow normally
+        // reaches the trailing block at the end of this method which clears
+        // mainwp_extensions_api_save_login + mainwp_extensions_plan_info.
+        // The sentinel short-circuit must mirror that behaviour so a user
+        // who unchecks the box (without changing the input) still has the
+        // flag cleared. The trailing block deliberately does NOT clear the
+        // master key itself, so the sentinel branch matches that semantic
+        // -- the only way to delete the stored master key is to submit an
+        // empty input, which the next branch handles.
+        if ( MainWP_Credential_Render::is_sentinel( $api_key ) ) {
+            $save_login = ( isset( $_POST['saveLogin'] ) && ( 1 === (int) $_POST['saveLogin'] ) ) ? true : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            if ( ! $save_login ) {
+                MainWP_Utility::update_option( 'mainwp_extensions_api_save_login', '' );
+                MainWP_Utility::update_option( 'mainwp_extensions_plan_info', '' );
+            }
+            die(
+                wp_json_encode(
+                    array(
+                        'saved'  => 1,
+                        'result' => 'SUCCESS',
+                    )
+                )
+            );
+        }
 
         if ( '' === $api_key && false !== $api_key ) {
             MainWP_Keys_Manager::instance()->update_key_value( 'mainwp_extensions_master_api_key', false );

@@ -288,9 +288,14 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         );
 
         if ( ! empty( $website->http_user ) && ! empty( $website->http_pass ) ) {
-            $args['headers'] = array(
-                'Authorization' => 'Basic ' . base64_encode( $website->http_user . ':' . stripslashes( $website->http_pass ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-            );
+            // MWP-1548: decrypt before constructing the Basic Auth header.
+            $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
+            $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
+            if ( ! empty( $http_user_plain ) && ! empty( $http_pass_plain ) ) {
+                $args['headers'] = array(
+                    'Authorization' => 'Basic ' . base64_encode( $http_user_plain . ':' . stripslashes( $http_pass_plain ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+                );
+            }
         }
 
         MainWP_Logger::instance()->debug( ' :: tryRequest :: [website=' . $website->url . ']' );

@@ -3126,6 +3126,18 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $wpe               = isset( $params['wpe'] ) ? $params['wpe'] : 0;
         $isStaging         = isset( $params['isStaging'] ) ? $params['isStaging'] : 0;
 
+        // MWP-1548: encrypt http_user / http_pass at rest. Empty / null
+        // values pass through unchanged (encrypt_credential is a no-op
+        // for those). A non-empty value that fails to encrypt produces
+        // false here, which we treat as a hard failure -- refuse to
+        // persist plaintext credentials when the encryption layer is
+        // unhealthy (missing keyfile, un-writable uploads dir).
+        $encrypted_http_user = MainWP_Credential_Storage::encrypt_credential( $http_user, 'http_user' );
+        $encrypted_http_pass = MainWP_Credential_Storage::encrypt_credential( $http_pass, 'http_pass' );
+        if ( false === $encrypted_http_user || false === $encrypted_http_pass ) {
+            return false;
+        }
+
         if ( MainWP_Utility::ctype_digit( $userid ) ) {
             if ( '/' !== substr( $url, - 1 ) ) {
                 $url .= '/';
@@ -3167,20 +3179,20 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 'ssl_version'           => $sslVersion,
                 'uniqueId'              => $uniqueId,
                 'mainwpdir'             => 0,
-                'http_user'             => $http_user,
-                'http_pass'             => $http_pass,
+                'http_user'             => $encrypted_http_user,
+                'http_pass'             => $encrypted_http_pass,
                 'wpe'                   => $wpe,
                 'is_staging'            => $isStaging,
             );
 
             $syncValues = array(
-                'dtsSync'                 => 0,
-                'dtsSyncStart'            => 0,
-                'dtsAutomaticSync'        => 0,
-                'dtsAutomaticSyncStart'   => 0,
-                'totalsize'               => 0,
-                'extauth'                 => '',
-                'sync_errors'             => '',
+                'dtsSync'               => 0,
+                'dtsSyncStart'          => 0,
+                'dtsAutomaticSync'      => 0,
+                'dtsAutomaticSyncStart' => 0,
+                'totalsize'             => 0,
+                'extauth'               => '',
+                'sync_errors'           => '',
             );
             if ( $this->wpdb->insert( $this->table_name( 'wp' ), $values ) ) {
                 $websiteid = $this->wpdb->insert_id;
@@ -3261,6 +3273,25 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     public function update_website_values( $websiteid, $fields ) {
         if ( ! empty( $fields ) ) {
+            // MWP-1548: encrypt http_user / http_pass at rest if either
+            // is present in $fields. Generic-fields updaters (clone
+            // flow in extensions-handler, callers that pass arbitrary
+            // column subsets) must go through the same fail-closed
+            // contract as add_website / update_website.
+            if ( array_key_exists( 'http_user', $fields ) ) {
+                $encrypted = MainWP_Credential_Storage::encrypt_credential( $fields['http_user'], 'http_user' );
+                if ( false === $encrypted ) {
+                    return false;
+                }
+                $fields['http_user'] = $encrypted;
+            }
+            if ( array_key_exists( 'http_pass', $fields ) ) {
+                $encrypted = MainWP_Credential_Storage::encrypt_credential( $fields['http_pass'], 'http_pass' );
+                if ( false === $encrypted ) {
+                    return false;
+                }
+                $fields['http_pass'] = $encrypted;
+            }
             // Lock the data stream to prevent other processes from updating at the same time.
             $table_name = esc_sql( $this->table_name( 'wp' ) );
             $sql        = $this->wpdb->prepare(
@@ -3348,6 +3379,16 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         if ( MainWP_Utility::ctype_digit( $websiteid ) && MainWP_Utility::ctype_digit( $userid ) ) {
             $website = $this->get_website_by_id( $websiteid );
             if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+                // MWP-1548: encrypt http_user / http_pass at rest. Same
+                // fail-closed contract as add_website -- a non-empty
+                // value that fails to encrypt aborts the update so we
+                // never overwrite an existing encrypted row with
+                // plaintext when the encryption layer is unhealthy.
+                $encrypted_http_user = MainWP_Credential_Storage::encrypt_credential( $http_user, 'http_user' );
+                $encrypted_http_pass = MainWP_Credential_Storage::encrypt_credential( $http_pass, 'http_pass' );
+                if ( false === $encrypted_http_user || false === $encrypted_http_pass ) {
+                    return false;
+                }
                 // update admin.
                 $this->wpdb->update(
                     $this->table_name( 'wp' ),
@@ -3360,8 +3401,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                         'ssl_version'           => intval( $sslVersion ),
                         'wpe'                   => intval( $wpe ),
                         'uniqueId'              => $uniqueId,
-                        'http_user'             => $http_user,
-                        'http_pass'             => $http_pass,
+                        'http_user'             => $encrypted_http_user,
+                        'http_pass'             => $encrypted_http_pass,
                         'disable_health_check'  => $disableHealthChecking,
                         'health_threshold'      => $healthThreshold,
                         'primary_backup_method' => $backup_method,
@@ -3894,7 +3935,13 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
 
     /**
-     * Return the user data for the given consumer_key.
+     * Insert a new REST API key row and return the credential payload.
+     *
+     * Returns an array with key_id, user_id, plaintext consumer_key,
+     * plaintext consumer_secret, and key_permissions on success. Returns
+     * false when the wpdb->insert() call fails (no current user, missing
+     * table, schema mismatch, etc.). Callers must check the return type
+     * before treating it as an array.
      *
      * @param string $consumer_key Consumer key.
      * @param string $consumer_secret Secret key.
@@ -3903,7 +3950,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @param int    $enabled 1 or 0.
      * @param array  $others others.
      *
-     * @return array
+     * @return array|false Credential payload on success, false on failure.
      */
     public function insert_rest_api_key( $consumer_key, $consumer_secret, $scope, $description, $enabled, $others = array() ) {
         global $current_user;
@@ -3916,27 +3963,26 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             return false;
         }
 
-        if ( ! is_array( $others ) ) {
-            $others = array();
-        }
+        unset( $others ); // Parameter retained for signature compatibility; key_pass/key_type fields are vestigial after MWP-1544 cleanup.
 
-        $pass = isset( $others['key_pass'] ) ? $others['key_pass'] : '';
-        $type = isset( $others['key_type'] ) ? intval( $others['key_type'] ) : 0;
+        // Hash the consumer_secret with WordPress's password hasher so the
+        // value at rest is no longer reversible by a DB-read primitive.
+        // The plaintext is returned to the caller below so it can be shown
+        // to the admin once at creation time. See MWP-1540.
+        $hashed_secret = wp_hash_password( $consumer_secret );
 
         // Created API keys.
         $permissions = in_array( $scope, array( 'read', 'write', 'delete', 'read_write' ), true ) ? sanitize_text_field( $scope ) : 'read';
-        $this->wpdb->insert(
+        $inserted    = $this->wpdb->insert(
             $this->table_name( 'api_keys' ),
             array(
                 'user_id'         => $user_id,
                 'description'     => $description,
                 'permissions'     => $permissions,
                 'consumer_key'    => mainwp_api_hash( $consumer_key ),
-                'consumer_secret' => $consumer_secret,
+                'consumer_secret' => $hashed_secret,
                 'truncated_key'   => substr( $consumer_key, -7 ),
                 'enabled'         => $enabled,
-                'key_pass'        => $pass,
-                'key_type'        => $type,
             ),
             array(
                 '%d',
@@ -3946,18 +3992,27 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 '%s',
                 '%s',
                 '%d',
-                '%s',
-                '%d',
             ),
         );
 
-            return array(
-                'key_id'          => $this->wpdb->insert_id,
-                'user_id'         => $user_id,
-                'consumer_key'    => $consumer_key,
-                'consumer_secret' => $consumer_secret,
-                'key_permissions' => $permissions,
-            );
+        // wpdb->insert() returns false on failure. Without this guard the
+        // function would still hand back the plaintext consumer_secret plus
+        // $wpdb->insert_id, but that insert_id is the LAST successful insert
+        // on the connection (typically from earlier in the same request),
+        // not this row. The caller's empty-key_id check would pass and the
+        // operator would receive a credential that was never persisted.
+        // See MWP-1540 PR review feedback.
+        if ( false === $inserted ) {
+            return false;
+        }
+
+        return array(
+            'key_id'          => $this->wpdb->insert_id,
+            'user_id'         => $user_id,
+            'consumer_key'    => $consumer_key,
+            'consumer_secret' => $consumer_secret,
+            'key_permissions' => $permissions,
+        );
     }
 
     /**

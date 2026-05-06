@@ -8,6 +8,7 @@
 
 namespace MainWP\Dashboard\Module\ApiBackups;
 
+use MainWP\Dashboard\MainWP_Credential_Render;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Logger;
 use MainWP\Dashboard\MainWP_System_Utility;
@@ -635,6 +636,14 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
             return false;
         }
 
+        // MWP-1543: settings forms render the sentinel ('••••••••') in the
+        // password input when a value is already stored. A submission that
+        // returns the sentinel unchanged means "leave existing value alone";
+        // short-circuit before delete_option / encrypt so no overwrite happens.
+        if ( MainWP_Credential_Render::is_sentinel( $value ) ) {
+            return true;
+        }
+
         $opt_name = 'mainwp_api_backups_' . $name . '_api_key';
         $current  = get_option( $opt_name );
         $key_file = '';
@@ -727,6 +736,14 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
 
         if ( ! in_array( $name, $names ) ) {
             return false;
+        }
+
+        // MWP-1543: same sentinel short-circuit as update_api_key(); the
+        // per-site Edit Site form renders the sentinel placeholder when a
+        // value already exists, and an unchanged submission must not
+        // overwrite the encrypted option with the sentinel string.
+        if ( MainWP_Credential_Render::is_sentinel( $value ) ) {
+            return true;
         }
 
         $opt_name    = 'mainwp_api_backups_' . $name . '_api_key';

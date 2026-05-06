@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.9.4
 Requires PHP: 7.4
-Stable tag: 6.0.12-er.1
+Stable tag: 6.0.12
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -152,6 +152,12 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 * Security: v2 REST API site responses no longer expose Basic Auth HTTP credentials. GET /v2/sites and GET /v2/sites/{id} no longer return `http_pass`, `http_user`, or `uniqueId`, even when the response is built via the `_fields=` short-circuit or the `?context=edit` query. The fields remain settable via POST/PUT request bodies for site updates; only the read response is stripped. See MWP-1541.
 * Security: Four v1 REST callbacks (`all-sites`, `get-sites-by-url`, `get-sites-by-client`, `site/site`) now strip `privkey`, `pubkey`, `http_user`, `http_pass`, `adminname`, and `securekey` from the response. The data layer projection at `MainWP_DB::get_websites_for_current_user` is unchanged so internal callers (cron jobs, MainWP_Connect) continue to receive full data; the strip is applied at the REST callback boundary. See MWP-1542.
+= 6.0.12 - 5-5-2026 =
+
+* Fixed: Improved site management stability with enhanced handling of site data to prevent errors in edge cases.
+* Fixed: An issue with logging auto-updates in the Network Activity logs.
+* Updated: Improved performance when performing bulk syncing.
+* Dev: Preserve response envelope for `_fields` REST API v2 requests in sites controller.
 
 = 6.0.11 - 4-28-2026 =
 

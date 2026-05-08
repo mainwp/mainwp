@@ -1419,9 +1419,12 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                 },
                                 deferRender: true,
                                 stateSaveParams: function (settings, data) {
-                                    data._mwpv = mainwpParams.mainwpVersion || 'dev';
+                                    data._mwpschema = 1; // bump only when state shape changes
                                 },
                                 stateLoadParams: function (settings, data) {
+                                    const schema = Number(data?._mwpschema ?? 1); // treat legacy states as schema 1
+                                    if (schema !== 1) return false;
+
                                     if (
                                         data?.columns &&
                                         data.columns.length !== settings.aoColumns.length
@@ -1532,11 +1535,13 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                 style: 'multi+shift',
                                 selector: 'tr>td.check-column'
                             },
-                            // Version the saved state so UI changes don’t brick users.
                             stateSaveParams: function (settings, data) {
-                                data._mwpv = mainwpParams.mainwpVersion || 'dev';
-                            },
++                               data._mwpschema = 1; // stable schema version, not plugin version
++                           },
                             stateLoadParams: function (settings, data) {
+                                const schema = Number(data?._mwpschema ?? 1); // treat legacy states as schema 1
++                               if (schema !== 1) return false;
+
                                 if (
                                     data?.columns &&
                                     data.columns.length !== settings.aoColumns.length

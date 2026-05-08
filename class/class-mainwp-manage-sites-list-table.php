@@ -1422,7 +1422,32 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                     data._mwpv = mainwpParams.mainwpVersion || 'dev';
                                 },
                                 stateLoadParams: function (settings, data) {
-                                    if ((mainwpParams.mainwpVersion || 'dev') !== data._mwpv) return false;
+                                    let state = null;
+                                    try {
+                                        state = JSON.parse(mainwp_ui_state_load('manage-sites-state'));
+                                        if( state ){
+                                            if( state?.columns.length !== data.columns.length ){
+                                                console.log('Skip applying saved manage sites state.');
+                                                // if columns length not match, do not apply saved table state to avoid js error.
+                                                return false;
+                                            }
+                                        }
+                                    } catch(err) {
+                                        // to fix js error.
+                                    }
+                                    return true;
+                                },
+                                stateSaveCallback: function(settings, data) {
+                                    mainwp_ui_state_save('manage-sites-state', JSON.stringify(data));
+                                },
+                                stateLoadCallback: function(settings) {
+                                    try {
+                                        let state = JSON.parse(mainwp_ui_state_load('manage-sites-state'));
+                                        return state;
+                                    } catch(err) {
+                                        // to fix js error.
+                                        return null;
+                                    }
                                 },
                                 search: { regex: false, smart: false },
                                 orderMulti: false,

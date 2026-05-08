@@ -35,7 +35,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '6.0.12'; // NOSONAR.
+    public static $version = '6.1-er.1'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -166,6 +166,11 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
             if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '5.0.2', '<' ) && version_compare( $this->current_version, '5.0.2', '>=' ) ) {
                 add_action( 'mainwp_after_header', array( MainWP_System_View::get_class_name(), 'mainwp_ver502_update_notice' ) );
+            }
+
+            // Use 6.0.12 as the lower bound so 6.1-er.x builds trigger this notice.
+            if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '6.1', '<' ) && version_compare( $this->current_version, '6.0.12', '>' ) ) {
+                add_action( 'mainwp_after_header', array( MainWP_System_View::get_class_name(), 'mainwp_ver61_update_notice' ) );
             }
 
             MainWP_Utility::update_option( 'mainwp_plugin_version', $this->current_version );

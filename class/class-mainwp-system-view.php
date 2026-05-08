@@ -405,6 +405,27 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
     }
 
     /**
+     * MainWP Version ver 6.1 update Notice.
+     *
+     * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
+     */
+    public static function mainwp_ver61_update_notice() {
+        if ( MainWP_Utility::show_mainwp_message( 'notice', 'upgrade_version61' ) ) {
+            ?>
+            <div class="ui attention message">
+                <div class="header"><?php esc_html_e( 'Important Rollback Notice', 'mainwp' ); ?></div>
+                <div>
+                    <p><?php esc_html_e( 'Version 6.1 includes internal connection handling changes. If you roll back to a version earlier than 6.1, child sites may temporarily lose connection to your MainWP Dashboard.', 'mainwp' ); ?></p>
+                    <p><?php esc_html_e( 'This can be easily resolved by reconnecting the sites. To reconnect multiple sites at once, go to the Manage Sites page and use the Reconnect bulk action.', 'mainwp' ); ?></p>
+                    <a href="https://docs.mainwp.com/sites/management/manage-child-sites#reconnect-a-child-site" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Learn how to reconnect sites.', 'mainwp' ); ?></a>
+                </div>
+                <i class="close icon mainwp-notice-dismiss" notice-id="upgrade_version61"></i>
+            </div>
+            <?php
+        }
+    }
+
+    /**
      * MainWP Version ver 5 update Notice.
      *
      * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()

@@ -1536,11 +1536,11 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                 selector: 'tr>td.check-column'
                             },
                             stateSaveParams: function (settings, data) {
-+                               data._mwpschema = 1; // stable schema version, not plugin version
-+                           },
+                                data._mwpschema = 1; // stable schema version, not plugin version
+                            },
                             stateLoadParams: function (settings, data) {
                                 const schema = Number(data?._mwpschema ?? 1); // treat legacy states as schema 1
-+                               if (schema !== 1) return false;
+                                if (schema !== 1) return false;
 
                                 if (
                                     data?.columns &&

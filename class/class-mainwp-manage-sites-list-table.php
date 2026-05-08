@@ -1537,7 +1537,15 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                 data._mwpv = mainwpParams.mainwpVersion || 'dev';
                             },
                             stateLoadParams: function (settings, data) {
-                                if ((mainwpParams.mainwpVersion || 'dev') !== data._mwpv) return false; // drop stale state
+                                if (
+                                    data?.columns &&
+                                    data.columns.length !== settings.aoColumns.length
+                                ) {
+                                    console.log('Skip applying saved manage sites state.');
+                                    // Reject stale/incompatible saved state
+                                    return false;
+                                }
+                                return true;
                             },
                             search: { regex: false, smart: false }, // Make search cheaper on the server.
                             orderMulti: false,

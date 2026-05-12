@@ -431,6 +431,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public static function register_migration_hooks() {
         add_action( 'mainwp_db_after_update', array( static::class, 'migrate_private_filenames' ), 10, 2 );
+        add_action( 'mainwp_db_after_update', array( static::class, 'migrate_sibling_dir_perms' ), 10, 2 );
     }
 
     /**
@@ -485,6 +486,67 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 continue;
             }
             @rename( $old_path, $new_path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort; lazy migration in get_key_file() handles failures.
+        }
+    }
+
+    /**
+     * Method migrate_sibling_dir_perms()
+     *
+     * One-time chmod sweep for installs that created mainwp/ subdirs before
+     * MWP-1558's mkdir tightening landed in 9.0.2.0. mkdir() does not touch
+     * the mode of an existing directory, so pre-fix installs keep their
+     * legacy 0777 even after upgrading. Reported by Daan Kortenbach in the
+     * MWP-1557/1558 follow-up sweep (MWP-1566).
+     *
+     * Targets the known set of subdirs the plugin manages. Idempotent:
+     * chmodding an already-correct dir is a no-op. @chmod failures are
+     * swallowed (Windows hosts, shared-hosting suexec mismatches, dirs
+     * owned by a different system user -- all expected).
+     *
+     * @param string $from_version Pre-upgrade mainwp_db_version.
+     * @param string $to_version   Post-upgrade mainwp_db_version.
+     *
+     * @return void
+     */
+    public static function migrate_sibling_dir_perms( $from_version, $to_version ) {
+        if ( ! version_compare( $from_version, '9.0.2.1', '<' ) ) {
+            return;
+        }
+        $dirs = MainWP_System_Utility::get_mainwp_dir();
+        if ( empty( $dirs[0] ) || ! is_dir( $dirs[0] ) ) {
+            return;
+        }
+        $base = rtrim( $dirs[0], '/\\' ) . DIRECTORY_SEPARATOR;
+
+        // mainwp/ root: 0755 (public-asset convention, holds index.php + subdirs).
+        @chmod( rtrim( $base, '/\\' ), 0755 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort hardening.
+
+        // Public-asset subdirs.
+        foreach ( array( 'icons', 'plugin-icons', 'theme-icons', 'client-images', 'site-icons', 'themes' ) as $sub ) {
+            $p = $base . $sub;
+            if ( is_dir( $p ) ) {
+                @chmod( $p, 0755 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort hardening.
+            }
+        }
+
+        // Private (htaccess-protected) subdirs.
+        foreach ( array( 'cookies', 'templates', 'templates' . DIRECTORY_SEPARATOR . 'emails', 'bulk' ) as $sub ) {
+            $p = $base . $sub;
+            if ( is_dir( $p ) ) {
+                @chmod( $p, 0750 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort hardening.
+            }
+        }
+
+        // Per-user backup dirs: mainwp/<userid>/ and mainwp/<userid>/bulk/.
+        $userdirs = @glob( $base . '[0-9]*', GLOB_ONLYDIR ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort directory walk.
+        if ( is_array( $userdirs ) ) {
+            foreach ( $userdirs as $udir ) {
+                @chmod( $udir, 0750 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort hardening.
+                $bulk = $udir . DIRECTORY_SEPARATOR . 'bulk';
+                if ( is_dir( $bulk ) ) {
+                    @chmod( $bulk, 0750 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort hardening.
+                }
+            }
         }
     }
 

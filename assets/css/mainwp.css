@@ -1762,24 +1762,3 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
 #change-history-according-wrapper .ui.list {
   margin-top: 0 !important;
 }
-
-#mainwp-sites-sidebar-menu .mainwp-site-menu-item {
-    cursor: pointer;
-}
-
-#sync-sites-status {
-    display: flex;
-    flex-direction: column;
-}
-
-#sync-sites-status .item {
-    order: 1;
-}
-
-#sync-sites-status .item.is-success {
-    order: 2;
-}
-
-#sync-sites-status .item.disconnected-site {
-    order: 3;
-}

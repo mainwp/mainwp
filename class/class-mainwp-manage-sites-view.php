@@ -277,7 +277,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     $favi_url  = MainWP_Connect::get_favico_url( $website );
                     $site_icon = MainWP_Manage_Sites::get_instance()->get_site_icon_display( $website->cust_site_icon_info, $favi_url );
                 }
-                $pagetitle                   = $site_icon . '<div class="content"><a href="' . esc_url( MainWP_Site_Open::get_open_site_url( $website->id, '', false ) ) . '" target="_blank" class="open_newwindow_wpadmin" rel="noopener noreferrer" style="font-weight:normal!important;"><i class="sign in grey icon" style="font-weight:normal!important;"></i></a><div class="ui pointing dropdown"><div class="text">' . esc_html( $website->name ) . '</div><i class="dropdown icon"></i><div class="menu">' . $dropdown . '</div></div><div class="sub header"><a href="' . esc_url( $website->url ) . '" target="_blank" style="font-size:10px" class="ui grey text" rel="noopener noreferrer">' . esc_html( MainWP_Utility::get_nice_url( $website->url ) ) . '</a></div></div>';
+                $pagetitle = $site_icon . '<div class="content"><a href="' . MainWP_Site_Open::get_open_site_url( $website->id, '', false ) . '" target="_blank" class="open_newwindow_wpadmin" rel="noopener noreferrer" style="font-weight:normal!important;"><i class="sign in grey icon" style="font-weight:normal!important;"></i></a><div class="ui pointing dropdown"><div class="text">' . $website->name . '</div><i class="dropdown icon"></i><div class="menu">' . $dropdown . '</div></div><div class="sub header"><a href="' . $website->url . '" target="_blank" style="font-size:10px" class="ui grey text" rel="noopener noreferrer">' . MainWP_Utility::get_nice_url( $website->url ) . '</a></div></div>';
                 $site_pages['JumpToWPAdmin'] = array(
                     'href'   => $wp_admin_href,
                     'title'  => esc_html__( 'Go to WP Admin', 'mainwp' ),
@@ -1348,39 +1348,29 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 </div>
                 <input style="display:none" type="text" name="fakeusernameremembered"/>
                 <input style="display:none" type="password" name="fakepasswordremembered"/>
-                <?php
-                // MWP-1548: http_user is encrypted at rest; decrypt for the
-                // visible username field. The "is set" indicator and the
-                // change-detection handler still need a truthy/falsy hint
-                // so we expose plaintext to those calls. http_pass uses the
-                // sentinel render (below) so the live password never enters
-                // the DOM, regardless of what's stored.
-                $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
-                $http_pass_set   = ! empty( $website->http_pass );
-                ?>
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-advanced">
                     <label class="six wide column middle aligned">
                     <?php
-                    MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_http_user', $http_user_plain );
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_http_user', $website->http_user );
                     esc_html_e( 'HTTP Username', 'mainwp' );
                     ?>
                     </label>
                     <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If the child site is HTTP Basic Auth protected, enter the HTTP username here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <div class="ui left labeled input">
-                            <input type="text" class="settings-field-value-change-handler" id="mainwp_managesites_edit_http_user" name="mainwp_managesites_edit_http_user" value="<?php echo empty( $http_user_plain ) ? '' : esc_attr( $http_user_plain ); ?>" autocomplete="off" />
+                            <input type="text" class="settings-field-value-change-handler" id="mainwp_managesites_edit_http_user" name="mainwp_managesites_edit_http_user" value="<?php echo empty( $website->http_user ) ? '' : esc_attr( $website->http_user ); ?>" autocomplete="off" />
                         </div>
                     </div>
                 </div>
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-advanced">
                     <label class="six wide column middle aligned">
                     <?php
-                    MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_http_pass', $http_pass_set ? '1' : '' );
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_http_pass', $website->http_pass );
                     esc_html_e( 'HTTP Password', 'mainwp' );
                     ?>
                     </label>
                     <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If the child site is HTTP Basic Auth protected, enter the HTTP password here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <div class="ui left labeled input">
-                            <input type="password" id="mainwp_managesites_edit_http_pass" class="settings-field-value-change-handler" name="mainwp_managesites_edit_http_pass" value="<?php echo esc_attr( MainWP_Credential_Render::value_for_input( $http_pass_set ) ); ?>" autocomplete="new-password" />
+                            <input type="password" id="mainwp_managesites_edit_http_pass" class="settings-field-value-change-handler" name="mainwp_managesites_edit_http_pass" value="<?php echo empty( $website->http_pass ) ? '' : esc_attr( $website->http_pass ); ?>" autocomplete="new-password" />
                         </div>
                     </div>
                 </div>
@@ -2004,7 +1994,6 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         $register_data['userpwd'] = $recon_userpwd;
                     }
 
-                    // MWP-1548: decrypt at the boundary for the reconnect/register call.
                     $information = MainWP_Connect::fetch_url_not_authed(
                         $website->url,
                         $website->adminname,
@@ -2012,8 +2001,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         $register_data,
                         true,
                         $website->verify_certificate,
-                        MainWP_Credential_Storage::decrypt_credential( $website->http_user ),
-                        MainWP_Credential_Storage::decrypt_credential( $website->http_pass ),
+                        $website->http_user,
+                        $website->http_pass,
                         $website->ssl_version
                     );
 

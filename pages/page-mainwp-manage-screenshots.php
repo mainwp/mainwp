@@ -423,13 +423,12 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
                             $website_info = MainWP_DB::instance()->get_website_option( $website, 'site_info' );
                             $website_info = ! empty( $website_info ) ? json_decode( $website_info, true ) : array();
-                            $site_mshot   = MainWP_UI::get_mshots_image_sources( $website->url, 900 );
 
                             ?>
 
                             <div class="card" site-url="<?php echo esc_url( $website->url ); ?>">
                                 <div class="image" data-tooltip="<?php echo esc_attr( $status_tooltip ); ?>" data-position="top center" data-inverted="">
-                                    <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" data-src="<?php echo esc_url( $site_mshot['src'] ); ?>" data-mainwp-mshot-src="<?php echo esc_url( $site_mshot['src'] ); ?>" data-mainwp-mshot-requeue-src="<?php echo esc_url( $site_mshot['requeue_src'] ); ?>">
+                                    <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" data-src="<?php echo esc_attr( '//s0.wp.com/mshots/v1/' . rawurlencode( esc_url_raw( $website->url ) ) . '?w=900' ); ?>">
                                 </div>
                                 <div class="ui <?php echo esc_attr( $status_color ); ?> corner label">
                                     <i class="<?php echo esc_attr( $status_icon ); ?> icon"></i>
@@ -690,29 +689,29 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     $where = 'wp_sync.health_status = 0';
                 }
             } elseif ( 'phpver8' === $site_status ) {
-                $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '<', '8.0.0.0' ); // NOSONAR - no IP.
+                $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '<', '8.0.0.0' ); // NOSONAR - no IP.
                 if ( $is_not ) {
-                    $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '>=', '8.0.0.0' ); // NOSONAR - no IP.
+                    $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '>=', '8.0.0.0' ); // NOSONAR - no IP.
                 }
             } elseif ( 'phpver81' === $site_status ) {
-                $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '<', '8.1.0.0' ); // NOSONAR - no IP.
+                $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '<', '8.1.0.0' ); // NOSONAR - no IP.
                 if ( $is_not ) {
-                    $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '>=', '8.1.0.0' ); // NOSONAR - no IP.
+                    $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '>=', '8.1.0.0' ); // NOSONAR - no IP.
                 }
             } elseif ( 'phpver82' === $site_status ) {
-                $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '<', '8.2.0.0' ); // NOSONAR - no IP.
+                $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '<', '8.2.0.0' ); // NOSONAR - no IP.
                 if ( $is_not ) {
-                    $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '>=', '8.2.0.0' ); // NOSONAR - no IP.
+                    $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '>=', '8.2.0.0' ); // NOSONAR - no IP.
                 }
             } elseif ( 'phpver83' === $site_status ) {
-                $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '<', '8.3.0.0' ); // NOSONAR - no IP.
+                $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '<', '8.3.0.0' ); // NOSONAR - no IP.
                 if ( $is_not ) {
-                    $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '>=', '8.3.0.0' ); // NOSONAR - no IP.
+                    $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '>=', '8.3.0.0' ); // NOSONAR - no IP.
                 }
             } elseif ( 'phpver84' === $site_status ) {
-                $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '<', '8.4.0.0' ); // NOSONAR - no IP.
+                $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '<', '8.4.0.0' ); // NOSONAR - no IP.
                 if ( $is_not ) {
-                    $where = MainWP_DB_Common::instance()->get_sql_where_wpopt_phpversion( 'phpversion', '>=', '8.4.0.0' ); // NOSONAR - no IP.
+                    $where = MainWP_DB_Common::instance()->get_sql_version_compare( 'wp_optionview.phpversion', '>=', '8.4.0.0' ); // NOSONAR - no IP.
                 }
             } elseif ( 'suspended' === $site_status ) {
                 $where = 'wp.suspended = 1';
@@ -792,7 +791,7 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         if ( '_get_cache_false' !== $cache_ids ) {
             if ( empty( $cache_ids ) ) {
-                $params['_included_cache_ids'] = array( 0 ); // not found if get cached success but empty.
+                $params['_included_cache_ids'] = array( -1 ); // not found if get cached success but empty.
             } else {
                 $params['_included_cache_ids'] = $cache_ids;
             }

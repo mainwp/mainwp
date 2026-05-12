@@ -372,12 +372,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $url               = $website->url;
             $verifyCertificate = isset( $website->verify_certificate ) ? (int) $website->verify_certificate : null;
             $forceUseIPv4      = $website->force_use_ipv4;
-            // MWP-1548: decrypt at the boundary so HTTP Basic Auth gets
-            // the plaintext credentials. Legacy plaintext rows pass
-            // through unchanged via the helper's fallback.
-            $http_user  = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
-            $http_pass  = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
-            $sslVersion = $website->ssl_version;
+            $http_user         = $website->http_user;
+            $http_pass         = $website->http_pass;
+            $sslVersion        = $website->ssl_version;
         } else {
             $url = $website;
         }
@@ -816,10 +813,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
 
             if ( property_exists( $website, 'http_user' ) ) {
-                $http_user = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
+                $http_user = $website->http_user;
             }
             if ( property_exists( $website, 'http_pass' ) ) {
-                $http_pass = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
+                $http_pass = $website->http_pass;
             }
 
             if ( isset( $params ) && isset( $params['new_post'] ) ) {
@@ -884,8 +881,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 if ( defined( 'LOGGED_IN_SALT' ) && defined( 'NONCE_SALT' ) ) {
                     $cookie_salt = sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' ); // NOSONAR - safe for salt file name.
                 } else {
-                    // MWP-1558: misconfigured WP installs (no salts) previously used unsalted SHA1, which is enumerable. Fall back to the per-install MainWP filename secret instead.
-                    $cookie_salt = MainWP_System_Utility::get_private_filename( 'cookies', $website->id, 'WP_Cookie' );
+                    $cookie_salt = sha1( sha1( 'mainwp' . $website->id ) . 'WP_Cookie' ); // NOSONAR - safe for salt file name.
                 }
                 $cookieFile = $cookieDir . '/' . $cookie_salt;
                 if ( ! file_exists( $cookieFile ) ) {
@@ -1283,12 +1279,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $output      = array();
 
         if ( ! $request_update ) {
-            // MWP-1548: decrypt http_user / http_pass before they hit the
-            // outbound HTTP Basic Auth header. Legacy plaintext rows pass
-            // through unchanged.
-            $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
-            $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
-            $information     = static::fetch_url( $website, $website->url, $postdata, $checkConstraints, $website->verify_certificate, $pRetryFailed, $http_user_plain, $http_pass_plain, $website->ssl_version, $others, $output );
+            $information = static::fetch_url( $website, $website->url, $postdata, $checkConstraints, $website->verify_certificate, $pRetryFailed, $website->http_user, $website->http_pass, $website->ssl_version, $others, $output );
             if ( ! empty( $output ) ) {
                 if ( ! is_array( $information ) ) {
                     $information = array();
@@ -1335,6 +1326,12 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 MainWP_Monitoring_Handler::handle_check_website( $website, true );
             }
         }
+
+        if ( $updating_website || in_array( $what, array( 'installplugintheme', 'stats' ) ) ) { // Invalidate cache for installation and synchronization actions.
+            MainWP_Cache_Helper::invalidate_cache_group( MainWP_Cache_Helper::CGR_UPDATES );
+            MainWP_Cache_Helper::invalidate_cache_group( MainWP_Cache_Helper::CGR_SYNC_DATA );
+        }
+        MainWP_Cache_Warm_Helper::invalidate_pages_by_site_actions( $what );
 
         return $information;
     }
@@ -1489,15 +1486,6 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         /**
          * Enables data to be returned prior to connecting to the site.
          *
-         * Dev/test override only. Gated behind the MAINWP_DEV_FILTERS_ENABLED
-         * constant so the filter does not dispatch in production. The filter
-         * receives plaintext HTTP Basic Auth credentials and the full $website
-         * DB row (including privkey); enabling it in production would expose
-         * those values to any 3rd-party plugin hooking the filter.
-         *
-         * To enable in a dev/test environment, add to wp-config.php:
-         *     define( 'MAINWP_DEV_FILTERS_ENABLED', true );
-         *
          * @since 5.5
          *
          * @param  mixed false
@@ -1512,11 +1500,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          * @param  mixed $others
          * @param  mixed $output
          */
-        if ( defined( 'MAINWP_DEV_FILTERS_ENABLED' ) && MAINWP_DEV_FILTERS_ENABLED ) {
-            $dev_data = apply_filters( 'mainwp_dev_return_data_before_connect_site', false, $website, $url, $postdata, $checkConstraints, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others, $output );
-            if ( false !== $dev_data ) {
-                return $dev_data;
-            }
+        $dev_data = apply_filters( 'mainwp_dev_return_data_before_connect_site', false, $website, $url, $postdata, $checkConstraints, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others, $output );
+        if ( false !== $dev_data ) {
+            return $dev_data;
         }
 
         $agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
@@ -1564,8 +1550,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( defined( 'LOGGED_IN_SALT' ) && defined( 'NONCE_SALT' ) ) {
                 $cookie_salt = sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' ); // NOSONAR - safe for salt file name.
             } else {
-                // MWP-1558: misconfigured WP installs (no salts) previously used unsalted SHA1, which is enumerable. Fall back to the per-install MainWP filename secret instead.
-                $cookie_salt = MainWP_System_Utility::get_private_filename( 'cookies', $website->id, 'WP_Cookie' );
+                $cookie_salt = sha1( sha1( 'mainwp' . $website->id ) . 'WP_Cookie' ); // NOSONAR - safe for salt file name.
             }
             $cookieFile = $cookieDir . '/' . $cookie_salt;
             if ( ! file_exists( $cookieFile ) ) {
@@ -1690,6 +1675,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     $mrc = curl_multi_exec( $mh, $running );
                 } while ( CURLM_CALL_MULTI_PERFORM === $mrc );
 
+
                 $rc = curl_multi_select( $mh, 1.0 );
                 if ( -1 === $rc ) {
                     usleep( 100000 );
@@ -1751,14 +1737,6 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         MainWP_Logger::instance()->log_execution_time( 'fetch_url_site :: [url=' . $url . ']' );
 
         $thr_error = null;
-
-        if ( isset( $others['function'] ) ) {
-            $what = $others['function'];
-            if ( in_array( $what, array( 'installplugintheme', 'upgradeplugintheme', 'upgradetranslation', 'upgrade', 'stats', 'renew', 'reconnect' ), true ) ) {
-                MainWP_Cache_Helper::invalidate_cache_group( MainWP_Cache_Helper::CGR_UPDATES );
-                MainWP_Cache_Warm_Helper::invalidate_pages_by_site_actions( $what );
-            }
-        }
 
         if ( ( false === $data ) && empty( $http_status ) ) {
             MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] HTTP Error: [status=0][' . $err . ']' );
@@ -1958,7 +1936,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         if ( ! $wp_filesystem->exists( dirname( $file ) ) ) {
-            $wp_filesystem->mkdir( dirname( $file ), 0750 ); // MWP-1558: tightened from 0777; downloaded files may contain backup data.
+            $wp_filesystem->mkdir( dirname( $file ), 0777 );
         }
 
         if ( ! $wp_filesystem->exists( dirname( $file ) ) ) {
@@ -2037,7 +2015,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
 
             if ( ! $wp_filesystem->is_dir( $cookieDir ) ) {
-                $wp_filesystem->mkdir( $cookieDir, 0750 ); // MWP-1558: tightened from 0777; cookies/ holds child wp-admin session cookies.
+                $wp_filesystem->mkdir( $cookieDir, 0777 );
             }
 
             if ( ! file_exists( $cookieDir . '/.htaccess' ) ) {
@@ -2052,7 +2030,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         } else {
 
             if ( ! file_exists( $cookieDir ) ) {
-                @mkdir( $cookieDir, 0750, true ); // MWP-1558: tightened from 0777; cookies/ holds child wp-admin session cookies.
+                @mkdir( $cookieDir, 0777, true );
             }
 
             if ( ! file_exists( $cookieDir . '/.htaccess' ) ) {
@@ -2116,7 +2094,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Method is_valid_curl_handle
      *
-     * @param  mixed $ch cURL handle to validate.
+     * @param  mixed $ch
      * @return bool Valid curl handle.
      */
     public static function is_valid_curl_handle( $ch ) {

@@ -496,15 +496,15 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
             $color = '';
 
-            if ( in_array( $act, array( 'deleted', 'removed', 'revoked', 'deactivated', 'disabled', 'suspended', 'trashed' ), true ) ) {
+            if ( in_array( $act, array( 'deleted', 'removed', 'revoked', 'deactivated', 'disabled', 'suspended' ), true ) ) {
                 $color = 'red';
-            } elseif ( in_array( $act, array( 'updated', 'modified', 'unapproved', 'spammed' ), true ) ) {
+            } elseif ( in_array( $act, array( 'updated', 'modified' ), true ) ) {
                 $color = 'orange';
-            } elseif ( in_array( $act, array( 'added', 'activated', 'created', 'published', 'enabled', 'approved' ), true ) ) {
+            } elseif ( in_array( $act, array( 'added', 'activated', 'created', 'published', 'enabled' ), true ) ) {
                 $color = 'green';
             } elseif ( in_array( $act, array( 'synced', 'installed', 'uploaded' ), true ) ) {
                 $color = 'teal';
-            } elseif ( in_array( $act, array( 'opened', 'logged-in', 'logged-out', 'unspammed' ), true ) ) {
+            } elseif ( in_array( $act, array( 'opened', 'logged-in', 'logged-out' ), true ) ) {
                 $color = 'blue';
             } else {
                 $color = 'grey'; // fallback / unknown event

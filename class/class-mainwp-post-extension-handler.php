@@ -204,7 +204,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
      * @return void
      *
      * @uses \MainWP\Dashboard\MainWP_Api_Manager::license_key_deactivation()
-     * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
+     * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key()
      */
     public function deactivate_extension() {
         $this->check_security( 'mainwp_extension_deactivate' );
@@ -260,6 +260,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
      * @return void
      *
      * @uses \MainWP\Dashboard\MainWP_Api_Manager::grab_license_key()
+     * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key()
      */
     public function grab_extension_api_key() {
         $this->check_security( 'mainwp_extension_grabapikey' );
@@ -366,21 +367,20 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
         $result     = json_decode( $test, true );
         $save_login = ( isset( $_POST['saveLogin'] ) && ( 1 === (int) $_POST['saveLogin'] ) ) ? true : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $return     = array();
-        if ( is_array( $result ) ) {
-            if ( isset( $result['success'] ) && $result['success'] ) {
-                if ( $save_login ) {
-                    if ( empty( $api_key ) && isset( $result['master_api_key'] ) ) {
-                        $api_key = $result['master_api_key'];
-                    }
-                    MainWP_Keys_Manager::instance()->update_key_value( 'mainwp_extensions_master_api_key', $api_key );
-                    MainWP_Utility::update_option( 'mainwp_extensions_api_save_login', true );
-                    $plan_info = isset( $result['plan_info'] ) ? wp_json_encode( $result['plan_info'] ) : '';
-                    MainWP_Utility::update_option( 'mainwp_extensions_plan_info', $plan_info );
+
+        if ( is_array( $result ) && isset( $result['success'] ) && $result['success'] ) {
+            if ( $save_login ) {
+                if ( empty( $api_key ) && isset( $result['master_api_key'] ) ) {
+                    $api_key = $result['master_api_key'];
                 }
-                $return['result'] = 'SUCCESS';
-            } elseif ( isset( $result['error'] ) ) {
-                $return['error'] = $result['error'];
+                MainWP_Keys_Manager::instance()->update_key_value( 'mainwp_extensions_master_api_key', $api_key );
+                MainWP_Utility::update_option( 'mainwp_extensions_api_save_login', true );
+                $plan_info = isset( $result['plan_info'] ) ? wp_json_encode( $result['plan_info'] ) : '';
+                MainWP_Utility::update_option( 'mainwp_extensions_plan_info', $plan_info );
             }
+            $return['result'] = 'SUCCESS';
+        } elseif ( isset( $result['error'] ) ) {
+            $return['error'] = $result['error'];
         }
 
         if ( ! $save_login ) {
@@ -411,6 +411,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
      *
      * @uses \MainWP\Dashboard\MainWP_Api_Manager::verify_mainwp_api()
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
+     * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key()
      */
     public function test_extensions_api_login() {
         $this->check_security( 'mainwp_extension_testextensionapilogin' );

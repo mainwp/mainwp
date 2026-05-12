@@ -420,7 +420,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
 
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_getpurchased' );
 
-        $api_key = isset( $_POST['api_key'] ) ? trim( wp_unslash( $_POST['api_key'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $api_key = self::get_master_api_key();
 
         // MWP-1547: the Extensions page renders the sentinel placeholder
         // when a master key is already stored. The browser submits whatever
@@ -482,15 +482,13 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
         $installing_exts        = $not_installed_org_exts;
 
         if ( ! empty( $api_key ) ) {
-
-            $data = MainWP_Api_Manager::instance()->get_purchased_extension( $api_key );
-
-            $result = json_decode( $data, true );
+            $result = self::get_purchased_extension_data( $api_key );
             $return = array();
 
             if ( is_array( $result ) ) {
                 if ( isset( $result['success'] ) && $result['success'] ) {
-                    $purchased_data     = ( isset( $result['purchased_data'] ) && is_array( $result['purchased_data'] ) ) ? $result['purchased_data'] : array();
+                    $purchased_data = ( isset( $result['purchased_data'] ) && is_array( $result['purchased_data'] ) ) ? $result['purchased_data'] : array();
+
                     $not_purchased_exts = array_diff_key( $all_free_pro_exts, $purchased_data );
                     $installing_exts    = array_diff_key( $purchased_data, $installed_softwares );
                     $installing_exts    = array_merge( $installing_exts, $not_installed_org_exts );
@@ -577,7 +575,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                         $package_url = apply_filters( 'mainwp_api_manager_upgrade_package_url', $product_info['package'], $product_info );
 
                         $item_html = '
-                                    <div class="item extension extension-to-install ' . esc_attr( $add_on_model ) . '" download-link="' . esc_url( $package_url ) . '" plugin-slug="" product-id="' . esc_attr( $product_id ) . '" software-title="' . esc_attr( $software_title ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
+                                    <div class="item extension extension-to-install ' . esc_attr( $add_on_model ) . '" download-link="' . esc_url( $package_url ) . '" plugin-slug="" product-id="' . esc_attr( $product_id ) . '" software-title="' . esc_attr( $software_title ) . '" slug="' . esc_attr( $ext['slug'] ) . '" needs-license="' . ( 'pro' === $type ? '1' : '0' ) . '">
                                         <div class="ui stackable grid">
                                             <div class="two column row">
                                                 <div class="column"><span class="ui checkbox"><input type="checkbox" status="queue"><label>' . $ext_source_label . '<strong><a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</strong></label></span></div>
@@ -605,7 +603,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                     }
                 } elseif ( 'org' === $type ) {
                     $item_html = '
-                                <div class="item extension extension-to-install ' . esc_attr( $add_on_model ) . '" download-link="" plugin-slug="' . esc_attr( $ext['slug'] ) . '" product-id="' . esc_attr( $product_id ) . '" software-title="' . esc_attr( $software_title ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
+                                <div class="item extension extension-to-install ' . esc_attr( $add_on_model ) . '" download-link="" plugin-slug="' . esc_attr( $ext['slug'] ) . '" product-id="' . esc_attr( $product_id ) . '" software-title="' . esc_attr( $software_title ) . '" slug="' . esc_attr( $ext['slug'] ) . '" needs-license="0">
                                     <div class="ui stackable grid">
                                         <div class="two column row">
                                             <div class="column"><span class="ui checkbox"><input type="checkbox" status="queue"><label>' . $ext_source_label . '<strong><a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</strong></label></span></div>
@@ -914,6 +912,67 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
              * @since 5.2
              */
             do_action( 'mainwp_extensions_help_item' );
+        }
+    }
+
+    /**
+     * Method verify_api_key()
+     *
+     * Verify API Key for the current user.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::get_decrypt_master_api_key()
+     */
+    public static function get_master_api_key() {
+        $api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
+        if ( empty( $api_key ) ) {
+            die(
+                wp_json_encode(
+                    array(
+                        'error' => esc_html__( 'API Key is not set. Please set your API Key to retrieve purchased extensions.', 'mainwp' ),
+                    )
+                )
+            );
+        }
+
+        return $api_key;
+    }
+
+    /**
+     * Method get_purchased_extension_data()
+     *
+     * Get purchased extensions data from API or cache.
+     *
+     * @param string $api_key API Key to retrieve purchased extensions.
+     *
+     * @return array
+     *
+     * @uses \MainWP\Dashboard\MainWP_Api_Manager::get_purchased_extension()
+     */
+    public static function get_purchased_extension_data( $api_key ) {  // phpcs:ignore -- NOSONAR
+        if ( empty( $api_key ) ) {
+            return array( 'error' => esc_html__( 'API Key is not set. Please set your API Key to retrieve purchased extensions.', 'mainwp' ) );
+        }
+
+        $purchased_extensions_key = 'mainwp_purchased_extensions_data_' . md5( $api_key ); // phpcs:ignore
+        $purchased_data_cached    = get_transient( $purchased_extensions_key );
+        if ( false !== $purchased_data_cached ) {
+            return is_string( $purchased_data_cached ) ? json_decode( $purchased_data_cached, true ) : $purchased_data_cached;
+        }
+
+        try {
+            $response = MainWP_Api_Manager::instance()->get_purchased_extension( $api_key );
+            $data     = is_string( $response ) ? json_decode( $response, true ) : $response;
+
+            if ( is_array( $data ) && ! isset( $data['error'] ) ) {
+                set_transient( $purchased_extensions_key, $data, 7 * DAY_IN_SECONDS );
+            }
+
+            return $data;
+
+        } catch ( \Exception $e ) {
+            return array(
+                'error' => $e->getMessage(),
+            );
         }
     }
 }

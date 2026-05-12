@@ -186,6 +186,12 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         add_action( 'mainwp_render_updates', array( &$this, 'hook_render_updates' ), 10, 2 );
         add_filter( 'mainwp_get_wp_client_by', array( &$this, 'hook_get_wp_client_by' ), 10, 4 );
 
+        // Batch-preload uptime data to avoid per-row queries.
+        add_filter( 'mainwp_sitestable_prepared_items', array( &$this, 'hook_uptime_preload_data' ), 10, 4 );
+
+        // Intercept column rendering.
+        add_filter( 'mainwp_sitestable_display_row_columns', array( &$this, 'hook_uptime_intercept_column' ), 10, 4 );
+
         /**
          * Filter: mainwp_get_tokens_values
          *
@@ -1750,6 +1756,34 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      */
     public function hook_get_wp_client_by( $by = 'client_id', $value = null, $obj = OBJECT, $params = array() ) {
         return MainWP_DB_Client::instance()->get_wp_client_by( $by, $value, $obj, $params );
+    }
+
+    /**
+     * Method hook_uptime_preload_data().
+     *
+     * @param array  $websites Websites array.
+     * @param array  $site_ids Site IDs array.
+     *
+     * @return void
+     */
+    public function hook_uptime_preload_data( $websites, $site_ids ) {
+        MainWP_Monitoring_Handler::preload_uptime_data( $websites, $site_ids );
+    }
+
+    /**
+     * Method hook_uptime_intercept_column()
+     *
+     * Intercept column display in the sites table.
+     *
+     * @param string $content Column content.
+     * @param string $column_name Column name.
+     * @param array  $website Website data.
+     *
+     * @return string $content Modified column content.
+     */
+    public function hook_uptime_intercept_column( $content, $column_name, $website ) {
+        // Implementation for intercepting column display.
+        return MainWP_Monitoring_Handler::intercept_column( $content, $column_name, $website );
     }
 
     /**

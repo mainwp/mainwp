@@ -1433,6 +1433,14 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                 $disabled = ( ! $glo_active && ( ! isset( $website['active'] ) || -1 === (int) $website['active'] ) ) || ! isset( $website['active'] ) || 0 === (int) $website['active'];
 
                 foreach ( $columns as $column_name => $column_display_name ) {
+
+                    $column_content = apply_filters( 'mainwp_monitoring_sitestable_display_row_columns', false, $column_name, $website );
+
+                    if ( false !== $column_content ) {
+                        $cols_data[ $column_name ] = $column_content;
+                        continue;
+                    }
+
                     ob_start();
                     ?>
                     <?php if ( 'cb' === $column_name ) : ?>

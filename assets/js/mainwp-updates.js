@@ -4,6 +4,7 @@
 globalThis.mainwpVars = globalThis.mainwpVars || {};
 mainwpVars.errorCount = 0;
 mainwpVars.actionsErrors = {};
+mainwpVars.maxThreads = 3;
 
 globalThis.mainwp_put_actions_errors_msg = function (action, itemId, msgType, errorMsg) {
     mainwpVars.actionsErrors[action] = mainwpVars.actionsErrors?.[action] || {};
@@ -307,7 +308,7 @@ let updatesoverview_wordpress_upgrade_all_int = function (websiteIds) {
     updatesoverview_wordpress_upgrade_all_loop_next();
 };
 let updatesoverview_wordpress_upgrade_all_loop_next = function () {
-    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxUpdateThreads) && (mainwpVars.websitesLeft > 0)) {
+    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxThreads) && (mainwpVars.websitesLeft > 0)) {
         updatesoverview_wordpress_upgrade_all_upgrade_next();
     }
 };
@@ -574,7 +575,7 @@ let updatesoverview_translations_upgrade_all_int = function (slug, websiteIds, s
     updatesoverview_translations_upgrade_all_loop_next();
 };
 let updatesoverview_translations_upgrade_all_loop_next = function () {
-    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxUpdateThreads) && (mainwpVars.websitesLeft > 0)) {
+    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxThreads) && (mainwpVars.websitesLeft > 0)) {
         updatesoverview_translations_upgrade_all_upgrade_next();
     }
 };
@@ -623,24 +624,9 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
         let pBulkMode = bulkMode;
 
         let slugList = globalThis.mainwp_slug_list_to_array(pSlug);
-
-        const yithSlugList = slugList.filter(slg => slg.startsWith('yith-'));
-        const noneYithSlugs = slugList.filter(slg => !slg.startsWith('yith-'));
-
-        let currentSlug = '';
-        let slugParts = [];
-        let remainingSlugs = [];
-
-        if (noneYithSlugs.length > 0) {
-            currentSlug = noneYithSlugs.join(',');
-            slugParts = noneYithSlugs;
-            remainingSlugs = yithSlugList;
-        } else if (yithSlugList.length > 0) {
-            currentSlug = yithSlugList.shift();
-            remainingSlugs = yithSlugList;
-            slugParts = [currentSlug];
-        }
-
+        let currentSlug = slugList.shift();
+        let remainingSlugs = slugList;
+        let slugParts = [currentSlug];
         // Show icon waiting
         const regression_waiting_icon = render_html_regression_waiting_icon();
         let waiting_icon = render_tooltip_loading_icon('<i class="notched circle loading icon"></i> ' + __('Updating. Please wait...'));
@@ -670,13 +656,7 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
             data: data,
             success: function (pSlug, pWebsiteId, pBulkMode) { //NOSONAR
                 return function (response) { //NOSONAR
-                    let slugParts = [];
-                    if (pSlug.includes(',')) {
-                        slugParts = pSlug.split(',');
-                    } else {
-                        slugParts = [pSlug];
-                    }
-
+                    let slugParts = [pSlug];
                     let done = false;
                     for (let sid of slugParts) {
                         let _error = '';
@@ -742,12 +722,7 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
             retryLimit: 3,
             endError: function (pSlug, pWebsiteId, pBulkMode) {
                 return function () {
-                    let slugParts = [];
-                    if (pSlug.includes(',')) {
-                        slugParts = pSlug.split(',');
-                    } else {
-                        slugParts = [pSlug];
-                    }
+                    let slugParts = [pSlug];
                     let done = false;
                     for (let sid of slugParts) {
                         let result;
@@ -1033,7 +1008,7 @@ let updatesoverview_plugins_upgrade_all_int = function (slug, websiteIds, sitesP
     updatesoverview_plugins_upgrade_all_loop_next();
 };
 let updatesoverview_plugins_upgrade_all_loop_next = function () {
-    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxUpdateThreads) && (mainwpVars.websitesLeft > 0)) {
+    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxThreads) && (mainwpVars.websitesLeft > 0)) {
         updatesoverview_plugins_upgrade_all_upgrade_next();
     }
 };
@@ -1098,24 +1073,9 @@ let mainwp_handle_regression_final_icon = function (pWebsiteId, success_icon) {
 let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsiteId, pBulkMode, pLastResult) { // NOSONAR - nest functions.
     return function () {
         let slugList = globalThis.mainwp_slug_list_to_array(pSlug); // NOSONAR -- window is ok.
-
-        const yithSlugList = slugList.filter(slg => slg.startsWith('yith-'));
-        const noneYithSlugs = slugList.filter(slg => !slg.startsWith('yith-'));
-
-        let currentSlug = '';
-        let slugParts = [];
-        let remainingSlugs = [];
-
-        if (noneYithSlugs.length > 0) {
-            currentSlug = noneYithSlugs.join(',');
-            slugParts = noneYithSlugs;
-            remainingSlugs = yithSlugList;
-        } else if (yithSlugList.length > 0) {
-            currentSlug = yithSlugList.shift();
-            remainingSlugs = yithSlugList;
-            slugParts = [currentSlug];
-        }
-
+        let currentSlug = slugList.shift();
+        let remainingSlugs = slugList;
+        let slugParts = [currentSlug];
         let lastResult = pLastResult || null;
         const regression_waiting_icon = render_html_regression_waiting_icon();
         let waiting_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Updating...', 'mainwp') + '"><i class="notched circle loading icon"></i></span> ';
@@ -1144,12 +1104,7 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
             data: data,
             success: function (pSlug, pWebsiteId, pBulkMode) {
                 return function (response) { //NOSONAR
-                    let slugParts = [];
-                    if (pSlug.includes(',')) {
-                        slugParts = pSlug.split(',');
-                    } else {
-                        slugParts = [pSlug];
-                    }
+                    let slugParts = [pSlug];
                     let done = false;
                     let bulk_errors = [];
                     let _icon = '<i class="red times icon"></i>';
@@ -1232,12 +1187,7 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
             retryLimit: 3,
             endError: function (pSlug, pWebsiteId, pBulkMode) {
                 return function () {
-                    let slugParts = [];
-                    if (pSlug.includes(',')) {
-                        slugParts = pSlug.split(',');
-                    } else {
-                        slugParts = [pSlug];
-                    }
+                    let slugParts = [pSlug];
                     let done = false;
                     for (let sid of slugParts) {
                         //Siteview
@@ -1539,7 +1489,7 @@ let updatesoverview_themes_upgrade_all_int = function (slug, websiteIds, sitesTh
     updatesoverview_themes_upgrade_all_loop_next();
 };
 let updatesoverview_themes_upgrade_all_loop_next = function () {
-    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxUpdateThreads) && (mainwpVars.websitesLeft > 0)) {
+    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxThreads) && (mainwpVars.websitesLeft > 0)) {
         updatesoverview_themes_upgrade_all_upgrade_next();
     }
 };
@@ -1579,24 +1529,9 @@ let updatesoverview_themes_upgrade_all_update_done = function () {
 };
 let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode, lastResult) {
     let slugList = globalThis.mainwp_slug_list_to_array(slug); // NOSONAR -- window is ok.
-
-    const yithSlugList = slugList.filter(slg => slg.startsWith('yith-'));
-    const noneYithSlugs = slugList.filter(slg => !slg.startsWith('yith-'));
-
-    let currentSlug = '';
-    let slugParts = [];
-    let remainingSlugs = [];
-
-    if (noneYithSlugs.length > 0) {
-        currentSlug = noneYithSlugs.join(',');
-        slugParts = noneYithSlugs;
-        remainingSlugs = yithSlugList;
-    } else if (yithSlugList.length > 0) {
-        currentSlug = yithSlugList.shift();
-        remainingSlugs = yithSlugList;
-        slugParts = [currentSlug];
-    }
-
+    let currentSlug = slugList.shift();
+    let remainingSlugs = slugList;
+    let slugParts = [currentSlug];
     let lastResultFinal = lastResult || null;
     // Show icon waiting
     const regression_waiting_icon = render_html_regression_waiting_icon();
@@ -1625,12 +1560,7 @@ let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode, la
         data: data,
         success: function (pSlug, pWebsiteId, pBulkMode) {
             return function (response) { // NOSONAR - complex.
-                let slugParts = [];
-                if (pSlug.includes(',')) {
-                    slugParts = pSlug.split(',');
-                } else {
-                    slugParts = [pSlug];
-                }
+                let slugParts = [pSlug];
                 let done = false;
 
                 let bulk_errors = [];
@@ -1718,12 +1648,7 @@ let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode, la
         retryLimit: 3,
         endError: function (pSlug, pWebsiteId, pBulkMode) {
             return function () {
-                let slugParts = [];
-                if (pSlug.includes(',')) {
-                    slugParts = pSlug.split(',');
-                } else {
-                    slugParts = [pSlug];
-                }
+                let slugParts = [pSlug];
                 let done = false;
                 for (let sid of slugParts) {
                     let websiteHolder = jQuery('div[theme_slug="' + sid + '"] div[site_id="' + pWebsiteId + '"]');
@@ -2005,7 +1930,7 @@ let updatesoverview_upgrade_all_int = function (pSitesToUpdate, pSitesToUpgrade,
 };
 
 let updatesoverview_upgrade_all_loop_next = function () {
-    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxUpdateThreads) && (mainwpVars.websitesLeft > 0)) {
+    while (mainwpVars.bulkTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxThreads) && (mainwpVars.websitesLeft > 0)) {
         updatesoverview_upgrade_all_upgrade_next();
     }
 };
@@ -2104,19 +2029,8 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
 
     if (!pThemeDone) {
         let themeSlugList = globalThis.mainwp_slug_list_to_array(pThemeSlugToUpgrade);
-
-        const yithSlugList = themeSlugList.filter(slg => slg.startsWith('yith-'));
-        let currentThemeSlug = '';
-        let remainingThemeSlugs = '';
-
-        if (yithSlugList.length > 0) {
-            currentThemeSlug = themeSlugList.shift();
-            remainingThemeSlugs = themeSlugList.join(',');
-        } else {
-            currentThemeSlug = pThemeSlugToUpgrade;
-            remainingThemeSlugs = '';
-        }
-
+        let currentThemeSlug = themeSlugList.shift();
+        let remainingThemeSlugs = themeSlugList.join(',');
         let data = mainwp_secure_data({
             action: 'mainwp_upgradeplugintheme',
             websiteId: pWebsiteId,
@@ -2206,26 +2120,14 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
             endError: function (pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pPluginDone, pUpgradeDone, pTransSlugToUpgrade, pTransDone) {
                 return function () {
                     let remainingThemeSlugs = globalThis.mainwp_slug_list_to_array(pThemeSlugToUpgrade);
-
-                    const yithSlugList = remainingThemeSlugs.filter(slg => slg.startsWith('yith-'));
-
-                    let pThemeDone = true;
-
-                    if (yithSlugList.length > 0) {
-                        remainingThemeSlugs.shift();
-                        remainingThemeSlugs = remainingThemeSlugs.join(',');
-                        pThemeDone = remainingThemeSlugs === '';
-                    } else {
-                        remainingThemeSlugs = pThemeSlugToUpgrade;
-                    }
-
-
+                    remainingThemeSlugs.shift();
+                    remainingThemeSlugs = remainingThemeSlugs.join(',');
                     let params = {
                         'pWebsiteId': pWebsiteId,
                         'pThemeSlugToUpgrade': remainingThemeSlugs,
                         'pPluginSlugToUpgrade': pPluginSlugToUpgrade,
                         'pWordpressUpgrade': pWordpressUpgrade,
-                        'pThemeDone': pThemeDone,
+                        'pThemeDone': remainingThemeSlugs === '',
                         'pPluginDone': pPluginDone,
                         'pUpgradeDone': pUpgradeDone,
                         'pErrorMessage': 'Error processing request',
@@ -2257,19 +2159,8 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
         });
     } else if (!pPluginDone) {
         let pluginSlugList = globalThis.mainwp_slug_list_to_array(pPluginSlugToUpgrade);
-
-        const yithSlugList = pluginSlugList.filter(slg => slg.startsWith('yith-'));
-        let currentPluginSlug = '';
-        let remainingPluginSlugs = '';
-
-        if (yithSlugList.length > 0) {
-            currentPluginSlug = pluginSlugList.shift();
-            remainingPluginSlugs = pluginSlugList.join(',');
-        } else {
-            currentPluginSlug = pPluginSlugToUpgrade;
-            remainingPluginSlugs = '';
-        }
-
+        let currentPluginSlug = pluginSlugList.shift();
+        let remainingPluginSlugs = pluginSlugList.join(',');
         let data = mainwp_secure_data({
             action: 'mainwp_upgradeplugintheme',
             websiteId: pWebsiteId,
@@ -2296,12 +2187,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                         mainwpVars.errorCount++;
 
                     } else {
-                        let slugParts = [];
-                        if (pSlug.includes(',')) {
-                            slugParts = pSlug.split(',');
-                        } else {
-                            slugParts = [pSlug];
-                        }
+                        let slugParts = [pSlug];
                         for (let sid of slugParts) {
                             let result;
                             let websiteHolder = jQuery('div[plugin_slug="' + sid + '"] div[site_id="' + pWebsiteId + '"]');
@@ -2360,25 +2246,15 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
             endError: function (pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pUpgradeDone, pTransSlugToUpgrade, pTransDone) {
                 return function () {
                     let remainingPluginSlugs = globalThis.mainwp_slug_list_to_array(pPluginSlugToUpgrade);
-                    const yithSlugList = remainingPluginSlugs.filter(slg => slg.startsWith('yith-'));
-
-                    let pPluginDone = true;
-
-                    if (yithSlugList.length > 0) {
-                        remainingPluginSlugs.shift();
-                        remainingPluginSlugs = remainingPluginSlugs.join(',');
-                        pPluginDone = remainingPluginSlugs === '';
-                    } else {
-                        remainingPluginSlugs = pPluginSlugToUpgrade;
-                    }
-
+                    remainingPluginSlugs.shift();
+                    remainingPluginSlugs = remainingPluginSlugs.join(',');
                     let params = {
                         'pWebsiteId': pWebsiteId,
                         'pThemeSlugToUpgrade': pThemeSlugToUpgrade,
                         'pPluginSlugToUpgrade': remainingPluginSlugs,
                         'pWordpressUpgrade': pWordpressUpgrade,
                         'pThemeDone': pThemeDone,
-                        'pPluginDone': pPluginDone,
+                        'pPluginDone': remainingPluginSlugs === '',
                         'pUpgradeDone': pUpgradeDone,
                         'pErrorMessage': 'Error processing request',
                         'pTransSlugToUpgrade': pTransSlugToUpgrade,
@@ -2513,20 +2389,8 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
         });
     } else if (!pTransDone) { // NOSONAR - condition ok.
         let transSlugList = globalThis.mainwp_slug_list_to_array(pTransSlugToUpgrade);
-
-        const yithSlugList = transSlugList.filter(slg => slg.startsWith('yith-'));
-
-        let currentTransSlug = '';
-        let remainingTransSlugs = '';
-
-        if (yithSlugList.length > 0) {
-            currentTransSlug = transSlugList.shift();
-            remainingTransSlugs = transSlugList.join(',');
-        } else {
-            currentTransSlug = pTransSlugToUpgrade;
-            remainingTransSlugs = '';
-        }
-
+        let currentTransSlug = transSlugList.shift();
+        let remainingTransSlugs = transSlugList.join(',');
         let data = mainwp_secure_data({
             action: 'mainwp_upgradeplugintheme',
             websiteId: pWebsiteId,
@@ -2553,12 +2417,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                         mainwpVars.errorCount++;
 
                     } else {
-                        let slugParts = [];
-                        if (pSlug.includes(',')) {
-                            slugParts = pSlug.split(',');
-                        } else {
-                            slugParts = [pSlug];
-                        }
+                        let slugParts = [pSlug];
                         for (let sid of slugParts) {
                             let result;
                             let websiteHolder = jQuery('div[translation_slug="' + sid + '"] div[site_id="' + pWebsiteId + '"]');
@@ -2612,19 +2471,8 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
             endError: function (pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pUpgradeDone, pTransSlugToUpgrade) {
                 return function () {
                     let remainingTransSlugs = globalThis.mainwp_slug_list_to_array(pTransSlugToUpgrade);
-
-                    const yithSlugList = remainingTransSlugs.filter(slg => slg.startsWith('yith-'));
-
-                    let pTransDone = true;
-
-                    if (yithSlugList.length > 0) {
-                        remainingTransSlugs.shift();
-                        remainingTransSlugs = remainingTransSlugs.join(',');
-                        pTransDone = remainingTransSlugs === '';
-                    } else {
-                        remainingTransSlugs = pTransSlugToUpgrade;
-                    }
-
+                    remainingTransSlugs.shift();
+                    remainingTransSlugs = remainingTransSlugs.join(',');
                     let params = {
                         'pWebsiteId': pWebsiteId,
                         'pThemeSlugToUpgrade': pThemeSlugToUpgrade,
@@ -2635,7 +2483,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                         'pUpgradeDone': pUpgradeDone,
                         'pErrorMessage': 'Error processing request',
                         'pTransSlugToUpgrade': remainingTransSlugs,
-                        'pTransDone': pTransDone
+                        'pTransDone': remainingTransSlugs === ''
                     };
                     updatesoverview_upgrade_int_loop_flow(params);
                 }
@@ -3962,7 +3810,7 @@ let mainwp_master_checkbox_init = function ($) {
 
 }
 // This function need to update when datatable changed it's style.
-globalThis.mainwp_table_check_columns_init = function (pTableSelector = 'table') {
+globalThis.mainwp_table_check_columns_init = function (pTableSelector = 'table' ) {
     let tblSelect = pTableSelector;
     jQuery(document).find(tblSelect + ' th.check-column .checkbox').checkbox({ // table headers.
         // check all children

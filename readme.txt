@@ -1,4 +1,4 @@
-=== MainWP Dashboard: Self-hosted WordPress Management for Agencies ===
+=== MainWP Dashboard: Self-hosted WordPress Management for Agencies  ===
 Contributors: mainwp
 Tags: manage multiple WordPress sites, WordPress maintenance, update, backups, security
 Author: mainwp
@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.9.4
 Requires PHP: 7.4
-Stable tag: 6.1-er.1
+Stable tag: 6.0.8
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -41,7 +41,7 @@ All of this makes MainWP the best non-SaaS alternative to ManageWP, InfiniteWP, 
 
 MainWP is designed to be user-friendly and intuitive, even for those new to WordPress management plugins. With a straightforward setup process and a clean, organized dashboard, you'll be able to start managing your WordPress sites efficiently in no time.
 
-* Setting up MainWP is straightforward, install the dashboard on a private WordPress site, add the MainWP Child plugin to your other WordPress sites, and take control.
+* Setting up MainWP is straightforward—install the dashboard on a private WordPress site, add the MainWP Child plugin to your other WordPress sites, and take control.
 
 **Your Guarantee of Privacy**
 
@@ -54,10 +54,10 @@ MainWP Dashboard is [100% FREE](https://mainwp.com/mainwp-free-features/) and al
 We make money by offering [MainWP Pro](https://mainwp.com/signup/), which provides access to a wide range of premium add-ons. These premium add-ons are organized into two clear categories:
 
 - **Integrations:**
- Add-ons in this category enable seamless connections with popular third-party services and plugins, allowing you to integrate the tools you already use directly into your MainWP Dashboard.
+  Add-ons in this category enable seamless connections with popular third-party services and plugins, allowing you to integrate the tools you already use directly into your MainWP Dashboard.
 
 - **Extensions:**
- These are custom-built, standalone add-ons developed exclusively for the MainWP Dashboard, designed to add unique and specialized functionality to enhance your WordPress management experience.
+  These are custom-built, standalone add-ons developed exclusively for the MainWP Dashboard, designed to add unique and specialized functionality to enhance your WordPress management experience.
 
 For more details, visit our [Premium Add-ons](https://mainwp.com/mainwp-add-ons/) page and see how our free and pro features compare at [Free vs. Pro: Know the Difference](https://mainwp.com/free-vs-pro/).
 
@@ -147,69 +147,6 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 11. Dashboard Insights
 
 == Changelog ==
-
-= 6.1 =
-* Important: Version 6.1 includes internal connection handling changes. Rolling back to a version earlier than 6.1 may temporarily disconnect child sites from your MainWP Dashboard. If this happens, reconnect the affected sites from the Manage Sites page using the Reconnect bulk action.
-* Updated: Improved code quality and internal handling in several areas.
-
-= 6.0.12 - 5-5-2026 =
-
-* Fixed: Improved site management stability with enhanced handling of site data to prevent errors in edge cases.
-* Fixed: An issue with logging auto-updates in the Network Activity logs.
-* Updated: Improved performance when performing bulk syncing.
-* Dev: Preserve response envelope for `_fields` REST API v2 requests in sites controller.
-
-= 6.0.11 - 4-28-2026 =
-
-* Fixed: Improved performance when performing bulk updates.
-* Fixed: The "Updates Overview" widget now includes only connected child sites in its overview counts.
-* Added: A duplicate cost action to create a prefilled copy of an operational cost. [(Feature request by Stéphane)](https://voice.mainwp.com/p/cost-tracker-duplication)
-* Added: A WordPress tab path to access ignored core updates through the existing "View Ignored Updates" button.
-* Added: Support for the `custom_fields` parameter in the `sites` REST API endpoint.
-* Added: "Copy Permalink" and "Copy ID" actions to the pages and posts table dropdown menus.
-* Updated: Server Information report exports now always use English to make support requests easier to review.
-* Updated: Cache invalidation is now limited to fewer scenarios to reduce unnecessary cache clearing.
-* Updated: Changed the default value of the `mainwp_module_log_disable_cron_log` filter to `false` so cron logging remains enabled by default.
-* Updated: Kept abandoned check actions visible in empty states for easier access.
-* Updated: Centralized screenshot URL generation and thumbnail metadata across pages for more consistent and maintainable preview behavior.
-
-= 6.0.11-er.2 - 4-24-2026 =
-
-* Fixed: Improved performance when performing bulk updates.
-* Added: A WordPress tab path to access ignored core updates through the existing "View Ignored Updates" button.
-* Added: Support for the `custom_fields` parameter in the `sites` REST API endpoint.
-* Updated: Kept abandoned check actions visible in empty states for easier access.
-* Updated: Centralized screenshot URL generation and thumbnail metadata across pages for more consistent and maintainable preview behavior.
-
-= 6.0.11-er.1 - 4-22-2026 =
-
-* Fixed: The "Updates Overview" widget now includes only connected child sites in its overview counts.
-* Added: A duplicate cost action to create a prefilled copy of an operational cost. ([Request by Stéphane])[https://voice.mainwp.com/p/cost-tracker-duplication]
-* Added: "Copy Permalink" and "Copy ID" actions to the pages and posts table dropdown menus.
-* Updated: Server Information report exports now always use English to make support requests easier to review.
-* Updated: Cache invalidation is now limited to fewer scenarios to reduce unnecessary cache clearing.
-* Updated: Changed the default value of the `mainwp_module_log_disable_cron_log` filter to `false` so cron logging remains enabled by default.
-
-= 6.0.10 - 4-21-2026 =
-
-* Fixed: Resolved an issue that could reduce concurrency during plugin and theme installation and update processes.
-* Fixed: Improved site selection for continued updates to reduce missed or duplicate update runs.
-* Fixed: Restricted monitor widget data to authorized sites only and improved monitor status query performance.
-* Updated: Improved site loading performance by optimizing site queries and refining filtering, sorting, and cache handling.
-
-= 6.0.9 - 4-14-2026 =
-
-* Fixed: Improved uptime monitoring status tracking and retry behavior for failed health checks to provide more reliable monitoring results.
-* Fixed: String concatenation in `mainwp.js` that introduced an extra semicolon when rendering site links.
-* Fixed: Resolved an issue that could reduce sync concurrency during site synchronization.
-* Added: Global search for filtering all system report tables.
-* Added: A detected issues summary and report tables for each system report section.
-* Updated: Improved diagnostics for REST API reachability and dashboard self-connect checks, including safer handling of unexpected response body output.
-* Updated: Refreshed the "Server Information" page UX with cleaner issue summary rows and more consistent section spacing.
-* Updated: Expanded Network Activity tracking to monitor core, plugin, and theme updates handled by WordPress auto-updates.
-* Updated: Improved performance by better isolating data so settings and options are correctly scoped per child site.
-* Updated: Click handler to sidebar site items to toggle accordion when clicking outside title/content.
-* Updated: Adjusted dark theme CSS so sidebar accordion title/content use transparent background.
 
 = 6.0.8 - 4-7-2026 =
 

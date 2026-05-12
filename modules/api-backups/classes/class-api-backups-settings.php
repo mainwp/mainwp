@@ -10,7 +10,6 @@
 
 namespace MainWP\Dashboard\Module\ApiBackups;
 
-use MainWP\Dashboard\MainWP_Credential_Render;
 use MainWP\Dashboard\MainWP_UI;
 use MainWP\Dashboard\MainWP_Settings_Indicator;
 use MainWP\Dashboard\MainWP_Settings;
@@ -370,7 +369,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="five wide column">
-                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_cloudways_api_key" id="mainwp_cloudways_api_key" value="<?php echo esc_attr( MainWP_Credential_Render::value_for_input( ! empty( $_api_key ) ) ); ?>" autocomplete="new-password"  />
+                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_cloudways_api_key" id="mainwp_cloudways_api_key" value="<?php echo esc_attr( $_api_key ); ?>"  />
                                         </div>
                                     </div>
                                     <?php
@@ -437,7 +436,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="five wide column">
-                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_gridpane_api_key" id="mainwp_gridpane_api_key" value="<?php echo esc_attr( MainWP_Credential_Render::value_for_input( ! empty( $_api_key ) ) ); ?>" autocomplete="new-password"  />
+                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_gridpane_api_key" id="mainwp_gridpane_api_key" value="<?php echo esc_attr( $_api_key ); ?>"  />
                                         </div>
                                     </div>
                                     <?php
@@ -505,7 +504,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="five wide column">
-                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_vultr_api_key" id="mainwp_vultr_api_key" value="<?php echo esc_attr( MainWP_Credential_Render::value_for_input( ! empty( $_api_key ) ) ); ?>" autocomplete="new-password"  />
+                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_vultr_api_key" id="mainwp_vultr_api_key" value="<?php echo esc_attr( $_api_key ); ?>"  />
                                         </div>
                                     </div>
                                     <?php
@@ -574,7 +573,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="five wide column">
-                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_linode_api_key" id="mainwp_linode_api_key" value="<?php echo esc_attr( MainWP_Credential_Render::value_for_input( ! empty( $_api_key ) ) ); ?>" autocomplete="new-password"  />
+                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_linode_api_key" id="mainwp_linode_api_key" value="<?php echo esc_attr( $_api_key ); ?>"  />
                                         </div>
                                     </div>
                                     <?php
@@ -643,7 +642,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="five wide column">
-                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_digitalocean_api_key" id="mainwp_digitalocean_api_key" value="<?php echo esc_attr( MainWP_Credential_Render::value_for_input( ! empty( $_api_key ) ) ); ?>" autocomplete="new-password"  />
+                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_digitalocean_api_key" id="mainwp_digitalocean_api_key" value="<?php echo esc_attr( $_api_key ); ?>"  />
                                         </div>
                                     </div>
                                     <?php
@@ -732,7 +731,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="five wide column">
-                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_cpanel_account_password" id="mainwp_cpanel_account_password" value="<?php echo esc_attr( MainWP_Credential_Render::value_for_input( ! empty( $_api_key ) ) ); ?>" autocomplete="new-password"  />
+                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_cpanel_account_password" id="mainwp_cpanel_account_password" value="<?php echo esc_attr( $_api_key ); ?>"  />
                                         </div>
                                     </div>
                                     <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cpanel-settings">
@@ -821,7 +820,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="five wide column">
-                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_plesk_api_key" id="mainwp_plesk_api_key" value="<?php echo esc_attr( MainWP_Credential_Render::value_for_input( ! empty( $_api_key ) ) ); ?>" autocomplete="new-password"  />
+                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_plesk_api_key" id="mainwp_plesk_api_key" value="<?php echo esc_attr( $_api_key ); ?>"  />
                                         </div>
                                     </div>
                                     <?php
@@ -910,7 +909,7 @@ class Api_Backups_Settings {
                                             ?>
                                         </label>
                                         <div class="five wide column">
-                                            <input type="password" name="mainwp_kinsta_api_key" id="mainwp_kinsta_api_key" value="<?php echo esc_attr( MainWP_Credential_Render::value_for_input( ! empty( $_api_key ) ) ); ?>" autocomplete="new-password"  />
+                                            <input type="password" name="mainwp_kinsta_api_key" id="mainwp_kinsta_api_key" value="<?php echo esc_attr( $_api_key ); ?>"  />
                                         </div>
                                     </div>
 
@@ -1194,7 +1193,7 @@ class Api_Backups_Settings {
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Password', 'mainwp' ); ?></label>
                         <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the cPanel Account Password.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <div class="ui left labeled input">
-                                <input type="password" name="mainwp_cpanel_account_password" id="mainwp_cpanel_account_password" value="<?php echo esc_attr( MainWP_Credential_Render::value_for_input( ! empty( $cpanel_account_password ) ) ); ?>" autocomplete="new-password" />
+                                <input type="password" name="mainwp_cpanel_account_password" id="mainwp_cpanel_account_password" value="<?php echo esc_attr( $cpanel_account_password ); ?>"  />
                             </div>
                         </div>
                     </div>
@@ -1240,7 +1239,7 @@ class Api_Backups_Settings {
                                 <?php
                                     $plesk_api_key = Api_Backups_Utility::get_instance()->get_child_api_key( $website, 'plesk' );
                                 ?>
-                                <input type="password" name="mainwp_plesk_api_key" id="mainwp_plesk_api_key" value="<?php echo esc_attr( MainWP_Credential_Render::value_for_input( ! empty( $plesk_api_key ) ) ); ?>" autocomplete="new-password" />
+                                <input type="password" name="mainwp_plesk_api_key" id="mainwp_plesk_api_key" value="<?php echo esc_attr( $plesk_api_key ); ?>"  />
                             </div>
                         </div>
                     </div>
@@ -1286,7 +1285,7 @@ class Api_Backups_Settings {
                                 <?php
                                     $kinsta_api_key = Api_Backups_Utility::get_instance()->get_child_api_key( $website, 'kinsta' );
                                 ?>
-                                <input type="password" name="mainwp_kinsta_api_key" id="mainwp_kinsta_api_key" value="<?php echo esc_attr( MainWP_Credential_Render::value_for_input( ! empty( $kinsta_api_key ) ) ); ?>" autocomplete="new-password" />
+                                <input type="password" name="mainwp_kinsta_api_key" id="mainwp_kinsta_api_key" value="<?php echo esc_attr( $kinsta_api_key ); ?>"  />
                             </div>
                         </div>
                     </div>

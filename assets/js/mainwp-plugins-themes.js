@@ -263,7 +263,7 @@ jQuery(function () {
     globalThis.mainwp_notes_plugin_save = function () {
         let slug = jQuery('#mainwp-notes-slug').val();
         let newnote = jQuery('#mainwp-notes-note').val();
-        newnote = newnote.replaceAll(/\r\n|\r|\n/g, '<br>');
+        newnote = newnote.replaceAll(/\r?\n/, '<br>');
         let data = mainwp_secure_data({
             action: 'mainwp_trusted_plugin_notes_save',
             slug: slug,
@@ -276,7 +276,7 @@ jQuery(function () {
             return function (response) {
                 let rowEl = jQuery('tr[plugin-slug="' + pSlug + '"]');
                 if (response.result == 'SUCCESS') {
-                    jQuery('#mainwp-notes-status').html(__('Note saved successfully.')).addClass('green');
+                    jQuery('#mainwp-notes-status').html('<i class="green check icon"></i> ' + __('Note saved!'));
                     rowEl.find('.esc-content-note').html(response?.esc_note_content??'');
                     jQuery('#mainwp-notes-html').html(response?.esc_note_content??'');
 
@@ -293,15 +293,6 @@ jQuery(function () {
                 }
             }
         }(slug), 'json');
-        setTimeout(function () {
-            jQuery('#mainwp-notes-status').fadeOut(300);
-        }, 3000);
-
-        jQuery('#mainwp-notes-html').show();
-        jQuery('#mainwp-notes-editor').hide();
-        jQuery('#mainwp-notes-save').hide();
-        jQuery('#mainwp-notes-edit').show();
-
         return false;
     }
 
@@ -321,7 +312,7 @@ jQuery(function () {
     globalThis.mainwp_notes_theme_save = function () {
         let slug = jQuery('#mainwp-notes-slug').val();
         let newnote = jQuery('#mainwp-notes-note').val();
-        newnote = newnote.replaceAll(/\r\n|\r|\n/g, '<br>');
+        newnote = newnote.replaceAll(/\r?\n/, '<br>');
 
         let data = mainwp_secure_data({
             action: 'mainwp_trusted_theme_notes_save',
@@ -329,13 +320,13 @@ jQuery(function () {
             note: newnote
         });
 
-        jQuery('#mainwp-notes-status').html('<i class="notched circle loading icon"></i> ' + __('Saving note. Please wait...')).show();
+        jQuery('#mainwp-notes-status').html('<i class="notched circle loading icon"></i> ' + __('Saving note. Please wait...'));
 
         jQuery.post(ajaxurl, data, function (pSlug) {
             return function (response) {
                 let rowEl = jQuery('tr[theme-slug="' + pSlug + '"]');
                 if (response.result == 'SUCCESS') {
-                    jQuery('#mainwp-notes-status').html(__('Note saved successfully.')).addClass('green');
+                    jQuery('#mainwp-notes-status').html('<i class="green check icon"></i> ' + __('Note saved!'));
                     rowEl.find('.esc-content-note').html(response?.esc_note_content??'');
                     jQuery('#mainwp-notes-html').html(response?.esc_note_content??'');
                     if (newnote == '') {
@@ -350,15 +341,6 @@ jQuery(function () {
                 }
             }
         }(slug), 'json');
-        setTimeout(function () {
-            jQuery('#mainwp-notes-status').fadeOut(300);
-        }, 3000);
-
-        jQuery('#mainwp-notes-html').show();
-        jQuery('#mainwp-notes-editor').hide();
-        jQuery('#mainwp-notes-save').hide();
-        jQuery('#mainwp-notes-edit').show();
-
         return false;
     }
 });

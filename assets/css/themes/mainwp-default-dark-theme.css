@@ -277,6 +277,11 @@
   color: var(--mainwp-base-background);
 }
 
+.mainwp-ui.mainwp-custom-theme .ui.orange.label:not(.basic, .corner) {
+  background-color: var(--mainwp-orange) !important;
+  color: var(--mainwp-base-background) !important;
+}
+
 .mainwp-ui.mainwp-custom-theme .ui.blue.label:not(.basic, .corner) {
   background-color: var(--mainwp-blue) !important;
   color: var(--mainwp-text);
@@ -1789,6 +1794,11 @@ body.mainwp-ui.mainwp-custom-theme,
 
 .mainwp-ui.mainwp-custom-theme #mainwp-sites-sidebar-menu.ui.vertical.menu .item:after {
   display: none !important;
+}
+
+.mainwp-ui.mainwp-custom-theme #mainwp-sites-sidebar-menu.ui.accordion .title,
+.mainwp-ui.mainwp-custom-theme #mainwp-sites-sidebar-menu.ui.accordion .content {
+  background: none !important;
 }
 
 /* Grids

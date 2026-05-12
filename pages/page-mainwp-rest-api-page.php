@@ -403,8 +403,14 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 }
             }
             $this->invalidate_warm_cache();
-            MainWP_DB::instance()->insert_rest_api_key( $consumer_key, $consumer_secret, $scope, $desc, $enabled );
-            // end.
+            $api_key = MainWP_DB::instance()->insert_rest_api_key( $consumer_key, $consumer_secret, $scope, $desc, $enabled );
+            // insert_rest_api_key() returns false when wpdb->insert() fails.
+            // Without this guard the redirect would still claim success even
+            // though no row was persisted.
+            if ( ! is_array( $api_key ) || empty( $api_key['key_id'] ) ) {
+                wp_safe_redirect( admin_url( 'admin.php?page=RESTAPI&message=create_failed' ) ); //phpcs:ignore -- ok.
+                exit();
+            }
             wp_safe_redirect( admin_url( 'admin.php?page=RESTAPI&message=created' ) ); //phpcs:ignore -- ok.
             exit();
         }
@@ -1143,13 +1149,20 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * Method show_messages().
      */
     public static function show_messages() {
-        $msg = '';
-        if ( isset( $_GET['message'] ) && ( 'saved' === $_GET['message'] || 'created' === $_GET['message'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            $msg = esc_html__( 'API Key have been saved successfully!', 'mainwp' );
+        $msg  = '';
+        $tone = 'green';
+        if ( isset( $_GET['message'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+            $message = sanitize_key( wp_unslash( $_GET['message'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
+            if ( 'saved' === $message || 'created' === $message ) {
+                $msg = esc_html__( 'API Key have been saved successfully!', 'mainwp' );
+            } elseif ( 'create_failed' === $message ) {
+                $msg  = esc_html__( 'Could not save the API key. The credential was generated but the database did not accept the insert, so no key was stored. Please try again or contact MainWP support if the problem persists.', 'mainwp' );
+                $tone = 'red';
+            }
         }
         if ( ! empty( $msg ) ) {
             ?>
-            <div class="ui green message"><i class="close icon"></i><?php echo esc_html( $msg ); ?></div>
+            <div class="ui <?php echo esc_attr( $tone ); ?> message"><i class="close icon"></i><?php echo esc_html( $msg ); ?></div>
             <?php
         }
     }
@@ -1784,7 +1797,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     <div class="middle aligned column">
                         <?php if ( $can_add ) : ?>
                             <button type="button" class="ui mini green button"
-                                id="mainwp-create-application-password-button"><?php esc_html_e( 'Add Application Password', 'mainwp' ); ?></button>
+                                id="mainwp-create-application-password-button-top"><?php esc_html_e( 'Add Application Password', 'mainwp' ); ?></button>
                         <?php endif; ?>
                     </div>
                     <div class="right aligned middle aligned column">

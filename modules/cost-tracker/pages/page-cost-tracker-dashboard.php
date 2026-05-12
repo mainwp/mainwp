@@ -959,6 +959,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                                     <?php endif; ?>
                                     <span style="display: none" id="sub-notes-<?php echo intval( $subscription->id ); ?>-note"><?php echo wp_unslash( $esc_note ); //phpcs:ignore -- escaped. ?></span>
                                     <a class="item subscription_menu_item_delete" href="javascript:void(0)"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+                                    <a class="item subscription_menu_item_duplicate" href="admin.php?page=CostTrackerAdd&duplicate_id=<?php echo intval( $subscription->id ); ?>"><?php esc_html_e( 'Duplicate', 'mainwp' ); ?></a>
                                 </div>
                             </div>
                             <?php

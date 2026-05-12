@@ -101,7 +101,6 @@ let mainwp_restapi_bulk_remove_specific = function (pCheckedBox) {
  */
 const init_application_passwords = ($) => {
     const app_pass_section = $("#rest-application-passwords-settings");
-    const create_button = $("#mainwp-create-application-password-button");
     const create_modal = $("#mainwp-create-application-password-modal");
     const success_modal = $("#mainwp-application-password-success-modal");
     const app_pass_name_input = $("#mainwp-app-password-name-input");
@@ -365,7 +364,7 @@ const init_application_passwords = ($) => {
     /**
      * Open create modal
      */
-    create_button.on("click", () => {
+    $("#mainwp-create-application-password-button-top, #mainwp-create-application-password-button").on("click", () => {
         app_pass_name_input.val("");
         const submit_btn = $("#mainwp-create-app-password-submit");
         submit_btn.addClass("disabled");

@@ -75,8 +75,18 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
             $where .= ' wp.suspended = 0 AND';
         }
 
+        $view_selects = '';
+        $view_joins   = '';
+
+        $opts_view = $this->get_wp_options_join( array( 'favi_icon' ) );
+
+        if ( is_array( $opts_view ) && ! empty( $opts_view['selects'] ) ) {
+            $view_selects = ',' . $opts_view['selects'];
+            $view_joins   = $opts_view['joins'];
+        }
+
         $sql = $wpdb->prepare(
-            'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid JOIN ' . $this->get_wp_options_view( array( 'favi_icon' ) ) . ' wp_optionview ON wp.id = wp_optionview.wpid WHERE ' . $where . ' ( wp_sync.dtsAutomaticSyncStart = 0 OR  wp_sync.dtsAutomaticSyncStart < %d ) ORDER BY wp_sync.dtsAutomaticSyncStart ASC LIMIT  %d',
+            'SELECT wp.*,wp_sync.*' . $view_selects . ' FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid ' . $view_joins . ' WHERE ' . $where . ' ( wp_sync.dtsAutomaticSyncStart = 0 OR  wp_sync.dtsAutomaticSyncStart < %d ) GROUP BY wp.id ORDER BY wp_sync.dtsAutomaticSyncStart ASC LIMIT  %d',
             $lasttime_start,
             $limit
         );
@@ -123,11 +133,10 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
      * @param int  $lasttime_start Lasttime start automatic update.
      * @param bool $connected Requires sites connected.
      * @param bool $not_suspended Requires sites unsuspended.
-     * @param int  $timeout Time in seconds to consider a site as timed out for updates.
      *
      * @return object|null Database query result or null on failure.
      */
-    public function get_websites_to_continue_updates( $limit, $lasttime_start, $connected = false, $not_suspended = false, $timeout = 0 ) {
+    public function get_websites_to_continue_updates( $limit, $lasttime_start, $connected = false, $not_suspended = false ) {
 
         if ( empty( $lasttime_start ) ) {
             return false;
@@ -142,10 +151,6 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
         }
 
         $orderby = ' wp_sync.dtsAutomaticSyncStart ASC ';
-        if ( ! empty( $timeout ) ) {
-            $where   .= ' AND ( COALESCE(CAST(autosync_start_run AS UNSIGNED), 0) = 0 OR (COALESCE(CAST(autosync_start_run AS UNSIGNED), 0) + ' . intval( $timeout ) . ') < UNIX_TIMESTAMP() ) AND';
-            $orderby .= ',CAST(autosync_start_run AS UNSIGNED) ASC ';
-        }
 
         $where = rtrim( $where, 'AND' );
 
@@ -189,7 +194,7 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
 
         $where  = ' wp_sync.sync_errors = "" AND ';
         $where .= ' wp.suspended = 0 AND ';
-        $where .= '  wp_optionview.batch_individual_queue_time >= ' . intval( $lasttime_start ) . ' ';
+        $where .= '  owp_batch_individual_queue_time.value >= ' . intval( $lasttime_start ) . ' '; // owp_batch_individual_queue_time left join alias.
 
         $params = array(
             'view'          => 'updates_view',

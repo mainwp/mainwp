@@ -307,8 +307,10 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
                 $verifyCertificate = (int) $website->verify_certificate;
                 $forceUseIPv4      = $website->force_use_ipv4;
                 $sslVersion        = $website->ssl_version;
-                $http_user         = $website->http_user;
-                $http_pass         = $website->http_pass;
+                // MWP-1548: decrypt at the boundary so the reconnect /
+                // try_visit call below uses plaintext credentials.
+                $http_user = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
+                $http_pass = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
             }
         }
         // phpcs:enable

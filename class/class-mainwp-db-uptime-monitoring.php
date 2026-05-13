@@ -1701,4 +1701,33 @@ KEY idx_wpid_issub (wpid, issub)";
             MainWP_Utility::update_option( 'mainwp_uptime_monitor_cleanup_heartbeat_at', 0 ); // reset cleanup heartbeat to process on next run.
         }
     }
+
+    /**
+     * Get batch stat hourly.
+     *
+     * @param array $monitor_ids Array of monitor IDs to retrieve stats for.
+     * @param array $last24_time time.
+     *
+     * @return array Database query results or empty.
+     */
+    public function get_batch_stat_hourly( $monitor_ids, $last24_time ) {
+
+        if ( ! is_array( $monitor_ids ) || empty( $monitor_ids ) ) {
+            return array();
+        }
+
+        $table           = $this->table_name( 'monitor_stat_hourly' );
+        $int_monitor_ids = array_map( 'intval', array_values( $monitor_ids ) );
+        $placeholders    = implode( ',', array_fill( 0, count( $int_monitor_ids ), '%d' ) );
+
+        // Single batch query for all monitors.
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+        return $this->wpdb->get_results(
+            $this->wpdb->prepare(
+                "SELECT * FROM `{$table}` WHERE monitor_id IN ({$placeholders}) AND timestamp >= %d ORDER BY timestamp ASC", //phpcs:ignore -- No user input.
+                ...array_merge( $int_monitor_ids, array( $last24_time ) )
+            ),
+            ARRAY_A
+        );
+    }
 }

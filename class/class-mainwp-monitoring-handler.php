@@ -21,6 +21,13 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
+
+    /** Cache for uptime status to avoid multiple queries during sites table rendering.
+     *
+     * @var array|null
+     */
+    private static $uptime_cache = null;
+
     /**
      * Manage the settings post.
      *
@@ -346,5 +353,92 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 usleep( 100000 );
             }
         }
+    }
+
+    /**
+     * Preload uptime data for all websites.
+     * Instead of querying monitor_stat_hourly per site (19 queries), do one batch query.
+     *
+     * @param array $websites Array of websites to preload data for.
+     *
+     * @return void
+     */
+    public static function preload_uptime_data( $websites ) { //phpcs:ignore -- NOSONAR -- complex func.
+
+        if ( null !== self::$uptime_cache ) {
+            return;
+        }
+
+        self::$uptime_cache = array();
+
+        // Collect monitor_ids from websites.
+        $monitor_ids = array();
+
+        if ( MainWP_DB::is_result( $websites ) ) {
+            MainWP_DB::data_seek( $websites, 0 );
+            while ( $websites && ( $site = MainWP_DB::fetch_array( $websites ) ) ) {
+                $mid = isset( $site['monitor_id'] ) ? (int) $site['monitor_id'] : 0;
+                if ( $mid > 0 ) {
+                    $monitor_ids[ $mid ] = true;
+                }
+            }
+            MainWP_DB::data_seek( $websites, 0 );
+        }
+
+        $int_monitor_ids = array_map( 'intval', array_keys( $monitor_ids ) );
+
+        if ( empty( $int_monitor_ids ) ) {
+            return;
+        }
+
+        $last24_time = MainWP_Uptime_Monitoring_Handle::get_hourly_key_by_timestamp( time() - DAY_IN_SECONDS );
+
+        // Single batch query for all monitors.
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+        $results = MainWP_DB_Uptime_Monitoring::instance()->get_batch_stat_hourly( $int_monitor_ids, $last24_time );
+
+        if ( is_array( $results ) ) {
+            // Group by monitor_id and compute percentage.
+            $grouped = array();
+            foreach ( $results as $r ) {
+                $mid = (int) $r['monitor_id'];
+                if ( ! isset( $grouped[ $mid ] ) ) {
+                    $grouped[ $mid ] = array();
+                }
+                $grouped[ $mid ][] = $r;
+            }
+
+            foreach ( $grouped as $mid => $uptime_status ) {
+                ob_start();
+                MainWP_Monitoring_Sites_List_Table::instance()->render_last24_uptime_status( $uptime_status, $last24_time );
+                $html                       = ob_get_clean();
+                self::$uptime_cache[ $mid ] = $html;
+            }
+        }
+    }
+
+    /**
+     * Method intercept_column()
+     *
+     * Intercept column display in the sites table.
+     *
+     * @param string $content Column content.
+     * @param string $column_name Column name.
+     * @param array  $website Website data.
+     *
+     * @return string $content Modified column content.
+     */
+    public static function intercept_column( $content, $column_name, $website ) {
+        // Uptime: use preloaded batch data instead of per-row query.
+        if ( 'uptime' === $column_name ) {
+            $mid = isset( $website['monitor_id'] ) ? (int) $website['monitor_id'] : 0;
+            if ( $mid > 0 && isset( self::$uptime_cache[ $mid ] ) ) {
+                return self::$uptime_cache[ $mid ];
+            }
+            if ( $mid <= 0 ) {
+                return '<span class="ui small text">N/A</span>';
+            }
+        }
+        return $content;
     }
 }

@@ -1410,10 +1410,21 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                 },
                                 deferRender: true,
                                 stateSaveParams: function (settings, data) {
-                                    data._mwpv = mainwpParams.mainwpVersion || 'dev';
+                                    data._mwpschema = 1; // bump only when state shape changes
                                 },
                                 stateLoadParams: function (settings, data) {
-                                    if ((mainwpParams.mainwpVersion || 'dev') !== data._mwpv) return false;
+                                    const schema = Number(data?._mwpschema ?? 1); // treat legacy states as schema 1
+                                    if (schema !== 1) return false;
+
+                                    if (
+                                        data?.columns &&
+                                        data.columns.length !== settings.aoColumns.length
+                                    ) {
+                                        console.log('Skip applying saved manage sites state.');
+                                        // Reject stale/incompatible saved state
+                                        return false;
+                                    }
+                                    return true;
                                 },
                                 search: { regex: false, smart: false },
                                 orderMulti: false,
@@ -1515,12 +1526,22 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                 style: 'multi+shift',
                                 selector: 'tr>td.check-column'
                             },
-                            // Version the saved state so UI changes don’t brick users.
                             stateSaveParams: function (settings, data) {
-                                data._mwpv = mainwpParams.mainwpVersion || 'dev';
+                                data._mwpschema = 1; // stable schema version, not plugin version
                             },
                             stateLoadParams: function (settings, data) {
-                                if ((mainwpParams.mainwpVersion || 'dev') !== data._mwpv) return false; // drop stale state
+                                const schema = Number(data?._mwpschema ?? 1); // treat legacy states as schema 1
+                                if (schema !== 1) return false;
+
+                                if (
+                                    data?.columns &&
+                                    data.columns.length !== settings.aoColumns.length
+                                ) {
+                                    console.log('Skip applying saved manage sites state.');
+                                    // Reject stale/incompatible saved state
+                                    return false;
+                                }
+                                return true;
                             },
                             search: { regex: false, smart: false }, // Make search cheaper on the server.
                             orderMulti: false,

@@ -382,6 +382,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     $monitor_ids[ $mid ] = true;
                 }
             }
+            MainWP_DB::data_seek( $websites, 0 );
         }
 
         $int_monitor_ids = array_map( 'intval', array_keys( $monitor_ids ) );

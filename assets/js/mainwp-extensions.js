@@ -258,92 +258,36 @@ jQuery(function () { // NOSONAR - levels deep ok.
     });
 
     jQuery(document).on('click', '.extension-the-plugin-action', function () { // eslint-disable-line unicorn/no-nested-ternary
-        const $button = jQuery(this);
-        const $card = $button.closest('.card');
-        const slug = $card.attr('extension-slug');
-        const whatAct = $button.attr('plugin-action');
-        const loadingEl = $card.find('.action-feedback');
-        const loader = loadingEl.find('.ui.text.loader');
-        const actionMessages = {
-            disable: __('Disabling add-on...'),
-            active: __('Enabling add-on...'),
-            remove: __('Removing add-on...'),
-        };
-        const successMessages = {
-            disable: __('Add-on disabled'),
-            active: __('Add-on enabled'),
-            remove: __('Add-on removed'),
-        };
-        const undefinedError = __('Undefined error');
+        let parent = jQuery(this).closest(".card");
+        let slug = jQuery(parent).attr('extension-slug');
+        let loadingEl = parent.find(".action-feedback");
+        let whatAct = jQuery(this).attr("plugin-action");
 
-        function setLoaderMessage(message) {
-            loader.html(message);
-        }
+        let _callback = function () {
+            let $btn = jQuery(this); // ✅ store correct context
 
-        function showError(message) {
-            setLoaderMessage(message || undefinedError);
-            run_after_delay(() => {
-                loadingEl.hide();
-            });
-        }
-
-        function reloadExtensionsPage() {
-            run_after_delay(() => {
-                mainwp_forceReload('admin.php?page=Extensions');
-            }, 2000);
-        }
-
-        function activateLicense() {
-            setLoaderMessage(__('Activating license...'));
-
-            const data = mainwp_secure_data({
-                action: 'mainwp_extension_grabapikey',
-                slug: slug
-            });
-
-            jQuery.post(ajaxurl, data, function (response) {
-                if (response && response.result == 'SUCCESS') {
-                    setLoaderMessage(__('License activated'));
-                    return;
-                }
-
-                setLoaderMessage(response && response.error ? response.error : undefinedError);
-            }).fail(function () {
-                setLoaderMessage(undefinedError);
-            }).always(function () {
-                reloadExtensionsPage();
-            });
-        }
-
-        function handleSuccess() {
-            setLoaderMessage(successMessages[whatAct] || successMessages.disable);
-
-            if (whatAct === 'active') {
-                activateLicense();
-                return;
-            }
-
-            if (whatAct === 'disable' || whatAct === 'remove') {
-                reloadExtensionsPage();
-            }
-        }
-
-        function executeAction() {
             loadingEl.show();
-            setLoaderMessage(actionMessages[whatAct] || actionMessages.disable);
-            $button.attr('disabled', true);
 
-            const data = mainwp_secure_data({
+            let msg = __('Disabling add-on...');
+            if (whatAct === 'active') {
+                msg = __('Enabling add-on...');
+            } else if (whatAct === 'remove') {
+                msg = __('Removing add-on...');
+            }
+
+            loadingEl.find('.ui.text.loader').html(msg);
+
+            let data = mainwp_secure_data({
                 action: 'mainwp_extension_plugin_action',
                 slug: slug,
                 what: whatAct,
             });
 
-            jQuery.post(ajaxurl, data, function (response) {
-                $button.attr('disabled', false);
+            function handleAddonResponse(response) {
+                $btn.attr('disabled', false); // ✅ correct button
 
                 if (!response) {
-                    showError(undefinedError);
+                    showError(__('Undefined error'));
                     return;
                 }
 
@@ -352,19 +296,49 @@ jQuery(function () { // NOSONAR - levels deep ok.
                     return;
                 }
 
-                showError(response.error || undefinedError);
-            }, 'json').fail(function () {
-                $button.attr('disabled', false);
-                showError(undefinedError);
-            });
-        }
+                if (response.error) {
+                    showError(response.error);
+                    return;
+                }
 
-        if (whatAct === 'remove') {
-            mainwp_confirm(__('Are you sure you want to remove this add-on?'), executeAction);
+                showError(__('Undefined error'));
+            }
+
+            function handleSuccess() {
+                let msg = __('Add-on disabled');
+
+                if (whatAct === 'active') {
+                    msg = __('Add-on enabled');
+                } else if (whatAct === 'remove') {
+                    msg = __('Add-on removed');
+                }
+
+                loadingEl.find('.ui.text.loader').html(msg);
+
+                run_after_delay(() => {
+                    mainwp_forceReload('admin.php?page=Extensions');
+                }, 2000);
+            }
+
+            function showError(message) {
+                loadingEl.find('.ui.text.loader').html(message);
+
+                run_after_delay(() => {
+                    loadingEl.hide();
+                });
+            }
+
+            $btn.attr('disabled', true);
+
+            jQuery.post(ajaxurl, data, handleAddonResponse, 'json');
+        };
+
+        if ('remove' === whatAct) {
+            let msg = __('Are you sure you want to remove this add-on?');
+            mainwp_confirm(msg, _callback);
         } else {
-            executeAction();
+            _callback();
         }
-
         return false;
     });
 });
@@ -461,9 +435,11 @@ jQuery(document).on('click', '.mainwp-extensions-deactivate', function () {
     formEl.hide();
 
     let extensionSlug = jQuery(apiEl).attr('extension-slug');
+    let extensionApiKey = jQuery(apiEl).find('.extension-api-key').val();
     let data = mainwp_secure_data({
         action: 'mainwp_extension_deactivate',
         slug: extensionSlug,
+        api_key: extensionApiKey
     });
 
     loadingEl.show();
@@ -617,9 +593,13 @@ let extensions_activate_next = function (pObj, bulkAct) {
     let statusEl = apiEl.find(".activate-api-status");
     let loadingEl = apiEl.find(".api-feedback");
 
+    let master_api_key = jQuery('#mainwp_com_api_key').val() || '';
+
+
     let extensionSlug = apiEl.attr('extension-slug');
     let data = mainwp_secure_data({
         action: 'mainwp_extension_grabapikey',
+        master_api_key: master_api_key,
         slug: extensionSlug
     });
 
@@ -694,7 +674,9 @@ let mainwp_extension_grab_purchased = function (retring) {
     let statusEl = jQuery(".mainwp-extensions-api-loading");
     let data = mainwp_secure_data({
         action: 'mainwp_extension_getpurchased',
+        api_key: api_key
     });
+
 
     if (api_key == '') {
         statusEl.find('.text').html(__("Main API Key is required."));
@@ -823,37 +805,6 @@ let bulkExtensionsCurrentThreads = 0;
 let bulkExtensionsTotal = 0;
 let bulkExtensionsFinished = 0;
 let bulkExtensionsRunning = false;
-let bulkExtensionsCompleted = 0;
-
-let mainwp_extension_set_modal_item_status = function (pluginSlug, iconHtml, tooltip) {
-    let item = jQuery('.mainwp-installing-extensions .extension-to-install[data-installed-slug="' + pluginSlug + '"], .mainwp-installing-extensions .extension-to-install[plugin-slug="' + pluginSlug + '"]')
-        .first();
-    let statusEl = item.find('.installing-extension');
-    if (!statusEl.length) {
-        return;
-    }
-
-    statusEl.html('<span data-tooltip="' + tooltip + '" data-inverted="" data-position="left center">' + iconHtml + '</span>');
-};
-
-let mainwp_extensions_mark_card_licensed = function (pluginSlug) {
-    let card = jQuery('#mainwp-extensions-list .card[extension-slug="' + pluginSlug + '"]');
-    if (!card.length) {
-        return;
-    }
-
-    let statusEl = card.find('.activate-api-status');
-    card.attr('license-status', 'activated');
-
-    if (statusEl.length) {
-        statusEl
-            .attr('api-actived', '1')
-            .attr('data-tooltip', __('License activated.'))
-            .html('<i class="green key icon"></i> ' + __('Licensed'));
-    }
-
-    mainwp_extensions_update_status_header();
-};
 
 let mainwp_extension_bulk_install = function () {
     if (bulkExtensionsRunning)
@@ -862,8 +813,6 @@ let mainwp_extension_bulk_install = function () {
     jQuery('.mainwp-installing-extensions input[type="checkbox"][status="queue"]:not(:checked)').closest('.extension-to-install').find('.installing-extension[status="queue"]').html('<span data-tooltip="Skipped" data-position="left center" data-inverted=""><i class="ban grey icon"></i></span>');
 
     bulkExtensionsTotal = jQuery('.mainwp-installing-extensions input[type="checkbox"][status="queue"]:checked').length;
-    bulkExtensionsFinished = 0;
-    bulkExtensionsCompleted = 0;
 
     if (bulkExtensionsTotal == 0)
         return false;
@@ -877,101 +826,11 @@ let mainwp_extension_bulk_install_next = function () {
     while ((extToInstall = jQuery('.mainwp-installing-extensions input[type="checkbox"][status="queue"]:checked:first').closest('.extension-to-install')) && (extToInstall.length > 0) && (bulkExtensionsCurrentThreads < bulkExtensionsMaxThreads)) { // NOSONAR -- modified out side the function.
         mainwp_extension_bulk_install_specific(extToInstall);
     }
+
+    if ((bulkExtensionsTotal > 0) && (bulkExtensionsFinished == bulkExtensionsTotal)) { // NOSONAR -- modified out side the function.
+        mainwp_extension_bulk_activate();
+    }
 }
-
-let mainwp_extension_complete_pipeline = function () {
-    bulkExtensionsCompleted++;
-    if (bulkExtensionsCompleted >= bulkExtensionsTotal) {
-        mainwp_extension_bulk_install_done();
-    }
-};
-
-let mainwp_extension_grab_api_key_for_item = function (pExtToInstall, pluginSlug) {
-    let statusEl = pExtToInstall.find('.installing-extension');
-    let masterApiKey = (jQuery('#mainwp_com_api_key').val() || '').trim();
-
-    if (masterApiKey === '') {
-        statusEl.html('<span data-tooltip="' + __('License key is required to activate this add-on license.') + '" data-inverted="" data-position="left center"><i class="times red icon"></i></span>');
-        mainwp_extension_complete_pipeline();
-        return;
-    }
-
-    statusEl.html('<span data-tooltip="' + __('Activating add-on license. Please wait...') + '" data-inverted="" data-position="left center"><i class="notched circle loading icon"></i></span>');
-
-    let data = mainwp_secure_data({
-        action: 'mainwp_extension_grabapikey',
-        slug: pluginSlug
-    });
-
-    jQuery.post(ajaxurl, data, function (response) {
-        if (response && response.result == 'SUCCESS') {
-            mainwp_extension_set_modal_item_status(
-                pluginSlug,
-                '<i class="check green icon"></i>',
-                __('Add-on installed, activated, and licensed successfully.')
-            );
-            mainwp_extensions_mark_card_licensed(pluginSlug);
-        } else {
-            mainwp_extension_set_modal_item_status(
-                pluginSlug,
-                '<i class="times red icon"></i>',
-                response && response.error ? response.error : __('Add-on license activation failed. Please try again.')
-            );
-        }
-        mainwp_extension_complete_pipeline();
-    }, 'json').fail(function () {
-        mainwp_extension_set_modal_item_status(
-            pluginSlug,
-            '<i class="times red icon"></i>',
-            __('Add-on license activation failed. Please try again.')
-        );
-        mainwp_extension_complete_pipeline();
-    });
-};
-
-let mainwp_extension_activate_item = function (pExtToInstall, pluginSlug) {
-    let statusEl = pExtToInstall.find('.installing-extension');
-    let needsLicense = pExtToInstall.attr('needs-license') === '1';
-
-    statusEl.html('<span data-tooltip="' + __('Enabling add-on. Please wait...') + '" data-inverted="" data-position="left center"><i class="notched circle loading icon"></i></span>');
-
-    let data = mainwp_secure_data({
-        action: 'mainwp_extension_plugin_action',
-        slug: pluginSlug,
-        what: 'active'
-    });
-
-    jQuery.post(ajaxurl, data, function (response) {
-        if (!(response && response.result === 'SUCCESS')) {
-            mainwp_extension_set_modal_item_status(
-                pluginSlug,
-                '<i class="times red icon"></i>',
-                response && response.error ? response.error : __('Add-on activation failed. Please try again.')
-            );
-            mainwp_extension_complete_pipeline();
-            return;
-        }
-
-        if (!needsLicense) {
-            mainwp_extension_set_modal_item_status(
-                pluginSlug,
-                '<i class="check green icon"></i>',
-                __('Add-on installed and activated successfully.')
-            );
-            mainwp_extension_complete_pipeline();
-            return;
-        }
-
-        mainwp_extension_grab_api_key_for_item(pExtToInstall, pluginSlug);
-    }, 'json').fail(function () {
-        mainwp_extension_set_modal_item_status(
-            pluginSlug,
-            '<i class="times red icon"></i>',
-            __('Add-on activation failed. Please try again.')
-        );
-        mainwp_extension_complete_pipeline();
-    });
-};
 
 let mainwp_extension_bulk_install_specific = function (pExtToInstall) {
     bulkExtensionsRunning = true;
@@ -1009,20 +868,13 @@ let mainwp_extension_bulk_install_specific = function (pExtToInstall) {
 
                 if (response == '') {
                     statusEl.html('<span data-tooltip="Undefined error occured. Please try again." data-inverted="" data-position="left center"><i class="times red icon"></i></span>');
-                    mainwp_extension_complete_pipeline();
                 } else if (response.result == 'SUCCESS') {
-                    pExtToInstall.attr('plugin-slug', response.slug);
-                    pExtToInstall.attr('data-installed-slug', response.slug);
-                    statusEl.html('<span data-tooltip="' + __('Preparing add-on activation. Please wait...') + '" data-inverted="" data-position="left center"><i class="notched circle loading icon"></i></span>');
-                    pExtToInstall.find('.extension-installed-success').remove();
-                    pExtToInstall.append('<span class="extension-installed-success" slug="' + response.slug + '" style="display:none;"></span>');
-                    mainwp_extension_activate_item(pExtToInstall, response.slug);
+                    statusEl.html('<span data-tooltip="' + response.output + '" data-inverted="" data-position="left center"><i class="check green icon"></i></span>');
+                    jQuery('.mainwp-installing-extensions').append('<span class="extension-installed-success" slug="' + response.slug + '"></span>')
                 } else if (response.error) {
                     statusEl.html('<span data-tooltip="' + response.error + '" data-inverted="" data-position="left center"><i class="times red icon"></i></span>');
-                    mainwp_extension_complete_pipeline();
                 } else {
                     statusEl.html('<span data-tooltip="Undefined error occured. Please try again." data-inverted="" data-position="left center"><i class="times red icon"></i></span>');
-                    mainwp_extension_complete_pipeline();
                 }
 
                 mainwp_extension_bulk_install_next();
@@ -1033,6 +885,37 @@ let mainwp_extension_bulk_install_specific = function (pExtToInstall) {
     return false;
 }
 
+let mainwp_extension_bulk_activate = function () {
+    let plugins = [];
+
+    jQuery('.extension-installed-success').each(function () {
+        plugins.push(jQuery(this).attr('slug'));
+    });
+
+    if (plugins.length == 0) {
+        mainwp_extension_bulk_install_done();
+        return;
+    }
+
+    let data = mainwp_secure_data({
+        action: 'mainwp_extension_bulk_activate',
+        plugins: plugins
+    });
+
+    let statusEl = jQuery('#mainwp-bulk-activating-extensions-status');
+
+    statusEl.html('<i class="notched circle loading icon"></i>' + __('Activating add-ons. Please wait...')).show();
+    jQuery.post(ajaxurl, data, function (response) {
+        statusEl.html('');
+        if (response == 'SUCCESS') {
+            statusEl.addClass('green');
+            statusEl.html(__('Add-ons have been activated successfully!'));
+            statusEl.fadeOut(3000);
+        }
+        mainwp_extension_bulk_install_done();
+    });
+}
+
 let mainwp_extension_bulk_install_done = function () {
     bulkExtensionsRunning = false;
 
@@ -1040,7 +923,7 @@ let mainwp_extension_bulk_install_done = function () {
 
     statusEl.addClass('green');
     statusEl.html(__("Installation completed successfully. Page will reload automatically in 3 seconds.")).show();
-    if (bulkExtensionsCompleted >= bulkExtensionsTotal) {
+    if (jQuery('.extension-installed-success').length == bulkExtensionsFinished) {
         setTimeout(function () {
             mainwp_forceReload('admin.php?page=Extensions');
         }, 3000);

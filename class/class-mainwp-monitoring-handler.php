@@ -434,7 +434,9 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             if ( $mid > 0 && isset( self::$uptime_cache[ $mid ] ) ) {
                 return self::$uptime_cache[ $mid ];
             }
-            return '<span class="ui small text">N/A</span>';
+            if ( $mid <= 0 ) {
+                return '<span class="ui small text">N/A</span>';
+            }
         }
         return $content;
     }

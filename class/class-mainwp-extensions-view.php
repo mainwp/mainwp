@@ -408,10 +408,10 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     /**
      * Render the introductory notice section for extensions page.
      *
-     * Displays the main intro content including License Key validation form,
+     * Displays the main intro content including API key validation form,
      * category browsing cards, and popular add-ons section.
      *
-     * @param string|false $mainwp_api_key The MainWP License Key or false if not set.
+     * @param string|false $mainwp_api_key The MainWP API key or false if not set.
      * @return void
      */
     public static function render_intro_notice( $mainwp_api_key ) {
@@ -431,7 +431,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             <i class="key icon"></i>
                             <div class="content">
                                 <?php esc_html_e( 'Connect your MainWP Account', 'mainwp' ); ?>
-                                <div class="sub header"><?php esc_html_e( 'All add-ons (including free MainWP add-ons) require an License Key. Create a free account or enter your existing key to get started.', 'mainwp' ); ?></div>
+                                <div class="sub header"><?php esc_html_e( 'All add-ons (including free MainWP add-ons) require an API key. Create a free account or enter your existing key to get started.', 'mainwp' ); ?></div>
                             </div>
                         </h2>
                         <div class="ui hidden divider"></div>
@@ -446,7 +446,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                                     <div class="field">
                                         <div class="ui checkbox">
                                             <input type="checkbox" <?php echo '' !== $mainwp_api_key ? 'checked="checked"' : ''; ?> name="extensions_api_savemylogin_chk" id="extensions_api_savemylogin_chk">
-                                            <label for="extensions_api_savemylogin_chk"><small><?php esc_html_e( 'Remember MainWP License Key', 'mainwp' ); ?></small></label>
+                                            <label for="extensions_api_savemylogin_chk"><small><?php esc_html_e( 'Remember MainWP Main API Key', 'mainwp' ); ?></small></label>
                                         </div>
                                     </div>
                                 </div>
@@ -907,7 +907,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * Displays the licensing status header and action buttons for managing add-ons,
      * including license validation, bulk installation, and activation options.
      *
-     * @param string|false $mainwp_api_key The MainWP License Key or false if not set.
+     * @param string|false $mainwp_api_key The MainWP API key or false if not set.
      * @return void
      */
     public static function render_licensing_actions_bar( $mainwp_api_key ) { //phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
@@ -999,7 +999,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             <input type="checkbox" <?php echo '' !== $mainwp_api_key ? 'checked="checked"' : ''; ?> name="extensions_api_savemylogin_chk" id="extensions_api_savemylogin_chk">
                             <label for="extensions_api_savemylogin_chk"><small><?php esc_html_e( 'Remember Key', 'mainwp' ); ?></small></label>
                         </div>&nbsp;&nbsp;
-                        <a href="javascript:void(0);" class="ui green basic tiny button" id="mainwp-extensions-savelogin" data-context="intro-notice" ><i class="check icon"></i> <?php esc_html_e( 'Validate License', 'mainwp' ); // NOSONAR - id ok. ?></a>
+                        <a href="javascript:void(0);" class="ui green basic tiny button" id="mainwp-extensions-savelogin"><i class="check icon"></i> <?php esc_html_e( 'Validate License', 'mainwp' ); // NOSONAR - id ok. ?></a>
                         <a href="javascript:void(0);" class="ui grey basic tiny button" id="mainwp-extensions-manage-toggle-off"><?php esc_html_e( 'Close', 'mainwp' ); ?></a>
                     </div>
                 </div>

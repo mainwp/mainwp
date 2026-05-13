@@ -1762,12 +1762,11 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * Method hook_uptime_preload_data().
      *
      * @param array  $websites Websites array.
-     * @param array  $site_ids Site IDs array.
      *
      * @return void
      */
-    public function hook_uptime_preload_data( $websites, $site_ids ) {
-        MainWP_Monitoring_Handler::preload_uptime_data( $websites, $site_ids );
+    public function hook_uptime_preload_data( $websites ) {
+        MainWP_Monitoring_Handler::preload_uptime_data( $websites );
     }
 
     /**

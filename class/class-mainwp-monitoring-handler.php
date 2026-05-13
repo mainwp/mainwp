@@ -363,7 +363,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * @return void
      */
-    public static function preload_uptime_data( $websites ) {
+    public static function preload_uptime_data( $websites ) { //phpcs:ignore -- NOSONAR -- complex func.
 
         if ( null !== self::$uptime_cache ) {
             return;

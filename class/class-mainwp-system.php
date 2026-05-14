@@ -169,7 +169,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             }
 
             // Use 6.0.12 as the lower bound so 6.1-er.x builds trigger this notice.
-            if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '6.1', '<' ) && version_compare( $this->current_version, '6.0.12', '>' ) ) {
+            if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '6.1', '<' ) && version_compare( $currentVersion, '6.0.12', '>' ) ) {
                 add_action( 'mainwp_after_header', array( MainWP_System_View::get_class_name(), 'mainwp_ver61_update_notice' ) );
             }
 

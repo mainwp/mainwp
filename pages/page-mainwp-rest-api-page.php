@@ -408,10 +408,26 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             // Without this guard the redirect would still claim success even
             // though no row was persisted.
             if ( ! is_array( $api_key ) || empty( $api_key['key_id'] ) ) {
-                wp_safe_redirect( admin_url( 'admin.php?page=RESTAPI&message=create_failed' ) ); //phpcs:ignore -- ok.
+                wp_safe_redirect(
+                    add_query_arg(
+                        array(
+                            'page'    => 'RESTAPI',
+                            'message' => 'create_failed',
+                        ),
+                        admin_url( 'admin.php' )
+                    )
+                );
                 exit();
             }
-            wp_safe_redirect( admin_url( 'admin.php?page=RESTAPI&message=created' ) ); //phpcs:ignore -- ok.
+            wp_safe_redirect(
+                add_query_arg(
+                    array(
+                        'page'    => 'RESTAPI',
+                        'message' => 'created',
+                    ),
+                    admin_url( 'admin.php' )
+                )
+            );
             exit();
         }
         // phpcs:enable

@@ -2528,6 +2528,14 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 if ( isset( $row['http_pass'] ) ) {
                     $row['http_pass'] = MainWP_Credential_Storage::decrypt_credential( $row['http_pass'] );
                 }
+
+                $row = array_map(
+                    static function ( $value ) {
+                        return str_replace( '"', '""', (string) $value );
+                    },
+                    $row
+                );
+
                 $csv .= '"' . implode( '","', $row ) . '"' . "\r";
             }
 

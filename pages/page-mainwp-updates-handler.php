@@ -183,7 +183,10 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'success'     => $success ? 1 : 0,
             'error'       => $error,
         );
-        mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $website, 'updated', $output_array, 'core' );
+        $actions_handler = mainwp_get_actions_handler_instance();
+        if ( $actions_handler ) {
+            $actions_handler->do_action_mainwp_install_actions( $website, 'updated', $output_array, 'core' );
+        }
     }
 
     /**

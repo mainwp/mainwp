@@ -2338,12 +2338,12 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     static::set_continue_update_html_selector( 'plugins_global_upgrade_all' );
                     ?>
                     <a href="javascript:void(0)" onClick="updatesoverview_plugins_global_upgrade_all( false, true ); return false;" class="mainwp-update-selected-button ui mini green basic button"><?php esc_html_e( 'Update Selected Plugins', 'mainwp' ); ?></a>
-                    <a href="javascript:void(0)" onClick="updatesoverview_plugins_global_upgrade_all(); return false;" class="mainwp-update-all-button ui mini green button"><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
+                    <a href="javascript:void(0)" onClick="updatesoverview_plugins_global_upgrade_all(); return false;" class="mainwp-update-all-button ui mini green button"><?php esc_html_e( 'Update All Plugins', 'mainwp' ); ?></a>
                     <?php
                 } else {
                     ?>
                     <a href="javascript:void(0)" class="mainwp-update-selected-button ui mini green basic disabled button" aria-disabled="true" tabindex="-1"><?php esc_html_e( 'Update Selected Plugins', 'mainwp' ); ?></a>
-                    <a href="javascript:void(0)" class="mainwp-update-all-button ui mini green disabled button" aria-disabled="true" tabindex="-1"><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
+                    <a href="javascript:void(0)" class="mainwp-update-all-button ui mini green disabled button" aria-disabled="true" tabindex="-1"><?php esc_html_e( 'Update All Plugins', 'mainwp' ); ?></a>
                     <?php
                 }
             }

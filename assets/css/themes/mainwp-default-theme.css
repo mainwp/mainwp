@@ -14,14 +14,16 @@
  --mainwp-yellow: #d7b33e;
  --mainwp-orange: #b86a2d;
  /* Background Colors */
- --mainwp-base-background: #fbfaf7;
- --mainwp-base-background-secondary: #f7f6f1;
+ --mainwp-base-background: #fffefa;
+ --mainwp-base-background-secondary: #fdfcf8;
  --mainwp-element-background: #ffffff;
- --mainwp-element-background-secondary: #f8f7f3;
+ --mainwp-element-background-secondary: #fefdf9;
+ --mainwp-shell-background: #f8f6f1;
+ --mainwp-shell-background-hover: #f2f0e9;
  /* Border Colors */
- --mainwp-border: #e8e5dd;
- --mainwp-border-medium: #ddd9cf;
- --mainwp-border-strong: #cdc7bb;
+ --mainwp-border: #f0ede6;
+ --mainwp-border-medium: #e7e2d9;
+ --mainwp-border-strong: #dad4c8;
  --button-radius: 5rem;
  --input-radius: 5px;
  --label-radius: 5px;
@@ -622,7 +624,9 @@
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.disabled.checkbox label::before {
-  background-color: var(--mainwp-element-background-secondary) !important;
+  background-color: var(--mainwp-base-background-secondary) !important;
+  border-color: var(--mainwp-border) !important;
+  box-shadow: none !important;
   opacity: 0.75 !important;
 }
 
@@ -633,8 +637,9 @@
 
 .mainwp-ui.mainwp-custom-theme .ui.toggle.checkbox label::before,
 .mainwp-ui.mainwp-custom-theme .ui.slide.checkbox label::before {
-  background-color: var(--mainwp-element-background-secondary) !important;
+  background-color: var(--mainwp-base-background-secondary) !important;
   border: 1px solid var(--mainwp-border) !important;
+  box-shadow: none !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.checkbox input~label,
@@ -649,15 +654,18 @@
 
 .mainwp-ui.mainwp-custom-theme .ui.checkbox input~label::before,
 .mainwp-ui.mainwp-custom-theme .ui.radio.checkbox input~label::before {
-  background: var(--mainwp-element-background-secondary) !important;
+  background: var(--mainwp-element-background) !important;
   color: var(--mainwp-text) !important;
-  border-color: var(--mainwp-text-secondary);
+  border: 1px solid var(--mainwp-border-medium) !important;
+  box-shadow: none !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.checkbox.checked input~label::before,
 .mainwp-ui.mainwp-custom-theme .ui.radio.checkbox.checked input~label::before {
-  background: var(--mainwp-element-background-secondary) !important;
+  background: var(--mainwp-element-background) !important;
+  border-color: var(--mainwp-green) !important;
   color: var(--mainwp-text) !important;
+  box-shadow: none !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.checkbox input~label::after,
@@ -1144,14 +1152,14 @@
   ========================================================================== */
 
 .mainwp-ui.mainwp-custom-theme #mainwp-main-navigation-container {
-  background-color: var(--mainwp-element-background) !important;
+  background-color: var(--mainwp-shell-background) !important;
 }
 
 
 .mainwp-ui.mainwp-custom-theme #mainwp-first-level-navigation,
 .mainwp-ui.mainwp-custom-theme #mainwp-first-level-navigation:hover,
 .mainwp-ui.mainwp-custom-theme #mainwp-first-level-navigation-menu {
-  background-color: var(--mainwp-element-background) !important;
+  background-color: var(--mainwp-shell-background) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-first-level-navigation {
@@ -1166,7 +1174,7 @@
   position: absolute;
   border-top-left-radius: 50%;
   content: "";
-  box-shadow: var(--mainwp-element-background) -10px 0px 0px 0px;
+  box-shadow: var(--mainwp-shell-background) -10px 0px 0px 0px;
   pointer-events: none;
   z-index: 99999;
 }
@@ -1197,16 +1205,16 @@
 
 .mainwp-ui.mainwp-custom-theme #mainwp-first-level-navigation .ui.vertical.inverted.menu .item.active {
   color: var(--mainwp-green) !important;
-  background-color: #6c980012 !important;
+  background-color: var(--mainwp-element-background) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-divider-handle:hover {
-  background-color: #6c980012 !important;
+  background-color: var(--mainwp-shell-background-hover) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-collapse-second-level-navigation {
-  background-color: #6c980012 !important;
-  border: 1px solid var(--mainwp-green);
+  background-color: var(--mainwp-element-background) !important;
+  border: 1px solid var(--mainwp-border-medium);
   color: var(--mainwp-green);
 }
 
@@ -1216,9 +1224,9 @@
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation {
-  background-color: var(--mainwp-element-background-secondary) !important;
-  border-left: 1px solid var(--mainwp-element-background-secondary);
-  border-right: 1px solid var(--mainwp-element-background);
+  background-color: var(--mainwp-element-background) !important;
+  border-left: 1px solid var(--mainwp-border);
+  border-right: 1px solid var(--mainwp-border);
   box-shadow: none !important;
   -webkit-box-shadow: none !important;
 }
@@ -1231,7 +1239,7 @@
   position: absolute;
   border-top-left-radius: 50%;
   content: "";
-  box-shadow: var(--mainwp-element-background-secondary) -10px 0px 0px 0px;
+  box-shadow: var(--mainwp-element-background) -10px 0px 0px 0px;
   pointer-events: none;
   z-index: 99999;
 }
@@ -1244,7 +1252,7 @@
   position: absolute;
   border-bottom-left-radius: 50%;
   content: "";
-  box-shadow: var(--mainwp-element-background-secondary) -10px 0px 0px 0px;
+  box-shadow: var(--mainwp-element-background) -10px 0px 0px 0px;
   pointer-events: none;
   z-index: 99999;
 }
@@ -1259,7 +1267,7 @@
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu {
-  background-color: var(--mainwp-element-background-secondary) !important;
+  background-color: var(--mainwp-element-background) !important;
   box-shadow: none !important;
   -webkit-box-shadow: none !important;
 }
@@ -1310,7 +1318,7 @@
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu.active .item {
-  background-color: var(--mainwp-element-background-secondary) !important;
+  background-color: var(--mainwp-element-background) !important;
 }
 .mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu > .item.active,
 .mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu > .item:hover {
@@ -1336,7 +1344,7 @@
 .mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu .item .item.active,
 .mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu .item .item:hover {
   color: var(--mainwp-green) !important;
-  background-color: #6c980012 !important;
+  background-color: #6c980010 !important;
   border-radius: 0.785rem !important;
   -webkit-border-radius: 0.785rem !important;
 }
@@ -1592,7 +1600,7 @@ body.mainwp-ui.mainwp-custom-theme,
   ========================================================================== */
 
 .mainwp-ui.mainwp-custom-theme #mainwp-top-header {
-  background: var(--mainwp-element-background);
+  background: var(--mainwp-shell-background);
   box-shadow: inset 0 -1px 0 var(--mainwp-border);
 }
 
@@ -1620,7 +1628,7 @@ body.mainwp-ui.mainwp-custom-theme,
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-top-header .ui.icon.button:not(.red, .green):hover {
-  background-color: var(--mainwp-element-background-secondary) !important;
+  background-color: var(--mainwp-shell-background-hover) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-top-header .mainwp-page-title {

@@ -184,7 +184,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'error'       => $error,
         );
         $actions_handler = mainwp_get_actions_handler_instance();
-        if ( $actions_handler ) {
+        if ( is_object( $actions_handler ) ) {
             $actions_handler->do_action_mainwp_install_actions( $website, 'updated', $output_array, 'core' );
         }
     }

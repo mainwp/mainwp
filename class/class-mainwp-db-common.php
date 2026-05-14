@@ -1068,7 +1068,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             'uniqueId'    => 'uniqueid',
         );
 
-        $sql_set = '';
+        $update_fields = array();
 
         foreach ( $map_fields as $field => $name ) {
             if ( isset( $data[ $name ] ) && empty( ! $data[ $name ] ) ) {
@@ -1083,36 +1083,38 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                     }
                     $value = $encrypted;
                 }
-                $sql_set .= ' `' . $this->escape( $field ) . '` = "' . $this->escape( $value ) . '",';
+                $update_fields[ $field ] = $value;
             }
         }
 
         if ( isset( $data['verify'] ) ) {
-            $verify   = intval( $data['verify'] );
-            $sql_set .= ' verify_certificate = "' . $this->escape( $verify ) . '",';
+            $verify                              = intval( $data['verify'] );
+            $update_fields['verify_certificate'] = $verify;
         }
 
         if ( isset( $data['protocol'] ) && ( 'http' === $data['protocol'] || 'https' === $data['protocol'] ) ) {
-            $url      = $data['protocol'] . '://' . MainWP_Utility::remove_http_prefix( $website->url, true );
-            $sql_set .= ' url = "' . $this->escape( $url ) . '",';
+            $url                  = $data['protocol'] . '://' . MainWP_Utility::remove_http_prefix( $website->url, true );
+            $update_fields['url'] = $this->escape( $url );
         }
 
         if ( isset( $data['disablehealthchecking'] ) ) {
-            $sql_set .= ' disable_health_check = "' . ( $data['disablehealthchecking'] ? 1 : 0 ) . '",';
+            $update_fields['disable_health_check'] = $data['disablehealthchecking'] ? 1 : 0;
         }
 
         if ( isset( $data['healththreshold'] ) ) {
-            $sql_set .= ' health_threshold = "' . intval( $data['healththreshold'] ) . '",';
+            $update_fields['health_threshold'] = intval( $data['healththreshold'] );
         }
 
         if ( isset( $data['suspended'] ) ) {
-            $sql_set .= ' suspended = "' . ( 1 === intval( $data['suspended'] ) ? 1 : 0 ) . '",';
+            $update_fields['suspended'] = 1 === intval( $data['suspended'] ) ? 1 : 0;
         }
 
-        if ( ! empty( $sql_set ) ) {
-            $sql_set  = rtrim( $sql_set, ',' );
-            $table_wp = esc_sql( $this->table_name( 'wp' ) );
-            $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_wp}` SET " . $sql_set . ' WHERE id=%d', $websiteid ) ); // phpcs:ignore -- NOSONAR -- $sql_set are escaped.
+        if ( ! empty( $update_fields ) ) {
+            $this->wpdb->update(
+                $this->table_name( 'wp' ),
+                $update_fields,
+                array( 'id' => $websiteid )
+            );
             $success = true;
         }
 

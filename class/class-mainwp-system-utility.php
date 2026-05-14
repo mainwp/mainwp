@@ -182,7 +182,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $dir  = $dirs[0] . 'icons' . DIRECTORY_SEPARATOR;
         $url  = $dirs[1] . 'icons/';
         if ( ! $wp_filesystem->exists( $dir ) ) {
-            $wp_filesystem->mkdir( $dir, 0777 );
+            $wp_filesystem->mkdir( $dir, 0755 ); // MWP-1558: tightened from 0777 to WP convention; public-asset dir, blocks cross-tenant manipulation on shared hosting.
         }
         if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
             $wp_filesystem->touch( $dir . 'index.php' );
@@ -276,7 +276,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $dir = $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'mainwp' . DIRECTORY_SEPARATOR;
         $url = $upload_dir['baseurl'] . '/mainwp/';
         if ( ! $wp_filesystem->exists( $dir ) ) {
-            $wp_filesystem->mkdir( $dir, 0777 );
+            $wp_filesystem->mkdir( $dir, 0755 ); // MWP-1558: tightened from 0777 to WP convention; closes cross-tenant pk/ substitution attack on shared hosting.
         }
         if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
             $wp_filesystem->touch( $dir . 'index.php' );
@@ -287,7 +287,8 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $url    = $url . $subdir . '/';
 
             if ( ! $wp_filesystem->exists( $newdir ) ) {
-                $wp_filesystem->mkdir( $newdir, 0777 );
+                // MWP-1558: 0750 for private (htaccess-protected) subdirs, 0755 for public-asset subdirs (icons, client-images, etc.).
+                $wp_filesystem->mkdir( $newdir, $direct_access ? 0755 : 0750 );
             }
 
             if ( $direct_access ) {
@@ -442,11 +443,11 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
             // need to check user dir first.
             if ( ! $wp_filesystem->is_dir( $userdir ) ) {
-                $wp_filesystem->mkdir( $userdir, 0777 );
+                $wp_filesystem->mkdir( $userdir, 0750 ); // MWP-1558: tightened from 0777; per-user backup root.
             }
 
             if ( ! $wp_filesystem->is_dir( $newdir ) ) {
-                $wp_filesystem->mkdir( $newdir, 0777 );
+                $wp_filesystem->mkdir( $newdir, 0750 ); // MWP-1558: tightened from 0777; per-user backup subdir.
             }
 
             if ( ! empty( $dirs[0] ) . $userid && ! $wp_filesystem->exists( trailingslashit( $dirs[0] . $userid ) . '.htaccess' ) ) {
@@ -457,11 +458,11 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
             // need to check user dir first.
             if ( ! file_exists( $userdir ) ) {
-                mkdir( $userdir, 0777, true ); // NOSONAR - @newdir is valid.
+                mkdir( $userdir, 0750, true ); // MWP-1558: tightened from 0777. NOSONAR - @newdir is valid.
             }
 
             if ( ! file_exists( $newdir ) ) {
-                mkdir( $newdir, 0777, true ); // NOSONAR - @newdir is valid.
+                mkdir( $newdir, 0750, true ); // MWP-1558: tightened from 0777. NOSONAR - @newdir is valid.
             }
 
             if ( ! empty( $dirs[0] ) . $userid && ! file_exists( trailingslashit( $dirs[0] . $userid ) . '.htaccess' ) ) {
@@ -502,6 +503,64 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $dirs = static::get_mainwp_dir();
 
         return $dirs[1] . $userid . '/' . $dir . '/';
+    }
+
+    /**
+     * Method get_or_create_filename_secret()
+     *
+     * Return a stable per-install secret used to derive opaque private filenames
+     * for sensitive files under wp-content/uploads/mainwp/. Generated once per
+     * install and persisted as a plain wp_option (autoload off).
+     *
+     * Storage rationale: the secret is stored as a plain wp_option rather than
+     * via MainWP_Keys_Manager::update_key_value(). The Keys_Manager would store
+     * the key file inside the very pk/ directory whose filenames this secret
+     * protects, defeating the purpose. The plaintext-in-DB trade-off is
+     * acceptable because the threat model targets external URL guessing only;
+     * a database read primitive that retrieves this secret would also retrieve
+     * the encrypted privkey ciphertext it would be used to locate.
+     *
+     * @return string 64-character hex secret (256 bits of entropy).
+     */
+    public static function get_or_create_filename_secret() {
+        // Use site-option storage so the secret is network-wide on multisite (consistent across blogs)
+        // and falls through to get_option() on single-site. Matches MainWP_Install's pattern for network state.
+        $secret = get_site_option( 'mainwp_private_filename_secret' );
+        if ( ! is_string( $secret ) || ! preg_match( '/^[a-f0-9]{64}$/', $secret ) ) {
+            $candidate = bin2hex( random_bytes( 32 ) );
+            // add_site_option is atomic at the DB layer: only one concurrent writer wins.
+            // Losing requests re-read so all callers see the same secret. Prevents a race where
+            // two concurrent first-upgrade requests would both generate (and write) different
+            // secrets, breaking subsequent filename derivations done by the losing request.
+            if ( add_site_option( 'mainwp_private_filename_secret', $candidate ) ) {
+                $secret = $candidate;
+            } else {
+                $secret = get_site_option( 'mainwp_private_filename_secret' );
+            }
+        }
+        return $secret;
+    }
+
+    /**
+     * Method get_private_filename()
+     *
+     * Compute the opaque filename for a private file under a wp-content/uploads/mainwp/
+     * subdirectory. Replaces predictable patterns like 'mainwp_priv_encrypt_keys_<site_id>'
+     * with HMAC-SHA256 derivations that are not externally enumerable.
+     *
+     * Filenames are deterministic per install: the same (subdir, key, purpose)
+     * always yields the same output. Different subdir or purpose values produce
+     * independent filename spaces with no cross-collision.
+     *
+     * @param string $subdir  Subdirectory under mainwp/ (e.g., 'pk', 'cookies').
+     * @param string $key     Internal identifier (e.g., site_id, cookie salt).
+     * @param string $purpose Domain separator to prevent cross-subdir filename collisions.
+     *
+     * @return string 64-character hex filename.
+     */
+    public static function get_private_filename( $subdir, $key, $purpose ) {
+        $secret = static::get_or_create_filename_secret();
+        return hash_hmac( 'sha256', $subdir . ':' . $purpose . ':' . $key, $secret );
     }
 
     /**

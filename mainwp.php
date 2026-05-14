@@ -8,7 +8,7 @@
  * Author URI: https://mainwp.com
  * Plugin URI: https://mainwp.com/
  * Text Domain: mainwp
- * Version:  6.0.8
+ * Version:  6.1-er.1
  * License: GPLv3 or later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  *
@@ -166,4 +166,8 @@ if ( ! $mainwp_is_secupress_scanning ) {
     register_activation_hook( __FILE__, array( $mainWP, 'activation' ) );
     register_deactivation_hook( __FILE__, array( $mainWP, 'deactivation' ) );
     add_action( 'plugins_loaded', array( $mainWP, 'update_install' ) );
+    // Register the post-upgrade hook for MWP-1557/1558 pk/ filename migration.
+    // Must be registered before plugins_loaded fires so MainWP_Install::install()
+    // sees a subscriber when it does_action('mainwp_db_after_update').
+    add_action( 'plugins_loaded', array( 'MainWP\\Dashboard\\MainWP_Keys_Manager', 'register_migration_hooks' ), 5 );
 }

@@ -70,14 +70,18 @@ class Cost_Tracker_Add_Edit {
             return;
         }
 
-        $edit_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : false; //phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        $show    = $edit_id ? 'edit' : 'add';
+        $edit_id      = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : false; //phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $duplicate_id = isset( $_GET['duplicate_id'] ) ? intval( $_GET['duplicate_id'] ) : false; //phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $show         = $edit_id ? 'edit' : 'add';
         Cost_Tracker_Admin::render_header( $show );
         $params = $edit_id ? '&id=' . $edit_id : '';
+        if ( $duplicate_id ) {
+            $params .= '&duplicate_id=' . $duplicate_id;
+        }
         ?>
         <div class="ui alt segment" id="mainwp-module-cost-tracker-add-edit-tab" style="margin-bottom:0px">
             <form id="mainwp-module-cost-tracker-settings-form" method="post" action="admin.php?page=CostTrackerAdd<?php echo $params; //phpcs:ignore -- escaped. ?>" class="ui form">
-                <?php $this->render_add_edit_content( $edit_id ); ?>
+                <?php $this->render_add_edit_content( $edit_id, $duplicate_id ); ?>
             </form>
             <div class="ui clearing hidden divider"></div>
         </div>
@@ -91,10 +95,13 @@ class Cost_Tracker_Add_Edit {
      * Renders the extension settings page.
      *
      * @param int $edit_id Cost Id to edit.
+     * @param int $duplicate_id Cost Id to duplicate.
      */
-    public function render_add_edit_content( $edit_id ) { //phpcs:ignore -- NOSONAR - complex method.
+    public function render_add_edit_content( $edit_id, $duplicate_id = 0 ) { //phpcs:ignore -- NOSONAR - complex method.
 
         $edit_cost                    = false;
+        $source_cost                  = false;
+        $is_duplicate                 = false;
         $selected_payment_type        = '';
         $selected_product_type        = '';
         $selected_license_type        = '';
@@ -106,22 +113,46 @@ class Cost_Tracker_Add_Edit {
         $selected_default_icon        = '';
         $selected_prod_icon           = '';
         $selected_prod_color          = '';
+        $duplicate_uploaded_icon_cleared = false;
         $is_plugintheme               = true;
 
         if ( $edit_id ) {
             $edit_cost = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'id', $edit_id );
-            if ( $edit_cost ) {
-                $selected_payment_type        = $edit_cost->type;
-                $selected_product_type        = $edit_cost->product_type;
-                $selected_license_type        = $edit_cost->license_type;
-                $selected_cost_tracker_status = $edit_cost->cost_status;
-                $selected_renewal             = $edit_cost->renewal_type;
-                $last_renewal                 = $edit_cost->last_renewal;
-                $selected_payment_method      = $edit_cost->payment_method;
-                $slug                         = $edit_cost->slug;
-                $selected_prod_icon           = $edit_cost->cost_icon;
-                $selected_prod_color          = $edit_cost->cost_color;
-                $is_plugintheme               = 'plugin' === $selected_product_type || 'theme' === $selected_product_type ? true : false;
+        } elseif ( $duplicate_id ) {
+            $source_cost  = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'id', $duplicate_id );
+            $is_duplicate = ! empty( $source_cost );
+        }
+
+        $prefill_cost = $edit_cost ? $edit_cost : $source_cost;
+
+        if ( $prefill_cost ) {
+            $selected_payment_type        = $prefill_cost->type;
+            $selected_product_type        = $prefill_cost->product_type;
+            $selected_license_type        = $prefill_cost->license_type;
+            $selected_cost_tracker_status = $prefill_cost->cost_status;
+            $selected_renewal             = $prefill_cost->renewal_type;
+            $last_renewal                 = $prefill_cost->last_renewal;
+            $selected_payment_method      = $prefill_cost->payment_method;
+            $slug                         = $prefill_cost->slug;
+            $selected_prod_icon           = $prefill_cost->cost_icon;
+            $selected_prod_color          = $prefill_cost->cost_color;
+            $is_plugintheme               = 'plugin' === $selected_product_type || 'theme' === $selected_product_type ? true : false;
+        }
+
+        if ( $is_duplicate ) {
+            // Avoid duplicate validation conflicts for plugin/theme records.
+            if ( in_array( $selected_product_type, array( 'plugin', 'theme' ), true ) ) {
+                $slug = '';
+            }
+
+            if ( ! empty( $source_cost->name ) ) {
+                $source_cost->name = $source_cost->name . __( ' - (Copy)', 'mainwp' );
+            }
+
+            // Do not reuse the same uploaded icon file between two cost entries.
+            if ( ! empty( $selected_prod_icon ) && false === strpos( $selected_prod_icon, 'deficon:' ) ) {
+                $selected_prod_icon              = '';
+                $duplicate_uploaded_icon_cleared = true;
             }
         }
 
@@ -153,12 +184,18 @@ class Cost_Tracker_Add_Edit {
             }
         }
 
-        // new cost.
-        if ( ! $edit_id ) {
+        // New cost only. Duplicates keep the copied default icon/color unless the uploaded icon was cleared.
+        if ( ! $edit_id && ! $is_duplicate ) {
             $selected_default_icon = 'archive';
             $selected_prod_icon    = 'deficon:' . $selected_default_icon;
             $selected_prod_color   = '#34424D';
             $cust_prod_src         = '';
+        } elseif ( $is_duplicate && $duplicate_uploaded_icon_cleared && empty( $selected_prod_icon ) ) {
+            $selected_default_icon = 'archive';
+            $selected_prod_icon    = 'deficon:' . $selected_default_icon;
+            if ( empty( $selected_prod_color ) ) {
+                $selected_prod_color = '#34424D';
+            }
         }
 
         ?>
@@ -187,7 +224,11 @@ class Cost_Tracker_Add_Edit {
                     }
                 }
                 ?>
-                <?php if ( ! $edit_cost ) : ?>
+                <?php if ( $is_duplicate ) : ?>
+                    <div class="ui blue message" style="margin-top:1em;">
+                        <?php esc_html_e( 'You are duplicating an existing cost entry. Review the details and save to create a new item.', 'mainwp' ); ?>
+                    </div>
+                <?php elseif ( ! $edit_cost ) : ?>
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'add-cost-info-message' ) ) : ?>
                         <div class="ui blue message" style="margin-top:1em;">
                             <i class="close icon mainwp-notice-dismiss" notice-id="add-cost-info-message"></i>
@@ -205,6 +246,11 @@ class Cost_Tracker_Add_Edit {
                         <?php echo esc_html__( 'Edit ', 'mainwp' ) . esc_html( $edit_cost->name ) . esc_html__( 'Product Details', 'mainwp' ); ?>
                         <div class="sub header"><?php esc_html_e( 'Update your expense details to keep your cost tracking accurate and up to date.', 'mainwp' ); ?></div>
                     </h2>
+                <?php elseif ( $source_cost ) : ?>
+                    <h2 class="ui dividing header">
+                        <?php echo esc_html__( 'Duplicate ', 'mainwp' ) . esc_html( $source_cost->name ) . esc_html__( 'Product Details', 'mainwp' ); ?>
+                        <div class="sub header"><?php esc_html_e( 'This form is pre-filled from the existing cost so you can create a new entry faster.', 'mainwp' ); ?></div>
+                    </h2>
                 <?php else : ?>
                     <h2 class="ui dividing header">
                         <?php esc_html_e( 'Product Details', 'mainwp' ); ?>
@@ -219,7 +265,7 @@ class Cost_Tracker_Add_Edit {
                     ?> <span class="ui small red text">(<?php esc_html_e( 'Required', 'mainwp' ); ?>)</span>
                     </label>
                     <div class="five wide column">
-                        <input type="text" class="settings-field-value-change-handler" aria-label="<?php esc_attr_e( 'Enter the Company (Product) name.', 'mainwp' ); ?>" name="mainwp_module_cost_tracker_edit_name" id="mainwp_module_cost_tracker_edit_name" value="<?php echo $edit_cost ? esc_html( $edit_cost->name ) : ''; ?>">
+                        <input type="text" class="settings-field-value-change-handler" aria-label="<?php esc_attr_e( 'Enter the Company (Product) name.', 'mainwp' ); ?>" name="mainwp_module_cost_tracker_edit_name" id="mainwp_module_cost_tracker_edit_name" value="<?php echo $prefill_cost ? esc_html( $prefill_cost->name ) : ''; ?>">
                     </div>
                 </div>
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit">
@@ -230,7 +276,7 @@ class Cost_Tracker_Add_Edit {
                     ?>
                     </label>
                     <div class="five wide column">
-                        <input type="text" class="settings-field-value-change-handler" aria-label="<?php esc_attr_e( 'Enter the URL of the product (optional).', 'mainwp' ); ?>" name="mainwp_module_cost_tracker_edit_url" id="mainwp_module_cost_tracker_edit_url" value="<?php echo $edit_cost ? esc_html( $edit_cost->url ) : ''; ?>">
+                        <input type="text" class="settings-field-value-change-handler" aria-label="<?php esc_attr_e( 'Enter the URL of the product (optional).', 'mainwp' ); ?>" name="mainwp_module_cost_tracker_edit_url" id="mainwp_module_cost_tracker_edit_url" value="<?php echo $prefill_cost ? esc_html( $prefill_cost->url ) : ''; ?>">
                     </div>
                 </div>
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit">
@@ -378,7 +424,7 @@ class Cost_Tracker_Add_Edit {
                     <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Please input a value using a single decimal point (.) without thousand separators or currency symbols.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
                         <div class="ui left labeled input">
                             <label for="mainwp_module_cost_tracker_edit_price" class="ui label"><?php echo esc_html( $currency_symbol ); ?></label>
-                            <input type="text" class="settings-field-value-change-handler" name="mainwp_module_cost_tracker_edit_price" id="mainwp_module_cost_tracker_edit_price" value="<?php echo $edit_cost ? esc_html( round( $edit_cost->price, $dec ) ) : ''; ?>">
+                            <input type="text" class="settings-field-value-change-handler" name="mainwp_module_cost_tracker_edit_price" id="mainwp_module_cost_tracker_edit_price" value="<?php echo $prefill_cost ? esc_html( round( $prefill_cost->price, $dec ) ) : ''; ?>">
                         </div>
                     </div>
                 </div>
@@ -495,7 +541,7 @@ class Cost_Tracker_Add_Edit {
                     ?>
                     </label>
                     <div class="ten wide column">
-                        <textarea id="mainwp_module_cost_tracker_edit_note" class="settings-field-value-change-handler" name="mainwp_module_cost_tracker_edit_note"><?php echo $edit_cost ? esc_html( $edit_cost->note ) : ''; ?></textarea>
+                        <textarea id="mainwp_module_cost_tracker_edit_note" class="settings-field-value-change-handler" name="mainwp_module_cost_tracker_edit_note"><?php echo $prefill_cost ? esc_html( $prefill_cost->note ) : ''; ?></textarea>
                     </div>
                 </div>
                 <input type="hidden" name="mainwp_module_cost_tracker_edit_id" value="<?php echo $edit_cost ? intval( $edit_cost->id ) : 0; ?>">
@@ -509,10 +555,10 @@ class Cost_Tracker_Add_Edit {
             $sel_sites   = array();
             $sel_groups  = array();
             $sel_clients = array();
-            if ( ! empty( $edit_cost ) ) {
-                $sel_sites   = json_decode( $edit_cost->sites, true );
-                $sel_groups  = json_decode( $edit_cost->groups, true );
-                $sel_clients = json_decode( $edit_cost->clients, true );
+            if ( ! empty( $prefill_cost ) ) {
+                $sel_sites   = json_decode( $prefill_cost->sites, true );
+                $sel_groups  = json_decode( $prefill_cost->groups, true );
+                $sel_clients = json_decode( $prefill_cost->clients, true );
                 if ( ! is_array( $sel_sites ) ) {
                     $sel_sites = array();
                 }

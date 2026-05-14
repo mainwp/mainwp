@@ -470,6 +470,64 @@ class MainWP_REST_Integration_Test extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * Test that `_fields` filters site items without stripping the response envelope.
+	 *
+	 * @return void
+	 */
+	public function test_rest_sites_endpoint_fields_keeps_envelope() {
+		$this->authenticate_as_admin();
+
+		$site_id = $this->create_test_site( [ 'name' => 'Fields Test Site' ] );
+
+		$response = $this->do_authenticated_request(
+			'GET',
+			'/mainwp/v2/sites',
+			[
+				'per_page' => 10,
+				'_fields'  => 'id',
+			]
+		);
+
+		$this->assertEquals( 200, $response->get_status() );
+
+		$data = $response->get_data();
+		$this->assertIsArray( $data );
+		$this->assertArrayHasKey( 'success', $data );
+		$this->assertArrayHasKey( 'total', $data );
+		$this->assertArrayHasKey( 'data', $data );
+		$this->assertNotEmpty( $data['data'] );
+		$this->assertSame( [ 'id' ], array_keys( $data['data'][0] ) );
+		$this->assertSame( $site_id, (int) $data['data'][0]['id'] );
+	}
+
+	/**
+	 * Test that single-site `_fields` requests keep the data envelope intact.
+	 *
+	 * @return void
+	 */
+	public function test_rest_single_site_fields_keeps_data_envelope() {
+		$this->authenticate_as_admin();
+
+		$site_id = $this->create_test_site( [ 'name' => 'Single Fields Test Site' ] );
+
+		$response = $this->do_authenticated_request(
+			'GET',
+			'/mainwp/v2/sites/' . $site_id,
+			[
+				'_fields' => 'id',
+			]
+		);
+
+		$this->assertEquals( 200, $response->get_status() );
+
+		$data = $response->get_data();
+		$this->assertIsArray( $data );
+		$this->assertArrayHasKey( 'data', $data );
+		$this->assertSame( [ 'id' ], array_keys( $data['data'] ) );
+		$this->assertSame( $site_id, (int) $data['data']['id'] );
+	}
+
+	/**
 	 * Test that REST sites sync endpoint uses ability.
 	 *
 	 * @return void

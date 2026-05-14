@@ -265,7 +265,8 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     <?php endif; ?>
                 </td>
                 <td class="not-selectable center aligned">
-                    <span class="mainwp-preview-item ui mini grey icon basic button" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'Click to see the site homepage screenshot . ', 'mainwp' ); ?>" preview-site-url="<?php echo esc_url( $website->url ); ?>" ><i class="camera icon"></i></span>
+                    <?php $site_mshot = MainWP_UI::get_mshots_image_sources( $website->url, 900 ); ?>
+                    <span class="mainwp-preview-item ui mini grey icon basic button" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'Click to see the site homepage screenshot . ', 'mainwp' ); ?>" preview-site-url="<?php echo esc_url( $website->url ); ?>" data-mainwp-mshot-src="<?php echo esc_url( $site_mshot['src'] ); ?>" data-mainwp-mshot-requeue-src="<?php echo esc_url( $site_mshot['requeue_src'] ); ?>" ><i class="camera icon"></i></span>
                 </td>
                 <td class="not-selectable center aligned">
                 <?php if ( empty( $website->note ) ) : ?>

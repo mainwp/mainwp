@@ -933,8 +933,11 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                                 'privkey'            => is_array( $en_privkey ) ? base64_encode( json_encode( $en_privkey ) ) : base64_encode( $en_privkey ), //phpcs:ignore -- NOSONAR -ok.
                                 'verify_certificate' => $website->verify_certificate,
                                 'uniqueId'           => ( null !== $website->uniqueId ? $website->uniqueId : '' ),
-                                'http_user'          => $website->http_user,
-                                'http_pass'          => $website->http_pass,
+                                // MWP-1548: decrypt the source's credentials and let
+                                // update_website_values re-encrypt under a fresh keyfile,
+                                // so the cloned site doesn't share the source row's file_key.
+                                'http_user'          => MainWP_Credential_Storage::decrypt_credential( $website->http_user ),
+                                'http_pass'          => MainWP_Credential_Storage::decrypt_credential( $website->http_pass ),
                                 'ssl_version'        => $website->ssl_version,
                             )
                         );
@@ -958,8 +961,11 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 'groupnames'        => array(),
                 'verifyCertificate' => $website->verify_certificate,
                 'addUniqueId'       => ( null !== $website->uniqueId ? $website->uniqueId : '' ),
-                'http_user'         => $website->http_user,
-                'http_pass'         => $website->http_pass,
+                // MWP-1548: same pattern as the force_update branch above --
+                // decrypt the source's credentials, let add_website re-encrypt
+                // for the new clone with a fresh keyfile.
+                'http_user'         => MainWP_Credential_Storage::decrypt_credential( $website->http_user ),
+                'http_pass'         => MainWP_Credential_Storage::decrypt_credential( $website->http_pass ),
                 'sslVersion'        => $website->ssl_version,
                 'wpe'               => $website->wpe,
                 'isStaging'         => 1,

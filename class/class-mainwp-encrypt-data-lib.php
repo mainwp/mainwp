@@ -65,32 +65,68 @@ class MainWP_Encrypt_Data_Lib { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Get key filename.
      *
-     * @param  int  $site_id site id.
+     * Returns the opaque HMAC-derived filename for the given site's encrypted
+     * private key. When called with $fullpath=true, also performs lazy migration:
+     * if the new opaque file does not yet exist but a legacy filename does, it
+     * is renamed in place. This covers the window between a plugin upgrade and
+     * the bulk migration on `mainwp_db_after_update`.
+     *
+     * @param  int  $site_id  site id.
      * @param  bool $fullpath full path.
      *
      * @return string
      */
     public static function get_key_file( $site_id, $fullpath = false ) {
-        $file = 'mainwp_priv_encrypt_keys_' . $site_id;
+        $file = MainWP_System_Utility::get_private_filename( 'pk', $site_id, 'priv_encrypt_keys' );
         if ( $fullpath ) {
             MainWP_Keys_Manager::init_keys_dir();
-            $key_dir = MainWP_Keys_Manager::get_keys_dir();
-            return $key_dir . $file;
+            $key_dir  = MainWP_Keys_Manager::get_keys_dir();
+            $new_path = $key_dir . $file;
+            if ( ! file_exists( $new_path ) ) {
+                $legacy_path = $key_dir . static::legacy_key_filename( $site_id );
+                if ( file_exists( $legacy_path ) ) {
+                    if ( @rename( $legacy_path, $new_path ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort lazy migration.
+                        return $new_path;
+                    }
+                    return $legacy_path; // rename failed; fall back to legacy until bulk migration runs.
+                }
+            }
+            return $new_path;
         }
         return $file;
+    }
+
+    /**
+     * Legacy (predictable) key filename.
+     *
+     * Returns the pre-migration filename pattern for a site's encrypted private
+     * key. Used by lazy migration in get_key_file() and by the bulk migration
+     * on plugin upgrade to locate files that need renaming. New code should
+     * never write a file at this name.
+     *
+     * @param int $site_id site id.
+     *
+     * @return string Legacy filename.
+     */
+    public static function legacy_key_filename( $site_id ) {
+        return 'mainwp_priv_encrypt_keys_' . $site_id;
     }
 
 
     /**
      * Remove key file.
      *
+     * Deletes both the new opaque filename and the legacy filename (if either
+     * exists) so that orphan legacy files left behind by an incomplete bulk
+     * migration are also cleaned up.
+     *
      * @param  int $site_id site id.
      *
      * @return void
      */
     public static function remove_key_file( $site_id ) {
-        $file = static::get_key_file( $site_id );
-        MainWP_Keys_Manager::instance()->delete_key_file( $file );
+        MainWP_Keys_Manager::instance()->delete_key_file( static::get_key_file( $site_id ) );
+        MainWP_Keys_Manager::instance()->delete_key_file( static::legacy_key_filename( $site_id ) );
     }
 
     /**

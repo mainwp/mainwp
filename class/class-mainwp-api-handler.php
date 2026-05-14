@@ -43,11 +43,18 @@ class MainWP_API_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         $check_exts = array();
         foreach ( $extensions as $ext ) {
             if ( isset( $ext['activated_key'] ) && 'Activated' === $ext['activated_key'] ) {
+                // MWP-1546: $ext['api_key'] no longer exists in the aggregated
+                // mainwp_extensions option (the plaintext was removed from
+                // there). Fetch the per-slug activation info, which decrypts
+                // the api_key on read and returns plaintext only for this
+                // request scope.
                 $args                               = array();
+                $api_slug                           = isset( $ext['slug'] ) ? dirname( $ext['slug'] ) : '';
+                $activation                         = MainWP_Api_Manager::instance()->get_activation_info( $api_slug );
                 $args['plugin_name']                = $ext['api'];
                 $args['version']                    = $ext['version'];
                 $args['product_id']                 = $ext['product_id'];
-                $args['api_key']                    = $ext['api_key'];
+                $args['api_key']                    = is_array( $activation ) && isset( $activation['api_key'] ) ? $activation['api_key'] : '';
                 $args['instance']                   = $ext['instance_id'];
                 $args['software_version']           = $ext['software_version'];
                 $check_exts[ $args['plugin_name'] ] = $args;
@@ -112,11 +119,16 @@ class MainWP_API_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         $rslt       = null;
         foreach ( $extensions as $ext ) {
             if ( isset( $ext['api'] ) && ( $pSlug === $ext['api'] ) && isset( $ext['apiManager'] ) && ! empty( $ext['apiManager'] ) ) {
+                // MWP-1546: same migration as check_exts_upgrade above --
+                // pull the api_key from per-slug get_activation_info() instead
+                // of the (now-stripped) aggregated mainwp_extensions option.
+                $api_slug                 = isset( $ext['slug'] ) ? dirname( $ext['slug'] ) : '';
+                $activation               = MainWP_Api_Manager::instance()->get_activation_info( $api_slug );
                 $args                     = array();
                 $args['plugin_name']      = $ext['api'];
                 $args['version']          = $ext['version'];
                 $args['product_id']       = $ext['product_id'];
-                $args['api_key']          = $ext['api_key'];
+                $args['api_key']          = is_array( $activation ) && isset( $activation['api_key'] ) ? $activation['api_key'] : '';
                 $args['instance']         = $ext['instance_id'];
                 $args['software_version'] = $ext['software_version'];
                 $response                 = MainWP_Api_Manager_Plugin_Update::instance()->update_check( $args );
@@ -153,11 +165,14 @@ class MainWP_API_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         $rslt       = null;
         foreach ( $extensions as $ext ) {
             if ( isset( $ext['api'] ) && $pSlug === $ext['api'] && isset( $ext['apiManager'] ) && ! empty( $ext['apiManager'] ) ) {
+                // MWP-1546: same migration as the two functions above.
+                $api_slug                 = isset( $ext['slug'] ) ? dirname( $ext['slug'] ) : '';
+                $activation               = MainWP_Api_Manager::instance()->get_activation_info( $api_slug );
                 $args                     = array();
                 $args['plugin_name']      = $ext['api'];
                 $args['version']          = $ext['version'];
                 $args['product_id']       = $ext['product_id'];
-                $args['api_key']          = $ext['api_key'];
+                $args['api_key']          = is_array( $activation ) && isset( $activation['api_key'] ) ? $activation['api_key'] : '';
                 $args['instance']         = $ext['instance_id'];
                 $args['software_version'] = $ext['software_version'];
                 $rslt                     = MainWP_Api_Manager::instance()->request_extension_information( $args );

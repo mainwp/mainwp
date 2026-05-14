@@ -367,7 +367,10 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
 
             if ( ! $wp_filesystem->is_dir( $keysDir ) ) {
-                $wp_filesystem->mkdir( $keysDir, 0777 );
+                // MWP-1557: 0700 preferred (owner only), 0750 fallback for shared-hosting umask edge cases. Mirrors migrate_private_filenames().
+                if ( ! $wp_filesystem->mkdir( $keysDir, 0700 ) ) {
+                    $wp_filesystem->mkdir( $keysDir, 0750 );
+                }
             }
 
             if ( ! file_exists( $keysDir . '.htaccess' ) ) {
@@ -383,7 +386,10 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
             //phpcs:disable
             if ( ! file_exists( $keysDir ) ) {
-                mkdir( $keysDir, 0777, true );
+                // MWP-1557: 0700 preferred (owner only), 0750 fallback for shared-hosting umask edge cases. Mirrors migrate_private_filenames().
+                if ( ! mkdir( $keysDir, 0700, true ) ) {
+                    mkdir( $keysDir, 0750, true );
+                }
             }
 
             if ( ! file_exists( $keysDir . '.htaccess' ) ) {
@@ -411,6 +417,148 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     public static function get_keys_dir() {
         $dirs = MainWP_System_Utility::get_mainwp_dir();
         return $dirs[0] . 'pk' . DIRECTORY_SEPARATOR;
+    }
+
+    /**
+     * Method register_migration_hooks()
+     *
+     * Register the post-upgrade hook that triggers the one-time pk/ filename
+     * migration. Called from MainWP_System::activate_this_plugin() before
+     * MainWP_Install::install() runs, so the action handler is registered when
+     * `mainwp_db_after_update` fires.
+     *
+     * @return void
+     */
+    public static function register_migration_hooks() {
+        add_action( 'mainwp_db_after_update', array( static::class, 'migrate_private_filenames' ), 10, 2 );
+        add_action( 'mainwp_db_after_update', array( static::class, 'migrate_sibling_dir_perms' ), 10, 2 );
+    }
+
+    /**
+     * Method migrate_private_filenames()
+     *
+     * One-time bulk migration for MWP-1557: rename legacy pk/ filenames
+     * (`mainwp_priv_encrypt_keys_<site_id>`) to the opaque HMAC-derived names
+     * computed by MainWP_System_Utility::get_private_filename(). Also tightens
+     * directory permissions from the legacy 0777 to 0700 (or 0750 fallback).
+     *
+     * Idempotent: only matches the legacy filename pattern, so re-running on
+     * already-migrated installs is a no-op. Lazy migration in
+     * MainWP_Encrypt_Data_Lib::get_key_file() handles any files this bulk
+     * pass might miss.
+     *
+     * @param string $from_version Pre-upgrade mainwp_db_version.
+     * @param string $to_version   Post-upgrade mainwp_db_version.
+     *
+     * @return void
+     */
+    public static function migrate_private_filenames( $from_version, $to_version ) {
+        if ( ! version_compare( $from_version, '9.0.2.0', '<' ) ) {
+            return;
+        }
+        static::init_keys_dir();
+        $key_dir = static::get_keys_dir();
+        if ( ! is_dir( $key_dir ) ) {
+            return;
+        }
+
+        // Tighten directory permissions; 0700 preferred, 0750 if a shared web group needs read access.
+        if ( ! @chmod( $key_dir, 0700 ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort hardening.
+            @chmod( $key_dir, 0750 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort hardening.
+        }
+
+        // Rename legacy pk files to opaque HMAC-derived names.
+        $entries = @scandir( $key_dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort directory walk.
+        if ( ! is_array( $entries ) ) {
+            return;
+        }
+        foreach ( $entries as $entry ) {
+            if ( ! preg_match( '/^mainwp_priv_encrypt_keys_(\d+)$/', $entry, $m ) ) {
+                continue;
+            }
+            $site_id  = (int) $m[1];
+            $new_name = MainWP_System_Utility::get_private_filename( 'pk', $site_id, 'priv_encrypt_keys' );
+            $old_path = $key_dir . $entry;
+            $new_path = $key_dir . $new_name;
+            if ( file_exists( $new_path ) ) {
+                // New file already present (rare race); legacy is stale, remove it.
+                @unlink( $old_path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- cleanup of stale legacy.
+                continue;
+            }
+            @rename( $old_path, $new_path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort; lazy migration in get_key_file() handles failures.
+        }
+    }
+
+    /**
+     * Method migrate_sibling_dir_perms()
+     *
+     * One-time chmod sweep for installs that created mainwp/ subdirs before
+     * MWP-1558's mkdir tightening landed in 9.0.2.0. mkdir() does not touch
+     * the mode of an existing directory, so pre-fix installs keep their
+     * legacy 0777 even after upgrading. Reported by Daan Kortenbach in the
+     * MWP-1557/1558 follow-up sweep (MWP-1566).
+     *
+     * Targets the known set of subdirs the plugin manages. Idempotent:
+     * chmodding an already-correct dir is a no-op. @chmod failures are
+     * swallowed (Windows hosts, shared-hosting suexec mismatches, dirs
+     * owned by a different system user -- all expected).
+     *
+     * @param string $from_version Pre-upgrade mainwp_db_version.
+     * @param string $to_version   Post-upgrade mainwp_db_version.
+     *
+     * @return void
+     */
+    public static function migrate_sibling_dir_perms( $from_version, $to_version ) {
+        if ( ! version_compare( $from_version, '9.0.2.1', '<' ) ) {
+            return;
+        }
+        $dirs = MainWP_System_Utility::get_mainwp_dir();
+        if ( empty( $dirs[0] ) || ! is_dir( $dirs[0] ) ) {
+            return;
+        }
+        $base = rtrim( $dirs[0], '/\\' ) . DIRECTORY_SEPARATOR;
+
+        // mainwp/ root: 0755 (public-asset convention, holds index.php + subdirs).
+        @chmod( rtrim( $base, '/\\' ), 0755 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort hardening.
+
+        // Public-asset subdirs. cost-tracker-products-icons is module-specific (constant-gated)
+        // but uses the same get_mainwp_dir(..., true) public pattern, so legacy installs that ran
+        // Cost Tracker pre-9.0.2.0 need the same chmod.
+        foreach ( array( 'icons', 'plugin-icons', 'theme-icons', 'client-images', 'site-icons', 'themes', 'cost-tracker-products-icons' ) as $sub ) {
+            $p = $base . $sub;
+            if ( is_dir( $p ) ) {
+                @chmod( $p, 0755 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort hardening.
+            }
+        }
+
+        // Private (htaccess-protected) subdirs.
+        foreach ( array( 'cookies', 'templates', 'templates' . DIRECTORY_SEPARATOR . 'emails', 'bulk' ) as $sub ) {
+            $p = $base . $sub;
+            if ( is_dir( $p ) ) {
+                @chmod( $p, 0750 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort hardening.
+            }
+        }
+
+        // Per-user dirs and all descendants: mainwp/<userid>/, /<userid>/bulk/, per-site
+        // <siteid>/ dirs from get_mainwp_specific_dir($website->id), and any deeper paths
+        // that backup_download_file() may have materialized via dirname($pFile) on legacy
+        // installs with custom backup filenames. All private (0750).
+        $chmod_recursive = function ( $dir ) use ( &$chmod_recursive ) {
+            @chmod( $dir, 0750 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort hardening.
+            $subs = @glob( $dir . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort directory walk.
+            if ( is_array( $subs ) ) {
+                foreach ( $subs as $s ) {
+                    $chmod_recursive( $s );
+                }
+            }
+        };
+
+        $userdirs = @glob( $base . '[0-9]*', GLOB_ONLYDIR ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort directory walk.
+        if ( is_array( $userdirs ) ) {
+            foreach ( $userdirs as $udir ) {
+                $chmod_recursive( $udir );
+            }
+        }
     }
 
 

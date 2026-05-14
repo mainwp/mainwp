@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.1.4'; // NOSONAR - no IP.
+    protected $mainwp_db_version = '9.0.2.1'; // NOSONAR - no IP. Bumped for MWP-1566 sibling-dir chmod migration (MWP-1558 follow-up). Original 9.0.2.0 bump for MWP-1557/1558.
 
     /**
      * Protected variable to hold the database option name.
@@ -368,15 +368,14 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     description varchar(200) NULL,
     permissions varchar(10) NOT NULL,
     consumer_key char(64) NOT NULL,
-    consumer_secret char(43) NOT NULL,
+    consumer_secret varchar(255) NOT NULL,
     nonces longtext NULL,
     truncated_key char(7) NOT NULL,
     key_pass char(64) NOT NULL DEFAULT "",
     key_type tinyint(1) NOT NULL DEFAULT 0,
     `enabled` tinyint(1) DEFAULT 0,
     last_access datetime NULL default null,
-    KEY consumer_key (consumer_key),
-    KEY consumer_secret (consumer_secret)';
+    KEY consumer_key (consumer_key)';
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.0.9', '<=' ) ) { // NOSONAR - none IP.
             $tbl .= ',
     PRIMARY KEY  (key_id)  ';
@@ -591,6 +590,34 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' ADD INDEX idx_userid (userid)' ); //phpcs:ignore -- ok.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' ADD INDEX idx_client_id (client_id)' ); //phpcs:ignore -- ok.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' ADD INDEX idx_url (url(191))' ); //phpcs:ignore -- ok.
+        }
+        // MWP-1540: widen consumer_secret so wp_hash_password output (variable length,
+        // typically 34 chars for $P$ but up to ~150 for argon2) fits without truncation,
+        // and drop the unused KEY consumer_secret index (lookups are by HMAC'd consumer_key,
+        // never by consumer_secret). dbDelta does not reliably MODIFY existing column types
+        // or DROP indexes, so both changes are applied explicitly here.
+        if ( ! empty( $current_ver ) && version_compare( $current_ver, '9.0.1.5', '<' ) ) { // NOSONAR - no ip.
+            $api_keys_table = $this->table_name( 'api_keys' );
+            // Drop the unused index FIRST so the column type change is unambiguous.
+            $existing_indexes = $this->wpdb->get_col( "SHOW INDEX FROM {$api_keys_table} WHERE Key_name = 'consumer_secret'", 2 ); // phpcs:ignore -- table name is internal.
+            if ( ! empty( $existing_indexes ) ) {
+                $this->wpdb->query( "ALTER TABLE {$api_keys_table} DROP INDEX consumer_secret" ); // phpcs:ignore -- table name is internal.
+            }
+            $this->wpdb->query( "ALTER TABLE {$api_keys_table} MODIFY COLUMN consumer_secret varchar(255) NOT NULL" ); // phpcs:ignore -- table name is internal.
+
+            // Confirm the MODIFY actually took effect before we trust this migration.
+            // WP 6.5+ produces bcrypt hashes around 60 characters, so a silent failure
+            // would leave the column at char(43) and truncate every freshly hashed
+            // secret on insert, quietly breaking auth on any newly created key. On a
+            // width mismatch we set a flag option that the dashboard surfaces as an
+            // admin notice; mainwp_notice_wp_mail_failed in class-mainwp-system.php
+            // uses the same shape.
+            $col_def = $this->wpdb->get_row( "SHOW COLUMNS FROM {$api_keys_table} LIKE 'consumer_secret'" ); // phpcs:ignore -- table name is internal.
+            if ( empty( $col_def ) || false === stripos( (string) $col_def->Type, 'varchar(255)' ) ) {
+                update_option( 'mainwp_notice_consumer_secret_migration_failed', current_time( 'mysql' ) );
+            } else {
+                delete_option( 'mainwp_notice_consumer_secret_migration_failed' );
+            }
         }
     }
 

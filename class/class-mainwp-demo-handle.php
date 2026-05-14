@@ -294,13 +294,13 @@ class MainWP_Demo_Handle { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             $params['client_id'] = 0; // set: 0.
 
             $syncValues = array(
-                'dtsSync'               => 0,
-                'dtsSyncStart'          => 0,
-                'dtsAutomaticSync'      => 0,
-                'dtsAutomaticSyncStart' => 0,
-                'totalsize'             => 0,
-                'extauth'               => '',
-                'sync_errors'           => '',
+                'dtsSync'                 => 0,
+                'dtsSyncStart'            => 0,
+                'dtsAutomaticSync'        => 0,
+                'dtsAutomaticSyncStart'   => 0,
+                'totalsize'               => 0,
+                'extauth'                 => '',
+                'sync_errors'             => '',
             );
 
             if ( $wpdb->insert( MainWP_DB::instance()->get_table_name( 'wp' ), $params ) ) {

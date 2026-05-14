@@ -1570,7 +1570,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                         <?php
                                         // translators: 1: Opening anchor tag. 2: Closing anchor tag.
                                         printf( esc_html__( 'If you are not sure how to find the openssl.cnf location, please %1$scheck this help document%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/potential-issues#openssl-library-error-invalid-request" target="_blank">', '</a> <i class="external alternate icon"></i>' );
-                                        ?></em>
+                                        ?>
+                                        </em>
                                         <em><?php esc_html_e( 'If you have confirmed the placement of your openssl.cnf and are still receiving an error banner, click the "Error Fixed" button to dismiss it.', 'mainwp' ); ?></em>
                                     </div>
                                 </div>
@@ -2513,7 +2514,28 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 if ( empty( $website ) ) {
                     continue;
                 }
-                $row  = MainWP_Utility::map_site( $website, $keys, false );
+                $row = MainWP_Utility::map_site( $website, $keys, false );
+                // MWP-1548: decrypt http_user / http_pass before they hit
+                // the CSV. The export file is meant for cross-install
+                // transfer (admin re-imports on another dashboard); a
+                // file_key envelope from this install would be unreadable
+                // there. Plaintext on disk preserves today's portability
+                // contract -- the export was already plaintext pre-fix,
+                // and this hop neither widens nor narrows that exposure.
+                if ( isset( $row['http_user'] ) ) {
+                    $row['http_user'] = MainWP_Credential_Storage::decrypt_credential( $row['http_user'] );
+                }
+                if ( isset( $row['http_pass'] ) ) {
+                    $row['http_pass'] = MainWP_Credential_Storage::decrypt_credential( $row['http_pass'] );
+                }
+
+                $row = array_map(
+                    static function ( $value ) {
+                        return str_replace( '"', '""', (string) $value );
+                    },
+                    $row
+                );
+
                 $csv .= '"' . implode( '","', $row ) . '"' . "\r";
             }
 

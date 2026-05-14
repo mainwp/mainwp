@@ -55,15 +55,15 @@ class MainWP_QQ2_Uploaded_File_Xhr { // phpcs:ignore Generic.Classes.OpeningBrac
         global $wp_filesystem;
 
         if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
-            if ( ! is_dir( dirname( dirname( dirname( $path ) ) ) ) && ! $wp_filesystem->mkdir( dirname( dirname( dirname( $path ) ) ), 0777 ) ) {
+            if ( ! is_dir( dirname( dirname( dirname( $path ) ) ) ) && ! $wp_filesystem->mkdir( dirname( dirname( dirname( $path ) ) ), 0750 ) ) {
                 throw new MainWP_Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
             }
 
-            if ( ! is_dir( dirname( dirname( $path ) ) ) && ! $wp_filesystem->mkdir( dirname( dirname( $path ) ), 0777 ) ) {
+            if ( ! is_dir( dirname( dirname( $path ) ) ) && ! $wp_filesystem->mkdir( dirname( dirname( $path ) ), 0750 ) ) {
                 throw new MainWP_Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
             }
 
-            if ( ! is_dir( dirname( $path ) ) && ! $wp_filesystem->mkdir( dirname( $path ), 0777 ) ) {
+            if ( ! is_dir( dirname( $path ) ) && ! $wp_filesystem->mkdir( dirname( $path ), 0750 ) ) {
                 throw new MainWP_Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
             }
 
@@ -71,7 +71,7 @@ class MainWP_QQ2_Uploaded_File_Xhr { // phpcs:ignore Generic.Classes.OpeningBrac
             $wp_filesystem->put_contents( $path, stream_get_contents( $temp ) );
         } else {
             if ( ! is_dir( dirname( $path ) ) ) {
-                mkdir( dirname( $path ), 0777, true );
+                mkdir( dirname( $path ), 0750, true );
             }
 
             $target = fopen( $path, 'w' );

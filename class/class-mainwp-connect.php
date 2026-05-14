@@ -815,6 +815,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $url .= 'admin-ajax.php';
             }
 
+            $http_user = null;
+            $http_pass = null;
+
             if ( property_exists( $website, 'http_user' ) ) {
                 $http_user = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
             }

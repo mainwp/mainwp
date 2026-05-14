@@ -764,6 +764,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
             </div>
         </div>
+
         <?php
         /**
          * Action: mainwp_before_pages_table
@@ -1109,7 +1110,8 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
             unset( $results );
             foreach ( $pages as $page ) {
-                $raw_dts = '';
+                $raw_dts        = '';
+                $copy_permalink = MainWP_Post::get_copyable_permalink( $page, $website );
                 if ( isset( $page['dts'] ) ) {
                     $raw_dts = $page['dts'];
                     if ( ! stristr( $page['dts'], '-' ) ) {
@@ -1190,6 +1192,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     </td>
                     <td class="right aligned  not-selectable">
                         <input class="pageId" type="hidden" name="id" value="<?php echo intval( $page['id'] ); ?>"/>
+                        <input class="copyPermalinkValue" type="hidden" value="<?php echo esc_url( $copy_permalink ); ?>"/>
                         <input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo 'trash' === $page['status'] ? 'restore|' : ''; ?><?php echo 'future' === $page['status'] || 'draft' === $page['status'] ? 'publish|' : ''; ?>" />
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
                         <div class="ui right pointing dropdown" style="z-index: 999">
@@ -1210,6 +1213,8 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                     <a class="item page_submitrestore" href="#"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
                                     <a class="item page_submitdelete_perm" href="#"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></a>
                                 <?php } ?>
+                                <a class="item mainwp-copy-row-value" href="#" data-copy-target=".copyPermalinkValue" data-copy-success="<?php echo esc_attr__( 'Copied permalink to clipboard.', 'mainwp' ); ?>"><?php esc_html_e( 'Copy Permalink', 'mainwp' ); ?></a>
+                                <a class="item mainwp-copy-row-value" href="#" data-copy-target=".pageId" data-copy-success="<?php echo esc_attr__( 'Copied ID to clipboard.', 'mainwp' ); ?>"><?php esc_html_e( 'Copy ID', 'mainwp' ); ?></a>
                                 <a class="item" href="<?php MainWP_Site_Open::get_open_site_admin_link( $website->id, true ); //phpcs:ignore -- ok. ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
                                 <?php
                                 /**

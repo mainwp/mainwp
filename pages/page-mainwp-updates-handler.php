@@ -134,33 +134,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
             $information = MainWP_Connect::fetch_url_authed( $website, 'upgrade' );
 
-            // logging feature.
-            $error   = '';
-            $success = false;
-
-            if ( is_array( $information ) ) {
-                if ( isset( $information['upgrade'] ) && ( 'SUCCESS' === $information['upgrade'] ) ) {
-                    $success = true;
-                } elseif ( isset( $information['upgrade'] ) ) {
-                    if ( 'LOCALIZATION' === $information['upgrade'] ) {
-                        $error = esc_html__( 'No update found for the set locale.', 'mainwp' );
-                    } elseif ( 'NORESPONSE' === $information['upgrade'] ) {
-                        $error = esc_html__( 'No response from the child site server.', 'mainwp' );
-                    }
-                } elseif ( isset( $information['error'] ) ) {
-                    $error = esc_html( $information['error'] );
-                } else {
-                    $error = esc_html__( 'Invalid response from child site.', 'mainwp' );
-                }
-            }
-
-            $output_array = array(
-                'old_version' => isset( $information['old_version'] ) ? $information['old_version'] : '',
-                'version'     => isset( $information['version'] ) ? $information['version'] : '',
-                'success'     => $success ? 1 : 0,
-                'error'       => $error,
-            );
-            mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $website, 'updated', $output_array, 'core' );
+            static::activity_log_upgrade( $website, $information );
 
             /**
             * Action: mainwp_after_wp_update
@@ -174,6 +148,42 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             return $information;
         }
         return false;
+    }
+
+    /**
+     * Log upgrade activities.
+     *
+     * @param object $website Child site object.
+     * @param array  $information Upgrade information.
+     */
+    public static function activity_log_upgrade( $website, $information ) {
+        // Implementation for logging upgrade activities.
+        $error   = '';
+        $success = false;
+
+        if ( is_array( $information ) ) {
+            if ( isset( $information['upgrade'] ) && ( 'SUCCESS' === $information['upgrade'] ) ) {
+                $success = true;
+            } elseif ( isset( $information['upgrade'] ) ) {
+                if ( 'LOCALIZATION' === $information['upgrade'] ) {
+                    $error = esc_html__( 'No update found for the set locale.', 'mainwp' );
+                } elseif ( 'NORESPONSE' === $information['upgrade'] ) {
+                    $error = esc_html__( 'No response from the child site server.', 'mainwp' );
+                }
+            } elseif ( isset( $information['error'] ) ) {
+                $error = esc_html( $information['error'] );
+            } else {
+                $error = esc_html__( 'Invalid response from child site.', 'mainwp' );
+            }
+        }
+
+        $output_array = array(
+            'old_version' => is_array( $information ) && isset( $information['old_version'] ) ? $information['old_version'] : '',
+            'version'     => is_array( $information ) && isset( $information['version'] ) ? $information['version'] : '',
+            'success'     => $success ? 1 : 0,
+            'error'       => $error,
+        );
+        mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $website, 'updated', $output_array, 'core' );
     }
 
     /**

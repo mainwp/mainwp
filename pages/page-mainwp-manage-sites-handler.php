@@ -58,8 +58,8 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             try {
 
                 $cur_id = MainWP_System_Utility::get_current_wpid();
-                if ( empty( $cur_id ) ) {
-                    MainWP_System_Utility::set_current_wpid( $website['id'] );
+                if ( empty( $cur_id ) && is_object( $website ) && isset( $website->id ) ) {
+                    MainWP_System_Utility::set_current_wpid( $website->id );
                 }
 
                 MainWP_Logger::instance()->log_execution_sync( 'init', '', $website );

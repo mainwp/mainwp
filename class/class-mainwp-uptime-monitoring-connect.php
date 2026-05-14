@@ -201,10 +201,13 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $http_pass = '';
 
         if ( property_exists( $monitor, 'http_user' ) ) {
-            $http_user = $monitor->http_user;
+            // MWP-1548: $monitor here carries http_user / http_pass joined
+            // from the wp table; decrypt at the boundary so the outbound
+            // CURLOPT_USERPWD gets plaintext.
+            $http_user = MainWP_Credential_Storage::decrypt_credential( $monitor->http_user );
         }
         if ( property_exists( $monitor, 'http_pass' ) ) {
-            $http_pass = $monitor->http_pass;
+            $http_pass = MainWP_Credential_Storage::decrypt_credential( $monitor->http_pass );
         }
 
         if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
@@ -417,10 +420,11 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             $mo_url = static::get_apply_monitor_url( $website );
 
             if ( property_exists( $website, 'http_user' ) ) {
-                $http_user = $website->http_user;
+                // MWP-1548: decrypt at boundary for outbound Basic Auth.
+                $http_user = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
             }
             if ( property_exists( $website, 'http_pass' ) ) {
-                $http_pass = $website->http_pass;
+                $http_pass = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
             }
 
             $ch = curl_init();
@@ -866,11 +870,11 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         }
 
         $previous_heartbeat = MainWP_DB_Uptime_Monitoring::instance()->get_previous_monitor_heartbeat( $monitor->monitor_id );
-        $sec_since_last = $previous_heartbeat && ! empty( $previous_heartbeat->time ) ? (int) $end - strtotime( $previous_heartbeat->time ) : 1;
+        $sec_since_last     = $previous_heartbeat && ! empty( $previous_heartbeat->time ) ? (int) $end - strtotime( $previous_heartbeat->time ) : 1;
 
         $previous_main_status = $monitor->last_main_status;
 
-        if ( 99 === (int)$previous_main_status ) { // initial status, to set as up, and not send notification for the first time.
+        if ( 99 === (int) $previous_main_status ) { // initial status, to set as up, and not send notification for the first time.
             $previous_main_status = static::UP;
         }
 

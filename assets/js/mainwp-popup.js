@@ -6,6 +6,7 @@
             if (popup === null) {
                 popup = new Mainwp_InstancePopup();
                 popup.initWrapper(selector);
+                popup.initElements();
                 mainwpListPopups.pushItem(popup);
             }
             return popup;
@@ -82,24 +83,65 @@
                     if (!this.hideStatusText) {
                         this.setStatusText('0 / ' + this.totalSites + ' ' + this.statusText);
                     }
-                    this.$overlayElementId.find('.mainwp-modal-progress').progress(pData);
+                    this.$progress = this.$overlayElementId.find('.mainwp-modal-progress');
+                    this.$progress.progress(pData);
+                },
+                initElements: function () {
+                    if (!this.$overlayElementId) return;
+
+                    this.$header    = this.$overlayElementId.find('.header');
+                    this.$progress  = this.$overlayElementId.find('.mainwp-modal-progress');
+                    this.$label     = this.$progress.find('.label');
+                    this.$list      = this.$overlayElementId.find('#sync-sites-status');
+                    this.$actions   = this.$overlayElementId.find('.mainwp-modal-actions');
+                    this.$content   = this.$overlayElementId.find('.mainwp-modal-content');
+                    this.$wrap      = this.$overlayElementId.find('.mainwp-popup-wrap');
+                    this.$backdrop  = this.$overlayElementId.find('.mainwp-popup-backdrop');
+                    this.$closeBtn  = this.$overlayElementId.find('.mainwp-modal-close');
                 },
                 render: function () {
+                    if (!this.$overlayElementId) return;
+
+                    this.initProgressBatch();
+
                     if (this.title) {
-                        this.$overlayElementId.find('.header').html(this.title);
+                        this.$header.html(this.title);
                     }
 
-                    if (this.progressMax)
-                        this.$overlayElementId.find('.mainwp-modal-progress').show();
-                    else
-                        this.$overlayElementId.find('.mainwp-modal-progress').hide(); // hide status and progress.
+                    this.$progress.show();
 
-                    this.$overlayElementId.modal({
-                        onHide:  () => {
-                            this.onHideModal();
-                        },
-                        allowMultiple: this.allowMultiple ?? false
-                    }).modal('setting', 'closable', false).modal('show').modal('set active'); // trick to fix diplay issue.
+                    this.$overlayElementId
+                        .modal({
+                            onHide: () => this.onHideModal(),
+                            allowMultiple: this.allowMultiple ?? false,
+                            closable: false
+                        })
+                        .modal('show')
+                        .modal('set active'); // keep if still needed for your UI bug
+                },
+                bindEvents: function () {
+                    if (this.$closeBtn?.length) {
+                        this.$closeBtn.off('click.mainwp').on('click.mainwp', () => this.close(true));
+                    }
+                },
+                setTitle: function (title) {
+                    this.$header?.html(title);
+                },
+                setStatusText: function (label) {
+                    this.$label?.html(label);
+                },
+                clearList: function () {
+                    this.$list?.empty();
+                },
+                setActionButtons: function (html) {
+                    this.$actions?.html(html);
+                },
+                getContentEl: function () {
+                    return this.$content;
+                },
+                setElementsZIndex: function (val) {
+                    this.$wrap?.css('z-index', val);
+                    this.$backdrop?.css('z-index', val);
                 },
                 onHideModal: function () {
                     if (this.doCloseCallback) {
@@ -107,60 +149,74 @@
                         typeof this.actionsCloseCallback === 'function' && this.actionsCloseCallback();
                     }
                 },
-                bindEvents: function () {
-                    const closebuttonEl = this.$overlayElementId.find('.mainwp-modal-close');
-
-                    if (closebuttonEl.length) {
-                        closebuttonEl.on('click', () => this.close(true));
-                    }
-                },
-                setTitle: function (title) {
-                    this.$overlayElementId.find('.header').html(title);
-                },
-                setStatusText: function (label) {
-                    this.$overlayElementId.find('.mainwp-modal-progress').find('.label').html(label);
-                },
-                getProgressValue: function () {
-                    return this.$overlayElementId.find('.mainwp-modal-progress').progress('get value');
-                },
-                setProgressValue: function (value) {
-                    this.$overlayElementId.find('.mainwp-modal-progress').progress('set progress', value);
+                initProgressBatch: function () {
+                    this._pendingCount = 0;
+                    this._lastValue = 0;
+                    this._flushTimer = null;
                 },
                 setProgressSite: function (value) {
-                    // progress label.
-                    let lb = value + ' / ' + this.totalSites + ' ' + this.statusText;
-                    this.setStatusText(lb);
-                    let pVal = this.getProgressValue();
-                    pVal += 1;
-                    this.setProgressValue(pVal);
-                },
-                appendItemsList: function (left, right) {
-                    if (this.$overlayElementId == null)
-                        return;
+                    if (!this.$progress) return;
 
-                    let row = '<div class="item">';
-                    row += '<div class="right floated content">';
-                    row += right;
-                    row += '</div>';
-                    row += '<div class="content">';
-                    row += left;
-                    row += '</div>';
-                    row += '</div>';
+                    this._pendingCount = (this._pendingCount || 0) + 1;
+                    this._lastValue = value;
 
-                    this.$overlayElementId.find('#sync-sites-status').append(row);
+                    if (this._rafScheduled) return;
+
+                    this._rafScheduled = true;
+
+                    requestAnimationFrame(() => {
+                        this.flushProgress();
+                        this._rafScheduled = false;
+                    });
                 },
-                clearList: function () {
-                    this.$overlayElementId.find('#sync-sites-status').empty();
+                flushProgress: function () {
+                    if (!this.$progress) return;
+
+                    // update label once
+                    this.setStatusText(
+                        `${this._lastValue} / ${this.totalSites} ${this.statusText}`
+                    );
+
+                    // batch increment
+                    const current = this.$progress.progress('get value') || 0;
+                    this.$progress.progress('set progress', current + this._pendingCount);
+
+                    // reset
+                    this._pendingCount = 0;
+                    this._flushTimer = null;
                 },
-                setActionButtons: function (html) {
-                    this.$overlayElementId.find('.mainwp-modal-actions').html(html);
+                getProgressValue: function () {
+                    return this.$progress
+                        ? this.$progress.progress('get value')
+                        : 0;
                 },
-                getContentEl: function () {
-                    return this.$overlayElementId.find('.mainwp-modal-content');
+                setProgressValue: function (value) {
+                    if (this.$progress) {
+                        this.$progress.progress('set progress', value);
+                    }
                 },
-                setElementsZIndex: function (val) {
-                    this.$overlayElementId.find('.mainwp-popup-wrap').css('z-index', val);
-                    this.$overlayElementId.find('.mainwp-popup-backdrop').css('z-index', val);
+                appendItemsList: function (left, right, { allowHtml = true } = {}) {
+                    if (!this.$overlayElementId) return;
+
+                    const $list = this.$list || (
+                        this.$list = this.$overlayElementId.find('#sync-sites-status')
+                    );
+
+                    const $row = $('<div>', { class: 'item' });
+
+                    const $right = $('<div>', { class: 'right floated content' });
+                    const $left  = $('<div>', { class: 'content' });
+
+                    if (allowHtml) {
+                        $right.html(right);
+                        $left.html(left);
+                    } else {
+                        $right.text(right);
+                        $left.text(left);
+                    }
+
+                    $row.append($right, $left);
+                    $list.append($row);
                 },
                 // close modal with executing callback or not executing callback.
                 close: function (execCallback) {

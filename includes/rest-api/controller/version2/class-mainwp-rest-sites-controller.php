@@ -65,6 +65,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
     public function __construct() {
         add_filter( 'mainwp_rest_routes_sites_controller_filter_allowed_fields_by_context', array( $this, 'hook_filter_allowed_fields_by_context' ), 10, 3 );
         add_filter( 'mainwp_rest_routes_sites_controller_get_allowed_fields_by_context', array( $this, 'hook_get_allowed_fields_by_context' ), 10, 1 );
+        add_filter( 'rest_request_after_callbacks', array( $this, 'hook_preserve_enveloped_fields_response' ), 10, 3 );
     }
 
     /**
@@ -93,7 +94,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return object item in context.
      */
     public function hook_filter_allowed_fields_by_context( $item, $context = 'view', $request = array() ) {
-        return $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $item, $request ), $context );
+        return $this->prepare_site_item_for_response_context( $item, $request, $context );
     }
 
     /**
@@ -105,6 +106,126 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      */
     public function hook_get_allowed_fields_by_context( $context = 'view' ) {
         return $this->get_allowed_fields_by_context( $context );
+    }
+
+    /**
+     * Site fields that must never appear in any v2 response, regardless of
+     * context or _fields. The schema declares http_pass / http_user / uniqueId
+     * as edit-only (MWP-1541), but check_permissions() in the auth layer only
+     * distinguishes GET vs write methods, so a read-only key can still request
+     * `?context=edit`. The _fields short-circuit below also skips the schema
+     * filter entirely. This list provides belt-and-suspenders defence so a
+     * read-only caller cannot recover credential fields via either bypass.
+     *
+     * @var string[]
+     */
+    protected static $never_in_response_fields = array(
+        'privkey',
+        'pubkey',
+        'http_user',
+        'http_pass',
+        'adminname',
+        'securekey',
+        'uniqueId',
+    );
+
+    /**
+     * Strip credential-shaped fields from a prepared response item in place.
+     * Operates on either an associative array or an object.
+     *
+     * @param mixed $prepared Prepared item (array or object).
+     * @return mixed The same item with credential fields removed.
+     */
+    private function strip_never_in_response_fields( $prepared ) {
+        if ( is_array( $prepared ) ) {
+            foreach ( static::$never_in_response_fields as $field ) {
+                unset( $prepared[ $field ] );
+            }
+        } elseif ( is_object( $prepared ) ) {
+            foreach ( static::$never_in_response_fields as $field ) {
+                unset( $prepared->{$field} );
+            }
+        }
+        return $prepared;
+    }
+
+    /**
+     * Prepare a site response item while preserving `_fields` projections.
+     *
+     * `prepare_item_for_response()` already narrows the payload when `_fields`
+     * is present. Running the result back through
+     * `filter_response_data_by_allowed_fields()` expands it again to all schema
+     * fields with empty-string placeholders. This helper avoids that behavior.
+     *
+     * @param object          $item    Site item.
+     * @param WP_REST_Request $request Request object.
+     * @param string          $context Response context.
+     *
+     * @return array
+     */
+    protected function prepare_site_item_for_response_context( $item, $request, $context = 'view', $addition_fields = array() ) {
+        $prepared = $this->prepare_item_for_response( $item, $request );
+
+        if ( ! ( $request instanceof WP_REST_Request && ! empty( $request['_fields'] ) ) ) {
+            $prepared = $this->filter_response_data_by_allowed_fields( $prepared, $context, $addition_fields );
+        }
+
+        // MWP-1541: strip credential fields unconditionally on read.
+        //
+        // The v2 schema labels http_pass / http_user / uniqueId as edit-only,
+        // but every site-response code path in this controller passes the
+        // context arg as 'view' (or 'simple_view') -- there is no caller that
+        // forwards the request's `?context=edit` query through to the
+        // schema-filter step, so the edit-context response shape is
+        // effectively unreachable from the v2 sites routes today. That
+        // makes this strip equivalent to "strip on every read response",
+        // which is what we want for the security fix anyway: REST consumers
+        // never need to read these fields back, and writes accept them via
+        // the request body regardless.
+        //
+        // Re-enabling edit-context reads in the future would mean plumbing
+        // the requested context through the existing call sites and then
+        // narrowing this strip to view only. Out of scope for MWP-1541.
+        return $this->strip_never_in_response_fields( $prepared );
+    }
+
+    /**
+     * Preserve MainWP's custom response envelopes when `_fields` is used.
+     *
+     * WordPress core applies `_fields` to the top-level response object. MainWP's
+     * sites routes return custom envelopes such as {success,total,data}, so core
+     * would otherwise strip the envelope and serialize an empty array for requests
+     * like `_fields=id`. The controller already applies `_fields` to each site
+     * item via prepare_item_for_response(), so we clear the request parameter after
+     * callbacks for enveloped sites responses only.
+     *
+     * @param mixed           $response Response to replace the requested version with.
+     * @param array           $handler  Route handler used for the request.
+     * @param WP_REST_Request $request  Request used to generate the response.
+     *
+     * @return mixed
+     */
+    public function hook_preserve_enveloped_fields_response( $response, $handler, $request ) { // phpcs:ignore -- NOSONAR - hook signature.
+        if ( empty( $request['_fields'] ) ) {
+            return $response;
+        }
+
+        $route_prefix = '/' . $this->namespace . '/' . $this->rest_base;
+        $route        = $request->get_route();
+        if ( 0 !== strpos( $route, $route_prefix ) || is_wp_error( $response ) ) {
+            return $response;
+        }
+
+        $response = rest_ensure_response( $response );
+        $data     = $response->get_data();
+
+        if ( ! is_array( $data ) || ( ! array_key_exists( 'data', $data ) && ! array_key_exists( 'site', $data ) ) ) {
+            return $response;
+        }
+
+        $request->set_param( '_fields', null );
+
+        return $response;
     }
 
     /**
@@ -552,7 +673,8 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
 
         // Extract with_tags flag early so both paths use the same value.
         // Default to true for consistency with get_items() endpoint.
-        $with_tags = isset( $request['with_tags'] ) ? mainwp_string_to_bool( $request['with_tags'] ) : true;
+        $with_tags     = isset( $request['with_tags'] ) ? mainwp_string_to_bool( $request['with_tags'] ) : true;
+        $custom_fields = isset( $request['custom_fields'] ) ? array_map( 'trim', wp_parse_list( $request['custom_fields'] ) ) : array();
 
         // Try abilities-first approach (with fallback to legacy logic).
         $ability = function_exists( 'wp_get_ability' ) ? wp_get_ability( 'mainwp/get-site-v1' ) : null;
@@ -585,16 +707,23 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $site_id   = isset( $site_data['id'] ) ? (int) $site_data['id'] : 0;
 
             if ( $site_id > 0 ) {
-                $params   = array(
+                $params = array(
                     'full_data'    => true,
                     'selectgroups' => $with_tags,
                     'include'      => array( $site_id ),
+                    'extra_view'   => $custom_fields, // Pass custom fields to prepare_item_for_response() via params for abilities path since ability schema does not support fields parameter.
                     'fields'       => $this->get_fields_for_response( $request ),
                 );
+
+                // Required to ensure custom fields are included in the DB query for abilities path since ability schema does not support fields parameter, but legacy path does.
+                if ( ! empty( $custom_fields ) ) {
+                    $params['fields'] = array_merge( $params['fields'], $custom_fields );
+                }
+
                 $websites = MainWP_DB::instance()->get_websites_for_current_user( $params );
                 $data     = $websites ? current( $websites ) : array();
                 if ( ! empty( $data ) ) {
-                    $site_data = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $data, $request ), 'view' );
+                    $site_data = $this->prepare_site_item_for_response_context( $data, $request, 'view', $custom_fields );
                 }
             }
 
@@ -612,16 +741,23 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             return $item;
         }
 
-        $params   = array(
+        $params = array(
             'full_data'    => true,
             'selectgroups' => $with_tags,
             'include'      => array( $item->id ),
+            'extra_view'   => $custom_fields, // Pass custom fields to prepare_item_for_response() via params for abilities path since ability schema does not support fields parameter.
             'fields'       => $this->get_fields_for_response( $request ),
         );
+
+        // Required to ensure custom fields are included in the DB query for abilities path since ability schema does not support fields parameter, but legacy path does.
+        if ( ! empty( $custom_fields ) ) {
+            $params['fields'] = array_merge( $params['fields'], $custom_fields );
+        }
+
         $websites = MainWP_DB::instance()->get_websites_for_current_user( $params );
         $data     = $websites ? current( $websites ) : array();
         if ( ! empty( $data ) ) {
-            $data = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $data, $request ), 'view' );
+            $data = $this->prepare_site_item_for_response_context( $data, $request, 'view', $custom_fields );
         }
         return rest_ensure_response( array( 'data' => $data ) );
     }
@@ -644,8 +780,9 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
 
         // Check REST-specific flags that affect response format.
         // These are processed in the legacy path but not in the ability schema.
-        $with_tags = isset( $request['with_tags'] ) ? mainwp_string_to_bool( $request['with_tags'] ) : true;
-        $full_data = isset( $request['full_data'] ) ? mainwp_string_to_bool( $request['full_data'] ) : true;
+        $with_tags     = isset( $request['with_tags'] ) ? mainwp_string_to_bool( $request['with_tags'] ) : true;
+        $full_data     = isset( $request['full_data'] ) ? mainwp_string_to_bool( $request['full_data'] ) : true;
+        $custom_fields = isset( $request['custom_fields'] ) ? array_map( 'trim', wp_parse_list( $request['custom_fields'] ) ) : array();
 
         // Try abilities-first approach (with fallback to legacy logic).
         // Skip abilities when with_tags=false, full_data=false, or include/exclude
@@ -696,17 +833,24 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
 
                 if ( ! empty( $site_ids ) ) {
                     // Fetch full site data to normalize through REST filters.
-                    $params   = array(
+                    $params = array(
                         'full_data'    => true,
                         'selectgroups' => true,
                         'include'      => $site_ids,
+                        'extra_view'   => $custom_fields, // Pass custom fields to prepare_item_for_response() via params for abilities path since ability schema does not support fields parameter.
                         'fields'       => $this->get_fields_for_response( $request ),
                     );
+
+                    // Required to ensure custom fields are included in the DB query for abilities path since ability schema does not support fields parameter, but legacy path does.
+                    if ( ! empty( $custom_fields ) ) {
+                        $params['fields'] = array_merge( $params['fields'], $custom_fields );
+                    }
+
                     $websites = MainWP_DB::instance()->get_websites_for_current_user( $params );
 
                     if ( $websites ) {
                         foreach ( $websites as $site ) {
-                            $normalized_items[] = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $site, $request ), 'view' );
+                            $normalized_items[] = $this->prepare_site_item_for_response_context( $site, $request, 'view', $custom_fields );
                         }
                     }
                 }
@@ -732,7 +876,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
 
         if ( $websites ) {
             foreach ( $websites as $site ) {
-                $data[] = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $site, $request ), 'view' );
+                $data[] = $this->prepare_site_item_for_response_context( $site, $request, 'view', $custom_fields );
             }
         }
         return rest_ensure_response(
@@ -769,7 +913,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
 
         if ( $websites ) {
             foreach ( $websites as $site ) {
-                $data[] = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $site, $request ), 'simple_view' );
+                $data[] = $this->prepare_site_item_for_response_context( $site, $request, 'simple_view' );
             }
         }
         return rest_ensure_response(
@@ -873,7 +1017,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 $websites = MainWP_DB::instance()->get_websites_for_current_user( $params );
                 $data     = $websites ? current( $websites ) : array();
                 if ( ! empty( $data ) ) {
-                    $site_data = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $data, $request ), 'view' );
+                    $site_data = $this->prepare_site_item_for_response_context( $data, $request, 'view' );
                 }
             }
 
@@ -903,7 +1047,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             );
             $websites = MainWP_DB::instance()->get_websites_for_current_user( $params );
             $data     = $websites ? current( $websites ) : array();
-            $data     = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $data, $request ), 'view' );
+            $data     = $this->prepare_site_item_for_response_context( $data, $request, 'view' );
         }
 
         return rest_ensure_response(
@@ -1732,7 +1876,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             } catch ( \Exception $e ) {
                 $ret = false;
             }
-            $item                 = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $website, $request ), 'view' );
+            $item                 = $this->prepare_site_item_for_response_context( $website, $request, 'view' );
             $data[ $website->id ] = array_merge( array( 'result' => $ret ? 'success' : 'failed' ), $item );
         }
         MainWP_DB::free_result( $websites );
@@ -2026,7 +2170,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             } catch ( \Exception $e ) {
                 $ret = false;
             }
-            $item                 = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $website, $request ), 'view' );
+            $item                 = $this->prepare_site_item_for_response_context( $website, $request, 'view' );
             $data[ $website->id ] = array_merge( array( 'result' => $ret ? 'success' : 'failed' ), $item );
         }
         MainWP_DB::free_result( $websites );
@@ -2394,10 +2538,21 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                         'sanitize_callback' => 'absint',
                     ),
                 ),
+                // MWP-1541: Basic Auth credentials were exposed in the default
+                // 'view' context, leaking http_pass to any v2 read-key holder.
+                // Narrowed to 'edit'-only as the formal contract; the actual
+                // protection on read responses is provided by
+                // strip_never_in_response_fields() in
+                // prepare_site_item_for_response_context(), which strips these
+                // fields from every site response regardless of context or
+                // _fields. (check_permissions() in the auth layer does not
+                // currently gate ?context=edit to actual edit-permission keys,
+                // and no caller forwards request context to the schema-filter
+                // step, so the schema label alone is not the effective guard.)
                 'http_user'              => array(
                     'type'        => 'string',
                     'description' => __( 'HTTP user', 'mainwp' ),
-                    'context'     => array( 'view', 'edit' ),
+                    'context'     => array( 'edit' ),
                     'arg_options' => array(
                         'sanitize_callback' => 'sanitize_text_field',
                     ),
@@ -2405,12 +2560,16 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 'http_pass'              => array(
                     'type'        => 'string',
                     'description' => __( 'HTTP password', 'mainwp' ),
-                    'context'     => array( 'view', 'edit' ), // no need to sanitize pass.
+                    'context'     => array( 'edit' ),
                 ),
+                // uniqueId is the per-site secure-mode signing identifier; same
+                // narrowing as http_pass / http_user. Unlike them, it was already
+                // view-only (never accepted as input) so this change strictly
+                // tightens the surface.
                 'uniqueId'               => array(
                     'type'    => 'string',
                     'default' => '',
-                    'context' => array( 'view' ),
+                    'context' => array( 'edit' ),
                 ),
                 'disable_health_check'   => array(
                     'type'        => 'integer',
@@ -2772,6 +2931,16 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $data['last_sync'] = mainwp_rest_prepare_date_response( $data['last_sync'] );
         }
 
+        $custom_fields = isset( $request['custom_fields'] ) ? array_map( 'trim', wp_parse_list( $request['custom_fields'] ) ) : array();
+
+        if ( is_array( $custom_fields ) && ! empty( $custom_fields ) ) {
+            foreach ( $custom_fields as $field ) {
+                if ( property_exists( $item, $field ) && ! isset( $data[ $field ] ) ) {
+                    $data[ $field ] = $item->{$field};
+                }
+            }
+        }
+
         /**
          * Filterobject returned from the REST API.
          *
@@ -2828,32 +2997,8 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $resp_data['error'] = wp_strip_all_tags( $e->getMessage() );
         }
 
-        $user                 = $this->get_rest_api_user();
-        $is_dashboard_connect = ! empty( $user ) && 1 === (int) $user->key_type ? true : false;
-
-        if ( $is_dashboard_connect ) {
-            if ( ! empty( $resp_data['error'] ) ) {
-                MainWP_Logger::instance()->log_action( 'Dashboard Connect add Site :: [url=' . $url . '] :: [result=Failed] :: [error=' . esc_html( $resp_data['error'] ) . ']', MainWP_Logger::CONNECT_LOG_PRIORITY );
-            } elseif ( ! empty( $resp_data['success'] ) ) {
-                MainWP_Logger::instance()->log_action( 'Dashboard Connect add Site :: [url=' . $url . '] :: [result=Success]', MainWP_Logger::CONNECT_LOG_PRIORITY );
-            }
-        }
-
         if ( ! empty( $found_id ) ) {
             $resp_data['found_id'] = $found_id;
-            // if found connected and is dashboard connect request then try to reconnect to prevent incorrect connection.
-            if ( $is_dashboard_connect ) {
-                $reconnect = false;
-                $site      = MainWP_DB::instance()->get_website_by_id( $found_id );
-                try {
-                    $reconnect                      = MainWP_Manage_Sites_View::m_reconnect_site( $site );
-                    $resp_data['reconnect_success'] = $reconnect ? 1 : 0;
-                } catch ( \Exception $e ) {
-                    // failed.
-                    $resp_data['reconnect_error'] = $e->getMessage();
-                }
-                MainWP_Logger::instance()->log_action( 'Dashboard Connect reconnect site :: [url=' . $url . '] :: [result=' . ( $reconnect ? 'success' : 'failed' ) . ']', MainWP_Logger::CONNECT_LOG_PRIORITY );
-            }
         }
 
         return rest_ensure_response( $resp_data );
@@ -2886,7 +3031,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     );
                     $websites             = MainWP_DB::instance()->get_websites_for_current_user( $params );
                     $data                 = $websites ? current( $websites ) : array();
-                    $resp_data['data']    = $this->filter_response_data_by_allowed_fields( $this->prepare_item_for_response( $data, $request ), 'view' );
+                    $resp_data['data']    = $this->prepare_site_item_for_response_context( $data, $request, 'view' );
             } else {
                 $resp_data['error'] = esc_html__( 'Update site failed. Please try again.', 'mainwp' );
             }

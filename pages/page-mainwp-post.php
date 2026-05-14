@@ -1249,6 +1249,27 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
     }
 
     /**
+     * Get a copyable permalink for a post/page row.
+     *
+     * Uses the child response value when available and falls back to
+     * the plain `?p=` form currently used by the View action.
+     *
+     * @param array  $item    Post or page data.
+     * @param object $website Website object.
+     *
+     * @return string
+     */
+    public static function get_copyable_permalink( $item, $website ) {
+        foreach ( array( 'permalink', 'link', 'url' ) as $key ) {
+            if ( ! empty( $item[ $key ] ) && is_string( $item[ $key ] ) ) {
+                return $item[ $key ];
+            }
+        }
+
+        return trailingslashit( $website->url ) . '?p=' . intval( $item['id'] );
+    }
+
+    /**
      * Method posts_search_handler()
      *
      * Post page search handler.
@@ -1302,6 +1323,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $table_rows = '';
             foreach ( $posts as $post ) {
                 $raw_dts = '';
+                $copy_permalink = static::get_copyable_permalink( $post, $website );
                 if ( isset( $post['dts'] ) ) {
                     $raw_dts = $post['dts'];
                     if ( ! stristr( $post['dts'], '-' ) ) {
@@ -1392,6 +1414,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     <td class="website column-website not-selectable"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_html( $website->url ); ?></a></td>
                     <td class="right aligned not-selectable">
                         <input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $post['id'] ); ?>"/>
+                        <input class="copyPermalinkValue" type="hidden" value="<?php echo esc_url( $copy_permalink ); ?>"/>
                         <input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo 'publish' === $post['status'] ? 'unpublish|' : ''; ?><?php echo ( 'pending' === $post['status'] ) ? 'approve|' : ''; ?><?php echo ( 'trash' === $post['status'] ) ? 'restore|' : ''; ?><?php echo ( 'future' === $post['status'] || 'draft' === $post['status'] ) ? 'publish|' : ''; ?>" />
                         <input class="websiteId" type="hidden" name="id" value="<?php echo intval( $website->id ); ?>"/>
                         <div class="ui right pointing dropdown" style="z-index: 999">
@@ -1424,6 +1447,8 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                     <?php do_action( 'mainwp_manage_posts_action_item', $post, $child_to_dash_array ); ?>
                                     <a class="item post_submitdelete" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
                                 <?php endif; ?>
+                                    <a class="item mainwp-copy-row-value" href="#" data-copy-target=".copyPermalinkValue" data-copy-success="<?php echo esc_attr__( 'Copied permalink to clipboard.', 'mainwp' ); ?>"><?php esc_html_e( 'Copy Permalink', 'mainwp' ); ?></a>
+                                    <a class="item mainwp-copy-row-value" href="#" data-copy-target=".postId" data-copy-success="<?php echo esc_attr__( 'Copied ID to clipboard.', 'mainwp' ); ?>"><?php esc_html_e( 'Copy ID', 'mainwp' ); ?></a>
                                     <a class="item" href="<?php MainWP_Site_Open::get_open_site_admin_link( $website->id, true ); //phpcs:ignore -- ok. ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
                                     <?php
                                     /**

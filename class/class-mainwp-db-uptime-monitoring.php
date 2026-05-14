@@ -848,7 +848,6 @@ KEY idx_wpid_issub (wpid, issub)";
         }
 
         $select_fields[] = 'mo.*';
-        $select_fields[] = 'wp_optionview.*';
 
         $select = implode( ',', $select_fields );
 
@@ -889,14 +888,24 @@ KEY idx_wpid_issub (wpid, issub)";
             $limit_str = $params['str_limit'];
         }
 
-        $qry = 'SELECT ' . $select . '
+        $view_selects = '';
+        $view_joins   = '';
+
+        $opts_view = $this->get_option_view_by_join( $view, $others_fields );
+
+        if ( is_array( $opts_view ) && ! empty( $opts_view['selects'] ) ) {
+            $view_selects = ',' . $opts_view['selects'];
+            $view_joins   = $opts_view['joins'];
+        }
+
+        $qry = 'SELECT ' . $select . $view_selects . '
             FROM ' . $table_wp . ' wp
             ' . $join_clients . '
             ' . $join_groups . '
             ' . $join_monitors . '
             ' . $join_process . '
             JOIN ' . $table_wp_sync . ' wp_sync ON wp.id = wp_sync.wpid
-            JOIN ' . $this->get_option_view_by( $view, $others_fields ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+            ' . $view_joins . '
             WHERE 1 ' . $where . $custom_where . '
             GROUP BY mo.monitor_id ORDER BY ' . $order_by . $limit_str;
 
@@ -1063,10 +1072,18 @@ KEY idx_wpid_issub (wpid, issub)";
      */
     public function get_count_up_down_monitors() {
         $table_monitors = esc_sql( $this->table_name( 'monitors' ) );
-        $sql            = ' SELECT ' .
-        ' ( SELECT count(*) FROM ' . $table_monitors . ' up WHERE  up.last_status = 1 ) AS count_up, ' .
-        ' ( SELECT count(*) FROM ' . $table_monitors . ' down WHERE  down.last_status = 0 ) AS count_down ' .
-        ' FROM ' . $table_monitors . ' mo LIMIT 1';
+        $table_wp       = esc_sql( $this->table_name( 'wp' ) );
+
+        $where_and_allow_sites = MainWP_DB::instance()->get_sql_where_allow_access_sites( 'wp' ); // Example: AND wp.is_staging = 0 or empty.
+
+        $sql = "
+            SELECT
+                SUM(mo.last_status = 1) AS count_up,
+                SUM(mo.last_status = 0) AS count_down
+            FROM {$table_monitors} mo
+            LEFT JOIN {$table_wp} wp ON wp.id = mo.wpid
+            WHERE 1 {$where_and_allow_sites}
+        ";
 
         return $this->wpdb->get_row( $sql, ARRAY_A ); //phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL from wpdb->prepare().
     }

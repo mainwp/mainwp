@@ -253,7 +253,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             if ( ! empty( $temp ) ) {
                 if ( 'stalled' === $temp['status'] ) {
                     if ( 5 > $backupTaskProgress->attempts ) {
-                        $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts ++ ) );
+                        $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts++ ) );
 
                         try {
                             $information = MainWP_Connect::fetch_url_authed(
@@ -316,7 +316,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
                 }
             } elseif ( 5 > $backupTaskProgress->attempts ) {
-                    $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts ++ ) );
+                    $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts++ ) );
             } else {
                 throw new MainWP_Exception( 'Backup failed after 5 retries.' );
             }
@@ -344,7 +344,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
             $dir = MainWP_System_Utility::get_mainwp_specific_dir( $website->id );
 
-            $wp_filesystem->mkdir( $dir, 0777 );
+            $wp_filesystem->mkdir( $dir, 0750 ); // MWP-1558: tightened from 0777; per-site backup dumps.
 
             if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
                 $wp_filesystem->touch( $dir . 'index.php' );
@@ -443,7 +443,11 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 }
 
                 if ( 0 === (int) $backupTaskProgress->downloadedDBComplete ) {
-                    MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $information['db'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
+                    // MWP-1548: decrypt at the boundary so download_to_file
+                    // sees plaintext credentials.
+                    $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
+                    $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
+                    MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $information['db'], 'fdl' ), $localBackupFile, $information['size'], $http_user_plain, $http_pass_plain );
                     $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedDBComplete' => 1 ) );
                 }
             }
@@ -506,7 +510,10 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         }
                     }
 
-                    MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $information['full'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
+                    // MWP-1548: decrypt at the boundary.
+                    $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
+                    $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
+                    MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $information['full'], 'fdl' ), $localBackupFile, $information['size'], $http_user_plain, $http_pass_plain );
                     MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $information['full'] ) );
                     $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedFULLComplete' => 1 ) );
                 }
@@ -557,7 +564,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         global $wp_filesystem;
 
         $dir = dirname( $pFile ) . '/';
-        $wp_filesystem->mkdir( $dir, 0777 );
+        $wp_filesystem->mkdir( $dir, 0750 ); // MWP-1558: tightened from 0777; backup download destination.
         if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
             $wp_filesystem->touch( $dir . 'index.php' );
         }
@@ -610,12 +617,17 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
         MainWP_Utility::end_session();
 
+        // MWP-1548: decrypt once at function boundary; both branches use
+        // the same credentials.
+        $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
+        $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
+
         if ( 'db' === $pType ) {
-            MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $pUrl, 'fdl' ), $pFile, false, $website->http_user, $website->http_pass );
+            MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $pUrl, 'fdl' ), $pFile, false, $http_user_plain, $http_pass_plain );
         }
 
         if ( 'full' === $pType ) {
-            MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $pUrl, 'fdl' ), $pFile, false, $website->http_user, $website->http_pass );
+            MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $pUrl, 'fdl' ), $pFile, false, $http_user_plain, $http_pass_plain );
         }
 
         return true;

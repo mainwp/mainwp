@@ -40,7 +40,7 @@ class MainWP_File_Uploader_Handle { // phpcs:ignore Generic.Classes.OpeningBrace
 
         //phpcs:disable WordPress.WP.AlternativeFunctions -- custom process.
         if ( ! is_dir( dirname( $path ) ) ) {
-            mkdir( dirname( $path ), 0777, true );
+            mkdir( dirname( $path ), 0750, true ); // MWP-1558: tightened from 0777.
         }
 
         if ( empty( $_REQUEST['dzchunkbyteoffset'] ) && file_exists( $path ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified.

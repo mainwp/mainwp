@@ -367,7 +367,10 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
 
             if ( ! $wp_filesystem->is_dir( $keysDir ) ) {
-                $wp_filesystem->mkdir( $keysDir, 0777 );
+                // MWP-1557: 0700 preferred (owner only), 0750 fallback for shared-hosting umask edge cases. Mirrors migrate_private_filenames().
+                if ( ! $wp_filesystem->mkdir( $keysDir, 0700 ) ) {
+                    $wp_filesystem->mkdir( $keysDir, 0750 );
+                }
             }
 
             if ( ! file_exists( $keysDir . '.htaccess' ) ) {
@@ -383,7 +386,10 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
             //phpcs:disable
             if ( ! file_exists( $keysDir ) ) {
-                mkdir( $keysDir, 0777, true );
+                // MWP-1557: 0700 preferred (owner only), 0750 fallback for shared-hosting umask edge cases. Mirrors migrate_private_filenames().
+                if ( ! mkdir( $keysDir, 0700, true ) ) {
+                    mkdir( $keysDir, 0750, true );
+                }
             }
 
             if ( ! file_exists( $keysDir . '.htaccess' ) ) {
@@ -411,6 +417,75 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     public static function get_keys_dir() {
         $dirs = MainWP_System_Utility::get_mainwp_dir();
         return $dirs[0] . 'pk' . DIRECTORY_SEPARATOR;
+    }
+
+    /**
+     * Method register_migration_hooks()
+     *
+     * Register the post-upgrade hook that triggers the one-time pk/ filename
+     * migration. Called from MainWP_System::activate_this_plugin() before
+     * MainWP_Install::install() runs, so the action handler is registered when
+     * `mainwp_db_after_update` fires.
+     *
+     * @return void
+     */
+    public static function register_migration_hooks() {
+        add_action( 'mainwp_db_after_update', array( static::class, 'migrate_private_filenames' ), 10, 2 );
+    }
+
+    /**
+     * Method migrate_private_filenames()
+     *
+     * One-time bulk migration for MWP-1557: rename legacy pk/ filenames
+     * (`mainwp_priv_encrypt_keys_<site_id>`) to the opaque HMAC-derived names
+     * computed by MainWP_System_Utility::get_private_filename(). Also tightens
+     * directory permissions from the legacy 0777 to 0700 (or 0750 fallback).
+     *
+     * Idempotent: only matches the legacy filename pattern, so re-running on
+     * already-migrated installs is a no-op. Lazy migration in
+     * MainWP_Encrypt_Data_Lib::get_key_file() handles any files this bulk
+     * pass might miss.
+     *
+     * @param string $from_version Pre-upgrade mainwp_db_version.
+     * @param string $to_version   Post-upgrade mainwp_db_version.
+     *
+     * @return void
+     */
+    public static function migrate_private_filenames( $from_version, $to_version ) {
+        if ( ! version_compare( $from_version, '9.0.2.0', '<' ) ) {
+            return;
+        }
+        static::init_keys_dir();
+        $key_dir = static::get_keys_dir();
+        if ( ! is_dir( $key_dir ) ) {
+            return;
+        }
+
+        // Tighten directory permissions; 0700 preferred, 0750 if a shared web group needs read access.
+        if ( ! @chmod( $key_dir, 0700 ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort hardening.
+            @chmod( $key_dir, 0750 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort hardening.
+        }
+
+        // Rename legacy pk files to opaque HMAC-derived names.
+        $entries = @scandir( $key_dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort directory walk.
+        if ( ! is_array( $entries ) ) {
+            return;
+        }
+        foreach ( $entries as $entry ) {
+            if ( ! preg_match( '/^mainwp_priv_encrypt_keys_(\d+)$/', $entry, $m ) ) {
+                continue;
+            }
+            $site_id  = (int) $m[1];
+            $new_name = MainWP_System_Utility::get_private_filename( 'pk', $site_id, 'priv_encrypt_keys' );
+            $old_path = $key_dir . $entry;
+            $new_path = $key_dir . $new_name;
+            if ( file_exists( $new_path ) ) {
+                // New file already present (rare race); legacy is stale, remove it.
+                @unlink( $old_path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- cleanup of stale legacy.
+                continue;
+            }
+            @rename( $old_path, $new_path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort; lazy migration in get_key_file() handles failures.
+        }
     }
 
 

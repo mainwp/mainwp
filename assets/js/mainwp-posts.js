@@ -6,7 +6,7 @@
 let countSent = 0;
 let countReceived = 0;
 
-let updatePagesBulkActionsState = function() {
+let updatePagesBulkActionsState = function () {
     let checkedCount = jQuery('#mainwp-pages-table input[name="page[]"]:checked').length;
     let dropdown = jQuery('#mainwp-manage-pages #mainwp-bulk-actions');
     let applyButton = jQuery('#mainwp-do-pages-bulk-actions');
@@ -36,7 +36,7 @@ jQuery(function () {
 
     updatePagesBulkActionsState();
 
-    jQuery(document).on('change', '#mainwp-pages-table .check-column INPUT:checkbox', function() {
+    jQuery(document).on('change', '#mainwp-pages-table .check-column INPUT:checkbox', function () {
         updatePagesBulkActionsState();
     });
 
@@ -282,7 +282,7 @@ let mainwp_fetch_pages_prepare = function () { // NOSONAR - complexity 19/15.
  * MainWP_Post.page
  */
 
-let updatePostsBulkActionsState = function() {
+let updatePostsBulkActionsState = function () {
     let checkedCount = jQuery('#mainwp-posts-table input[name="post[]"]:checked').length;
     let dropdown = jQuery('#mainwp-manage-posts #mainwp-bulk-actions');
     let applyButton = jQuery('#mainwp-do-posts-bulk-actions');
@@ -299,11 +299,49 @@ let updatePostsBulkActionsState = function() {
     }
 };
 
+let mainwp_copyTextToClipboard = function (value) {
+
+    if (!value) {
+        return Promise.reject(new Error('Empty clipboard value'));
+    }
+
+    if (navigator.clipboard && globalThis.isSecureContext) {
+        return navigator.clipboard.writeText(value);
+    }
+
+    return new Promise(function (resolve, reject) {
+
+        let tempField = jQuery('<textarea readonly class="mainwp-copy-temp-field" aria-hidden="true"></textarea>');
+        tempField.css({
+            position: 'absolute',
+            left: '-9999px',
+            top: '0'
+        });
+        jQuery('body').append(tempField);
+        tempField.val(value).trigger('focus').trigger('select');
+
+        try {
+            if (document.execCommand('copy')) {
+                tempField.remove();
+                resolve();
+                return;
+            }
+        } catch (err) {
+            tempField.remove();
+            reject(err);
+            return;
+        }
+
+        tempField.remove();
+        reject(new Error('Copy command failed'));
+    });
+};
+
 jQuery(function () {
 
     updatePostsBulkActionsState();
 
-    jQuery(document).on('change', '#mainwp-posts-table .check-column INPUT:checkbox', function() {
+    jQuery(document).on('change', '#mainwp-posts-table .check-column INPUT:checkbox', function () {
         updatePostsBulkActionsState();
     });
 
@@ -342,6 +380,23 @@ jQuery(function () {
 
     jQuery(document).on('click', '.page_getedit', function () {
         mainwppost_postAction(jQuery(this), 'get_edit', 'page');
+        return false;
+    });
+
+    jQuery(document).on('click', '.mainwp-copy-row-value', function () {
+        let button = jQuery(this);
+        let rowElement = button.closest('tr');
+        let target = button.data('copy-target');
+        let value = '';
+
+        if (target) {
+            value = rowElement.find(target).val() || '';
+        }
+
+        mainwp_copyTextToClipboard(value).catch(function () {
+            alert(__('Unable to copy to clipboard.'));
+        });
+
         return false;
     });
 
@@ -402,7 +457,7 @@ let mainwppost_postAction = function (elem, what, postType) {
         postId: postId,
         websiteId: websiteId
     };
-    if ( postType !== undefined) {
+    if (postType !== undefined) {
         data['postType'] = postType;
     }
     data = mainwp_secure_data(data);
@@ -427,7 +482,7 @@ let mainwppost_postAction = function (elem, what, postType) {
                 } else if (postType == 'page') {
                     reloadUrl = 'admin.php?page=PageBulkEdit&post_id=' + response.id;
                 }
-                if(reloadUrl !== ''){
+                if (reloadUrl !== '') {
                     mainwp_forceReload(reloadUrl);
                 }
             }
@@ -537,7 +592,7 @@ let mainwp_fetch_posts_prepare = function (postId, userId, start_sites) { // NOS
 
     let i = 0;
     let num_sites = jQuery('#search-bulk-sites').attr('number-sites');
-    num_sites =  Number.parseInt(num_sites);
+    num_sites = Number.parseInt(num_sites);
 
     let select_sites_error = '<div class="ui yellow message">' + __('Please select at least one website or group or client.') + '</div>';
 
@@ -565,7 +620,7 @@ let mainwp_fetch_posts_prepare = function (postId, userId, start_sites) { // NOS
         jQuery("input[name='selected_clients[]']:checked").each(function () {
             selected_clients.push(jQuery(this).val());
         });
-        if(selected_clients.length == 0){
+        if (selected_clients.length == 0) {
             errors.push(select_sites_error);
         }
     } else if (jQuery('input[name="select_by"]').val() == 'group') {
@@ -573,7 +628,7 @@ let mainwp_fetch_posts_prepare = function (postId, userId, start_sites) { // NOS
             selected_groups.push(jQuery(this).val());
         });
 
-        if(selected_groups.length == 0){
+        if (selected_groups.length == 0) {
             errors.push(select_sites_error);
         } else if (selected_groups.length > 0 && bulk_search && start_sites == undefined) {
             start_sites = 0;

@@ -1110,11 +1110,14 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
 
         if ( ! empty( $update_fields ) ) {
-            $this->wpdb->update(
+            $updated = $this->wpdb->update(
                 $this->table_name( 'wp' ),
                 $update_fields,
                 array( 'id' => $websiteid )
             );
+            if ( false === $updated ) {
+                return false;
+            }
             $success = true;
         }
 

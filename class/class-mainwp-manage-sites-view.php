@@ -2166,6 +2166,30 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
     }
 
     /**
+     * Try to fetch the child site favicon immediately after a successful add.
+     *
+     * @param int   $site_id Child site ID.
+     * @param array $params  Child site add parameters.
+     */
+    private static function maybe_fetch_initial_site_favicon( $site_id, $params ) {
+        if ( empty( $site_id ) ) {
+            return;
+        }
+
+        $uploaded_site_icon = isset( $params['uploaded_site_icon'] ) ? $params['uploaded_site_icon'] : '';
+        $selected_site_icon = isset( $params['selected_site_icon'] ) ? $params['selected_site_icon'] : '';
+
+        if ( ! empty( $uploaded_site_icon ) || ! empty( $selected_site_icon ) ) {
+            return;
+        }
+
+        $result = MainWP_Sync::get_wp_icon( $site_id );
+        if ( isset( $result['error'] ) && ! empty( $result['error'] ) ) {
+            MainWP_Logger::instance()->debug( 'Initial favicon fetch failed :: ' . esc_html( $result['error'] ) );
+        }
+    }
+
+    /**
      * Medthod add_wp_site()
      *
      * Add new Child Site.
@@ -2181,6 +2205,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_DB::add_website()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_Exception
+     * @uses \MainWP\Dashboard\MainWP_Sync::get_wp_icon()
      * @uses \MainWP\Dashboard\MainWP_Sync::sync_information_array()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_openssl_conf()
      * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
@@ -2355,10 +2380,21 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     }
 
                     if ( $id ) {
-                        $obj_site = (object) array( 'id' => $id );
+                        $obj_site           = (object) array( 'id' => $id );
+                        $uploaded_site_icon = isset( $params['uploaded_site_icon'] )
+                            ? $params['uploaded_site_icon']
+                            : '';
+                        $selected_site_icon = isset( $params['selected_site_icon'] )
+                            ? $params['selected_site_icon']
+                            : '';
+                        $cust_icon_color    = isset( $params['cust_icon_color'] )
+                            ? $params['cust_icon_color']
+                            : '';
                         MainWP_DB::instance()->update_website_option( $obj_site, 'added_timestamp', time() );
                         MainWP_DB::instance()->update_website_option( $obj_site, 'signature_algo', 9999 ); // use global.
-                        $icon_info = 'uploaded:' . $params['uploaded_site_icon'] . ';selected:' . $params['selected_site_icon'] . ';color:' . $params['cust_icon_color'];
+                        $icon_info = 'uploaded:' . $uploaded_site_icon
+                            . ';selected:' . $selected_site_icon
+                            . ';color:' . $cust_icon_color;
                         MainWP_DB::instance()->update_website_option( $obj_site, 'cust_site_icon_info', $icon_info );
                     }
 
@@ -2422,6 +2458,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         $connection_step = 'post_add_sync';
 
                         MainWP_Sync::sync_information_array( $website, $information );
+                        static::maybe_fetch_initial_site_favicon( $id, $params );
                     }
                 } else {
                     $error = sprintf( esc_html__( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/potential-issues" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.

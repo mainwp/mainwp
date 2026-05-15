@@ -277,7 +277,14 @@ class Log_Changes_Logs_Helper {
         $title = '';
 
         if ( 'action' === $type ) {
-            $title = isset( static::get_changes_logs_types( $log_type_id )['msg'] ) ? static::get_changes_logs_types( $log_type_id )['msg'] : '';
+            if ( 1965 === (int) $log_type_id ) {
+                $title = isset( static::get_changes_logs_types( $log_type_id )['action_name'] ) ? static::get_changes_logs_types( $log_type_id )['action_name'] : '';
+                if ( ! empty( $title ) ) {
+                    $title = ucfirst( $title );
+                }
+            } else {
+                $title = isset( static::get_changes_logs_types( $log_type_id )['msg'] ) ? static::get_changes_logs_types( $log_type_id )['msg'] : '';
+            }
         } elseif ( 'object' === $type ) {
             $title = isset( static::get_changes_logs_types( $log_type_id )['object_msg'] ) ? static::get_changes_logs_types( $log_type_id )['object_msg'] : '';
         }

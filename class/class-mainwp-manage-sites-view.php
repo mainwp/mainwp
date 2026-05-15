@@ -2458,7 +2458,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         $connection_step = 'post_add_sync';
 
                         MainWP_Sync::sync_information_array( $website, $information );
-                        static::maybe_fetch_initial_site_favicon( $id, $params );
+                        self::maybe_fetch_initial_site_favicon( $id, $params );
                     }
                 } else {
                     $error = sprintf( esc_html__( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/potential-issues" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.

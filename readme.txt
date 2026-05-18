@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.9.4
 Requires PHP: 7.4
-Stable tag: 6.1-er.2
+Stable tag: 6.1-er.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -152,9 +152,15 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 * Important: Version 6.1 includes internal connection handling changes. Rolling back to a version earlier than 6.1 may temporarily disconnect child sites from your MainWP Dashboard. If this happens, reconnect the affected sites from the Manage Sites page using the Reconnect bulk action.
 * Fixed: Improved validation when restoring saved table layouts to ensure saved column structures match the current table, preventing broken or incorrect table displays after updates.
 * Fixed: Resolved an issue with saving plugin and theme notes on Auto Update pages.
+* Fixed: Resolved an issue with fetching child site favicons when connecting a site.
+* Fixed: Resolved an issue where installed plugin and theme names were not displayed in the Object column in Network Activity.
+* Fixed: Typos and inconsistencies in user login event log descriptions and action identifiers for improved clarity and consistency across Network Activity logs.
 * Updated: Improved code quality and internal handling in several areas.
 * Updated: Improved uptime column rendering in the sites list with intelligent caching for faster display of uptime information.
 * Updated: Updated the PHPSecLib library to the latest version.
+* Updated: Refreshed the light theme using the newer dark theme structure for improved consistency across the Dashboard UI.
+* Updated: Tuned the light theme shell, navigation, top bar, shadows, and client icon rendering for a more polished interface.
+* Updated: Improved the "Manage Updates" action for outdated themes in Site Hardening to open the relevant "Theme Updates" tab.
 
 = 6.0.12 - 5-5-2026 =
 

@@ -36,8 +36,8 @@
 .mainwp-ui.mainwp-custom-theme .ui.double.loader::before {
     content: '';
     display: inline-block;
-    width: 2.28571429;
-    height: 2.28571429;
+    width: 2.28571429em;
+    height: 2.28571429em;
     border: none !important;
     background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg"><circle fill="%237FB100" cx="85" cy="85" r="78.67"/><circle fill="%23FFFFFF" cx="85" cy="37.8" r="15.73"/><polygon fill="%23FFFFFF" points="111.75,132.2 85,147.94 58.25,132.2 85,22.06"/></svg>');
     background-size: contain;
@@ -164,7 +164,7 @@
 
 .mainwp-ui.mainwp-custom-theme .ui.buttons .button:last-child {
   border-radius: 0px var(--button-radius) var(--button-radius) 0px !important;
-  -webkit-border-radius: 0px var(--button-radius) var(--button-radius) 0px important;
+  -webkit-border-radius: 0px var(--button-radius) var(--button-radius) 0px !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.buttons .ui.disabled.basic.button {
@@ -329,6 +329,10 @@
 /* Icons */
 .mainwp-ui.mainwp-custom-theme i.icon.inverted {
   color: var(--mainwp-text) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .mainwp_client_icon_display > i.circular.inverted.icon {
+  color: #f3f4f6 !important;
 }
 
 .mainwp-ui.mainwp-custom-theme i.blue.icon.inverted {
@@ -1817,7 +1821,7 @@ body.mainwp-ui.mainwp-custom-theme,
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-sites-sidebar-menu.ui.vertical.menu .item {
-  border-bottom: 1px solid var(--border-color) !important;
+  border-bottom: 1px solid var(--mainwp-border) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-sites-sidebar-menu.ui.vertical.menu .item:last-child {
@@ -2041,7 +2045,7 @@ body.mainwp-ui.mainwp-custom-theme,
 }
 
 .mainwp-ui.mainwp-custom-theme table.dataTable tr th:last-child,
-.mainwp-ui.mainwp-custom-themetable.dataTable tr td:last-child {
+.mainwp-ui.mainwp-custom-theme table.dataTable tr td:last-child {
     border-right: none !important;
 }
 
@@ -2108,7 +2112,7 @@ body.mainwp-ui.mainwp-custom-theme,
   background: var(--mainwp-element-background-secondary) !important;
 }
 
-.mainwp-ui.mainwp-custom-theme.mainwp_page_InsightsOverview .ui.segment.mainwp-widet {
+.mainwp-ui.mainwp-custom-theme.mainwp_page_InsightsOverview .ui.segment.mainwp-widget {
   color: var(--mainwp-text) !important;
 }
 

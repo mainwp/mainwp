@@ -1004,6 +1004,7 @@ return array(
     1965 => array(
         'type_id'     => 1965,
         'desc'        => esc_html__( 'Plugin installed.', 'mainwp' ),
+        'object_msg'  => esc_html__( '%plugin% plugin', 'mainwp' ),
         'context'     => 'plugin',
         'action_name' => 'installed',
     ),

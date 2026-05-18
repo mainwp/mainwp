@@ -233,7 +233,7 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         </div>
                     </td>
                     <td>
-                        <span id="sec_outdated_themes_fix" style="display: none"><a href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>" class="ui mini basic button"><?php esc_html_e( 'Manage Updates', 'mainwp' ); ?></a></span>
+                        <span id="sec_outdated_themes_fix" style="display: none"><a href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=themes-updates" class="ui mini basic button"><?php esc_html_e( 'Manage Updates', 'mainwp' ); ?></a></span>
                     </td>
                 </tr>
 

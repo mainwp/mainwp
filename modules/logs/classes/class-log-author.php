@@ -117,7 +117,12 @@ class Log_Author {
         }
 
         if ( empty( $fullname ) && isset( $this->meta['first_name'] ) && isset( $this->meta['last_name'] ) ) {
-            $fullname = esc_html( $this->meta['first_name'] . ' ' . $this->meta['last_name'] );
+            $first_name = trim( (string) $this->meta['first_name'] );
+            $last_name  = trim( (string) $this->meta['last_name'] );
+            $full_name  = trim( $first_name . ' ' . $last_name );
+            if ( '' !== $full_name ) {
+                $fullname = esc_html( $full_name );
+            }
         }
 
         if ( empty( $fullname ) && ! empty( $this->meta['username'] ) ) {

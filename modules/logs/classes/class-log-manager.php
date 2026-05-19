@@ -158,10 +158,13 @@ class Log_Manager {
         if ( $this->is_enabled_auto_archive_logs() && ! empty( $this->settings->options['records_logs_ttl'] ) ) {
             add_action( 'mainwp_module_log_cron_job_auto_archive', array( $this, 'cron_module_log_auto_archive' ) );
         }
-        if ( ! empty( $this->settings->options['enabled'] ) ) {
-            add_action( 'mainwp_module_log_render_db_size_notice', array( $this->admin, 'render_logs_db_notice' ), 10, 1 );
+
+        if ( $this->admin instanceof Log_Admin ) {
+            if ( ! empty( $this->settings->options['enabled'] ) ) {
+                add_action( 'mainwp_module_log_render_db_size_notice', array( $this->admin, 'render_logs_db_notice' ), 10, 1 );
+            }
+            add_action( 'mainwp_module_log_render_db_update_notice', array( $this->admin, 'render_update_db_notice' ), 10, 1 );
         }
-        add_action( 'mainwp_module_log_render_db_update_notice', array( $this->admin, 'render_update_db_notice' ), 10, 1 );
     }
 
 

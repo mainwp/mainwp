@@ -202,7 +202,10 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      */
     public static function get_group_list_content() {
 
-        $groups = MainWP_DB_Common::instance()->get_groups_and_count();
+        $for_manager = \mainwp_current_user_can( 'dashboard', 'manage_groups' ) ? true : false;
+
+        $groups = MainWP_DB_Common::instance()->get_groups_and_count( null, $for_manager );
+
 
         foreach ( $groups as $group ) {
             static::create_group_item( $group );

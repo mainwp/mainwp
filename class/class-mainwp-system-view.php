@@ -410,7 +410,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
      */
     public static function mainwp_ver61_update_notice() {
-        if ( MainWP_Utility::show_mainwp_message( 'notice', 'upgrade_version61' ) ) {
+        if ( MainWP_Utility::show_mainwp_message( 'notice', 'upgrade_version61' ) && MainWP_DB::instance()->get_websites_count() > 0 ) {
             ?>
             <div class="ui attention message">
                 <div class="header"><?php esc_html_e( 'Important Rollback Notice', 'mainwp' ); ?></div>

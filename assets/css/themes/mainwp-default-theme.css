@@ -5,6 +5,7 @@
  /* Text Colors */
  --mainwp-text: #2f3437;
  --mainwp-text-secondary: #73777b;
+ --mainwp-text-disabled: #a8adb3;
  --mainwp-text-header: #202427;
  --mainwp-link-color: #357da8;
 /* General Colors */
@@ -18,6 +19,7 @@
  --mainwp-base-background-secondary: #fafafa;
  --mainwp-element-background: #ffffff;
  --mainwp-element-background-secondary: #fbfbfc;
+ --mainwp-tab-bar-background: #f7f7f9;
  --mainwp-shell-background: #f3f3f4;
  --mainwp-shell-background-hover: #eaeaec;
  /* Border Colors */
@@ -1124,12 +1126,17 @@
 .mainwp-ui.mainwp-custom-theme [data-tooltip]::before,
 .mainwp-ui.mainwp-custom-theme [data-tooltip]::after,
 .mainwp-ui.mainwp-custom-theme .ui.slider [data-tooltip][data-variation="black"]::after,
+.mainwp-ui.mainwp-custom-theme .ui.popup:not(.calendar, .menu, .mainwp-popup-tooltip, .mainwp-help-popup),
 .mainwp-ui.mainwp-custom-theme .ui.popup:not(.calendar, .menu, .mainwp-popup-tooltip, .mainwp-help-popup):before,
 .mainwp-ui.mainwp-custom-theme .ui.popup:not(.calendar, .menu, .mainwp-popup-tooltip, .mainwp-help-popup):after {
-  background: var(--mainwp-element-background-secondary) !important;
-  border: 1px solid var(--mainwp-element-background-secondary) !important;
-  color: var(--mainwp-text) !important;
+  background: var(--mainwp-text-header) !important;
+  border: 1px solid var(--mainwp-text-header) !important;
+  color: #ffffff !important;
   box-shadow: none !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.popup:not(.calendar, .menu, .mainwp-popup-tooltip, .mainwp-help-popup) .header {
+  color: #ffffff !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .mainwp-help-popup,
@@ -1359,6 +1366,21 @@
   -webkit-border-radius: 0.785rem !important;
 }
 
+.mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu .item.extension-inactive,
+.mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu .item.extension-inactive:hover,
+.mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu .item.extension-inactive a,
+.mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu .item.extension-inactive .title,
+.mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu .item.extension-inactive .icon,
+.mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu a.item.extension-inactive,
+.mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu a.item.extension-inactive:hover {
+  color: var(--mainwp-text-disabled) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu .item.extension-inactive:hover,
+.mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu a.item.extension-inactive:hover {
+  background: none !important;
+}
+
 .mainwp-ui.mainwp-custom-theme #mainwp-main-mobile-navigation-container {
   background-color: var(--mainwp-base-background-secondary) !important;
 }
@@ -1445,8 +1467,14 @@
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.inverted.menu.mainwp-sub-submenu {
-  background-color: var(--mainwp-element-background-secondary) !important;
+  background-color: var(--mainwp-tab-bar-background) !important;
   border-radius: 0px !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.inverted.menu.mainwp-sub-submenu,
+.mainwp-ui.mainwp-custom-theme .ui.inverted.menu.mainwp-sub-submenu .item {
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.inverted.menu.mainwp-sub-submenu .item,
@@ -1697,6 +1725,11 @@ body.mainwp-ui.mainwp-custom-theme,
   background-color: var(--mainwp-element-background-secondary) !important;
 }
 
+.mainwp-ui.mainwp-custom-theme .ui.dimmer:not(.modals) > .ui.text.loader,
+.mainwp-ui.mainwp-custom-theme .ui.inverted.dimmer:not(.modals) > .ui.text.loader {
+  color: var(--mainwp-text-header) !important;
+}
+
 .mainwp-ui.mainwp-custom-theme .ui.dimmer.modals,
 .mainwp-ui.mainwp-custom-theme .ui.inverted.dimmer.modals {
   background-color: rgba(32, 36, 39, 0.32) !important;
@@ -1708,6 +1741,11 @@ body.mainwp-ui.mainwp-custom-theme,
   background-color: rgba(32, 36, 39, 0.32) !important;
   backdrop-filter: blur(5px) !important;
   border-radius: var(--area-radius) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .ui.extension.card .ui.dimmer > .ui.text.loader,
+.mainwp-ui.mainwp-custom-theme .ui.extension.card .ui.inverted.dimmer > .ui.text.loader {
+  color: #ffffff !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.loader:after {

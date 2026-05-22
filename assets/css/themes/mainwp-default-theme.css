@@ -5,6 +5,7 @@
  /* Text Colors */
  --mainwp-text: #2f3437;
  --mainwp-text-secondary: #73777b;
+ --mainwp-text-disabled: #a8adb3;
  --mainwp-text-header: #202427;
  --mainwp-link-color: #357da8;
 /* General Colors */
@@ -1363,6 +1364,21 @@
   background-color: #6c980010 !important;
   border-radius: 0.785rem !important;
   -webkit-border-radius: 0.785rem !important;
+}
+
+.mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu .item.extension-inactive,
+.mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu .item.extension-inactive:hover,
+.mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu .item.extension-inactive a,
+.mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu .item.extension-inactive .title,
+.mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu .item.extension-inactive .icon,
+.mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu a.item.extension-inactive,
+.mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu a.item.extension-inactive:hover {
+  color: var(--mainwp-text-disabled) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu .item.extension-inactive:hover,
+.mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu a.item.extension-inactive:hover {
+  background: none !important;
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-main-mobile-navigation-container {

@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.9.4
 Requires PHP: 7.4
-Stable tag: 6.1-er.3
+Stable tag: 6.1-er.4
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -154,6 +154,8 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 * Fixed: Resolved an issue with saving plugin and theme notes on Auto Update pages.
 * Fixed: Resolved an issue with fetching child site favicons when connecting a site.
 * Fixed: Resolved an issue where installed plugin and theme names were not displayed in the Object column in Network Activity.
+* Fixed: Enhanced application stability by refining initialization conditions for admin notifications related to log database monitoring.
+* Fixed: Improved group visibility filtering to ensure users without management permissions only see groups they are authorized to access.
 * Fixed: Typos and inconsistencies in user login event log descriptions and action identifiers for improved clarity and consistency across Network Activity logs.
 * Updated: Improved code quality and internal handling in several areas.
 * Updated: Improved uptime column rendering in the sites list with intelligent caching for faster display of uptime information.

@@ -2266,6 +2266,23 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'integration_owner_pp' => 'https://independentwp.com/privacy-policy/',
                 'desc'                 => 'This is a free extension for MainWP that lets you view stats from all of your sites using Independent Analytics in the main Overview menu.',
             ),
+            'update-brief-mainwp'                     => array(
+                'type'                 => 'org',
+                'model'                => 'integration',
+                'product_id'           => 'update-brief-mainwp',
+                'slug'                 => 'update-brief-mainwp/update-brief-mainwp.php',
+                'title'                => 'Update Brief for MainWP',
+                'link'                 => 'https://wordpress.org/plugins/update-brief-mainwp/',
+                'changelog_url'        => 'https://wordpress.org/plugins/update-brief-mainwp/#developers',
+                'url'                  => 'https://wordpress.org/plugins/update-brief-mainwp/',
+                'group'                => array( 'client' ),
+                'privacy'              => 1,
+                'integration'          => 'Update Brief',
+                'integration_url'      => 'https://updatebrief.com/',
+                'integration_owner'    => 'Ascend Online Media Limited',
+                'integration_owner_pp' => 'https://updatebrief.com/policy/',
+                'desc'                 => 'Turn WP and plugin updates into compelling client reports that clearly show your maintenance value through concise, professional update summaries.',
+            ),
         );
 
         $list = array();

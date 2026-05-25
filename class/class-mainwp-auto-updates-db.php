@@ -91,7 +91,7 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
             $limit
         );
 
-        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery -- $sql is prepared by $wpdb->prepare() with parameterized values; direct query required for complex joins.
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $sql is prepared by $wpdb->prepare() with parameterized values; direct query required for complex joins.
         $result = $wpdb->get_results( $sql, OBJECT );
 
         return $result;

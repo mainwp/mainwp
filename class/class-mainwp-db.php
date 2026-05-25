@@ -3608,10 +3608,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $view_joins   = $opts_view['joins'];
         }
 
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- is a validated SQL subquery.
         return $this->wpdb->get_results(
             "SELECT wp.*{$view_selects} FROM {$wp_table} wp
-            {$view_joins}" . // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- is a validated SQL subquery.
-            ' WHERE wp.suspended = 0 AND wp.http_code_noticed = 0  AND wp.offline_check_result = -1 ' .
+            {$view_joins}" . ' WHERE wp.suspended = 0 AND wp.http_code_noticed = 0  AND wp.offline_check_result = -1 ' .
             $where . ' GROUP BY wp.id ',
             OBJECT
         );

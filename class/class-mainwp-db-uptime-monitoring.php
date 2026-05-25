@@ -1738,7 +1738,7 @@ KEY idx_wpid_issub (wpid, issub)";
         $placeholders    = implode( ',', array_fill( 0, count( $int_monitor_ids ), '%d' ) );
 
         // Single batch query for all monitors.
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Safe: table name is an internal MainWP table identifier, IN placeholders are generated from the count of integer-cast monitor IDs, and all runtime values are bound through wpdb::prepare().
         return $this->wpdb->get_results(
             $this->wpdb->prepare(
                 "SELECT * FROM `{$table}` WHERE monitor_id IN ({$placeholders}) AND timestamp >= %d ORDER BY timestamp ASC", //phpcs:ignore -- No user input.

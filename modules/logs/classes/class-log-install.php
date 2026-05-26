@@ -439,16 +439,16 @@ class Log_Install extends MainWP_Install {
         if ( empty( $currentVersion ) ) {
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD COLUMN archived_at int(11) NOT NULL DEFAULT 0' ); //phpcs:ignore -- ok.
         } else {
-            $column = $this->wpdb->get_results(
-                $this->wpdb->prepare( // phpcs:ignore -- NOSONAR - custom query ok.
-                    "SHOW COLUMNS FROM {$archive} LIKE %s", //phpcs:ignore -- custom query ok.
+            $column = $this->wpdb->get_results( // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $archive is an internal MainWP table identifier; column name is bound via prepare().
+                $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table identifiers cannot be placeholders; $archive comes from table_name().
+                    "SHOW COLUMNS FROM {$archive} LIKE %s",
                     'archived_at'
                 )
             );
 
             if ( empty( $column ) ) {
-                $this->wpdb->query(
-                    "ALTER TABLE {$archive} ADD COLUMN archived_at INT(11) NOT NULL DEFAULT 0" //phpcs:ignore -- ok.
+                $this->wpdb->query( // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $archive is an internal MainWP table identifier; ALTER TABLE has no user input.
+                    "ALTER TABLE {$archive} ADD COLUMN archived_at INT(11) NOT NULL DEFAULT 0"
                 );
             }
         }

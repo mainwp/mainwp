@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 6.2
-Tested up to: 6.9.4
+Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 6.1-er.4
+Stable tag: 6.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -148,8 +148,15 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
-= 6.1 =
+= 6.1 - 5-26-2026 =
+
 * Important: Version 6.1 includes internal connection handling changes. Rolling back to a version earlier than 6.1 may temporarily disconnect child sites from your MainWP Dashboard. If this happens, reconnect the affected sites from the Manage Sites page using the Reconnect bulk action.
+* Security: Strengthened protection for internal key files by replacing predictable file names with secure, non-guessable identifiers and tightening directory permissions for related storage locations.
+* Security: Improved protection of stored extension license keys by encrypting them at rest and avoiding unnecessary plaintext caching.
+* Security: Updated API credential fields to display masked placeholders instead of stored values, preventing sensitive keys from being exposed in page HTML.
+* Security: Removed sensitive authentication fields from REST API site responses to prevent credentials from being exposed through API requests.
+* Security: Improved REST API key storage by hashing new consumer secrets at rest while maintaining compatibility with existing keys.
+* Security: Removed unused legacy connection and API key handling paths, with safer comparison handling for any existing legacy records.
 * Fixed: Improved validation when restoring saved table layouts to ensure saved column structures match the current table, preventing broken or incorrect table displays after updates.
 * Fixed: Resolved an issue with saving plugin and theme notes on Auto Update pages.
 * Fixed: Resolved an issue with fetching child site favicons when connecting a site.

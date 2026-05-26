@@ -93,6 +93,7 @@ class Log_DB_Archive extends MainWP_DB {
 
         do {
             // 1. Get batch IDs.
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL fragments are built from integer-cast archive inputs; table name is internal.
             $ids = $this->wpdb->get_col(
                 "SELECT log_id
                 FROM $table_logs
@@ -107,6 +108,7 @@ class Log_DB_Archive extends MainWP_DB {
             $ids_in = implode( ',', array_map( 'intval', $ids ) );
 
             // 2. Archive logs (prevent duplicates).
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $ids_in contains only intval() log IDs selected from the DB; table names are internal.
             $this->wpdb->query(
                 "INSERT IGNORE INTO $table_logs_archive
                 SELECT l.*, UNIX_TIMESTAMP() AS archived_at
@@ -115,6 +117,7 @@ class Log_DB_Archive extends MainWP_DB {
             );
 
             // 3. Archive meta (prevent duplicates).
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $ids_in contains only intval() log IDs selected from the DB; table names are internal.
             $this->wpdb->query(
                 "INSERT IGNORE INTO $table_meta_archive
                 SELECT m.*
@@ -123,12 +126,14 @@ class Log_DB_Archive extends MainWP_DB {
             );
 
             // 4. Delete meta first.
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $ids_in contains only intval() log IDs selected from the DB; table name is internal.
             $this->wpdb->query(
                 "DELETE FROM $table_meta
                 WHERE meta_log_id IN ($ids_in)"
             );
 
             // 5. Delete logs
+            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $ids_in contains only intval() log IDs selected from the DB; table name is internal.
             $this->wpdb->query(
                 "DELETE FROM $table_logs
                 WHERE log_id IN ($ids_in)"

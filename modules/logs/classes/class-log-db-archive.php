@@ -78,7 +78,7 @@ class Log_DB_Archive extends MainWP_DB {
      * Bulk archive logs + meta with batching (no transaction).
      *
      * @param string $where      SQL WHERE condition (MUST be prepared).
-     * @param string $order_by   SQL ORDER BY clause (e.g. "ORDER BY created ASC").
+     * @param string $order_by   Column and direction for ORDER BY (e.g. "created ASC").
      * @param int    $batch_limit Number of rows per batch.
      *
      * @return int Total archived rows.

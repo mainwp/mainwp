@@ -1002,7 +1002,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         if ( is_string( $log_data ) && strlen( $log_data ) > 2000 ) {
                             $log_data = substr( $log_data, 0, 2000 ) . '...[truncated]';
                         }
-                        MainWP_Logger::instance()->debug( 'curl_multi_getcontent :: unexpected response :: [data=' . $log_data . '] :: [url=' . ( isset( $requestUrls[ $rid ] ) ? $requestUrls[ $rid ] : 'Unknown' ) . ']' );
+                        $log_url = isset( $requestUrls[ $rid ] ) ? $requestUrls[ $rid ] : '';
+                        if ( empty( $log_url ) ) {
+                            $log_url = ( isset( $handleToWebsite[ $rid ] ) && is_object( $handleToWebsite[ $rid ] ) && property_exists( $handleToWebsite[ $rid ], 'url' ) ) ? $handleToWebsite[ $rid ]->url : 'Unknown';
+                        }
+                        MainWP_Logger::instance()->debug( 'curl_multi_getcontent :: unexpected response :: [data=' . $log_data . '] :: [url=' . $log_url . ']' );
                     }
 
                     if ( null !== $handler ) {

@@ -998,7 +998,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
                     if ( ! $contains ) {
                         // Add useful debug log for unexpected response.
-                        MainWP_Logger::instance()->debug( 'curl_multi_getcontent :: unexpected response :: [data=' . $data . '] :: [url=' . ( isset( $requestUrls[ $rid ] ) ? $requestUrls[ $rid ] : 'Unknown' ) . ']' );
+                        $log_data = (string) $data;
+                        if ( is_string( $log_data ) && strlen( $log_data ) > 2000 ) {
+                            $log_data = substr( $log_data, 0, 2000 ) . '...[truncated]';
+                        }
+                        MainWP_Logger::instance()->debug( 'curl_multi_getcontent :: unexpected response :: [data=' . $log_data . '] :: [url=' . ( isset( $requestUrls[ $rid ] ) ? $requestUrls[ $rid ] : 'Unknown' ) . ']' );
                     }
 
                     if ( null !== $handler ) {

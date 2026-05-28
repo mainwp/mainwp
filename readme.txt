@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 6.1
+Stable tag: 6.1.1-er.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -147,6 +147,12 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.1.1 =
+
+* Fixed: Resolved a duplicate `LIMIT` clause in the log archive batch query to prevent query errors during log processing.
+* Updated: Improved directory permission handling for user and site directories to ensure more consistent access control across the Dashboard.
+* Updated: Simplified REST API availability checks for v1 and v2 endpoints to streamline behavior and reduce internal validation complexity.
 
 = 6.1 - 5-26-2026 =
 

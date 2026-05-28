@@ -432,6 +432,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     public static function register_migration_hooks() {
         add_action( 'mainwp_db_after_update', array( static::class, 'migrate_private_filenames' ), 10, 2 );
         add_action( 'mainwp_db_after_update', array( static::class, 'migrate_sibling_dir_perms' ), 10, 2 );
+        add_action( 'mainwp_db_after_update', array( static::class, 'fix_sibling_dir_perms_9023' ), 10, 2 );
     }
 
     /**
@@ -543,20 +544,101 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         // <siteid>/ dirs from get_mainwp_specific_dir($website->id), and any deeper paths
         // that backup_download_file() may have materialized via dirname($pFile) on legacy
         // installs with custom backup filenames. All private (0750).
-        $chmod_recursive = function ( $dir ) use ( &$chmod_recursive ) {
+
+        $public_access_dirs = array( 'favorites' );
+
+        $chmod_recursive = function ( $dir ) use ( &$chmod_recursive, $public_access_dirs ) {
             @chmod( $dir, 0750 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- NOSONAR - best-effort hardening.
             $subs = @glob( $dir . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- NOSONAR - best-effort directory walk.
             if ( is_array( $subs ) ) {
                 foreach ( $subs as $s ) {
+                    if ( in_array( basename( $s ), $public_access_dirs, true ) ) {
+                        @chmod( $s, 0755 );
+                        continue;
+                    }
                     $chmod_recursive( $s );
                 }
             }
         };
 
-        $userdirs = @glob( $base . '[0-9]*', GLOB_ONLYDIR ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- NOSONAR - best-effort directory walk.
+        $userdirs = @glob( $base . '[0-9]*', GLOB_ONLYDIR );  // phpcs:ignore WordPress.PHP.NoSilencedErrors -- NOSONAR - best-effort directory walk.
+
         if ( is_array( $userdirs ) ) {
             foreach ( $userdirs as $udir ) {
-                $chmod_recursive( $udir );
+                @chmod( $udir, 0751 );
+                $subs = @glob( $udir . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR );
+                if ( is_array( $subs ) ) {
+                    foreach ( $subs as $s ) {
+                        if ( in_array( basename( $s ), $public_access_dirs, true ) ) {
+                            @chmod( $s, 0755 );
+                            continue;
+                        }
+                        $chmod_recursive( $s );
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Method fix_sibling_dir_perms_9023()
+     *
+     * One-time chmod sweep for MWP-1566: fix a small number of installs that ran the MWP-1558/1566
+     * follow-up sweep (MWP-1566) on.
+     *
+     * @param string $from_version Pre-upgrade mainwp_db_version.
+     * @param string $to_version   Post-upgrade mainwp_db_version.
+     *
+     * @return void
+     */
+    public static function fix_sibling_dir_perms_9023( $from_version, $to_version ) {
+
+        if ( empty( $from_version ) || version_compare( $from_version, '9.0.2.1', '<' ) || version_compare( $from_version, '9.0.2.3', '>=' ) ) {
+            return;
+        }
+
+        $dirs = MainWP_System_Utility::get_mainwp_dir();
+        if ( empty( $dirs[0] ) || ! is_dir( $dirs[0] ) ) {
+            return;
+        }
+        $base = rtrim( $dirs[0], '/\\' ) . DIRECTORY_SEPARATOR;
+
+        // Per-user dirs and all descendants: mainwp/<userid>/, /<userid>/bulk/, per-site
+        // <siteid>/ dirs from get_mainwp_specific_dir($website->id), and any deeper paths
+        // that backup_download_file() may have materialized via dirname($pFile) on legacy
+        // installs with custom backup filenames. All private (0750).
+
+        $public_access_dirs = array( 'favorites' );
+
+        $chmod_recursive = function ( $dir ) use ( &$chmod_recursive, $public_access_dirs ) {
+            @chmod( $dir, 0750 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- NOSONAR - best-effort hardening.
+            $subs = @glob( $dir . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- NOSONAR - best-effort directory walk.
+            if ( is_array( $subs ) ) {
+                foreach ( $subs as $s ) {
+                    if ( in_array( basename( $s ), $public_access_dirs, true ) ) {
+                        @chmod( $s, 0755 );
+                        continue;
+                    }
+                    $chmod_recursive( $s );
+                }
+            }
+        };
+
+        $userdirs = @glob( $base . '[0-9]*', GLOB_ONLYDIR );  // phpcs:ignore WordPress.PHP.NoSilencedErrors -- NOSONAR - best-effort directory walk.
+
+        if ( is_array( $userdirs ) ) {
+            foreach ( $userdirs as $udir ) {
+                @chmod( $udir, 0751 );
+                $subs = @glob( $udir . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR );
+                if ( is_array( $subs ) ) {
+                    foreach ( $subs as $s ) {
+                        if ( in_array( basename( $s ), $public_access_dirs, true ) ) {
+                            @chmod( $s, 0755 );
+                            continue;
+                        }
+                        $chmod_recursive( $s );
+                    }
+                }
             }
         }
     }

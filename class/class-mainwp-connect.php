@@ -996,6 +996,19 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         continue; // libcurl updates $running automatically.
                     }
 
+                    if ( ! $contains ) {
+                        // Add useful debug log for unexpected response.
+                        $log_data = (string) $data;
+                        if ( is_string( $log_data ) && strlen( $log_data ) > 2000 ) {
+                            $log_data = substr( $log_data, 0, 2000 ) . '...[truncated]';
+                        }
+                        $log_url = isset( $requestUrls[ $rid ] ) ? $requestUrls[ $rid ] : '';
+                        if ( empty( $log_url ) ) {
+                            $log_url = ( isset( $handleToWebsite[ $rid ] ) && is_object( $handleToWebsite[ $rid ] ) && property_exists( $handleToWebsite[ $rid ], 'url' ) ) ? $handleToWebsite[ $rid ]->url : 'Unknown';
+                        }
+                        MainWP_Logger::instance()->debug( 'curl_multi_getcontent :: unexpected response :: [data=' . $log_data . '] :: [url=' . $log_url . ']' );
+                    }
+
                     if ( null !== $handler ) {
                         $site = &$handleToWebsite[ static::get_resource_id( $info['handle'] ) ];
                         call_user_func_array( $handler, array( $data, $site, &$output, $params ) );

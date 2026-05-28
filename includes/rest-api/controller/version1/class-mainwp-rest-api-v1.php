@@ -124,20 +124,7 @@ class Rest_Api_V1 { //phpcs:ignore -- NOSONAR - multi methods.
      * Check if enable the REST API.
      */
     private function enabled_rest_v1_api() {
-
-        $all_keys = get_option( 'mainwp_rest_api_keys', false );
-
-        if ( ! is_array( $all_keys ) ) {
-            return false;
-        }
-
-        foreach ( $all_keys as $item ) {
-            if ( ! empty( $item['cs'] ) && ! empty( $item['enabled'] ) ) {
-                return true; // one key enabled, enabled the REST API.
-            }
-        }
-
-        return false; // all keys disabled.
+        return get_option( 'mainwp_rest_api_keys', true ); // enabled the REST API if there is any key.
     }
 
     /**
@@ -146,7 +133,7 @@ class Rest_Api_V1 { //phpcs:ignore -- NOSONAR - multi methods.
      * Enabled the REST API.
      */
     private function enabled_rest_v2_api() {
-        return MainWP_DB::instance()->is_existed_enabled_rest_key();
+        return true; // enabled the REST API if there is any key.
     }
 
     /**

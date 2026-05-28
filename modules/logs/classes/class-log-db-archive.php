@@ -55,20 +55,22 @@ class Log_DB_Archive extends MainWP_DB {
     public function archive_sites_changes( $before_timestamp = 0, $by_limit = 0, $dismiss = false ) {
         $before_timestamp = 1000000 * $before_timestamp;
         $where            = '';
-        $order            = '';
+        $order_by         = '';
+        $batch_limit      = 0;
         if ( ! empty( $before_timestamp ) ) {
             $where .= ' AND created < ' . (int) $before_timestamp;
         }
 
         if ( ! empty( $by_limit ) ) {
-            $order .= ' ORDER BY created ASC LIMIT ' . (int) $by_limit;
+            $order_by   .= ' created ASC ';
+            $batch_limit = (int) $by_limit;
         }
 
         if ( false !== $dismiss ) {
             $where .= ' AND dismiss = ' . intval( $dismiss );
         }
 
-        $this->bulk_archive_logs( $where, $order );
+        $this->bulk_archive_logs( $where, $order_by, $batch_limit );
     }
 
 
@@ -76,12 +78,12 @@ class Log_DB_Archive extends MainWP_DB {
      * Bulk archive logs + meta with batching (no transaction).
      *
      * @param string $where      SQL WHERE condition (MUST be prepared).
-     * @param string $order      SQL ORDER BY clause (e.g. "ORDER BY created ASC").
-     * @param int    $batch_size Number of rows per batch.
+     * @param string $order_by   Column and direction for ORDER BY (e.g. "created ASC").
+     * @param int    $batch_limit Number of rows per batch.
      *
      * @return int Total archived rows.
      */
-    public function bulk_archive_logs( $where, $order, $batch_size = 1000 ) {
+    public function bulk_archive_logs( $where, $order_by, $batch_limit = 1000 ) {
         global $wpdb;
 
         $table_logs         = $this->table_name( 'wp_logs' );
@@ -97,8 +99,8 @@ class Log_DB_Archive extends MainWP_DB {
             $ids = $this->wpdb->get_col(
                 "SELECT log_id
                 FROM $table_logs
-                WHERE 1 $where $order
-                LIMIT " . intval( $batch_size )
+                WHERE 1 $where " . ( ! empty( $order_by ) ? " ORDER BY $order_by " : '' ) . // phpcs:ignore -- NOSONAR -no user input
+                ( $batch_limit ? ' LIMIT ' . intval( $batch_limit ) : '' )
             );
 
             if ( empty( $ids ) ) {
@@ -141,7 +143,7 @@ class Log_DB_Archive extends MainWP_DB {
 
             $total_archived += count( $ids );
 
-        } while ( count( $ids ) === $batch_size );
+        } while ( count( $ids ) === $batch_limit ); // Continue if we hit the batch limit.
 
         return $total_archived;
     }

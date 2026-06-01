@@ -2133,11 +2133,12 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                 return function (response) { // NOSONAR - complex ok.
                     let slugParts = pSlug.split(',');
                     if (response?.error?.errorCode == 'SUSPENDED_SITE') {
-                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause circular yellow inverted icon"></i></span>';
+                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause yellow icon"></i></span>';
                         updatesoverview_upgrade_all_update_site_bold(pWebsiteId, false, msgUI);
                         pPluginDone = true;
                         pUpgradeDone = true;
                         pTransDone = true;
+                        pThemeDone = true;
                         mainwpVars.errorCount++;
                     } else {
                         for (let sid of slugParts) {
@@ -2183,7 +2184,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                                 'pThemeSlugToUpgrade': remainingThemeSlugs,
                                 'pPluginSlugToUpgrade': pPluginSlugToUpgrade,
                                 'pWordpressUpgrade': pWordpressUpgrade,
-                                'pThemeDone': remainingThemeSlugs === '',
+                                'pThemeDone': pThemeDone ? true : remainingThemeSlugs === '',
                                 'pPluginDone': pPluginDone,
                                 'pUpgradeDone': pUpgradeDone,
                                 'pErrorMessage': pErrorMessage,
@@ -2292,6 +2293,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                         pThemeDone = true;
                         pUpgradeDone = true;
                         pTransDone = true;
+                        pPluginDone = true;
 
                         mainwpVars.errorCount++;
 
@@ -2338,7 +2340,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                                 'pPluginSlugToUpgrade': remainingPluginSlugs,
                                 'pWordpressUpgrade': pWordpressUpgrade,
                                 'pThemeDone': pThemeDone,
-                                'pPluginDone': remainingPluginSlugs === '',
+                                'pPluginDone': pPluginDone ? true : remainingPluginSlugs === '',
                                 'pUpgradeDone': pUpgradeDone,
                                 'pErrorMessage': pErrorMessage,
                                 'pTransSlugToUpgrade': pTransSlugToUpgrade,
@@ -2549,6 +2551,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                         pThemeDone = true;
                         pPluginDone = true;
                         pUpgradeDone = true;
+                        pTransDone = true;
 
                         mainwpVars.errorCount++;
 
@@ -2594,7 +2597,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                                 'pUpgradeDone': pUpgradeDone,
                                 'pErrorMessage': pErrorMessage,
                                 'pTransSlugToUpgrade': remainingTransSlugs,
-                                'pTransDone': remainingTransSlugs === '',
+                                'pTransDone': pTransDone ? true : remainingTransSlugs === '',
                                 'bulkErrorCode': bulkErrorCode
                             };
                             updatesoverview_upgrade_int_loop_flow(params);

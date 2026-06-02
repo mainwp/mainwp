@@ -1157,6 +1157,10 @@ table.mainwp-manage-wpsites-table .error a {
     color: #999;
 }
 
+.mainwp-ui #mainwp-help-modal {
+    position: fixed !important;
+}
+
 /* END V4
 ********************************************************************************/
 

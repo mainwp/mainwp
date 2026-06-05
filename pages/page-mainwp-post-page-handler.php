@@ -348,8 +348,12 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     $cat_val = esc_attr( $item['name'] );
                 }
 
+                if ( ! empty( $cats_sites[ $print_slug ] ) ) {
+                    $cls .= ' mainwp-html-popup ';
+                }
+
                 $title = ! empty( $term_pt ) ? '<strong>' . esc_html( $item['name'] ) . '</strong>' : esc_html( $item['name'] );
-                echo '<div class="item ' . esc_attr( $cls ) . '" data-value="' . $cat_val . '" data-slug="' . esc_attr( $item['slug'] ) . '" post-type="' . esc_attr( $term_pt ) . '" class="sitecategory-list" >' . ( ! empty( $cats_sites[ $print_slug ] ) ? '<span class="mainwp-html-popup" data-position="left center" data-html="' . esc_attr__( implode( ', ', $cats_sites[ $print_slug ] ) ) . '"  data-position="bottom right"  data-inverted="" >' . $title . '</span>' : $title ) . '</div>';  //phpcs:ignore -- $title ok.
+                echo '<div class="item ' . esc_attr( $cls ) . '" data-value="' . $cat_val . '" data-slug="' . esc_attr( $item['slug'] ) . '" post-type="' . esc_attr( $term_pt ) . '" ' . ( ! empty( $cats_sites[ $print_slug ] ) ? ' data-position="left center" data-html="' . esc_attr__( implode( ', ', $cats_sites[ $print_slug ] ) ) . '"  data-inverted=""' : '') . '>' . $title . '</div>';  //phpcs:ignore -- $title ok.
             }
 
             if ( ! empty( $item['children'] ) ) {

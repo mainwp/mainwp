@@ -23,6 +23,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
+     * Fresh download tokens requested after a token rejection before the
+     * transfer failure is propagated to the caller.
+     *
+     * @var int
+     */
+    const MAX_TOKEN_RETRIES = 2;
+
+    /**
      * Method get_class_name()
      *
      * Get Class Name.
@@ -125,6 +133,138 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         }
 
         return true;
+    }
+
+    /**
+     * Method download_backup_artifact()
+     *
+     * Download a backup artifact from a child site. When the child
+     * advertises one-time download tokens, a token is requested over the
+     * authenticated callable surface, sent with the download request, and
+     * the sha256 of the received bytes is verified against the hash the
+     * child reported at issuance. A token consumed mid-transfer (the
+     * transfer layer can retry the same URL internally) surfaces as an
+     * HTTP 401/403 response; a fresh token is requested and the download
+     * resumes from the partial file. Children without the capability are
+     * served by the token-less path with no hash verification.
+     *
+     * @param object      $website         Child site object.
+     * @param string      $remote_filename Remote backup file name.
+     * @param string      $local_file      Absolute local target path.
+     * @param int|false   $size            Expected size in bytes, false when unknown.
+     * @param string|null $http_user       HTTP Basic Auth username (plaintext).
+     * @param string|null $http_pass       HTTP Basic Auth password (plaintext).
+     *
+     * @throws MainWP_Exception On transfer failure, token failure, or hash mismatch.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Backup_Monitor::child_supports_download_token()
+     * @uses \MainWP\Dashboard\MainWP_Connect::download_to_file()
+     * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
+     */
+    public static function download_backup_artifact( object $website, string $remote_filename, string $local_file, $size, $http_user, $http_pass ): void {
+        if ( ! MainWP_Backup_Monitor::child_supports_download_token( $website ) ) {
+            MainWP_Connect::download_to_file(
+                MainWP_Connect::get_get_data_authed( $website, $remote_filename, 'fdl' ),
+                $local_file,
+                $size,
+                $http_user,
+                $http_pass
+            );
+            static::fire_downloaded_action( $website, $local_file, false );
+            return;
+        }
+
+        // Fail closed: a token failure on a capability-advertising child
+        // propagates - downgrading to a token-less download here would
+        // defeat the authorization entirely.
+        $token_info = static::fetch_download_token( $website, $remote_filename );
+
+        for ( $attempt = 0; ; $attempt++ ) {
+            $url = MainWP_Connect::get_get_data_authed( $website, $remote_filename, 'fdl', false, array( 'dltoken' => $token_info['token'] ) );
+            try {
+                MainWP_Connect::download_to_file( $url, $local_file, $size, $http_user, $http_pass );
+                break;
+            } catch ( MainWP_Exception $e ) {
+                $extra          = (string) $e->get_message_extra( false );
+                $token_rejected = false !== strpos( $extra, 'HTTP 401' ) || false !== strpos( $extra, 'HTTP 403' );
+                if ( ! $token_rejected || $attempt >= static::MAX_TOKEN_RETRIES ) {
+                    throw $e;
+                }
+                $token_info = static::fetch_download_token( $website, $remote_filename );
+            }
+        }
+
+        if ( ! empty( $token_info['hash'] ) && file_exists( $local_file ) ) {
+            $actual_hash = (string) hash_file( 'sha256', $local_file );
+            if ( ! hash_equals( (string) $token_info['hash'], $actual_hash ) ) {
+                wp_delete_file( $local_file );
+                throw MainWP_Backup_Error_Codes::exception( // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                    MainWP_Backup_Error_Codes::ERR_HASH_MISMATCH,
+                    'expected ' . $token_info['hash'] . ', got ' . $actual_hash
+                );
+            }
+        }
+
+        static::fire_downloaded_action( $website, $local_file, true );
+    }
+
+    /**
+     * Method fetch_download_token()
+     *
+     * Request a one-time download token from the child site.
+     *
+     * @param object $website         Child site object.
+     * @param string $remote_filename Remote backup file name.
+     *
+     * @return array Token info: token, hash, size, expires_in.
+     * @throws MainWP_Exception When the child reports an error or returns no usable token.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     */
+    private static function fetch_download_token( object $website, string $remote_filename ): array {
+        $info = MainWP_Connect::fetch_url_authed( $website, 'backup_download_token', array( 'file' => $remote_filename ), false, false, false );
+
+        if ( is_array( $info ) && isset( $info['error'] ) ) {
+            // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- message escaped inline, code is a child registry constant.
+            throw new MainWP_Exception(
+                esc_html( MainWP_Backup_Error_Codes::sanitize_message( $info['error'] ) ),
+                null,
+                isset( $info['error_code'] ) ? $info['error_code'] : ''
+            );
+            // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+
+        if ( ! is_array( $info ) || empty( $info['token'] ) || empty( $info['hash'] ) ) {
+            throw new MainWP_Exception( esc_html__( 'The child site did not return a valid download authorization. Verify the child site is running the latest MainWP Child version and try again.', 'mainwp' ) );
+        }
+
+        return $info;
+    }
+
+    /**
+     * Method fire_downloaded_action()
+     *
+     * Announce a completed artifact download.
+     *
+     * @param object $website       Child site object.
+     * @param string $local_file    Local file the artifact was saved to.
+     * @param bool   $hash_verified Whether the sha256 was verified against the child-reported hash.
+     */
+    private static function fire_downloaded_action( object $website, string $local_file, bool $hash_verified ): void {
+        /**
+         * Fires after a backup artifact download completes.
+         *
+         * @param array $event Download details: site_id, file, size, hash_verified.
+         */
+        do_action(
+            'mainwp_backup_downloaded',
+            array(
+                'site_id'       => (int) $website->id,
+                'file'          => basename( $local_file ),
+                'size'          => file_exists( $local_file ) ? (int) filesize( $local_file ) : 0,
+                'hash_verified' => $hash_verified,
+            )
+        );
     }
 
     /**

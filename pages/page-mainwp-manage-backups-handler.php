@@ -167,7 +167,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $excludedFolder = explode( "\n", $excludedFolder );
         $excludedFolder = array_map( array( MainWP_Utility::get_class_name(), 'trim_slashes' ), $excludedFolder );
         $excludedFolder = array_map( 'htmlentities', $excludedFolder );
-        $excludedFolder = implode( ',', $excludedFolder );
+        $excludedFolder = MainWP_Backup_Handler::sanitize_exclude_list( $excludedFolder );
         $sites          = '';
         $groups         = '';
 
@@ -236,7 +236,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $excludedFolder = explode( "\n", $excludedFolder );
         $excludedFolder = array_map( array( MainWP_Utility::get_class_name(), 'trim_slashes' ), $excludedFolder );
         $excludedFolder = array_map( 'htmlentities', $excludedFolder );
-        $excludedFolder = implode( ',', $excludedFolder );
+        $excludedFolder = MainWP_Backup_Handler::sanitize_exclude_list( $excludedFolder );
 
         $sites  = '';
         $groups = '';

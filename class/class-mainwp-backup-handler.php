@@ -76,7 +76,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         $userid        = $pTask->userid;
         $type          = $pTask->type;
-        $exclude       = $pTask->exclude;
+        $exclude       = static::sanitize_exclude_list( $pTask->exclude );
         $taskId        = $pTask->id;
         $excludebackup = $pTask->excludebackup;
         $excludecache  = $pTask->excludecache;
@@ -845,7 +845,9 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         static::validate_backup_environment();
 
-        if ( '' === trim( $pFilename ) ) {
+        $pExclude = static::sanitize_exclude_list( $pExclude );
+
+        if ( null === $pFilename || '' === trim( $pFilename ) ) {
             $pFilename = null;
         }
 
@@ -897,7 +899,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $maximumFileDescriptors     = ( false === $maximumFileDescriptors ? 150 : $maximumFileDescriptors );
         }
 
-        $file = str_replace(
+        $file = ( null === $pFilename ) ? '' : str_replace(
             array(
                 '%sitename%',
                 '%url%',
@@ -1101,6 +1103,48 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public static function is_sql_archive( $pFileName ) {
         return preg_match( '/(.*).sql.(zip|tar|tar.gz|tar.bz2)$/', $pFileName );
+    }
+
+    /**
+     * Method sanitize_exclude_list()
+     *
+     * Sanitize a backup exclude list before it is sent to a child site.
+     * Entries name folders relative to the child WordPress root, so each
+     * entry is reduced to a safe relative path: null bytes and control
+     * characters are stripped, backslashes are normalized, Windows drive
+     * prefixes and leading slashes are removed, and dot or dot-dot path
+     * segments are dropped. Entries with nothing safe left are discarded.
+     *
+     * @param string|array $exclude Exclude list as a newline- or comma-separated string, or an array of entries.
+     *
+     * @return string Comma-separated list of sanitized child-relative folder paths.
+     */
+    public static function sanitize_exclude_list( $exclude ) {
+        if ( ! is_array( $exclude ) ) {
+            $exclude = preg_split( '/[\n,]/', (string) $exclude );
+        }
+
+        $clean = array();
+        foreach ( $exclude as $entry ) {
+            $entry = preg_replace( '/[\x00-\x1F\x7F]/', '', (string) $entry );
+            $entry = str_replace( '\\', '/', $entry );
+            $entry = preg_replace( '/^[A-Za-z]:/', '', $entry );
+
+            $segments = array();
+            foreach ( explode( '/', $entry ) as $segment ) {
+                $segment = trim( $segment );
+                if ( '' === $segment || '.' === $segment || '..' === $segment ) {
+                    continue;
+                }
+                $segments[] = $segment;
+            }
+
+            if ( ! empty( $segments ) ) {
+                $clean[] = implode( '/', $segments );
+            }
+        }
+
+        return implode( ',', $clean );
     }
 
     /**

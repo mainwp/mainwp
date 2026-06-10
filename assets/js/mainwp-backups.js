@@ -608,6 +608,33 @@ let manageBackupsTaskRemoteDestinations;
 let manageBackupsTaskId;
 let manageBackupsTaskType;
 let manageBackupsTaskError;
+
+let managebackups_format_bytes = function (bytes) {
+    if (bytes >= 1073741824)
+        return (bytes / 1073741824).toFixed(1) + ' GB';
+    if (bytes >= 1048576)
+        return (bytes / 1048576).toFixed(1) + ' MB';
+    if (bytes >= 1024)
+        return (bytes / 1024).toFixed(0) + ' KB';
+    return bytes + ' B';
+};
+
+// Render the recorded child task phase next to the create-progress bar and
+// drive the bar from the recorded counters when the child reports them.
+let managebackups_render_task_phase = function (siteId, progress) {
+    let text = progress.label;
+    if (progress.files_total > 0) {
+        text += ' (' + progress.files_processed + '/' + progress.files_total + ')';
+    } else if (progress.bytes_done > 0) {
+        text += ' (' + managebackups_format_bytes(progress.bytes_done) + ')';
+    }
+    jQuery('.managebackups-task-status-phase[siteId="' + siteId + '"]').text(text + '...');
+
+    let progressBar = jQuery('#managebackups-task-status-create-progress[siteId="' + siteId + '"]');
+    if (progress.bytes_done > 0 && progressBar.progress('get value') < progressBar.progress('get total')) {
+        progressBar.progress('set progress', progress.bytes_done);
+    }
+};
 managebackups_run_now = function (el) {
     el = jQuery(el);
     el.hide();
@@ -660,7 +687,7 @@ managebackups_run_next = function () {
     let siteName = manageBackupTaskSites[0]['name'];
     let size = manageBackupTaskSites[0][manageBackupsTaskType + 'size'];
     let fileNameUID = mainwp_uid();
-    appendToDiv(backtaskContentEl, '[' + siteName + '] ' + MainWP.I18n.t('Creating backup file.') + '<div id="managebackups-task-status-create-progress" siteId="' + siteId + '" class="ui green progress"><div class="bar"><div class="progress"></div></div></div>');
+    appendToDiv(backtaskContentEl, '[' + siteName + '] ' + MainWP.I18n.t('Creating backup file.') + ' <span class="managebackups-task-status-phase" siteId="' + siteId + '"></span><div id="managebackups-task-status-create-progress" siteId="' + siteId + '" class="ui green progress"><div class="bar"><div class="progress"></div></div></div>');
 
     manageBackupTaskSites.shift();
     let data = mainwp_secure_data({
@@ -690,6 +717,20 @@ managebackups_run_next = function () {
                         progressBar.progress('set progress', response.size);
                     }
                 }
+            }
+        }(siteId), 'json');
+
+        let phaseData = mainwp_secure_data({
+            action: 'mainwp_backup_task_progress',
+            task_id: manageBackupsTaskId,
+            site_id: siteId
+        });
+        jQuery.post(ajaxurl, phaseData, function (pSiteId) {
+            return function (response) {
+                if (!backupCreateRunning || !response || !response.result || 'idle' == response.result.status)
+                    return;
+
+                managebackups_render_task_phase(pSiteId, response.result);
             }
         }(siteId), 'json');
     }, 1000);

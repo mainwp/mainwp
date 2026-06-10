@@ -130,4 +130,53 @@ class MainWP_Backup_Progress_Recording_Test extends \WP_UnitTestCase {
 
 		$this->assertEquals( $before, $after );
 	}
+
+	/**
+	 * The poll response derives the label and percent from the recorded
+	 * row: file counters win over bytes for the percentage.
+	 *
+	 * @return void
+	 */
+	public function test_progress_response_derives_label_and_percent() {
+		MainWP_Backup_Executor::record_child_progress(
+			self::TASK_ID,
+			self::SITE_ID,
+			array(
+				'phase'    => 'dumping_db',
+				'progress' => array(
+					'files_processed' => 3,
+					'files_total'     => 12,
+					'bytes_done'      => 10,
+					'bytes_total'     => 100,
+				),
+			)
+		);
+
+		$response = \MainWP\Dashboard\MainWP_Post_Backup_Handler::build_task_progress_response( $this->get_row() );
+
+		$this->assertSame( 'running', $response['status'] );
+		$this->assertSame( 'Exporting database', $response['label'] );
+		$this->assertSame( 25, $response['percent'] );
+	}
+
+	/**
+	 * A missing row reads as idle, a terminal phase as its status, and an
+	 * unknown future phase stays a generic working state.
+	 *
+	 * @return void
+	 */
+	public function test_progress_response_status_classification() {
+		$this->assertSame( 'idle', \MainWP\Dashboard\MainWP_Post_Backup_Handler::build_task_progress_response( null )['status'] );
+
+		MainWP_Backup_Executor::record_child_progress( self::TASK_ID, self::SITE_ID, array( 'phase' => 'completed' ) );
+		$this->assertSame( 'completed', \MainWP\Dashboard\MainWP_Post_Backup_Handler::build_task_progress_response( $this->get_row() )['status'] );
+
+		MainWP_Backup_Executor::record_child_progress( self::TASK_ID, self::SITE_ID, array( 'phase' => 'failed' ) );
+		$this->assertSame( 'failed', \MainWP\Dashboard\MainWP_Post_Backup_Handler::build_task_progress_response( $this->get_row() )['status'] );
+
+		MainWP_Backup_Executor::record_child_progress( self::TASK_ID, self::SITE_ID, array( 'phase' => 'some_future_phase' ) );
+		$response = \MainWP\Dashboard\MainWP_Post_Backup_Handler::build_task_progress_response( $this->get_row() );
+		$this->assertSame( 'running', $response['status'] );
+		$this->assertSame( 'Working', $response['label'] );
+	}
 }

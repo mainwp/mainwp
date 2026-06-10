@@ -64,6 +64,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         if ( \mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
             $this->add_action( 'mainwp_backuptask_get_sites', array( &$this, 'mainwp_backuptask_get_sites' ) );
             $this->add_action( 'mainwp_backuptask_run_site', array( &$this, 'mainwp_backuptask_run_site' ) );
+            $this->add_action( 'mainwp_backup_task_progress', array( &$this, 'mainwp_backup_task_progress' ) );
         }
         // Page: backup.
         if ( \mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
@@ -132,6 +133,87 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                     ),
                 )
             )
+        );
+    }
+
+    /**
+     * Method mainwp_backup_task_progress()
+     *
+     * Report the recorded progress of a running scheduled backup for one
+     * site from the local progress row - no child round trip.
+     *
+     * @return void
+     */
+    public function mainwp_backup_task_progress() {
+        $this->secure_request( 'mainwp_backup_task_progress' );
+        $task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification -- verified by secure_request.
+        $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification -- verified by secure_request.
+
+        if ( empty( $task_id ) || empty( $site_id ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'Invalid request. Please reload the page and try again.', 'mainwp' ) ) );
+        }
+
+        $row = MainWP_DB_Backup::instance()->get_backup_task_progress( $task_id, $site_id );
+
+        wp_send_json( array( 'result' => static::build_task_progress_response( $row ) ) );
+    }
+
+    /**
+     * Method build_task_progress_response()
+     *
+     * Shape a progress row into the poll response: the human label
+     * derives from the child machine phase, and the percentage prefers
+     * file counters over bytes.
+     *
+     * @param object|null $row Progress row, or null when none exists.
+     *
+     * @return array Response with status, phase, label, counters, percent.
+     */
+    public static function build_task_progress_response( ?object $row ): array {
+        if ( empty( $row ) || ( empty( $row->child_phase ) && empty( $row->child_backup_task_id ) ) ) {
+            return array( 'status' => 'idle' );
+        }
+
+        $phase = MainWP_Backup_Task_Phase::tryFrom( (string) $row->child_phase );
+
+        $status = 'running';
+        if ( MainWP_Backup_Task_Phase::Completed === $phase ) {
+            $status = 'completed';
+        } elseif ( MainWP_Backup_Task_Phase::Failed === $phase ) {
+            $status = 'failed';
+        }
+
+        if ( null !== $phase ) {
+            $label = $phase->label();
+        } elseif ( '' === (string) $row->child_phase ) {
+            $label = MainWP_Backup_Task_Phase::Queued->label();
+        } else {
+            // A future phase from a newer child: still working, no known label.
+            $label = __( 'Working', 'mainwp' );
+        }
+
+        $files_processed = (int) $row->files_processed;
+        $files_total     = (int) $row->files_total;
+        $bytes_done      = (int) $row->bytes_downloaded;
+        $bytes_expected  = (int) $row->bytes_expected;
+
+        $percent = null;
+        if ( $files_total > 0 ) {
+            $percent = (int) round( min( 100, $files_processed * 100 / $files_total ) );
+        } elseif ( $bytes_expected > 0 ) {
+            $percent = (int) round( min( 100, $bytes_done * 100 / $bytes_expected ) );
+        }
+
+        return array(
+            'status'          => $status,
+            'phase'           => (string) $row->child_phase,
+            'label'           => $label,
+            'current_file'    => (string) $row->current_file,
+            'files_processed' => $files_processed,
+            'files_total'     => $files_total,
+            'bytes_done'      => $bytes_done,
+            'bytes_expected'  => $bytes_expected,
+            'percent'         => $percent,
         );
     }
 

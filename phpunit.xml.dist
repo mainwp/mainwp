@@ -17,11 +17,17 @@
         <testsuite name="MainWP Dashboard Test Suite">
             <directory suffix=".php">tests</directory>
             <exclude>tests/abilities</exclude>
+            <exclude>tests/backup</exclude>
         </testsuite>
         <testsuite name="Abilities">
             <directory suffix=".php">tests/abilities</directory>
             <exclude>tests/abilities/class-mainwp-abilities-test-case.php</exclude>
             <exclude>tests/abilities/README.md</exclude>
+        </testsuite>
+        <testsuite name="Backup">
+            <directory suffix=".php">tests/backup</directory>
+            <exclude>tests/backup/class-mainwp-backup-test-case.php</exclude>
+            <exclude>tests/backup/fixtures</exclude>
         </testsuite>
     </testsuites>
 

@@ -437,6 +437,290 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Record which child actions get called, in order.
+	 *
+	 * @param array $called Reference to the recorder array.
+	 *
+	 * @return void
+	 */
+	private function record_child_actions( &$called ) {
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what ) use ( &$called ) {
+				unset( $website );
+				$called[] = $what;
+				return $result;
+			},
+			5,
+			3
+		);
+	}
+
+	/**
+	 * A child that advertises the resumable task machine gets a task
+	 * created on the first call; the task id lands on the progress row and
+	 * the run defers to the next cycle.
+	 *
+	 * @return void
+	 */
+	public function test_spine_first_call_creates_task_and_defers() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+		$this->mock_child_action(
+			'backup_task_create',
+			array(
+				'task_id' => 'task-1749600000-abcdef',
+				'phase'   => 'queued',
+			)
+		);
+
+		$called = array();
+		$this->record_child_actions( $called );
+
+		$result = MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+
+		$this->assertFalse( $result, 'Creating the task defers the work to the next cycle.' );
+		$this->assertContains( 'backup_task_create', $called );
+		$this->assertNotContains( 'backup', $called, 'The legacy backup action must not fire on the resumable path.' );
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( 'task-1749600000-abcdef', $progress->child_backup_task_id );
+	}
+
+	/**
+	 * A child without the task machine takes the legacy path untouched.
+	 *
+	 * @return void
+	 */
+	public function test_no_spine_support_takes_legacy_path() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->mock_child_action( 'backup_preflight', array( 'zip_support' => true ) );
+		$this->mock_child_action(
+			'backup',
+			array(
+				'error'      => 'Could not write backup data.',
+				'error_code' => 'mainwp_backup_disk_full',
+			)
+		);
+
+		$called = array();
+		$this->record_child_actions( $called );
+
+		try {
+			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			$this->fail( 'Expected the legacy child error to propagate.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( 'mainwp_backup_disk_full', $e->get_message_error_code() );
+		}
+
+		$this->assertContains( 'backup', $called );
+		$this->assertNotContains( 'backup_task_create', $called );
+	}
+
+	/**
+	 * A fresh run resets any stale child task id so a new run never drives
+	 * a previous run's task.
+	 *
+	 * @return void
+	 */
+	public function test_fresh_run_resets_stale_child_task_id() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->seed_progress( $task->id, $site_id, array( 'child_backup_task_id' => 'task-old' ) );
+		global $wpdb;
+		$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}mainwp_wp_backup_progress SET dtsFetched = %d WHERE task_id = %d", $task->last_run - 50, $task->id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture.
+
+		$this->mock_child_action( 'backup_preflight', array( 'zip_support' => true ) );
+		$this->mock_child_action( 'backup', array( 'error' => 'Could not write backup data.' ) );
+
+		try {
+			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+		} catch ( MainWP_Exception $e ) {
+			unset( $e );
+		}
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( '', $progress->child_backup_task_id );
+	}
+
+	/**
+	 * An in-flight run with a child task id advances the task instead of
+	 * polling the legacy pid, and defers while the task is still working.
+	 *
+	 * @return void
+	 */
+	public function test_spine_in_flight_runs_task_and_defers() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->seed_progress( $task->id, $site_id, array( 'child_backup_task_id' => 'task-abc' ) );
+
+		$run_params = null;
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what, $params ) use ( &$run_params ) {
+				unset( $website );
+				if ( 'backup_task_run' === $what ) {
+					$run_params = $params;
+					return array(
+						'task_id' => 'task-abc',
+						'phase'   => 'archiving_files',
+						'type'    => 'full',
+					);
+				}
+				return $result;
+			},
+			10,
+			4
+		);
+
+		$called = array();
+		$this->record_child_actions( $called );
+
+		$result = MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+
+		$this->assertFalse( $result, 'A working task defers to the next cycle.' );
+		$this->assertSame( 'task-abc', $run_params['task_id'] );
+		$this->assertNotContains( 'backup_checkpid', $called, 'The resumable path must not poll the legacy pid.' );
+	}
+
+	/**
+	 * A completed task feeds the artifact into the fetch result, entering
+	 * the unchanged download flow.
+	 *
+	 * @return void
+	 */
+	public function test_spine_completed_populates_fetch_result() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->give_site_real_privkey( $site_id );
+		$this->seed_progress(
+			$task->id,
+			$site_id,
+			array(
+				'child_backup_task_id' => 'task-abc',
+				'removedFiles'         => 1,
+			)
+		);
+		$this->mock_child_action(
+			'backup_task_run',
+			array(
+				'task_id' => 'task-abc',
+				'phase'   => 'completed',
+				'type'    => 'full',
+				'file'    => 'backup-1749600000.tar',
+				'size'    => 4096,
+			)
+		);
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+		add_filter( 'mainwp_download_to_file_pre', '__return_true', 10, 1 );
+
+		try {
+			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+		} catch ( MainWP_Exception $e ) {
+			unset( $e ); // The skipped download fails validation; only the fetch result matters here.
+		}
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( 'backup-1749600000.tar', $progress->fetchResult['full'] );
+		$this->assertFalse( $progress->fetchResult['db'] );
+		$this->assertSame( 4096, $progress->fetchResult['size'] );
+	}
+
+	/**
+	 * A completed db task lands its artifact under the db key.
+	 *
+	 * @return void
+	 */
+	public function test_spine_completed_db_kind_populates_db_key() {
+		list( $site_id, $task ) = $this->site_and_task( array( 'type' => 'db' ) );
+		$this->give_site_real_privkey( $site_id );
+		$this->seed_progress(
+			$task->id,
+			$site_id,
+			array(
+				'child_backup_task_id' => 'task-db',
+				'removedFiles'         => 1,
+			)
+		);
+		$this->mock_child_action(
+			'backup_task_run',
+			array(
+				'task_id' => 'task-db',
+				'phase'   => 'completed',
+				'type'    => 'db',
+				'file'    => 'dbBackup-1749600000.sql.tar',
+				'size'    => 2048,
+			)
+		);
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+		add_filter( 'mainwp_download_to_file_pre', '__return_true', 10, 1 );
+
+		try {
+			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+		} catch ( MainWP_Exception $e ) {
+			unset( $e );
+		}
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( 'dbBackup-1749600000.sql.tar', $progress->fetchResult['db'] );
+		$this->assertFalse( $progress->fetchResult['full'] );
+	}
+
+	/**
+	 * A failed task surfaces the child's recorded error and code.
+	 *
+	 * @return void
+	 */
+	public function test_spine_failed_task_throws_child_error() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->seed_progress( $task->id, $site_id, array( 'child_backup_task_id' => 'task-abc' ) );
+		$this->mock_child_action(
+			'backup_task_run',
+			array(
+				'task_id'    => 'task-abc',
+				'phase'      => 'failed',
+				'type'       => 'full',
+				'error'      => 'Could not read table data for the backup.',
+				'error_code' => 'mainwp_backup_db_query_failed',
+			)
+		);
+
+		try {
+			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			$this->fail( 'Expected the failed task to propagate.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( 'mainwp_backup_db_query_failed', $e->get_message_error_code() );
+			$this->assertStringContainsString( 'Could not read table data', $e->getMessage() );
+		}
+	}
+
+	/**
+	 * A failed run call consumes a retry attempt, mirroring the legacy
+	 * status-check semantics; exhausted attempts stop the run.
+	 *
+	 * @return void
+	 */
+	public function test_spine_run_failure_consumes_attempt() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->seed_progress( $task->id, $site_id, array( 'child_backup_task_id' => 'task-abc' ) );
+		$this->mock_child_action( 'backup_task_run', new MainWP_Exception( 'connection failed' ) );
+
+		try {
+			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+		} catch ( MainWP_Exception $e ) {
+			unset( $e );
+		}
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( 1, (int) $progress->attempts, 'A failed run call must consume one retry attempt.' );
+
+		MainWP_DB_Backup::instance()->update_backup_task_progress( $task->id, $site_id, array( 'attempts' => 5 ) );
+		try {
+			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			$this->fail( 'Expected retry-exhausted exception.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( 'mainwp_backup_retry_exhausted', $e->get_message_error_code() );
+		}
+	}
+
+	/**
 	 * A failed retry of a stalled backup re-throws instead of returning false.
 	 *
 	 * @return void

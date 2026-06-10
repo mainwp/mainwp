@@ -198,6 +198,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         'last_error'             => '',
                         'pid'                    => $pid,
                         'busy_since'             => 0,
+                        'child_backup_task_id'   => '',
                     )
                 );
 
@@ -218,9 +219,11 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
                 static::negotiate_backup_preflight( $website, static::get_current_archive_extension( $website, $pTask ) );
 
-                MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup: ' . MainWP_Utility::value_to_string( $params, 1 ) );
+                $use_spine = static::child_supports_task_spine( $website );
 
-                $information = MainWP_Connect::fetch_url_authed( $website, 'backup', $params, false, false, false );
+                MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup' . ( $use_spine ? ' task' : '' ) . ': ' . MainWP_Utility::value_to_string( $params, 1 ) );
+
+                $information = MainWP_Connect::fetch_url_authed( $website, $use_spine ? 'backup_task_create' : 'backup', $params, false, false, false );
             } catch ( MainWP_Exception $e ) {
                 MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'ERROR: ' . $e->getMessage() . ' (' . $e->get_message_extra() . ')' );
                 $stop = microtime( true );
@@ -247,7 +250,62 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
             }
 
+            if ( $use_spine && empty( $information['error'] ) ) {
+                if ( empty( $information['task_id'] ) || ! is_string( $information['task_id'] ) ) {
+                    throw new MainWP_Exception( esc_html__( 'The child site did not return a backup task id. Sync the child site and try again.', 'mainwp' ) );
+                }
+
+                // The task is queued on the child; each following cycle
+                // advances it one bounded slice.
+                MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'child_backup_task_id' => sanitize_text_field( $information['task_id'] ) ) );
+
+                return false;
+            }
+
             $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
+        } elseif ( empty( $backupTaskProgress->fetchResult ) && ! empty( $backupTaskProgress->child_backup_task_id ) ) {
+            $temp = false;
+            try {
+                $temp = MainWP_Connect::fetch_url_authed( $website, 'backup_task_run', array( 'task_id' => $backupTaskProgress->child_backup_task_id ), false, false, false );
+            } catch ( \Exception $e ) {
+                // The failed run call consumes a retry attempt below instead of being ignored.
+                MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup task run failed: ' . $e->getMessage() );
+            }
+
+            if ( ! empty( $temp ) && isset( $temp['error'] ) ) {
+                throw new MainWP_Exception( esc_html( MainWP_Backup_Error_Codes::sanitize_message( $temp['error'] ) ), null, isset( $temp['error_code'] ) ? $temp['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            }
+
+            if ( ! empty( $temp ) && isset( $temp['phase'] ) ) {
+                if ( 'failed' === $temp['phase'] ) {
+                    // The child recorded why the task died; surface it as-is.
+                    $message = isset( $temp['error'] ) && '' !== $temp['error']
+                        ? MainWP_Backup_Error_Codes::sanitize_message( $temp['error'] )
+                        : esc_html__( 'The backup task failed on the child site. Check the child site error log and try again.', 'mainwp' );
+                    throw new MainWP_Exception( esc_html( $message ), null, isset( $temp['error_code'] ) ? $temp['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                }
+
+                if ( 'completed' !== $temp['phase'] ) {
+                    return false; // The task is still working; the next cycle advances it again.
+                }
+
+                $information = array();
+                if ( 'full' === $type ) {
+                    $information['full'] = isset( $temp['file'] ) ? $temp['file'] : false;
+                    $information['db']   = false;
+                } else {
+                    $information['full'] = false;
+                    $information['db']   = isset( $temp['file'] ) ? $temp['file'] : false;
+                }
+                $information['size'] = isset( $temp['size'] ) ? $temp['size'] : 0;
+
+                $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
+            } elseif ( 5 > $backupTaskProgress->attempts ) {
+                $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts + 1 ) );
+                return false;
+            } else {
+                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_RETRY_EXHAUSTED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+            }
         } elseif ( empty( $backupTaskProgress->fetchResult ) ) {
             $temp = false;
             try {
@@ -1325,6 +1383,24 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 MainWP_DB::instance()->update_website_option( $website, 'backup_dir_hash', $hash );
             }
         }
+
+        // Remember whether the child runs the resumable task machine; an
+        // empty value also clears the flag after a child downgrade.
+        MainWP_DB::instance()->update_website_option( $website, 'task_spine_support', empty( $preflight['task_spine'] ) ? '' : '1' );
+    }
+
+    /**
+     * Method child_supports_task_spine()
+     *
+     * Whether the child site advertised the resumable backup task machine
+     * in its last preflight report.
+     *
+     * @param object $website Website object.
+     *
+     * @return bool True when the child supports resumable backup tasks.
+     */
+    public static function child_supports_task_spine( $website ) {
+        return '1' === (string) MainWP_DB::instance()->get_website_option( $website, 'task_spine_support' );
     }
 
     /**

@@ -364,6 +364,8 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 $wp_filesystem->touch( $dir . 'index.php' );
             }
 
+            static::cleanup_stale_download_locks( $dir );
+
             // Clean old backups from our system.
             $maxBackups = get_option( 'mainwp_backupsOnServer' );
             if ( false === $maxBackups ) {
@@ -457,11 +459,18 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 }
 
                 if ( 0 === (int) $backupTaskProgress->downloadedDBComplete ) {
-                    // MWP-1548: decrypt at the boundary so download_to_file
-                    // sees plaintext credentials.
-                    $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
-                    $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
-                    MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $information['db'], 'fdl' ), $localBackupFile, $information['size'], $http_user_plain, $http_pass_plain );
+                    if ( ! static::acquire_download_lock( $localBackupFile, $website->id, $taskId ) ) {
+                        throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, 'download lock held for ' . basename( $localBackupFile ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                    }
+                    try {
+                        // MWP-1548: decrypt at the boundary so download_to_file sees plaintext credentials.
+                        $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
+                        $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
+                        MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $information['db'], 'fdl' ), $localBackupFile, $information['size'], $http_user_plain, $http_pass_plain );
+                        static::validate_backup_file( $localBackupFile, $information['size'] );
+                    } finally {
+                        static::release_download_lock( $localBackupFile );
+                    }
                     $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedDBComplete' => 1 ) );
                 }
             }
@@ -503,31 +512,18 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 }
 
                 if ( 0 === (int) $backupTaskProgress->downloadedFULLComplete ) {
-                    if ( file_exists( $localBackupFile ) ) {
-                        $time = filemtime( $localBackupFile );
-
-                        $minutes = gmdate( 'i', time() );
-                        $seconds = gmdate( 's', time() );
-
-                        $file_minutes = gmdate( 'i', $time );
-                        $file_seconds = gmdate( 's', $time );
-
-                        $minuteDiff = $minutes - $file_minutes;
-                        if ( 59 === $minuteDiff ) {
-                            $minuteDiff = 1;
-                        }
-                        $secondsdiff = ( $minuteDiff * 60 ) + $seconds - $file_seconds;
-
-                        if ( 60 > $secondsdiff ) {
-                            // still downloading.
-                            return false;
-                        }
+                    if ( ! static::acquire_download_lock( $localBackupFile, $website->id, $taskId ) ) {
+                        throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, 'download lock held for ' . basename( $localBackupFile ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
                     }
-
-                    // MWP-1548: decrypt at the boundary.
-                    $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
-                    $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
-                    MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $information['full'], 'fdl' ), $localBackupFile, $information['size'], $http_user_plain, $http_pass_plain );
+                    try {
+                        // MWP-1548: decrypt at the boundary so download_to_file sees plaintext credentials.
+                        $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
+                        $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
+                        MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $information['full'], 'fdl' ), $localBackupFile, $information['size'], $http_user_plain, $http_pass_plain );
+                        static::validate_backup_file( $localBackupFile, $information['size'] );
+                    } finally {
+                        static::release_download_lock( $localBackupFile );
+                    }
                     MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $information['full'] ) );
                     $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedFULLComplete' => 1 ) );
                 }
@@ -631,17 +627,13 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
         MainWP_Utility::end_session();
 
-        // MWP-1548: decrypt once at function boundary; both branches use
-        // the same credentials.
+        // MWP-1548: decrypt once at function boundary; both branches use the same credentials.
         $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
         $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
 
-        if ( 'db' === $pType ) {
+        if ( 'db' === $pType || 'full' === $pType ) {
             MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $pUrl, 'fdl' ), $pFile, false, $http_user_plain, $http_pass_plain );
-        }
-
-        if ( 'full' === $pType ) {
-            MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $pUrl, 'fdl' ), $pFile, false, $http_user_plain, $http_pass_plain );
+            static::validate_backup_file( $pFile, false );
         }
 
         return true;
@@ -1209,6 +1201,159 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         return $output;
+    }
+
+    /**
+     * Method acquire_download_lock()
+     *
+     * Acquire the download lock for a backup file. The lock is a sidecar
+     * file with a one hour TTL; a stale or corrupt lock is replaced. TTL
+     * expiry alone covers crash recovery on every platform, so no process
+     * checks are used.
+     *
+     * @param string $local_file Absolute path of the download target.
+     * @param int    $site_id    Child site ID.
+     * @param int    $task_id    Backup task ID.
+     *
+     * @return bool True when the lock was acquired, false when another process holds a live lock.
+     */
+    public static function acquire_download_lock( $local_file, $site_id, $task_id ) {
+        $lock_file = $local_file . '.downloading';
+
+        if ( file_exists( $lock_file ) ) {
+            $data  = json_decode( (string) file_get_contents( $lock_file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local lock file.
+            $stale = ! is_array( $data ) || ( time() - (int) ( isset( $data['started'] ) ? $data['started'] : 0 ) ) > HOUR_IN_SECONDS;
+            if ( ! $stale ) {
+                return false;
+            }
+            wp_delete_file( $lock_file );
+        }
+
+        $payload = wp_json_encode(
+            array(
+                'started' => time(),
+                'site_id' => (int) $site_id,
+                'task_id' => (int) $task_id,
+            )
+        );
+
+        return false !== file_put_contents( $lock_file, $payload ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- local lock file.
+    }
+
+    /**
+     * Method release_download_lock()
+     *
+     * Release the download lock for a backup file.
+     *
+     * @param string $local_file Absolute path of the download target.
+     *
+     * @return void
+     */
+    public static function release_download_lock( $local_file ) {
+        $lock_file = $local_file . '.downloading';
+        if ( file_exists( $lock_file ) ) {
+            wp_delete_file( $lock_file );
+        }
+    }
+
+    /**
+     * Method cleanup_stale_download_locks()
+     *
+     * Remove stale download lock files left behind by crashed processes.
+     * Runs at backup start so an interrupted run never blocks future runs
+     * for longer than the lock TTL.
+     *
+     * @param string $dir Directory holding backup files.
+     *
+     * @return void
+     */
+    public static function cleanup_stale_download_locks( $dir ) {
+        $locks = glob( rtrim( $dir, '/' ) . '/*.downloading' );
+        if ( ! is_array( $locks ) ) {
+            return;
+        }
+        foreach ( $locks as $lock_file ) {
+            $data  = json_decode( (string) file_get_contents( $lock_file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local lock file.
+            $stale = ! is_array( $data ) || ( time() - (int) ( isset( $data['started'] ) ? $data['started'] : 0 ) ) > HOUR_IN_SECONDS;
+            if ( $stale ) {
+                wp_delete_file( $lock_file );
+            }
+        }
+    }
+
+    /**
+     * Method validate_backup_file()
+     *
+     * Validate a downloaded backup file before it is marked complete:
+     * the file must exist with content, match the expected size within
+     * the tolerance, and start with the archive signature matching its
+     * extension. This catches error pages and truncated transfers saved
+     * as backup files.
+     *
+     * @param string    $file          Absolute path of the downloaded file.
+     * @param int|false $expected_size Expected size in bytes, false to skip the size check.
+     * @param float     $tolerance     Allowed fractional size deviation (default 1%).
+     *
+     * @return void
+     * @throws MainWP_Exception When validation fails.
+     */
+    public static function validate_backup_file( $file, $expected_size = false, $tolerance = 0.01 ) { // phpcs:ignore -- NOSONAR - complex.
+        // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped, WordPress.WP.AlternativeFunctions -- registry messages are pre-escaped; streaming file reads.
+        if ( ! file_exists( $file ) || ! filesize( $file ) ) {
+            throw new MainWP_Exception(
+                MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ),
+                'missing or empty file',
+                MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT
+            );
+        }
+
+        if ( false !== $expected_size && is_numeric( $expected_size ) && (int) $expected_size > 0 ) {
+            $actual    = (int) filesize( $file );
+            $expected  = (int) $expected_size;
+            $allowance = (int) max( 1, floor( $expected * $tolerance ) );
+            if ( abs( $actual - $expected ) > $allowance ) {
+                $code = $actual < $expected ? MainWP_Backup_Error_Codes::ERR_FILE_TOO_SMALL : MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT;
+                throw new MainWP_Exception(
+                    MainWP_Backup_Error_Codes::message( $code ),
+                    'expected ' . $expected . ' bytes, got ' . $actual,
+                    $code
+                );
+            }
+        }
+
+        $fp = fopen( $file, 'rb' );
+        if ( false === $fp ) {
+            throw new MainWP_Exception(
+                MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ),
+                'could not open file for validation',
+                MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT
+            );
+        }
+        $head = (string) fread( $fp, 512 );
+        fclose( $fp );
+
+        $valid = true;
+        if ( MainWP_Utility::ends_with( $file, '.zip' ) ) {
+            $valid = "PK\x03\x04" === substr( $head, 0, 4 );
+        } elseif ( MainWP_Utility::ends_with( $file, '.gz' ) ) {
+            $valid = "\x1f\x8b" === substr( $head, 0, 2 );
+        } elseif ( MainWP_Utility::ends_with( $file, '.bz2' ) ) {
+            $valid = 'BZh' === substr( $head, 0, 3 );
+        } elseif ( MainWP_Utility::ends_with( $file, '.tar' ) ) {
+            $valid = strlen( $head ) >= 262 && 'ustar' === substr( $head, 257, 5 );
+        } elseif ( MainWP_Utility::ends_with( $file, '.sql' ) ) {
+            // SQL dumps must not start with markup - that's an error page.
+            $valid = '<' !== substr( ltrim( $head ), 0, 1 );
+        }
+
+        if ( ! $valid ) {
+            throw new MainWP_Exception(
+                MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_HEADER_INVALID ),
+                'unexpected file signature for ' . basename( $file ),
+                MainWP_Backup_Error_Codes::ERR_HEADER_INVALID
+            );
+        }
+        // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped, WordPress.WP.AlternativeFunctions
     }
 
     /**

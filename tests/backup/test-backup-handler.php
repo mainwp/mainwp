@@ -311,6 +311,132 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Give a test site a real RSA private key so download URL signing works.
+	 *
+	 * @param int $site_id Site ID.
+	 *
+	 * @return void
+	 */
+	private function give_site_real_privkey( $site_id ) {
+		global $wpdb;
+		$key = openssl_pkey_new(
+			array(
+				'private_key_bits' => 2048,
+				'private_key_type' => OPENSSL_KEYTYPE_RSA,
+			)
+		);
+		openssl_pkey_export( $key, $privkey_pem );
+		// The connect layer base64-decodes the stored key before signing.
+		$wpdb->update( $wpdb->prefix . 'mainwp_wp', array( 'privkey' => base64_encode( $privkey_pem ) ), array( 'id' => $site_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.PHP.DiscouragedPHPFunctions -- test fixture.
+	}
+
+	/**
+	 * Seed a progress row whose fetch result is ready for the download phase.
+	 *
+	 * @param int $task_id Task ID.
+	 * @param int $site_id Site ID.
+	 * @param int $size    Reported backup size.
+	 *
+	 * @return void
+	 */
+	private function seed_download_ready_progress( $task_id, $site_id, $size ) {
+		$this->give_site_real_privkey( $site_id );
+		MainWP_DB_Backup::instance()->add_backup_task_progress( $task_id, $site_id, array() );
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			$task_id,
+			$site_id,
+			array(
+				'dtsFetched'   => time(),
+				'pid'          => 12345,
+				'removedFiles' => 1,
+				'fetchResult'  => wp_json_encode(
+					array(
+						'full' => 'backup-file.zip',
+						'db'   => false,
+						'size' => $size,
+					)
+				),
+			)
+		);
+	}
+
+	/**
+	 * A held download lock stops a second process from downloading the
+	 * same backup file.
+	 *
+	 * @return void
+	 */
+	public function test_download_lock_held_reports_already_running() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->seed_download_ready_progress( $task->id, $site_id, 4096 );
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+
+		$locked_file = null;
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre, $url, $file ) use ( &$locked_file ) {
+				unset( $pre, $url );
+				$locked_file = $file;
+				return true; // Skip the real transfer; validation will reject the missing file.
+			},
+			10,
+			3
+		);
+
+		// First run captures the local file path and stores it in the progress row.
+		try {
+			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+		} catch ( MainWP_Exception $e ) {
+			unset( $e );
+		}
+		$this->assertNotNull( $locked_file );
+
+		// Another process now holds the lock; a new run must refuse to download.
+		$this->assertTrue( MainWP_Backup_Handler::acquire_download_lock( $locked_file, 999, 999 ) );
+		try {
+			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			$this->fail( 'Expected already-running exception while the download lock is held.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( 'mainwp_backup_already_running', $e->get_message_error_code() );
+		}
+
+		MainWP_Backup_Handler::release_download_lock( $locked_file );
+	}
+
+	/**
+	 * A downloaded file that fails validation is reported and the download
+	 * is not marked complete.
+	 *
+	 * @return void
+	 */
+	public function test_invalid_downloaded_file_not_marked_complete() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->seed_download_ready_progress( $task->id, $site_id, 52 );
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre, $url, $file ) {
+				unset( $pre, $url );
+				file_put_contents( $file, '<html><body>Fatal error on child site</body></html>' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+				return true;
+			},
+			10,
+			3
+		);
+
+		try {
+			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			$this->fail( 'Expected header validation to reject the error-page download.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( 'mainwp_backup_header_invalid', $e->get_message_error_code() );
+		}
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( 0, (int) $progress->downloadedFULLComplete, 'A failed validation must not mark the download complete.' );
+	}
+
+	/**
 	 * A failed retry of a stalled backup re-throws instead of returning false.
 	 *
 	 * @return void

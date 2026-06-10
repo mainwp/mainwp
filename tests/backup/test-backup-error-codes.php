@@ -39,6 +39,9 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 		'mainwp_backup_too_many_skipped',
 		'mainwp_backup_stalled',
 		'mainwp_backup_already_running',
+		'mainwp_backup_dl_file_not_found',
+		'mainwp_backup_dl_file_changed',
+		'mainwp_backup_dl_token_invalid',
 	);
 
 	/**
@@ -60,6 +63,7 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 		'mainwp_backup_ftp_failed',
 		'mainwp_backup_dropbox_failed',
 		'mainwp_backup_s3_failed',
+		'mainwp_backup_hash_mismatch',
 	);
 
 	/**
@@ -122,6 +126,16 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 		$message = MainWP_Backup_Error_Codes::message( 'mainwp_backup_nonexistent_code' );
 		$this->assertNotEmpty( $message );
 		$this->assertStringNotContainsStringIgnoringCase( 'undefined error', $message );
+	}
+
+	/**
+	 * The hash mismatch constant exists and is error severity.
+	 *
+	 * @return void
+	 */
+	public function test_hash_mismatch_code_is_error_severity() {
+		$this->assertSame( 'mainwp_backup_hash_mismatch', MainWP_Backup_Error_Codes::ERR_HASH_MISMATCH );
+		$this->assertSame( 'error', MainWP_Backup_Error_Codes::severity( MainWP_Backup_Error_Codes::ERR_HASH_MISMATCH ) );
 	}
 
 	/**

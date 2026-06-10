@@ -48,6 +48,12 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_FILE_CORRUPT   = 'mainwp_backup_file_corrupt';
     const ERR_FILE_TOO_SMALL = 'mainwp_backup_file_too_small';
     const ERR_HEADER_INVALID = 'mainwp_backup_header_invalid';
+    const ERR_HASH_MISMATCH  = 'mainwp_backup_hash_mismatch';
+
+    // Download authorization errors reported by the child site.
+    const ERR_DL_FILE_NOT_FOUND = 'mainwp_backup_dl_file_not_found';
+    const ERR_DL_FILE_CHANGED   = 'mainwp_backup_dl_file_changed';
+    const ERR_DL_TOKEN_INVALID  = 'mainwp_backup_dl_token_invalid';
 
     // Archive.
     const ERR_ZIP_FAILED       = 'mainwp_backup_zip_failed';
@@ -202,6 +208,10 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_FTP_FAILED         => esc_html__( 'Could not upload the backup to the FTP server. Check the FTP credentials and that the server is reachable, then try again.', 'mainwp' ),
             self::ERR_DROPBOX_FAILED     => esc_html__( 'Could not upload the backup to Dropbox. Check the Dropbox connection settings and available storage space, then try again.', 'mainwp' ),
             self::ERR_S3_FAILED          => esc_html__( 'Could not upload the backup to Amazon S3. Check the S3 credentials, bucket name, and permissions, then try again.', 'mainwp' ),
+            self::ERR_HASH_MISMATCH      => esc_html__( 'The downloaded backup file does not match the integrity hash reported by the child site. The file may have been modified or corrupted during the transfer. The local file was removed; try the download again.', 'mainwp' ),
+            self::ERR_DL_FILE_NOT_FOUND  => esc_html__( 'The backup file was not found on the child site. It may have been removed by a cleanup. Run a new backup and try again.', 'mainwp' ),
+            self::ERR_DL_FILE_CHANGED    => esc_html__( 'The backup file changed on the child site after the download was authorized. Try the download again to get a fresh authorization for the current file.', 'mainwp' ),
+            self::ERR_DL_TOKEN_INVALID   => esc_html__( 'The download authorization was rejected by the child site as invalid, expired, or already used. Try the download again to get a fresh authorization.', 'mainwp' ),
         );
     }
 }

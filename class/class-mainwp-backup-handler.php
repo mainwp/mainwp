@@ -69,7 +69,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
         // phpcs: ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
-            return false;
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
         $userid        = $pTask->userid;
@@ -119,7 +119,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $ext = '.' . static::get_current_archive_extension( $website, $pTask );
         }
 
-        $file = str_replace(
+        $file = ( null === $pFilename ) ? '' : str_replace(
             array(
                 '%sitename%',
                 '%url%',
@@ -195,6 +195,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         'attempts'               => 0,
                         'last_error'             => '',
                         'pid'                    => $pid,
+                        'busy_since'             => 0,
                     )
                 );
 
@@ -233,60 +234,57 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                             ),
                         )
                     );
-
-                    return false;
                 }
 
                 throw $e;
             }
 
             if ( isset( $information['error'] ) && stristr( $information['error'], 'Another backup process is running' ) ) {
-                return false;
+                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
             }
 
             $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
         } elseif ( empty( $backupTaskProgress->fetchResult ) ) {
+            $temp = false;
             try {
                 $temp = MainWP_Connect::fetch_url_authed( $website, 'backup_checkpid', array( 'pid' => $backupTaskProgress->pid ) );
             } catch ( \Exception $e ) {
-                // ok!
+                // The failed status check consumes a retry attempt below instead of being ignored.
+                MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup status check failed: ' . $e->getMessage() );
             }
 
             if ( ! empty( $temp ) ) {
                 if ( 'stalled' === $temp['status'] ) {
                     if ( 5 > $backupTaskProgress->attempts ) {
-                        $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts++ ) );
+                        $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts + 1 ) );
 
-                        try {
-                            $information = MainWP_Connect::fetch_url_authed(
-                                $website,
-                                'backup',
-                                array(
-                                    'type'               => $type,
-                                    'exclude'            => $exclude,
-                                    'excludebackup'      => $excludebackup,
-                                    'excludecache'       => $excludecache,
-                                    'excludenonwp'       => $excludenonwp,
-                                    'excludezip'         => $excludezip,
-                                    'ext'                => static::get_current_archive_extension( $website, $pTask ),
-                                    'file_descriptors_auto' => $maximumFileDescriptorsAuto,
-                                    'file_descriptors'   => $maximumFileDescriptors,
-                                    'loadFilesBeforeZip' => $loadFilesBeforeZip,
-                                    'pid'                => $backupTaskProgress->pid,
-                                    'append'             => '1',
-                                    'f'                  => $temp['file'],
-                                ),
-                                false,
-                                false,
-                                false
-                            );
+                        // A failed retry propagates to the caller instead of being silently dropped.
+                        $information = MainWP_Connect::fetch_url_authed(
+                            $website,
+                            'backup',
+                            array(
+                                'type'                  => $type,
+                                'exclude'               => $exclude,
+                                'excludebackup'         => $excludebackup,
+                                'excludecache'          => $excludecache,
+                                'excludenonwp'          => $excludenonwp,
+                                'excludezip'            => $excludezip,
+                                'ext'                   => static::get_current_archive_extension( $website, $pTask ),
+                                'file_descriptors_auto' => $maximumFileDescriptorsAuto,
+                                'file_descriptors'      => $maximumFileDescriptors,
+                                'loadFilesBeforeZip'    => $loadFilesBeforeZip,
+                                'pid'                   => $backupTaskProgress->pid,
+                                'append'                => '1',
+                                'f'                     => $temp['file'],
+                            ),
+                            false,
+                            false,
+                            false
+                        );
 
-                            if ( isset( $information['error'] ) && stristr( $information['error'], 'Another backup process is running' ) ) {
-                                MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => ( $backupTaskProgress->attempts - 1 ) ) );
+                        if ( isset( $information['error'] ) && stristr( $information['error'], 'Another backup process is running' ) ) {
+                            MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => ( $backupTaskProgress->attempts - 1 ) ) );
 
-                                return false;
-                            }
-                        } catch ( MainWP_Exception $e ) {
                             return false;
                         }
 
@@ -303,6 +301,20 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         throw new MainWP_Exception( $error['message'], $error['extra'] ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                     }
                 } elseif ( 'busy' === $temp['status'] ) {
+                    $busy_since = isset( $backupTaskProgress->busy_since ) ? (int) $backupTaskProgress->busy_since : 0;
+                    if ( empty( $busy_since ) ) {
+                        MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'busy_since' => time() ) );
+                        return false;
+                    }
+                    if ( ( time() - $busy_since ) > HOUR_IN_SECONDS ) {
+                        // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- internal diagnostic context.
+                        throw new MainWP_Exception(
+                            esc_html__( 'The child site has reported the backup as busy for over an hour. The backup process likely stalled or was killed by the host. Check the child site error log and try again.', 'mainwp' ),
+                            'busy since ' . gmdate( 'Y-m-d H:i:s', $busy_since ) . ' UTC',
+                            MainWP_Backup_Error_Codes::ERR_STALLED
+                        );
+                        // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                    }
                     return false;
                 } elseif ( 'done' === $temp['status'] ) {
                     if ( 'full' === $type ) {
@@ -318,7 +330,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
                 }
             } elseif ( 5 > $backupTaskProgress->attempts ) {
-                    $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts++ ) );
+                    $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts + 1 ) );
             } else {
                 throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_RETRY_EXHAUSTED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
             }
@@ -330,9 +342,9 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         if ( isset( $information['error'] ) ) {
             throw new MainWP_Exception( esc_html( MainWP_Backup_Error_Codes::sanitize_message( $information['error'] ) ), null, isset( $information['error_code'] ) ? $information['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-        } elseif ( 'db' === $type && ! $information['db'] ) {
+        } elseif ( 'db' === $type && empty( $information['db'] ) ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_DB_QUERY_FAILED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
-        } elseif ( 'full' === $type && ! $information['full'] ) {
+        } elseif ( 'full' === $type && empty( $information['full'] ) ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         } elseif ( isset( $information['db'] ) ) {
             $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
@@ -832,7 +844,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     ) {
 
         if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
-            return false;
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
         if ( '' === trim( $pFilename ) ) {

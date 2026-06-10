@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
-    // phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
+    // phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- unprepared SQL ok, table and column identifiers cannot be prepared and are escaped via esc_sql.
 
     /**
      * Private variable to hold the database version info.
@@ -318,6 +318,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   attempts int(11) NOT NULL DEFAULT 0,
   last_error text NOT NULL DEFAULT '',
   pid int(11) NOT NULL DEFAULT 0,
+  busy_since int(11) NOT NULL DEFAULT 0,
   KEY idx_task_id (task_id)";
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.53', '<=' ) ) {
             $tbl .= ',
@@ -494,7 +495,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 'nossl',
                 'nosslkey',
             );
-            $wp_table = esc_sql( $this->table_name( 'wp' ) );
+            $wp_table   = esc_sql( $this->table_name( 'wp' ) );
             foreach ( $sslColumns as $col ) {
                 $col = esc_sql( $col );
                 // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
@@ -520,7 +521,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 $this->wpdb->query( "ALTER TABLE {$wp_table} DROP COLUMN {$rankColumn}" );
             }
 
-            $syncColumns = array( 'uptodate' );
+            $syncColumns   = array( 'uptodate' );
             $wp_sync_table = esc_sql( $this->table_name( 'wp_sync' ) );
             foreach ( $syncColumns as $column ) {
                 $column = esc_sql( $column );
@@ -537,7 +538,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
                 $this->wpdb->query( "ALTER TABLE {$wp_table} DROP COLUMN {$column}" );
             }
-            $delColumns = array( 'heatMap' );
+            $delColumns  = array( 'heatMap' );
             $users_table = esc_sql( $this->table_name( 'users' ) );
             foreach ( $delColumns as $column ) {
                 $column = esc_sql( $column );
@@ -558,7 +559,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
         // fix missing PRIMARY keys.
         if ( version_compare( $currentVersion, '8.53', '<=' ) ) {
-            $wp_options_table = esc_sql( $this->table_name( 'wp_options' ) );
+            $wp_options_table         = esc_sql( $this->table_name( 'wp_options' ) );
             $wp_settings_backup_table = esc_sql( $this->table_name( 'wp_settings_backup' ) );
             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name escaped via esc_sql.
             $this->wpdb->query( "ALTER TABLE {$wp_options_table} ADD opt_id int NOT NULL AUTO_INCREMENT PRIMARY KEY" );
@@ -677,7 +678,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 'dtsAutomaticSync',
                 'dtsAutomaticSyncStart',
             );
-            $wp_table = esc_sql( $this->table_name( 'wp' ) );
+            $wp_table      = esc_sql( $this->table_name( 'wp' ) );
             $wp_sync_table = esc_sql( $this->table_name( 'wp_sync' ) );
             foreach ( $wpSyncColumns as $wpSyncColumn ) {
                 $wpSyncColumn = esc_sql( $wpSyncColumn );

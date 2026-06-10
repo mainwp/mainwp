@@ -293,7 +293,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      *
      * @return mixed $errorOutput.
      *
-     * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup_site()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Executor::backup_site()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_run()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task_with_values()
@@ -406,7 +406,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             try {
                 $subfolder = str_replace( '%task%', MainWP_Utility::sanitize( $task->name ), $task->subfolder );
 
-                $backupResult = MainWP_Backup_Handler::backup_site( $siteid, $task, $subfolder );
+                $backupResult = MainWP_Backup_Executor::backup_site( $siteid, $task, $subfolder );
 
                 if ( false === $backupResult ) {
                     continue;
@@ -512,7 +512,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @throws MainWP_Exception Error message.
      *
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
-     * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Executor::backup()
      * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize()
      */
     public static function backup( $pTaskId, $pSiteId, $pFileNameUID ) {
@@ -540,7 +540,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             $archiveFormat                  = $backupTask->archiveFormat;
         }
 
-        return MainWP_Backup_Handler::backup( $pSiteId, $backupTask->type, $subfolder, $backupTask->exclude, $backupTask->excludebackup, $backupTask->excludecache, $backupTask->excludenonwp, $backupTask->excludezip, $backupTask->filename, $pFileNameUID, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip );
+        return MainWP_Backup_Executor::backup( $pSiteId, $backupTask->type, $subfolder, $backupTask->exclude, $backupTask->excludebackup, $backupTask->excludecache, $backupTask->excludenonwp, $backupTask->excludezip, $backupTask->filename, $pFileNameUID, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip );
     }
 
     /**

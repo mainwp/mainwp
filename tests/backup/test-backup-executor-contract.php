@@ -1,0 +1,409 @@
+<?php
+/**
+ * MainWP Backup Executor Provider Contract Tests
+ *
+ * Covers the consumer-facing contract of the backup executor: starting
+ * an ad-hoc resumable backup task, reading and driving task status,
+ * the completion hook, and the backup freshness check.
+ *
+ * @package MainWP\Dashboard\Tests
+ */
+
+namespace MainWP\Dashboard\Tests;
+
+use MainWP\Dashboard\MainWP_Backup_Executor;
+use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Exception;
+use MainWP\Dashboard\MainWP_System_Utility;
+
+/**
+ * Class MainWP_Backup_Executor_Contract_Test
+ */
+class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
+
+	/**
+	 * Set up: enable the legacy backup feature.
+	 *
+	 * @return void
+	 */
+	public function setUp(): void {
+		parent::setUp();
+		update_option( 'mainwp_enableLegacyBackupFeature', 1 );
+	}
+
+	/**
+	 * Clean up.
+	 *
+	 * @return void
+	 */
+	public function tearDown(): void {
+		delete_option( 'mainwp_enableLegacyBackupFeature' );
+		parent::tearDown();
+	}
+
+	/**
+	 * Mock a child response for a specific action.
+	 *
+	 * @param string $action   Action name.
+	 * @param mixed  $response Response array, or a MainWP_Exception to throw.
+	 *
+	 * @return void
+	 */
+	private function mock_child_action( $action, $response ) {
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what ) use ( $action, $response ) {
+				unset( $website );
+				if ( $what === $action ) {
+					if ( $response instanceof MainWP_Exception ) {
+						throw $response; // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- test mock.
+					}
+					return $response;
+				}
+				return $result;
+			},
+			10,
+			3
+		);
+	}
+
+	/**
+	 * Record which child actions get called, in order.
+	 *
+	 * @param array $called Reference to the recorder array.
+	 *
+	 * @return void
+	 */
+	private function record_child_actions( &$called ) {
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what ) use ( &$called ) {
+				unset( $website );
+				$called[] = $what;
+				return $result;
+			},
+			5,
+			3
+		);
+	}
+
+	/**
+	 * Give a test site a real RSA private key so download URL signing works.
+	 *
+	 * @param int $site_id Site ID.
+	 *
+	 * @return void
+	 */
+	private function give_site_real_privkey( $site_id ) {
+		global $wpdb;
+		$key = openssl_pkey_new(
+			array(
+				'private_key_bits' => 2048,
+				'private_key_type' => OPENSSL_KEYTYPE_RSA,
+			)
+		);
+		openssl_pkey_export( $key, $privkey_pem );
+		// The connect layer base64-decodes the stored key before signing.
+		$wpdb->update( $wpdb->prefix . 'mainwp_wp', array( 'privkey' => base64_encode( $privkey_pem ) ), array( 'id' => $site_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.PHP.DiscouragedPHPFunctions -- test fixture.
+	}
+
+	/**
+	 * Short-circuit downloads by writing a valid gzip header to the target.
+	 *
+	 * @return void
+	 */
+	private function stub_download_with_valid_gzip() {
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre, $url, $file ) {
+				unset( $pre, $url );
+				file_put_contents( $file, "\x1f\x8b" . str_repeat( 'x', 64 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+				return true;
+			},
+			10,
+			3
+		);
+	}
+
+	/**
+	 * Collect mainwp_native_backup_completed hook firings.
+	 *
+	 * @param array $events Reference to the recorder array.
+	 *
+	 * @return void
+	 */
+	private function record_completion_hook( &$events ) {
+		add_action(
+			'mainwp_native_backup_completed',
+			function ( $site_id, $task_id, $success, $meta ) use ( &$events ) {
+				$events[] = array(
+					'site_id' => $site_id,
+					'task_id' => $task_id,
+					'success' => $success,
+					'meta'    => $meta,
+				);
+			},
+			10,
+			4
+		);
+	}
+
+	/**
+	 * Triggering a backup on a task-machine child creates a task and
+	 * persists the handle for later status calls.
+	 *
+	 * @return void
+	 */
+	public function test_trigger_backup_creates_task_and_persists_id() {
+		$site_id = $this->create_test_site();
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+		$this->mock_child_action(
+			'backup_task_create',
+			array(
+				'task_id' => 'task-1749600000-adhoc1',
+				'phase'   => 'queued',
+			)
+		);
+
+		$task_id = MainWP_Backup_Executor::trigger_backup( $site_id, 'full' );
+
+		$this->assertSame( 'task-1749600000-adhoc1', $task_id );
+
+		$website   = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$persisted = json_decode( (string) MainWP_DB::instance()->get_website_option( $website, 'adhoc_backup_task' ), true );
+		$this->assertIsArray( $persisted );
+		$this->assertSame( 'task-1749600000-adhoc1', $persisted['task_id'] );
+		$this->assertSame( 'full', $persisted['type'] );
+	}
+
+	/**
+	 * Triggering again while an ad-hoc task is persisted reuses the handle
+	 * instead of colliding with the active task on the child.
+	 *
+	 * @return void
+	 */
+	public function test_trigger_backup_reuses_persisted_active_task() {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		MainWP_DB::instance()->update_website_option(
+			$website,
+			'adhoc_backup_task',
+			wp_json_encode(
+				array(
+					'task_id' => 'task-live',
+					'type'    => 'full',
+					'started' => time() - 60,
+				)
+			)
+		);
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+
+		$called = array();
+		$this->record_child_actions( $called );
+
+		$task_id = MainWP_Backup_Executor::trigger_backup( $site_id, 'full' );
+
+		$this->assertSame( 'task-live', $task_id );
+		$this->assertNotContains( 'backup_task_create', $called, 'An active ad-hoc task must be reused, not recreated.' );
+	}
+
+	/**
+	 * A child without the task machine falls back to the synchronous
+	 * legacy backup, downloads the artifact, fires the completion hook,
+	 * and returns null.
+	 *
+	 * @return void
+	 */
+	public function test_trigger_backup_legacy_child_falls_back_blocking() {
+		$site_id = $this->create_test_site();
+		$this->give_site_real_privkey( $site_id );
+		$this->mock_child_action( 'backup_preflight', array( 'zip_support' => true ) );
+		$this->mock_child_action(
+			'backup',
+			array(
+				'full' => 'backup-1749600000.tar.gz',
+				'db'   => false,
+				'size' => 66,
+			)
+		);
+		$this->stub_download_with_valid_gzip();
+
+		$events = array();
+		$this->record_completion_hook( $events );
+
+		$ob_level = ob_get_level();
+		ob_start();
+		try {
+			$task_id = MainWP_Backup_Executor::trigger_backup( $site_id, 'full' );
+		} finally {
+			while ( ob_get_level() > $ob_level ) {
+				ob_end_clean();
+			}
+		}
+
+		$this->assertNull( $task_id, 'The synchronous fallback completes without a task handle.' );
+		$this->assertCount( 1, $events );
+		$this->assertTrue( $events[0]['success'] );
+		$this->assertSame( $site_id, (int) $events[0]['site_id'] );
+		$this->assertFileExists( $events[0]['meta']['local'] );
+	}
+
+	/**
+	 * A zero budget performs a pure status read without advancing the task.
+	 *
+	 * @return void
+	 */
+	public function test_get_backup_task_status_pure_read() {
+		$site_id = $this->create_test_site();
+		$this->mock_child_action(
+			'backup_task_status',
+			array(
+				'task_id' => 'task-abc',
+				'phase'   => 'archiving_files',
+				'type'    => 'full',
+			)
+		);
+
+		$called = array();
+		$this->record_child_actions( $called );
+
+		$status = MainWP_Backup_Executor::get_backup_task_status( $site_id, 'task-abc' );
+
+		$this->assertSame( 'running', $status['status'] );
+		$this->assertSame( 'archiving_files', $status['meta']['phase'] );
+		$this->assertContains( 'backup_task_status', $called );
+		$this->assertNotContains( 'backup_task_run', $called, 'A pure read must not advance the task.' );
+	}
+
+	/**
+	 * A budgeted status call drives run slices to completion, downloads the
+	 * artifact, fires the completion hook once, and clears the persisted
+	 * ad-hoc handle.
+	 *
+	 * @return void
+	 */
+	public function test_get_backup_task_status_budget_drives_to_completed() {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$this->give_site_real_privkey( $site_id );
+		MainWP_DB::instance()->update_website_option(
+			$website,
+			'adhoc_backup_task',
+			wp_json_encode(
+				array(
+					'task_id' => 'task-adhoc',
+					'type'    => 'full',
+					'started' => time() - 60,
+				)
+			)
+		);
+		$this->mock_child_action(
+			'backup_task_run',
+			array(
+				'task_id' => 'task-adhoc',
+				'phase'   => 'completed',
+				'type'    => 'full',
+				'file'    => 'backup-1749600000.tar.gz',
+				'size'    => 66,
+			)
+		);
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+		$this->stub_download_with_valid_gzip();
+
+		$events = array();
+		$this->record_completion_hook( $events );
+
+		$ob_level = ob_get_level();
+		ob_start();
+		try {
+			$status = MainWP_Backup_Executor::get_backup_task_status( $site_id, 'task-adhoc', 60 );
+		} finally {
+			while ( ob_get_level() > $ob_level ) {
+				ob_end_clean();
+			}
+		}
+
+		$this->assertSame( 'completed', $status['status'] );
+		$this->assertSame( 'backup-1749600000.tar.gz', $status['meta']['file'] );
+		$this->assertFileExists( $status['meta']['local'] );
+
+		$this->assertCount( 1, $events );
+		$this->assertTrue( $events[0]['success'] );
+		$this->assertSame( 'task-adhoc', $events[0]['task_id'] );
+
+		$this->assertSame( '', (string) MainWP_DB::instance()->get_website_option( $website, 'adhoc_backup_task' ), 'A terminal task must clear the persisted handle.' );
+	}
+
+	/**
+	 * A failed task reports failed status, fires the completion hook with
+	 * success false, and clears the persisted ad-hoc handle.
+	 *
+	 * @return void
+	 */
+	public function test_get_backup_task_status_failed_fires_hook() {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		MainWP_DB::instance()->update_website_option(
+			$website,
+			'adhoc_backup_task',
+			wp_json_encode(
+				array(
+					'task_id' => 'task-adhoc',
+					'type'    => 'full',
+					'started' => time() - 60,
+				)
+			)
+		);
+		$this->mock_child_action(
+			'backup_task_run',
+			array(
+				'task_id'    => 'task-adhoc',
+				'phase'      => 'failed',
+				'type'       => 'full',
+				'error'      => 'Could not read table data for the backup.',
+				'error_code' => 'mainwp_backup_db_query_failed',
+			)
+		);
+
+		$events = array();
+		$this->record_completion_hook( $events );
+
+		$status = MainWP_Backup_Executor::get_backup_task_status( $site_id, 'task-adhoc', 60 );
+
+		$this->assertSame( 'failed', $status['status'] );
+		$this->assertSame( 'mainwp_backup_db_query_failed', $status['meta']['error_code'] );
+
+		$this->assertCount( 1, $events );
+		$this->assertFalse( $events[0]['success'] );
+
+		$this->assertSame( '', (string) MainWP_DB::instance()->get_website_option( $website, 'adhoc_backup_task' ), 'A terminal task must clear the persisted handle.' );
+	}
+
+	/**
+	 * The freshness check sees a recent full archive and ignores stale
+	 * archives and database dumps.
+	 *
+	 * @return void
+	 */
+	public function test_has_recent_backup_detects_fresh_and_stale() {
+		$site_id = $this->create_test_site();
+		$dir     = MainWP_System_Utility::get_mainwp_specific_dir( $site_id );
+		wp_mkdir_p( $dir );
+
+		$this->assertFalse( MainWP_Backup_Executor::has_recent_backup( $site_id, 7 ), 'An empty backup directory has no recent backup.' );
+
+		$sql_archive = $dir . 'db-example-June-1-2026.sql.tar.gz';
+		file_put_contents( $sql_archive, 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		$this->assertFalse( MainWP_Backup_Executor::has_recent_backup( $site_id, 7 ), 'Database dumps do not count as full backups.' );
+
+		$full_archive = $dir . 'full-example-June-1-2026.tar.gz';
+		file_put_contents( $full_archive, 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		$this->assertTrue( MainWP_Backup_Executor::has_recent_backup( $site_id, 7 ), 'A fresh full archive is a recent backup.' );
+
+		touch( $full_archive, time() - 10 * DAY_IN_SECONDS );
+		$this->assertFalse( MainWP_Backup_Executor::has_recent_backup( $site_id, 7 ), 'An archive older than the window is not recent.' );
+
+		unlink( $sql_archive );
+		unlink( $full_archive );
+	}
+}

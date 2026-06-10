@@ -13,7 +13,7 @@
 
 namespace MainWP\Dashboard\Tests;
 
-use MainWP\Dashboard\MainWP_Backup_Handler;
+use MainWP\Dashboard\MainWP_Backup_Executor;
 use MainWP\Dashboard\MainWP_Backup_Settings;
 
 /**
@@ -147,7 +147,7 @@ class MainWP_Backup_Exclude_Sanitization_Test extends MainWP_Abilities_Test_Case
 		$ob_level = ob_get_level();
 		ob_start();
 		try {
-			MainWP_Backup_Handler::backup( $site_id, 'full', '', '../../etc/passwd,wp-content/uploads', 0, 0, 0, 0, '', '', 'zip' );
+			MainWP_Backup_Executor::backup( $site_id, 'full', '', '../../etc/passwd,wp-content/uploads', 0, 0, 0, 0, '', '', 'zip' );
 		} catch ( \Exception $e ) {
 			unset( $e ); // The mocked child response ends the request after transmission.
 		}

@@ -142,7 +142,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      *
      * @throws MainWP_Exception On errors.
      *
-     * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Executor::backup()
      * @uses \MainWP\Dashboard\MainWP_Exception
      */
     public function mainwp_backup_run_site() {
@@ -154,7 +154,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 throw new MainWP_Exception( 'Site ID not found. Please reload the page and try again.', 'mainwp' );
             }
 
-            $ret = array( 'result' => MainWP_Backup_Handler::backup( $site_id, 'full', '', '', 1, 1, 1, 1 ) );
+            $ret = array( 'result' => MainWP_Backup_Executor::backup( $site_id, 'full', '', '', 1, 1, 1, 1 ) );
             wp_send_json( $ret );
         } catch ( MainWP_Exception $e ) {
             $this->die_exception_error( $e );
@@ -168,7 +168,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      *
      * @throws MainWP_Exception On errors.
      *
-     * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Executor::backup()
      * @uses \MainWP\Dashboard\MainWP_Exception
      */
     public function ajax_mainwp_backup() {
@@ -203,7 +203,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $pid                            = isset( $_POST['pid'] ) ? intval( $_POST['pid'] ) : false;
             $append                         = isset( $_POST['append'] ) ? intval( $_POST['append'] ) : false;
 
-            $result = MainWP_Backup_Handler::backup( $site_id, $type, $subfolder, $excludedFolder, $excludebackup, $excludecache, $excludenonwp, $excludezip, $filename, $fileNameUID, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip, $pid, $append );
+            $result = MainWP_Backup_Executor::backup( $site_id, $type, $subfolder, $excludedFolder, $excludebackup, $excludecache, $excludenonwp, $excludezip, $filename, $fileNameUID, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip, $pid, $append );
             wp_send_json( array( 'result' => $result ) );
         } catch ( MainWP_Exception $e ) {
             $this->die_exception_error( $e );
@@ -275,7 +275,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      *
      * @throws MainWP_Exception On errors.
      *
-     * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup_delete_file()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Executor::backup_delete_file()
      * @uses \MainWP\Dashboard\MainWP_Exception
      */
     public function mainwp_backup_delete_file() {
@@ -290,7 +290,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : 0;
             $file    = isset( $_POST['file'] ) ? sanitize_text_field( wp_unslash( $_POST['file'] ) ) : '';
 
-            die( wp_json_encode( array( 'result' => MainWP_Backup_Handler::backup_delete_file( $site_id, $file ) ) ) );
+            die( wp_json_encode( array( 'result' => MainWP_Backup_Executor::backup_delete_file( $site_id, $file ) ) ) );
         } catch ( MainWP_Exception $e ) {
             $this->die_exception_error( $e );
         }

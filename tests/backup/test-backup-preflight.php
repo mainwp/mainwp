@@ -12,7 +12,7 @@
 
 namespace MainWP\Dashboard\Tests;
 
-use MainWP\Dashboard\MainWP_Backup_Handler;
+use MainWP\Dashboard\MainWP_Backup_Executor;
 use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Exception;
@@ -121,7 +121,7 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 		$this->mock_child_actions( $responses );
 
 		try {
-			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 		} catch ( MainWP_Exception $e ) {
 			return $e;
 		}

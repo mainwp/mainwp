@@ -422,7 +422,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * This Cron Checks to see if Automatic Daily Updates need to be performed.
      *
      * @uses \MainWP\Dashboard\MainWP_Backup_File_Manager::is_archive()
-     * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Executor::backup()
      * @uses \MainWP\Dashboard\MainWP_Backup_File_Manager::backup_download_file()
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::backup_full_task_running()

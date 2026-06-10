@@ -11,16 +11,16 @@
 
 namespace MainWP\Dashboard\Tests;
 
-use MainWP\Dashboard\MainWP_Backup_Handler;
+use MainWP\Dashboard\MainWP_Backup_Executor;
 use MainWP\Dashboard\MainWP_Backup_File_Manager;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Exception;
 
 /**
- * Class MainWP_Backup_Handler_Test
+ * Class MainWP_Backup_Executor_Test
  */
-class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
+class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 
 	/**
 	 * Set up: enable the legacy backup feature.
@@ -151,7 +151,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 		list( $site_id, $task ) = $this->site_and_task();
 
 		try {
-			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 			$this->fail( 'Expected exception when the legacy backup feature is disabled.' );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertSame( 'mainwp_backup_legacy_disabled', $e->get_message_error_code() );
@@ -168,7 +168,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 		$site_id = $this->create_test_site();
 
 		try {
-			MainWP_Backup_Handler::backup( $site_id, 'full', '', '', 1, 1, 1, 1 );
+			MainWP_Backup_Executor::backup( $site_id, 'full', '', '', 1, 1, 1, 1 );
 			$this->fail( 'Expected exception when the legacy backup feature is disabled.' );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertSame( 'mainwp_backup_legacy_disabled', $e->get_message_error_code() );
@@ -187,7 +187,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 		$this->mock_child_action( 'backup_checkpid', array() );
 
 		try {
-			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 		} catch ( MainWP_Exception $e ) {
 			unset( $e ); // The empty fetch result is reported separately; only the counter matters here.
 		}
@@ -208,7 +208,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 		$this->mock_child_action( 'backup_checkpid', new MainWP_Exception( 'connection failed' ) );
 
 		try {
-			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 		} catch ( MainWP_Exception $e ) {
 			unset( $e ); // The empty fetch result is reported separately; only the counter matters here.
 		}
@@ -228,7 +228,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 		$this->mock_child_action( 'backup_checkpid', array() );
 
 		try {
-			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 			$this->fail( 'Expected retry-exhausted exception.' );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertSame( 'mainwp_backup_retry_exhausted', $e->get_message_error_code() );
@@ -245,7 +245,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 		$this->seed_progress( $task->id, $site_id );
 		$this->mock_child_action( 'backup_checkpid', array( 'status' => 'busy' ) );
 
-		$result = MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 
 		$this->assertFalse( $result, 'A fresh busy status defers to the next cycle.' );
 		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
@@ -263,7 +263,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 		$this->mock_child_action( 'backup_checkpid', array( 'status' => 'busy' ) );
 
 		try {
-			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 			$this->fail( 'Expected stall exception after one hour of busy status.' );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertSame( 'mainwp_backup_stalled', $e->get_message_error_code() );
@@ -281,7 +281,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 		$this->mock_child_action( 'backup', array( 'error' => 'Another backup process is running on the child site.' ) );
 
 		try {
-			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 			$this->fail( 'Expected already-running exception.' );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertSame( 'mainwp_backup_already_running', $e->get_message_error_code() );
@@ -304,7 +304,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 		);
 
 		try {
-			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 			$this->fail( 'Expected child error exception.' );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertSame( 'mainwp_backup_disk_full', $e->get_message_error_code() );
@@ -386,7 +386,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 
 		// First run captures the local file path and stores it in the progress row.
 		try {
-			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 		} catch ( MainWP_Exception $e ) {
 			unset( $e );
 		}
@@ -395,7 +395,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 		// Another process now holds the lock; a new run must refuse to download.
 		$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $locked_file, 999, 999 ) );
 		try {
-			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 			$this->fail( 'Expected already-running exception while the download lock is held.' );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertSame( 'mainwp_backup_already_running', $e->get_message_error_code() );
@@ -427,7 +427,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 		);
 
 		try {
-			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 			$this->fail( 'Expected header validation to reject the error-page download.' );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertSame( 'mainwp_backup_header_invalid', $e->get_message_error_code() );
@@ -478,7 +478,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 		$called = array();
 		$this->record_child_actions( $called );
 
-		$result = MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 
 		$this->assertFalse( $result, 'Creating the task defers the work to the next cycle.' );
 		$this->assertContains( 'backup_task_create', $called );
@@ -508,7 +508,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 		$this->record_child_actions( $called );
 
 		try {
-			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 			$this->fail( 'Expected the legacy child error to propagate.' );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertSame( 'mainwp_backup_disk_full', $e->get_message_error_code() );
@@ -534,7 +534,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 		$this->mock_child_action( 'backup', array( 'error' => 'Could not write backup data.' ) );
 
 		try {
-			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 		} catch ( MainWP_Exception $e ) {
 			unset( $e );
 		}
@@ -575,7 +575,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 		$called = array();
 		$this->record_child_actions( $called );
 
-		$result = MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 
 		$this->assertFalse( $result, 'A working task defers to the next cycle.' );
 		$this->assertSame( 'task-abc', $run_params['task_id'] );
@@ -613,7 +613,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 		add_filter( 'mainwp_download_to_file_pre', '__return_true', 10, 1 );
 
 		try {
-			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 		} catch ( MainWP_Exception $e ) {
 			unset( $e ); // The skipped download fails validation; only the fetch result matters here.
 		}
@@ -654,7 +654,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 		add_filter( 'mainwp_download_to_file_pre', '__return_true', 10, 1 );
 
 		try {
-			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 		} catch ( MainWP_Exception $e ) {
 			unset( $e );
 		}
@@ -684,7 +684,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 		);
 
 		try {
-			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 			$this->fail( 'Expected the failed task to propagate.' );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertSame( 'mainwp_backup_db_query_failed', $e->get_message_error_code() );
@@ -704,7 +704,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 		$this->mock_child_action( 'backup_task_run', new MainWP_Exception( 'connection failed' ) );
 
 		try {
-			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 		} catch ( MainWP_Exception $e ) {
 			unset( $e );
 		}
@@ -714,7 +714,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 
 		MainWP_DB_Backup::instance()->update_backup_task_progress( $task->id, $site_id, array( 'attempts' => 5 ) );
 		try {
-			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 			$this->fail( 'Expected retry-exhausted exception.' );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertSame( 'mainwp_backup_retry_exhausted', $e->get_message_error_code() );
@@ -739,7 +739,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 		$this->mock_child_action( 'backup', new MainWP_Exception( 'child unreachable during retry' ) );
 
 		try {
-			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 			$this->fail( 'Expected the stalled-retry failure to propagate.' );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertStringContainsString( 'child unreachable during retry', $e->getMessage() );

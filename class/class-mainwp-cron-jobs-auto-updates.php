@@ -590,26 +590,12 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
 
             if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
                 foreach ( $websitesToCheck as $siteId => $bool ) {
-                    if ( empty( $website->backup_before_upgrade ) ) {
+                    $websiteToBackup = MainWP_DB::instance()->get_website_by_id( $siteId );
+                    if ( empty( $websiteToBackup ) || empty( $websiteToBackup->backup_before_upgrade ) ) {
                         $sitesCheckCompleted[ $siteId ] = true;
                     }
                     if ( isset( $sitesCheckCompleted[ $siteId ] ) ) {
                         continue;
-                    }
-
-                    $dir        = MainWP_System_Utility::get_mainwp_specific_dir( $siteId );
-                    $dh         = opendir( $dir );
-                    $lastBackup = - 1;
-                    if ( $wp_filesystem->exists( $dir ) && $dh ) {
-                        while ( ( $file = readdir( $dh ) ) !== false ) {
-                            if ( '.' !== $file && '..' !== $file ) {
-                                $theFile = $dir . $file;
-                                if ( MainWP_Backup_File_Manager::is_archive( $file ) && ! MainWP_Backup_File_Manager::is_sql_archive( $file ) && ( $wp_filesystem->mtime( $theFile ) > $lastBackup ) ) {
-                                    $lastBackup = $wp_filesystem->mtime( $theFile );
-                                }
-                            }
-                        }
-                        closedir( $dh );
                     }
 
                     $mainwp_backup_before_upgrade_days = get_option( 'mainwp_backup_before_upgrade_days' );
@@ -617,18 +603,30 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                         $mainwp_backup_before_upgrade_days = 7;
                     }
 
-                    $backupRequired = ( $lastBackup < ( time() - ( $mainwp_backup_before_upgrade_days * 24 * 60 * 60 ) ) ? true : false );
-
-                    if ( ! $backupRequired ) {
+                    if ( MainWP_Backup_Executor::has_recent_backup( $siteId, (int) $mainwp_backup_before_upgrade_days ) ) {
                         $sitesCheckCompleted[ $siteId ] = true;
                         MainWP_Utility::update_option( 'mainwp_automaticUpdate_backupChecks', $sitesCheckCompleted );
                         continue;
                     }
 
                     try {
-                        $result = MainWP_Backup_Handler::backup( $siteId, 'full', '', '', 0, 0, 0, 0 );
-                        MainWP_Backup_File_Manager::backup_download_file( $siteId, 'full', $result['url'], $result['local'] );
-                        $sitesCheckCompleted[ $siteId ] = true;
+                        $task_id = MainWP_Backup_Executor::trigger_backup( $siteId, 'full' );
+                        if ( null === $task_id ) {
+                            // The synchronous fallback for children without the task machine already completed.
+                            $sitesCheckCompleted[ $siteId ] = true;
+                        } else {
+                            /**
+                             * Filters the wall-clock budget the pre-update backup may spend driving task slices in one cron pass.
+                             *
+                             * @param int $budget_seconds Budget in seconds (default 600).
+                             * @param int $siteId         Child site ID.
+                             */
+                            $budget = (int) apply_filters( 'mainwp_preupgrade_backup_budget_seconds', 10 * MINUTE_IN_SECONDS, $siteId );
+                            $status = MainWP_Backup_Executor::get_backup_task_status( $siteId, $task_id, $budget );
+
+                            // An unfinished task stays persisted; the next pass resumes it and updates stay deferred until then.
+                            $sitesCheckCompleted[ $siteId ] = ( 'completed' === $status['status'] );
+                        }
                         MainWP_Utility::update_option( 'mainwp_automaticUpdate_backupChecks', $sitesCheckCompleted );
                     } catch ( \Exception $e ) {
                         $sitesCheckCompleted[ $siteId ] = false;

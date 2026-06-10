@@ -251,6 +251,10 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         // Remember whether the child runs the resumable task machine; an
         // empty value also clears the flag after a child downgrade.
         MainWP_DB::instance()->update_website_option( $website, 'task_spine_support', empty( $preflight['task_spine'] ) ? '' : '1' );
+
+        // Remember whether the child issues one-time download tokens; an
+        // empty value also clears the flag after a child downgrade.
+        MainWP_DB::instance()->update_website_option( $website, 'download_token_support', empty( $preflight['download_token'] ) ? '' : '1' );
     }
 
     /**
@@ -265,6 +269,20 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public static function child_supports_task_spine( object $website ): bool {
         return '1' === (string) MainWP_DB::instance()->get_website_option( $website, 'task_spine_support' );
+    }
+
+    /**
+     * Method child_supports_download_token()
+     *
+     * Whether the child site advertised one-time download tokens in its
+     * last preflight report.
+     *
+     * @param object $website Website object.
+     *
+     * @return bool True when the child issues download tokens.
+     */
+    public static function child_supports_download_token( object $website ): bool {
+        return '1' === (string) MainWP_DB::instance()->get_website_option( $website, 'download_token_support' );
     }
 
     /**

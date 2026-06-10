@@ -149,6 +149,63 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A child that advertises download token support gets the capability
+	 * stored in site metadata.
+	 *
+	 * @return void
+	 */
+	public function test_preflight_stores_download_token_support() {
+		$site_id = $this->create_test_site();
+
+		$this->run_backup_site(
+			$site_id,
+			array(
+				'backup_preflight' => $this->preflight_response( array( 'download_token' => 1 ) ),
+				'backup'           => array( 'error' => 'stop here' ),
+			)
+		);
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$this->assertSame( '1', MainWP_DB::instance()->get_website_option( $website, 'download_token_support' ) );
+		$this->assertTrue( MainWP_Backup_Monitor::child_supports_download_token( $website ) );
+	}
+
+	/**
+	 * A preflight without the capability clears a previously stored flag,
+	 * covering a child downgrade.
+	 *
+	 * @return void
+	 */
+	public function test_preflight_clears_download_token_support_when_omitted() {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		MainWP_DB::instance()->update_website_option( $website, 'download_token_support', '1' );
+
+		$this->run_backup_site(
+			$site_id,
+			array(
+				'backup_preflight' => $this->preflight_response(),
+				'backup'           => array( 'error' => 'stop here' ),
+			)
+		);
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$this->assertFalse( MainWP_Backup_Monitor::child_supports_download_token( $website ) );
+	}
+
+	/**
+	 * A site that never reported the capability does not support it.
+	 *
+	 * @return void
+	 */
+	public function test_child_supports_download_token_false_when_never_reported() {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+
+		$this->assertFalse( MainWP_Backup_Monitor::child_supports_download_token( $website ) );
+	}
+
+	/**
 	 * Critically low disk space on the child site blocks the backup
 	 * before any backup work starts.
 	 *

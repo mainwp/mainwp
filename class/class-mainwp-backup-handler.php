@@ -1179,8 +1179,9 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             if ( false === $website ) {
                 $useGlobal = true;
             } else {
+                // A site that never saved per-site backup settings has no row; treat it as using the global format.
                 $backupSettings = MainWP_DB_Backup::instance()->get_website_backup_settings( $website->id );
-                $archiveFormat  = $backupSettings->archiveFormat;
+                $archiveFormat  = empty( $backupSettings ) || empty( $backupSettings->archiveFormat ) ? 'global' : $backupSettings->archiveFormat;
                 $useGlobal      = ( 'global' === $archiveFormat );
             }
         }

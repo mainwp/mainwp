@@ -126,6 +126,28 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
+     * Method is_native_backups_enabled()
+     *
+     * Whether the built-in (native) backup feature is enabled.
+     *
+     * Reads the canonical option mainwp_enableNativeBackups with a
+     * transparent fallback to the old mainwp_enableLegacyBackupFeature
+     * option, so the answer is correct both before and after the rename
+     * migration has run. Cron entry points can fire before the upgrade
+     * routine on a freshly updated install, so keep the fallback until
+     * the old option name is fully retired.
+     *
+     * @return bool True when native backups are enabled.
+     */
+    public static function is_native_backups_enabled(): bool {
+        $value = get_option( 'mainwp_enableNativeBackups', null );
+        if ( null === $value || false === $value ) {
+            $value = get_option( 'mainwp_enableLegacyBackupFeature' );
+        }
+        return ! empty( $value );
+    }
+
+    /**
      * Method get_max_concurrent_backups()
      *
      * Get the configured maximum number of concurrent backup tasks.

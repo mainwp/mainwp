@@ -858,7 +858,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * Render the MainWP Settings Page.
      *
      * @uses \MainWP\Dashboard\MainWP_Monitoring_View
-     * @uses \MainWP\Dashboard\MainWP_Manage_Backups::render_settings()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Settings_View::render_settings()
      * @uses \MainWP\Dashboard\MainWP_Utility::get_http_codes()
      */
     public static function render() { //phpcs:ignore -- NOSONAR - complex method.
@@ -1140,7 +1140,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         </div>
                     </div>
 
-                    <?php MainWP_Manage_Backups::render_settings(); ?>
+                    <?php MainWP_Backup_Settings_View::render_settings(); ?>
                     <?php
                     /**
                      * Action: mainwp_settings_form_bottom
@@ -1591,7 +1591,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             MainWP_Utility::update_option( 'mainwp_forceUseIPv4', isset( $_POST['mainwp_forceUseIPv4'] ) ? 1 : 0 );
             $use_wpcron = ! isset( $_POST['mainwp_options_wp_cron'] ) ? 0 : 1;
             MainWP_Utility::update_option( 'mainwp_wp_cron', $use_wpcron );
-            MainWP_Utility::update_option( 'mainwp_warm_cache_pages_ttl', intval( $_POST['mainwp_warm_cache_pages_ttl'] ) );
+            MainWP_Utility::update_option( 'mainwp_warm_cache_pages_ttl', isset( $_POST['mainwp_warm_cache_pages_ttl'] ) ? intval( $_POST['mainwp_warm_cache_pages_ttl'] ) : 0 );
 
             MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
             MainWP_Utility::update_option( 'mainwp_auto_correct_site_url', ( ! isset( $_POST['mainwp_auto_correct_site_url'] ) ? 0 : 1 ) );

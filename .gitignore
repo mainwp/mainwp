@@ -8,3 +8,7 @@ composer.lock
 
 # PHPUnit
 .phpunit.result.cache
+
+# Claude Code / Dev tools
+CLAUDE.md
+.mwpdev/

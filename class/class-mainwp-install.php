@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.4'; // NOSONAR - no IP. Bumped so dbDelta adds the wp_backup_progress busy_since column on existing installs. Previous 9.0.2.3 bump for MWP-1566 sibling-dir chmod migration (MWP-1558 follow-up).
+    protected $mainwp_db_version = '9.0.2.5'; // NOSONAR - no IP. Bumped so dbDelta adds the wp_backup_progress child_backup_task_id column on existing installs. Previous 9.0.2.4 bump added busy_since.
 
     /**
      * Protected variable to hold the database option name.
@@ -319,6 +319,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   last_error text NOT NULL DEFAULT '',
   pid int(11) NOT NULL DEFAULT 0,
   busy_since int(11) NOT NULL DEFAULT 0,
+  child_backup_task_id varchar(64) NOT NULL DEFAULT '',
   KEY idx_task_id (task_id)";
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.53', '<=' ) ) {
             $tbl .= ',

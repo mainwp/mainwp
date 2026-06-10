@@ -59,6 +59,9 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		if ( ! $this->column_exists( $table, 'busy_since' ) ) {
 			$wpdb->query( "ALTER TABLE {$table} ADD COLUMN busy_since int(11) NOT NULL DEFAULT 0" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 		}
+		if ( ! $this->column_exists( $table, 'child_backup_task_id' ) ) {
+			$wpdb->query( "ALTER TABLE {$table} ADD COLUMN child_backup_task_id varchar(64) NOT NULL DEFAULT ''" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+		}
 
 		if ( false === $this->saved_db_version ) {
 			delete_site_option( 'mainwp_db_version' );
@@ -114,5 +117,44 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			$this->column_exists( $table, 'busy_since' ),
 			'Upgrade must add busy_since to existing installs; the shipped db version needs a bump or dbDelta never runs.'
 		);
+	}
+
+	/**
+	 * An install whose stored db version predates the child task id column
+	 * must receive it when install() runs - the column links a progress row
+	 * to the resumable task on the child site.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_adds_child_backup_task_id_column_to_existing_install() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_progress' );
+		$this->assertTrue( $this->column_exists( $table, 'child_backup_task_id' ), 'Precondition: fresh install has child_backup_task_id.' );
+
+		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN child_backup_task_id" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$this->assertFalse( $this->column_exists( $table, 'child_backup_task_id' ), 'Precondition: column dropped to simulate an older install.' );
+
+		update_site_option( 'mainwp_db_version', '9.0.2.4' );
+
+		MainWP_Install::instance()->install();
+
+		$this->assertTrue(
+			$this->column_exists( $table, 'child_backup_task_id' ),
+			'Upgrade must add child_backup_task_id to existing installs; the shipped db version needs a bump or dbDelta never runs.'
+		);
+
+		// The column stores the child's 64-char task ids intact.
+		$task_id = str_pad( 'task-', 64, 'x' );
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- test fixture.
+			$table,
+			array(
+				'task_id'              => 999999,
+				'wp_id'                => 999999,
+				'child_backup_task_id' => $task_id,
+			)
+		);
+		$stored = $wpdb->get_var( "SELECT child_backup_task_id FROM {$table} WHERE task_id = 999999 AND wp_id = 999999" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test probe, identifiers cannot be prepared.
+		$this->assertSame( $task_id, $stored );
 	}
 }

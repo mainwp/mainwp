@@ -216,6 +216,8 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     'f'                     => $file,
                 );
 
+                static::negotiate_backup_preflight( $website, static::get_current_archive_extension( $website, $pTask ) );
+
                 MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup: ' . MainWP_Utility::value_to_string( $params, 1 ) );
 
                 $information = MainWP_Connect::fetch_url_authed( $website, 'backup', $params, false, false, false );
@@ -959,6 +961,8 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             'append'                => ( $append ? 1 : 0 ),
         );
 
+        static::negotiate_backup_preflight( $website, $archiveFormat );
+
         MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup: ' . MainWP_Utility::value_to_string( $params, 1 ) );
 
         $information = MainWP_Connect::fetch_url_authed( $website, 'backup', $params, false, false, false );
@@ -1205,6 +1209,77 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         return $output;
+    }
+
+    /**
+     * Method negotiate_backup_preflight()
+     *
+     * Ask the child site for its backup readiness report before starting
+     * a backup. Old child sites without the preflight action are detected
+     * by their error response and the backup proceeds without preflight.
+     *
+     * Stores the child backup directory hash in site metadata for later
+     * operations (sensitive value: stored only, never rendered), blocks
+     * the backup when the child disk space is critically low, and logs
+     * advisory warnings for the rest of the report.
+     *
+     * @param object $website     Website object.
+     * @param string $archive_ext Requested archive extension (zip, tar.gz, tar.bz2, tar).
+     *
+     * @return void
+     * @throws MainWP_Exception When the child reports critically low disk space.
+     */
+    public static function negotiate_backup_preflight( &$website, $archive_ext = '' ) { // phpcs:ignore -- NOSONAR - complex.
+        try {
+            $preflight = MainWP_Connect::fetch_url_authed( $website, 'backup_preflight', array() );
+        } catch ( \Exception $e ) {
+            MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup preflight unavailable: ' . $e->getMessage() );
+            return; // Capability unknown - proceed for backwards compatibility.
+        }
+
+        if ( ! is_array( $preflight ) || isset( $preflight['error'] ) ) {
+            // Old child site without the preflight action - proceed without it.
+            MainWP_Logger::instance()->info_for_website( $website, 'backup', 'Backup preflight not supported by the child site; proceeding without it.' );
+            return;
+        }
+
+        if ( isset( $preflight['disk_free'] ) && false !== $preflight['disk_free'] && is_numeric( $preflight['disk_free'] ) && (int) $preflight['disk_free'] < 50 * MB_IN_BYTES ) {
+            // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- message parts are escaped above.
+            throw new MainWP_Exception(
+                sprintf(
+                    /* translators: %s: available disk space */
+                    esc_html__( 'The child site has insufficient disk space for a backup: %s available. Free up disk space on the child site and try again.', 'mainwp' ),
+                    esc_html( size_format( (int) $preflight['disk_free'] ) )
+                ),
+                null,
+                MainWP_Backup_Error_Codes::ERR_DISK_FULL
+            );
+            // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+
+        if ( isset( $preflight['time_limit_ok'] ) && ! $preflight['time_limit_ok'] ) {
+            do_action( 'mainwp_log_warning', 'Child site cannot call set_time_limit(). Large backups may time out.' );
+        }
+
+        if ( ! empty( $preflight['disk_warning'] ) && is_string( $preflight['disk_warning'] ) ) {
+            do_action( 'mainwp_log_warning', 'Child site disk warning: ' . MainWP_Backup_Error_Codes::sanitize_message( $preflight['disk_warning'] ) );
+        }
+
+        $format_support = array(
+            'zip'     => 'zip_support',
+            'tar.gz'  => 'gz_support',
+            'tar.bz2' => 'bz2_support',
+        );
+        if ( isset( $format_support[ $archive_ext ] ) && isset( $preflight[ $format_support[ $archive_ext ] ] ) && ! $preflight[ $format_support[ $archive_ext ] ] ) {
+            do_action( 'mainwp_log_warning', sprintf( 'Child site reports no support for the requested %s archive format.', $archive_ext ) );
+        }
+
+        if ( ! empty( $preflight['backup_dir_hash'] ) && is_string( $preflight['backup_dir_hash'] ) ) {
+            $hash = preg_replace( '/[^a-zA-Z0-9]/', '', $preflight['backup_dir_hash'] );
+            if ( '' !== $hash ) {
+                MainWP_DB::instance()->update_website_option( $website, 'backup_dir_hash', $hash );
+            }
+        }
     }
 
     /**

@@ -2075,20 +2075,126 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
+     * Method parse_content_range_header()
+     *
+     * Parse a Content-Range response header value.
+     *
+     * Accepts the satisfied form "bytes START-END/TOTAL" and the
+     * unsatisfied form "bytes &#42;/TOTAL" used with 416 responses. The
+     * "Content-Range:" name prefix is tolerated.
+     *
+     * @param string $value Header value or full header line.
+     *
+     * @return array|false Array with start/end/total keys for the satisfied
+     *                     form, array with only a total key for the
+     *                     unsatisfied form, false when not parsable.
+     */
+    public static function parse_content_range_header( $value ) {
+        if ( ! is_string( $value ) || '' === $value ) {
+            return false;
+        }
+
+        $value = preg_replace( '/^Content-Range:\s*/i', '', trim( $value ) );
+
+        if ( preg_match( '/^bytes\s+(\d+)-(\d+)\/(\d+)$/i', $value, $matches ) ) {
+            return array(
+                'start' => (int) $matches[1],
+                'end'   => (int) $matches[2],
+                'total' => (int) $matches[3],
+            );
+        }
+
+        if ( preg_match( '/^bytes\s+\*\/(\d+)$/i', $value, $matches ) ) {
+            return array( 'total' => (int) $matches[1] );
+        }
+
+        return false;
+    }
+
+    /**
+     * Method decide_download_mode()
+     *
+     * Decide how to handle a download response when resuming is in play.
+     *
+     * The rules protect against the historical corruption bugs: data is
+     * appended only when the server confirmed the exact requested offset
+     * with 206 + Content-Range, a 200 answer to a Range request means the
+     * server ignored the header (old child site) and the download restarts
+     * from byte zero, and 416 is treated as already-complete only when the
+     * local size matches the server-reported total.
+     *
+     * @param int         $http_status      HTTP response status code.
+     * @param int         $requested_offset Byte offset requested via Range (0 = fresh download).
+     * @param array|false $content_range    Parsed Content-Range header or false when absent.
+     * @param int         $local_size       Current local file size in bytes.
+     * @param int|false   $expected_size    Expected remote total size, false when unknown.
+     *
+     * @return string 'w' to write from scratch, 'a' to append, 'already_complete' when nothing is left to download.
+     * @throws MainWP_Exception When the response cannot be used safely.
+     */
+    public static function decide_download_mode( $http_status, $requested_offset, $content_range, $local_size, $expected_size ) {
+        $sent_range = $requested_offset > 0;
+
+        if ( 416 === $http_status ) {
+            if ( is_array( $content_range ) && isset( $content_range['total'] ) && $local_size === $content_range['total'] ) {
+                return 'already_complete';
+            }
+            return 'w';
+        }
+
+        if ( 400 <= $http_status || ( 200 !== $http_status && 206 !== $http_status ) ) {
+            // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- internal diagnostic context.
+            throw new MainWP_Exception(
+                esc_html__( 'Backup download failed: the child site returned an unexpected response.', 'mainwp' ),
+                'HTTP ' . (int) $http_status,
+                MainWP_Backup_Error_Codes::ERR_HTTP_ERROR
+            );
+            // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+
+        if ( ! $sent_range ) {
+            return 'w';
+        }
+
+        if ( 200 === $http_status ) {
+            // Server ignored the Range header (old child site). Never append.
+            if ( false !== $expected_size && $local_size === $expected_size ) {
+                return 'already_complete';
+            }
+            return 'w';
+        }
+
+        // 206 on a resume: the Content-Range start must match the requested offset.
+        if ( ! is_array( $content_range ) || ! isset( $content_range['start'] ) || $content_range['start'] !== $requested_offset ) {
+            // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- internal diagnostic context.
+            throw new MainWP_Exception(
+                esc_html__( 'Backup resume failed: the child site confirmed a different byte range than requested.', 'mainwp' ),
+                is_array( $content_range ) && isset( $content_range['start'] ) ? 'expected offset ' . $requested_offset . ', got ' . $content_range['start'] : 'Content-Range header missing',
+                MainWP_Backup_Error_Codes::ERR_HTTP_ERROR
+            );
+            // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+
+        return 'a';
+    }
+
+    /**
      * Method download_to_file()
      *
-     * Download to file.
+     * Download a backup file from a child site, resuming with HTTP Range
+     * requests when a partial file exists. Appends only after the child
+     * confirms the partial response; error response bodies never reach the
+     * backup file, and the transfer aborts on stalls and timeouts.
      *
      * @param mixed $url Download URL.
      * @param mixed $file File to download to.
-     * @param bool  $size Size of file.
+     * @param bool  $size Expected total file size in bytes, false when unknown.
      * @param null  $http_user htaccess username.
      * @param null  $http_pass htaccess password.
      *
      * @throws MainWP_Exception Exception message.
      *
      * @uses \MainWP\Dashboard\MainWP_Exception
-     * @uses \MainWP\Dashboard\MainWP_System::$version
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
      */
     public static function download_to_file( $url, $file, $size = false, $http_user = null, $http_pass = null ) { // phpcs:ignore -- NOSONAR - complex.
@@ -2102,7 +2208,34 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          */
         global $wp_filesystem;
 
-        if ( $wp_filesystem->exists( $file ) && ( ( false === $size ) || ( $wp_filesystem->size( $file ) > $size ) ) ) {
+        /**
+         * Filter to mock download_to_file before any HTTP transfer occurs.
+         *
+         * SECURITY WARNING - TEST ONLY: fires only when MAINWP_TESTING_MODE is
+         * defined together with a PHPUnit harness constant, mirroring the
+         * mainwp_fetch_url_authed_pre guard. MAINWP_TESTING_MODE must only be
+         * defined in the PHPUnit bootstrap.
+         *
+         * @param mixed  $pre Return non-null to short-circuit the download.
+         * @param string $url  Download URL.
+         * @param string $file Local target file.
+         * @param mixed  $size Expected size or false.
+         */
+        $is_phpunit_env = defined( 'WP_TESTS_DOMAIN' ) || defined( 'PHPUNIT_COMPOSER_INSTALL' ) || ( defined( 'WP_TESTS_DIR' ) && WP_TESTS_DIR );
+        if ( defined( 'MAINWP_TESTING_MODE' ) && MAINWP_TESTING_MODE && $is_phpunit_env ) {
+            $pre_result = apply_filters( 'mainwp_download_to_file_pre', null, $url, $file, $size );
+            if ( null !== $pre_result ) {
+                if ( $pre_result instanceof MainWP_Exception ) {
+                    throw $pre_result;
+                }
+                return;
+            }
+        }
+
+        $expected_size = ( false !== $size && is_numeric( $size ) && (int) $size > 0 ) ? (int) $size : false;
+
+        // A partial file larger than the expected total is corrupt - start over.
+        if ( $wp_filesystem->exists( $file ) && ( ( false === $expected_size ) || ( $wp_filesystem->size( $file ) > $expected_size ) ) ) {
             $wp_filesystem->delete( $file );
         }
 
@@ -2122,12 +2255,68 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             throw new MainWP_Exception( esc_html__( 'MainWP upload directory is not writable.', 'mainwp' ) );
         }
 
-        $fp    = fopen( $file, 'a' );
-        $agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
-        if ( false !== $size && $wp_filesystem->exists( $file ) ) {
-            $size = $wp_filesystem->size( $file );
-            $url .= '&foffset=' . $size;
+        $local_size = ( false !== $expected_size && $wp_filesystem->exists( $file ) ) ? (int) $wp_filesystem->size( $file ) : 0;
+
+        if ( false !== $expected_size && $local_size === $expected_size ) {
+            return; // Already fully downloaded.
         }
+
+        for ( $attempt = 1; $attempt <= 2; $attempt++ ) {
+            $result = static::perform_download_request( $url, $file, $expected_size, $local_size, $http_user, $http_pass );
+
+            if ( 'restart' !== $result ) {
+                break;
+            }
+
+            // Unusable resume state (416 size mismatch) - delete and download fresh.
+            if ( $wp_filesystem->exists( $file ) ) {
+                $wp_filesystem->delete( $file );
+            }
+            $local_size = 0;
+        }
+
+        if ( false !== $expected_size ) {
+            $final_size = $wp_filesystem->exists( $file ) ? (int) $wp_filesystem->size( $file ) : 0;
+            $tolerance  = (int) max( 1, floor( $expected_size * 0.01 ) );
+            if ( abs( $final_size - $expected_size ) > $tolerance ) {
+                $too_small = $final_size < $expected_size;
+                if ( ! $too_small && $wp_filesystem->exists( $file ) ) {
+                    $wp_filesystem->delete( $file ); // Oversized files are unusable for resume.
+                }
+                // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- internal diagnostic context.
+                throw new MainWP_Exception(
+                    esc_html__( 'The downloaded backup file size does not match the size reported by the child site. The transfer may have been interrupted. Try again to resume the download.', 'mainwp' ),
+                    'expected ' . $expected_size . ' bytes, got ' . $final_size,
+                    $too_small ? MainWP_Backup_Error_Codes::ERR_FILE_TOO_SMALL : MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT
+                );
+                // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            }
+        }
+    }
+
+    /**
+     * Method perform_download_request()
+     *
+     * Execute a single download HTTP request, streaming the body to the
+     * target file once the response status and Content-Range are validated.
+     * Partial bytes from an interrupted valid transfer are kept on disk so
+     * the next attempt can resume; error bodies are discarded.
+     *
+     * @param string    $url           Download URL.
+     * @param string    $file          Local target file.
+     * @param int|false $expected_size Expected total size, false when unknown.
+     * @param int       $local_size    Local size used as the resume offset.
+     * @param mixed     $http_user     htaccess username.
+     * @param mixed     $http_pass     htaccess password.
+     *
+     * @return string 'done' when the response was handled, 'restart' when the caller should retry from scratch.
+     * @throws MainWP_Exception When the transfer fails.
+     */
+    private static function perform_download_request( $url, $file, $expected_size, $local_size, $http_user, $http_pass ) { // phpcs:ignore -- NOSONAR - complex.
+        $agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
+
+        $requested_offset = ( false !== $expected_size && $local_size > 0 && $local_size < $expected_size ) ? $local_size : 0;
+
         $ch = curl_init( str_replace( ' ', '%20', $url ) );
 
         $proxy = new \WP_HTTP_Proxy();
@@ -2141,23 +2330,205 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 curl_setopt( $ch, CURLOPT_PROXYUSERPWD, $proxy->authentication() );
             }
         }
-        curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
-        curl_setopt( $ch, CURLOPT_HEADER, false );
-        curl_setopt( $ch, CURLOPT_FILE, $fp );
 
+        $response_headers = array();
+        $state            = new \stdClass();
+        $state->fp        = null;
+        $state->mode      = null;
+        $state->discard   = false;
+        $state->exception = null;
+
+        /**
+         * Filter the transfer limits for backup file downloads.
+         *
+         * The stall detection (low_speed_limit/low_speed_time) aborts
+         * transfers that drop below the byte rate for the given number of
+         * seconds, which catches connections killed by hosting proxies.
+         *
+         * @param array $timeouts {
+         *     Transfer limits in seconds and bytes per second.
+         *
+         *     @type int $connect_timeout Connection timeout (default 30s).
+         *     @type int $timeout         Total transfer timeout (default 1800s).
+         *     @type int $low_speed_limit Minimum transfer rate in bytes/s (default 1024).
+         *     @type int $low_speed_time  Seconds below the rate before aborting (default 60).
+         * }
+         */
+        $timeouts = apply_filters(
+            'mainwp_download_to_file_timeouts',
+            array(
+                'connect_timeout' => 30,
+                'timeout'         => 1800,
+                'low_speed_limit' => 1024,
+                'low_speed_time'  => 60,
+            )
+        );
+
+        curl_setopt( $ch, CURLOPT_HEADER, false );
         curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
         curl_setopt( $ch, CURLOPT_ENCODING, 'none' );
-
         curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+        curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, (int) $timeouts['connect_timeout'] );
+        curl_setopt( $ch, CURLOPT_TIMEOUT, (int) $timeouts['timeout'] );
+        curl_setopt( $ch, CURLOPT_LOW_SPEED_LIMIT, (int) $timeouts['low_speed_limit'] );
+        curl_setopt( $ch, CURLOPT_LOW_SPEED_TIME, (int) $timeouts['low_speed_time'] );
+
+        if ( $requested_offset > 0 ) {
+            curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'Range: bytes=' . $requested_offset . '-' ) );
+        }
+
+        curl_setopt(
+            $ch,
+            CURLOPT_HEADERFUNCTION,
+            function ( $handle, $header ) use ( &$response_headers ) {
+                unset( $handle );
+                $trimmed = trim( $header );
+                if ( 0 === stripos( $trimmed, 'HTTP/' ) ) {
+                    $response_headers = array(); // New status line (redirect) - discard previous headers.
+                }
+                if ( '' !== $trimmed ) {
+                    $response_headers[] = $trimmed;
+                }
+                return strlen( $header );
+            }
+        );
+
+        curl_setopt(
+            $ch,
+            CURLOPT_WRITEFUNCTION,
+            function ( $handle, $data ) use ( $state, &$response_headers, $file, $requested_offset, $local_size, $expected_size ) {
+                if ( $state->discard ) {
+                    return strlen( $data );
+                }
+
+                if ( null === $state->fp ) {
+                    $status = (int) curl_getinfo( $handle, CURLINFO_RESPONSE_CODE );
+
+                    if ( 200 !== $status && 206 !== $status ) {
+                        // Error or unsatisfiable-range body - never write it to the backup file.
+                        $state->discard = true;
+                        return strlen( $data );
+                    }
+
+                    $content_range = false;
+                    foreach ( $response_headers as $header_line ) {
+                        if ( 0 === stripos( $header_line, 'Content-Range:' ) ) {
+                            $content_range = static::parse_content_range_header( $header_line );
+                            break;
+                        }
+                    }
+
+                    try {
+                        $mode = static::decide_download_mode( $status, $requested_offset, $content_range, $local_size, $expected_size );
+                    } catch ( MainWP_Exception $e ) {
+                        $state->exception = $e;
+                        return -1; // Abort the transfer.
+                    }
+
+                    if ( 'already_complete' === $mode ) {
+                        $state->discard = true;
+                        return strlen( $data );
+                    }
+
+                    $state->mode = $mode;
+                    $state->fp   = fopen( $file, $mode . 'b' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- streaming large downloads.
+                    if ( false === $state->fp ) {
+                        $state->exception = new MainWP_Exception(
+                            esc_html__( 'Could not open the local backup file for writing. Check disk space and permissions on the dashboard backup directory.', 'mainwp' ),
+                            $file,
+                            MainWP_Backup_Error_Codes::ERR_PERMISSIONS
+                        );
+                        return -1;
+                    }
+                }
+
+                $written = fwrite( $state->fp, $data ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- streaming large downloads.
+                return ( false === $written ) ? -1 : $written;
+            }
+        );
+
         if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
             $http_pass = stripslashes( $http_pass );
             curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
         }
+
         curl_exec( $ch );
+        $curl_errno = curl_errno( $ch );
+        $curl_error = curl_error( $ch );
+        $status     = (int) curl_getinfo( $ch, CURLINFO_RESPONSE_CODE );
         if ( static::is_valid_curl_handle( $ch ) ) {
             curl_close( $ch );
         }
-        fclose( $fp );
+        if ( null !== $state->fp && false !== $state->fp ) {
+            fclose( $state->fp ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- streaming large downloads.
+        }
+
+        if ( null !== $state->exception ) {
+            throw $state->exception;
+        }
+
+        if ( CURLE_OK !== $curl_errno ) {
+            // Partial bytes from a confirmed 200/206 stay on disk for the next resume.
+            // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- internal diagnostic context.
+            throw new MainWP_Exception(
+                esc_html__( 'The backup download was interrupted before completing. Partial data was kept so the next attempt can resume.', 'mainwp' ),
+                'cURL error ' . $curl_errno . ': ' . $curl_error,
+                static::map_curl_errno_to_backup_error( $curl_errno, $curl_error )
+            );
+            // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+
+        if ( 416 === $status ) {
+            $content_range = false;
+            foreach ( $response_headers as $header_line ) {
+                if ( 0 === stripos( $header_line, 'Content-Range:' ) ) {
+                    $content_range = static::parse_content_range_header( $header_line );
+                    break;
+                }
+            }
+            $mode = static::decide_download_mode( 416, $requested_offset, $content_range, $local_size, $expected_size );
+            return ( 'already_complete' === $mode ) ? 'done' : 'restart';
+        }
+
+        if ( 200 !== $status && 206 !== $status ) {
+            // Throws for 4xx/5xx and other unexpected statuses.
+            static::decide_download_mode( $status, $requested_offset, false, $local_size, $expected_size );
+        }
+
+        if ( null === $state->fp && ! $state->discard && 200 === $status ) {
+            // Zero-length 200 body: create/truncate the file so the size check reports honestly.
+            $empty_fp = fopen( $file, 'wb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- streaming large downloads.
+            if ( false !== $empty_fp ) {
+                fclose( $empty_fp ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- streaming large downloads.
+            }
+        }
+
+        return 'done';
+    }
+
+    /**
+     * Method map_curl_errno_to_backup_error()
+     *
+     * Map a cURL error number to a backup error code.
+     *
+     * @param int    $errno cURL error number.
+     * @param string $error cURL error message.
+     *
+     * @return string Backup error code.
+     */
+    private static function map_curl_errno_to_backup_error( $errno, $error ) {
+        if ( CURLE_OPERATION_TIMEDOUT === $errno ) {
+            // cURL reports stalled transfers (low speed limit) with the same
+            // error number as flat timeouts; the message tells them apart.
+            return ( false !== stripos( (string) $error, 'too slow' ) ) ? MainWP_Backup_Error_Codes::ERR_STALLED : MainWP_Backup_Error_Codes::ERR_TIMEOUT;
+        }
+        if ( in_array( $errno, array( CURLE_SSL_CONNECT_ERROR, CURLE_SSL_PEER_CERTIFICATE, CURLE_SSL_ENGINE_NOTFOUND, CURLE_SSL_ENGINE_SETFAILED, CURLE_SSL_CERTPROBLEM, CURLE_SSL_CIPHER, CURLE_SSL_CACERT ), true ) ) {
+            return MainWP_Backup_Error_Codes::ERR_SSL_FAILED;
+        }
+        if ( in_array( $errno, array( CURLE_COULDNT_RESOLVE_HOST, CURLE_COULDNT_CONNECT ), true ) ) {
+            return MainWP_Backup_Error_Codes::ERR_CONNECT_FAILED;
+        }
+        return MainWP_Backup_Error_Codes::ERR_HTTP_ERROR;
     }
 
     /**

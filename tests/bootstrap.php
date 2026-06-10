@@ -93,3 +93,4 @@ _mainwp_install_tables();
 
 // Load custom test case base classes.
 require_once dirname( __FILE__ ) . '/abilities/class-mainwp-abilities-test-case.php';
+require_once dirname( __FILE__ ) . '/backup/class-mainwp-backup-test-case.php';

@@ -63,8 +63,6 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         if ( \mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
             $this->add_action( 'mainwp_backuptask_run_site', array( &$this, 'mainwp_backuptask_run_site' ) );
         }
-        $this->add_action( 'mainwp_backup_upload_file', array( &$this, 'mainwp_backup_upload_file' ) );
-
         // Page: backup.
         if ( \mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
             $this->add_action( 'mainwp_backup_run_site', array( &$this, 'mainwp_backup_run_site' ) );

@@ -128,7 +128,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
 
         if ( 'db' === $pType || 'full' === $pType ) {
-            MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $pUrl, 'fdl' ), $pFile, false, $http_user_plain, $http_pass_plain );
+            static::download_backup_artifact( $website, $pUrl, $pFile, false, $http_user_plain, $http_pass_plain );
             static::validate_backup_file( $pFile, false );
         }
 

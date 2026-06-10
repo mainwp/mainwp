@@ -576,7 +576,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         // MWP-1548: decrypt at the boundary so download_to_file sees plaintext credentials.
                         $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
                         $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
-                        MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $information['db'], 'fdl' ), $localBackupFile, $information['size'], $http_user_plain, $http_pass_plain );
+                        MainWP_Backup_File_Manager::download_backup_artifact( $website, $information['db'], $localBackupFile, $information['size'], $http_user_plain, $http_pass_plain );
                         MainWP_Backup_File_Manager::validate_backup_file( $localBackupFile, $information['size'] );
                     } finally {
                         MainWP_Backup_File_Manager::release_download_lock( $localBackupFile );
@@ -629,7 +629,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         // MWP-1548: decrypt at the boundary so download_to_file sees plaintext credentials.
                         $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
                         $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
-                        MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $information['full'], 'fdl' ), $localBackupFile, $information['size'], $http_user_plain, $http_pass_plain );
+                        MainWP_Backup_File_Manager::download_backup_artifact( $website, $information['full'], $localBackupFile, $information['size'], $http_user_plain, $http_pass_plain );
                         MainWP_Backup_File_Manager::validate_backup_file( $localBackupFile, $information['size'] );
                     } finally {
                         MainWP_Backup_File_Manager::release_download_lock( $localBackupFile );

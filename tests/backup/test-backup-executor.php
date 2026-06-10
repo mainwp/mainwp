@@ -438,6 +438,65 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A child that advertises download tokens gets the executor download
+	 * phase routed through the token flow: the token callable is consulted
+	 * and the download URL carries the token.
+	 *
+	 * @return void
+	 */
+	public function test_download_phase_requests_token_when_child_supports_it() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$content = 'PK' . "\x03\x04" . str_repeat( 'x', 4092 );
+		$this->seed_download_ready_progress( $task->id, $site_id, strlen( $content ) );
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		MainWP_DB::instance()->update_website_option( $website, 'download_token_support', '1' );
+
+		$token_calls = 0;
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what ) use ( &$token_calls, $content ) {
+				unset( $website );
+				if ( 'backup_download_token' === $what ) {
+					++$token_calls;
+					return array(
+						'token' => str_repeat( 'g', 32 ),
+						'hash'  => hash( 'sha256', $content ),
+						'size'  => strlen( $content ),
+					);
+				}
+				if ( 'delete_backup' === $what ) {
+					return array( 'result' => 'ok' );
+				}
+				return $result;
+			},
+			10,
+			3
+		);
+
+		$urls = array();
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre, $url, $file ) use ( &$urls, $content ) {
+				unset( $pre );
+				$urls[] = $url;
+				file_put_contents( $file, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+				return true;
+			},
+			10,
+			3
+		);
+
+		MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+
+		$this->assertSame( 1, $token_calls, 'The download phase must request a token from a capable child.' );
+		$this->assertCount( 1, $urls );
+		$this->assertStringContainsString( 'dltoken=' . str_repeat( 'g', 32 ), $urls[0] );
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( 1, (int) $progress->downloadedFULLComplete );
+	}
+
+	/**
 	 * Record which child actions get called, in order.
 	 *
 	 * @param array $called Reference to the recorder array.
